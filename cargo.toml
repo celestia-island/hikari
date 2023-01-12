@@ -1,0 +1,20 @@
+[package]
+authors = ["langyo <langyo.china@gmail.com>"]
+edition = "2021"
+name = "hikari"
+version = "0.1.0"
+
+[workspace]
+members = [
+  "src/frontend/web",
+  "src/frontend/web-wrapper",
+  "src/frontend/native",
+  "src/frontend/native-wrapper",
+  "src/backend/router",
+  "src/backend/database",
+  "src/backend/docker-wrapper",
+]
+
+[[bin]]
+name = "hikari-web-wrapper"
+path = "src/frontend/web-wrapper/src/main.rs"

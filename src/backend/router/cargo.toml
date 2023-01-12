@@ -5,6 +5,7 @@ name = "hikari-router"
 version = "0.1.0"
 
 [dependencies]
+hikari-database = {path = "../database", version = "^0"}
 salvo = "0.37"
 tokio = {version = "1", features = ["macros"]}
 tracing = "0.1"

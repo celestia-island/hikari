@@ -1,11 +1,10 @@
-mod migration;
-mod models;
+pub mod migration;
+pub mod models;
 
 use sea_orm::{Database, EntityTrait};
 use sea_orm_migration::MigratorTrait;
 
-#[tokio::main]
-async fn main() {
+pub async fn init() {
     let db = Database::connect("mysql://root:1145141919810@localhost:3306/test")
         .await
         .unwrap();

@@ -1,7 +1,8 @@
+use salvo::prelude::*;
 use std::fs::create_dir_all;
 use std::path::Path;
 
-use salvo::prelude::*;
+use hikari_database::init as init_db;
 
 #[handler]
 async fn index(res: &mut Response) {
@@ -30,6 +31,7 @@ async fn upload(req: &mut Request, res: &mut Response) {
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt().init();
+    init_db().await;
 
     create_dir_all("temp").unwrap();
     let router = Router::new()

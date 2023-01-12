@@ -1,0 +1,7 @@
+[package]
+authors = ["langyo <langyo.china@gmail.com>"]
+edition = "2021"
+name = "hikari-web-wrapper"
+version = "0.1.0"
+
+[dependencies]

@@ -1,6 +1,3 @@
-use std::fs::File;
-use std::io::Write;
-use std::path::Path;
 use std::process::{Command, Stdio};
 
 pub fn main() {
@@ -27,15 +24,4 @@ pub fn main() {
         .unwrap()
         .wait()
         .unwrap();
-
-    let mut file = File::create(Path::new(
-        "target/wasm32-unknown-unknown/debug/dist/index.html",
-    ))
-    .unwrap();
-    file.write(
-        b"
-<script src='./hikari-web.js'></script>
-<script>wasm_bindgen('./hikari-web_bg.wasm');</script>",
-    )
-    .unwrap();
 }

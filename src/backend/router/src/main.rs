@@ -1,15 +1,13 @@
 use std::collections::HashMap;
-use std::convert::Infallible;
 use std::future::Future;
 use std::path::PathBuf;
 
-use axum::body::{Body, StreamBody};
+use axum::body::Body;
 use axum::http::Request;
 use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::Router;
 use clap::Parser;
-use futures::stream::{self, StreamExt};
 use hyper::header::HeaderMap;
 use hyper::server::Server;
 use stylist::manager::{render_static, StyleManager};
@@ -40,34 +38,29 @@ async fn render(url: Request<Body>) -> impl IntoResponse {
             }),
         }
     });
-    let html_raw = renderer.render_stream();
+    let html_raw = renderer.render().await;
 
     let style_data = reader.read_style_data();
     let mut style_raw = String::new();
     style_data.write_static_markup(&mut style_raw).unwrap();
 
-    StreamBody::new(
-        stream::once(async move {
-            format!(
-                r#"
-                <head>
-                    {}
-                </head>
-                <body>
-                "#,
-                style_raw
-            )
-        })
-        .chain(html_raw)
-        .chain(stream::once(async move {
+    // TODO - Replace format! to string builder
+    let mut headers = HeaderMap::new();
+    headers.insert(hyper::header::CONTENT_TYPE, "text/html".parse().unwrap());
+    (
+        headers,
+        format!(
             r#"
-                <script src='/static/js'></script>
-                <script>wasm_bindgen('/static/wasm');</script>
-                </body>
-                "#
-            .to_string()
-        }))
-        .map(Result::<_, Infallible>::Ok),
+        <head>
+            {style_raw}
+        </head>
+        <body>
+            {html_raw}
+            <script src='/static/js'></script>
+            <script>wasm_bindgen('/static/wasm');</script>
+        </body>
+        "#
+        ),
     )
 }
 

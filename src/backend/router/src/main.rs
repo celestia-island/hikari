@@ -89,7 +89,7 @@ async fn main() {
         .route(
             "/static/js",
             get(|| async move {
-                include_str!("../../../../target/wasm32-unknown-unknown/debug/dist/hikari-web.js")
+                include_str!("../../../../target/wasm32-unknown-unknown/release/dist/hikari-web.js")
             }),
         )
         .route(
@@ -103,7 +103,7 @@ async fn main() {
                 (
                     headers,
                     include_bytes!(
-                        "../../../../target/wasm32-unknown-unknown/debug/dist/hikari-web_bg.wasm"
+                        "../../../../target/wasm32-unknown-unknown/release/dist/hikari-web_bg.wasm"
                     )
                     .to_vec(),
                 )

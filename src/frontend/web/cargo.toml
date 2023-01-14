@@ -6,11 +6,15 @@ version = "0.1.0"
 
 [dependencies]
 gloo = "0.8"
+lazy_static = "1.4"
 serde = {version = "1", features = ["derive"]}
 serde_derive = "1"
 strum = "0.24"
 strum_macros = "0.24"
+stylist = "0.11"
+wasm-logger = "0.2"
 yew = {version = "0.20", features = ["csr"]}
+yew-router = "0.17"
 
 [dependencies.web-sys]
 features = [

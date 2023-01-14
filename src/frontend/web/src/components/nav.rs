@@ -1,14 +1,14 @@
+use stylist::yew::styled_component;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
 use crate::app::Route;
 
-mod styles {
-    use stylist::*;
-
-    lazy_static! {
-        pub static ref NAV_OUTSIDE: String = style!(
-            r#"
+#[styled_component]
+pub fn Nav() -> Html {
+    html! {
+        <nav class={classes!(
+            css!(r#"
                 position: sticky;
                 top: 0;
                 left: 0;
@@ -20,13 +20,14 @@ mod styles {
                 align-items: center;
                 justify-content: flex-start;
                 user-select: none;
-            "#
-        )
-        .unwrap()
-        .get_class_name()
-        .into();
-        pub static ref NAV_BUTTON: String = style!(
-            r#"
+            "#)
+        )}>
+            <h1 style={r#"
+                margin-left: 16px;
+            "#}>
+                { "Hikari" }
+            </h1>
+            <Link<Route> classes={classes!(css!(r#"
                 width: min-content;
                 height: 24px;
                 margin: 0px 8px;
@@ -48,24 +49,7 @@ mod styles {
                 &:active {
                     filter: brightness(0.8);
                 }
-            "#
-        )
-        .unwrap()
-        .get_class_name()
-        .into();
-    }
-}
-
-#[function_component]
-pub fn Nav() -> Html {
-    html! {
-        <nav class={classes!(styles::NAV_OUTSIDE.to_string())}>
-            <h1 style={r#"
-                margin-left: 16px;
-            "#}>
-                { "Hikari" }
-            </h1>
-            <Link<Route> classes={classes!(styles::NAV_BUTTON.to_string())} to={Route::Home}>
+            "#))} to={Route::Home}>
                 { "Home" }
             </Link<Route>>
         </nav>

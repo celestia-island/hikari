@@ -1,59 +1,128 @@
-use salvo::prelude::*;
-use std::fs::create_dir_all;
-use std::path::Path;
+use std::collections::HashMap;
+use std::convert::Infallible;
+use std::future::Future;
+use std::path::PathBuf;
 
-use hikari_database::init as init_db;
+use axum::body::{Body, StreamBody};
+use axum::http::Request;
+use axum::response::IntoResponse;
+use axum::routing::get;
+use axum::Router;
+use clap::Parser;
+use futures::stream::{self, StreamExt};
+use hyper::header::HeaderMap;
+use hyper::server::Server;
+use stylist::manager::{render_static, StyleManager};
+use yew::platform::Runtime;
+use yew::ServerRenderer;
 
-#[handler]
-async fn index(res: &mut Response) {
-    res.render(Text::Html(INDEX_HTML));
+use hikari_web::app::{AppProps, ServerApp};
+
+#[derive(Parser, Debug)]
+struct Opt {
+    #[clap(short, long, parse(from_os_str))]
+    dir: PathBuf,
 }
 
-#[handler]
-async fn upload(req: &mut Request, res: &mut Response) {
-    let file = req.file("file").await;
-    if let Some(file) = file {
-        let dest = format!("temp/{}", file.name().unwrap_or("file"));
-        println!("{dest}");
-        let info = if let Err(e) = std::fs::copy(file.path(), Path::new(&dest)) {
-            res.set_status_code(StatusCode::INTERNAL_SERVER_ERROR);
-            format!("file not found in request: {e}")
-        } else {
-            format!("File uploaded to {dest}")
-        };
-        res.render(Text::Plain(info));
-    } else {
-        res.set_status_code(StatusCode::BAD_REQUEST);
-        res.render(Text::Plain("file not found in request"));
-    };
+async fn render(url: Request<Body>) -> impl IntoResponse {
+    let (writer, reader) = render_static();
+    let uri = url.uri().to_string();
+
+    let renderer = ServerRenderer::<ServerApp>::with_props(move || {
+        let manager = StyleManager::builder().writer(writer).build().unwrap();
+        AppProps {
+            manager,
+            url: uri.into(),
+            queries: url.uri().query().map_or_else(HashMap::new, |q| {
+                url::form_urlencoded::parse(q.as_bytes())
+                    .into_owned()
+                    .collect()
+            }),
+        }
+    });
+    let html_raw = renderer.render_stream();
+
+    let style_data = reader.read_style_data();
+    let mut style_raw = String::new();
+    style_data.write_static_markup(&mut style_raw).unwrap();
+
+    StreamBody::new(
+        stream::once(async move {
+            format!(
+                r#"
+                <head>
+                    {}
+                </head>
+                <body>
+                "#,
+                style_raw
+            )
+        })
+        .chain(html_raw)
+        .chain(stream::once(async move {
+            r#"
+                <script src='/static/js'></script>
+                <script>wasm_bindgen('/static/wasm');</script>
+                </body>
+                "#
+            .to_string()
+        }))
+        .map(Result::<_, Infallible>::Ok),
+    )
+}
+
+#[derive(Clone, Default)]
+struct Executor {
+    inner: Runtime,
+}
+
+impl<F> hyper::rt::Executor<F> for Executor
+where
+    F: Future + Send + 'static,
+{
+    fn execute(&self, fut: F) {
+        self.inner.spawn_pinned(move || async move {
+            fut.await;
+        });
+    }
 }
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt().init();
-    init_db().await;
+    let exec = Executor::default();
+    env_logger::init();
 
-    create_dir_all("temp").unwrap();
-    let router = Router::new()
-        .get(index)
-        .push(Router::with_path("upload").post(upload));
+    let app = Router::new()
+        .route(
+            "/static/js",
+            get(|| async move {
+                include_str!("../../../../target/wasm32-unknown-unknown/debug/dist/hikari-web.js")
+            }),
+        )
+        .route(
+            "/static/wasm",
+            get(|| async move {
+                let mut headers = HeaderMap::new();
+                headers.insert(
+                    hyper::header::CONTENT_TYPE,
+                    "application/wasm".parse().unwrap(),
+                );
+                (
+                    headers,
+                    include_bytes!(
+                        "../../../../target/wasm32-unknown-unknown/debug/dist/hikari-web_bg.wasm"
+                    )
+                    .to_vec(),
+                )
+            }),
+        )
+        .fallback(render);
 
-    Server::new(TcpListener::bind("127.0.0.1:80"))
-        .serve(router)
-        .await;
+    println!("Site is running: http://localhost:80/");
+
+    Server::bind(&"127.0.0.1:80".parse().unwrap())
+        .executor(exec)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 }
-
-static INDEX_HTML: &str = r#"<!DOCTYPE html>
-<html>
-    <head>
-        <title>Upload file</title>
-    </head>
-    <body>
-        <h1>Upload file</h1>
-        <form action="/upload" method="post" enctype="multipart/form-data">
-            <input type="file" name="file" />
-            <input type="submit" value="upload" />
-        </form>
-    </body>
-</html>
-"#;

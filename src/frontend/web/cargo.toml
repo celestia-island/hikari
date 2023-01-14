@@ -10,13 +10,24 @@ serde = {version = "1", features = ["derive"]}
 serde_derive = "1"
 strum = "0.24"
 strum_macros = "0.24"
-stylist = {version = "0.11", features = ["yew"]}
 wasm-logger = "0.2"
-yew = {version = "0.20", features = ["csr"]}
+yew = {version = "0.20", features = ["hydration"]}
 yew-router = "0.17"
 
 [dependencies.web-sys]
 features = [
-  "HtmlInputElement",
+  "Window",
+  "Document",
+  "Element",
+  "HtmlElement",
+  "HtmlHeadElement",
+  "HtmlStyleElement",
+  "CssStyleDeclaration",
 ]
 version = "0.3"
+
+[dependencies.stylist]
+branch = "ssr-first-pass"
+features = ["yew_integration", "ssr", "hydration"]
+git = "https://github.com/futursolo/stylist-rs"
+version = "*"

@@ -20,30 +20,36 @@ pub struct AppProps {
 
 #[function_component]
 pub fn App() -> Html {
+    let fallback = html! { <div>{"Loading..."}</div> };
     let style_manager = (*use_memo(|_| StyleManager::new().unwrap(), ())).to_owned();
 
     html! {
-        <ManagerProvider  manager={style_manager}>
-            <BrowserRouter>
-                <Content />
-            </BrowserRouter>
-        </ManagerProvider>
+        <Suspense {fallback}>
+            <ManagerProvider  manager={style_manager}>
+                <BrowserRouter>
+                    <Content />
+                </BrowserRouter>
+            </ManagerProvider>
+        </Suspense>
     }
 }
 
 #[function_component]
 pub fn ServerApp(props: &AppProps) -> Html {
+    let fallback = html! { <div>{"Loading..."}</div> };
     let history = AnyHistory::from(MemoryHistory::new());
     history
         .push_with_query(&*props.url, &props.queries)
         .unwrap();
 
     html! {
-        <ManagerProvider manager={props.manager.clone()}>
-            <Router history={history}>
-                <Content />
-            </Router>
-        </ManagerProvider>
+        <Suspense {fallback}>
+            <ManagerProvider manager={props.manager.clone()}>
+                <Router history={history}>
+                    <Content />
+                </Router>
+            </ManagerProvider>
+        </Suspense>
     }
 }
 

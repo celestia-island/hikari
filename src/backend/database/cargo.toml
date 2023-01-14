@@ -5,7 +5,7 @@ name = "hikari-database"
 version = "0.1.0"
 
 [dependencies]
-sea-orm = {version = "0.10", features = ["sqlx-mysql", "runtime-tokio-rustls"]}
-sea-orm-migration = "0.10"
-serde = {version = "1", features = ["derive"]}
-tokio = {version = "1", features = ["macros"]}
+sea-orm = {version = "^0.10", features = ["sqlx-mysql", "runtime-tokio-rustls"]}
+sea-orm-migration = "^0.10"
+serde = {version = "^1", features = ["derive"]}
+tokio = {version = "^1", features = ["macros"]}

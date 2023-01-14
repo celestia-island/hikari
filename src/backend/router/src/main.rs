@@ -1,26 +1,20 @@
 use std::collections::HashMap;
 use std::future::Future;
-use std::path::PathBuf;
 
 use axum::body::Body;
 use axum::http::Request;
 use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::Router;
-use clap::Parser;
 use hyper::header::HeaderMap;
 use hyper::server::Server;
 use stylist::manager::{render_static, StyleManager};
+use tower::ServiceBuilder;
+use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 use yew::platform::Runtime;
 use yew::ServerRenderer;
 
 use hikari_web::app::{AppProps, ServerApp};
-
-#[derive(Parser, Debug)]
-struct Opt {
-    #[clap(short, long, parse(from_os_str))]
-    dir: PathBuf,
-}
 
 async fn render(url: Request<Body>) -> impl IntoResponse {
     let (writer, reader) = render_static();
@@ -85,6 +79,11 @@ async fn main() {
     let exec = Executor::default();
     env_logger::init();
 
+    let middleware_stack = ServiceBuilder::new()
+        .layer(TraceLayer::new_for_http())
+        .layer(CompressionLayer::new())
+        .into_inner();
+
     let app = Router::new()
         .route(
             "/static/js",
@@ -109,7 +108,8 @@ async fn main() {
                 )
             }),
         )
-        .fallback(render);
+        .fallback(render)
+        .layer(middleware_stack);
 
     println!("Site is running: http://localhost:80/");
 

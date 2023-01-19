@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use gloo::console::console;
 use gloo::net::http::Request;
 use stylist::yew::styled_component;
@@ -7,7 +5,7 @@ use yew::prelude::*;
 
 #[styled_component]
 pub fn Inside() -> Html {
-    let count = use_state(|| Rc::new(".".to_string()));
+    let count = use_state(|| ".".to_string());
 
     use_effect_with_deps(
         move |_| {
@@ -26,7 +24,7 @@ pub fn Inside() -> Html {
     let onclick = {
         let count = count.clone();
         Callback::from(move |_| {
-            count.set((*count).repeat(2).into());
+            count.set((*count).repeat(2));
         })
     };
 
@@ -47,7 +45,7 @@ pub fn Inside() -> Html {
             "#)}
             onclick={onclick}
         >
-            {&**count}
+            {&*count}
         </div>
     }
 }
@@ -73,6 +71,8 @@ pub fn Home() -> Html {
                 flex-direction: column;
                 background-color: white;
             "#)} id="yew-sample-content">
+                <Inside />
+                <Inside />
                 <Inside />
             </div>
         </>

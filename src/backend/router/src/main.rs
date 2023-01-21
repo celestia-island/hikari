@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fs::read;
 use std::future::Future;
 
 use axum::body::Body;
@@ -17,6 +18,7 @@ use yew::ServerRenderer;
 use hikari_web::app::{AppProps, ServerApp};
 
 async fn render(url: Request<Body>) -> impl IntoResponse {
+    println!("{:?}", url);
     let (writer, reader) = render_static();
     let uri = url.uri().to_string();
 
@@ -79,18 +81,16 @@ async fn main() {
     let exec = Executor::default();
     env_logger::init();
 
+    let wasm_wrapper_raw = read("/home/dist/a.js").unwrap();
+    let wasm_raw = read("/home/dist/a.wasm").unwrap();
+
     let middleware_stack = ServiceBuilder::new()
         .layer(TraceLayer::new_for_http())
         .layer(CompressionLayer::new())
         .into_inner();
 
     let app = Router::new()
-        .route(
-            "/static/js",
-            get(|| async move {
-                include_str!("../../../../target/wasm32-unknown-unknown/release/dist/hikari-web.js")
-            }),
-        )
+        .route("/static/js", get(|| async move { wasm_wrapper_raw }))
         .route(
             "/static/wasm",
             get(|| async move {
@@ -99,21 +99,15 @@ async fn main() {
                     hyper::header::CONTENT_TYPE,
                     "application/wasm".parse().unwrap(),
                 );
-                (
-                    headers,
-                    include_bytes!(
-                        "../../../../target/wasm32-unknown-unknown/release/dist/hikari-web_bg.wasm"
-                    )
-                    .to_vec(),
-                )
+                (headers, wasm_raw)
             }),
         )
         .fallback(render)
         .layer(middleware_stack);
 
-    println!("Site is running: http://localhost:80/");
+    println!("Site will run on port 80.");
 
-    Server::bind(&"127.0.0.1:80".parse().unwrap())
+    Server::bind(&"0.0.0.0:80".parse().unwrap())
         .executor(exec)
         .serve(app.into_make_service())
         .await

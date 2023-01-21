@@ -1,20 +1,9 @@
-[package]
-authors = ["langyo <langyo.china@gmail.com>"]
-edition = "2021"
-name = "hikari"
-version = "0.1.0"
-
 [workspace]
 members = [
   "src/frontend/web",
-  "src/frontend/web-wrapper",
   "src/backend/router",
   "src/backend/database",
 ]
-
-[[bin]]
-name = "hikari-web-wrapper"
-path = "src/frontend/web-wrapper/src/main.rs"
 
 [profile.release]
 lto = true

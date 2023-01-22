@@ -11,6 +11,7 @@ serde_derive = "^1"
 serde_json = "^1"
 strum = "^0.24"
 strum_macros = "^0.24"
+stylist = {version = "^0.12", features = ["yew_integration", "ssr", "hydration"]}
 wasm-bindgen-futures = "^0.4"
 wasm-logger = "^0.2"
 yew = {version = "^0.20", features = ["hydration"]}
@@ -27,9 +28,3 @@ features = [
   "CssStyleDeclaration",
 ]
 version = "^0.3"
-
-[dependencies.stylist]
-branch = "ssr-first-pass"
-features = ["yew_integration", "ssr", "hydration"]
-git = "https://github.com/futursolo/stylist-rs"
-version = "*"

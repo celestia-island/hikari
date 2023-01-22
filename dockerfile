@@ -1,34 +1,20 @@
-FROM rust:latest as stage-deps
-
-RUN cargo new --name playground /home/src/playground
-WORKDIR /home/src/playground
-
-# COPY ./src/backend/database/Cargo.toml /home/src/playground/Cargo.toml
-# RUN cargo build --release
-
-COPY ./src/backend/router/Cargo.toml /home/src/playground/Cargo.toml
-# Polyfill
-RUN cargo new --name hikari-database /home/src/database
-RUN cargo new --name hikari-web /home/frontend/web
-RUN cargo build --release
-
-# COPY ./src/frontend/web/Cargo.toml /home/src/playground/Cargo.toml
-# RUN cargo build --release
-
-# The dependencies are now cached in the image, so we can copy them to the next stage
-# without having to rebuild them.
-RUN mv /home/src/playground/target /home/target
-RUN mv /home/src/playground/Cargo.lock /home/Cargo.lock
-
 FROM rust:latest as stage-client-build1
 
 RUN rustup target add wasm32-unknown-unknown
-COPY --from=stage-deps /home/target /home/target
-COPY --from=stage-deps /home/Cargo.lock /home/Cargo.lock
-COPY ./src /home/src
+RUN cargo new --name hikari-router /home/src/backend/router
+COPY ./src/backend/router/Cargo.toml /home/src/backend/router/Cargo.toml
+RUN cargo new --name hikari-database /home/src/backend/database
+COPY ./src/backend/database/Cargo.toml /home/src/backend/database/Cargo.toml
+RUN cargo new --name hikari-web /home/src/frontend/web
+COPY ./src/frontend/web/Cargo.toml /home/src/frontend/web/Cargo.toml
 COPY ./Cargo.toml /home/Cargo.toml
-WORKDIR /home/src
-RUN cargo build --package hikari-web --bin hikari-web --release --target wasm32-unknown-unknown
+WORKDIR /home/src/frontend/web
+RUN cargo build --release --target wasm32-unknown-unknown
+
+RUN rm -r /home/src
+COPY ./src /home/src
+WORKDIR /home
+RUN cargo build --bin hikari-web --package hikari-web --release --target wasm32-unknown-unknown
 
 FROM rust:latest as stage-client-build2
 
@@ -47,12 +33,20 @@ RUN rm a_bg.wasm
 
 FROM rust:latest as stage-server-build1
 
-COPY --from=stage-deps /home/target /home/target
-COPY --from=stage-deps /home/Cargo.lock /home/Cargo.lock
-COPY ./src /home/src
+RUN cargo new --name hikari-router /home/src/backend/router
+COPY ./src/backend/router/Cargo.toml /home/src/backend/router/Cargo.toml
+RUN cargo new --name hikari-database /home/src/backend/database
+COPY ./src/backend/database/Cargo.toml /home/src/backend/database/Cargo.toml
+RUN cargo new --name hikari-web /home/src/frontend/web
+COPY ./src/frontend/web/Cargo.toml /home/src/frontend/web/Cargo.toml
 COPY ./Cargo.toml /home/Cargo.toml
+WORKDIR /home
+RUN cargo build --bin hikari-router --package hikari-router --release
+
+RUN rm -r /home/src
+COPY ./src /home/src
 WORKDIR /home/src/backend/router
-RUN cargo build --package hikari-router --bin hikari-router --release
+RUN cargo build --release
 
 FROM ubuntu:22.10 as stage-server-build2
 

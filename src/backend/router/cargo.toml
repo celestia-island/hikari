@@ -13,6 +13,7 @@ clap = {version = "^3", features = ["derive"]}
 env_logger = "^0.9"
 futures = {version = "^0.3", features = ["std"], default-features = false}
 hyper = {version = "^0.14", features = ["server", "http1"]}
+stylist = {version = "^0.12", features = ["yew_integration", "ssr", "hydration"]}
 tokio = {version = "^1", features = ["macros"]}
 tower = {version = "^0.4", features = ["make"]}
 tracing = "^0.1"
@@ -31,12 +32,6 @@ features = [
   "CssStyleDeclaration",
 ]
 version = "0.3"
-
-[dependencies.stylist]
-branch = "ssr-first-pass"
-features = ["yew_integration", "ssr", "hydration"]
-git = "https://github.com/futursolo/stylist-rs"
-version = "*"
 
 [dependencies.tower-http]
 features = ["fs", "trace", "compression-gzip"]

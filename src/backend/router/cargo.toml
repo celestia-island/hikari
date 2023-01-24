@@ -13,13 +13,13 @@ clap = {version = "^3", features = ["derive"]}
 env_logger = "^0.9"
 futures = {version = "^0.3", features = ["std"], default-features = false}
 hyper = {version = "^0.14", features = ["server", "http1"]}
-stylist = {version = "^0.12", features = ["yew_integration", "ssr", "hydration"]}
+stylist = {version = "^0.12", features = ["yew_integration", "ssr"]}
 tokio = {version = "^1", features = ["macros"]}
 tower = {version = "^0.4", features = ["make"]}
 tracing = "^0.1"
 tracing-subscriber = "^0.3"
 url = "^2"
-yew = {version = "^0.20", features = ["csr", "ssr", "hydration"]}
+yew = {version = "^0.20", features = ["ssr", "hydration"]}
 
 [dev-dependencies.web-sys]
 features = [

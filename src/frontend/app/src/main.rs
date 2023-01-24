@@ -32,7 +32,7 @@ async fn main() {
             let window = app.get_window("main").unwrap();
             window.center().unwrap();
 
-            #[cfg(debug_assertions)]
+            #[cfg(feature = "devtools")]
             window.open_devtools();
 
             Ok(())

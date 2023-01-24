@@ -18,8 +18,8 @@ RUN cargo build --release --target wasm32-unknown-unknown
 
 RUN rm -r /home/src
 COPY ./src /home/src
-WORKDIR /home
-RUN cargo build --bin hikari-web --package hikari-web --release --target wasm32-unknown-unknown
+WORKDIR /home/src/frontend/web
+RUN cargo build --release --target wasm32-unknown-unknown --features web_env
 
 FROM rust:latest as stage-client-build2
 

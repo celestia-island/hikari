@@ -48,6 +48,7 @@ RUN cargo build --release
 
 FROM ubuntu:22.10 as stage-server-build2
 
+COPY ./src/backend/router/res /home/res
 COPY --from=stage-client-build3 /home/dist /home/dist
 COPY --from=stage-server-build1 /home/target/release/hikari-router /home/a
 WORKDIR /home

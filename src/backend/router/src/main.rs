@@ -2,18 +2,18 @@ use std::collections::HashMap;
 use std::fs::read;
 use std::future::Future;
 
-use axum::body::Body;
-use axum::http::Request;
-use axum::response::IntoResponse;
-use axum::routing::get;
-use axum::Router;
-use hyper::header::HeaderMap;
-use hyper::server::Server;
+use axum::{
+    body::Body,
+    http::{Request, StatusCode},
+    response::IntoResponse,
+    routing::{get, get_service},
+    Router,
+};
+use hyper::{header::HeaderMap, server::Server};
 use stylist::manager::{render_static, StyleManager};
 use tower::ServiceBuilder;
-use tower_http::{compression::CompressionLayer, trace::TraceLayer};
-use yew::platform::Runtime;
-use yew::ServerRenderer;
+use tower_http::{compression::CompressionLayer, services::ServeFile, trace::TraceLayer};
+use yew::{platform::Runtime, ServerRenderer};
 
 use hikari_web::app::{AppProps, ServerApp};
 
@@ -60,6 +60,10 @@ async fn render(url: Request<Body>) -> impl IntoResponse {
     )
 }
 
+async fn handle_static_file_error(err: std::io::Error) -> impl IntoResponse {
+    (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
+}
+
 #[derive(Clone, Default)]
 struct Executor {
     inner: Runtime,
@@ -101,6 +105,11 @@ async fn main() {
                 );
                 (headers, wasm_raw)
             }),
+        )
+        .nest_service(
+            "/favicon.ico",
+            get_service(ServeFile::new("/home/res/favicon.ico"))
+                .handle_error(handle_static_file_error),
         )
         .fallback(render)
         .layer(middleware_stack);

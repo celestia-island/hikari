@@ -24,12 +24,17 @@ fn my_custom_command(window: tauri::Window, app_handle: tauri::AppHandle) -> Str
     "Hello from Rust".into()
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![my_custom_command])
         .setup(|app| {
             let window = app.get_window("main").unwrap();
             window.center().unwrap();
+
+            #[cfg(debug_assertions)]
+            window.open_devtools();
+
             Ok(())
         })
         .run(tauri::generate_context!("./tauri.conf.json"))

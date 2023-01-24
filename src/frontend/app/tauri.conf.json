@@ -46,9 +46,6 @@
         "resizable": true,
         "fullscreen": false
       }
-    ],
-    "security": {
-      "csp": "default-src 'self'"
-    }
+    ]
   }
 }

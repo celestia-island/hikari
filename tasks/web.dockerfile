@@ -1,4 +1,4 @@
-FROM rust:latest as stage-client-build1
+FROM rust:latest as stage-client-deps
 
 RUN rustup target add wasm32-unknown-unknown
 RUN cargo new --name hikari-router /home/src/backend/router
@@ -7,7 +7,12 @@ RUN cargo new --name hikari-database /home/src/backend/database
 COPY ./src/backend/database/Cargo.toml /home/src/backend/database/Cargo.toml
 RUN cargo new --name hikari-web /home/src/frontend/web
 COPY ./src/frontend/web/Cargo.toml /home/src/frontend/web/Cargo.toml
+RUN cargo new --name hikari-web /home/src/frontend/app
+COPY ./src/frontend/app/Cargo.toml /home/src/frontend/app/Cargo.toml
 COPY ./Cargo.toml /home/Cargo.toml
+
+FROM stage-client-deps as stage-client-build1
+
 WORKDIR /home/src/frontend/web
 RUN cargo build --release --target wasm32-unknown-unknown
 
@@ -31,15 +36,8 @@ WORKDIR /home/dist
 RUN wasm-opt -Oz -o a.wasm a_bg.wasm
 RUN rm a_bg.wasm
 
-FROM rust:latest as stage-server-build1
+FROM stage-client-deps as stage-server-build1
 
-RUN cargo new --name hikari-router /home/src/backend/router
-COPY ./src/backend/router/Cargo.toml /home/src/backend/router/Cargo.toml
-RUN cargo new --name hikari-database /home/src/backend/database
-COPY ./src/backend/database/Cargo.toml /home/src/backend/database/Cargo.toml
-RUN cargo new --name hikari-web /home/src/frontend/web
-COPY ./src/frontend/web/Cargo.toml /home/src/frontend/web/Cargo.toml
-COPY ./Cargo.toml /home/Cargo.toml
 WORKDIR /home
 RUN cargo build --bin hikari-router --package hikari-router --release
 

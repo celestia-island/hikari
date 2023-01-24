@@ -1,0 +1,54 @@
+{
+  "build": {
+    "distDir": "./res",
+    "devPath": "./res",
+    "beforeDevCommand": "",
+    "beforeBuildCommand": ""
+  },
+  "package": {
+    "productName": "Hikari",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "bundle": {
+      "active": true,
+      "targets": "all",
+      "identifier": "xyz.langyo.hikari",
+      "icon": [
+        "./res/32x32.png",
+        "./res/128x128.png",
+        "./res/128x128@2x.png",
+        "./res/icon.icns",
+        "./res/icon.ico"
+      ],
+      "resources": [],
+      "externalBin": [],
+      "copyright": "",
+      "category": "Utility",
+      "shortDescription": "",
+      "longDescription": "",
+      "deb": {
+        "depends": []
+      },
+      "macOS": {
+        "frameworks": [],
+        "exceptionDomain": ""
+      }
+    },
+    "allowlist": {
+      "all": false
+    },
+    "windows": [
+      {
+        "title": "Hikari",
+        "width": 800,
+        "height": 600,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'"
+    }
+  }
+}

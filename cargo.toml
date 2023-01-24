@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "src/frontend/web",
+  "src/frontend/app",
   "src/backend/router",
   "src/backend/database",
 ]

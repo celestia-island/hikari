@@ -1,0 +1,12 @@
+[package]
+authors = ["langyo <langyo.china@gmail.com>"]
+build = "src/build.rs"
+edition = "2021"
+name = "hikari-app"
+version = "0.1.0"
+
+[build-dependencies]
+tauri-build = {version = "^1", features = []}
+
+[dependencies]
+tauri = "^1"

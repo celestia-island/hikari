@@ -1,18 +1,21 @@
 use std::collections::HashMap;
-use std::fs::read;
 use std::future::Future;
 
 use axum::{
     body::Body,
     http::{Request, StatusCode},
     response::IntoResponse,
-    routing::{get, get_service},
+    routing::get_service,
     Router,
 };
 use hyper::{header::HeaderMap, server::Server};
 use stylist::manager::{render_static, StyleManager};
 use tower::ServiceBuilder;
-use tower_http::{compression::CompressionLayer, services::ServeFile, trace::TraceLayer};
+use tower_http::{
+    compression::CompressionLayer,
+    services::{ServeDir, ServeFile},
+    trace::TraceLayer,
+};
 use yew::{platform::Runtime, ServerRenderer};
 
 use hikari_web::app::{AppProps, ServerApp};
@@ -52,8 +55,8 @@ async fn render(url: Request<Body>) -> impl IntoResponse {
         </head>
         <body>
             {html_raw}
-            <script src='/static/js'></script>
-            <script>wasm_bindgen('/static/wasm');</script>
+            <script src='/res/entry/js'></script>
+            <script>wasm_bindgen('/res/entry/wasm');</script>
         </body>
         "#
         ),
@@ -85,31 +88,28 @@ async fn main() {
     let exec = Executor::default();
     env_logger::init();
 
-    let wasm_wrapper_raw = read("/home/dist/a.js").unwrap();
-    let wasm_raw = read("/home/dist/a.wasm").unwrap();
-
     let middleware_stack = ServiceBuilder::new()
         .layer(TraceLayer::new_for_http())
         .layer(CompressionLayer::new())
         .into_inner();
 
     let app = Router::new()
-        .route("/static/js", get(|| async move { wasm_wrapper_raw }))
-        .route(
-            "/static/wasm",
-            get(|| async move {
-                let mut headers = HeaderMap::new();
-                headers.insert(
-                    hyper::header::CONTENT_TYPE,
-                    "application/wasm".parse().unwrap(),
-                );
-                (headers, wasm_raw)
-            }),
+        .route_service(
+            "/res/entry/js",
+            get_service(ServeFile::new("/home/dist/a.js")).handle_error(handle_static_file_error),
         )
-        .nest_service(
+        .route_service(
+            "/res/entry/wasm",
+            get_service(ServeFile::new("/home/dist/a.wasm")).handle_error(handle_static_file_error),
+        )
+        .route_service(
             "/favicon.ico",
             get_service(ServeFile::new("/home/res/favicon.ico"))
                 .handle_error(handle_static_file_error),
+        )
+        .nest_service(
+            "/res",
+            get_service(ServeDir::new("/home/res")).handle_error(handle_static_file_error),
         )
         .fallback(render)
         .layer(middleware_stack);

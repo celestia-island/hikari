@@ -54,7 +54,6 @@ pub fn Inside() -> Html {
 pub fn Home() -> Html {
     html! {
         <>
-            <h1>{"Yew Integration"}</h1>
             <div class={css!(r#"
                 box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.7);
                 height: 500px;

@@ -10,6 +10,7 @@ use yew_router::prelude::*;
 use crate::components::nav::Nav;
 use crate::pages::home::Home;
 use crate::pages::page_not_found::PageNotFound;
+use crate::utils::store::ContextShell;
 
 #[derive(Properties, PartialEq)]
 pub struct AppProps {
@@ -25,7 +26,7 @@ pub fn App() -> Html {
 
     html! {
         <Suspense {fallback}>
-            <ManagerProvider  manager={style_manager}>
+            <ManagerProvider manager={style_manager}>
                 <BrowserRouter>
                     <Content />
                 </BrowserRouter>
@@ -57,18 +58,20 @@ pub fn ServerApp(props: &AppProps) -> Html {
 pub fn Content() -> Html {
     html! {
         <>
-            <Global css={css!(r#"
-                html, body {
-                    margin: 0;
-                    padding: 0;
-                }
-            "#)} />
+            <ContextShell>
+                <Global css={css!(r#"
+                    html, body {
+                        margin: 0;
+                        padding: 0;
+                    }
+                "#)} />
 
-            <Nav />
+                <Nav />
 
-            <main class={css!("background: #6cf;")}>
-                <Switch<Route> render={switch} />
-            </main>
+                <main class={css!("background: #6cf;")}>
+                    <Switch<Route> render={switch} />
+                </main>
+            </ContextShell>
         </>
     }
 }

@@ -8,7 +8,7 @@ pub fn PageNotFound() -> Html {
     let context = use_context::<ContextProviderType>().expect("No context found");
 
     let handle_change_msg1 = {
-        let context = use_context::<ContextProviderType>().expect("No context found");
+        let context = context.clone();
 
         Callback::from(move |_| {
             console!("Clicked msg1 button".to_string());
@@ -20,7 +20,7 @@ pub fn PageNotFound() -> Html {
         })
     };
     let handle_change_msg2 = {
-        let context = use_context::<ContextProviderType>().expect("No context found");
+        let context = context.clone();
         Callback::from(move |_| {
             console!("Clicked msg2 button".to_string());
             context.set(Context {

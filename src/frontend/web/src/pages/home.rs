@@ -7,24 +7,20 @@ use yew::prelude::*;
 pub fn Inside() -> Html {
     let count = use_state(|| ".".to_string());
 
-    use_effect_with_deps(
-        move |_| {
+    let onclick = {
+        let count = count.clone();
+        Callback::from(move |_| {
+            count.set("Loading".into());
+            let count = count.clone();
             wasm_bindgen_futures::spawn_local(async move {
                 let response = Request::get("https://httpbin.org/get")
                     .send()
                     .await
                     .unwrap();
                 let raw = response.text().await.unwrap();
-                console!(raw);
-            })
-        },
-        (),
-    );
-
-    let onclick = {
-        let count = count.clone();
-        Callback::from(move |_| {
-            count.set((*count).repeat(2));
+                console!(raw.clone());
+                count.set(raw);
+            });
         })
     };
 
@@ -70,8 +66,6 @@ pub fn Home() -> Html {
                 flex-direction: column;
                 background-color: white;
             "#)} id="yew-sample-content">
-                <Inside />
-                <Inside />
                 <Inside />
             </div>
         </>

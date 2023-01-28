@@ -1,0 +1,11 @@
+[workspace]
+members = [
+  "packages/web",
+  "packages/app",
+  "packages/router",
+  "packages/database",
+]
+
+[profile.release]
+lto = true
+opt-level = 'z'

@@ -6,7 +6,7 @@ version = "0.1.0"
 
 [dependencies]
 hikari-database = {path = "../database", version = "^0"}
-hikari-web = {path = "../../frontend/web", version = "^0"}
+hikari-web = {path = "../web", version = "^0"}
 
 axum = {version = "^0.6", features = ["query"]}
 clap = {version = "^3", features = ["derive"]}

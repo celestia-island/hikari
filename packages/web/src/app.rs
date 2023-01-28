@@ -7,7 +7,6 @@ use yew::prelude::*;
 use yew_router::history::{AnyHistory, History, MemoryHistory};
 use yew_router::prelude::*;
 
-use crate::components::nav::Nav;
 use crate::pages::home::Home;
 use crate::pages::page_not_found::PageNotFound;
 use crate::utils::store::ContextShell;
@@ -65,8 +64,6 @@ pub fn Content() -> Html {
                         padding: 0;
                     }
                 "#)} />
-
-                <Nav />
 
                 <main class={css!("background: #6cf;")}>
                     <Switch<Route> render={switch} />

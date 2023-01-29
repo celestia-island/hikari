@@ -2,17 +2,17 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub(crate) struct CardProps {
+pub struct CardProps {
     #[prop_or_default]
-    pub(crate) children: Children,
+    pub children: Children,
 }
 
 #[styled_component]
-pub(crate) fn Card(props: &CardProps) -> Html {
+pub fn Card(props: &CardProps) -> Html {
     html! {
         <button
             class={css!(r#"
-                display: fixed;
+                display: flex;
                 align-items: center;
                 justify-content: center;
             "#)}

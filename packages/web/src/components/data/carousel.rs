@@ -2,17 +2,17 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub(crate) struct CarouselProps {
+pub struct CarouselProps {
     #[prop_or_default]
-    pub(crate) children: Children,
+    pub children: Children,
 }
 
 #[styled_component]
-pub(crate) fn Carousel(props: &CarouselProps) -> Html {
+pub fn Carousel(props: &CarouselProps) -> Html {
     html! {
         <button
             class={css!(r#"
-                display: fixed;
+                display: flex;
                 align-items: center;
                 justify-content: center;
             "#)}

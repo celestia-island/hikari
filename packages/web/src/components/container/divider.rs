@@ -2,20 +2,20 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub(crate) struct DividerProps {
+pub struct DividerProps {
     #[prop_or(false)]
-    pub(crate) is_vertical: bool,
+    pub is_vertical: bool,
 
     #[prop_or(true)]
-    pub(crate) is_horizontal: bool,
+    pub is_horizontal: bool,
 }
 
 #[styled_component]
-pub(crate) fn Divider(props: &DividerProps) -> Html {
+pub fn Divider(props: &DividerProps) -> Html {
     html! {
         <div
             class={css!(r#"
-                display: fixed;
+                display: flex;
                 align-items: center;
                 justify-content: center;
             "#)}

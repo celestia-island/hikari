@@ -2,17 +2,17 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub(crate) struct CollapseProps {
+pub struct CollapseProps {
     #[prop_or_default]
-    pub(crate) children: Children,
+    pub children: Children,
 }
 
 #[styled_component]
-pub(crate) fn Collapse(props: &CollapseProps) -> Html {
+pub fn Collapse(props: &CollapseProps) -> Html {
     html! {
         <button
             class={css!(r#"
-                display: fixed;
+                display: flex;
                 align-items: center;
                 justify-content: center;
             "#)}

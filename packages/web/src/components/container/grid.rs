@@ -2,17 +2,17 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub(crate) struct GridProps {
+pub struct GridProps {
     #[prop_or_default]
-    pub(crate) children: Children,
+    pub children: Children,
 }
 
 #[styled_component]
-pub(crate) fn Grid(props: &GridProps) -> Html {
+pub fn Grid(props: &GridProps) -> Html {
     html! {
         <div
             class={css!(r#"
-                display: fixed;
+                display: flex;
                 align-items: center;
                 justify-content: center;
             "#)}

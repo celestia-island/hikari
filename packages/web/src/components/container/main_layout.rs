@@ -2,20 +2,20 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub(crate) struct MainLayoutProps {
+pub struct MainLayoutProps {
     #[prop_or_default]
-    pub(crate) children: Children,
+    pub children: Children,
 }
 
 #[styled_component]
-pub(crate) fn MainLayout(props: &MainLayoutProps) -> Html {
+pub fn MainLayout(props: &MainLayoutProps) -> Html {
     html! {
         <main
             class={css!(r#"
-                width: 100%;
+                width: 100vw;
                 height: max-content;
 
-                display: fixed;
+                display: flex;
                 flex-direction: column;
                 align-items: center;
             "#)}

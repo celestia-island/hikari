@@ -4,7 +4,7 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[styled_component]
-pub(crate) fn Inside() -> Html {
+pub fn Home() -> Html {
     let count = use_state(|| ".".to_string());
 
     let onclick = {
@@ -28,46 +28,17 @@ pub(crate) fn Inside() -> Html {
         <div
             class={css!(r#"
                 width: 200px;
-                height: 200px;
-                border-radius: 5px;
+                min-height: 200px;
+                margin-top: 32px;
 
                 background: black;
-
-                padding: 15px;
-                box-sizing: border-box;
-
-                box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.7);
+                border-radius: 4px;
+                box-shadow: 0 0 4px 1px rgba(0, 0, 0, 0.8);
                 color: white;
             "#)}
             onclick={onclick}
         >
             {&*count}
         </div>
-    }
-}
-
-#[styled_component]
-pub(crate) fn Home() -> Html {
-    html! {
-        <>
-            <div class={css!(r#"
-                box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.7);
-                height: 500px;
-                width: 500px;
-                border-radius: 5px;
-
-                display: flex;
-                justify-content: space-around;
-                align-items: center;
-
-                padding: 15px;
-                box-sizing: border-box;
-
-                flex-direction: column;
-                background-color: white;
-            "#)} id="yew-sample-content">
-                <Inside />
-            </div>
-        </>
     }
 }

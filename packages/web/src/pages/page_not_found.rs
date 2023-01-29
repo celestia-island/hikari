@@ -4,7 +4,7 @@ use yew::prelude::*;
 use crate::utils::store::{Context, ContextProviderType};
 
 #[function_component]
-pub(crate) fn PageNotFound() -> Html {
+pub fn PageNotFound() -> Html {
     let context = use_context::<ContextProviderType>().expect("No context found");
 
     let handle_change_msg1 = {

@@ -7,6 +7,7 @@ use yew::prelude::*;
 use yew_router::history::{AnyHistory, History, MemoryHistory};
 use yew_router::prelude::*;
 
+use crate::components::container::{AsideLayout, FooterLayout, HeaderLayout, MainLayout};
 use crate::pages::home::Home;
 use crate::pages::page_not_found::PageNotFound;
 use crate::utils::store::ContextShell;
@@ -59,16 +60,31 @@ pub fn Content() -> Html {
         <>
             <ContextShell>
                 <Global css={css!(r#"
-                    * {
+                    html, body {
                         margin: 0;
                         padding: 0;
+                    }
+
+                    * {
                         box-sizing: border-box;
                     }
                 "#)} />
 
-                <main class={css!("background: #6cf;")}>
+                <HeaderLayout>
+                    <h1>{"Header"}</h1>
+                </HeaderLayout>
+
+                <MainLayout>
                     <Switch<Route> render={switch} />
-                </main>
+                </MainLayout>
+
+                <AsideLayout>
+                    <p>{"Aside"}</p>
+                </AsideLayout>
+
+                <FooterLayout>
+                    <p>{"Footer"}</p>
+                </FooterLayout>
             </ContextShell>
         </>
     }

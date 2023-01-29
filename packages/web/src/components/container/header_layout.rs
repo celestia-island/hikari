@@ -2,13 +2,13 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub(crate) struct HeaderLayoutProps {
+pub struct HeaderLayoutProps {
     #[prop_or_default]
-    pub(crate) children: Children,
+    pub children: Children,
 }
 
 #[styled_component]
-pub(crate) fn HeaderLayout(props: &HeaderLayoutProps) -> Html {
+pub fn HeaderLayout(props: &HeaderLayoutProps) -> Html {
     html! {
         <header
             class={css!(r#"
@@ -22,8 +22,9 @@ pub(crate) fn HeaderLayout(props: &HeaderLayoutProps) -> Html {
                 padding: 16px;
                 box-shadow: 0 0 4px 1px rgba(0, 0, 0, 0.8);
 
-                display: fixed;
+                display: flex;
                 align-items: center;
+                z-index: 1000;
             "#)}
         >
             {props.children.clone()}

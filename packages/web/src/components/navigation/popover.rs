@@ -2,17 +2,17 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub(crate) struct PopOverProps {
+pub(crate) struct PopoverProps {
     #[prop_or_default]
     pub(crate) children: Children,
 }
 
 #[styled_component]
-pub(crate) fn PopOver(props: &PopOverProps) -> Html {
+pub(crate) fn Popover(props: &PopoverProps) -> Html {
     html! {
         <div
             class={css!(r#"
-                display: fixed;
+                display: flex;
                 align-items: center;
                 justify-content: center;
             "#)}

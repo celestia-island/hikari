@@ -4,7 +4,7 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[styled_component]
-pub fn Inside() -> Html {
+pub(crate) fn Inside() -> Html {
     let count = use_state(|| ".".to_string());
 
     let onclick = {
@@ -47,7 +47,7 @@ pub fn Inside() -> Html {
 }
 
 #[styled_component]
-pub fn Home() -> Html {
+pub(crate) fn Home() -> Html {
     html! {
         <>
             <div class={css!(r#"

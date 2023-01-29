@@ -1,21 +1,21 @@
 use yew::prelude::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Context {
-    pub msg1: String,
-    pub msg2: String,
+pub(crate) struct Context {
+    pub(crate) msg1: String,
+    pub(crate) msg2: String,
 }
 
 #[derive(Properties, Debug, PartialEq)]
-pub struct ContextProviderProps {
+pub(crate) struct ContextProviderProps {
     #[prop_or_default]
-    pub children: Children,
+    pub(crate) children: Children,
 }
 
-pub type ContextProviderType = UseStateHandle<Context>;
+pub(crate) type ContextProviderType = UseStateHandle<Context>;
 
 #[function_component]
-pub fn ContextShell(props: &ContextProviderProps) -> Html {
+pub(crate) fn ContextShell(props: &ContextProviderProps) -> Html {
     let ctx = use_state(|| Context {
         msg1: "No message yet.".to_owned(),
         msg2: "No message yet.".to_owned(),

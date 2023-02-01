@@ -17,6 +17,7 @@ fn main() {
 
     #[cfg(not(feature = "web_env"))]
     {
+        console_log::init_with_level(log::Level::Debug).unwrap();
         Renderer::<App>::new().render();
     }
 }

@@ -8,11 +8,14 @@ version = "0.1.0"
 hikari-database = {path = "../database", version = "^0"}
 hikari-web = {path = "../web", version = "^0"}
 
+anyhow = "^1"
 axum = {version = "^0.6", features = ["query"]}
+chrono = "^0.4"
 clap = {version = "^3", features = ["derive"]}
-env_logger = "^0.9"
+env_logger = "^0.10"
 futures = {version = "^0.3", features = ["std"], default-features = false}
 hyper = {version = "^0.14", features = ["server", "http1"]}
+log = "^0.4"
 stylist = {version = "^0.12", features = ["yew_integration", "ssr"]}
 tokio = {version = "^1", features = ["macros"]}
 tower = {version = "^0.4", features = ["make"]}

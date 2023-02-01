@@ -1,5 +1,6 @@
-use std::collections::HashMap;
+use log::info;
 use std::future::Future;
+use std::{collections::HashMap, path::Path};
 
 use axum::{
     body::Body,
@@ -9,6 +10,7 @@ use axum::{
     Router,
 };
 use hyper::{header::HeaderMap, server::Server};
+use std::env::{current_dir, vars};
 use stylist::manager::{render_static, StyleManager};
 use tower::ServiceBuilder;
 use tower_http::{
@@ -84,9 +86,28 @@ where
 }
 
 #[tokio::main]
-async fn main() {
-    let exec = Executor::default();
-    env_logger::init();
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    env_logger::Builder::new()
+        .filter(None, log::LevelFilter::Info)
+        .init();
+
+    let mut vars = vars();
+    let mut env = HashMap::new();
+    while let Some((k, v)) = vars.next() {
+        env.insert(k, v);
+    }
+
+    let port = match env.get("PORT").map(|n| match n.parse() {
+        Ok(port) => port,
+        Err(_) => 80,
+    }) {
+        Some(port) => port,
+        None => 80,
+    };
+    let root_dir = match env.get("ROOT_DIR") {
+        Some(dir) => Path::new(dir).to_path_buf(),
+        None => current_dir()?.join("./target/web"),
+    };
 
     let middleware_stack = ServiceBuilder::new()
         .layer(TraceLayer::new_for_http())
@@ -96,29 +117,33 @@ async fn main() {
     let app = Router::new()
         .route_service(
             "/res/entry/js",
-            get_service(ServeFile::new("/home/dist/a.js")).handle_error(handle_static_file_error),
+            get_service(ServeFile::new(root_dir.clone().join("./a.js")))
+                .handle_error(handle_static_file_error),
         )
         .route_service(
             "/res/entry/wasm",
-            get_service(ServeFile::new("/home/dist/a.wasm")).handle_error(handle_static_file_error),
+            get_service(ServeFile::new(root_dir.clone().join("./a.wasm")))
+                .handle_error(handle_static_file_error),
         )
         .route_service(
             "/favicon.ico",
-            get_service(ServeFile::new("/home/res/favicon.ico"))
+            get_service(ServeFile::new(root_dir.clone().join("./favicon.ico")))
                 .handle_error(handle_static_file_error),
         )
         .nest_service(
             "/res",
-            get_service(ServeDir::new("/home/res")).handle_error(handle_static_file_error),
+            get_service(ServeDir::new(root_dir.clone())).handle_error(handle_static_file_error),
         )
         .fallback(render)
         .layer(middleware_stack);
 
-    println!("Site will run on port 80.");
+    info!("Root dir is \"{}\".", root_dir.display());
+    info!("Site will run on port {}.", port);
 
-    Server::bind(&"0.0.0.0:80".parse().unwrap())
-        .executor(exec)
+    Server::bind(&format!("0.0.0.0:{}", port).parse()?)
+        .executor(Executor::default())
         .serve(app.into_make_service())
-        .await
-        .unwrap();
+        .await?;
+
+    Ok(())
 }

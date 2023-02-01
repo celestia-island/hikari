@@ -7,8 +7,6 @@ RUN cargo new --name hikari-database /home/packages/database
 COPY ./packages/database/Cargo.toml /home/packages/database/Cargo.toml
 RUN cargo new --name hikari-web /home/packages/web
 COPY ./packages/web/Cargo.toml /home/packages/web/Cargo.toml
-RUN cargo new --name hikari-web /home/packages/app
-COPY ./packages/app/Cargo.toml /home/packages/app/Cargo.toml
 COPY ./Cargo.toml /home/Cargo.toml
 
 FROM stage-client-deps as stage-client-build1
@@ -28,18 +26,10 @@ COPY --from=stage-client-build1 /home/target/wasm32-unknown-unknown/release/hika
 WORKDIR /home
 RUN wasm-bindgen a.wasm --out-dir /home/dist --target no-modules --no-typescript
 
-FROM rust:latest as stage-client-build3
-
-RUN cargo install wasm-opt
-COPY --from=stage-client-build2 /home/dist /home/dist
-WORKDIR /home/dist
-RUN wasm-opt -Oz -o a.wasm a_bg.wasm
-RUN rm a_bg.wasm
-
 FROM stage-client-deps as stage-server-build1
 
 WORKDIR /home
-RUN cargo build --bin hikari-router --package hikari-router --release
+RUN cargo build --package hikari-router --release
 
 RUN rm -r /home/packages
 COPY ./packages /home/packages
@@ -49,8 +39,10 @@ RUN cargo build --release
 FROM ubuntu:22.10 as stage-server-build2
 
 COPY ./packages/router/res /home/res
-COPY --from=stage-client-build3 /home/dist /home/dist
+COPY --from=stage-client-build2 /home/dist/a_bg.wasm /home/res/a.wasm
+COPY --from=stage-client-build2 /home/dist/a.js /home/res/a.js
 COPY --from=stage-server-build1 /home/target/release/hikari-router /home/a
+ENV ROOT_DIR=/home/res
 WORKDIR /home
 ENTRYPOINT [ "./a" ]
 EXPOSE 80

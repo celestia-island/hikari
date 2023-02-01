@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use log::info;
 
 use stylist::css;
 use stylist::manager::StyleManager;
@@ -56,6 +57,8 @@ pub fn ServerApp(props: &AppProps) -> Html {
 
 #[styled_component]
 pub fn Content() -> Html {
+    info!("Loaded the content");
+
     html! {
         <>
             <ContextShell>

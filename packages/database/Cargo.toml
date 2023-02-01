@@ -5,6 +5,10 @@ name = "hikari-database"
 version = "0.1.0"
 
 [dependencies]
+anyhow = "^1"
+chrono = "^0.4"
+env_logger = "^0.10"
+log = "^0.4"
 sea-orm = {version = "^0.10", features = ["sqlx-mysql", "runtime-tokio-rustls"]}
 sea-orm-migration = "^0.10"
 serde = {version = "^1", features = ["derive"]}

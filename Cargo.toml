@@ -1,9 +1,6 @@
 [workspace]
 members = [
-  "packages/web",
-  "packages/app",
-  "packages/router",
-  "packages/database",
+  "packages/*",
 ]
 
 [profile.release]

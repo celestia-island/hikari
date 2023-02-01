@@ -1,5 +1,5 @@
-use gloo::console::console;
 use gloo::net::http::Request;
+use log::info;
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
@@ -17,8 +17,8 @@ pub fn Home() -> Html {
                     .send()
                     .await
                     .unwrap();
-                let raw = response.text().await.unwrap();
-                console!(raw.clone());
+                let raw = (&response).text().await.unwrap();
+                info!("{:?}", response);
                 count.set(raw);
             });
         })

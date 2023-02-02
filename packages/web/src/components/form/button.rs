@@ -36,10 +36,13 @@ pub fn Button(props: &ButtonProps) -> Html {
                 color: var(--color-primary-text-color);
                 user-select: none;
                 cursor: pointer;
-                transition: all 0.3s;
 
                 &:hover {
-                    filter: brightness(1.2);
+                    box-shadow: 1px 1px 8px 0 var(--color-shadow-black);
+                }
+
+                &:active {
+                    filter: brightness(0.8);
                 }
             "#)}
             onclick={&props.onclick}

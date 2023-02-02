@@ -101,11 +101,9 @@ pub fn Content() -> Html {
     html! {
         <>
             <Global css={css!(r#"
-                html, body {
+                * {
                     margin: 0;
                     padding: 0;
-                }
-                * {
                     box-sizing: border-box;
                 }
             "#)} />

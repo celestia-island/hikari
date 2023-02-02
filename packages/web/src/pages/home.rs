@@ -3,15 +3,20 @@ use log::info;
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
+use crate::components::form::Button;
+
 #[styled_component]
 pub fn Home() -> Html {
-    let count = use_state(|| ".".to_string());
+    let is_fetching = use_state(|| false);
+    let data = use_state(|| "Click me".to_string());
 
     let onclick = {
-        let count = count.clone();
+        let is_fetching = is_fetching.clone();
+        let data = data.clone();
         Callback::from(move |_| {
-            count.set("Loading".into());
-            let count = count.clone();
+            is_fetching.set(true);
+            let is_fetching = is_fetching.to_owned();
+            let data = data.to_owned();
             wasm_bindgen_futures::spawn_local(async move {
                 let response = Request::get("https://httpbin.org/get")
                     .send()
@@ -19,26 +24,21 @@ pub fn Home() -> Html {
                     .unwrap();
                 let raw = (&response).text().await.unwrap();
                 info!("{:?}", response);
-                count.set(raw);
+                is_fetching.set(false);
+                data.set(raw);
             });
         })
     };
 
     html! {
-        <div
-            class={css!(r#"
-                width: 200px;
-                min-height: 200px;
-                margin-top: 32px;
-
-                background: black;
-                border-radius: 4px;
-                box-shadow: 0 0 4px 1px rgba(0, 0, 0, 0.8);
-                color: white;
-            "#)}
-            onclick={onclick}
-        >
-            {&*count}
-        </div>
+        <>
+            <Button onclick={onclick}>
+                {match *is_fetching {
+                    true => "Loading...",
+                    false => "Click me",
+                }}
+            </Button>
+            <p>{&*data}</p>
+        </>
     }
 }

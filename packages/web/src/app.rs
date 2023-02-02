@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use log::info;
 
 use stylist::css;
 use stylist::manager::StyleManager;
@@ -11,7 +10,7 @@ use yew_router::prelude::*;
 use crate::components::container::{AsideLayout, FooterLayout, HeaderLayout, MainLayout};
 use crate::pages::home::Home;
 use crate::pages::page_not_found::PageNotFound;
-use crate::utils::store::ContextShell;
+use crate::utils::contexts::theme::{ThemeContextProviderType, ThemeContextShell};
 
 #[derive(Properties, PartialEq)]
 pub struct AppProps {
@@ -29,7 +28,7 @@ pub fn App() -> Html {
         <Suspense {fallback}>
             <ManagerProvider manager={style_manager}>
                 <BrowserRouter>
-                    <Content />
+                    <ContextShell />
                 </BrowserRouter>
             </ManagerProvider>
         </Suspense>
@@ -48,47 +47,88 @@ pub fn ServerApp(props: &AppProps) -> Html {
         <Suspense {fallback}>
             <ManagerProvider manager={props.manager.clone()}>
                 <Router history={history}>
-                    <Content />
+                    <ContextShell />
                 </Router>
             </ManagerProvider>
         </Suspense>
     }
 }
 
+#[function_component]
+fn ContextShell() -> Html {
+    html! {
+        <ThemeContextShell>
+            <Content />
+        </ThemeContextShell>
+    }
+}
+
 #[styled_component]
 pub fn Content() -> Html {
-    info!("Loaded the content");
+    let theme = use_context::<ThemeContextProviderType>().expect("Theme context not found.");
+    let theme_raw = format!(
+        r#"
+            :root {{
+                --color-primary: {};
+                --color-secondary: {};
+
+                --color-error: {};
+                --color-warning: {};
+                --color-success: {};
+                --color-info: {};
+
+                --color-primary-text: {};
+                --color-secondary-text: {};
+                --color-disabled-text: {};
+                --color-placeholder-text: {};
+
+                --color-shadow-black: {};
+            }}
+        "#,
+        theme.primary_color.to_owned(),
+        theme.secondary_color.to_owned(),
+        theme.error_color.to_owned(),
+        theme.warning_color.to_owned(),
+        theme.success_color.to_owned(),
+        theme.info_color.to_owned(),
+        theme.primary_text_color.to_owned(),
+        theme.secondary_text_color.to_owned(),
+        theme.disabled_text_color.to_owned(),
+        theme.placeholder_text_color.to_owned(),
+        theme.shadow_color_black.to_owned(),
+    );
 
     html! {
         <>
-            <ContextShell>
-                <Global css={css!(r#"
-                    html, body {
-                        margin: 0;
-                        padding: 0;
-                    }
+            <Global css={css!(r#"
+                html, body {
+                    margin: 0;
+                    padding: 0;
+                }
+                * {
+                    box-sizing: border-box;
+                }
+            "#)} />
 
-                    * {
-                        box-sizing: border-box;
-                    }
-                "#)} />
+            <style>
+                {theme_raw}
+            </style>
 
-                <HeaderLayout>
-                    <h1>{"Header"}</h1>
-                </HeaderLayout>
+            <HeaderLayout>
+                <h1>{"Header"}</h1>
+            </HeaderLayout>
 
-                <MainLayout>
-                    <Switch<Route> render={switch} />
-                </MainLayout>
+            <MainLayout>
+                <Switch<Route> render={switch} />
+            </MainLayout>
 
-                <AsideLayout>
-                    <p>{"Aside"}</p>
-                </AsideLayout>
+            <AsideLayout>
+                <p>{"Aside"}</p>
+            </AsideLayout>
 
-                <FooterLayout>
-                    <p>{"Footer"}</p>
-                </FooterLayout>
-            </ContextShell>
+            <FooterLayout>
+                <p>{"Footer"}</p>
+            </FooterLayout>
         </>
     }
 }

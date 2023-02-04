@@ -10,7 +10,6 @@ use axum::{
     Router,
 };
 use hyper::{header::HeaderMap, server::Server};
-use std::env::{current_dir, vars};
 use stylist::manager::{render_static, StyleManager};
 use tower::ServiceBuilder;
 use tower_http::{
@@ -23,7 +22,7 @@ use yew::{platform::Runtime, ServerRenderer};
 use hikari_web::app::{AppProps, ServerApp};
 
 async fn render(url: Request<Body>) -> impl IntoResponse {
-    println!("{:?}", url);
+    info!("{:?}", url);
     let (writer, reader) = render_static();
     let uri = url.uri().to_string();
 
@@ -91,23 +90,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .filter(None, log::LevelFilter::Info)
         .init();
 
-    let mut vars = vars();
-    let mut env = HashMap::new();
-    while let Some((k, v)) = vars.next() {
-        env.insert(k, v);
-    }
-
-    let port = match env.get("PORT").map(|n| match n.parse() {
-        Ok(port) => port,
-        Err(_) => 80,
-    }) {
-        Some(port) => port,
-        None => 80,
-    };
-    let root_dir = match env.get("ROOT_DIR") {
-        Some(dir) => Path::new(dir).to_path_buf(),
-        None => current_dir()?.join("./target/web"),
-    };
+    let port = std::env::var("PORT")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(80);
+    let root_dir = std::env::var("ROOT_DIR")
+        .ok()
+        .and_then(|dir| Some(Path::new(&dir).to_path_buf()))
+        .unwrap_or(std::env::current_dir()?.join("./target/web"));
 
     let middleware_stack = ServiceBuilder::new()
         .layer(TraceLayer::new_for_http())
@@ -136,6 +126,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .fallback(render)
         .layer(middleware_stack);
+
+    hikari_database::init().await?;
 
     info!("Root dir is \"{}\".", root_dir.display());
     info!("Site will run on port {}.", port);

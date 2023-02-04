@@ -6,7 +6,7 @@ use axum::{
     body::Body,
     http::{Request, StatusCode},
     response::IntoResponse,
-    routing::get_service,
+    routing::{get, get_service},
     Router,
 };
 use hyper::{header::HeaderMap, server::Server};
@@ -19,6 +19,7 @@ use tower_http::{
 };
 use yew::{platform::Runtime, ServerRenderer};
 
+use hikari_database::functions::query_all_post;
 use hikari_web::app::{AppProps, ServerApp};
 
 async fn render(url: Request<Body>) -> impl IntoResponse {
@@ -99,6 +100,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .and_then(|dir| Some(Path::new(&dir).to_path_buf()))
         .unwrap_or(std::env::current_dir()?.join("./target/web"));
 
+    let db_conn = hikari_database::init().await?;
+
     let middleware_stack = ServiceBuilder::new()
         .layer(TraceLayer::new_for_http())
         .layer(CompressionLayer::new())
@@ -120,6 +123,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get_service(ServeFile::new(root_dir.clone().join("./favicon.ico")))
                 .handle_error(handle_static_file_error),
         )
+        .route(
+            "/test",
+            get(|| async {
+                query_all_post(db_conn)
+                    .await
+                    .ok()
+                    .unwrap_or("Failed to get data".into())
+            }),
+        )
         .nest_service(
             "/res",
             get_service(ServeDir::new(root_dir.clone())).handle_error(handle_static_file_error),
@@ -127,10 +139,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .fallback(render)
         .layer(middleware_stack);
 
-    hikari_database::init().await?;
-
-    info!("Root dir is \"{}\".", root_dir.display());
-    info!("Site will run on port {}.", port);
+    info!(r#"Root dir is "{}""#, root_dir.display());
+    info!("Site will run on port {}", port);
 
     Server::bind(&format!("0.0.0.0:{}", port).parse()?)
         .executor(Executor::default())

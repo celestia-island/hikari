@@ -5,9 +5,7 @@ pub mod models;
 use log::info;
 use std::time::Duration;
 
-use sea_orm::{
-    ConnectOptions, ConnectionTrait, Database, DatabaseConnection, EntityTrait, Statement,
-};
+use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection, Statement};
 use sea_orm_migration::MigratorTrait;
 
 pub async fn init() -> Result<Box<DatabaseConnection>, Box<dyn std::error::Error>> {
@@ -43,10 +41,6 @@ pub async fn init() -> Result<Box<DatabaseConnection>, Box<dyn std::error::Error
     let db = Database::connect(opt).await?;
 
     migration::Migrator::up(&db, None).await.unwrap();
-
-    for cc in models::post::Entity::find().all(&db).await.unwrap() {
-        info!("{:?}", cc);
-    }
 
     info!("Database is ready");
     Ok(Box::new(db))

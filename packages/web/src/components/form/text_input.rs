@@ -22,24 +22,27 @@ pub fn TextInput(props: &TextInputProps) -> Html {
                 margin: 4px;
                 padding: 8px;
                 border: none;
-                outline: 1px solid var(--color-primary);
 
                 border-radius: 4px;
-                box-shadow: 1px 1px 4px 0 var(--color-shadow-black);
+                box-shadow: 1px 1px 4px 0 var(--color-shadow-rgba);
+                background: rgba(var(--color-background), 0.8);
 
                 display: flex;
                 align-items: center;
                 justify-content: center;
 
                 text-align: left;
-                font-size: 14px;
-                line-height: 48px;
-                color: var(--color-primary-text-color);
+                font-size: 16px;
+                color: rgb(var(--color-primary-text));
                 user-select: none;
                 cursor: text;
 
                 &:hover {
-                    box-shadow: 1px 1px 8px 0 var(--color-shadow-black);
+                    box-shadow: 1px 1px 8px 0 var(--color-shadow-rgba);
+                }
+
+                &:focus {
+                    outline: 1px solid rgba(var(--color-primary), 0.8);
                 }
             "#)}
             placeholder={props.placeholder.clone()}

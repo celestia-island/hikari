@@ -22,23 +22,23 @@ pub fn Button(props: &ButtonProps) -> Html {
                 border: none;
                 outline: none;
 
-                background: var(--color-primary);
+                background-color: rgba(var(--color-primary), 0.8);
                 border-radius: 4px;
-                box-shadow: 1px 1px 4px 0 var(--color-shadow-black);
+                box-shadow: 1px 1px 4px 0 var(--color-shadow-rgba);
 
                 display: flex;
                 align-items: center;
                 justify-content: center;
 
                 text-align: center;
-                font-size: 14px;
+                font-size: 16px;
                 line-height: 48px;
-                color: var(--color-primary-text-color);
+                color: rgb(var(--color-button-text));
                 user-select: none;
                 cursor: pointer;
 
                 &:hover {
-                    box-shadow: 1px 1px 8px 0 var(--color-shadow-black);
+                    box-shadow: 1px 1px 8px 0 var(--color-shadow-rgba);
                 }
 
                 &:active {

@@ -1,15 +1,17 @@
 use std::collections::HashMap;
 
-use stylist::css;
-use stylist::manager::StyleManager;
-use stylist::yew::{styled_component, Global, ManagerProvider};
+use stylist::{
+    manager::StyleManager,
+    yew::{styled_component, ManagerProvider},
+};
 use yew::prelude::*;
-use yew_router::history::{AnyHistory, History, MemoryHistory};
-use yew_router::prelude::*;
+use yew_router::{
+    history::{AnyHistory, History, MemoryHistory},
+    prelude::*,
+};
 
 use crate::components::container::{AsideLayout, FooterLayout, HeaderLayout, MainLayout};
-use crate::pages::home::Home;
-use crate::pages::page_not_found::PageNotFound;
+use crate::pages::{home::Home, page_not_found::PageNotFound};
 use crate::utils::contexts::theme::{ThemeContextProviderType, ThemeContextShell};
 
 #[derive(Properties, PartialEq)]
@@ -79,10 +81,25 @@ pub fn Content() -> Html {
 
                 --color-primary-text: {};
                 --color-secondary-text: {};
+                --color-button-text: {};
                 --color-disabled-text: {};
                 --color-placeholder-text: {};
 
-                --color-shadow-black: {};
+                --color-shadow-rgba: {};
+                --color-background: {};
+            }}
+
+            
+            * {{
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }}
+
+            body {{
+                font-family: 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+                background-color: rgb(var(--color-background));
+                color: rgb(var(--color-primary-text));
             }}
         "#,
         theme.primary_color.to_owned(),
@@ -93,21 +110,15 @@ pub fn Content() -> Html {
         theme.info_color.to_owned(),
         theme.primary_text_color.to_owned(),
         theme.secondary_text_color.to_owned(),
+        theme.button_text_color.to_owned(),
         theme.disabled_text_color.to_owned(),
         theme.placeholder_text_color.to_owned(),
-        theme.shadow_color_black.to_owned(),
+        theme.shadow_color_rgba.to_owned(),
+        theme.background_color.to_owned(),
     );
 
     html! {
         <>
-            <Global css={css!(r#"
-                * {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }
-            "#)} />
-
             <style>
                 {theme_raw}
             </style>

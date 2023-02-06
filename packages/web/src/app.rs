@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use base64::Engine;
+use log::info;
 
 use stylist::{
     manager::StyleManager,
@@ -10,27 +11,41 @@ use yew_router::{
     prelude::*,
 };
 
-use crate::components::container::{AsideLayout, FooterLayout, HeaderLayout, MainLayout};
-use crate::pages::*;
-use crate::utils::contexts::theme::{ThemeContextProviderType, ThemeContextShell};
-
-#[derive(Properties, PartialEq)]
-pub struct AppProps {
-    pub style_manager: StyleManager,
-    pub url: AttrValue,
-    pub queries: HashMap<String, String>,
-}
+use crate::utils::{
+    app_props::AppProps,
+    contexts::{
+        app_props::AppPropsContextShell,
+        theme::{ThemeContextProviderType, ThemeContextShell},
+    },
+    routes::{switch, Route},
+};
+use crate::{
+    components::container::{AsideLayout, FooterLayout, HeaderLayout, MainLayout},
+    utils::contexts::app_props::AppPageProps,
+};
 
 #[function_component]
 pub fn App() -> Html {
     let fallback = html! { <div>{"Loading..."}</div> };
     let style_manager = (*use_memo(|_| StyleManager::new().unwrap(), ())).to_owned();
 
+    let page_data = js_sys::Reflect::get(&web_sys::window().unwrap(), &"__ssr_page_data".into())
+        .unwrap()
+        .as_string()
+        .unwrap();
+    let page_data = base64::engine::general_purpose::STANDARD_NO_PAD
+        .decode(page_data)
+        .unwrap();
+    let page_data = String::from_utf8(page_data).unwrap();
+    let page_data: AppPageProps =
+        serde_json::from_str(&page_data).expect("Failed to parse page data.");
+    info!("{:?}", page_data);
+
     html! {
         <Suspense {fallback}>
             <ManagerProvider manager={style_manager}>
                 <BrowserRouter>
-                    <ContextShell />
+                    <ContextShell page_props={page_data} />
                 </BrowserRouter>
             </ManagerProvider>
         </Suspense>
@@ -49,25 +64,33 @@ pub fn ServerApp(props: &AppProps) -> Html {
         <Suspense {fallback}>
             <ManagerProvider manager={props.style_manager.clone()}>
                 <Router history={history}>
-                    <ContextShell />
+                    <ContextShell page_props={props.page_data.clone()} />
                 </Router>
             </ManagerProvider>
         </Suspense>
     }
 }
 
+#[derive(Properties, Debug, PartialEq)]
+struct ContextProps {
+    #[prop_or(AppPageProps::Portal{id: "".into(), thread_list: vec![]})]
+    pub page_props: AppPageProps,
+}
+
 #[function_component]
-fn ContextShell() -> Html {
+fn ContextShell(props: &ContextProps) -> Html {
     html! {
         <ThemeContextShell>
-            <Content />
+            <AppPropsContextShell page_props={props.page_props.to_owned()}>
+                <Content />
+            </AppPropsContextShell>
         </ThemeContextShell>
     }
 }
 
 #[styled_component]
 pub fn Content() -> Html {
-    let theme = use_context::<ThemeContextProviderType>().expect("Theme context not found.");
+    let theme = use_context::<ThemeContextProviderType>().unwrap();
     let theme_raw = format!(
         r#"
             :root {{
@@ -139,38 +162,5 @@ pub fn Content() -> Html {
                 <p>{"Footer"}</p>
             </FooterLayout>
         </>
-    }
-}
-
-#[derive(Routable, PartialEq, Eq, Clone, Debug)]
-pub enum Route {
-    #[at("/")]
-    Portal,
-
-    #[at("/t/:id")]
-    Thread { id: String },
-
-    #[at("/u/:id")]
-    Personal { id: String },
-
-    #[not_found]
-    #[at("/404")]
-    NotFound,
-}
-
-fn switch(routes: Route) -> Html {
-    match routes {
-        Route::Portal => {
-            html! { <Portal /> }
-        }
-        Route::Thread { id } => {
-            html! { <Thread {id} /> }
-        }
-        Route::Personal { id } => {
-            html! { <Personal {id} /> }
-        }
-        Route::NotFound => {
-            html! { <PageNotFound /> }
-        }
     }
 }

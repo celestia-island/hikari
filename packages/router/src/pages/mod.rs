@@ -2,6 +2,7 @@ mod personal;
 mod portal;
 mod thread;
 
+use base64::Engine;
 use log::info;
 use std::collections::HashMap;
 
@@ -11,23 +12,31 @@ use stylist::manager::{render_static, StyleManager};
 use yew::ServerRenderer;
 
 use self::{personal::query_personal, portal::query_portal, thread::query_thread};
-use hikari_web::app::{AppProps, ServerApp};
+use hikari_web::{app::ServerApp, utils::app_props::AppProps};
 
-pub async fn render(url: Request<Body>) -> Result<impl IntoResponse, Box<dyn std::error::Error>> {
-    info!("{:?}", url);
+pub async fn render(req: Request<Body>) -> Result<impl IntoResponse, Box<dyn std::error::Error>> {
+    info!("{:?}", req);
     let (writer, reader) = render_static();
-    let uri = url.uri().to_string();
+    let uri = req.uri().to_string();
+    let page_data = match req.uri().path().split('/').nth(1).unwrap_or("") {
+        "u" => query_personal(&req).await?,
+        "t" => query_thread(&req).await?,
+        _ => query_portal(&req).await?,
+    };
+    let page_data_raw = serde_json::to_string(&page_data)?;
+    let page_data_raw = base64::engine::general_purpose::STANDARD_NO_PAD.encode(page_data_raw);
 
     let renderer = ServerRenderer::<ServerApp>::with_props(move || {
-        let manager = StyleManager::builder().writer(writer).build().unwrap();
+        let style_manager = StyleManager::builder().writer(writer).build().unwrap();
         AppProps {
-            style_manager: manager,
+            style_manager,
             url: uri.into(),
-            queries: url.uri().query().map_or_else(HashMap::new, |q| {
+            queries: req.uri().query().map_or_else(HashMap::new, |q| {
                 url::form_urlencoded::parse(q.as_bytes())
                     .into_owned()
                     .collect()
             }),
+            page_data,
         }
     });
     let html_raw = renderer.render().await;
@@ -44,6 +53,11 @@ pub async fn render(url: Request<Body>) -> Result<impl IntoResponse, Box<dyn std
     body.push_str("</head>");
     body.push_str("<body>");
     body.push_str(&html_raw);
+    body.push_str("<script>");
+    body.push_str("window.__ssr_page_data = \"");
+    body.push_str(&page_data_raw);
+    body.push_str("\";");
+    body.push_str("</script>");
     body.push_str("<script src='/res/entry/js'></script>");
     body.push_str("<script>wasm_bindgen('/res/entry/wasm');</script>");
     body.push_str("</body>");

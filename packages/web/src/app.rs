@@ -11,12 +11,12 @@ use yew_router::{
 };
 
 use crate::components::container::{AsideLayout, FooterLayout, HeaderLayout, MainLayout};
-use crate::pages::{home::Home, page_not_found::PageNotFound};
+use crate::pages::*;
 use crate::utils::contexts::theme::{ThemeContextProviderType, ThemeContextShell};
 
 #[derive(Properties, PartialEq)]
 pub struct AppProps {
-    pub manager: StyleManager,
+    pub style_manager: StyleManager,
     pub url: AttrValue,
     pub queries: HashMap<String, String>,
 }
@@ -47,7 +47,7 @@ pub fn ServerApp(props: &AppProps) -> Html {
 
     html! {
         <Suspense {fallback}>
-            <ManagerProvider manager={props.manager.clone()}>
+            <ManagerProvider manager={props.style_manager.clone()}>
                 <Router history={history}>
                     <ContextShell />
                 </Router>
@@ -145,7 +145,14 @@ pub fn Content() -> Html {
 #[derive(Routable, PartialEq, Eq, Clone, Debug)]
 pub enum Route {
     #[at("/")]
-    Home,
+    Portal,
+
+    #[at("/t/:id")]
+    Thread { id: String },
+
+    #[at("/u/:id")]
+    Personal { id: String },
+
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -153,8 +160,14 @@ pub enum Route {
 
 fn switch(routes: Route) -> Html {
     match routes {
-        Route::Home => {
-            html! { <Home /> }
+        Route::Portal => {
+            html! { <Portal /> }
+        }
+        Route::Thread { id } => {
+            html! { <Thread {id} /> }
+        }
+        Route::Personal { id } => {
+            html! { <Personal {id} /> }
         }
         Route::NotFound => {
             html! { <PageNotFound /> }

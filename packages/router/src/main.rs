@@ -1,69 +1,26 @@
+mod pages;
+
 use log::info;
 use std::future::Future;
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
 use axum::{
-    body::Body,
-    http::{Request, StatusCode},
+    http::StatusCode,
     response::IntoResponse,
     routing::{get, get_service},
     Router,
 };
-use hyper::{header::HeaderMap, server::Server};
-use stylist::manager::{render_static, StyleManager};
+use hyper::server::Server;
 use tower::ServiceBuilder;
 use tower_http::{
     compression::CompressionLayer,
     services::{ServeDir, ServeFile},
     trace::TraceLayer,
 };
-use yew::{platform::Runtime, ServerRenderer};
+use yew::platform::Runtime;
 
+use crate::pages::render;
 use hikari_database::functions::query_all_post;
-use hikari_web::app::{AppProps, ServerApp};
-
-async fn render(url: Request<Body>) -> impl IntoResponse {
-    info!("{:?}", url);
-    let (writer, reader) = render_static();
-    let uri = url.uri().to_string();
-
-    let renderer = ServerRenderer::<ServerApp>::with_props(move || {
-        let manager = StyleManager::builder().writer(writer).build().unwrap();
-        AppProps {
-            manager,
-            url: uri.into(),
-            queries: url.uri().query().map_or_else(HashMap::new, |q| {
-                url::form_urlencoded::parse(q.as_bytes())
-                    .into_owned()
-                    .collect()
-            }),
-        }
-    });
-    let html_raw = renderer.render().await;
-
-    let style_data = reader.read_style_data();
-    let mut style_raw = String::new();
-    style_data.write_static_markup(&mut style_raw).unwrap();
-
-    // TODO - Replace format! to string builder
-    let mut headers = HeaderMap::new();
-    headers.insert(hyper::header::CONTENT_TYPE, "text/html".parse().unwrap());
-    (
-        headers,
-        format!(
-            r#"
-        <head>
-            {style_raw}
-        </head>
-        <body>
-            {html_raw}
-            <script src='/res/entry/js'></script>
-            <script>wasm_bindgen('/res/entry/wasm');</script>
-        </body>
-        "#
-        ),
-    )
-}
 
 async fn handle_static_file_error(err: std::io::Error) -> impl IntoResponse {
     (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
@@ -136,7 +93,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/res",
             get_service(ServeDir::new(root_dir.clone())).handle_error(handle_static_file_error),
         )
-        .fallback(render)
+        .fallback(|req| async {
+            render(req)
+                .await
+                .or_else(|err| Err((StatusCode::INTERNAL_SERVER_ERROR, err.to_string())))
+        })
         .layer(middleware_stack);
 
     info!(r#"Root dir is "{}""#, root_dir.display());

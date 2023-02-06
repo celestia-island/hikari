@@ -1,14 +1,15 @@
-use gloo::net::http::Request;
 use log::info;
-use stylist::yew::styled_component;
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use web_sys::{Event, HtmlInputElement, InputEvent};
+
+use gloo::net::http::Request;
+use stylist::yew::styled_component;
 use yew::prelude::*;
 
 use crate::components::form::{Button, TextInput};
 
 #[styled_component]
-pub fn Home() -> Html {
+pub fn Portal() -> Html {
     let is_fetching = use_state(|| false);
     let url = use_state(|| "https://httpbin.org/get".to_string());
     let data = use_state(|| "Ready to fetch".to_string());

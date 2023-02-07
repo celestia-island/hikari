@@ -57,7 +57,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .and_then(|dir| Some(Path::new(&dir).to_path_buf()))
         .unwrap_or(std::env::current_dir()?.join("./target/web"));
 
-    let db_conn = hikari_database::init().await?;
+    let db_conn = hikari_database::init(hikari_database::DatabaseConfig::MySQL({
+        hikari_database::DatabaseNetworkConfig {
+            host: std::env::var("DB_HOST").unwrap_or("localhost".into()),
+            port: std::env::var("DB_PORT")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(3306),
+            username: std::env::var("DB_USERNAME").unwrap_or("root".into()),
+            password: std::env::var("DB_PASSWORD").unwrap_or("root".into()),
+        }
+    }))
+    .await?;
 
     let middleware_stack = ServiceBuilder::new()
         .layer(TraceLayer::new_for_http())

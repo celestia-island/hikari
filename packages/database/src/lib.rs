@@ -1,5 +1,5 @@
 pub mod functions;
-pub mod migration;
+pub mod migrations;
 pub mod models;
 
 use anyhow::Context;
@@ -7,7 +7,6 @@ use log::info;
 use std::time::Duration;
 
 use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection, Statement};
-use sea_orm_migration::MigratorTrait;
 
 pub struct DatabaseNetworkConfig {
     pub host: String,
@@ -98,7 +97,7 @@ pub async fn init(
         .sqlx_logging_level(log::LevelFilter::Trace);
     let db = Database::connect(opt).await?;
 
-    migration::Migrator::up(&db, None).await.unwrap();
+    migrations::init(&db).await?;
 
     info!("Database is ready");
     Ok(Box::new(db))

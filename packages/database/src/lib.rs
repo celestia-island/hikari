@@ -1,12 +1,11 @@
 pub mod functions;
-pub mod migrations;
 pub mod models;
 
 use anyhow::Context;
 use log::info;
 use std::time::Duration;
 
-use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection, Statement};
+use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection, Schema, Statement};
 
 pub struct DatabaseNetworkConfig {
     pub host: String,
@@ -97,7 +96,48 @@ pub async fn init(
         .sqlx_logging_level(log::LevelFilter::Trace);
     let db = Database::connect(opt).await?;
 
-    migrations::init(&db).await?;
+    let builder = db.get_database_backend();
+
+    db.execute(
+        builder.build(
+            Schema::new(builder)
+                .create_table_from_entity(models::channel::Entity)
+                .if_not_exists(),
+        ),
+    )
+    .await?;
+    db.execute(
+        builder.build(
+            Schema::new(builder)
+                .create_table_from_entity(models::post::Entity)
+                .if_not_exists(),
+        ),
+    )
+    .await?;
+    db.execute(
+        builder.build(
+            Schema::new(builder)
+                .create_table_from_entity(models::tag::Entity)
+                .if_not_exists(),
+        ),
+    )
+    .await?;
+    db.execute(
+        builder.build(
+            Schema::new(builder)
+                .create_table_from_entity(models::thread::Entity)
+                .if_not_exists(),
+        ),
+    )
+    .await?;
+    db.execute(
+        builder.build(
+            Schema::new(builder)
+                .create_table_from_entity(models::user::Entity)
+                .if_not_exists(),
+        ),
+    )
+    .await?;
 
     info!("Database is ready");
     Ok(Box::new(db))

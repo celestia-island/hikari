@@ -78,12 +78,27 @@ impl MigrationTrait for Migration {
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
             .drop_table(Table::drop().table(Channel::Table).to_owned())
-            .await
+            .await?;
+        manager
+            .drop_table(Table::drop().table(Post::Table).to_owned())
+            .await?;
+        manager
+            .drop_table(Table::drop().table(Tag::Table).to_owned())
+            .await?;
+        manager
+            .drop_table(Table::drop().table(Thread::Table).to_owned())
+            .await?;
+        manager
+            .drop_table(Table::drop().table(User::Table).to_owned())
+            .await?;
+
+        Ok(())
     }
 }
 
 #[derive(Iden)]
 enum Channel {
+    #[iden = "channel"]
     Table,
     Id,
     Label,
@@ -91,6 +106,7 @@ enum Channel {
 
 #[derive(Iden)]
 enum Post {
+    #[iden = "post"]
     Table,
     Id,
     Parent,
@@ -101,6 +117,7 @@ enum Post {
 
 #[derive(Iden)]
 enum Tag {
+    #[iden = "tag"]
     Table,
     Id,
     Parent,
@@ -109,6 +126,7 @@ enum Tag {
 
 #[derive(Iden)]
 enum Thread {
+    #[iden = "thread"]
     Table,
     Id,
     Channel,
@@ -121,6 +139,7 @@ enum Thread {
 
 #[derive(Iden)]
 enum User {
+    #[iden = "user"]
     Table,
     Id,
     Name,

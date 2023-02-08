@@ -10,13 +10,43 @@ pub struct Model {
     pub channel: Uuid,
     pub tags: Json,
     pub author: Uuid,
-    pub timestamp: DateTime,
+    pub timestamp: ChronoDateTimeUtc,
 
     pub title: String,
     pub content: String,
 }
 
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
+#[derive(Copy, Clone, Debug, EnumIter)]
+pub enum Relation {
+    Channel,
+    Author,
+}
+
+impl RelationTrait for Relation {
+    fn def(&self) -> RelationDef {
+        match self {
+            Self::Channel => Entity::belongs_to(super::channel::Entity)
+                .from(Column::Channel)
+                .to(super::channel::Column::Id)
+                .into(),
+            Self::Author => Entity::belongs_to(super::user::Entity)
+                .from(Column::Author)
+                .to(super::user::Column::Id)
+                .into(),
+        }
+    }
+}
+
+impl Related<super::channel::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Channel.def()
+    }
+}
+
+impl Related<super::user::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Author.def()
+    }
+}
 
 impl ActiveModelBehavior for ActiveModel {}

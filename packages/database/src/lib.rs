@@ -109,7 +109,7 @@ pub async fn init(
     db.execute(
         builder.build(
             Schema::new(builder)
-                .create_table_from_entity(models::post::Entity)
+                .create_table_from_entity(models::user::Entity)
                 .if_not_exists(),
         ),
     )
@@ -133,7 +133,7 @@ pub async fn init(
     db.execute(
         builder.build(
             Schema::new(builder)
-                .create_table_from_entity(models::user::Entity)
+                .create_table_from_entity(models::post::Entity)
                 .if_not_exists(),
         ),
     )

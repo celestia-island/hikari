@@ -9,12 +9,31 @@ pub struct Model {
 
     pub parent: Option<Uuid>,
     pub author: Uuid,
-    pub timestamp: DateTime,
+    pub timestamp: ChronoDateTimeUtc,
 
     pub content: String,
 }
 
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
+#[derive(Copy, Clone, Debug, EnumIter)]
+pub enum Relation {
+    Thread,
+}
+
+impl RelationTrait for Relation {
+    fn def(&self) -> RelationDef {
+        match self {
+            Self::Thread => Entity::belongs_to(super::thread::Entity)
+                .from(Column::Parent)
+                .to(super::thread::Column::Id)
+                .into(),
+        }
+    }
+}
+
+impl Related<super::thread::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Thread.def()
+    }
+}
 
 impl ActiveModelBehavior for ActiveModel {}

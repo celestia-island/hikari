@@ -13,11 +13,16 @@
     "bundle": {
       "active": true,
       "targets": "all",
-      "identifier": "xyz.langyo.hikari",
+      "identifier": "world.celestia.hikari",
       "icon": [
         "./res/32x32.png",
+        "./res/32x32@2x.png",
         "./res/128x128.png",
         "./res/128x128@2x.png",
+        "./res/256x256.png",
+        "./res/256x256@2x.png",
+        "./res/512x512.png",
+        "./res/512x512@2x.png",
         "./res/icon.icns",
         "./res/icon.ico"
       ],

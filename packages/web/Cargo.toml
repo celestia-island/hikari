@@ -12,6 +12,7 @@ web_env = ["yew/hydration", "stylist/hydration"]
 anyhow = "^1"
 base64 = "^0.21"
 console_log = "^0.2"
+derive_more = "*"
 gloo = "^0.8"
 js-sys = "^0.3"
 log = "^0.4"

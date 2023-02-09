@@ -76,6 +76,10 @@ pub async fn build() -> Result<(), Box<dyn std::error::Error>> {
         current_dir()?.join("./packages/router/res/favicon.ico"),
         current_dir()?.join("./target/web/favicon.ico"),
     )?;
+    copy(
+        current_dir()?.join("./packages/router/res/logo.png"),
+        current_dir()?.join("./target/web/logo.png"),
+    )?;
 
     Ok(())
 }

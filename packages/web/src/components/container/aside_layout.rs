@@ -3,6 +3,9 @@ use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
 pub struct AsideLayoutProps {
+    #[prop_or(256)]
+    pub width: u32,
+
     #[prop_or_default]
     pub children: Children,
 }
@@ -12,20 +15,22 @@ pub fn AsideLayout(props: &AsideLayoutProps) -> Html {
     html! {
         <aside
             class={css!(r#"
-                position: fixed;
                 left: 0;
                 top: 64px;
-                width: 35vw;
+                width: var(--hikari-aside-width, 256px);
                 height: calc(100vh - 128px);
 
                 border-radius: 4px;
                 padding: 16px;
-                box-shadow: 0 0 4px 1px rgba(0, 0, 0, 0.8);
+                flex-shrink: 0;
 
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                text-align: center;
+                z-index: 1;
             "#)}
+            style={format!("--hikari-aside-width: {}px", props.width)}
         >
             {props.children.clone()}
         </aside>

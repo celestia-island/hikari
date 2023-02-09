@@ -20,7 +20,7 @@ use crate::utils::{
     routes::{switch, Route},
 };
 use crate::{
-    components::container::{AsideLayout, FooterLayout, HeaderLayout, MainLayout},
+    components::container::{AsideLayout, ContainerLayout, FooterLayout, HeaderLayout, MainLayout},
     utils::contexts::app_props::AppPageProps,
 };
 
@@ -146,21 +146,32 @@ pub fn Content() -> Html {
                 {theme_raw}
             </style>
 
-            <HeaderLayout>
-                <h1>{"Header"}</h1>
-            </HeaderLayout>
+            <ContainerLayout>
+                <HeaderLayout>
+                    <img src="/logo.png" alt="logo" class={css!(r#"
+                        width: 48px;
+                        height: 48px;
+                        margin: 8px;
+                    "#)} />
+                    <h1>{"Header"}</h1>
+                </HeaderLayout>
 
-            <MainLayout>
-                <Switch<Route> render={switch} />
-            </MainLayout>
+                <ContainerLayout>
+                    <AsideLayout>
+                        <p>{"Aside"}</p>
+                    </AsideLayout>
 
-            <AsideLayout>
-                <p>{"Aside"}</p>
-            </AsideLayout>
+                    <ContainerLayout>
+                        <MainLayout>
+                            <Switch<Route> render={switch} />
+                        </MainLayout>
 
-            <FooterLayout>
-                <p>{"Footer"}</p>
-            </FooterLayout>
+                        <FooterLayout>
+                            <p>{"Footer"}</p>
+                        </FooterLayout>
+                    </ContainerLayout>
+                </ContainerLayout>
+            </ContainerLayout>
         </>
     }
 }

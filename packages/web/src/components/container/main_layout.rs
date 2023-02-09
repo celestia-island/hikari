@@ -12,8 +12,10 @@ pub fn MainLayout(props: &MainLayoutProps) -> Html {
     html! {
         <main
             class={css!(r#"
-                width: 100vw;
-                height: max-content;
+                width: 100%;
+
+                flex-grow: 1;
+                flex-shrink: 1;
 
                 display: flex;
                 flex-direction: column;

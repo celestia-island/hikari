@@ -87,6 +87,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .handle_error(handle_static_file_error),
         )
         .route_service(
+            "/logo.png",
+            get_service(ServeFile::new(root_dir.clone().join("./logo.png")))
+                .handle_error(handle_static_file_error),
+        )
+        .route_service(
             "/favicon.ico",
             get_service(ServeFile::new(root_dir.clone().join("./favicon.ico")))
                 .handle_error(handle_static_file_error),

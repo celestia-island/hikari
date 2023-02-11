@@ -59,7 +59,7 @@ pub async fn render(req: Request<Body>) -> Result<impl IntoResponse, Box<dyn std
     body.push_str("\";");
     body.push_str("</script>");
     body.push_str("<script src='/res/entry/js'></script>");
-    body.push_str("<script>wasm_bindgen('/res/entry/wasm');</script>");
+    body.push_str("<script>__wasm_vendor_entry('/res/entry/wasm');</script>");
     body.push_str("</body>");
 
     Ok((headers, body))

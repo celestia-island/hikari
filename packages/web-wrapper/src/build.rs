@@ -44,10 +44,12 @@ pub async fn build() -> Result<(), Box<dyn std::error::Error>> {
         .spawn()?
         .wait()?;
     Command::new("wasm-bindgen")
-        .arg("hikari-web.wasm")
+        .args(vec!["--target", "no-modules"])
+        .args(vec!["--no-modules-global", "__wasm_vendor_entry"])
         .args(vec!["--out-dir", "./dist"])
-        .arg("--no-modules")
+        .args(vec!["--out-name", "a"])
         .arg("--no-typescript")
+        .arg("./hikari-web.wasm")
         .current_dir(current_dir()?.join("./target/wasm32-unknown-unknown/release"))
         .stdout(Stdio::piped())
         .spawn()?
@@ -65,11 +67,11 @@ pub async fn build() -> Result<(), Box<dyn std::error::Error>> {
 </body>",
     )?;
     copy(
-        current_dir()?.join("./target/wasm32-unknown-unknown/release/dist/hikari-web.js"),
+        current_dir()?.join("./target/wasm32-unknown-unknown/release/dist/a.js"),
         current_dir()?.join("./target/web/a.js"),
     )?;
     copy(
-        current_dir()?.join("./target/wasm32-unknown-unknown/release/dist/hikari-web_bg.wasm"),
+        current_dir()?.join("./target/wasm32-unknown-unknown/release/dist/a_bg.wasm"),
         current_dir()?.join("./target/web/a.wasm"),
     )?;
     copy(

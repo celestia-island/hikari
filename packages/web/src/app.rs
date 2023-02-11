@@ -44,6 +44,9 @@ pub fn App() -> Html {
     let page_data: AppPageProps =
         serde_json::from_str(&page_data).expect("Failed to parse page data.");
 
+    wasm_bindgen_futures::spawn_local(async move {
+        page_data_el.remove();
+    });
     info!("{:?}", page_data);
 
     html! {

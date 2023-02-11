@@ -52,12 +52,12 @@ pub async fn render(req: Request<Body>) -> Result<impl IntoResponse, Box<dyn std
     body.push_str(&style_raw);
     body.push_str("</head>");
     body.push_str("<body>");
-    body.push_str(&html_raw);
-    body.push_str("<script>");
-    body.push_str("window.__ssr_page_data = \"");
+    body.push_str("<textarea id='__ssr_data' style='display: none;'>");
     body.push_str(&page_data_raw);
-    body.push_str("\";");
-    body.push_str("</script>");
+    body.push_str("</textarea>");
+    body.push_str("<div id='app' style='width: 100vw; height: 100vh; position: fixed;'>");
+    body.push_str(&html_raw);
+    body.push_str("</div>");
     body.push_str("<script src='/res/entry/js'></script>");
     body.push_str("<script>__wasm_vendor_entry('/res/entry/wasm');</script>");
     body.push_str("</body>");

@@ -60,6 +60,7 @@ pub async fn build() -> Result<(), Box<dyn std::error::Error>> {
     html_file.write(
         b"
 <body>
+    <div id='app' style='width: 100vw; height: 100vh; position: fixed;'></div>
     <script src='./a.js'></script>
     <script>__wasm_vendor_entry('./a.wasm');</script>
 </body>",

@@ -5,6 +5,7 @@ use stylist::{
     manager::StyleManager,
     yew::{styled_component, ManagerProvider},
 };
+use web_sys::window;
 use yew::prelude::*;
 use yew_router::{
     history::{AnyHistory, History, MemoryHistory},
@@ -29,16 +30,20 @@ pub fn App() -> Html {
     let fallback = html! { <div>{"Loading..."}</div> };
     let style_manager = (*use_memo(|_| StyleManager::new().unwrap(), ())).to_owned();
 
-    let page_data = js_sys::Reflect::get(&web_sys::window().unwrap(), &"__ssr_page_data".into())
+    let page_data_el = window()
         .unwrap()
-        .as_string()
+        .document()
+        .unwrap()
+        .get_element_by_id("__ssr_data")
         .unwrap();
+    let page_data = page_data_el.inner_html();
     let page_data = base64::engine::general_purpose::STANDARD_NO_PAD
         .decode(page_data)
         .unwrap();
     let page_data = String::from_utf8(page_data).unwrap();
     let page_data: AppPageProps =
         serde_json::from_str(&page_data).expect("Failed to parse page data.");
+
     info!("{:?}", page_data);
 
     html! {

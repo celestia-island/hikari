@@ -4,9 +4,9 @@ use yew::prelude::*;
 #[derive(Properties, Debug, PartialEq)]
 pub struct TextInputProps {
     #[prop_or_default]
-    pub placeholder: String,
+    pub placeholder: AttrValue,
     #[prop_or_default]
-    pub value: String,
+    pub value: AttrValue,
 
     #[prop_or_default]
     pub oninput: Callback<InputEvent>,
@@ -45,8 +45,8 @@ pub fn TextInput(props: &TextInputProps) -> Html {
                     outline: 1px solid rgba(var(--color-primary), 0.8);
                 }
             "#)}
-            placeholder={props.placeholder.clone()}
-            value={props.value.clone()}
+            placeholder={&props.placeholder}
+            value={&props.value}
             oninput={&props.oninput}
         />
     }

@@ -1,32 +1,32 @@
 use yew::prelude::*;
 
-fn rgb_to_dec(rgb: i32) -> String {
-    format!(
+fn rgb_to_dec(rgb: i32) -> AttrValue {
+    AttrValue::from(format!(
         "{}, {}, {}",
         (rgb >> 16) & 0xff,
         (rgb >> 8) & 0xff,
         rgb & 0xff
-    )
+    ))
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ThemeContext {
-    pub primary_color: String,
-    pub secondary_color: String,
+    pub primary_color: AttrValue,
+    pub secondary_color: AttrValue,
 
-    pub error_color: String,
-    pub warning_color: String,
-    pub success_color: String,
-    pub info_color: String,
+    pub error_color: AttrValue,
+    pub warning_color: AttrValue,
+    pub success_color: AttrValue,
+    pub info_color: AttrValue,
 
-    pub primary_text_color: String,
-    pub secondary_text_color: String,
-    pub button_text_color: String,
-    pub disabled_text_color: String,
-    pub placeholder_text_color: String,
+    pub primary_text_color: AttrValue,
+    pub secondary_text_color: AttrValue,
+    pub button_text_color: AttrValue,
+    pub disabled_text_color: AttrValue,
+    pub placeholder_text_color: AttrValue,
 
-    pub shadow_color_rgba: String,
-    pub background_color: String,
+    pub shadow_color_rgba: AttrValue,
+    pub background_color: AttrValue,
 }
 
 #[derive(Properties, Debug, PartialEq)]

@@ -11,7 +11,7 @@ use crate::components::form::{Button, TextInput};
 #[styled_component]
 pub fn Portal() -> Html {
     let is_fetching = use_state(|| false);
-    let url = use_state(|| "https://httpbin.org/get".to_string());
+    let url = use_state(|| "/test".to_string());
     let data = use_state(|| "Ready to fetch".to_string());
 
     let onclick = {

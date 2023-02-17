@@ -50,8 +50,8 @@ pub fn ThemeContextShell(props: &ThemeContextProviderProps) -> Html {
 
         primary_text_color: rgb_to_dec(0x161823), // 漆黑 Qī Hēi
         secondary_text_color: rgb_to_dec(0x50616d), // 墨 Mò
-        button_text_color: rgb_to_dec(0xe0f0e9),  // 素 Sù
-        disabled_text_color: rgb_to_dec(0xf0f0f4), // 铅白 Qiān Bái
+        button_text_color: rgb_to_dec(0xf0f0f4),  // 铅白 Qiān Bái
+        disabled_text_color: rgb_to_dec(0xe0f0e9), // 素 Sù
         placeholder_text_color: rgb_to_dec(0xc2ccd0), // 花白 Huā Bái
 
         shadow_color_rgba: "rgba(0, 0, 0, 0.6)".into(),

@@ -6,7 +6,10 @@ use gloo::net::http::Request;
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
-use crate::components::form::{Button, TextInput};
+use crate::components::{
+    form::{Button, TextInput},
+    Color, Size,
+};
 
 #[styled_component]
 pub fn Portal() -> Html {
@@ -63,6 +66,35 @@ pub fn Portal() -> Html {
                 {"Click me"}
             </Button>
             <p>{&*data}</p>
+            <div>
+                <Button outlined={true} size={Size::Large}>
+                    {"Test Biiiiiig Button"}
+                </Button>
+                <Button outlined={true}>
+                    {"Test"}
+                </Button>
+                <Button outlined={true} size={Size::Small}>
+                    {"Test Small Button"}
+                </Button>
+                <Button>
+                    {"Test"}
+                </Button>
+                <Button color={Color::Secondary}>
+                    {"Test"}
+                </Button>
+                <Button color={Color::Success}>
+                    {"Test"}
+                </Button>
+                <Button color={Color::Warning}>
+                    {"Test"}
+                </Button>
+                <Button color={Color::Error}>
+                    {"Test"}
+                </Button>
+                <Button color={Color::Info}>
+                    {"Test"}
+                </Button>
+            </div>
         </>
     }
 }

@@ -60,10 +60,7 @@ pub fn Portal() -> Html {
                 )}}
             />
             <Button onclick={onclick}>
-                {match *is_fetching {
-                    true => "Loading...",
-                    false => "Click me",
-                }}
+                {"Click me"}
             </Button>
             <p>{&*data}</p>
         </>

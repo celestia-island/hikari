@@ -64,32 +64,15 @@ pub fn Button(props: &ButtonProps) -> Html {
     };
 
     html! {
-        <button
+        <div
             ref={button_ref}
             class={css!(r#"
                 position: relative;
                 width: max-content;
                 height: 48px;
                 margin: 4px;
-                padding: 8px;
-                border: none;
-                outline: none;
+                padding: 8px 12px;
 
-                background-color: rgba(var(--color-primary), 0.8);
-                border-radius: 4px;
-                box-shadow: 1px 1px 4px 0 var(--color-shadow-rgba);
-
-                display: flex;
-                align-items: center;
-                justify-content: center;
-
-                text-align: center;
-                font-size: 16px;
-                line-height: 48px;
-                color: rgb(var(--color-button-text));
-
-                user-select: none;
-                cursor: pointer;
                 transition: opacity 0.3s;
             "#)}
             onmouseenter={on_mouseenter}
@@ -98,6 +81,25 @@ pub fn Button(props: &ButtonProps) -> Html {
             onmousedown={on_mousedown}
             onclick={&props.onclick}
         >
+            // Border
+            <div
+                class={css!(r#"
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+
+                    background-color: rgba(var(--color-primary), 0.8);
+                    border: 1px solid rgba(var(--color-primary), 0.8);
+                    border-radius: 4px;
+                    box-shadow: 1px 1px 4px 0 var(--color-shadow-rgba);
+
+                    transform: skewX(-10deg);
+                    transition: opacity 0.3s;
+                "#)}
+            />
+
             // Shadow
             <div
                 class={css!(r#"
@@ -111,6 +113,7 @@ pub fn Button(props: &ButtonProps) -> Html {
                     opacity: 0;
 
                     z-index: -1;
+                    transform: skewX(-10deg);
                     transition: opacity 0.3s;
 
                     &[data-state="hover"] {
@@ -137,7 +140,9 @@ pub fn Button(props: &ButtonProps) -> Html {
                     transition: opacity 0.3s 0.3s;
 
                     z-index: -1;
+                    transform: skewX(-10deg);
                     overflow: hidden;
+                    user-select: none;
 
                     &[data-state="active"] {
                         opacity: 0;
@@ -164,7 +169,7 @@ pub fn Button(props: &ButtonProps) -> Html {
                         transition: opacity 0.3s, transform 0.3s;
 
                         &[data-state="active"] {
-                            transform: scale(128);
+                            transform: scale(128); /* width * 2 */
                             opacity: 1;
                         }
                     "#)}
@@ -179,7 +184,30 @@ pub fn Button(props: &ButtonProps) -> Html {
                 />
             </div>
 
-            {props.children.clone()}
-        </button>
+            // Content
+            <div
+                class={css!(r#"
+                    position: relative;
+                    width: 100%;
+                    height: 100%;
+
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+
+                    text-align: center;
+                    font-size: 16px;
+                    line-height: 48px;
+                    color: rgb(var(--color-button-text));
+
+                    user-select: none;
+                    cursor: pointer;
+
+                    z-index: 1;
+                "#)}
+            >
+                {props.children.clone()}
+            </div>
+        </div>
     }
 }

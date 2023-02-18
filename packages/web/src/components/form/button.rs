@@ -1,8 +1,7 @@
-use log::info;
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
-use crate::components::{Color, Size};
+use super::super::{Color, Size};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BorderRadiusType {
@@ -13,12 +12,21 @@ pub enum BorderRadiusType {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct BorderRadiusTypeContext {
+pub struct ButtonGroupInjectorContext {
+    pub size: Size,
+    pub color: Color,
+    pub outlined: bool,
     pub border_radius_type: BorderRadiusType,
 }
 
 #[derive(Properties, Debug, PartialEq)]
-pub struct BorderRadiusTypeContextProviderProps {
+pub struct ButtonGroupInjectorContextProviderProps {
+    #[prop_or(Size::Medium)]
+    pub size: Size,
+    #[prop_or(Color::Primary)]
+    pub color: Color,
+    #[prop_or(false)]
+    pub outlined: bool,
     #[prop_or(BorderRadiusType::Default)]
     pub border_radius_type: BorderRadiusType,
 
@@ -26,29 +34,32 @@ pub struct BorderRadiusTypeContextProviderProps {
     pub children: Children,
 }
 
-pub type BorderRadiusTypeContextProviderType = UseStateHandle<BorderRadiusTypeContext>;
+pub type ButtonGroupInjectorContextProviderType = UseStateHandle<ButtonGroupInjectorContext>;
 
 #[function_component]
-pub fn BorderRadiusTypeContextShell(props: &BorderRadiusTypeContextProviderProps) -> Html {
-    let ctx = use_state(|| BorderRadiusTypeContext {
+pub fn ButtonGroupInjectorContextShell(props: &ButtonGroupInjectorContextProviderProps) -> Html {
+    let ctx = use_state(|| ButtonGroupInjectorContext {
+        size: props.size,
+        color: props.color,
+        outlined: props.outlined,
         border_radius_type: props.border_radius_type,
     });
 
     html! {
-        <ContextProvider<BorderRadiusTypeContextProviderType> context={ctx.clone()}>
+        <ContextProvider<ButtonGroupInjectorContextProviderType> context={ctx.clone()}>
             {props.children.clone()  }
-        </ContextProvider<BorderRadiusTypeContextProviderType>>
+        </ContextProvider<ButtonGroupInjectorContextProviderType>>
     }
 }
 
 #[derive(Properties, Debug, PartialEq)]
 pub struct ButtonProps {
-    #[prop_or(Size::Medium)]
-    pub size: Size,
-    #[prop_or(Color::Primary)]
-    pub color: Color,
-    #[prop_or(false)]
-    pub outlined: bool,
+    #[prop_or(None)]
+    pub size: Option<Size>,
+    #[prop_or(None)]
+    pub color: Option<Color>,
+    #[prop_or(None)]
+    pub outlined: Option<bool>,
 
     #[prop_or_default]
     pub onclick: Callback<MouseEvent>,
@@ -61,7 +72,31 @@ pub struct ButtonProps {
 pub fn Button(props: &ButtonProps) -> Html {
     let is_hover = use_state(|| false);
     let is_active = use_state(|| false);
-    let border_radius_type = match use_context::<BorderRadiusTypeContextProviderType>() {
+
+    let button_radius_type = use_context::<ButtonGroupInjectorContextProviderType>();
+
+    let size = match props.size {
+        Some(size) => size,
+        None => match &button_radius_type {
+            Some(ctx) => ctx.size,
+            None => Size::Medium,
+        },
+    };
+    let color = match props.color {
+        Some(color) => color,
+        None => match &button_radius_type {
+            Some(ctx) => ctx.color,
+            None => Color::Primary,
+        },
+    };
+    let outlined = match props.outlined {
+        Some(outlined) => outlined,
+        None => match &button_radius_type {
+            Some(ctx) => ctx.outlined,
+            None => false,
+        },
+    };
+    let border_radius_type = match &button_radius_type {
         Some(ctx) => ctx.border_radius_type,
         None => BorderRadiusType::Default,
     };
@@ -132,7 +167,7 @@ pub fn Button(props: &ButtonProps) -> Html {
                 }
             "#)}
 
-            data-size={match props.size {
+            data-size={match size {
                 Size::Small => "small",
                 Size::Medium => "medium",
                 Size::Large => "large",
@@ -214,11 +249,11 @@ pub fn Button(props: &ButtonProps) -> Html {
                     }
 
                     &[data-state="active"] {
-                        filter: brightness(0.9);
+                        filter: brightness(0.8);
                     }
                 "#)}
 
-                data-color={match props.color {
+                data-color={match color {
                     Color::Primary => "primary",
                     Color::Secondary => "secondary",
                     Color::Success => "success",
@@ -226,7 +261,7 @@ pub fn Button(props: &ButtonProps) -> Html {
                     Color::Info => "info",
                     Color::Warning => "warning",
                 }}
-                data-style={if props.outlined {
+                data-style={if outlined {
                     "outlined"
                 } else {
                     "basic"
@@ -262,10 +297,31 @@ pub fn Button(props: &ButtonProps) -> Html {
                     &[data-state="hover"] {
                         opacity: 1;
                     }
+
+                    
+                    &[data-border-radius-type="default"] {
+                        border-radius: 4px;
+                    }
+                    &[data-border-radius-type="none"] {
+                        border-radius: 0;
+                    }
+                    &[data-border-radius-type="only-left"] {
+                        border-radius: 4px 0 0 4px;
+                    }
+                    &[data-border-radius-type="only-right"] {
+                        border-radius: 0 4px 4px 0;
+                    }
                 "#)}
+
                 data-state={match *is_hover {
                     true => "hover",
                     false => "none",
+                }}
+                data-border-radius-type={match border_radius_type {
+                    BorderRadiusType::Default => "default",
+                    BorderRadiusType::None => "none",
+                    BorderRadiusType::OnlyLeft => "only-left",
+                    BorderRadiusType::OnlyRight => "only-right",
                 }}
             />
 
@@ -308,12 +364,12 @@ pub fn Button(props: &ButtonProps) -> Html {
                     }
                 "#)}
 
-                data-size={match props.size {
+                data-size={match size {
                     Size::Small => "small",
                     Size::Medium => "medium",
                     Size::Large => "large",
                 }}
-                data-style={if props.outlined {
+                data-style={if outlined {
                     "outlined"
                 } else {
                     "basic"

@@ -3,14 +3,14 @@ pub mod data;
 pub mod form;
 pub mod navigation;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Size {
     Small,
     Medium,
     Large,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Color {
     Primary,
     Secondary,

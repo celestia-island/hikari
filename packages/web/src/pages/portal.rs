@@ -96,6 +96,26 @@ pub fn Portal() -> Html {
                 </Button>
             </div>
             <ButtonGroup />
+            <ButtonGroup>
+                <Button>{"Test"}</Button>
+            </ButtonGroup>
+            <ButtonGroup size={Size::Large}>
+                <Button>{"Test"}</Button>
+                <Button>{"Test"}</Button>
+            </ButtonGroup>
+            <ButtonGroup outlined={true} color={Color::Success}>
+                <Button>{"Test"}</Button>
+                <Button>{"Test"}</Button>
+                <Button>{"Test"}</Button>
+            </ButtonGroup>
+            <ButtonGroup size={Size::Small} color={Color::Warning}>
+                <Button>{"Test"}</Button>
+                <Button>{"Test"}</Button>
+                <Button>{"Test"}</Button>
+                <Button>{"Test"}</Button>
+                <Button>{"Test"}</Button>
+                <Button>{"Test"}</Button>
+            </ButtonGroup>
         </>
     }
 }

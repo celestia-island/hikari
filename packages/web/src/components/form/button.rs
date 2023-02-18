@@ -343,6 +343,25 @@ pub fn Button(props: &ButtonProps) -> Html {
                     z-index: 1;
                     transition: color 0.3s;
 
+                    &[data-color="primary"]&[data-style="outlined"] {
+                        color: rgb(var(--color-primary));
+                    }
+                    &[data-color="secondary"]&[data-style="outlined"] {
+                        color: rgb(var(--color-secondary));
+                    }
+                    &[data-color="success"]&[data-style="outlined"] {
+                        color: rgb(var(--color-success));
+                    }
+                    &[data-color="error"]&[data-style="outlined"] {
+                        color: rgb(var(--color-error));
+                    }
+                    &[data-color="info"]&[data-style="outlined"] {
+                        color: rgb(var(--color-info));
+                    }
+                    &[data-color="warning"]&[data-style="outlined"] {
+                        color: rgb(var(--color-warning));
+                    }
+
                     &[data-size="small"] {
                         font-size: 14px;
                     }
@@ -364,6 +383,14 @@ pub fn Button(props: &ButtonProps) -> Html {
                     }
                 "#)}
 
+                data-color={match color {
+                    Color::Primary => "primary",
+                    Color::Secondary => "secondary",
+                    Color::Success => "success",
+                    Color::Error => "error",
+                    Color::Info => "info",
+                    Color::Warning => "warning",
+                }}
                 data-size={match size {
                     Size::Small => "small",
                     Size::Medium => "medium",

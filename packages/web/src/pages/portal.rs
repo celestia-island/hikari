@@ -7,7 +7,7 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 use crate::components::{
-    form::{Button, TextInput},
+    form::{Button, ButtonGroup, TextInput},
     Color, Size,
 };
 
@@ -95,6 +95,7 @@ pub fn Portal() -> Html {
                     {"Test"}
                 </Button>
             </div>
+            <ButtonGroup />
         </>
     }
 }

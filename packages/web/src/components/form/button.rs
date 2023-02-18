@@ -1,7 +1,45 @@
+use log::info;
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
 use crate::components::{Color, Size};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BorderRadiusType {
+    Default,
+    None,
+    OnlyLeft,
+    OnlyRight,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct BorderRadiusTypeContext {
+    pub border_radius_type: BorderRadiusType,
+}
+
+#[derive(Properties, Debug, PartialEq)]
+pub struct BorderRadiusTypeContextProviderProps {
+    #[prop_or(BorderRadiusType::Default)]
+    pub border_radius_type: BorderRadiusType,
+
+    #[prop_or_default]
+    pub children: Children,
+}
+
+pub type BorderRadiusTypeContextProviderType = UseStateHandle<BorderRadiusTypeContext>;
+
+#[function_component]
+pub fn BorderRadiusTypeContextShell(props: &BorderRadiusTypeContextProviderProps) -> Html {
+    let ctx = use_state(|| BorderRadiusTypeContext {
+        border_radius_type: props.border_radius_type,
+    });
+
+    html! {
+        <ContextProvider<BorderRadiusTypeContextProviderType> context={ctx.clone()}>
+            {props.children.clone()  }
+        </ContextProvider<BorderRadiusTypeContextProviderType>>
+    }
+}
 
 #[derive(Properties, Debug, PartialEq)]
 pub struct ButtonProps {
@@ -21,10 +59,12 @@ pub struct ButtonProps {
 
 #[styled_component]
 pub fn Button(props: &ButtonProps) -> Html {
-    let button_ref = use_node_ref();
-
     let is_hover = use_state(|| false);
     let is_active = use_state(|| false);
+    let border_radius_type = match use_context::<BorderRadiusTypeContextProviderType>() {
+        Some(ctx) => ctx.border_radius_type,
+        None => BorderRadiusType::Default,
+    };
 
     let on_mouseenter = {
         let is_hover = is_hover.clone();
@@ -58,7 +98,6 @@ pub fn Button(props: &ButtonProps) -> Html {
 
     html! {
         <button
-            ref={button_ref}
             class={css!(r#"
                 position: relative;
                 width: max-content;
@@ -80,12 +119,29 @@ pub fn Button(props: &ButtonProps) -> Html {
                 &[data-size="large"] {
                     height: 48px;
                 }
+
+                &[data-border-radius-type="only-left"] {
+                    margin-right: 0;
+                }
+                &[data-border-radius-type="none"] {
+                    margin-left: 1px;
+                    margin-right: 0;
+                }
+                &[data-border-radius-type="only-right"] {
+                    margin-left: 1px;
+                }
             "#)}
 
             data-size={match props.size {
                 Size::Small => "small",
                 Size::Medium => "medium",
                 Size::Large => "large",
+            }}
+            data-border-radius-type={match border_radius_type {
+                BorderRadiusType::Default => "default",
+                BorderRadiusType::None => "none",
+                BorderRadiusType::OnlyLeft => "only-left",
+                BorderRadiusType::OnlyRight => "only-right",
             }}
 
             onmouseenter={on_mouseenter}
@@ -104,7 +160,6 @@ pub fn Button(props: &ButtonProps) -> Html {
                     height: 100%;
 
                     border: 1px solid transparent;
-                    border-radius: 4px;
                     box-shadow: 1px 1px 4px 0 var(--color-shadow-rgba);
 
                     transition: all 0.3s;
@@ -132,6 +187,19 @@ pub fn Button(props: &ButtonProps) -> Html {
                     &[data-color="warning"] {
                         background-color: rgba(var(--color-warning), 0.8);
                         border-color: rgba(var(--color-warning), 0.8);
+                    }
+
+                    &[data-border-radius-type="default"] {
+                        border-radius: 4px;
+                    }
+                    &[data-border-radius-type="none"] {
+                        border-radius: 0;
+                    }
+                    &[data-border-radius-type="only-left"] {
+                        border-radius: 4px 0 0 4px;
+                    }
+                    &[data-border-radius-type="only-right"] {
+                        border-radius: 0 4px 4px 0;
                     }
 
                     &[data-style="outlined"] {
@@ -167,6 +235,12 @@ pub fn Button(props: &ButtonProps) -> Html {
                     (true, true) => "active",
                     (true, false) => "hover",
                     _ => "none",
+                }}
+                data-border-radius-type={match border_radius_type {
+                    BorderRadiusType::Default => "default",
+                    BorderRadiusType::None => "none",
+                    BorderRadiusType::OnlyLeft => "only-left",
+                    BorderRadiusType::OnlyRight => "only-right",
                 }}
             />
 

@@ -117,7 +117,7 @@ pub fn ThemeContextShell(props: &ThemeContextProviderProps) -> Html {
         secondary_color: rgb_to_dec(0x065279), // 靛蓝 Diàn Lán
 
         error_color: rgb_to_dec(0xc3272b),   // 赤 Chì
-        warning_color: rgb_to_dec(0xf0c239), // 缃 Xiāng
+        warning_color: rgb_to_dec(0xca6924), // 琥珀 Hú Pò
         success_color: rgb_to_dec(0x0aa344), // 青葱 Qīng Cōng
         info_color: rgb_to_dec(0xbacac6),    // 老银 Lǎo Yín
 

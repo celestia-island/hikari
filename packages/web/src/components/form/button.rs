@@ -363,13 +363,13 @@ pub fn Button(props: &ButtonProps) -> Html {
                     }
 
                     &[data-size="small"] {
-                        font-size: 14px;
+                        font-size: var(--size-small-text);
                     }
                     &[data-size="medium"] {
-                        font-size: 16px;
+                        font-size: var(--size-medium-text);
                     }
                     &[data-size="large"] {
-                        font-size: 18px;
+                        font-size: var(--size-large-text);
                     }
 
                     &[data-style="outlined"] {

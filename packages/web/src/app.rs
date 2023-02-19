@@ -14,10 +14,7 @@ use yew_router::{
 
 use crate::utils::{
     app_props::AppProps,
-    contexts::{
-        app_props::AppPropsContextShell,
-        theme::{ThemeContextProviderType, ThemeContextShell},
-    },
+    contexts::{app_props::AppPropsContextShell, theme::ThemeContextShell},
     routes::{switch, Route},
 };
 use crate::{
@@ -98,62 +95,8 @@ fn ContextShell(props: &ContextProps) -> Html {
 
 #[styled_component]
 pub fn Content() -> Html {
-    let theme = use_context::<ThemeContextProviderType>().unwrap();
-    let theme_raw = format!(
-        r#"
-            :root {{
-                --color-primary: {};
-                --color-secondary: {};
-
-                --color-error: {};
-                --color-warning: {};
-                --color-success: {};
-                --color-info: {};
-
-                --color-primary-text: {};
-                --color-secondary-text: {};
-                --color-button-text: {};
-                --color-disabled-text: {};
-                --color-placeholder-text: {};
-
-                --color-shadow-rgba: {};
-                --color-background: {};
-            }}
-
-            
-            * {{
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }}
-
-            body {{
-                font-family: 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
-                background-color: rgb(var(--color-background));
-                color: rgb(var(--color-primary-text));
-            }}
-        "#,
-        theme.primary_color.to_owned(),
-        theme.secondary_color.to_owned(),
-        theme.error_color.to_owned(),
-        theme.warning_color.to_owned(),
-        theme.success_color.to_owned(),
-        theme.info_color.to_owned(),
-        theme.primary_text_color.to_owned(),
-        theme.secondary_text_color.to_owned(),
-        theme.button_text_color.to_owned(),
-        theme.disabled_text_color.to_owned(),
-        theme.placeholder_text_color.to_owned(),
-        theme.shadow_color_rgba.to_owned(),
-        theme.background_color.to_owned(),
-    );
-
     html! {
         <>
-            <style>
-                {theme_raw}
-            </style>
-
             <ContainerLayout>
                 <HeaderLayout>
                     <img src="/logo.png" alt="logo" class={css!(r#"

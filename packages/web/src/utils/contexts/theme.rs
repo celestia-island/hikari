@@ -1,5 +1,6 @@
 use yew::prelude::*;
 
+#[inline]
 fn rgb_to_dec(rgb: i32) -> AttrValue {
     AttrValue::from(format!(
         "{}, {}, {}",
@@ -27,6 +28,10 @@ pub struct ThemeContext {
 
     pub shadow_color_rgba: AttrValue,
     pub background_color: AttrValue,
+
+    pub large_text_size: AttrValue,
+    pub medium_text_size: AttrValue,
+    pub small_text_size: AttrValue,
 }
 
 #[derive(Properties, Debug, PartialEq)]
@@ -36,6 +41,74 @@ pub struct ThemeContextProviderProps {
 }
 
 pub type ThemeContextProviderType = UseStateHandle<ThemeContext>;
+
+#[function_component]
+fn Injector() -> Html {
+    let theme = use_context::<ThemeContextProviderType>().unwrap();
+    let theme_raw = format!(
+        r#"
+            :root {{
+                --color-primary: {};
+                --color-secondary: {};
+
+                --color-error: {};
+                --color-warning: {};
+                --color-success: {};
+                --color-info: {};
+
+                --color-primary-text: {};
+                --color-secondary-text: {};
+                --color-button-text: {};
+                --color-disabled-text: {};
+                --color-placeholder-text: {};
+
+                --color-shadow-rgba: {};
+                --color-background: {};
+
+                --size-large-text: {};
+                --size-medium-text: {};
+                --size-small-text: {};
+            }}
+
+            
+            * {{
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }}
+
+            body {{
+                font-family: 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+                background-color: rgb(var(--color-background));
+                color: rgb(var(--color-primary-text));
+            }}
+        "#,
+        theme.primary_color.to_owned(),
+        theme.secondary_color.to_owned(),
+        theme.error_color.to_owned(),
+        theme.warning_color.to_owned(),
+        theme.success_color.to_owned(),
+        theme.info_color.to_owned(),
+        theme.primary_text_color.to_owned(),
+        theme.secondary_text_color.to_owned(),
+        theme.button_text_color.to_owned(),
+        theme.disabled_text_color.to_owned(),
+        theme.placeholder_text_color.to_owned(),
+        theme.shadow_color_rgba.to_owned(),
+        theme.background_color.to_owned(),
+        theme.large_text_size.to_owned(),
+        theme.medium_text_size.to_owned(),
+        theme.small_text_size.to_owned(),
+    );
+
+    html! {
+        <>
+            <style>
+                {theme_raw}
+            </style>
+        </>
+    }
+}
 
 #[function_component]
 pub fn ThemeContextShell(props: &ThemeContextProviderProps) -> Html {
@@ -56,10 +129,15 @@ pub fn ThemeContextShell(props: &ThemeContextProviderProps) -> Html {
 
         shadow_color_rgba: "rgba(0, 0, 0, 0.6)".into(),
         background_color: rgb_to_dec(0xf2fdff), // 雪白 Xuě Bái
+
+        large_text_size: "18px".into(),
+        medium_text_size: "16px".into(),
+        small_text_size: "14px".into(),
     });
 
     html! {
         <ContextProvider<ThemeContextProviderType> context={ctx.clone()}>
+            <Injector />
             {props.children.clone()  }
         </ContextProvider<ThemeContextProviderType>>
     }

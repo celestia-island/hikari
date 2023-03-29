@@ -97,13 +97,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .handle_error(handle_static_file_error),
         )
         .route(
-            "/test",
-            get(|| async {
-                query_all_post(db_conn)
-                    .await
-                    .ok()
-                    .unwrap_or("Failed to get data".into())
-            }),
+            "/timestamp",
+            get(|| async { format!("{}", chrono::Utc::now().timestamp()) }),
         )
         .nest_service(
             "/res",

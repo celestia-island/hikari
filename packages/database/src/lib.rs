@@ -1,91 +1,27 @@
 pub mod functions;
 pub mod models;
 
-use anyhow::Context;
+use anyhow::Result;
+use lazy_static::lazy_static;
 use log::info;
-use std::time::Duration;
+use std::{cell::Cell, time::Duration};
+use tokio::sync::Mutex;
 
-use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection, Schema, Statement};
+use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection, Schema};
 
 pub struct DatabaseNetworkConfig {
     pub host: String,
     pub port: u16,
     pub username: String,
     pub password: String,
+    pub database: String,
 }
 
-pub enum DatabaseLocalConfig {
-    FilePath(Box<std::path::Path>),
-    InMemory,
-}
-
-pub enum DatabaseConfig {
-    MySQL(DatabaseNetworkConfig),
-    SQLite(DatabaseLocalConfig),
-    PostgreSQL(DatabaseNetworkConfig),
-}
-
-pub async fn init(
-    config: DatabaseConfig,
-) -> Result<Box<DatabaseConnection>, Box<dyn std::error::Error>> {
-    {
-        match &config {
-            DatabaseConfig::MySQL(config) => {
-                let db = Database::connect(format!(
-                    "mysql://{}:{}@{}:{}",
-                    config.username, config.password, config.host, config.port
-                ))
-                .await?;
-                db.execute(Statement::from_string(
-                    db.get_database_backend(),
-                    format!(
-                        r#"CREATE DATABASE IF NOT EXISTS hikari DEFAULT CHARACTER SET utf8mb4;"#
-                    ),
-                ))
-                .await?;
-            }
-            DatabaseConfig::PostgreSQL(config) => {
-                let db = Database::connect(format!(
-                    "postgres://{}:{}@{}:{}",
-                    config.username, config.password, config.host, config.port
-                ))
-                .await?;
-                db.execute(Statement::from_string(
-                    db.get_database_backend(),
-                    format!(
-                        r#"CREATE DATABASE IF NOT EXISTS hikari DEFAULT CHARACTER SET utf8mb4;"#
-                    ),
-                ))
-                .await?;
-            }
-            DatabaseConfig::SQLite(_) => {}
-        };
-    }
-
-    let mut opt = ConnectOptions::new(match &config {
-        DatabaseConfig::MySQL(config) => {
-            format!(
-                "mysql://{}:{}@{}:{}/hikari",
-                config.username, config.password, config.host, config.port
-            )
-        }
-        DatabaseConfig::PostgreSQL(config) => {
-            format!(
-                "postgres://{}:{}@{}:{}/hikari",
-                config.username, config.password, config.host, config.port
-            )
-        }
-        DatabaseConfig::SQLite(config) => match config {
-            DatabaseLocalConfig::FilePath(path) => {
-                format!(
-                    "sqlite:///{}",
-                    path.to_str()
-                        .context("Failed to convert database file path to string")?
-                )
-            }
-            DatabaseLocalConfig::InMemory => "sqlite::memory:".into(),
-        },
-    });
+pub async fn init(config: DatabaseNetworkConfig) -> Result<()> {
+    let mut opt = ConnectOptions::new(format!(
+        "mysql://{}:{}@{}:{}/{}",
+        config.username, config.password, config.host, config.port, config.database
+    ));
     opt.max_connections(100)
         .min_connections(5)
         .connect_timeout(Duration::from_secs(8))
@@ -140,5 +76,11 @@ pub async fn init(
     .await?;
 
     info!("Database is ready");
-    Ok(Box::new(db))
+    DB_CONN.lock().await.replace(db);
+
+    Ok(())
+}
+
+lazy_static! {
+    static ref DB_CONN: Mutex<Cell<DatabaseConnection>> = Default::default();
 }

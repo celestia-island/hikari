@@ -1,0 +1,107 @@
+[config]
+default_to_workspace = false
+skip_core_tasks = true
+
+[tasks.build]
+script = '''
+#!@duckscript
+
+exec docker-compose -p hikari -f ./tasks/compose.yml build
+'''
+
+[tasks.build-native]
+script = '''
+#!@duckscript
+
+exec cargo build --package hikari-web --target wasm32-unknown-unknown --release
+exec wasm-bindgen --target no-modules --no-modules-global __wasm_vendor_entry --out-dir ./dist --out-name a --no-typescript ./target/wasm32-unknown-unknown/release/hikari-web.wasm
+
+html_raw = "<body><div id='app' style='width: 100vw; height: 100vh; position: fixed;'><script src='./a.js'></script><script>__wasm_vendor_entry('./a.wasm');</script></div></body>"
+writefile ./packages/app/res/index.html ${html_raw}
+cp ./target/wasm32-unknown-unknown/release/dist/a.js ./packages/app/res/a.js
+cp ./target/wasm32-unknown-unknown/release/dist/a_bg.wasm ./packages/app/res/a.wasm
+
+exec cargo build --package hikari-app
+'''
+
+[tasks.up]
+script = '''
+#!@duckscript
+
+db_username = get_env DB_USERNAME
+if is_empty ${db_username}
+  echo "DB_USERNAME is not set"
+  exit 1
+end
+
+db_password = get_env DB_PASSWORD
+if is_empty ${db_password}
+  echo "DB_PASSWORD is not set"
+  exit 1
+end
+
+set_env DB_DATABASE "hikari"
+
+exec docker-compose -p hikari -f ./tasks/compose.yml up --build -d
+'''
+
+[tasks.dev-on-container-reboot]
+condition = { profiles = ["docker-inside"] }
+script = '''
+#!@duckscript
+
+cd /home
+while not is_path_exists /home/a
+  echo "Waiting for build..."
+  sleep 1000
+end
+exec /home/a
+'''
+
+[tasks.dev-on-container-build]
+condition = { profiles = ["docker-inside"] }
+script = '''
+#!@duckscript
+
+cd /home
+if is_path_exists /home/target/Cargo.lock
+  cp /home/target/Cargo.lock /home/Cargo.lock
+end
+exec cargo check
+cp /home/Cargo.lock /home/target/Cargo.lock
+
+exec cargo build --package app --target wasm32-unknown-unknown
+cd /home/target/wasm32-unknown-unknown/debug
+exec wasm-bindgen --out-dir /home/dist --out-name a --target no-modules --no-typescript --no-modules-global __wasm_vendor_entry hikari-web.wasm
+
+cd /home
+exec cargo build --package router
+
+mkdir /home/res
+cp /home/packages/router/res/favicon.ico /home/dist/res/favicon.ico
+cp /home/packages/router/res/fonts.otf /home/dist/res/fonts.otf
+
+mv /home/dist/a_bg.wasm /home/dist/res/a.wasm
+mv /home/dist/a.js /home/dist/res/a.js
+cp /home/target/debug/router /home/dist/a
+
+cd /home/dist
+exec /home/dist/a
+'''
+
+[tasks.dev-preload]
+env = { DB_USERNAME = "homo", DB_PASSWORD = "1145141919810", DB_DATABASE = "hikari" }
+script = '''
+#!@duckscript
+
+exec docker-compose -p hikari-dev -f ./tasks/compose.dev.yml up --build -d
+'''
+
+[tasks.dev]
+dependencies = [{ name = "dev-preload" }]
+watch = { postpone = true, no_git_ignore = true, ignore_pattern = "Cargo.lock", watch = ["./packages/"] }
+script = '''
+#!@duckscript
+
+exec docker-compose -p hikari-dev -f ./tasks/compose.dev.yml restart dynamic
+'''

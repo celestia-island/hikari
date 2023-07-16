@@ -4,6 +4,9 @@ edition = "2021"
 name = "hikari-web"
 version = "0.1.0"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [features]
 default = []
 web_env = ["yew/hydration", "stylist/hydration"]

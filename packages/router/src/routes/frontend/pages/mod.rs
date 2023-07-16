@@ -2,28 +2,26 @@ mod personal;
 mod portal;
 mod thread;
 
+use anyhow::Result;
 use base64::Engine;
 use log::info;
 use std::collections::HashMap;
 
-use axum::{body::Body, http::Request, response::IntoResponse};
+use axum::{body::Body, http::Request, response::IntoResponse, routing::get, Router};
 use hyper::header::HeaderMap;
 use stylist::manager::{render_static, StyleManager};
 use yew::ServerRenderer;
 
-use self::{personal::query_personal, portal::query_portal, thread::query_thread};
-use hikari_web::{app::ServerApp, utils::app_props::AppProps};
+use hikari_web::{
+    app::ServerApp,
+    utils::{app_props::AppProps, contexts::app_props::AppPageProps},
+};
 
-pub async fn render(req: Request<Body>) -> Result<impl IntoResponse, Box<dyn std::error::Error>> {
+pub async fn render(req: Request<Body>, props: AppPageProps) -> Result<impl IntoResponse> {
     info!("{:?}", req);
     let (writer, reader) = render_static();
     let uri = req.uri().to_string();
-    let page_data = match req.uri().path().split('/').nth(1).unwrap_or("") {
-        "u" => query_personal(&req).await?,
-        "t" => query_thread(&req).await?,
-        _ => query_portal(&req).await?,
-    };
-    let page_data_raw = serde_json::to_string(&page_data)?;
+    let page_data_raw = serde_json::to_string(&props)?;
     let page_data_raw = base64::engine::general_purpose::STANDARD_NO_PAD.encode(page_data_raw);
 
     let renderer = ServerRenderer::<ServerApp>::with_props(move || {
@@ -36,7 +34,7 @@ pub async fn render(req: Request<Body>) -> Result<impl IntoResponse, Box<dyn std
                     .into_owned()
                     .collect()
             }),
-            page_data,
+            page_data: props.to_owned(),
         }
     });
     let html_raw = renderer.render().await;
@@ -57,10 +55,19 @@ pub async fn render(req: Request<Body>) -> Result<impl IntoResponse, Box<dyn std
     body.push_str("</textarea>");
     body.push_str("<div id='app' style='width: 100vw; height: 100vh; position: fixed;'>");
     body.push_str(&html_raw);
-    body.push_str("<script src='/res/entry/js'></script>");
-    body.push_str("<script>__wasm_vendor_entry('/res/entry/wasm');</script>");
+    body.push_str("<script src='/a.js'></script>");
+    body.push_str("<script>__wasm_vendor_entry('/a.wasm');</script>");
     body.push_str("</div>");
     body.push_str("</body>");
 
     Ok((headers, body))
+}
+
+pub async fn route() -> Result<Router> {
+    let router = Router::new()
+        .route("/", get(portal::query))
+        .route("/t", get(thread::query))
+        .route("/u", get(personal::query));
+
+    Ok(router)
 }

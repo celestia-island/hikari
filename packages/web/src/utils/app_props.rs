@@ -5,7 +5,7 @@ use yew::prelude::*;
 
 use crate::utils::contexts::app_props::AppPageProps;
 
-#[derive(Properties, PartialEq)]
+#[derive(Properties, PartialEq, Debug)]
 pub struct AppProps {
     pub style_manager: StyleManager,
     pub url: AttrValue,

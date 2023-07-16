@@ -7,6 +7,8 @@ RUN cargo install cargo-make
 RUN cargo install wasm-bindgen-cli@0.2.87
 
 COPY ./Cargo.toml /home/Cargo.toml
+RUN cargo new --lib --name hikari-app /home/packages/app
+COPY ./packages/app/Cargo.toml /home/packages/app/Cargo.toml
 RUN cargo new --lib --name hikari-database /home/packages/database
 COPY ./packages/database/Cargo.toml /home/packages/database/Cargo.toml
 RUN cargo new --name hikari-router /home/packages/router

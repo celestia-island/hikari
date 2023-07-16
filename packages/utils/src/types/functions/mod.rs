@@ -1,3 +1,3 @@
-mod users;
+mod user;
 
-pub use users::{Permission, UserType};
+pub use user::{Permission, UserType};

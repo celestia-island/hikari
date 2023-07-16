@@ -5,6 +5,8 @@ name = "hikari-database"
 version = "0.1.0"
 
 [dependencies]
+hikari-utils = {path = "../utils", version = "^0"}
+
 anyhow = "^1"
 chrono = {version = "^0.4", features = ["serde", "unstable-locales"]}
 env_logger = "^0.10"

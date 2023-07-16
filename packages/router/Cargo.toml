@@ -7,24 +7,28 @@ version = "0.1.0"
 [dependencies]
 hikari-database = {path = "../database", version = "^0"}
 hikari-web = {path = "../web", version = "^0"}
+hikari-utils = {path = "../utils", version = "^0"}
 
 anyhow = "^1"
-axum = {version = "^0.6", features = ["query"]}
 base64 = "^0.21"
-chrono = "^0.4"
-clap = {version = "^3", features = ["derive"]}
+chrono = {version = "^0.4", features = ["serde", "unstable-locales"]}
 env_logger = "^0.10"
-futures = {version = "^0.3", features = ["std"], default-features = false}
-hyper = {version = "^0.14", features = ["server", "http1"]}
+lazy_static = "*"
 log = "^0.4"
 serde = {version = "^1", features = ["derive"]}
 serde_json = "^1"
-stylist = {version = "^0.12", features = ["yew_integration", "ssr"]}
+url = "^2"
+uuid = {version = "^1", features = ['v4', 'fast-rng', 'macro-diagnostics', 'serde']}
+
+axum = {version = "^0.6", features = ["query"]}
+clap = {version = "^3", features = ["derive"]}
+futures = {version = "^0.3", features = ["std"], default-features = false}
+hyper = {version = "^0.14", features = ["server", "http1"]}
 tokio = {version = "^1", features = ["macros"]}
 tower = {version = "^0.4", features = ["make"]}
 tracing = "^0.1"
 tracing-subscriber = "^0.3"
-url = "^2"
+stylist = {version = "^0.12", features = ["yew_integration", "ssr"]}
 yew = {version = "^0.20", features = ["ssr", "hydration"]}
 
 [dev-dependencies.web-sys]

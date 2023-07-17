@@ -81,15 +81,15 @@ cd /home
 exec cargo build --package hikari-router
 
 mkdir /home/res
-cp /home/packages/router/res/favicon.ico /home/dist/res/favicon.ico
-cp /home/packages/router/res/fonts.otf /home/dist/res/fonts.otf
+cp /home/packages/router/res/favicon.ico /home/res/favicon.ico
+cp /home/packages/router/res/logo.png /home/res/logo.png
 
-mv /home/dist/a_bg.wasm /home/dist/res/a.wasm
-mv /home/dist/a.js /home/dist/res/a.js
-cp /home/target/debug/router /home/dist/a
+mv /home/dist/a_bg.wasm /home/res/a.wasm
+mv /home/dist/a.js /home/res/a.js
+cp /home/target/debug/hikari-router /home/a
 
-cd /home/dist
-exec /home/dist/a
+cd /home
+exec /home/a
 '''
 
 [tasks.dev-preload]

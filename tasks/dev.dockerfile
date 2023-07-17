@@ -11,7 +11,7 @@ COPY ./Makefile.toml /home/Makefile.toml
 
 VOLUME ["/home/target", "/home/packages"]
 
-ENV ROOT_DIR=/home/dist/res
+ENV ROOT_DIR=/home/res
 WORKDIR /home
 ENTRYPOINT ["cargo", "make", "-p", "docker-inside", "dev-on-container-build"]
 EXPOSE 80

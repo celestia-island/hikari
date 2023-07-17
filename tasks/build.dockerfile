@@ -52,11 +52,11 @@ RUN cargo build --offline --package hikari-router --release
 # Stage 2 for server build, used to integrate the build result of client and generate the final image
 FROM ubuntu:22.10 as stage-server-build2
 
-COPY ./packages/router/res /home/dist/res
-COPY --from=stage-client-build2 /home/dist/a_bg.wasm /home/dist/res/a.wasm
-COPY --from=stage-client-build2 /home/dist/a.js /home/dist/res/a.js
-COPY --from=stage-server-build1 /home/target/release/router /home/dist/a
-ENV ROOT_DIR=/home/dist/res
-WORKDIR /home/dist
+COPY ./packages/router/res /home/res
+COPY --from=stage-client-build2 /home/dist/a_bg.wasm /home/res/a.wasm
+COPY --from=stage-client-build2 /home/dist/a.js /home/res/a.js
+COPY --from=stage-server-build1 /home/target/release/hikari-router /home/a
+ENV ROOT_DIR=/home/res
+WORKDIR /home
 ENTRYPOINT [ "./a" ]
 EXPOSE 80

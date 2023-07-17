@@ -21,6 +21,16 @@ pub async fn route() -> Result<Router> {
             "/a.wasm",
             get_service(ServeFile::new(ROOT_DIR.clone().join("./a.wasm")))
                 .handle_error(handle_static_file_error),
+        )
+        .route_service(
+            "/favicon.ico",
+            get_service(ServeFile::new(ROOT_DIR.clone().join("./favicon.ico")))
+                .handle_error(handle_static_file_error),
+        )
+        .route_service(
+            "/logo.png",
+            get_service(ServeFile::new(ROOT_DIR.clone().join("./logo.png")))
+                .handle_error(handle_static_file_error),
         );
 
     Ok(router)

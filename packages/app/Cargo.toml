@@ -1,9 +1,10 @@
 [package]
 authors = ["langyo <langyo.china@gmail.com>"]
-build = "src/build.rs"
 edition = "2021"
 name = "hikari-app"
 version = "0.1.0"
+
+build = "src/build.rs"
 
 [features]
 default = []

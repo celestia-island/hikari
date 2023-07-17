@@ -7,8 +7,6 @@ RUN cargo install cargo-make
 RUN cargo install wasm-bindgen-cli@0.2.87
 
 COPY ./Cargo.toml /home/Cargo.toml
-RUN cargo new --lib --name hikari-app /home/packages/app
-COPY ./packages/app/Cargo.toml /home/packages/app/Cargo.toml
 RUN cargo new --lib --name hikari-database /home/packages/database
 COPY ./packages/database/Cargo.toml /home/packages/database/Cargo.toml
 RUN cargo new --name hikari-router /home/packages/router
@@ -27,7 +25,7 @@ COPY ./packages /home/packages
 FROM stage-deps as stage-client-build1
 
 WORKDIR /home
-RUN cargo build --offline --package app --target wasm32-unknown-unknown --release
+RUN cargo build --offline --package hikari-web --target wasm32-unknown-unknown --release
 
 # Stage 2 for client build, used to process wasm file for browser platform
 FROM stage-deps as stage-client-build2
@@ -46,7 +44,7 @@ RUN wasm-bindgen\
 FROM stage-deps as stage-server-build1
 
 WORKDIR /home
-RUN cargo build --offline --package router --release
+RUN cargo build --offline --package hikari-router --release
 
 # Stage 2 for server build, used to integrate the build result of client and generate the final image
 FROM ubuntu:22.10 as stage-server-build2

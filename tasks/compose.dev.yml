@@ -12,7 +12,10 @@ services:
     ports:
       - 80:3000
     volumes:
-      - ../packages:/home/packages
+      - ../packages/database:/home/packages/database
+      - ../packages/router:/home/packages/router
+      - ../packages/utils:/home/packages/utils
+      - ../packages/web:/home/packages/web
       - build-cache:/home/target
     environment:
       - DB_HOST=database

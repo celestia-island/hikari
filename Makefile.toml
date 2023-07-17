@@ -72,12 +72,12 @@ end
 exec cargo check
 cp /home/Cargo.lock /home/target/Cargo.lock
 
-exec cargo build --package app --target wasm32-unknown-unknown
+exec cargo build --package hikari-web --target wasm32-unknown-unknown
 cd /home/target/wasm32-unknown-unknown/debug
 exec wasm-bindgen --out-dir /home/dist --out-name a --target no-modules --no-typescript --no-modules-global __wasm_vendor_entry hikari_web.wasm
 
 cd /home
-exec cargo build --package router
+exec cargo build --package hikari-router
 
 mkdir /home/res
 cp /home/packages/router/res/favicon.ico /home/dist/res/favicon.ico

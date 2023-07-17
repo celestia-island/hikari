@@ -56,7 +56,9 @@ pub async fn render(req: Request<Body>, props: AppPageProps) -> Result<impl Into
     body.push_str("<div id='app' style='width: 100vw; height: 100vh; position: fixed;'>");
     body.push_str(&html_raw);
     body.push_str("<script src='/a.js'></script>");
-    body.push_str("<script>__wasm_vendor_entry('/a.wasm');</script>");
+    body.push_str(
+        "<script>(async () => {await __wasm_vendor_entry('./a.wasm');(await (new __wasm_vendor_entry.WebHandle())).start();})()</script>",
+    );
     body.push_str("</div>");
     body.push_str("</body>");
 

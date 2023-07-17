@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::*;
 use web_sys::window;
 
-use yew::{AppHandle, Renderer};
+use yew::Renderer;
 
 use crate::app::App;
 

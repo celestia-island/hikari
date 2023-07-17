@@ -19,7 +19,10 @@ COPY ./packages/utils/Cargo.toml /home/packages/utils/Cargo.toml
 WORKDIR /home
 RUN cargo fetch
 
-COPY ./packages /home/packages
+COPY ./packages/database /home/packages/database
+COPY ./packages/router /home/packages/router
+COPY ./packages/web /home/packages/web
+COPY ./packages/utils /home/packages/utils
 
 # Stage 1 for client build, used to compile wasm file
 FROM stage-deps as stage-client-build1

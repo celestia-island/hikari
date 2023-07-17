@@ -1,7 +1,7 @@
-pub(crate) mod app;
-pub(crate) mod components;
-pub(crate) mod pages;
-pub(crate) mod utils;
+pub mod app;
+pub mod components;
+pub mod pages;
+pub mod utils;
 
 #[cfg(target_arch = "wasm32")]
 mod web_entry;

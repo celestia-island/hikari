@@ -32,7 +32,7 @@ RUN cargo build --offline --package app --target wasm32-unknown-unknown --releas
 # Stage 2 for client build, used to process wasm file for browser platform
 FROM stage-deps as stage-client-build2
 
-COPY --from=stage-client-build1 /home/target/wasm32-unknown-unknown/release/hikari-web.wasm /home/a.wasm
+COPY --from=stage-client-build1 /home/target/wasm32-unknown-unknown/release/hikari_web.wasm /home/a.wasm
 WORKDIR /home
 RUN wasm-bindgen\
   --out-dir /home/dist\

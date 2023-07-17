@@ -14,9 +14,9 @@ script = '''
 #!@duckscript
 
 # TODO - Move the wasm build to docker container
-exec cargo install -f wasm-bindgen-cli --version 0.2.87
+# exec cargo install -f wasm-bindgen-cli --version 0.2.87
 exec cargo build --package hikari-web --target wasm32-unknown-unknown --release
-exec wasm-bindgen --target no-modules --no-modules-global __wasm_vendor_entry --out-dir ./target/dist --out-name a --no-typescript ./target/wasm32-unknown-unknown/release/hikari-web.wasm
+exec wasm-bindgen --target no-modules --no-modules-global __wasm_vendor_entry --out-dir ./target/dist --out-name a --no-typescript ./target/wasm32-unknown-unknown/release/hikari_web.wasm
 
 html_raw = set "<body><div id='app' style='width: 100vw; height: 100vh; position: fixed;'><script src='./a.js'></script><script>__wasm_vendor_entry('./a.wasm');</script></div></body>"
 writefile ./packages/app/res/index.html ${html_raw}
@@ -74,7 +74,7 @@ cp /home/Cargo.lock /home/target/Cargo.lock
 
 exec cargo build --package app --target wasm32-unknown-unknown
 cd /home/target/wasm32-unknown-unknown/debug
-exec wasm-bindgen --out-dir /home/dist --out-name a --target no-modules --no-typescript --no-modules-global __wasm_vendor_entry hikari-web.wasm
+exec wasm-bindgen --out-dir /home/dist --out-name a --target no-modules --no-typescript --no-modules-global __wasm_vendor_entry hikari_web.wasm
 
 cd /home
 exec cargo build --package router

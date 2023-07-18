@@ -10,7 +10,7 @@ services:
       context: ../
       dockerfile: ./tasks/dev.dockerfile
     ports:
-      - 80:3000
+      - 80:80
     volumes:
       - ../packages/database:/home/packages/database
       - ../packages/router:/home/packages/router

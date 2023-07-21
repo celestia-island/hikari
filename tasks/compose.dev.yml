@@ -24,7 +24,6 @@ services:
       - DB_DATABASE=$DB_DATABASE
     networks:
       - backend-dev
-    restart: always
     depends_on:
       - database
   database:
@@ -40,7 +39,6 @@ services:
       - MARIADB_RANDOM_ROOT_PASSWORD=yes
     networks:
       - backend-dev
-    restart: always
 
 networks:
   backend-dev:

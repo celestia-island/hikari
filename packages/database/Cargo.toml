@@ -12,8 +12,8 @@ chrono = {version = "^0.4", features = ["serde", "unstable-locales"]}
 env_logger = "^0.10"
 lazy_static = "*"
 log = "^0.4"
-strum = "^0.24"
-strum_macros = "^0.24"
+strum = "^0.25"
+strum_macros = "^0.25"
 uuid = {version = "^1", features = ['v4', 'fast-rng', 'macro-diagnostics', 'serde']}
 
 sea-orm-migration = "^0.11"

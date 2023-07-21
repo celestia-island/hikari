@@ -14,8 +14,8 @@ chrono = {version = "^0.4", features = ["serde", "wasmbind", "unstable-locales"]
 log = "^0.4"
 serde = {version = "^1", features = ["derive"]}
 serde_json = "^1"
-strum = "^0.24"
-strum_macros = "^0.24"
+strum = "^0.25"
+strum_macros = "^0.25"
 uuid = {version = "^1", features = ['v4', 'fast-rng', 'macro-diagnostics', 'serde']}
 
-bcrypt = "^0.14"
+bcrypt = "^0.15"

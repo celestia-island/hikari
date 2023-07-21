@@ -1,36 +1,27 @@
 use anyhow::Result;
 
-use axum::{response::IntoResponse, routing::get_service, Router};
-use hyper::StatusCode;
+use axum::{routing::get_service, Router};
 use tower_http::services::ServeFile;
 
 use super::super::ROOT_DIR;
-
-async fn handle_static_file_error(err: std::io::Error) -> impl IntoResponse {
-    (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
-}
 
 pub async fn route() -> Result<Router> {
     let router = Router::new()
         .route_service(
             "/a.js",
-            get_service(ServeFile::new(ROOT_DIR.clone().join("./a.js")))
-                .handle_error(handle_static_file_error),
+            get_service(ServeFile::new(ROOT_DIR.clone().join("./a.js"))),
         )
         .route_service(
             "/a.wasm",
-            get_service(ServeFile::new(ROOT_DIR.clone().join("./a.wasm")))
-                .handle_error(handle_static_file_error),
+            get_service(ServeFile::new(ROOT_DIR.clone().join("./a.wasm"))),
         )
         .route_service(
             "/favicon.ico",
-            get_service(ServeFile::new(ROOT_DIR.clone().join("./favicon.ico")))
-                .handle_error(handle_static_file_error),
+            get_service(ServeFile::new(ROOT_DIR.clone().join("./favicon.ico"))),
         )
         .route_service(
             "/logo.png",
-            get_service(ServeFile::new(ROOT_DIR.clone().join("./logo.png")))
-                .handle_error(handle_static_file_error),
+            get_service(ServeFile::new(ROOT_DIR.clone().join("./logo.png"))),
         );
 
     Ok(router)

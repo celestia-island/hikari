@@ -21,7 +21,7 @@ url = "^2"
 uuid = {version = "^1", features = ['v4', 'fast-rng', 'macro-diagnostics', 'serde']}
 
 axum = {version = "^0.6", features = ["query"]}
-clap = {version = "^3", features = ["derive"]}
+clap = {version = "^4", features = ["derive"]}
 futures = {version = "^0.3", features = ["std"], default-features = false}
 hyper = {version = "^0.14", features = ["server", "http1"]}
 tokio = {version = "^1", features = ["macros"]}
@@ -45,4 +45,4 @@ version = "0.3"
 
 [dependencies.tower-http]
 features = ["fs", "trace", "compression-gzip"]
-version = "^0.3"
+version = "^0.4"

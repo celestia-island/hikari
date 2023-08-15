@@ -43,8 +43,6 @@ if is_empty ${db_password}
   exit 1
 end
 
-set_env DB_DATABASE "hikari"
-
 exec docker-compose -p hikari -f ./tasks/compose.yml up --build -d
 '''
 
@@ -93,7 +91,7 @@ exec /home/a
 '''
 
 [tasks.dev-preload]
-env = { DB_USERNAME = "homo", DB_PASSWORD = "1145141919810", DB_DATABASE = "hikari" }
+env = { DB_USERNAME = "homo", DB_PASSWORD = "1145141919810", DB_NAMESPACE = "hikari", DB_DATABASE = "hikari" }
 script = '''
 #!@duckscript
 
@@ -102,7 +100,9 @@ exec docker-compose -p hikari-dev -f ./tasks/compose.dev.yml up --build -d
 
 [tasks.dev]
 dependencies = [{ name = "dev-preload" }]
-watch = { postpone = true, no_git_ignore = true, ignore_pattern = "Cargo.lock", watch = ["./packages/"] }
+watch = { postpone = true, no_git_ignore = true, ignore_pattern = "Cargo.lock", watch = [
+  "./packages/",
+] }
 script = '''
 #!@duckscript
 

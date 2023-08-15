@@ -42,9 +42,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         port: std::env::var("DB_PORT")
             .ok()
             .and_then(|s| s.parse().ok())
-            .unwrap_or(3306),
+            .unwrap_or(8000),
         username: std::env::var("DB_USERNAME").unwrap_or("root".into()),
         password: std::env::var("DB_PASSWORD").unwrap_or("root".into()),
+        namespace: std::env::var("DB_NAMESPACE").unwrap_or("hikari".into()),
         database: std::env::var("DB_DATABASE").unwrap_or("hikari".into()),
     })
     .await?;

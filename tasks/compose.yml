@@ -15,22 +15,26 @@ services:
       - DB_USERNAME=$DB_USERNAME
       - DB_PASSWORD=$DB_PASSWORD
       - DB_DATABASE=$DB_DATABASE
+      - DB_NAMESPACE=$DB_NAMESPACE
     networks:
       - backend
     restart: always
     depends_on:
       - database
   database:
-    image: mariadb:lts
+    image: surrealdb/surrealdb:1.0.0-beta.9-20230402
     expose:
-      - 3306
+      - 8000
     volumes:
-      - db:/var/lib/mysql
-    environment:
-      - MARIADB_USER=$DB_USERNAME
-      - MARIADB_PASSWORD=$DB_PASSWORD
-      - MARIADB_DATABASE=$DB_DATABASE
-      - MARIADB_RANDOM_ROOT_PASSWORD=yes
+      - db:/data
+    entrypoint:
+      - /surreal
+      - start
+      - -u
+      - $DB_USERNAME
+      - -p
+      - $DB_PASSWORD
+      - file:/data/data.db
     networks:
       - backend
     restart: always

@@ -7,7 +7,6 @@ To ensure the environment is unified, this project has been deployed automatical
 Before the formal deployment, you should create a file named `.env` in the project folder, which stores the configuration information of the database that the server will connect to. The example content is as follows:
 
 ```env
-MARIADB_ROOT_PASSWORD=root
 DB_PASSWORD=root
 ```
 

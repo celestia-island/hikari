@@ -11,6 +11,7 @@ anyhow = "^1"
 chrono = { version = "^0.4", features = ["serde", "unstable-locales"] }
 env_logger = "^0.10"
 lazy_static = "*"
+async_once = "*"
 log = "^0.4"
 strum = "^0.25"
 strum_macros = "^0.25"

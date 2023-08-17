@@ -1,15 +1,9 @@
 use anyhow::Result;
-use sea_orm::{EntityTrait, ModelTrait};
-use uuid::Uuid;
 
-use crate::{models::user::Entity, DB_CONN};
+use crate::DB_CONN;
 
-pub async fn delete(id: Uuid) -> Result<()> {
-    if let Some(item) = Entity::find_by_id(id)
-        .one(DB_CONN.lock().await.get_mut())
-        .await?
-    {
-        item.delete(DB_CONN.lock().await.get_mut()).await?;
-    }
+pub async fn delete(id: impl ToString) -> Result<()> {
+    DB_CONN.get().await.delete(("user", id.to_string())).await?;
+
     Ok(())
 }

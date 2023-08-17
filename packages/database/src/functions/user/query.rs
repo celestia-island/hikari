@@ -1,16 +1,8 @@
 use anyhow::Result;
-use sea_orm::EntityTrait;
-use uuid::Uuid;
 
-use crate::{
-    models::user::{Entity, Model},
-    DB_CONN,
-};
+use crate::{models::user::Model, DB_CONN};
 
-pub async fn query(id: Uuid) -> Result<Model> {
-    let ret = Entity::find_by_id(id)
-        .one(DB_CONN.lock().await.get_mut())
-        .await?
-        .unwrap();
+pub async fn query(id: impl ToString) -> Result<Model> {
+    let ret = DB_CONN.get().await.select(("user", id.to_string())).await?;
     Ok(ret)
 }

@@ -2,15 +2,12 @@ use anyhow::Result;
 
 use axum::Router;
 
-// mod functions;
+mod functions;
 // mod secure;
 
 pub async fn route() -> Result<Router> {
-    // let router = Router::new()
-    //     .nest("/", secure::route().await?)
-    //     .nest("/", functions::route().await?);
+    let router = Router::new().nest("/", functions::route().await?);
+    //     .nest("/", secure::route().await?);
 
-    // Ok(router)
-
-    Ok(Router::new())
+    Ok(router)
 }

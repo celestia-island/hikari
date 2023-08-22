@@ -7,9 +7,5 @@ use uuid::Uuid;
 pub struct Model {
     pub id: Uuid,
 
-    pub parent: Option<Uuid>,
-
     pub label: Cow<'static, str>,
 }
-
-// TODO - Convert between PO and DTO

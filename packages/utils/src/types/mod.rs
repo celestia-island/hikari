@@ -1,6 +1,6 @@
-mod functions;
-mod secure;
-mod utils;
+pub mod functions;
+pub mod secure;
+pub mod utils;
 
 use serde::{Deserialize, Serialize};
 
@@ -27,7 +27,7 @@ pub mod models {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RequestPackage {
-    UserInfo(functions::UserType),
+    UserInfo(functions::user::Model),
 
     Login(secure::LoginInfo),
     Verify(secure::VerifyInfo),
@@ -41,7 +41,7 @@ pub enum RequestPackage {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(untagged, rename_all = "snake_case")]
 pub enum ResponseStruct {
-    UserInfo(functions::UserType),
+    UserInfo(functions::user::Model),
 
     Count(utils::Count),
     Token(utils::UuidData),

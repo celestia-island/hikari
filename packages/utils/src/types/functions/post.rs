@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -8,8 +9,8 @@ pub struct Model {
     pub id: Uuid,
 
     pub parent: Option<Uuid>,
+    pub author: Uuid,
+    pub timestamp: DateTime<Utc>,
 
-    pub label: Cow<'static, str>,
+    pub content: Cow<'static, str>,
 }
-
-// TODO - Convert between PO and DTO

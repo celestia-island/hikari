@@ -9,3 +9,5 @@ pub struct Model {
 
     pub label: Cow<'static, str>,
 }
+
+// TODO - Convert between PO and DTO

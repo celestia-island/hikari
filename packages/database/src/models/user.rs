@@ -1,16 +1,9 @@
 use std::borrow::Cow;
 
 use serde::{Deserialize, Serialize};
-use strum_macros::EnumString;
 use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, EnumString)]
-pub enum Permission {
-    #[strum(serialize = "admin")]
-    Admin,
-    #[strum(serialize = "user")]
-    User,
-}
+use hikari_utils::types::functions::user::Permission;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Model {
@@ -33,6 +26,38 @@ impl Default for Model {
             password_hash: Default::default(),
 
             permission: Permission::Admin,
+        }
+    }
+}
+
+// Convert between PO and DTO
+
+use hikari_utils::types::functions::user as DTO;
+
+impl From<DTO::Model> for Model {
+    fn from(item: DTO::Model) -> Self {
+        Self {
+            id: item.id,
+            token: item.token,
+
+            name: item.name.into(),
+            password_hash: item.password_hash.into(),
+
+            permission: item.permission,
+        }
+    }
+}
+
+impl From<Model> for DTO::Model {
+    fn from(item: Model) -> Self {
+        Self {
+            id: item.id,
+            token: item.token,
+
+            name: item.name.into(),
+            password_hash: item.password_hash.into(),
+
+            permission: item.permission,
         }
     }
 }

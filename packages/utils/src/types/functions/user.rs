@@ -1,31 +1,38 @@
+use std::borrow::Cow;
+
 use serde::{Deserialize, Serialize};
-use strum_macros::{Display, EnumIter};
+use strum_macros::EnumString;
 use uuid::Uuid;
 
-#[derive(Copy, Clone, Debug, PartialEq, EnumIter, Deserialize, Serialize, Display)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, EnumString)]
 pub enum Permission {
-    Root,
-    Manager,
+    #[strum(serialize = "admin")]
+    Admin,
+    #[strum(serialize = "user")]
     User,
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct UserType {
+pub struct Model {
     pub id: Uuid,
+    pub token: Uuid,
 
-    pub name: String,
+    pub name: Cow<'static, str>,
+    pub password_hash: Cow<'static, str>,
 
     pub permission: Permission,
 }
 
-impl Default for UserType {
+impl Default for Model {
     fn default() -> Self {
         Self {
             id: Uuid::new_v4(),
+            token: Uuid::nil(),
 
             name: Default::default(),
+            password_hash: Default::default(),
 
-            permission: Permission::User,
+            permission: Permission::Admin,
         }
     }
 }

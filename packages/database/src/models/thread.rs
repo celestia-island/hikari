@@ -17,3 +17,5 @@ pub struct Model {
     pub title: Cow<'static, str>,
     pub content: Cow<'static, str>,
 }
+
+// TODO - Convert between PO and DTO

@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as Json;
@@ -14,6 +12,6 @@ pub struct Model {
     pub author: Uuid,
     pub timestamp: DateTime<Utc>,
 
-    pub title: Cow<'static, str>,
-    pub content: Cow<'static, str>,
+    pub title: String,
+    pub content: String,
 }

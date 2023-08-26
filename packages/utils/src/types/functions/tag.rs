@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -9,5 +7,5 @@ pub struct Model {
 
     pub parent: Option<Uuid>,
 
-    pub label: Cow<'static, str>,
+    pub label: String,
 }

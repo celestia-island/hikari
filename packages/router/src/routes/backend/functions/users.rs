@@ -50,6 +50,19 @@ async fn list(Json(item): Json<RequestPackage>) -> Result<String, (StatusCode, S
     to_string(&ret).or_else(|e| Err(generate_error_message(e.to_string())))
 }
 
+async fn insert(Json(item): Json<RequestPackage>) -> Result<String, (StatusCode, String)> {
+    let item = match &item {
+        RequestPackage::UserInfo(item) => item.to_owned(),
+        _ => return Err(generate_error_message("Invalid request".to_string())),
+    };
+
+    functions::insert(item.into())
+        .await
+        .or_else(|e| Err(generate_error_message(e.to_string())))?;
+
+    generate_ok_message()
+}
+
 async fn update(Json(item): Json<RequestPackage>) -> Result<String, (StatusCode, String)> {
     let item = match &item {
         RequestPackage::UserInfo(item) => item.to_owned(),
@@ -81,6 +94,7 @@ pub async fn route() -> Result<Router> {
         .route("/count", post(count))
         .route("/query", post(query))
         .route("/list", post(list))
+        .route("/insert", post(insert))
         .route("/update", post(update))
         .route("/delete", post(delete));
 

@@ -100,7 +100,7 @@ exec docker-compose -p hikari-dev -f ./tasks/compose.dev.yml up --build -d
 
 [tasks.dev]
 dependencies = [{ name = "dev-preload" }]
-watch = { postpone = true, no_git_ignore = true, ignore_pattern = "Cargo.lock", watch = [
+watch = { no_git_ignore = true, ignore_pattern = "Cargo.lock", watch = [
   "./packages/",
 ] }
 script = '''

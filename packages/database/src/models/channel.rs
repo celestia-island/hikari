@@ -1,13 +1,8 @@
-use std::borrow::Cow;
-
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Model {
-    pub id: Uuid,
-
-    pub label: Cow<'static, str>,
+    pub label: String,
 }
 
 // TODO - Convert between PO and DTO

@@ -1,13 +1,14 @@
 use anyhow::Result;
 
-use crate::{models::user::Model, DB_CONN};
+use crate::{models::user::Model as PO, DB_CONN};
+use hikari_utils::types::functions::user::Model as DTO;
 
-pub async fn update(item: Model) -> Result<()> {
+pub async fn update(item: DTO) -> Result<()> {
     DB_CONN
         .get()
         .await
         .update(("user", item.id.to_string()))
-        .content(item)
+        .content(PO::from(item))
         .await?;
 
     Ok(())

@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -12,5 +10,5 @@ pub struct Model {
     pub author: Uuid,
     pub timestamp: DateTime<Utc>,
 
-    pub content: Cow<'static, str>,
+    pub content: String,
 }

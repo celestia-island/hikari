@@ -1,14 +1,11 @@
-use std::borrow::Cow;
-
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumString;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize, EnumString)]
+#[serde(rename_all = "snake_case")]
 pub enum Permission {
-    #[strum(serialize = "admin")]
     Admin,
-    #[strum(serialize = "user")]
     User,
 }
 
@@ -17,8 +14,8 @@ pub struct Model {
     pub id: Uuid,
     pub token: Uuid,
 
-    pub name: Cow<'static, str>,
-    pub password_hash: Cow<'static, str>,
+    pub name: String,
+    pub password_hash: String,
 
     pub permission: Permission,
 }

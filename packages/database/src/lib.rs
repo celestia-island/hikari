@@ -18,10 +18,7 @@ pub struct DatabaseNetworkConfig {
 }
 
 pub async fn init(config: DatabaseNetworkConfig) -> Result<()> {
-    let mut opt = ConnectOptions::new(format!(
-        "mysql://{}:{}@{}:{}/{}",
-        config.username, config.password, config.host, config.port, config.database
-    ));
+    let mut opt = ConnectOptions::new(format!("mysql://{}:{}", config.host, config.port));
     opt.max_connections(100)
         .min_connections(5)
         .connect_timeout(Duration::from_secs(8))

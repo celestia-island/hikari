@@ -1,0 +1,16 @@
+[server]
+bind_addr = "0.0.0.0"
+
+[logger]
+level = "info"
+
+[tracing]
+dir = "/tmp/ceresdb"
+
+[analytic.storage.object_store]
+type = "Local"
+data_dir = "/tmp/ceresdb"
+
+[analytic.wal]
+type = "RocksDB"
+data_dir = "/tmp/ceresdb"

@@ -21,16 +21,12 @@ services:
     depends_on:
       - database
   database:
-    image: mariadb:lts
+    image: ceresdb/ceresdb-server
     expose:
-      - 3306
+      - 3307
     volumes:
-      - db:/var/lib/mysql
-    environment:
-      - MARIADB_USER=$DB_USERNAME
-      - MARIADB_PASSWORD=$DB_PASSWORD
-      - MARIADB_DATABASE=$DB_DATABASE
-      - MARIADB_RANDOM_ROOT_PASSWORD=yes
+      - db:/data
+      - ./ceresdb.toml:/etc/ceresdb/ceresdb.toml
     networks:
       - backend
     restart: always

@@ -27,16 +27,12 @@ services:
     depends_on:
       - database
   database:
-    image: mariadb:lts
+    image: ceresdb/ceresdb-server
     ports:
-      - 3306:3306
+      - 3307:3307
     volumes:
-      - db-dev:/var/lib/mysql
-    environment:
-      - MARIADB_USER=$DB_USERNAME
-      - MARIADB_PASSWORD=$DB_PASSWORD
-      - MARIADB_DATABASE=$DB_DATABASE
-      - MARIADB_RANDOM_ROOT_PASSWORD=yes
+      - db-dev:/data
+      - ./ceresdb.toml:/etc/ceresdb/ceresdb.toml
     networks:
       - backend-dev
 

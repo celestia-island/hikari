@@ -23,7 +23,10 @@ use crate::{
 #[function_component]
 pub fn App() -> Html {
     let fallback = html! { <div>{"Loading..."}</div> };
-    let style_manager = (*use_memo(|_| StyleManager::new().unwrap(), ())).to_owned();
+    let style_manager = (*use_memo((), |_| {
+        StyleManager::new().expect("failed to create style manager.")
+    }))
+    .to_owned();
 
     // let page_data_el = web_sys::window()
     //     .unwrap()

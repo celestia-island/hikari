@@ -24,9 +24,9 @@ wasm-bindgen = "0.2.87"
 wasm-bindgen-futures = "^0.4"
 wasm-logger = "^0.2"
 
-stylist = { version = "^0.12", features = ["yew_integration", "hydration"] }
-yew = { version = "^0.20", features = ["csr", "hydration"] }
-yew-router = "^0.17"
+stylist = { version = "^0.13", features = ["yew_integration", "hydration"] }
+yew = { version = "^0.21", features = ["csr", "hydration"] }
+yew-router = "^0.18"
 
 [dependencies.web-sys]
 features = [

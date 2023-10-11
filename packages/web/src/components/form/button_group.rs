@@ -35,7 +35,12 @@ pub struct ButtonGroupProps {
 pub fn ButtonGroup(props: &ButtonGroupProps) -> Html {
     match props.children.len() {
         0 => html! {},
-        1 => html! { <>{props.children.clone()}</> },
+        1 => html! { <>
+            {{
+                let children = props.children.clone().iter().map(|child| child.into()).collect::<Vec<Html>>();
+                children.clone()
+            }}
+        </> },
         _ => html! {
             <div class={css!(r#"
                 width: max-content;
@@ -50,7 +55,13 @@ pub fn ButtonGroup(props: &ButtonGroupProps) -> Html {
                     outlined={props.outlined}
                     border_radius_type={BorderRadiusType::OnlyLeft}
                 >
-                    {props.children.iter().next()}
+                    {
+                        if let Some(children) = props.children.clone().iter().next() {
+                            children.clone().into()
+                        } else {
+                            html! {}
+                        }
+                    }
                 </ButtonGroupInjectorContextShell>
 
                 {props.children.iter().skip(1).take(props.children.len() - 2).map(|child| html! {
@@ -60,7 +71,10 @@ pub fn ButtonGroup(props: &ButtonGroupProps) -> Html {
                         outlined={props.outlined}
                         border_radius_type={BorderRadiusType::None}
                     >
-                        {child}
+                        {{
+                            let child: Html = child.clone().into();
+                            child
+                        }}
                     </ButtonGroupInjectorContextShell>
                 }).collect::<Html>()}
 
@@ -70,7 +84,13 @@ pub fn ButtonGroup(props: &ButtonGroupProps) -> Html {
                     outlined={props.outlined}
                     border_radius_type={BorderRadiusType::OnlyRight}
                 >
-                    {props.children.iter().last()}
+                    {
+                        if let Some(children) = props.children.clone().iter().last() {
+                            children.clone().into()
+                        } else {
+                            html! {}
+                        }
+                    }
                 </ButtonGroupInjectorContextShell>
             </div>
         },

@@ -42,6 +42,12 @@ pub fn ContainerLayout(props: &ContainerLayoutProps) -> Html {
     } else {
         None
     };
+    let children = props
+        .children
+        .clone()
+        .into_iter()
+        .map(|child| child.into())
+        .collect::<Vec<Html>>();
 
     html! {
         <section
@@ -53,7 +59,7 @@ pub fn ContainerLayout(props: &ContainerLayoutProps) -> Html {
                 min-width: 0;
             "#), is_vertical)}
         >
-            {props.children.clone()}
+            {children}
         </section>
     }
 }

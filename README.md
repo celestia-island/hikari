@@ -1,3 +1,5 @@
+<p align="center"><img src="./docs/logo.png" /></p>
+
 # Hikari - The Frontend of Everything
 
 > Still in progress

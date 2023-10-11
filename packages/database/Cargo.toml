@@ -5,7 +5,7 @@ name = "hikari-database"
 version = "0.1.0"
 
 [dependencies]
-hikari-utils = { path = "../utils", version = "^0" }
+hikari-utils = { path = "../utils", version = "*" }
 
 anyhow = "^1"
 chrono = { version = "^0.4", features = ["serde", "unstable-locales"] }

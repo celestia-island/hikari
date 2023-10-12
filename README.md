@@ -1,6 +1,30 @@
-<p align="center"><img src="./docs/logo.png" /></p>
+<div align="center"><img src="./docs/logo.png" /></div>
+<h1 align="center">Hikari</h1>
+<div align="center">
+ <strong>
+   The Frontend of Everything
+ </strong>
+</div>
 
-# Hikari - The Frontend of Everything
+<br />
+
+<div align="center">
+   <!-- CI status -->
+  <a href="https://github.com/async-rs/async-std/actions">
+    <img src="https://img.shields.io/github/actions/workflow/status/celestia-island/hikari/ci.yml?branch=main&style=flat-square"
+      alt="CI Status" />
+  </a>
+</div>
+
+<div align="center">
+  <h3>
+    <a href="https://celestia.world">
+      Website
+    </a>
+  </h3>
+</div>
+
+<br/>
 
 > Still in progress
 

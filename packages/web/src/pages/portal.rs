@@ -6,7 +6,7 @@ use gloo::net::http::Request;
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
-use crate::components::{
+use hikari_components::{
     form::{Button, ButtonGroup, TextInput},
     Color, Size,
 };

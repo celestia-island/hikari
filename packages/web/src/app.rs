@@ -12,12 +12,14 @@ use yew_router::{
 
 use crate::utils::{
     app_props::AppProps,
-    contexts::{app_props::AppPropsContextShell, theme::ThemeContextShell},
+    contexts::{
+        app_props::{AppPageProps, AppPropsContextShell},
+        theme::ThemeContextShell,
+    },
     routes::{switch, Route},
 };
-use crate::{
-    components::container::{AsideLayout, ContainerLayout, FooterLayout, HeaderLayout, MainLayout},
-    utils::contexts::app_props::AppPageProps,
+use hikari_components::container::{
+    AsideLayout, ContainerLayout, FooterLayout, HeaderLayout, MainLayout,
 };
 
 #[function_component]

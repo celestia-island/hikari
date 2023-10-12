@@ -33,8 +33,8 @@ tokio = { version = "^1", features = ["macros"] }
 tower = { version = "^0.4", features = ["make"] }
 tracing = "^0.1"
 tracing-subscriber = "^0.3"
-stylist = { version = "^0.12", features = ["yew_integration", "ssr"] }
-yew = { version = "^0.20", features = ["ssr", "hydration"] }
+stylist = { version = "^0.13", features = ["yew_integration", "ssr"] }
+yew = { version = "^0.21", features = ["ssr", "hydration"] }
 
 [dev-dependencies.web-sys]
 features = [

@@ -24,7 +24,7 @@ fn my_custom_command(window: tauri::Window, app_handle: tauri::AppHandle) -> Str
     "Hello from Rust".into()
 }
 
-#[tokio::main]
+#[async_std::main]
 async fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![my_custom_command])

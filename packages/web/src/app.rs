@@ -1,5 +1,3 @@
-use log::info;
-
 use stylist::{
     manager::StyleManager,
     yew::{styled_component, ManagerProvider},
@@ -18,9 +16,6 @@ use crate::utils::{
     },
     routes::{switch, Route},
 };
-use hikari_components::container::{
-    AsideLayout, ContainerLayout, FooterLayout, HeaderLayout, MainLayout,
-};
 
 #[function_component]
 pub fn App() -> Html {
@@ -30,32 +25,26 @@ pub fn App() -> Html {
     }))
     .to_owned();
 
-    // let page_data_el = web_sys::window()
-    //     .unwrap()
-    //     .document()
-    //     .unwrap()
-    //     .get_element_by_id("__ssr_data")
-    //     .unwrap();
-    // let page_data = page_data_el.inner_html();
-    // let page_data = {
-    //     use base64::Engine;
-    //     base64::engine::general_purpose::STANDARD_NO_PAD
-    //         .decode(page_data)
-    //         .unwrap()
-    // };
-    // let page_data = String::from_utf8(page_data).unwrap();
-    // let page_data: AppPageProps =
-    //     serde_json::from_str(&page_data).expect("Failed to parse page data.");
-
-    // wasm_bindgen_futures::spawn_local(async move {
-    //     page_data_el.remove();
-    // });
-
-    let page_data = AppPageProps::Portal {
-        id: "test".into(),
-        thread_list: vec![],
+    let page_data_el = web_sys::window()
+        .expect("Cannot get the global window object")
+        .document()
+        .expect("Cannot get the global document object")
+        .get_element_by_id("__ssr_data")
+        .expect("Cannot get the root DOM element");
+    let page_data = page_data_el.inner_html();
+    let page_data = {
+        use base64::Engine;
+        base64::engine::general_purpose::STANDARD_NO_PAD
+            .decode(page_data)
+            .unwrap()
     };
-    info!("{:?}", page_data);
+    let page_data = String::from_utf8(page_data).unwrap();
+    let page_data: AppPageProps =
+        serde_json::from_str(&page_data).expect("Failed to parse page data.");
+
+    wasm_bindgen_futures::spawn_local(async move {
+        page_data_el.remove();
+    });
 
     html! {
         <Suspense {fallback}>
@@ -108,32 +97,7 @@ fn ContextShell(props: &ContextProps) -> Html {
 pub fn Content() -> Html {
     html! {
         <>
-            <ContainerLayout>
-                <HeaderLayout>
-                    <img src="/logo.png" alt="logo" class={css!(r#"
-                        width: 48px;
-                        height: 48px;
-                        margin: 8px;
-                    "#)} />
-                    <h1>{"Header"}</h1>
-                </HeaderLayout>
-
-                <ContainerLayout>
-                    <AsideLayout>
-                        <p>{"Aside"}</p>
-                    </AsideLayout>
-
-                    <ContainerLayout>
-                        <MainLayout>
-                            <Switch<Route> render={switch} />
-                        </MainLayout>
-
-                        <FooterLayout>
-                            <p>{"Footer"}</p>
-                        </FooterLayout>
-                    </ContainerLayout>
-                </ContainerLayout>
-            </ContainerLayout>
+            <Switch<Route> render={switch} />
         </>
     }
 }

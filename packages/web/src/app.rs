@@ -1,7 +1,7 @@
 use crate::utils::{
     contexts::{
         app_props::{AppPageProps, AppPropsContextShell},
-        theme::ThemeContextShell,
+        app_states::AppStatesContextShell,
     },
     routes::{switch, Route},
 };
@@ -95,11 +95,11 @@ fn ContextShell(props: &__ContextProps) -> yew::Html {
     use yew::prelude::*;
 
     html! {
-        <ThemeContextShell>
+        <AppStatesContextShell>
             <AppPropsContextShell page_props={props.page_props.to_owned()}>
                 <Content />
             </AppPropsContextShell>
-        </ThemeContextShell>
+        </AppStatesContextShell>
     }
 }
 

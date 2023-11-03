@@ -1,15 +1,4 @@
-use stylist::{
-    manager::StyleManager,
-    yew::{styled_component, ManagerProvider},
-};
-use yew::prelude::*;
-use yew_router::{
-    history::{AnyHistory, History, MemoryHistory},
-    prelude::*,
-};
-
 use crate::utils::{
-    app_props::AppProps,
     contexts::{
         app_props::{AppPageProps, AppPropsContextShell},
         theme::ThemeContextShell,
@@ -17,8 +6,20 @@ use crate::utils::{
     routes::{switch, Route},
 };
 
-#[function_component]
-pub fn App() -> Html {
+#[derive(yew::Properties, PartialEq, Debug)]
+pub struct AppProps {
+    pub style_manager: stylist::manager::StyleManager,
+    pub url: yew::AttrValue,
+    pub queries: std::collections::HashMap<String, String>,
+    pub page_data: AppPageProps,
+}
+
+#[yew::function_component]
+pub fn App() -> yew::Html {
+    use stylist::{manager::StyleManager, yew::ManagerProvider};
+    use yew::prelude::*;
+    use yew_router::BrowserRouter;
+
     let fallback = html! { <div>{"Loading..."}</div> };
     let style_manager = (*use_memo((), |_| {
         StyleManager::new().expect("failed to create style manager.")
@@ -57,8 +58,15 @@ pub fn App() -> Html {
     }
 }
 
-#[function_component]
-pub fn ServerApp(props: &AppProps) -> Html {
+#[yew::function_component]
+pub fn ServerApp(props: &AppProps) -> yew::Html {
+    use stylist::yew::ManagerProvider;
+    use yew::prelude::*;
+    use yew_router::{
+        history::{AnyHistory, History, MemoryHistory},
+        prelude::*,
+    };
+
     let fallback = html! { <div>{"Loading..."}</div> };
     let history = AnyHistory::from(MemoryHistory::new());
     history
@@ -76,14 +84,16 @@ pub fn ServerApp(props: &AppProps) -> Html {
     }
 }
 
-#[derive(Properties, Debug, PartialEq)]
-struct ContextProps {
+#[derive(yew::Properties, Debug, PartialEq)]
+struct __ContextProps {
     #[prop_or(AppPageProps::Portal{id: "".into(), thread_list: vec![]})]
     pub page_props: AppPageProps,
 }
 
-#[function_component]
-fn ContextShell(props: &ContextProps) -> Html {
+#[yew::function_component]
+fn ContextShell(props: &__ContextProps) -> yew::Html {
+    use yew::prelude::*;
+
     html! {
         <ThemeContextShell>
             <AppPropsContextShell page_props={props.page_props.to_owned()}>
@@ -93,8 +103,11 @@ fn ContextShell(props: &ContextProps) -> Html {
     }
 }
 
-#[styled_component]
-pub fn Content() -> Html {
+#[stylist::yew::styled_component]
+pub fn Content() -> yew::Html {
+    use yew::prelude::*;
+    use yew_router::prelude::*;
+
     html! {
         <>
             <Switch<Route> render={switch} />

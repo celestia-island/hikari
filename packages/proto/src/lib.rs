@@ -111,3 +111,90 @@ macro_rules! register_routes {
         }
     };
 }
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct AppProps<PageContextEnum: PartialEq + Default> {
+    pub style_manager: stylist::manager::StyleManager,
+    pub url: yew::AttrValue,
+    pub queries: std::collections::HashMap<String, String>,
+    pub page_data: PageContextEnum,
+}
+
+#[derive(yew::Properties, Debug, PartialEq, Clone)]
+pub struct ContextProps<PageContextEnum: PartialEq + Default> {
+    #[prop_or_default]
+    pub page_props: PageContextEnum,
+}
+
+pub trait WebClient<PageContextEnum: PartialEq + Default> {
+    // <..., StateContextEnum>
+    fn App(&self) -> yew::Html;
+    fn ServerApp(&self, props: &AppProps<PageContextEnum>) -> yew::Html;
+    fn ContextShell(&self, props: &ContextProps<PageContextEnum>) -> yew::Html;
+}
+
+#[cfg(test)]
+mod test {
+    use serde::{Deserialize, Serialize};
+    use yew::prelude::*;
+
+    use crate::{AppProps, ContextProps, WebClient};
+
+    #[derive(PartialEq, Eq, Clone, Debug, Serialize, Deserialize)]
+    pub enum AppPageProps {
+        Portal {
+            id: String,
+            thread_list: Vec<String>,
+        },
+
+        Personal {
+            id: String,
+            name: String,
+            email: String,
+        },
+
+        Thread {
+            id: String,
+            title: String,
+            content: String,
+            comments: Vec<String>,
+        },
+    }
+
+    impl Default for AppPageProps {
+        fn default() -> Self {
+            AppPageProps::Portal {
+                id: "".into(),
+                thread_list: vec![],
+            }
+        }
+    }
+
+    struct Test;
+
+    impl WebClient<AppPageProps> for Test {
+        fn App(&self) -> yew::Html {
+            html! {
+                <div></div>
+            }
+        }
+
+        fn ServerApp(&self, props: &AppProps<AppPageProps>) -> yew::Html {
+            html! {
+                <div></div>
+            }
+        }
+
+        fn ContextShell(&self, props: &ContextProps<AppPageProps>) -> yew::Html {
+            html! {
+                <div></div>
+            }
+        }
+    }
+
+    #[test]
+    fn test() {
+        let n = Test {};
+        let _ = n.App();
+    }
+}

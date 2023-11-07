@@ -2,7 +2,7 @@
 mod test {
     use serde::{Deserialize, Serialize};
 
-    use hikari_proto_macros::register_routes;
+    use hikari_proto_macros::as_routes;
 
     #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
     pub enum AppPageProps {
@@ -34,7 +34,7 @@ mod test {
         }
     }
 
-    #[register_routes(AppPageProps)]
+    #[as_routes(AppPageProps)]
     pub struct WebApp {}
 
     #[test]

@@ -1,6 +1,6 @@
 [package]
 authors = ["langyo <langyo.china@gmail.com>"]
-name = "hikari-macros-temp"
+name = "hikari-proto-macros"
 
 version = "0.1.0"
 edition = "2021"

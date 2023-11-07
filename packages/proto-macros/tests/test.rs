@@ -2,7 +2,7 @@
 mod test {
     use serde::{Deserialize, Serialize};
 
-    use hikari_macros_temp::register_routes;
+    use hikari_proto_macros::register_routes;
 
     #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
     pub enum AppPageProps {

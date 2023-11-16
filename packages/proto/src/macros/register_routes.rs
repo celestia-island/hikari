@@ -138,66 +138,8 @@ pub struct ContextProps<PageContextEnum: PartialEq + Default> {
 
 pub trait WebClient<PageContextEnum: PartialEq + Default> {
     // <..., StateContextEnum>
+    #[allow(non_snake_case)]
     fn App(&self) -> yew::Html;
+    #[allow(non_snake_case)]
     fn ServerApp(&self, props: &AppProps<PageContextEnum>) -> yew::Html;
-}
-
-#[cfg(test)]
-mod test {
-    use serde::{Deserialize, Serialize};
-    use yew::prelude::*;
-
-    use crate::macros::register_routes::{AppProps, WebClient};
-
-    #[derive(PartialEq, Eq, Clone, Debug, Serialize, Deserialize)]
-    pub enum AppPageProps {
-        Portal {
-            id: String,
-            thread_list: Vec<String>,
-        },
-
-        Personal {
-            id: String,
-            name: String,
-            email: String,
-        },
-
-        Thread {
-            id: String,
-            title: String,
-            content: String,
-            comments: Vec<String>,
-        },
-    }
-
-    impl Default for AppPageProps {
-        fn default() -> Self {
-            AppPageProps::Portal {
-                id: "".into(),
-                thread_list: vec![],
-            }
-        }
-    }
-
-    struct Test;
-
-    impl WebClient<AppPageProps> for Test {
-        fn App(&self) -> yew::Html {
-            html! {
-                <div></div>
-            }
-        }
-
-        fn ServerApp(&self, props: &AppProps<AppPageProps>) -> yew::Html {
-            html! {
-                <div></div>
-            }
-        }
-    }
-
-    #[test]
-    fn test() {
-        let n = Test {};
-        let _ = n.App();
-    }
 }

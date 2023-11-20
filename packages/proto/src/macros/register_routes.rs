@@ -13,7 +13,7 @@ macro_rules! register_routes {
             #[derive(yew::Properties, PartialEq, Debug)]
             pub struct AppProps {
                 pub style_manager: stylist::manager::StyleManager,
-                pub url: yew::AttrValue,
+                pub uri: yew::AttrValue,
                 pub queries: std::collections::HashMap<String, String>,
                 pub page_data: $page_props,
             }
@@ -74,7 +74,7 @@ macro_rules! register_routes {
                 let fallback = html! { <div>{"Loading..."}</div> };
                 let history = AnyHistory::from(MemoryHistory::new());
                 history
-                    .push_with_query(&*props.url, &props.queries)
+                    .push_with_query(&*props.uri, &props.queries)
                     .unwrap();
 
                 html! {
@@ -125,7 +125,7 @@ macro_rules! register_routes {
 #[derive(Debug, PartialEq, Clone)]
 pub struct AppProps<PageContextEnum: PartialEq + Default> {
     pub style_manager: stylist::manager::StyleManager,
-    pub url: yew::AttrValue,
+    pub uri: yew::AttrValue,
     pub queries: std::collections::HashMap<String, String>,
     pub page_data: PageContextEnum,
 }

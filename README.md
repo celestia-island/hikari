@@ -9,10 +9,14 @@
 <br />
 
 <div align="center">
-   <!-- CI status -->
+  <!-- CI status -->
   <a href="https://github.com/async-rs/async-std/actions">
     <img src="https://img.shields.io/github/actions/workflow/status/celestia-island/hikari/ci.yml?branch=main&style=flat-square"
       alt="CI Status" />
+  </a>
+  <!-- Built with -->
+  <a href="https://sagiegurari.github.io/cargo-make">
+    <img src="https://sagiegurari.github.io/cargo-make/assets/badges/cargo-make.svg" alt="Built with cargo-make">
   </a>
 </div>
 

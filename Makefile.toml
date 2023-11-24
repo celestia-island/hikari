@@ -8,4 +8,7 @@ script = '''
 
 exec cargo build --package hikari-web --target wasm32-unknown-unknown --release
 exec wasm-bindgen --out-dir ./target/wasm32-html --out-name a --target no-modules --no-typescript --no-modules-global __wasm_vendor_entry ./target/wasm32-unknown-unknown/release/hikari_web.wasm
+
+cp ./target/wasm32-html/a.js ./packages/app/res/a.js
+cp ./target/wasm32-html/a_bg.wasm ./packages/app/res/a.wasm
 '''

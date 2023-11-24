@@ -30,26 +30,30 @@ macro_rules! register_routes {
                 }))
                 .to_owned();
 
-                let page_data_el = web_sys::window()
-                    .expect("Cannot get the global window object")
-                    .document()
-                    .expect("Cannot get the global document object")
-                    .get_element_by_id("__ssr_data")
-                    .expect("Cannot get the root DOM element");
-                let page_data = page_data_el.inner_html();
-                let page_data = {
-                    use base64::Engine;
-                    base64::engine::general_purpose::STANDARD_NO_PAD
-                        .decode(page_data)
-                        .unwrap()
-                };
-                let page_data = String::from_utf8(page_data).unwrap();
-                let page_data: AppPageProps =
-                    serde_json::from_str(&page_data).expect("Failed to parse page data.");
+                // let page_data_el = web_sys::window()
+                //     .expect("Cannot get the global window object")
+                //     .document()
+                //     .expect("Cannot get the global document object")
+                //     .get_element_by_id("__ssr_data")
+                //     .expect("Cannot get the root DOM element");
+                // let page_data = page_data_el.inner_html();
+                // let page_data = {
+                //     use base64::Engine;
+                //     base64::engine::general_purpose::STANDARD_NO_PAD
+                //         .decode(page_data)
+                //         .unwrap()
+                // };
+                // let page_data = String::from_utf8(page_data).unwrap();
+                // let page_data: AppPageProps =
+                //     serde_json::from_str(&page_data).expect("Failed to parse page data.");
 
-                wasm_bindgen_futures::spawn_local(async move {
-                    page_data_el.remove();
-                });
+                // wasm_bindgen_futures::spawn_local(async move {
+                //     page_data_el.remove();
+                // });
+                let page_data = AppPageProps::Portal {
+                    id: "".into(),
+                    thread_list: vec![],
+                };
 
                 html! {
                     <Suspense {fallback}>

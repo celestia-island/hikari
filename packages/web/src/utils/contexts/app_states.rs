@@ -137,7 +137,7 @@ pub fn AppStatesContextShell(props: &AppStatesContextProviderProps) -> Html {
             placeholder_text_color: rgb_to_dec(0xc2ccd0), // 花白 Huā Bái
 
             shadow_color_rgba: "rgba(0, 0, 0, 0.6)".into(),
-            background_color: rgb_to_dec(0xf2fdff), // 雪白 Xuě Bái
+            background_color: "rgba(255, 255, 255, 0.2)".into(),
 
             large_text_size: "18px".into(),
             medium_text_size: "16px".into(),

@@ -11,12 +11,12 @@ default = []
 devtools = []
 
 [build-dependencies]
-tauri-build = { version = "^1", features = [] }
+tauri-build = "^1"
 
 [dependencies]
 anyhow = "^1"
 chrono = "^0.4"
 env_logger = "^0.10"
 log = "^0.4"
-tauri = "^1"
+tauri = { version = "^1", features = ["window-start-dragging"] }
 async-std = { version = "^1", features = ["attributes", "tokio1"] }

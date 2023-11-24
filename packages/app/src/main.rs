@@ -3,7 +3,7 @@
     windows_subsystem = "windows"
 )]
 
-use tauri::Manager;
+use anyhow::Result;
 
 #[tauri::command]
 fn my_custom_command(window: tauri::Window, app_handle: tauri::AppHandle) -> String {
@@ -25,18 +25,24 @@ fn my_custom_command(window: tauri::Window, app_handle: tauri::AppHandle) -> Str
 }
 
 #[async_std::main]
-async fn main() {
-    tauri::Builder::default()
+async fn main() -> Result<()> {
+    let app = tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![my_custom_command])
-        .setup(|app| {
-            let window = app.get_window("main").unwrap();
-            window.center().unwrap();
+        .setup(|_app| Ok(()))
+        .build(tauri::generate_context!("./tauri.conf.json"))?;
 
-            #[cfg(feature = "devtools")]
-            window.open_devtools();
+    for id in 1..=3 {
+        tauri::WindowBuilder::new(
+            &app,
+            format!("local{id}"),
+            tauri::WindowUrl::App("index.html".into()),
+        )
+        .transparent(true)
+        .decorations(false)
+        .build()?;
+    }
 
-            Ok(())
-        })
-        .run(tauri::generate_context!("./tauri.conf.json"))
-        .unwrap();
+    app.run(|_, _| {});
+
+    Ok(())
 }

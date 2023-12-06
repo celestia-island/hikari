@@ -11,7 +11,7 @@
 <div align="center">
   <!-- CI status -->
   <a href="https://github.com/async-rs/async-std/actions">
-    <img src="https://img.shields.io/github/actions/workflow/status/celestia-island/hikari/ci.yml?branch=main&style=flat-square"
+    <img src="https://img.shields.io/github/actions/workflow/status/celestia-island/hikari/ci.yml?branch=main"
       alt="CI Status" />
   </a>
   <!-- Built with -->

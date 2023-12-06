@@ -1,7 +1,7 @@
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
-use super::super::{Color, Size};
+use hikari_components_container::types::{Color, Size};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BorderRadiusType {

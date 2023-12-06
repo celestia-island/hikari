@@ -1,7 +1,8 @@
 use stylist::yew::styled_component;
 use yew::{html::ChildrenRenderer, prelude::*, virtual_dom::VChild};
 
-use super::super::{Color, Size};
+use hikari_components_container::types::{Color, Size};
+
 use super::button::{BorderRadiusType, Button, ButtonGroupInjectorContextShell};
 
 #[derive(Clone, derive_more::From, PartialEq)]

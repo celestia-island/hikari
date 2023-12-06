@@ -1,0 +1,44 @@
+[package]
+authors = ["langyo <langyo.china@gmail.com>"]
+name = "hikari-components-form"
+
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+hikari-components-container = { path = "../components-container", version = "*" }
+
+anyhow = "^1"
+base64 = "^0.21"
+derive_more = "*"
+gloo = "^0.10"
+serde = { version = "^1", features = ["derive"] }
+serde_json = "^1"
+strum = "^0.25"
+strum_macros = "^0.25"
+
+console_log = "^1"
+js-sys = "^0.3"
+log = "^0.4"
+wasm-bindgen = "0.2.87"
+wasm-bindgen-futures = "^0.4"
+wasm-logger = "^0.2"
+
+stylist = { version = "^0.13", features = ["yew_integration", "hydration"] }
+yew = { version = "^0.21", features = ["csr", "hydration"] }
+
+[dependencies.web-sys]
+features = [
+  "Window",
+  "Document",
+  "Element",
+  "HtmlElement",
+  "HtmlHeadElement",
+  "HtmlStyleElement",
+  "CssStyleDeclaration",
+]
+version = "^0.3"

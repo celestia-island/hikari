@@ -6,10 +6,7 @@ use gloo::net::http::Request;
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
-use hikari_components::{
-    form::{Button, ButtonGroup, TextInput},
-    Color, Size,
-};
+use hikari_components::{Button, ButtonGroup, Color, Size, TextInput};
 
 #[styled_component]
 pub fn Portal() -> Html {

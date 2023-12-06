@@ -1,6 +1,6 @@
 [package]
 authors = ["langyo <langyo.china@gmail.com>"]
-name = "hikari-web"
+name = "hikari-example-web"
 
 version = "0.1.0"
 edition = "2021"
@@ -10,8 +10,8 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-hikari-components = { path = "../components", version = "*" }
-hikari-proto = { path = "../proto", version = "*" }
+hikari-components = { path = "../../packages/components", version = "*" }
+hikari-proto = { path = "../../packages/proto", version = "*" }
 
 anyhow = "^1"
 base64 = "^0.21"

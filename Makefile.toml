@@ -6,6 +6,6 @@ skip_core_tasks = true
 script = '''
 #!@duckscript
 
-exec cargo build --package hikari-web --target wasm32-unknown-unknown --release
-exec wasm-bindgen --out-dir ./target/wasm32-html --out-name a --target no-modules --no-typescript --no-modules-global __wasm_vendor_entry ./target/wasm32-unknown-unknown/release/hikari_web.wasm
+exec cargo build --package hikari-example-web --target wasm32-unknown-unknown --release
+exec wasm-bindgen --out-dir ./target/wasm32-html --out-name a --target no-modules --no-typescript --no-modules-global __wasm_vendor_entry ./target/wasm32-unknown-unknown/release/hikari_example_web.wasm
 '''

@@ -1,6 +1,13 @@
-pub use hikari_components_container::*;
-pub use hikari_components_data::*;
-pub use hikari_components_form::*;
-pub use hikari_components_navigation::*;
+pub use hikari_components_container as container;
+pub use hikari_components_data as data;
+pub use hikari_components_form as form;
+pub use hikari_components_navigation as navigation;
 
-pub use hikari_components_container::types::*;
+pub mod prelude {
+    pub use crate::container::*;
+    pub use crate::data::*;
+    pub use crate::form::*;
+    pub use crate::navigation::*;
+
+    pub use hikari_theme::prelude::*;
+}

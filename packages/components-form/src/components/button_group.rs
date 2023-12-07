@@ -1,7 +1,7 @@
 use stylist::yew::styled_component;
 use yew::{html::ChildrenRenderer, prelude::*, virtual_dom::VChild};
 
-use hikari_components_container::types::{Color, Size};
+use hikari_theme::prelude::*;
 
 use super::button::{BorderRadiusType, Button, ButtonGroupInjectorContextShell};
 
@@ -10,7 +10,6 @@ pub enum ButtonGroupVariant {
     Button(VChild<Button>),
 }
 
-#[allow(clippy::from_over_into)]
 impl Into<Html> for ButtonGroupVariant {
     fn into(self) -> Html {
         match self {
@@ -21,10 +20,10 @@ impl Into<Html> for ButtonGroupVariant {
 
 #[derive(Properties, Debug, PartialEq)]
 pub struct ButtonGroupProps {
-    #[prop_or(Size::Medium)]
-    pub size: Size,
-    #[prop_or(Color::Primary)]
-    pub color: Color,
+    #[prop_or(SizeType::Medium)]
+    pub size: SizeType,
+    #[prop_or(ColorType::Primary)]
+    pub color: ColorType,
     #[prop_or(false)]
     pub outlined: bool,
 
@@ -51,9 +50,6 @@ pub fn ButtonGroup(props: &ButtonGroupProps) -> Html {
                 flex-direction: row;
             "#)}>
                 <ButtonGroupInjectorContextShell
-                    size={props.size}
-                    color={props.color}
-                    outlined={props.outlined}
                     border_radius_type={BorderRadiusType::OnlyLeft}
                 >
                     {
@@ -67,9 +63,6 @@ pub fn ButtonGroup(props: &ButtonGroupProps) -> Html {
 
                 {props.children.iter().skip(1).take(props.children.len() - 2).map(|child| html! {
                     <ButtonGroupInjectorContextShell
-                        size={props.size}
-                        color={props.color}
-                        outlined={props.outlined}
                         border_radius_type={BorderRadiusType::None}
                     >
                         {{
@@ -80,9 +73,6 @@ pub fn ButtonGroup(props: &ButtonGroupProps) -> Html {
                 }).collect::<Html>()}
 
                 <ButtonGroupInjectorContextShell
-                    size={props.size}
-                    color={props.color}
-                    outlined={props.outlined}
                     border_radius_type={BorderRadiusType::OnlyRight}
                 >
                     {

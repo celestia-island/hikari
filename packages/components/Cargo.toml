@@ -14,6 +14,7 @@ hikari-components-container = { path = "../components-container", version = "*" 
 hikari-components-data = { path = "../components-data", version = "*", optional = true }
 hikari-components-form = { path = "../components-form", version = "*", optional = true }
 hikari-components-navigation = { path = "../components-navigation", version = "*", optional = true }
+hikari-theme = { path = "../theme", version = "*" }
 
 anyhow = "^1"
 serde = { version = "^1", features = ["derive"] }

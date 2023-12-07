@@ -1,33 +1,31 @@
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
-use hikari_components_container::types::{Color, Size};
+use hikari_theme::prelude::*;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum BorderRadiusType {
+    #[default]
     Default,
     None,
     OnlyLeft,
     OnlyRight,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ButtonGroupInjectorContext {
-    pub size: Size,
-    pub color: Color,
-    pub outlined: bool,
     pub border_radius_type: BorderRadiusType,
 }
 
 #[derive(Properties, Debug, PartialEq)]
 pub struct ButtonGroupInjectorContextProviderProps {
-    #[prop_or(Size::Medium)]
-    pub size: Size,
-    #[prop_or(Color::Primary)]
-    pub color: Color,
+    #[prop_or(SizeType::Medium)]
+    pub size: SizeType,
+    #[prop_or(ColorType::Primary)]
+    pub color: ColorType,
     #[prop_or(false)]
     pub outlined: bool,
-    #[prop_or(BorderRadiusType::Default)]
+    #[prop_or_default]
     pub border_radius_type: BorderRadiusType,
 
     #[prop_or_default]
@@ -39,9 +37,6 @@ pub type ButtonGroupInjectorContextProviderType = UseStateHandle<ButtonGroupInje
 #[function_component]
 pub fn ButtonGroupInjectorContextShell(props: &ButtonGroupInjectorContextProviderProps) -> Html {
     let ctx = use_state(|| ButtonGroupInjectorContext {
-        size: props.size,
-        color: props.color,
-        outlined: props.outlined,
         border_radius_type: props.border_radius_type,
     });
 
@@ -54,12 +49,12 @@ pub fn ButtonGroupInjectorContextShell(props: &ButtonGroupInjectorContextProvide
 
 #[derive(Properties, Debug, PartialEq)]
 pub struct ButtonProps {
-    #[prop_or(None)]
-    pub size: Option<Size>,
-    #[prop_or(None)]
-    pub color: Option<Color>,
-    #[prop_or(None)]
-    pub outlined: Option<bool>,
+    #[prop_or_default]
+    pub size: SizeType,
+    #[prop_or_default]
+    pub color: ColorType,
+    #[prop_or(false)]
+    pub outlined: bool,
 
     #[prop_or_default]
     pub onclick: Callback<MouseEvent>,
@@ -70,36 +65,14 @@ pub struct ButtonProps {
 
 #[styled_component]
 pub fn Button(props: &ButtonProps) -> Html {
-    let is_hover = use_state(|| false);
-    let is_active = use_state(|| false);
-
-    let button_radius_type = use_context::<ButtonGroupInjectorContextProviderType>();
-
-    let size = match props.size {
-        Some(size) => size,
-        None => match &button_radius_type {
-            Some(ctx) => ctx.size,
-            None => Size::Medium,
-        },
-    };
-    let color = match props.color {
-        Some(color) => color,
-        None => match &button_radius_type {
-            Some(ctx) => ctx.color,
-            None => Color::Primary,
-        },
-    };
-    let outlined = match props.outlined {
-        Some(outlined) => outlined,
-        None => match &button_radius_type {
-            Some(ctx) => ctx.outlined,
-            None => false,
-        },
-    };
-    let border_radius_type = match &button_radius_type {
+    let radius_type = use_context::<ButtonGroupInjectorContextProviderType>();
+    let radius_type = match &radius_type {
         Some(ctx) => ctx.border_radius_type,
         None => BorderRadiusType::Default,
     };
+
+    let is_hover = use_state(|| false);
+    let is_active = use_state(|| false);
 
     let on_mouseenter = {
         let is_hover = is_hover.clone();
@@ -167,12 +140,12 @@ pub fn Button(props: &ButtonProps) -> Html {
                 }
             "#)}
 
-            data-size={match size {
-                Size::Small => "small",
-                Size::Medium => "medium",
-                Size::Large => "large",
+            data-size={match props.size {
+                SizeType::Small => "small",
+                SizeType::Medium => "medium",
+                SizeType::Large => "large",
             }}
-            data-border-radius-type={match border_radius_type {
+            data-border-radius-type={match radius_type {
                 BorderRadiusType::Default => "default",
                 BorderRadiusType::None => "none",
                 BorderRadiusType::OnlyLeft => "only-left",
@@ -253,15 +226,15 @@ pub fn Button(props: &ButtonProps) -> Html {
                     }
                 "#)}
 
-                data-color={match color {
-                    Color::Primary => "primary",
-                    Color::Secondary => "secondary",
-                    Color::Success => "success",
-                    Color::Error => "error",
-                    Color::Info => "info",
-                    Color::Warning => "warning",
+                data-color={match props.color {
+                    ColorType::Primary => "primary",
+                    ColorType::Secondary => "secondary",
+                    ColorType::Success => "success",
+                    ColorType::Error => "error",
+                    ColorType::Info => "info",
+                    ColorType::Warning => "warning",
                 }}
-                data-style={if outlined {
+                data-style={if props.outlined {
                     "outlined"
                 } else {
                     "basic"
@@ -271,7 +244,7 @@ pub fn Button(props: &ButtonProps) -> Html {
                     (true, false) => "hover",
                     _ => "none",
                 }}
-                data-border-radius-type={match border_radius_type {
+                data-border-radius-type={match radius_type {
                     BorderRadiusType::Default => "default",
                     BorderRadiusType::None => "none",
                     BorderRadiusType::OnlyLeft => "only-left",
@@ -317,7 +290,7 @@ pub fn Button(props: &ButtonProps) -> Html {
                     true => "hover",
                     false => "none",
                 }}
-                data-border-radius-type={match border_radius_type {
+                data-border-radius-type={match radius_type {
                     BorderRadiusType::Default => "default",
                     BorderRadiusType::None => "none",
                     BorderRadiusType::OnlyLeft => "only-left",
@@ -383,20 +356,20 @@ pub fn Button(props: &ButtonProps) -> Html {
                     }
                 "#)}
 
-                data-color={match color {
-                    Color::Primary => "primary",
-                    Color::Secondary => "secondary",
-                    Color::Success => "success",
-                    Color::Error => "error",
-                    Color::Info => "info",
-                    Color::Warning => "warning",
+                data-color={match props.color {
+                    ColorType::Primary => "primary",
+                    ColorType::Secondary => "secondary",
+                    ColorType::Success => "success",
+                    ColorType::Error => "error",
+                    ColorType::Info => "info",
+                    ColorType::Warning => "warning",
                 }}
-                data-size={match size {
-                    Size::Small => "small",
-                    Size::Medium => "medium",
-                    Size::Large => "large",
+                data-size={match props.size {
+                    SizeType::Small => "small",
+                    SizeType::Medium => "medium",
+                    SizeType::Large => "large",
                 }}
-                data-style={if outlined {
+                data-style={if props.outlined {
                     "outlined"
                 } else {
                     "basic"

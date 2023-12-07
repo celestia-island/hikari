@@ -6,7 +6,7 @@ use gloo::net::http::Request;
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
-use hikari_components::{Button, ButtonGroup, Color, Size, TextInput};
+use hikari_components::prelude::*;
 
 #[styled_component]
 pub fn Portal() -> Html {
@@ -64,31 +64,31 @@ pub fn Portal() -> Html {
             </Button>
             <p>{&*data}</p>
             <div>
-                <Button outlined={true} size={Size::Large}>
+                <Button outlined={true} size={SizeType::Large}>
                     {"Test Biiiiiig Button"}
                 </Button>
                 <Button outlined={true}>
                     {"Test"}
                 </Button>
-                <Button outlined={true} size={Size::Small}>
+                <Button outlined={true} size={SizeType::Small}>
                     {"Test Small Button"}
                 </Button>
                 <Button>
                     {"Test"}
                 </Button>
-                <Button color={Color::Secondary}>
+                <Button color={ColorType::Secondary}>
                     {"Test"}
                 </Button>
-                <Button color={Color::Success}>
+                <Button color={ColorType::Success}>
                     {"Test"}
                 </Button>
-                <Button color={Color::Warning}>
+                <Button color={ColorType::Warning}>
                     {"Test"}
                 </Button>
-                <Button color={Color::Error}>
+                <Button color={ColorType::Error}>
                     {"Test"}
                 </Button>
-                <Button color={Color::Info}>
+                <Button color={ColorType::Info}>
                     {"Test"}
                 </Button>
             </div>
@@ -96,16 +96,16 @@ pub fn Portal() -> Html {
             <ButtonGroup>
                 <Button>{"Test"}</Button>
             </ButtonGroup>
-            <ButtonGroup size={Size::Large}>
+            <ButtonGroup size={SizeType::Large}>
                 <Button>{"Test"}</Button>
                 <Button>{"Test"}</Button>
             </ButtonGroup>
-            <ButtonGroup outlined={true} color={Color::Success}>
+            <ButtonGroup outlined={true} color={ColorType::Success}>
                 <Button>{"Test"}</Button>
                 <Button>{"Test"}</Button>
                 <Button>{"Test"}</Button>
             </ButtonGroup>
-            <ButtonGroup size={Size::Small} color={Color::Warning}>
+            <ButtonGroup size={SizeType::Small} color={ColorType::Warning}>
                 <Button>{"Test"}</Button>
                 <Button>{"Test"}</Button>
                 <Button>{"Test"}</Button>

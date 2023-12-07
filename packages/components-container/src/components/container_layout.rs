@@ -3,7 +3,7 @@ use yew::{html::ChildrenRenderer, prelude::*, virtual_dom::VChild};
 
 use super::{AsideLayout, FooterLayout, HeaderLayout, MainLayout};
 
-#[derive(Clone, derive_more::From, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum ContainerLayoutVariant {
     AsideLayout(VChild<AsideLayout>),
     FooterLayout(VChild<FooterLayout>),

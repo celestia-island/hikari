@@ -11,6 +11,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 hikari-components-container = { path = "../components-container", version = "*" }
+hikari-theme = { path = "../theme", version = "*" }
 
 anyhow = "^1"
 base64 = "^0.21"

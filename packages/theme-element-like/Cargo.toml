@@ -1,0 +1,13 @@
+[package]
+authors = ["langyo <langyo.china@gmail.com>"]
+name = "hikari-theme-element-like"
+
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+hikari-theme = { path = "../theme", version = "*" }

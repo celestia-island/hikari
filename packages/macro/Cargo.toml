@@ -1,18 +1,15 @@
 [package]
 authors = ["langyo <langyo.china@gmail.com>"]
-name = "hikari-example-web"
+name = "hikari-macro"
 
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+proc-macro = true
 
 [dependencies]
-hikari-components = { path = "../../packages/components", version = "*" }
-hikari-boot = { path = "../../packages/boot", version = "*" }
-
 anyhow = "^1"
 base64 = "^0.21"
 derive_more = "*"
@@ -21,6 +18,10 @@ serde = { version = "^1", features = ["derive"] }
 serde_json = "^1"
 strum = "^0.25"
 strum_macros = "^0.25"
+
+syn = { version = "^2", features = ["full"] }
+proc-macro2 = "^1"
+quote = "^1"
 
 console_log = "^1"
 js-sys = "^0.3"

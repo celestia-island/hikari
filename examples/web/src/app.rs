@@ -1,4 +1,4 @@
-use hikari_proto::register_routes;
+use hikari_boot::register_routes;
 
 register_routes!(
     app,

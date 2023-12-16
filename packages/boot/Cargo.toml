@@ -1,12 +1,17 @@
 [package]
 authors = ["langyo <langyo.china@gmail.com>"]
-name = "hikari-proto"
+name = "hikari-boot"
 
 version = "0.1.0"
 edition = "2021"
 publish = false
 
+[lib]
+crate-type = ["rlib"]
+
 [dependencies]
+hikari-macro = { path = "../macro", version = "*" }
+
 anyhow = "^1"
 base64 = "^0.21"
 derive_more = "*"

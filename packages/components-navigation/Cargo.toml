@@ -10,8 +10,8 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-hikari-components-container = { path = "../components-container", version = "*" }
-hikari-theme = { path = "../theme", version = "*" }
+hikari-components-container = { path = "../components-container" }
+hikari-theme = { path = "../theme" }
 
 anyhow = "^1"
 base64 = "^0.21"

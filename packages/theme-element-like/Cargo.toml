@@ -10,4 +10,4 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-hikari-theme = { path = "../theme", version = "*" }
+hikari-theme = { path = "../theme" }

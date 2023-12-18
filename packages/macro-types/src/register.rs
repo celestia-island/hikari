@@ -1,21 +1,15 @@
 #![allow(non_snake_case)]
 
-pub trait DeriveRoutesTrait: yew_router::Routable {
-    fn switch(&self) -> yew::Html;
-}
+pub trait Routes: yew_router::Routable {}
 
-pub trait DeriveAppPropsTrait {
-    type AppProps;
-}
+pub trait AppProps {}
 
-pub trait DeriveAppStatesTrait {
-    type AppStates;
-}
+pub trait AppStates {}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct AppContext<T>
 where
-    T: DeriveAppPropsTrait,
+    T: AppProps,
 {
     pub style_manager: stylist::manager::StyleManager,
     pub uri: String,
@@ -23,16 +17,19 @@ where
     pub page_data: T,
 }
 
-pub trait Application: DeriveApplication {
+pub trait Application: DeriveApplicationType {
+    fn switch(&self) -> yew::Html;
+
     fn App(&self) -> yew::Html;
-    fn ServerApp(&self, props: &AppContext<<Self as DeriveApplication>::AppProps>) -> yew::Html;
+    fn ServerApp(&self, props: &AppContext<<Self as DeriveApplicationType>::AppProps>)
+        -> yew::Html;
 }
 
-pub trait DeriveApplication
+pub trait DeriveApplicationType
 where
-    Self::Routes: DeriveRoutesTrait,
-    Self::AppProps: DeriveAppPropsTrait,
-    Self::AppStates: DeriveAppStatesTrait,
+    Self::Routes: Routes + yew_router::Routable,
+    Self::AppProps: AppProps,
+    Self::AppStates: AppStates,
 {
     type Routes;
     type AppProps;

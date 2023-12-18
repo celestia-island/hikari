@@ -7,7 +7,9 @@ mod test {
     use yew::prelude::*;
     use yew_router::prelude::*;
 
-    use hikari_boot::{DeriveAppProps, DeriveAppStates, DeriveApplication, DeriveRoutes};
+    use hikari_boot::{
+        DeriveAppProps, DeriveAppStates, DeriveApplication, DeriveApplicationType, DeriveRoutes,
+    };
 
     #[function_component]
     fn Portal() -> yew::Html {
@@ -16,49 +18,71 @@ mod test {
         }
     }
 
-    // #[derive(yew::Properties, PartialEq, Eq, Clone, Debug, Serialize, Deserialize)]
-    // pub struct ThreadProps {
-    //     pub id: String,
-    // }
-
-    // #[function_component]
-    // fn Thread(props: &ThreadProps) -> yew::Html {
-    //     html! {
-    //         <div>{format!("Thread {}", props.id)}</div>
-    //     }
-    // }
-
-    #[derive(Clone, Debug)]
-    pub struct Router;
-
-    impl DeriveApplication for Router {
-        type Routes = Routes;
-        type AppProps = PageProps;
-        type AppStates = Theme;
+    #[derive(Properties, Clone, PartialEq, Debug, Serialize, Deserialize)]
+    pub struct ThreadProps {
+        pub id: String,
     }
 
-    #[derive(PartialEq, Eq, Clone, Debug, DeriveRoutes, Routable)]
+    #[function_component]
+    fn Thread(props: &ThreadProps) -> yew::Html {
+        html! {
+            <div>{format!("Thread {}", props.id)}</div>
+        }
+    }
+
+    #[derive(PartialEq, Clone, Debug, DeriveRoutes, Routable)]
     pub enum Routes {
         #[at("/")]
-        #[component(Portal)]
         Portal,
-        //
-        // #[at("/t/:id")]
-        // #[component(Thread)]
-        // Thread { id: String },
+
+        #[at("/t/:id")]
+        Thread { id: String },
     }
 
-    #[derive(PartialEq, Eq, Clone, Debug, DeriveAppStates, Serialize, Deserialize)]
-    pub struct Theme {
+    #[derive(PartialEq, Clone, Debug, DeriveAppStates, Serialize, Deserialize)]
+    pub struct AppStates {
         pub color: String,
     }
 
-    #[derive(PartialEq, Eq, Clone, Debug, DeriveAppProps, Serialize, Deserialize)]
-    pub enum PageProps {
+    #[derive(PartialEq, Clone, Debug, DeriveAppProps, Serialize, Deserialize)]
+    pub enum AppProps {
+        #[component(Portal)]
         Portal,
-        //
-        // Thread {
-        //     id: String,
-        // },
+
+        #[component(Thread)]
+        Thread(ThreadProps),
+    }
+
+    #[derive(Clone, Debug, DeriveApplication)]
+    pub struct App;
+
+    impl DeriveApplicationType for App {
+        type Routes = Routes;
+        type AppProps = AppProps;
+        type AppStates = AppStates;
+    }
+
+    #[test]
+    fn render_on_server() {
+        let html = App.ServerApp("/", AppProps::Portal);
+
+        assert_eq!(
+            html,
+            yew::html! {
+                <div>{"Portal"}</div>
+            }
+        );
+    }
+
+    #[wasm_bindgen_test::wasm_bindgen_test]
+    fn render_on_client() {
+        let html = App.App();
+
+        assert_eq!(
+            html,
+            yew::html! {
+                <div>{"Portal"}</div>
+            }
+        );
     }
 }

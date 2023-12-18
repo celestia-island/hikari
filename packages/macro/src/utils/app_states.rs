@@ -20,7 +20,7 @@ pub fn root(input: DeriveAppStates) -> TokenStream {
 
     quote! {
         #[automatically_derived]
-        impl ::hikari_boot::DeriveAppStatesTrait for #ident {
+        impl ::hikari_boot::AppStates for #ident {
             type AppStates = Self;
         }
     }

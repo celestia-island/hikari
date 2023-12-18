@@ -3,13 +3,19 @@ use syn::parse_macro_input;
 
 mod utils;
 
-#[proc_macro_derive(DeriveRoutes, attributes(component))]
+#[proc_macro_derive(DeriveApplication)]
+pub fn app(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as utils::app::DeriveApp);
+    utils::app::root(input).into()
+}
+
+#[proc_macro_derive(DeriveRoutes)]
 pub fn routes(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as utils::routes::DeriveRoutes);
     utils::routes::root(input).into()
 }
 
-#[proc_macro_derive(DeriveAppProps)]
+#[proc_macro_derive(DeriveAppProps, attributes(component))]
 pub fn app_props(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as utils::app_props::DeriveAppProps);
     utils::app_props::root(input).into()

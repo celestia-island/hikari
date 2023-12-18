@@ -1,4 +1,2 @@
-mod types;
-pub use types::*;
-
 pub use hikari_macro::*;
+pub use hikari_macro_types::*;

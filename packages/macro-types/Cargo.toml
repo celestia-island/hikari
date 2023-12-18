@@ -1,18 +1,12 @@
 [package]
 authors = ["langyo <langyo.china@gmail.com>"]
-name = "hikari-boot"
+name = "hikari-macro-types"
 
 version = "0.1.0"
 edition = "2021"
 publish = false
 
-[lib]
-crate-type = ["rlib"]
-
 [dependencies]
-hikari-macro = { path = "../macro" }
-hikari-macro-types = { path = "../macro-types" }
-
 anyhow = "^1"
 base64 = "^0.21"
 derive_more = "*"
@@ -21,10 +15,6 @@ serde = { version = "^1", features = ["derive"] }
 serde_json = "^1"
 strum = "^0.25"
 strum_macros = "^0.25"
-
-syn = { version = "^2", features = ["full"] }
-proc-macro2 = "^1"
-quote = "^1"
 
 console_log = "^1"
 js-sys = "^0.3"

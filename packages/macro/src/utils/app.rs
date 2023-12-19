@@ -37,7 +37,7 @@ pub fn root(input: DeriveApp) -> TokenStream {
 
     quote! {
         #[::yew::function_component]
-        pub fn __HikariApp() -> yew::Html {
+        pub fn HikariApp() -> yew::Html {
             use ::stylist::{manager::StyleManager, yew::ManagerProvider};
             use ::yew::prelude::*;
             use ::yew_router::BrowserRouter;
@@ -52,7 +52,7 @@ pub fn root(input: DeriveApp) -> TokenStream {
                 .expect("Cannot get the global window object")
                 .document()
                 .expect("Cannot get the global document object")
-                .get_element_by_id("__ssr_data")
+                .get_element_by_id("ssr_data")
                 .expect("Cannot get the root DOM element");
             let page_data = page_data_el.inner_html();
             let page_data = {
@@ -73,7 +73,7 @@ pub fn root(input: DeriveApp) -> TokenStream {
                 <Suspense {fallback}>
                     <ManagerProvider manager={style_manager}>
                         <BrowserRouter>
-                            <__HikariContextShell states={page_data} />
+                            <HikariContextShell states={page_data} />
                         </BrowserRouter>
                     </ManagerProvider>
                 </Suspense>
@@ -81,7 +81,7 @@ pub fn root(input: DeriveApp) -> TokenStream {
         }
 
         #[::yew::function_component]
-        pub fn __HikariServerApp(
+        pub fn HikariServerApp(
             props: &::hikari_boot::AppContext<<#ident as ::hikari_boot::DeclType>::AppStates>
         ) -> yew::Html {
             use ::stylist::yew::ManagerProvider;
@@ -93,15 +93,13 @@ pub fn root(input: DeriveApp) -> TokenStream {
 
             let fallback = html! { <div>{"Loading..."}</div> };
             let history = AnyHistory::from(MemoryHistory::new());
-            history
-                .push(&*props.uri)
-                .unwrap();
+            history.push(&props.url);
 
             html! {
                 <Suspense {fallback}>
                     <ManagerProvider manager={props.style_manager.clone()}>
                         <Router history={history}>
-                            <__HikariContextShell states={props.states.to_owned()} />
+                            <HikariContextShell states={props.states.to_owned()} />
                         </Router>
                     </ManagerProvider>
                 </Suspense>
@@ -109,13 +107,13 @@ pub fn root(input: DeriveApp) -> TokenStream {
         }
 
         #[derive(Clone, Debug, PartialEq, ::yew::Properties)]
-        struct __HikariContextShellProps {
+        struct HikariContextShellProps {
             states: <#ident as ::hikari_boot::DeclType>::AppStates,
         }
 
 
         #[::yew::function_component]
-        fn __HikariContextShell(states: &__HikariContextShellProps) -> yew::Html {
+        fn HikariContextShell(states: &HikariContextShellProps) -> yew::Html {
             use yew::prelude::*;
 
             type AppStates = <#ident as ::hikari_boot::DeclType>::AppStates;
@@ -124,23 +122,20 @@ pub fn root(input: DeriveApp) -> TokenStream {
 
             html! {
                 <ContextProvider<AppStatesContextProviderType> context={ctx.clone()}>
-                    <__HikariContent />
+                    <HikariContent />
                 </ContextProvider<AppStatesContextProviderType>>
             }
         }
 
         #[::stylist::yew::styled_component]
-        pub fn __HikariContent() -> yew::Html {
+        pub fn HikariContent() -> yew::Html {
             use yew::prelude::*;
             use yew_router::prelude::*;
 
             html! {
                 <>
                     <Switch<<#ident as ::hikari_boot::DeclType>::Routes>
-                        render={<
-                            <#ident as ::hikari_boot::DeclType>::Routes as
-                            ::hikari_boot::DeclRoutes>::switch
-                        }
+                        render={|r| <<#ident as ::hikari_boot::DeclType>::Routes as ::hikari_boot::DeclRoutes>::switch(&r)}
                     />
                 </>
             }
@@ -149,16 +144,17 @@ pub fn root(input: DeriveApp) -> TokenStream {
         #[automatically_derived]
         #[::async_trait::async_trait]
         impl ::hikari_boot::Application for #ident {
-            async fn render_to_string(url: ::url::Url) -> String {
+            async fn render_to_string(url: String, states: <#ident as ::hikari_boot::DeclType>::AppStates) -> String {
                 use ::stylist::manager::{render_static, StyleManager};
                 use ::yew::ServerRenderer;
 
                 let (writer, reader) = render_static();
-                let renderer = ServerRenderer::<__HikariServerApp>::with_props(move || {
+                let renderer = ServerRenderer::<HikariServerApp>::with_props(move || {
                     let style_manager = StyleManager::builder().writer(writer).build().unwrap();
-                    <Self as ::hikari_boot::DeclType>::AppStates {
+                    ::hikari_boot::AppContext {
                         style_manager,
                         url,
+                        states,
                     }
                 });
                 let html_raw = renderer.render().await;
@@ -176,10 +172,10 @@ pub fn root(input: DeriveApp) -> TokenStream {
                             <style>{style_raw}</style>
                         </head>
                         <body>
-                            <textarea id='__ssr_data' style='display: none;'>{{}}</textarea>
+                            <textarea id='ssr_data' style='display: none;'>{{}}</textarea>
                             <div id='app'>{html_raw}</div>
                             <script src='/a.js'></script>
-                            <script>(async () => {{await __wasm_vendor_entry('/a.wasm');(await (new __wasm_vendor_entry.WebHandle())).start();}})()</script>
+                            <script>(async () => {{await wasm_vendor_entry('/a.wasm');(await (new wasm_vendor_entry.WebHandle())).start();}})()</script>
                         </body>
                     </html>
                 ")

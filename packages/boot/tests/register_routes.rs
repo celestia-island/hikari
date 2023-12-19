@@ -4,7 +4,7 @@
 #[cfg(test)]
 mod test {
     use serde::{Deserialize, Serialize};
-    use std::str::FromStr;
+
     use yew::prelude::*;
     use yew_router::prelude::*;
 
@@ -39,7 +39,13 @@ mod test {
 
     #[tokio::test]
     async fn render_on_server() -> anyhow::Result<()> {
-        let html = App::render_to_string(url::Url::from_str("/")?).await;
+        let html = App::render_to_string(
+            "/".to_string(),
+            AppStates {
+                color: "#114514".to_string(),
+            },
+        )
+        .await;
         println!("{}", html);
 
         Ok(())

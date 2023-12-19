@@ -1,37 +1,29 @@
 #![allow(non_snake_case)]
 
-pub trait Routes: yew_router::Routable {}
+pub trait DeclRoutes: yew_router::Routable {
+    fn switch(routes: &Self) -> yew::Html;
+}
 
-pub trait AppProps {}
-
-pub trait AppStates {}
-
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, yew::Properties)]
 pub struct AppContext<T>
 where
-    T: AppProps,
+    T: PartialEq + Clone + ::serde::Serialize + ::serde::Deserialize<'static>,
 {
     pub style_manager: stylist::manager::StyleManager,
-    pub uri: String,
-    pub queries: std::collections::HashMap<String, String>,
-    pub page_data: T,
+    pub url: url::Url,
+    pub states: T,
 }
 
-pub trait Application: DeriveApplicationType {
-    fn switch(&self) -> yew::Html;
-
-    fn App(&self) -> yew::Html;
-    fn ServerApp(&self, props: &AppContext<<Self as DeriveApplicationType>::AppProps>)
-        -> yew::Html;
+#[async_trait::async_trait]
+pub trait Application: DeclType {
+    async fn render_to_string(url: url::Url) -> String;
 }
 
-pub trait DeriveApplicationType
+pub trait DeclType
 where
-    Self::Routes: Routes + yew_router::Routable,
-    Self::AppProps: AppProps,
-    Self::AppStates: AppStates,
+    Self::Routes: DeclRoutes + yew_router::Routable,
+    Self::AppStates: PartialEq + Clone + ::serde::Serialize + ::serde::Deserialize<'static>,
 {
     type Routes;
-    type AppProps;
     type AppStates;
 }

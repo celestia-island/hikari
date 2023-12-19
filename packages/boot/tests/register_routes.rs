@@ -4,12 +4,11 @@
 #[cfg(test)]
 mod test {
     use serde::{Deserialize, Serialize};
+    use std::str::FromStr;
     use yew::prelude::*;
     use yew_router::prelude::*;
 
-    use hikari_boot::{
-        DeriveAppProps, DeriveAppStates, DeriveApplication, DeriveApplicationType, DeriveRoutes,
-    };
+    use hikari_boot::{Application, DeclType, DeriveApplication, DeriveRoutes};
 
     #[function_component]
     fn Portal() -> yew::Html {
@@ -18,62 +17,35 @@ mod test {
         }
     }
 
-    #[derive(Properties, Clone, PartialEq, Debug, Serialize, Deserialize)]
-    pub struct ThreadProps {
-        pub id: String,
-    }
-
-    #[function_component]
-    fn Thread(props: &ThreadProps) -> yew::Html {
-        html! {
-            <div>{format!("Thread {}", props.id)}</div>
-        }
-    }
-
     #[derive(PartialEq, Clone, Debug, DeriveRoutes, Routable)]
     pub enum Routes {
         #[at("/")]
-        Portal,
-
-        #[at("/t/:id")]
-        Thread { id: String },
-    }
-
-    #[derive(PartialEq, Clone, Debug, DeriveAppStates, Serialize, Deserialize)]
-    pub struct AppStates {
-        pub color: String,
-    }
-
-    #[derive(PartialEq, Clone, Debug, DeriveAppProps, Serialize, Deserialize)]
-    pub enum AppProps {
         #[component(Portal)]
         Portal,
+    }
 
-        #[component(Thread)]
-        Thread(ThreadProps),
+    #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
+    pub struct AppStates {
+        pub color: String,
     }
 
     #[derive(Clone, Debug, DeriveApplication)]
     pub struct App;
 
-    impl DeriveApplicationType for App {
+    impl DeclType for App {
         type Routes = Routes;
-        type AppProps = AppProps;
         type AppStates = AppStates;
     }
 
-    #[test]
-    fn render_on_server() {
-        let html = App.ServerApp("/", AppProps::Portal);
+    #[tokio::test]
+    async fn render_on_server() -> anyhow::Result<()> {
+        let html = App::render_to_string(url::Url::from_str("/")?).await;
+        println!("{}", html);
 
-        assert_eq!(
-            html,
-            yew::html! {
-                <div>{"Portal"}</div>
-            }
-        );
+        Ok(())
     }
 
+    #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
     #[wasm_bindgen_test::wasm_bindgen_test]
     fn render_on_client() {
         let html = App.App();

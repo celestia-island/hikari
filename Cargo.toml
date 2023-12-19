@@ -7,3 +7,9 @@ lto = true
 opt-level = 'z'
 codegen-units = 1
 panic = "abort"
+
+[patch.crates-io]
+yew = { git = "https://github.com/langyo/yew", branch = "wasi-support-test" }
+yew-router = { git = "https://github.com/langyo/yew", branch = "wasi-support-test" }
+stylist = { git = "https://github.com/langyo/stylist-rs", branch = "wasi-support" }
+prokio = { git = "https://github.com/langyo/prokio", branch = "wasi-fix" }

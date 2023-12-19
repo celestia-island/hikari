@@ -8,6 +8,7 @@ publish = false
 
 [dependencies]
 anyhow = "^1"
+async-trait = "^0.1"
 base64 = "^0.21"
 derive_more = "*"
 gloo = "^0.11"
@@ -22,9 +23,14 @@ log = "^0.4"
 wasm-bindgen = "0.2.87"
 wasm-bindgen-futures = "^0.4"
 wasm-logger = "^0.2"
+url = "^2"
 
-stylist = { version = "^0.13", features = ["yew_integration", "hydration"] }
-yew = { version = "^0.21", features = ["csr", "hydration"] }
+stylist = { version = "^0.13", features = [
+  "yew_integration",
+  "ssr",
+  "hydration",
+] }
+yew = { version = "^0.21", features = ["ssr", "hydration"] }
 yew-router = "^0.18"
 
 [dependencies.web-sys]

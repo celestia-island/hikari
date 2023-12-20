@@ -6,8 +6,6 @@ use yew_router::prelude::*;
 use crate::pages::*;
 use hikari_boot::{DeclType, DeriveApplication, DeriveRoutes, RoutesOutsideProps};
 
-use self::_HikariContextShellProps::states;
-
 #[derive(PartialEq, Clone, Debug, DeriveRoutes, Routable)]
 pub enum Routes {
     #[at("/")]

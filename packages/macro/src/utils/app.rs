@@ -37,7 +37,7 @@ pub fn root(input: DeriveApp) -> TokenStream {
 
     quote! {
         #[::yew::function_component]
-        pub fn HikariApp(
+        pub fn HikariClientApp(
             props: &::hikari_boot::AppContextForClient<<#ident as ::hikari_boot::DeclType>::AppStates>
         ) -> yew::Html {
             use ::stylist::{manager::StyleManager, yew::ManagerProvider};
@@ -81,7 +81,7 @@ pub fn root(input: DeriveApp) -> TokenStream {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, ::yew::Properties)]
+        #[derive(::yew::Properties, Clone, Debug, PartialEq)]
         struct HikariContextShellProps {
             states: <#ident as ::hikari_boot::DeclType>::AppStates,
         }
@@ -129,7 +129,7 @@ pub fn root(input: DeriveApp) -> TokenStream {
         #[automatically_derived]
         #[::async_trait::async_trait]
         impl ::hikari_boot::Application for #ident {
-            type App = HikariApp;
+            type ClientApp = HikariClientApp;
             type ServerApp = HikariServerApp;
 
             async fn render_to_string(url: String, states: <#ident as ::hikari_boot::DeclType>::AppStates) -> String {
@@ -138,8 +138,8 @@ pub fn root(input: DeriveApp) -> TokenStream {
 
                 let (writer, reader) = render_static();
 
-                let renderer = ServerRenderer::<Self::ServerApp>::with_props({
-                    let states  = states.clone();
+                let renderer = ServerRenderer::<<#ident as ::hikari_boot::Application>::ServerApp>::with_props({
+                    let states = states.clone();
                     move || {
                         let style_manager = StyleManager::builder().writer(writer).build().unwrap();
                         ::hikari_boot::AppContextForServer {
@@ -155,14 +155,14 @@ pub fn root(input: DeriveApp) -> TokenStream {
                 let mut style_raw = String::new();
                 style_data.write_static_markup(&mut style_raw).unwrap();
 
-                <#ident as ::hikari_boot::DeclType>::render_to_string_outside(style_raw, html_raw, &states)
+                <#ident as ::hikari_boot::DeclType>::render_to_string_outside(style_raw, html_raw, states)
             }
 
             fn render_with_root(
                 root: web_sys::Element,
                 states: <#ident as ::hikari_boot::DeclType>::AppStates
-            ) -> ::yew::prelude::AppHandle<Self::App> {
-                ::yew::Renderer::<Self::App>::with_root_and_props(
+            ) -> ::yew::prelude::AppHandle<<#ident as ::hikari_boot::Application>::ClientApp> {
+                ::yew::Renderer::<<#ident as ::hikari_boot::Application>::ClientApp>::with_root_and_props(
                     root,
                     ::hikari_boot::AppContextForClient {
                         states

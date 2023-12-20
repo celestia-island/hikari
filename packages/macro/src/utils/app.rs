@@ -104,6 +104,7 @@ pub fn root(input: DeriveApp) -> TokenStream {
                                 children: ::yew::html! {
                                     <HikariRoutesContent />
                                 },
+                                states: props.states.clone(),
                             },
                         )
                     }

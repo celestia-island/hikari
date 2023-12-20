@@ -23,8 +23,12 @@ where
 }
 
 #[derive(::yew::Properties, Debug, PartialEq, Clone)]
-pub struct RoutesOutsideProps {
+pub struct RoutesOutsideProps<States>
+where
+    States: PartialEq + Clone + ::serde::Serialize + ::serde::Deserialize<'static>,
+{
     pub children: ::yew::Html,
+    pub states: States,
 }
 
 #[async_trait::async_trait]
@@ -52,7 +56,7 @@ where
     type Routes;
     type AppStates;
 
-    fn decl_render_outside(props: &RoutesOutsideProps) -> ::yew::Html {
+    fn decl_render_outside(props: &RoutesOutsideProps<Self::AppStates>) -> ::yew::Html {
         ::yew::html! {
             <>
                 {props.children.clone()}

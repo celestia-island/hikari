@@ -11,7 +11,7 @@ const COMPONENT_ATTR_IDENT: &str = "component";
 
 pub struct DeriveRoutes {
     ident: Ident,
-    components: HashMap<Ident, Path>,
+    components: HashMap<Ident, (Vec<Ident>, Path)>,
 }
 
 impl Parse for DeriveRoutes {
@@ -42,8 +42,8 @@ impl Parse for DeriveRoutes {
 
 fn parse_variants_attributes(
     variants: &Punctuated<Variant, syn::token::Comma>,
-) -> syn::Result<HashMap<Ident, Path>> {
-    let mut components: HashMap<Ident, Path> = Default::default();
+) -> syn::Result<HashMap<Ident, (Vec<Ident>, Path)>> {
+    let mut components: HashMap<Ident, (Vec<Ident>, Path)> = Default::default();
 
     for variant in variants.iter() {
         if let Fields::Unnamed(ref field) = variant.fields {
@@ -52,6 +52,12 @@ fn parse_variants_attributes(
                 "only named fields are supported",
             ));
         }
+
+        let args = variant
+            .fields
+            .iter()
+            .map(|field| field.ident.clone().unwrap())
+            .collect::<Vec<_>>();
 
         let attrs = &variant.attrs;
         let at_attrs = attrs
@@ -74,9 +80,9 @@ fn parse_variants_attributes(
                 ))
             }
         };
-        let lit = attr.parse_args::<Path>()?;
+        let path = attr.parse_args::<Path>()?;
 
-        components.insert(variant.ident.clone(), lit);
+        components.insert(variant.ident.clone(), (args, path));
     }
 
     Ok(components)
@@ -86,21 +92,33 @@ pub fn root(input: DeriveRoutes) -> TokenStream {
     let DeriveRoutes {
         components, ident, ..
     } = &input;
-    let (ats, components): (Vec<_>, Vec<_>) = components
+    let components = components
         .iter()
-        .map(|(ident, path)| {
-            let ats = quote! { #ident };
-            let components = quote! { ::yew::html! { <#path /> } };
-            (ats, components)
+        .map(|(key, (fields, path))| {
+            if fields.is_empty() {
+                quote! {
+                    #ident::#key => ::yew::html! {
+                        <#path />
+                    }
+                }
+            } else {
+                quote! {
+                    #ident::#key { #(#fields),* } => ::yew::html! {
+                        <#path
+                            #(#fields={#fields.clone()}),*
+                        />
+                    }
+                }
+            }
         })
-        .unzip();
+        .collect::<Vec<_>>();
 
     quote! {
         impl ::hikari_boot::DeclRoutes for #ident {
             #[allow(bindings_with_variant_name)]
             fn switch(route: &Self) -> ::yew::Html {
                 match route {
-                    #(#ats => #components,)*
+                    #(#components,)*
                 }
             }
         }

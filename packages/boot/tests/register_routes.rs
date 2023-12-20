@@ -17,11 +17,28 @@ mod test {
         }
     }
 
+    #[derive(yew::Properties, Clone, PartialEq, Debug)]
+    pub struct TestProps {
+        pub id: String,
+    }
+
+    #[function_component]
+    fn Test(props: &TestProps) -> yew::Html {
+        html! {
+            <div>{format!("Test {}", props.id)}</div>
+        }
+    }
+
     #[derive(PartialEq, Clone, Debug, DeriveRoutes, Routable)]
     pub enum Routes {
         #[at("/")]
+        #[not_found]
         #[component(Portal)]
         Portal,
+
+        #[at("/test/:id")]
+        #[component(Test)]
+        Test { id: String },
     }
 
     #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
@@ -40,7 +57,7 @@ mod test {
     #[tokio::test]
     async fn render_on_server() -> anyhow::Result<()> {
         let html = App::render_to_string(
-            "/".to_string(),
+            "/test/123".to_string(),
             AppStates {
                 color: "#114514".to_string(),
             },

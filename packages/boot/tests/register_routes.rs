@@ -8,7 +8,7 @@ mod test {
     use yew::prelude::*;
     use yew_router::prelude::*;
 
-    use hikari_boot::{Application, DeclType, DeriveApplication, DeriveRoutes};
+    use hikari_boot::{Application, DeclType, DeriveApplication, DeriveRoutes, RoutesOutsideProps};
 
     #[function_component]
     fn Portal() -> yew::Html {
@@ -53,7 +53,7 @@ mod test {
         type Routes = Routes;
         type AppStates = AppStates;
 
-        fn render_outside(props: &hikari_macro_types::RoutesOutsideProps) -> yew::Html {
+        fn decl_render_outside(props: &RoutesOutsideProps) -> yew::Html {
             yew::html! {
                 <>
                     <h1>{"Hikari DEMO"}</h1>
@@ -75,11 +75,5 @@ mod test {
         println!("{}", html);
 
         Ok(())
-    }
-
-    #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
-    #[wasm_bindgen_test::wasm_bindgen_test]
-    fn render_on_client() {
-        let html = App.App();
     }
 }

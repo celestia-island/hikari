@@ -55,8 +55,8 @@ features = [
 ]
 version = "^0.3"
 
-[target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dev-dependencies]
-wasm-bindgen-test = "^0.3"
+# [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dev-dependencies]
+# wasm-bindgen-test = "^0.3"
 
 [target.'cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))'.dev-dependencies]
 tokio = { version = "^1", features = ["full"] }

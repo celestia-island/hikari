@@ -11,4 +11,7 @@ exec wasm-bindgen --out-dir ./target/wasm32-html --out-name a --target no-module
 
 cp ./target/wasm32-html/a_bg.wasm ./examples/app/res/a.wasm
 cp ./target/wasm32-html/a.js ./examples/app/res/a.js
+
+html_raw = set "<body><div id='app' style='width: 100vw; height: 100vh; position: fixed;'><script src='./a.js'></script><script>(async () => {await __wasm_vendor_entry('./a.wasm');(await (new __wasm_vendor_entry.WebHandle())).start();})()</script></div></body>"
+writefile ./examples/app/res/index.html ${html_raw}
 '''

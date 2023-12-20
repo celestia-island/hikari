@@ -5,7 +5,7 @@ pub trait DeclRoutes: ::yew_router::Routable {
 }
 
 #[derive(Debug, PartialEq, Clone, ::yew::Properties)]
-pub struct AppContext<T>
+pub struct AppContextForServer<T>
 where
     T: PartialEq + Clone + ::serde::Serialize + ::serde::Deserialize<'static>,
 {
@@ -15,13 +15,33 @@ where
 }
 
 #[derive(Debug, PartialEq, Clone, ::yew::Properties)]
+pub struct AppContextForClient<T>
+where
+    T: PartialEq + Clone + ::serde::Serialize + ::serde::Deserialize<'static>,
+{
+    pub states: T,
+}
+
+#[derive(Debug, PartialEq, Clone, ::yew::Properties)]
 pub struct RoutesOutsideProps {
     pub children: ::yew::Html,
 }
 
 #[async_trait::async_trait]
-pub trait Application: DeclType {
-    async fn render_to_string(url: String, status: <Self as DeclType>::AppStates) -> String;
+pub trait Application: DeclType
+where
+    Self::App: ::yew::BaseComponent,
+    Self::ServerApp: ::yew::BaseComponent,
+{
+    type App;
+    type ServerApp;
+
+    async fn render_to_string(url: String, states: <Self as DeclType>::AppStates) -> String;
+
+    fn render_with_root(
+        root: web_sys::Element,
+        states: <Self as DeclType>::AppStates,
+    ) -> ::yew::prelude::AppHandle<Self::App>;
 }
 
 pub trait DeclType
@@ -32,7 +52,7 @@ where
     type Routes;
     type AppStates;
 
-    fn render_outside(props: &RoutesOutsideProps) -> ::yew::Html {
+    fn decl_render_outside(props: &RoutesOutsideProps) -> ::yew::Html {
         ::yew::html! {
             <>
                 {props.children.clone()}

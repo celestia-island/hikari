@@ -5,6 +5,7 @@ use web_sys::{Event, HtmlInputElement, InputEvent};
 use gloo::net::http::Request;
 use stylist::yew::styled_component;
 use yew::prelude::*;
+use yew_router::prelude::*;
 
 use hikari_components::prelude::*;
 
@@ -13,6 +14,8 @@ pub fn Portal() -> Html {
     let is_fetching = use_state(|| false);
     let uri = use_state(|| "/test".to_string());
     let data = use_state(|| "Ready to fetch".to_string());
+
+    let navigator = use_navigator().unwrap();
 
     let onclick = {
         let is_fetching = is_fetching.clone();
@@ -64,54 +67,28 @@ pub fn Portal() -> Html {
             </Button>
             <p>{&*data}</p>
             <div>
-                <Button outlined={true} size={SizeType::Large}>
-                    {"Test Biiiiiig Button"}
-                </Button>
-                <Button outlined={true}>
-                    {"Test"}
-                </Button>
-                <Button outlined={true} size={SizeType::Small}>
-                    {"Test Small Button"}
-                </Button>
-                <Button>
-                    {"Test"}
-                </Button>
-                <Button color={ColorType::Secondary}>
-                    {"Test"}
-                </Button>
                 <Button color={ColorType::Success}>
-                    {"Test"}
-                </Button>
-                <Button color={ColorType::Warning}>
-                    {"Test"}
-                </Button>
-                <Button color={ColorType::Error}>
-                    {"Test"}
-                </Button>
-                <Button color={ColorType::Info}>
                     {"Test"}
                 </Button>
             </div>
             <ButtonGroup />
             <ButtonGroup>
-                <Button>{"Test"}</Button>
-            </ButtonGroup>
-            <ButtonGroup size={SizeType::Large}>
-                <Button>{"Test"}</Button>
-                <Button>{"Test"}</Button>
-            </ButtonGroup>
-            <ButtonGroup outlined={true} color={ColorType::Success}>
-                <Button>{"Test"}</Button>
-                <Button>{"Test"}</Button>
-                <Button>{"Test"}</Button>
-            </ButtonGroup>
-            <ButtonGroup size={SizeType::Small} color={ColorType::Warning}>
-                <Button>{"Test"}</Button>
-                <Button>{"Test"}</Button>
-                <Button>{"Test"}</Button>
-                <Button>{"Test"}</Button>
-                <Button>{"Test"}</Button>
-                <Button>{"Test"}</Button>
+                <Button onclick={{
+                    let navigator = navigator.clone();
+                    Callback::from(move |_| {
+                        navigator.push(&crate::app::Routes::Personal { id: "123".to_string() });
+                    })
+                }}>
+                    {"Personal"}
+                </Button>
+                <Button onclick={{
+                    let navigator = navigator.clone();
+                    Callback::from(move |_| {
+                        navigator.push(&crate::app::Routes::Thread { id: "123".to_string() });
+                    })
+                }}>
+                    {"Thread"}
+                </Button>
             </ButtonGroup>
         </>
     }

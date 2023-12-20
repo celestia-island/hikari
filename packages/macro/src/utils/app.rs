@@ -37,52 +37,30 @@ pub fn root(input: DeriveApp) -> TokenStream {
 
     quote! {
         #[::yew::function_component]
-        pub fn HikariApp() -> yew::Html {
+        pub fn HikariApp(
+            props: &::hikari_boot::AppContextForClient<<#ident as ::hikari_boot::DeclType>::AppStates>
+        ) -> yew::Html {
             use ::stylist::{manager::StyleManager, yew::ManagerProvider};
             use ::yew::prelude::*;
             use ::yew_router::BrowserRouter;
 
-            let fallback = html! { <div>{"Loading..."}</div> };
             let style_manager = (*use_memo((), |_| {
                 StyleManager::new().expect("failed to create style manager.")
             }))
             .to_owned();
 
-            let page_data_el = web_sys::window()
-                .expect("Cannot get the global window object")
-                .document()
-                .expect("Cannot get the global document object")
-                .get_element_by_id("ssr_data")
-                .expect("Cannot get the root DOM element");
-            let page_data = page_data_el.inner_html();
-            let page_data = {
-                use base64::Engine;
-                base64::engine::general_purpose::STANDARD_NO_PAD
-                    .decode(page_data)
-                    .unwrap()
-            };
-            let page_data = String::from_utf8(page_data).unwrap();
-            let page_data: <#ident as ::hikari_boot::DeclType>::AppStates =
-                serde_json::from_str(&page_data).expect("Failed to parse page data.");
-
-            wasm_bindgen_futures::spawn_local(async move {
-                page_data_el.remove();
-            });
-
             html! {
-                <Suspense {fallback}>
-                    <ManagerProvider manager={style_manager}>
-                        <BrowserRouter>
-                            <HikariContextShell states={page_data} />
-                        </BrowserRouter>
-                    </ManagerProvider>
-                </Suspense>
+                <ManagerProvider manager={style_manager}>
+                    <BrowserRouter>
+                        <HikariContextShell states={props.states.clone()} />
+                    </BrowserRouter>
+                </ManagerProvider>
             }
         }
 
         #[::yew::function_component]
         pub fn HikariServerApp(
-            props: &::hikari_boot::AppContext<<#ident as ::hikari_boot::DeclType>::AppStates>
+            props: &::hikari_boot::AppContextForServer<<#ident as ::hikari_boot::DeclType>::AppStates>
         ) -> yew::Html {
             use ::stylist::yew::ManagerProvider;
             use ::yew::prelude::*;
@@ -91,18 +69,15 @@ pub fn root(input: DeriveApp) -> TokenStream {
                 prelude::*,
             };
 
-            let fallback = html! { <div>{"Loading..."}</div> };
             let history = AnyHistory::from(MemoryHistory::new());
             history.push(&props.url);
 
             html! {
-                <Suspense {fallback}>
-                    <ManagerProvider manager={props.style_manager.clone()}>
-                        <Router history={history}>
-                            <HikariContextShell states={props.states.to_owned()} />
-                        </Router>
-                    </ManagerProvider>
-                </Suspense>
+                <ManagerProvider manager={props.style_manager.clone()}>
+                    <Router history={history}>
+                        <HikariContextShell states={props.states.clone()} />
+                    </Router>
+                </ManagerProvider>
             }
         }
 
@@ -113,23 +88,26 @@ pub fn root(input: DeriveApp) -> TokenStream {
 
 
         #[::yew::function_component]
-        fn HikariContextShell(states: &HikariContextShellProps) -> yew::Html {
+        fn HikariContextShell(props: &HikariContextShellProps) -> yew::Html {
             use yew::prelude::*;
 
-            type AppStates = <#ident as ::hikari_boot::DeclType>::AppStates;
-            type AppStatesContextProviderType = UseStateHandle<AppStates>;
-            let ctx = use_state(|| states.states.to_owned());
+            let ctx = use_state(|| props.states.clone());
 
             html! {
-                <ContextProvider<AppStatesContextProviderType> context={ctx.clone()}>
+                <ContextProvider
+                    <UseStateHandle<<#ident as ::hikari_boot::DeclType>::AppStates>>
+                    context={ctx.clone()}
+                >
                     {
-                        <#ident as ::hikari_boot::DeclType>::render_outside(&::hikari_boot::RoutesOutsideProps {
-                            children: ::yew::html! {
-                                <HikariRoutesContent />
-                            }
-                        })
+                        <#ident as ::hikari_boot::DeclType>::decl_render_outside(
+                            &::hikari_boot::RoutesOutsideProps {
+                                children: ::yew::html! {
+                                    <HikariRoutesContent />
+                                },
+                            },
+                        )
                     }
-                </ContextProvider<AppStatesContextProviderType>>
+                </ContextProvider<UseStateHandle<<#ident as ::hikari_boot::DeclType>::AppStates>>>
             }
         }
 
@@ -151,17 +129,20 @@ pub fn root(input: DeriveApp) -> TokenStream {
         #[automatically_derived]
         #[::async_trait::async_trait]
         impl ::hikari_boot::Application for #ident {
+            type App = HikariApp;
+            type ServerApp = HikariServerApp;
+
             async fn render_to_string(url: String, states: <#ident as ::hikari_boot::DeclType>::AppStates) -> String {
                 use ::stylist::manager::{render_static, StyleManager};
                 use ::yew::ServerRenderer;
 
                 let (writer, reader) = render_static();
 
-                let renderer = ServerRenderer::<HikariServerApp>::with_props({
+                let renderer = ServerRenderer::<Self::ServerApp>::with_props({
                     let states  = states.clone();
                     move || {
-                    let style_manager = StyleManager::builder().writer(writer).build().unwrap();
-                        ::hikari_boot::AppContext {
+                        let style_manager = StyleManager::builder().writer(writer).build().unwrap();
+                        ::hikari_boot::AppContextForServer {
                             style_manager,
                             url,
                             states,
@@ -175,6 +156,18 @@ pub fn root(input: DeriveApp) -> TokenStream {
                 style_data.write_static_markup(&mut style_raw).unwrap();
 
                 <#ident as ::hikari_boot::DeclType>::render_to_string_outside(style_raw, html_raw, &states)
+            }
+
+            fn render_with_root(
+                root: web_sys::Element,
+                states: <#ident as ::hikari_boot::DeclType>::AppStates
+            ) -> ::yew::prelude::AppHandle<Self::App> {
+                ::yew::Renderer::<Self::App>::with_root_and_props(
+                    root,
+                    ::hikari_boot::AppContextForClient {
+                        states
+                    }
+                ).render()
             }
         }
     }

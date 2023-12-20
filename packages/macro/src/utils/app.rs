@@ -122,22 +122,29 @@ pub fn root(input: DeriveApp) -> TokenStream {
 
             html! {
                 <ContextProvider<AppStatesContextProviderType> context={ctx.clone()}>
-                    <HikariContent />
+                    {
+                        <#ident as ::hikari_boot::DeclType>::render_outside(&::hikari_boot::RoutesOutsideProps {
+                            children: ::yew::html! {
+                                <HikariRoutesContent />
+                            }
+                        })
+                    }
                 </ContextProvider<AppStatesContextProviderType>>
             }
         }
 
-        #[::stylist::yew::styled_component]
-        pub fn HikariContent() -> yew::Html {
+        #[::yew::function_component]
+        pub fn HikariRoutesContent() -> yew::Html {
             use yew::prelude::*;
-            use yew_router::prelude::*;
 
             html! {
-                <>
-                    <Switch<<#ident as ::hikari_boot::DeclType>::Routes>
-                        render={|r| <<#ident as ::hikari_boot::DeclType>::Routes as ::hikari_boot::DeclRoutes>::switch(&r)}
-                    />
-                </>
+                <Switch<<#ident as ::hikari_boot::DeclType>::Routes>
+                    render={
+                        |r| {
+                            <<#ident as ::hikari_boot::DeclType>::Routes as ::hikari_boot::DeclRoutes>::switch(&r)
+                        }
+                    }
+                />
             }
         }
 

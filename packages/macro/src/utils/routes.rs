@@ -5,13 +5,13 @@ use quote::quote;
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::{Data, DeriveInput, Fields, Ident, Path, Variant};
+use syn::{Data, DeriveInput, Fields, Ident, Path, Type, Variant};
 
 const COMPONENT_ATTR_IDENT: &str = "component";
 
 pub struct DeriveRoutes {
     ident: Ident,
-    components: HashMap<Ident, (Vec<Ident>, Path)>,
+    components: HashMap<Ident, (Vec<(Ident, Type)>, Path)>,
 }
 
 impl Parse for DeriveRoutes {
@@ -42,8 +42,8 @@ impl Parse for DeriveRoutes {
 
 fn parse_variants_attributes(
     variants: &Punctuated<Variant, syn::token::Comma>,
-) -> syn::Result<HashMap<Ident, (Vec<Ident>, Path)>> {
-    let mut components: HashMap<Ident, (Vec<Ident>, Path)> = Default::default();
+) -> syn::Result<HashMap<Ident, (Vec<(Ident, Type)>, Path)>> {
+    let mut components: HashMap<Ident, (Vec<(Ident, Type)>, Path)> = Default::default();
 
     for variant in variants.iter() {
         if let Fields::Unnamed(ref field) = variant.fields {
@@ -56,7 +56,7 @@ fn parse_variants_attributes(
         let args = variant
             .fields
             .iter()
-            .map(|field| field.ident.clone().unwrap())
+            .map(|field| (field.ident.clone().unwrap(), field.ty.clone()))
             .collect::<Vec<_>>();
 
         let attrs = &variant.attrs;
@@ -92,6 +92,7 @@ pub fn root(input: DeriveRoutes) -> TokenStream {
     let DeriveRoutes {
         components, ident, ..
     } = &input;
+
     let components = components
         .iter()
         .map(|(key, (fields, path))| {
@@ -102,6 +103,7 @@ pub fn root(input: DeriveRoutes) -> TokenStream {
                     }
                 }
             } else {
+                let (fields, _) = fields.iter().cloned().unzip::<_, _, Vec<_>, Vec<_>>();
                 quote! {
                     #ident::#key { #(#fields),* } => ::yew::html! {
                         <#path

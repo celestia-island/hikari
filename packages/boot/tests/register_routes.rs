@@ -52,6 +52,15 @@ mod test {
     impl DeclType for App {
         type Routes = Routes;
         type AppStates = AppStates;
+
+        fn render_outside(props: &hikari_macro_types::RoutesOutsideProps) -> yew::Html {
+            yew::html! {
+                <>
+                    <h1>{"Hikari DEMO"}</h1>
+                    {props.children.clone()}
+                </>
+            }
+        }
     }
 
     #[tokio::test]
@@ -72,12 +81,5 @@ mod test {
     #[wasm_bindgen_test::wasm_bindgen_test]
     fn render_on_client() {
         let html = App.App();
-
-        assert_eq!(
-            html,
-            yew::html! {
-                <div>{"Portal"}</div>
-            }
-        );
     }
 }

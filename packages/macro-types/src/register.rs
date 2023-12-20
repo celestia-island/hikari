@@ -14,6 +14,11 @@ where
     pub states: T,
 }
 
+#[derive(Debug, PartialEq, Clone, ::yew::Properties)]
+pub struct RoutesOutsideProps {
+    pub children: ::yew::Html,
+}
+
 #[async_trait::async_trait]
 pub trait Application: DeclType {
     async fn render_to_string(url: String, status: <Self as DeclType>::AppStates) -> String;
@@ -26,4 +31,12 @@ where
 {
     type Routes;
     type AppStates;
+
+    fn render_outside(props: &RoutesOutsideProps) -> ::yew::Html {
+        ::yew::html! {
+            <>
+                {props.children.clone()}
+            </>
+        }
+    }
 }

@@ -39,4 +39,29 @@ where
             </>
         }
     }
+
+    fn render_to_string_outside(
+        style_raw: String,
+        html_raw: String,
+        state: &Self::AppStates,
+    ) -> String {
+        let state = ::serde_json::to_string(state).unwrap();
+
+        format!("
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <meta charset='utf-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1'>
+                    <style>{style_raw}</style>
+                </head>
+                <body>
+                    <textarea id='ssr_data' style='display: none;'>{state}</textarea>
+                    <div id='app'>{html_raw}</div>
+                    <script src='/a.js'></script>
+                    <script>(async () => {{await wasm_vendor_entry('/a.wasm');(await (new wasm_vendor_entry.WebHandle())).start();}})()</script>
+                </body>
+            </html>
+        ")
+    }
 }

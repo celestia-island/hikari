@@ -156,12 +156,16 @@ pub fn root(input: DeriveApp) -> TokenStream {
                 use ::yew::ServerRenderer;
 
                 let (writer, reader) = render_static();
-                let renderer = ServerRenderer::<HikariServerApp>::with_props(move || {
+
+                let renderer = ServerRenderer::<HikariServerApp>::with_props({
+                    let states  = states.clone();
+                    move || {
                     let style_manager = StyleManager::builder().writer(writer).build().unwrap();
-                    ::hikari_boot::AppContext {
-                        style_manager,
-                        url,
-                        states,
+                        ::hikari_boot::AppContext {
+                            style_manager,
+                            url,
+                            states,
+                        }
                     }
                 });
                 let html_raw = renderer.render().await;
@@ -170,22 +174,7 @@ pub fn root(input: DeriveApp) -> TokenStream {
                 let mut style_raw = String::new();
                 style_data.write_static_markup(&mut style_raw).unwrap();
 
-                format!("
-                    <!DOCTYPE html>
-                    <html lang='en'>
-                        <head>
-                            <meta charset='utf-8'>
-                            <meta name='viewport' content='width=device-width, initial-scale=1'>
-                            <style>{style_raw}</style>
-                        </head>
-                        <body>
-                            <textarea id='ssr_data' style='display: none;'>{{}}</textarea>
-                            <div id='app'>{html_raw}</div>
-                            <script src='/a.js'></script>
-                            <script>(async () => {{await wasm_vendor_entry('/a.wasm');(await (new wasm_vendor_entry.WebHandle())).start();}})()</script>
-                        </body>
-                    </html>
-                ")
+                <#ident as ::hikari_boot::DeclType>::render_to_string_outside(style_raw, html_raw, &states)
             }
         }
     }

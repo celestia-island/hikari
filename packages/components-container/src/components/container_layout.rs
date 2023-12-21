@@ -5,22 +5,22 @@ use super::{AsideLayout, FooterLayout, HeaderLayout, MainLayout};
 
 #[derive(Clone, PartialEq)]
 pub enum ContainerLayoutVariant {
-    AsideLayout(VChild<AsideLayout>),
-    FooterLayout(VChild<FooterLayout>),
-    HeaderLayout(VChild<HeaderLayout>),
-    MainLayout(VChild<MainLayout>),
-    ContainerLayout(VChild<ContainerLayout>),
+    Aside(VChild<AsideLayout>),
+    Footer(VChild<FooterLayout>),
+    Header(VChild<HeaderLayout>),
+    Main(VChild<MainLayout>),
+    Container(VChild<ContainerLayout>),
 }
 
 #[allow(clippy::from_over_into)]
 impl Into<Html> for ContainerLayoutVariant {
     fn into(self) -> Html {
         match self {
-            Self::AsideLayout(child) => child.into(),
-            Self::FooterLayout(child) => child.into(),
-            Self::HeaderLayout(child) => child.into(),
-            Self::MainLayout(child) => child.into(),
-            Self::ContainerLayout(child) => child.into(),
+            Self::Aside(child) => child.into(),
+            Self::Footer(child) => child.into(),
+            Self::Header(child) => child.into(),
+            Self::Main(child) => child.into(),
+            Self::Container(child) => child.into(),
         }
     }
 }
@@ -33,10 +33,11 @@ pub struct ContainerLayoutProps {
 
 #[styled_component]
 pub fn ContainerLayout(props: &ContainerLayoutProps) -> Html {
-    let is_vertical = if props.children.iter().any(|child| match child {
-        ContainerLayoutVariant::HeaderLayout(_) => true,
-        ContainerLayoutVariant::FooterLayout(_) => true,
-        _ => false,
+    let is_vertical = if props.children.iter().any(|child| {
+        matches!(
+            child,
+            ContainerLayoutVariant::Header(_) | ContainerLayoutVariant::Footer(_)
+        )
     }) {
         Some(css!("flex-direction: column;"))
     } else {

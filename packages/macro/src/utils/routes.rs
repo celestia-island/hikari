@@ -11,7 +11,7 @@ const COMPONENT_ATTR_IDENT: &str = "component";
 
 pub struct DeriveRoutes {
     ident: Ident,
-    components: HashMap<Ident, (Vec<(Ident, Type)>, Path)>,
+    components: Components,
 }
 
 impl Parse for DeriveRoutes {
@@ -40,10 +40,12 @@ impl Parse for DeriveRoutes {
     }
 }
 
+type Components = HashMap<Ident, (Vec<(Ident, Type)>, Path)>;
+
 fn parse_variants_attributes(
     variants: &Punctuated<Variant, syn::token::Comma>,
-) -> syn::Result<HashMap<Ident, (Vec<(Ident, Type)>, Path)>> {
-    let mut components: HashMap<Ident, (Vec<(Ident, Type)>, Path)> = Default::default();
+) -> syn::Result<Components> {
+    let mut components: Components = Default::default();
 
     for variant in variants.iter() {
         if let Fields::Unnamed(ref field) = variant.fields {

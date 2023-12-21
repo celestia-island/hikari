@@ -29,9 +29,9 @@ pub fn Portal() -> Html {
             let data = data.to_owned();
 
             wasm_bindgen_futures::spawn_local(async move {
-                match Request::get(&*uri).send().await {
+                match Request::get(&uri).send().await {
                     Ok(response) => {
-                        let raw = (&response).text().await.unwrap();
+                        let raw = response.text().await.unwrap();
                         info!("{:?}", response);
                         data.set(raw);
                     }

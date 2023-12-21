@@ -9,11 +9,8 @@ use tauri::Manager;
 fn my_custom_command(window: tauri::Window, app_handle: tauri::AppHandle) -> String {
     println!("{}", window.label());
     let app_path = app_handle.path_resolver().app_data_dir();
-    match app_path {
-        Some(dir) => {
-            println!("{}", dir.display())
-        }
-        None => {}
+    if let Some(dir) = app_path {
+        println!("{}", dir.display())
     };
     window.set_always_on_top(true).unwrap();
     // window

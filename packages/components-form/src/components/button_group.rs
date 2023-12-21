@@ -10,10 +10,10 @@ pub enum ButtonGroupVariant {
     Button(VChild<Button>),
 }
 
-impl Into<Html> for ButtonGroupVariant {
-    fn into(self) -> Html {
-        match self {
-            Self::Button(child) => child.into(),
+impl From<ButtonGroupVariant> for Html {
+    fn from(val: ButtonGroupVariant) -> Self {
+        match val {
+            ButtonGroupVariant::Button(child) => child.into(),
         }
     }
 }

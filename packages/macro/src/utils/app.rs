@@ -170,6 +170,18 @@ pub fn root(input: DeriveApp) -> TokenStream {
                     }
                 ).render()
             }
+
+            fn hydrate_with_root(
+                root: web_sys::Element,
+                states: <#ident as ::hikari_boot::DeclType>::AppStates
+            ) -> ::yew::prelude::AppHandle<<#ident as ::hikari_boot::Application>::ClientApp> {
+                ::yew::Renderer::<<#ident as ::hikari_boot::Application>::ClientApp>::with_root_and_props(
+                    root,
+                    ::hikari_boot::AppContextForClient {
+                        states
+                    }
+                ).hydrate()
+            }
         }
     }
 }

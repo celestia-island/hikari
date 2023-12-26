@@ -46,6 +46,10 @@ where
         root: web_sys::Element,
         states: <Self as DeclType>::AppStates,
     ) -> ::yew::prelude::AppHandle<Self::ClientApp>;
+    fn hydrate_with_root(
+        root: web_sys::Element,
+        states: <Self as DeclType>::AppStates,
+    ) -> ::yew::prelude::AppHandle<Self::ClientApp>;
 }
 
 pub trait DeclType

@@ -77,7 +77,7 @@ where
                 <head>
                     <meta charset='utf-8'>
                     <meta name='viewport' content='width=device-width, initial-scale=1'>
-                    <style>{style_raw}</style>
+                    {style_raw}
                 </head>
                 <body>
                     <textarea id='ssr_data' style='display: none;'>{state}</textarea>

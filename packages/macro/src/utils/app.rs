@@ -48,13 +48,16 @@ pub fn root(input: DeriveApp) -> TokenStream {
                 StyleManager::new().expect("failed to create style manager.")
             }))
             .to_owned();
+            let suspense_html = html! { <div> {"Loading"} </div> };
 
             html! {
-                <ManagerProvider manager={style_manager}>
-                    <BrowserRouter>
-                        <HikariContextShell states={props.states.clone()} />
-                    </BrowserRouter>
-                </ManagerProvider>
+                <Suspense fallback={suspense_html}>
+                    <ManagerProvider manager={style_manager}>
+                        <BrowserRouter>
+                            <HikariContextShell states={props.states.clone()} />
+                        </BrowserRouter>
+                    </ManagerProvider>
+                </Suspense>
             }
         }
 
@@ -71,13 +74,16 @@ pub fn root(input: DeriveApp) -> TokenStream {
 
             let history = AnyHistory::from(MemoryHistory::new());
             history.push(&props.url);
+            let suspense_html = html! { <div> {"Loading"} </div> };
 
             html! {
-                <ManagerProvider manager={props.style_manager.clone()}>
-                    <Router history={history}>
-                        <HikariContextShell states={props.states.clone()} />
-                    </Router>
-                </ManagerProvider>
+                <Suspense fallback={suspense_html}>
+                    <ManagerProvider manager={props.style_manager.clone()}>
+                        <Router history={history}>
+                            <HikariContextShell states={props.states.clone()} />
+                        </Router>
+                    </ManagerProvider>
+                </Suspense>
             }
         }
 

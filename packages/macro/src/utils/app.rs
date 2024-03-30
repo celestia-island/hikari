@@ -143,6 +143,7 @@ pub fn root(input: DeriveApp) -> TokenStream {
                 use ::stylist::manager::{render_static, StyleManager};
                 use ::yew::ServerRenderer;
 
+                let url = url.split('?').next().unwrap().to_string();
                 let (writer, reader) = render_static();
 
                 let renderer = ServerRenderer::<<#ident as ::hikari_boot::Application>::ServerApp>::with_props({

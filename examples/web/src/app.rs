@@ -57,7 +57,7 @@ impl DeclType for App {
     type Routes = Routes;
     type AppStates = AppStates;
 
-    fn decl_render_outside(props: &RoutesOutsideProps<Self::AppStates>) -> yew::Html {
+    fn decl_render_outside(props: &RoutesOutsideProps<Self::AppStates>) -> yew::HtmlResult {
         let theme_raw = format!(
             r#"
             :root {{
@@ -114,7 +114,7 @@ impl DeclType for App {
             props.states.small_text_size.to_owned(),
         );
 
-        yew::html! {
+        Ok(yew::html! {
             <>
                 <style>
                     {theme_raw}
@@ -122,6 +122,6 @@ impl DeclType for App {
                 <h1>{"Hikari DEMO"}</h1>
                 {props.children.clone()}
             </>
-        }
+        })
     }
 }

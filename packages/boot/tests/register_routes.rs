@@ -53,13 +53,13 @@ mod test {
         type Routes = Routes;
         type AppStates = AppStates;
 
-        fn decl_render_outside(props: &RoutesOutsideProps<Self::AppStates>) -> yew::Html {
-            yew::html! {
+        fn decl_render_outside(props: &RoutesOutsideProps<Self::AppStates>) -> yew::HtmlResult {
+            Ok(yew::html! {
                 <>
                     <h1>{"Hikari DEMO"}</h1>
                     {props.children.clone()}
                 </>
-            }
+            })
         }
     }
 
@@ -71,7 +71,7 @@ mod test {
                 color: "#114514".to_string(),
             },
         )
-        .await;
+        .await?;
         println!("{}", html);
 
         Ok(())

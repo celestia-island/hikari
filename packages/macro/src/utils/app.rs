@@ -94,12 +94,12 @@ pub fn root(input: DeriveApp) -> TokenStream {
 
 
         #[::yew::function_component]
-        fn HikariContextShell(props: &HikariContextShellProps) -> yew::Html {
+        fn HikariContextShell(props: &HikariContextShellProps) -> yew::HtmlResult {
             use yew::prelude::*;
 
             let ctx = use_state(|| props.states.clone());
 
-            html! {
+            Ok(html! {
                 <ContextProvider
                     <UseStateHandle<<#ident as ::hikari_boot::DeclType>::AppStates>>
                     context={ctx.clone()}
@@ -112,10 +112,10 @@ pub fn root(input: DeriveApp) -> TokenStream {
                                 },
                                 states: props.states.clone(),
                             },
-                        )
+                        ).unwrap()
                     }
                 </ContextProvider<UseStateHandle<<#ident as ::hikari_boot::DeclType>::AppStates>>>
-            }
+            })
         }
 
         #[::yew::function_component]
@@ -139,17 +139,20 @@ pub fn root(input: DeriveApp) -> TokenStream {
             type ClientApp = HikariClientApp;
             type ServerApp = HikariServerApp;
 
-            async fn render_to_string(url: String, states: <#ident as ::hikari_boot::DeclType>::AppStates) -> String {
+            async fn render_to_string(url: String, states: <#ident as ::hikari_boot::DeclType>::AppStates) -> ::anyhow::Result<String> {
                 use ::stylist::manager::{render_static, StyleManager};
                 use ::yew::ServerRenderer;
 
-                let url = url.split('?').next().unwrap().to_string();
+                let url = url.split('?').next().ok_or(::anyhow::anyhow!("failed to get url path from '{}'", url))?.to_string();
                 let (writer, reader) = render_static();
 
                 let renderer = ServerRenderer::<<#ident as ::hikari_boot::Application>::ServerApp>::with_props({
                     let states = states.clone();
                     move || {
-                        let style_manager = StyleManager::builder().writer(writer).build().unwrap();
+                        let style_manager = StyleManager::builder()
+                            .writer(writer)
+                            .build()
+                            .expect("Failed to create style manager with writer.");
                         ::hikari_boot::AppContextForServer {
                             style_manager,
                             url,
@@ -161,9 +164,9 @@ pub fn root(input: DeriveApp) -> TokenStream {
 
                 let style_data = reader.read_style_data();
                 let mut style_raw = String::new();
-                style_data.write_static_markup(&mut style_raw).unwrap();
+                style_data.write_static_markup(&mut style_raw)?;
 
-                <#ident as ::hikari_boot::DeclType>::render_to_string_outside(style_raw, html_raw, states)
+                Ok(<#ident as ::hikari_boot::DeclType>::render_to_string_outside(style_raw, html_raw, states)?)
             }
 
             fn render_with_root(

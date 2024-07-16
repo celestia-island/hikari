@@ -1,5 +1,7 @@
 #![allow(non_snake_case)]
 
+use anyhow::Result;
+
 pub trait DeclRoutes: ::yew_router::Routable {
     fn switch(routes: &Self) -> ::yew::Html;
 }
@@ -40,7 +42,8 @@ where
     type ClientApp;
     type ServerApp;
 
-    async fn render_to_string(url: String, states: <Self as DeclType>::AppStates) -> String;
+    async fn render_to_string(url: String, states: <Self as DeclType>::AppStates)
+        -> Result<String>;
 
     fn render_with_root(
         root: web_sys::Element,
@@ -60,22 +63,22 @@ where
     type Routes;
     type AppStates;
 
-    fn decl_render_outside(props: &RoutesOutsideProps<Self::AppStates>) -> ::yew::Html {
-        ::yew::html! {
+    fn decl_render_outside(props: &RoutesOutsideProps<Self::AppStates>) -> ::yew::HtmlResult {
+        Ok(::yew::html! {
             <>
                 {props.children.clone()}
             </>
-        }
+        })
     }
 
     fn render_to_string_outside(
         style_raw: String,
         html_raw: String,
         state: Self::AppStates,
-    ) -> String {
+    ) -> Result<String> {
         let state = ::serde_json::to_string(&state).unwrap();
 
-        format!("
+        Ok(format!("
             <!DOCTYPE html>
             <html>
                 <head>
@@ -90,6 +93,6 @@ where
                     <script>(async () => {{await wasm_vendor_entry('/a.wasm');(await (new wasm_vendor_entry.WebHandle())).start();}})()</script>
                 </body>
             </html>
-        ")
+        "))
     }
 }

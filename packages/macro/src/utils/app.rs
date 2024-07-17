@@ -45,7 +45,7 @@ pub fn root(input: DeriveApp) -> TokenStream {
             use ::yew_router::BrowserRouter;
 
             let style_manager = (*use_memo((), |_| {
-                StyleManager::new().expect("failed to create style manager.")
+                StyleManager::new().expect("Failed to create style manager.")
             }))
             .to_owned();
             let suspense_html = html! { <div> {"Loading"} </div> };
@@ -143,7 +143,7 @@ pub fn root(input: DeriveApp) -> TokenStream {
                 use ::stylist::manager::{render_static, StyleManager};
                 use ::yew::ServerRenderer;
 
-                let url = url.split('?').next().ok_or(::anyhow::anyhow!("failed to get url path from '{}'", url))?.to_string();
+                let url = url.split('?').next().ok_or(::anyhow::anyhow!("Failed to get url path from '{}'", url))?.to_string();
                 let (writer, reader) = render_static();
 
                 let renderer = ServerRenderer::<<#ident as ::hikari_boot::Application>::ServerApp>::with_props({

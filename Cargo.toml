@@ -36,9 +36,6 @@ uuid = { version = "^1", features = [
     'serde',
 ] }
 
-image = { version = "^0.25", features = ["gif", "jpeg", "png", "webp"] }
-sqids = "^0.4"
-
 log = "^0.4"
 env_logger = "^0.11"
 tracing = "^0.1"
@@ -70,33 +67,6 @@ yew-router = "^0.18"
 tokio = { version = "^1", features = ["full"] }
 tauri = "^2"
 tauri-build = { version = "^2", features = ["config-toml"] }
-
-sea-orm = { version = "^1", default-features = false, features = [
-    "macros",
-    "proxy",
-    "with-uuid",
-    "with-chrono",
-    "with-json",
-    "debug-print",
-] }
-axum = { version = "^0.7", default-features = false, features = [
-    "macros",
-    "json",
-    "query",
-    "multipart",
-] }
-axum-extra = { version = "^0.9", features = [
-    "typed-header",
-    "multipart",
-    "cookie",
-] }
-reqwest = { version = "^0.12", features = [
-    "cookies",
-    "gzip",
-    "brotli",
-    "json",
-    "multipart",
-] }
 
 [patch.crates-io]
 yew = { git = "https://github.com/langyo/yew", branch = "wasi-support-test" }

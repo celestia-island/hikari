@@ -41,9 +41,8 @@ yew = { workspace = true }
 yew-router = { workspace = true }
 
 [dev-dependencies]
+env_logger = { workspace = true }
 tokio = { workspace = true }
-tower = { version = "^0.4", features = ["full"] }
 
-axum = { workspace = true, features = ["default", "query", "multipart"] }
-sea-orm = { workspace = true }
-yew = { workspace = true }
+axum = "^0.7"
+tower = { version = "^0.4", features = ["full"] }

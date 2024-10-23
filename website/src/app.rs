@@ -117,7 +117,7 @@ impl DeclType for App {
                 <style>
                     {theme_raw}
                 </style>
-                <h1>{"Hikari DEMO"}</h1>
+
                 {props.children.clone()}
             </>
         })

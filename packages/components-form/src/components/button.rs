@@ -57,7 +57,7 @@ pub struct ButtonProps {
     pub outlined: bool,
 
     #[prop_or_default]
-    pub onclick: Callback<MouseEvent>,
+    pub on_click: Callback<MouseEvent>,
 
     #[prop_or_default]
     pub children: Children,
@@ -156,7 +156,7 @@ pub fn Button(props: &ButtonProps) -> Html {
             onmouseleave={on_mouseleave}
             onmousedown={on_mousedown}
             onmouseup={on_mouseup}
-            onclick={&props.onclick}
+            onclick={&props.on_click}
         >
             // Background
             <div

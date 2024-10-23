@@ -1,9 +1,9 @@
+mod component;
+mod guide;
 mod not_found;
-mod personal;
 mod portal;
-mod thread;
 
+pub use component::Component;
+pub use guide::Guide;
 pub use not_found::NotFound;
-pub use personal::Personal;
 pub use portal::Portal;
-pub use thread::Thread;

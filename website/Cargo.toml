@@ -1,0 +1,49 @@
+[package]
+authors = ["langyo <langyo.china@gmail.com>"]
+name = "hikari-website"
+
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[example]]
+name = "build"
+
+[[example]]
+name = "dev"
+
+[dependencies]
+hikari-components = { path = "../packages/components" }
+hikari-boot = { path = "../packages/boot" }
+
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+base64 = { workspace = true }
+derive_more = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+strum = { workspace = true }
+
+console_log = { workspace = true }
+gloo = { workspace = true }
+js-sys = { workspace = true }
+log = { workspace = true }
+
+wasm-bindgen = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+web-sys = { workspace = true }
+
+stylist = { workspace = true }
+yew = { workspace = true }
+yew-router = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+tower = { version = "^0.4", features = ["full"] }
+
+axum = { workspace = true, features = ["default", "query", "multipart"] }
+sea-orm = { workspace = true }
+yew = { workspace = true }

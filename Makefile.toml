@@ -6,12 +6,14 @@ skip_core_tasks = true
 script = '''
 #!@duckscript
 
-exec cargo build --package hikari-example-web --target wasm32-unknown-unknown --release
-exec wasm-bindgen --out-dir ./target/wasm32-html --out-name a --target no-modules --no-typescript --no-modules-global __wasm_vendor_entry ./target/wasm32-unknown-unknown/release/hikari_example_web.wasm
+exec cargo build --package hikari-website --target wasm32-unknown-unknown --release
+exec wasm-bindgen --out-dir ./target/wasm32-html --out-name a --target no-modules --no-typescript --no-modules-global __wasm_vendor_entry ./target/wasm32-unknown-unknown/release/hikari_website.wasm
+'''
 
-cp ./target/wasm32-html/a_bg.wasm ./examples/app/res/a.wasm
-cp ./target/wasm32-html/a.js ./examples/app/res/a.js
+[tasks.serve]
+script = '''
+#!@duckscript
 
-html_raw = set "<body><div id='app' style='width: 100vw; height: 100vh; position: fixed;'><script src='./a.js'></script><script>(async () => {await __wasm_vendor_entry('./a.wasm');(await (new __wasm_vendor_entry.WebHandle())).start();})()</script></div></body>"
-writefile ./examples/app/res/index.html ${html_raw}
+exec cargo make build
+exec cargo run --package hikari-website --example dev
 '''

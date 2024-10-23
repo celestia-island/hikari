@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use yew::prelude::*;
 use yew_router::prelude::*;
 
 use crate::pages::*;
@@ -12,13 +11,12 @@ pub enum Routes {
     #[component(Portal)]
     Portal,
 
-    #[at("/t/:id")]
-    #[component(Thread)]
-    Thread { id: String },
-
-    #[at("/u/:id")]
-    #[component(Personal)]
-    Personal { id: String },
+    #[at("/guide/:id")]
+    #[component(Guide)]
+    Guide { id: String },
+    #[at("/component/:id")]
+    #[component(Component)]
+    Component { id: String },
 
     #[not_found]
     #[at("/404")]

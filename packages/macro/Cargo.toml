@@ -12,11 +12,12 @@ proc-macro = true
 [dependencies]
 hikari-macro-types = { path = "../macro-types" }
 
-anyhow = "^1"
-derive_more = { version = "^1", features = ["full"] }
-serde = { version = "^1", features = ["derive"] }
-serde_json = "^1"
-strum = { version = "^0.26", features = ["derive"] }
+anyhow = { workspace = true }
+derive_more = { workspace = true }
+
+serde = { workspace = true }
+serde_json = { workspace = true }
+strum = { workspace = true }
 
 syn = { version = "^2", features = ["full"] }
 proc-macro2 = "^1"

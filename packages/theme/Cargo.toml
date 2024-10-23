@@ -10,4 +10,4 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-yew = { version = "^0.21" }
+yew = { workspace = true }

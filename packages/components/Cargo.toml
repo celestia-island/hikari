@@ -10,10 +10,6 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-hikari-components-container = { path = "../components-container" }
-hikari-components-data = { path = "../components-data", optional = true }
-hikari-components-form = { path = "../components-form", optional = true }
-hikari-components-navigation = { path = "../components-navigation", optional = true }
 hikari-theme = { path = "../theme" }
 
 anyhow = { workspace = true }
@@ -29,9 +25,13 @@ js-sys = { workspace = true }
 wasm-bindgen = { workspace = true }
 wasm-bindgen-futures = { workspace = true }
 
+stylist = { workspace = true }
+yew = { workspace = true }
+yew-router = { workspace = true }
+
 [features]
 default = ["full"]
 full = ["components-data", "components-form", "components-navigation"]
-components-data = ["dep:hikari-components-data"]
-components-form = ["dep:hikari-components-form"]
-components-navigation = ["dep:hikari-components-navigation"]
+components-data = []
+components-form = []
+components-navigation = []

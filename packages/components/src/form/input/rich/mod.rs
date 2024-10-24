@@ -1,5 +1,9 @@
+#[cfg(feature = "form-input-rich-html")]
 mod html;
+#[cfg(feature = "form-input-rich-markdown")]
 mod markdown;
+#[cfg(feature = "form-input-rich-mediawiki")]
+mod mediawiki;
 
 use stylist::yew::styled_component;
 use yew::prelude::*;

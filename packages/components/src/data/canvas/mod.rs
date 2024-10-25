@@ -1,4 +1,4 @@
-#[cfg(features = "data-canvas-charts")]
+#[cfg(feature = "data-canvas-charts")]
 pub mod charts;
-#[cfg(features = "data-canvas-scene")]
+#[cfg(feature = "data-canvas-scene")]
 pub mod scene;

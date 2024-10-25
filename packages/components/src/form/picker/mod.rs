@@ -1,9 +1,9 @@
-mod color_picker;
-mod date_picker;
-mod date_time_picker;
-mod time_picker;
+mod color;
+mod date;
+mod date_time;
+mod time;
 
-pub use color_picker::ColorPicker;
-pub use date_picker::DatePicker;
-pub use date_time_picker::DateTimePicker;
-pub use time_picker::TimePicker;
+pub use color::ColorPicker;
+pub use date::DatePicker;
+pub use date_time::DateTimePicker;
+pub use time::TimePicker;

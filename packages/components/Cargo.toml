@@ -30,7 +30,7 @@ yew = { workspace = true }
 yew-router = { workspace = true }
 
 html5ever = { version = "^0.29", optional = true }
-comrak = { version = "^0.29", optional = true }
+markdown = { version = "1.0.0-alpha.21", optional = true }
 parse-wiki-text-2 = { version = "^0.2", optional = true }
 
 egui = { version = "^0.29", optional = true }
@@ -56,7 +56,7 @@ form-input-rich = [
     "form-input-rich-mediawiki",
 ]
 form-input-rich-html = ["dep:html5ever"]
-form-input-rich-markdown = ["dep:comrak"]
+form-input-rich-markdown = ["dep:markdown"]
 form-input-rich-mediawiki = ["dep:parse-wiki-text-2"]
 
 data-canvas = ["data-canvas-charts", "data-canvas-scene"]

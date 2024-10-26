@@ -1,9 +1,7 @@
 pub mod block;
-pub mod canvas;
+pub mod media;
 pub mod paragraph;
-pub mod progress;
 
 pub use block::*;
-pub use canvas::*;
+pub use media::*;
 pub use paragraph::*;
-pub use progress::*;

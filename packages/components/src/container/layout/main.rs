@@ -2,13 +2,13 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub struct MainLayoutProps {
+pub struct Props {
     #[prop_or_default]
     pub children: Children,
 }
 
 #[styled_component]
-pub fn MainLayout(props: &MainLayoutProps) -> Html {
+pub fn MainLayout(props: &Props) -> Html {
     html! {
         <main
             class={css!(r#"

@@ -14,7 +14,7 @@ pub use badge::Badge;
 pub use chip::Chip;
 
 pub use rich::Rich;
-pub use typography::Typography;
+pub use typography::*;
 
 pub use avatar::Avatar;
 pub use icon::Icon;

@@ -2,7 +2,7 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub struct DividerProps {
+pub struct Props {
     #[prop_or(false)]
     pub is_vertical: bool,
 
@@ -11,7 +11,7 @@ pub struct DividerProps {
 }
 
 #[styled_component]
-pub fn Divider(props: &DividerProps) -> Html {
+pub fn Divider(props: &Props) -> Html {
     html! {
         <div
             class={css!(r#"

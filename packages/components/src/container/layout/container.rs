@@ -26,13 +26,13 @@ impl Into<Html> for ContainerLayoutVariant {
 }
 
 #[derive(Properties, Debug, PartialEq)]
-pub struct ContainerLayoutProps {
+pub struct Props {
     #[prop_or_default]
     pub children: ChildrenRenderer<ContainerLayoutVariant>,
 }
 
 #[styled_component]
-pub fn ContainerLayout(props: &ContainerLayoutProps) -> Html {
+pub fn ContainerLayout(props: &Props) -> Html {
     let is_vertical = if props.children.iter().any(|child| {
         matches!(
             child,

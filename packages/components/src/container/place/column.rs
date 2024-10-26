@@ -2,13 +2,13 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub struct ColumnProps {
+pub struct Props {
     #[prop_or_default]
     pub children: Children,
 }
 
 #[styled_component]
-pub fn Column(props: &ColumnProps) -> Html {
+pub fn Column(props: &Props) -> Html {
     html! {
         <div
             class={css!(r#"

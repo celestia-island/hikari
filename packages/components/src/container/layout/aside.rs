@@ -2,7 +2,7 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub struct AsideLayoutProps {
+pub struct Props {
     #[prop_or(256)]
     pub width: u32,
 
@@ -11,7 +11,7 @@ pub struct AsideLayoutProps {
 }
 
 #[styled_component]
-pub fn AsideLayout(props: &AsideLayoutProps) -> Html {
+pub fn AsideLayout(props: &Props) -> Html {
     html! {
         <aside
             class={css!(r#"

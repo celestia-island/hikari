@@ -1,20 +1,23 @@
-#[cfg(test)]
-mod test {
-    #[test]
-    fn test() {
-        use markdown::{to_mdast, ParseOptions};
+use stylist::yew::styled_component;
+use yew::prelude::*;
 
-        let input = r#"
-```rust;ignored
-fn main() {
-    println!("Hello, world!");
+#[derive(Properties, Debug, PartialEq)]
+pub struct Props {
+    #[prop_or_default]
+    pub children: Children,
 }
-```
 
-<SomeComponent />
-
-{a + b} // inline code
-        "#;
-        println!("{:?}", to_mdast(input, &ParseOptions::mdx()).unwrap());
+#[styled_component]
+pub fn Markdown(props: &Props) -> Html {
+    html! {
+        <div
+            class={css!(r#"
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            "#)}
+        >
+            {props.children.clone()}
+        </div>
     }
 }

@@ -2,13 +2,13 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub struct CardProps {
+pub struct Props {
     #[prop_or_default]
     pub children: Children,
 }
 
 #[styled_component]
-pub fn Card(props: &CardProps) -> Html {
+pub fn Card(props: &Props) -> Html {
     html! {
         <button
             class={css!(r#"

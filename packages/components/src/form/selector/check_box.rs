@@ -1,10 +1,10 @@
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
-use hikari_theme::styles::{ColorType, SizeType};
+use hikari_theme::types::{ColorType, SizeType};
 
 #[derive(Properties, Debug, PartialEq)]
-pub struct CheckBoxProps {
+pub struct Props {
     #[prop_or_default]
     pub size: SizeType,
     #[prop_or_default]
@@ -20,7 +20,7 @@ pub struct CheckBoxProps {
 }
 
 #[styled_component]
-pub fn CheckBox(props: &CheckBoxProps) -> Html {
+pub fn CheckBox(props: &Props) -> Html {
     html! {
         <div
             class={css!(r#"

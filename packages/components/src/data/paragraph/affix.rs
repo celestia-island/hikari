@@ -2,13 +2,13 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub struct AffixProps {
+pub struct Props {
     #[prop_or_default]
     pub children: Children,
 }
 
 #[styled_component]
-pub fn Affix(props: &AffixProps) -> Html {
+pub fn Affix(props: &Props) -> Html {
     html! {
         <div
             class={css!(r#"

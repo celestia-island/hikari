@@ -2,8 +2,12 @@ use std::collections::HashMap;
 
 use yew::prelude::*;
 
+pub trait Theme: Clone + PartialEq + Default + 'static {
+    fn get_color(&self, t: crate::types::ColorType) -> crate::types::Color;
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct ThemeContext<T: crate::Theme> {
+pub struct ThemeContext<T: Theme> {
     pub theme: T,
     pub state: HashMap<String, String>,
 }
@@ -17,8 +21,8 @@ pub struct ThemeContextProviderProps {
 pub type ThemeContextProviderType<T> = UseStateHandle<ThemeContext<T>>;
 
 #[function_component]
-fn Injector<T: crate::Theme>() -> Html {
-    use crate::styles::ColorType;
+fn Injector<T: Theme>() -> Html {
+    use crate::types::ColorType;
 
     let app_states = use_context::<ThemeContextProviderType<T>>().unwrap();
     let theme_raw = format!(
@@ -67,7 +71,7 @@ fn Injector<T: crate::Theme>() -> Html {
 }
 
 #[function_component]
-pub fn ThemeContextShell<T: crate::Theme>(props: &ThemeContextProviderProps) -> Html {
+pub fn ThemeContextShell<T: Theme>(props: &ThemeContextProviderProps) -> Html {
     let ctx = use_state(|| ThemeContext {
         theme: T::default(),
         state: HashMap::new(),

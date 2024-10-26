@@ -2,7 +2,7 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub struct TextInputProps {
+pub struct Props {
     #[prop_or_default]
     pub placeholder: AttrValue,
     #[prop_or_default]
@@ -13,7 +13,7 @@ pub struct TextInputProps {
 }
 
 #[styled_component]
-pub fn TextInput(props: &TextInputProps) -> Html {
+pub fn TextInput(props: &Props) -> Html {
     let is_hover = use_state(|| false);
 
     let on_mouseenter = {

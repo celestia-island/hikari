@@ -2,13 +2,13 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub struct DatePickerProps {
+pub struct Props {
     #[prop_or_default]
     pub children: Children,
 }
 
 #[styled_component]
-pub fn DatePicker(props: &DatePickerProps) -> Html {
+pub fn DatePicker(props: &Props) -> Html {
     html! {
         <div
             class={css!(r#"

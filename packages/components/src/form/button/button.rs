@@ -1,7 +1,7 @@
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
-use hikari_theme::prelude::*;
+use hikari_theme::types::{ColorType, SizeType};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum BorderRadiusType {
@@ -12,43 +12,8 @@ pub enum BorderRadiusType {
     OnlyRight,
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct ButtonGroupInjectorContext {
-    pub border_radius_type: BorderRadiusType,
-}
-
 #[derive(Properties, Debug, PartialEq)]
-pub struct ButtonGroupInjectorContextProviderProps {
-    #[prop_or(SizeType::Medium)]
-    pub size: SizeType,
-    #[prop_or(ColorType::Primary)]
-    pub color: ColorType,
-    #[prop_or(false)]
-    pub outlined: bool,
-    #[prop_or_default]
-    pub border_radius_type: BorderRadiusType,
-
-    #[prop_or_default]
-    pub children: Children,
-}
-
-pub type ButtonGroupInjectorContextProviderType = UseStateHandle<ButtonGroupInjectorContext>;
-
-#[function_component]
-pub fn ButtonGroupInjectorContextShell(props: &ButtonGroupInjectorContextProviderProps) -> Html {
-    let ctx = use_state(|| ButtonGroupInjectorContext {
-        border_radius_type: props.border_radius_type,
-    });
-
-    html! {
-        <ContextProvider<ButtonGroupInjectorContextProviderType> context={ctx.clone()}>
-            {props.children.clone()  }
-        </ContextProvider<ButtonGroupInjectorContextProviderType>>
-    }
-}
-
-#[derive(Properties, Debug, PartialEq)]
-pub struct ButtonProps {
+pub struct Props {
     #[prop_or_default]
     pub size: SizeType,
     #[prop_or_default]
@@ -64,8 +29,9 @@ pub struct ButtonProps {
 }
 
 #[styled_component]
-pub fn Button(props: &ButtonProps) -> Html {
-    let radius_type = use_context::<ButtonGroupInjectorContextProviderType>();
+pub fn Button(props: &Props) -> Html {
+    let radius_type =
+        use_context::<super::button_group::group_injector_context::ContextProviderType>();
     let radius_type = match &radius_type {
         Some(ctx) => ctx.border_radius_type,
         None => BorderRadiusType::Default,

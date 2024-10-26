@@ -2,13 +2,13 @@ use stylist::yew::styled_component;
 use yew::prelude::*;
 
 #[derive(Properties, Debug, PartialEq)]
-pub struct HeaderLayoutProps {
+pub struct Props {
     #[prop_or_default]
     pub children: Children,
 }
 
 #[styled_component]
-pub fn HeaderLayout(props: &HeaderLayoutProps) -> Html {
+pub fn HeaderLayout(props: &Props) -> Html {
     html! {
         <header
             class={css!(r#"

@@ -1,51 +1,11 @@
 use stylist::yew::styled_component;
 use yew::{html::ChildrenRenderer, prelude::*, virtual_dom::VChild};
 
-use hikari_theme::types::{ColorType, SizeType};
-
-use super::button::{BorderRadiusType, Button};
-
-pub(crate) mod group_injector_context {
-    use yew::prelude::*;
-
-    use super::BorderRadiusType;
-    use hikari_theme::types::{ColorType, SizeType};
-
-    #[derive(Debug, PartialEq, Clone)]
-    pub struct Context {
-        pub border_radius_type: BorderRadiusType,
-    }
-
-    #[derive(Properties, Debug, PartialEq)]
-    pub struct ContextProviderProps {
-        #[prop_or(SizeType::Medium)]
-        pub size: SizeType,
-        #[prop_or(ColorType::Primary)]
-        pub color: ColorType,
-        #[prop_or(false)]
-        pub outlined: bool,
-        #[prop_or_default]
-        pub border_radius_type: BorderRadiusType,
-
-        #[prop_or_default]
-        pub children: Children,
-    }
-
-    pub type ContextProviderType = UseStateHandle<Context>;
-
-    #[function_component]
-    pub fn ContextShell(props: &ContextProviderProps) -> Html {
-        let ctx = use_state(|| Context {
-            border_radius_type: props.border_radius_type,
-        });
-
-        html! {
-            <ContextProvider<ContextProviderType> context={ctx.clone()}>
-                {props.children.clone()  }
-            </ContextProvider<ContextProviderType>>
-        }
-    }
-}
+use super::button::Button;
+use hikari_theme::{
+    components::form::button::*,
+    types::{ColorType, SizeType},
+};
 
 #[derive(Clone, derive_more::From, PartialEq)]
 pub enum ButtonGroupVariant {
@@ -91,7 +51,7 @@ pub fn ButtonGroup(props: &Props) -> Html {
                 display: flex;
                 flex-direction: row;
             "#)}>
-                <group_injector_context::ContextShell
+                <ContextShell
                     border_radius_type={BorderRadiusType::OnlyLeft}
                 >
                     {
@@ -101,20 +61,20 @@ pub fn ButtonGroup(props: &Props) -> Html {
                             html! {}
                         }
                     }
-                </group_injector_context::ContextShell>
+                </ContextShell>
 
                 {props.children.iter().skip(1).take(props.children.len() - 2).map(|child| html! {
-                    <group_injector_context::ContextShell
+                    <ContextShell
                         border_radius_type={BorderRadiusType::None}
                     >
                         {{
                             let child: Html = child.clone().into();
                             child
                         }}
-                    </group_injector_context::ContextShell>
+                    </ContextShell>
                 }).collect::<Html>()}
 
-                <group_injector_context::ContextShell
+                <ContextShell
                     border_radius_type={BorderRadiusType::OnlyRight}
                 >
                     {
@@ -124,7 +84,7 @@ pub fn ButtonGroup(props: &Props) -> Html {
                             html! {}
                         }
                     }
-                </group_injector_context::ContextShell>
+                </ContextShell>
             </div>
         },
     }

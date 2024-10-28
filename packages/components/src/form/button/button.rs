@@ -1,16 +1,10 @@
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
-use hikari_theme::types::{ColorType, SizeType};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum BorderRadiusType {
-    #[default]
-    Default,
-    None,
-    OnlyLeft,
-    OnlyRight,
-}
+use hikari_theme::{
+    components::form::button::*,
+    types::{ColorType, SizeType},
+};
 
 #[derive(Properties, Debug, PartialEq)]
 pub struct Props {
@@ -30,8 +24,7 @@ pub struct Props {
 
 #[styled_component]
 pub fn Button(props: &Props) -> Html {
-    let radius_type =
-        use_context::<super::button_group::group_injector_context::ContextProviderType>();
+    let radius_type = use_context::<ContextProviderType>();
     let radius_type = match &radius_type {
         Some(ctx) => ctx.border_radius_type,
         None => BorderRadiusType::Default,

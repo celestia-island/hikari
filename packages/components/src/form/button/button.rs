@@ -24,7 +24,7 @@ pub struct Props {
 
 #[styled_component]
 pub fn Button(props: &Props) -> Html {
-    let radius_type = use_context::<ContextProviderType>();
+    let radius_type = use_context::<ComponentContextProviderType>();
     let radius_type = match &radius_type {
         Some(ctx) => ctx.border_radius_type,
         None => BorderRadiusType::Default,
@@ -127,33 +127,33 @@ pub fn Button(props: &Props) -> Html {
                     height: 100%;
 
                     border: 1px solid transparent;
-                    box-shadow: 1px 1px 4px 0 var(--color-shadow-rgba);
+                    box-shadow: 1px 1px 4px 0 var(--color-shadow);
 
                     transition: all 0.3s;
 
                     &[data-color="primary"] {
-                        background-color: rgba(var(--color-primary), 0.8);
-                        border-color: rgba(var(--color-primary), 0.8);
+                        background-color: var(--color-primary-most);
+                        border-color: var(--color-primary-most);
                     }
                     &[data-color="secondary"] {
-                        background-color: rgba(var(--color-secondary), 0.8);
-                        border-color: rgba(var(--color-secondary), 0.8);
+                        background-color: var(--color-secondary-most);
+                        border-color: var(--color-secondary-most);
                     }
                     &[data-color="success"] {
-                        background-color: rgba(var(--color-success), 0.8);
-                        border-color: rgba(var(--color-success), 0.8);
+                        background-color: var(--color-success-most);
+                        border-color: var(--color-success-most);
                     }
                     &[data-color="error"] {
-                        background-color: rgba(var(--color-error), 0.8);
-                        border-color: rgba(var(--color-error), 0.8);
+                        background-color: var(--color-error-most);
+                        border-color: var(--color-error-most);
                     }
                     &[data-color="info"] {
-                        background-color: rgba(var(--color-info), 0.8);
-                        border-color: rgba(var(--color-info), 0.8);
+                        background-color: var(--color-info-most);
+                        border-color: var(--color-info-most);
                     }
                     &[data-color="warning"] {
-                        background-color: rgba(var(--color-warning), 0.8);
-                        border-color: rgba(var(--color-warning), 0.8);
+                        background-color: var(--color-warning-most);
+                        border-color: var(--color-warning-most);
                     }
 
                     &[data-border-radius-type="default"] {
@@ -172,8 +172,8 @@ pub fn Button(props: &Props) -> Html {
                     &[data-style="outlined"] {
                         backdrop-filter: blur(4px);
                     }
-                    &[data-style="outlined"]&[data-state="none"],
-                    &[data-style="outlined"]&[data-state="hover"] {
+                    &[data-style="outlined"] &[data-state="none"],
+                    &[data-style="outlined"] &[data-state="hover"] {
                         background-color: transparent;
                     }
                     &[data-style="basic"] {
@@ -220,7 +220,7 @@ pub fn Button(props: &Props) -> Html {
                     width: 100%;
                     height: 100%;
                     border-radius: 4px;
-                    box-shadow: 1px 1px 4px 0 var(--color-shadow-rgba);
+                    box-shadow: 1px 1px 4px 0 var(--color-shadow);
                     opacity: 0;
 
                     z-index: -1;
@@ -276,22 +276,22 @@ pub fn Button(props: &Props) -> Html {
                     transition: color 0.3s;
 
                     &[data-color="primary"]&[data-style="outlined"] {
-                        color: rgb(var(--color-primary));
+                        color: var(--color-primary);
                     }
                     &[data-color="secondary"]&[data-style="outlined"] {
-                        color: rgb(var(--color-secondary));
+                        color: var(--color-secondary);
                     }
                     &[data-color="success"]&[data-style="outlined"] {
-                        color: rgb(var(--color-success));
+                        color: var(--color-success);
                     }
                     &[data-color="error"]&[data-style="outlined"] {
-                        color: rgb(var(--color-error));
+                        color: var(--color-error);
                     }
                     &[data-color="info"]&[data-style="outlined"] {
-                        color: rgb(var(--color-info));
+                        color: var(--color-info);
                     }
                     &[data-color="warning"]&[data-style="outlined"] {
-                        color: rgb(var(--color-warning));
+                        color: var(--color-warning);
                     }
 
                     &[data-size="small"] {
@@ -305,13 +305,13 @@ pub fn Button(props: &Props) -> Html {
                     }
 
                     &[data-style="outlined"] {
-                        color: rgb(var(--color-primary));
+                        color: var(--color-primary);
                     }
                     &[data-style="outlined"]&[data-state="active"] {
-                        color: rgb(var(--color-button-text));
+                        color: var(--color-button-text);
                     }
                     &[data-style="basic"] {
-                        color: rgb(var(--color-button-text));
+                        color: var(--color-button-text);
                     }
                 "#)}
 

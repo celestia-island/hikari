@@ -15,21 +15,6 @@ pub async fn html(url: String) -> Result<impl IntoResponse, (StatusCode, String)
     let raw = App::render_to_string(url, Default::default())
         .await
         .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()))?;
-    let raw = format!(
-        r#"
-<body>
-<div id='app'>
-    <script src='./a.js'></script>
-    <script>
-    (async () => {{
-        await __wasm_vendor_entry('./a.wasm');
-        (await (new __wasm_vendor_entry.WebHandle())).start();
-    }})()
-    </script>
-    {raw}
-</div>
-</body>"#
-    );
 
     {
         let mut headers = HeaderMap::new();

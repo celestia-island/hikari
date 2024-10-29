@@ -11,6 +11,26 @@ pub enum ColorType {
     Warning,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
+pub enum ColorLevel {
+    #[default]
+    Full,
+    Most,
+    Half,
+    Less,
+}
+
+impl Into<f64> for ColorLevel {
+    fn into(self) -> f64 {
+        match self {
+            ColorLevel::Full => 1.0,
+            ColorLevel::Most => 0.8,
+            ColorLevel::Half => 0.5,
+            ColorLevel::Less => 0.2,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct ColorMap {
     pub primary: Color,
@@ -44,19 +64,21 @@ impl Color {
 
     pub fn to_rgb_str(&self) -> String {
         format!(
-            "rgb({:.3},{:.3},{:.3})",
-            self.red * 256.0,
-            self.green * 256.0,
-            self.blue * 256.0
+            "rgb({:.0},{:.0},{:.0})",
+            self.red * 256.,
+            self.green * 256.,
+            self.blue * 256.
         )
     }
 
-    pub fn to_rgba_str(&self, alpha: f32) -> String {
+    pub fn to_rgba_str(&self, alpha: ColorLevel) -> String {
+        let alpha: f64 = alpha.into();
+
         format!(
-            "rgba({:.3},{:.3},{:.3},{:.3})",
-            self.red * 256.0,
-            self.green * 256.0,
-            self.blue * 256.0,
+            "rgba({:.0},{:.0},{:.0},{:.1})",
+            self.red * 256.,
+            self.green * 256.,
+            self.blue * 256.,
             alpha
         )
     }
@@ -64,9 +86,9 @@ impl Color {
     pub fn to_rgb_str_hex(&self) -> String {
         format!(
             "#{:02x}{:02x}{:02x}",
-            (self.red * 256.0) as u8,
-            (self.green * 256.0) as u8,
-            (self.blue * 256.0) as u8
+            (self.red * 256.) as u8,
+            (self.green * 256.) as u8,
+            (self.blue * 256.) as u8
         )
     }
 }

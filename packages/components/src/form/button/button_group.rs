@@ -51,7 +51,7 @@ pub fn ButtonGroup(props: &Props) -> Html {
                 display: flex;
                 flex-direction: row;
             "#)}>
-                <ContextShell
+                <ComponentContextShell
                     border_radius_type={BorderRadiusType::OnlyLeft}
                 >
                     {
@@ -61,20 +61,20 @@ pub fn ButtonGroup(props: &Props) -> Html {
                             html! {}
                         }
                     }
-                </ContextShell>
+                </ComponentContextShell>
 
                 {props.children.iter().skip(1).take(props.children.len() - 2).map(|child| html! {
-                    <ContextShell
+                    <ComponentContextShell
                         border_radius_type={BorderRadiusType::None}
                     >
                         {{
                             let child: Html = child.clone().into();
                             child
                         }}
-                    </ContextShell>
+                    </ComponentContextShell>
                 }).collect::<Html>()}
 
-                <ContextShell
+                <ComponentContextShell
                     border_radius_type={BorderRadiusType::OnlyRight}
                 >
                     {
@@ -84,7 +84,7 @@ pub fn ButtonGroup(props: &Props) -> Html {
                             html! {}
                         }
                     }
-                </ContextShell>
+                </ComponentContextShell>
             </div>
         },
     }

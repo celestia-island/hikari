@@ -90,7 +90,7 @@ where
                     <textarea id='ssr_data' style='display: none;'>{state}</textarea>
                     <div id='app'>{html_raw}</div>
                     <script src='/a.js'></script>
-                    <script>(async () => {{await wasm_vendor_entry('/a.wasm');(await (new wasm_vendor_entry.WebHandle())).start();}})()</script>
+                    <script>(async () => {{await __wasm_vendor_entry('/a.wasm');(await (new __wasm_vendor_entry.WebHandle())).start();}})()</script>
                 </body>
             </html>
         "))

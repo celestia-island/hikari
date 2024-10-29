@@ -1,4 +1,4 @@
 pub mod components;
-pub mod global_states;
+pub mod context;
 pub mod prelude;
 pub mod types;

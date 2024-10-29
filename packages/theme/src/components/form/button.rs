@@ -12,12 +12,12 @@ pub enum BorderRadiusType {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct ContextState {
+pub struct ComponentContextState {
     pub border_radius_type: BorderRadiusType,
 }
 
 #[derive(Properties, Debug, PartialEq)]
-pub struct ContextProps {
+pub struct ComponentContextProps {
     #[prop_or(SizeType::Medium)]
     pub size: SizeType,
     #[prop_or(ColorType::Primary)]
@@ -31,17 +31,17 @@ pub struct ContextProps {
     pub children: Children,
 }
 
-pub type ContextProviderType = UseStateHandle<ContextState>;
+pub type ComponentContextProviderType = UseStateHandle<ComponentContextState>;
 
 #[function_component]
-pub fn ContextShell(props: &ContextProps) -> Html {
-    let ctx = use_state(|| ContextState {
+pub fn ComponentContextShell(props: &ComponentContextProps) -> Html {
+    let ctx = use_state(|| ComponentContextState {
         border_radius_type: props.border_radius_type,
     });
 
     html! {
-        <ContextProvider<ContextProviderType> context={ctx.clone()}>
+        <ContextProvider<ComponentContextProviderType> context={ctx.clone()}>
             {props.children.clone()  }
-        </ContextProvider<ContextProviderType>>
+        </ContextProvider<ComponentContextProviderType>>
     }
 }

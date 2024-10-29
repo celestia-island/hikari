@@ -62,7 +62,7 @@ stylist = { version = "^0.13", features = [
     "ssr",
     "hydration",
 ] }
-yew = { version = "^0.21", features = ["ssr", "hydration"] }
+yew = { version = "^0.21", features = ["csr", "ssr", "hydration"] }
 yew-router = "^0.18"
 
 tokio = { version = "^1", features = ["full"] }

@@ -7,29 +7,6 @@ use axum::{
     Router,
 };
 
-pub async fn html() -> Result<impl IntoResponse, (StatusCode, String)> {
-    {
-        let mut headers = HeaderMap::new();
-        headers.insert(header::CONTENT_TYPE, "text/html".parse().unwrap());
-
-        Ok((
-            headers,
-            r#"
-<body>
-<div id='app'>
-    <script src='./a.js'></script>
-    <script>
-    (async () => {
-        await __wasm_vendor_entry('./a.wasm');
-        (await (new __wasm_vendor_entry.WebHandle())).start();
-    })()
-    </script>
-</div>
-</body>"#,
-        ))
-    }
-}
-
 pub async fn wasm() -> Result<impl IntoResponse, (StatusCode, String)> {
     {
         let mut headers = HeaderMap::new();
@@ -66,7 +43,6 @@ pub async fn js() -> Result<impl IntoResponse, (StatusCode, String)> {
 
 pub async fn route() -> Result<Router> {
     let router = Router::new()
-        .route("/", get(html))
         .route("/a.wasm", get(wasm))
         .route("/a.js", get(js));
 

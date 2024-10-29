@@ -1,13 +1,14 @@
+mod render;
 mod r#static;
 
 use anyhow::Result;
 use log::info;
 use std::net::SocketAddr;
 
-use axum::serve;
+use axum::{serve, Router};
 use tokio::net::TcpListener;
 
-#[tokio::main(flavor = "multi_thread")]
+#[tokio::main]
 async fn main() -> Result<()> {
     env_logger::builder()
         .filter_level(log::LevelFilter::Info)
@@ -18,8 +19,9 @@ async fn main() -> Result<()> {
         .and_then(|s| s.parse().ok())
         .unwrap_or(8080);
 
-    let router = r#static::route()
-        .await?
+    let router = Router::new()
+        .nest("/", r#static::route().await?)
+        .nest("/", render::route().await?)
         .into_make_service_with_connect_info::<SocketAddr>();
 
     info!("Site will run on http://localhost:{port}");

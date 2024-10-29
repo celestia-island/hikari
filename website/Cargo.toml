@@ -44,6 +44,9 @@ yew = { workspace = true }
 yew-router = { workspace = true }
 
 [dev-dependencies]
+hikari-website = { path = "." }
+hikari-boot = { path = "../packages/boot" }
+
 env_logger = { workspace = true }
 tokio = { workspace = true }
 

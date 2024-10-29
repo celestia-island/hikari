@@ -27,7 +27,18 @@ pub enum Routes {
 }
 
 derive_struct!(AppStates {
-    color: ColorMap = COLOR_MAP.clone()
+    theme: {
+        color: ColorMap = COLOR_MAP.clone()
+    }
+    data: enum PageData {
+        Portal
+        Guide { id: String, raw: String }
+        Component(enum {
+            Button,
+            ButtonGroup,
+            // TODO: Add more components.
+        })
+    } = Portal
 });
 
 #[derive(Clone, Debug, DeriveApplication)]
@@ -63,12 +74,12 @@ impl DeclType for App {
                 color: rgb(var(--color-primary-text));
             }}
             "#,
-            props.states.color.primary.to_rgb_str(),
-            props.states.color.secondary.to_rgb_str(),
-            props.states.color.error.to_rgb_str(),
-            props.states.color.warning.to_rgb_str(),
-            props.states.color.success.to_rgb_str(),
-            props.states.color.info.to_rgb_str(),
+            props.states.theme.color.primary.to_rgb_str(),
+            props.states.theme.color.secondary.to_rgb_str(),
+            props.states.theme.color.error.to_rgb_str(),
+            props.states.theme.color.warning.to_rgb_str(),
+            props.states.theme.color.success.to_rgb_str(),
+            props.states.theme.color.info.to_rgb_str(),
         );
 
         Ok(yew::html! {

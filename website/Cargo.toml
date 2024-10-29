@@ -17,15 +17,18 @@ name = "dev"
 
 [dependencies]
 hikari-components = { path = "../packages/components" }
+hikari-theme = { path = "../packages/theme" }
 hikari-boot = { path = "../packages/boot" }
 
 anyhow = { workspace = true }
 async-trait = { workspace = true }
-base64 = { workspace = true }
 derive_more = { workspace = true }
+
 serde = { workspace = true }
 serde_json = { workspace = true }
 strum = { workspace = true }
+base64 = { workspace = true }
+yuuka = { workspace = true }
 
 console_log = { workspace = true }
 gloo = { workspace = true }

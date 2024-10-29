@@ -10,4 +10,15 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+derive_more = { workspace = true }
+once_cell = { workspace = true }
+
+serde = { workspace = true }
+serde_json = { workspace = true }
+strum = { workspace = true }
+base64 = { workspace = true }
+yuuka = { workspace = true }
+
 yew = { workspace = true }

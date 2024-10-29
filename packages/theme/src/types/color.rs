@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub enum ColorType {
     #[default]
@@ -7,6 +9,16 @@ pub enum ColorType {
     Error,
     Info,
     Warning,
+}
+
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct ColorMap {
+    pub primary: Color,
+    pub secondary: Color,
+    pub success: Color,
+    pub error: Color,
+    pub info: Color,
+    pub warning: Color,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -56,5 +68,24 @@ impl Color {
             (self.green * 256.0) as u8,
             (self.blue * 256.0) as u8
         )
+    }
+}
+
+impl Serialize for Color {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_rgb_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for Color {
+    fn deserialize<D>(deserializer: D) -> Result<Color, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Color::from_rgb_str_hex(&s))
     }
 }

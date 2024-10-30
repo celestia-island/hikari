@@ -3,11 +3,11 @@ use yuuka::derive_struct;
 use yew::prelude::*;
 
 use crate::{
-    prelude::element::designs::color::COLOR_MAP,
-    types::{ColorLevel, ColorMap},
+    prelude::element::palette::COLOR_MAP,
+    types::{ColorLevel, Palette},
 };
 
-derive_struct!(pub Theme { color: ColorMap = COLOR_MAP.clone() });
+derive_struct!(pub Theme { palette: Palette = COLOR_MAP.clone() });
 
 #[derive(Properties, Debug, PartialEq)]
 pub struct ThemeContextProviderProps {
@@ -78,30 +78,30 @@ pub fn ThemeContextShell(props: &ThemeContextProviderProps) -> Html {
                     body {{
                         font-family: 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
                     }}"#,
-                    props.context.color.primary.to_rgb_str(),
-                    props.context.color.secondary.to_rgb_str(),
-                    props.context.color.success.to_rgb_str(),
-                    props.context.color.warning.to_rgb_str(),
-                    props.context.color.error.to_rgb_str(),
-                    props.context.color.info.to_rgb_str(),
-                    props.context.color.primary.to_rgba_str(ColorLevel::Most),
-                    props.context.color.secondary.to_rgba_str(ColorLevel::Most),
-                    props.context.color.success.to_rgba_str(ColorLevel::Most),
-                    props.context.color.warning.to_rgba_str(ColorLevel::Most),
-                    props.context.color.error.to_rgba_str(ColorLevel::Most),
-                    props.context.color.info.to_rgba_str(ColorLevel::Most),
-                    props.context.color.primary.to_rgba_str(ColorLevel::Half),
-                    props.context.color.secondary.to_rgba_str(ColorLevel::Half),
-                    props.context.color.success.to_rgba_str(ColorLevel::Half),
-                    props.context.color.warning.to_rgba_str(ColorLevel::Half),
-                    props.context.color.error.to_rgba_str(ColorLevel::Half),
-                    props.context.color.info.to_rgba_str(ColorLevel::Half),
-                    props.context.color.primary.to_rgba_str(ColorLevel::Less),
-                    props.context.color.secondary.to_rgba_str(ColorLevel::Less),
-                    props.context.color.success.to_rgba_str(ColorLevel::Less),
-                    props.context.color.warning.to_rgba_str(ColorLevel::Less),
-                    props.context.color.error.to_rgba_str(ColorLevel::Less),
-                    props.context.color.info.to_rgba_str(ColorLevel::Less)
+                    props.context.palette.primary.to_rgb_str(),
+                    props.context.palette.secondary.to_rgb_str(),
+                    props.context.palette.success.to_rgb_str(),
+                    props.context.palette.warning.to_rgb_str(),
+                    props.context.palette.error.to_rgb_str(),
+                    props.context.palette.info.to_rgb_str(),
+                    props.context.palette.primary.to_rgba_str(ColorLevel::Most),
+                    props.context.palette.secondary.to_rgba_str(ColorLevel::Most),
+                    props.context.palette.success.to_rgba_str(ColorLevel::Most),
+                    props.context.palette.warning.to_rgba_str(ColorLevel::Most),
+                    props.context.palette.error.to_rgba_str(ColorLevel::Most),
+                    props.context.palette.info.to_rgba_str(ColorLevel::Most),
+                    props.context.palette.primary.to_rgba_str(ColorLevel::Half),
+                    props.context.palette.secondary.to_rgba_str(ColorLevel::Half),
+                    props.context.palette.success.to_rgba_str(ColorLevel::Half),
+                    props.context.palette.warning.to_rgba_str(ColorLevel::Half),
+                    props.context.palette.error.to_rgba_str(ColorLevel::Half),
+                    props.context.palette.info.to_rgba_str(ColorLevel::Half),
+                    props.context.palette.primary.to_rgba_str(ColorLevel::Less),
+                    props.context.palette.secondary.to_rgba_str(ColorLevel::Less),
+                    props.context.palette.success.to_rgba_str(ColorLevel::Less),
+                    props.context.palette.warning.to_rgba_str(ColorLevel::Less),
+                    props.context.palette.error.to_rgba_str(ColorLevel::Less),
+                    props.context.palette.info.to_rgba_str(ColorLevel::Less)
                 )}
             </style>
 

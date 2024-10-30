@@ -32,7 +32,7 @@ impl Into<f64> for ColorLevel {
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct ColorMap {
+pub struct Palette {
     pub primary: Color,
     pub secondary: Color,
     pub success: Color,

@@ -1,10 +1,14 @@
+use serde::{Deserialize, Serialize};
 use yuuka::derive_struct;
 
 use yew_router::prelude::*;
 
 use crate::pages::*;
 use hikari_boot::{DeclType, DeriveApplication, DeriveRoutes, RoutesOutsideProps};
-use hikari_theme::context::{Theme, ThemeContextShell};
+use hikari_theme::{
+    context::{Theme, ThemeContextShell},
+    types::ComponentType,
+};
 
 #[derive(PartialEq, Clone, Debug, DeriveRoutes, Routable)]
 pub enum Routes {
@@ -25,18 +29,17 @@ pub enum Routes {
     NotFound,
 }
 
-derive_struct!(AppStates {
-    theme: Theme,
-    data: enum PageData {
-        Portal
-        Guide { id: String, raw: String }
-        Component(enum {
-            Button,
-            ButtonGroup,
-            // TODO: Add more components.
-        })
-    } = Portal
-});
+derive_struct!(
+    #[derive(PartialEq, Serialize, Deserialize)]
+    AppStates {
+        theme: Theme,
+        data: enum PageData {
+            Portal
+            Guide { id: String, raw: String }
+            Component(ComponentType)
+        } = Portal
+    }
+);
 
 #[derive(Clone, Debug, DeriveApplication)]
 pub struct App;

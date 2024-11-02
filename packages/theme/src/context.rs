@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use yuuka::derive_struct;
 
 use yew::prelude::*;
@@ -7,7 +8,14 @@ use crate::{
     types::{ColorLevel, Palette},
 };
 
-derive_struct!(pub Theme { palette: Palette = COLOR_MAP.clone() });
+derive_struct!(
+    #[derive(PartialEq, Serialize, Deserialize)]
+    pub Theme {
+        palette: Palette = COLOR_MAP.clone(),
+        // FIXME: Maybe we should use `dyn Trait` instead...
+        // skin: Vec<(ComponentType, ComponentSkin)> = Vec::new(),
+    }
+);
 
 #[derive(Properties, Debug, PartialEq)]
 pub struct ThemeContextProviderProps {

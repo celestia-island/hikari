@@ -7,7 +7,7 @@ mod italic;
 mod mark;
 mod quote;
 mod ruby;
-mod size;
+mod sizing;
 mod split;
 mod underline;
 
@@ -20,6 +20,9 @@ pub use italic::Italic;
 pub use mark::Mark;
 pub use quote::{BlockQuote, Quote};
 pub use ruby::Ruby;
-pub use size::{Size, Sizing};
-pub use split::{Divider, Split};
+pub use sizing::{
+    headers::{H1, H2, H3, H4, H5, H6},
+    Sizing,
+};
+pub use split::{Break, Divider};
 pub use underline::Underline;

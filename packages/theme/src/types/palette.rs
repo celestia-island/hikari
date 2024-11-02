@@ -12,6 +12,13 @@ pub enum ColorType {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
+pub enum ColorMode {
+    #[default]
+    Light,
+    Dark,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub enum ColorLevel {
     #[default]
     Full,
@@ -31,7 +38,7 @@ impl Into<f64> for ColorLevel {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Palette {
     pub primary: Color,
     pub secondary: Color,

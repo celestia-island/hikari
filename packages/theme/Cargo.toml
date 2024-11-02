@@ -22,3 +22,4 @@ base64 = { workspace = true }
 yuuka = { workspace = true }
 
 yew = { workspace = true }
+stylist = { workspace = true }

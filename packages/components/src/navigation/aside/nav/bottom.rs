@@ -10,7 +10,7 @@ pub struct Props {
 #[styled_component]
 pub fn BottomNav(props: &Props) -> Html {
     html! {
-        <div
+        <nav
             class={css!(r#"
                 display: flex;
                 align-items: center;
@@ -18,6 +18,6 @@ pub fn BottomNav(props: &Props) -> Html {
             "#)}
         >
             {props.children.clone()}
-        </div>
+        </nav>
     }
 }

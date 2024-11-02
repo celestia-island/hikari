@@ -1,3 +1,4 @@
+mod anchor;
 mod breakpoint;
 mod cursor;
 mod draggable;
@@ -6,6 +7,7 @@ mod modal;
 mod resizable;
 mod scrollable;
 
+pub use anchor::Anchor;
 pub use breakpoint::Breakpoint;
 pub use cursor::Cursor;
 pub use draggable::Draggable;

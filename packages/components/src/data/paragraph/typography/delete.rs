@@ -7,6 +7,7 @@ pub struct Props {
     pub children: Children,
 }
 
+/// `<Delete>` component is like a `<del>` / `<s>` element in HTML.
 #[styled_component]
 pub fn Delete(props: &Props) -> Html {
     html! {

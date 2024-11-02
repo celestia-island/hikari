@@ -7,10 +7,9 @@ pub struct Props {
     pub children: Children,
 }
 
+/// `<Ruby>` component is like a `<ruby>` element in HTML.
 #[styled_component]
-pub fn TimePicker(props: &Props) -> Html {
-    // TODO: Use `<time>` element in HTML.
-
+pub fn Ruby(props: &Props) -> Html {
     html! {
         <div
             class={css!(r#"

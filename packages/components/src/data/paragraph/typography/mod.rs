@@ -1,9 +1,25 @@
+mod baseline;
 mod bold;
+mod code;
 mod delete;
+mod direction;
 mod italic;
+mod mark;
+mod quote;
+mod ruby;
+mod size;
+mod split;
 mod underline;
 
+pub use baseline::{Sub, Sup};
 pub use bold::Bold;
+pub use code::{Code, Sample};
 pub use delete::Delete;
+pub use direction::{IsolateDirection, OverrideDirection};
 pub use italic::Italic;
+pub use mark::Mark;
+pub use quote::{BlockQuote, Quote};
+pub use ruby::Ruby;
+pub use size::{Size, Sizing};
+pub use split::{Divider, Split};
 pub use underline::Underline;

@@ -7,6 +7,7 @@ pub struct Props {
     pub children: Children,
 }
 
+/// `<Bold>` component is like a `<b>` element in HTML.
 #[styled_component]
 pub fn Bold(props: &Props) -> Html {
     html! {

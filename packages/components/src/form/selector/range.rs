@@ -8,9 +8,7 @@ pub struct Props {
 }
 
 #[styled_component]
-pub fn TimePicker(props: &Props) -> Html {
-    // TODO: Use `<time>` element in HTML.
-
+pub fn Range(props: &Props) -> Html {
     html! {
         <div
             class={css!(r#"

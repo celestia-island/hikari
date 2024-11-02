@@ -7,6 +7,7 @@ pub struct Props {
     pub children: Children,
 }
 
+/// `<Italic>` component is like a `<i>` element in HTML.
 #[styled_component]
 pub fn Italic(props: &Props) -> Html {
     html! {

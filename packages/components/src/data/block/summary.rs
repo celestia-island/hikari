@@ -7,10 +7,12 @@ pub struct Props {
     pub children: Children,
 }
 
+pub type Collapse = Summary;
+
 #[styled_component]
-pub fn Image(props: &Props) -> Html {
+pub fn Summary(props: &Props) -> Html {
     html! {
-        <div
+        <button
             class={css!(r#"
                 display: flex;
                 align-items: center;
@@ -18,6 +20,6 @@ pub fn Image(props: &Props) -> Html {
             "#)}
         >
             {props.children.clone()}
-        </div>
+        </button>
     }
 }

@@ -1,16 +1,21 @@
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
+use hikari_theme::types::Color;
+
 #[derive(Properties, Debug, PartialEq)]
 pub struct Props {
     #[prop_or_default]
     pub children: Children,
+    #[prop_or_default]
+    pub color: Option<Color>,
 }
 
+/// `<Mark>` component is like a `<mark>` element in HTML.
 #[styled_component]
-pub fn Collapse(props: &Props) -> Html {
+pub fn Mark(props: &Props) -> Html {
     html! {
-        <button
+        <div
             class={css!(r#"
                 display: flex;
                 align-items: center;
@@ -18,6 +23,6 @@ pub fn Collapse(props: &Props) -> Html {
             "#)}
         >
             {props.children.clone()}
-        </button>
+        </div>
     }
 }

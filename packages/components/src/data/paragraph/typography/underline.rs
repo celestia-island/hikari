@@ -7,6 +7,7 @@ pub struct Props {
     pub children: Children,
 }
 
+/// `<Underline>` component is like a `<u>` element in HTML.
 #[styled_component]
 pub fn Underline(props: &Props) -> Html {
     html! {

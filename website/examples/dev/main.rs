@@ -1,4 +1,4 @@
-mod render;
+mod pages;
 mod r#static;
 
 use anyhow::Result;
@@ -21,7 +21,7 @@ async fn main() -> Result<()> {
 
     let router = Router::new()
         .nest("/", r#static::route().await?)
-        .nest("/", render::route().await?)
+        .nest("/", pages::route().await?)
         .into_make_service_with_connect_info::<SocketAddr>();
 
     info!("Site will run on http://localhost:{port}");

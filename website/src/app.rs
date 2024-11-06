@@ -31,7 +31,7 @@ pub enum Routes {
 
 derive_struct!(
     #[derive(PartialEq, Serialize, Deserialize)]
-    AppStates {
+    pub AppStates {
         theme: Theme,
         data: enum PageData {
             Portal

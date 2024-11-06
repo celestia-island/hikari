@@ -1,3 +1,5 @@
+use anyhow::anyhow;
+
 use wasm_bindgen::prelude::*;
 use web_sys::window;
 
@@ -18,6 +20,14 @@ impl WebHandle {
 
     #[wasm_bindgen]
     pub async fn start(&self) -> Result<(), wasm_bindgen::JsValue> {
+        let el = gloo::utils::document().query_selector("#ssr_data")?;
+        let states = el
+            .ok_or(wasm_bindgen::JsError::new("Cannot find ssr_data element"))?
+            .inner_html();
+        let states: AppStates = serde_json::from_str(&states).map_err(|err| {
+            wasm_bindgen::JsError::new(&format!("Cannot parse ssr_data element: {}", err))
+        })?;
+
         <App as hikari_boot::Application>::render_with_root(
             window()
                 .expect("Cannot get window object")
@@ -25,7 +35,7 @@ impl WebHandle {
                 .expect("Cannot get document object")
                 .get_element_by_id("app")
                 .expect("Cannot get root element"),
-            AppStates::default(), // TODO: Read from raw HTML.
+            states,
         );
         Ok(())
     }

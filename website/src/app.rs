@@ -35,8 +35,8 @@ derive_struct!(
         theme: Theme,
         data: enum PageData {
             Portal
-            Guide { id: String, raw: String }
-            Component(ComponentType)
+            Guide { path: String, raw: String }
+            Component { id: ComponentType, raw: String }
         } = Portal
     }
 );
@@ -51,7 +51,9 @@ impl DeclType for App {
     fn decl_render_outside(props: &RoutesOutsideProps<Self::AppStates>) -> yew::HtmlResult {
         Ok(yew::html! {
             <ThemeContextShell context={props.states.theme.clone()}>
-                {props.children.clone()}
+                <crate::preload_data::Provider preload_data={props.states.data.clone()}>
+                    {props.children.clone()}
+                </crate::preload_data::Provider>
             </ThemeContextShell>
         })
     }

@@ -9,7 +9,7 @@ pub async fn html(id: String) -> Result<String> {
         AppStates {
             theme: Default::default(),
             data: PageData::Guide {
-                id,
+                path: id,
                 raw: "いいよ！こいよ".to_string(),
             },
         },

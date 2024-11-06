@@ -10,7 +10,10 @@ pub async fn html(id: String) -> Result<String> {
         format!("/component/{}", id),
         AppStates {
             theme: Default::default(),
-            data: PageData::Component(ComponentType::from_str(&id)?),
+            data: PageData::Component {
+                id: ComponentType::from_str(&id)?,
+                raw: "いいよ！こいよ".to_string(),
+            },
         },
     )
     .await

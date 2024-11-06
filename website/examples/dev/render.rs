@@ -32,7 +32,7 @@ pub async fn route() -> Result<Router> {
             get(move |Path(id): Path<String>| async move { html(format!("/guide/{}", id)).await }),
         )
         .route(
-            "/component/:id",
+            "/component/*id",
             get(move |Path(id): Path<String>| async move { html(format!("/component/{}", id)).await }),
         );
 

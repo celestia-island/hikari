@@ -19,9 +19,9 @@ pub enum Routes {
     #[at("/guide/:id")]
     #[component(Guide)]
     Guide { id: String },
-    #[at("/component/:id")]
+    #[at("/component/*id")]
     #[component(Component)]
-    Component { id: String },
+    Component { id: ComponentType },
 
     #[not_found]
     #[at("/404")]

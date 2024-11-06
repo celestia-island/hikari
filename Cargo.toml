@@ -35,7 +35,7 @@ uuid = { version = "^1", features = [
     'macro-diagnostics',
     'serde',
 ] }
-yuuka = "^0.3"
+yuuka = "^0.4"
 
 log = "^0.4"
 env_logger = "^0.11"

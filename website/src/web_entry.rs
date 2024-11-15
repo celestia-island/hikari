@@ -1,5 +1,3 @@
-use anyhow::anyhow;
-
 use wasm_bindgen::prelude::*;
 use web_sys::window;
 

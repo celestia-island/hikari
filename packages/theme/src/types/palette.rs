@@ -53,20 +53,58 @@ pub struct Color {
     pub red: f32,
     pub green: f32,
     pub blue: f32,
+    pub alpha: Option<f32>,
 }
 
 #[allow(dead_code)]
 impl Color {
-    pub fn new(red: f32, green: f32, blue: f32) -> Self {
-        Self { red, green, blue }
+    pub fn new(red: f32, green: f32, blue: f32, alpha: Option<f32>) -> Self {
+        Self {
+            red,
+            green,
+            blue,
+            alpha,
+        }
     }
 
-    pub fn from_rgb_str_hex(rgb_str_hex: &str) -> Self {
-        let rgb_str_hex = rgb_str_hex.trim_start_matches('#');
-        let red = u8::from_str_radix(&rgb_str_hex[0..2], 16).unwrap() as f32 / 256.0;
-        let green = u8::from_str_radix(&rgb_str_hex[2..4], 16).unwrap() as f32 / 256.0;
-        let blue = u8::from_str_radix(&rgb_str_hex[4..6], 16).unwrap() as f32 / 256.0;
-        Self { red, green, blue }
+    pub fn from_rgb_str(str: &str) -> Self {
+        if str.starts_with("rgba") {
+            let str = str.trim_start_matches("rgba(").trim_end_matches(')');
+            let mut split = str.split(',');
+            let red = split.next().unwrap().parse::<f32>().unwrap() / 256.;
+            let green = split.next().unwrap().parse::<f32>().unwrap() / 256.;
+            let blue = split.next().unwrap().parse::<f32>().unwrap() / 256.;
+            let alpha = split.next().unwrap().parse::<f32>().unwrap();
+            Self {
+                red,
+                green,
+                blue,
+                alpha: Some(alpha),
+            }
+        } else if str.starts_with("#") {
+            let str = str.trim_start_matches('#');
+            let red = u8::from_str_radix(&str[0..2], 16).unwrap() as f32 / 256.;
+            let green = u8::from_str_radix(&str[2..4], 16).unwrap() as f32 / 256.;
+            let blue = u8::from_str_radix(&str[4..6], 16).unwrap() as f32 / 256.;
+            Self {
+                red,
+                green,
+                blue,
+                alpha: None,
+            }
+        } else {
+            let str = str.trim_start_matches("rgb(").trim_end_matches(')');
+            let mut split = str.split(',');
+            let red = split.next().unwrap().parse::<f32>().unwrap() / 256.;
+            let green = split.next().unwrap().parse::<f32>().unwrap() / 256.;
+            let blue = split.next().unwrap().parse::<f32>().unwrap() / 256.;
+            Self {
+                red,
+                green,
+                blue,
+                alpha: None,
+            }
+        }
     }
 
     pub fn to_rgb_str(&self) -> String {
@@ -115,6 +153,6 @@ impl<'de> Deserialize<'de> for Color {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        Ok(Color::from_rgb_str_hex(&s))
+        Ok(Color::from_rgb_str(&s))
     }
 }

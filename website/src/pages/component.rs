@@ -1,9 +1,11 @@
+use yuuka::auto;
+
 use stylist::yew::styled_component;
 use wasm_bindgen::{throw_str, UnwrapThrowExt};
 use yew::prelude::*;
 
 use hikari_components::form::Button;
-use hikari_theme::types::{ColorType, ComponentType};
+use hikari_theme::{types::*, *};
 
 use crate::{app::PageData, preload_data::PreloadDataContext};
 
@@ -21,6 +23,9 @@ pub fn Component(props: &Props) -> Html {
         PageData::Component { id, raw } => (id, raw),
         _ => throw_str("Invalid preload data"),
     };
+
+    // TEST: Auto import
+    let _ = auto!(ComponentType::Data::Block::Card);
 
     html! {
         <>

@@ -7,6 +7,7 @@ use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
 use yuuka::derive_enum;
 
 derive_enum!(
+    #[macro_export]
     #[derive(PartialEq, Copy, Serialize, Deserialize, Display, EnumIter)]
     #[macros_recursive(strum(serialize_all = "snake_case"))]
     pub enum ComponentType {

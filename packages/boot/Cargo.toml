@@ -10,8 +10,7 @@ publish = false
 crate-type = ["rlib"]
 
 [dependencies]
-hikari-macro = { path = "../macro" }
-hikari-macro-types = { path = "../macro-types" }
+macros = { path = "../macros", package = "hikari-macros" }
 
 anyhow = { workspace = true }
 async-trait = { workspace = true }

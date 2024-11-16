@@ -1,6 +1,6 @@
 [package]
 authors = ["langyo <langyo.china@gmail.com>"]
-name = "hikari-theme"
+name = "hikari-types"
 
 version = "0.1.0"
 edition = "2021"
@@ -10,8 +10,6 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-hikari-types = { path = "../types" }
-
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 derive_more = { workspace = true }

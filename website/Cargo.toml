@@ -16,9 +16,10 @@ name = "build"
 name = "dev"
 
 [dependencies]
+hikari-boot = { path = "../packages/boot" }
 hikari-components = { path = "../packages/components" }
 hikari-theme = { path = "../packages/theme" }
-hikari-boot = { path = "../packages/boot" }
+hikari-types = { path = "../packages/types" }
 
 anyhow = { workspace = true }
 async-trait = { workspace = true }

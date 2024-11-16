@@ -5,7 +5,7 @@ use wasm_bindgen::{throw_str, UnwrapThrowExt};
 use yew::prelude::*;
 
 use hikari_components::form::Button;
-use hikari_theme::{types::*, *};
+use hikari_types::*;
 
 use crate::{app::PageData, preload_data::PreloadDataContext};
 

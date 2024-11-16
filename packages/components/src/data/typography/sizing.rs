@@ -1,14 +1,18 @@
+use serde::{Deserialize, Serialize};
+
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
 use hikari_theme::types::FontSize;
 
-#[derive(Properties, Debug, PartialEq)]
+#[derive(Properties, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Props {
-    #[prop_or_default]
-    pub children: Children,
     #[prop_or(FontSize::H1)]
     pub size: FontSize,
+
+    #[prop_or_default]
+    #[serde(skip)]
+    pub children: Children,
 }
 
 /// `<Sizing>` component can be used to set the font size.
@@ -28,15 +32,18 @@ pub fn Sizing(props: &Props) -> Html {
 }
 
 pub mod headers {
+    use serde::{Deserialize, Serialize};
+
     use stylist::yew::styled_component;
     use yew::prelude::*;
 
     use super::Sizing;
     use hikari_theme::types::FontSize;
 
-    #[derive(Properties, Debug, PartialEq)]
+    #[derive(Properties, Debug, PartialEq, Serialize, Deserialize)]
     pub struct Props {
         #[prop_or_default]
+        #[serde(skip)]
         pub children: Children,
     }
 

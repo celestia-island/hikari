@@ -1,14 +1,17 @@
+use serde::{Deserialize, Serialize};
+
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
-#[derive(Properties, Debug, PartialEq)]
+#[derive(Properties, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Props {
     #[prop_or_default]
-    pub placeholder: AttrValue,
+    pub placeholder: String,
     #[prop_or_default]
-    pub value: AttrValue,
+    pub value: String,
 
     #[prop_or_default]
+    #[serde(skip)]
     pub oninput: Callback<InputEvent>,
 }
 
@@ -65,8 +68,8 @@ pub fn TextInput(props: &Props) -> Html {
                         outline: 1px solid rgba(var(--color-primary), 0.8);
                     }
                 "#)}
-                placeholder={&props.placeholder}
-                value={&props.value}
+                placeholder={props.placeholder.clone()}
+                value={props.value.clone()}
                 oninput={&props.oninput}
             />
 

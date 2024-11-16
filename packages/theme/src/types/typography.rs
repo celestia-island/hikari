@@ -1,6 +1,9 @@
 // TODO: fonts, scales and default font size
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum FontSize {
     H1,
     H2,
@@ -11,5 +14,5 @@ pub enum FontSize {
     Px(f64),
     Em(f64),
     Rem(f64),
-    Custom(&'static str),
+    Custom(String),
 }

@@ -1,8 +1,11 @@
+use serde::{Deserialize, Serialize};
+
 use yew::prelude::*;
 
 use crate::types::{ColorType, SizeType};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum BorderRadiusType {
     #[default]
     Default,
@@ -16,7 +19,7 @@ pub struct ComponentContextState {
     pub border_radius_type: BorderRadiusType,
 }
 
-#[derive(Properties, Debug, PartialEq)]
+#[derive(Properties, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ComponentContextProps {
     #[prop_or(SizeType::Medium)]
     pub size: SizeType,
@@ -28,6 +31,7 @@ pub struct ComponentContextProps {
     pub border_radius_type: BorderRadiusType,
 
     #[prop_or_default]
+    #[serde(skip)]
     pub children: Children,
 }
 

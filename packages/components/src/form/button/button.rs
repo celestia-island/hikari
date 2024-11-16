@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use stylist::yew::styled_component;
 use yew::prelude::*;
 
@@ -6,7 +8,7 @@ use hikari_theme::{
     types::{ColorType, SizeType},
 };
 
-#[derive(Properties, Debug, PartialEq)]
+#[derive(Properties, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Props {
     #[prop_or_default]
     pub size: SizeType,
@@ -16,9 +18,11 @@ pub struct Props {
     pub outlined: bool,
 
     #[prop_or_default]
+    #[serde(skip)]
     pub on_click: Callback<MouseEvent>,
 
     #[prop_or_default]
+    #[serde(skip)]
     pub children: Children,
 }
 

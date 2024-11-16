@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use stylist::yew::styled_component;
 use yew::{html::ChildrenRenderer, prelude::*, virtual_dom::VChild};
 
@@ -25,9 +27,10 @@ impl Into<Html> for ContainerLayoutVariant {
     }
 }
 
-#[derive(Properties, Debug, PartialEq)]
+#[derive(Properties, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Props {
     #[prop_or_default]
+    #[serde(skip)]
     pub children: ChildrenRenderer<ContainerLayoutVariant>,
 }
 

@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use stylist::yew::styled_component;
 use yew::{html::ChildrenRenderer, prelude::*, virtual_dom::VChild};
 
@@ -20,7 +22,7 @@ impl From<ButtonGroupVariant> for Html {
     }
 }
 
-#[derive(Properties, Debug, PartialEq)]
+#[derive(Properties, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Props {
     #[prop_or(SizeType::Medium)]
     pub size: SizeType,
@@ -30,6 +32,7 @@ pub struct Props {
     pub outlined: bool,
 
     #[prop_or_default]
+    #[serde(skip)]
     pub children: ChildrenRenderer<ButtonGroupVariant>,
 }
 

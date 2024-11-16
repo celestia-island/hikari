@@ -17,11 +17,12 @@ derive_struct!(
     }
 );
 
-#[derive(Properties, Debug, PartialEq)]
+#[derive(Properties, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ThemeContextProviderProps {
     pub context: Theme,
 
     #[prop_or_default]
+    #[serde(skip)]
     pub children: Children,
 }
 

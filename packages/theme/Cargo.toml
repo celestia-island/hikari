@@ -10,7 +10,7 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-hikari-types = { path = "../types" }
+types = { path = "../types", package = "hikari-types" }
 
 anyhow = { workspace = true }
 async-trait = { workspace = true }

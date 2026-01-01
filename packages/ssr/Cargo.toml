@@ -1,0 +1,34 @@
+[package]
+name = "hikari-ssr"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[features]
+default = []
+example = []
+
+[dependencies]
+# 工作区依赖
+hikari-components = { path = "../components" }
+
+# 基础语言与工具
+anyhow.workspace = true
+thiserror.workspace = true
+
+# 数据与序列化
+serde.workspace = true
+serde_json.workspace = true
+
+# Async / 并发运行时
+tokio.workspace = true
+tokio-util = { version = "^0.7", features = ["io"] }
+
+# MCP / 网络与协议
+axum.workspace = true
+axum-extra.workspace = true
+dioxus.workspace = true
+dioxus-fullstack = "^0.7"
+tower.workspace = true
+tower-http.workspace = true

@@ -1,0 +1,639 @@
+// hikari-components/styles/components/drag.scss
+// Drag and drop component styles
+
+@use '../../packages/hikari-theme/styles/mixins.scss' as *;
+
+// ============================================
+// Drag Container
+// ============================================
+
+.hikari-drag-container {
+    position: relative;
+
+    // Arknights clean design
+    user-select: none;
+}
+
+// ============================================
+// Draggable Item
+// ============================================
+
+.hikari-draggable {
+    position: relative;
+    cursor: grab;
+    transition: all $hikari-transition-base;
+
+    // Prevent default browser drag styling
+    -webkit-user-drag: none;
+    user-select: none;
+
+    &:active {
+        cursor: grabbing;
+    }
+
+    // Focus visible for accessibility
+    &:focus-visible {
+        outline: 2px solid var(--hikari-color-primary);
+        outline-offset: 2px;
+    }
+}
+
+// ============================================
+// Drag Handle
+// ============================================
+
+.hikari-drag-handle {
+    @include flex-center;
+    width: 24px;
+    height: 24px;
+    cursor: grab;
+    color: var(--hikari-color-text-secondary);
+    transition: all $hikari-transition-base;
+    opacity: 0.5;
+
+    // Drag handle icon (⋮⋮)
+    &::before {
+        content: '⋮⋮';
+        font-size: $hikari-font-size-base;
+        letter-spacing: -2px;
+        line-height: 1;
+    }
+
+    &:hover {
+        opacity: 1;
+        color: var(--hikari-color-primary);
+
+        // FUI subtle glow
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+        border-radius: $hikari-radius-sm;
+    }
+
+    &:active {
+        cursor: grabbing;
+        color: var(--hikari-color-primary);
+        opacity: 1;
+    }
+
+    // Always visible handle variant
+    .hikari-drag-handle-visible & {
+        opacity: 1;
+    }
+}
+
+// ============================================
+// Dragging State
+// ============================================
+
+.hikari-dragging {
+    opacity: 0.8;
+    cursor: grabbing;
+
+    // Visual feedback during drag
+    box-shadow: $hikari-shadow-xl;
+    transform: scale(1.02) rotate(1deg);
+
+    // Arknights minimal drag indicators
+    z-index: 1000;
+
+    // FUI glow effect
+    &::after {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: inherit;
+        background: rgba(59, 130, 246, 0.1);
+        box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    // Prevent text selection during drag
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+// ============================================
+// Drop Target
+// ============================================
+
+.hikari-drop-target {
+    position: relative;
+
+    // Visual feedback when hovering over drop target
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity $hikari-transition-base;
+    }
+}
+
+.hikari-drop-target-active {
+    background-color: rgba(79, 209, 197, 0.05);
+
+    &::before {
+        opacity: 1;
+        box-shadow: inset 0 0 20px rgba(79, 209, 197, 0.2);
+        border: 2px dashed var(--hikari-color-success);
+    }
+}
+
+// ============================================
+// Drop Indicator Line
+// ============================================
+
+.hikari-drop-indicator {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: #4fd1c5;
+    pointer-events: none;
+    z-index: 999;
+
+    // FUI glow effect
+    box-shadow: 0 0 15px rgba(79, 209, 197, 0.6),
+        0 0 30px rgba(79, 209, 197, 0.3);
+
+    // Arknights minimal design
+    border-radius: 2px;
+
+    // Animated pulse
+    animation: hikari-drop-indicator-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes hikari-drop-indicator-pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scaleY(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scaleY(1.5);
+    }
+}
+
+// Insert position variants
+.hikari-drop-indicator-before {
+    top: -2px;
+}
+
+.hikari-drop-indicator-after {
+    bottom: -2px;
+}
+
+.hikari-drop-indicator-inside {
+    inset: 0;
+    height: auto;
+    background-color: rgba(79, 209, 197, 0.1);
+    border: 2px solid #4fd1c5;
+    box-shadow: inset 0 0 20px rgba(79, 209, 197, 0.3),
+        0 0 20px rgba(79, 209, 197, 0.4);
+}
+
+// ============================================
+// Ghost Element (Drag Preview)
+// ============================================
+
+.hikari-drag-ghost {
+    position: fixed;
+    pointer-events: none;
+    opacity: 0.9;
+    z-index: 9999;
+    transform: rotate(3deg);
+
+    // Arknights minimal styling
+    box-shadow: $hikari-shadow-xl,
+        0 0 40px rgba(59, 130, 246, 0.4);
+
+    // Prevent default browser drag image
+    -webkit-user-drag: none;
+
+    // Smooth transitions
+    transition: transform 50ms linear;
+}
+
+// ============================================
+// Placeholder (Empty Drop Zone)
+// ============================================
+
+.hikari-drag-placeholder {
+    @include flex-center;
+    min-height: 80px;
+    border: 2px dashed var(--hikari-color-border);
+    border-radius: $hikari-radius-lg;
+    background-color: rgba(0, 0, 0, 0.2);
+    color: var(--hikari-color-text-secondary);
+    transition: all $hikari-transition-base;
+
+    // Arknights clean placeholder design
+
+    &:hover,
+    &.hikari-drop-target-active {
+        border-color: #4fd1c5;
+        background-color: rgba(79, 209, 197, 0.1);
+        color: var(--hikari-color-success);
+
+        // FUI glow
+        box-shadow: 0 0 20px rgba(79, 209, 197, 0.3);
+    }
+
+    .hikari-drag-placeholder-icon {
+        font-size: $hikari-font-size-2xl;
+        margin-bottom: $hikari-spacing-sm;
+        opacity: 0.5;
+    }
+
+    .hikari-drag-placeholder-text {
+        font-size: $hikari-font-size-sm;
+    }
+}
+
+// ============================================
+// Drag Preview Classes
+// ============================================
+
+// Preview being dragged
+.hikari-drag-preview {
+    position: fixed;
+    pointer-events: none;
+    z-index: 10000;
+    opacity: 0.8;
+    transform: scale(1.05);
+    box-shadow: $hikari-shadow-xl,
+        0 0 50px rgba(59, 130, 246, 0.5);
+}
+
+// ============================================
+// Drag Overlay (Blocking Other Interactions)
+// ============================================
+
+.hikari-drag-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    cursor: grabbing;
+    background: transparent;
+
+    // Prevent all pointer events except drag
+    pointer-events: auto;
+}
+
+// ============================================
+// Drop Position Indicators
+// ============================================
+
+// Highlight insertion point before
+.hikari-drop-before {
+    border-top: 3px solid #4fd1c5;
+    box-shadow: 0 -5px 15px rgba(79, 209, 197, 0.3);
+}
+
+// Highlight insertion point after
+.hikari-drop-after {
+    border-bottom: 3px solid #4fd1c5;
+    box-shadow: 0 5px 15px rgba(79, 209, 197, 0.3);
+}
+
+// Highlight insertion point inside (nested)
+.hikari-drop-inside {
+    background-color: rgba(79, 209, 197, 0.15) !important;
+    border: 2px solid #4fd1c5;
+    box-shadow: inset 0 0 20px rgba(79, 209, 197, 0.3),
+        0 0 20px rgba(79, 209, 197, 0.4);
+}
+
+// ============================================
+// Animation States
+// ============================================
+
+// Item being dragged away
+.hikari-drag-leave {
+    opacity: 0.3;
+    transform: scale(0.95);
+}
+
+// Item entering drop zone
+.hikari-drag-enter {
+    animation: hikari-drag-enter 200ms ease-out;
+}
+
+@keyframes hikari-drag-enter {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+// ============================================
+// Horizontal Drag Support
+// ============================================
+
+.hikari-drag-horizontal {
+    .hikari-drop-indicator {
+        width: 3px;
+        height: auto;
+        top: 0;
+        bottom: 0;
+        left: auto;
+        right: auto;
+    }
+
+    .hikari-drop-indicator-before {
+        left: -2px;
+    }
+
+    .hikari-drop-indicator-after {
+        right: -2px;
+    }
+
+    .hikari-drop-before {
+        border-left: 3px solid #4fd1c5;
+        border-top: none;
+        box-shadow: -5px 0 15px rgba(79, 209, 197, 0.3);
+    }
+
+    .hikari-drop-after {
+        border-right: 3px solid #4fd1c5;
+        border-bottom: none;
+        box-shadow: 5px 0 15px rgba(79, 209, 197, 0.3);
+    }
+}
+
+// ============================================
+// Grid Drag Support
+// ============================================
+
+.hikari-drag-grid {
+    .hikari-draggable {
+        transition: transform $hikari-transition-base, box-shadow $hikari-transition-base;
+    }
+
+    .hikari-dragging {
+        transform: scale(1.05);
+    }
+}
+
+// ============================================
+// Disabled Drag State
+// ============================================
+
+.hikari-drag-disabled {
+    cursor: not-allowed !important;
+    opacity: 0.5;
+    pointer-events: none;
+
+    .hikari-drag-handle {
+        cursor: not-allowed;
+        opacity: 0.3;
+    }
+}
+
+// ============================================
+// Snap Zones
+// ============================================
+
+.hikari-snap-zone {
+    position: relative;
+    transition: all $hikari-transition-base;
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        border: 2px solid transparent;
+        pointer-events: none;
+        transition: all $hikari-transition-base;
+    }
+}
+
+.hikari-snap-zone-active {
+    &::after {
+        border-color: #4fd1c5;
+        box-shadow: 0 0 20px rgba(79, 209, 197, 0.4);
+    }
+}
+
+// ============================================
+// Performance Optimizations
+// ============================================
+
+// GPU acceleration for smooth dragging
+.hikari-dragging,
+.hikari-drag-ghost,
+.hikari-drag-preview {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+// Reduce motion for accessibility
+@media (prefers-reduced-motion: reduce) {
+    .hikari-draggable,
+    .hikari-dragging,
+    .hikari-drop-indicator,
+    .hikari-drag-ghost {
+        animation: none;
+        transition: none;
+    }
+
+    .hikari-dragging {
+        transform: none;
+    }
+}
+
+// ============================================
+// Arknights + FUI Special Effects
+// ============================================
+
+// Arknights minimal drag feedback
+.hikari-draggable {
+    &:hover:not(.hikari-drag-disabled) {
+        background-color: rgba(59, 130, 246, 0.05);
+    }
+}
+
+// FUI particle trail effect (subtle)
+.hikari-dragging {
+    &::before {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border-radius: inherit;
+        background: radial-gradient(
+            circle at center,
+            rgba(59, 130, 246, 0.2),
+            transparent 70%
+        );
+        animation: hikari-drag-pulse 1s ease-in-out infinite;
+        pointer-events: none;
+        z-index: -1;
+    }
+}
+
+@keyframes hikari-drag-pulse {
+    0%, 100% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+}
+
+// Success animation on drop
+.hikari-drop-success {
+    animation: hikari-drop-success 400ms ease-out;
+}
+
+@keyframes hikari-drop-success {
+    0% {
+        background-color: rgba(79, 209, 197, 0.3);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+// Error animation on invalid drop
+.hikari-drop-error {
+    animation: hikari-drop-error 400ms ease-out;
+}
+
+@keyframes hikari-drop-error {
+    0%, 100% {
+        background-color: transparent;
+    }
+    25%, 75% {
+        background-color: rgba(239, 68, 68, 0.2);
+    }
+    50% {
+        background-color: rgba(239, 68, 68, 0.3);
+    }
+}
+
+// ============================================
+// Context Menu Integration
+// ============================================
+
+.hikari-draggable-context-menu {
+    position: absolute;
+    right: $hikari-spacing-sm;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity $hikari-transition-base;
+    pointer-events: none;
+
+    .hikari-draggable:hover & {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+// ============================================
+// Touch Device Support
+// ============================================
+
+@media (hover: none) and (pointer: coarse) {
+    .hikari-drag-handle {
+        opacity: 1;
+        width: 32px;
+        height: 32px;
+    }
+
+    .hikari-drop-indicator {
+        height: 5px;
+    }
+}
+
+// ============================================
+// Sortable Indicators
+// ============================================
+
+.hikari-sortable-number {
+    @include flex-center;
+    width: 24px;
+    height: 24px;
+    background-color: var(--hikari-color-background);
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-sm;
+    font-size: $hikari-font-size-sm;
+    color: var(--hikari-color-text-secondary);
+    margin-right: $hikari-spacing-sm;
+    transition: all $hikari-transition-base;
+
+    .hikari-dragging & {
+        background-color: var(--hikari-color-primary);
+        border-color: var(--hikari-color-primary);
+        color: var(--hikari-color-text-primary);
+
+        // FUI glow
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    }
+}
+
+// ============================================
+// Auto-scroll Zones
+// ============================================
+
+.hikari-auto-scroll-zone {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 50px;
+    pointer-events: none;
+    z-index: 9997;
+}
+
+.hikari-auto-scroll-zone-top {
+    top: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(59, 130, 246, 0.1),
+        transparent
+    );
+}
+
+.hikari-auto-scroll-zone-bottom {
+    bottom: 0;
+    background: linear-gradient(
+        to top,
+        rgba(59, 130, 246, 0.1),
+        transparent
+    );
+}
+
+.hikari-auto-scroll-zone-left {
+    top: 0;
+    bottom: 0;
+    width: 50px;
+    height: auto;
+    left: 0;
+    background: linear-gradient(
+        to right,
+        rgba(59, 130, 246, 0.1),
+        transparent
+    );
+}
+
+.hikari-auto-scroll-zone-right {
+    top: 0;
+    bottom: 0;
+    width: 50px;
+    height: auto;
+    right: 0;
+    background: linear-gradient(
+        to left,
+        rgba(59, 130, 246, 0.1),
+        transparent
+    );
+}

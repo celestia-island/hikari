@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
         .nest("/", pages::route().await?)
         .into_make_service_with_connect_info::<SocketAddr>();
 
-    info!("Site will run on http://localhost:{port}");
+    log::info!("Site will run on http://localhost:{port}");
 
     let listener = TcpListener::bind(format!("0.0.0.0:{port}"))
         .await
@@ -33,3 +33,5 @@ async fn main() -> Result<()> {
 
     Ok(())
 }
+
+

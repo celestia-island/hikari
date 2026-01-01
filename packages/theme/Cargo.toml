@@ -1,27 +1,13 @@
 [package]
-authors = ["langyo <langyo.china@gmail.com>"]
 name = "hikari-theme"
-
-version = "0.1.0"
-edition = "2021"
-publish = false
-
-[lib]
-crate-type = ["cdylib", "rlib"]
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
 
 [dependencies]
-types = { path = "../types", package = "hikari-types" }
+# 工作区依赖
+hikari-palette = { path = "../palette" }
 
-anyhow = { workspace = true }
-async-trait = { workspace = true }
-derive_more = { workspace = true }
-once_cell = { workspace = true }
-
-serde = { workspace = true }
-serde_json = { workspace = true }
-strum = { workspace = true }
-base64 = { workspace = true }
-yuuka = { workspace = true }
-
-yew = { workspace = true }
-stylist = { workspace = true }
+# MCP / 网络与协议
+dioxus.workspace = true

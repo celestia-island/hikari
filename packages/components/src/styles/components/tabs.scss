@@ -1,0 +1,409 @@
+// hikari-components/styles/components/tabs.scss
+// Tabs component styles
+
+@use '../../packages/hikari-theme/styles/mixins.scss' as *;
+
+// ============================================
+// Tabs Base
+// ============================================
+
+.hikari-tabs {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+
+    // Arknights minimal design
+    position: relative;
+}
+
+.hikari-tabs-nav {
+    display: flex;
+    position: relative;
+    background-color: var(--hikari-color-surface);
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-lg;
+
+    // FUI subtle glow
+    &::after {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        border-radius: inherit;
+        opacity: 0;
+        transition: opacity $hikari-transition-base;
+        pointer-events: none;
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+    }
+
+    &:hover::after {
+        opacity: 1;
+    }
+}
+
+.hikari-tabs-nav-list {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+    position: relative;
+}
+
+// ============================================
+// Tab Positions
+// ============================================
+
+.hikari-tabs-top {
+    .hikari-tabs-nav {
+        border-bottom: none;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .hikari-tabs-content {
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+    }
+}
+
+.hikari-tabs-bottom {
+    flex-direction: column-reverse;
+
+    .hikari-tabs-nav {
+        border-top: none;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+    }
+
+    .hikari-tabs-content {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+}
+
+.hikari-tabs-left {
+    flex-direction: row;
+
+    .hikari-tabs-nav {
+        flex-direction: column;
+        border-right: none;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .hikari-tabs-nav-list {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .hikari-tabs-content {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+}
+
+.hikari-tabs-right {
+    flex-direction: row-reverse;
+
+    .hikari-tabs-nav {
+        flex-direction: column;
+        border-left: none;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+
+    .hikari-tabs-nav-list {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .hikari-tabs-content {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+}
+
+// ============================================
+// Tab Item
+// ============================================
+
+.hikari-tabs-tab {
+    @include flex-center;
+    padding: $hikari-spacing-sm $hikari-spacing-md;
+    color: var(--hikari-color-text-secondary);
+    cursor: pointer;
+    transition: all $hikari-transition-base;
+    position: relative;
+    white-space: nowrap;
+    user-select: none;
+    border: none;
+    background: transparent;
+    font-size: $hikari-font-size-base;
+    font-weight: 500;
+
+    // Arknights clean design
+    flex: 1;
+
+    &:hover {
+        color: var(--hikari-color-primary);
+    }
+
+    &:focus {
+        outline: none;
+    }
+
+    &:focus-visible {
+        box-shadow: inset 0 0 0 2px var(--hikari-color-primary);
+    }
+}
+
+.hikari-tabs-tab-active {
+    color: var(--hikari-color-primary);
+    font-weight: 600;
+
+    // FUI glow effect
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+
+    // Arknights active indicator
+    &::after {
+        content: '';
+        position: absolute;
+        background-color: var(--hikari-color-primary);
+        transition: all $hikari-transition-base;
+    }
+}
+
+.hikari-tabs-tab-disabled {
+    @include disabled;
+    cursor: not-allowed;
+
+    &:hover {
+        color: var(--hikari-color-text-secondary);
+    }
+}
+
+.hikari-tabs-tab-icon {
+    margin-right: $hikari-spacing-xs;
+    font-size: $hikari-font-size-lg;
+}
+
+// ============================================
+// Tab Indicators (Animated)
+// ============================================
+
+.hikari-tabs-top .hikari-tabs-tab-active::after,
+.hikari-tabs-bottom .hikari-tabs-tab-active::after {
+    left: 0;
+    right: 0;
+    height: 2px;
+}
+
+.hikari-tabs-top .hikari-tabs-tab-active::after {
+    bottom: 0;
+}
+
+.hikari-tabs-bottom .hikari-tabs-tab-active::after {
+    top: 0;
+}
+
+.hikari-tabs-left .hikari-tabs-tab-active::after,
+.hikari-tabs-right .hikari-tabs-tab-active::after {
+    top: 0;
+    bottom: 0;
+    width: 2px;
+}
+
+.hikari-tabs-left .hikari-tabs-tab-active::after {
+    right: 0;
+}
+
+.hikari-tabs-right .hikari-tabs-tab-active::after {
+    left: 0;
+}
+
+// ============================================
+// Tab Content
+// ============================================
+
+.hikari-tabs-content {
+    flex: 1;
+    background-color: var(--hikari-color-surface);
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-lg;
+    padding: $hikari-spacing-lg;
+
+    // Arknights clean content area
+    position: relative;
+
+    // FUI subtle glow on hover
+    &::after {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        border-radius: inherit;
+        opacity: 0;
+        transition: opacity $hikari-transition-base;
+        pointer-events: none;
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+    }
+
+    &:hover::after {
+        opacity: 1;
+    }
+}
+
+.hikari-tabs-tabpane {
+    display: none;
+
+    &.hikari-tabs-tabpane-active {
+        display: block;
+        animation: hikari-tab-fade-in $hikari-transition-base;
+    }
+}
+
+@keyframes hikari-tab-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// ============================================
+// Tab Sizes
+// ============================================
+
+.hikari-tabs-sm {
+    .hikari-tabs-tab {
+        padding: $hikari-spacing-xs $hikari-spacing-sm;
+        font-size: $hikari-font-size-sm;
+    }
+
+    .hikari-tabs-tab-icon {
+        font-size: $hikari-font-size-base;
+    }
+
+    .hikari-tabs-content {
+        padding: $hikari-spacing-sm $hikari-spacing-md;
+    }
+}
+
+.hikari-tabs-md {
+    .hikari-tabs-tab {
+        padding: $hikari-spacing-sm $hikari-spacing-md;
+        font-size: $hikari-font-size-base;
+    }
+}
+
+.hikari-tabs-lg {
+    .hikari-tabs-tab {
+        padding: $hikari-spacing-md $hikari-spacing-lg;
+        font-size: $hikari-font-size-lg;
+    }
+
+    .hikari-tabs-tab-icon {
+        font-size: $hikari-font-size-xl;
+    }
+
+    .hikari-tabs-content {
+        padding: $hikari-spacing-lg $hikari-spacing-xl;
+    }
+}
+
+// ============================================
+// Tab Types
+// ============================================
+
+.hikari-tabs-line {
+    .hikari-tabs-nav {
+        border: none;
+        background: transparent;
+    }
+
+    .hikari-tabs-tab {
+        border-bottom: 2px solid transparent;
+
+        &.hikari-tabs-tab-active {
+            border-bottom-color: var(--hikari-color-primary);
+
+            &::after {
+                display: none;
+            }
+        }
+    }
+}
+
+.hikari-tabs-card {
+    .hikari-tabs-tab {
+        background-color: var(--hikari-color-background);
+        border: 1px solid var(--hikari-color-border);
+        border-radius: $hikari-radius-md $hikari-radius-md 0 0;
+        margin-right: $hikari-spacing-xs;
+
+        &.hikari-tabs-tab-active {
+            background-color: var(--hikari-color-surface);
+            border-bottom-color: transparent;
+
+            &::after {
+                display: none;
+            }
+        }
+    }
+
+    .hikari-tabs-content {
+        border-top-left-radius: 0;
+    }
+}
+
+// ============================================
+// Arknights + FUI Special Effects
+// ============================================
+
+.hikari-tabs-tab-active {
+    // FUI pulse animation
+    animation: hikari-tab-pulse 3s ease-in-out infinite;
+}
+
+@keyframes hikari-tab-pulse {
+    0%, 100% {
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+    }
+}
+
+// Arknights sliding indicator animation
+.hikari-tabs-indicator {
+    position: absolute;
+    background-color: var(--hikari-color-primary);
+    transition: all $hikari-transition-slow;
+    opacity: 0.6;
+}
+
+.hikari-tabs-top .hikari-tabs-indicator {
+    bottom: 0;
+    left: 0;
+    height: 2px;
+}
+
+.hikari-tabs-bottom .hikari-tabs-indicator {
+    top: 0;
+    left: 0;
+    height: 2px;
+}
+
+.hikari-tabs-left .hikari-tabs-indicator {
+    right: 0;
+    top: 0;
+    width: 2px;
+}
+
+.hikari-tabs-right .hikari-tabs-indicator {
+    left: 0;
+    top: 0;
+    width: 2px;
+}

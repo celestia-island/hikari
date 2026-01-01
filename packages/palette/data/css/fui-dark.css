@@ -1,0 +1,8 @@
+/* FUI Dark - Dark theme inspired by Fluent UI */
+:root[data-theme="fui-dark"] {
+  --hikari-PURPLE_500: #8B5CF6;
+  --hikari-PURPLE_600: #7C3AED;
+  --hikari-PURPLE_50: #F5F3FF;
+  --hikari-SLATE_900: #0F172A;
+  --hikari-SLATE_800: #1E293B;
+}

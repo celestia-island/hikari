@@ -1,0 +1,12 @@
+// hikari-extra-components/styles/components/index.scss
+// Extra component styles entry point
+
+// Graph components
+@import './node_graph.scss';
+
+// Panel components
+@import './collapsible.scss';
+
+// Interaction components
+@import './drag_layer.scss';
+@import './zoom_controls.scss';

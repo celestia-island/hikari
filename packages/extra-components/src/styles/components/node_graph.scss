@@ -1,0 +1,484 @@
+// hikari-extra-components/styles/components/node_graph.scss
+// Node graph component styles with Arknights design + FUI glow
+
+@use '../../../hikari-theme/styles/mixins.scss' as *;
+
+// ============================================
+// Node Graph Container
+// ============================================
+
+.hikari-node-graph {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--hikari-color-background);
+    user-select: none;
+
+    // Arknights clean border
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-lg;
+}
+
+// ============================================
+// Canvas
+// ============================================
+
+.hikari-node-graph-canvas {
+    position: absolute;
+    inset: 0;
+    cursor: grab;
+
+    &:active {
+        cursor: grabbing;
+    }
+
+    // Grid background pattern
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(var(--hikari-color-border) 1px, transparent 1px),
+            linear-gradient(90deg, var(--hikari-color-border) 1px, transparent 1px);
+        background-size: 20px 20px;
+        opacity: 0.1;
+        pointer-events: none;
+    }
+
+    // Major grid lines
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(var(--hikari-color-border) 1px, transparent 1px),
+            linear-gradient(90deg, var(--hikari-color-border) 1px, transparent 1px);
+        background-size: 100px 100px;
+        opacity: 0.15;
+        pointer-events: none;
+    }
+}
+
+// ============================================
+// Node
+// ============================================
+
+.hikari-node {
+    position: absolute;
+    min-width: 180px;
+    background-color: var(--hikari-color-surface);
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-md;
+    box-shadow: $hikari-shadow-md;
+    cursor: move;
+    transition:
+        box-shadow $hikari-transition-base,
+        border-color $hikari-transition-base;
+
+    // FUI glow on hover
+    &:hover {
+        border-color: var(--hikari-color-primary);
+        box-shadow:
+            $hikari-shadow-lg,
+            0 0 20px rgba(139, 92, 246, 0.3);
+    }
+
+    &.hikari-node-selected {
+        border-color: var(--hikari-color-primary);
+        box-shadow:
+            $hikari-shadow-lg,
+            0 0 30px rgba(59, 130, 246, 0.5);
+    }
+}
+
+.hikari-node-header {
+    display: flex;
+    align-items: center;
+    gap: $hikari-spacing-sm;
+    padding: $hikari-spacing-sm $hikari-spacing-md;
+    border-bottom: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-md $hikari-radius-md 0 0;
+    background-color: rgba(0, 0, 0, 0.2);
+    font-size: $hikari-font-size-sm;
+    font-weight: 600;
+    color: var(--hikari-color-text-primary);
+    cursor: move;
+
+    // FUI accent line
+    &::before {
+        content: '';
+        width: 3px;
+        height: 16px;
+        background-color: var(--hikari-color-primary);
+        border-radius: $hikari-radius-sm;
+        box-shadow: 0 0 8px var(--hikari-color-primary);
+    }
+}
+
+.hikari-node-content {
+    padding: $hikari-spacing-md;
+}
+
+// ============================================
+// Port (Input/Output)
+// ============================================
+
+.hikari-node-ports {
+    display: flex;
+    flex-direction: column;
+    gap: $hikari-spacing-sm;
+
+    &.hikari-ports-input {
+        float: left;
+    }
+
+    &.hikari-ports-output {
+        float: right;
+        text-align: right;
+    }
+}
+
+.hikari-node-port {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: $hikari-spacing-sm;
+    padding: $hikari-spacing-xs;
+    font-size: $hikari-font-size-sm;
+    color: var(--hikari-color-text-secondary);
+    cursor: pointer;
+    transition: all $hikari-transition-fast;
+
+    &:hover {
+        color: var(--hikari-color-text-primary);
+
+        .hikari-port-handle {
+            transform: scale(1.2);
+            box-shadow: 0 0 15px currentColor;
+        }
+    }
+
+    &.hikari-port-connected .hikari-port-handle {
+        background-color: var(--hikari-color-success);
+    }
+}
+
+.hikari-port-handle {
+    width: 12px;
+    height: 12px;
+    background-color: var(--hikari-color-border);
+    border: 2px solid var(--hikari-color-surface);
+    border-radius: 50%;
+    transition: all $hikari-transition-fast;
+    flex-shrink: 0;
+
+    // Input port color (cyan for Arknights style)
+    .hikari-ports-input & {
+        background-color: #06B6D4;
+        box-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+    }
+
+    // Output port color (purple for FUI style)
+    .hikari-ports-output & {
+        background-color: #8B5CF6;
+        box-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
+    }
+}
+
+.hikari-port-label {
+    @include text-ellipsis;
+    max-width: 120px;
+}
+
+// ============================================
+// Connection (Bezier Curves)
+// ============================================
+
+.hikari-node-connections {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.hikari-connection {
+    fill: none;
+    stroke-width: 2;
+    pointer-events: stroke;
+    cursor: pointer;
+    transition:
+        stroke $hikari-transition-fast,
+        stroke-width $hikari-transition-fast;
+
+    // Default connection color
+    stroke: var(--hikari-color-border);
+
+    // Active state
+    &.hikari-connection-active {
+        stroke: var(--hikari-color-primary);
+        stroke-width: 3;
+        filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+    }
+
+    // Hover state
+    &:hover {
+        stroke: var(--hikari-color-accent);
+        stroke-width: 3;
+        filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.6));
+    }
+
+    // Animated flow effect
+    &.hikari-connection-flow {
+        stroke-dasharray: 10, 5;
+        animation: hikari-connection-flow-animation 1s linear infinite;
+    }
+
+    // Success state
+    &.hikari-connection-success {
+        stroke: var(--hikari-color-success);
+        filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.5));
+    }
+
+    // Error state
+    &.hikari-connection-error {
+        stroke: var(--hikari-color-danger);
+        filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.5));
+    }
+}
+
+@keyframes hikari-connection-flow-animation {
+    to {
+        stroke-dashoffset: -15;
+    }
+}
+
+// Connection preview (while dragging)
+.hikari-connection-preview {
+    fill: none;
+    stroke: var(--hikari-color-primary);
+    stroke-width: 2;
+    stroke-dasharray: 5, 5;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+// ============================================
+// Minimap
+// ============================================
+
+.hikari-node-minimap {
+    position: absolute;
+    bottom: $hikari-spacing-md;
+    right: $hikari-spacing-md;
+    width: 200px;
+    height: 150px;
+    background-color: rgba(var(--hikari-color-surface), 0.95);
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-md;
+    overflow: hidden;
+    box-shadow: $hikari-shadow-lg;
+    backdrop-filter: blur(8px);
+
+    // FUI glow
+    &::before {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(135deg, var(--hikari-color-primary), var(--hikari-color-secondary));
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        opacity: 0.5;
+    }
+}
+
+.hikari-minimap-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.hikari-minimap-node {
+    position: absolute;
+    background-color: var(--hikari-color-border);
+    border-radius: 2px;
+    transition: all $hikari-transition-fast;
+
+    &.hikari-node-selected {
+        background-color: var(--hikari-color-primary);
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    }
+}
+
+.hikari-minimap-viewport {
+    position: absolute;
+    border: 2px solid var(--hikari-color-accent);
+    background-color: rgba(245, 158, 11, 0.1);
+    border-radius: $hikari-radius-sm;
+    cursor: move;
+    transition: border-color $hikari-transition-fast;
+
+    // FUI glow
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+
+    &:hover {
+        border-color: var(--hikari-color-primary);
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+    }
+}
+
+// ============================================
+// Context Menu
+// ============================================
+
+.hikari-node-context-menu {
+    position: absolute;
+    min-width: 180px;
+    background-color: var(--hikari-color-surface);
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-md;
+    box-shadow: $hikari-shadow-xl;
+    padding: $hikari-spacing-xs;
+    z-index: 1000;
+    opacity: 0;
+    transform: scale(0.95);
+    animation: hikari-context-menu-enter $hikari-transition-base forwards;
+
+    // FUI glow
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        box-shadow: inset 0 0 20px rgba(139, 92, 246, 0.1);
+        pointer-events: none;
+    }
+}
+
+@keyframes hikari-context-menu-enter {
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.hikari-context-menu-item {
+    display: flex;
+    align-items: center;
+    gap: $hikari-spacing-sm;
+    padding: $hikari-spacing-sm $hikari-spacing-md;
+    font-size: $hikari-font-size-sm;
+    color: var(--hikari-color-text-primary);
+    border-radius: $hikari-radius-sm;
+    cursor: pointer;
+    transition: all $hikari-transition-fast;
+    user-select: none;
+
+    &:hover {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: var(--hikari-color-primary);
+
+        // FUI glow effect
+        box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.2);
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+
+    &.hikari-menu-item-danger {
+        color: var(--hikari-color-danger);
+
+        &:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--hikari-color-danger);
+            box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.2);
+        }
+    }
+
+    &.hikari-menu-item-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+}
+
+.hikari-context-menu-divider {
+    height: 1px;
+    background-color: var(--hikari-color-border);
+    margin: $hikari-spacing-xs 0;
+}
+
+.hikari-context-menu-shortcut {
+    margin-left: auto;
+    font-size: $hikari-font-size-xs;
+    color: var(--hikari-color-text-secondary);
+    font-family: $hikari-font-family-mono;
+}
+
+// ============================================
+// Node Variants
+// ============================================
+
+.hikari-node-source {
+    border-color: var(--hikari-color-success);
+
+    .hikari-node-header::before {
+        background-color: var(--hikari-color-success);
+        box-shadow: 0 0 8px var(--hikari-color-success);
+    }
+}
+
+.hikari-node-processor {
+    border-color: var(--hikari-color-primary);
+
+    .hikari-node-header::before {
+        background-color: var(--hikari-color-primary);
+        box-shadow: 0 0 8px var(--hikari-color-primary);
+    }
+}
+
+.hikari-node-output {
+    border-color: var(--hikari-color-accent);
+
+    .hikari-node-header::before {
+        background-color: var(--hikari-color-accent);
+        box-shadow: 0 0 8px var(--hikari-color-accent);
+    }
+}
+
+// ============================================
+// Zoom/Pan Controls Container
+// ============================================
+
+.hikari-node-controls {
+    position: absolute;
+    bottom: $hikari-spacing-md;
+    left: $hikari-spacing-md;
+    display: flex;
+    gap: $hikari-spacing-xs;
+    z-index: 100;
+}
+
+// ============================================
+// Responsive Design
+// ============================================
+
+@include mobile {
+    .hikari-node {
+        min-width: 150px;
+    }
+
+    .hikari-node-minimap {
+        width: 120px;
+        height: 90px;
+    }
+
+    .hikari-node-context-menu {
+        min-width: 150px;
+    }
+}

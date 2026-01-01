@@ -1,4 +1,8 @@
-pub mod components;
+// hikari-theme/src/lib.rs
+// Hikari theme package
+
 pub mod context;
-pub mod prelude;
-pub use types;
+pub mod provider;
+
+pub use context::*;
+pub use provider::*;

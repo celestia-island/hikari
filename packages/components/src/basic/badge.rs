@@ -1,0 +1,118 @@
+// hikari-components/src/basic/badge.rs
+// Badge component with Arknights + FUI styling
+
+use dioxus::prelude::*;
+
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum BadgeVariant {
+    #[default]
+    Default,
+    Primary,
+    Success,
+    Warning,
+    Danger,
+}
+
+#[derive(Clone, PartialEq, Props)]
+pub struct BadgeProps {
+    #[props(default)]
+    pub variant: BadgeVariant,
+
+    #[props(default)]
+    pub dot: bool,
+
+    #[props(default)]
+    pub count: Option<i32>,
+
+    #[props(default)]
+    pub max: Option<i32>,
+
+    #[props(default)]
+    pub show_zero: bool,
+
+    #[props(default)]
+    pub class: String,
+
+    pub children: Element,
+}
+
+impl Default for BadgeProps {
+    fn default() -> Self {
+        Self {
+            variant: Default::default(),
+            dot: false,
+            count: None,
+            max: None,
+            show_zero: false,
+            class: String::default(),
+            children: VNode::empty(),
+        }
+    }
+}
+
+/// Badge component with Arknights + FUI styling
+///
+/// # Examples
+///
+/// ```rust
+/// use dioxus::prelude::*;
+/// use hikari_components::{Badge, BadgeVariant};
+///
+/// fn app() -> Element {
+///     rsx! {
+///         Badge {
+///             variant: BadgeVariant::Primary,
+///             count: 5,
+///             Button { "Notifications" }
+///         }
+///     }
+/// }
+/// ```
+#[component]
+pub fn Badge(props: BadgeProps) -> Element {
+    let variant_class = match props.variant {
+        BadgeVariant::Default => "hikari-badge-default",
+        BadgeVariant::Primary => "hikari-badge-primary",
+        BadgeVariant::Success => "hikari-badge-success",
+        BadgeVariant::Warning => "hikari-badge-warning",
+        BadgeVariant::Danger => "hikari-badge-danger",
+    };
+
+    let display_count = if let Some(count) = props.count {
+        if count == 0 && !props.show_zero {
+            None
+        } else if let Some(max) = props.max {
+            if count > max {
+                Some(format!("{max}+"))
+            } else {
+                Some(format!("{count}"))
+            }
+        } else {
+            Some(format!("{count}"))
+        }
+    } else {
+        None
+    };
+
+    rsx! {
+        div { class: format!("hikari-badge-wrapper {}", props.class),
+
+            { props.children }
+
+            if props.dot || display_count.is_some() {
+                span {
+                    class: format!(
+                        "hikari-badge {variant_class} {}",
+                        if props.dot { "hikari-badge-dot" } else { "" }
+                    ),
+
+                    if props.dot {
+                        span { class: "hikari-badge-dot" }
+                    } else if let Some(count) = display_count {
+                        "{count}"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,5 +1,10 @@
-pub mod aside;
-pub mod modal;
+// hikari-components/src/navigation/mod.rs
+// Navigation components: Menu, Tabs, Breadcrumb
 
-pub use aside::*;
-pub use modal::*;
+pub mod breadcrumb;
+pub mod menu;
+pub mod tabs;
+
+pub use breadcrumb::*;
+pub use menu::*;
+pub use tabs::*;

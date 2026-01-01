@@ -1,0 +1,411 @@
+// hikari-extra-components/styles/components/collapsible.scss
+// Collapsible panel styles with Arknights design + FUI glow
+
+@use '../../../hikari-theme/styles/mixins.scss' as *;
+
+// ============================================
+// Collapsible Container
+// ============================================
+
+.hikari-collapsible {
+    width: 100%;
+    background-color: var(--hikari-color-surface);
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-lg;
+    overflow: hidden;
+    transition: all $hikari-transition-base;
+
+    // Arknights clean design with subtle glow
+    &:hover {
+        border-color: var(--hikari-color-primary);
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+    }
+}
+
+// ============================================
+// Collapsible Header
+// ============================================
+
+.hikari-collapsible-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $hikari-spacing-md;
+    padding: $hikari-spacing-md $hikari-spacing-lg;
+    cursor: pointer;
+    user-select: none;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--hikari-color-border);
+    transition: all $hikari-transition-base;
+
+    // Hover effect
+    &:hover {
+        background-color: rgba(59, 130, 246, 0.05);
+
+        .hikari-collapsible-icon {
+            color: var(--hikari-color-primary);
+            transform: scale(1.1);
+        }
+
+        .hikari-collapsible-title {
+            color: var(--hikari-color-text-primary);
+        }
+    }
+
+    // Active state
+    &:active {
+        transform: scale(0.99);
+    }
+}
+
+.hikari-collapsible-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: $hikari-spacing-md;
+    flex: 1;
+}
+
+.hikari-collapsible-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--hikari-color-text-secondary);
+    transition: all $hikari-transition-base;
+    flex-shrink: 0;
+
+    // Rotation animation when collapsed
+    .hikari-collapsible:not(.hikari-collapsible-expanded) & {
+        transform: rotate(-90deg);
+    }
+
+    // FUI glow on hover
+    .hikari-collapsible-header:hover & {
+        filter: drop-shadow(0 0 8px currentColor);
+    }
+}
+
+.hikari-collapsible-title {
+    font-size: $hikari-font-size-base;
+    font-weight: 600;
+    color: var(--hikari-color-text-primary);
+    transition: color $hikari-transition-fast;
+}
+
+.hikari-collapsible-subtitle {
+    font-size: $hikari-font-size-sm;
+    color: var(--hikari-color-text-secondary);
+    font-weight: 400;
+    margin-top: 2px;
+}
+
+.hikari-collapsible-actions {
+    display: flex;
+    align-items: center;
+    gap: $hikari-spacing-sm;
+
+    // Prevent click from triggering toggle
+    > * {
+        cursor: default;
+    }
+}
+
+// ============================================
+// Collapsible Content
+// ============================================
+
+.hikari-collapsible-content {
+    overflow: hidden;
+    transition:
+        max-height $hikari-transition-slow cubic-bezier(0.4, 0, 0.2, 1),
+        opacity $hikari-transition-base;
+
+    // Collapsed state
+    .hikari-collapsible:not(.hikari-collapsible-expanded) & {
+        max-height: 0;
+        opacity: 0;
+    }
+
+    // Expanded state
+    .hikari-collapsible.hikari-collapsible-expanded & {
+        max-height: 2000px;
+        opacity: 1;
+    }
+}
+
+.hikari-collapsible-body {
+    padding: $hikari-spacing-lg;
+
+    // Add scrollbar when content overflows
+    @include scrollbar;
+}
+
+// ============================================
+// Collapsible Variants
+// ============================================
+
+// Bordered variant
+.hikari-collapsible-bordered {
+    border-radius: 0;
+
+    &:first-child {
+        border-top-left-radius: $hikari-radius-lg;
+        border-top-right-radius: $hikari-radius-lg;
+    }
+
+    &:last-child {
+        border-bottom-left-radius: $hikari-radius-lg;
+        border-bottom-right-radius: $hikari-radius-lg;
+    }
+
+    &:not(:last-child) {
+        border-bottom: none;
+    }
+}
+
+// Ghost variant (minimal styling)
+.hikari-collapsible-ghost {
+    background-color: transparent;
+    border: none;
+
+    .hikari-collapsible-header {
+        background-color: transparent;
+        border-bottom: none;
+        border-radius: $hikari-radius-md;
+
+        &:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+    }
+
+    .hikari-collapsible-body {
+        padding: $hikari-spacing-md $hikari-spacing-lg;
+    }
+}
+
+// FUI variant (enhanced glow)
+.hikari-collapsible-fui {
+    position: relative;
+    overflow: hidden;
+
+    // Animated gradient border
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(
+            90deg,
+            var(--hikari-color-primary),
+            var(--hikari-color-secondary),
+            var(--hikari-color-accent),
+            var(--hikari-color-primary)
+        );
+        background-size: 300% 100%;
+        animation: hikari-gradient-shift 3s ease infinite;
+        opacity: 0;
+        transition: opacity $hikari-transition-base;
+    }
+
+    &:hover::before {
+        opacity: 1;
+    }
+
+    .hikari-collapsible-header {
+        background: linear-gradient(
+            135deg,
+            rgba(139, 92, 246, 0.05) 0%,
+            rgba(59, 130, 246, 0.05) 100%
+        );
+    }
+}
+
+@keyframes hikari-gradient-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+// ============================================
+// Collapsible Sizes
+// ============================================
+
+.hikari-collapsible-sm {
+    .hikari-collapsible-header {
+        padding: $hikari-spacing-sm $hikari-spacing-md;
+    }
+
+    .hikari-collapsible-title {
+        font-size: $hikari-font-size-sm;
+    }
+
+    .hikari-collapsible-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .hikari-collapsible-body {
+        padding: $hikari-spacing-md;
+    }
+}
+
+.hikari-collapsible-lg {
+    .hikari-collapsible-header {
+        padding: $hikari-spacing-lg $hikari-spacing-xl;
+    }
+
+    .hikari-collapsible-title {
+        font-size: $hikari-font-size-lg;
+    }
+
+    .hikari-collapsible-icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .hikari-collapsible-body {
+        padding: $hikari-spacing-xl;
+    }
+}
+
+// ============================================
+// Collapsible States
+// ============================================
+
+// Disabled state
+.hikari-collapsible-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+    cursor: not-allowed;
+
+    .hikari-collapsible-header {
+        cursor: not-allowed;
+    }
+}
+
+// Loading state
+.hikari-collapsible-loading {
+    position: relative;
+
+    .hikari-collapsible-icon {
+        animation: hikari-spin 1s linear infinite;
+    }
+}
+
+@keyframes hikari-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// Error state
+.hikari-collapsible-error {
+    border-color: var(--hikari-color-danger);
+
+    .hikari-collapsible-icon {
+        color: var(--hikari-color-danger);
+    }
+
+    .hikari-collapsible-title {
+        color: var(--hikari-color-danger);
+    }
+}
+
+// Success state
+.hikari-collapsible-success {
+    border-color: var(--hikari-color-success);
+
+    .hikari-collapsible-icon {
+        color: var(--hikari-color-success);
+    }
+}
+
+// ============================================
+// Accordion Group
+// ============================================
+
+.hikari-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: $hikari-spacing-sm;
+
+    // Only one collapsible can be expanded at a time
+    &.hikari-accordion-mutual-exclusive {
+        .hikari-collapsible:not(.hikari-collapsible-expanded) {
+            .hikari-collapsible-content {
+                display: none;
+            }
+        }
+    }
+}
+
+// ============================================
+// Animation Variants
+// ============================================
+
+// Fade animation
+.hikari-collapsible-fade {
+    .hikari-collapsible-content {
+        transition: opacity $hikari-transition-base;
+    }
+
+    &.hikari-collapsible-expanded .hikari-collapsible-content {
+        opacity: 1;
+    }
+
+    &:not(.hikari-collapsible-expanded) .hikari-collapsible-content {
+        opacity: 0;
+        display: none;
+    }
+}
+
+// Slide animation (default is in the base styles)
+.hikari-collapsible-slide {
+    // This is the default behavior
+}
+
+// Scale animation
+.hikari-collapsible-scale {
+    .hikari-collapsible-content {
+        transform-origin: top;
+        transition:
+            max-height $hikari-transition-slow,
+            opacity $hikari-transition-base,
+            transform $hikari-transition-base;
+    }
+
+    &:not(.hikari-collapsible-expanded) .hikari-collapsible-content {
+        transform: scaleY(0);
+    }
+
+    &.hikari-collapsible-expanded .hikari-collapsible-content {
+        transform: scaleY(1);
+    }
+}
+
+// ============================================
+// Responsive Design
+// ============================================
+
+@include mobile {
+    .hikari-collapsible-header {
+        padding: $hikari-spacing-sm $hikari-spacing-md;
+    }
+
+    .hikari-collapsible-body {
+        padding: $hikari-spacing-md;
+    }
+
+    .hikari-collapsible-title {
+        font-size: $hikari-font-size-sm;
+    }
+}

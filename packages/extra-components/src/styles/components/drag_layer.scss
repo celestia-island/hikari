@@ -1,0 +1,421 @@
+// hikari-extra-components/styles/components/drag_layer.scss
+// Drag layer styles with Arknights design + FUI glow
+
+@use '../../../hikari-theme/styles/mixins.scss' as *;
+
+// ============================================
+// Drag Layer Container
+// ============================================
+
+.hikari-drag-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+}
+
+// ============================================
+// Drag Preview (Ghost Element)
+// ============================================
+
+.hikari-drag-preview {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0.8;
+    transform: rotate(3deg);
+    transition:
+        opacity $hikari-transition-fast,
+        transform $hikari-transition-fast;
+
+    // Arknights clean design with FUI glow
+    background-color: var(--hikari-color-surface);
+    border: 2px solid var(--hikari-color-primary);
+    border-radius: $hikari-radius-md;
+    box-shadow:
+        $hikari-shadow-xl,
+        0 0 30px rgba(59, 130, 246, 0.4),
+        inset 0 0 20px rgba(59, 130, 246, 0.1);
+
+    // Animated glow effect
+    animation: hikari-drag-glow 1.5s ease-in-out infinite;
+
+    // Scale effect on drag start
+    &.hikari-drag-starting {
+        transform: rotate(3deg) scale(0.9);
+        opacity: 0.6;
+    }
+
+    // Scale effect on drag end
+    &.hikari-drag-ending {
+        transform: rotate(0deg) scale(1);
+        opacity: 0;
+    }
+}
+
+@keyframes hikari-drag-glow {
+    0%, 100% {
+        box-shadow:
+            $hikari-shadow-xl,
+            0 0 30px rgba(59, 130, 246, 0.4),
+            inset 0 0 20px rgba(59, 130, 246, 0.1);
+    }
+    50% {
+        box-shadow:
+            $hikari-shadow-xl,
+            0 0 40px rgba(59, 130, 246, 0.6),
+            inset 0 0 30px rgba(59, 130, 246, 0.15);
+    }
+}
+
+// ============================================
+// Drag Preview Content
+// ============================================
+
+.hikari-drag-preview-content {
+    padding: $hikari-spacing-md;
+    min-width: 100px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $hikari-spacing-sm;
+    font-size: $hikari-font-size-sm;
+    color: var(--hikari-color-text-primary);
+    white-space: nowrap;
+
+    // Ghost text effect
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.hikari-drag-preview-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--hikari-color-primary);
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+.hikari-drag-preview-label {
+    @include text-ellipsis;
+    font-weight: 500;
+}
+
+// ============================================
+// Drag Cursor States
+// ============================================
+
+.hikari-draggable {
+    cursor: grab;
+    transition: transform $hikari-transition-fast;
+
+    &:active {
+        cursor: grabbing;
+    }
+
+    // Hover effect
+    &:hover {
+        transform: translateY(-2px);
+    }
+
+    // Dragging state on original element
+    &.hikari-dragging {
+        opacity: 0.4;
+        cursor: grabbing;
+    }
+}
+
+// ============================================
+// Drop Zone Indicator
+// ============================================
+
+.hikari-drop-zone {
+    position: relative;
+    transition: all $hikari-transition-base;
+
+    // Valid drop target
+    &.hikari-drop-zone-valid {
+        border-color: var(--hikari-color-success);
+        background-color: rgba(16, 185, 129, 0.05);
+        box-shadow:
+            inset 0 0 20px rgba(16, 185, 129, 0.2),
+            0 0 20px rgba(16, 185, 129, 0.3);
+    }
+
+    // Invalid drop target
+    &.hikari-drop-zone-invalid {
+        border-color: var(--hikari-color-danger);
+        background-color: rgba(239, 68, 68, 0.05);
+        box-shadow:
+            inset 0 0 20px rgba(239, 68, 68, 0.2),
+            0 0 20px rgba(239, 68, 68, 0.3);
+    }
+
+    // Active drop target (dragging over)
+    &.hikari-drop-zone-active {
+        border-color: var(--hikari-color-accent);
+        background-color: rgba(245, 158, 11, 0.1);
+        box-shadow:
+            inset 0 0 30px rgba(245, 158, 11, 0.3),
+            0 0 30px rgba(245, 158, 11, 0.5);
+
+        // Pulsing animation
+        animation: hikari-drop-pulse 1s ease-in-out infinite;
+    }
+}
+
+@keyframes hikari-drop-pulse {
+    0%, 100% {
+        box-shadow:
+            inset 0 0 30px rgba(245, 158, 11, 0.3),
+            0 0 30px rgba(245, 158, 11, 0.5);
+    }
+    50% {
+        box-shadow:
+            inset 0 0 40px rgba(245, 158, 11, 0.4),
+            0 0 40px rgba(245, 158, 11, 0.7);
+    }
+}
+
+// ============================================
+// Drag Overlay
+// ============================================
+
+.hikari-drag-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity $hikari-transition-base;
+    pointer-events: none;
+
+    &.hikari-drag-overlay-active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+// ============================================
+// Drag Handle
+// ============================================
+
+.hikari-drag-handle {
+    display: inline-flex;
+    align-items: center;
+    gap: $hikari-spacing-xs;
+    padding: $hikari-spacing-xs $hikari-spacing-sm;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-sm;
+    cursor: grab;
+    transition: all $hikari-transition-fast;
+    user-select: none;
+
+    &:hover {
+        background-color: rgba(59, 130, 246, 0.1);
+        border-color: var(--hikari-color-primary);
+        color: var(--hikari-color-primary);
+
+        // FUI glow
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+    }
+
+    &:active {
+        cursor: grabbing;
+        transform: scale(0.95);
+    }
+
+    &.hikari-drag-handle-dragging {
+        opacity: 0.6;
+    }
+}
+
+.hikari-drag-handle-icon {
+    width: 16px;
+    height: 16px;
+    color: currentColor;
+}
+
+.hikari-drag-handle-label {
+    font-size: $hikari-font-size-xs;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+// ============================================
+// Drag Preview Variants
+// ============================================
+
+// Card preview
+.hikari-drag-preview-card {
+    @include card-base;
+    min-width: 200px;
+
+    .hikari-drag-preview-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+// List item preview
+.hikari-drag-preview-list-item {
+    background-color: var(--hikari-color-surface);
+    border-left: 3px solid var(--hikari-color-primary);
+    border-radius: $hikari-radius-sm;
+    padding: $hikari-spacing-sm $hikari-spacing-md;
+    min-width: 150px;
+    box-shadow: $hikari-shadow-md;
+
+    .hikari-drag-preview-content {
+        justify-content: flex-start;
+    }
+}
+
+// Table row preview
+.hikari-drag-preview-table-row {
+    display: flex;
+    align-items: center;
+    background-color: var(--hikari-color-surface);
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-sm;
+    overflow: hidden;
+
+    .hikari-drag-preview-cell {
+        padding: $hikari-spacing-sm $hikari-spacing-md;
+        border-right: 1px solid var(--hikari-color-border);
+        font-size: $hikari-font-size-sm;
+        white-space: nowrap;
+
+        &:last-child {
+            border-right: none;
+        }
+    }
+}
+
+// ============================================
+// Drag Line Indicator
+// ============================================
+
+.hikari-drag-line {
+    position: absolute;
+    background-color: var(--hikari-color-primary);
+    transition: all $hikari-transition-fast;
+    z-index: 100;
+
+    // FUI glow
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+
+    // Horizontal line
+    &.hikari-drag-line-horizontal {
+        height: 3px;
+        left: 0;
+        right: 0;
+    }
+
+    // Vertical line
+    &.hikari-drag-line-vertical {
+        width: 3px;
+        top: 0;
+        bottom: 0;
+    }
+
+    // Pulsing animation
+    &.hikari-drag-line-active {
+        animation: hikari-line-pulse 1s ease-in-out infinite;
+    }
+}
+
+@keyframes hikari-line-pulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(59, 130, 246, 0.9);
+    }
+}
+
+// ============================================
+// Multiple Selection Drag
+// ============================================
+
+.hikari-drag-preview-multiple {
+    display: flex;
+    flex-direction: column;
+    gap: $hikari-spacing-xs;
+    padding: $hikari-spacing-sm;
+
+    &::after {
+        content: attr(data-count);
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        width: 24px;
+        height: 24px;
+        background-color: var(--hikari-color-primary);
+        border: 2px solid var(--hikari-color-surface);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: $hikari-font-size-xs;
+        font-weight: 700;
+        color: var(--hikari-color-text-primary);
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+    }
+}
+
+.hikari-drag-preview-item {
+    background-color: var(--hikari-color-surface);
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-sm;
+    padding: $hikari-spacing-xs $hikari-spacing-sm;
+    font-size: $hikari-font-size-xs;
+    color: var(--hikari-color-text-secondary);
+    white-space: nowrap;
+}
+
+// ============================================
+// Z-Index Management
+// ============================================
+
+.hikari-drag-layer {
+    // Ensure drag layer is always on top
+    z-index: 9999;
+
+    // Drag preview z-index
+    .hikari-drag-preview {
+        z-index: 10000;
+    }
+
+    // Drag line z-index
+    .hikari-drag-line {
+        z-index: 10001;
+    }
+
+    // Drop overlay z-index
+    .hikari-drag-overlay {
+        z-index: 9998;
+    }
+}
+
+// ============================================
+// Responsive Design
+// ============================================
+
+@include mobile {
+    .hikari-drag-preview {
+        transform: rotate(2deg) scale(0.9);
+    }
+
+    .hikari-drag-preview-content {
+        padding: $hikari-spacing-sm;
+        font-size: $hikari-font-size-xs;
+    }
+
+    .hikari-drop-zone {
+        &.hikari-drop-zone-active {
+            animation: none; // Disable animation on mobile for performance
+        }
+    }
+}

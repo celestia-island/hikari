@@ -1,0 +1,576 @@
+// hikari-extra-components/styles/components/zoom_controls.scss
+// Zoom controls styles with Arknights design + FUI glow
+
+@use '../../../hikari-theme/styles/mixins.scss' as *;
+
+// ============================================
+// Zoom Controls Container
+// ============================================
+
+.hikari-zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: $hikari-spacing-xs;
+    padding: $hikari-spacing-sm;
+    background-color: rgba(var(--hikari-color-surface), 0.95);
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-lg;
+    box-shadow: $hikari-shadow-lg;
+    backdrop-filter: blur(8px);
+    transition: all $hikari-transition-base;
+
+    // FUI glow on hover
+    &:hover {
+        border-color: var(--hikari-color-primary);
+        box-shadow:
+            $hikari-shadow-xl,
+            0 0 20px rgba(59, 130, 246, 0.3);
+    }
+
+    // Compact variant
+    &.hikari-zoom-compact {
+        padding: $hikari-spacing-xs;
+        gap: 0;
+    }
+}
+
+// ============================================
+// Zoom Buttons
+// ============================================
+
+.hikari-zoom-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background-color: var(--hikari-color-surface);
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-md;
+    color: var(--hikari-color-text-primary);
+    cursor: pointer;
+    transition: all $hikari-transition-fast;
+    user-select: none;
+
+    // FUI glow effect on hover
+    &:hover:not(:disabled) {
+        background-color: rgba(59, 130, 246, 0.1);
+        border-color: var(--hikari-color-primary);
+        color: var(--hikari-color-primary);
+        box-shadow:
+            0 0 15px rgba(59, 130, 246, 0.4),
+            inset 0 0 10px rgba(59, 130, 246, 0.1);
+        transform: translateY(-2px);
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0) scale(0.95);
+    }
+
+    &:disabled {
+        @include disabled;
+        opacity: 0.4;
+    }
+
+    // Active state
+    &.hikari-zoom-button-active {
+        background-color: var(--hikari-color-primary);
+        border-color: var(--hikari-color-primary);
+        color: var(--hikari-color-text-primary);
+
+        // Enhanced FUI glow
+        box-shadow:
+            0 0 20px rgba(59, 130, 246, 0.5),
+            inset 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+}
+
+.hikari-zoom-button-icon {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2;
+}
+
+// ============================================
+// Zoom Display
+// ============================================
+
+.hikari-zoom-display {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+    padding: $hikari-spacing-xs $hikari-spacing-sm;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-md;
+    font-family: $hikari-font-family-mono;
+    font-size: $hikari-font-size-sm;
+    font-weight: 600;
+    color: var(--hikari-color-text-primary);
+    user-select: none;
+    transition: all $hikari-transition-fast;
+
+    // FUI glow
+    &.hikari-zoom-display-active {
+        border-color: var(--hikari-color-accent);
+        color: var(--hikari-color-accent);
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+    }
+}
+
+// ============================================
+// Zoom Slider
+// ============================================
+
+.hikari-zoom-slider-container {
+    display: flex;
+    align-items: center;
+    padding: 0 $hikari-spacing-sm;
+}
+
+.hikari-zoom-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100px;
+    height: 4px;
+    background-color: var(--hikari-color-border);
+    border-radius: $hikari-radius-full;
+    outline: none;
+    cursor: pointer;
+    transition: all $hikari-transition-fast;
+
+    // Track styling
+    &::-webkit-slider-runnable-track {
+        height: 4px;
+        background: linear-gradient(
+            90deg,
+            var(--hikari-color-primary),
+            var(--hikari-color-secondary)
+        );
+        border-radius: $hikari-radius-full;
+    }
+
+    &::-moz-range-track {
+        height: 4px;
+        background: linear-gradient(
+            90deg,
+            var(--hikari-color-primary),
+            var(--hikari-color-secondary)
+        );
+        border-radius: $hikari-radius-full;
+    }
+
+    // Thumb styling
+    &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        background-color: var(--hikari-color-surface);
+        border: 2px solid var(--hikari-color-primary);
+        border-radius: 50%;
+        cursor: grab;
+        transition: all $hikari-transition-fast;
+
+        // FUI glow
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+
+        &:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+        }
+
+        &:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+    }
+
+    &::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        background-color: var(--hikari-color-surface);
+        border: 2px solid var(--hikari-color-primary);
+        border-radius: 50%;
+        cursor: grab;
+        transition: all $hikari-transition-fast;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+
+        &:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+        }
+
+        &:active {
+            cursor: grabbing;
+        }
+    }
+
+    &:hover {
+        &::-webkit-slider-runnable-track {
+            background: linear-gradient(
+                90deg,
+                var(--hikari-color-primary),
+                var(--hikari-color-accent)
+            );
+        }
+
+        &::-moz-range-track {
+            background: linear-gradient(
+                90deg,
+                var(--hikari-color-primary),
+                var(--hikari-color-accent)
+            );
+        }
+    }
+}
+
+// ============================================
+// Zoom Presets
+// ============================================
+
+.hikari-zoom-presets {
+    display: flex;
+    gap: $hikari-spacing-xs;
+    padding-left: $hikari-spacing-sm;
+    border-left: 1px solid var(--hikari-color-border);
+}
+
+.hikari-zoom-preset {
+    padding: $hikari-spacing-xs $hikari-spacing-sm;
+    background-color: transparent;
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-sm;
+    font-family: $hikari-font-family-mono;
+    font-size: $hikari-font-size-xs;
+    font-weight: 600;
+    color: var(--hikari-color-text-secondary);
+    cursor: pointer;
+    transition: all $hikari-transition-fast;
+    user-select: none;
+
+    &:hover {
+        background-color: rgba(59, 130, 246, 0.1);
+        border-color: var(--hikari-color-primary);
+        color: var(--hikari-color-primary);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+
+    &.hikari-zoom-preset-active {
+        background-color: var(--hikari-color-primary);
+        border-color: var(--hikari-color-primary);
+        color: var(--hikari-color-text-primary);
+
+        // FUI glow
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    }
+}
+
+// ============================================
+// Position Variants
+// ============================================
+
+// Top-left
+.hikari-zoom-controls-top-left {
+    position: absolute;
+    top: $hikari-spacing-md;
+    left: $hikari-spacing-md;
+}
+
+// Top-right
+.hikari-zoom-controls-top-right {
+    position: absolute;
+    top: $hikari-spacing-md;
+    right: $hikari-spacing-md;
+}
+
+// Bottom-left
+.hikari-zoom-controls-bottom-left {
+    position: absolute;
+    bottom: $hikari-spacing-md;
+    left: $hikari-spacing-md;
+}
+
+// Bottom-right
+.hikari-zoom-controls-bottom-right {
+    position: absolute;
+    bottom: $hikari-spacing-md;
+    right: $hikari-spacing-md;
+}
+
+// Center
+.hikari-zoom-controls-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+// ============================================
+// Size Variants
+// ============================================
+
+.hikari-zoom-controls-sm {
+    .hikari-zoom-button {
+        width: 28px;
+        height: 28px;
+    }
+
+    .hikari-zoom-button-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .hikari-zoom-display {
+        min-width: 50px;
+        font-size: $hikari-font-size-xs;
+        padding: $hikari-spacing-xs;
+    }
+
+    .hikari-zoom-slider {
+        width: 80px;
+    }
+}
+
+.hikari-zoom-controls-lg {
+    .hikari-zoom-button {
+        width: 44px;
+        height: 44px;
+    }
+
+    .hikari-zoom-button-icon {
+        width: 22px;
+        height: 22px;
+    }
+
+    .hikari-zoom-display {
+        min-width: 70px;
+        font-size: $hikari-font-size-base;
+        padding: $hikari-spacing-sm;
+    }
+
+    .hikari-zoom-slider {
+        width: 120px;
+    }
+}
+
+// ============================================
+// Orientation Variants
+// ============================================
+
+.hikari-zoom-controls-horizontal {
+    flex-direction: row;
+}
+
+.hikari-zoom-controls-vertical {
+    flex-direction: column;
+    padding: $hikari-spacing-sm;
+
+    .hikari-zoom-presets {
+        flex-direction: column;
+        padding-left: 0;
+        padding-top: $hikari-spacing-sm;
+        border-left: none;
+        border-top: 1px solid var(--hikari-color-border);
+    }
+
+    .hikari-zoom-slider-container {
+        padding: $hikari-spacing-sm 0;
+    }
+
+    .hikari-zoom-slider {
+        width: 4px;
+        height: 100px;
+
+        &::-webkit-slider-runnable-track {
+            width: 4px;
+            height: 100px;
+            background: linear-gradient(
+                180deg,
+                var(--hikari-color-primary),
+                var(--hikari-color-secondary)
+            );
+        }
+
+        &::-moz-range-track {
+            width: 4px;
+            height: 100px;
+            background: linear-gradient(
+                180deg,
+                var(--hikari-color-primary),
+                var(--hikari-color-secondary)
+            );
+        }
+    }
+}
+
+// ============================================
+// Style Variants
+// ============================================
+
+// Minimal variant
+.hikari-zoom-controls-minimal {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+
+    .hikari-zoom-button {
+        background-color: rgba(var(--hikari-color-surface), 0.8);
+        backdrop-filter: blur(4px);
+    }
+}
+
+// FUI variant (enhanced glow effects)
+.hikari-zoom-controls-fui {
+    position: relative;
+    overflow: hidden;
+
+    // Animated gradient border
+    &::before {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: inherit;
+        padding: 2px;
+        background: linear-gradient(
+            135deg,
+            var(--hikari-color-primary),
+            var(--hikari-color-secondary),
+            var(--hikari-color-accent),
+            var(--hikari-color-primary)
+        );
+        background-size: 300% 300%;
+        animation: hikari-zoom-gradient-shift 4s ease infinite;
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        opacity: 0.6;
+    }
+
+    .hikari-zoom-button {
+        position: relative;
+        z-index: 1;
+    }
+}
+
+@keyframes hikari-zoom-gradient-shift {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+// ============================================
+// Tooltip Support
+// ============================================
+
+.hikari-zoom-button[data-tooltip],
+.hikari-zoom-preset[data-tooltip] {
+    position: relative;
+
+    &::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-8px);
+        padding: $hikari-spacing-xs $hikari-spacing-sm;
+        background-color: var(--hikari-color-background);
+        border: 1px solid var(--hikari-color-border);
+        border-radius: $hikari-radius-sm;
+        font-size: $hikari-font-size-xs;
+    color: var(--hikari-color-text-primary);
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity $hikari-transition-fast;
+        z-index: 100;
+
+        // FUI glow
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+    }
+
+    &:hover::after {
+        opacity: 1;
+    }
+}
+
+// ============================================
+// Animation States
+// ============================================
+
+// Zoom in animation
+@keyframes hikari-zoom-in {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.hikari-zoom-controls-enter {
+    animation: hikari-zoom-in $hikari-transition-base;
+}
+
+// Pulse animation for active zoom
+.hikari-zoom-display-pulse {
+    animation: hikari-zoom-pulse 2s ease-in-out infinite;
+}
+
+@keyframes hikari-zoom-pulse {
+    0%, 100% {
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 25px rgba(245, 158, 11, 0.6);
+    }
+}
+
+// ============================================
+// Responsive Design
+// ============================================
+
+@include mobile {
+    .hikari-zoom-controls {
+        padding: $hikari-spacing-xs;
+        gap: 0;
+    }
+
+    .hikari-zoom-button {
+        width: 32px;
+        height: 32px;
+    }
+
+    .hikari-zoom-button-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .hikari-zoom-display {
+        min-width: 50px;
+        font-size: $hikari-font-size-xs;
+    }
+
+    .hikari-zoom-slider {
+        width: 60px;
+    }
+
+    .hikari-zoom-presets {
+        display: none; // Hide presets on mobile
+    }
+
+    .hikari-zoom-button[data-tooltip]::after {
+        display: none; // Hide tooltips on mobile
+    }
+}

@@ -1,0 +1,285 @@
+// hikari-components/styles/components/tooltip.scss
+// Tooltip component styles
+
+@use '../../packages/hikari-theme/styles/mixins.scss' as *;
+
+// ============================================
+// Tooltip Base
+// ============================================
+
+.hikari-tooltip {
+    position: absolute;
+    z-index: 10000;
+    max-width: 300px;
+    padding: $hikari-spacing-sm $hikari-spacing-md;
+    border-radius: $hikari-radius-sm;
+    background-color: var(--hikari-color-surface);
+    border: 1px solid var(--hikari-color-border);
+    box-shadow: $hikari-shadow-lg;
+    font-size: $hikari-font-size-sm;
+    color: var(--hikari-color-text-primary);
+    line-height: 1.5;
+    white-space: normal;
+    word-wrap: break-word;
+    pointer-events: none;
+
+    // Arknights sharp, clean design
+    transition: opacity $hikari-transition-base,
+                transform $hikari-transition-base;
+
+    // FUI subtle glow
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+        opacity: 0;
+        transition: opacity $hikari-transition-base;
+        pointer-events: none;
+    }
+}
+
+.hikari-tooltip.visible {
+    opacity: 1;
+    pointer-events: auto;
+
+    &::before {
+        opacity: 1;
+    }
+}
+
+.hikari-tooltip.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+// ============================================
+// Tooltip Placements
+// ============================================
+
+// Top placement
+.hikari-tooltip-top {
+    bottom: calc(100% + #{$hikari-spacing-sm});
+    left: 50%;
+    transform: translateX(-50%);
+
+    &.hikari-tooltip-hidden {
+        transform: translateX(-50%) translateY(-5px);
+    }
+
+    .hikari-tooltip-arrow {
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%) rotate(45deg);
+        border-top-color: var(--hikari-color-border);
+        border-left-color: var(--hikari-color-border);
+    }
+}
+
+// Bottom placement
+.hikari-tooltip-bottom {
+    top: calc(100% + #{$hikari-spacing-sm});
+    left: 50%;
+    transform: translateX(-50%);
+
+    &.hikari-tooltip-hidden {
+        transform: translateX(-50%) translateY(5px);
+    }
+
+    .hikari-tooltip-arrow {
+        top: -6px;
+        left: 50%;
+        transform: translateX(-50%) rotate(45deg);
+        border-bottom-color: var(--hikari-color-border);
+        border-right-color: var(--hikari-color-border);
+    }
+}
+
+// Left placement
+.hikari-tooltip-left {
+    right: calc(100% + #{$hikari-spacing-sm});
+    top: 50%;
+    transform: translateY(-50%);
+
+    &.hikari-tooltip-hidden {
+        transform: translateY(-50%) translateX(-5px);
+    }
+
+    .hikari-tooltip-arrow {
+        right: -6px;
+        top: 50%;
+        transform: translateY(-50%) rotate(45deg);
+        border-top-color: var(--hikari-color-border);
+        border-left-color: var(--hikari-color-border);
+    }
+}
+
+// Right placement
+.hikari-tooltip-right {
+    left: calc(100% + #{$hikari-spacing-sm});
+    top: 50%;
+    transform: translateY(-50%);
+
+    &.hikari-tooltip-hidden {
+        transform: translateY(-50%) translateX(5px);
+    }
+
+    .hikari-tooltip-arrow {
+        left: -6px;
+        top: 50%;
+        transform: translateY(-50%) rotate(45deg);
+        border-bottom-color: var(--hikari-color-border);
+        border-right-color: var(--hikari-color-border);
+    }
+}
+
+// ============================================
+// Tooltip Arrow
+// ============================================
+
+.hikari-tooltip-arrow {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background-color: var(--hikari-color-surface);
+    border: 1px solid var(--hikari-color-border);
+
+    // Arknights sharp arrow design
+}
+
+// ============================================
+// Tooltip Content
+// ============================================
+
+.hikari-tooltip-title {
+    font-weight: 600;
+    margin-bottom: $hikari-spacing-xs;
+    color: var(--hikari-color-text-primary);
+
+    // Arknights information hierarchy
+}
+
+.hikari-tooltip-content {
+    color: var(--hikari-color-text-secondary);
+
+    // Arknights clean typography
+}
+
+// ============================================
+// Tooltip Modifiers
+// ============================================
+
+.hikari-tooltip-with-title {
+    .hikari-tooltip-title {
+        margin-bottom: $hikari-spacing-xs;
+    }
+}
+
+.hikari-tooltip-without-title {
+    .hikari-tooltip-title {
+        display: none;
+    }
+}
+
+// ============================================
+// Tooltip Animations
+// ============================================
+
+@keyframes hikari-tooltip-fade-in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes hikari-tooltip-fade-out {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+.hikari-tooltip.visible {
+    animation: hikari-tooltip-fade-in $hikari-transition-base;
+}
+
+.hikari-tooltip.hidden {
+    animation: hikari-tooltip-fade-out $hikari-transition-base;
+}
+
+// ============================================
+// FUI Glow Animation for Tooltips
+// ============================================
+
+@keyframes hikari-tooltip-glow {
+    0%, 100% {
+        box-shadow: $hikari-shadow-lg, 0 0 10px rgba(59, 130, 246, 0.15);
+    }
+    50% {
+        box-shadow: $hikari-shadow-lg, 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+}
+
+.hikari-tooltip.visible {
+    animation: hikari-tooltip-fade-in $hikari-transition-base,
+               hikari-tooltip-glow 3s ease-in-out infinite 0.5s;
+}
+
+// ============================================
+// Arknights Decorative Elements
+// ============================================
+
+// Subtle gradient top border
+.hikari-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(59, 130, 246, 0.3),
+        transparent
+    );
+    opacity: 0;
+    transition: opacity $hikari-transition-base;
+}
+
+.hikari-tooltip.visible::after {
+    opacity: 1;
+}
+
+// ============================================
+// Tooltip Wrapper (for trigger element)
+// ============================================
+
+.hikari-tooltip-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+// ============================================
+// Tooltip Z-Index Layering
+// ============================================
+
+// Ensure tooltips appear above other UI elements
+.hikari-tooltip {
+    // Higher than toasts (9999)
+    z-index: 10000;
+
+    // Nested tooltips get higher z-index
+    &.hikari-tooltip-nested {
+        z-index: 10001;
+    }
+
+    &.hikari-tooltip-nested-2 {
+        z-index: 10002;
+    }
+}

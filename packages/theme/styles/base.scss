@@ -1,0 +1,290 @@
+// hikari-theme/styles/base.scss
+// 基础样式（使用 hikari-palette）
+
+@use './variables.scss' as *;
+@use './mixins.scss' as *;
+
+// ============================================
+// 全局重置
+// ============================================
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: $hikari-font-family-sans;
+    font-size: $hikari-font-size-base;
+    line-height: 1.5;
+    color: var(--hikari-color-text-primary);
+    background-color: var(--hikari-color-background);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+// ============================================
+// 排版样式
+// ============================================
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.25;
+    margin-bottom: $hikari-spacing-md;
+}
+
+h1 {
+    font-size: $hikari-font-size-3xl;
+}
+
+h2 {
+    font-size: $hikari-font-size-2xl;
+}
+
+h3 {
+    font-size: $hikari-font-size-xl;
+}
+
+h4 {
+    font-size: $hikari-font-size-lg;
+}
+
+h5 {
+    font-size: $hikari-font-size-base;
+}
+
+h6 {
+    font-size: $hikari-font-size-sm;
+}
+
+p {
+    margin-bottom: $hikari-spacing-md;
+}
+
+a {
+    color: var(--hikari-color-primary);
+    text-decoration: none;
+    transition: color $hikari-transition-fast;
+    
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+code {
+    font-family: $hikari-font-family-mono;
+    font-size: 0.9em;
+    padding: 0.2em 0.4em;
+    background-color: var(--hikari-color-border);
+    border-radius: $hikari-radius-sm;
+}
+
+pre {
+    font-family: $hikari-font-family-mono;
+    font-size: $hikari-font-size-sm;
+    padding: $hikari-spacing-md;
+    background-color: var(--hikari-color-background);
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-md;
+    overflow-x: auto;
+    
+    @include scrollbar;
+}
+
+// ============================================
+// 列表样式
+// ============================================
+
+ul, ol {
+    list-style: none;
+    margin-bottom: $hikari-spacing-md;
+}
+
+li {
+    margin-bottom: $hikari-spacing-sm;
+}
+
+// ============================================
+// 表单元素
+// ============================================
+
+input,
+textarea,
+select {
+    @include input-base;
+}
+
+textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+select {
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="%239CA3AF" d="M2 4l4 4 4-4"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: $hikari-spacing-xs;
+    font-weight: 500;
+    color: var(--hikari-color-text-secondary);
+}
+
+// ============================================
+// 按钮样式
+// ============================================
+
+button {
+    @include button-base;
+}
+
+// ============================================
+// 图片样式
+// ============================================
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+// ============================================
+// 表格样式
+// ============================================
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: $hikari-spacing-md;
+}
+
+th,
+td {
+    padding: $hikari-spacing-sm $hikari-spacing-md;
+    text-align: left;
+    border-bottom: 1px solid var(--hikari-color-border);
+}
+
+th {
+    font-weight: 600;
+    color: var(--hikari-color-text-secondary);
+}
+
+// ============================================
+// 分隔线样式
+// ============================================
+
+hr {
+    border: none;
+    height: 1px;
+    background-color: var(--hikari-color-border);
+    margin: $hikari-spacing-lg 0;
+}
+
+// ============================================
+// 容器样式
+// ============================================
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 $hikari-spacing-md;
+}
+
+.container-fluid {
+    width: 100%;
+    padding: 0 $hikari-spacing-md;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 (-$hikari-spacing-sm);
+    
+    > * {
+        margin: 0 $hikari-spacing-sm;
+    }
+}
+
+.col {
+    flex: 1 1 0%;
+}
+
+// ============================================
+// 工具类
+// ============================================
+
+.text-center {
+    text-align: center;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-muted {
+    color: var(--hikari-color-text-secondary);
+}
+
+.text-primary {
+    color: var(--hikari-color-primary);
+}
+
+.text-success {
+    color: var(--hikari-color-success);
+}
+
+.text-warning {
+    color: var(--hikari-color-warning);
+}
+
+.text-danger {
+    color: var(--hikari-color-danger);
+}
+
+.mt-1 { margin-top: $hikari-spacing-xs; }
+.mt-2 { margin-top: $hikari-spacing-sm; }
+.mt-3 { margin-top: $hikari-spacing-md; }
+.mt-4 { margin-top: $hikari-spacing-lg; }
+.mt-5 { margin-top: $hikari-spacing-xl; }
+
+.mb-1 { margin-bottom: $hikari-spacing-xs; }
+.mb-2 { margin-bottom: $hikari-spacing-sm; }
+.mb-3 { margin-bottom: $hikari-spacing-md; }
+.mb-4 { margin-bottom: $hikari-spacing-lg; }
+.mb-5 { margin-bottom: $hikari-spacing-xl; }
+
+.p-1 { padding: $hikari-spacing-xs; }
+.p-2 { padding: $hikari-spacing-sm; }
+.p-3 { padding: $hikari-spacing-md; }
+.p-4 { padding: $hikari-spacing-lg; }
+.p-5 { padding: $hikari-spacing-xl; }
+
+.hidden {
+    display: none !important;
+}
+
+.visible {
+    visibility: visible;
+}
+
+.invisible {
+    visibility: hidden;
+}

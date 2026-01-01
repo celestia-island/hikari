@@ -1,64 +1,14 @@
 [package]
-authors = ["langyo <langyo.china@gmail.com>"]
 name = "hikari-components"
-
-version = "0.1.0"
-edition = "2021"
-publish = false
-
-[lib]
-crate-type = ["cdylib", "rlib"]
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
 
 [dependencies]
+# 工作区依赖
+hikari-palette = { path = "../palette" }
 hikari-theme = { path = "../theme" }
 
-anyhow = { workspace = true }
-async-trait = { workspace = true }
-derive_more = { workspace = true }
-
-serde = { workspace = true }
-serde_json = { workspace = true }
-strum = { workspace = true }
-
-web-sys = { workspace = true }
-js-sys = { workspace = true }
-wasm-bindgen = { workspace = true }
-wasm-bindgen-futures = { workspace = true }
-
-stylist = { workspace = true }
-yew = { workspace = true }
-yew-router = { workspace = true }
-
-html5ever = { version = "^0.29", optional = true }
-markdown = { version = "1.0.0-alpha.21", optional = true }
-pest = { version = "^2", optional = true }
-
-egui = { version = "^0.29", optional = true }
-bevy = { version = "^0.14", optional = true }
-
-[features]
-default = ["components-data", "components-form", "components-navigation"]
-full = [
-    "components-data",
-    "components-form",
-    "components-navigation",
-    "form-input-rich",
-    "data-canvas",
-]
-
-components-data = []
-components-form = []
-components-navigation = []
-
-form-input-rich = [
-    "form-input-rich-html",
-    "form-input-rich-markdown",
-    "form-input-rich-mediawiki",
-]
-form-input-rich-html = ["dep:html5ever"]
-form-input-rich-markdown = ["dep:markdown"]
-form-input-rich-mediawiki = ["dep:pest"]
-
-data-canvas = ["data-canvas-charts", "data-canvas-scene"]
-data-canvas-charts = ["dep:egui"]
-data-canvas-scene = ["dep:bevy"]
+# MCP / 网络与协议
+dioxus.workspace = true

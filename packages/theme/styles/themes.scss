@@ -1,0 +1,258 @@
+// hikari-theme/styles/themes.scss
+// 主题变体（使用 hikari-palette）
+
+@use './variables.scss' as *;
+
+// ============================================
+// Primary 主题（Arknights 风格）
+// ============================================
+
+:root[data-theme="primary"] {
+    // 背景增强
+    background-color: var(--hikari-color-background);
+    
+    // Arknights 风格边框
+    .hikari-arknights-border {
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+    }
+    
+    // 高对比度文字
+    .hikari-contrast-text {
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+}
+
+// ============================================
+// FUI Dark 主题（科幻风格）
+// ============================================
+
+:root[data-theme="fui-dark"] {
+    // 深色背景
+    background-color: #0A0E14;
+    
+    // 科幻发光效果
+    .hikari-fui-glow {
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.6),
+                    0 0 40px rgba(139, 92, 246, 0.4),
+                    inset 0 0 20px rgba(139, 92, 246, 0.2);
+    }
+    
+    // 脉冲动画
+    .hikari-pulse {
+        animation: fui-pulse 3s ease-in-out infinite;
+    }
+    
+    @keyframes fui-pulse {
+        0%, 100% {
+            opacity: 1;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
+        }
+        50% {
+            opacity: 0.8;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.8);
+        }
+    }
+    
+    // 六边形按钮
+    .hikari-hexagon-button {
+        clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+        transition: all $hikari-transition-base;
+        
+        &:hover {
+            clip-path: polygon(0% 0, 100% 0, 100% 100%, 10% 100%);
+        }
+    }
+    
+    // 科幻网格背景
+    .hikari-grid-background {
+        background-image: 
+            linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
+        background-size: 20px 20px;
+    }
+}
+
+// ============================================
+// Arknights 主题（游戏风格）
+// ============================================
+
+:root[data-theme="arknights"] {
+    // 游戏风格边框
+    .hikari-game-border {
+        border: 2px solid rgba(6, 182, 212, 0.5);
+        border-radius: 8px;
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+    }
+    
+    // 动态扫描线
+    .hikari-scanline {
+        position: relative;
+        overflow: hidden;
+        
+        &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(6, 182, 212, 0.8), 
+                transparent);
+            animation: scanline 2s linear infinite;
+        }
+    }
+    
+    @keyframes scanline {
+        0% {
+            top: -2px;
+        }
+        100% {
+            top: 100%;
+        }
+    }
+    
+    // 全息效果
+    .hikari-holographic {
+        background: linear-gradient(135deg, 
+            rgba(6, 182, 212, 0.1) 0%,
+            rgba(6, 182, 212, 0.05) 100%);
+        border: 1px solid rgba(6, 182, 212, 0.3);
+        backdrop-filter: blur(10px);
+    }
+}
+
+// ============================================
+// Fresh 主题（清新风格）
+// ============================================
+
+:root[data-theme="fresh"] {
+    // 浅色背景
+    background-color: var(--hikari-color-background);
+    
+    // 渐变卡片
+    .hikari-gradient-card {
+        background: linear-gradient(135deg, 
+            var(--hikari-color-surface) 0%,
+            rgba(16, 185, 129, 0.1) 100%);
+    }
+    
+    // 柔和阴影
+    .hikari-soft-shadow {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05),
+                    0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    // 圆形按钮
+    .hikari-round-button {
+        border-radius: 9999px;
+        padding: $hikari-spacing-sm $hikari-spacing-xl;
+    }
+    
+    // 渐变文字
+    .hikari-gradient-text {
+        background: linear-gradient(135deg, 
+            var(--hikari-color-primary) 0%,
+            var(--hikari-color-success) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+}
+
+// ============================================
+// 响应式主题切换
+// ============================================
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="fresh"]) {
+        --hikari-color-background: #0F172A;
+        --hikari-color-surface: #1E293B;
+        --hikari-color-text-primary: #F1F5F9;
+        --hikari-color-text-secondary: #94A3B8;
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    :root[data-theme="fresh"] {
+        --hikari-color-background: #FFFFFF;
+        --hikari-color-surface: #F8FAFC;
+        --hikari-color-text-primary: #1E293B;
+        --hikari-color-text-secondary: #64748B;
+    }
+}
+
+// ============================================
+// 动画效果
+// ============================================
+
+.fade-in {
+    animation: fadeIn $hikari-transition-base ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-in {
+    animation: slideIn $hikari-transition-base ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+.zoom-in {
+    animation: zoomIn $hikari-transition-base ease-out;
+}
+
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.bounce {
+    animation: bounce $hikari-transition-base ease-in-out infinite;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}

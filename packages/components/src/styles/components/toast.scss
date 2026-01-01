@@ -1,0 +1,423 @@
+// hikari-components/styles/components/toast.scss
+// Toast component styles
+
+@use '../../packages/hikari-theme/styles/mixins.scss' as *;
+
+// ============================================
+// Toast Container Positions
+// ============================================
+
+.hikari-toast-container {
+    position: fixed;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: $hikari-spacing-md;
+    pointer-events: none;
+}
+
+.hikari-toast-container-top {
+    top: $hikari-spacing-lg;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.hikari-toast-container-top-right {
+    top: $hikari-spacing-lg;
+    right: $hikari-spacing-lg;
+    align-items: flex-end;
+}
+
+.hikari-toast-container-top-left {
+    top: $hikari-spacing-lg;
+    left: $hikari-spacing-lg;
+    align-items: flex-start;
+}
+
+.hikari-toast-container-bottom {
+    bottom: $hikari-spacing-lg;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.hikari-toast-container-bottom-right {
+    bottom: $hikari-spacing-lg;
+    right: $hikari-spacing-lg;
+    align-items: flex-end;
+}
+
+.hikari-toast-container-bottom-left {
+    bottom: $hikari-spacing-lg;
+    left: $hikari-spacing-lg;
+    align-items: flex-start;
+}
+
+// ============================================
+// Toast Base
+// ============================================
+
+.hikari-toast {
+    pointer-events: auto;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: $hikari-spacing-md;
+    min-width: 300px;
+    max-width: 500px;
+    padding: $hikari-spacing-md $hikari-spacing-lg;
+    border-radius: $hikari-radius-md;
+    background-color: var(--hikari-color-surface);
+    border: 1px solid var(--hikari-color-border);
+    box-shadow: $hikari-shadow-lg;
+
+    // Arknights clean design
+    overflow: hidden;
+
+    // FUI pulse animation on show
+    animation: hikari-toast-show $hikari-transition-base;
+
+    @include mobile {
+        min-width: 280px;
+        max-width: calc(100vw - #{$hikari-spacing-lg * 2});
+    }
+}
+
+@keyframes hikari-toast-show {
+    0% {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+// ============================================
+// Toast Slide Animations
+// ============================================
+
+.hikari-toast-container-top .hikari-toast {
+    animation: hikari-toast-slide-in-top $hikari-transition-base;
+}
+
+.hikari-toast-container-top-right .hikari-toast,
+.hikari-toast-container-top-left .hikari-toast {
+    animation: hikari-toast-slide-in-top $hikari-transition-base;
+}
+
+.hikari-toast-container-bottom .hikari-toast {
+    animation: hikari-toast-slide-in-bottom $hikari-transition-base;
+}
+
+.hikari-toast-container-bottom-right .hikari-toast,
+.hikari-toast-container-bottom-left .hikari-toast {
+    animation: hikari-toast-slide-in-bottom $hikari-transition-base;
+}
+
+@keyframes hikari-toast-slide-in-top {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes hikari-toast-slide-in-bottom {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hikari-toast.hiding {
+    animation: hikari-toast-hide $hikari-transition-base forwards;
+}
+
+@keyframes hikari-toast-hide {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+// ============================================
+// Toast Variants
+// ============================================
+
+.hikari-toast-info {
+    border-left: 4px solid var(--hikari-color-primary);
+
+    // FUI subtle glow
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+        opacity: 0;
+        transition: opacity $hikari-transition-base;
+        pointer-events: none;
+    }
+
+    &:hover::before {
+        opacity: 1;
+    }
+
+    .hikari-toast-icon {
+        color: var(--hikari-color-primary);
+    }
+}
+
+.hikari-toast-success {
+    border-left: 4px solid var(--hikari-color-success);
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+        opacity: 0;
+        transition: opacity $hikari-transition-base;
+        pointer-events: none;
+    }
+
+    &:hover::before {
+        opacity: 1;
+    }
+
+    .hikari-toast-icon {
+        color: var(--hikari-color-success);
+    }
+}
+
+.hikari-toast-warning {
+    border-left: 4px solid var(--hikari-color-warning);
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+        opacity: 0;
+        transition: opacity $hikari-transition-base;
+        pointer-events: none;
+    }
+
+    &:hover::before {
+        opacity: 1;
+    }
+
+    .hikari-toast-icon {
+        color: var(--hikari-color-warning);
+    }
+}
+
+.hikari-toast-error {
+    border-left: 4px solid var(--hikari-color-danger);
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+        opacity: 0;
+        transition: opacity $hikari-transition-base;
+        pointer-events: none;
+    }
+
+    &:hover::before {
+        opacity: 1;
+    }
+
+    .hikari-toast-icon {
+        color: var(--hikari-color-danger);
+    }
+}
+
+// ============================================
+// Toast Content
+// ============================================
+
+.hikari-toast-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    font-size: $hikari-font-size-lg;
+}
+
+.hikari-toast-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.hikari-toast-title {
+    font-size: $hikari-font-size-base;
+    font-weight: 600;
+    color: var(--hikari-color-text-primary);
+    margin-bottom: $hikari-spacing-xs;
+
+    // Arknights information hierarchy
+}
+
+.hikari-toast-message {
+    font-size: $hikari-font-size-sm;
+    color: var(--hikari-color-text-secondary);
+    line-height: 1.5;
+
+    // Arknights clean typography
+}
+
+// ============================================
+// Toast Close Button
+// ============================================
+
+.hikari-toast-close {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--hikari-color-text-secondary);
+    cursor: pointer;
+    border-radius: $hikari-radius-sm;
+    transition: all $hikari-transition-fast;
+
+    // Arknights minimal close button
+    font-size: $hikari-font-size-lg;
+    line-height: 1;
+
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+        color: var(--hikari-color-text-primary);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
+// ============================================
+// Toast Modifiers
+// ============================================
+
+.hikari-toast-with-title {
+    .hikari-toast-message {
+        margin-top: $hikari-spacing-xs;
+    }
+}
+
+.hikari-toast-without-close {
+    .hikari-toast-close {
+        display: none;
+    }
+}
+
+// ============================================
+// FUI Pulse Animation for Toasts
+// ============================================
+
+@keyframes hikari-toast-pulse {
+    0%, 100% {
+        box-shadow: $hikari-shadow-lg, 0 0 10px rgba(59, 130, 246, 0.2);
+    }
+    50% {
+        box-shadow: $hikari-shadow-lg, 0 0 20px rgba(59, 130, 246, 0.4);
+    }
+}
+
+.hikari-toast-info {
+    animation: hikari-toast-show $hikari-transition-base,
+               hikari-toast-pulse 3s ease-in-out infinite 0.5s;
+}
+
+@keyframes hikari-toast-success-pulse {
+    0%, 100% {
+        box-shadow: $hikari-shadow-lg, 0 0 10px rgba(16, 185, 129, 0.2);
+    }
+    50% {
+        box-shadow: $hikari-shadow-lg, 0 0 20px rgba(16, 185, 129, 0.4);
+    }
+}
+
+.hikari-toast-success {
+    animation: hikari-toast-show $hikari-transition-base,
+               hikari-toast-success-pulse 3s ease-in-out infinite 0.5s;
+}
+
+@keyframes hikari-toast-warning-pulse {
+    0%, 100% {
+        box-shadow: $hikari-shadow-lg, 0 0 10px rgba(251, 191, 36, 0.2);
+    }
+    50% {
+        box-shadow: $hikari-shadow-lg, 0 0 20px rgba(251, 191, 36, 0.4);
+    }
+}
+
+.hikari-toast-warning {
+    animation: hikari-toast-show $hikari-transition-base,
+               hikari-toast-warning-pulse 3s ease-in-out infinite 0.5s;
+}
+
+@keyframes hikari-toast-error-pulse {
+    0%, 100% {
+        box-shadow: $hikari-shadow-lg, 0 0 10px rgba(239, 68, 68, 0.2);
+    }
+    50% {
+        box-shadow: $hikari-shadow-lg, 0 0 20px rgba(239, 68, 68, 0.4);
+    }
+}
+
+.hikari-toast-error {
+    animation: hikari-toast-show $hikari-transition-base,
+               hikari-toast-error-pulse 3s ease-in-out infinite 0.5s;
+}
+
+// ============================================
+// Arknights Decorative Element
+// ============================================
+
+.hikari-toast::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    opacity: 0;
+    transition: opacity $hikari-transition-base;
+}
+
+.hikari-toast:hover::after {
+    opacity: 1;
+}

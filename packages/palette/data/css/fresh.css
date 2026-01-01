@@ -1,0 +1,8 @@
+/* Fresh - Fresh and vibrant color scheme */
+:root[data-theme="fresh"] {
+  --hikari-GREEN_500: #10B981;
+  --hikari-GREEN_600: #059669;
+  --hikari-GREEN_50: #ECFDF5;
+  --hikari-SLATE_900: #0F172A;
+  --hikari-SLATE_50: #F8FAFC;
+}

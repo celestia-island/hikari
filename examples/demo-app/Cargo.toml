@@ -1,0 +1,23 @@
+[package]
+name = "demo-app"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+# This is a standalone example, not part of the main workspace
+
+[[bin]]
+name = "demo-app"
+path = "src/main.rs"
+
+[dependencies]
+# 工作区依赖
+hikari-components = { path = "../../packages/components" }
+hikari-palette = { path = "../../packages/palette" }
+hikari-theme = { path = "../../packages/theme" }
+
+# MCP / 网络与协议
+dioxus = { version = "^0.7", features = ["web", "router"] }
+dioxus-router = "^0.7"
+dioxus-web = "^0.7"

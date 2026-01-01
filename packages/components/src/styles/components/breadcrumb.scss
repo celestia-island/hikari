@@ -1,0 +1,331 @@
+// hikari-components/styles/components/breadcrumb.scss
+// Breadcrumb component styles
+
+@use '../../packages/hikari-theme/styles/mixins.scss' as *;
+
+// ============================================
+// Breadcrumb Base
+// ============================================
+
+.hikari-breadcrumb {
+    @include flex-start;
+    width: 100%;
+    padding: $hikari-spacing-sm $hikari-spacing-md;
+    font-size: $hikari-font-size-base;
+
+    // Arknights flat design
+    background-color: transparent;
+    border-radius: $hikari-radius-md;
+}
+
+.hikari-breadcrumb-nav {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.hikari-breadcrumb-list {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+
+    // Arknights simple layout
+}
+
+// ============================================
+// Breadcrumb Item
+// ============================================
+
+.hikari-breadcrumb-item {
+    @include flex-start;
+    color: var(--hikari-color-text-secondary);
+    transition: all $hikari-transition-base;
+    position: relative;
+
+    // Arknights clean design
+    &:not(:last-child)::after {
+        content: '/';
+        margin: 0 $hikari-spacing-sm;
+        color: var(--hikari-color-text-secondary);
+        opacity: 0.5;
+    }
+
+    &:hover {
+        color: var(--hikari-color-primary);
+
+        .hikari-breadcrumb-link {
+            color: var(--hikari-color-primary);
+        }
+    }
+}
+
+.hikari-breadcrumb-item-active {
+    color: var(--hikari-color-primary);
+    font-weight: 500;
+    pointer-events: none;
+
+    // FUI glow effect
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+    padding: 2px 6px;
+    border-radius: $hikari-radius-sm;
+
+    .hikari-breadcrumb-link {
+        color: var(--hikari-color-primary);
+    }
+}
+
+// ============================================
+// Breadcrumb Link
+// ============================================
+
+.hikari-breadcrumb-link {
+    color: var(--hikari-color-text-secondary);
+    text-decoration: none;
+    transition: all $hikari-transition-base;
+    cursor: pointer;
+    user-select: none;
+
+    &:hover {
+        color: var(--hikari-color-primary);
+        text-decoration: none;
+    }
+
+    &:focus {
+        outline: none;
+    }
+
+    &:focus-visible {
+        box-shadow: 0 0 0 2px var(--hikari-color-primary);
+        border-radius: $hikari-radius-sm;
+    }
+}
+
+// ============================================
+// Breadcrumb Separator
+// ============================================
+
+.hikari-breadcrumb-separator {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 $hikari-spacing-sm;
+    color: var(--hikari-color-text-secondary);
+    opacity: 0.5;
+    font-size: $hikari-font-size-sm;
+    user-select: none;
+
+    // Arknights minimal separator
+}
+
+// Custom separator styles
+.hikari-breadcrumb-separator-arrow {
+    &::before {
+        content: '›';
+        font-size: $hikari-font-size-lg;
+    }
+}
+
+.hikari-breadcrumb-separator-bullet {
+    &::before {
+        content: '•';
+        font-size: $hikari-font-size-lg;
+    }
+}
+
+.hikari-breadcrumb-separator-dash {
+    &::before {
+        content: '—';
+        font-size: $hikari-font-base;
+    }
+}
+
+.hikari-breadcrumb-separator-slash {
+    &::before {
+        content: '/';
+        font-size: $hikari-font-size-sm;
+    }
+}
+
+// ============================================
+// Breadcrumb Icon
+// ============================================
+
+.hikari-breadcrumb-icon {
+    margin-right: $hikari-spacing-xs;
+    font-size: $hikari-font-size-base;
+    color: var(--hikari-color-text-secondary);
+}
+
+// ============================================
+// Breadcrumb Sizes
+// ============================================
+
+.hikari-breadcrumb-sm {
+    padding: $hikari-spacing-xs $hikari-spacing-sm;
+    font-size: $hikari-font-size-sm;
+
+    .hikari-breadcrumb-item:not(:last-child)::after,
+    .hikari-breadcrumb-separator {
+        margin: 0 $hikari-spacing-xs;
+    }
+
+    .hikari-breadcrumb-icon {
+        font-size: $hikari-font-size-sm;
+    }
+}
+
+.hikari-breadcrumb-md {
+    padding: $hikari-spacing-sm $hikari-spacing-md;
+    font-size: $hikari-font-size-base;
+}
+
+.hikari-breadcrumb-lg {
+    padding: $hikari-spacing-md $hikari-spacing-lg;
+    font-size: $hikari-font-size-lg;
+
+    .hikari-breadcrumb-item:not(:last-child)::after,
+    .hikari-breadcrumb-separator {
+        margin: 0 $hikari-spacing-md;
+    }
+
+    .hikari-breadcrumb-icon {
+        font-size: $hikari-font-size-lg;
+    }
+}
+
+// ============================================
+// Breadcrumb Types
+// ============================================
+
+.hikari-breadcrumb-background {
+    background-color: var(--hikari-color-surface);
+    border: 1px solid var(--hikari-color-border);
+    border-radius: $hikari-radius-md;
+
+    // FUI subtle glow
+    &::after {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        border-radius: inherit;
+        opacity: 0;
+        transition: opacity $hikari-transition-base;
+        pointer-events: none;
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+    }
+
+    &:hover::after {
+        opacity: 1;
+    }
+}
+
+.hikari-breadcrumb-ghost {
+    background-color: transparent;
+    border: none;
+}
+
+// ============================================
+// Arknights + FUI Special Effects
+// ============================================
+
+.hikari-breadcrumb-item:hover {
+    // Arknights hover effect
+    transform: translateX(2px);
+    transition: transform $hikari-transition-fast;
+}
+
+.hikari-breadcrumb-item-active {
+    // FUI glow animation
+    animation: hikari-breadcrumb-glow 2s ease-in-out infinite;
+}
+
+@keyframes hikari-breadcrumb-glow {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    }
+}
+
+// Arknights hover underline effect
+.hikari-breadcrumb-link {
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 1px;
+        background-color: var(--hikari-color-primary);
+        transition: width $hikari-transition-base;
+    }
+
+    &:hover::after {
+        width: 100%;
+    }
+}
+
+// ============================================
+// Breadcrumb Dropdown (for nested items)
+// ============================================
+
+.hikari-breadcrumb-dropdown {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+
+    .hikari-breadcrumb-dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        margin-top: $hikari-spacing-xs;
+        min-width: 150px;
+        background-color: var(--hikari-color-surface);
+        border: 1px solid var(--hikari-color-border);
+        border-radius: $hikari-radius-md;
+        box-shadow: $hikari-shadow-lg;
+        padding: $hikari-spacing-xs;
+        list-style: none;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all $hikari-transition-base;
+        z-index: 1000;
+
+        // Arknights clean popup
+    }
+
+    &:hover .hikari-breadcrumb-dropdown-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+}
+
+.hikari-breadcrumb-dropdown-item {
+    padding: $hikari-spacing-xs $hikari-spacing-sm;
+    color: var(--hikari-color-text-primary);
+    cursor: pointer;
+    border-radius: $hikari-radius-sm;
+    transition: all $hikari-transition-base;
+
+    &:hover {
+        background-color: var(--hikari-color-background);
+        color: var(--hikari-color-primary);
+    }
+}
+
+.hikari-breadcrumb-dropdown-icon {
+    margin-left: $hikari-spacing-xs;
+    font-size: $hikari-font-size-sm;
+    transition: transform $hikari-transition-base;
+}
+
+.hikari-breadcrumb-dropdown:hover .hikari-breadcrumb-dropdown-icon {
+    transform: rotate(180deg);
+}

@@ -2,6 +2,10 @@
 // Card component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
+
+/// Card 组件的类型包装器（用于实现 StyledComponent）
+pub struct CardComponent;
 
 #[derive(Clone, PartialEq, Props)]
 pub struct CardProps {
@@ -98,5 +102,15 @@ pub fn Card(props: CardProps) -> Element {
                 { props.children }
             }
         }
+    }
+}
+
+impl StyledComponent for CardComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/card.css"))
+    }
+
+    fn name() -> &'static str {
+        "card"
     }
 }

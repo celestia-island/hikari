@@ -104,12 +104,13 @@ The result is a UI framework that feels both ancient and futuristic, professiona
 - **Advanced Utilities**: Collapsible, DragLayer, ZoomControls
 - Perfect for visual editors, workflow builders, and data visualization
 
-### hikari-ssr
+### hikari-render-service
 - Server-Side Rendering support
 - Easy Axum integration
 - Static asset serving
 - Type-safe router builder
 - Production-ready error handling
+- Style service with CSS injection
 
 ## Quick Start
 
@@ -173,7 +174,7 @@ hikari/
 │   ├── hikari-theme/            # Theme system + SCSS
 │   ├── hikari-components/       # Basic components
 │   ├── hikari-extra-components/ # Advanced components
-│   └── hikari-ssr/              # SSR integration
+│   └── hikari-render-service/   # SSR + style service
 │
 ├── examples/
 │   ├── demo-app/                # Comprehensive demo
@@ -233,11 +234,11 @@ rsx! {
 ### SSR Integration
 
 ```rust
-use hikari_ssr::HikariSsrPlugin;
+use hikari_render_service::HikariRenderServicePlugin;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let app = HikariSsrPlugin::new()
+    let app = HikariRenderServicePlugin::new()
         .add_route("/api/health", health_handler)
         .static_assets("./dist")
         .build()?;
@@ -311,7 +312,7 @@ just dev
 - [x] hikari-theme - Complete
 - [x] hikari-components - Basic components complete
 - [ ] hikari-extra-components - In progress
-- [ ] hikari-ssr - Core features complete
+- [x] hikari-render-service - Core features complete
 
 See [PLAN.md](PLAN.md) for detailed implementation status.
 
@@ -327,7 +328,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) for
 - [hikari-theme Documentation](packages/hikari-theme/README.md)
 - [hikari-components Documentation](packages/hikari-components/README.md)
 - [hikari-extra-components Documentation](packages/hikari-extra-components/README.md)
-- [hikari-ssr Documentation](packages/hikari-ssr/README.md)
+- [hikari-render-service Documentation](packages/hikari-render-service/README.md)
 
 ## License
 

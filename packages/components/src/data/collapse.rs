@@ -2,6 +2,10 @@
 // Animated collapse/expand component for tree nodes
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
+
+/// Collapse component wrapper (for StyledComponent)
+pub struct CollapseComponent;
 
 #[derive(Clone, PartialEq, Props)]
 pub struct CollapseProps {
@@ -232,5 +236,15 @@ pub fn TreeCollapse(props: TreeCollapseProps) -> Element {
                 }
             }
         }
+    }
+}
+
+impl StyledComponent for CollapseComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/collapse.css"))
+    }
+
+    fn name() -> &'static str {
+        "collapse"
     }
 }

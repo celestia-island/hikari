@@ -66,23 +66,15 @@
         }
     </script>
 
+    <!-- Hikari Component Styles Bundle -->
+    <link rel="stylesheet" href="/styles/bundle.css">
+
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
-        // Initialize Lucide icons after page load
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-        });
-
-        // Re-initialize after Dioxus hydration
-        const observer = new MutationObserver(() => {
-            lucide.createIcons();
-        });
-        observer.observe(document.body, { childList: true, subtree: true });
+        // Initialize Lucide icons - call manually after Dioxus renders
+        // Note: Using MutationObserver here causes infinite loops, so we avoid it
     </script>
-
-    <!-- Note: Hikari SCSS styles will be added here once SCSS compilation is fixed -->
-    <!-- For now, using Tailwind CDN only -->
 </head>
 <body>
     <div id="loading">Loading Hikari Demo...</div>
@@ -102,6 +94,13 @@
 
                 // Launch Dioxus application
                 hydrate();
+
+                // Initialize icons after Dioxus has rendered
+                setTimeout(() => {
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }, 100);
             } catch (error) {
                 console.error('Failed to load WASM:', error);
                 document.getElementById('loading').innerHTML = `

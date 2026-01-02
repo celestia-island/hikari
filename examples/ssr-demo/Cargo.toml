@@ -16,7 +16,7 @@ path = "src/main.rs"
 hikari-components = { path = "../../packages/components" }
 hikari-palette = { path = "../../packages/palette" }
 hikari-theme = { path = "../../packages/theme" }
-hikari-ssr = { path = "../../packages/ssr" }
+hikari-render-service = { path = "../../packages/render-service" }
 
 # 基础语言与工具
 anyhow = "^1"

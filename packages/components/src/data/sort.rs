@@ -2,7 +2,11 @@
 // Sort component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
 pub use super::column::ColumnDef;
+
+/// Sort component wrapper (for StyledComponent)
+pub struct SortComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SortDirection {
@@ -26,6 +30,15 @@ impl SortDirection {
             SortDirection::None => "⇅",
             SortDirection::Ascending => "↑",
             SortDirection::Descending => "↓",
+        }
+    }
+
+    /// Get CSS class for sort direction
+    pub fn class(&self) -> &'static str {
+        match self {
+            SortDirection::None => "",
+            SortDirection::Ascending => "hikari-sort-asc",
+            SortDirection::Descending => "hikari-sort-desc",
         }
     }
 }
@@ -76,25 +89,13 @@ impl Default for SortProps {
 
 #[component]
 pub fn Sort(props: SortProps) -> Element {
-    let handle_sort = move |column_key: String| {
-        let new_direction = if props.column == column_key {
-            props.direction.toggle()
-        } else {
-            SortDirection::Ascending
-        };
-
-        let config = SortConfig {
-            column: column_key.clone(),
-            direction: new_direction,
-        };
-
-        if let Some(handler) = props.on_sort_change.as_ref() {
-            handler.call(config);
-        }
-    };
+    // Clone props for use in closures
+    let current_column = props.column.clone();
+    let current_direction = props.direction.clone();
+    let on_sort_handler = props.on_sort_change.clone();
 
     let handle_clear = move |_| {
-        if let Some(handler) = props.on_sort_change.as_ref() {
+        if let Some(handler) = on_sort_handler.as_ref() {
             handler.call(SortConfig {
                 column: String::new(),
                 direction: SortDirection::None,
@@ -107,18 +108,36 @@ pub fn Sort(props: SortProps) -> Element {
     rsx! {
         div { class: format!("hikari-sort {}", props.class),
 
-            for column in props.columns.iter() {
-                if column.sortable {
-                    let col_key = column.column_key.clone();
-                    let is_active = props.column == column.column_key && props.direction != SortDirection::None;
+            {props.columns.iter().filter(|column| column.sortable).map(|column| {
+                let column_key = column.column_key.clone();
+                let is_active = props.column == column.column_key && props.direction != SortDirection::None;
 
+                // Clone captured variables for this iteration
+                let sort_column = current_column.clone();
+                let sort_direction = current_direction.clone();
+                let sort_handler = on_sort_handler.clone();
+
+                rsx! {
                     button {
                         class: if is_active {
                             "hikari-sort-button hikari-sort-active"
                         } else {
                             "hikari-sort-button"
                         },
-                        onclick: move |_| handle_sort(col_key.clone()),
+                        onclick: move |_| {
+                            let new_direction = if sort_column == column_key {
+                                sort_direction.toggle()
+                            } else {
+                                SortDirection::Ascending
+                            };
+
+                            if let Some(handler) = sort_handler.as_ref() {
+                                handler.call(SortConfig {
+                                    column: column_key.clone(),
+                                    direction: new_direction,
+                                });
+                            }
+                        },
 
                         span { class: "hikari-sort-title",
                             {column.title.clone()}
@@ -133,7 +152,7 @@ pub fn Sort(props: SortProps) -> Element {
                         }
                     }
                 }
-            }
+            })}
 
             if has_active_sort {
                 button {
@@ -153,5 +172,15 @@ pub fn Sort(props: SortProps) -> Element {
                 }
             }
         }
+    }
+}
+
+impl StyledComponent for SortComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/sort.css"))
+    }
+
+    fn name() -> &'static str {
+        "sort"
     }
 }

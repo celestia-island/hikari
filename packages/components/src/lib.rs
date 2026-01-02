@@ -5,8 +5,10 @@ pub mod basic;
 pub mod data;
 pub mod feedback;
 pub mod navigation;
+pub mod styled;
 
 pub use basic::*;
 pub use data::*;
 pub use feedback::*;
 pub use navigation::*;
+pub use styled::{StyleRegistry, StyledComponent};

@@ -14,7 +14,7 @@ use axum::{
     response::Json,
     routing::get,
 };
-use hikari_ssr::HikariSsrPlugin;
+use hikari_render_service::HikariRenderServicePlugin;
 use serde_json::json;
 use tokio::net::TcpListener;
 use tower_http::{
@@ -37,7 +37,7 @@ async fn health_check() -> Json<serde_json::Value> {
 }
 
 /// Detailed health check with system info
-async fn health_detailed(State(state): State<hikari_ssr::router::AppState>) -> Json<serde_json::Value> {
+async fn health_detailed(State(state): State<hikari_render_service::router::AppState>) -> Json<serde_json::Value> {
     let name = state.config.get("name").and_then(|v| v.as_str()).unwrap_or("hikari-ssr-demo");
     let version = state.config.get("version").and_then(|v| v.as_str()).unwrap_or("0.1.0");
 
@@ -54,7 +54,7 @@ async fn health_detailed(State(state): State<hikari_ssr::router::AppState>) -> J
 }
 
 /// API endpoint example
-async fn api_info(State(state): State<hikari_ssr::router::AppState>) -> Json<serde_json::Value> {
+async fn api_info(State(state): State<hikari_render_service::router::AppState>) -> Json<serde_json::Value> {
     let name = state.config.get("name").and_then(|v| v.as_str()).unwrap_or("Hikari SSR Demo");
     let version = state.config.get("version").and_then(|v| v.as_str()).unwrap_or("0.1.0");
 
@@ -80,15 +80,15 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "hikari_ssr_demo=debug,tower_http=debug,axum=info".into()),
+                .unwrap_or_else(|_| "hikari_render_service_demo=debug,tower_http=debug,axum=info".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
 
     info!("Starting Hikari SSR Demo...");
 
-    // Build the SSR router using HikariSsrPlugin
-    let app = HikariSsrPlugin::new()
+    // Build the SSR router using HikariRenderServicePlugin
+    let app = HikariRenderServicePlugin::new()
         // Add application state
         .state("name", "Hikari SSR Demo")
         .state("version", env!("CARGO_PKG_VERSION"))

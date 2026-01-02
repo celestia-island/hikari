@@ -5,6 +5,9 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[build-dependencies]
+grass = "0.12"
+
 [dependencies]
 # 工作区依赖
 hikari-palette = { path = "../palette" }

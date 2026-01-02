@@ -2,6 +2,10 @@
 // Menu component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
+
+/// Menu 组件的类型包装器（用于实现 StyledComponent）
+pub struct MenuComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum MenuMode {
@@ -150,6 +154,16 @@ pub fn Menu(props: MenuProps) -> Element {
 
             { props.children }
         }
+    }
+}
+
+impl StyledComponent for MenuComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/menu.css"))
+    }
+
+    fn name() -> &'static str {
+        "menu"
     }
 }
 

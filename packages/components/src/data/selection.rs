@@ -2,6 +2,10 @@
 // Selection component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
+
+/// Selection component wrapper (for StyledComponent)
+pub struct SelectionComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SelectionType {
@@ -49,12 +53,17 @@ impl Default for SelectionProps {
 #[component]
 pub fn Selection(props: SelectionProps) -> Element {
     let mut selected = use_signal(|| props.row_keys.clone());
-    let is_all_selected = use_signal(|| false);
-    let is_indeterminate = use_signal(|| false);
+    let mut is_all_selected = use_signal(|| false);
+    let mut is_indeterminate = use_signal(|| false);
+
+    // Clone available_keys multiple times for different closures
+    let available_keys = props.available_keys.clone();
+    let available_keys_for_effect = available_keys.clone();
+    let available_keys_for_select_all = available_keys.clone();
 
     use_effect(move || {
         let total_selected = selected().len();
-        let total_available = props.available_keys.len() as u32;
+        let total_available = available_keys_for_effect.len();
 
         is_all_selected.set(total_selected > 0 && total_selected == total_available);
         is_indeterminate.set(total_selected > 0 && total_selected < total_available);
@@ -64,7 +73,7 @@ pub fn Selection(props: SelectionProps) -> Element {
         let new_selection = if is_all_selected() {
             Vec::new()
         } else {
-            props.available_keys.clone()
+            available_keys_for_select_all.clone()
         };
 
         selected.set(new_selection.clone());
@@ -74,7 +83,7 @@ pub fn Selection(props: SelectionProps) -> Element {
         }
     };
 
-    let handle_row_select = move |row_key: String| {
+    let mut handle_row_select = move |row_key: String| {
         let mut new_selection = selected();
 
         match props.selection_type {
@@ -125,33 +134,35 @@ pub fn Selection(props: SelectionProps) -> Element {
                                 class: "hikari-selection-checkbox",
                                 r#type: "checkbox",
                                 checked: is_all_selected(),
-                                indeterminate: is_indeterminate(),
                                 onchange: handle_select_all,
                             }
                         }
                     }
                 }
 
-                for key in props.available_keys.iter() {
+                {available_keys.iter().map(|key| {
                     let key_clone = key.clone();
                     let checked = is_row_selected(key);
 
-                    div { class: "hikari-selection-row",
-                        label { class: "hikari-selection-item",
-                            input {
-                                class: "hikari-selection-checkbox",
-                                r#type: get_input_type(),
-                                checked: checked,
-                                name: if props.selection_type == SelectionType::Radio {
-                                    "hikari-selection-radio-group"
-                                } else {
-                                    ""
-                                },
-                                onchange: move |_| handle_row_select(key_clone.clone()),
+                    rsx! {
+                        div { class: "hikari-selection-row",
+                            label { class: "hikari-selection-item",
+                                input {
+                                    class: "hikari-selection-checkbox",
+                                    r#type: get_input_type(),
+                                    checked: checked,
+                                    name: if props.selection_type == SelectionType::Radio {
+                                        "hikari-selection-radio-group"
+                                    } else {
+                                        ""
+                                    },
+                                    onchange: move |_| handle_row_select(key_clone.clone()),
+                                }
+                                {key.clone()}
                             }
                         }
                     }
-                }
+                })}
             }
         }
     }
@@ -243,5 +254,15 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
                 }
             }
         }
+    }
+}
+
+impl StyledComponent for SelectionComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/selection.css"))
+    }
+
+    fn name() -> &'static str {
+        "selection"
     }
 }

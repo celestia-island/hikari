@@ -4,39 +4,8 @@
 use super::column::ColumnDef;
 use dioxus::prelude::*;
 
-/// Sort direction
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum SortDirection {
-    #[default]
-    Asc,
-    Desc,
-}
-
-impl SortDirection {
-    /// Get sort icon
-    pub fn icon(&self) -> &'static str {
-        match self {
-            Self::Asc => "↑",
-            Self::Desc => "↓",
-        }
-    }
-
-    /// Toggle direction
-    pub fn toggle(&self) -> Self {
-        match self {
-            Self::Asc => Self::Desc,
-            Self::Desc => Self::Asc,
-        }
-    }
-
-    /// Get CSS class for sort direction
-    pub fn class(&self) -> &'static str {
-        match self {
-            Self::Asc => "hikari-sort-asc",
-            Self::Desc => "hikari-sort-desc",
-        }
-    }
-}
+// Re-export SortDirection from sort module to avoid ambiguity
+pub use super::sort::SortDirection;
 
 /// Header component props
 #[derive(Clone, PartialEq, Props, Default)]
@@ -110,7 +79,7 @@ pub fn Header(props: HeaderProps) -> Element {
                     let sort_dir = if is_sorted {
                         props.sort_direction
                     } else {
-                        SortDirection::Asc
+                        SortDirection::None
                     };
 
                     let base_classes = "hikari-header-cell";

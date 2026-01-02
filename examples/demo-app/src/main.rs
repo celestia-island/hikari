@@ -1,30 +1,14 @@
 // demo-app/src/main.rs
 // Development server with Axum + WASM support
 
-use axum::{
-    http::StatusCode,
-    response::{Html, IntoResponse},
-    Router,
-};
+use hikari_components::StyleRegistry;
+use hikari_render_service::HikariRenderServicePlugin;
 use tower_http::{
     cors::Any,
     cors::CorsLayer,
-    services::ServeDir,
 };
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
-
-/// SPA fallback handler - 返回 index.html 用于客户端路由
-async fn spa_fallback() -> impl IntoResponse {
-    match tokio::fs::read_to_string("dist/index.html").await {
-        Ok(html) => Html(html).into_response(),
-        Err(_) => (
-            StatusCode::NOT_FOUND,
-            "index.html not found. Run 'just build-client' first.",
-        )
-        .into_response(),
-    }
-}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -39,14 +23,16 @@ async fn main() -> anyhow::Result<()> {
         .allow_methods(Any)
         .allow_headers(Any);
 
-    // Build router
-    let app = Router::new()
-        // Health check
-        .route("/health", axum::routing::get(|| async { "OK" }))
-        // 静态文件服务 (assets 包含 WASM, JS, CSS)
-        .nest_service("/assets", ServeDir::new("dist/assets"))
-        // SPA fallback - 所有其他路径返回 index.html
-        .fallback(spa_fallback)
+    // Create style registry and register all components
+    let mut style_registry = StyleRegistry::default();
+    style_registry.register_all();
+
+    // Build router with HikariRenderServicePlugin
+    let app = HikariRenderServicePlugin::new()
+        .component_style_registry(style_registry)
+        .add_route("/health", axum::routing::get(|| async { "OK" }))
+        .static_assets("dist/assets")
+        .build()?
         .layer(cors);
 
     // Start server

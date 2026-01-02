@@ -2,6 +2,10 @@
 // Filter component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
+
+/// Filter component wrapper (for StyledComponent)
+pub struct FilterComponent;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct FilterOption {
@@ -57,7 +61,7 @@ pub fn Filter(props: FilterProps) -> Element {
         is_open.set(!is_open());
     };
 
-    let handle_select = move |value: String| {
+    let mut handle_select = move |value: String| {
         let mut current = selected();
         if let Some(pos) = current.iter().position(|v| v == &value) {
             current.remove(pos);
@@ -150,26 +154,28 @@ pub fn Filter(props: FilterProps) -> Element {
                     }
 
                     div { class: "hikari-filter-options",
-                        for option in props.filters.iter() {
+                        {props.filters.iter().map(|option| {
                             let opt_value = option.value.clone();
-                            let label = option.label.clone();
+                            let label_text = option.label.clone();
                             let checked = is_selected(&option.value);
 
-                            label {
-                                class: "hikari-filter-option",
-                                onclick: move |_| handle_select(opt_value.clone()),
+                            rsx! {
+                                label {
+                                    class: "hikari-filter-option",
+                                    onclick: move |_| handle_select(opt_value.clone()),
 
-                                input {
-                                    class: "hikari-filter-checkbox",
-                                    r#type: "checkbox",
-                                    checked: checked,
-                                }
+                                    input {
+                                        class: "hikari-filter-checkbox",
+                                        r#type: "checkbox",
+                                        checked: checked,
+                                    }
 
-                                span { class: "hikari-filter-label",
-                                    "{label}"
+                                    span { class: "hikari-filter-label",
+                                        "{label_text}"
+                                    }
                                 }
                             }
-                        }
+                        })}
                     }
 
                     div { class: "hikari-filter-footer",
@@ -184,5 +190,15 @@ pub fn Filter(props: FilterProps) -> Element {
                 }
             }
         }
+    }
+}
+
+impl StyledComponent for FilterComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/filter.css"))
+    }
+
+    fn name() -> &'static str {
+        "filter"
     }
 }

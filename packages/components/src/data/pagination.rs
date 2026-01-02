@@ -2,6 +2,10 @@
 // Pagination component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
+
+/// Pagination component wrapper (for StyledComponent)
+pub struct PaginationComponent;
 
 /// Pagination component props
 #[derive(Clone, PartialEq, Props)]
@@ -26,7 +30,7 @@ pub struct PaginationProps {
     pub show_total: bool,
 
     /// Page size options
-    #[props(default = "vec![10, 20, 50, 100]")]
+    #[props(default)]
     pub page_size_options: Vec<u32>,
 
     /// Custom CSS classes
@@ -107,7 +111,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
     let pages = get_page_numbers();
 
-    let handle_page_change = move |page: u32| {
+    let mut handle_page_change = move |page: u32| {
         if page < 1 || page > total_pages || page == current_page() {
             return;
         }
@@ -195,21 +199,26 @@ pub fn Pagination(props: PaginationProps) -> Element {
                     }
                 }
 
-                for page in pages.iter() {
-                    if *page == 0 {
-                        span { class: "hikari-pagination-ellipsis", "..." }
+                {pages.iter().map(|page| {
+                    let page_num = *page;
+                    if page_num == 0 {
+                        rsx! {
+                            span { class: "hikari-pagination-ellipsis", "..." }
+                        }
                     } else {
-                        button {
-                            class: if *page == current_page() {
-                                "hikari-pagination-item hikari-pagination-active"
-                            } else {
-                                "hikari-pagination-item"
-                            },
-                            onclick: move |_| handle_page_change(*page),
-                            "{page}"
+                        rsx! {
+                            button {
+                                class: if page_num == current_page() {
+                                    "hikari-pagination-item hikari-pagination-active"
+                                } else {
+                                    "hikari-pagination-item"
+                                },
+                                onclick: move |_| handle_page_change(page_num),
+                                "{page_num}"
+                            }
                         }
                     }
-                }
+                })}
 
                 button {
                     class: "hikari-pagination-next",
@@ -238,5 +247,15 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 }
             }
         }
+    }
+}
+
+impl StyledComponent for PaginationComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/pagination.css"))
+    }
+
+    fn name() -> &'static str {
+        "pagination"
     }
 }

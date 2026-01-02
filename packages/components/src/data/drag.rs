@@ -2,6 +2,10 @@
 // Drag and drop component for tree node reordering
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
+
+/// Drag component wrapper (for StyledComponent)
+pub struct DragComponent;
 
 #[derive(Clone, PartialEq, Props, Default)]
 pub struct DragTreeNodeData {
@@ -281,5 +285,15 @@ fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
                 }
             }
         }
+    }
+}
+
+impl StyledComponent for DragComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/drag.css"))
+    }
+
+    fn name() -> &'static str {
+        "drag"
     }
 }

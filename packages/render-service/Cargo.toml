@@ -1,5 +1,5 @@
 [package]
-name = "hikari-ssr"
+name = "hikari-render-service"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

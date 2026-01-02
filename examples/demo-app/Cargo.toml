@@ -19,7 +19,7 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = []
-server = ["dep:tokio", "dep:axum", "dep:tower-http", "dep:tower", "dep:anyhow", "dep:tracing", "dep:tracing-subscriber"]
+server = ["dep:tokio", "dep:axum", "dep:tower-http", "dep:tower", "dep:anyhow", "dep:tracing", "dep:tracing-subscriber", "dep:hikari-render-service"]
 
 [dependencies]
 # 工作区依赖
@@ -27,6 +27,7 @@ hikari-components = { path = "../../packages/components" }
 hikari-icons = { path = "../../packages/icons" }
 hikari-palette = { path = "../../packages/palette" }
 hikari-theme = { path = "../../packages/theme" }
+hikari-render-service = { path = "../../packages/render-service", optional = true }
 
 # Dioxus 前端框架
 dioxus = { version = "^0.7", features = ["web", "router"] }

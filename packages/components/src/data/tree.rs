@@ -2,7 +2,11 @@
 // Tree component for hierarchical data display
 
 use crate::data::node::{TreeNode, TreeNodeData, TreeNodeProps};
+use crate::styled::StyledComponent;
 use dioxus::prelude::*;
+
+/// Tree component wrapper (for StyledComponent)
+pub struct TreeComponent;
 
 #[derive(Clone, PartialEq, Props, Default)]
 pub struct TreeProps {
@@ -151,5 +155,15 @@ fn render_tree_nodes(
                 ..TreeNodeProps::default()
             }
         }
+    }
+}
+
+impl StyledComponent for TreeComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/tree.css"))
+    }
+
+    fn name() -> &'static str {
+        "tree"
     }
 }

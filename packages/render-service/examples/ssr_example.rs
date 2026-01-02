@@ -16,7 +16,7 @@ use axum::{
     response::{Html, Json},
     routing::get,
 };
-use hikari_ssr::HikariSsrPlugin;
+use hikari_render_service::HikariRenderServicePlugin;
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
 
@@ -78,7 +78,7 @@ async fn index() -> Html<&'static str> {
 async fn health() -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "status": "ok",
-        "service": "hikari-ssr",
+        "service": "hikari-render-service",
         "version": "0.1.0"
     }))
 }
@@ -101,8 +101,8 @@ async fn get_users() -> Json<Vec<User>> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Using HikariSsrPlugin builder (recommended)
-    let app = HikariSsrPlugin::new()
+    // Using HikariRenderServicePlugin builder (recommended)
+    let app = HikariRenderServicePlugin::new()
         .add_route("/", get(index))
         .add_route("/health", get(health))
         .add_route("/api/users", get(get_users))
@@ -113,7 +113,7 @@ async fn main() -> anyhow::Result<()> {
     let addr = "0.0.0.0:3000";
     let listener = TcpListener::bind(addr).await?;
 
-    println!("🚀 Hikari SSR Example Server");
+    println!("🚀 Hikari Render Service Example Server");
     println!("📡 Listening on http://{}\n", addr);
     println!("Endpoints:");
     println!("  - GET  /           - Home page");

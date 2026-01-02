@@ -2,6 +2,10 @@
 // Tabs component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
+
+/// Tabs 组件的类型包装器（用于实现 StyledComponent）
+pub struct TabsComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TabPosition {
@@ -142,6 +146,16 @@ pub fn Tabs(props: TabsProps) -> Element {
                 { props.children }
             }
         }
+    }
+}
+
+impl StyledComponent for TabsComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/tabs.css"))
+    }
+
+    fn name() -> &'static str {
+        "tabs"
     }
 }
 

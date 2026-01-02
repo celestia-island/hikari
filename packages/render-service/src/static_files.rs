@@ -148,7 +148,7 @@ impl MimeTypes {
 /// # Example
 ///
 /// ```rust,no_run
-/// use hikari_ssr::static_files::{serve_static_files, StaticFileConfig};
+/// use hikari_render_service::static_files::{serve_static_files, StaticFileConfig};
 ///
 /// let service = serve_static_files(
 ///     "./dist".into(),
@@ -163,10 +163,15 @@ pub fn serve_static_files(
         AxumPath(path): AxumPath<String>,
         state: axum::extract::State<FileServerState>,
     ) -> impl IntoResponse {
-        // Sanitize the path to prevent directory traversal
-        let sanitized_path = path.split('.').next().unwrap_or(&path).to_string();
+        // Prevent directory traversal attacks by checking for ".."
+        if path.contains("..") {
+            return Response::builder()
+                .status(StatusCode::FORBIDDEN)
+                .body(Body::empty())
+                .unwrap();
+        }
 
-        let full_path = state.base_path.join(&sanitized_path);
+        let full_path = state.base_path.join(&path);
 
         // Check if path exists and is within base directory
         if !full_path.starts_with(&state.base_path) {

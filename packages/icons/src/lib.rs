@@ -50,6 +50,7 @@ pub fn Icon(
 ///
 /// Note: These shortcuts use icons that actually exist in Lucide.
 /// For the full list of available icons, see: https://lucide.dev/icons/
+#[allow(non_snake_case)]
 pub mod shortcuts {
     use super::*;
 

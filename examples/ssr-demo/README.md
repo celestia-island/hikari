@@ -1,6 +1,6 @@
 # SSR Demo
 
-Server-Side Rendering demonstration using Hikari SSR with Axum.
+Server-Side Rendering demonstration using Hikari Render Service with Axum.
 
 ## Features
 
@@ -77,7 +77,7 @@ Response:
 ```json
 {
   "status": "healthy",
-  "service": "hikari-ssr-demo",
+  "service": "hikari-render-service-demo",
   "timestamp": "2024-01-01T12:00:00Z"
 }
 ```
@@ -248,5 +248,5 @@ kill -9 <PID>
 - **Axum 0.8**: Web framework
 - **Tokio**: Async runtime
 - **Tower**: Middleware stack
-- **Hikari SSR**: SSR integration
+- **Hikari Render Service**: SSR integration
 - **Tracing**: Structured logging

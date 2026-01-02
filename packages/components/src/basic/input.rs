@@ -2,6 +2,10 @@
 // Input component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
+
+/// Input 组件的类型包装器（用于实现 StyledComponent）
+pub struct InputComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum InputSize {
@@ -118,5 +122,15 @@ pub fn Input(props: InputProps) -> Element {
                 span { class: "hikari-input-suffix", { icon } }
             }
         }
+    }
+}
+
+impl StyledComponent for InputComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/input.css"))
+    }
+
+    fn name() -> &'static str {
+        "input"
     }
 }

@@ -2,6 +2,10 @@
 // Alert component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
+
+/// Alert 组件的类型包装器（用于实现 StyledComponent）
+pub struct AlertComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum AlertVariant {
@@ -155,5 +159,15 @@ pub fn Alert(props: AlertProps) -> Element {
                 }
             }
         }
+    }
+}
+
+impl StyledComponent for AlertComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/alert.css"))
+    }
+
+    fn name() -> &'static str {
+        "alert"
     }
 }

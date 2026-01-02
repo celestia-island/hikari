@@ -200,10 +200,10 @@ cargo test --workspace
 
 ## 📚 Learn More
 
-- **Hikari Components**: [../../packages/hikari-components/](../../packages/hikari-components/)
-- **Hikari SSR**: [../../packages/hikari-ssr/](../../packages/hikari-ssr/)
-- **Hikari Palette**: [../../packages/hikari-palette/](../../packages/hikari-palette/)
-- **Hikari Theme**: [../../packages/hikari-theme/](../../packages/hikari-theme/)
+- **Hikari Components**: [../../packages/components/](../../packages/components/)
+- **Hikari Render Service**: [../../packages/render-service/](../../packages/render-service/)
+- **Hikari Palette**: [../../packages/palette/](../../packages/palette/)
+- **Hikari Theme**: [../../packages/theme/](../../packages/theme/)
 
 ## 🤝 Contributing
 

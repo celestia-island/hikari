@@ -2,7 +2,11 @@
 // Table component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
 pub use super::column::{ColumnDef, ColumnAlign};
+
+/// Table component wrapper (for StyledComponent)
+pub struct TableComponent;
 
 /// Table size variants
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -243,5 +247,15 @@ pub fn Table(props: TableProps) -> Element {
                 }
             }
         }
+    }
+}
+
+impl StyledComponent for TableComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/table.css"))
+    }
+
+    fn name() -> &'static str {
+        "table"
     }
 }

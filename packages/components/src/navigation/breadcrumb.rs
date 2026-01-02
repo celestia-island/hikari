@@ -2,6 +2,10 @@
 // Breadcrumb component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
+
+/// Breadcrumb 组件的类型包装器（用于实现 StyledComponent）
+pub struct BreadcrumbComponent;
 
 #[derive(Clone, PartialEq, Props)]
 pub struct BreadcrumbItemProps {
@@ -86,6 +90,16 @@ pub fn Breadcrumb(props: BreadcrumbProps) -> Element {
                 { props.children }
             }
         }
+    }
+}
+
+impl StyledComponent for BreadcrumbComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/breadcrumb.css"))
+    }
+
+    fn name() -> &'static str {
+        "breadcrumb"
     }
 }
 

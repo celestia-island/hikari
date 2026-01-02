@@ -2,6 +2,10 @@
 // Button component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
+
+/// Button 组件的类型包装器（用于实现 StyledComponent）
+pub struct ButtonComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ButtonVariant {
@@ -132,5 +136,15 @@ pub fn Button(props: ButtonProps) -> Element {
 
             { props.children }
         }
+    }
+}
+
+impl StyledComponent for ButtonComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/button.css"))
+    }
+
+    fn name() -> &'static str {
+        "button"
     }
 }

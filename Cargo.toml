@@ -5,7 +5,7 @@ members = [
     "packages/components",
     "packages/extra-components",
     "packages/icons",
-    "packages/ssr",
+    "packages/render-service",
 ]
 resolver = "2"
 

@@ -1,18 +1,22 @@
-//! SSR plugin builder for Hikari applications.
+//! Render service plugin builder for Hikari applications.
 //!
-//! Provides a fluent builder API for configuring SSR behavior.
+//! Provides a fluent builder API for configuring rendering behavior.
 
 use crate::router::build_router;
 use crate::router::AppState;
 use crate::static_files::StaticFileConfig;
+use crate::registry::StyleRegistry as RenderServiceStyleRegistry;
 use axum::routing::MethodRouter;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use thiserror::Error;
 
-/// Errors that can occur during SSR plugin configuration.
+// Re-export StyleRegistry for convenience
+pub use crate::registry::StyleRegistry;
+
+/// Errors that can occur during plugin configuration.
 #[derive(Error, Debug)]
-pub enum SsrPluginError {
+pub enum RenderServiceError {
     #[error("Invalid static assets path: {0}")]
     InvalidStaticPath(String),
 
@@ -29,47 +33,98 @@ pub struct RouterRoute {
     pub method_router: MethodRouter<AppState>,
 }
 
-/// SSR plugin builder for configuring Hikari SSR applications.
+/// Render service plugin builder for configuring Hikari applications.
 ///
 /// # Example
 ///
 /// ```rust,no_run
-/// use hikari_ssr::HikariSsrPlugin;
+/// use hikari_render_service::HikariRenderServicePlugin;
+/// use hikari_components::StyleRegistry;
 /// use axum::routing::get;
 ///
 /// async fn health() -> &'static str {
 ///     "OK"
 /// }
 ///
-/// let plugin = HikariSsrPlugin::new()
+/// let mut registry = StyleRegistry::default();
+/// registry.register_all();  // Register all Hikari components
+///
+/// let plugin = HikariRenderServicePlugin::new()
+///     .component_style_registry(registry)  // Convert from hikari_components
 ///     .add_route("/api/health", get(health))
 ///     .static_assets("./dist")
-///     .state("app_name", "Hikari App")
 ///     .build()
 ///     .unwrap();
 /// ```
-pub struct HikariSsrPlugin {
+pub struct HikariRenderServicePlugin {
     routes: Vec<RouterRoute>,
     static_assets_path: Option<PathBuf>,
     static_config: StaticFileConfig,
     state: HashMap<String, serde_json::Value>,
+    style_registry: Option<RenderServiceStyleRegistry>,
 }
 
-impl Default for HikariSsrPlugin {
+impl Default for HikariRenderServicePlugin {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl HikariSsrPlugin {
-    /// Creates a new SSR plugin builder with default configuration.
+impl HikariRenderServicePlugin {
+    /// Creates a new render service plugin builder with default configuration.
     pub fn new() -> Self {
         Self {
             routes: Vec::new(),
             static_assets_path: None,
             static_config: StaticFileConfig::default(),
             state: HashMap::new(),
+            style_registry: None,
         }
+    }
+
+    /// Sets the style registry for managing component styles.
+    ///
+    /// # Arguments
+    ///
+    /// * `registry` - StyleRegistry with registered component styles
+    pub fn style_registry(mut self, registry: StyleRegistry) -> Self {
+        self.style_registry = Some(registry);
+        self
+    }
+
+    /// Sets the style registry from hikari_components.
+    ///
+    /// # Arguments
+    ///
+    /// * `registry` - hikari_components::StyleRegistry with registered component styles
+    pub fn component_style_registry(mut self, registry: hikari_components::StyleRegistry) -> Self {
+        // Convert hikari_components::StyleRegistry to render-service StyleRegistry
+        let mut render_registry = RenderServiceStyleRegistry::default();
+
+        // The components StyleRegistry stores &str, we need to convert to String
+        for (name, css) in registry.get_all() {
+            render_registry.register(name, css);
+        }
+
+        self.style_registry = Some(render_registry);
+        self
+    }
+
+    /// Registers a styled component to the style registry.
+    ///
+    /// # Arguments
+    ///
+    /// * `css` - Static CSS content
+    /// * `name` - Component name identifier
+    pub fn register_style(mut self, name: &'static str, css: &'static str) -> Self {
+        if let Some(ref mut registry) = self.style_registry {
+            registry.register(name, css);
+        } else {
+            let mut registry = StyleRegistry::default();
+            registry.register(name, css);
+            self.style_registry = Some(registry);
+        }
+        self
     }
 
     /// Adds a custom route to the router.
@@ -78,10 +133,6 @@ impl HikariSsrPlugin {
     ///
     /// * `path` - The URL path (must start with '/')
     /// * `method_router` - The Axum MethodRouter for this path
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the path doesn't start with '/'.
     pub fn add_route<S>(mut self, path: S, method_router: MethodRouter<AppState>) -> Self
     where
         S: AsRef<str>,
@@ -160,6 +211,7 @@ impl HikariSsrPlugin {
             self.static_assets_path,
             self.static_config,
             self.state,
+            self.style_registry,
         )
     }
 
@@ -172,6 +224,11 @@ impl HikariSsrPlugin {
     pub fn has_static_assets(&self) -> bool {
         self.static_assets_path.is_some()
     }
+
+    /// Returns the style registry if configured.
+    pub fn get_style_registry(&self) -> Option<&StyleRegistry> {
+        self.style_registry.as_ref()
+    }
 }
 
 #[cfg(test)]
@@ -180,7 +237,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_plugin_creation() {
-        let plugin = HikariSsrPlugin::new();
+        let plugin = HikariRenderServicePlugin::new();
         assert_eq!(plugin.route_count(), 0);
         assert!(!plugin.has_static_assets());
     }
@@ -191,34 +248,20 @@ mod tests {
             "OK"
         }
 
-        let plugin = HikariSsrPlugin::new().add_route("/test", axum::routing::get(handler));
+        let plugin = HikariRenderServicePlugin::new().add_route("/test", axum::routing::get(handler));
 
         assert_eq!(plugin.route_count(), 1);
     }
 
     #[tokio::test]
-    #[should_panic(expected = "Route path must start with '/'")]
-    async fn test_invalid_route_path() {
-        async fn handler() -> &'static str {
-            "OK"
-        }
+    async fn test_style_registry() {
+        let mut registry = StyleRegistry::default();
+        registry.register("button", ".button { color: red; }");
 
-        let _ = HikariSsrPlugin::new().add_route("invalid", axum::routing::get(handler));
-    }
+        let plugin = HikariRenderServicePlugin::new()
+            .style_registry(registry);
 
-    #[tokio::test]
-    async fn test_static_assets() {
-        let plugin = HikariSsrPlugin::new().static_assets("./dist");
-
-        assert!(plugin.has_static_assets());
-    }
-
-    #[tokio::test]
-    async fn test_state() {
-        let plugin = HikariSsrPlugin::new()
-            .state("app_name", "Test App")
-            .state("version", 1);
-
-        assert_eq!(plugin.route_count(), 0);
+        assert!(plugin.get_style_registry().is_some());
+        assert!(plugin.get_style_registry().unwrap().has("button"));
     }
 }

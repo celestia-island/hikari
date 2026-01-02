@@ -2,6 +2,10 @@
 // Toast component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
+
+/// Toast 组件的类型包装器（用于实现 StyledComponent）
+pub struct ToastComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ToastVariant {
@@ -188,5 +192,15 @@ pub fn Toast(props: ToastProps) -> Element {
                 }
             }
         }
+    }
+}
+
+impl StyledComponent for ToastComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/toast.css"))
+    }
+
+    fn name() -> &'static str {
+        "toast"
     }
 }

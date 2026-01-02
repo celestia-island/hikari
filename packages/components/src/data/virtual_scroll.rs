@@ -2,6 +2,10 @@
 // Virtual scroll component for large tree data sets
 
 use dioxus::prelude::*;
+use crate::styled::StyledComponent;
+
+/// VirtualScroll component wrapper (for StyledComponent)
+pub struct VirtualScrollComponent;
 
 /// Tree node data structure
 #[derive(Clone, PartialEq, Debug, Default)]
@@ -150,5 +154,15 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
                 }
             }
         }
+    }
+}
+
+impl StyledComponent for VirtualScrollComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/virtual-scroll.css"))
+    }
+
+    fn name() -> &'static str {
+        "virtual-scroll"
     }
 }

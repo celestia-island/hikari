@@ -1,10 +1,10 @@
-# hikari-ssr
+# hikari-render-service
 
 Server-Side Rendering integration for Hikari applications using Axum.
 
 ## Overview
 
-`hikari-ssr` provides:
+`hikari-render-service` provides:
 
 - **SSR Plugin Builder** - Fluent API for configuring SSR behavior
 - **Router Builder** - Easy Axum router creation with Dioxus integration
@@ -18,7 +18,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-hikari-ssr = "0.1.0"
+hikari-render-service = "0.1.0"
 axum = "0.8"
 tokio = { version = "1", features = ["full"] }
 ```
@@ -28,12 +28,12 @@ tokio = { version = "1", features = ["full"] }
 ### Minimal Example
 
 ```rust
-use hikari_ssr::HikariSsrPlugin;
+use hikari_render_service::HikariRenderServicePlugin;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Build the router
-    let app = HikariSsrPlugin::new()
+    let app = HikariRenderServicePlugin::new()
         .build()?;
 
     // Start the server
@@ -47,7 +47,7 @@ async fn main() -> anyhow::Result<()> {
 
 ```rust
 use axum::routing::get;
-use hikari_ssr::HikariSsrPlugin;
+use hikari_render_service::HikariRenderServicePlugin;
 
 async fn health() -> &'static str {
     "OK"
@@ -59,7 +59,7 @@ async fn version() -> &'static str {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let app = HikariSsrPlugin::new()
+    let app = HikariRenderServicePlugin::new()
         .add_route("/api/health", get(health))
         .add_route("/api/version", get(version))
         .build()?;
@@ -73,11 +73,11 @@ async fn main() -> anyhow::Result<()> {
 ### With Static Assets
 
 ```rust
-use hikari_ssr::HikariSsrPlugin;
+use hikari_render_service::HikariRenderServicePlugin;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let app = HikariSsrPlugin::new()
+    let app = HikariRenderServicePlugin::new()
         .static_assets("./dist")  // Serve frontend files
         .add_route("/api/health", get(health))
         .build()?;
@@ -88,9 +88,9 @@ async fn main() -> anyhow::Result<()> {
 }
 ```
 
-## HikariSsrPlugin API
+## HikariRenderServicePlugin API
 
-The `HikariSsrPlugin` provides a fluent builder API for configuring SSR.
+The `HikariRenderServicePlugin` provides a fluent builder API for configuring SSR.
 
 ### Builder Methods
 
@@ -99,7 +99,7 @@ The `HikariSsrPlugin` provides a fluent builder API for configuring SSR.
 Creates a new SSR plugin builder with default configuration.
 
 ```rust
-let plugin = HikariSsrPlugin::new();
+let plugin = HikariRenderServicePlugin::new();
 ```
 
 #### `add_route(path, method_router)`
@@ -113,7 +113,7 @@ Adds a custom route to the router.
 ```rust
 use axum::routing::{get, post};
 
-let plugin = HikariSsrPlugin::new()
+let plugin = HikariRenderServicePlugin::new()
     .add_route("/api/users", get(get_users))
     .add_route("/api/users", post(create_user))
     .add_route("/api/users/:id", get(get_user));
@@ -127,7 +127,7 @@ Sets the static assets directory path.
 - `path: impl Into<String>` - Path to static assets directory
 
 ```rust
-let plugin = HikariSsrPlugin::new()
+let plugin = HikariRenderServicePlugin::new()
     .static_assets("./dist");
 ```
 
@@ -139,13 +139,13 @@ Configures static file serving options.
 - `config: StaticFileConfig` - Configuration for caching and compression
 
 ```rust
-use hikari_ssr::StaticFileConfig;
+use hikari_render_service::StaticFileConfig;
 
 let config = StaticFileConfig::default()
     .cache_max_age(7200)  // 2 hours
     .no_compression();
 
-let plugin = HikariSsrPlugin::new()
+let plugin = HikariRenderServicePlugin::new()
     .static_assets("./dist")
     .static_config(config);
 ```
@@ -159,7 +159,7 @@ Adds a state value available to all handlers.
 - `value: impl Serialize` - State value (must be serializable)
 
 ```rust
-let plugin = HikariSsrPlugin::new()
+let plugin = HikariRenderServicePlugin::new()
     .state("app_name", "My Hikari App")
     .state("version", "1.0.0")
     .state("debug", true);
@@ -172,7 +172,7 @@ Builds the Axum Router with all configured routes and middleware.
 **Returns:** `anyhow::Result<axum::Router<AppState>>`
 
 ```rust
-let app = HikariSsrPlugin::new()
+let app = HikariRenderServicePlugin::new()
     .static_assets("./dist")
     .add_route("/api/health", get(health))
     .build()?;
@@ -185,7 +185,7 @@ let app = HikariSsrPlugin::new()
 Configuration for static file serving with caching and compression.
 
 ```rust
-use hikari_ssr::StaticFileConfig;
+use hikari_render_service::StaticFileConfig;
 
 let config = StaticFileConfig {
     cache_enabled: true,
@@ -256,7 +256,7 @@ use axum::{
     routing::{get, post},
     Json,
 };
-use hikari_ssr::{HikariSsrPlugin, StaticFileConfig};
+use hikari_render_service::{HikariRenderServicePlugin, StaticFileConfig};
 use serde_json::Value;
 
 // Health check handler
@@ -283,7 +283,7 @@ async fn main() -> anyhow::Result<()> {
         .compression_enabled(true);
 
     // Build the router
-    let app = HikariSsrPlugin::new()
+    let app = HikariRenderServicePlugin::new()
         // Add API routes
         .add_route("/api/health", get(health))
         .add_route("/api/user", get(get_user))
@@ -291,7 +291,7 @@ async fn main() -> anyhow::Result<()> {
         .static_assets("./dist")
         .static_config(static_config)
         // Add application state
-        .state("app_name", "Hikari SSR App")
+        .state("app_name", "Hikari Render Service App")
         .state("version", "1.0.0")
         .state("environment", "production")
         // Build router

@@ -15,16 +15,52 @@ This demo showcases:
 
 ## Running the Demo
 
-```bash
-# From the project root
-cargo run --bin node-graph-demo
-```
+This demo uses **Axum + WASM** architecture (similar to quotation-sheet-generator).
 
-Or from this directory:
+### Quick Start
 
 ```bash
-cargo run
+# Build client (WASM) and start Axum server
+just serve
 ```
+
+This will:
+1. Build workspace dependencies
+2. Build WASM client
+3. Start Axum development server at http://localhost:3000
+
+### Manual Build
+
+```bash
+# Build WASM client only
+just build-client
+
+# Build Axum server only
+just build-server
+
+# Build both
+just build
+
+# Start server (after build)
+just run-server
+```
+
+### Architecture
+
+- **Client**: Dioxus WASM compiled to `dist/assets/`
+- **Server**: Axum serves static files and handles SPA routing
+- **Routes**:
+  - `/assets/*` - Static files (WASM, JS, CSS)
+  - `/health` - Health check
+  - `/*` - SPA fallback (returns `index.html`)
+
+Available commands (see `justfile`):
+
+- `just serve` - Build and run (recommended)
+- `just build-client` - Build WASM client
+- `just build-server` - Build Axum server
+- `just clean` - Clean build artifacts
+- `just check` - Run formatting and clippy checks
 
 ## Node Graph Features
 
@@ -64,7 +100,6 @@ cargo run
 - Overview of entire graph
 - Viewport indicator
 - Real-time position tracking
-- Click to navigate
 - Scaled representation
 
 ## Usage Example

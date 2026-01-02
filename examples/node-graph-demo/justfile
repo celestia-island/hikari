@@ -1,0 +1,130 @@
+# Hikari Node Graph Demo Build System
+#
+# Usage:
+#   just                - List all available recipes
+#   just serve          - Build client and start server (recommended)
+#   just build-client   - Build WASM client only
+#   just run-server     - Start Axum server
+#   just clean          - Clean build artifacts
+
+# Configure Windows to use PowerShell (UTF-8 encoding)
+set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding'] = 'utf8';"]
+
+default:
+    @just --list
+
+# ============================================================================
+# Build Commands - Axum + WASM Architecture
+# ============================================================================
+
+# Clean dist directory
+clean-dist:
+    @echo "Cleaning dist directory..."
+    @if (Test-Path dist) { Remove-Item -Recurse -Force dist }
+
+# Build workspace dependencies
+build-deps:
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Building workspace dependencies..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    cd ../../ && cargo build --workspace --bins
+    @echo ""
+    @echo "✅ Dependencies built successfully"
+
+# Build client (WASM + assets)
+build-client: clean-dist build-deps
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Building Client (WASM)..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Building WASM..."
+    cargo build --lib --release --target wasm32-unknown-unknown
+    @echo "Creating output directories..."
+    @New-Item -ItemType Directory -Force -Path dist/assets | Out-Null
+    @echo "Running wasm-bindgen..."
+    wasm-bindgen target/wasm32-unknown-unknown/release/node_graph_demo.wasm --out-dir dist/assets --target web --no-typescript
+    @echo "Copying static assets..."
+    @if (Test-Path index.html) { Copy-Item -Force index.html dist/index.html }
+    @echo ""
+    @echo "✅ Client build complete!"
+
+# Build server (Axum)
+build-server: build-deps
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Building Server..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    cargo build --features server
+
+# Build everything
+build: build-client build-server
+
+# ============================================================================
+# Run Commands
+# ============================================================================
+
+# Start Axum development server
+run-server: build-client
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Starting Axum development server..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo ""
+    @echo "🌐 Server will be available at:"
+    @echo "   → http://localhost:3000"
+    @echo ""
+    @echo "Press Ctrl+C to stop the server"
+    @echo ""
+    cargo run --features server
+
+# Alias for run-server
+serve: run-server
+
+# ============================================================================
+# Development
+# ============================================================================
+
+# Format code
+fmt:
+    cargo fmt
+
+# Check formatting
+fmt-check:
+    @echo "Checking code formatting..."
+    cargo fmt -- --check
+
+# Run Clippy
+clippy:
+    @echo "Running Clippy..."
+    cargo clippy --all-targets -- -D warnings
+
+# Full check (format + clippy)
+check: fmt-check clippy
+    @echo "✅ All checks passed"
+
+# ============================================================================
+# Testing
+# ============================================================================
+
+# Run tests
+test:
+    cargo test
+
+# ============================================================================
+# Cleanup
+# ============================================================================
+
+# Clean build artifacts
+clean:
+    @echo "Cleaning build artifacts..."
+    cargo clean
+    @if (Test-Path dist) { Remove-Item -Recurse -Force dist }
+    @echo "🧹 Cleaned successfully"
+
+# Clean everything (including workspace dependencies)
+clean-all:
+    @echo "Cleaning all build artifacts (workspace + demo)..."
+    cd ../../ && cargo clean
+    cargo clean
+    @if (Test-Path dist) { Remove-Item -Recurse -Force dist }
+    @echo "🧹 Cleaned all artifacts"

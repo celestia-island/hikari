@@ -2,6 +2,13 @@
 
 Comprehensive tree component demonstration with large datasets, virtual scrolling, drag-and-drop, and custom rendering.
 
+## Architecture
+
+This demo uses the **Axum + WASM architecture**:
+- **Frontend**: Dioxus compiled to WebAssembly
+- **Backend**: Axum web server (Rust)
+- **Build**: Unified build system via Justfile
+
 ## Features
 
 This demo showcases:
@@ -14,16 +21,53 @@ This demo showcases:
 
 ## Running the Demo
 
-```bash
-# From the project root
-cargo run --bin tree-demo
-```
-
-Or from this directory:
+### Quick Start (Recommended)
 
 ```bash
-cargo run
+# From this directory
+just serve
 ```
+
+This will:
+1. Build workspace dependencies
+2. Build WASM client in release mode
+3. Start Axum development server at **http://localhost:3000**
+
+### Build Commands
+
+```bash
+# Build client (WASM) only
+just build-client
+
+# Build server (Axum) only
+just build-server
+
+# Build everything
+just build
+```
+
+### Available Commands
+
+See `justfile` for all available commands:
+
+- `just serve` - Build client and start server (recommended)
+- `just build-client` - Build WASM client only
+- `just build-server` - Build Axum server only
+- `just run-server` - Start Axum server (assumes client is built)
+- `just build` - Build both client and server
+- `just clean` - Clean build artifacts
+- `just fmt` - Format code
+- `just clippy` - Run Clippy checks
+- `just check` - Run full checks (format + clippy)
+
+## Server Features
+
+The Axum server provides:
+- **Health check**: `GET /health` - Returns "OK"
+- **Static assets**: `/assets/*` - Serves WASM, JS, and CSS files
+- **SPA fallback**: All other routes return `index.html` for client-side routing
+- **CORS**: Enabled for development
+- **Port**: 3000 (to avoid conflicts with VSCode Live Server)
 
 ## Tree Features
 
@@ -134,3 +178,47 @@ rsx! {
 - **Category Navigation**: E-commerce categories
 - **Task Trees**: Project management
 - **Settings Menus**: Configuration hierarchies
+
+## Technical Details
+
+### Build Process
+
+1. Build Rust library as WASM target (release mode)
+2. Use `wasm-bindgen` to generate JavaScript bindings
+3. Output to `dist/assets/` directory
+4. Serve with Axum web server
+
+### Module Architecture
+
+- `lib.rs`: WASM entry point with panic hook setup
+- `main.rs`: Axum server entry point (conditional compilation)
+- `app.rs`: Shared application components and logic
+
+This structure allows the same code to run both:
+- **In browser**: Compiled to WASM with `dioxus-web`
+- **In server**: Axum handles static files and SPA routing
+
+### Conditional Compilation
+
+Server dependencies (tokio, axum, tower-http, etc.) are optional and only compiled when the `server` feature is enabled. This keeps the WASM binary small and focused.
+
+## Development Tips
+
+### Hot Reload
+
+Currently, hot reload is not supported. After making changes:
+1. Stop the server (Ctrl+C)
+2. Run `just serve` again to rebuild and restart
+
+### Debugging
+
+- Browser DevTools: Use standard browser debugging tools for WASM
+- Server logs: Axum uses `tracing` for structured logging
+- Health check: `curl http://localhost:3000/health`
+
+### Port Conflicts
+
+If port 3000 is already in use:
+1. Edit `src/main.rs`
+2. Change the port number: `SocketAddr::from(([127, 0, 0, 1], 3001))`
+3. Rebuild with `just build-server`

@@ -4,6 +4,7 @@ members = [
     "packages/theme",
     "packages/components",
     "packages/extra-components",
+    "packages/icons",
     "packages/ssr",
 ]
 resolver = "2"

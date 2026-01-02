@@ -16,18 +16,34 @@ This demo showcases:
 
 ## Running the Demo
 
+This demo is a standalone workspace and requires building dependencies first.
+
 ```bash
-# From the project root
-cargo run --bin ssr-demo
+# From this directory (recommended)
+just run
 ```
 
-Or from this directory:
+Or manually:
 
 ```bash
+# 1. Build workspace dependencies first
+cd ../..
+cargo build --workspace --bins
+
+# 2. Build and run the demo
+cd examples/ssr-demo
 cargo run
 ```
 
 The server will start on `http://localhost:3000`
+
+Available commands (see `justfile`):
+
+- `just run` - Build and run the demo
+- `just build` - Build the demo only
+- `just build-deps` - Build workspace dependencies
+- `just clean` - Clean build artifacts
+- `just check` - Run formatting and clippy checks
 
 ## Available Endpoints
 
@@ -106,17 +122,6 @@ All HTTP requests are logged with:
 - Request duration
 - Structured JSON format
 
-## Project Structure
-
-```
-ssr-demo/
-├── Cargo.toml           # Dependencies
-├── src/
-│   ├── main.rs         # Server entry point
-│   └── index.html      # SSR template
-└── static/             # Static assets (optional)
-```
-
 ## Configuration
 
 ### Port
@@ -127,7 +132,7 @@ Change the port in `main.rs`:
 let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
 ```
 
-### Static Assets
+### Static Assets Configuration
 
 Configure static asset serving:
 

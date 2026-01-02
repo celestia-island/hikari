@@ -1,7 +1,9 @@
 // hikari-components/styles/components/tree.scss
 // Tree component styles
 
-@use '../../packages/hikari-theme/styles/mixins.scss' as *;
+@use '../../../../theme/styles/variables.scss' as *;
+@use '../../../../theme/styles/mixins.scss' as *;
+
 
 // ============================================
 // Tree Container

@@ -1,0 +1,104 @@
+# Hikari Table Demo Build System
+#
+# Usage:
+#   just                - List all available recipes
+#   just serve          - Build client and run server (recommended)
+#   just build-client   - Build WASM only
+#   just build-server   - Build server binary
+#   just clean          - Clean build artifacts
+
+# Configure Windows to use PowerShell (UTF-8 encoding)
+set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding'] = 'utf8';"]
+
+default:
+    @just --list
+
+# ============================================================================
+# Axum + WASM Architecture (Recommended)
+# ============================================================================
+
+# Build WASM client
+build-client:
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Building WASM client..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    cargo build --lib --target wasm32-unknown-unknown
+    @echo ""
+    @echo "🔧 Binding WASM..."
+    wasm-bindgen --target web --out-dir ./dist/assets --no-typescript target/wasm32-unknown-unknown/debug/table_demo.wasm
+    @echo ""
+    @echo "✅ WASM client built successfully"
+    @echo ""
+    @echo "📦 Output: dist/assets/"
+
+# Build server binary
+build-server:
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Building Axum server..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    cargo build --bin table-demo --features server
+    @echo ""
+    @echo "✅ Server binary built successfully"
+
+# Build client and run server (one-click start)
+serve: build-client
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Starting development server..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo ""
+    @echo "🌐 Server will be available at:"
+    @echo "   → http://localhost:3000"
+    @echo ""
+    @echo "Press Ctrl+C to stop the server"
+    @echo ""
+    cargo run --bin table-demo --features server
+
+# Alias for serve
+run-server: serve
+
+# ============================================================================
+# Development
+# ============================================================================
+
+# Format code
+fmt:
+    cargo fmt
+
+# Check formatting
+fmt-check:
+    @echo "Checking code formatting..."
+    cargo fmt -- --check
+
+# Run Clippy
+clippy:
+    @echo "Running Clippy..."
+    cargo clippy --all-targets -- -D warnings
+
+# Full check (format + clippy)
+check: fmt-check clippy
+    @echo "✅ All checks passed"
+
+# ============================================================================
+# Testing
+# ============================================================================
+
+# Run tests
+test:
+    cargo test
+
+# ============================================================================
+# Cleanup
+# ============================================================================
+
+# Clean build artifacts
+clean:
+    @echo "Cleaning build artifacts..."
+    cargo clean
+    @echo "🧹 Cleaned successfully"
+
+# Clean everything (including dist)
+clean-all: clean
+    @echo "Cleaning dist folder..."
+    rm -rf dist
+    @echo "🧹 Cleaned all artifacts"

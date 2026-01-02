@@ -1,7 +1,9 @@
 // hikari-components/styles/components/tabs.scss
 // Tabs component styles
 
-@use '../../packages/hikari-theme/styles/mixins.scss' as *;
+@use '../../../../theme/styles/variables.scss' as *;
+@use '../../../../theme/styles/mixins.scss' as *;
+
 
 // ============================================
 // Tabs Base

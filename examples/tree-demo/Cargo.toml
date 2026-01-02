@@ -10,6 +10,16 @@ publish = false
 [[bin]]
 name = "tree-demo"
 path = "src/main.rs"
+required-features = ["server"]
+
+[lib]
+name = "tree_demo"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+server = ["dep:tokio", "dep:axum", "dep:tower-http", "dep:tower", "dep:anyhow", "dep:tracing", "dep:tracing-subscriber"]
 
 [dependencies]
 # 工作区依赖
@@ -17,6 +27,20 @@ hikari-components = { path = "../../packages/components" }
 hikari-palette = { path = "../../packages/palette" }
 hikari-theme = { path = "../../packages/theme" }
 
-# MCP / 网络与协议
+# Dioxus 前端框架
 dioxus = { version = "^0.7", features = ["web", "router"] }
+dioxus-router = "^0.7"
 dioxus-web = "^0.7"
+
+# WASM 相关
+wasm-bindgen = "^0.2"
+console_error_panic_hook = "^0.1"
+
+# 服务端相关 (仅在启用 server feature 时使用)
+tokio = { version = "^1", features = ["full"], optional = true }
+axum = { version = "^0.8", features = ["macros"], optional = true }
+tower-http = { version = "^0.6", features = ["fs", "trace", "cors"], optional = true }
+tower = { version = "^0.5", features = ["full"], optional = true }
+anyhow = { version = "^1", optional = true }
+tracing = { version = "^0.1", optional = true }
+tracing-subscriber = { version = "^0.3", optional = true }

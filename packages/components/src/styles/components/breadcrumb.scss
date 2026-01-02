@@ -1,7 +1,9 @@
 // hikari-components/styles/components/breadcrumb.scss
 // Breadcrumb component styles
 
-@use '../../packages/hikari-theme/styles/mixins.scss' as *;
+@use '../../../../theme/styles/variables.scss' as *;
+@use '../../../../theme/styles/mixins.scss' as *;
+
 
 // ============================================
 // Breadcrumb Base
@@ -137,7 +139,7 @@
 .hikari-breadcrumb-separator-dash {
     &::before {
         content: '—';
-        font-size: $hikari-font-base;
+        font-size: $hikari-font-size-base;
     }
 }
 

@@ -1,7 +1,8 @@
 // hikari-components/styles/components/index.scss
 // Component styles entry point
-
 // Basic components
+@use '../../../../theme/styles/variables.scss' as *;
+@use '../../../../theme/styles/mixins.scss' as *;
 @import './button.scss';
 @import './input.scss';
 @import './card.scss';

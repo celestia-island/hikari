@@ -1,7 +1,9 @@
 // hikari-components/styles/components/menu.scss
 // Menu component styles
 
-@use '../../packages/hikari-theme/styles/mixins.scss' as *;
+@use '../../../../theme/styles/variables.scss' as *;
+@use '../../../../theme/styles/mixins.scss' as *;
+
 
 // ============================================
 // Menu Base

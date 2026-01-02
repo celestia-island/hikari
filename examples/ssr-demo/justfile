@@ -1,0 +1,114 @@
+# Hikari SSR Demo Build System
+#
+# Usage:
+#   just                - List all available recipes
+#   just run            - Build and run the demo
+#   just build          - Build the demo only
+#   just build-deps     - Build workspace dependencies
+#   just clean          - Clean build artifacts
+
+# Configure Windows to use PowerShell (UTF-8 encoding)
+set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding'] = 'utf8';"]
+
+default:
+    @just --list
+
+# ============================================================================
+# Build tasks
+# ============================================================================
+
+# Build workspace dependencies (required first step)
+build-deps:
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Building workspace dependencies..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    cd ../../ && cargo build --workspace --bins
+    @echo ""
+    @echo "✅ Dependencies built successfully"
+
+# Build this demo (dependencies must be built first)
+build: build-deps
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Building ssr-demo..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    cargo build
+
+# Build in release mode
+build-release: build-deps
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Building ssr-demo (Release)..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    cargo build --release
+
+# ============================================================================
+# Run tasks
+# ============================================================================
+
+# Build and run the demo
+run: build
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Running ssr-demo..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "📡 Server will be available at http://localhost:3000"
+    @echo ""
+    cargo run
+
+# Run in release mode
+run-release: build-release
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Running ssr-demo (Release)..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "📡 Server will be available at http://localhost:3000"
+    @echo ""
+    cargo run --release
+
+# ============================================================================
+# Development
+# ============================================================================
+
+# Format code
+fmt:
+    cargo fmt
+
+# Check formatting
+fmt-check:
+    @echo "Checking code formatting..."
+    cargo fmt -- --check
+
+# Run Clippy
+clippy:
+    @echo "Running Clippy..."
+    cargo clippy --all-targets -- -D warnings
+
+# Full check (format + clippy)
+check: fmt-check clippy
+    @echo "✅ All checks passed"
+
+# ============================================================================
+# Testing
+# ============================================================================
+
+# Run tests
+test:
+    cargo test
+
+# ============================================================================
+# Cleanup
+# ============================================================================
+
+# Clean build artifacts
+clean:
+    @echo "Cleaning build artifacts..."
+    cargo clean
+    @echo "🧹 Cleaned successfully"
+
+# Clean everything (including workspace dependencies)
+clean-all:
+    @echo "Cleaning all build artifacts (workspace + demo)..."
+    cd ../../ && cargo clean
+    cargo clean
+    @echo "🧹 Cleaned all artifacts"

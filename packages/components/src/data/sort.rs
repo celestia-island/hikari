@@ -2,8 +2,9 @@
 // Sort component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use crate::styled::StyledComponent;
+
 pub use super::column::ColumnDef;
+use crate::styled::StyledComponent;
 
 /// Sort component wrapper (for StyledComponent)
 pub struct SortComponent;

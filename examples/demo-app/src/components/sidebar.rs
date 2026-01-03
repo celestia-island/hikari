@@ -3,8 +3,9 @@
 
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
-use crate::app::Route;
 use hikari_icons::{Icon, LucideIcon};
+
+use crate::app::Route;
 
 #[component]
 pub fn Sidebar(

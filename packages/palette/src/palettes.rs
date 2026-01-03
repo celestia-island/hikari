@@ -1,8 +1,14 @@
-// hikari-palette/src/palettes.rs
-// 预定义配色方案
+//! Color palette definitions
+//!
+//! This module provides predefined color schemes and themes
+//! that combine traditional Chinese colors in aesthetically pleasing ways.
 
 use super::colors::*;
 
+/// Color palette configuration
+///
+/// Defines a complete color scheme with primary, secondary,
+/// accent, semantic colors, and surface/text colors.
 #[derive(Debug, Clone)]
 pub struct Palette {
     pub primary: ChineseColor,

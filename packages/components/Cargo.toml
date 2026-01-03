@@ -5,13 +5,43 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[features]
+default = ["basic", "feedback", "navigation", "data"]
+
+# Component groups (shortcuts) - enable multiple components at once
+basic = ["button", "input", "card", "badge"]
+feedback = ["alert", "toast", "tooltip"]
+navigation = ["menu", "tabs", "breadcrumb"]
+data = ["table", "tree", "pagination", "virtual-scroll", "collapse", "drag", "sort", "filter", "selection"]
+
+# Individual component features (fine-grained control)
+button = []
+input = []
+card = []
+badge = []
+alert = []
+toast = []
+tooltip = []
+menu = []
+tabs = []
+breadcrumb = []
+table = []
+tree = []
+pagination = []
+virtual-scroll = []
+collapse = []
+drag = []
+sort = []
+filter = []
+selection = []
+
 [build-dependencies]
 grass = "0.12"
 
 [dependencies]
-# 工作区依赖
+# Workspace dependencies
 hikari-palette = { path = "../palette" }
 hikari-theme = { path = "../theme" }
 
-# MCP / 网络与协议
+# MCP / network and protocols
 dioxus.workspace = true

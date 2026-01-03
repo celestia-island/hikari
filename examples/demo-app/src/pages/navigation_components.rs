@@ -2,8 +2,8 @@
 // Navigation components demonstration page
 
 use dioxus::prelude::*;
-use crate::app::Route;
-use crate::components::{Layout, Section};
+
+use crate::{app::Route, components::{Layout, Section}};
 
 #[component]
 pub fn NavigationComponents() -> Element {

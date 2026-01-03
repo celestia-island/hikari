@@ -1,15 +1,26 @@
-// hikari-theme/src/provider.rs
-// Theme Provider Component
+//! Theme provider component
+//!
+//! This module provides the [`ThemeProvider`] component which enables
+//! theme switching across the application using the [`ThemeContext`].
+//!
+//! # Supported Themes
+//!
+//! - `"primary"` - Primary theme (四大传统色)
+//! - `"fui-dark"` - FUI dark theme (科幻风格深色主题)
+//! - `"arknights"` - Arknights theme (明日方舟风格)
+//! - `"fresh"` - Fresh theme (清新雅致风格)
 
 use dioxus::prelude::*;
 use hikari_palette::*;
 
-impl PartialEq for ThemeProviderProps {
-    fn eq(&self, other: &Self) -> bool {
-        self.palette == other.palette
-    }
-}
-
+/// Theme provider properties
+///
+/// Defines the props accepted by [`ThemeProvider`] component.
+///
+/// # Fields
+///
+/// - `palette` - Theme identifier string (default: "primary")
+/// - `children` - Child elements to render within the theme context
 #[derive(Clone, Props)]
 pub struct ThemeProviderProps {
     #[props(default = "primary".to_string())]
@@ -18,7 +29,27 @@ pub struct ThemeProviderProps {
     children: Element,
 }
 
-/// Theme Provider 组件
+/// Theme Provider component
+///
+/// Provides theme context to all child components.
+///
+/// # Props
+///
+/// - `palette` - Theme identifier ("primary", "fui-dark", "arknights", or "fresh")
+/// - `children` - Child elements that receive theme context
+///
+/// # Example
+///
+/// ```rust,no_run
+/// use hikari_theme::ThemeProvider;
+///
+/// rsx! {
+///     ThemeProvider { palette: "fui-dark" } {
+///         // Children here
+///     }
+/// }
+/// }
+/// ```
 #[component]
 pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
     let _colors = match props.palette.as_str() {

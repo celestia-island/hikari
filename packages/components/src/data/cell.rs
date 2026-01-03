@@ -1,9 +1,11 @@
 // hikari-components/src/data/cell.rs
 // Cell component for table cells
 
-use super::column::ColumnDef;
-use dioxus::prelude::*;
 use std::rc::Rc;
+
+use dioxus::prelude::*;
+
+use super::column::ColumnDef;
 
 /// Cell component props
 #[derive(Clone, Props, Default)]

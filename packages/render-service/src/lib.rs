@@ -37,12 +37,9 @@ pub mod router;
 pub mod static_files;
 pub mod styles_service;
 
-#[cfg(feature = "example")]
-pub mod example;
-
 // Re-exports
 pub use html::HtmlService;
-pub use plugin::{HikariRenderServicePlugin, StyleRegistry};
+pub use plugin::{HikariRenderServicePlugin, StaticMountConfig, StyleRegistry};
 pub use router::build_router;
 pub use static_files::{serve_static_files, StaticFileConfig};
 pub use styles_service::StyleService;

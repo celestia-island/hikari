@@ -3,17 +3,15 @@
 //! Provides production-ready static asset serving with caching,
 //! proper MIME types, and compression support.
 
+use std::path::PathBuf;
+use tokio::fs;
+
 use axum::{
     body::Body,
     extract::Path as AxumPath,
-    http::{
-        header::{self},
-        StatusCode,
-    },
+    http::{header, StatusCode},
     response::{IntoResponse, Response},
 };
-use std::path::PathBuf;
-use tokio::fs;
 use tokio_util::io::ReaderStream;
 
 /// Configuration for static file serving.

@@ -93,11 +93,7 @@ impl HtmlService {
     /// - `{{ body }}` - 页面内容
     /// - `{{ lang }}` - 语言
     /// - `{{ charset }}` - 字符编码
-    pub fn render_with_template(
-        &self,
-        template: &str,
-        body_content: &str,
-    ) -> String {
+    pub fn render_with_template(&self, template: &str, body_content: &str) -> String {
         let styles = self.styles.as_deref().unwrap_or("");
 
         template

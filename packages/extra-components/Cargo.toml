@@ -6,10 +6,10 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-# 工作区依赖
+# Workspace dependencies
 hikari-components = { path = "../components" }
 hikari-palette = { path = "../palette" }
 hikari-theme = { path = "../theme" }
 
-# MCP / 网络与协议
+# MCP / network and protocols
 dioxus.workspace = true

@@ -1,14 +1,13 @@
 // demo-app/src/main.rs
 // Development server with Axum + WASM support
 
-use hikari_components::StyleRegistry;
-use hikari_render_service::HikariRenderServicePlugin;
-use tower_http::{
-    cors::Any,
-    cors::CorsLayer,
-};
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
+
+use hikari_components::StyleRegistry;
+use hikari_render_service::HikariRenderServicePlugin;
+use hikari_theme::get_tailwind_css;
+use tower_http::cors::{Any, CorsLayer};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -30,6 +29,7 @@ async fn main() -> anyhow::Result<()> {
     // Build router with HikariRenderServicePlugin
     let app = HikariRenderServicePlugin::new()
         .component_style_registry(style_registry)
+        .with_tailwind_css(get_tailwind_css())
         .add_route("/health", axum::routing::get(|| async { "OK" }))
         .static_assets("dist/assets")
         .build()?
@@ -48,3 +48,4 @@ async fn main() -> anyhow::Result<()> {
 
     Ok(())
 }
+

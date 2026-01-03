@@ -2,6 +2,7 @@
 members = [
     "packages/palette",
     "packages/theme",
+    "packages/animation",
     "packages/components",
     "packages/extra-components",
     "packages/icons",
@@ -22,14 +23,14 @@ license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
 # =================================================================
-# 基础语言与工具
+# Basic language and tools
 # =================================================================
 anyhow = "^1"
 thiserror = "^2"
 futures = "^0.3"
 
 # =================================================================
-# 数据与序列化
+# Data and serialization
 # =================================================================
 chrono = { version = "^0.4", features = ["serde", "unstable-locales"] }
 serde = { version = "^1", features = ["derive"] }
@@ -42,25 +43,25 @@ uuid = { version = "^1", features = [
 ] }
 
 # =================================================================
-# Async / 并发运行时
+# Async / concurrency runtime
 # =================================================================
 tokio = { version = "^1", features = ["full"] }
 
 # =================================================================
-# 日志与追踪
+# Logging and tracing
 # =================================================================
 log = "^0.4"
 tracing = "^0.1"
 tracing-subscriber = { version = "^0.3", features = ["env-filter"] }
 
 # =================================================================
-# Dioxus 前端框架
+# Dioxus frontend framework
 # =================================================================
 dioxus = { version = "^0.7", features = ["web", "router"] }
 dioxus-router = "^0.7"
 
 # =================================================================
-# WASM 相关
+# WASM related
 # =================================================================
 wasm-bindgen = "^0.2"
 wasm-bindgen-futures = "^0.4"
@@ -77,9 +78,10 @@ web-sys = { version = "^0.3", features = [
     "Location",
 ] }
 gloo = "^0.11"
+gloo-net = "^0.6"
 
 # =================================================================
-# 服务端相关（用于 SSR）
+# Server-side dependencies (for SSR)
 # =================================================================
 axum = { version = "^0.8", features = ["macros", "ws"] }
 axum-extra = { version = "^0.12", features = ["typed-header"] }

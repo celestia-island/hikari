@@ -1,7 +1,26 @@
-// hikari-components/src/data/mod.rs
-// Data display components: Table, Tree
-// Advanced features: Virtual Scroll, Collapse, Drag & Drop
-// Table modules: Sort, Filter, Selection, Cell, Column, Header
+//! Data display components module
+//!
+//! Advanced components for displaying and interacting with data,
+//! including tables, trees, and supporting features.
+//!
+//! ## Core Components
+//!
+//! - [`Table`] - Full-featured data table
+//! - [`Tree`] - Hierarchical tree view
+//!
+//! ## Supporting Components
+//!
+//! - [`Cell`] - Table cell rendering
+//! - [`Collapse`] - Collapsible content sections
+//! - [`Column`] - Table column definitions
+//! - [`Drag`] - Drag and drop functionality
+//! - [`Filter`] - Data filtering UI
+//! - [`Header`] - Table header component
+//! - [`Node`] - Tree node representation
+//! - [`Pagination`] - Page navigation
+//! - [`Selection`] - Multi-selection controls
+//! - [`Sort`] - Sorting controls
+//! - [`VirtualScroll`] - High-performance virtual scrolling
 
 pub mod cell;
 pub mod collapse;

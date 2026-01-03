@@ -3,5 +3,14 @@ name = "hikari-icons"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ["embedded"]
+embedded = []    # Enable embedded Lucide SVG icons (pre-generated at build time)
+
+[build-dependencies]
+
 [dependencies]
+# MCP / network and protocols
 dioxus = { workspace = true }
+
+

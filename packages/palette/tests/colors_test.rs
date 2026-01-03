@@ -14,7 +14,7 @@ fn test_color_properties() {
 #[test]
 fn test_all_colors_are_unique() {
     let colors = vec![
-        朱砂, 石青, 藤黄, 靛蓝, 月白, 墨色, 丹雘, 银红, 葱倩, 鹅黄, 缟色, 云白, 玄色,
+        朱砂, 石青, 藤黄, 靛蓝, 月白, 墨色, 丹雘, 黛色, 葱倩, 鹅黄, 缟色, 云白, 烟灰,
     ];
 
     let mut seen: std::collections::HashMap<String, bool> = std::collections::HashMap::new();

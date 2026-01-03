@@ -2,8 +2,9 @@
 // Table component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+
+pub use super::column::{ColumnAlign, ColumnDef};
 use crate::styled::StyledComponent;
-pub use super::column::{ColumnDef, ColumnAlign};
 
 /// Table component wrapper (for StyledComponent)
 pub struct TableComponent;

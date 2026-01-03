@@ -2,6 +2,7 @@
 // Tabs component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+
 use crate::styled::StyledComponent;
 
 /// Tabs 组件的类型包装器（用于实现 StyledComponent）

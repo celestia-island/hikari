@@ -19,11 +19,7 @@ impl StyleRegistry {
 
     /// 获取聚合的 CSS 样式（所有已注册组件）
     pub fn css_bundle(&self) -> String {
-        self.styles
-            .values()
-            .cloned()
-            .collect::<Vec<_>>()
-            .join("\n")
+        self.styles.values().cloned().collect::<Vec<_>>().join("\n")
     }
 
     /// 获取单个组件的 CSS 样式

@@ -3,8 +3,8 @@
 
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
-use crate::app::Route;
-use crate::components::Layout;
+
+use crate::{app::Route, components::Layout};
 
 #[component]
 pub fn Home() -> Element {

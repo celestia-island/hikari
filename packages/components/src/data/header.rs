@@ -1,8 +1,9 @@
 // hikari-components/src/data/header.rs
 // Header component for table headers
 
-use super::column::ColumnDef;
 use dioxus::prelude::*;
+
+use super::column::ColumnDef;
 
 // Re-export SortDirection from sort module to avoid ambiguity
 pub use super::sort::SortDirection;

@@ -12,27 +12,27 @@ name = "ssr-demo"
 path = "src/main.rs"
 
 [dependencies]
-# 工作区依赖
+# Workspace dependencies
 hikari-components = { path = "../../packages/components" }
 hikari-palette = { path = "../../packages/palette" }
 hikari-theme = { path = "../../packages/theme" }
 hikari-render-service = { path = "../../packages/render-service" }
 
-# 基础语言与工具
+# Basic language and tools
 anyhow = "^1"
 
-# 数据与序列化
+# Data and serialization
 serde = { version = "^1", features = ["derive"] }
 serde_json = "^1"
 
-# 日志与追踪
+# Logging and tracing
 tracing = "^0.1"
 tracing-subscriber = { version = "^0.3", features = ["env-filter"] }
 
-# Async / 并发运行时
+# Async / concurrency runtime
 tokio = { version = "^1", features = ["full"] }
 
-# MCP / 网络与协议
+# MCP / network and protocols
 axum = { version = "^0.8", features = ["macros", "ws"] }
 dioxus = { version = "^0.7", features = ["web", "router"] }
 dioxus-fullstack = "^0.7"

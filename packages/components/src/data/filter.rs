@@ -2,6 +2,7 @@
 // Filter component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+
 use crate::styled::StyledComponent;
 
 /// Filter component wrapper (for StyledComponent)
@@ -83,9 +84,7 @@ pub fn Filter(props: FilterProps) -> Element {
         }
     };
 
-    let is_selected = move |value: &str| -> bool {
-        selected().iter().any(|v| v == value)
-    };
+    let is_selected = move |value: &str| -> bool { selected().iter().any(|v| v == value) };
 
     let close_dropdown = move |_| {
         is_open.set(false);

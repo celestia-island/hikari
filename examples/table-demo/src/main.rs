@@ -1,18 +1,11 @@
 // table-demo/src/main.rs
 // Development server with Axum + WASM support
 
-use axum::{
-    http::StatusCode,
-    response::{Html, IntoResponse},
-    Router,
-};
-use tower_http::{
-    cors::Any,
-    cors::CorsLayer,
-    services::ServeDir,
-};
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
+
+use axum::{Router, http::StatusCode, response::{Html, IntoResponse}};
+use tower_http::{cors::{Any, CorsLayer}, services::ServeDir};
 
 /// SPA fallback handler - 返回 index.html 用于客户端路由
 async fn spa_fallback() -> impl IntoResponse {

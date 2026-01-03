@@ -21,24 +21,27 @@ crate-type = ["cdylib", "rlib"]
 default = []
 server = ["dep:tokio", "dep:axum", "dep:tower-http", "dep:tower", "dep:anyhow", "dep:tracing", "dep:tracing-subscriber", "dep:hikari-render-service"]
 
+# Optional integrations
+embedded = ["hikari-icons/embedded"]
+
 [dependencies]
-# 工作区依赖
+# Workspace dependencies
 hikari-components = { path = "../../packages/components" }
 hikari-icons = { path = "../../packages/icons" }
 hikari-palette = { path = "../../packages/palette" }
 hikari-theme = { path = "../../packages/theme" }
 hikari-render-service = { path = "../../packages/render-service", optional = true }
 
-# Dioxus 前端框架
+# Dioxus frontend framework
 dioxus = { version = "^0.7", features = ["web", "router"] }
 dioxus-router = "^0.7"
 dioxus-web = "^0.7"
 
-# WASM 相关
+# WASM related
 wasm-bindgen = "^0.2"
 console_error_panic_hook = "^0.1"
 
-# 服务端相关 (仅在启用 server feature 时使用)
+# Server-side dependencies (only used when server feature is enabled)
 tokio = { version = "^1", features = ["full"], optional = true }
 axum = { version = "^0.8", features = ["macros"], optional = true }
 tower-http = { version = "^0.6", features = ["fs", "trace", "cors"], optional = true }

@@ -2,26 +2,55 @@
 // Button component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+
 use crate::styled::StyledComponent;
 
-/// Button 组件的类型包装器（用于实现 StyledComponent）
+/// Button component type wrapper (for implementing StyledComponent)
 pub struct ButtonComponent;
 
+/// Button visual variants
+///
+/// Different visual styles for a button component.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ButtonVariant {
+    /// Primary button (most prominent, uses primary color)
     #[default]
     Primary,
+    /// Secondary button (less prominent)
     Secondary,
+    /// Ghost button (transparent background, border only)
     Ghost,
+    /// Danger button (uses danger color for destructive actions)
     Danger,
+    /// Success button (uses success color for positive actions)
     Success,
 }
 
+/// Button size variants
+///
+/// Different size options for a button component.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ButtonSize {
+    /// Medium size (default)
     #[default]
     Medium,
+    /// Small size (compact)
     Small,
+    /// Large size (prominent)
+    Large,
+}
+
+/// Button size variants
+///
+/// Different size options for the button component.
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum ButtonSize {
+    /// Medium size (default)
+    #[default]
+    Medium,
+    /// Small size (compact)
+    Small,
+    /// Large size (prominent)
     Large,
 }
 

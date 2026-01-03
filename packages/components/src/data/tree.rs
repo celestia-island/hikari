@@ -1,9 +1,12 @@
 // hikari-components/src/data/tree.rs
 // Tree component for hierarchical data display
 
-use crate::data::node::{TreeNode, TreeNodeData, TreeNodeProps};
-use crate::styled::StyledComponent;
 use dioxus::prelude::*;
+
+use crate::{
+    data::node::{TreeNode, TreeNodeData, TreeNodeProps},
+    styled::StyledComponent,
+};
 
 /// Tree component wrapper (for StyledComponent)
 pub struct TreeComponent;

@@ -2,9 +2,7 @@
 // Application logic for the table demo
 
 use dioxus::prelude::*;
-use hikari_components::table::{Table, ColumnDef};
-use hikari_components::ColumnAlign;
-use hikari_components::Input;
+use hikari_components::{ColumnAlign, Input, table::{ColumnDef, Table}};
 
 #[component]
 pub fn App() -> Element {

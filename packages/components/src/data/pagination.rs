@@ -2,6 +2,7 @@
 // Pagination component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+
 use crate::styled::StyledComponent;
 
 /// Pagination component wrapper (for StyledComponent)

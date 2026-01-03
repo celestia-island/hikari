@@ -126,3 +126,76 @@ info:
     @echo "  tree-demo"
     @echo "  node-graph-demo"
     @echo "  ssr-demo"
+
+# ============================================================================
+# Module Pre-build Scripts (Python-based)
+# ============================================================================
+
+# Generate all static assets (Theme + Icons + Palette)
+generate-all:
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Generating all static assets..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @python scripts/palette/generate_palette.py
+    @python scripts/theme/fetch_tailwindcss.py
+    @python scripts/icons/fetch_lucide_icons.py
+    @echo "All static assets generated"
+
+# Generate Chinese color palette
+generate-palette:
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Generating Chinese color palette..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @python scripts/palette/generate_palette.py
+
+# Generate Tailwind CSS bundle
+generate-tailwind:
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Fetching Tailwind CSS..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @python scripts/theme/fetch_tailwindcss.py
+
+# Generate Lucide Icons enum and SVGs
+generate-lucide:
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Generating Lucide icons..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @python scripts/icons/fetch_lucide_icons.py
+
+# ============================================================================
+# Module-specific shortcuts
+# ============================================================================
+
+# Theme module commands
+theme *args:
+    @just --justfile scripts/theme.just {{args}}
+
+# Icons module commands
+icons *args:
+    @just --justfile scripts/icons.just {{args}}
+
+# Palette module commands
+palette *args:
+    @just --justfile scripts/palette.just {{args}}
+
+# Build with all generated assets
+build-generated: generate-all
+    @cargo build --workspace
+
+# ============================================================================
+# Feature-specific builds
+# ============================================================================
+
+# Build with all generated static assets
+build-features: generate-all
+    @cargo build --workspace --release
+
+# ============================================================================
+# Installation
+# ============================================================================
+
+# Install Rust dependencies
+install:
+    @echo "Installing Rust dependencies..."
+    @cargo fetch
+    @echo "✅ All dependencies installed!"

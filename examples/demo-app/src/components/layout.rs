@@ -2,9 +2,9 @@
 // Layout component with responsive drawer
 
 use dioxus::prelude::*;
-use crate::app::Route;
-use crate::components::Sidebar;
 use hikari_icons::{Icon, LucideIcon};
+
+use crate::{app::Route, components::Sidebar};
 
 /// Layout component that wraps all pages with a responsive sidebar
 ///

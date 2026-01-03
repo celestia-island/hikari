@@ -2,6 +2,7 @@
 // Animated collapse/expand component for tree nodes
 
 use dioxus::prelude::*;
+
 use crate::styled::StyledComponent;
 
 /// Collapse component wrapper (for StyledComponent)

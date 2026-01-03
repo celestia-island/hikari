@@ -20,7 +20,7 @@ Styling:         Grass (SCSS 编译器)
 Build System:    Justfile
 Palette:         中国传统色 (500+ 色)
 Server (SSR):    Axum (可选)
-Tooling:         Python 3.11+ 用于格式化/检查
+Tooling:         Python 3.11+ 用于预构建脚本
 ```
 
 ---
@@ -160,18 +160,28 @@ let transparent = opacity(color, 0.5);
 ### 使用 Justfile
 
 ```bash
-just build         # 构建所有包
-just test          # 运行所有测试
-just fmt           # 格式化代码
-just clippy        # 运行 Clippy
+just build           # 构建所有包
+just test            # 运行所有测试
+just fmt             # 格式化代码
+just clippy          # 运行 Clippy
+just generate-all    # 生成所有静态资源（Tailwind CSS + Lucide Icons）
+just build-generated # 生成静态资源后构建
 ```
 
-### Python 工具脚本
+### Python 预构建脚本
+
+项目使用 Python 脚本在预构建阶段从 CDN 或 GitHub API 下载外部资源：
 
 ```bash
-python scripts/format.py    # 格式化
-python scripts/lint.py      # 代码检查
+python scripts/generate_palette.py     # 生成中国传统色调色板
+python scripts/fetch_tailwindcss.py     # 下载并生成 Tailwind CSS
+python scripts/fetch_lucide_icons.py   # 下载并生成 Lucide Icons
 ```
+
+生成的文件位于：
+- `packages/theme/src/generated/` - Tailwind CSS 和主题资源
+- `packages/icons/src/generated/` - Lucide Icons 枚举和 SVG 内容
+- `packages/palette/src/colors.rs` - 中国传统色定义
 
 ---
 

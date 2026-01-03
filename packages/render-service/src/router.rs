@@ -3,29 +3,30 @@
 //! Combines Dioxus SSR routes, style service routes, custom routes, and static file serving
 //! into a unified Axum router.
 
-use super::plugin::RouterRoute;
-use super::registry::StyleRegistry;
-use super::static_files::StaticFileConfig;
+use std::{collections::HashMap, sync::Arc};
+
 use axum::{
     body::Body,
-    extract::State,
-    extract::Path,
+    extract::{Path, State},
     http::{header, StatusCode, Uri},
     response::{IntoResponse, Response},
     routing::any,
     Router,
 };
-use std::collections::HashMap;
-use std::path::PathBuf;
-use std::sync::Arc;
 use thiserror::Error;
 use tower_http::services::ServeDir;
+
+use super::{
+    plugin::{RouterRoute, StaticMountConfig},
+    registry::StyleRegistry,
+};
 
 /// Application state shared across all handlers.
 #[derive(Clone, Debug)]
 pub struct AppState {
     pub config: HashMap<String, serde_json::Value>,
     pub style_registry: Option<Arc<StyleRegistry>>,
+    pub tailwind_css: Option<&'static str>,
 }
 
 impl AppState {
@@ -33,11 +34,17 @@ impl AppState {
         Self {
             config,
             style_registry: None,
+            tailwind_css: None,
         }
     }
 
     pub fn with_style_registry(mut self, registry: StyleRegistry) -> Self {
         self.style_registry = Some(Arc::new(registry));
+        self
+    }
+
+    pub fn with_tailwind_css(mut self, css: &'static str) -> Self {
+        self.tailwind_css = Some(css);
         self
     }
 
@@ -63,8 +70,7 @@ pub enum RouterBuildError {
 /// # Arguments
 ///
 /// * `routes` - Custom routes to add to the router
-/// * `static_assets_path` - Optional path to static assets directory
-/// * `static_config` - Configuration for static file serving
+/// * `static_mounts` - Static asset mount configurations
 /// * `state` - Application state to share across handlers
 /// * `style_registry` - Optional style registry for CSS serving
 ///
@@ -79,8 +85,7 @@ pub enum RouterBuildError {
 /// let registry = StyleRegistry::default();
 /// let router = build_router(
 ///     vec![],
-///     Some("./dist".into()),
-///     Default::default(),
+///     vec![],
 ///     HashMap::new(),
 ///     Some(registry),
 /// )?;
@@ -89,8 +94,7 @@ pub enum RouterBuildError {
 /// ```
 pub fn build_router(
     routes: Vec<RouterRoute>,
-    static_assets_path: Option<PathBuf>,
-    _static_config: StaticFileConfig,
+    static_mounts: Vec<StaticMountConfig>,
     state: HashMap<String, serde_json::Value>,
     style_registry: Option<StyleRegistry>,
 ) -> anyhow::Result<Router> {
@@ -111,7 +115,7 @@ pub fn build_router(
     }
 
     // Add style service routes if registry is configured
-    // Note: These will use the AppState's style_registry, not a separate StyleService
+    // Note: These will use AppState's style_registry, not a separate StyleService
     if app_state.style_registry.is_some() {
         router = router.route("/styles/bundle.css", axum::routing::get(css_bundle_handler));
         router = router.route(
@@ -121,14 +125,20 @@ pub fn build_router(
         router = router.route("/styles/info", axum::routing::get(style_info_handler));
     }
 
+    // Add Tailwind CSS route (always available if built)
+    router = router.route(
+        "/styles/tailwind.css",
+        axum::routing::get(tailwind_css_handler),
+    );
+
     // Add Dioxus SSR catch-all route
     router = router.route("/ssr/<*path>", any(ssr_handler));
     router = router.fallback(any(ssr_handler));
 
-    // Add static assets route if configured
-    if let Some(static_path) = static_assets_path {
-        let serve_dir = ServeDir::new(static_path);
-        router = router.nest_service("/assets", serve_dir);
+    // Add static asset mounts for each configured mount point
+    for mount_config in static_mounts {
+        let serve_dir = ServeDir::new(&mount_config.local_path);
+        router = router.nest_service(&mount_config.url_path, serve_dir);
     }
 
     // NOW add state - this must be done last in Axum 0.8
@@ -185,7 +195,9 @@ pub async fn health_check() -> impl IntoResponse {
     Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(r#"{"status":"ok","service":"hikari-render-service"}"#))
+        .body(Body::from(
+            r#"{"status":"ok","service":"hikari-render-service"}"#,
+        ))
         .unwrap()
 }
 
@@ -253,6 +265,27 @@ async fn component_css_handler(
     }
 }
 
+/// Tailwind CSS handler - serves Tailwind CSS framework.
+async fn tailwind_css_handler(State(state): State<AppState>) -> impl IntoResponse {
+    match state.tailwind_css {
+        Some(css) => Response::builder()
+            .status(StatusCode::OK)
+            .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
+            .header(header::CACHE_CONTROL, "public, max-age=3600")
+            .body(Body::from(css))
+            .unwrap(),
+        None => {
+            let not_found_css =
+                "/* Tailwind CSS is not enabled. Make sure hikari-theme is properly built. */";
+            Response::builder()
+                .status(StatusCode::NOT_FOUND)
+                .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
+                .body(Body::from(not_found_css))
+                .unwrap()
+        }
+    }
+}
+
 /// Style info handler - returns information about registered styles.
 async fn style_info_handler(State(state): State<AppState>) -> impl IntoResponse {
     let info = if let Some(registry) = &state.style_registry {
@@ -307,7 +340,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_build_router_basic() {
-        let router = build_router(vec![], None, StaticFileConfig::default(), HashMap::new(), None);
+        let router = build_router(vec![], vec![], HashMap::new(), None);
 
         assert!(router.is_ok());
     }
@@ -323,20 +356,15 @@ mod tests {
             method_router: get(test_handler),
         }];
 
-        let router = build_router(routes, None, StaticFileConfig::default(), HashMap::new(), None);
+        let router = build_router(routes, vec![], HashMap::new(), None);
 
         assert!(router.is_ok());
     }
 
     #[tokio::test]
     async fn test_build_router_with_static_assets() {
-        let router = build_router(
-            vec![],
-            Some("./dist".into()),
-            StaticFileConfig::default(),
-            HashMap::new(),
-            None,
-        );
+        let static_mounts = vec![StaticMountConfig::new("./dist", "/static")];
+        let router = build_router(vec![], static_mounts, HashMap::new(), None);
 
         assert!(router.is_ok());
     }

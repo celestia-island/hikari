@@ -2,9 +2,9 @@
 // Feedback components demonstration page
 
 use dioxus::prelude::*;
-use crate::app::Route;
-use crate::components::{Layout, Section};
 use hikari_components::*;
+
+use crate::{app::Route, components::{Layout, Section}};
 
 #[component]
 pub fn FeedbackComponents() -> Element {

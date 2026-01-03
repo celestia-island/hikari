@@ -1,57 +1,98 @@
-// hikari-components/src/styled.rs
-// StyledComponent trait 和 StyleRegistry
+//! Styling infrastructure
+//!
+//! Provides styling system infrastructure for Hikari components
+//! including a [`StyleRegistry`] for managing CSS styles
+//! and a [`StyledComponent`] trait for styled components.
 
 use std::collections::HashMap;
 
-/// 样式注册表
+/// Style registry for managing component styles
 ///
-/// 用于管理所有已注册组件的 CSS 样式
+/// Central registry that stores CSS styles for all registered
+/// components and can generate a CSS bundle.
+///
+/// # Example
+///
+/// ```rust
+/// use hikari_components::StyleRegistry;
+///
+/// let mut registry = StyleRegistry::default();
+/// registry.register("my-component", ".my-component { color: red; }");
+/// let css = registry.css_bundle();
+/// ```
 #[derive(Default, Clone)]
 pub struct StyleRegistry {
     styles: HashMap<&'static str, &'static str>,
 }
 
 impl StyleRegistry {
-    /// 注册单个组件的样式
+    /// Register a single component's styles
+    ///
+    /// # Arguments
+    /// * `name` - Component identifier
+    /// * `css` - CSS styles for the component
     pub fn register(&mut self, name: &'static str, css: &'static str) {
         self.styles.insert(name, css);
     }
 
-    /// 获取聚合的 CSS 样式（所有已注册组件）
+    /// Get aggregated CSS bundle (all registered components)
+    ///
+    /// # Returns
+    /// CSS bundle with all registered component styles
     pub fn css_bundle(&self) -> String {
-        self.styles
-            .values()
-            .copied()
-            .collect::<Vec<_>>()
-            .join("\n")
+        self.styles.values().copied().collect::<Vec<_>>().join("\n")
     }
 
-    /// 获取单个组件的 CSS 样式
+    /// Get CSS for a single component
+    ///
+    /// # Arguments
+    /// * `name` - Component identifier
+    ///
+    /// # Returns
+    /// CSS styles for the component, if registered
     pub fn get(&self, name: &str) -> Option<&'static str> {
         self.styles.get(name).copied()
     }
 
-    /// 获取所有已注册的样式
+    /// Get all registered styles
+    ///
+    /// # Returns
+    /// Clone of the complete style registry
     pub fn get_all(&self) -> HashMap<&'static str, &'static str> {
         self.styles.clone()
     }
 
-    /// 检查组件是否已注册
+    /// Check if component is registered
+    ///
+    /// # Arguments
+    /// * `name` - Component identifier
+    ///
+    /// # Returns
+    /// true if component is registered
     pub fn has(&self, name: &str) -> bool {
         self.styles.contains_key(name)
     }
 
-    /// 获取已注册组件的数量
+    /// Get count of registered components
+    ///
+    /// # Returns
+    /// Number of registered components
     pub fn len(&self) -> usize {
         self.styles.len()
     }
 
-    /// 检查是否为空
+    /// Check if registry is empty
+    ///
+    /// # Returns
+    /// true if no components are registered
     pub fn is_empty(&self) -> bool {
         self.styles.is_empty()
     }
 
-    /// 批量注册：基础组件
+    /// Batch register: basic components
+    ///
+    /// Registers all basic UI components.
+    #[cfg(feature = "basic")]
     pub fn register_basic_components(&mut self) {
         use crate::basic::{BadgeComponent, ButtonComponent, CardComponent, InputComponent};
         ButtonComponent::register(self);
@@ -60,11 +101,22 @@ impl StyleRegistry {
         BadgeComponent::register(self);
     }
 
-    /// 批量注册：数据组件
+    /// No-op if basic feature is disabled
+    #[cfg(not(feature = "basic"))]
+    pub fn register_basic_components(&mut self) {
+        // No-op
+    }
+
+    /// Batch register: data components
+    ///
+    /// Registers all data display components.
+    #[cfg(feature = "data")]
     pub fn register_data_components(&mut self) {
-        use crate::data::{CollapseComponent, DragComponent, FilterComponent, PaginationComponent,
-                           SelectionComponent, SortComponent, TableComponent, TreeComponent,
-                           VirtualScrollComponent};
+        use crate::data::{
+            CollapseComponent, DragComponent, FilterComponent, PaginationComponent,
+            SelectionComponent, SortComponent, TableComponent, TreeComponent,
+            VirtualScrollComponent,
+        };
         TableComponent::register(self);
         TreeComponent::register(self);
         PaginationComponent::register(self);
@@ -76,7 +128,16 @@ impl StyleRegistry {
         SelectionComponent::register(self);
     }
 
-    /// 批量注册：反馈组件
+    /// No-op if data feature is disabled
+    #[cfg(not(feature = "data"))]
+    pub fn register_data_components(&mut self) {
+        // No-op
+    }
+
+    /// Batch register: feedback components
+    ///
+    /// Registers all feedback and notification components.
+    #[cfg(feature = "feedback")]
     pub fn register_feedback_components(&mut self) {
         use crate::feedback::{AlertComponent, ToastComponent, TooltipComponent};
         AlertComponent::register(self);
@@ -84,7 +145,16 @@ impl StyleRegistry {
         TooltipComponent::register(self);
     }
 
-    /// 批量注册：导航组件
+    /// No-op if feedback feature is disabled
+    #[cfg(not(feature = "feedback"))]
+    pub fn register_feedback_components(&mut self) {
+        // No-op
+    }
+
+    /// Batch register: navigation components
+    ///
+    /// Registers all navigation and routing components.
+    #[cfg(feature = "navigation")]
     pub fn register_navigation_components(&mut self) {
         use crate::navigation::{BreadcrumbComponent, MenuComponent, TabsComponent};
         MenuComponent::register(self);
@@ -92,7 +162,32 @@ impl StyleRegistry {
         BreadcrumbComponent::register(self);
     }
 
-    /// 批量注册：所有组件
+    /// No-op if navigation feature is disabled
+    #[cfg(not(feature = "navigation"))]
+    pub fn register_navigation_components(&mut self) {
+        // No-op
+    }
+
+    /// Auto-register based on enabled features
+    ///
+    /// Registers all components for enabled features.
+    pub fn register_available(&mut self) {
+        #[cfg(feature = "basic")]
+        self.register_basic_components();
+
+        #[cfg(feature = "data")]
+        self.register_data_components();
+
+        #[cfg(feature = "feedback")]
+        self.register_feedback_components();
+
+        #[cfg(feature = "navigation")]
+        self.register_navigation_components();
+    }
+
+    /// Batch register: all components
+    ///
+    /// Registers all available components.
     pub fn register_all(&mut self) {
         self.register_basic_components();
         self.register_data_components();
@@ -101,18 +196,44 @@ impl StyleRegistry {
     }
 }
 
-/// 样式化组件 trait
+/// Styled component trait
 ///
-/// 所有提供样式的组件都应该实现此 trait
+/// All styled components should implement this trait
+/// to provide their CSS styles.
+///
+/// # Example
+///
+/// ```rust
+/// struct MyComponent;
+///
+/// impl StyledComponent for MyComponent {
+///     fn styles() -> &'static str {
+///         ".my-component { color: red; }"
+///     }
+///
+///     fn name() -> &'static str {
+///         "my-component"
+///     }
+/// }
+/// ```
 pub trait StyledComponent: Sized {
-    /// 获取组件的 CSS 样式
+    /// Get the component's CSS styles
+    ///
+    /// # Returns
+    /// CSS styles string
     fn styles() -> &'static str;
 
-    /// 注册到样式表
+    /// Register the component to the style registry
+    ///
+    /// # Arguments
+    /// * `registry` - Style registry to register with
     fn register(registry: &mut StyleRegistry) {
         registry.register(Self::name(), Self::styles());
     }
 
-    /// 组件名称（默认使用类型名的小写形式）
+    /// Component name
+    ///
+    /// # Returns
+    /// Default type name in lowercase
     fn name() -> &'static str;
 }

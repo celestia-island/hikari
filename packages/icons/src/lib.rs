@@ -1,12 +1,12 @@
 // Hikari Icons - Lucide Icons integration for Dioxus
 //
 // This crate provides a type-safe Icon component that integrates
-// with Lucide Icons (https://lucide.dev) via the Lucide CDN.
+// with Lucide Icons (https://lucide.dev).
 
-mod generated;
-pub use generated::LucideIcon;
+pub mod generated;
 
 use dioxus::prelude::*;
+pub use generated::lucide::LucideIcon;
 
 /// Icon component that renders Lucide icons
 ///
@@ -27,19 +27,17 @@ use dioxus::prelude::*;
 #[component]
 pub fn Icon(
     icon: LucideIcon,
-    #[props(default)]
-    class: String,
-    #[props(default = 24)]
-    size: u32,
+    #[props(default)] class: String,
+    #[props(default = 24)] size: u32,
 ) -> Element {
     let icon_name = icon.to_string();
 
     rsx! {
-        i {
+        div {
+            class: "lucide-icon {class}",
+            style: "display: inline-block; width: {size}px; height: {size}px;",
             "data-lucide": "{icon_name}",
-            class: "{class}",
-            width: "{size}",
-            height: "{size}",
+            "data-icon": "{icon_name}",
         }
     }
 }

@@ -1,0 +1,327 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Hikari Lucide Icons Fetcher
+
+Downloads all Lucide SVG icons from GitHub and generates a Rust module
+with the SVG content as static string constants.
+
+Output: packages/icons/src/generated/lucide.rs
+"""
+
+import urllib.request
+import re
+import io
+import sys
+from pathlib import Path
+from typing import Dict
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# Set UTF-8 encoding for stdout on Windows
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
+# Concurrency settings
+MAX_WORKERS = 10
+
+# GitHub API endpoints
+GITHUB_API = "https://api.github.com/repos/lucide-icons/lucide/contents/icons"
+GITHUB_RAW = "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons"
+
+# Output paths
+OUTPUT_DIR = Path("packages/icons/src/generated")
+OUTPUT_FILE = OUTPUT_DIR / "lucide.rs"
+
+# SVG compression options
+COMPRESS_SVG = True  # Remove unnecessary whitespace and newlines
+
+
+def download_svg(icon_name: str) -> str | None:
+    """Download a single SVG icon from GitHub"""
+    url = f"{GITHUB_RAW}/{icon_name}.svg"
+    
+    try:
+        request = urllib.request.Request(
+            url,
+            headers={
+                'Accept': 'application/vnd.github.raw',
+                'User-Agent': 'Hikari-Icon-Generator/1.0'
+            }
+        )
+        with urllib.request.urlopen(request, timeout=10) as response:
+            return response.read().decode('utf-8')
+    except Exception as e:
+        return None
+
+
+def compress_svg(svg_content: str) -> str:
+    """Compress SVG by removing unnecessary whitespace"""
+    # Remove extra whitespace between tags
+    compressed = re.sub(r'>\s+<', '><', svg_content)
+    # Remove leading/trailing whitespace
+    compressed = compressed.strip()
+    return compressed
+
+
+def fetch_icon_list() -> list[str]:
+    """Fetch all icon names from Lucide GitHub API"""
+    print("Fetching icon list from GitHub...")
+    try:
+        request = urllib.request.Request(
+            GITHUB_API,
+            headers={
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'Hikari-Icon-Generator/1.0'
+            }
+        )
+        with urllib.request.urlopen(request, timeout=30) as response:
+            data = eval(response.read().decode('utf-8'))
+
+            # Extract icon names (remove .svg extension)
+            icons = [item['name'].replace('.svg', '') for item in data if item['name'].endswith('.svg')]
+            icons.sort()
+
+            print(f"  OK: Found {len(icons)} icons")
+            return icons
+    except Exception as e:
+        print(f"  ERROR: Failed to fetch icon list: {e}")
+        raise
+
+
+def escape_variant(icon_name: str) -> str:
+    """Escape icon name for Rust enum variant"""
+    # Convert kebab-case to snake_case
+    variant_name = icon_name.replace('-', '_')
+    
+    # Rust reserved keywords
+    rust_keywords = {
+        'box', 'match', 'if', 'else', 'while', 'for', 'loop', 'return',
+        'fn', 'let', 'mut', 'const', 'static', 'struct', 'enum', 'impl',
+        'use', 'mod', 'trait', 'type', 'where', 'in', 'true', 'false',
+        'move', 'ref', 'unsafe', 'async', 'await', 'break', 'continue',
+        'yield', 'try', 'crate', 'super', 'self', 'extern', 'pub',
+    }
+    
+    # Escape if it's a reserved keyword
+    if variant_name in rust_keywords:
+        return f"r#{variant_name}"
+    return variant_name
+
+
+def escape_const_name(icon_name: str) -> str:
+    """Escape icon name for Rust constant (UPPERCASE)"""
+    # Convert kebab-case to UPPERCASE
+    const_name = icon_name.replace('-', '_').upper()
+    
+    return const_name
+
+
+def escape_enum_variant(icon_name: str) -> str:
+    """Escape icon name for Rust enum variant (snake_case)"""
+    # Convert kebab-case to snake_case (keep lowercase)
+    variant_name = icon_name.replace('-', '_')
+    
+    # Rust reserved keywords - for enum variants, we add '_' suffix to raw identifiers
+    rust_keywords = {
+        'box', 'match', 'if', 'else', 'while', 'for', 'loop', 'return',
+        'fn', 'let', 'mut', 'const', 'static', 'struct', 'enum', 'impl',
+        'use', 'mod', 'trait', 'type', 'where', 'in', 'true', 'false',
+        'move', 'ref', 'unsafe', 'async', 'await', 'break', 'continue',
+        'yield', 'try', 'crate', 'super', 'self', 'extern', 'pub',
+    }
+    
+    # Escape if it's a reserved keyword - use raw identifier with '_' suffix
+    if variant_name in rust_keywords:
+        return f"r#{variant_name}_"
+    
+    return variant_name
+
+
+def generate_rust_module(icons: list[str], svg_map: Dict[str, str]) -> str:
+    """Generate Rust module with enum and SVG constants"""
+    
+    # Generate header
+    output = []
+    output.append("// Auto-generated by scripts/fetch_lucide_icons.py")
+    output.append(f"// Generated at: {datetime.now().isoformat()}")
+    output.append(f"// Total icons: {len(icons)}")
+    output.append(f"// Downloaded: {len(svg_map)}")
+    output.append("")
+    output.append("#![allow(non_camel_case_types)]")
+    output.append("#![allow(non_snake_case)]")
+    output.append("#![allow(dead_code)]")
+    output.append("")
+    output.append("/// Lucide icon names")
+    output.append("///")
+    output.append("/// This enum contains all icons from the Lucide icon library.")
+    output.append("/// See: https://lucide.dev/icons/")
+    output.append("#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]")
+    output.append("pub enum LucideIcon {")
+    output.append("    #[doc(hidden)]")
+    output.append("    Unknown,")
+
+    # Enum variants
+    for icon in icons:
+        variant_name = escape_enum_variant(icon)
+        output.append(f"    {variant_name},")
+
+    output.append("}")
+
+    # Display implementation
+    output.append("")
+    output.append("impl std::fmt::Display for LucideIcon {")
+    output.append("    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {")
+    output.append("        match self {")
+    output.append("            LucideIcon::Unknown => write!(f, \"unknown\"),")
+
+    for icon in icons:
+        variant_name = escape_enum_variant(icon)
+        output.append(f"            LucideIcon::{variant_name} => write!(f, \"{icon}\"),")
+
+    output.append("        }")
+    output.append("    }")
+    output.append("}")
+
+    # From<&str> implementation
+    output.append("")
+    output.append("impl std::convert::From<&str> for LucideIcon {")
+    output.append("    fn from(s: &str) -> Self {")
+    output.append("        match s {")
+
+    for icon in icons:
+        variant_name = escape_enum_variant(icon)
+        output.append(f"            \"{icon}\" => LucideIcon::{variant_name},")
+
+    output.append("            _ => LucideIcon::Unknown,")
+    output.append("        }")
+    output.append("    }")
+    output.append("}")
+
+    # SVG content module
+    output.append("")
+    output.append("/// SVG content for Lucide icons")
+    output.append("///")
+    output.append("/// This module contains the raw SVG content for each icon.")
+    output.append("pub mod svgs {")
+    
+    for icon in icons:
+        if icon in svg_map:
+            svg_content = svg_map[icon]
+            # Escape for Rust raw string literal
+            svg_escaped = svg_content.replace('"', '\\"')
+            
+            output.append("")
+            output.append(f"    /// SVG content for '{icon}' icon")
+            output.append(f"    pub const {escape_const_name(icon)}: &str = r#\"{svg_escaped}\"#;")
+    
+    output.append("")
+
+    # Get SVG by name function
+    output.append("")
+    output.append("    /// Get SVG content by icon name")
+    output.append("    pub fn get(name: &str) -> Option<&'static str> {")
+    output.append("        match name {")
+
+    for icon in icons:
+        if icon in svg_map:
+            variant_name = escape_const_name(icon)
+            output.append(f"            \"{icon}\" => Some({variant_name}),")
+
+    output.append("            _ => None,")
+    output.append("        }")
+    output.append("    }")
+
+    output.append("}")
+
+    return "\n".join(output)
+
+
+def main():
+    """Main generation workflow"""
+    print("=" * 60)
+    print("Hikari Lucide Icons Fetcher")
+    print("=" * 60)
+    
+    # Create output directory
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    
+    # Fetch icon list
+    icons = fetch_icon_list()
+    
+    # Download all SVG icons with concurrency
+    print(f"\nDownloading {len(icons)} SVG icons (with {MAX_WORKERS} workers)...")
+    svg_map = {}
+    failed_icons = []
+    completed = 0
+    
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        # Submit all download tasks
+        future_to_icon = {
+            executor.submit(download_svg, icon_name): icon_name
+            for icon_name in icons
+        }
+        
+        # Process completed downloads
+        for future in as_completed(future_to_icon):
+            icon_name = future_to_icon[future]
+            completed += 1
+            
+            if completed % 50 == 0:
+                print(f"  Progress: {completed}/{len(icons)}")
+            
+            try:
+                svg_content = future.result()
+                if svg_content:
+                    if COMPRESS_SVG:
+                        svg_content = compress_svg(svg_content)
+                    svg_map[icon_name] = svg_content
+                else:
+                    failed_icons.append(icon_name)
+            except Exception as e:
+                failed_icons.append(icon_name)
+    
+    if failed_icons:
+        print(f"\nWARNING: Failed to download {len(failed_icons)} icons:")
+        for icon in failed_icons[:10]:
+            print(f"    - {icon}")
+        if len(failed_icons) > 10:
+            print(f"    ... and {len(failed_icons) - 10} more")
+    
+    print(f"  OK: Successfully downloaded {len(svg_map)} icons")
+
+    # Generate Rust module
+    print("\nGenerating Rust module...")
+    rust_code = generate_rust_module(icons, svg_map)
+
+    # Write to file
+    print(f"Writing to {OUTPUT_FILE}...")
+    with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
+        f.write(rust_code)
+
+    file_size = OUTPUT_FILE.stat().st_size
+    print(f"  OK: Generated {OUTPUT_FILE} ({file_size} bytes)")
+
+    # Print summary
+    print("\n" + "=" * 60)
+    print("SUCCESS!")
+    print("=" * 60)
+    print(f"Total icons: {len(icons)}")
+    print(f"Downloaded: {len(svg_map)}")
+    print(f"Failed: {len(failed_icons)}")
+    print(f"\nOutput file:")
+    print(f"  - {OUTPUT_FILE}")
+    print(f"\nRust usage:")
+    print(f"  use hikari_icons::generated::lucide::LucideIcon;")
+    print(f"  use hikari_icons::generated::lucide::svgs;")
+    print(f"  ")
+    print(f"  let svg = svgs::get(\"menu\").unwrap();")
+    print(f"  rsx! {{")
+    print(f'      dangerous_inner_html: "{{svg}}"')
+    print(f"  }}")
+    print("=" * 60)
+
+
+if __name__ == "__main__":
+    main()

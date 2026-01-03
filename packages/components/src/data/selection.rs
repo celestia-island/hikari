@@ -2,6 +2,7 @@
 // Selection component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+
 use crate::styled::StyledComponent;
 
 /// Selection component wrapper (for StyledComponent)
@@ -107,15 +108,11 @@ pub fn Selection(props: SelectionProps) -> Element {
         }
     };
 
-    let is_row_selected = move |key: &str| -> bool {
-        selected().iter().any(|k| k == key)
-    };
+    let is_row_selected = move |key: &str| -> bool { selected().iter().any(|k| k == key) };
 
-    let get_input_type = || {
-        match props.selection_type {
-            SelectionType::Checkbox => "checkbox",
-            SelectionType::Radio => "radio",
-        }
+    let get_input_type = || match props.selection_type {
+        SelectionType::Checkbox => "checkbox",
+        SelectionType::Radio => "radio",
     };
 
     rsx! {

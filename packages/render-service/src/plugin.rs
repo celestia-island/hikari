@@ -2,14 +2,16 @@
 //!
 //! Provides a fluent builder API for configuring rendering behavior.
 
-use crate::router::build_router;
-use crate::router::AppState;
-use crate::static_files::StaticFileConfig;
-use crate::registry::StyleRegistry as RenderServiceStyleRegistry;
+use std::{collections::HashMap, path::PathBuf};
+
 use axum::routing::MethodRouter;
-use std::collections::HashMap;
-use std::path::PathBuf;
 use thiserror::Error;
+
+use crate::{
+    registry::StyleRegistry as RenderServiceStyleRegistry,
+    router::{build_router, AppState},
+    static_files::StaticFileConfig,
+};
 
 // Re-export StyleRegistry for convenience
 pub use crate::registry::StyleRegistry;
@@ -33,6 +35,42 @@ pub struct RouterRoute {
     pub method_router: MethodRouter<AppState>,
 }
 
+/// Configuration for static asset mounting.
+#[derive(Clone, Debug)]
+pub struct StaticMountConfig {
+    /// Local filesystem path to the assets
+    pub local_path: PathBuf,
+    /// URL path to mount the assets (e.g., "/static")
+    pub url_path: String,
+    /// File serving configuration
+    pub config: StaticFileConfig,
+}
+
+impl StaticMountConfig {
+    /// Create a new static mount configuration.
+    ///
+    /// # Arguments
+    ///
+    /// * `local_path` - Local filesystem path
+    /// * `url_path` - URL path to mount at (must start with '/')
+    pub fn new<S>(local_path: impl Into<PathBuf>, url_path: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            local_path: local_path.into(),
+            url_path: url_path.into(),
+            config: StaticFileConfig::default(),
+        }
+    }
+
+    /// Set custom file serving configuration.
+    pub fn config(mut self, config: StaticFileConfig) -> Self {
+        self.config = config;
+        self
+    }
+}
+
 /// Render service plugin builder for configuring Hikari applications.
 ///
 /// # Example
@@ -52,16 +90,18 @@ pub struct RouterRoute {
 /// let plugin = HikariRenderServicePlugin::new()
 ///     .component_style_registry(registry)  // Convert from hikari_components
 ///     .add_route("/api/health", get(health))
-///     .static_assets("./dist")
+///     .static_assets("./dist", "/static")  // Custom mount path
+///     .icon_assets("./packages/icons/dist/lucide/icons", "/static/icons")
 ///     .build()
 ///     .unwrap();
 /// ```
+#[allow(dead_code)]
 pub struct HikariRenderServicePlugin {
     routes: Vec<RouterRoute>,
-    static_assets_path: Option<PathBuf>,
-    static_config: StaticFileConfig,
+    static_mounts: Vec<StaticMountConfig>,
     state: HashMap<String, serde_json::Value>,
     style_registry: Option<RenderServiceStyleRegistry>,
+    tailwind_css: Option<&'static str>,
 }
 
 impl Default for HikariRenderServicePlugin {
@@ -75,10 +115,10 @@ impl HikariRenderServicePlugin {
     pub fn new() -> Self {
         Self {
             routes: Vec::new(),
-            static_assets_path: None,
-            static_config: StaticFileConfig::default(),
+            static_mounts: Vec::new(),
             state: HashMap::new(),
             style_registry: None,
+            tailwind_css: None,
         }
     }
 
@@ -149,36 +189,74 @@ impl HikariRenderServicePlugin {
         self
     }
 
-    /// Sets the static assets directory path.
+    /// Mount static assets with custom path configuration.
     ///
     /// # Arguments
     ///
-    /// * `path` - Path to the directory containing static assets
-    pub fn static_assets<S>(mut self, path: S) -> Self
+    /// * `local_path` - Local filesystem path to assets
+    /// * `url_path` - URL path to mount at (default: "/static")
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use hikari_render_service::HikariRenderServicePlugin;
+    /// let plugin = HikariRenderServicePlugin::new()
+    ///     .static_assets("./dist", "/static");
+    /// ```
+    pub fn static_assets<S, T>(mut self, local_path: S, url_path: T) -> Self
     where
-        S: Into<String>,
+        S: Into<PathBuf>,
+        T: AsRef<str>,
     {
-        let path_str = path.into();
-        let path_buf = PathBuf::from(&path_str);
+        let local = local_path.into();
+        let url = url_path.as_ref();
 
-        if path_buf.exists() && !path_buf.is_dir() {
-            panic!(
-                "Static assets path exists but is not a directory: {}",
-                path_str
-            );
+        if !url.starts_with('/') {
+            panic!("Static URL path must start with '/': got '{}'", url);
         }
 
-        self.static_assets_path = Some(path_buf);
+        let mount_config = StaticMountConfig::new(local, url);
+        self.static_mounts.push(mount_config);
         self
     }
 
-    /// Configures static file serving options.
+    /// Mount icon assets with custom path configuration.
     ///
     /// # Arguments
     ///
-    /// * `config` - StaticFileConfig with caching and MIME settings
-    pub fn static_config(mut self, config: StaticFileConfig) -> Self {
-        self.static_config = config;
+    /// * `local_path` - Local filesystem path to icon assets
+    /// * `url_path` - URL path to mount at (default: "/static/icons")
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use hikari_render_service::HikariRenderServicePlugin;
+    /// let plugin = HikariRenderServicePlugin::new()
+    ///     .icon_assets("./packages/icons/dist/lucide/icons", "/static/icons");
+    /// ```
+    pub fn icon_assets<S, T>(mut self, local_path: S, url_path: T) -> Self
+    where
+        S: Into<PathBuf>,
+        T: AsRef<str>,
+    {
+        let local = local_path.into();
+        let url = url_path.as_ref();
+
+        if !url.starts_with('/') {
+            panic!("Icon URL path must start with '/': got '{}'", url);
+        }
+
+        let mount_config = StaticMountConfig::new(local, url);
+        self.static_mounts.push(mount_config);
+        self
+    }
+
+    /// Configure static file serving options for a specific mount.
+    ///
+    /// This is a convenience method for advanced configuration.
+    /// For simple cases, use `static_assets()` directly.
+    pub fn mount_static(mut self, mount_config: StaticMountConfig) -> Self {
+        self.static_mounts.push(mount_config);
         self
     }
 
@@ -208,8 +286,7 @@ impl HikariRenderServicePlugin {
     pub fn build(self) -> anyhow::Result<axum::Router> {
         build_router(
             self.routes,
-            self.static_assets_path,
-            self.static_config,
+            self.static_mounts,
             self.state,
             self.style_registry,
         )
@@ -220,9 +297,9 @@ impl HikariRenderServicePlugin {
         self.routes.len()
     }
 
-    /// Returns whether static assets are configured.
-    pub fn has_static_assets(&self) -> bool {
-        self.static_assets_path.is_some()
+    /// Returns the number of configured static mounts.
+    pub fn static_mount_count(&self) -> usize {
+        self.static_mounts.len()
     }
 
     /// Returns the style registry if configured.
@@ -239,7 +316,7 @@ mod tests {
     async fn test_plugin_creation() {
         let plugin = HikariRenderServicePlugin::new();
         assert_eq!(plugin.route_count(), 0);
-        assert!(!plugin.has_static_assets());
+        assert_eq!(plugin.static_mount_count(), 0);
     }
 
     #[tokio::test]
@@ -248,7 +325,8 @@ mod tests {
             "OK"
         }
 
-        let plugin = HikariRenderServicePlugin::new().add_route("/test", axum::routing::get(handler));
+        let plugin =
+            HikariRenderServicePlugin::new().add_route("/test", axum::routing::get(handler));
 
         assert_eq!(plugin.route_count(), 1);
     }
@@ -258,10 +336,32 @@ mod tests {
         let mut registry = StyleRegistry::default();
         registry.register("button", ".button { color: red; }");
 
-        let plugin = HikariRenderServicePlugin::new()
-            .style_registry(registry);
+        let plugin = HikariRenderServicePlugin::new().style_registry(registry);
 
         assert!(plugin.get_style_registry().is_some());
         assert!(plugin.get_style_registry().unwrap().has("button"));
+    }
+
+    #[tokio::test]
+    async fn test_static_assets() {
+        let plugin = HikariRenderServicePlugin::new().static_assets("./dist", "/static");
+
+        assert_eq!(plugin.static_mount_count(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_icon_assets() {
+        let plugin = HikariRenderServicePlugin::new().icon_assets("./icons", "/static/icons");
+
+        assert_eq!(plugin.static_mount_count(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_multiple_static_mounts() {
+        let plugin = HikariRenderServicePlugin::new()
+            .static_assets("./dist", "/static")
+            .icon_assets("./icons", "/static/icons");
+
+        assert_eq!(plugin.static_mount_count(), 2);
     }
 }

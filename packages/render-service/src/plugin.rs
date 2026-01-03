@@ -167,6 +167,16 @@ impl HikariRenderServicePlugin {
         self
     }
 
+    /// Sets the Tailwind CSS bundle to be served.
+    ///
+    /// # Arguments
+    ///
+    /// * `css` - Static CSS content for Tailwind CSS framework
+    pub fn with_tailwind_css(mut self, css: &'static str) -> Self {
+        self.tailwind_css = Some(css);
+        self
+    }
+
     /// Adds a custom route to the router.
     ///
     /// # Arguments
@@ -289,6 +299,7 @@ impl HikariRenderServicePlugin {
             self.static_mounts,
             self.state,
             self.style_registry,
+            self.tailwind_css,
         )
     }
 

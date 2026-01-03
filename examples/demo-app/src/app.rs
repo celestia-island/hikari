@@ -18,6 +18,12 @@ pub enum Route {
     NavigationComponents {},
     #[route("/data")]
     DataComponents {},
+    #[route("/table")]
+    TableDemo {},
+    #[route("/tree")]
+    TreeDemo {},
+    #[route("/node-graph")]
+    NodeGraphDemo {},
 }
 
 #[allow(non_snake_case)]

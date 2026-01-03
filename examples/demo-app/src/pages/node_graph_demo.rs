@@ -1,9 +1,11 @@
-// node-graph-demo/src/app.rs
-// Main app component for node graph demo
+// demo-app/src/pages/node_graph_demo.rs
+// Node graph demo page
 
 use dioxus::prelude::*;
+use dioxus_router::components::Link;
 
-// Node data structure
+use crate::app::Route;
+
 #[derive(Clone, PartialEq, Debug)]
 pub struct GraphNode {
     pub id: String,
@@ -20,8 +22,6 @@ pub enum NodeType {
     Input,
     Process,
     Output,
-    #[allow(dead_code)]
-    Conditional,
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -36,7 +36,6 @@ pub enum PortType {
     Data,
 }
 
-// Connection data structure
 #[derive(Clone, PartialEq, Debug)]
 pub struct Connection {
     pub id: String,
@@ -46,7 +45,6 @@ pub struct Connection {
     pub to_port: String,
 }
 
-// Viewport state for zoom and pan
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Viewport {
     pub zoom: f64,
@@ -65,8 +63,8 @@ impl Default for Viewport {
 }
 
 #[component]
-pub fn App() -> Element {
-    let mut nodes = use_signal(|| {
+pub fn NodeGraphDemo() -> Element {
+    let nodes = use_signal(|| {
         vec![
             GraphNode {
                 id: "node-1".to_string(),
@@ -197,60 +195,35 @@ pub fn App() -> Element {
 
     let mut viewport = use_signal(Viewport::default);
     let mut selected_node = use_signal(|| Option::<String>::None);
-    let mut is_dragging = use_signal(|| false);
-    let mut drag_start = use_signal(|| (0.0, 0.0));
 
     rsx! {
-        div { class: "node-graph-demo",
-            style: "min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: system-ui, -apple-system, sans-serif;",
+        // Node graph page is special - it takes over the full screen
+        div { class: "node-graph-demo min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] font-sans",
 
             // Header
             header {
-                style: "background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 20px 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);",
-                div {
-                    style: "max-width: 100%; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;",
+                class: "bg-white/95 backdrop-blur-sm p-5 lg:p-10 shadow-md",
+                div { class: "max-w-full mx-auto flex justify-between items-center",
                     div {
-                        h1 { style: "margin: 0; font-size: 28px; color: #1a1a2e;",
+                        h1 { class: "m-0 text-2xl lg:text-3xl text-[#1a1a2e]",
                             "Node Graph Demo"
                         }
-                        p { style: "margin: 8px 0 0 0; color: #666; font-size: 14px;",
+                        p { class: "mt-2 text-gray-600 text-sm",
                             "Interactive node graph with connections, zoom, pan, and minimap"
                         }
                     }
-                    div { style: "display: flex; gap: 12px;",
+                    div { class: "flex gap-3",
+                        Link {
+                            to: Route::Home {},
+                            class: "px-4 py-2 bg-gray-500 text-white border-none rounded-md cursor-pointer font-medium hover:bg-gray-600",
+                            "Back to Demo"
+                        }
                         button {
                             onclick: move |_| {
                                 viewport.set(Viewport::default());
                             },
-                            style: "padding: 8px 16px; background: #4a9eff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;",
+                            class: "px-4 py-2 bg-[#4a9eff] text-white border-none rounded-md cursor-pointer font-medium hover:bg-blue-600",
                             "Reset View"
-                        }
-                        button {
-                            onclick: move |_| {
-                                // Add a new node
-                                let new_id = format!("node-{}", nodes().len() + 1);
-                                let mut new_nodes = nodes().clone();
-                                new_nodes.push(GraphNode {
-                                    id: new_id.clone(),
-                                    label: format!("Node {}", nodes().len() + 1),
-                                    x: 500.0,
-                                    y: 500.0,
-                                    node_type: NodeType::Process,
-                                    inputs: vec![Port {
-                                        id: format!("{}-in", new_id),
-                                        label: "input".to_string(),
-                                        port_type: PortType::Data,
-                                    }],
-                                    outputs: vec![Port {
-                                        id: format!("{}-out", new_id),
-                                        label: "output".to_string(),
-                                        port_type: PortType::Data,
-                                    }],
-                                });
-                                nodes.set(new_nodes);
-                            },
-                            style: "padding: 8px 16px; background: #48bb78; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;",
-                            "Add Node"
                         }
                     }
                 }
@@ -258,7 +231,7 @@ pub fn App() -> Element {
 
             // Toolbar
             div {
-                style: "background: white; padding: 12px 40px; display: flex; gap: 16px; align-items: center; border-bottom: 1px solid #e0e0e0;",
+                class: "bg-white px-10 py-3 flex gap-4 items-center border-b border-gray-200",
 
                 button {
                     onclick: move |_| {
@@ -266,7 +239,7 @@ pub fn App() -> Element {
                         v.zoom = (v.zoom * 1.2).min(3.0);
                         viewport.set(v);
                     },
-                    style: "padding: 8px 12px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; font-size: 14px;",
+                    class: "px-3 py-2 border border-gray-300 bg-white rounded cursor-pointer text-sm hover:bg-gray-50",
                     "Zoom In"
                 }
                 button {
@@ -275,13 +248,13 @@ pub fn App() -> Element {
                         v.zoom = (v.zoom / 1.2).max(0.3);
                         viewport.set(v);
                     },
-                    style: "padding: 8px 12px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; font-size: 14px;",
+                    class: "px-3 py-2 border border-gray-300 bg-white rounded cursor-pointer text-sm hover:bg-gray-50",
                     "Zoom Out"
                 }
                 div {
-                    style: "margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 14px; color: #666;",
+                    class: "ml-auto flex items-center gap-2 text-sm text-gray-600",
                     "Zoom: "
-                    span { style: "font-weight: 500; color: #1a1a2e;",
+                    span { class: "font-medium text-[#1a1a2e]",
                         {format!("{:.0}%", viewport().zoom * 100.0)}
                     }
                 }
@@ -289,24 +262,18 @@ pub fn App() -> Element {
 
             // Canvas area
             div {
-                style: "position: relative; width: 100%; height: calc(100vh - 140px); background: #1a1a2e; overflow: hidden;",
+                class: "relative w-full h-[calc(100vh-180px)] bg-[#1a1a2e] overflow-hidden",
 
                 // Grid background
                 div {
-                    style: format!(
-                        "position: absolute; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 20px 20px; transform: scale({}); transform-origin: 0 0;",
-                        viewport().zoom
-                    ),
+                    class: "absolute w-full h-full bg-[radial-gradient(circle,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[length:20px_20px]",
+                    style: format!("transform: scale({}); transform-origin: 0 0;", viewport().zoom),
                 }
 
                 // Node graph canvas
                 svg {
-                    style: format!(
-                        "position: absolute; width: 100%; height: 100%; transform: translate({}, {}) scale({}); transform-origin: 0 0;",
-                        viewport().pan_x,
-                        viewport().pan_y,
-                        viewport().zoom
-                    ),
+                    class: "absolute w-full h-full",
+                    style: format!("transform: translate({}, {}) scale({}); transform-origin: 0 0;", viewport().pan_x, viewport().pan_y, viewport().zoom),
                     "width": "100%",
                     "height": "100%",
 
@@ -332,12 +299,11 @@ pub fn App() -> Element {
                         let to_node = nodes_vec.iter().find(|n| n.id == conn.to_node);
 
                         if let (Some(from), Some(to)) = (from_node, to_node) {
-                            let from_x = from.x + 200.0; // Right side of node
-                            let from_y = from.y + 40.0;  // Center of port area
-                            let to_x = to.x;             // Left side of node
-                            let to_y = to.y + 40.0;      // Center of port area
+                            let from_x = from.x + 200.0;
+                            let from_y = from.y + 40.0;
+                            let to_x = to.x;
+                            let to_y = to.y + 40.0;
 
-                            // Bezier curve control points
                             let cp1_x = from_x + (to_x - from_x) * 0.5;
                             let cp1_y = from_y;
                             let cp2_x = to_x - (to_x - from_x) * 0.5;
@@ -373,7 +339,6 @@ pub fn App() -> Element {
                             NodeType::Input => "#48bb78",
                             NodeType::Output => "#f56565",
                             NodeType::Process => "#4a9eff",
-                            NodeType::Conditional => "#ed8936",
                         };
 
                         rsx! {
@@ -391,12 +356,9 @@ pub fn App() -> Element {
                                     rx: "8",
                                     stroke: if is_selected { "#fff" } else { "rgba(255,255,255,0.3)" },
                                     "stroke-width": if is_selected { "3" } else { "1" },
-                                    style: "cursor: move; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));",
-                                    onmousedown: move |e: MouseEvent| {
+                                    class: "cursor-move drop-shadow-md hover:drop-shadow-lg",
+                                    onclick: move |_| {
                                         selected_node.set(Some(node_id.clone()));
-                                        is_dragging.set(true);
-                                        let coords = e.coordinates().client();
-                                        drag_start.set((coords.x, coords.y));
                                     },
                                 }
 
@@ -408,7 +370,7 @@ pub fn App() -> Element {
                                     "text-anchor": "middle",
                                     "font-size": "14",
                                     "font-weight": "bold",
-                                    style: "pointer-events: none;",
+                                    class: "pointer-events-none",
                                     {node.label.clone()}
                                 }
 
@@ -424,14 +386,14 @@ pub fn App() -> Element {
                                             fill: "white",
                                             stroke: bg_color,
                                             "stroke-width": "2",
-                                            style: "cursor: crosshair;",
+                                            class: "cursor-crosshair",
                                         }
                                         text {
                                             x: "10",
                                             y: "{port_y + 4.0}",
                                             fill: "rgba(255,255,255,0.9)",
                                             "font-size": "10",
-                                            style: "pointer-events: none;",
+                                            class: "pointer-events-none",
                                             {port.label.clone()}
                                         }
                                     }
@@ -449,7 +411,7 @@ pub fn App() -> Element {
                                             fill: "white",
                                             stroke: bg_color,
                                             "stroke-width": "2",
-                                            style: "cursor: crosshair;",
+                                            class: "cursor-crosshair",
                                         }
                                     }
                                 })}
@@ -460,9 +422,9 @@ pub fn App() -> Element {
 
                 // Minimap
                 div {
-                    style: "position: absolute; bottom: 20px; right: 20px; width: 200px; height: 150px; background: rgba(26, 26, 46, 0.9); border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 8px;",
+                    class: "absolute bottom-5 right-5 w-[200px] h-[150px] bg-[#1a1a2e]/90 border-2 border-white/20 rounded-lg p-2",
                     svg {
-                        style: "width: 100%; height: 100%;",
+                        class: "w-full h-full",
                         "viewBox": "0 0 1200 800",
                         "preserveAspectRatio": "xMidYMid meet",
 
@@ -472,7 +434,6 @@ pub fn App() -> Element {
                                 NodeType::Input => "#48bb78",
                                 NodeType::Output => "#f56565",
                                 NodeType::Process => "#4a9eff",
-                                NodeType::Conditional => "#ed8936",
                             };
                             rsx! {
                                 rect {
@@ -492,7 +453,7 @@ pub fn App() -> Element {
                         rect {
                             x: "{(-viewport().pan_x / 5.0 / viewport().zoom).max(0.0)}",
                             y: "{(-viewport().pan_y / 5.0 / viewport().zoom).max(0.0)}",
-                            width: "200", // Fixed size for minimap viewport indicator
+                            width: "200",
                             height: "150",
                             fill: "none",
                             stroke: "white",
@@ -505,14 +466,13 @@ pub fn App() -> Element {
 
                 // Info panel
                 div {
-                    style: "position: absolute; top: 20px; left: 20px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); max-width: 300px;",
-                    h3 { style: "margin: 0 0 12px 0; font-size: 16px; color: #1a1a2e;",
+                    class: "absolute top-5 left-5 bg-white/95 backdrop-blur-sm p-5 rounded-lg shadow-xl max-w-[300px]",
+                    h3 { class: "m-0 mb-3 text-base text-[#1a1a2e]",
                         "Node Graph Controls"
                     }
-                    ul { style: "margin: 0; padding-left: 20px; color: #666; font-size: 13px; line-height: 1.8;",
-                        li { "Drag nodes to reposition" }
-                        li { "Use toolbar to zoom in/out" }
+                    ul { class: "m-0 pl-5 text-gray-600 text-sm leading-relaxed",
                         li { "Click nodes to select" }
+                        li { "Use toolbar to zoom in/out" }
                         li { "Ports shown as circles" }
                         li { "Bezier curve connections" }
                         li { "Minimap for navigation" }
@@ -520,11 +480,11 @@ pub fn App() -> Element {
 
                     if let Some(node_id) = selected_node() {
                         div {
-                            style: "margin-top: 16px; padding-top: 16px; border-top: 1px solid #e0e0e0;",
-                            h4 { style: "margin: 0 0 8px 0; font-size: 14px; color: #1a1a2e;",
+                            class: "mt-4 pt-4 border-t border-gray-200",
+                            h4 { class: "m-0 mb-2 text-sm text-[#1a1a2e]",
                                 "Selected Node"
                             }
-                            p { style: "margin: 0; color: #666; font-size: 13px;",
+                            p { class: "m-0 text-gray-600 text-sm",
                                 "{nodes().iter().find(|n| n.id == node_id).map(|n| n.label.clone()).unwrap_or_default()}"
                             }
                         }
@@ -533,19 +493,19 @@ pub fn App() -> Element {
 
                 // Stats
                 div {
-                    style: "position: absolute; bottom: 20px; left: 20px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);",
-                    div { style: "display: flex; gap: 20px; font-size: 13px;",
+                    class: "absolute bottom-5 left-5 bg-white/95 backdrop-blur-sm p-3 px-4 rounded-lg shadow-xl",
+                    div { class: "flex gap-5 text-sm",
                         div {
-                            span { style: "color: #666;", "Nodes: " }
-                            span { style: "color: #1a1a2e; font-weight: 500;", "{nodes().len()}" }
+                            span { class: "text-gray-600", "Nodes: " }
+                            span { class: "text-[#1a1a2e] font-medium", "{nodes().len()}" }
                         }
                         div {
-                            span { style: "color: #666;", "Connections: " }
-                            span { style: "color: #1a1a2e; font-weight: 500;", "{connections().len()}" }
+                            span { class: "text-gray-600", "Connections: " }
+                            span { class: "text-[#1a1a2e] font-medium", "{connections().len()}" }
                         }
                         div {
-                            span { style: "color: #666;", "Zoom: " }
-                            span { style: "color: #1a1a2e; font-weight: 500;",
+                            span { class: "text-gray-600", "Zoom: " }
+                            span { class: "text-[#1a1a2e] font-medium",
                                 {format!("{:.0}%", viewport().zoom * 100.0)}
                             }
                         }

@@ -329,13 +329,8 @@ impl SequenceBuilder {
 
     pub fn build(self) -> Vec<TweenId> {
         let mut ids = Vec::new();
-        for (mut tween, delay) in self.tweens {
-            let id = tween.id();
-            let mut tweens = self.engine.tweens.borrow_mut();
-            tweens.insert(tween);
-            drop(tweens);
-
-            std::thread::sleep(delay);
+        for (tween, _delay) in self.tweens {
+            let id = self.engine.insert_tween(tween);
             self.engine.play(id);
             ids.push(id);
         }

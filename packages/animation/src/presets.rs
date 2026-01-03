@@ -1,9 +1,8 @@
-use std::{cell::RefCell, rc::Rc, time::Duration};
+use std::time::Duration;
 
 use crate::core::{
-    {AnimationDirection, AnimationState, EasingFunction, PlaybackMode},
-    {AnimationEngine, AnimationOptions, PropertyTarget, Tween, TweenId},
-    {CompletionCallback, TweenCallback},
+    EasingFunction, PlaybackMode,
+    AnimationEngine, AnimationOptions, PropertyTarget, Tween, TweenId,
 };
 
 /// Color configuration for FUI animations
@@ -160,16 +159,6 @@ impl GlowAnimation {
 
         let mut tweens = self.engine.tweens.borrow_mut();
         tweens.insert(tween)
-    }
-}
-
-impl Default for FUIColors {
-    fn default() -> Self {
-        Self {
-            primary: (0.0, 0.8, 1.0),
-            accent: (0.0, 1.0, 0.8),
-            glow: (0.2, 0.6, 1.0),
-        }
     }
 }
 

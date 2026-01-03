@@ -21,7 +21,7 @@ use hikari_palette::*;
 ///
 /// - `palette` - Theme identifier string (default: "primary")
 /// - `children` - Child elements to render within the theme context
-#[derive(Clone, Props)]
+#[derive(Props, PartialEq, Clone)]
 pub struct ThemeProviderProps {
     #[props(default = "primary".to_string())]
     pub palette: String,

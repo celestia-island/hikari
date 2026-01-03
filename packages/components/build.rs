@@ -21,7 +21,7 @@ fn main() {
         if feature_enabled(&feature_name) {
             for scss_path in files {
                 if let Err(e) = compile_scss(scss_path, &styles_dir) {
-                    eprintln!("   ✗ Failed to compile {}: {}", scss_path, e);
+                    eprintln!("   ✗ Failed to compile {} (feature: {}): {}", scss_path, feature_name, e);
                     std::process::exit(1);
                 }
             }
@@ -100,25 +100,26 @@ fn get_scss_files() -> Vec<(&'static str, Vec<&'static str>)> {
 }
 
 fn feature_enabled(feature: &str) -> bool {
-    // First check group flags
-    let group_features = ["basic", "feedback", "navigation", "data"];
-    for group in group_features {
-        if env::var(format!("CARGO_FEATURE_{}", group.to_uppercase())).is_ok() {
-            return true;
-        }
-    }
-
-    // Then check individual component flags
-    env::var(format!("CARGO_FEATURE_{}", feature.to_uppercase())).is_ok()
+    // Check specific feature flag
+    let feature_var = format!("CARGO_FEATURE_{}", feature.to_uppercase().replace("-", "_"));
+    env::var(&feature_var).is_ok()
 }
 
 fn compile_scss(input_path: &str, output_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    let scss_content = fs::read_to_string(input_path)?;
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+    // Normalize path separators
+    let normalized_path = input_path.replace('/', std::path::MAIN_SEPARATOR_STR);
+    let full_path = Path::new(&manifest_dir).join(&normalized_path);
+
+    if !full_path.exists() {
+        return Err(format!("File not found: {}", full_path.display()).into());
+    }
+
+    let scss_content = fs::read_to_string(&full_path)?;
 
     // 获取 theme SCSS 文件的路径
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
-    let theme_vars = Path::new(&manifest_dir).join("../../theme/styles/variables.scss");
-    let theme_mixins = Path::new(&manifest_dir).join("../../theme/styles/mixins.scss");
+    let theme_vars = Path::new(&manifest_dir).join("../theme/styles/variables.scss");
+    let theme_mixins = Path::new(&manifest_dir).join("../theme/styles/mixins.scss");
 
     // 读取 theme 文件内容
     let vars_content = fs::read_to_string(&theme_vars)?;
@@ -139,7 +140,9 @@ fn compile_scss(input_path: &str, output_dir: &Path) -> Result<(), Box<dyn std::
         mixins_content,
         scss_content
             .replace("@use '../../../theme/styles/variables.scss' as *;", "")
+            .replace("@use '../../../../theme/styles/variables.scss' as *;", "")
             .replace("@use '../../../theme/styles/mixins.scss' as *;", "")
+            .replace("@use '../../../../theme/styles/mixins.scss' as *;", "")
     );
 
     // 编译 SCSS 为 CSS（不需要 load_path）

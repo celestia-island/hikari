@@ -6,9 +6,9 @@
 #   just --summary       - Briefly list all recipe names
 #
 # Main tasks:
+#   just dev             - Development mode (build and start demo-app)
 #   just build           - Build everything (Release)
 #   just build-dev       - Build everything (Debug)
-#   just dev             - Development mode (build and start demo-app)
 #   just fmt             - Format code
 #   just clippy          - Run Clippy checks
 #   just clean           - Clean build artifacts
@@ -45,13 +45,21 @@ build:
 # Examples
 # ============================================================================
 
-# Run demo-app (one-click start)
-run-demo: build-dev
+# Development mode (build and start demo-app)
+dev:
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Building workspace..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    cargo build
     @echo ""
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Running demo-app..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    cargo run -p demo-app --bin demo-app
+    cd examples/demo-app && cargo run --features="server"
+
+# Run demo-app (one-click start, alias for dev)
+run-demo: dev
 
 # ============================================================================
 # Code quality
@@ -121,11 +129,7 @@ info:
     @echo "  _dev-tools"
     @echo ""
     @echo "Examples:"
-    @echo "  demo-app"
-    @echo "  table-demo"
-    @echo "  tree-demo"
-    @echo "  node-graph-demo"
-    @echo "  ssr-demo"
+    @echo "  demo-app (unified demo app with all examples)"
 
 # ============================================================================
 # Module Pre-build Scripts (Python-based)

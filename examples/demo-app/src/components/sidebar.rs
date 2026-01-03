@@ -75,6 +75,27 @@ pub fn Sidebar(
                 on_close: on_close,
                 "Data Components"
             }
+
+            div { class: "border-t border-white/20 my-2" }
+
+            NavLink {
+                to: Route::TableDemo {},
+                is_active: is_active(&Route::TableDemo {}),
+                on_close: on_close,
+                "Table Demo"
+            }
+            NavLink {
+                to: Route::TreeDemo {},
+                is_active: is_active(&Route::TreeDemo {}),
+                on_close: on_close,
+                "Tree Demo"
+            }
+            NavLink {
+                to: Route::NodeGraphDemo {},
+                is_active: is_active(&Route::NodeGraphDemo {}),
+                on_close: on_close,
+                "Node Graph"
+            }
         }
     }
 }

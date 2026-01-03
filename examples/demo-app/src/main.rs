@@ -31,7 +31,7 @@ async fn main() -> anyhow::Result<()> {
         .component_style_registry(style_registry)
         .with_tailwind_css(get_tailwind_css())
         .add_route("/health", axum::routing::get(|| async { "OK" }))
-        .static_assets("dist/assets")
+        .static_assets("dist/assets", "/assets")
         .build()?
         .layer(cors);
 

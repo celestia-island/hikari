@@ -8,7 +8,7 @@ publish = false
 # This is a standalone example, not part of the main workspace
 
 [[bin]]
-name = "demo-app"
+name = "demo_app_server"
 path = "src/main.rs"
 required-features = ["server"]
 

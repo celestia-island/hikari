@@ -41,6 +41,21 @@ pub fn Home() -> Element {
                     description: "Table, Tree".to_string(),
                     route: Route::DataComponents {},
                 }
+                DemoCard {
+                    title: "Table Demo".to_string(),
+                    description: "Full table component showcase".to_string(),
+                    route: Route::TableDemo {},
+                }
+                DemoCard {
+                    title: "Tree Demo".to_string(),
+                    description: "Full tree component showcase".to_string(),
+                    route: Route::TreeDemo {},
+                }
+                DemoCard {
+                    title: "Node Graph".to_string(),
+                    description: "Interactive node graph editor".to_string(),
+                    route: Route::NodeGraphDemo {},
+                }
             }
 
             div { class: "mt-15 p-5 bg-white rounded-lg border-l-4 border-[#4a9eff] shadow-sm",

@@ -73,6 +73,7 @@ pub enum RouterBuildError {
 /// * `static_mounts` - Static asset mount configurations
 /// * `state` - Application state to share across handlers
 /// * `style_registry` - Optional style registry for CSS serving
+/// * `tailwind_css` - Optional Tailwind CSS bundle
 ///
 /// # Example
 ///
@@ -88,6 +89,7 @@ pub enum RouterBuildError {
 ///     vec![],
 ///     HashMap::new(),
 ///     Some(registry),
+///     None,
 /// )?;
 /// # Ok(())
 /// # }
@@ -97,6 +99,7 @@ pub fn build_router(
     static_mounts: Vec<StaticMountConfig>,
     state: HashMap<String, serde_json::Value>,
     style_registry: Option<StyleRegistry>,
+    tailwind_css: Option<&'static str>,
 ) -> anyhow::Result<Router> {
     // Create the application state
     let mut app_state = AppState::new(state);
@@ -104,6 +107,11 @@ pub fn build_router(
     // Add style registry to state if provided
     if let Some(registry) = style_registry {
         app_state = app_state.with_style_registry(registry);
+    }
+
+    // Add Tailwind CSS to state if provided
+    if let Some(css) = tailwind_css {
+        app_state = app_state.with_tailwind_css(css);
     }
 
     // Start building the router WITHOUT state first
@@ -340,7 +348,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_build_router_basic() {
-        let router = build_router(vec![], vec![], HashMap::new(), None);
+        let router = build_router(vec![], vec![], HashMap::new(), None, None);
 
         assert!(router.is_ok());
     }
@@ -356,7 +364,7 @@ mod tests {
             method_router: get(test_handler),
         }];
 
-        let router = build_router(routes, vec![], HashMap::new(), None);
+        let router = build_router(routes, vec![], HashMap::new(), None, None);
 
         assert!(router.is_ok());
     }
@@ -364,7 +372,7 @@ mod tests {
     #[tokio::test]
     async fn test_build_router_with_static_assets() {
         let static_mounts = vec![StaticMountConfig::new("./dist", "/static")];
-        let router = build_router(vec![], static_mounts, HashMap::new(), None);
+        let router = build_router(vec![], static_mounts, HashMap::new(), None, None);
 
         assert!(router.is_ok());
     }

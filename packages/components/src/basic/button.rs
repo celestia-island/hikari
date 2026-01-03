@@ -40,20 +40,6 @@ pub enum ButtonSize {
     Large,
 }
 
-/// Button size variants
-///
-/// Different size options for the button component.
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum ButtonSize {
-    /// Medium size (default)
-    #[default]
-    Medium,
-    /// Small size (compact)
-    Small,
-    /// Large size (prominent)
-    Large,
-}
-
 #[derive(Clone, PartialEq, Props)]
 pub struct ButtonProps {
     #[props(default)]

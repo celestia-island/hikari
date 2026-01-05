@@ -49,15 +49,15 @@ pub fn Layout(
     let mut is_drawer_open = use_signal(|| false);
 
     rsx! {
-        div { class: "flex h-screen font-sans overflow-hidden",
+        div { class: "hi-flex hi-h-screen hi-font-sans hi-overflow-hidden",
 
             // Mobile overlay (backdrop)
             if collapsible {
                 div {
                     class: if *is_drawer_open.read() {
-                        "fixed inset-0 bg-black/50 z-40 lg:hidden"
+                        "hi-fixed hi-inset-0 hi-bg-black/50 hi-z-40 hi-lg:hidden"
                     } else {
-                        "hidden"
+                        "hi-hidden"
                     },
                     onclick: move |_| is_drawer_open.set(false)
                 }
@@ -69,7 +69,7 @@ pub fn Layout(
             }
 
             // Main content area
-            div { class: "flex-1 flex flex-col overflow-hidden lg:ml-0",
+            div { class: "hi-flex-1 hi-flex hi-flex-col hi-overflow-hidden hi-lg:ml-0",
 
                 // Header (if provided)
                 if let Some(header_content) = header {
@@ -78,7 +78,7 @@ pub fn Layout(
 
                 // Main content
                 main {
-                    class: "flex-1 overflow-y-auto p-6 lg:p-10 bg-[#f5f5f5]",
+                    class: "hi-flex-1 hi-overflow-y-auto hi-p-6 hi-lg:p-10 hi-bg-light-theme",
                     { children }
                 }
             }

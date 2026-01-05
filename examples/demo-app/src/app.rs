@@ -4,8 +4,6 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Router;
 
-use crate::components::*;
-
 /// Main application routes
 #[derive(Clone, Routable, Debug, PartialEq)]
 pub enum Route {
@@ -46,24 +44,19 @@ pub enum Route {
 // ============================================================
 // Route Handler Functions
 // ============================================================
+// NOTE: Page components already include Layout, so we just call them directly
 
 #[allow(non_snake_case)]
 fn Home() -> Element {
     rsx! {
-        Layout {
-            current_route: Route::Home {},
-            crate::pages::home::Home {}
-        }
+        crate::pages::home::Home {}
     }
 }
 
 #[allow(non_snake_case)]
 fn ComponentsOverview() -> Element {
     rsx! {
-        Layout {
-            current_route: Route::ComponentsOverview {},
-            crate::pages::components::ComponentsOverview {}
-        }
+        crate::pages::components::ComponentsOverview {}
     }
 }
 
@@ -72,10 +65,7 @@ macro_rules! component_page {
         #[allow(non_snake_case)]
         fn $name() -> Element {
             rsx! {
-                Layout {
-                    current_route: Route::$name {},
-                    crate::pages::components::$name {}
-                }
+                crate::pages::components::$name {}
             }
         }
     };
@@ -91,10 +81,7 @@ macro_rules! system_page {
         #[allow(non_snake_case)]
         fn $name() -> Element {
             rsx! {
-                Layout {
-                    current_route: Route::$name {},
-                    crate::pages::system::$name {}
-                }
+                crate::pages::system::$name {}
             }
         }
     };
@@ -109,10 +96,7 @@ system_page!(SystemAnimations);
 #[allow(non_snake_case)]
 fn DemosOverview() -> Element {
     rsx! {
-        Layout {
-            current_route: Route::DemosOverview {},
-            crate::pages::demos::DemosOverview {}
-        }
+        crate::pages::demos::DemosOverview {}
     }
 }
 

@@ -59,6 +59,9 @@ build-client:
     @echo "📄 Copying static assets..."
     @Copy-Item -Force examples/demo-app/index.html examples/demo-app/dist/index.html
     @echo ""
+    @echo "🔧 Fixing resource paths..."
+    @python scripts/fix_index_html.py examples/demo-app/dist/index.html
+    @echo ""
     @echo "✅ WASM client built successfully"
     @echo ""
     @echo "📦 Output: examples/demo-app/dist/"
@@ -76,6 +79,9 @@ dev:
     @echo ""
     @echo "📄 Copying static assets..."
     @Copy-Item -Force examples/demo-app/index.html examples/demo-app/dist/index.html
+    @echo ""
+    @echo "🔧 Fixing resource paths..."
+    @python scripts/fix_index_html.py examples/demo-app/dist/index.html
     @echo ""
     @echo "✅ WASM client built successfully"
     @echo ""

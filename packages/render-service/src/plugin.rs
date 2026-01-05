@@ -77,7 +77,7 @@ impl StaticMountConfig {
 ///
 /// ```rust,no_run
 /// use hikari_render_service::HikariRenderServicePlugin;
-/// use hikari_components::StyleRegistry;
+/// use components::StyleRegistry;
 /// use axum::routing::get;
 ///
 /// async fn health() -> &'static str {
@@ -88,7 +88,7 @@ impl StaticMountConfig {
 /// registry.register_all();  // Register all Hikari components
 ///
 /// let plugin = HikariRenderServicePlugin::new()
-///     .component_style_registry(registry)  // Convert from hikari_components
+///     .component_style_registry(registry)  // Convert from components
 ///     .add_route("/api/health", get(health))
 ///     .static_assets("./dist", "/static")  // Custom mount path
 ///     .icon_assets("./packages/icons/dist/lucide/icons", "/static/icons")
@@ -132,13 +132,13 @@ impl HikariRenderServicePlugin {
         self
     }
 
-    /// Sets the style registry from hikari_components.
+    /// Sets the style registry from components.
     ///
     /// # Arguments
     ///
-    /// * `registry` - hikari_components::StyleRegistry with registered component styles
-    pub fn component_style_registry(mut self, registry: hikari_components::StyleRegistry) -> Self {
-        // Convert hikari_components::StyleRegistry to render-service StyleRegistry
+    /// * `registry` - components::StyleRegistry with registered component styles
+    pub fn component_style_registry(mut self, registry: components::StyleRegistry) -> Self {
+        // Convert components::StyleRegistry to render-service StyleRegistry
         let mut render_registry = RenderServiceStyleRegistry::default();
 
         // The components StyleRegistry stores &str, we need to convert to String

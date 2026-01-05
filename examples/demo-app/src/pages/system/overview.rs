@@ -8,16 +8,17 @@ use crate::app::Route;
 
 /// System overview page
 #[allow(non_snake_case)]
+#[component]
 pub fn SystemOverview() -> Element {
     rsx! {
-        div { class: "space-y-6",
-            div { class: "mb-8",
-                h1 { class: "text-4xl font-bold text-gray-800 mb-2", "System" }
-                p { class: "text-gray-600", "Explore Hikari's foundational systems and utilities" }
+        div { class: "hi-space-y-6",
+            div { class: "hi-mb-8",
+                h1 { class: "hi-text-4xl hi-font-bold hi-text-gray-800 hi-mb-2", "System" }
+                p { class: "hi-text-gray-600", "Explore Hikari's foundational systems and utilities" }
             }
 
             // System categories grid
-            div { class: "grid grid-cols-1 md:grid-cols-2 gap-6",
+            div { class: "hi-grid hi-grid-cols-1 hi-md:grid-cols-2 hi-gap-6",
                 SystemCard {
                     title: "CSS Utilities".to_string(),
                     description: "Tailwind-compatible utility classes for rapid styling".to_string(),
@@ -56,15 +57,11 @@ fn SystemCard(
     rsx! {
         Link {
             to: route,
-            class: "block group",
+            class: "hi-block group",
             div {
-                class: "bg-white rounded-lg shadow-md p-6 \
-                         hover:shadow-lg hover:-translate-y-1 \
-                         transition-all duration-200 \
-                         border-2 border-transparent \
-                         hover:border-[#4a9eff]",
-                h3 { class: "text-2xl font-semibold text-gray-800 mb-2", "{title}" }
-                p { class: "text-gray-600", "{description}" }
+                class: "hi-bg-white hi-rounded-lg shadow-md hi-p-6 hover:shadow-lg hover:-translate-y-1 hi-transition-all duration-200 border-2 border-transparent hover:border-[#4a9eff]",
+                h3 { class: "hi-text-2xl hi-font-semibold hi-text-gray-800 hi-mb-2", "{title}" }
+                p { class: "hi-text-gray-600", "{description}" }
             }
         }
     }

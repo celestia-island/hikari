@@ -13,7 +13,7 @@
 //!
 //! ```rust,no_run
 //! use hikari_render_service::HikariRenderServicePlugin;
-//! use hikari_components::StyleRegistry;
+//! use components::StyleRegistry;
 //!
 //! #[tokio::main]
 //! async fn main() -> anyhow::Result<()> {
@@ -21,7 +21,7 @@
 //!     registry.register_all();  // Register all Hikari components
 //!
 //!     let app = HikariRenderServicePlugin::new()
-//!         .component_style_registry(registry)  // Convert from hikari_components
+//!         .component_style_registry(registry)  // Convert from components
 //!         .build()?;
 //!
 //!     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;

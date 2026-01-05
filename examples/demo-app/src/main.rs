@@ -6,15 +6,16 @@ use tokio::net::TcpListener;
 
 use axum::response::IntoResponse;
 use http::StatusCode;
-use hikari_components::StyleRegistry;
-use hikari_render_service::HikariRenderServicePlugin;
+use components::StyleRegistry;
+use render_service::HikariRenderServicePlugin;
 use tower_http::cors::{Any, CorsLayer};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Initialize tracing
+    // Initialize tracing with more detailed logging
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+        .with_max_level(tracing::Level::DEBUG)
+        .with_target(false)
         .init();
 
     // 配置 CORS

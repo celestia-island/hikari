@@ -2,7 +2,7 @@
 // Layout component with responsive drawer
 
 use dioxus::prelude::*;
-use hikari_icons::{Icon, LucideIcon};
+use icons::{Icon, LucideIcon};
 
 use crate::{app::Route, components::Sidebar};
 
@@ -17,14 +17,14 @@ pub fn Layout(children: Element, current_route: Route) -> Element {
     let mut is_drawer_open = use_signal(|| false);
 
     rsx! {
-        div { class: "flex h-screen font-sans overflow-hidden",
+        div { class: "hi-flex hi-h-screen hi-font-sans hi-overflow-hidden",
 
             // Mobile overlay (backdrop)
             div {
                 class: if *is_drawer_open.read() {
-                    "fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    "hi-fixed hi-inset-0 hi-bg-black/50 hi-z-40 hi-lg:hidden"
                 } else {
-                    "hidden"
+                    "hi-hidden"
                 },
                 onclick: move |_| is_drawer_open.set(false)
             }
@@ -37,27 +37,27 @@ pub fn Layout(children: Element, current_route: Route) -> Element {
             }
 
             // Main content area
-            div { class: "flex-1 flex flex-col overflow-hidden lg:ml-0",
+            div { class: "hi-flex-1 hi-flex hi-flex-col hi-overflow-hidden lg:ml-0",
 
                 // Mobile header with hamburger menu
                 header {
-                    class: "lg:hidden flex items-center justify-between p-4 bg-[#1a1a2e] text-white",
+                    class: "lg:hidden hi-flex hi-items-center hi-justify-between hi-p-4 hi-bg-dark-theme hi-text-white",
 
                     button {
-                        class: "p-2 rounded-lg hover:bg-white/10 transition-colors",
+                        class: "hi-p-2 hi-rounded-lg hi-hover:bg-white/10 hi-transition-colors",
                         onclick: move |_| is_drawer_open.toggle(),
                         Icon {
                             icon: LucideIcon::align_horizontal_justify_start,
-                            class: "w-6 h-6".to_string()
+                            class: "hi-w-6 hi-h-6".to_string()
                         }
                     }
 
-                    h2 { class: "text-xl text-[#4a9eff] font-semibold", "Hikari Demo" }
+                    h2 { class: "hi-text-xl hi-text-primary-light hi-font-semibold", "Hikari Demo" }
                 }
 
                 // Main content
                 main {
-                    class: "flex-1 overflow-y-auto p-6 lg:p-10 bg-[#f5f5f5]",
+                    class: "hi-flex-1 hi-overflow-y-auto hi-p-6 lg:p-10 hi-bg-light-theme",
                     { children }
                 }
             }

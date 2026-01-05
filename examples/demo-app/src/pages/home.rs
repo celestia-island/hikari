@@ -12,15 +12,15 @@ pub fn Home() -> Element {
         Layout {
             current_route: Route::Home {},
 
-            h1 { class: "text-3xl lg:text-4xl font-bold mb-5 text-[#1a1a2e]",
+            h1 { class: "hi-text-3xl lg:text-4xl hi-font-bold hi-mb-5 hi-text-dark-theme",
                 "Welcome to Hikari UI Demo"
             }
 
-            p { class: "text-base lg:text-lg leading-relaxed text-gray-600 mb-8",
+            p { class: "hi-text-base lg:text-lg hi-leading-relaxed hi-text-gray-600 mb-8",
                 "Hikari is a modern UI component library for Dioxus, inspired by Arknights design aesthetics with FUI (Futuristic User Interface) elements and traditional Chinese colors. The name \"Hikari\" comes from the rhythm game Arcaea."
             }
 
-            div { class: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-5 mt-10",
+            div { class: "hi-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-5 mt-10",
                 DemoCard {
                     title: "Basic Components".to_string(),
                     description: "Button, Input, Card, Badge".to_string(),
@@ -43,9 +43,9 @@ pub fn Home() -> Element {
                 }
             }
 
-            div { class: "mt-15 p-5 bg-white rounded-lg border-l-4 border-[#4a9eff] shadow-sm",
-                h3 { class: "text-xl font-semibold mb-2.5 text-[#1a1a2e]", "About Hikari" }
-                p { class: "m-0 text-gray-600 leading-relaxed",
+            div { class: "mt-15 hi-p-5 hi-bg-white hi-rounded-lg border-l-4 border-[#4a9eff] shadow-sm",
+                h3 { class: "hi-text-xl hi-font-semibold mb-2.5 hi-text-dark-theme", "About Hikari" }
+                p { class: "hi-m-0 hi-text-gray-600 hi-leading-relaxed",
                     "Hikari (光) means 'light' in Japanese. This library brings together the best of modern web design with traditional Chinese color palettes, creating a unique and beautiful UI experience."
                 }
             }
@@ -57,14 +57,13 @@ pub fn Home() -> Element {
 fn DemoCard(title: String, description: String, route: Route) -> Element {
     rsx! {
         Link { to: route,
-            class: "block h-full",
+            class: "hi-block hi-h-full",
             div {
-                class: "bg-white p-6 rounded-xl shadow-md hover:shadow-lg \
-                        hover:-translate-y-1 transition-all duration-200 cursor-pointer",
-                h3 { class: "m-0 mb-2 text-[#1a1a2e] text-lg font-semibold",
+                class: "hi-bg-white hi-p-6 hi-rounded-xl shadow-md hover:shadow-lg hover:-translate-y-1 hi-transition-all duration-200 hi-cursor-pointer",
+                h3 { class: "hi-m-0 hi-mb-2 hi-text-dark-theme hi-text-lg hi-font-semibold",
                     "{title}"
                 }
-                p { class: "m-0 text-gray-600 text-sm",
+                p { class: "hi-m-0 hi-text-gray-600 hi-text-sm",
                     "{description}"
                 }
             }

@@ -21,6 +21,9 @@ use super::{
     registry::StyleRegistry,
 };
 
+// Import palette for utility classes
+use palette;
+
 /// Application state shared across all handlers.
 #[derive(Clone, Debug)]
 pub struct AppState {
@@ -131,15 +134,27 @@ pub fn build_router(
         axum::routing::get(tailwind_css_handler),
     );
 
+    // CRITICAL: Add root path handler BEFORE static mounts
+    // This ensures the SPA index.html is served for the root path
+    router = router.route("/", axum::routing::get(index_handler));
+    router = router.route("/index.html", axum::routing::get(index_handler));
+
     // Add Dioxus SSR catch-all route
     router = router.route("/ssr/<*path>", any(ssr_handler));
-    router = router.fallback(any(ssr_handler));
 
-    // Add static asset mounts for each configured mount point
+    // CRITICAL: Add static asset mounts with SPA fallback
+    // Static files are served, but 404s fall through to index.html for SPA routing
     for mount_config in static_mounts {
-        let serve_dir = ServeDir::new(&mount_config.local_path);
+        let serve_dir = ServeDir::new(&mount_config.local_path)
+            .fallback(ServeDir::new("dist").fallback(
+                axum::routing::get(spa_fallback_handler)
+            ));
         router = router.nest_service(&mount_config.url_path, serve_dir);
     }
+
+    // Add global fallback for any unmatched routes
+    // This catches frontend routes like /components/basic, /system, etc.
+    router = router.fallback(axum::routing::get(spa_fallback_handler));
 
     // NOW add state - this must be done last in Axum 0.8
     let router = router.with_state(app_state);
@@ -148,6 +163,81 @@ pub fn build_router(
     // Users can add their own middleware layers after building the router
 
     Ok(router)
+}
+
+/// Index handler - serves the SPA's index.html
+///
+/// This is the entry point for the application. For Dioxus WASM apps,
+/// the index.html contains everything needed to bootstrap the app.
+async fn index_handler() -> impl IntoResponse {
+    // Try to read index.html from dist directory
+    let html = match tokio::fs::read_to_string("dist/index.html").await {
+        Ok(content) => content,
+        Err(_) => {
+            // Fallback HTML if index.html not found
+            r#"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hikari App - Not Found</title>
+    <style>
+        body { font-family: system-ui; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .error { text-align: center; color: #f55; }
+        .hint { color: #666; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="error">
+        <h1>dist/index.html not found</h1>
+        <p class="hint">Run 'just build-client' or 'dx build' first.</p>
+    </div>
+</body>
+</html>"#.to_string()
+        }
+    };
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
+        .body(Body::from(html))
+        .unwrap()
+}
+
+/// SPA fallback handler - returns index.html for all unmatched routes
+///
+/// This enables client-side routing by returning the same index.html
+/// for all paths. The frontend router (Dioxus Router) will handle
+/// displaying the correct page based on the URL.
+async fn spa_fallback_handler(_uri: Uri) -> impl IntoResponse {
+    // For SPAs, all routes should return index.html
+    // The frontend router handles showing the right page
+    let html = match tokio::fs::read_to_string("dist/index.html").await {
+        Ok(content) => content,
+        Err(_) => {
+            // Fallback HTML if index.html not found
+            r#"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hikari App - Not Found</title>
+</head>
+<body>
+    <div style="font-family: system-ui; text-align: center; padding: 2rem;">
+        <h1 style="color: #f55;">Application Not Built</h1>
+        <p>dist/index.html not found. Please build the application first.</p>
+    </div>
+</body>
+</html>"#.to_string()
+        }
+    };
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
+        .body(Body::from(html))
+        .unwrap()
 }
 
 /// Dioxus SSR handler for server-side rendering.
@@ -226,13 +316,20 @@ pub async fn internal_error(err: String) -> impl IntoResponse {
         .unwrap()
 }
 
-/// CSS bundle handler - serves all registered component styles.
+/// CSS bundle handler - serves all registered component styles plus utility classes.
 async fn css_bundle_handler(State(state): State<AppState>) -> impl IntoResponse {
-    let css = if let Some(registry) = &state.style_registry {
+    // Get utility classes from palette
+    let utility_classes = palette::get_utility_classes();
+
+    // Get component styles from registry
+    let component_styles = if let Some(registry) = &state.style_registry {
         registry.css_bundle()
     } else {
         String::new()
     };
+
+    // Combine utility classes and component styles
+    let css = format!("{}\n\n{}", utility_classes, component_styles);
 
     Response::builder()
         .status(StatusCode::OK)

@@ -20,22 +20,22 @@ pub fn Sidebar(
     rsx! {
         aside {
             class: format!(
-                "fixed lg:static inset-y-0 left-0 z-50 w-64 \
-                 bg-[#1a1a2e] text-white p-5 flex flex-col gap-2 \
-                 transition-transform duration-300 ease-in-out \
+                "hi-fixed hi-lg:static hi-inset-y-0 hi-left-0 hi-z-50 hi-w-64 \
+                 hi-bg-dark-theme hi-text-white hi-p-5 hi-flex hi-flex-col hi-gap-2 \
+                 hi-transition-transform hi-duration-300 hi-ease-in-out \
                  {}",
-                if is_open { "translate-x-0" } else { "-translate-x-full lg:translate-x-0" }
+                if is_open { "hi-translate-x-0" } else { "hi--translate-x-full hi-lg:translate-x-0" }
             ),
 
             // Close button (mobile only)
             button {
-                class: "lg:hidden self-end p-2 hover:bg-white/10 rounded transition-colors",
+                class: "hi-lg:hidden hi-self-end hi-p-2 hi-hover:bg-white/10 hi-rounded hi-transition-colors",
                 onclick: move |_| on_close.call(()),
                 "✕"
             }
 
             // Title
-            h2 { class: "hidden lg:block text-2xl text-[#4a9eff] mb-5 font-semibold", "Hikari Demo" }
+            h2 { class: "hi-hidden hi-lg:block hi-text-2xl hi-text-primary-light hi-mb-5 hi-font-semibold", "Hikari Demo" }
 
             // Navigation sections
             NavSection {
@@ -141,8 +141,8 @@ pub fn Sidebar(
 #[component]
 fn NavSection(title: String, children: Element) -> Element {
     rsx! {
-        div { class: "mb-4",
-            div { class: "px-4 py-2 text-sm font-semibold text-gray-400 uppercase tracking-wider",
+        div { class: "hi-mb-4",
+            div { class: "hi-px-4 hi-py-2 hi-text-sm hi-font-semibold hi-text-gray-400 hi-uppercase hi-tracking-wider",
                 {title}
             }
             { children }

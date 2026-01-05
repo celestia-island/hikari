@@ -9,12 +9,12 @@ pub fn DemosOverview() -> Element {
     rsx! {
         div { class: "space-y-6",
             div { class: "mb-8",
-                h1 { class: "text-4xl font-bold text-gray-800 mb-2", "Demos" }
-                p { class: "text-gray-600", "Complete application examples showcasing Hikari in action" }
+                h1 { class: "hi-text-4xl hi-font-bold hi-text-gray-800 hi-mb-2", "Demos" }
+                p { class: "hi-text-gray-600", "Complete application examples showcasing Hikari in action" }
             }
 
-            div { class: "bg-blue-50 border border-blue-200 rounded-lg p-6",
-                p { class: "text-blue-800",
+            div { class: "bg-blue-50 hi-border border-blue-200 hi-rounded-lg hi-p-6",
+                p { class: "hi-text-blue-800",
                     "This page is under construction. Check back soon for demo examples!"
                 }
             }

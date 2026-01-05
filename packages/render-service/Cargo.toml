@@ -9,8 +9,9 @@ license.workspace = true
 default = []
 
 [dependencies]
-# Workspace dependencies
-hikari-components = { path = "../components" }
+# Workspace dependencies (with short aliases)
+components = { path = "../components", package = "hikari-components" }
+palette = { path = "../palette", package = "hikari-palette" }
 
 # Basic language and tools
 anyhow.workspace = true

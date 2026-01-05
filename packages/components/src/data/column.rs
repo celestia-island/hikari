@@ -1,4 +1,4 @@
-// hikari-components/src/data/column.rs
+// hi-components/src/data/column.rs
 // Column component for table configuration
 
 use dioxus::prelude::*;
@@ -190,16 +190,16 @@ impl ColumnDef {
     /// Get alignment CSS class
     pub fn align_class(&self) -> &'static str {
         match self.align {
-            ColumnAlign::Left => "hikari-align-left",
-            ColumnAlign::Center => "hikari-align-center",
-            ColumnAlign::Right => "hikari-align-right",
+            ColumnAlign::Left => "hi-align-left",
+            ColumnAlign::Center => "hi-align-center",
+            ColumnAlign::Right => "hi-align-right",
         }
     }
 
     /// Get fixed column class
     pub fn fixed_class(&self) -> &'static str {
         if self.fixed {
-            "hikari-column-fixed"
+            "hi-column-fixed"
         } else {
             ""
         }
@@ -208,7 +208,7 @@ impl ColumnDef {
     /// Get sortable class
     pub fn sortable_class(&self) -> &'static str {
         if self.sortable {
-            "hikari-column-sortable"
+            "hi-column-sortable"
         } else {
             ""
         }
@@ -217,7 +217,7 @@ impl ColumnDef {
     /// Get resizable class
     pub fn resizable_class(&self) -> &'static str {
         if self.resizable {
-            "hikari-column-resizable"
+            "hi-column-resizable"
         } else {
             ""
         }

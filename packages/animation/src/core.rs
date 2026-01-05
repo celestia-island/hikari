@@ -67,36 +67,12 @@ pub struct AnimationOptions {
     pub yoyo: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum AnimationDirection {
-    Forward,
-    Backward,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum PlaybackMode {
-    Normal,
-    Reverse,
-    Loop,
-    Yoyo,
-}
-
-#[derive(Debug, Clone)]
-pub struct AnimationOptions {
-    pub duration: Duration,
-    pub delay: Duration,
-    pub easing: EasingFunction,
-    pub playback: PlaybackMode,
-    pub repeat: Option<u32>,
-    pub yoyo: bool,
-}
-
 impl Default for AnimationOptions {
     fn default() -> Self {
         Self {
-            duration: Duration::from_millis(500),
+            duration: Duration::from_millis(1000),
             delay: Duration::ZERO,
-            easing: EasingFunction::EaseOutCubic,
+            easing: EasingFunction::default(),
             playback: PlaybackMode::Normal,
             repeat: None,
             yoyo: false,
@@ -104,13 +80,6 @@ impl Default for AnimationOptions {
     }
 }
 
-/// Easing functions for smooth animation transitions
-///
-/// Easing functions control how an animation progresses over time.
-/// The input `t` is a value between 0.0 and 1.0 representing the progress.
-/// The output is also between 0.0 and 1.0, but transformed to create
-/// different acceleration/deceleration effects.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EasingFunction {
     /// No easing (linear progress)
     Linear,
@@ -186,7 +155,131 @@ pub enum EasingFunction {
     EaseInOutBounce,
 
     /// Custom easing function
-    Custom(fn(f64) -> f64),
+    Custom(Box<dyn Fn(f64) -> f64>),
+}
+
+impl Clone for EasingFunction {
+    fn clone(&self) -> Self {
+        match self {
+            EasingFunction::Linear => EasingFunction::Linear,
+            EasingFunction::EaseInQuad => EasingFunction::EaseInQuad,
+            EasingFunction::EaseOutQuad => EasingFunction::EaseOutQuad,
+            EasingFunction::EaseInOutQuad => EasingFunction::EaseInOutQuad,
+            EasingFunction::EaseInCubic => EasingFunction::EaseInCubic,
+            EasingFunction::EaseOutCubic => EasingFunction::EaseOutCubic,
+            EasingFunction::EaseInOutCubic => EasingFunction::EaseInOutCubic,
+            EasingFunction::EaseInQuart => EasingFunction::EaseInQuart,
+            EasingFunction::EaseOutQuart => EasingFunction::EaseOutQuart,
+            EasingFunction::EaseInOutQuart => EasingFunction::EaseInOutQuart,
+            EasingFunction::EaseInQuint => EasingFunction::EaseInQuint,
+            EasingFunction::EaseOutQuint => EasingFunction::EaseOutQuint,
+            EasingFunction::EaseInOutQuint => EasingFunction::EaseInOutQuint,
+            EasingFunction::EaseInExpo => EasingFunction::EaseInExpo,
+            EasingFunction::EaseOutExpo => EasingFunction::EaseOutExpo,
+            EasingFunction::EaseInOutExpo => EasingFunction::EaseInOutExpo,
+            EasingFunction::EaseInCirc => EasingFunction::EaseInCirc,
+            EasingFunction::EaseOutCirc => EasingFunction::EaseOutCirc,
+            EasingFunction::EaseInOutCirc => EasingFunction::EaseInOutCirc,
+            EasingFunction::EaseInSine => EasingFunction::EaseInSine,
+            EasingFunction::EaseOutSine => EasingFunction::EaseOutSine,
+            EasingFunction::EaseInOutSine => EasingFunction::EaseInOutSine,
+            EasingFunction::EaseInBack => EasingFunction::EaseInBack,
+            EasingFunction::EaseOutBack => EasingFunction::EaseOutBack,
+            EasingFunction::EaseInOutBack => EasingFunction::EaseInOutBack,
+            EasingFunction::EaseInElastic => EasingFunction::EaseInElastic,
+            EasingFunction::EaseOutElastic => EasingFunction::EaseOutElastic,
+            EasingFunction::EaseInOutElastic => EasingFunction::EaseInOutElastic,
+            EasingFunction::EaseInBounce => EasingFunction::EaseInBounce,
+            EasingFunction::EaseOutBounce => EasingFunction::EaseOutBounce,
+            EasingFunction::EaseInOutBounce => EasingFunction::EaseInOutBounce,
+            EasingFunction::Custom(_) => EasingFunction::Linear, // Can't clone closures, fallback to Linear
+        }
+    }
+}
+
+impl std::fmt::Debug for EasingFunction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EasingFunction::Linear => write!(f, "Linear"),
+            EasingFunction::EaseInQuad => write!(f, "EaseInQuad"),
+            EasingFunction::EaseOutQuad => write!(f, "EaseOutQuad"),
+            EasingFunction::EaseInOutQuad => write!(f, "EaseInOutQuad"),
+            EasingFunction::EaseInCubic => write!(f, "EaseInCubic"),
+            EasingFunction::EaseOutCubic => write!(f, "EaseOutCubic"),
+            EasingFunction::EaseInOutCubic => write!(f, "EaseInOutCubic"),
+            EasingFunction::EaseInQuart => write!(f, "EaseInQuart"),
+            EasingFunction::EaseOutQuart => write!(f, "EaseOutQuart"),
+            EasingFunction::EaseInOutQuart => write!(f, "EaseInOutQuart"),
+            EasingFunction::EaseInQuint => write!(f, "EaseInQuint"),
+            EasingFunction::EaseOutQuint => write!(f, "EaseOutQuint"),
+            EasingFunction::EaseInOutQuint => write!(f, "EaseInOutQuint"),
+            EasingFunction::EaseInExpo => write!(f, "EaseInExpo"),
+            EasingFunction::EaseOutExpo => write!(f, "EaseOutExpo"),
+            EasingFunction::EaseInOutExpo => write!(f, "EaseInOutExpo"),
+            EasingFunction::EaseInCirc => write!(f, "EaseInCirc"),
+            EasingFunction::EaseOutCirc => write!(f, "EaseOutCirc"),
+            EasingFunction::EaseInOutCirc => write!(f, "EaseInOutCirc"),
+            EasingFunction::EaseInSine => write!(f, "EaseInSine"),
+            EasingFunction::EaseOutSine => write!(f, "EaseOutSine"),
+            EasingFunction::EaseInOutSine => write!(f, "EaseInOutSine"),
+            EasingFunction::EaseInBack => write!(f, "EaseInBack"),
+            EasingFunction::EaseOutBack => write!(f, "EaseOutBack"),
+            EasingFunction::EaseInOutBack => write!(f, "EaseInOutBack"),
+            EasingFunction::EaseInElastic => write!(f, "EaseInElastic"),
+            EasingFunction::EaseOutElastic => write!(f, "EaseOutElastic"),
+            EasingFunction::EaseInOutElastic => write!(f, "EaseInOutElastic"),
+            EasingFunction::EaseInBounce => write!(f, "EaseInBounce"),
+            EasingFunction::EaseOutBounce => write!(f, "EaseOutBounce"),
+            EasingFunction::EaseInOutBounce => write!(f, "EaseInOutBounce"),
+            EasingFunction::Custom(_) => write!(f, "Custom(<closure>)"),
+        }
+    }
+}
+
+impl PartialEq for EasingFunction {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (EasingFunction::Linear, EasingFunction::Linear) => true,
+            (EasingFunction::EaseInQuad, EasingFunction::EaseInQuad) => true,
+            (EasingFunction::EaseOutQuad, EasingFunction::EaseOutQuad) => true,
+            (EasingFunction::EaseInOutQuad, EasingFunction::EaseInOutQuad) => true,
+            (EasingFunction::EaseInCubic, EasingFunction::EaseInCubic) => true,
+            (EasingFunction::EaseOutCubic, EasingFunction::EaseOutCubic) => true,
+            (EasingFunction::EaseInOutCubic, EasingFunction::EaseInOutCubic) => true,
+            (EasingFunction::EaseInQuart, EasingFunction::EaseInQuart) => true,
+            (EasingFunction::EaseOutQuart, EasingFunction::EaseOutQuart) => true,
+            (EasingFunction::EaseInOutQuart, EasingFunction::EaseInOutQuart) => true,
+            (EasingFunction::EaseInQuint, EasingFunction::EaseInQuint) => true,
+            (EasingFunction::EaseOutQuint, EasingFunction::EaseOutQuint) => true,
+            (EasingFunction::EaseInOutQuint, EasingFunction::EaseInOutQuint) => true,
+            (EasingFunction::EaseInExpo, EasingFunction::EaseInExpo) => true,
+            (EasingFunction::EaseOutExpo, EasingFunction::EaseOutExpo) => true,
+            (EasingFunction::EaseInOutExpo, EasingFunction::EaseInOutExpo) => true,
+            (EasingFunction::EaseInCirc, EasingFunction::EaseInCirc) => true,
+            (EasingFunction::EaseOutCirc, EasingFunction::EaseOutCirc) => true,
+            (EasingFunction::EaseInOutCirc, EasingFunction::EaseInOutCirc) => true,
+            (EasingFunction::EaseInSine, EasingFunction::EaseInSine) => true,
+            (EasingFunction::EaseOutSine, EasingFunction::EaseOutSine) => true,
+            (EasingFunction::EaseInOutSine, EasingFunction::EaseInOutSine) => true,
+            (EasingFunction::EaseInBack, EasingFunction::EaseInBack) => true,
+            (EasingFunction::EaseOutBack, EasingFunction::EaseOutBack) => true,
+            (EasingFunction::EaseInOutBack, EasingFunction::EaseInOutBack) => true,
+            (EasingFunction::EaseInElastic, EasingFunction::EaseInElastic) => true,
+            (EasingFunction::EaseOutElastic, EasingFunction::EaseOutElastic) => true,
+            (EasingFunction::EaseInOutElastic, EasingFunction::EaseInOutElastic) => true,
+            (EasingFunction::EaseInBounce, EasingFunction::EaseInBounce) => true,
+            (EasingFunction::EaseOutBounce, EasingFunction::EaseOutBounce) => true,
+            (EasingFunction::EaseInOutBounce, EasingFunction::EaseInOutBounce) => true,
+            (EasingFunction::Custom(_), EasingFunction::Custom(_)) => false, // Can't compare closures
+            _ => false,
+        }
+    }
+}
+
+impl Default for EasingFunction {
+    fn default() -> Self {
+        EasingFunction::Linear
+    }
 }
 
 impl EasingFunction {
@@ -401,6 +494,9 @@ pub type CompletionCallback = Box<dyn Fn() + 'static>;
 ///
 /// Tween is the basic unit of animation that interpolates properties
 /// from start values to end values over a specified duration with easing.
+/// Tween animation instance
+///
+/// Represents a single animation with configurable properties and callbacks.
 pub struct Tween {
     id: TweenId,
     state: AnimationState,
@@ -412,6 +508,40 @@ pub struct Tween {
     progress: f64,
     elapsed: Duration,
     repeat_count: u32,
+}
+
+impl Clone for Tween {
+    fn clone(&self) -> Self {
+        Self {
+            id: self.id,
+            state: self.state,
+            direction: self.direction,
+            options: self.options.clone(),
+            targets: self.targets.clone(),
+            on_update: None, // Callbacks cannot be cloned
+            on_complete: None,
+            progress: self.progress,
+            elapsed: self.elapsed,
+            repeat_count: self.repeat_count,
+        }
+    }
+}
+
+impl std::fmt::Debug for Tween {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Tween")
+            .field("id", &self.id)
+            .field("state", &self.state)
+            .field("direction", &self.direction)
+            .field("options", &self.options)
+            .field("targets", &self.targets)
+            .field("on_update", &self.on_update.as_ref().map(|_| "<callback>"))
+            .field("on_complete", &self.on_complete.as_ref().map(|_| "<callback>"))
+            .field("progress", &self.progress)
+            .field("elapsed", &self.elapsed)
+            .field("repeat_count", &self.repeat_count)
+            .finish()
+    }
 }
 
 impl Tween {
@@ -683,7 +813,7 @@ impl Tween {
 /// allowing for efficient batch updates and global control.
 #[derive(Clone)]
 pub struct AnimationEngine {
-    tweens: Arc<RefCell<SlotMap<TweenId, Tween>>>,
+    pub tweens: Arc<RefCell<SlotMap<TweenId, Tween>>>,
 }
 
 impl Default for AnimationEngine {
@@ -709,7 +839,20 @@ impl AnimationEngine {
     /// Unique ID of the created tween
     pub fn create_tween(&self, options: AnimationOptions) -> TweenId {
         let mut tweens = self.tweens.borrow_mut();
-        let id = tweens.insert(Tween::new(id, options));
+        // Create a temporary tween with a default id, then insert and get the real id
+        let temp_tween = Tween {
+            id: TweenId::default(),
+            state: AnimationState::Idle,
+            direction: AnimationDirection::Forward,
+            targets: Vec::new(),
+            on_update: None,
+            on_complete: None,
+            progress: 0.0,
+            elapsed: Duration::ZERO,
+            repeat_count: 0,
+            options,
+        };
+        let id = tweens.insert(temp_tween);
         id
     }
 

@@ -1,4 +1,4 @@
-// hikari-components/src/feedback/alert.rs
+// hi-components/src/feedback/alert.rs
 // Alert component with Arknights + FUI styling
 
 use dioxus::prelude::*;
@@ -62,16 +62,16 @@ pub struct AlertProps {
 #[component]
 pub fn Alert(props: AlertProps) -> Element {
     let variant_class = match props.variant {
-        AlertVariant::Info => "hikari-alert-info",
-        AlertVariant::Success => "hikari-alert-success",
-        AlertVariant::Warning => "hikari-alert-warning",
-        AlertVariant::Error => "hikari-alert-error",
+        AlertVariant::Info => "hi-alert-info",
+        AlertVariant::Success => "hi-alert-success",
+        AlertVariant::Warning => "hi-alert-warning",
+        AlertVariant::Error => "hi-alert-error",
     };
 
     let default_icon = match props.variant {
         AlertVariant::Info => Some(rsx! {
             svg {
-                class: "hikari-alert-icon",
+                class: "hi-alert-icon",
                 view_box: "0 0 24 24",
                 fill: "none",
                 stroke: "currentColor",
@@ -83,7 +83,7 @@ pub fn Alert(props: AlertProps) -> Element {
         }),
         AlertVariant::Success => Some(rsx! {
             svg {
-                class: "hikari-alert-icon",
+                class: "hi-alert-icon",
                 view_box: "0 0 24 24",
                 fill: "none",
                 stroke: "currentColor",
@@ -94,7 +94,7 @@ pub fn Alert(props: AlertProps) -> Element {
         }),
         AlertVariant::Warning => Some(rsx! {
             svg {
-                class: "hikari-alert-icon",
+                class: "hi-alert-icon",
                 view_box: "0 0 24 24",
                 fill: "none",
                 stroke: "currentColor",
@@ -106,7 +106,7 @@ pub fn Alert(props: AlertProps) -> Element {
         }),
         AlertVariant::Error => Some(rsx! {
             svg {
-                class: "hikari-alert-icon",
+                class: "hi-alert-icon",
                 view_box: "0 0 24 24",
                 fill: "none",
                 stroke: "currentColor",
@@ -122,28 +122,28 @@ pub fn Alert(props: AlertProps) -> Element {
 
     rsx! {
         div {
-            class: format!("hikari-alert {variant_class} {}", props.class),
+            class: format!("hi-alert {variant_class} {}", props.class),
 
             if let Some(icon_element) = icon {
-                div { class: "hikari-alert-icon-wrapper",
+                div { class: "hi-alert-icon-wrapper",
                     { icon_element }
                 }
             }
 
-            div { class: "hikari-alert-content",
+            div { class: "hi-alert-content",
 
                 if let Some(title) = props.title {
-                    div { class: "hikari-alert-title", "{title}" }
+                    div { class: "hi-alert-title", "{title}" }
                 }
 
                 if let Some(description) = props.description {
-                    div { class: "hikari-alert-description", "{description}" }
+                    div { class: "hi-alert-description", "{description}" }
                 }
             }
 
             if props.closable {
                 button {
-                    class: "hikari-alert-close",
+                    class: "hi-alert-close",
                     onclick: move |e| {
                         if let Some(handler) = props.on_close.as_ref() {
                             handler.call(e);

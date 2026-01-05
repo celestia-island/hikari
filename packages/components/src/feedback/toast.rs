@@ -1,4 +1,4 @@
-// hikari-components/src/feedback/toast.rs
+// hi-components/src/feedback/toast.rs
 // Toast component with Arknights + FUI styling
 
 use dioxus::prelude::*;
@@ -92,25 +92,25 @@ impl Default for ToastProps {
 #[component]
 pub fn Toast(props: ToastProps) -> Element {
     let variant_class = match props.variant {
-        ToastVariant::Info => "hikari-toast-info",
-        ToastVariant::Success => "hikari-toast-success",
-        ToastVariant::Warning => "hikari-toast-warning",
-        ToastVariant::Error => "hikari-toast-error",
+        ToastVariant::Info => "hi-toast-info",
+        ToastVariant::Success => "hi-toast-success",
+        ToastVariant::Warning => "hi-toast-warning",
+        ToastVariant::Error => "hi-toast-error",
     };
 
     let position_class = match props.position {
-        ToastPosition::TopRight => "hikari-toast-top-right",
-        ToastPosition::TopCenter => "hikari-toast-top-center",
-        ToastPosition::TopLeft => "hikari-toast-top-left",
-        ToastPosition::BottomRight => "hikari-toast-bottom-right",
-        ToastPosition::BottomCenter => "hikari-toast-bottom-center",
-        ToastPosition::BottomLeft => "hikari-toast-bottom-left",
+        ToastPosition::TopRight => "hi-toast-top-right",
+        ToastPosition::TopCenter => "hi-toast-top-center",
+        ToastPosition::TopLeft => "hi-toast-top-left",
+        ToastPosition::BottomRight => "hi-toast-bottom-right",
+        ToastPosition::BottomCenter => "hi-toast-bottom-center",
+        ToastPosition::BottomLeft => "hi-toast-bottom-left",
     };
 
     let default_icon = match props.variant {
         ToastVariant::Info => rsx! {
             svg {
-                class: "hikari-toast-icon",
+                class: "hi-toast-icon",
                 view_box: "0 0 24 24",
                 fill: "none",
                 stroke: "currentColor",
@@ -122,7 +122,7 @@ pub fn Toast(props: ToastProps) -> Element {
         },
         ToastVariant::Success => rsx! {
             svg {
-                class: "hikari-toast-icon",
+                class: "hi-toast-icon",
                 view_box: "0 0 24 24",
                 fill: "none",
                 stroke: "currentColor",
@@ -133,7 +133,7 @@ pub fn Toast(props: ToastProps) -> Element {
         },
         ToastVariant::Warning => rsx! {
             svg {
-                class: "hikari-toast-icon",
+                class: "hi-toast-icon",
                 view_box: "0 0 24 24",
                 fill: "none",
                 stroke: "currentColor",
@@ -145,7 +145,7 @@ pub fn Toast(props: ToastProps) -> Element {
         },
         ToastVariant::Error => rsx! {
             svg {
-                class: "hikari-toast-icon",
+                class: "hi-toast-icon",
                 view_box: "0 0 24 24",
                 fill: "none",
                 stroke: "currentColor",
@@ -159,24 +159,24 @@ pub fn Toast(props: ToastProps) -> Element {
 
     rsx! {
         div {
-            class: format!("hikari-toast {variant_class} {position_class} {}", props.class),
+            class: format!("hi-toast {variant_class} {position_class} {}", props.class),
 
-            div { class: "hikari-toast-icon-wrapper",
+            div { class: "hi-toast-icon-wrapper",
                 { default_icon }
             }
 
-            div { class: "hikari-toast-content",
+            div { class: "hi-toast-content",
 
                 if let Some(title) = props.title {
-                    div { class: "hikari-toast-title", "{title}" }
+                    div { class: "hi-toast-title", "{title}" }
                 }
 
-                div { class: "hikari-toast-message", "{props.message}" }
+                div { class: "hi-toast-message", "{props.message}" }
             }
 
             if props.closable {
                 button {
-                    class: "hikari-toast-close",
+                    class: "hi-toast-close",
                     onclick: move |e| {
                         if let Some(handler) = props.on_close.as_ref() {
                             handler.call(e);

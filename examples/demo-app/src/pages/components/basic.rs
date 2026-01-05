@@ -7,10 +7,10 @@ use hikari_components::*;
 use crate::{app::Route, components::{Layout, Section}};
 
 #[component]
-pub fn BasicComponents() -> Element {
+pub fn ComponentsBasic() -> Element {
     rsx! {
         Layout {
-            current_route: Route::BasicComponents {},
+            current_route: Route::ComponentsBasic {},
 
             h1 { class: "text-3xl lg:text-4xl font-bold mb-8 text-[#1a1a2e]",
                 "Basic Components"

@@ -1,4 +1,4 @@
-// hikari-extra-components/src/collapsible.rs
+// hi-extra-components/src/collapsible.rs
 // Collapsible panel component with slide-in/out animation
 
 use dioxus::prelude::*;
@@ -81,8 +81,8 @@ pub fn Collapsible(props: CollapsibleProps) -> Element {
     let mut expanded = use_signal(|| props.expanded);
 
     let position_class = match props.position {
-        CollapsiblePosition::Left => "hikari-collapsible-left",
-        CollapsiblePosition::Right => "hikari-collapsible-right",
+        CollapsiblePosition::Left => "hi-collapsible-left",
+        CollapsiblePosition::Right => "hi-collapsible-right",
     };
 
     let toggle_collapse = move |_| {
@@ -98,25 +98,25 @@ pub fn Collapsible(props: CollapsibleProps) -> Element {
     rsx! {
         div {
             class: format!(
-                "hikari-collapsible {position_class} {} {}",
-                if expanded() { "hikari-collapsible-expanded" } else { "hikari-collapsible-collapsed" },
+                "hi-collapsible {position_class} {} {}",
+                if expanded() { "hi-collapsible-expanded" } else { "hi-collapsible-collapsed" },
                 props.class
             ),
             style: format!("width: {}px", props.width),
 
             // Header
             div {
-                class: "hikari-collapsible-header",
+                class: "hi-collapsible-header",
                 onclick: toggle_collapse,
 
                 h3 {
-                    class: "hikari-collapsible-title",
+                    class: "hi-collapsible-title",
                     "{props.title}"
                 }
 
                 if props.collapsible {
                     button {
-                        class: "hikari-collapsible-toggle",
+                        class: "hi-collapsible-toggle",
                         "aria-label": if expanded() { "Collapse" } else { "Expand" },
                         "aria-expanded": "{expanded()}",
                         dangerous_inner_html: if expanded() {
@@ -130,7 +130,7 @@ pub fn Collapsible(props: CollapsibleProps) -> Element {
 
             // Content area
             div {
-                class: "hikari-collapsible-content",
+                class: "hi-collapsible-content",
                 "aria-hidden": "{!expanded()}",
                 { props.children }
             }

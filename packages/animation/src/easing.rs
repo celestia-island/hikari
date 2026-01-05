@@ -165,7 +165,7 @@ pub fn ease_in_out_bounce() -> EasingFunction {
 /// # Arguments
 /// * `f` - Function that takes progress (0.0-1.0) and returns eased value
 pub fn custom(f: fn(f64) -> f64) -> EasingFunction {
-    EasingFunction::Custom(f)
+    EasingFunction::Custom(Box::new(f))
 }
 
 /// Create a cubic bezier easing function
@@ -177,7 +177,7 @@ pub fn custom(f: fn(f64) -> f64) -> EasingFunction {
 /// # Returns
 /// Easing function that follows the bezier curve
 pub fn bezier(x1: f64, y1: f64, x2: f64, y2: f64) -> EasingFunction {
-    EasingFunction::Custom(move |t| cubic_bezier(t, x1, y1, x2, y2))
+    EasingFunction::Custom(Box::new(move |t| cubic_bezier(t, x1, y1, x2, y2)))
 }
 
 /// Cubic bezier curve solver
@@ -234,7 +234,7 @@ fn cubic_bezier(t: f64, x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
 /// # Returns
 /// Easing function that jumps between discrete steps
 pub fn steps(n: u32, start: bool) -> EasingFunction {
-    EasingFunction::Custom(move |t| {
+    EasingFunction::Custom(Box::new(move |t| {
         if t <= 0.0 {
             return if start { 0.0 } else { 0.0 };
         }
@@ -247,7 +247,7 @@ pub fn steps(n: u32, start: bool) -> EasingFunction {
             (t * n as f64).floor() / n as f64
         };
         step.clamp(0.0, 1.0)
-    })
+    }))
 }
 
 /// Create a power easing function
@@ -258,7 +258,7 @@ pub fn steps(n: u32, start: bool) -> EasingFunction {
 /// # Returns
 /// Easing function with t^p curve
 pub fn power(p: f64) -> EasingFunction {
-    EasingFunction::Custom(move |t| t.powf(p))
+    EasingFunction::Custom(Box::new(move |t| t.powf(p)))
 }
 
 /// Create an elastic easing function
@@ -270,7 +270,7 @@ pub fn power(p: f64) -> EasingFunction {
 /// # Returns
 /// Easing function with elastic bounce
 pub fn elastic(amplitude: f64, period: f64) -> EasingFunction {
-    EasingFunction::Custom(move |t| {
+    EasingFunction::Custom(Box::new(move |t| {
         if t == 0.0 || t == 1.0 {
             t
         } else {
@@ -280,7 +280,7 @@ pub fn elastic(amplitude: f64, period: f64) -> EasingFunction {
                 * ((t - s) * 2.0 * std::f64::consts::PI / period).sin()
                 + 1.0
         }
-    })
+    }))
 }
 
 /// Create a bounce easing function
@@ -291,7 +291,7 @@ pub fn elastic(amplitude: f64, period: f64) -> EasingFunction {
 /// # Returns
 /// Easing function with bouncing effect
 pub fn bounce(amplitude: f64) -> EasingFunction {
-    EasingFunction::Custom(move |t| {
+    EasingFunction::Custom(Box::new(move |t| {
         if t < 1.0 / 2.75 {
             amplitude * t * t
         } else if t < 2.0 / 2.75 {
@@ -304,7 +304,7 @@ pub fn bounce(amplitude: f64) -> EasingFunction {
             let t = t - 2.625 / 2.75;
             amplitude * t * t + 0.984375
         }
-    })
+    }))
 }
 
 /// Create an overshoot easing function
@@ -315,7 +315,7 @@ pub fn bounce(amplitude: f64) -> EasingFunction {
 /// # Returns
 /// Easing function that overshoots the target
 pub fn overshoot(tension: f64) -> EasingFunction {
-    EasingFunction::Custom(move |t| {
+    EasingFunction::Custom(Box::new(move |t| {
         if t == 0.0 {
             0.0
         } else if t == 1.0 {
@@ -324,7 +324,7 @@ pub fn overshoot(tension: f64) -> EasingFunction {
             let s = tension + 1.0;
             s * t * t * t - tension * t * t
         }
-    })
+    }))
 }
 
 /// Create an anticipate easing function
@@ -335,7 +335,7 @@ pub fn overshoot(tension: f64) -> EasingFunction {
 /// # Returns
 /// Easing function that anticipates the movement
 pub fn anticipate(tension: f64) -> EasingFunction {
-    EasingFunction::Custom(move |t| {
+    EasingFunction::Custom(Box::new(move |t| {
         let s = tension * t * t * (2.0 * t - tension - 2.0);
         if s.abs() > 1.0 {
             1.0
@@ -344,7 +344,7 @@ pub fn anticipate(tension: f64) -> EasingFunction {
         } else {
             s
         }
-    })
+    }))
 }
 
 /// Smoothstep interpolation (Hermite interpolation)

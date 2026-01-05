@@ -22,7 +22,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 async fn health_check() -> Json<serde_json::Value> {
     Json(json!({
         "status": "healthy",
-        "service": "hikari-ssr-demo",
+        "service": "hi-ssr-demo",
         "timestamp": std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
@@ -32,7 +32,7 @@ async fn health_check() -> Json<serde_json::Value> {
 
 /// Detailed health check with system info
 async fn health_detailed(State(state): State<hikari_render_service::router::AppState>) -> Json<serde_json::Value> {
-    let name = state.config.get("name").and_then(|v| v.as_str()).unwrap_or("hikari-ssr-demo");
+    let name = state.config.get("name").and_then(|v| v.as_str()).unwrap_or("hi-ssr-demo");
     let version = state.config.get("version").and_then(|v| v.as_str()).unwrap_or("0.1.0");
 
     Json(json!({

@@ -21,7 +21,7 @@ use hikari_palette::*;
 ///
 /// - `palette` - Theme identifier string (default: "primary")
 /// - `children` - Child elements to render within the theme context
-#[derive(Clone, Props)]
+#[derive(Clone, Props, PartialEq)]
 pub struct ThemeProviderProps {
     #[props(default = "primary".to_string())]
     pub palette: String,
@@ -62,7 +62,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 
     rsx! {
         div {
-            class: "hikari-theme-provider",
+            class: "hi-theme-provider",
             "data-theme": "{props.palette}",
             {props.children}
         }

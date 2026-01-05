@@ -1,4 +1,4 @@
-// hikari-components/src/data/tree.rs
+// hi-components/src/data/tree.rs
 // Tree component for hierarchical data display
 
 use dioxus::prelude::*;
@@ -53,7 +53,7 @@ pub fn Tree(props: TreeProps) -> Element {
     let mut _focused_key = use_signal(String::new);
 
     let line_class = if props.show_line {
-        "hikari-tree-show-line"
+        "hi-tree-show-line"
     } else {
         ""
     };
@@ -72,14 +72,14 @@ pub fn Tree(props: TreeProps) -> Element {
 
     rsx! {
         div {
-            class: format!("hikari-tree-container {}", props.class),
+            class: format!("hi-tree-container {}", props.class),
             tabindex: 0,
             role: "tree",
             aria_multiselectable: "false",
             onkeydown: handle_keydown,
 
             ul {
-                class: format!("hikari-tree {line_class}"),
+                class: format!("hi-tree {line_class}"),
                 role: "treegroup",
 
                 {render_tree_nodes(

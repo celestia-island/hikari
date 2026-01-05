@@ -489,17 +489,17 @@ fn EditableTableDemo() -> Element {
                 }
             }
 
-            div { class: "hikari-table-wrapper",
+            div { class: "hi-table-wrapper",
                 table {
-                    class: "hikari-table hikari-table-bordered hikari-table-hover",
+                    class: "hi-table hi-table-bordered hi-table-hover",
                     style: "width: 100%;",
 
                     thead {
                         tr {
-                            th { class: "hikari-table-header-cell", "ID" }
-                            th { class: "hikari-table-header-cell", "Name" }
-                            th { class: "hikari-table-header-cell", "Class" }
-                            th { class: "hikari-table-header-cell", "Level" }
+                            th { class: "hi-table-header-cell", "ID" }
+                            th { class: "hi-table-header-cell", "Name" }
+                            th { class: "hi-table-header-cell", "Class" }
+                            th { class: "hi-table-header-cell", "Level" }
                         }
                     }
 
@@ -507,14 +507,14 @@ fn EditableTableDemo() -> Element {
                         {data().iter().enumerate().map(|(row_idx, row)| {
                             rsx! {
                                 tr {
-                                    class: "hikari-table-row",
+                                    class: "hi-table-row",
                                     key: "{row_idx}",
 
                                     {row.iter().enumerate().map(|(col_idx, cell)| {
                                         let is_editing = editing_cell() == Some((row_idx, col_idx));
                                         rsx! {
                                             td {
-                                                class: "hikari-table-cell",
+                                                class: "hi-table-cell",
                                                 style: "cursor: pointer;",
                                                 key: "{row_idx}-{col_idx}",
                                                 ondoubleclick: move |_| editing_cell.set(Some((row_idx, col_idx))),

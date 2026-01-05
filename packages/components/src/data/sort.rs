@@ -1,4 +1,4 @@
-// hikari-components/src/data/sort.rs
+// hi-components/src/data/sort.rs
 // Sort component with Arknights + FUI styling
 
 use dioxus::prelude::*;
@@ -38,8 +38,8 @@ impl SortDirection {
     pub fn class(&self) -> &'static str {
         match self {
             SortDirection::None => "",
-            SortDirection::Ascending => "hikari-sort-asc",
-            SortDirection::Descending => "hikari-sort-desc",
+            SortDirection::Ascending => "hi-sort-asc",
+            SortDirection::Descending => "hi-sort-desc",
         }
     }
 }
@@ -107,7 +107,7 @@ pub fn Sort(props: SortProps) -> Element {
     let has_active_sort = props.direction != SortDirection::None;
 
     rsx! {
-        div { class: format!("hikari-sort {}", props.class),
+        div { class: format!("hi-sort {}", props.class),
 
             {props.columns.iter().filter(|column| column.sortable).map(|column| {
                 let column_key = column.column_key.clone();
@@ -121,9 +121,9 @@ pub fn Sort(props: SortProps) -> Element {
                 rsx! {
                     button {
                         class: if is_active {
-                            "hikari-sort-button hikari-sort-active"
+                            "hi-sort-button hi-sort-active"
                         } else {
-                            "hikari-sort-button"
+                            "hi-sort-button"
                         },
                         onclick: move |_| {
                             let new_direction = if sort_column == column_key {
@@ -140,11 +140,11 @@ pub fn Sort(props: SortProps) -> Element {
                             }
                         },
 
-                        span { class: "hikari-sort-title",
+                        span { class: "hi-sort-title",
                             {column.title.clone()}
                         }
 
-                        span { class: "hikari-sort-indicator",
+                        span { class: "hi-sort-indicator",
                             {if is_active {
                                 props.direction.icon()
                             } else {
@@ -157,13 +157,13 @@ pub fn Sort(props: SortProps) -> Element {
 
             if has_active_sort {
                 button {
-                    class: "hikari-sort-clear",
+                    class: "hi-sort-clear",
                     onclick: handle_clear,
 
-                    span { class: "hikari-sort-clear-text", "Clear" }
+                    span { class: "hi-sort-clear-text", "Clear" }
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: "hikari-sort-clear-icon",
+                        class: "hi-sort-clear-icon",
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,

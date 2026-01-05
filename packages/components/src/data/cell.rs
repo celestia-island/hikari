@@ -1,4 +1,4 @@
-// hikari-components/src/data/cell.rs
+// hi-components/src/data/cell.rs
 // Cell component for table cells
 
 use std::rc::Rc;
@@ -83,11 +83,11 @@ impl PartialEq for CellProps {
 /// ```
 #[component]
 pub fn Cell(props: CellProps) -> Element {
-    let base_classes = "hikari-cell";
+    let base_classes = "hi-cell";
     let align_class = props.column.align_class();
-    let hover_class = "hikari-cell-hover";
+    let hover_class = "hi-cell-hover";
     let editable_class = if props.editable {
-        "hikari-cell-editable"
+        "hi-cell-editable"
     } else {
         ""
     };

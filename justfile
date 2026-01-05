@@ -45,13 +45,63 @@ build:
 # Examples
 # ============================================================================
 
-# Run demo-app (one-click start)
+# Build demo-app WASM client (debug mode)
+build-client:
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Building demo-app WASM client..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @New-Item -ItemType Directory -Force -Path examples/demo-app/dist/assets | Out-Null
+    @cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/demo-app/Cargo.toml
+    @echo ""
+    @echo "🔧 Binding WASM..."
+    @wasm-bindgen --target web --out-dir examples/demo-app/dist/assets --no-typescript examples/demo-app/target/wasm32-unknown-unknown/debug/demo_app.wasm
+    @echo ""
+    @echo "📄 Copying static assets..."
+    @Copy-Item -Force examples/demo-app/index.html examples/demo-app/dist/index.html
+    @echo ""
+    @echo "✅ WASM client built successfully"
+    @echo ""
+    @echo "📦 Output: examples/demo-app/dist/"
+
+# Development mode for demo-app (build WASM client and start server)
+dev:
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Building demo-app WASM client..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @New-Item -ItemType Directory -Force -Path examples/demo-app/dist/assets | Out-Null
+    @cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/demo-app/Cargo.toml
+    @echo ""
+    @echo "🔧 Binding WASM..."
+    @wasm-bindgen --target web --out-dir examples/demo-app/dist/assets --no-typescript examples/demo-app/target/wasm32-unknown-unknown/debug/demo_app.wasm
+    @echo ""
+    @echo "📄 Copying static assets..."
+    @Copy-Item -Force examples/demo-app/index.html examples/demo-app/dist/index.html
+    @echo ""
+    @echo "✅ WASM client built successfully"
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Starting demo-app server..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "🌐 Server will be available at: http://localhost:3000"
+    @echo ""
+    @echo "Press Ctrl+C to stop the server"
+    @echo ""
+    @cd examples/demo-app && cargo run --features server
+
+# Alias for dev
+serve: dev
+
+# Run demo-app (one-click start, no WASM build)
 run-demo: build-dev
     @echo ""
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Running demo-app..."
+    @echo "Running demo-app server..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    cargo run -p demo-app --bin demo-app
+    @echo "🌐 Server will be available at: http://localhost:3000"
+    @echo ""
+    @echo "Press Ctrl+C to stop the server"
+    @echo ""
+    @cd examples/demo-app && cargo run --features server
 
 # ============================================================================
 # Code quality

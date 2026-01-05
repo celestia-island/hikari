@@ -35,9 +35,6 @@ sort = []
 filter = []
 selection = []
 
-[build-dependencies]
-grass = "0.12"
-
 [dependencies]
 # Workspace dependencies
 hikari-palette = { path = "../palette" }

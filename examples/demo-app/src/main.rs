@@ -4,9 +4,10 @@
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 
+use axum::response::IntoResponse;
+use http::StatusCode;
 use hikari_components::StyleRegistry;
 use hikari_render_service::HikariRenderServicePlugin;
-use hikari_theme::get_tailwind_css;
 use tower_http::cors::{Any, CorsLayer};
 
 #[tokio::main]
@@ -29,9 +30,9 @@ async fn main() -> anyhow::Result<()> {
     // Build router with HikariRenderServicePlugin
     let app = HikariRenderServicePlugin::new()
         .component_style_registry(style_registry)
-        .with_tailwind_css(get_tailwind_css())
-        .add_route("/health", axum::routing::get(|| async { "OK" }))
-        .static_assets("dist/assets")
+        .add_route("/health", axum::routing::get(health_handler))
+        .add_route("/_dioxus", axum::routing::get(dioxus_hmr_handler))
+        .static_assets("dist/assets", "/assets")
         .build()?
         .layer(cors);
 
@@ -47,5 +48,15 @@ async fn main() -> anyhow::Result<()> {
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+/// Health check handler
+async fn health_handler() -> impl IntoResponse {
+    (StatusCode::OK, "OK")
+}
+
+/// Dioxus HMR handler - explicitly disable hot reload
+async fn dioxus_hmr_handler() -> impl IntoResponse {
+    (StatusCode::NOT_FOUND, "Hot reload is disabled")
 }
 

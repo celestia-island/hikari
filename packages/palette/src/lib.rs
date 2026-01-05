@@ -9,6 +9,7 @@
 //!
 //! - [`colors`] - Individual color definitions (500+ traditional colors)
 //! - [`palettes`] - Predefined color schemes and themes
+//! - [`utility`] - Utility class system (Tailwind-like CSS utilities)
 //!
 //! ## Usage
 //!
@@ -26,6 +27,8 @@
 
 pub mod colors;
 pub mod palettes;
+pub mod utility;
 
 pub use colors::*;
 pub use palettes::*;
+pub use utility::*;

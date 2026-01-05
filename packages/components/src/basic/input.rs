@@ -1,4 +1,4 @@
-// hikari-components/src/basic/input.rs
+// hi-components/src/basic/input.rs
 // Input component with Arknights + FUI styling
 
 use dioxus::prelude::*;
@@ -73,26 +73,26 @@ pub struct InputProps {
 #[component]
 pub fn Input(props: InputProps) -> Element {
     let size_class = match props.size {
-        InputSize::Small => "hikari-input-sm",
-        InputSize::Medium => "hikari-input-md",
-        InputSize::Large => "hikari-input-lg",
+        InputSize::Small => "hi-input-sm",
+        InputSize::Medium => "hi-input-md",
+        InputSize::Large => "hi-input-lg",
     };
 
     let disabled_class = if props.disabled {
-        "hikari-input-disabled"
+        "hi-input-disabled"
     } else {
         ""
     };
 
     rsx! {
-        div { class: format!("hikari-input-wrapper {size_class} {}", props.class),
+        div { class: format!("hi-input-wrapper {size_class} {}", props.class),
 
             if let Some(icon) = props.prefix_icon {
-                span { class: "hikari-input-prefix", { icon } }
+                span { class: "hi-input-prefix", { icon } }
             }
 
             input {
-                class: format!("hikari-input {disabled_class}"),
+                class: format!("hi-input {disabled_class}"),
                 disabled: props.disabled,
                 readonly: props.readonly,
                 placeholder: props.placeholder,
@@ -120,7 +120,7 @@ pub fn Input(props: InputProps) -> Element {
             }
 
             if let Some(icon) = props.suffix_icon {
-                span { class: "hikari-input-suffix", { icon } }
+                span { class: "hi-input-suffix", { icon } }
             }
         }
     }

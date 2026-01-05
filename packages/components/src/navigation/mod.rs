@@ -1,4 +1,4 @@
-// hikari-components/src/navigation/mod.rs
+// hi-components/src/navigation/mod.rs
 // Navigation components: Menu, Tabs, Breadcrumb
 
 pub mod breadcrumb;

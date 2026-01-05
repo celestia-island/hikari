@@ -1,4 +1,4 @@
-// hikari-components/src/basic/badge.rs
+// hi-components/src/basic/badge.rs
 // Badge component with Arknights + FUI styling
 
 use dioxus::prelude::*;
@@ -76,11 +76,11 @@ impl Default for BadgeProps {
 #[component]
 pub fn Badge(props: BadgeProps) -> Element {
     let variant_class = match props.variant {
-        BadgeVariant::Default => "hikari-badge-default",
-        BadgeVariant::Primary => "hikari-badge-primary",
-        BadgeVariant::Success => "hikari-badge-success",
-        BadgeVariant::Warning => "hikari-badge-warning",
-        BadgeVariant::Danger => "hikari-badge-danger",
+        BadgeVariant::Default => "hi-badge-default",
+        BadgeVariant::Primary => "hi-badge-primary",
+        BadgeVariant::Success => "hi-badge-success",
+        BadgeVariant::Warning => "hi-badge-warning",
+        BadgeVariant::Danger => "hi-badge-danger",
     };
 
     let display_count = if let Some(count) = props.count {
@@ -100,19 +100,19 @@ pub fn Badge(props: BadgeProps) -> Element {
     };
 
     rsx! {
-        div { class: format!("hikari-badge-wrapper {}", props.class),
+        div { class: format!("hi-badge-wrapper {}", props.class),
 
             { props.children }
 
             if props.dot || display_count.is_some() {
                 span {
                     class: format!(
-                        "hikari-badge {variant_class} {}",
-                        if props.dot { "hikari-badge-dot" } else { "" }
+                        "hi-badge {variant_class} {}",
+                        if props.dot { "hi-badge-dot" } else { "" }
                     ),
 
                     if props.dot {
-                        span { class: "hikari-badge-dot" }
+                        span { class: "hi-badge-dot" }
                     } else if let Some(count) = display_count {
                         "{count}"
                     }

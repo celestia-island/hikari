@@ -1,9 +1,8 @@
 // demo-app/src/components/sidebar.rs
-// Sidebar navigation component with responsive drawer
+// New sidebar navigation (simplified)
 
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
-use hikari_icons::{Icon, LucideIcon};
 
 use crate::app::Route;
 
@@ -20,9 +19,6 @@ pub fn Sidebar(
 
     rsx! {
         aside {
-            // Responsive drawer classes:
-            // - Desktop (lg): static positioning, always visible
-            // - Mobile: fixed positioning, slide in/out based on is_open
             class: format!(
                 "fixed lg:static inset-y-0 left-0 z-50 w-64 \
                  bg-[#1a1a2e] text-white p-5 flex flex-col gap-2 \
@@ -35,51 +31,126 @@ pub fn Sidebar(
             button {
                 class: "lg:hidden self-end p-2 hover:bg-white/10 rounded transition-colors",
                 onclick: move |_| on_close.call(()),
-                Icon {
-                    icon: LucideIcon::cross,
-                    class: "w-5 h-5".to_string()
+                "✕"
+            }
+
+            // Title
+            h2 { class: "hidden lg:block text-2xl text-[#4a9eff] mb-5 font-semibold", "Hikari Demo" }
+
+            // Navigation sections
+            NavSection {
+                title: "Overview",
+                children: rsx! {
+                    NavLink {
+                        to: Route::Home {},
+                        is_active: is_active(&Route::Home {}),
+                        on_close: on_close,
+                        "Home"
+                    }
                 }
             }
 
-            // Title (desktop only, hidden on mobile header)
-            h2 { class: "hidden lg:block text-2xl text-[#4a9eff] mb-5 font-semibold", "Hikari Demo" }
+            NavSection {
+                title: "Components",
+                children: rsx! {
+                    NavLink {
+                        to: Route::ComponentsOverview {},
+                        is_active: is_active(&Route::ComponentsOverview {}),
+                        on_close: on_close,
+                        "All Components"
+                    }
+                    SubNavLink {
+                        to: Route::ComponentsBasic {},
+                        is_active: is_active(&Route::ComponentsBasic {}),
+                        on_close: on_close,
+                        "Basic"
+                    }
+                    SubNavLink {
+                        to: Route::ComponentsFeedback {},
+                        is_active: is_active(&Route::ComponentsFeedback {}),
+                        on_close: on_close,
+                        "Feedback"
+                    }
+                    SubNavLink {
+                        to: Route::ComponentsNavigation {},
+                        is_active: is_active(&Route::ComponentsNavigation {}),
+                        on_close: on_close,
+                        "Navigation"
+                    }
+                    SubNavLink {
+                        to: Route::ComponentsData {},
+                        is_active: is_active(&Route::ComponentsData {}),
+                        on_close: on_close,
+                        "Data"
+                    }
+                }
+            }
 
-            // Navigation links
-            NavLink {
-                to: Route::Home {},
-                is_active: is_active(&Route::Home {}),
-                on_close: on_close,
-                "Home"
+            NavSection {
+                title: "System",
+                children: rsx! {
+                    NavLink {
+                        to: Route::SystemOverview {},
+                        is_active: is_active(&Route::SystemOverview {}),
+                        on_close: on_close,
+                        "All Systems"
+                    }
+                    SubNavLink {
+                        to: Route::SystemCSS {},
+                        is_active: is_active(&Route::SystemCSS {}),
+                        on_close: on_close,
+                        "CSS Utilities"
+                    }
+                    SubNavLink {
+                        to: Route::SystemIcons {},
+                        is_active: is_active(&Route::SystemIcons {}),
+                        on_close: on_close,
+                        "Icons"
+                    }
+                    SubNavLink {
+                        to: Route::SystemPalette {},
+                        is_active: is_active(&Route::SystemPalette {}),
+                        on_close: on_close,
+                        "Palette"
+                    }
+                    SubNavLink {
+                        to: Route::SystemAnimations {},
+                        is_active: is_active(&Route::SystemAnimations {}),
+                        on_close: on_close,
+                        "Animations"
+                    }
+                }
             }
-            NavLink {
-                to: Route::BasicComponents {},
-                is_active: is_active(&Route::BasicComponents {}),
-                on_close: on_close,
-                "Basic Components"
-            }
-            NavLink {
-                to: Route::FeedbackComponents {},
-                is_active: is_active(&Route::FeedbackComponents {}),
-                on_close: on_close,
-                "Feedback Components"
-            }
-            NavLink {
-                to: Route::NavigationComponents {},
-                is_active: is_active(&Route::NavigationComponents {}),
-                on_close: on_close,
-                "Navigation Components"
-            }
-            NavLink {
-                to: Route::DataComponents {},
-                is_active: is_active(&Route::DataComponents {}),
-                on_close: on_close,
-                "Data Components"
+
+            NavSection {
+                title: "Demos",
+                children: rsx! {
+                    NavLink {
+                        to: Route::DemosOverview {},
+                        is_active: is_active(&Route::DemosOverview {}),
+                        on_close: on_close,
+                        "All Demos"
+                    }
+                }
             }
         }
     }
 }
 
-/// Navigation link component with active state styling
+/// Navigation section component
+#[component]
+fn NavSection(title: String, children: Element) -> Element {
+    rsx! {
+        div { class: "mb-4",
+            div { class: "px-4 py-2 text-sm font-semibold text-gray-400 uppercase tracking-wider",
+                {title}
+            }
+            { children }
+        }
+    }
+}
+
+/// Main navigation link component
 #[component]
 fn NavLink(
     to: Route,
@@ -100,7 +171,34 @@ fn NavLink(
                 }
             ),
             onclick: move |_| {
-                // Close drawer on mobile when navigating
+                on_close.call(());
+            },
+            { children }
+        }
+    }
+}
+
+/// Sub-navigation link component (indented)
+#[component]
+fn SubNavLink(
+    to: Route,
+    is_active: bool,
+    on_close: EventHandler,
+    children: Element,
+) -> Element {
+    rsx! {
+        Link {
+            to: to,
+            class: format!(
+                "block px-8 py-2 rounded-lg transition-all duration-200 \
+                 hover:bg-white/10 active:scale-95 text-sm {}",
+                if is_active {
+                    "bg-white/20 font-medium"
+                } else {
+                    ""
+                }
+            ),
+            onclick: move |_| {
                 on_close.call(());
             },
             { children }

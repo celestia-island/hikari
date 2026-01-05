@@ -1,4 +1,4 @@
-// hikari-components/src/data/header.rs
+// hi-components/src/data/header.rs
 // Header component for table headers
 
 use dioxus::prelude::*;
@@ -71,9 +71,9 @@ pub struct HeaderProps {
 pub fn Header(props: HeaderProps) -> Element {
     rsx! {
         thead {
-            class: "hikari-table-header {props.class}",
+            class: "hi-table-header {props.class}",
             tr {
-                class: "hikari-header-row",
+                class: "hi-header-row",
 
                 {props.columns.iter().map(|column| {
                     let is_sorted = props.sort_column.as_ref() == Some(&column.column_key);
@@ -83,12 +83,12 @@ pub fn Header(props: HeaderProps) -> Element {
                         SortDirection::None
                     };
 
-                    let base_classes = "hikari-header-cell";
+                    let base_classes = "hi-header-cell";
                     let column_classes = column.build_classes();
                     let sortable_class = column.sortable_class();
                     let fixed_class = column.fixed_class();
                     let active_class = if is_sorted {
-                        "hikari-header-cell-active"
+                        "hi-header-cell-active"
                     } else {
                         ""
                     };
@@ -131,14 +131,14 @@ pub fn Header(props: HeaderProps) -> Element {
 
                             // Column title
                             span {
-                                class: "hikari-header-cell-content",
+                                class: "hi-header-cell-content",
                                 { title }
                             }
 
                             // Sort indicator
                             if column.sortable {
                                 span {
-                                    class: "hikari-sort-indicator {sort_dir.class()}",
+                                    class: "hi-sort-indicator {sort_dir.class()}",
                                     aria_hidden: "true",
                                     { sort_dir.icon() }
                                 }
@@ -147,7 +147,7 @@ pub fn Header(props: HeaderProps) -> Element {
                             // Filter icon
                             if has_filter {
                                 span {
-                                    class: "hikari-filter-icon",
+                                    class: "hi-filter-icon",
                                     aria_hidden: "true",
                                     "⚬"
                                 }
@@ -156,7 +156,7 @@ pub fn Header(props: HeaderProps) -> Element {
                             // Resize handle
                             if column.resizable {
                                 span {
-                                    class: "hikari-resize-handle",
+                                    class: "hi-resize-handle",
                                     aria_hidden: "true"
                                 }
                             }
@@ -193,8 +193,8 @@ pub fn get_sort_class(
     column_key: &str,
 ) -> String {
     if is_sorted_column(sort_column, column_key) {
-        format!("hikari-sorted {}", sort_direction.class())
+        format!("hi-sorted {}", sort_direction.class())
     } else {
-        "hikari-sortable".to_string()
+        "hi-sortable".to_string()
     }
 }

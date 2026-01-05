@@ -1,4 +1,4 @@
-// hikari-components/src/basic/card.rs
+// hi-components/src/basic/card.rs
 // Card component with Arknights + FUI styling
 
 use dioxus::prelude::*;
@@ -66,12 +66,12 @@ impl Default for CardProps {
 #[component]
 pub fn Card(props: CardProps) -> Element {
     let hoverable_class = if props.hoverable {
-        "hikari-card-hoverable"
+        "hi-card-hoverable"
     } else {
         ""
     };
     let bordered_class = if props.bordered {
-        "hikari-card-bordered"
+        "hi-card-bordered"
     } else {
         ""
     };
@@ -79,7 +79,7 @@ pub fn Card(props: CardProps) -> Element {
 
     rsx! {
         div {
-            class: format!("hikari-card {hoverable_class} {bordered_class} {}", props.class),
+            class: format!("hi-card {hoverable_class} {bordered_class} {}", props.class),
             onclick: move |e| {
                 if let Some(handler) = props.onclick.as_ref() {
                     handler.call(e);
@@ -87,19 +87,19 @@ pub fn Card(props: CardProps) -> Element {
             },
 
             if props.title.is_some() || props.extra.is_some() {
-                div { class: "hikari-card-header",
+                div { class: "hi-card-header",
 
                     if let Some(title) = props.title {
-                        div { class: "hikari-card-title", "{title}" }
+                        div { class: "hi-card-title", "{title}" }
                     }
 
                     if let Some(extra) = props.extra {
-                        div { class: "hikari-card-extra", { extra } }
+                        div { class: "hi-card-extra", { extra } }
                     }
                 }
             }
 
-            div { class: "hikari-card-body",
+            div { class: "hi-card-body",
                 { props.children }
             }
         }

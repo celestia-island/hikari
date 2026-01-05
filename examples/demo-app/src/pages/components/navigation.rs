@@ -6,10 +6,10 @@ use dioxus::prelude::*;
 use crate::{app::Route, components::{Layout, Section}};
 
 #[component]
-pub fn NavigationComponents() -> Element {
+pub fn ComponentsNavigation() -> Element {
     rsx! {
         Layout {
-            current_route: Route::NavigationComponents {},
+            current_route: Route::ComponentsNavigation {},
 
             h1 { class: "text-3xl lg:text-4xl font-bold mb-8 text-[#1a1a2e]",
                 "Navigation Components"

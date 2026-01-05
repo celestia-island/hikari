@@ -1,4 +1,4 @@
-// hikari-extra-components/src/zoom_controls.rs
+// hi-extra-components/src/zoom_controls.rs
 // Zoom controls component with keyboard shortcuts
 
 use dioxus::prelude::*;
@@ -86,10 +86,10 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
     let mut zoom = use_signal(|| props.zoom);
 
     let position_class = match props.position {
-        ZoomPosition::TopRight => "hikari-zoom-top-right",
-        ZoomPosition::TopLeft => "hikari-zoom-top-left",
-        ZoomPosition::BottomRight => "hikari-zoom-bottom-right",
-        ZoomPosition::BottomLeft => "hikari-zoom-bottom-left",
+        ZoomPosition::TopRight => "hi-zoom-top-right",
+        ZoomPosition::TopLeft => "hi-zoom-top-left",
+        ZoomPosition::BottomRight => "hi-zoom-bottom-right",
+        ZoomPosition::BottomLeft => "hi-zoom-bottom-left",
     };
 
     // Create callbacks by cloning what we need
@@ -123,13 +123,13 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
 
     rsx! {
         div {
-            class: format!("hikari-zoom-controls {position_class} {}", props.class),
+            class: format!("hi-zoom-controls {position_class} {}", props.class),
             tabindex: 0,
             onkeydown: handle_keydown,
 
             // Zoom out button
             button {
-                class: "hikari-zoom-btn hikari-zoom-out",
+                class: "hi-zoom-btn hi-zoom-out",
                 "aria-label": "Zoom out",
                 "title": "Zoom out (-)",
                 disabled: !can_zoom_out,
@@ -143,13 +143,13 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
 
             // Zoom level display
             div {
-                class: "hikari-zoom-level",
+                class: "hi-zoom-level",
                 "{zoom_percent}%"
             }
 
             // Zoom in button
             button {
-                class: "hikari-zoom-btn hikari-zoom-in",
+                class: "hi-zoom-btn hi-zoom-in",
                 "aria-label": "Zoom in",
                 "title": "Zoom in (+)",
                 disabled: !can_zoom_in,
@@ -163,7 +163,7 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
 
             // Reset button
             button {
-                class: "hikari-zoom-btn hikari-zoom-reset",
+                class: "hi-zoom-btn hi-zoom-reset",
                 "aria-label": "Reset zoom",
                 "title": "Reset to 100% (0)",
                 onclick: move |_| {
@@ -176,7 +176,7 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
             // Fit to screen button (optional)
             if props.show_fit {
                 button {
-                    class: "hikari-zoom-btn hikari-zoom-fit",
+                    class: "hi-zoom-btn hi-zoom-fit",
                     "aria-label": "Fit to screen",
                     "title": "Fit to screen",
                     onclick: move |_| {

@@ -26,6 +26,6 @@ pub fn init_panic_hook() {
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn hydrate() {
-    // Launch Dioxus application and mount to #main element
+    // Use dioxus::launch (will attempt hot reload but fail gracefully)
     dioxus::launch(App);
 }

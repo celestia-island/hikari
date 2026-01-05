@@ -1,4 +1,4 @@
-// hikari-components/src/feedback/tooltip.rs
+// hi-components/src/feedback/tooltip.rs
 // Tooltip component with Arknights + FUI styling
 
 use dioxus::prelude::*;
@@ -71,36 +71,36 @@ impl Default for TooltipProps {
 #[component]
 pub fn Tooltip(props: TooltipProps) -> Element {
     let placement_class = match props.placement {
-        TooltipPlacement::Top => "hikari-tooltip-top",
-        TooltipPlacement::Bottom => "hikari-tooltip-bottom",
-        TooltipPlacement::Left => "hikari-tooltip-left",
-        TooltipPlacement::Right => "hikari-tooltip-right",
+        TooltipPlacement::Top => "hi-tooltip-top",
+        TooltipPlacement::Bottom => "hi-tooltip-bottom",
+        TooltipPlacement::Left => "hi-tooltip-left",
+        TooltipPlacement::Right => "hi-tooltip-right",
     };
 
     let arrow_class = match props.placement {
-        TooltipPlacement::Top => "hikari-tooltip-arrow-top",
-        TooltipPlacement::Bottom => "hikari-tooltip-arrow-bottom",
-        TooltipPlacement::Left => "hikari-tooltip-arrow-left",
-        TooltipPlacement::Right => "hikari-tooltip-arrow-right",
+        TooltipPlacement::Top => "hi-tooltip-arrow-top",
+        TooltipPlacement::Bottom => "hi-tooltip-arrow-bottom",
+        TooltipPlacement::Left => "hi-tooltip-arrow-left",
+        TooltipPlacement::Right => "hi-tooltip-arrow-right",
     };
 
     rsx! {
         div {
-            class: format!("hikari-tooltip-wrapper {}", props.class),
+            class: format!("hi-tooltip-wrapper {}", props.class),
 
             div {
-                class: "hikari-tooltip-trigger",
+                class: "hi-tooltip-trigger",
                 { props.children }
             }
 
             div {
-                class: format!("hikari-tooltip {placement_class}"),
+                class: format!("hi-tooltip {placement_class}"),
 
-                div { class: "hikari-tooltip-content",
+                div { class: "hi-tooltip-content",
                     "{props.content}"
 
                     if props.arrow {
-                        div { class: format!("hikari-tooltip-arrow {arrow_class}") }
+                        div { class: format!("hi-tooltip-arrow {arrow_class}") }
                     }
                 }
             }

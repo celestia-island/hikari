@@ -1,4 +1,4 @@
-// hikari-components/src/navigation/breadcrumb.rs
+// hi-components/src/navigation/breadcrumb.rs
 // Breadcrumb component with Arknights + FUI styling
 
 use dioxus::prelude::*;
@@ -82,11 +82,11 @@ impl Default for BreadcrumbProps {
 pub fn Breadcrumb(props: BreadcrumbProps) -> Element {
     rsx! {
         nav {
-            class: format!("hikari-breadcrumb {}", props.class),
+            class: format!("hi-breadcrumb {}", props.class),
             "aria-label": "Breadcrumb",
 
             ol {
-                class: "hikari-breadcrumb-list",
+                class: "hi-breadcrumb-list",
 
                 { props.children }
             }
@@ -109,14 +109,14 @@ impl StyledComponent for BreadcrumbComponent {
 pub fn BreadcrumbItem(props: BreadcrumbItemProps) -> Element {
     rsx! {
         li {
-            class: format!("hikari-breadcrumb-item {}", props.class),
+            class: format!("hi-breadcrumb-item {}", props.class),
 
             if props.href.is_some() || props.onclick.is_some() {
                 {
                     if let Some(href) = props.href {
                         rsx! {
                             a {
-                                class: "hikari-breadcrumb-link",
+                                class: "hi-breadcrumb-link",
                                 href: "{href}",
                                 onclick: move |e| {
                                     if let Some(handler) = props.onclick.as_ref() {
@@ -129,7 +129,7 @@ pub fn BreadcrumbItem(props: BreadcrumbItemProps) -> Element {
                     } else {
                         rsx! {
                             span {
-                                class: "hikari-breadcrumb-link",
+                                class: "hi-breadcrumb-link",
                                 onclick: move |e| {
                                     if let Some(handler) = props.onclick.as_ref() {
                                         handler.call(e);
@@ -142,7 +142,7 @@ pub fn BreadcrumbItem(props: BreadcrumbItemProps) -> Element {
                 }
             } else {
                 span {
-                    class: "hikari-breadcrumb-separator",
+                    class: "hi-breadcrumb-separator",
                     {props.children}
                 }
             }
@@ -155,9 +155,9 @@ pub fn BreadcrumbItem(props: BreadcrumbItemProps) -> Element {
 pub fn BreadcrumbSeparator(#[props(default)] separator: String) -> Element {
     rsx! {
         li {
-            class: "hikari-breadcrumb-separator",
+            class: "hi-breadcrumb-separator",
             span {
-                class: "hikari-breadcrumb-separator-icon",
+                class: "hi-breadcrumb-separator-icon",
                 "{separator}"
             }
         }

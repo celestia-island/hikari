@@ -1,4 +1,4 @@
-// hikari-components/src/feedback/mod.rs
+// hi-components/src/feedback/mod.rs
 // Feedback components: Alert, Toast, Tooltip
 
 pub mod alert;

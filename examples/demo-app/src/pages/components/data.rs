@@ -7,7 +7,7 @@ use hikari_components::*;
 use crate::{app::Route, components::{Layout, Section}};
 
 #[component]
-pub fn DataComponents() -> Element {
+pub fn ComponentsData() -> Element {
     let columns = vec![
         hikari_components::table::ColumnDef::new("name", "Operator Name").sortable(true),
         hikari_components::table::ColumnDef::new("class", "Class"),
@@ -25,7 +25,7 @@ pub fn DataComponents() -> Element {
 
     rsx! {
         Layout {
-            current_route: Route::DataComponents {},
+            current_route: Route::ComponentsData {},
 
             h1 { class: "text-3xl lg:text-4xl font-bold mb-8 text-[#1a1a2e]",
                 "Data Components"

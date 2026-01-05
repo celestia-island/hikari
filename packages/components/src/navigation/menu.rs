@@ -1,4 +1,4 @@
-// hikari-components/src/navigation/menu.rs
+// hi-components/src/navigation/menu.rs
 // Menu component with Arknights + FUI styling
 
 use dioxus::prelude::*;
@@ -139,18 +139,18 @@ pub fn Menu(props: MenuProps) -> Element {
     let mut _open_submenus = use_signal(Vec::<String>::new);
 
     let mode_class = match props.mode {
-        MenuMode::Vertical => "hikari-menu-vertical",
-        MenuMode::Horizontal => "hikari-menu-horizontal",
+        MenuMode::Vertical => "hi-menu-vertical",
+        MenuMode::Horizontal => "hi-menu-horizontal",
     };
     let inline_class = if props.inline {
-        "hikari-menu-inline"
+        "hi-menu-inline"
     } else {
         ""
     };
 
     rsx! {
         ul {
-            class: format!("hikari-menu {mode_class} {inline_class} {}", props.class),
+            class: format!("hi-menu {mode_class} {inline_class} {}", props.class),
             role: "menu",
 
             { props.children }
@@ -173,7 +173,7 @@ impl StyledComponent for MenuComponent {
 pub fn MenuItem(props: MenuItemProps) -> Element {
     rsx! {
         li {
-            class: format!("hikari-menu-item {}", props.class),
+            class: format!("hi-menu-item {}", props.class),
             role: "menuitem",
             "data-key": "{props.item_key}",
             aria_disabled: props.disabled.to_string(),
@@ -186,10 +186,10 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
             },
 
             if let Some(icon) = props.icon {
-                span { class: "hikari-menu-item-icon", { icon } }
+                span { class: "hi-menu-item-icon", { icon } }
             }
 
-            span { class: "hikari-menu-item-content", { props.children } }
+            span { class: "hi-menu-item-content", { props.children } }
         }
     }
 }
@@ -201,12 +201,12 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
 
     rsx! {
         li {
-            class: format!("hikari-menu-submenu {}", props.class),
+            class: format!("hi-menu-submenu {}", props.class),
             role: "none",
             "data-key": "{props.item_key}",
 
             div {
-                class: "hikari-menu-submenu-title",
+                class: "hi-menu-submenu-title",
                 aria_disabled: props.disabled.to_string(),
                 onclick: move |_| {
                     if !props.disabled {
@@ -215,19 +215,19 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
                 },
 
                 if let Some(icon) = props.icon {
-                    span { class: "hikari-menu-item-icon", { icon } }
+                    span { class: "hi-menu-item-icon", { icon } }
                 }
 
-                span { class: "hikari-menu-item-content", "{props.title}" }
+                span { class: "hi-menu-item-content", "{props.title}" }
 
                 span {
-                    class: format!("hikari-menu-submenu-arrow {}", if is_open() { "open" } else { "" }),
+                    class: format!("hi-menu-submenu-arrow {}", if is_open() { "open" } else { "" }),
                     "›"
                 }
             }
 
             ul {
-                class: format!("hikari-menu-submenu-list {}", if is_open() { "open" } else { "" }),
+                class: format!("hi-menu-submenu-list {}", if is_open() { "open" } else { "" }),
                 role: "menu",
                 "aria-hidden": "{!is_open()}",
 

@@ -1,4 +1,4 @@
-// hikari-components/src/navigation/tabs.rs
+// hi-components/src/navigation/tabs.rs
 // Tabs component with Arknights + FUI styling
 
 use dioxus::prelude::*;
@@ -108,40 +108,40 @@ pub fn Tabs(props: TabsProps) -> Element {
     let _tabs = use_context::<Signal<Vec<Vec<String>>>>();
 
     let position_class = match props.tab_position {
-        TabPosition::Top => "hikari-tabs-top",
-        TabPosition::Right => "hikari-tabs-right",
-        TabPosition::Bottom => "hikari-tabs-bottom",
-        TabPosition::Left => "hikari-tabs-left",
+        TabPosition::Top => "hi-tabs-top",
+        TabPosition::Right => "hi-tabs-right",
+        TabPosition::Bottom => "hi-tabs-bottom",
+        TabPosition::Left => "hi-tabs-left",
     };
 
     let animated_class = if props.animated {
-        "hikari-tabs-animated"
+        "hi-tabs-animated"
     } else {
         ""
     };
 
     rsx! {
         div {
-            class: format!("hikari-tabs {position_class} {animated_class} {}", props.class),
+            class: format!("hi-tabs {position_class} {animated_class} {}", props.class),
 
             div {
-                class: "hikari-tabs-nav",
+                class: "hi-tabs-nav",
 
                 div {
-                    class: "hikari-tabs-nav-list",
+                    class: "hi-tabs-nav-list",
                     role: "tablist",
 
                     { props.children.clone() }
                 }
 
                 div {
-                    class: "hikari-tabs-ink-bar",
+                    class: "hi-tabs-ink-bar",
                     style: "transform: translateX(...)",
                 }
             }
 
             div {
-                class: "hikari-tabs-content",
+                class: "hi-tabs-content",
                 role: "tabpanel",
 
                 { props.children }
@@ -169,9 +169,9 @@ pub fn TabPane(props: TabPaneProps) -> Element {
     rsx! {
         div {
             class: format!(
-                "hikari-tabs-tab {} {}",
-                if is_active { "hikari-tabs-tab-active" } else { "" },
-                if props.disabled { "hikari-tabs-tab-disabled" } else { "" }
+                "hi-tabs-tab {} {}",
+                if is_active { "hi-tabs-tab-active" } else { "" },
+                if props.disabled { "hi-tabs-tab-disabled" } else { "" }
             ),
             role: "tab",
             "data-key": "{props.item_key}",
@@ -179,16 +179,16 @@ pub fn TabPane(props: TabPaneProps) -> Element {
             "aria-disabled": "{props.disabled}",
 
             if let Some(icon) = props.icon {
-                span { class: "hikari-tabs-tab-icon", { icon } }
+                span { class: "hi-tabs-tab-icon", { icon } }
             }
 
-            span { class: "hikari-tabs-tab-label", "{props.tab}" }
+            span { class: "hi-tabs-tab-label", "{props.tab}" }
         }
 
         div {
             class: format!(
-                "hikari-tabs-tabpane {}",
-                if is_active { "hikari-tabs-tabpane-active" } else { "hikari-tabs-tabpane-inactive" }
+                "hi-tabs-tabpane {}",
+                if is_active { "hi-tabs-tabpane-active" } else { "hi-tabs-tabpane-inactive" }
             ),
             role: "tabpanel",
             "data-key": "{props.item_key}",

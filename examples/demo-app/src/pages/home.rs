@@ -24,22 +24,22 @@ pub fn Home() -> Element {
                 DemoCard {
                     title: "Basic Components".to_string(),
                     description: "Button, Input, Card, Badge".to_string(),
-                    route: Route::BasicComponents {},
+                    route: Route::ComponentsBasic {},
                 }
                 DemoCard {
                     title: "Feedback Components".to_string(),
                     description: "Alert, Toast, Tooltip".to_string(),
-                    route: Route::FeedbackComponents {},
+                    route: Route::ComponentsFeedback {},
                 }
                 DemoCard {
                     title: "Navigation Components".to_string(),
                     description: "Menu, Tabs, Breadcrumb".to_string(),
-                    route: Route::NavigationComponents {},
+                    route: Route::ComponentsNavigation {},
                 }
                 DemoCard {
                     title: "Data Components".to_string(),
                     description: "Table, Tree".to_string(),
-                    route: Route::DataComponents {},
+                    route: Route::ComponentsData {},
                 }
             }
 

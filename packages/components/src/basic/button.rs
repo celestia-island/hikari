@@ -1,4 +1,4 @@
-// hikari-components/src/basic/button.rs
+// hi-components/src/basic/button.rs
 // Button component with Arknights + FUI styling
 
 use dioxus::prelude::*;
@@ -29,20 +29,6 @@ pub enum ButtonVariant {
 /// Button size variants
 ///
 /// Different size options for a button component.
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum ButtonSize {
-    /// Medium size (default)
-    #[default]
-    Medium,
-    /// Small size (compact)
-    Small,
-    /// Large size (prominent)
-    Large,
-}
-
-/// Button size variants
-///
-/// Different size options for the button component.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ButtonSize {
     /// Medium size (default)
@@ -117,27 +103,27 @@ impl Default for ButtonProps {
 #[component]
 pub fn Button(props: ButtonProps) -> Element {
     let variant_class = match props.variant {
-        ButtonVariant::Primary => "hikari-button-primary",
-        ButtonVariant::Secondary => "hikari-button-secondary",
-        ButtonVariant::Ghost => "hikari-button-ghost",
-        ButtonVariant::Danger => "hikari-button-danger",
-        ButtonVariant::Success => "hikari-button-success",
+        ButtonVariant::Primary => "hi-button-primary",
+        ButtonVariant::Secondary => "hi-button-secondary",
+        ButtonVariant::Ghost => "hi-button-ghost",
+        ButtonVariant::Danger => "hi-button-danger",
+        ButtonVariant::Success => "hi-button-success",
     };
 
     let size_class = match props.size {
-        ButtonSize::Small => "hikari-button-sm",
-        ButtonSize::Medium => "hikari-button-md",
-        ButtonSize::Large => "hikari-button-lg",
+        ButtonSize::Small => "hi-button-sm",
+        ButtonSize::Medium => "hi-button-md",
+        ButtonSize::Large => "hi-button-lg",
     };
 
     let disabled = props.disabled || props.loading;
     let loading_class = if props.loading {
-        "hikari-button-loading"
+        "hi-button-loading"
     } else {
         ""
     };
     let block_class = if props.block {
-        "hikari-button-block"
+        "hi-button-block"
     } else {
         ""
     };
@@ -145,7 +131,7 @@ pub fn Button(props: ButtonProps) -> Element {
     rsx! {
         button {
             class: format!(
-                "hikari-button {variant_class} {size_class} {loading_class} {block_class} {}",
+                "hi-button {variant_class} {size_class} {loading_class} {block_class} {}",
                 props.class
             ),
             disabled: disabled,
@@ -156,7 +142,7 @@ pub fn Button(props: ButtonProps) -> Element {
             },
 
             if props.loading {
-                span { class: "hikari-button-spinner", "" }
+                span { class: "hi-button-spinner", "" }
             }
 
             if let Some(icon) = props.icon {

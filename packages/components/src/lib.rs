@@ -17,22 +17,26 @@
 //! Enable all basic components:
 //! ```toml
 //! [dependencies]
-//! hikari-components = { features = ["basic"] }
+//! hi-components = { features = ["basic"] }
 //! ```
 //!
 //! Enable specific components:
 //! ```toml
 //! [dependencies]
-//! hikari-components = { features = ["button", "input", "card"] }
+//! hi-components = { features = ["button", "input", "card"] }
 //! ```
 //!
 //! ## Modules
 //!
+//! - [`layout`] - Layout components (Layout, Header, Aside, Content)
 //! - [`basic`] - Basic UI components
 //! - [`feedback`] - Feedback and notification components
 //! - [`navigation`] - Navigation and routing components
 //! - [`data`] - Data display and table components
 //! - [`styled`] - Styling infrastructure traits
+
+// Layout components (always available)
+pub mod layout;
 
 // Feature-gated modules
 #[cfg(any(
@@ -90,3 +94,23 @@ pub use navigation::*;
 pub use data::*;
 
 pub use styled::{StyleRegistry, StyledComponent};
+
+/// Get Hikari utility classes CSS
+///
+/// Returns the complete utility class system (similar to Tailwind CSS but independent).
+/// These are basic utility classes for layout, spacing, typography, etc.
+pub fn get_utility_classes() -> &'static str {
+    hikari_palette::get_utility_classes()
+}
+
+/// Get complete CSS bundle (utility classes + component styles)
+///
+/// This is a convenience function that combines utility classes
+/// with all registered component styles.
+pub fn get_complete_bundle(registry: &StyleRegistry) -> String {
+    format!(
+        "{}\n\n{}",
+        get_utility_classes(),
+        registry.css_bundle()
+    )
+}

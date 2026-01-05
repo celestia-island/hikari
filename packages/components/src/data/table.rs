@@ -1,4 +1,4 @@
-// hikari-components/src/data/table.rs
+// hi-components/src/data/table.rs
 // Table component with Arknights + FUI styling
 
 use dioxus::prelude::*;
@@ -124,25 +124,25 @@ impl Default for TableProps {
 #[component]
 pub fn Table(props: TableProps) -> Element {
     let size_class = match props.size {
-        TableSize::Small => "hikari-table-sm",
-        TableSize::Medium => "hikari-table-md",
-        TableSize::Large => "hikari-table-lg",
+        TableSize::Small => "hi-table-sm",
+        TableSize::Medium => "hi-table-md",
+        TableSize::Large => "hi-table-lg",
     };
 
     let bordered_class = if props.bordered {
-        "hikari-table-bordered"
+        "hi-table-bordered"
     } else {
         ""
     };
 
     let striped_class = if props.striped {
-        "hikari-table-striped"
+        "hi-table-striped"
     } else {
         ""
     };
 
     let hoverable_class = if props.hoverable {
-        "hikari-table-hover"
+        "hi-table-hover"
     } else {
         ""
     };
@@ -153,10 +153,10 @@ pub fn Table(props: TableProps) -> Element {
     let colspan_count = if has_columns { props.columns.len() } else { 1 };
 
     rsx! {
-        div { class: "hikari-table-wrapper",
+        div { class: "hi-table-wrapper",
             table {
                 class: format!(
-                    "hikari-table {size_class} {bordered_class} {striped_class} {hoverable_class} {}",
+                    "hi-table {size_class} {bordered_class} {striped_class} {hoverable_class} {}",
                     props.class
                 ),
 
@@ -164,32 +164,32 @@ pub fn Table(props: TableProps) -> Element {
                 if has_columns {
                     thead {
                         tr {
-                            class: "hikari-table-header-row",
+                            class: "hi-table-header-row",
                             {props.columns.iter().map(|column| {
                                 let align_class = match column.align {
-                                    ColumnAlign::Left => "hikari-text-left",
-                                    ColumnAlign::Center => "hikari-text-center",
-                                    ColumnAlign::Right => "hikari-text-right",
+                                    ColumnAlign::Left => "hi-text-left",
+                                    ColumnAlign::Center => "hi-text-center",
+                                    ColumnAlign::Right => "hi-text-right",
                                 };
 
                                 let width_style = column.width.as_ref()
                                     .map_or(String::new(), |w| format!("width: {w};"));
 
                                 let sortable_class = if column.sortable {
-                                    "hikari-table-sortable"
+                                    "hi-table-sortable"
                                 } else {
                                     ""
                                 };
 
                                 rsx! {
                                     th {
-                                        class: format!("hikari-table-header-cell {align_class} {sortable_class}"),
+                                        class: format!("hi-table-header-cell {align_class} {sortable_class}"),
                                         style: "{width_style}",
 
                                         {column.title.clone()}
 
                                         if column.sortable {
-                                            span { class: "hikari-table-sort-icon", "" }
+                                            span { class: "hi-table-sort-icon", "" }
                                         }
                                     }
                                 }
@@ -200,21 +200,21 @@ pub fn Table(props: TableProps) -> Element {
 
                 // Render table body
                 tbody {
-                    class: "hikari-table-body",
+                    class: "hi-table-body",
 
                     if has_data {
                         {props.data.iter().enumerate().map(|(row_index, row)| {
                             rsx! {
                                 tr {
-                                    class: "hikari-table-row",
+                                    class: "hi-table-row",
                                     key: "{row_index}",
 
                                     {row.iter().enumerate().map(|(col_index, cell)| {
                                         let align_class = if has_columns && col_index < props.columns.len() {
                                             match props.columns[col_index].align {
-                                                ColumnAlign::Left => "hikari-text-left",
-                                                ColumnAlign::Center => "hikari-text-center",
-                                                ColumnAlign::Right => "hikari-text-right",
+                                                ColumnAlign::Left => "hi-text-left",
+                                                ColumnAlign::Center => "hi-text-center",
+                                                ColumnAlign::Right => "hi-text-right",
                                             }
                                         } else {
                                             ""
@@ -222,7 +222,7 @@ pub fn Table(props: TableProps) -> Element {
 
                                         rsx! {
                                             td {
-                                                class: format!("hikari-table-cell {align_class}"),
+                                                class: format!("hi-table-cell {align_class}"),
                                                 key: "{row_index}-{col_index}",
 
                                                 {cell.clone()}
@@ -235,11 +235,11 @@ pub fn Table(props: TableProps) -> Element {
                     } else {
                         // Empty state
                         tr {
-                            class: "hikari-table-row",
+                            class: "hi-table-row",
                             td {
-                                class: "hikari-table-empty",
+                                class: "hi-table-empty",
                                 colspan: "{colspan_count}",
-                                div { class: "hikari-table-empty-content",
+                                div { class: "hi-table-empty-content",
                                     {props.empty_text.clone()}
                                 }
                             }

@@ -1,4 +1,4 @@
-// hikari-components/src/data/pagination.rs
+// hi-components/src/data/pagination.rs
 // Pagination component with Arknights + FUI styling
 
 use dioxus::prelude::*;
@@ -163,18 +163,18 @@ pub fn Pagination(props: PaginationProps) -> Element {
     };
 
     rsx! {
-        div { class: format!("hikari-pagination {}", props.class),
+        div { class: format!("hi-pagination {}", props.class),
 
             if props.show_total {
-                div { class: "hikari-pagination-total",
+                div { class: "hi-pagination-total",
                     "{start}-{end} of {total_items}"
                 }
             }
 
             if props.show_size_changer {
-                div { class: "hikari-pagination-sizer",
+                div { class: "hi-pagination-sizer",
                     select {
-                        class: "hikari-select hikari-select-sm",
+                        class: "hi-select hi-select-sm",
                         value: "{current_size}",
                         onchange: handle_size_change,
                         for size in props.page_size_options.iter() {
@@ -184,10 +184,10 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 }
             }
 
-            div { class: "hikari-pagination-pages",
+            div { class: "hi-pagination-pages",
 
                 button {
-                    class: "hikari-pagination-prev",
+                    class: "hi-pagination-prev",
                     disabled: current_page() <= 1,
                     onclick: handle_prev,
                     svg {
@@ -204,15 +204,15 @@ pub fn Pagination(props: PaginationProps) -> Element {
                     let page_num = *page;
                     if page_num == 0 {
                         rsx! {
-                            span { class: "hikari-pagination-ellipsis", "..." }
+                            span { class: "hi-pagination-ellipsis", "..." }
                         }
                     } else {
                         rsx! {
                             button {
                                 class: if page_num == current_page() {
-                                    "hikari-pagination-item hikari-pagination-active"
+                                    "hi-pagination-item hi-pagination-active"
                                 } else {
-                                    "hikari-pagination-item"
+                                    "hi-pagination-item"
                                 },
                                 onclick: move |_| handle_page_change(page_num),
                                 "{page_num}"
@@ -222,7 +222,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 })}
 
                 button {
-                    class: "hikari-pagination-next",
+                    class: "hi-pagination-next",
                     disabled: current_page() >= total_pages,
                     onclick: handle_next,
                     svg {
@@ -236,10 +236,10 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 }
             }
 
-            div { class: "hikari-pagination-jump",
-                span { class: "hikari-pagination-jump-label", "Go to" }
+            div { class: "hi-pagination-jump",
+                span { class: "hi-pagination-jump-label", "Go to" }
                 input {
-                    class: "hikari-input hikari-input-sm",
+                    class: "hi-input hi-input-sm",
                     r#type: "number",
                     min: 1,
                     max: "{total_pages}",

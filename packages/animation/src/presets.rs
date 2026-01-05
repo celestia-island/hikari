@@ -163,16 +163,6 @@ impl GlowAnimation {
     }
 }
 
-impl Default for FUIColors {
-    fn default() -> Self {
-        Self {
-            primary: (0.0, 0.8, 1.0),
-            accent: (0.0, 1.0, 0.8),
-            glow: (0.2, 0.6, 1.0),
-        }
-    }
-}
-
 /// FUI neon effect animations
 ///
 /// Provides neon-style glowing, flickering, and scanline effects

@@ -1,4 +1,4 @@
-// hikari-components/src/data/selection.rs
+// hi-components/src/data/selection.rs
 // Selection component with Arknights + FUI styling
 
 use dioxus::prelude::*;
@@ -116,19 +116,19 @@ pub fn Selection(props: SelectionProps) -> Element {
     };
 
     rsx! {
-        div { class: format!("hikari-selection {}", props.class),
+        div { class: format!("hi-selection {}", props.class),
 
             div { class: if props.fixed_column {
-                "hikari-selection-column hikari-selection-fixed"
+                "hi-selection-column hi-selection-fixed"
             } else {
-                "hikari-selection-column"
+                "hi-selection-column"
             },
 
                 if props.selection_type == SelectionType::Checkbox {
-                    div { class: "hikari-selection-header",
-                        label { class: "hikari-selection-all",
+                    div { class: "hi-selection-header",
+                        label { class: "hi-selection-all",
                             input {
-                                class: "hikari-selection-checkbox",
+                                class: "hi-selection-checkbox",
                                 r#type: "checkbox",
                                 checked: is_all_selected(),
                                 onchange: handle_select_all,
@@ -142,14 +142,14 @@ pub fn Selection(props: SelectionProps) -> Element {
                     let checked = is_row_selected(key);
 
                     rsx! {
-                        div { class: "hikari-selection-row",
-                            label { class: "hikari-selection-item",
+                        div { class: "hi-selection-row",
+                            label { class: "hi-selection-item",
                                 input {
-                                    class: "hikari-selection-checkbox",
+                                    class: "hi-selection-checkbox",
                                     r#type: get_input_type(),
                                     checked: checked,
                                     name: if props.selection_type == SelectionType::Radio {
-                                        "hikari-selection-radio-group"
+                                        "hi-selection-radio-group"
                                     } else {
                                         ""
                                     },
@@ -209,14 +209,14 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
     };
 
     rsx! {
-        div { class: format!("hikari-row-selection {}", props.class),
-            label { class: "hikari-row-selection-label",
+        div { class: format!("hi-row-selection {}", props.class),
+            label { class: "hi-row-selection-label",
                 input {
-                    class: "hikari-row-selection-input",
+                    class: "hi-row-selection-input",
                     r#type: input_type,
                     checked: is_selected,
                     name: if props.selection_type == SelectionType::Radio {
-                        "hikari-selection-radio-group"
+                        "hi-selection-radio-group"
                     } else {
                         ""
                     },
@@ -225,9 +225,9 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
 
                 span {
                     class: if is_selected {
-                        "hikari-row-selection-custom hikari-row-selection-checked"
+                        "hi-row-selection-custom hi-row-selection-checked"
                     } else {
-                        "hikari-row-selection-custom"
+                        "hi-row-selection-custom"
                     },
 
                     if props.selection_type == SelectionType::Checkbox && is_selected {
@@ -246,7 +246,7 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
                     }
 
                     if props.selection_type == SelectionType::Radio && is_selected {
-                        span { class: "hikari-row-selection-radio-dot" }
+                        span { class: "hi-row-selection-radio-dot" }
                     }
                 }
             }

@@ -1,4 +1,4 @@
-// hikari-components/src/data/filter.rs
+// hi-components/src/data/filter.rs
 // Filter component with Arknights + FUI styling
 
 use dioxus::prelude::*;
@@ -91,20 +91,20 @@ pub fn Filter(props: FilterProps) -> Element {
     };
 
     rsx! {
-        div { class: format!("hikari-filter {}", props.class),
+        div { class: format!("hi-filter {}", props.class),
 
-            div { class: "hikari-filter-container",
+            div { class: "hi-filter-container",
                 button {
                     class: if active_count > 0 {
-                        "hikari-filter-trigger hikari-filter-active"
+                        "hi-filter-trigger hi-filter-active"
                     } else {
-                        "hikari-filter-trigger"
+                        "hi-filter-trigger"
                     },
                     onclick: handle_toggle,
 
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: "hikari-filter-icon",
+                        class: "hi-filter-icon",
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,
@@ -117,14 +117,14 @@ pub fn Filter(props: FilterProps) -> Element {
                     }
 
                     if active_count > 0 {
-                        span { class: "hikari-filter-badge",
+                        span { class: "hi-filter-badge",
                             "{active_count}"
                         }
                     }
 
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: "hikari-filter-dropdown-icon",
+                        class: "hi-filter-dropdown-icon",
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,
@@ -135,24 +135,24 @@ pub fn Filter(props: FilterProps) -> Element {
             }
 
             if is_open() {
-                div { class: "hikari-filter-dropdown",
+                div { class: "hi-filter-dropdown",
                     onclick: close_dropdown,
 
-                    div { class: "hikari-filter-header",
-                        span { class: "hikari-filter-title",
+                    div { class: "hi-filter-header",
+                        span { class: "hi-filter-title",
                             "{props.column}"
                         }
 
                         if active_count > 0 {
                             button {
-                                class: "hikari-filter-clear-btn",
+                                class: "hi-filter-clear-btn",
                                 onclick: handle_clear,
                                 "Clear"
                             }
                         }
                     }
 
-                    div { class: "hikari-filter-options",
+                    div { class: "hi-filter-options",
                         {props.filters.iter().map(|option| {
                             let opt_value = option.value.clone();
                             let label_text = option.label.clone();
@@ -160,16 +160,16 @@ pub fn Filter(props: FilterProps) -> Element {
 
                             rsx! {
                                 label {
-                                    class: "hikari-filter-option",
+                                    class: "hi-filter-option",
                                     onclick: move |_| handle_select(opt_value.clone()),
 
                                     input {
-                                        class: "hikari-filter-checkbox",
+                                        class: "hi-filter-checkbox",
                                         r#type: "checkbox",
                                         checked: checked,
                                     }
 
-                                    span { class: "hikari-filter-label",
+                                    span { class: "hi-filter-label",
                                         "{label_text}"
                                     }
                                 }
@@ -177,8 +177,8 @@ pub fn Filter(props: FilterProps) -> Element {
                         })}
                     }
 
-                    div { class: "hikari-filter-footer",
-                        span { class: "hikari-filter-hint",
+                    div { class: "hi-filter-footer",
+                        span { class: "hi-filter-hint",
                             if active_count > 0 {
                                 "{active_count} selected"
                             } else {

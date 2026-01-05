@@ -1,4 +1,4 @@
-// hikari-components/src/data/collapse.rs
+// hi-components/src/data/collapse.rs
 // Animated collapse/expand component for tree nodes
 
 use dioxus::prelude::*;
@@ -69,10 +69,10 @@ pub fn Collapse(props: CollapseProps) -> Element {
 
     rsx! {
         div {
-            class: format!("hikari-collapse {}", props.class),
+            class: format!("hi-collapse {}", props.class),
 
             div {
-                class: "hikari-collapse-header",
+                class: "hi-collapse-header",
                 style: "cursor: pointer; display: flex; align-items: center; gap: 8px;",
                 onclick: move |_| {
                     is_expanded.set(!is_expanded());
@@ -83,7 +83,7 @@ pub fn Collapse(props: CollapseProps) -> Element {
                 },
 
                 span {
-                    class: "hikari-collapse-arrow",
+                    class: "hi-collapse-arrow",
                     style: format!(
                         "display: inline-block; transition: transform {}ms ease-in-out; transform: rotate({});",
                         props.duration, arrow_rotation
@@ -92,21 +92,21 @@ pub fn Collapse(props: CollapseProps) -> Element {
                 }
 
                 span {
-                    class: "hikari-collapse-header-content",
+                    class: "hi-collapse-header-content",
                     { children_content }
                 }
             }
 
             div {
-                class: "hikari-collapse-content",
-                class: if *is_expanded.read() { "hikari-collapse-expanded" } else { "hikari-collapse-collapsed" },
+                class: "hi-collapse-content",
+                class: if *is_expanded.read() { "hi-collapse-expanded" } else { "hi-collapse-collapsed" },
                 style: format!(
                     "max-height: {}; overflow: hidden; opacity: {}; {}",
                     max_height, opacity, animation_style
                 ),
 
                 div {
-                    class: "hikari-collapse-inner",
+                    class: "hi-collapse-inner",
                     onmounted: move |e: Event<MountedData>| {
                         let _ = e;
                     },
@@ -185,10 +185,10 @@ pub fn TreeCollapse(props: TreeCollapseProps) -> Element {
 
     rsx! {
         div {
-            class: format!("hikari-tree-collapse {}", props.class),
+            class: format!("hi-tree-collapse {}", props.class),
 
             div {
-                class: "hikari-tree-node-header",
+                class: "hi-tree-node-header",
                 style: "cursor: pointer; display: flex; align-items: center; gap: 8px;",
                 onclick: move |_| {
                     is_expanded.set(!is_expanded());
@@ -199,7 +199,7 @@ pub fn TreeCollapse(props: TreeCollapseProps) -> Element {
                 },
 
                 span {
-                    class: "hikari-tree-node-arrow",
+                    class: "hi-tree-node-arrow",
                     style: format!(
                         "display: inline-block; transition: transform {}ms ease-in-out; transform: rotate({});",
                         props.duration, arrow_rotation
@@ -208,19 +208,19 @@ pub fn TreeCollapse(props: TreeCollapseProps) -> Element {
                 }
 
                 if let Some(icon) = props.icon {
-                    span { class: "hikari-tree-node-icon", { icon } }
+                    span { class: "hi-tree-node-icon", { icon } }
                 }
 
                 span {
-                    class: "hikari-tree-node-title",
+                    class: "hi-tree-node-title",
                     "{props.title}"
                 }
             }
 
             div {
                 class: format!(
-                    "hikari-tree-node-children {}",
-                    if *is_expanded.read() { "hikari-tree-expanded" } else { "hikari-tree-collapsed" }
+                    "hi-tree-node-children {}",
+                    if *is_expanded.read() { "hi-tree-expanded" } else { "hi-tree-collapsed" }
                 ),
                 style: format!(
                     "max-height: {}; overflow: hidden; opacity: {}; padding-left: 24px; {}",
@@ -228,7 +228,7 @@ pub fn TreeCollapse(props: TreeCollapseProps) -> Element {
                 ),
 
                 div {
-                    class: "hikari-tree-node-children-inner",
+                    class: "hi-tree-node-children-inner",
                     onmounted: move |e: Event<MountedData>| {
                         let _ = e;
                     },

@@ -1,4 +1,4 @@
-// hikari-components/src/data/virtual_scroll.rs
+// hi-components/src/data/virtual_scroll.rs
 // Virtual scroll component for large tree data sets
 
 use dioxus::prelude::*;
@@ -102,7 +102,7 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
 
     rsx! {
         div {
-            class: format!("hikari-virtual-tree {}", props.class),
+            class: format!("hi-virtual-tree {}", props.class),
             style: "position: relative; overflow: hidden; height: {props.height};",
 
             div {
@@ -110,7 +110,7 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
             }
 
             div {
-                class: "hikari-virtual-tree-viewport",
+                class: "hi-virtual-tree-viewport",
                 style: "position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto;",
                 onscroll: move |e| {
                     let scroll_top = e.scroll_top();
@@ -138,14 +138,14 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
                         rsx! {
                             div {
                                 class: format!(
-                                    "hikari-virtual-tree-node {}",
-                                    if disabled { "hikari-tree-node-disabled" } else { "" }
+                                    "hi-virtual-tree-node {}",
+                                    if disabled { "hi-tree-node-disabled" } else { "" }
                                 ),
                                 style: "position: absolute; top: {(idx as f64 * props.item_height as f64)}px; left: 0; right: 0; height: {props.item_height}px; padding-left: {(depth * 24)}px; display: flex; align-items: center;",
                                 "data-key": "{id}",
 
                                 span {
-                                    class: "hikari-tree-node-content",
+                                    class: "hi-tree-node-content",
                                     style: "display: flex; align-items: center; gap: 8px;",
                                     "{title}"
                                 }

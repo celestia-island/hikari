@@ -1,4 +1,4 @@
-// hikari-extra-components/src/drag_layer.rs
+// hi-extra-components/src/drag_layer.rs
 // Drag layer component with bounds constraints
 
 use dioxus::prelude::*;
@@ -149,8 +149,8 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
     rsx! {
         div {
             class: format!(
-                "hikari-drag-layer {} {}",
-                if is_dragging() { "hikari-dragging" } else { "" },
+                "hi-drag-layer {} {}",
+                if is_dragging() { "hi-dragging" } else { "" },
                 props.class
             ),
             style: format!(

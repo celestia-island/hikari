@@ -8,7 +8,7 @@ publish = false
 # This is a standalone example, not part of the main workspace
 
 [[bin]]
-name = "demo-app"
+name = "demo_app_server"
 path = "src/main.rs"
 required-features = ["server"]
 
@@ -19,7 +19,7 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = []
-server = ["dep:tokio", "dep:axum", "dep:tower-http", "dep:tower", "dep:anyhow", "dep:tracing", "dep:tracing-subscriber", "dep:hikari-render-service"]
+server = ["dep:tokio", "dep:axum", "dep:tower-http", "dep:tower", "dep:anyhow", "dep:tracing", "dep:tracing-subscriber", "dep:http", "dep:hikari-render-service"]
 
 # Optional integrations
 embedded = ["hikari-icons/embedded"]
@@ -29,7 +29,6 @@ embedded = ["hikari-icons/embedded"]
 hikari-components = { path = "../../packages/components" }
 hikari-icons = { path = "../../packages/icons" }
 hikari-palette = { path = "../../packages/palette" }
-hikari-theme = { path = "../../packages/theme" }
 hikari-render-service = { path = "../../packages/render-service", optional = true }
 
 # Dioxus frontend framework
@@ -49,3 +48,4 @@ tower = { version = "^0.5", features = ["full"], optional = true }
 anyhow = { version = "^1", optional = true }
 tracing = { version = "^0.1", optional = true }
 tracing-subscriber = { version = "^0.3", optional = true }
+http = { version = "^1", optional = true }

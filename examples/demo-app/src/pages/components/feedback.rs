@@ -7,10 +7,10 @@ use hikari_components::*;
 use crate::{app::Route, components::{Layout, Section}};
 
 #[component]
-pub fn FeedbackComponents() -> Element {
+pub fn ComponentsFeedback() -> Element {
     rsx! {
         Layout {
-            current_route: Route::FeedbackComponents {},
+            current_route: Route::ComponentsFeedback {},
 
             h1 { class: "text-3xl lg:text-4xl font-bold mb-8 text-[#1a1a2e]",
                 "Feedback Components"

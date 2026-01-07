@@ -29,6 +29,9 @@ pub struct CardProps {
     pub children: Element,
 
     pub onclick: Option<EventHandler<MouseEvent>>,
+
+    #[props(default)]
+    pub spotlight: bool,
 }
 
 impl Default for CardProps {
@@ -41,6 +44,7 @@ impl Default for CardProps {
             extra: None,
             children: VNode::empty(),
             onclick: None,
+            spotlight: false,
         }
     }
 }
@@ -77,7 +81,7 @@ pub fn Card(props: CardProps) -> Element {
     };
     let _clickable = props.onclick.is_some();
 
-    rsx! {
+    let card_content = rsx! {
         div {
             class: format!("hi-card {hoverable_class} {bordered_class} {}", props.class),
             onclick: move |e| {
@@ -103,6 +107,19 @@ pub fn Card(props: CardProps) -> Element {
                 { props.children }
             }
         }
+    };
+
+    // Wrap with spotlight if enabled
+    if props.spotlight {
+        rsx! {
+            div {
+                class: "hi-card-spotlight-wrapper",
+                "data-spotlight": "true",
+                { card_content }
+            }
+        }
+    } else {
+        card_content
     }
 }
 

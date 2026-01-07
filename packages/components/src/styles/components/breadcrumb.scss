@@ -54,7 +54,9 @@
       margin-left: 0.5rem;
       color: var(--hi-color-text-secondary);
       opacity: 0.5;
-      transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+      // DISABLED - migrated to JS animation
+
+      // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
       // Glow effect on separator
       filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.3));
@@ -94,7 +96,9 @@
   cursor: pointer;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Padding
   padding: 0.25rem 0.5rem;
@@ -111,7 +115,9 @@
     flex-shrink: 0;
     width: 1rem;
     height: 1rem;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     svg {
       width: 100%;
@@ -162,7 +168,9 @@
   font-size: 0.875rem;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Custom separator glow
   &.hi-breadcrumb-separator-glow {
@@ -233,7 +241,9 @@
     .hi-breadcrumb-dropdown-arrow {
       width: 0.75rem;
       height: 0.75rem;
-      transition: transform vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+      // DISABLED - migrated to JS animation
+
+      // transition: transform vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
       svg {
         width: 100%;
@@ -272,7 +282,9 @@
     padding: 0.5rem;
 
     // Transitions
-    transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
     // Animation
     opacity: 0;
@@ -310,7 +322,9 @@
       cursor: pointer;
 
       // Transitions
-      transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+      // DISABLED - migrated to JS animation
+
+      // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
       // Hover state
       &:hover {
@@ -341,7 +355,9 @@
   color: var(--hi-color-text-secondary);
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   svg {
     width: 100%;
@@ -420,7 +436,9 @@
     background: rgba(45, 45, 45, 0.5);
     padding: 0.375rem 0.75rem;
     border-radius: vars.$hikari-radius-fui-sm;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     &:not(:last-child):hover {
       background: rgba(139, 92, 246, 0.15);
@@ -442,7 +460,9 @@
     padding: 0.375rem 0.875rem;
     border-radius: 999px;
     border: 1px solid var(--hi-color-border);
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     &:not(:last-child) {
       &:hover {
@@ -467,19 +487,22 @@
 
 // Animated separator (pulsing glow)
 .hi-breadcrumb-separator-animated {
-  animation: breadcrumb-separator-pulse 2s ease-in-out infinite;
+  // DISABLED - migrated to JS animation
+
+  // animation: breadcrumb-separator-pulse 2s ease-in-out infinite;
 }
 
-@keyframes breadcrumb-separator-pulse {
-  0%, 100% {
-    opacity: 0.5;
-    filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.3));
-  }
-  50% {
-    opacity: 1;
-    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6));
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes breadcrumb-separator-pulse {
+//   0%, 100% {
+//     opacity: 0.5;
+//     filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.3));
+//   }
+//   50% {
+//     opacity: 1;
+//     filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6));
+//   }
+// }
 
 // ============================================
 // Collapsible Breadcrumb (for mobile)
@@ -511,7 +534,9 @@
 .hi-breadcrumb-animate-in {
   .hi-breadcrumb-item {
     opacity: 0;
-    animation: breadcrumb-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+    // DISABLED - migrated to JS animation
+
+    // animation: breadcrumb-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 
     @for $i from 1 through 10 {
       &:nth-child(#{$i}) {
@@ -521,22 +546,25 @@
   }
 }
 
-@keyframes breadcrumb-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes breadcrumb-fade-in {
+//   from {
+//     opacity: 0;
+//     transform: translateY(-4px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+// }
 
 // Slide-in animation
 .hi-breadcrumb-slide-in {
   .hi-breadcrumb-item {
     opacity: 0;
-    animation: breadcrumb-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+    // DISABLED - migrated to JS animation
+
+    // animation: breadcrumb-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 
     @for $i from 1 through 10 {
       &:nth-child(#{$i}) {
@@ -546,16 +574,17 @@
   }
 }
 
-@keyframes breadcrumb-slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes breadcrumb-slide-in {
+//   from {
+//     opacity: 0;
+//     transform: translateX(-8px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateX(0);
+//   }
+// }
 
 // ============================================
 // Custom Colors

@@ -52,7 +52,9 @@
       rgba(139, 92, 246, 0.04) 0%,
       transparent 50%
     );
-    animation: layout-ambient-move vars.$hikari-ambient-duration vars.$hikari-ambient-easing infinite;
+    // DISABLED - migrated to JS animation
+
+    // animation: layout-ambient-move vars.$hikari-ambient-duration vars.$hikari-ambient-easing infinite;
     pointer-events: none;
     z-index: 0;
   }
@@ -64,20 +66,21 @@
   }
 }
 
-@keyframes layout-ambient-move {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-  }
-  25% {
-    transform: translate(5%, 5%) scale(1.05);
-  }
-  50% {
-    transform: translate(0, 10%) scale(1.1);
-  }
-  75% {
-    transform: translate(-5%, 5%) scale(1.05);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes layout-ambient-move {
+//   0%, 100% {
+//     transform: translate(0, 0) scale(1);
+//   }
+//   25% {
+//     transform: translate(5%, 5%) scale(1.05);
+//   }
+//   50% {
+//     transform: translate(0, 10%) scale(1.1);
+//   }
+//   75% {
+//     transform: translate(-5%, 5%) scale(1.05);
+//   }
+// }
 
 // ============================================
 // Layout Header Area
@@ -92,7 +95,9 @@
   background: rgba(45, 45, 45, 0.95);
 
   // Transition for scroll state
-  transition: background vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: background vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Scrolled state (applied via JS)
   &.hi-layout-header-scrolled {
@@ -134,7 +139,9 @@
   background: rgba(248, 250, 252, 1);
 
   // Transitions
-  transition: background vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: background vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Responsive padding
   @include mix.mobile {
@@ -219,7 +226,9 @@
       background: linear-gradient(to bottom, rgba(248, 250, 252, 0.9), transparent);
       pointer-events: none;
       opacity: var(--fade-top-opacity, 0); // Controlled by JS
-      transition: opacity 0.2s ease;
+      // DISABLED - migrated to JS animation
+
+      // transition: opacity 0.2s ease;
       z-index: 10;
     }
 
@@ -233,7 +242,9 @@
       background: linear-gradient(to top, rgba(248, 250, 252, 0.9), transparent);
       pointer-events: none;
       opacity: var(--fade-bottom-opacity, 0); // Controlled by JS
-      transition: opacity 0.2s ease;
+      // DISABLED - migrated to JS animation
+
+      // transition: opacity 0.2s ease;
       z-index: 10;
     }
 
@@ -381,7 +392,9 @@
       width: 80%;
       max-width: 300px;
       transform: translateX(-100%);
-      transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+      // DISABLED - migrated to JS animation
+
+      // transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
       &.hi-layout-aside-open {
         transform: translateX(0);
@@ -402,7 +415,9 @@
       z-index: 199;
       opacity: 0;
       pointer-events: none;
-      transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+      // DISABLED - migrated to JS animation
+
+      // transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
     }
 
     &.hi-layout-overlay-open::before {
@@ -418,35 +433,41 @@
 
 // Fade in animation for layout content
 .hi-layout-animate-in {
-  animation: layout-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: layout-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
-@keyframes layout-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes layout-fade-in {
+//   from {
+//     opacity: 0;
+//     transform: translateY(20px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+// }
 
 // Slide in from left (for sidebar)
 .hi-layout-slide-in-left {
-  animation: layout-slide-left vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: layout-slide-left vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
-@keyframes layout-slide-left {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes layout-slide-left {
+//   from {
+//     opacity: 0;
+//     transform: translateX(-30px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateX(0);
+//   }
+// }
 
 // ============================================
 // Layout Transitions
@@ -455,12 +476,13 @@
 // Smooth transition when sidebar collapses/expands
 .hi-layout-sidebar-transition {
   .hi-layout-aside {
-    transition: width vars.$hikari-duration-normal vars.$hikari-ease-smooth,
-                padding vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+    // transition: width vars.$hikari-duration-normal vars.$hikari-ease-smooth,
   }
 
   .hi-layout-aside-content {
-    transition: opacity vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+    // transition: opacity vars.$hikari-duration-fast vars.$hikari-ease-smooth;
   }
 }
 

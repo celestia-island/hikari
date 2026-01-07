@@ -31,13 +31,15 @@
   border-radius: vars.$hikari-radius-fui-sm;
   border: 1px solid var(--hi-color-border);
 
-  // Acrylic background effect
-  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+  // Light acrylic background effect
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(vars.$hikari-acrylic-blur);
   -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
 
   // Transitions - smooth GSAP-style easing
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Remove default outline
   outline: none;
@@ -51,7 +53,7 @@
   // Focus state with acrylic glow
   &:focus {
     border-color: var(--hi-color-primary);
-    background: rgba(45, 45, 45, 0.95);
+    background: rgba(255, 255, 255, 0.95);
 
     // Glowing border effect
     box-shadow:
@@ -70,7 +72,7 @@
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background: rgba(45, 45, 45, 0.5);
+    background: rgba(255, 255, 255, 0.5);
   }
 
   // Error state
@@ -109,15 +111,18 @@
   width: 100%;
   max-width: 320px;
 
-  // Acrylic background
-  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+  // Light acrylic background
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(vars.$hikari-acrylic-blur);
   -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
 
   border-radius: vars.$hikari-radius-fui-sm;
   border: 1px solid var(--hi-color-border);
 
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   &:hover {
     border-color: rgba(139, 92, 246, 0.5);
@@ -126,7 +131,7 @@
 
   &:focus-within {
     border-color: var(--hi-color-primary);
-    background: rgba(45, 45, 45, 0.95);
+    background: rgba(255, 255, 255, 0.95);
     box-shadow:
       0 0 0 1px var(--hi-color-primary),
       0 0 12px rgba(139, 92, 246, 0.4),
@@ -178,7 +183,9 @@
   cursor: pointer;
   color: var(--hi-color-text-secondary);
   border-radius: vars.$hikari-radius-fui-sm;
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   &:hover {
     color: var(--hi-color-text-primary);
@@ -204,7 +211,9 @@
 .hi-input-search {
   .hi-input-suffix {
     cursor: pointer;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     &:hover {
       color: var(--hi-color-primary);
@@ -220,7 +229,9 @@
 .hi-input-password {
   .hi-input-suffix {
     cursor: pointer;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     &:hover {
       color: var(--hi-color-primary);
@@ -326,52 +337,101 @@
 
   &.hi-input-counter-limit {
     color: var(--hi-color-danger);
-    animation: counter-pulse 0.5s vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // animation: counter-pulse 0.5s vars.$hikari-ease-smooth;
   }
 }
 
-@keyframes counter-pulse {
-  0%, 100% {
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 1;
-    text-shadow: 0 0 8px var(--hi-color-danger);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes counter-pulse {
+//   0%, 100% {
+//     opacity: 0.8;
+//   }
+//   50% {
+//     opacity: 1;
+//     text-shadow: 0 0 8px var(--hi-color-danger);
+//   }
+// }
 
 // ============================================
 // Animations
 // ============================================
 
 .hi-input-animate-in {
-  animation: input-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: input-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
-@keyframes input-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes input-fade-in {
+//   from {
+//     opacity: 0;
+//     transform: translateY(-8px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+// }
 
 // Shake animation for error state
 .hi-input-shake {
-  animation: input-shake 0.5s vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // animation: input-shake 0.5s vars.$hikari-ease-smooth;
 }
 
-@keyframes input-shake {
-  0%, 100% {
-    transform: translateX(0);
+// DISABLED - migrated to JS animation
+// @keyframes input-shake {
+//   0%, 100% {
+//     transform: translateX(0);
+//   }
+//   10%, 30%, 50%, 70%, 90% {
+//     transform: translateX(-4px);
+//   }
+//   20%, 40%, 60%, 80% {
+//     transform: translateX(4px);
+//   }
+// }
+
+// ============================================
+// Spotlight Effect (Mouse-following glow)
+// ============================================
+
+// Spotlight wrapper for input
+.hi-input-spotlight-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 320px;
+
+  // Create spotlight overlay using ::before pseudo-element
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: inherit;
+    opacity: var(--spotlight-opacity, 0);
+
+    // Blue radial gradient spotlight positioned by CSS variables
+    background-image: radial-gradient(
+      circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+      rgba(59, 130, 246, 0.5) 0%,
+      transparent 70%
+    );
+
+    // Smooth opacity transition (only for opacity, position updates are instant)
+    transition: opacity 0.1s ease-out;
   }
-  10%, 30%, 50%, 70%, 90% {
-    transform: translateX(-4px);
-  }
-  20%, 40%, 60%, 80% {
-    transform: translateX(4px);
+
+  // Ensure input is above the spotlight overlay
+  .hi-input,
+  .hi-input-wrapper {
+    position: relative;
+    z-index: 2;
   }
 }

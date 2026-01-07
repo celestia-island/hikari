@@ -21,7 +21,9 @@
   background: transparent;
 
   // Transitions
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 }
 
 // ============================================
@@ -118,7 +120,9 @@
   user-select: none;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Position
   position: relative;
@@ -128,7 +132,9 @@
     flex-shrink: 0;
     width: 1rem;
     height: 1rem;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     svg {
       width: 100%;
@@ -154,7 +160,9 @@
     cursor: pointer;
     border-radius: vars.$hikari-radius-fui-sm;
     opacity: 0;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     svg {
       width: 100%;
@@ -242,7 +250,9 @@
     0 0 16px rgba(139, 92, 246, 0.6);
 
   // Transitions - smooth sliding animation
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Border radius
   border-radius: 2px 2px 0 0;
@@ -278,20 +288,23 @@
   // Active state
   &.hi-tab-panel-active {
     display: block;
-    animation: tab-panel-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+    // DISABLED - migrated to JS animation
+
+    // animation: tab-panel-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
   }
 }
 
-@keyframes tab-panel-fade-in {
-  from {
-    opacity: 0;
-    transform: translateX(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes tab-panel-fade-in {
+//   from {
+//     opacity: 0;
+//     transform: translateX(16px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateX(0);
+//   }
+// }
 
 // ============================================
 // Position Variants
@@ -552,7 +565,9 @@
   cursor: pointer;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Icon
   svg {
@@ -581,59 +596,68 @@
 .hi-tabs-animated {
   .hi-tab-panel {
     &.hi-tab-panel-active {
-      animation: tab-panel-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+      // DISABLED - migrated to JS animation
+
+      // animation: tab-panel-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
     }
   }
 }
 
-@keyframes tab-panel-slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes tab-panel-slide-in {
+//   from {
+//     opacity: 0;
+//     transform: translateX(24px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateX(0);
+//   }
+// }
 
 // Fade animation
 .hi-tabs-fade {
   .hi-tab-panel {
     &.hi-tab-panel-active {
-      animation: tab-panel-fade-only vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+      // DISABLED - migrated to JS animation
+
+      // animation: tab-panel-fade-only vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
     }
   }
 }
 
-@keyframes tab-panel-fade-only {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes tab-panel-fade-only {
+//   from {
+//     opacity: 0;
+//   }
+//   to {
+//     opacity: 1;
+//   }
+// }
 
 // Zoom animation
 .hi-tabs-zoom {
   .hi-tab-panel {
     &.hi-tab-panel-active {
-      animation: tab-panel-zoom-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+      // DISABLED - migrated to JS animation
+
+      // animation: tab-panel-zoom-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
     }
   }
 }
 
-@keyframes tab-panel-zoom-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes tab-panel-zoom-in {
+//   from {
+//     opacity: 0;
+//     transform: scale(0.95);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: scale(1);
+//   }
+// }
 
 // ============================================
 // Scrollable Tabs
@@ -651,7 +675,9 @@
       pointer-events: none;
       z-index: 1;
       opacity: 0;
-      transition: opacity vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+      // DISABLED - migrated to JS animation
+
+      // transition: opacity vars.$hikari-duration-fast vars.$hikari-ease-smooth;
     }
 
     &::before {
@@ -693,7 +719,9 @@
   cursor: pointer;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Icon
   svg {

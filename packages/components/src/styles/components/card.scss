@@ -36,7 +36,9 @@
     0 0 0 1px rgba(241, 245, 249, 0.5) inset;
 
   // Transitions - smooth GSAP-style easing
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Position for accent bar
   position: relative;
@@ -56,7 +58,9 @@
       var(--hi-color-primary) 100%
     );
     opacity: 0;
-    transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
   }
 
   // Hover state with accent bar
@@ -75,7 +79,9 @@
   // Active/clickable state
   &:active {
     transform: translateY(0);
-    transition: transform vars.$hikari-duration-instant ease-out;
+    // DISABLED - migrated to JS animation
+
+    // transition: transform vars.$hikari-duration-instant ease-out;
   }
 }
 
@@ -207,18 +213,21 @@
       rgba(255, 255, 255, 0.1),
       transparent
     );
-    animation: card-loading-shimmer 1.5s infinite;
+    // DISABLED - migrated to JS animation
+
+    // animation: card-loading-shimmer 1.5s infinite;
   }
 }
 
-@keyframes card-loading-shimmer {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes card-loading-shimmer {
+//   0% {
+//     left: -100%;
+//   }
+//   100% {
+//     left: 100%;
+//   }
+// }
 
 // ============================================
 // Card Variants
@@ -335,30 +344,73 @@
 // ============================================
 
 .hi-card-animate-in {
-  animation: card-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: card-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
-@keyframes card-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes card-fade-in {
+//   from {
+//     opacity: 0;
+//     transform: translateY(16px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+// }
 
 // Staggered animation for card grids
 .hi-card-stagger {
   .hi-card {
     opacity: 0;
-    animation: card-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+    // DISABLED - migrated to JS animation
+
+    // animation: card-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 
     @for $i from 1 through 10 {
       &:nth-child(#{$i}) {
         animation-delay: #{$i * 0.1s};
       }
     }
+  }
+}
+
+// ============================================
+// Spotlight Effect (Mouse-following glow)
+// ============================================
+
+// Spotlight wrapper for card
+.hi-card-spotlight-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+
+  // Create spotlight overlay using ::before pseudo-element
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: inherit;
+    opacity: var(--spotlight-opacity, 0);
+
+    // Blue radial gradient spotlight positioned by CSS variables
+    background-image: radial-gradient(
+      circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+      rgba(59, 130, 246, 0.4) 0%,
+      transparent 70%
+    );
+
+    // Smooth opacity transition (only for opacity, position updates are instant)
+    transition: opacity 0.1s ease-out;
+  }
+
+  // Ensure card content is above the spotlight overlay
+  .hi-card {
+    position: relative;
+    z-index: 2;
   }
 }

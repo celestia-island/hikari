@@ -36,7 +36,9 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
   // Transitions - smooth GSAP-style easing
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Position
   position: relative;
@@ -109,7 +111,9 @@
   gap: 0.75rem;
   text-decoration: none;
   color: var(--hi-color-text-primary);
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
   position: relative;
 
   // Logo icon/image
@@ -132,7 +136,9 @@
       width: 100%;
       height: 100%;
       filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.6));
-      transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+      // DISABLED - migrated to JS animation
+
+      // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
     }
 
     // Animation on hover
@@ -222,7 +228,9 @@
     color: var(--hi-color-text-secondary);
     text-decoration: none;
     border-radius: vars.$hikari-radius-fui-sm;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     // Hover state
     &:hover {
@@ -288,13 +296,17 @@
   outline: none;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Icon
   svg {
     width: 1.125rem;
     height: 1.125rem;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
   }
 
   // Hover state
@@ -338,21 +350,24 @@
       background: var(--hi-color-danger);
       border-radius: 50%;
       box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
-      animation: header-badge-pulse 2s ease-in-out infinite;
+      // DISABLED - migrated to JS animation
+
+      // animation: header-badge-pulse 2s ease-in-out infinite;
     }
   }
 }
 
-@keyframes header-badge-pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.1);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes header-badge-pulse {
+//   0%, 100% {
+//     opacity: 1;
+//     transform: scale(1);
+//   }
+//   50% {
+//     opacity: 0.7;
+//     transform: scale(1.1);
+//   }
+// }
 
 // ============================================
 // Header Search
@@ -381,7 +396,9 @@
     border: 1px solid rgba(139, 92, 246, 0.2);
     border-radius: vars.$hikari-radius-fui-sm;
     outline: none;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     &::placeholder {
       color: var(--hi-color-text-secondary);
@@ -438,7 +455,9 @@
   padding: 0.375rem 0.75rem;
   border-radius: vars.$hikari-radius-fui-sm;
   cursor: pointer;
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
   text-decoration: none;
   color: var(--hi-color-text-primary);
 
@@ -450,7 +469,9 @@
     object-fit: cover;
     border: 2px solid rgba(139, 92, 246, 0.3);
     box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
   }
 
   // User info
@@ -484,7 +505,9 @@
     width: 0.75rem;
     height: 0.75rem;
     color: var(--hi-color-text-secondary);
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     @include mix.mobile {
       display: none;
@@ -659,33 +682,39 @@
 
 // Slide down animation
 .hi-header-slide-down {
-  animation: header-slide-down vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: header-slide-down vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
-@keyframes header-slide-down {
-  from {
-    opacity: 0;
-    transform: translateY(-100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes header-slide-down {
+//   from {
+//     opacity: 0;
+//     transform: translateY(-100%);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+// }
 
 // Fade in animation
 .hi-header-fade-in {
-  animation: header-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: header-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
-@keyframes header-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes header-fade-in {
+//   from {
+//     opacity: 0;
+//   }
+//   to {
+//     opacity: 1;
+//   }
+// }
 
 // ============================================
 // Header with Breadcrumb

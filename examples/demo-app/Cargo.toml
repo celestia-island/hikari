@@ -29,6 +29,7 @@ embedded = ["icons/embedded"]
 components = { path = "../../packages/components", package = "hikari-components", features = ["basic", "feedback", "navigation", "data", "layout"] }
 icons = { path = "../../packages/icons", package = "hikari-icons" }
 palette = { path = "../../packages/palette", package = "hikari-palette" }
+animations = { path = "../../packages/animation", package = "hikari-animation" }
 render-service = { path = "../../packages/render-service", package = "hikari-render-service", optional = true }
 
 # Dioxus frontend framework
@@ -38,6 +39,7 @@ dioxus-web = "0.7"
 
 # WASM related
 wasm-bindgen = "0.2"
+web-sys = "0.3"
 console_error_panic_hook = "0.1"
 
 # Server-side dependencies (only used when server feature is enabled)

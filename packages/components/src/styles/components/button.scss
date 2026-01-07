@@ -37,8 +37,9 @@
   white-space: nowrap;
   outline: none;
 
-  // Transitions - smooth GSAP-style easing
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // Transitions - DISABLED by default, handled by JS animation library
+  // Uncomment if you want CSS-only fallback:
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Position for pseudo-elements
   position: relative;
@@ -49,32 +50,32 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 
-  // Shine effect on hover (animated sweep)
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.15),
-      transparent
-    );
-    transition: left vars.$hikari-duration-slow vars.$hikari-ease-smooth;
-    pointer-events: none;
-    z-index: 1;
-  }
+  // Shine effect on hover (animated sweep) - DISABLED for JS animation
+  // &::before {
+  //   content: '';
+  //   position: absolute;
+  //   top: 0;
+  //   left: -100%;
+  //   width: 100%;
+  //   height: 100%;
+  //   background: linear-gradient(
+  //     90deg,
+  //     transparent,
+  //     rgba(255, 255, 255, 0.15),
+  //     transparent
+  //   );
+  //   transition: left vars.$hikari-duration-slow vars.$hikari-ease-smooth;
+  //   pointer-events: none;
+  //   z-index: 1;
+  // }
 
-  &:hover::before {
-    left: 100%;
-  }
+  // &:hover::before {
+  //   left: 100%;
+  // }
 
   &:active {
     transform: scale(0.98);
-    transition: transform vars.$hikari-duration-instant ease-out;
+    // transition: transform vars.$hikari-duration-instant ease-out;
   }
 
   // Disabled state
@@ -87,6 +88,37 @@
   // Loading state
   &.hi-button-loading {
     pointer-events: none;
+  }
+
+  // Optional: Enable CSS transitions with this class (for CSS-only mode)
+  &.hi-button-css-transitions {
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.15),
+        transparent
+      );
+      transition: left vars.$hikari-duration-slow vars.$hikari-ease-smooth;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    &:hover::before {
+      left: 100%;
+    }
+
+    &:active {
+      transition: transform vars.$hikari-duration-instant ease-out;
+    }
   }
 }
 
@@ -306,41 +338,43 @@
 // Entrance Animation (Optional)
 // ============================================
 
-.hi-button-animate-in {
-  animation: button-fade-in 300ms vars.$hikari-ease-smooth forwards;
-}
-
-@keyframes button-fade-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+// DISABLED - migrated to JS animation
+// .hi-button-animate-in {
+//   animation: button-fade-in 300ms vars.$hikari-ease-smooth forwards;
+// }
+//
+// @keyframes button-fade-in {
+//   from {
+//     opacity: 0;
+//     transform: scale(0.95);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: scale(1);
+//   }
+// }
 
 // ============================================
 // Ripple Effect (Optional enhancement)
 // ============================================
 
-.hi-button-ripple {
-  &::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: width 0.6s ease-out, height 0.6s ease-out;
-  }
-
-  &:active::after {
-    width: 300px;
-    height: 300px;
-  }
-}
+// DISABLED - handled by JS animation library
+// .hi-button-ripple {
+//   &::after {
+//     content: '';
+//     position: absolute;
+//     top: 50%;
+//     left: 50%;
+//     width: 0;
+//     height: 0;
+//     background: rgba(255, 255, 255, 0.3);
+//     border-radius: 50%;
+//     transform: translate(-50%, -50%);
+//     transition: width 0.6s ease-out, height 0.6s ease-out;
+//   }
+//
+//   &:active::after {
+//     width: 300px;
+//     height: 300px;
+//   }
+// }

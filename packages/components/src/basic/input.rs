@@ -4,6 +4,8 @@
 use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
+use crate::feedback::Spotlight;
+use crate::feedback::SpotlightColor;
 
 /// Input 组件的类型包装器（用于实现 StyledComponent）
 pub struct InputComponent;
@@ -51,6 +53,10 @@ pub struct InputProps {
     pub onblur: Option<EventHandler<FocusEvent>>,
 
     pub onkeydown: Option<EventHandler<KeyboardEvent>>,
+
+    /// Enable spotlight effect (uses Theme color for solid backgrounds)
+    #[props(default)]
+    pub spotlight: bool,
 }
 
 /// Input component with Arknights + FUI styling
@@ -84,7 +90,7 @@ pub fn Input(props: InputProps) -> Element {
         ""
     };
 
-    rsx! {
+    let input_content = rsx! {
         div { class: format!("hi-input-wrapper {size_class} {}", props.class),
 
             if let Some(icon) = props.prefix_icon {
@@ -123,6 +129,19 @@ pub fn Input(props: InputProps) -> Element {
                 span { class: "hi-input-suffix", { icon } }
             }
         }
+    };
+
+    // Wrap with spotlight if enabled
+    if props.spotlight {
+        rsx! {
+            Spotlight {
+                color: SpotlightColor::Theme,
+                class: "has-solid-bg", // Enable blend mode for solid backgrounds
+                { input_content }
+            }
+        }
+    } else {
+        input_content
     }
 }
 

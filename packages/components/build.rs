@@ -1,141 +1,93 @@
 // hikari-components/build.rs
-// SCSS build script - compiles SCSS files to CSS using Grass compiler
+// SCSS build script - auto-discovers and compiles SCSS files using Grass compiler
 
-use std::{env, fs, path::Path};
+use anyhow::Result;
 use grass::Options;
+use std::{env, fs, path::Path};
 
-fn main() {
+fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=src/styles");
 
-    let out_dir = env::var("OUT_DIR").unwrap();
+    let out_dir = env::var("OUT_DIR")?;
     let styles_out_dir = Path::new(&out_dir).join("styles");
 
     // 创建输出目录
-    fs::create_dir_all(&styles_out_dir).unwrap();
+    fs::create_dir_all(&styles_out_dir)?;
 
-    println!("🔨 Compiling SCSS files with Grass...");
+    println!("🔨 Auto-discovering and compiling SCSS files...");
 
-    let scss_files = get_scss_files();
+    let manifest_dir_str = env::var("CARGO_MANIFEST_DIR")?;
+    let manifest_dir = Path::new(&manifest_dir_str);
+    let components_dir = manifest_dir.join("src/styles/components");
 
-    for (feature_name, files) in scss_files {
-        if feature_enabled(&feature_name) {
-            for scss_path in files {
-                if let Err(e) = compile_scss(scss_path, &styles_out_dir) {
-                    eprintln!("   ✗ Failed to compile {}: {}", scss_path, e);
-                    std::process::exit(1);
-                }
+    // Auto-discover all .scss files in components directory
+    let scss_files = discover_scss_files(&components_dir);
+
+    if scss_files.is_empty() {
+        println!("⚠️  No SCSS files found in {}", components_dir.display());
+        return Ok(());
+    }
+
+    println!("   Found {} SCSS file(s)", scss_files.len());
+
+    // Always compile (in development, we want all styles available)
+    for scss_path in scss_files {
+        let relative_path = scss_path
+            .strip_prefix(&manifest_dir)?
+            .to_string_lossy()
+            .replace('\\', "/");
+
+        compile_scss(&scss_path, &styles_out_dir, &relative_path)?;
+    }
+
+    println!("✅ SCSS compilation complete!");
+    Ok(())
+}
+
+fn discover_scss_files(dir: &Path) -> Vec<std::path::PathBuf> {
+    let mut files = Vec::new();
+
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("scss") {
+                files.push(path);
             }
         }
     }
 
-    println!("✅ SCSS compilation complete!");
+    files.sort(); // Ensure consistent order
+    files
 }
 
-fn get_scss_files() -> Vec<(&'static str, Vec<&'static str>)> {
-    vec![
-        // Component groups (check group flag)
-        (
-            "basic",
-            vec![
-                "src/styles/components/button.scss",
-                "src/styles/components/input.scss",
-                "src/styles/components/card.scss",
-                "src/styles/components/badge.scss",
-            ],
-        ),
-        (
-            "feedback",
-            vec![
-                "src/styles/components/alert.scss",
-                "src/styles/components/toast.scss",
-                "src/styles/components/tooltip.scss",
-            ],
-        ),
-        (
-            "navigation",
-            vec![
-                "src/styles/components/menu.scss",
-                "src/styles/components/tabs.scss",
-                "src/styles/components/breadcrumb.scss",
-            ],
-        ),
-        (
-            "data",
-            vec![
-                "src/styles/components/table.scss",
-                "src/styles/components/tree.scss",
-                "src/styles/components/pagination.scss",
-            ],
-        ),
-        (
-            "layout",
-            vec![
-                "src/styles/components/layout.scss",
-                "src/styles/components/header.scss",
-                "src/styles/components/aside.scss",
-                "src/styles/components/container.scss",
-                "src/styles/components/grid.scss",
-                "src/styles/components/section.scss",
-            ],
-        ),
-        // Individual components (check specific flag)
-        ("button", vec!["src/styles/components/button.scss"]),
-        ("input", vec!["src/styles/components/input.scss"]),
-        ("card", vec!["src/styles/components/card.scss"]),
-        ("badge", vec!["src/styles/components/badge.scss"]),
-        ("alert", vec!["src/styles/components/alert.scss"]),
-        ("toast", vec!["src/styles/components/toast.scss"]),
-        ("tooltip", vec!["src/styles/components/tooltip.scss"]),
-        ("menu", vec!["src/styles/components/menu.scss"]),
-        ("tabs", vec!["src/styles/components/tabs.scss"]),
-        ("breadcrumb", vec!["src/styles/components/breadcrumb.scss"]),
-        ("table", vec!["src/styles/components/table.scss"]),
-        ("tree", vec!["src/styles/components/tree.scss"]),
-        ("pagination", vec!["src/styles/components/pagination.scss"]),
-        ("layout-component", vec!["src/styles/components/layout.scss"]),
-        ("header", vec!["src/styles/components/header.scss"]),
-        ("aside", vec!["src/styles/components/aside.scss"]),
-    ]
-}
-
-fn feature_enabled(feature: &str) -> bool {
-    // First check group flags
-    let group_features = ["basic", "feedback", "navigation", "data", "layout"];
-    for group in group_features {
-        if env::var(format!("CARGO_FEATURE_{}", group.to_uppercase())).is_ok() {
-            return true;
-        }
-    }
-
-    // Then check individual component flags
-    env::var(format!("CARGO_FEATURE_{}", feature.to_uppercase())).is_ok()
-}
-
-fn compile_scss(input_path: &str, output_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")?;
-    let full_path = Path::new(&manifest_dir).join(input_path);
-
-    // Get filename without path and extension
+fn compile_scss(
+    full_path: &Path,
+    output_dir: &Path,
+    relative_path: &str,
+) -> Result<()> {
+    // Get filename without extension
     let css_name = full_path
         .file_name()
-        .unwrap()
+        .ok_or_else(|| anyhow::anyhow!("Failed to get filename from path: {:?}", full_path))?
         .to_string_lossy()
         .replace(".scss", ".css");
 
     // Set up Grass options with load path for theme package
-    let theme_styles_dir = Path::new(&manifest_dir)
+    let manifest_dir_str = env::var("CARGO_MANIFEST_DIR")?;
+    let manifest_dir = Path::new(&manifest_dir_str);
+    let theme_styles_dir = manifest_dir
         .join("../theme/styles")
         .canonicalize()?;
 
     let options = Options::default().load_path(&theme_styles_dir);
 
     // Compile SCSS to CSS using Grass (from_path handles imports correctly)
-    let css_content = grass::from_path(&full_path, &options)?;
+    let css_content = grass::from_path(full_path, &options)?;
 
     // Write to output directory
     let output_path = output_dir.join(&css_name);
     fs::write(&output_path, css_content)?;
 
-    println!("   ✓ Compiled: {} -> {}", input_path, css_name);
+    println!("   ✓ Compiled: {} -> {}", relative_path, css_name);
     Ok(())
 }

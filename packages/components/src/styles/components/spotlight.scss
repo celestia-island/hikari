@@ -1,0 +1,95 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+
+// ============================================
+// Hikari Spotlight Container Component
+// Mouse-following glow/spotlight effect wrapper
+// ============================================
+
+// Base spotlight wrapper styles
+.hi-spotlight-wrapper {
+  position: relative;
+  display: inline-block;
+  isolation: isolate; // Create new stacking context to fix rendering issues
+
+  // Ensure child respects parent's border-radius
+  border-radius: inherit;
+
+  // Create spotlight overlay using ::before pseudo-element
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none; // Don't block mouse events
+    z-index: 1;
+    border-radius: inherit; // Inherit border-radius from parent
+    opacity: var(--spotlight-opacity, 0);
+
+    // Smooth opacity transition
+    transition: opacity 0.15s ease-out;
+  }
+
+  // Ensure children don't block the spotlight overlay
+  > * {
+    position: relative;
+    z-index: 2;
+  }
+}
+
+// Auto color mode: black for light theme, white for dark theme
+// Best for colored backgrounds (Primary, Danger, Success buttons)
+.hi-spotlight-auto::before {
+  background-image: radial-gradient(
+    circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+    rgba(255, 255, 255, 1.0) 0%,
+    rgba(255, 255, 255, 0.6) 30%,
+    rgba(255, 255, 255, 0.2) 60%,
+    transparent 100%
+  );
+}
+
+// Theme color mode: uses primary theme color (blue)
+// Best for solid white/black backgrounds (Input, Card, Ghost buttons)
+.hi-spotlight-theme::before {
+  background-image: radial-gradient(
+    circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+    rgba(59, 130, 246, 0.8) 0%,
+    rgba(59, 130, 246, 0.4) 40%,
+    rgba(59, 130, 246, 0.1) 70%,
+    transparent 100%
+  );
+}
+
+// Fix for components with solid backgrounds (like Input)
+// We use ::after to create an additional overlay that penetrates
+.hi-spotlight-wrapper.has-solid-bg {
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3; // Above children but below text
+    border-radius: inherit;
+    opacity: var(--spotlight-opacity, 0);
+    background-image: radial-gradient(
+      circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+      rgba(59, 130, 246, 0.15) 0%,
+      transparent 80%
+    );
+    transition: opacity 0.15s ease-out;
+    mix-blend-mode: overlay; // Blend with underlying content
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .hi-spotlight-auto::before {
+    background-image: radial-gradient(
+      circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+      rgba(0, 0, 0, 1.0) 0%,
+      rgba(0, 0, 0, 0.6) 30%,
+      rgba(0, 0, 0, 0.2) 60%,
+      transparent 100%
+    );
+  }
+}

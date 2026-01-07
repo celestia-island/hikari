@@ -33,7 +33,9 @@
     0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 
   // Transitions
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Custom scrollbar
   @include mix.scrollbar;
@@ -63,7 +65,9 @@
   &::-webkit-scrollbar-thumb {
     background: rgba(139, 92, 246, 0.4);
     border-radius: 4px;
-    transition: background vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: background vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     &:hover {
       background: rgba(139, 92, 246, 0.6);
@@ -109,7 +113,9 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 
   // Transitions
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 }
 
 .hi-table-header-row {
@@ -117,7 +123,9 @@
   display: table-row;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 }
 
 .hi-table-header-cell {
@@ -146,7 +154,9 @@
   user-select: none;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Last cell border
   &:last-child {
@@ -219,7 +229,9 @@
   opacity: 0.6;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Sorted state
   .hi-table-header-sorted & {
@@ -241,7 +253,9 @@
   svg {
     width: 100%;
     height: 100%;
-    transition: transform vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: transform vars.$hikari-duration-fast vars.$hikari-ease-smooth;
   }
 }
 
@@ -254,7 +268,9 @@
   display: table-row-group;
 
   // Transitions
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 }
 
 .hi-table-row {
@@ -262,7 +278,9 @@
   display: table-row;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Hover glow effect (subtle purple/blue glow)
   &:hover {
@@ -320,7 +338,9 @@
   border-radius: vars.$hikari-radius-fui-sm;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Last cell border
   &:last-child {
@@ -378,7 +398,9 @@
     border-radius: 3px;
     background: rgba(45, 45, 45, 0.9);
     cursor: pointer;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
     position: relative;
 
     &:hover {
@@ -421,21 +443,24 @@
     // Smooth expand/collapse animation
     &.hi-table-expanded {
       display: table-row;
-      animation: table-expand vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+      // DISABLED - migrated to JS animation
+
+      // animation: table-expand vars.$hikari-duration-normal vars.$hikari-ease-smooth;
     }
   }
 }
 
-@keyframes table-expand {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes table-expand {
+//   from {
+//     opacity: 0;
+//     transform: translateY(-8px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+// }
 
 .hi-table-expand-icon {
   // Layout
@@ -447,7 +472,9 @@
   margin-right: 0.5rem;
 
   // Transitions
-  transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Rotated when expanded
   .hi-table-expanded & {
@@ -487,7 +514,9 @@
   user-select: none;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Hover glow
   &:hover {
@@ -520,7 +549,9 @@
     color: currentColor;
     cursor: pointer;
     opacity: 0.7;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     &:hover {
       opacity: 1;
@@ -551,7 +582,9 @@
   background: rgba(214, 236, 240, 0.5);
 
   // Transitions
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 }
 
 .hi-table-pagination-info {
@@ -706,15 +739,18 @@
     border: 3px solid rgba(139, 92, 246, 0.2);
     border-top-color: var(--hi-color-primary);
     border-radius: 50%;
-    animation: table-spinner 0.8s linear infinite;
+    // DISABLED - migrated to JS animation
+
+    // animation: table-spinner 0.8s linear infinite;
   }
 }
 
-@keyframes table-spinner {
-  to {
-    transform: rotate(360deg);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes table-spinner {
+//   to {
+//     transform: rotate(360deg);
+//   }
+// }
 
 // ============================================
 // Sort/Filter Animations
@@ -723,38 +759,44 @@
 // Smooth sort animation
 .hi-table-sort-animate {
   .hi-table-row {
-    animation: table-row-sort vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // animation: table-row-sort vars.$hikari-duration-normal vars.$hikari-ease-smooth;
   }
 }
 
-@keyframes table-row-sort {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes table-row-sort {
+//   from {
+//     opacity: 0;
+//     transform: translateY(8px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+// }
 
 // Smooth filter animation
 .hi-table-filter-animate {
   .hi-table-row {
-    animation: table-row-filter vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // animation: table-row-filter vars.$hikari-duration-normal vars.$hikari-ease-smooth;
   }
 }
 
-@keyframes table-row-filter {
-  from {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes table-row-filter {
+//   from {
+//     opacity: 0;
+//     transform: scale(0.98);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: scale(1);
+//   }
+// }
 
 // ============================================
 // Responsive Behavior

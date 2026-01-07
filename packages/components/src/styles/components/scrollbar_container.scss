@@ -99,9 +99,10 @@
     border-radius: 3px;
     cursor: pointer;
     pointer-events: auto; // Re-enable clicks for thumb
-    transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    // DISABLED - migrated to JS animation
 
+    // transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+// box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     // Gradient for visual appeal
     background-image: linear-gradient(
         to bottom,

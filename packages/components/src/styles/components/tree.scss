@@ -35,7 +35,9 @@
     0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 
   // Transitions
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Custom scrollbar
   @include mix.scrollbar;
@@ -66,7 +68,9 @@
   position: relative;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Node connector (vertical line with glow)
   &::before {
@@ -127,7 +131,9 @@
   user-select: none;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Position
   position: relative;
@@ -252,13 +258,17 @@
   cursor: pointer;
 
   // Transitions
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Icon
   svg {
     width: 100%;
     height: 100%;
-    transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
   }
 
   // Expanded state (rotate 90deg)
@@ -293,7 +303,9 @@
   color: var(--hi-color-text-secondary);
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Icon
   svg {
@@ -303,18 +315,21 @@
 
   // Animated icon on expand/collapse
   .hi-tree-node-expanded > .hi-tree-node-content & {
-    animation: tree-icon-bounce 0.4s vars.$hikari-ease-bounce;
+    // DISABLED - migrated to JS animation
+
+    // animation: tree-icon-bounce 0.4s vars.$hikari-ease-bounce;
   }
 }
 
-@keyframes tree-icon-bounce {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes tree-icon-bounce {
+//   0%, 100% {
+//     transform: scale(1);
+//   }
+//   50% {
+//     transform: scale(1.2);
+//   }
+// }
 
 // ============================================
 // Node Label
@@ -331,7 +346,9 @@
   @include mix.text-ellipsis;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 }
 
 // ============================================
@@ -350,25 +367,30 @@
   gap: 0.125rem;
 
   // Transitions
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Expanded state
   .hi-tree-node-expanded > & {
     display: flex;
-    animation: tree-expand-children vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // animation: tree-expand-children vars.$hikari-duration-normal vars.$hikari-ease-smooth;
   }
 }
 
-@keyframes tree-expand-children {
-  from {
-    opacity: 0;
-    transform: translateX(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes tree-expand-children {
+//   from {
+//     opacity: 0;
+//     transform: translateX(-8px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateX(0);
+//   }
+// }
 
 // Nested level connector
 .hi-tree-node-children .hi-tree-node {
@@ -404,7 +426,9 @@
   cursor: pointer;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Hover effect
   &:hover {
@@ -493,18 +517,21 @@
     );
     background-size: 200% 100%;
     border-radius: vars.$hikari-radius-fui-sm;
-    animation: tree-skeleton-loading 1.5s ease-in-out infinite;
+    // DISABLED - migrated to JS animation
+
+    // animation: tree-skeleton-loading 1.5s ease-in-out infinite;
   }
 }
 
-@keyframes tree-skeleton-loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes tree-skeleton-loading {
+//   0% {
+//     background-position: 200% 0;
+//   }
+//   100% {
+//     background-position: -200% 0;
+//   }
+// }
 
 // ============================================
 // Empty State
@@ -626,7 +653,9 @@
 .hi-tree-animate-in {
   .hi-tree-node {
     opacity: 0;
-    animation: tree-node-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+    // DISABLED - migrated to JS animation
+
+    // animation: tree-node-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 
     @for $i from 1 through 50 {
       &:nth-child(#{$i}) {
@@ -636,21 +665,24 @@
   }
 }
 
-@keyframes tree-node-fade-in {
-  from {
-    opacity: 0;
-    transform: translateX(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes tree-node-fade-in {
+//   from {
+//     opacity: 0;
+//     transform: translateX(-12px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateX(0);
+//   }
+// }
 
 // Expand/collapse animation
 .hi-tree-animated {
   .hi-tree-node-children {
-    transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
     overflow: hidden;
 
     &:not(.hi-tree-expanded) {
@@ -693,20 +725,23 @@
       0 0 16px rgba(139, 92, 246, 0.6);
     margin: 0.25rem 0;
     border-radius: 1px;
-    animation: tree-drop-pulse 1s ease-in-out infinite;
+    // DISABLED - migrated to JS animation
+
+    // animation: tree-drop-pulse 1s ease-in-out infinite;
   }
 }
 
-@keyframes tree-drop-pulse {
-  0%, 100% {
-    opacity: 1;
-    height: 2px;
-  }
-  50% {
-    opacity: 0.7;
-    height: 3px;
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes tree-drop-pulse {
+//   0%, 100% {
+//     opacity: 1;
+//     height: 2px;
+//   }
+//   50% {
+//     opacity: 0.7;
+//     height: 3px;
+//   }
+// }
 
 // ============================================
 // Responsive Behavior
@@ -760,12 +795,18 @@
   .hi-tree-node-icon,
   .hi-tree-node-checkbox,
   .hi-tree-node-children {
-    transition: none;
-    animation: none;
+    // DISABLED - migrated to JS animation
+
+    // transition: none;
+    // DISABLED - migrated to JS animation
+
+    // animation: none;
   }
 
   .hi-tree-animate-in .hi-tree-node {
-    animation: none;
+    // DISABLED - migrated to JS animation
+
+    // animation: none;
     opacity: 1;
   }
 }

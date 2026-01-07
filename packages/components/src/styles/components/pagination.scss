@@ -24,7 +24,9 @@
   padding: 0.5rem;
 
   // Transitions
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 }
 
 // ============================================
@@ -59,13 +61,17 @@
   user-select: none;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Icon
   svg {
     width: 1rem;
     height: 1rem;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
   }
 
   // Hover effect
@@ -95,23 +101,26 @@
     font-weight: 600;
 
     // Pulse animation for active page
-    animation: pagination-active-pulse 2s ease-in-out infinite;
+    // DISABLED - migrated to JS animation
+
+    // animation: pagination-active-pulse 2s ease-in-out infinite;
   }
 
-  @keyframes pagination-active-pulse {
-    0%, 100% {
-      box-shadow:
-        0 0 16px rgba(139, 92, 246, 0.5),
-        0 0 24px rgba(139, 92, 246, 0.3),
-        inset 0 0 8px rgba(255, 255, 255, 0.1);
-    }
-    50% {
-      box-shadow:
-        0 0 20px rgba(139, 92, 246, 0.6),
-        0 0 32px rgba(139, 92, 246, 0.4),
-        inset 0 0 12px rgba(255, 255, 255, 0.15);
-    }
-  }
+  // DISABLED - migrated to JS animation
+// @keyframes pagination-active-pulse {
+//     0%, 100% {
+//       box-shadow:
+//         0 0 16px rgba(139, 92, 246, 0.5),
+//         0 0 24px rgba(139, 92, 246, 0.3),
+//         inset 0 0 8px rgba(255, 255, 255, 0.1);
+//     }
+//     50% {
+//       box-shadow:
+//         0 0 20px rgba(139, 92, 246, 0.6),
+//         0 0 32px rgba(139, 92, 246, 0.4),
+//         inset 0 0 12px rgba(255, 255, 255, 0.15);
+//     }
+//   }
 
   // Disabled state
   &:disabled {
@@ -132,7 +141,9 @@
   // Active press effect
   &:active:not(:disabled) {
     transform: translateY(0) scale(0.95);
-    transition: transform vars.$hikari-duration-instant ease-out;
+    // DISABLED - migrated to JS animation
+
+    // transition: transform vars.$hikari-duration-instant ease-out;
   }
 }
 
@@ -183,23 +194,26 @@
 // ============================================
 
 .hi-pagination-jump {
-  animation: pagination-jump-animation vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // animation: pagination-jump-animation vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 }
 
-@keyframes pagination-jump-animation {
-  0% {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes pagination-jump-animation {
+//   0% {
+//     opacity: 0;
+//     transform: scale(0.9);
+//   }
+//   50% {
+//     opacity: 1;
+//     transform: scale(1.05);
+//   }
+//   100% {
+//     opacity: 1;
+//     transform: scale(1);
+//   }
+// }
 
 // ============================================
 // Smooth Page Change Transitions
@@ -207,35 +221,40 @@
 
 .hi-pagination-animate {
   .hi-pagination-item {
-    transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
   }
 
   // Active page transition
   .hi-pagination-item.hi-pagination-active {
-    animation: pagination-page-change vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // animation: pagination-page-change vars.$hikari-duration-normal vars.$hikari-ease-smooth;
   }
 }
 
-@keyframes pagination-page-change {
-  0% {
-    transform: scale(1);
-    box-shadow:
-      0 0 16px rgba(139, 92, 246, 0.5),
-      0 0 24px rgba(139, 92, 246, 0.3);
-  }
-  50% {
-    transform: scale(1.1);
-    box-shadow:
-      0 0 24px rgba(139, 92, 246, 0.7),
-      0 0 36px rgba(139, 92, 246, 0.5);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow:
-      0 0 16px rgba(139, 92, 246, 0.5),
-      0 0 24px rgba(139, 92, 246, 0.3);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes pagination-page-change {
+//   0% {
+//     transform: scale(1);
+//     box-shadow:
+//       0 0 16px rgba(139, 92, 246, 0.5),
+//       0 0 24px rgba(139, 92, 246, 0.3);
+//   }
+//   50% {
+//     transform: scale(1.1);
+//     box-shadow:
+//       0 0 24px rgba(139, 92, 246, 0.7),
+//       0 0 36px rgba(139, 92, 246, 0.5);
+//   }
+//   100% {
+//     transform: scale(1);
+//     box-shadow:
+//       0 0 16px rgba(139, 92, 246, 0.5),
+//       0 0 24px rgba(139, 92, 246, 0.3);
+//   }
+// }
 
 // ============================================
 // Ellipsis (for large page counts)
@@ -308,7 +327,9 @@
     cursor: pointer;
 
     // Transitions
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     // Focus state with glow
     &:focus {
@@ -403,7 +424,9 @@
     color: var(--hi-color-text-primary);
 
     // Transitions
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     // Focus state with glow
     &:focus {
@@ -449,7 +472,9 @@
     cursor: pointer;
 
     // Transitions
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     // Hover effect
     &:hover:not(:disabled) {
@@ -680,16 +705,19 @@
       border: 2px solid rgba(139, 92, 246, 0.3);
       border-top-color: var(--hi-color-primary);
       border-radius: 50%;
-      animation: pagination-spinner 0.6s linear infinite;
+      // DISABLED - migrated to JS animation
+
+      // animation: pagination-spinner 0.6s linear infinite;
     }
   }
 }
 
-@keyframes pagination-spinner {
-  to {
-    transform: rotate(360deg);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes pagination-spinner {
+//   to {
+//     transform: rotate(360deg);
+//   }
+// }
 
 // ============================================
 // Alignment Variants
@@ -737,16 +765,24 @@
   .hi-pagination-size-select,
   .hi-pagination-jumper-input,
   .hi-pagination-jumper-button {
-    transition: none;
-    animation: none;
+    // DISABLED - migrated to JS animation
+
+    // transition: none;
+    // DISABLED - migrated to JS animation
+
+    // animation: none;
   }
 
   .hi-pagination-item.hi-pagination-active {
-    animation: none;
+    // DISABLED - migrated to JS animation
+
+    // animation: none;
   }
 
   .hi-pagination-jump {
-    animation: none;
+    // DISABLED - migrated to JS animation
+
+    // animation: none;
   }
 }
 

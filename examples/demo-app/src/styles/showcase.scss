@@ -66,7 +66,7 @@
   position: fixed;
   top: 100px;
   right: 20px;
-  z-index: 1000;
+  z-index: 9999;  // Above header (z-index: 100)
   min-width: 300px;
   max-width: 500px;
   padding: 1rem 1.25rem;

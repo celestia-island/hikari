@@ -25,8 +25,8 @@
   border-radius: vars.$hikari-radius-fui-md;
   border: 1px solid var(--hi-color-border);
 
-  // Acrylic background effect
-  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+  // Acrylic background effect (light)
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(vars.$hikari-acrylic-blur);
   -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
 
@@ -36,7 +36,10 @@
     0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 
   // Transitions - smooth GSAP-style easing
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // // DISABLED - migrated to JS animation
+ // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Position for gradient border
   position: relative;
@@ -57,7 +60,10 @@
       transparent 100%
     );
     opacity: 0;
-    transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // // DISABLED - migrated to JS animation
+ // transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
   }
 
   // Icon
@@ -111,7 +117,10 @@
     border: none;
     color: var(--hi-color-text-secondary);
     cursor: pointer;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // // DISABLED - migrated to JS animation
+ // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
     border-radius: vars.$hikari-radius-fui-sm;
 
     &:hover {
@@ -381,68 +390,88 @@
 
 .hi-alert-glow {
   .hi-alert-icon {
-    animation: alert-icon-glow 2s ease-in-out infinite;
+    // DISABLED - migrated to JS animation
+
+    // // DISABLED - migrated to JS animation
+ // animation: alert-icon-glow 2s ease-in-out infinite;
   }
 }
 
-@keyframes alert-icon-glow {
-  0%, 100% {
-    filter: drop-shadow(0 0 4px currentColor);
-  }
-  50% {
-    filter: drop-shadow(0 0 8px currentColor);
-  }
-}
+// DISABLED - migrated to JS animation
+// // DISABLED - migrated to JS animation
+// @keyframes alert-icon-glow {
+//   0%, 100% {
+//     filter: drop-shadow(0 0 4px currentColor);
+//   }
+//   50% {
+//     filter: drop-shadow(0 0 8px currentColor);
+//   }
+// }
 
 // ============================================
 // Animations
 // ============================================
 
 .hi-alert-animate-in {
-  animation: alert-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // // DISABLED - migrated to JS animation
+ // animation: alert-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
-@keyframes alert-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// // DISABLED - migrated to JS animation
+// @keyframes alert-fade-in {
+//   from {
+//     opacity: 0;
+//     transform: translateY(-8px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+// }
 
 .hi-alert-slide-in {
-  animation: alert-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // // DISABLED - migrated to JS animation
+ // animation: alert-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
-@keyframes alert-slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// // DISABLED - migrated to JS animation
+// @keyframes alert-slide-in {
+//   from {
+//     opacity: 0;
+//     transform: translateX(-100%);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateX(0);
+//   }
+// }
 
 // Exit animation
 .hi-alert-exit {
-  animation: alert-exit vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // // DISABLED - migrated to JS animation
+ // animation: alert-exit vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
 }
 
-@keyframes alert-exit {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-}
+// DISABLED - migrated to JS animation
+// // DISABLED - migrated to JS animation
+// @keyframes alert-exit {
+//   from {
+//     opacity: 1;
+//     transform: scale(1);
+//   }
+//   to {
+//     opacity: 0;
+//     transform: scale(0.95);
+//   }
+// }
 
 // ============================================
 // Closable State
@@ -457,22 +486,27 @@
 // ============================================
 
 .hi-alert-dismissing {
-  animation: alert-dismiss vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // // DISABLED - migrated to JS animation
+ // animation: alert-dismiss vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
-@keyframes alert-dismiss {
-  from {
-    opacity: 1;
-    transform: scale(1);
-    max-height: 200px;
-    margin-bottom: 1rem;
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.95);
-    max-height: 0;
-    margin-bottom: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-}
+// DISABLED - migrated to JS animation
+// // DISABLED - migrated to JS animation
+// @keyframes alert-dismiss {
+//   from {
+//     opacity: 1;
+//     transform: scale(1);
+//     max-height: 200px;
+//     margin-bottom: 1rem;
+//   }
+//   to {
+//     opacity: 0;
+//     transform: scale(0.95);
+//     max-height: 0;
+//     margin-bottom: 0;
+//     padding-top: 0;
+//     padding-bottom: 0;
+//   }
+// }

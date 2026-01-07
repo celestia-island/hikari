@@ -5,7 +5,7 @@ extern crate components as hikari_components;
 
 use dioxus::prelude::*;
 use components::{
-    Button, ButtonVariant, ButtonSize, Input, Card, Badge, BadgeVariant,
+    Button, ButtonVariant, ButtonSize, ButtonAnimation, Input, Card, Badge, BadgeVariant,
     layout::{Container, Section, Row}
 };
 
@@ -45,11 +45,11 @@ pub fn ComponentsBasic() -> Element {
                         }
                         Row {
                             gap: "md".to_string(),
-                            Button { variant: ButtonVariant::Primary, "Primary" }
-                            Button { variant: ButtonVariant::Secondary, "Secondary" }
-                            Button { variant: ButtonVariant::Ghost, "Ghost" }
-                            Button { variant: ButtonVariant::Danger, "Danger" }
-                            Button { variant: ButtonVariant::Success, "Success" }
+                            Button { variant: ButtonVariant::Primary, spotlight: true, "Primary" }
+                            Button { variant: ButtonVariant::Secondary, spotlight: true, "Secondary" }
+                            Button { variant: ButtonVariant::Ghost, spotlight: true, "Ghost" }
+                            Button { variant: ButtonVariant::Danger, spotlight: true, "Danger" }
+                            Button { variant: ButtonVariant::Success, spotlight: true, "Success" }
                         }
                     }
 
@@ -62,9 +62,9 @@ pub fn ComponentsBasic() -> Element {
                         }
                         Row {
                             gap: "md".to_string(),
-                            Button { size: ButtonSize::Small, "Small" }
-                            Button { size: ButtonSize::Medium, "Medium" }
-                            Button { size: ButtonSize::Large, "Large" }
+                            Button { size: ButtonSize::Small, spotlight: true, "Small" }
+                            Button { size: ButtonSize::Medium, spotlight: true, "Medium" }
+                            Button { size: ButtonSize::Large, spotlight: true, "Large" }
                         }
                     }
 
@@ -79,6 +79,27 @@ pub fn ComponentsBasic() -> Element {
                             gap: "md".to_string(),
                             Button { loading: true, "Loading..." }
                             Button { disabled: true, "Disabled" }
+                        }
+                    }
+
+                    // Button animations
+                    div {
+                        class: "showcase-subsection",
+                        h3 {
+                            class: "showcase-subtitle",
+                            "Button Animations (Hover to see effects)"
+                        }
+                        p {
+                            class: "showcase-description",
+                            "Move your mouse over the buttons to see the spotlight effect that follows your cursor."
+                        }
+                        Row {
+                            gap: "md".to_string(),
+                            Button {
+                                variant: ButtonVariant::Primary,
+                                spotlight: true,
+                                "Spotlight Effect"
+                            }
                         }
                     }
                 }
@@ -114,14 +135,15 @@ pub fn ComponentsBasic() -> Element {
                             }
                         }
 
-                        // Search input
+                        // Search input with spotlight
                         div {
                             label {
                                 class: "showcase-label",
-                                "Search Input"
+                                "Search Input with Spotlight"
                             }
                             Input {
-                                placeholder: "Search..."
+                                placeholder: "Search...",
+                                spotlight: true,
                             }
                         }
 

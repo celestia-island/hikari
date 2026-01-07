@@ -34,7 +34,9 @@
   border: 1px solid transparent;
 
   // Transitions - smooth GSAP-style easing
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Default background
   background: rgba(107, 114, 128, 0.9);
@@ -150,122 +152,142 @@
 // ============================================
 
 .hi-badge-glow {
-  animation: badge-glow-pulse 2s ease-in-out infinite;
+  // DISABLED - migrated to JS animation
+
+  // animation: badge-glow-pulse 2s ease-in-out infinite;
 
   &.hi-badge-primary {
-    animation: badge-glow-primary 2s ease-in-out infinite;
+    // DISABLED - migrated to JS animation
+
+    // animation: badge-glow-primary 2s ease-in-out infinite;
   }
 
   &.hi-badge-success {
-    animation: badge-glow-success 2s ease-in-out infinite;
+    // DISABLED - migrated to JS animation
+
+    // animation: badge-glow-success 2s ease-in-out infinite;
   }
 
   &.hi-badge-warning {
-    animation: badge-glow-warning 2s ease-in-out infinite;
+    // DISABLED - migrated to JS animation
+
+    // animation: badge-glow-warning 2s ease-in-out infinite;
   }
 
   &.hi-badge-danger {
-    animation: badge-glow-danger 2s ease-in-out infinite;
+    // DISABLED - migrated to JS animation
+
+    // animation: badge-glow-danger 2s ease-in-out infinite;
   }
 
   &.hi-badge-info {
-    animation: badge-glow-info 2s ease-in-out infinite;
+    // DISABLED - migrated to JS animation
+
+    // animation: badge-glow-info 2s ease-in-out infinite;
   }
 }
 
-@keyframes badge-glow-primary {
-  0%, 100% {
-    box-shadow:
-      0 0 8px rgba(59, 130, 246, 0.4),
-      0 0 16px rgba(59, 130, 246, 0.2),
-      inset 0 0 4px rgba(255, 255, 255, 0.1);
-  }
-  50% {
-    box-shadow:
-      0 0 12px rgba(59, 130, 246, 0.6),
-      0 0 24px rgba(59, 130, 246, 0.4),
-      inset 0 0 6px rgba(255, 255, 255, 0.15);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes badge-glow-primary {
+//   0%, 100% {
+//     box-shadow:
+//       0 0 8px rgba(59, 130, 246, 0.4),
+//       0 0 16px rgba(59, 130, 246, 0.2),
+//       inset 0 0 4px rgba(255, 255, 255, 0.1);
+//   }
+//   50% {
+//     box-shadow:
+//       0 0 12px rgba(59, 130, 246, 0.6),
+//       0 0 24px rgba(59, 130, 246, 0.4),
+//       inset 0 0 6px rgba(255, 255, 255, 0.15);
+//   }
+// }
 
-@keyframes badge-glow-success {
-  0%, 100% {
-    box-shadow:
-      0 0 8px rgba(16, 185, 129, 0.4),
-      0 0 16px rgba(16, 185, 129, 0.2),
-      inset 0 0 4px rgba(255, 255, 255, 0.1);
-  }
-  50% {
-    box-shadow:
-      0 0 12px rgba(16, 185, 129, 0.6),
-      0 0 24px rgba(16, 185, 129, 0.4),
-      inset 0 0 6px rgba(255, 255, 255, 0.15);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes badge-glow-success {
+//   0%, 100% {
+//     box-shadow:
+//       0 0 8px rgba(16, 185, 129, 0.4),
+//       0 0 16px rgba(16, 185, 129, 0.2),
+//       inset 0 0 4px rgba(255, 255, 255, 0.1);
+//   }
+//   50% {
+//     box-shadow:
+//       0 0 12px rgba(16, 185, 129, 0.6),
+//       0 0 24px rgba(16, 185, 129, 0.4),
+//       inset 0 0 6px rgba(255, 255, 255, 0.15);
+//   }
+// }
 
-@keyframes badge-glow-warning {
-  0%, 100% {
-    box-shadow:
-      0 0 8px rgba(245, 158, 11, 0.4),
-      0 0 16px rgba(245, 158, 11, 0.2),
-      inset 0 0 4px rgba(255, 255, 255, 0.1);
-  }
-  50% {
-    box-shadow:
-      0 0 12px rgba(245, 158, 11, 0.6),
-      0 0 24px rgba(245, 158, 11, 0.4),
-      inset 0 0 6px rgba(255, 255, 255, 0.15);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes badge-glow-warning {
+//   0%, 100% {
+//     box-shadow:
+//       0 0 8px rgba(245, 158, 11, 0.4),
+//       0 0 16px rgba(245, 158, 11, 0.2),
+//       inset 0 0 4px rgba(255, 255, 255, 0.1);
+//   }
+//   50% {
+//     box-shadow:
+//       0 0 12px rgba(245, 158, 11, 0.6),
+//       0 0 24px rgba(245, 158, 11, 0.4),
+//       inset 0 0 6px rgba(255, 255, 255, 0.15);
+//   }
+// }
 
-@keyframes badge-glow-danger {
-  0%, 100% {
-    box-shadow:
-      0 0 8px rgba(239, 68, 68, 0.4),
-      0 0 16px rgba(239, 68, 68, 0.2),
-      inset 0 0 4px rgba(255, 255, 255, 0.1);
-  }
-  50% {
-    box-shadow:
-      0 0 12px rgba(239, 68, 68, 0.6),
-      0 0 24px rgba(239, 68, 68, 0.4),
-      inset 0 0 6px rgba(255, 255, 255, 0.15);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes badge-glow-danger {
+//   0%, 100% {
+//     box-shadow:
+//       0 0 8px rgba(239, 68, 68, 0.4),
+//       0 0 16px rgba(239, 68, 68, 0.2),
+//       inset 0 0 4px rgba(255, 255, 255, 0.1);
+//   }
+//   50% {
+//     box-shadow:
+//       0 0 12px rgba(239, 68, 68, 0.6),
+//       0 0 24px rgba(239, 68, 68, 0.4),
+//       inset 0 0 6px rgba(255, 255, 255, 0.15);
+//   }
+// }
 
-@keyframes badge-glow-info {
-  0%, 100% {
-    box-shadow:
-      0 0 8px rgba(6, 182, 212, 0.4),
-      0 0 16px rgba(6, 182, 212, 0.2),
-      inset 0 0 4px rgba(255, 255, 255, 0.1);
-  }
-  50% {
-    box-shadow:
-      0 0 12px rgba(6, 182, 212, 0.6),
-      0 0 24px rgba(6, 182, 212, 0.4),
-      inset 0 0 6px rgba(255, 255, 255, 0.15);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes badge-glow-info {
+//   0%, 100% {
+//     box-shadow:
+//       0 0 8px rgba(6, 182, 212, 0.4),
+//       0 0 16px rgba(6, 182, 212, 0.2),
+//       inset 0 0 4px rgba(255, 255, 255, 0.1);
+//   }
+//   50% {
+//     box-shadow:
+//       0 0 12px rgba(6, 182, 212, 0.6),
+//       0 0 24px rgba(6, 182, 212, 0.4),
+//       inset 0 0 6px rgba(255, 255, 255, 0.15);
+//   }
+// }
 
 // ============================================
 // Pulse Animation Variant
 // ============================================
 
 .hi-badge-pulse {
-  animation: badge-pulse 1.5s ease-in-out infinite;
+  // DISABLED - migrated to JS animation
+
+  // animation: badge-pulse 1.5s ease-in-out infinite;
 }
 
-@keyframes badge-pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.9;
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes badge-pulse {
+//   0%, 100% {
+//     transform: scale(1);
+//     opacity: 1;
+//   }
+//   50% {
+//     transform: scale(1.1);
+//     opacity: 0.9;
+//   }
+// }
 
 // ============================================
 // Dot Variant (Small indicator)
@@ -298,20 +320,23 @@
   }
 
   &.hi-badge-pulse {
-    animation: badge-dot-pulse 1.5s ease-in-out infinite;
+    // DISABLED - migrated to JS animation
+
+    // animation: badge-dot-pulse 1.5s ease-in-out infinite;
   }
 }
 
-@keyframes badge-dot-pulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 8px currentColor;
-  }
-  50% {
-    transform: scale(1.2);
-    box-shadow: 0 0 16px currentColor;
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes badge-dot-pulse {
+//   0%, 100% {
+//     transform: scale(1);
+//     box-shadow: 0 0 8px currentColor;
+//   }
+//   50% {
+//     transform: scale(1.2);
+//     box-shadow: 0 0 16px currentColor;
+//   }
+// }
 
 // ============================================
 // Positioning Variants (for parent elements)
@@ -410,33 +435,39 @@
 // ============================================
 
 .hi-badge-animate-in {
-  animation: badge-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: badge-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
-@keyframes badge-fade-in {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes badge-fade-in {
+//   from {
+//     opacity: 0;
+//     transform: scale(0.8);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: scale(1);
+//   }
+// }
 
 // Bounce animation for new badges
 .hi-badge-bounce {
-  animation: badge-bounce 0.6s vars.$hikari-ease-bounce;
+  // DISABLED - migrated to JS animation
+
+  // animation: badge-bounce 0.6s vars.$hikari-ease-bounce;
 }
 
-@keyframes badge-bounce {
-  0% {
-    transform: scale(0);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes badge-bounce {
+//   0% {
+//     transform: scale(0);
+//   }
+//   50% {
+//     transform: scale(1.2);
+//   }
+//   100% {
+//     transform: scale(1);
+//   }
+// }

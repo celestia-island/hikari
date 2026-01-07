@@ -33,7 +33,9 @@
     0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 
   // Transitions - smooth GSAP-style easing
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Padding
   padding: 0.5rem;
@@ -87,7 +89,9 @@
   user-select: none;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Position for effects
   position: relative;
@@ -99,7 +103,9 @@
     width: 1rem;
     height: 1rem;
     color: var(--hi-color-text-secondary);
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     svg {
       width: 100%;
@@ -126,7 +132,9 @@
     width: 0.75rem;
     height: 0.75rem;
     color: var(--hi-color-text-secondary);
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     svg {
       width: 100%;
@@ -247,7 +255,9 @@
   .hi-menu-submenu-title {
     .hi-menu-item-arrow {
       transform: rotate(0deg);
-      transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+      // DISABLED - migrated to JS animation
+
+      // transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
     }
   }
 
@@ -274,7 +284,9 @@
   opacity: 0;
   transform: translateX(-8px);
   pointer-events: none;
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Glow on the border
   box-shadow: -2px 0 8px rgba(139, 92, 246, 0.2);
@@ -431,7 +443,9 @@
 .hi-menu-animate-in {
   .hi-menu-item {
     opacity: 0;
-    animation: menu-item-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+    // DISABLED - migrated to JS animation
+
+    // animation: menu-item-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 
     @for $i from 1 through 20 {
       &:nth-child(#{$i}) {
@@ -441,22 +455,25 @@
   }
 }
 
-@keyframes menu-item-slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes menu-item-slide-in {
+//   from {
+//     opacity: 0;
+//     transform: translateX(-12px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateX(0);
+//   }
+// }
 
 // Fade-in animation
 .hi-menu-fade-in {
   .hi-menu-item {
     opacity: 0;
-    animation: menu-item-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+    // DISABLED - migrated to JS animation
+
+    // animation: menu-item-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 
     @for $i from 1 through 20 {
       &:nth-child(#{$i}) {
@@ -466,34 +483,38 @@
   }
 }
 
-@keyframes menu-item-fade-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes menu-item-fade-in {
+//   from {
+//     opacity: 0;
+//     transform: scale(0.95);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: scale(1);
+//   }
+// }
 
 // Pulse animation for active items
 .hi-menu-item-active.hi-menu-item-pulse {
-  animation: menu-item-pulse 2s ease-in-out infinite;
+  // DISABLED - migrated to JS animation
+
+  // animation: menu-item-pulse 2s ease-in-out infinite;
 }
 
-@keyframes menu-item-pulse {
-  0%, 100% {
-    box-shadow:
-      0 0 12px rgba(139, 92, 246, 0.2),
-      inset 0 0 8px rgba(139, 92, 246, 0.1);
-  }
-  50% {
-    box-shadow:
-      0 0 20px rgba(139, 92, 246, 0.4),
-      inset 0 0 12px rgba(139, 92, 246, 0.15);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes menu-item-pulse {
+//   0%, 100% {
+//     box-shadow:
+//       0 0 12px rgba(139, 92, 246, 0.2),
+//       inset 0 0 8px rgba(139, 92, 246, 0.1);
+//   }
+//   50% {
+//     box-shadow:
+//       0 0 20px rgba(139, 92, 246, 0.4),
+//       inset 0 0 12px rgba(139, 92, 246, 0.15);
+//   }
+// }
 
 // Ripple effect on click
 .hi-menu-item-ripple {
@@ -507,7 +528,9 @@
     background: rgba(139, 92, 246, 0.3);
     border-radius: 50%;
     transform: translate(-50%, -50%);
-    transition: width 0.6s ease-out, height 0.6s ease-out;
+    // DISABLED - migrated to JS animation
+
+    // transition: width 0.6s ease-out, height 0.6s ease-out;
   }
 
   &:active::after {

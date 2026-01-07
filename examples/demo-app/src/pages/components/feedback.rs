@@ -7,7 +7,7 @@ use dioxus::prelude::*;
 use components::{
     Alert, AlertVariant, Button, ButtonVariant, ButtonSize, Tooltip, Card, Input
 };
-use components::layout::{Container, Grid, Row, Section};
+use components::layout::{Container, Grid, Row, Section, Col};
 
 use crate::{app::Route, components::Layout};
 
@@ -195,54 +195,62 @@ pub fn ComponentsFeedback() -> Element {
                         gap: "lg".to_string(),
 
                         // Demo card 1
-                        Card {
-                            title: "Form Validation".to_string(),
-                            div {
-                                class: "demo-form-group",
-                                Input {
-                                    placeholder: "Enter email address..."
+                        Col {
+                            span: Some(6),
+                            Card {
+                                title: "Form Validation".to_string(),
+                                spotlight: true,
+                                div {
+                                    class: "demo-form-group",
+                                    Input {
+                                        placeholder: "Enter email address...",
+                                        spotlight: true,
+                                    }
                                 }
-                            }
-                            Row {
-                                gap: "sm".to_string(),
-                                Button {
-                                    variant: ButtonVariant::Primary,
-                                    onclick: move |_| {
-                                        toast_variant.set(AlertVariant::Info);
-                                        toast_message.set("Validating email...".to_string());
-                                        show_toast.set(true);
-                                    },
-                                    "Validate"
+                                Row {
+                                    gap: "sm".to_string(),
+                                    Button {
+                                        variant: ButtonVariant::Primary,
+                                        onclick: move |_| {
+                                            toast_variant.set(AlertVariant::Info);
+                                            toast_message.set("Validating email...".to_string());
+                                            show_toast.set(true);
+                                        },
+                                        "Validate"
+                                    }
                                 }
                             }
                         }
 
                         // Demo card 2
-                        Card {
-                            title: "Action Feedback".to_string(),
-                            div {
-                                class: "demo-description",
-                                "Click a button to see feedback"
-                            }
-                            div {
-                                class: "showcase-vertical-stack",
-                                Button {
-                                    variant: ButtonVariant::Success,
-                                    onclick: move |_| {
-                                        toast_variant.set(AlertVariant::Success);
-                                        toast_message.set("Changes saved successfully!".to_string());
-                                        show_toast.set(true);
-                                    },
-                                    "Save Changes"
+                        Col {
+                            span: Some(6),
+                            Card {
+                                title: "Action Feedback".to_string(),
+                                div {
+                                    class: "demo-description",
+                                    "Click a button to see feedback"
                                 }
-                                Button {
-                                    variant: ButtonVariant::Danger,
-                                    onclick: move |_| {
-                                        toast_variant.set(AlertVariant::Error);
-                                        toast_message.set("Failed to delete item".to_string());
-                                        show_toast.set(true);
-                                    },
-                                    "Delete Item"
+                                div {
+                                    class: "showcase-vertical-stack",
+                                    Button {
+                                        variant: ButtonVariant::Success,
+                                        onclick: move |_| {
+                                            toast_variant.set(AlertVariant::Success);
+                                            toast_message.set("Changes saved successfully!".to_string());
+                                            show_toast.set(true);
+                                        },
+                                        "Save Changes"
+                                    }
+                                    Button {
+                                        variant: ButtonVariant::Danger,
+                                        onclick: move |_| {
+                                            toast_variant.set(AlertVariant::Error);
+                                            toast_message.set("Failed to delete item".to_string());
+                                            show_toast.set(true);
+                                        },
+                                        "Delete Item"
+                                    }
                                 }
                             }
                         }

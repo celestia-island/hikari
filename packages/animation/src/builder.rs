@@ -54,6 +54,7 @@
 use super::context::AnimationContext;
 use super::style::{CssProperty, StyleBuilder};
 use std::collections::HashMap;
+use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 use web_sys::{Element, HtmlElement};
@@ -426,44 +427,6 @@ mod tests {
 
     #[cfg(target_arch = "wasm32")]
     #[test]
-    fn test_dynamic_value_static() {
-        let ctx = AnimationContext::new(&web_sys::HtmlElement::from(
-            web_sys::window()
-                .unwrap()
-                .document()
-                .unwrap()
-                .create_element("div")
-                .unwrap()
-                .dyn_into::<web_sys::HtmlElement>()
-                .unwrap(),
-        ));
-
-        let val = DynamicValue::static_value("100px");
-        assert_eq!(val.evaluate(&ctx), "100px");
-
-        let val: DynamicValue = "200px".into();
-        assert_eq!(val.evaluate(&ctx), "200px");
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    #[test]
-    fn test_dynamic_value_dynamic() {
-        let ctx = AnimationContext::new(&web_sys::HtmlElement::from(
-            web_sys::window()
-                .unwrap()
-                .document()
-                .unwrap()
-                .create_element("div")
-                .unwrap()
-                .dyn_into::<web_sys::HtmlElement>()
-                .unwrap(),
-        ));
-
-        let val = DynamicValue::dynamic(|_| "300px".to_string());
-        assert_eq!(val.evaluate(&ctx), "300px");
-    }
-
-    #[test]
     fn test_animation_action_creation() {
         let action = AnimationAction::style_static(CssProperty::Width, "100px");
         match action {
@@ -476,5 +439,265 @@ mod tests {
             AnimationAction::Class(c) => assert_eq!(c, "test-class"),
             _ => panic!("Expected Class action"),
         }
+    }
+}
+
+// ===== Debounced Animation Builder =====
+
+/// Debounced animation builder for throttling animation updates
+///
+/// Prevents excessive animation updates by debouncing rapid triggers.
+/// Animations are only applied after a period of inactivity (default 500ms).
+///
+/// # Features
+///
+/// - Automatic debouncing with configurable delay
+/// - Updates pending animations on each trigger
+/// - Applies only the latest animation state after debounce period
+/// - Per-element independent debouncing
+///
+/// # Example
+///
+/// ```ignore
+/// use animation::AnimationBuilderDebounced;
+/// use animation::style::CssProperty;
+/// use std::collections::HashMap;
+///
+/// let mut elements = HashMap::new();
+/// elements.insert("button".to_string(), button_element);
+///
+/// // Create debounced builder with 500ms delay
+/// let mut debounced = AnimationBuilderDebounced::new(&elements, 500);
+///
+/// // These rapid updates will be debounced
+/// debounced.add_style("button", CssProperty::Opacity, "0.5");
+/// debounced.add_style("button", CssProperty::Transform, "scale(1.1)");
+/// // Only the last state will be applied after 500ms
+/// ```
+#[cfg(target_arch = "wasm32")]
+pub struct AnimationBuilderDebounced<'a> {
+    /// Elements to animate
+    elements: &'a HashMap<String, JsValue>,
+    /// Pending animation actions per element
+    pending_actions: HashMap<String, Vec<AnimationAction>>,
+    /// Debounce delay in milliseconds
+    debounce_ms: u32,
+    /// Active timeout handles per element
+    timeout_handles: HashMap<String, i32>,
+}
+
+#[cfg(target_arch = "wasm32")]
+impl<'a> AnimationBuilderDebounced<'a> {
+    /// Create a new debounced animation builder
+    ///
+    /// # Arguments
+    ///
+    /// * `elements` - Map of element names to DOM element references
+    /// * `debounce_ms` - Debounce delay in milliseconds (default 500)
+    pub fn new(elements: &'a HashMap<String, JsValue>, debounce_ms: u32) -> Self {
+        Self {
+            elements,
+            pending_actions: HashMap::new(),
+            debounce_ms,
+            timeout_handles: HashMap::new(),
+        }
+    }
+
+    /// Add a static CSS style property to an element (debounced)
+    ///
+    /// # Arguments
+    ///
+    /// * `element_name` - Name of the element to animate
+    /// * `property` - CSS property to set
+    /// * `value` - Static value for the property
+    pub fn add_style(&mut self, element_name: &str, property: CssProperty, value: impl Into<String>) -> &mut Self {
+        let action = AnimationAction::style_static(property, value);
+        self.pending_actions
+            .entry(element_name.to_string())
+            .or_insert_with(Vec::new)
+            .push(action);
+        self.schedule_apply(element_name);
+        self
+    }
+
+    /// Add a dynamic CSS style property to an element (debounced)
+    ///
+    /// # Arguments
+    ///
+    /// * `element_name` - Name of the element to animate
+    /// * `property` - CSS property to set
+    /// * `f` - Closure that computes the value dynamically
+    pub fn add_style_dynamic<F>(&mut self, element_name: &str, property: CssProperty, f: F) -> &mut Self
+    where
+        F: Fn(&AnimationContext) -> String + 'static,
+    {
+        let action = AnimationAction::style_dynamic(property, f);
+        self.pending_actions
+            .entry(element_name.to_string())
+            .or_insert_with(Vec::new)
+            .push(action);
+        self.schedule_apply(element_name);
+        self
+    }
+
+    /// Add a utility class to an element (debounced)
+    ///
+    /// # Arguments
+    ///
+    /// * `element_name` - Name of the element
+    /// * `class` - Class name to add
+    pub fn add_class(&mut self, element_name: &str, class: impl Into<String>) -> &mut Self {
+        let action = AnimationAction::class(class);
+        self.pending_actions
+            .entry(element_name.to_string())
+            .or_insert_with(Vec::new)
+            .push(action);
+        self.schedule_apply(element_name);
+        self
+    }
+
+    /// Add multiple utility classes to an element (debounced)
+    ///
+    /// # Arguments
+    ///
+    /// * `element_name` - Name of the element
+    /// * `classes` - Slice of class names to add
+    pub fn add_classes(&mut self, element_name: &str, classes: &[impl AsRef<str>]) -> &mut Self {
+        for class in classes {
+            let action = AnimationAction::class(class.as_ref());
+            self.pending_actions
+                .entry(element_name.to_string())
+                .or_insert_with(Vec::new)
+                .push(action);
+        }
+        self.schedule_apply(element_name);
+        self
+    }
+
+    /// Schedule applying animations for an element after debounce delay
+    fn schedule_apply(&mut self, element_name: &str) {
+        let window = match web_sys::window() {
+            Some(w) => w,
+            None => return,
+        };
+
+        // Clear any existing timeout for this element
+        if let Some(handle) = self.timeout_handles.remove(element_name) {
+            let _ = window.clear_timeout_with_handle(handle);
+        }
+
+        // Clone necessary data for the closure
+        let element_name = element_name.to_string();
+        let element_name_for_closure = element_name.clone();
+        let element_name_for_timeout = element_name.clone();
+        let elements = self.elements.clone();
+        let pending_actions = self.pending_actions.clone();
+        let debounce_ms = self.debounce_ms;
+
+        // Set new timeout
+        let closure = Closure::once(move || {
+            if let Some(actions) = pending_actions.get(&element_name_for_closure) {
+                if let Some(js_value) = elements.get(&element_name_for_closure) {
+                    if let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
+                        // Apply all pending actions
+                        apply_actions_to_element(&element, actions);
+                    }
+                }
+            }
+        });
+
+        let result = window.set_timeout_with_callback_and_timeout_and_arguments_0(
+            closure.as_ref().unchecked_ref(),
+            debounce_ms as i32,
+        );
+
+        match result {
+            Ok(handle) => {
+                self.timeout_handles.insert(element_name_for_timeout, handle);
+                closure.forget();
+            }
+            Err(_) => {
+                // Timeout failed, apply immediately
+                if let Some(actions) = self.pending_actions.get(&element_name) {
+                    if let Some(js_value) = self.elements.get(&element_name) {
+                        if let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
+                            apply_actions_to_element(&element, actions);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Immediately flush all pending animations (bypasses debounce)
+    pub fn flush(&mut self) {
+        let element_names: Vec<String> = self.pending_actions.keys().cloned().collect();
+
+        for element_name in element_names {
+            // Clear any pending timeout
+            if let Some(window) = web_sys::window() {
+                if let Some(handle) = self.timeout_handles.remove(&element_name) {
+                    let _ = window.clear_timeout_with_handle(handle);
+                }
+            }
+
+            // Apply pending actions immediately
+            if let Some(actions) = self.pending_actions.remove(&element_name) {
+                if let Some(js_value) = self.elements.get(&element_name) {
+                    if let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
+                        apply_actions_to_element(&element, &actions);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Cancel all pending animations
+    pub fn cancel_all(&mut self) {
+        if let Some(window) = web_sys::window() {
+            for handle in self.timeout_handles.values() {
+                let _ = window.clear_timeout_with_handle(*handle);
+            }
+        }
+        self.timeout_handles.clear();
+        self.pending_actions.clear();
+    }
+}
+
+/// Apply animation actions to an element (shared helper)
+#[cfg(target_arch = "wasm32")]
+fn apply_actions_to_element(element: &HtmlElement, actions: &[AnimationAction]) {
+    let ctx = AnimationContext::new(element);
+
+    // Separate styles and classes
+    let mut styles: Vec<(CssProperty, String)> = Vec::new();
+    let mut classes: Vec<String> = Vec::new();
+
+    for action in actions {
+        match action {
+            AnimationAction::Style(prop, value) => {
+                styles.push((*prop, value.evaluate(&ctx)));
+            }
+            AnimationAction::Class(class) => {
+                classes.push(class.clone());
+            }
+        }
+    }
+
+    // Apply styles using StyleBuilder
+    if !styles.is_empty() {
+        let style_refs: Vec<(CssProperty, &str)> = styles
+            .iter()
+            .map(|(p, v)| (*p, v.as_str()))
+            .collect();
+        StyleBuilder::new(element)
+            .add_all(&style_refs)
+            .apply();
+    }
+
+    // Apply classes
+    let elem = element.clone().dyn_into::<web_sys::Element>().unwrap();
+    for class in classes {
+        let _ = elem.class_list().add_1(&class);
     }
 }

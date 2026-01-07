@@ -89,7 +89,9 @@
     0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 
   // Transitions - smooth GSAP-style easing
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Position for progress bar
   position: relative;
@@ -148,7 +150,9 @@
     border: none;
     color: var(--hi-color-text-secondary);
     cursor: pointer;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
     border-radius: vars.$hikari-radius-fui-sm;
 
     &:hover {
@@ -184,18 +188,21 @@
     left: 0;
     height: 100%;
     background: currentColor;
-    animation: toast-progress linear forwards;
+    // DISABLED - migrated to JS animation
+
+    // animation: toast-progress linear forwards;
   }
 }
 
-@keyframes toast-progress {
-  from {
-    width: 100%;
-  }
-  to {
-    width: 0;
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes toast-progress {
+//   from {
+//     width: 100%;
+//   }
+//   to {
+//     width: 0;
+//   }
+// }
 
 // ============================================
 // Color Variants
@@ -282,7 +289,9 @@
 
   .hi-toast-icon {
     color: var(--hi-color-primary);
-    animation: toast-spin 1s linear infinite;
+    // DISABLED - migrated to JS animation
+
+    // animation: toast-spin 1s linear infinite;
 
     svg {
       filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.6));
@@ -290,14 +299,15 @@
   }
 }
 
-@keyframes toast-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes toast-spin {
+//   from {
+//     transform: rotate(0deg);
+//   }
+//   to {
+//     transform: rotate(360deg);
+//   }
+// }
 
 // ============================================
 // Hover State
@@ -369,153 +379,187 @@
 
 // Top-right
 .hi-toast-top-right .hi-toast {
-  animation: toast-slide-in-right vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: toast-slide-in-right vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
 .hi-toast-top-right .hi-toast.hi-toast-leave {
-  animation: toast-slide-out-right vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: toast-slide-out-right vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
 }
 
 // Top-left
 .hi-toast-top-left .hi-toast {
-  animation: toast-slide-in-left vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: toast-slide-in-left vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
 .hi-toast-top-left .hi-toast.hi-toast-leave {
-  animation: toast-slide-out-left vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: toast-slide-out-left vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
 }
 
 // Bottom-right
 .hi-toast-bottom-right .hi-toast {
-  animation: toast-slide-in-right vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: toast-slide-in-right vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
 .hi-toast-bottom-right .hi-toast.hi-toast-leave {
-  animation: toast-slide-out-right vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: toast-slide-out-right vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
 }
 
 // Bottom-left
 .hi-toast-bottom-left .hi-toast {
-  animation: toast-slide-in-left vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: toast-slide-in-left vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
 .hi-toast-bottom-left .hi-toast.hi-toast-leave {
-  animation: toast-slide-out-left vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: toast-slide-out-left vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
 }
 
 // Top-center
 .hi-toast-top-center .hi-toast {
-  animation: toast-slide-in-top vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: toast-slide-in-top vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
 .hi-toast-top-center .hi-toast.hi-toast-leave {
-  animation: toast-slide-out-top vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: toast-slide-out-top vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
 }
 
 // Bottom-center
 .hi-toast-bottom-center .hi-toast {
-  animation: toast-slide-in-bottom vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: toast-slide-in-bottom vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
 .hi-toast-bottom-center .hi-toast.hi-toast-leave {
-  animation: toast-slide-out-bottom vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: toast-slide-out-bottom vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
 }
 
 // Animation keyframes
-@keyframes toast-slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes toast-slide-in-right {
+//   from {
+//     opacity: 0;
+//     transform: translateX(100%);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateX(0);
+//   }
+// }
 
-@keyframes toast-slide-out-right {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes toast-slide-out-right {
+//   from {
+//     opacity: 1;
+//     transform: translateX(0);
+//   }
+//   to {
+//     opacity: 0;
+//     transform: translateX(100%);
+//   }
+// }
 
-@keyframes toast-slide-in-left {
-  from {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes toast-slide-in-left {
+//   from {
+//     opacity: 0;
+//     transform: translateX(-100%);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateX(0);
+//   }
+// }
 
-@keyframes toast-slide-out-left {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes toast-slide-out-left {
+//   from {
+//     opacity: 1;
+//     transform: translateX(0);
+//   }
+//   to {
+//     opacity: 0;
+//     transform: translateX(-100%);
+//   }
+// }
 
-@keyframes toast-slide-in-top {
-  from {
-    opacity: 0;
-    transform: translateY(-100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes toast-slide-in-top {
+//   from {
+//     opacity: 0;
+//     transform: translateY(-100%);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+// }
 
-@keyframes toast-slide-out-top {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-100%);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes toast-slide-out-top {
+//   from {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+//   to {
+//     opacity: 0;
+//     transform: translateY(-100%);
+//   }
+// }
 
-@keyframes toast-slide-in-bottom {
-  from {
-    opacity: 0;
-    transform: translateY(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes toast-slide-in-bottom {
+//   from {
+//     opacity: 0;
+//     transform: translateY(100%);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+// }
 
-@keyframes toast-slide-out-bottom {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(100%);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes toast-slide-out-bottom {
+//   from {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+//   to {
+//     opacity: 0;
+//     transform: translateY(100%);
+//   }
+// }
 
 // ============================================
 // Stacked Animation (for multiple toasts)
 // ============================================
 
 .hi-toast-container .hi-toast {
-  animation: toast-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: toast-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 
   @for $i from 1 through 10 {
     &:nth-child(#{$i}) {
@@ -524,16 +568,17 @@
   }
 }
 
-@keyframes toast-fade-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes toast-fade-in {
+//   from {
+//     opacity: 0;
+//     transform: scale(0.95) translateY(-10px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: scale(1) translateY(0);
+//   }
+// }
 
 // ============================================
 // Clickable Toast
@@ -552,6 +597,8 @@
 
   &:active {
     transform: translateX(-4px) scale(0.98);
-    transition: transform vars.$hikari-duration-instant ease-out;
+    // DISABLED - migrated to JS animation
+
+    // transition: transform vars.$hikari-duration-instant ease-out;
   }
 }

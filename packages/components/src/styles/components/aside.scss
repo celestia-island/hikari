@@ -95,7 +95,9 @@
   box-shadow: 0 4px 8px rgba(139, 92, 246, 0.05);
 
   // Transition
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Logo
   .hi-aside-logo {
@@ -145,7 +147,9 @@
       @include mix.text-ellipsis;
 
       // Transition for collapsed state
-      transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+      // DISABLED - migrated to JS animation
+
+      // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
     }
 
     // Hover state
@@ -169,13 +173,17 @@
     background: transparent;
     color: var(--hi-color-text-secondary);
     cursor: pointer;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
     flex-shrink: 0;
 
     svg {
       width: 1rem;
       height: 1rem;
-      transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+      // DISABLED - migrated to JS animation
+
+      // transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
     }
 
     // Hover state
@@ -239,7 +247,9 @@
   scroll-behavior: smooth;
 
   // Transition for collapsed state
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Position relative for gradient overlays
   position: relative;
@@ -255,7 +265,9 @@
     background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), transparent);
     pointer-events: none;
     opacity: var(--fade-top-opacity, 0); // Controlled by JS
-    transition: opacity 0.2s ease;
+    // DISABLED - migrated to JS animation
+
+    // transition: opacity 0.2s ease;
     z-index: 10;
   }
 
@@ -269,7 +281,9 @@
     background: linear-gradient(to top, rgba(255, 255, 255, 0.8), transparent);
     pointer-events: none;
     opacity: var(--fade-bottom-opacity, 0); // Controlled by JS
-    transition: opacity 0.2s ease;
+    // DISABLED - migrated to JS animation
+
+    // transition: opacity 0.2s ease;
     z-index: 10;
   }
 
@@ -322,7 +336,9 @@
   user-select: none;
 
   // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Position for effects
   position: relative;
@@ -334,7 +350,9 @@
     width: 1.125rem;
     height: 1.125rem;
     color: var(--hi-color-text-secondary);
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     svg {
       width: 100%;
@@ -347,7 +365,9 @@
     flex: 1;
 
     // Transition for collapsed state
-    transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
   }
 
   // Badge/counter
@@ -369,7 +389,9 @@
     width: 0.75rem;
     height: 0.75rem;
     color: var(--hi-color-text-secondary);
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     svg {
       width: 100%;
@@ -468,7 +490,9 @@
     letter-spacing: 0.05em;
 
     // Transition for collapsed state
-    transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
   }
 
   // Collapsible group
@@ -480,7 +504,9 @@
       cursor: pointer;
       user-select: none;
       border-radius: vars.$hikari-radius-fui-sm;
-      transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+      // DISABLED - migrated to JS animation
+
+      // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
       // Arrow indicator
       &::after {
@@ -490,7 +516,9 @@
         border-right: 2px solid var(--hi-color-text-secondary);
         border-bottom: 2px solid var(--hi-color-text-secondary);
         transform: rotate(45deg);
-        transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+        // DISABLED - migrated to JS animation
+
+        // transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
       }
 
       &:hover {
@@ -525,7 +553,9 @@
     max-height: 1000px;
     opacity: 1;
     overflow: visible;
-    transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
   }
 }
 
@@ -566,7 +596,9 @@
     opacity: 1;
     max-height: 1000px;
     overflow: visible;
-    transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
     // Collapsed state
     &.hi-aside-submenu-collapsed {
@@ -598,7 +630,9 @@
   box-shadow: 0 -4px 8px rgba(139, 92, 246, 0.05);
 
   // Transition
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // DISABLED - migrated to JS animation
+
+  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // User info section
   .hi-aside-user {
@@ -608,7 +642,9 @@
     padding: 0.5rem;
     border-radius: vars.$hikari-radius-fui-sm;
     cursor: pointer;
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     // Avatar
     .hi-aside-user-avatar {
@@ -618,7 +654,9 @@
       object-fit: cover;
       border: 2px solid rgba(139, 92, 246, 0.3);
       box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
-      transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+      // DISABLED - migrated to JS animation
+
+      // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
     }
 
     // User info
@@ -630,7 +668,9 @@
       gap: 0.125rem;
 
       // Transition for collapsed state
-      transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+      // DISABLED - migrated to JS animation
+
+      // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
       // Username
       .hi-aside-user-name {
@@ -676,7 +716,9 @@
     border-radius: 0;
     min-height: 100vh;
     transform: translateX(-100%);
-    transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    // DISABLED - migrated to JS animation
+
+    // transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
     // Open state
     &.hi-aside-drawer-open {
@@ -697,7 +739,9 @@
       z-index: -1;
       opacity: 0;
       pointer-events: none;
-      transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+      // DISABLED - migrated to JS animation
+
+      // transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
     }
 
     &.hi-aside-drawer-open::after {
@@ -809,39 +853,47 @@
 
 // Slide in from left
 .hi-aside-animate-in {
-  animation: aside-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: aside-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
-@keyframes aside-slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes aside-slide-in {
+//   from {
+//     opacity: 0;
+//     transform: translateX(-30px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateX(0);
+//   }
+// }
 
 // Fade in
 .hi-aside-fade-in {
-  animation: aside-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // DISABLED - migrated to JS animation
+
+  // animation: aside-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 }
 
-@keyframes aside-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes aside-fade-in {
+//   from {
+//     opacity: 0;
+//   }
+//   to {
+//     opacity: 1;
+//   }
+// }
 
 // Stagger animation for menu items
 .hi-aside-stagger {
   .hi-aside-menu-item {
     opacity: 0;
-    animation: aside-menu-item-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+    // DISABLED - migrated to JS animation
+
+    // animation: aside-menu-item-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 
     @for $i from 1 through 20 {
       &:nth-child(#{$i}) {
@@ -851,16 +903,17 @@
   }
 }
 
-@keyframes aside-menu-item-fade-in {
-  from {
-    opacity: 0;
-    transform: translateX(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+// DISABLED - migrated to JS animation
+// @keyframes aside-menu-item-fade-in {
+//   from {
+//     opacity: 0;
+//     transform: translateX(-12px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateX(0);
+//   }
+// }
 
 // Ripple effect on click
 .hi-aside-menu-item-ripple {
@@ -874,7 +927,9 @@
     background: rgba(139, 92, 246, 0.3);
     border-radius: 50%;
     transform: translate(-50%, -50%);
-    transition: width 0.6s ease-out, height 0.6s ease-out;
+    // DISABLED - migrated to JS animation
+
+    // transition: width 0.6s ease-out, height 0.6s ease-out;
   }
 
   &:active::after {

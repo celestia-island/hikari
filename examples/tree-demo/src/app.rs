@@ -2,7 +2,7 @@
 // Comprehensive tree component demo with large trees, virtual scrolling, and drag-drop
 
 use dioxus::prelude::*;
-use hikari_components::*;
+use components::*;
 
 #[component]
 pub fn App() -> Element {

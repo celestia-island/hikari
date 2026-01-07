@@ -5,6 +5,9 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[lib]
+doctest = false
+
 [features]
 default = ["basic", "feedback", "navigation", "layout", "data"]
 
@@ -35,9 +38,9 @@ pagination = []
 
 [dependencies]
 # Workspace dependencies
-hikari-palette = { path = "../palette" }
-hikari-theme = { path = "../theme" }
-hikari-animation = { path = "../animation" }
+palette = { path = "../palette", package = "hikari-palette" }
+theme = { path = "../theme", package = "hikari-theme" }
+animation = { path = "../animation", package = "hikari-animation" }
 
 # MCP / network and protocols
 dioxus.workspace = true

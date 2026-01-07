@@ -76,7 +76,7 @@ impl StaticMountConfig {
 /// # Example
 ///
 /// ```rust,no_run
-/// use hikari_render_service::HikariRenderServicePlugin;
+/// use render_service::HikariRenderServicePlugin;
 /// use components::StyleRegistry;
 /// use axum::routing::get;
 ///
@@ -199,7 +199,7 @@ impl HikariRenderServicePlugin {
     /// # Example
     ///
     /// ```rust,no_run
-    /// # use hikari_render_service::HikariRenderServicePlugin;
+    /// # use render_service::HikariRenderServicePlugin;
     /// let plugin = HikariRenderServicePlugin::new()
     ///     .static_assets("./dist", "/static");
     /// ```
@@ -230,7 +230,7 @@ impl HikariRenderServicePlugin {
     /// # Example
     ///
     /// ```rust,no_run
-    /// # use hikari_render_service::HikariRenderServicePlugin;
+    /// # use render_service::HikariRenderServicePlugin;
     /// let plugin = HikariRenderServicePlugin::new()
     ///     .icon_assets("./packages/icons/dist/lucide/icons", "/static/icons");
     /// ```

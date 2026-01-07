@@ -5,13 +5,16 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[lib]
+doctest = false
+
 [features]
 default = ["scss"]
 scss = []       # Default SCSS compilation
 
 [dependencies]
 # Workspace dependencies
-hikari-palette = { path = "../palette" }
+palette = { path = "../palette", package = "hikari-palette" }
 
 # MCP / network and protocols
 dioxus.workspace = true

@@ -12,7 +12,7 @@
 //! ## Example
 //!
 //! ```rust,no_run
-//! use hikari_render_service::HikariRenderServicePlugin;
+//! use render_service::HikariRenderServicePlugin;
 //! use components::StyleRegistry;
 //!
 //! #[tokio::main]

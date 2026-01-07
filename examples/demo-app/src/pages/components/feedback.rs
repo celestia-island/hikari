@@ -4,10 +4,10 @@
 extern crate components as hikari_components;
 
 use dioxus::prelude::*;
-use hikari_components::{
+use components::{
     Alert, AlertVariant, Button, ButtonVariant, ButtonSize, Tooltip, Card, Input
 };
-use hikari_components::layout::{Container, Grid, Row, Section};
+use components::layout::{Container, Grid, Row, Section};
 
 use crate::{app::Route, components::Layout};
 

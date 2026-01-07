@@ -88,7 +88,7 @@ pub struct DragData {
 ///
 /// ```rust
 /// use dioxus::prelude::*;
-/// use hikari_extra_components::{DragLayer, DragConstraints};
+/// use extra_components::{DragLayer, DragConstraints};
 ///
 /// fn app() -> Element {
 ///     rsx! {

@@ -72,7 +72,7 @@ impl ScreenSize {
 /// # Example
 ///
 /// ```rust,no_run
-/// use components::hooks::use_screen_size;
+/// use hikari_components::hooks::use_screen_size;
 ///
 /// fn App() -> Element {
 ///     let screen_size = use_screen_size();
@@ -119,7 +119,8 @@ pub fn use_screen_size() -> Signal<ScreenSize> {
 /// # Example
 ///
 /// ```rust,no_run
-/// use components::hooks::use_is_mobile;
+/// use dioxus::prelude::*;
+/// use hikari_components::hooks::use_is_mobile;
 ///
 /// fn Sidebar() -> Element {
 ///     let is_mobile = use_is_mobile();
@@ -141,7 +142,8 @@ pub fn use_is_mobile() -> Memo<bool> {
 /// # Example
 ///
 /// ```rust,no_run
-/// use components::hooks::use_is_desktop;
+/// use dioxus::prelude::*;
+/// use hikari_components::hooks::use_is_desktop;
 ///
 /// fn Layout() -> Element {
 ///     let is_desktop = use_is_desktop();
@@ -189,7 +191,7 @@ fn get_screen_size_from_window() -> ScreenSize {
 /// # Example
 ///
 /// ```rust,no_run
-/// use components::hooks::use_media_query;
+/// use hikari_components::hooks::use_media_query;
 ///
 /// fn Component() -> Element {
 ///     let is_medium = use_media_query(Some(768), Some(1023));

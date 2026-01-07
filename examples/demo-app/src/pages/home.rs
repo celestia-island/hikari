@@ -7,8 +7,8 @@ use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
 use crate::{app::Route, components::Layout};
-use hikari_components::layout::{Container, Grid, Row, Section, Spacer};
-use hikari_components::{Button, ButtonSize, ButtonVariant, Card};
+use components::layout::{Container, Grid, Row, Section, Spacer};
+use components::{Button, ButtonSize, ButtonVariant, Card};
 
 #[component]
 pub fn Home() -> Element {

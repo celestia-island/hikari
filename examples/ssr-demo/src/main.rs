@@ -13,7 +13,7 @@ use serde_json::json;
 use tokio::net::TcpListener;
 
 use axum::{extract::State, response::Json, routing::get};
-use hikari_render_service::HikariRenderServicePlugin;
+use render_service::HikariRenderServicePlugin;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};

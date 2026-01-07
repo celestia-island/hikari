@@ -6,7 +6,7 @@
 // # Usage
 //
 // ```rust,ignore
-// use hikari_icons::{Icon, LucideIcon};
+// use icons::{Icon, LucideIcon};
 //
 // rsx! {
 //     Icon { icon: LucideIcon::Menu, class: "w-6 h-6" }
@@ -28,7 +28,7 @@ pub use generated::lucide::LucideIcon;
 ///
 /// # Example
 /// ```rust,ignore
-/// use hikari_icons::{Icon, LucideIcon};
+/// use icons::{Icon, LucideIcon};
 ///
 /// rsx! {
 ///     Icon { icon: LucideIcon::Menu, class: "w-6 h-6" }

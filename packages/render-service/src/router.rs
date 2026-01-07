@@ -21,9 +21,6 @@ use super::{
     registry::StyleRegistry,
 };
 
-// Import palette for utility classes
-use palette;
-
 /// Application state shared across all handlers.
 #[derive(Clone, Debug)]
 pub struct AppState {
@@ -80,8 +77,8 @@ pub enum RouterBuildError {
 /// # Example
 ///
 /// ```rust,no_run
-/// use hikari_render_service::router::build_router;
-/// use hikari_render_service::StyleRegistry;
+/// use render_service::router::build_router;
+/// use render_service::StyleRegistry;
 /// use std::collections::HashMap;
 ///
 /// # async fn example() -> anyhow::Result<()> {
@@ -320,9 +317,6 @@ pub async fn internal_error(err: String) -> impl IntoResponse {
 
 /// CSS bundle handler - serves all registered component styles plus utility classes.
 async fn css_bundle_handler(State(state): State<AppState>) -> impl IntoResponse {
-    // Get utility classes from palette
-    let utility_classes = palette::get_utility_classes();
-
     // Get component styles from registry
     let component_styles = if let Some(registry) = &state.style_registry {
         registry.css_bundle()
@@ -330,8 +324,8 @@ async fn css_bundle_handler(State(state): State<AppState>) -> impl IntoResponse 
         String::new()
     };
 
-    // Combine utility classes and component styles
-    let css = format!("{}\n\n{}", utility_classes, component_styles);
+    // Utility classes are now in the SCSS bundle, so we only return component styles
+    let css = component_styles;
 
     Response::builder()
         .status(StatusCode::OK)

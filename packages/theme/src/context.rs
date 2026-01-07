@@ -8,18 +8,18 @@
 //! # Example
 //!
 //! ```rust,no_run
-//! use hikari_theme::{ThemeContext, ThemeProvider};
-//! use hikari_palette::primary_palette;
+//! use theme::{ThemeContext, ThemeProvider};
+//! use palette::themes::Hikari;
 //!
 //! fn main() {
 //!     let context = ThemeContext {
-//!         palette: "primary".to_string(),
-//!         colors: primary_palette(),
+//!         palette: "hikari".to_string(),
+//!         colors: Hikari::palette(),
 //!     };
 //! }
 //! ```
 
-use hikari_palette::*;
+use palette::*;
 
 /// Theme context state
 ///
@@ -28,7 +28,7 @@ use hikari_palette::*;
 ///
 /// # Fields
 ///
-/// - `palette` - Identifier string for the current palette (e.g., "primary", "fui-dark", "arknights")
+/// - `palette` - Identifier string for the current theme (e.g., "hikari", "tairitsu")
 /// - `colors` - The active [`Palette`] with color definitions
 #[derive(Clone)]
 pub struct ThemeContext {
@@ -39,8 +39,8 @@ pub struct ThemeContext {
 impl Default for ThemeContext {
     fn default() -> Self {
         ThemeContext {
-            palette: "primary".to_string(),
-            colors: primary_palette(),
+            palette: "hikari".to_string(),
+            colors: themes::Hikari::palette(),
         }
     }
 }

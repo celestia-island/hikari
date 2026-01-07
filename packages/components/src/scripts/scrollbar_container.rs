@@ -22,8 +22,8 @@ use wasm_bindgen::JsCast;
 use std::rc::Rc;
 use std::cell::RefCell;
 use js_sys::Date;
-use hikari_animation::TimerManager;
-use hikari_animation::style::{CssProperty, StyleBuilder};
+use animation::TimerManager;
+use animation::style::{CssProperty, StyleBuilder};
 
 /// Animation state for scrollbar width transition
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -62,7 +62,7 @@ struct ScrollbarAnimator {
     start_width: RefCell<f64>,  // Starting width
     target_width: RefCell<f64>,  // Target width
     timer_manager: TimerManager,  // For delayed state transitions
-    scroll_hover_timer: RefCell<Option<hikari_animation::TimerId>>,  // Scroll hover timer
+    scroll_hover_timer: RefCell<Option<animation::TimerId>>,  // Scroll hover timer
     is_mouse_over: RefCell<bool>,  // Track mouse position for drag end logic
 }
 
@@ -253,7 +253,7 @@ impl ScrollbarAnimator {
 
         // Apply current width
         if let Some(el) = self.track.dyn_ref::<web_sys::HtmlElement>() {
-            use hikari_animation::style::set_style;
+            use animation::style::set_style;
             set_style(el, CssProperty::Width, &format!("{}px", current));
         }
 

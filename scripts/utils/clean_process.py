@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Clean processes listening on port 3000
 
@@ -18,17 +19,17 @@ from typing import Optional
 
 def print_info(message: str):
     """Print info message"""
-    print(f"ℹ️  {message}")
+    print(f"[INFO] {message}")
 
 
 def print_success(message: str):
     """Print success message"""
-    print(f"✅ {message}")
+    print(f"[OK] {message}")
 
 
 def print_warning(message: str):
     """Print warning message"""
-    print(f"⚠️  {message}")
+    print(f"[WARN] {message}")
 
 
 def find_process_on_port(port: int) -> Optional[int]:

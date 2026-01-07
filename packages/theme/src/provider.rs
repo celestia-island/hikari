@@ -5,13 +5,11 @@
 //!
 //! # Supported Themes
 //!
-//! - `"primary"` - Primary theme (四大传统色)
-//! - `"fui-dark"` - FUI dark theme (科幻风格深色主题)
-//! - `"arknights"` - Arknights theme (明日方舟风格)
-//! - `"fresh"` - Fresh theme (清新雅致风格)
+//! - `"hikari"` - Light theme (光)
+//! - `"tairitsu"` - Dark theme (tairitsu)
 
 use dioxus::prelude::*;
-use hikari_palette::*;
+use palette::*;
 
 /// Theme provider properties
 ///
@@ -19,11 +17,11 @@ use hikari_palette::*;
 ///
 /// # Fields
 ///
-/// - `palette` - Theme identifier string (default: "primary")
+/// - `palette` - Theme identifier string (default: "hikari")
 /// - `children` - Child elements to render within the theme context
 #[derive(Clone, Props, PartialEq)]
 pub struct ThemeProviderProps {
-    #[props(default = "primary".to_string())]
+    #[props(default = "hikari".to_string())]
     pub palette: String,
 
     children: Element,
@@ -35,16 +33,16 @@ pub struct ThemeProviderProps {
 ///
 /// # Props
 ///
-/// - `palette` - Theme identifier ("primary", "fui-dark", "arknights", or "fresh")
+/// - `palette` - Theme identifier ("hikari" or "tairitsu")
 /// - `children` - Child elements that receive theme context
 ///
 /// # Example
 ///
 /// ```rust,no_run
-/// use hikari_theme::ThemeProvider;
+/// use theme::ThemeProvider;
 ///
 /// rsx! {
-///     ThemeProvider { palette: "fui-dark" } {
+///     ThemeProvider { palette: "tairitsu" } {
 ///         // Children here
 ///     }
 /// }
@@ -53,11 +51,9 @@ pub struct ThemeProviderProps {
 #[component]
 pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
     let _colors = match props.palette.as_str() {
-        "primary" => primary_palette(),
-        "fui-dark" => fui_dark_palette(),
-        "arknights" => arknights_palette(),
-        "fresh" => fresh_palette(),
-        _ => primary_palette(),
+        "hikari" => themes::Hikari::palette(),
+        "tairitsu" => themes::Tairitsu::palette(),
+        _ => themes::Hikari::palette(),
     };
 
     rsx! {

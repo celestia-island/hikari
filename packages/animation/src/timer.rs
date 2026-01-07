@@ -36,7 +36,7 @@ pub type TimerCallback = Rc<dyn Fn()>;
 ///
 /// # Example
 /// ```ignore
-/// use hikari_animation::TimerManager;
+/// use animation::TimerManager;
 ///
 /// let manager = TimerManager::new();
 ///
@@ -208,7 +208,7 @@ impl Default for TimerManager {
 ///
 /// # Example
 /// ```ignore
-/// use hikari_animation::{TimerManager, debounce};
+/// use animation::{TimerManager, debounce};
 ///
 /// let manager = TimerManager::new();
 /// let debounced = debounce(manager.clone(), Duration::from_millis(300), || {
@@ -256,7 +256,7 @@ pub fn debounce(
 ///
 /// # Example
 /// ```ignore
-/// use hikari_animation::{TimerManager, throttle};
+/// use animation::{TimerManager, throttle};
 ///
 /// let manager = TimerManager::new();
 /// let throttled = throttle(manager, Duration::from_millis(100), || {

@@ -8,27 +8,37 @@
 //! ## Modules
 //!
 //! - [`colors`] - Individual color definitions (500+ traditional colors)
-//! - [`palettes`] - Predefined color schemes and themes
-//! - [`utility`] - Utility class system (Tailwind-like CSS utilities)
+//! - [`themes`] - Theme palettes (Hikari & Tairitsu)
+//! - [`classes`] - Type-safe utility class system with hierarchical enums
 //!
 //! ## Usage
 //!
 //! ```rust,no_run
-//! use hikari_palette::{朱红, primary_palette};
+//! use palette::{朱红, themes::Hikari};
+//! use palette::classes::*;
 //!
 //! // Use a specific color
 //! let red = 朱红;
 //! println!("{:?}", red.hex());
 //!
-//! // Use a predefined palette
-//! let palette = primary_palette();
-//! println!("{:?}", palette.primary.hex());
+//! // Use a theme
+//! let theme = Hikari::default();
+//! println!("{:?}", theme.primary.hex());
+//!
+//! // Use utility classes
+//! use palette::ClassesBuilder;
+//! let classes = ClassesBuilder::new()
+//!     .add(Display::Flex)
+//!     .add(FlexDirection::Row)
+//!     .add(Gap::Gap4)
+//!     .build();
+//! // Output: "hi-flex hi-flex-row hi-gap-4"
 //! ```
 
 pub mod colors;
-pub mod palettes;
-pub mod utility;
+pub mod themes;
+pub mod classes;
 
 pub use colors::*;
-pub use palettes::*;
-pub use utility::*;
+pub use themes::*;
+pub use classes::*;

@@ -1,18 +1,22 @@
+pub mod builder;
+pub mod context;
 pub mod core;
 pub mod easing;
 pub mod hooks;
 pub mod presets;
-pub mod timeline;
-pub mod tween;
-pub mod timer;
 pub mod style;
+pub mod timeline;
+pub mod timer;
+pub mod tween;
 
+pub use builder::*;
+pub use context::*;
 pub use core::*;
 
 pub use easing::*;
 pub use hooks::*;
 pub use presets::*;
+pub use style::*;
 pub use timeline::*;
 pub use tween::*;
 pub use timer::*;
-pub use style::*;

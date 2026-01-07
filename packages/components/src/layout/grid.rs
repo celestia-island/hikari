@@ -18,6 +18,8 @@
 //! ```
 
 use dioxus::prelude::*;
+use palette::ClassesBuilder;
+use palette::classes::components::*;
 
 /// Grid component - 12-column responsive grid container
 ///
@@ -46,14 +48,20 @@ pub fn Grid(
     class: String,
 ) -> Element {
     let gap_class = match gap.as_str() {
-        "sm" => "hi-grid-gap-sm",
-        "lg" => "hi-grid-gap-lg",
-        _ => "hi-grid-gap-md", // md (default)
+        "sm" => GridClass::GapSm,
+        "lg" => GridClass::GapLg,
+        _ => GridClass::GapMd, // md (default)
     };
+
+    let classes = ClassesBuilder::new()
+        .add(GridClass::Grid)
+        .add(gap_class)
+        .add_raw(&class)
+        .build();
 
     rsx! {
         div {
-            class: format!("hi-grid {gap_class} {class}"),
+            class: "{classes}",
             style: format!("grid-template-columns: repeat({columns}, minmax(0, 1fr));"),
             { children }
         }
@@ -97,9 +105,14 @@ pub fn Col(
         style
     };
 
+    let classes = ClassesBuilder::new()
+        .add(GridClass::Col)
+        .add_raw(&class)
+        .build();
+
     rsx! {
         div {
-            class: format!("hi-col {class}"),
+            class: "{classes}",
             style: style,
             { children }
         }
@@ -145,9 +158,9 @@ pub fn Row(
     style: String,
 ) -> Element {
     let gap_class = match gap.as_str() {
-        "sm" => "hi-row-gap-sm",
-        "lg" => "hi-row-gap-lg",
-        _ => "hi-row-gap-md", // md (default)
+        "sm" => RowClass::GapSm,
+        "lg" => RowClass::GapLg,
+        _ => RowClass::GapMd, // md (default)
     };
 
     let justify_style = match justify.as_str() {
@@ -167,9 +180,15 @@ pub fn Row(
 
     let wrap_style = if wrap { "flex-wrap: wrap;" } else { "flex-wrap: nowrap;" };
 
+    let classes = ClassesBuilder::new()
+        .add(RowClass::Row)
+        .add(gap_class)
+        .add_raw(&class)
+        .build();
+
     rsx! {
         div {
-            class: format!("hi-row {gap_class} {class}"),
+            class: "{classes}",
             style: format!("display: flex; {justify_style} {align_style} {wrap_style} {style}"),
             { children }
         }

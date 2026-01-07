@@ -100,8 +100,9 @@ pub use styled::{StyleRegistry, StyledComponent};
 ///
 /// Returns the complete utility class system (similar to Tailwind CSS but independent).
 /// These are basic utility classes for layout, spacing, typography, etc.
+#[deprecated(note = "Utility classes are now managed by the CSS bundle. Use CSS classes directly.")]
 pub fn get_utility_classes() -> &'static str {
-    hikari_palette::get_utility_classes()
+    ""  // Utility classes are now in the SCSS bundle
 }
 
 /// Get complete CSS bundle (utility classes + component styles)
@@ -109,9 +110,5 @@ pub fn get_utility_classes() -> &'static str {
 /// This is a convenience function that combines utility classes
 /// with all registered component styles.
 pub fn get_complete_bundle(registry: &StyleRegistry) -> String {
-    format!(
-        "{}\n\n{}",
-        get_utility_classes(),
-        registry.css_bundle()
-    )
+    registry.css_bundle()
 }

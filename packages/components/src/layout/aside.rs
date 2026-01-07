@@ -20,6 +20,8 @@
 //! ```
 
 use dioxus::prelude::*;
+use palette::{ClassesBuilder, UtilityClass};
+use palette::classes::components::*;
 
 /// Aside component - Modern sidebar navigation panel
 ///
@@ -65,37 +67,41 @@ pub fn Aside(
 
     // Get width classes
     let width_class = match width.as_str() {
-        "sm" => "hi-aside-sm",
-        "lg" => "hi-aside-lg",
-        _ => "hi-aside-md", // md (default)
+        "sm" => AsideClass::Sm,
+        "lg" => AsideClass::Lg,
+        _ => AsideClass::Md, // md (default)
     };
 
     // Get variant-specific styles
     let variant_class = match variant.as_str() {
-        "light" => "hi-aside-light",
-        _ => "hi-aside-dark",
+        "light" => AsideClass::Light,
+        _ => AsideClass::Dark,
     };
+
+    let mut builder = ClassesBuilder::new()
+        .add(AsideClass::Aside)
+        .add(AsideClass::Drawer)
+        .add(width_class)
+        .add(variant_class);
+
+    // Add drawer-open state class if open
+    if *is_open.read() {
+        builder = builder.add(AsideClass::DrawerOpen);
+    }
+
+    let classes = builder.add_raw(&class).build();
+    let content_class = AsideClass::Content.as_class();
 
     rsx! {
         aside {
             // Responsive drawer classes:
             // - Desktop (lg): static positioning, always visible
             // - Mobile: fixed positioning, slide in/out based on is_open
-            class: format!(
-                "hi-aside hi-aside-drawer {} {} {} {}",
-                width_class,
-                variant_class,
-                if *is_open.read() {
-                    "hi-aside-drawer-open"
-                } else {
-                    ""
-                },
-                class
-            ),
+            class: "{classes}",
 
             // Sidebar content with scroll support
             div {
-                class: "hi-aside-content",
+                class: "{content_class}",
                 { children }
             }
         }

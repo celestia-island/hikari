@@ -63,7 +63,7 @@ impl Default for CollapsibleProps {
 ///
 /// ```rust
 /// use dioxus::prelude::*;
-/// use hikari_extra_components::Collapsible;
+/// use extra_components::Collapsible;
 ///
 /// fn app() -> Element {
 ///     rsx! {

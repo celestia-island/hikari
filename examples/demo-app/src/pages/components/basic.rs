@@ -4,7 +4,7 @@
 extern crate components as hikari_components;
 
 use dioxus::prelude::*;
-use hikari_components::{
+use components::{
     Button, ButtonVariant, ButtonSize, Input, Card, Badge, BadgeVariant,
     layout::{Container, Section, Row}
 };

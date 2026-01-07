@@ -146,7 +146,7 @@ impl MimeTypes {
 /// # Example
 ///
 /// ```rust,no_run
-/// use hikari_render_service::static_files::{serve_static_files, StaticFileConfig};
+/// use render_service::static_files::{serve_static_files, StaticFileConfig};
 ///
 /// let service = serve_static_files(
 ///     "./dist".into(),

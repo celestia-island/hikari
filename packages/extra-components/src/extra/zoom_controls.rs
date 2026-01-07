@@ -68,7 +68,7 @@ impl Default for ZoomControlsProps {
 ///
 /// ```rust
 /// use dioxus::prelude::*;
-/// use hikari_extra_components::ZoomControls;
+/// use extra_components::ZoomControls;
 ///
 /// fn app() -> Element {
 ///     rsx! {

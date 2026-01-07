@@ -4,7 +4,7 @@
 extern crate components as hikari_components;
 
 use dioxus::prelude::*;
-use hikari_components::{
+use components::{
     Table, ColumnDef, ColumnAlign, Tree, TreeNode, Pagination,
     Button, ButtonVariant, ButtonSize, Card,
     layout::{Container, Grid, Row, Section}

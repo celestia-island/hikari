@@ -8,7 +8,7 @@ use dioxus_router::components::Link;
 use icons::{Icon, LucideIcon};
 
 use crate::{app::Route, components::Sidebar};
-use hikari_components::layout::{Aside, Header, Layout as HikariLayout};
+use components::layout::{Aside, Header, Layout as HikariLayout};
 
 /// Layout component that wraps all pages with modern design
 ///

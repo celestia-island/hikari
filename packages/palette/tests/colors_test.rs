@@ -30,20 +30,20 @@ fn test_all_colors_are_unique() {
 
 #[test]
 fn test_palette_default() {
-    let palette = Palette::default();
+    let palette = default_theme();
     assert_eq!(palette.primary.hex(), 石青.hex());
     assert_eq!(palette.secondary.hex(), 朱红.hex());
     assert_eq!(palette.success.hex(), 葱倩.hex());
 }
 
 #[test]
-fn test_palettes() {
-    let primary = primary_palette();
-    let fui_dark = fui_dark_palette();
+fn test_themes() {
+    let hikari = themes::Hikari::palette();
+    let tairitsu = themes::Tairitsu::palette();
 
-    assert_eq!(primary.background.hex(), 墨色.hex());
-    assert_eq!(fui_dark.background.hex(), 墨色.hex());
+    assert_eq!(hikari.background.hex(), 素.hex());
+    assert_eq!(tairitsu.background.hex(), 墨色.hex());
 
-    assert_eq!(primary.primary.hex(), 石青.hex());
-    assert_eq!(fui_dark.accent.hex(), 靛蓝.hex());
+    assert_eq!(hikari.primary.hex(), 石青.hex());
+    assert_eq!(tairitsu.primary.hex(), 靛蓝.hex());
 }

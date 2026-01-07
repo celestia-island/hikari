@@ -15,6 +15,8 @@
 //! ```
 
 use dioxus::prelude::*;
+use palette::ClassesBuilder;
+use palette::classes::components::*;
 
 /// Container component - Responsive content container
 ///
@@ -44,15 +46,21 @@ pub fn Container(
     style: String,
 ) -> Element {
     let max_width_class = match max_width.as_str() {
-        "sm" => "hi-container-sm",
-        "xl" => "hi-container-xl",
-        "xxl" => "hi-container-xxl",
-        _ => "hi-container-lg", // lg (default)
+        "sm" => ContainerClass::Sm,
+        "xl" => ContainerClass::Xl,
+        "xxl" => ContainerClass::Xxl,
+        _ => ContainerClass::Lg, // lg (default)
     };
+
+    let classes = ClassesBuilder::new()
+        .add(ContainerClass::Container)
+        .add(max_width_class)
+        .add_raw(&class)
+        .build();
 
     rsx! {
         div {
-            class: format!("hi-container {max_width_class} {class}"),
+            class: "{classes}",
             style: "{style}",
             { children }
         }

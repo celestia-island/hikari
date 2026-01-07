@@ -6,7 +6,7 @@
 //! # Example
 //!
 //! ```ignore
-//! use hikari_animation::style::*;
+//! use animation::style::*;
 //! use wasm_bindgen::JsCast;
 //!
 //! let element = web_sys::window()
@@ -37,6 +37,7 @@
 //!     .apply();
 //! ```
 
+use wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
 
 /// Common CSS properties with type-safe names
@@ -386,7 +387,10 @@ impl CssProperty {
 /// set_style(&element, CssProperty::Display, "flex");
 /// ```
 pub fn set_style(element: &HtmlElement, property: CssProperty, value: &str) {
-    let _ = element
+    let elem = element.clone().dyn_into::<web_sys::Element>().unwrap();
+    let _ = elem
+        .dyn_ref::<web_sys::HtmlElement>()
+        .unwrap()
         .style()
         .set_property(property.as_str(), value);
 }
@@ -411,7 +415,8 @@ pub fn set_style(element: &HtmlElement, property: CssProperty, value: &str) {
 /// ]);
 /// ```
 pub fn set_styles(element: &HtmlElement, properties: &[(CssProperty, &str)]) {
-    let style = element.style();
+    let elem = element.clone().dyn_into::<web_sys::Element>().unwrap();
+    let style = elem.dyn_ref::<web_sys::HtmlElement>().unwrap().style();
     for (property, value) in properties {
         let _ = style.set_property(property.as_str(), value);
     }
@@ -460,7 +465,8 @@ impl<'a> StyleBuilder<'a> {
 
     /// Apply all accumulated properties to the element
     pub fn apply(self) {
-        let style = self.element.style();
+        let elem = self.element.clone().dyn_into::<web_sys::Element>().unwrap();
+        let style = elem.dyn_ref::<web_sys::HtmlElement>().unwrap().style();
         for (property, value) in self.properties {
             let _ = style.set_property(property.as_str(), &value);
         }
@@ -480,7 +486,10 @@ impl<'a> StyleBuilder<'a> {
 /// remove_style(&element, CssProperty::Width);
 /// ```
 pub fn remove_style(element: &HtmlElement, property: CssProperty) {
-    let _ = element
+    let elem = element.clone().dyn_into::<web_sys::Element>().unwrap();
+    let _ = elem
+        .dyn_ref::<web_sys::HtmlElement>()
+        .unwrap()
         .style()
         .remove_property(property.as_str());
 }
@@ -502,7 +511,9 @@ pub fn remove_style(element: &HtmlElement, property: CssProperty) {
 /// let width = get_style(&element, CssProperty::Width);
 /// ```
 pub fn get_style(element: &HtmlElement, property: CssProperty) -> String {
-    element
+    let elem = element.clone().dyn_into::<web_sys::Element>().unwrap();
+    elem.dyn_ref::<web_sys::HtmlElement>()
+        .unwrap()
         .style()
         .get_property_value(property.as_str())
         .unwrap_or_default()

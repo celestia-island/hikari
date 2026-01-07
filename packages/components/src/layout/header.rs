@@ -17,6 +17,8 @@
 //! ```
 
 use dioxus::prelude::*;
+use palette::classes::*;
+use palette::ClassesBuilder;
 
 /// Header component - Modern application header bar
 ///
@@ -49,6 +51,15 @@ pub fn Header(
     #[props(default)]
     class: String,
 ) -> Element {
+    // Build utility classes for header content container
+    let content_classes = ClassesBuilder::new()
+        .add(Display::Flex)
+        .add(AlignItems::Center)
+        .add(Gap::Gap3)
+        .add(MinWidth::MinW0)
+        .add(Flex::Shrink0)
+        .build();
+
     rsx! {
         header {
             class: format!(
@@ -83,7 +94,7 @@ pub fn Header(
 
                 // Header content
                 div {
-                    class: "flex items-center gap-3 min-w-0 flex-shrink-0",
+                    class: "{content_classes}",
                     { children }
                 }
             }

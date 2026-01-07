@@ -1,71 +1,312 @@
-// demo-app/src/pages/navigation_components.rs
-// Navigation components demonstration page
+// demo-app/src/pages/components/navigation.rs
+// Navigation components demonstration page with FUI styling
+
+extern crate components as hikari_components;
 
 use dioxus::prelude::*;
+use hikari_components::{
+    Tabs, TabPane, Menu, MenuItem, Breadcrumb, BreadcrumbItem,
+    Button, ButtonVariant, ButtonSize, Card,
+    layout::{Container, Grid, Row, Section}
+};
 
-use crate::{app::Route, components::{Layout, Section}};
+use crate::{app::Route, components::Layout};
 
 #[component]
 pub fn ComponentsNavigation() -> Element {
+    // Tab state management
+    let mut active_tab = use_signal(|| "1".to_string());
+
     rsx! {
         Layout {
             current_route: Route::ComponentsNavigation {},
 
-            h1 { class: "hi-text-3xl lg:text-4xl hi-font-bold mb-8 hi-text-dark-theme",
-                "Navigation Components"
+            // Page header using Container
+            Container {
+                class: "showcase-header",
+                h1 {
+                    class: "showcase-title",
+                    "Navigation Components"
+                }
+                p {
+                    class: "showcase-description",
+                    "Navigation and routing components with FUI aesthetics"
+                }
             }
 
+            // Tabs Section using Section component
             Section {
-                title: "Menu".to_string(),
-                children: rsx! {
-                    p { class: "hi-text-gray-600", "Menu component - inline demo for showcase" }
-                    div { class: "hi-bg-white hi-rounded-lg hi-p-5 max-w-xs",
-                        div { class: "hi-flex hi-flex-col hi-gap-2",
-                            div { class: "px-2.5 py-2.5 hi-rounded-lg bg-[#4a9eff] hi-text-white hi-cursor-pointer",
-                                "Menu Item 1 (Active)"
+                class: "showcase-section",
+                title: Some("Tabs".to_string()),
+                description: Some("Tab component for organizing content into separate panels.".to_string()),
+
+                // Interactive tabs demo using Container
+                Container {
+                    max_width: "lg".to_string(),
+
+                    // Custom tab buttons using Row
+                    Row {
+                        gap: "sm".to_string(),
+                        class: "showcase-tabs-nav",
+
+                        button {
+                            class: if *active_tab.read() == "1" {
+                                "showcase-tab-active"
+                            } else {
+                                "showcase-tab"
+                            },
+                            onclick: move |_| active_tab.set("1".to_string()),
+                            "Overview"
+                        }
+                        button {
+                            class: if *active_tab.read() == "2" {
+                                "showcase-tab-active"
+                            } else {
+                                "showcase-tab"
+                            },
+                            onclick: move |_| active_tab.set("2".to_string()),
+                            "Features"
+                        }
+                        button {
+                            class: if *active_tab.read() == "3" {
+                                "showcase-tab-active"
+                            } else {
+                                "showcase-tab"
+                            },
+                            onclick: move |_| active_tab.set("3".to_string()),
+                            "Settings"
+                        }
+                    }
+
+                    // Tab content
+                    div {
+                        class: "showcase-tab-content",
+                        if *active_tab.read() == "1" {
+                            div {
+                                h3 {
+                                    class: "showcase-tab-title",
+                                    "Overview Tab"
+                                }
+                                p {
+                                    class: "showcase-tab-text",
+                                    "This is the overview tab content. Tabs allow you to organize content into separate panels."
+                                }
                             }
-                            div { class: "px-2.5 py-2.5 hi-rounded-lg hi-cursor-pointer hi-hover:bg-gray-100",
-                                "Menu Item 2"
+                        } else if *active_tab.read() == "2" {
+                            div {
+                                h3 {
+                                    class: "showcase-tab-title",
+                                    "Features Tab"
+                                }
+                                p {
+                                    class: "showcase-tab-text",
+                                    "Explore the features of this component. Click on different tabs to see content change."
+                                }
                             }
-                            div { class: "px-2.5 py-2.5 hi-rounded-lg hi-cursor-pointer hi-hover:bg-gray-100",
-                                "Menu Item 3"
+                        } else if *active_tab.read() == "3" {
+                            div {
+                                h3 {
+                                    class: "showcase-tab-title",
+                                    "Settings Tab"
+                                }
+                                p {
+                                    class: "showcase-tab-text",
+                                    "Configure your settings here. This tab demonstrates the third panel."
+                                }
                             }
                         }
                     }
                 }
             }
 
+            // Menu Section using Section component
             Section {
-                title: "Tabs".to_string(),
-                children: rsx! {
-                    div { class: "hi-max-w-2xl",
-                        div { class: "border-b-2 hi-border-gray-200 hi-flex gap-6",
-                            div { class: "px-6 py-3 hi-cursor-pointer border-b-2 border-[#4a9eff] hi-text-primary-light -mb-0.5",
-                                "Tab 1"
+                class: "showcase-section",
+                title: Some("Menu".to_string()),
+                description: Some("Menu components for navigation within your application.".to_string()),
+
+                // Use Grid component for menu cards
+                Grid {
+                    gap: "lg".to_string(),
+                    class: "showcase-grid",
+
+                    // Vertical menu demo
+                    Card {
+                        title: "Vertical Menu".to_string(),
+                        div {
+                            class: "showcase-menu-vertical",
+                            div {
+                                class: "showcase-menu-item-active",
+                                "Dashboard"
                             }
-                            div { class: "px-6 py-3 hi-cursor-pointer hi-text-gray-600 hover:text-gray-800",
-                                "Tab 2"
+                            div {
+                                class: "showcase-menu-item",
+                                "Projects"
                             }
-                            div { class: "px-6 py-3 hi-cursor-pointer hi-text-gray-600 hover:text-gray-800",
-                                "Tab 3"
+                            div {
+                                class: "showcase-menu-item",
+                                "Tasks"
+                            }
+                            div {
+                                class: "showcase-menu-item",
+                                "Settings"
                             }
                         }
-                        div { class: "hi-p-6 hi-bg-white mt-4 rounded-r-lg rounded-b-lg rounded-bl-lg",
-                            "Tab 1 content - Active tab panel"
+                    }
+
+                    // Horizontal menu demo
+                    Card {
+                        title: "Horizontal Menu".to_string(),
+                        Row {
+                            gap: "sm".to_string(),
+                            Button {
+                                size: ButtonSize::Small,
+                                variant: ButtonVariant::Primary,
+                                "Home"
+                            }
+                            Button {
+                                size: ButtonSize::Small,
+                                variant: ButtonVariant::Ghost,
+                                "Products"
+                            }
+                            Button {
+                                size: ButtonSize::Small,
+                                variant: ButtonVariant::Ghost,
+                                "About"
+                            }
+                            Button {
+                                size: ButtonSize::Small,
+                                variant: ButtonVariant::Ghost,
+                                "Contact"
+                            }
+                        }
+                    }
+
+                    // Menu with icons
+                    Card {
+                        title: "Menu with Icons".to_string(),
+                        div {
+                            class: "showcase-menu-vertical",
+                            div {
+                                class: "showcase-menu-item-active showcase-menu-item-icon",
+                                span { class: "showcase-menu-icon", "📊" }
+                                span { "Analytics" }
+                            }
+                            div {
+                                class: "showcase-menu-item showcase-menu-item-icon",
+                                span { class: "showcase-menu-icon", "👥" }
+                                span { "Users" }
+                            }
+                            div {
+                                class: "showcase-menu-item showcase-menu-item-icon",
+                                span { class: "showcase-menu-icon", "⚙️" }
+                                span { "Settings" }
+                            }
                         }
                     }
                 }
             }
 
+            // Breadcrumb Section using Section component
             Section {
-                title: "Breadcrumb".to_string(),
-                children: rsx! {
-                    div { class: "hi-flex hi-items-center hi-gap-2 hi-text-gray-600",
-                        span { "Home" }
-                        span { class: "hi-text-gray-400", "/" }
-                        span { "Components" }
-                        span { class: "hi-text-gray-400", "/" }
-                        span { class: "hi-text-primary-light hi-font-medium", "Navigation" }
+                class: "showcase-section",
+                title: Some("Breadcrumbs".to_string()),
+                description: Some("Breadcrumb navigation showing the user's current location.".to_string()),
+
+                Container {
+                    max_width: "lg".to_string(),
+                    class: "showcase-vertical-stack",
+
+                    // Simple breadcrumb
+                    Card {
+                        title: "Simple Breadcrumb".to_string(),
+                        div {
+                            class: "showcase-breadcrumb",
+                            span { "Home" }
+                            span { class: "showcase-breadcrumb-separator", "/" }
+                            span { "Components" }
+                            span { class: "showcase-breadcrumb-separator", "/" }
+                            span { class: "showcase-breadcrumb-current", "Navigation" }
+                        }
+                    }
+
+                    // Breadcrumb with icons
+                    Card {
+                        title: "Breadcrumb with Icons".to_string(),
+                        div {
+                            class: "showcase-breadcrumb",
+                            span { class: "showcase-breadcrumb-icon", "🏠" }
+                            span { class: "showcase-breadcrumb-separator", "→" }
+                            span { "Components" }
+                            span { class: "showcase-breadcrumb-separator", "→" }
+                            span { class: "showcase-breadcrumb-current", "Navigation" }
+                        }
+                    }
+
+                    // Long breadcrumb path
+                    Card {
+                        title: "Deep Path".to_string(),
+                        div {
+                            class: "showcase-breadcrumb",
+                            span { "Home" }
+                            span { class: "showcase-breadcrumb-separator", "/" }
+                            span { "Library" }
+                            span { class: "showcase-breadcrumb-separator", "/" }
+                            span { "Components" }
+                            span { class: "showcase-breadcrumb-separator", "/" }
+                            span { "Navigation" }
+                            span { class: "showcase-breadcrumb-separator", "/" }
+                            span { class: "showcase-breadcrumb-current", "Breadcrumbs" }
+                        }
+                    }
+                }
+            }
+
+            // Interactive Demo Section
+            Section {
+                class: "showcase-section",
+                title: Some("Interactive Demo".to_string()),
+
+                Grid {
+                    gap: "lg".to_string(),
+                    class: "demo-card-grid",
+
+                    Card {
+                        title: "Tabbed Interface".to_string(),
+                        div {
+                            class: "showcase-tabbed-interface",
+
+                            // Tab buttons using Row
+                            Row {
+                                gap: "sm".to_string(),
+                                class: "showcase-tabs-nav-small",
+
+                                button {
+                                    class: if *active_tab.read() == "a" {
+                                        "showcase-tab-small-active"
+                                    } else {
+                                        "showcase-tab-small"
+                                    },
+                                    onclick: move |_| active_tab.set("a".to_string()),
+                                    "Tab A"
+                                }
+                                button {
+                                    class: if *active_tab.read() == "b" {
+                                        "showcase-tab-small-active"
+                                    } else {
+                                        "showcase-tab-small"
+                                    },
+                                    onclick: move |_| active_tab.set("b".to_string()),
+                                    "Tab B"
+                                }
+                            }
+
+                            // Tab content
+                            div {
+                                class: "showcase-tab-content-small",
+                                {format!("Content for {}", active_tab.read())}
+                            }
+                        }
                     }
                 }
             }

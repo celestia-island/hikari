@@ -1,207 +1,235 @@
 // demo-app/src/components/sidebar.rs
-// New sidebar navigation (simplified)
+// Modern sidebar navigation with refined styling
 
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
+use icons::{Icon, LucideIcon};
 
 use crate::app::Route;
 
+/// Sidebar component - Modern navigation content for Aside
+///
+/// This component provides the navigation content that goes inside
+/// the hikari-components Aside component with premium styling.
 #[component]
-pub fn Sidebar(
-    current_route: Route,
-    is_open: bool,
-    on_close: EventHandler,
-) -> Element {
-    // Helper function to check if a route is active
-    let is_active = |route: &Route| -> bool {
+pub fn Sidebar(current_route: Route) -> Element {
+    let is_active_route = |route: &Route| -> bool {
         std::mem::discriminant(&current_route) == std::mem::discriminant(route)
     };
 
     rsx! {
-        aside {
-            class: format!(
-                "hi-fixed hi-lg:static hi-inset-y-0 hi-left-0 hi-z-50 hi-w-64 \
-                 hi-bg-dark-theme hi-text-white hi-p-5 hi-flex hi-flex-col hi-gap-2 \
-                 hi-transition-transform hi-duration-300 hi-ease-in-out \
-                 {}",
-                if is_open { "hi-translate-x-0" } else { "hi--translate-x-full hi-lg:translate-x-0" }
-            ),
-
-            // Close button (mobile only)
-            button {
-                class: "hi-lg:hidden hi-self-end hi-p-2 hi-hover:bg-white/10 hi-rounded hi-transition-colors",
-                onclick: move |_| on_close.call(()),
-                "✕"
+        // Logo and title
+        div {
+            class: "sidebar-header",
+            img {
+                class: "sidebar-logo",
+                src: "/images/logo.png",
+                alt: "Hikari Logo",
             }
+            div {
+                class: "sidebar-title-group",
+                h1 {
+                    class: "sidebar-title",
+                    "Hikari UI"
+                }
+                span {
+                    class: "sidebar-subtitle",
+                    "Component Library"
+                }
+            }
+        }
 
-            // Title
-            h2 { class: "hi-hidden hi-lg:block hi-text-2xl hi-text-primary-light hi-mb-5 hi-font-semibold", "Hikari Demo" }
+        // Navigation
+        div {
+            class: "sidebar-nav",
 
-            // Navigation sections
-            NavSection {
+            NavGroup {
                 title: "Overview",
                 children: rsx! {
-                    NavLink {
+                    NavItem {
                         to: Route::Home {},
-                        is_active: is_active(&Route::Home {}),
-                        on_close: on_close,
-                        "Home"
+                        is_active: is_active_route(&Route::Home {}),
+                        icon: "home",
+                        label: "Home"
                     }
                 }
             }
 
-            NavSection {
+            NavGroup {
                 title: "Components",
                 children: rsx! {
-                    NavLink {
+                    NavItem {
                         to: Route::ComponentsOverview {},
-                        is_active: is_active(&Route::ComponentsOverview {}),
-                        on_close: on_close,
-                        "All Components"
+                        is_active: is_active_route(&Route::ComponentsOverview {}),
+                        icon: "layers",
+                        label: "All Components"
                     }
-                    SubNavLink {
+                    NavSubItem {
                         to: Route::ComponentsBasic {},
-                        is_active: is_active(&Route::ComponentsBasic {}),
-                        on_close: on_close,
-                        "Basic"
+                        is_active: is_active_route(&Route::ComponentsBasic {}),
+                        label: "Basic"
                     }
-                    SubNavLink {
+                    NavSubItem {
                         to: Route::ComponentsFeedback {},
-                        is_active: is_active(&Route::ComponentsFeedback {}),
-                        on_close: on_close,
-                        "Feedback"
+                        is_active: is_active_route(&Route::ComponentsFeedback {}),
+                        label: "Feedback"
                     }
-                    SubNavLink {
+                    NavSubItem {
                         to: Route::ComponentsNavigation {},
-                        is_active: is_active(&Route::ComponentsNavigation {}),
-                        on_close: on_close,
-                        "Navigation"
+                        is_active: is_active_route(&Route::ComponentsNavigation {}),
+                        label: "Navigation"
                     }
-                    SubNavLink {
+                    NavSubItem {
                         to: Route::ComponentsData {},
-                        is_active: is_active(&Route::ComponentsData {}),
-                        on_close: on_close,
-                        "Data"
+                        is_active: is_active_route(&Route::ComponentsData {}),
+                        label: "Data"
                     }
                 }
             }
 
-            NavSection {
+            NavGroup {
                 title: "System",
                 children: rsx! {
-                    NavLink {
+                    NavItem {
                         to: Route::SystemOverview {},
-                        is_active: is_active(&Route::SystemOverview {}),
-                        on_close: on_close,
-                        "All Systems"
+                        is_active: is_active_route(&Route::SystemOverview {}),
+                        icon: "settings",
+                        label: "All Systems"
                     }
-                    SubNavLink {
+                    NavSubItem {
                         to: Route::SystemCSS {},
-                        is_active: is_active(&Route::SystemCSS {}),
-                        on_close: on_close,
-                        "CSS Utilities"
+                        is_active: is_active_route(&Route::SystemCSS {}),
+                        label: "CSS Utilities"
                     }
-                    SubNavLink {
+                    NavSubItem {
                         to: Route::SystemIcons {},
-                        is_active: is_active(&Route::SystemIcons {}),
-                        on_close: on_close,
-                        "Icons"
+                        is_active: is_active_route(&Route::SystemIcons {}),
+                        label: "Icons"
                     }
-                    SubNavLink {
+                    NavSubItem {
                         to: Route::SystemPalette {},
-                        is_active: is_active(&Route::SystemPalette {}),
-                        on_close: on_close,
-                        "Palette"
+                        is_active: is_active_route(&Route::SystemPalette {}),
+                        label: "Palette"
                     }
-                    SubNavLink {
+                    NavSubItem {
                         to: Route::SystemAnimations {},
-                        is_active: is_active(&Route::SystemAnimations {}),
-                        on_close: on_close,
-                        "Animations"
+                        is_active: is_active_route(&Route::SystemAnimations {}),
+                        label: "Animations"
                     }
                 }
             }
 
-            NavSection {
+            NavGroup {
                 title: "Demos",
                 children: rsx! {
-                    NavLink {
+                    NavItem {
                         to: Route::DemosOverview {},
-                        is_active: is_active(&Route::DemosOverview {}),
-                        on_close: on_close,
-                        "All Demos"
+                        is_active: is_active_route(&Route::DemosOverview {}),
+                        icon: "sparkles",
+                        label: "All Demos"
                     }
                 }
             }
         }
+
+        // Footer
+        div {
+            class: "sidebar-footer",
+            div {
+                class: "sidebar-footer-content",
+                div {
+                    class: "sidebar-footer-text",
+                    span { "🔗" }
+                    span { "Version 0.1.0" }
+                }
+            }
+        }
     }
 }
 
-/// Navigation section component
+/// Navigation group with refined styling
 #[component]
-fn NavSection(title: String, children: Element) -> Element {
+fn NavGroup(title: String, children: Element) -> Element {
     rsx! {
-        div { class: "hi-mb-4",
-            div { class: "hi-px-4 hi-py-2 hi-text-sm hi-font-semibold hi-text-gray-400 hi-uppercase hi-tracking-wider",
-                {title}
+        div {
+            class: "nav-group",
+            div {
+                class: "nav-group-title",
+                "{title}"
             }
             { children }
         }
     }
 }
 
-/// Main navigation link component
+/// Navigation item with icon and refined hover effects
 #[component]
-fn NavLink(
+fn NavItem(
     to: Route,
     is_active: bool,
-    on_close: EventHandler,
-    children: Element,
+    icon: String,
+    label: String,
 ) -> Element {
+    let lucide_icon = map_icon_name(&icon);
+
     rsx! {
         Link {
             to: to,
             class: format!(
-                "block px-4 py-2.5 rounded-lg transition-all duration-200 \
-                 hover:bg-white/10 active:scale-95 {}",
-                if is_active {
-                    "bg-white/20 font-medium shadow-lg shadow-black/20"
-                } else {
-                    ""
-                }
+                "nav-item {}",
+                if is_active { "nav-item-active" } else { "" }
             ),
-            onclick: move |_| {
-                on_close.call(());
-            },
-            { children }
+
+            // Icon with refined styling
+            div {
+                class: "nav-item-icon",
+                Icon {
+                    icon: lucide_icon,
+                    size: 20
+                }
+            }
+
+            span {
+                class: "nav-item-label",
+                "{label}"
+            }
         }
     }
 }
 
-/// Sub-navigation link component (indented)
+/// Navigation sub-item with refined styling
 #[component]
-fn SubNavLink(
+fn NavSubItem(
     to: Route,
     is_active: bool,
-    on_close: EventHandler,
-    children: Element,
+    label: String,
 ) -> Element {
     rsx! {
         Link {
             to: to,
             class: format!(
-                "block px-8 py-2 rounded-lg transition-all duration-200 \
-                 hover:bg-white/10 active:scale-95 text-sm {}",
-                if is_active {
-                    "bg-white/20 font-medium"
-                } else {
-                    ""
-                }
+                "nav-subitem {}",
+                if is_active { "nav-subitem-active" } else { "" }
             ),
-            onclick: move |_| {
-                on_close.call(());
-            },
-            { children }
+
+            span {
+                class: "nav-item-label",
+                "{label}"
+            }
         }
+    }
+}
+
+/// Map icon name to LucideIcon
+///
+/// Note: Some icons may not be available in the current generated set (A-C only).
+/// This function provides fallbacks to available icons.
+fn map_icon_name(icon: &str) -> LucideIcon {
+    match icon {
+        "home" => LucideIcon::award, // Using award as home alternative (A-C icons only)
+        "layers" => LucideIcon::component, // Using component as layers alternative
+        "settings" => LucideIcon::cog, // Cog is available
+        "sparkles" => LucideIcon::circle_star, // Circle star is available
+        _ => LucideIcon::badge, // Fallback to badge
     }
 }

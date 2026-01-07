@@ -1,0 +1,364 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari Card Component - FUI Styling
+// Design: Arknights + Future UI (FUI) aesthetics
+// Features: Elevated shadows, hover accent bar, smooth transitions
+// ============================================
+
+// ============================================
+// Base Card Styles
+// ============================================
+
+.hi-card {
+  // Layout
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  // Spacing
+  margin: 0;
+
+  // Appearance - FUI subtle rounded corners
+  border-radius: vars.$hikari-radius-fui-md;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+
+  // 明亮主题背景
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  // Elevated shadow
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(241, 245, 249, 0.5) inset;
+
+  // Transitions - smooth GSAP-style easing
+  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+
+  // Position for accent bar
+  position: relative;
+
+  // Accent bar (3px wide, left side)
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: vars.$hikari-accent-bar-width;
+    height: 100%;
+    background: linear-gradient(
+      180deg,
+      var(--hi-color-primary) 0%,
+      rgba(139, 92, 246, 0.6) 50%,
+      var(--hi-color-primary) 100%
+    );
+    opacity: 0;
+    transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  }
+
+  // Hover state with accent bar
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.1),
+      0 0 0 1px rgba(226, 232, 240, 0.8) inset;
+    border-color: rgba(59, 130, 246, 0.3);
+
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  // Active/clickable state
+  &:active {
+    transform: translateY(0);
+    transition: transform vars.$hikari-duration-instant ease-out;
+  }
+}
+
+// ============================================
+// Card Header
+// ============================================
+
+.hi-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--hi-color-border);
+  background: rgba(214, 236, 240, 0.5);
+
+  // Title
+  .hi-card-title {
+    margin: 0;
+    font-family: vars.$hikari-font-family-sans;
+    font-size: vars.$hikari-font-size-lg;
+    font-weight: 600;
+    color: var(--hi-color-text-primary);
+    letter-spacing: 0.02em;
+
+    // Subtle text shadow
+    text-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+  }
+
+  // Subtitle
+  .hi-card-subtitle {
+    margin: 0.25rem 0 0 0;
+    font-family: vars.$hikari-font-family-sans;
+    font-size: vars.$hikari-font-size-sm;
+    font-weight: 400;
+    color: var(--hi-color-text-secondary);
+  }
+
+  // Extra actions
+  .hi-card-extra {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+// ============================================
+// Card Body
+// ============================================
+
+.hi-card-body {
+  flex: 1;
+  padding: 1.25rem;
+  color: var(--hi-color-text-primary);
+  font-size: vars.$hikari-font-size-sm;
+  line-height: 1.6;
+}
+
+// ============================================
+// Card Footer
+// ============================================
+
+.hi-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--hi-color-border);
+  background: rgba(214, 236, 240, 0.5);
+
+  // Actions
+  .hi-card-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+// ============================================
+// Cover Image
+// ============================================
+
+.hi-card-cover {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-bottom: 1px solid var(--hi-color-border);
+}
+
+// ============================================
+// Hoverable Card
+// ============================================
+
+.hi-card-hoverable {
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 12px 24px rgba(23, 89, 168, 0.2),
+      0 0 30px rgba(139, 92, 246, 0.3),
+      0 0 0 1px rgba(139, 92, 246, 0.2) inset;
+    border-color: var(--hi-color-primary);
+
+    &::before {
+      opacity: 1;
+      box-shadow: 0 0 12px var(--hi-color-primary);
+    }
+  }
+}
+
+// ============================================
+// Loading State
+// ============================================
+
+.hi-card-loading {
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    animation: card-loading-shimmer 1.5s infinite;
+  }
+}
+
+@keyframes card-loading-shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+// ============================================
+// Card Variants
+// ============================================
+
+// Bordered variant (more prominent border)
+.hi-card-bordered {
+  border-width: 2px;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+
+// Flat variant (no shadow, no hover effect)
+.hi-card-flat {
+  box-shadow: none;
+  border: 1px solid var(--hi-color-border);
+
+  &:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+// ============================================
+// Size Variants
+// ============================================
+
+.hi-card-sm {
+  border-radius: vars.$hikari-radius-fui-sm;
+
+  .hi-card-header,
+  .hi-card-body,
+  .hi-card-footer {
+    padding: 0.75rem 1rem;
+  }
+
+  .hi-card-title {
+    font-size: vars.$hikari-font-size-base;
+  }
+
+  .hi-card-cover {
+    height: 150px;
+  }
+}
+
+.hi-card-md {
+  border-radius: vars.$hikari-radius-fui-md;
+
+  .hi-card-header,
+  .hi-card-body,
+  .hi-card-footer {
+    padding: 1rem 1.25rem;
+  }
+
+  .hi-card-title {
+    font-size: vars.$hikari-font-size-lg;
+  }
+
+  .hi-card-cover {
+    height: 200px;
+  }
+}
+
+.hi-card-lg {
+  border-radius: vars.$hikari-radius-fui-lg;
+
+  .hi-card-header,
+  .hi-card-body,
+  .hi-card-footer {
+    padding: 1.5rem 1.75rem;
+  }
+
+  .hi-card-title {
+    font-size: vars.$hikari-font-size-xl;
+  }
+
+  .hi-card-cover {
+    height: 280px;
+  }
+}
+
+// ============================================
+// Grid Layout for Multiple Cards
+// ============================================
+
+.hi-card-grid {
+  display: grid;
+  gap: 1rem;
+
+  &.hi-card-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  &.hi-card-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  &.hi-card-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    &.hi-card-grid-2,
+    &.hi-card-grid-3,
+    &.hi-card-grid-4 {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+// ============================================
+// Animations
+// ============================================
+
+.hi-card-animate-in {
+  animation: card-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+}
+
+@keyframes card-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Staggered animation for card grids
+.hi-card-stagger {
+  .hi-card {
+    opacity: 0;
+    animation: card-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+
+    @for $i from 1 through 10 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{$i * 0.1s};
+      }
+    }
+  }
+}

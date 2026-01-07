@@ -1,0 +1,377 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari Input Component - FUI Styling
+// Design: Arknights + Future UI (FUI) aesthetics
+// Features: Acrylic focus, glowing borders, smooth transitions
+// ============================================
+
+// ============================================
+// Base Input Styles
+// ============================================
+
+.hi-input {
+  // Layout
+  display: inline-block;
+  width: 100%;
+  max-width: 320px;
+
+  // Typography
+  font-family: vars.$hikari-font-family-sans;
+  font-size: vars.$hikari-font-size-sm;
+  line-height: 1.5;
+  color: var(--hi-color-text-primary);
+
+  // Spacing
+  padding: 0.5rem 0.75rem;
+
+  // Appearance - FUI subtle rounded corners
+  border-radius: vars.$hikari-radius-fui-sm;
+  border: 1px solid var(--hi-color-border);
+
+  // Acrylic background effect
+  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+  backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
+
+  // Transitions - smooth GSAP-style easing
+  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+  // Remove default outline
+  outline: none;
+
+  // Placeholder styling
+  &::placeholder {
+    color: var(--hi-color-text-secondary);
+    opacity: 0.6;
+  }
+
+  // Focus state with acrylic glow
+  &:focus {
+    border-color: var(--hi-color-primary);
+    background: rgba(45, 45, 45, 0.95);
+
+    // Glowing border effect
+    box-shadow:
+      0 0 0 1px var(--hi-color-primary),
+      0 0 12px rgba(139, 92, 246, 0.4),
+      inset 0 0 8px rgba(139, 92, 246, 0.1);
+  }
+
+  // Hover state
+  &:hover:not(:focus) {
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.2);
+  }
+
+  // Disabled state
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(45, 45, 45, 0.5);
+  }
+
+  // Error state
+  &.hi-input-error {
+    border-color: var(--hi-color-danger);
+
+    &:focus {
+      box-shadow:
+        0 0 0 1px var(--hi-color-danger),
+        0 0 12px rgba(239, 68, 68, 0.4),
+        inset 0 0 8px rgba(239, 68, 68, 0.1);
+    }
+  }
+
+  // Success state
+  &.hi-input-success {
+    border-color: var(--hi-color-success);
+
+    &:focus {
+      box-shadow:
+        0 0 0 1px var(--hi-color-success),
+        0 0 12px rgba(16, 185, 129, 0.4),
+        inset 0 0 8px rgba(16, 185, 129, 0.1);
+    }
+  }
+}
+
+// ============================================
+// Input with Wrapper (for icons, prefixes, suffixes)
+// ============================================
+
+.hi-input-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  max-width: 320px;
+
+  // Acrylic background
+  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+  backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
+
+  border-radius: vars.$hikari-radius-fui-sm;
+  border: 1px solid var(--hi-color-border);
+
+  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+  &:hover {
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.2);
+  }
+
+  &:focus-within {
+    border-color: var(--hi-color-primary);
+    background: rgba(45, 45, 45, 0.95);
+    box-shadow:
+      0 0 0 1px var(--hi-color-primary),
+      0 0 12px rgba(139, 92, 246, 0.4),
+      inset 0 0 8px rgba(139, 92, 246, 0.1);
+  }
+
+  .hi-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    max-width: none;
+
+    &:focus {
+      box-shadow: none;
+    }
+
+    &:hover {
+      box-shadow: none;
+    }
+  }
+}
+
+// Prefix and Suffix
+.hi-input-prefix,
+.hi-input-suffix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  color: var(--hi-color-text-secondary);
+  font-size: vars.$hikari-font-size-sm;
+}
+
+.hi-input-prefix {
+  border-right: 1px solid var(--hi-color-border);
+}
+
+.hi-input-suffix {
+  border-left: 1px solid var(--hi-color-border);
+}
+
+// Clear button
+.hi-input-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  margin-right: 0.25rem;
+  cursor: pointer;
+  color: var(--hi-color-text-secondary);
+  border-radius: vars.$hikari-radius-fui-sm;
+  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+  &:hover {
+    color: var(--hi-color-text-primary);
+    background: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+  }
+}
+
+// ============================================
+// Textarea Variant
+// ============================================
+
+.hi-input-textarea {
+  min-height: 80px;
+  resize: vertical;
+  font-family: vars.$hikari-font-family-sans;
+}
+
+// ============================================
+// Search Input
+// ============================================
+
+.hi-input-search {
+  .hi-input-suffix {
+    cursor: pointer;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    &:hover {
+      color: var(--hi-color-primary);
+      text-shadow: 0 0 8px var(--hi-color-primary);
+    }
+  }
+}
+
+// ============================================
+// Password Input
+// ============================================
+
+.hi-input-password {
+  .hi-input-suffix {
+    cursor: pointer;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    &:hover {
+      color: var(--hi-color-primary);
+      text-shadow: 0 0 8px var(--hi-color-primary);
+    }
+  }
+}
+
+// ============================================
+// Size Variants
+// ============================================
+
+.hi-input-sm,
+.hi-input-wrapper-sm {
+  font-size: vars.$hikari-font-size-xs;
+  padding: 0.25rem 0.5rem;
+
+  .hi-input {
+    padding: 0.25rem 0.5rem;
+    font-size: vars.$hikari-font-size-xs;
+  }
+
+  .hi-input-prefix,
+  .hi-input-suffix {
+    padding: 0 0.375rem;
+    font-size: vars.$hikari-font-size-xs;
+  }
+}
+
+.hi-input-md,
+.hi-input-wrapper-md {
+  font-size: vars.$hikari-font-size-sm;
+  padding: 0.5rem 0.75rem;
+
+  .hi-input {
+    padding: 0.5rem 0.75rem;
+    font-size: vars.$hikari-font-size-sm;
+  }
+}
+
+.hi-input-lg,
+.hi-input-wrapper-lg {
+  font-size: vars.$hikari-font-size-base;
+  padding: 0.75rem 1rem;
+
+  .hi-input {
+    padding: 0.75rem 1rem;
+    font-size: vars.$hikari-font-size-base;
+  }
+
+  .hi-input-prefix,
+  .hi-input-suffix {
+    padding: 0 0.75rem;
+    font-size: vars.$hikari-font-size-base;
+  }
+}
+
+// ============================================
+// Input Group
+// ============================================
+
+.hi-input-group {
+  display: flex;
+  width: 100%;
+
+  .hi-input-wrapper {
+    flex: 1;
+    max-width: none;
+
+    &:not(:first-child):not(:last-child) {
+      border-radius: 0;
+      margin-left: -1px;
+    }
+
+    &:first-child {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    &:last-child {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    &:focus-within {
+      z-index: 1;
+    }
+  }
+}
+
+// ============================================
+// Character Counter
+// ============================================
+
+.hi-input-counter {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--hi-color-text-secondary);
+  pointer-events: none;
+  opacity: 0.8;
+
+  &.hi-input-counter-limit {
+    color: var(--hi-color-danger);
+    animation: counter-pulse 0.5s vars.$hikari-ease-smooth;
+  }
+}
+
+@keyframes counter-pulse {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 8px var(--hi-color-danger);
+  }
+}
+
+// ============================================
+// Animations
+// ============================================
+
+.hi-input-animate-in {
+  animation: input-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+}
+
+@keyframes input-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Shake animation for error state
+.hi-input-shake {
+  animation: input-shake 0.5s vars.$hikari-ease-smooth;
+}
+
+@keyframes input-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}

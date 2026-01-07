@@ -115,24 +115,69 @@ impl Default for MenuProps {
     }
 }
 
-/// Menu component with Arknights + FUI styling
+/// Menu component with modern, premium styling
+///
+/// A flexible navigation menu component inspired by Material UI and Element Plus.
+/// Features smooth animations, proper icon support, and multiple layout modes.
+///
+/// # Features
+/// - **Multiple Modes**: Vertical (default), Horizontal, and Inline variants
+/// - **Nested Menus**: Support for submenus with animated chevron icons
+/// - **Hover Effects**: Subtle background transitions on hover
+/// - **Active States**: Clear visual indication for selected items
+/// - **Accessibility**: Proper ARIA attributes and keyboard navigation
+/// - **Responsive**: Size variants (sm, lg) for different contexts
 ///
 /// # Examples
 ///
+/// ## Basic Vertical Menu
 /// ```rust
 /// use dioxus::prelude::*;
-/// use hikari_components::Menu;
+/// use hikari_components::{Menu, MenuItem};
 ///
 /// fn app() -> Element {
 ///     rsx! {
 ///         Menu {
 ///             mode: MenuMode::Vertical,
-///             MenuItem { item_key: "1", "Item 1" }
-///             MenuItem { item_key: "2", "Item 2" }
+///             MenuItem { item_key: "1", "Dashboard" }
+///             MenuItem { item_key: "2", "Settings" }
+///             MenuItem { item_key: "3", "Profile" }
 ///         }
 ///     }
 /// }
 /// ```
+///
+/// ## Menu with Submenus
+/// ```rust
+/// use dioxus::prelude::*;
+/// use hikari_components::{Menu, MenuItem, SubMenu};
+///
+/// fn app() -> Element {
+///     rsx! {
+///         Menu {
+///             MenuItem { item_key: "1", "Home" }
+///             SubMenu {
+///                 item_key: "2".to_string(),
+///                 title: "Products".to_string(),
+///                 MenuItem { item_key: "2-1", "Category A" }
+///                 MenuItem { item_key: "2-2", "Category B" }
+///             }
+///         }
+///     }
+/// }
+/// ```
+///
+/// # Styling
+/// The component uses CSS custom properties for theming:
+/// - `--hi-background`: Background color
+/// - `--hi-border`: Border color
+/// - `--hi-text-primary`: Primary text color
+/// - `--hi-primary-600`: Active state color
+///
+/// # Size Variants
+/// - **Default**: 14px font, 10px padding
+/// - **Small** (`.hi-menu-sm`): 13px font, 6px padding
+/// - **Large** (`.hi-menu-lg`): 15px font, 12px padding
 #[component]
 pub fn Menu(props: MenuProps) -> Element {
     let _active_key = use_signal(|| props.default_active.clone());
@@ -222,7 +267,18 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
 
                 span {
                     class: format!("hi-menu-submenu-arrow {}", if is_open() { "open" } else { "" }),
-                    "›"
+                    svg {
+                        xmlns: "http://www.w3.org/2000/svg",
+                        view_box: "0 0 24 24",
+                        fill: "none",
+                        stroke: "currentColor",
+                        "stroke-width": "2",
+                        "stroke-linecap": "round",
+                        "stroke-linejoin": "round",
+                        path {
+                            d: "M9 18l6-6-6-6"
+                        }
+                    }
                 }
             }
 

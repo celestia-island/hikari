@@ -7,8 +7,11 @@ use tokio::net::TcpListener;
 use axum::response::IntoResponse;
 use http::StatusCode;
 use components::StyleRegistry;
-use render_service::HikariRenderServicePlugin;
+use render_service::{HikariRenderServicePlugin, plugin::StaticMountConfig, static_files::StaticFileConfig};
 use tower_http::cors::{Any, CorsLayer};
+
+// Import centralized path configuration
+use demo_app::paths::STATIC_PATHS;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -33,7 +36,13 @@ async fn main() -> anyhow::Result<()> {
         .component_style_registry(style_registry)
         .add_route("/health", axum::routing::get(health_handler))
         .add_route("/_dioxus", axum::routing::get(dioxus_hmr_handler))
-        .static_assets("dist/assets", "/assets")
+        .static_assets(STATIC_PATHS.assets_fs, STATIC_PATHS.assets_mount)
+        // Disable cache for styles directory to force reload during development
+        .mount_static(
+            StaticMountConfig::new(STATIC_PATHS.styles_fs, STATIC_PATHS.styles_mount)
+                .config(StaticFileConfig::default().no_cache())
+        )
+        .static_assets(STATIC_PATHS.images_fs, STATIC_PATHS.images_mount)
         .build()?
         .layer(cors);
 

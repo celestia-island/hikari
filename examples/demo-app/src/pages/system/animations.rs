@@ -3,20 +3,38 @@
 
 use dioxus::prelude::*;
 
+use crate::{app::Route, components::Layout};
+
 /// Animations showcase page
 #[allow(non_snake_case)]
 #[component]
 pub fn SystemAnimations() -> Element {
     rsx! {
-        div { class: "space-y-6",
-            div { class: "mb-8",
-                h1 { class: "hi-text-4xl hi-font-bold hi-text-gray-800 hi-mb-2", "Animation System" }
-                p { class: "hi-text-gray-600", "GSAP-inspired state machine for smooth, declarative animations" }
-            }
+        Layout {
+            current_route: Route::SystemAnimations {},
+            children: rsx! {
+                div {
+                    class: "page-container",
 
-            div { class: "bg-blue-50 hi-border border-blue-200 hi-rounded-lg hi-p-6",
-                p { class: "hi-text-blue-800",
-                    "This page is under construction. Check back soon for detailed documentation and examples!"
+                    div {
+                        class: "page-header",
+                        h1 {
+                            class: "page-title",
+                            "Animation System"
+                        }
+                        p {
+                            class: "page-description",
+                            "GSAP-inspired state machine for smooth, declarative animations"
+                        }
+                    }
+
+                    div {
+                        class: "info-box",
+                        p {
+                            class: "info-box-text",
+                            "This page is under construction. Check back soon for detailed documentation and examples!"
+                        }
+                    }
                 }
             }
         }

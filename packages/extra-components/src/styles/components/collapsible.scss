@@ -9,15 +9,15 @@
 
 .hikari-collapsible {
     width: 100%;
-    background-color: var(--hikari-color-surface);
-    border: 1px solid var(--hikari-color-border);
+    background-color: var(--hi-color-surface);
+    border: 1px solid var(--hi-color-border);
     border-radius: $hikari-radius-lg;
     overflow: hidden;
     transition: all $hikari-transition-base;
 
     // Arknights clean design with subtle glow
     &:hover {
-        border-color: var(--hikari-color-primary);
+        border-color: var(--hi-color-primary);
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
     }
 }
@@ -35,7 +35,7 @@
     cursor: pointer;
     user-select: none;
     background-color: rgba(0, 0, 0, 0.2);
-    border-bottom: 1px solid var(--hikari-color-border);
+    border-bottom: 1px solid var(--hi-color-border);
     transition: all $hikari-transition-base;
 
     // Hover effect
@@ -43,12 +43,12 @@
         background-color: rgba(59, 130, 246, 0.05);
 
         .hikari-collapsible-icon {
-            color: var(--hikari-color-primary);
+            color: var(--hi-color-primary);
             transform: scale(1.1);
         }
 
         .hikari-collapsible-title {
-            color: var(--hikari-color-text-primary);
+            color: var(--hi-color-text-primary);
         }
     }
 
@@ -68,7 +68,7 @@
 .hikari-collapsible-icon {
     width: 20px;
     height: 20px;
-    color: var(--hikari-color-text-secondary);
+    color: var(--hi-color-text-secondary);
     transition: all $hikari-transition-base;
     flex-shrink: 0;
 
@@ -86,13 +86,13 @@
 .hikari-collapsible-title {
     font-size: $hikari-font-size-base;
     font-weight: 600;
-    color: var(--hikari-color-text-primary);
+    color: var(--hi-color-text-primary);
     transition: color $hikari-transition-fast;
 }
 
 .hikari-collapsible-subtitle {
     font-size: $hikari-font-size-sm;
-    color: var(--hikari-color-text-secondary);
+    color: var(--hi-color-text-secondary);
     font-weight: 400;
     margin-top: 2px;
 }
@@ -196,10 +196,10 @@
         height: 2px;
         background: linear-gradient(
             90deg,
-            var(--hikari-color-primary),
-            var(--hikari-color-secondary),
-            var(--hikari-color-accent),
-            var(--hikari-color-primary)
+            var(--hi-color-primary),
+            var(--hi-color-secondary),
+            var(--hi-color-accent),
+            var(--hi-color-primary)
         );
         background-size: 300% 100%;
         animation: hikari-gradient-shift 3s ease infinite;
@@ -309,23 +309,23 @@
 
 // Error state
 .hikari-collapsible-error {
-    border-color: var(--hikari-color-danger);
+    border-color: var(--hi-color-danger);
 
     .hikari-collapsible-icon {
-        color: var(--hikari-color-danger);
+        color: var(--hi-color-danger);
     }
 
     .hikari-collapsible-title {
-        color: var(--hikari-color-danger);
+        color: var(--hi-color-danger);
     }
 }
 
 // Success state
 .hikari-collapsible-success {
-    border-color: var(--hikari-color-success);
+    border-color: var(--hi-color-success);
 
     .hikari-collapsible-icon {
-        color: var(--hikari-color-success);
+        color: var(--hi-color-success);
     }
 }
 

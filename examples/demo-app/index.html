@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hikari Demo App</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
+    <link rel="shortcut icon" type="image/png" href="/images/logo.png">
     <style>
         * {
             margin: 0;
@@ -37,12 +40,12 @@
 
     <!-- Load WASM module -->
     <script type="module">
-        import init, { hydrate } from './assets/demo_app.js';
+        import init, { hydrate } from '/assets/demo_app.js';
 
         async function main() {
             try {
                 // Initialize WASM module
-                await init('./assets/demo_app_bg.wasm');
+                await init('/assets/demo_app_bg.wasm');
 
                 // Hide loading indicator
                 document.getElementById('loading').style.display = 'none';

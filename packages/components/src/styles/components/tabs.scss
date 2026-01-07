@@ -1,0 +1,714 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari Tabs Component - FUI Styling
+// Design: Arknights + Future UI (FUI) aesthetics
+// Features: Glowing indicators, slide transitions, smooth animations
+// ============================================
+
+// ============================================
+// Base Tabs Styles
+// ============================================
+
+.hi-tabs {
+  // Layout
+  display: flex;
+  flex-direction: column;
+
+  // Appearance
+  background: transparent;
+
+  // Transitions
+  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+}
+
+// ============================================
+// Tabs Header (Navigation)
+// ============================================
+
+.hi-tabs-header {
+  // Layout
+  display: flex;
+  align-items: center;
+  position: relative;
+
+  // Spacing
+  margin: 0;
+  padding: 0;
+
+  // Border
+  border-bottom: 1px solid var(--hi-color-border);
+
+  // Position for indicator
+  position: relative;
+
+  // Scrollable support
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(214, 236, 240, 0.5);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.3);
+    border-radius: 2px;
+
+    &:hover {
+      background: rgba(139, 92, 246, 0.5);
+    }
+  }
+}
+
+// ============================================
+// Tabs Nav (List)
+// ============================================
+
+.hi-tabs-nav {
+  // Layout
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  // Reset
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem;
+
+  // Min width for scroll support
+  min-width: max-content;
+}
+
+// ============================================
+// Tab Item
+// ============================================
+
+.hi-tab {
+  // Layout
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  // Spacing
+  padding: 0.625rem 1rem;
+  margin: 0;
+
+  // Typography
+  font-family: vars.$hikari-font-family-sans;
+  font-size: vars.$hikari-font-size-sm;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--hi-color-text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+
+  // Appearance
+  background: transparent;
+  border: none;
+  border-radius: vars.$hikari-radius-fui-sm;
+
+  // Cursor
+  cursor: pointer;
+  user-select: none;
+
+  // Transitions
+  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+  // Position
+  position: relative;
+
+  // Icon
+  .hi-tab-icon {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  // Label
+  .hi-tab-label {
+    flex: 1;
+  }
+
+  // Close button
+  .hi-tab-close {
+    flex-shrink: 0;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-left: 0.25rem;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: var(--hi-color-text-secondary);
+    cursor: pointer;
+    border-radius: vars.$hikari-radius-fui-sm;
+    opacity: 0;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    &:hover {
+      color: var(--hi-color-danger);
+      background: rgba(239, 68, 68, 0.2);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+    }
+  }
+
+  // Hover state
+  &:hover {
+    color: var(--hi-color-text-primary);
+    background: rgba(139, 92, 246, 0.1);
+
+    .hi-tab-icon {
+      color: var(--hi-color-primary);
+      filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.4));
+    }
+
+    .hi-tab-close {
+      opacity: 1;
+    }
+  }
+
+  // Active state
+  &.hi-tab-active {
+    color: var(--hi-color-primary);
+    background: rgba(139, 92, 246, 0.15);
+    box-shadow:
+      0 0 12px rgba(139, 92, 246, 0.15),
+      inset 0 0 8px rgba(139, 92, 246, 0.1);
+
+    .hi-tab-icon {
+      color: var(--hi-color-primary);
+      filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6));
+    }
+
+    .hi-tab-close {
+      opacity: 1;
+    }
+  }
+
+  // Disabled state
+  &.hi-tab-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  // Focus state
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px rgba(139, 92, 246, 0.3),
+      0 0 12px rgba(139, 92, 246, 0.3);
+  }
+}
+
+// ============================================
+// Glowing Indicator (for active tab)
+// ============================================
+
+.hi-tabs-indicator {
+  // Layout
+  position: absolute;
+  bottom: 0;
+  left: 0;
+
+  // Appearance
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--hi-color-primary) 0%,
+    rgba(139, 92, 246, 0.8) 50%,
+    var(--hi-color-primary) 100%
+  );
+
+  // Glow effect
+  box-shadow:
+    0 0 8px var(--hi-color-primary),
+    0 0 16px rgba(139, 92, 246, 0.6);
+
+  // Transitions - smooth sliding animation
+  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+
+  // Border radius
+  border-radius: 2px 2px 0 0;
+}
+
+// ============================================
+// Tabs Content
+// ============================================
+
+.hi-tabs-content {
+  // Layout
+  position: relative;
+
+  // Spacing
+  padding: 1rem;
+
+  // Overflow
+  overflow: hidden;
+}
+
+// ============================================
+// Tab Panel
+// ============================================
+
+.hi-tab-panel {
+  // Layout
+  display: none;
+
+  // Animation
+  opacity: 0;
+  transform: translateX(16px);
+
+  // Active state
+  &.hi-tab-panel-active {
+    display: block;
+    animation: tab-panel-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  }
+}
+
+@keyframes tab-panel-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// ============================================
+// Position Variants
+// ============================================
+
+// Top (default)
+.hi-tabs-top {
+  .hi-tabs-header {
+    border-bottom: 1px solid var(--hi-color-border);
+  }
+
+  .hi-tabs-indicator {
+    bottom: 0;
+    border-radius: 2px 2px 0 0;
+  }
+}
+
+// Bottom
+.hi-tabs-bottom {
+  flex-direction: column-reverse;
+
+  .hi-tabs-header {
+    border-top: 1px solid var(--hi-color-border);
+    border-bottom: none;
+  }
+
+  .hi-tabs-indicator {
+    top: 0;
+    bottom: auto;
+    border-radius: 0 0 2px 2px;
+  }
+}
+
+// Left
+.hi-tabs-left {
+  flex-direction: row;
+
+  .hi-tabs-header {
+    flex-direction: column;
+    border-right: 1px solid var(--hi-color-border);
+    border-bottom: none;
+    min-width: 200px;
+  }
+
+  .hi-tabs-nav {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hi-tab {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .hi-tabs-indicator {
+    top: 0;
+    left: 0;
+    right: auto;
+    width: 3px;
+    height: auto;
+    border-radius: 0 2px 2px 0;
+  }
+}
+
+// Right
+.hi-tabs-right {
+  flex-direction: row-reverse;
+
+  .hi-tabs-header {
+    flex-direction: column;
+    border-left: 1px solid var(--hi-color-border);
+    border-bottom: none;
+    min-width: 200px;
+  }
+
+  .hi-tabs-nav {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hi-tab {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .hi-tabs-indicator {
+    top: 0;
+    right: 0;
+    left: auto;
+    width: 3px;
+    height: auto;
+    border-radius: 2px 0 0 2px;
+  }
+}
+
+// ============================================
+// Type Variants
+// ============================================
+
+// Card type (with background and border)
+.hi-tabs-type-card {
+  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+  backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  border: 1px solid var(--hi-color-border);
+  border-radius: vars.$hikari-radius-fui-md;
+  box-shadow:
+    0 4px 8px rgba(214, 236, 240, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+
+  .hi-tabs-header {
+    background: rgba(214, 236, 240, 0.5);
+    border-radius: vars.$hikari-radius-fui-md vars.$hikari-radius-fui-md 0 0;
+    margin: 0;
+  }
+
+  .hi-tab {
+    border-radius: vars.$hikari-radius-fui-sm;
+    margin: 0.25rem;
+
+    &.hi-tab-active {
+      background: rgba(139, 92, 246, 0.2);
+      box-shadow:
+        0 0 12px rgba(139, 92, 246, 0.2),
+        inset 0 0 8px rgba(139, 92, 246, 0.1);
+    }
+  }
+
+  .hi-tabs-content {
+    border-radius: 0 0 vars.$hikari-radius-fui-md vars.$hikari-radius-fui-md;
+  }
+}
+
+// Border card type (more prominent border)
+.hi-tabs-type-border-card {
+  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+  backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  border: 2px solid var(--hi-color-border);
+  border-radius: vars.$hikari-radius-fui-md;
+  box-shadow:
+    0 4px 8px rgba(214, 236, 240, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+
+  .hi-tabs-header {
+    background: rgba(214, 236, 240, 0.5);
+  }
+
+  .hi-tab {
+    border: 1px solid transparent;
+    margin: 0.25rem;
+
+    &.hi-tab-active {
+      background: rgba(139, 92, 246, 0.2);
+      border-color: rgba(139, 92, 246, 0.5);
+      box-shadow:
+        0 0 12px rgba(139, 92, 246, 0.2),
+        inset 0 0 8px rgba(139, 92, 246, 0.1);
+    }
+  }
+}
+
+// Segment type (pill-shaped)
+.hi-tabs-type-segment {
+  .hi-tabs-header {
+    background: rgba(23, 89, 168, 0.15);
+    border-radius: vars.$hikari-radius-fui-md;
+    border: none;
+    padding: 0.375rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .hi-tab {
+    border-radius: vars.$hikari-radius-fui-sm;
+
+    &.hi-tab-active {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(109, 40, 217, 0.9));
+      box-shadow:
+        0 0 12px rgba(139, 92, 246, 0.4),
+        inset 0 0 8px rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  .hi-tabs-indicator {
+    display: none;
+  }
+}
+
+// ============================================
+// Size Variants
+// ============================================
+
+.hi-tabs-sm {
+  .hi-tab {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+
+    .hi-tab-icon {
+      width: 0.875rem;
+      height: 0.875rem;
+    }
+  }
+
+  .hi-tabs-content {
+    padding: 0.75rem;
+  }
+}
+
+.hi-tabs-md {
+  .hi-tab {
+    padding: 0.625rem 1rem;
+    font-size: vars.$hikari-font-size-sm;
+  }
+
+  .hi-tabs-content {
+    padding: 1rem;
+  }
+}
+
+.hi-tabs-lg {
+  .hi-tab {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9375rem;
+
+    .hi-tab-icon {
+      width: 1.125rem;
+      height: 1.125rem;
+    }
+  }
+
+  .hi-tabs-content {
+    padding: 1.5rem;
+  }
+}
+
+// ============================================
+// Add/Remove Actions
+// ============================================
+
+.hi-tabs-add-button {
+  // Layout
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // Spacing
+  width: 2rem;
+  height: 2rem;
+  margin-left: 0.5rem;
+
+  // Appearance
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: vars.$hikari-radius-fui-sm;
+  color: var(--hi-color-primary);
+
+  // Cursor
+  cursor: pointer;
+
+  // Transitions
+  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+  // Icon
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow:
+      0 0 12px rgba(139, 92, 246, 0.3),
+      inset 0 0 8px rgba(139, 92, 246, 0.1);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// ============================================
+// Animated Transitions
+// ============================================
+
+// Slide animation for tab content
+.hi-tabs-animated {
+  .hi-tab-panel {
+    &.hi-tab-panel-active {
+      animation: tab-panel-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+    }
+  }
+}
+
+@keyframes tab-panel-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Fade animation
+.hi-tabs-fade {
+  .hi-tab-panel {
+    &.hi-tab-panel-active {
+      animation: tab-panel-fade-only vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+    }
+  }
+}
+
+@keyframes tab-panel-fade-only {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// Zoom animation
+.hi-tabs-zoom {
+  .hi-tab-panel {
+    &.hi-tab-panel-active {
+      animation: tab-panel-zoom-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+    }
+  }
+}
+
+@keyframes tab-panel-zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// ============================================
+// Scrollable Tabs
+// ============================================
+
+.hi-tabs-scrollable {
+  .hi-tabs-header {
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 48px;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    }
+
+    &::before {
+      left: 0;
+      background: linear-gradient(90deg, rgba(45, 45, 45, 1), transparent);
+    }
+
+    &::after {
+      right: 0;
+      background: linear-gradient(-90deg, rgba(45, 45, 45, 1), transparent);
+    }
+  }
+
+  &.hi-tabs-scroll-left .hi-tabs-header::before,
+  &.hi-tabs-scroll-right .hi-tabs-header::after {
+    opacity: 1;
+  }
+}
+
+// Navigation buttons for scrollable tabs
+.hi-tabs-nav-button {
+  // Layout
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // Spacing
+  width: 2rem;
+  height: 2rem;
+
+  // Appearance
+  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+  backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  border: 1px solid var(--hi-color-border);
+  border-radius: vars.$hikari-radius-fui-sm;
+  color: var(--hi-color-text-primary);
+
+  // Cursor
+  cursor: pointer;
+
+  // Transitions
+  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+  // Icon
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

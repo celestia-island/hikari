@@ -91,30 +91,30 @@ ThemeProvider { palette: "fresh".to_string(), children }
 Each theme defines the following CSS variables:
 
 ```css
---hikari-color-primary          /* Primary brand color */
---hikari-color-secondary        /* Secondary accent color */
---hikari-color-accent           /* Highlight color */
---hikari-color-success          /* Success state color */
---hikari-color-warning          /* Warning state color */
---hikari-color-danger           /* Error/danger color */
---hikari-color-background       /* Main background */
---hikari-color-surface          /* Card/surface background */
---hikari-color-border           /* Border/divider color */
---hikari-color-text-primary     /* Primary text color */
---hikari-color-text-secondary   /* Secondary text color */
+--hi-color-primary          /* Primary brand color */
+--hi-color-secondary        /* Secondary accent color */
+--hi-color-accent           /* Highlight color */
+--hi-color-success          /* Success state color */
+--hi-color-warning          /* Warning state color */
+--hi-color-danger           /* Error/danger color */
+--hi-color-background       /* Main background */
+--hi-color-surface          /* Card/surface background */
+--hi-color-border           /* Border/divider color */
+--hi-color-text-primary     /* Primary text color */
+--hi-color-text-secondary   /* Secondary text color */
 ```
 
 ### Usage in CSS
 
 ```css
 .my-component {
-    background-color: var(--hikari-color-surface);
-    color: var(--hikari-color-text-primary);
-    border: 1px solid var(--hikari-color-border);
+    background-color: var(--hi-color-surface);
+    color: var(--hi-color-text-primary);
+    border: 1px solid var(--hi-color-border);
 }
 
 .my-component:hover {
-    background-color: var(--hikari-color-primary);
+    background-color: var(--hi-color-primary);
 }
 ```
 
@@ -261,18 +261,18 @@ fn app() -> Element {
 ```css
 /* In your custom CSS */
 .custom-button {
-    background-color: var(--hikari-color-primary);
-    color: var(--hikari-color-text-primary);
-    padding: var(--hikari-spacing-sm) var(--hikari-spacing-md);
-    border-radius: var(--hikari-radius-md);
-    transition: all var(--hikari-transition-fast);
-    font-family: var(--hikari-font-family-sans);
-    font-size: var(--hikari-font-size-base);
+    background-color: var(--hi-color-primary);
+    color: var(--hi-color-text-primary);
+    padding: var(--hi-spacing-sm) var(--hi-spacing-md);
+    border-radius: var(--hi-radius-md);
+    transition: all var(--hi-transition-fast);
+    font-family: var(--hi-font-family-sans);
+    font-size: var(--hi-font-size-base);
 }
 
 .custom-button:hover {
-    background-color: var(--hikari-color-secondary);
-    box-shadow: var(--hikari-shadow-md);
+    background-color: var(--hi-color-secondary);
+    box-shadow: var(--hi-shadow-md);
 }
 ```
 
@@ -284,7 +284,7 @@ fn app() -> Element {
 @import '~hikari-theme/styles/mixins.scss';
 
 .my-component {
-    background: var(--hikari-color-surface);
+    background: var(--hi-color-surface);
     padding: $hikari-spacing-md;
     border-radius: $hikari-radius-lg;
     @include hikari-transition-base;
@@ -325,20 +325,20 @@ $hikari-breakpoint-xl: 1280px;
 
 ```css
 .hikari-button {
-    background-color: var(--hikari-color-primary);
-    color: var(--hikari-color-text-primary);
+    background-color: var(--hi-color-primary);
+    color: var(--hi-color-text-primary);
     border: none;
     padding: 0.5rem 1rem;
-    border-radius: var(--hikari-radius-md);
+    border-radius: var(--hi-radius-md);
     cursor: pointer;
-    transition: all var(--hikari-transition-fast);
-    font-family: var(--hikari-font-family-sans);
+    transition: all var(--hi-transition-fast);
+    font-family: var(--hi-font-family-sans);
     font-weight: 500;
 }
 
 .hikari-button:hover {
-    background-color: var(--hikari-color-secondary);
-    box-shadow: var(--hikari-shadow-md);
+    background-color: var(--hi-color-secondary);
+    box-shadow: var(--hi-shadow-md);
     transform: translateY(-1px);
 }
 
@@ -356,16 +356,16 @@ $hikari-breakpoint-xl: 1280px;
 
 ```css
 .hikari-card {
-    background-color: var(--hikari-color-surface);
-    border: 1px solid var(--hikari-color-border);
-    border-radius: var(--hikari-radius-lg);
-    padding: var(--hikari-spacing-lg);
-    box-shadow: var(--hikari-shadow-sm);
-    transition: box-shadow var(--hikari-transition-base);
+    background-color: var(--hi-color-surface);
+    border: 1px solid var(--hi-color-border);
+    border-radius: var(--hi-radius-lg);
+    padding: var(--hi-spacing-lg);
+    box-shadow: var(--hi-shadow-sm);
+    transition: box-shadow var(--hi-transition-base);
 }
 
 .hikari-card:hover {
-    box-shadow: var(--hikari-shadow-lg);
+    box-shadow: var(--hi-shadow-lg);
 }
 ```
 
@@ -375,11 +375,11 @@ $hikari-breakpoint-xl: 1280px;
 
 ```css
 .fade-in {
-    animation: hikari-fade-in var(--hikari-transition-base);
+    animation: hikari-fade-in var(--hi-transition-base);
 }
 
 .slide-up {
-    animation: hikari-slide-up var(--hikari-transition-base);
+    animation: hikari-slide-up var(--hi-transition-base);
 }
 ```
 
@@ -388,20 +388,20 @@ $hikari-breakpoint-xl: 1280px;
 ```css
 .fui-glow {
     box-shadow:
-        0 0 10px var(--hikari-color-primary),
-        0 0 20px var(--hikari-color-primary);
+        0 0 10px var(--hi-color-primary),
+        0 0 20px var(--hi-color-primary);
 }
 
 .fui-text-glow {
     text-shadow:
-        0 0 10px var(--hikari-color-primary),
-        0 0 20px var(--hikari-color-primary);
+        0 0 10px var(--hi-color-primary),
+        0 0 20px var(--hi-color-primary);
 }
 ```
 
 ## Best Practices
 
-1. **Use CSS Variables** - Always prefer `var(--hikari-*)` over hardcoded colors
+1. **Use CSS Variables** - Always prefer `var(--hi-*)` over hardcoded colors
 2. **Semantic Naming** - Use semantic color variables (primary, success) over specific colors
 3. **Spacing Scale** - Stick to the predefined spacing scale for consistency
 4. **Responsive First** - Design mobile-first, enhance for larger screens

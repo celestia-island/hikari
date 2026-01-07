@@ -209,12 +209,16 @@ def generate_rust_module(icons: list[str], svg_map: Dict[str, str]) -> str:
     for icon in icons:
         if icon in svg_map:
             svg_content = svg_map[icon]
-            # Escape for Rust raw string literal
-            svg_escaped = svg_content.replace('"', '\\"')
-            
+            # No escaping needed for raw string literals - just check if we need extra # delimiters
+            # If SVG contains "#", we need to use r##"..."## instead of r#"..."#
+            delimiter_count = 1
+            while '#"' * delimiter_count in svg_content:
+                delimiter_count += 1
+            delimiter = '#' * delimiter_count
+
             output.append("")
             output.append(f"    /// SVG content for '{icon}' icon")
-            output.append(f"    pub const {escape_const_name(icon)}: &str = r#\"{svg_escaped}\"#;")
+            output.append(f"    pub const {escape_const_name(icon)}: &str = r{delimiter}\"{svg_content}\"{delimiter};")
     
     output.append("")
 

@@ -1,0 +1,894 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari Aside (Sidebar) Component - FUI Styling
+// Design: Arknights + Future UI (FUI) aesthetics
+// Features: Hover glow effects, collapsible sections, icon animations
+// ============================================
+
+// ============================================
+// Base Aside Styles
+// ============================================
+
+.hi-aside {
+  // Layout
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  // 轻量白色背景
+  background: rgba(255, 255, 255, 0.98);
+  border-right: 1px solid rgba(226, 232, 240, 0.8);
+
+  // Overflow
+  overflow: hidden;
+
+  // Position
+  position: relative;
+
+  // Spacing
+  padding: 0;
+
+  // Fixed/flush variant (no border radius, full height)
+  &.hi-aside-fixed {
+    min-height: 100vh;
+  }
+
+  // Collapsed state
+  &.hi-aside-collapsed {
+    width: 64px;
+    padding: vars.$hikari-spacing-md vars.$hikari-spacing-sm;
+
+    // Hide text elements
+    .hi-aside-logo-text,
+    .hi-menu-item-label,
+    .hi-menu-group-title,
+    .hi-menu-item-shortcut {
+      opacity: 0;
+      pointer-events: none;
+      width: 0;
+      margin: 0;
+    }
+
+    // Center align icons
+    .hi-menu-item {
+      justify-content: center;
+      padding: 0.75rem;
+
+      .hi-menu-item-icon {
+        margin: 0;
+      }
+    }
+
+    // Rotate arrows to point down (for submenus)
+    .hi-menu-item-arrow {
+      transform: rotate(90deg);
+    }
+  }
+
+  // Expanded state (default)
+  &.hi-aside-expanded {
+    width: 260px;
+
+    @include mix.mobile {
+      width: 100%;
+      max-width: 300px;
+    }
+  }
+}
+
+// ============================================
+// Aside Header (Logo Area)
+// ============================================
+
+.hi-aside-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.5rem;
+  padding-bottom: calc(0.75rem + vars.$hikari-spacing-md);
+
+  // Bottom border with subtle glow
+  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.05);
+
+  // Transition
+  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+
+  // Logo
+  .hi-aside-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    color: var(--hi-color-text-primary);
+    flex: 1;
+    min-width: 0;
+
+    // Logo icon
+    .hi-aside-logo-icon {
+      width: 2rem;
+      height: 2rem;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      // Glow effect
+      border-radius: vars.$hikari-radius-fui-sm;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+      box-shadow:
+        0 0 12px rgba(139, 92, 246, 0.4),
+        inset 0 0 8px rgba(139, 92, 246, 0.2);
+
+      svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.6));
+      }
+    }
+
+    // Logo text
+    .hi-aside-logo-text {
+      font-family: vars.$hikari-font-family-sans;
+      font-size: vars.$hikari-font-size-lg;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+
+      // Subtle text glow
+      text-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+
+      // Truncate
+      @include mix.text-ellipsis;
+
+      // Transition for collapsed state
+      transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    }
+
+    // Hover state
+    &:hover .hi-aside-logo-icon {
+      box-shadow:
+        0 0 20px rgba(139, 92, 246, 0.6),
+        inset 0 0 12px rgba(139, 92, 246, 0.3);
+      transform: scale(1.05);
+    }
+  }
+
+  // Collapse toggle button
+  .hi-aside-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: vars.$hikari-radius-fui-sm;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--hi-color-text-secondary);
+    cursor: pointer;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    flex-shrink: 0;
+
+    svg {
+      width: 1rem;
+      height: 1rem;
+      transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    }
+
+    // Hover state
+    &:hover {
+      color: var(--hi-color-text-primary);
+      background: rgba(139, 92, 246, 0.15);
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow:
+        0 0 12px rgba(139, 92, 246, 0.3),
+        inset 0 0 8px rgba(139, 92, 246, 0.1);
+
+      svg {
+        filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.6));
+      }
+    }
+
+    // Active state
+    &:active {
+      transform: scale(0.95);
+    }
+
+    // Focus state
+    &:focus-visible {
+      outline: none;
+      border-color: var(--hi-color-primary);
+      box-shadow:
+        0 0 0 2px rgba(139, 92, 246, 0.3),
+        0 0 12px rgba(139, 92, 246, 0.4);
+    }
+  }
+
+  // Mobile-only toggle button (hidden on desktop)
+  .hi-aside-toggle-mobile {
+    @include mix.desktop {
+      display: none;
+    }
+  }
+
+  // Rotate toggle icon when collapsed
+  .hi-aside-collapsed & {
+    .hi-aside-toggle svg {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+// ============================================
+// Aside Content (Scrollable Menu Area)
+// ============================================
+
+.hi-aside-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 0.5rem;
+
+  // Custom scrollbar (no mask - will be applied dynamically via JS)
+  @include mix.scrollbar;
+
+  // Smooth scroll
+  scroll-behavior: smooth;
+
+  // Transition for collapsed state
+  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+
+  // Position relative for gradient overlays
+  position: relative;
+
+  // Gradient fade indicators (positioned absolutely, controlled by JS)
+  &::before {
+    content: '';
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), transparent);
+    pointer-events: none;
+    opacity: var(--fade-top-opacity, 0); // Controlled by JS
+    transition: opacity 0.2s ease;
+    z-index: 10;
+  }
+
+  &::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(to top, rgba(255, 255, 255, 0.8), transparent);
+    pointer-events: none;
+    opacity: var(--fade-bottom-opacity, 0); // Controlled by JS
+    transition: opacity 0.2s ease;
+    z-index: 10;
+  }
+
+  // Hide scrollbar when content doesn't need scrolling
+  &.scrollbar-hidden {
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+}
+
+// ============================================
+// Aside Menu Items
+// ============================================
+
+.hi-aside-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+// Menu item
+.hi-aside-menu-item {
+  // Layout
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  // Spacing
+  padding: 0.625rem 0.875rem;
+  margin: 0;
+
+  // Typography
+  font-family: vars.$hikari-font-family-sans;
+  font-size: vars.$hikari-font-size-sm;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--hi-color-text-primary);
+  text-decoration: none;
+  white-space: nowrap;
+
+  // Appearance
+  border-radius: vars.$hikari-radius-fui-sm;
+  border: 1px solid transparent;
+
+  // Cursor
+  cursor: pointer;
+  user-select: none;
+
+  // Transitions
+  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+  // Position for effects
+  position: relative;
+  overflow: hidden;
+
+  // Icon
+  .hi-aside-menu-item-icon {
+    flex-shrink: 0;
+    width: 1.125rem;
+    height: 1.125rem;
+    color: var(--hi-color-text-secondary);
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  // Label
+  .hi-aside-menu-item-label {
+    flex: 1;
+
+    // Transition for collapsed state
+    transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  }
+
+  // Badge/counter
+  .hi-aside-menu-item-badge {
+    margin-left: auto;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--hi-color-text-primary);
+    background: rgba(139, 92, 246, 0.2);
+    border-radius: vars.$hikari-radius-fui-sm;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+  }
+
+  // Submenu indicator arrow
+  .hi-aside-menu-item-arrow {
+    flex-shrink: 0;
+    width: 0.75rem;
+    height: 0.75rem;
+    color: var(--hi-color-text-secondary);
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  // Hover state - Glow effect
+  &:hover {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.3);
+    color: var(--hi-color-text-primary);
+    box-shadow:
+      0 0 12px rgba(139, 92, 246, 0.2),
+      inset 0 0 8px rgba(139, 92, 246, 0.1);
+
+    .hi-aside-menu-item-icon {
+      color: var(--hi-color-primary);
+      filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.5));
+      transform: scale(1.1);
+    }
+
+    .hi-aside-menu-item-arrow {
+      color: var(--hi-color-primary);
+      transform: translateX(2px);
+    }
+  }
+
+  // Active state (selected) - Accent bar on left
+  &.hi-aside-menu-item-active {
+    background: linear-gradient(90deg, rgba(139, 92, 246, 0.25), rgba(139, 92, 246, 0.05));
+    border-color: rgba(139, 92, 246, 0.5);
+    color: var(--hi-color-text-primary);
+    box-shadow:
+      0 0 16px rgba(139, 92, 246, 0.3),
+      inset 0 0 12px rgba(139, 92, 246, 0.15);
+
+    // Left accent bar
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 60%;
+      background: var(--hi-color-primary);
+      border-radius: 0 2px 2px 0;
+      box-shadow: 0 0 8px var(--hi-color-primary);
+    }
+
+    .hi-aside-menu-item-icon {
+      color: var(--hi-color-primary);
+      filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6));
+    }
+
+    .hi-aside-menu-item-arrow {
+      color: var(--hi-color-primary);
+    }
+  }
+
+  // Disabled state
+  &.hi-aside-menu-item-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  // Focus state
+  &:focus-visible {
+    outline: none;
+    background: rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow:
+      0 0 0 2px rgba(139, 92, 246, 0.3),
+      0 0 12px rgba(139, 92, 246, 0.3);
+  }
+}
+
+// ============================================
+// Aside Menu Groups (Collapsible Sections)
+// ============================================
+
+.hi-aside-menu-group {
+  padding-bottom: 0.5rem;
+
+  // Group title
+  .hi-aside-menu-group-title {
+    padding: 0.5rem 0.875rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--hi-color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    // Transition for collapsed state
+    transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  }
+
+  // Collapsible group
+  &.hi-aside-menu-group-collapsible {
+    .hi-aside-menu-group-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      border-radius: vars.$hikari-radius-fui-sm;
+      transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+      // Arrow indicator
+      &::after {
+        content: '';
+        width: 0.5rem;
+        height: 0.5rem;
+        border-right: 2px solid var(--hi-color-text-secondary);
+        border-bottom: 2px solid var(--hi-color-text-secondary);
+        transform: rotate(45deg);
+        transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+      }
+
+      &:hover {
+        background: rgba(139, 92, 246, 0.08);
+        color: var(--hi-color-text-primary);
+      }
+    }
+
+    // Expanded state
+    &.hi-aside-menu-group-expanded {
+      .hi-aside-menu-group-title::after {
+        transform: rotate(225deg);
+      }
+    }
+
+    // Collapsed state
+    &.hi-aside-menu-group-collapsed {
+      .hi-aside-menu-group-title::after {
+        transform: rotate(45deg);
+      }
+
+      .hi-aside-menu-group-content {
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+      }
+    }
+  }
+
+  // Group content (menu items)
+  .hi-aside-menu-group-content {
+    max-height: 1000px;
+    opacity: 1;
+    overflow: visible;
+    transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  }
+}
+
+// ============================================
+// Aside Submenu (Nested Navigation)
+// ============================================
+
+.hi-aside-submenu {
+  position: relative;
+
+  // Submenu trigger
+  .hi-aside-submenu-trigger {
+    @extend .hi-aside-menu-item;
+
+    // Arrow points right by default
+    .hi-aside-menu-item-arrow {
+      transform: rotate(0deg);
+    }
+
+    // Expanded state - arrow points down
+    &.hi-aside-submenu-open {
+      .hi-aside-menu-item-arrow {
+        transform: rotate(90deg);
+      }
+    }
+  }
+
+  // Nested submenu list
+  .hi-aside-submenu-list {
+    padding: 0.5rem 0.5rem 0.5rem 2rem;
+    border-left: 2px solid rgba(139, 92, 246, 0.3);
+    list-style: none;
+
+    // Glow on the border
+    box-shadow: -2px 0 8px rgba(139, 92, 246, 0.2);
+
+    // Animation
+    opacity: 1;
+    max-height: 1000px;
+    overflow: visible;
+    transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+
+    // Collapsed state
+    &.hi-aside-submenu-collapsed {
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+
+    // Nested menu items (smaller indentation)
+    .hi-aside-menu-item {
+      font-size: 0.875rem;
+      padding: 0.5rem 0.75rem;
+    }
+  }
+}
+
+// ============================================
+// Aside Footer
+// ============================================
+
+.hi-aside-footer {
+  margin-top: vars.$hikari-spacing-md;
+  padding-top: vars.$hikari-spacing-md;
+
+  // Top border with subtle glow
+  border-top: 1px solid rgba(139, 92, 246, 0.2);
+  box-shadow: 0 -4px 8px rgba(139, 92, 246, 0.05);
+
+  // Transition
+  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+
+  // User info section
+  .hi-aside-user {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: vars.$hikari-radius-fui-sm;
+    cursor: pointer;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    // Avatar
+    .hi-aside-user-avatar {
+      width: 2rem;
+      height: 2rem;
+      border-radius: vars.$hikari-radius-fui-sm;
+      object-fit: cover;
+      border: 2px solid rgba(139, 92, 246, 0.3);
+      box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+      transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    }
+
+    // User info
+    .hi-aside-user-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+
+      // Transition for collapsed state
+      transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+
+      // Username
+      .hi-aside-user-name {
+        font-size: vars.$hikari-font-size-sm;
+        font-weight: 500;
+        color: var(--hi-color-text-primary);
+        @include mix.text-ellipsis;
+      }
+
+      // User role/status
+      .hi-aside-user-role {
+        font-size: 0.75rem;
+        color: var(--hi-color-text-secondary);
+        @include mix.text-ellipsis;
+      }
+    }
+
+    // Hover state
+    &:hover {
+      background: rgba(139, 92, 246, 0.1);
+
+      .hi-aside-user-avatar {
+        border-color: rgba(139, 92, 246, 0.6);
+        box-shadow: 0 0 16px rgba(139, 92, 246, 0.6);
+      }
+    }
+  }
+}
+
+// ============================================
+// Aside Mobile Drawer Behavior
+// ============================================
+
+.hi-aside-drawer {
+  @include mix.mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 200;
+    width: 80%;
+    max-width: 300px;
+    border-radius: 0;
+    min-height: 100vh;
+    transform: translateX(-100%);
+    transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+
+    // Open state
+    &.hi-aside-drawer-open {
+      transform: translateX(0);
+    }
+
+    // Overlay backdrop
+    &::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(23, 89, 168, 0.3);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: -1;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    }
+
+    &.hi-aside-drawer-open::after {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+}
+
+// ============================================
+// Aside Size Variants
+// ============================================
+
+.hi-aside-sm {
+  width: 200px;
+
+  &.hi-aside-collapsed {
+    width: 56px;
+  }
+
+  .hi-aside-menu-item {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+
+    .hi-aside-menu-item-icon {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+}
+
+.hi-aside-md {
+  width: 260px;
+
+  &.hi-aside-collapsed {
+    width: 64px;
+  }
+}
+
+.hi-aside-lg {
+  width: 320px;
+
+  &.hi-aside-collapsed {
+    width: 72px;
+  }
+
+  .hi-aside-menu-item {
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
+
+    .hi-aside-menu-item-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+}
+
+// ============================================
+// Aside Color Variants
+// ============================================
+
+// Dark variant (default)
+.hi-aside-dark {
+  background: rgba(45, 45, 45, 0.9);
+}
+
+// Light variant
+.hi-aside-light {
+  background: rgba(255, 255, 255, 0.9);
+
+  &::before {
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      var(--hi-color-primary) 20%,
+      rgba(59, 130, 246, 0.6) 50%,
+      var(--hi-color-primary) 80%,
+      transparent 100%
+    );
+  }
+
+  .hi-aside-menu-item {
+    color: var(--hi-color-text-primary);
+
+    &.hi-aside-menu-item-active {
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+    }
+  }
+}
+
+// Primary variant
+.hi-aside-primary {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9));
+  border-color: rgba(255, 255, 255, 0.2);
+
+  &::before {
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.6) 50%,
+      transparent 100%
+    );
+  }
+}
+
+// ============================================
+// Aside Animations
+// ============================================
+
+// Slide in from left
+.hi-aside-animate-in {
+  animation: aside-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+}
+
+@keyframes aside-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Fade in
+.hi-aside-fade-in {
+  animation: aside-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+}
+
+@keyframes aside-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// Stagger animation for menu items
+.hi-aside-stagger {
+  .hi-aside-menu-item {
+    opacity: 0;
+    animation: aside-menu-item-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+
+    @for $i from 1 through 20 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{$i * 0.05s};
+      }
+    }
+  }
+}
+
+@keyframes aside-menu-item-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Ripple effect on click
+.hi-aside-menu-item-ripple {
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(139, 92, 246, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease-out, height 0.6s ease-out;
+  }
+
+  &:active::after {
+    width: 300px;
+    height: 300px;
+  }
+}
+
+// ============================================
+// Print Styles
+// ============================================
+
+@media print {
+  .hi-aside {
+    display: none;
+  }
+}

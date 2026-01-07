@@ -9,7 +9,7 @@
 
 :root[data-theme="primary"] {
     // 背景增强
-    background-color: var(--hikari-color-background);
+    background-color: var(--hi-color-background);
     
     // Arknights 风格边框
     .hikari-arknights-border {
@@ -130,12 +130,12 @@
 
 :root[data-theme="fresh"] {
     // 浅色背景
-    background-color: var(--hikari-color-background);
+    background-color: var(--hi-color-background);
     
     // 渐变卡片
     .hikari-gradient-card {
         background: linear-gradient(135deg, 
-            var(--hikari-color-surface) 0%,
+            var(--hi-color-surface) 0%,
             rgba(16, 185, 129, 0.1) 100%);
     }
     
@@ -154,8 +154,8 @@
     // 渐变文字
     .hikari-gradient-text {
         background: linear-gradient(135deg, 
-            var(--hikari-color-primary) 0%,
-            var(--hikari-color-success) 100%);
+            var(--hi-color-primary) 0%,
+            var(--hi-color-success) 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -168,19 +168,19 @@
 
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="fresh"]) {
-        --hikari-color-background: #0F172A;
-        --hikari-color-surface: #1E293B;
-        --hikari-color-text-primary: #F1F5F9;
-        --hikari-color-text-secondary: #94A3B8;
+        --hi-color-background: #0F172A;
+        --hi-color-surface: #1E293B;
+        --hi-color-text-primary: #F1F5F9;
+        --hi-color-text-secondary: #94A3B8;
     }
 }
 
 @media (prefers-color-scheme: light) {
     :root[data-theme="fresh"] {
-        --hikari-color-background: #FFFFFF;
-        --hikari-color-surface: #F8FAFC;
-        --hikari-color-text-primary: #1E293B;
-        --hikari-color-text-secondary: #64748B;
+        --hi-color-background: #FFFFFF;
+        --hi-color-surface: #F8FAFC;
+        --hi-color-text-primary: #1E293B;
+        --hi-color-text-secondary: #64748B;
     }
 }
 

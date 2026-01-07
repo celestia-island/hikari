@@ -3,19 +3,37 @@
 
 use dioxus::prelude::*;
 
+use crate::{app::Route, components::Layout};
+
 /// Demo overview page
 #[component]
 pub fn DemosOverview() -> Element {
     rsx! {
-        div { class: "space-y-6",
-            div { class: "mb-8",
-                h1 { class: "hi-text-4xl hi-font-bold hi-text-gray-800 hi-mb-2", "Demos" }
-                p { class: "hi-text-gray-600", "Complete application examples showcasing Hikari in action" }
-            }
+        Layout {
+            current_route: Route::DemosOverview {},
+            children: rsx! {
+                div {
+                    class: "page-container",
 
-            div { class: "bg-blue-50 hi-border border-blue-200 hi-rounded-lg hi-p-6",
-                p { class: "hi-text-blue-800",
-                    "This page is under construction. Check back soon for demo examples!"
+                    div {
+                        class: "page-header",
+                        h1 {
+                            class: "page-title",
+                            "Demos"
+                        }
+                        p {
+                            class: "page-description",
+                            "Complete application examples showcasing Hikari in action"
+                        }
+                    }
+
+                    div {
+                        class: "info-box",
+                        p {
+                            class: "info-box-text",
+                            "This page is under construction. Check back soon for demo examples!"
+                        }
+                    }
                 }
             }
         }

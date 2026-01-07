@@ -1,0 +1,478 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari Alert Component - FUI Styling
+// Design: Arknights + Future UI (FUI) aesthetics
+// Features: Glowing icons, gradient borders, smooth transitions
+// ============================================
+
+// ============================================
+// Base Alert Styles
+// ============================================
+
+.hi-alert {
+  // Layout
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+
+  // Spacing
+  padding: 1rem 1.25rem;
+
+  // Appearance - FUI subtle rounded corners
+  border-radius: vars.$hikari-radius-fui-md;
+  border: 1px solid var(--hi-color-border);
+
+  // Acrylic background effect
+  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+  backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
+
+  // Elevated shadow
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+
+  // Transitions - smooth GSAP-style easing
+  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+
+  // Position for gradient border
+  position: relative;
+  overflow: hidden;
+
+  // Gradient border effect
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      currentColor 50%,
+      transparent 100%
+    );
+    opacity: 0;
+    transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  }
+
+  // Icon
+  .hi-alert-icon {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: 0.125rem;
+    filter: drop-shadow(0 0 4px currentColor);
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  // Content wrapper
+  .hi-alert-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  // Title
+  .hi-alert-title {
+    margin: 0 0 0.25rem 0;
+    font-family: vars.$hikari-font-family-sans;
+    font-size: vars.$hikari-font-size-sm;
+    font-weight: 600;
+    color: var(--hi-color-text-primary);
+    line-height: 1.4;
+  }
+
+  // Description
+  .hi-alert-description {
+    margin: 0;
+    font-family: vars.$hikari-font-family-sans;
+    font-size: vars.$hikari-font-size-sm;
+    font-weight: 400;
+    color: var(--hi-color-text-secondary);
+    line-height: 1.5;
+  }
+
+  // Close button
+  .hi-alert-close {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    margin: -0.25rem -0.25rem 0 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: var(--hi-color-text-secondary);
+    cursor: pointer;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    border-radius: vars.$hikari-radius-fui-sm;
+
+    &:hover {
+      color: var(--hi-color-text-primary);
+      background: rgba(239, 68, 68, 0.2);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  // Hover state
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 6px 12px rgba(0, 0, 0, 0.25),
+      0 0 12px rgba(139, 92, 246, 0.15);
+
+    &::before {
+      opacity: 0.6;
+    }
+  }
+}
+
+// ============================================
+// Color Variants
+// ============================================
+
+// Success (Green)
+.hi-alert-success {
+  border-color: rgba(16, 185, 129, 0.4);
+  color: var(--hi-color-success);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.2),
+    0 0 12px rgba(16, 185, 129, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+
+  .hi-alert-icon {
+    color: var(--hi-color-success);
+    filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.6));
+  }
+
+  &:hover {
+    border-color: rgba(16, 185, 129, 0.6);
+    box-shadow:
+      0 6px 12px rgba(0, 0, 0, 0.25),
+      0 0 16px rgba(16, 185, 129, 0.25);
+  }
+}
+
+// Info (Blue)
+.hi-alert-info {
+  border-color: rgba(59, 130, 246, 0.4);
+  color: var(--hi-color-primary);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.2),
+    0 0 12px rgba(59, 130, 246, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+
+  .hi-alert-icon {
+    color: var(--hi-color-primary);
+    filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.6));
+  }
+
+  &:hover {
+    border-color: rgba(59, 130, 246, 0.6);
+    box-shadow:
+      0 6px 12px rgba(0, 0, 0, 0.25),
+      0 0 16px rgba(59, 130, 246, 0.25);
+  }
+}
+
+// Warning (Yellow)
+.hi-alert-warning {
+  border-color: rgba(245, 158, 11, 0.4);
+  color: var(--hi-color-warning);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.2),
+    0 0 12px rgba(245, 158, 11, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+
+  .hi-alert-icon {
+    color: var(--hi-color-warning);
+    filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
+  }
+
+  &:hover {
+    border-color: rgba(245, 158, 11, 0.6);
+    box-shadow:
+      0 6px 12px rgba(0, 0, 0, 0.25),
+      0 0 16px rgba(245, 158, 11, 0.25);
+  }
+}
+
+// Error (Red)
+.hi-alert-error {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: var(--hi-color-danger);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.2),
+    0 0 12px rgba(239, 68, 68, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+
+  .hi-alert-icon {
+    color: var(--hi-color-danger);
+    filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.6));
+  }
+
+  &:hover {
+    border-color: rgba(239, 68, 68, 0.6);
+    box-shadow:
+      0 6px 12px rgba(0, 0, 0, 0.25),
+      0 0 16px rgba(239, 68, 68, 0.25);
+  }
+}
+
+// ============================================
+// Variant Types
+// ============================================
+
+// Solid variant (more prominent background)
+.hi-alert-solid {
+  &.hi-alert-success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+  }
+
+  &.hi-alert-info {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+  }
+
+  &.hi-alert-warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+  }
+
+  &.hi-alert-error {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+  }
+}
+
+// Outlined variant (transparent background, more prominent border)
+.hi-alert-outlined {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+
+  &.hi-alert-success {
+    background: rgba(16, 185, 129, 0.05);
+    border-width: 2px;
+  }
+
+  &.hi-alert-info {
+    background: rgba(59, 130, 246, 0.05);
+    border-width: 2px;
+  }
+
+  &.hi-alert-warning {
+    background: rgba(245, 158, 11, 0.05);
+    border-width: 2px;
+  }
+
+  &.hi-alert-error {
+    background: rgba(239, 68, 68, 0.05);
+    border-width: 2px;
+  }
+}
+
+// ============================================
+// Size Variants
+// ============================================
+
+.hi-alert-sm {
+  padding: 0.75rem 1rem;
+
+  .hi-alert-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .hi-alert-title {
+    font-size: 0.875rem;
+  }
+
+  .hi-alert-description {
+    font-size: 0.75rem;
+  }
+}
+
+.hi-alert-md {
+  padding: 1rem 1.25rem;
+}
+
+.hi-alert-lg {
+  padding: 1.25rem 1.5rem;
+
+  .hi-alert-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .hi-alert-title {
+    font-size: 1rem;
+  }
+
+  .hi-alert-description {
+    font-size: 0.9375rem;
+  }
+}
+
+// ============================================
+// Banner Variant (full width, no border radius)
+// ============================================
+
+.hi-alert-banner {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+
+  &::before {
+    height: 3px;
+  }
+}
+
+// ============================================
+// Center-aligned content
+// ============================================
+
+.hi-alert-center {
+  text-align: center;
+  justify-content: center;
+
+  .hi-alert-title,
+  .hi-alert-description {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+// ============================================
+// Without Title
+// ============================================
+
+.hi-alert-no-title {
+  .hi-alert-description {
+    margin: 0;
+  }
+}
+
+// ============================================
+// With Action Button
+// ============================================
+
+.hi alert-action {
+  .hi-alert-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+}
+
+// ============================================
+// Icon Glow Animation
+// ============================================
+
+.hi-alert-glow {
+  .hi-alert-icon {
+    animation: alert-icon-glow 2s ease-in-out infinite;
+  }
+}
+
+@keyframes alert-icon-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px currentColor);
+  }
+  50% {
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+}
+
+// ============================================
+// Animations
+// ============================================
+
+.hi-alert-animate-in {
+  animation: alert-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+}
+
+@keyframes alert-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hi-alert-slide-in {
+  animation: alert-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+}
+
+@keyframes alert-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Exit animation
+.hi-alert-exit {
+  animation: alert-exit vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
+}
+
+@keyframes alert-exit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+// ============================================
+// Closable State
+// ============================================
+
+.hi-alert-closable {
+  cursor: pointer;
+}
+
+// ============================================
+// Dismiss Animation
+// ============================================
+
+.hi-alert-dismissing {
+  animation: alert-dismiss vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+}
+
+@keyframes alert-dismiss {
+  from {
+    opacity: 1;
+    transform: scale(1);
+    max-height: 200px;
+    margin-bottom: 1rem;
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+    max-height: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}

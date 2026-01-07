@@ -1,0 +1,50 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+
+// ============================================
+// Hikari Grid System
+// ============================================
+
+// Grid container
+.hi-grid {
+  display: grid;
+}
+
+// Grid gap variants
+.hi-grid-gap-sm {
+  gap: 0.5rem;
+}
+
+.hi-grid-gap-md {
+  gap: 1rem;
+}
+
+.hi-grid-gap-lg {
+  gap: 1.5rem;
+}
+
+// Grid column
+.hi-col {
+  min-width: 0; // Prevent grid blowout
+}
+
+// ============================================
+// Hikari Row Component
+// ============================================
+
+.hi-row {
+  display: flex;
+}
+
+// Row gap variants
+.hi-row-gap-sm {
+  gap: 0.5rem;
+}
+
+.hi-row-gap-md {
+  gap: 1rem;
+}
+
+.hi-row-gap-lg {
+  gap: 1.5rem;
+}

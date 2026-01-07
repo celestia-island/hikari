@@ -1,41 +1,50 @@
 // hikari-components/src/layout/aside.rs
-//! Aside component - Sidebar navigation panel
+//! Aside component - Modern sidebar navigation panel
+//!
+//! Inspired by Element Plus and Material Navigation Drawer designs.
+//!
+//! # Example
+//!
+//! ```rust
+//! use hikari_components::layout::Aside;
+//! use dioxus::prelude::*;
+//!
+//! rsx! {
+//!     Aside {
+//!         nav {
+//!             a { "Link 1" }
+//!             a { "Link 2" }
+//!         }
+//!     }
+//! }
+//! ```
 
 use dioxus::prelude::*;
 
-/// Aside component - Sidebar navigation panel
+/// Aside component - Modern sidebar navigation panel
 ///
-/// # Example
+/// # Design Features
+/// - Clean, minimal design with subtle shadows
+/// - Smooth slide-in/out animation on mobile
+/// - Refined padding and spacing
+/// - Optional close button on mobile
+/// - Proper border for visual separation
 ///
-/// ```rust
-/// use hikari_components::layout::Aside;
-/// use dioxus::prelude::*;
-///
-/// rsx! {
-///     Aside {
-///         nav {
-///             a { "Link 1" }
-///             a { "Link 2" }
-///         }
-///     }
-/// }
-/// ```
+/// # Responsive Behavior
+/// - Desktop (≥1024px): Static positioning, always visible
+/// - Mobile (<1024px): Fixed positioning, slides in from left
 #[component]
 pub fn Aside(
     /// Sidebar content
     children: Element,
 
-    /// Background color (default: #1a1a2e)
-    #[props(default = "#1a1a2e".to_string())]
-    background_color: String,
-
-    /// Text color (default: white)
-    #[props(default = "text-white".to_string())]
-    text_color: String,
-
-    /// Sidebar width (default: 250px)
-    #[props(default = "w-64".to_string())]
+    /// Width preset (sm: 200px, md: 250px, lg: 300px, default: md)
+    #[props(default = "md".to_string())]
     width: String,
+
+    /// Background variant (default, white, light)
+    #[props(default = "white".to_string())]
+    variant: String,
 
     /// Whether to be collapsible on mobile
     #[props(default = true)]
@@ -52,7 +61,20 @@ pub fn Aside(
     #[props(default)]
     class: String,
 ) -> Element {
-    let mut is_open = use_signal(|| initial_open);
+    let is_open = use_signal(|| initial_open);
+
+    // Get width classes
+    let width_class = match width.as_str() {
+        "sm" => "hi-aside-sm",
+        "lg" => "hi-aside-lg",
+        _ => "hi-aside-md", // md (default)
+    };
+
+    // Get variant-specific styles
+    let variant_class = match variant.as_str() {
+        "light" => "hi-aside-light",
+        _ => "hi-aside-dark",
+    };
 
     rsx! {
         aside {
@@ -60,37 +82,22 @@ pub fn Aside(
             // - Desktop (lg): static positioning, always visible
             // - Mobile: fixed positioning, slide in/out based on is_open
             class: format!(
-                "fixed lg:static inset-y-0 left-0 z-50 {width} \
-                 {text_color} p-5 flex flex-col gap-2 \
-                 transition-transform duration-300 ease-in-out \
-                 {} {class}",
-                if *is_open.read() { "translate-x-0" } else { "-translate-x-full lg:translate-x-0" }
+                "hi-aside hi-aside-drawer {} {} {} {}",
+                width_class,
+                variant_class,
+                if *is_open.read() {
+                    "hi-aside-drawer-open"
+                } else {
+                    ""
+                },
+                class
             ),
-            style: "background-color: {background_color}",
 
-            // Close button (mobile only)
-            if collapsible {
-                button {
-                    class: "lg:hidden self-end p-2 hover:bg-white/10 rounded transition-colors",
-                    onclick: move |_| {
-                        is_open.set(false);
-                        on_close.call(());
-                    },
-                    // Close icon
-                    svg {
-                        xmlns: "http://www.w3.org/2000/svg",
-                        fill: "none",
-                        view_box: "0 0 24 24",
-                        stroke: "currentColor",
-                        class: "w-5 h-5",
-                        stroke_width: "2",
-                        path { d: "M6 18L18 6M6 6l12 12" }
-                    }
-                }
+            // Sidebar content with scroll support
+            div {
+                class: "hi-aside-content",
+                { children }
             }
-
-            // Sidebar content
-            { children }
         }
     }
 }

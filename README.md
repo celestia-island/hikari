@@ -80,12 +80,14 @@ The result is a UI framework that feels both ancient and futuristic, professiona
 ## Features
 
 ### hikari-palette
+
 - 500+ traditional Chinese colors
 - Rich color metadata (hex, RGB, CMYK, historical notes)
 - Pre-defined palettes for different design systems
 - Type-safe color constants with Chinese names
 
 ### hikari-theme
+
 - Theme context and provider
 - CSS variables system
 - Multiple built-in themes (Primary, FUI Dark, Arknights, Fresh)
@@ -93,6 +95,8 @@ The result is a UI framework that feels both ancient and futuristic, professiona
 - Responsive design utilities
 
 ### hikari-components
+
+- **Layout System**: Layout, Header, Aside, Content, Container, Grid, Row, Col, Section, Spacer
 - **Basic Components**: Button, Input, Card, Badge
 - **Feedback**: Alert, Toast, Tooltip
 - **Navigation**: Menu, Tabs, Breadcrumb
@@ -100,11 +104,13 @@ The result is a UI framework that feels both ancient and futuristic, professiona
 - **Data Display**: Tree (modular with virtual scroll, drag-drop, collapse)
 
 ### hikari-extra-components
+
 - **Node Graph System**: Canvas, nodes, ports, connections, minimap, context menu
 - **Advanced Utilities**: Collapsible, DragLayer, ZoomControls
 - Perfect for visual editors, workflow builders, and data visualization
 
 ### hikari-render-service
+
 - Server-Side Rendering support
 - Easy Axum integration
 - Static asset serving
@@ -194,6 +200,34 @@ hikari/
 
 ## Examples
 
+### Layout Component
+
+```rust
+use hikari_components::layout::{Layout, Header, Aside};
+
+rsx! {
+    Layout {
+        header: rsx! {
+            Header {
+                h1 { "My Application" }
+            }
+        },
+        aside: rsx! {
+            Aside {
+                nav {
+                    a { "Home" }
+                    a { "About" }
+                    a { "Contact" }
+                }
+            }
+        },
+        main {
+            p { "Main content goes here..." }
+        }
+    }
+}
+```
+
 ### Button Component
 
 ```rust
@@ -252,24 +286,28 @@ async fn main() -> anyhow::Result<()> {
 ## Design Philosophy
 
 ### Arknights Flat Design
+
 - Clean, sharp lines and edges
 - Clear information hierarchy
 - High contrast for readability
 - Minimalist without being boring
 
 ### FUI Sci-Fi Aesthetics
+
 - Subtle glow effects (`box-shadow`, `text-shadow`)
 - Dynamic indicators (breathing lights, pulse animations)
 - Fine 1px semi-transparent borders
 - Geometric patterns (hexagons, grids)
 
 ### Animation Principles
+
 - Subtle transitions (150ms ease)
 - Functional animations over decorative
 - Smooth, natural motion curves
 - No jarring or distracting effects
 
 ### Chinese Color System
+
 - **Primary Colors**: Stone Cyan (石青), Cinnabar (朱砂), Vine Yellow (藤黄), Indigo (靛蓝)
 - **Neutral Colors**: Moon White (月白), Ink Black (墨色), Silk Gray (缟色)
 - **Functional Colors**: Scallion Green (葱倩 - success), Goosling Yellow (鹅黄 - warning), Cinnabar (朱砂 - danger)
@@ -334,8 +372,8 @@ We welcome contributions! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) for
 
 Hikari is dual-licensed under:
 
-- MIT License ([LICENSE-MIT](LICENSE-MIT) or https://opensource.org/licenses/MIT)
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or https://www.apache.org/licenses/LICENSE-2.0)
+- MIT License ([LICENSE-MIT](LICENSE-MIT) or <https://opensource.org/licenses/MIT>)
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or <https://www.apache.org/licenses/LICENSE-2.0>)
 
 You may choose either license for your use.
 

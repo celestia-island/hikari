@@ -92,7 +92,7 @@
     outline: none;
     
     &:focus-visible {
-        box-shadow: 0 0 0 2px var(--hikari-color-primary);
+        box-shadow: 0 0 0 2px var(--hi-color-primary);
     }
 }
 
@@ -123,8 +123,8 @@
 
 @mixin button-primary {
     @include button-base;
-    background-color: var(--hikari-color-primary);
-    color: var(--hikari-color-text-primary);
+    background-color: var(--hi-color-primary);
+    color: var(--hi-color-text-primary);
     
     &:hover:not(:disabled) {
         filter: brightness(1.1);
@@ -134,21 +134,21 @@
 @mixin button-secondary {
     @include button-base;
     background-color: transparent;
-    color: var(--hikari-color-primary);
-    border-color: var(--hikari-color-primary);
+    color: var(--hi-color-primary);
+    border-color: var(--hi-color-primary);
     
     &:hover:not(:disabled) {
-        background-color: var(--hikari-color-surface);
+        background-color: var(--hi-color-surface);
     }
 }
 
 @mixin button-ghost {
     @include button-base;
     background-color: transparent;
-    color: var(--hikari-color-text-primary);
+    color: var(--hi-color-text-primary);
     
     &:hover:not(:disabled) {
-        background-color: var(--hikari-color-surface);
+        background-color: var(--hi-color-surface);
     }
 }
 
@@ -159,10 +159,10 @@
 @mixin input-base {
     width: 100%;
     padding: $hikari-spacing-sm $hikari-spacing-md;
-    border: 1px solid var(--hikari-color-border);
+    border: 1px solid var(--hi-color-border);
     border-radius: $hikari-radius-md;
-    background-color: var(--hikari-color-background);
-    color: var(--hikari-color-text-primary);
+    background-color: var(--hi-color-background);
+    color: var(--hi-color-text-primary);
     font-size: $hikari-font-size-base;
     font-family: $hikari-font-family-sans;
     transition: all $hikari-transition-base;
@@ -170,7 +170,7 @@
     @include focus-ring;
     
     &::placeholder {
-        color: var(--hikari-color-text-secondary);
+        color: var(--hi-color-text-secondary);
     }
     
     &:disabled {
@@ -183,8 +183,8 @@
 // ============================================
 
 @mixin card-base {
-    background-color: var(--hikari-color-surface);
-    border: 1px solid var(--hikari-color-border);
+    background-color: var(--hi-color-surface);
+    border: 1px solid var(--hi-color-border);
     border-radius: $hikari-radius-lg;
     padding: $hikari-spacing-lg;
     box-shadow: $hikari-shadow-md;
@@ -240,30 +240,648 @@
 // ============================================
 
 @mixin scrollbar {
+    // 关键：使用 stable gutter 为滚动条预留固定空间
+    // 这确保滚动条宽度变化时不会影响内容区域宽度
+    scrollbar-gutter: stable;
+
+    // Firefox: 设置滚动条宽度为细（不会动态变化）
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.4) rgba(241, 245, 249, 0.5);
+
+    // 基础滚动条 - 固定 6px 宽度（通过 CSS 变量确保）
     &::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
     }
-    
+
+    // 注意：不要在 hover 时改变 ::-webkit-scrollbar 的宽度
+    // webkit 滚动条的宽度改变会导致布局重排
+    // 我们只改变 track 和 thumb 的样式，不改变宽度
+
+    // 滚动条轨道 - 使用轻量灰色
     &::-webkit-scrollbar-track {
-        background: var(--hikari-color-background);
+        background: rgba(241, 245, 249, 0.5);
+        border-radius: 3px;
+
+        // 上边缘箭头指示（通过渐变实现）
+        background-image:
+            linear-gradient(to bottom, transparent 0%, transparent 45%, rgba(100, 116, 139, 0.2) 48%, rgba(100, 116, 139, 0.3) 50%, rgba(100, 116, 139, 0.2) 52%, transparent 55%, transparent 100%),
+            linear-gradient(to bottom, rgba(100, 116, 139, 0.15) 0%, transparent 15%),
+            linear-gradient(to top, rgba(100, 116, 139, 0.15) 0%, transparent 15%);
+        background-size:
+            100% 100%,
+            100% 12px,
+            100% 12px;
+        background-position:
+            0 0,
+            0 0,
+            0 100%;
+        background-repeat: no-repeat;
+
+        // 平滑过渡动画
+        transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                    border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
+
+    // 滚动条滑块 - 使用灰色，hover 变亮
     &::-webkit-scrollbar-thumb {
-        background: var(--hikari-color-border);
-        border-radius: 4px;
-        
-        &:hover {
-            background: var(--hikari-color-text-secondary);
-        }
+        background: rgba(148, 163, 184, 0.4);
+        border-radius: 3px;
+
+        // 从中间向上下扩散的高亮效果（使用渐变）
+        background-image: linear-gradient(
+            to bottom,
+            rgba(148, 163, 184, 0.3) 0%,
+            rgba(148, 163, 184, 0.5) 40%,
+            rgba(148, 163, 184, 0.6) 50%,
+            rgba(148, 163, 184, 0.5) 60%,
+            rgba(148, 163, 184, 0.3) 100%
+        );
+
+        // 平滑过渡动画
+        transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                    background-image 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                    border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    // Hover 状态 - 滚动条滑块变亮并增加发光
+    // 注意：这里不改变宽度，只改变外观
+    &:hover::-webkit-scrollbar-track {
+        background: rgba(226, 232, 240, 0.6);
+    }
+
+    &:hover::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.7);
+        background-image: linear-gradient(
+            to bottom,
+            rgba(148, 163, 184, 0.5) 0%,
+            rgba(203, 213, 225, 0.8) 50%,
+            rgba(148, 163, 184, 0.5) 100%
+        );
+        box-shadow: 0 0 12px rgba(148, 163, 184, 0.6);
+    }
+
+    // Active/dragging 状态
+    &:active::-webkit-scrollbar-thumb {
+        background: rgba(203, 213, 225, 0.9);
+        box-shadow: 0 0 16px rgba(203, 213, 225, 0.7);
+    }
+
+    // 滚动条角落（横向+纵向滚动条交界处）
+    &::-webkit-scrollbar-corner {
+        background: transparent;
     }
 }
 
 @mixin scrollbar-hidden {
     -ms-overflow-style: none;
     scrollbar-width: none;
-    
+
     &::-webkit-scrollbar {
         display: none;
+    }
+}
+
+// ============================================
+// FUI 亚克力背景系统
+// ============================================
+
+/// 亚克力材质效果（类似 Windows 10 Acrylic）
+@mixin acrylic-material {
+    background-color: rgba(var(--hi-color-surface-rgb, 29, 29, 29), $hikari-acrylic-opacity);
+    backdrop-filter: blur($hikari-acrylic-blur);
+    -webkit-backdrop-filter: blur($hikari-acrylic-blur);
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.05"/></svg>');
+        opacity: $hikari-acrylic-noise;
+        pointer-events: none;
+        z-index: -1;
+    }
+}
+
+/// 亚克力聚焦效果（Win10 风格的局部高亮）
+@mixin acrylic-focus {
+    @include acrylic-material;
+    transition: all $hikari-duration-normal $hikari-ease-smooth;
+
+    &:hover,
+    &:focus-within {
+        background-color: rgba(var(--hi-color-surface-rgb, 29, 29, 29), 0.95);
+        box-shadow: $hikari-glow-md, inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+        transform: translateY(-1px);
+    }
+
+    &:focus-within {
+        box-shadow: $hikari-glow-focus, inset 0 0 0 1px $hikari-border-glow-color;
+    }
+}
+
+// ============================================
+// FUI 发光边框系统
+// ============================================
+
+/// 基础发光边框
+@mixin glowing-border($color: $hikari-border-glow-color, $width: $hikari-border-glow-width) {
+    border: $width solid $color;
+    box-shadow: $hikari-glow-sm;
+    transition: all $hikari-duration-normal $hikari-ease-smooth;
+
+    &:hover {
+        box-shadow: $hikari-glow-md;
+        border-color: lighten($color, 10%);
+    }
+
+    &:focus,
+    &:focus-within {
+        box-shadow: $hikari-glow-focus;
+        border-color: lighten($color, 20%);
+    }
+}
+
+/// 多色发光边框（适用于不同状态）
+@mixin glowing-border-variant($color) {
+    $glow-color: rgba($color, 0.6);
+    @include glowing-border($glow-color);
+}
+
+// ============================================
+// FUI 强调色条系统
+// ============================================
+
+/// 左侧强调色条（最常用）
+@mixin accent-bar-left($width: $hikari-accent-bar-width, $color: var(--hi-color-primary)) {
+    position: relative;
+    border-left: $width solid $color;
+
+    &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: $width;
+        background: linear-gradient(180deg, $color 0%, transparent 100%);
+        opacity: 0;
+        transition: opacity $hikari-duration-normal $hikari-ease-smooth;
+    }
+
+    &:hover::before {
+        opacity: 1;
+    }
+}
+
+/// 右侧强调色条
+@mixin accent-bar-right($width: $hikari-accent-bar-width, $color: var(--hi-color-primary)) {
+    position: relative;
+    border-right: $width solid $color;
+
+    &::before {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: $width;
+        background: linear-gradient(180deg, transparent 0%, $color 100%);
+        opacity: 0;
+        transition: opacity $hikari-duration-normal $hikari-ease-smooth;
+    }
+
+    &:hover::before {
+        opacity: 1;
+    }
+}
+
+/// 顶部强调色条
+@mixin accent-bar-top($width: $hikari-accent-bar-width, $color: var(--hi-color-primary)) {
+    position: relative;
+    border-top: $width solid $color;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: $width;
+        background: linear-gradient(90deg, transparent 0%, $color 50%, transparent 100%);
+        opacity: 0;
+        transition: opacity $hikari-duration-normal $hikari-ease-smooth;
+    }
+
+    &:hover::before {
+        opacity: 1;
+    }
+}
+
+/// 底部强调色条
+@mixin accent-bar-bottom($width: $hikari-accent-bar-width, $color: var(--hi-color-primary)) {
+    position: relative;
+    border-bottom: $width solid $color;
+
+    &::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: $width;
+        background: linear-gradient(90deg, transparent 0%, $color 50%, transparent 100%);
+        opacity: 0;
+        transition: opacity $hikari-duration-normal $hikari-ease-smooth;
+    }
+
+    &:hover::before {
+        opacity: 1;
+    }
+}
+
+// ============================================
+// FUI 微动背景系统
+// ============================================
+
+/// 微动背景（ambient animation）
+@mixin ambient-background {
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+            circle at 50% 50%,
+            rgba(var(--hi-color-primary-rgb, 139, 92, 246), 0.03) 0%,
+            transparent 50%
+        );
+        animation: ambient-move $hikari-ambient-duration $hikari-ambient-easing infinite;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    & > * {
+        position: relative;
+        z-index: 1;
+    }
+}
+
+@keyframes ambient-move {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+    }
+    25% {
+        transform: translate(5%, 5%) scale(1.05);
+    }
+    50% {
+        transform: translate(0, 10%) scale(1.1);
+    }
+    75% {
+        transform: translate(-5%, 5%) scale(1.05);
+    }
+}
+
+/// 脉冲光晕效果
+@mixin pulse-glow($color: var(--hi-color-primary)) {
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, $color 0%, transparent 70%);
+        transform: translate(-50%, -50%);
+        opacity: 0;
+        animation: pulse-glow-animation 2s ease-in-out infinite;
+        pointer-events: none;
+    }
+}
+
+@keyframes pulse-glow-animation {
+    0%, 100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    50% {
+        opacity: 0.3;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+}
+
+// ============================================
+// FUI 动画预设系统（GSAP 风格）
+// ============================================
+
+/// 从中间向左右展开（进入动画）
+@mixin animate-expand-horizontal($duration: $hikari-duration-normal) {
+    animation: expand-horizontal $duration $hikari-ease-smooth forwards;
+}
+
+@keyframes expand-horizontal {
+    from {
+        opacity: 0;
+        transform: scaleX(0);
+        transform-origin: center;
+    }
+    to {
+        opacity: 1;
+        transform: scaleX(1);
+        transform-origin: center;
+    }
+}
+
+/// 从上下往中间收缩（进入动画）
+@mixin animate-collapse-vertical($duration: $hikari-duration-normal) {
+    animation: collapse-vertical $duration $hikari-ease-smooth forwards;
+}
+
+@keyframes collapse-vertical {
+    from {
+        opacity: 0;
+        transform: scaleY(0);
+        transform-origin: center;
+    }
+    to {
+        opacity: 1;
+        transform: scaleY(1);
+        transform-origin: center;
+    }
+}
+
+/// 从左滑入
+@mixin animate-slide-in-left($duration: $hikari-duration-normal, $distance: 20px) {
+    animation: slide-in-left $duration $hikari-ease-smooth forwards;
+}
+
+@keyframes slide-in-left {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/// 从右滑入
+@mixin animate-slide-in-right($duration: $hikari-duration-normal, $distance: 20px) {
+    animation: slide-in-right $duration $hikari-ease-smooth forwards;
+}
+
+@keyframes slide-in-right {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/// 从上滑入
+@mixin animate-slide-in-top($duration: $hikari-duration-normal, $distance: 20px) {
+    animation: slide-in-top $duration $hikari-ease-smooth forwards;
+}
+
+@keyframes slide-in-top {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/// 从下滑入
+@mixin animate-slide-in-bottom($duration: $hikari-duration-normal, $distance: 20px) {
+    animation: slide-in-bottom $duration $hikari-ease-smooth forwards;
+}
+
+@keyframes slide-in-bottom {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/// 淡入 + 缩放
+@mixin animate-fade-in-scale($duration: $hikari-duration-normal) {
+    animation: fade-in-scale $duration $hikari-ease-smooth forwards;
+}
+
+@keyframes fade-in-scale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/// 淡出 + 缩放（退出动画）
+@mixin animate-fade-out-scale($duration: $hikari-duration-normal) {
+    animation: fade-out-scale $duration $hikari-ease-smooth forwards;
+}
+
+@keyframes fade-out-scale {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+}
+
+/// 模糊淡入
+@mixin animate-blur-in($duration: $hikari-duration-normal) {
+    animation: blur-in $duration $hikari-ease-smooth forwards;
+}
+
+@keyframes blur-in {
+    from {
+        opacity: 0;
+        filter: blur(10px);
+    }
+    to {
+        opacity: 1;
+        filter: blur(0);
+    }
+}
+
+/// 弹性进入
+@mixin animate-bounce-in($duration: $hikari-duration-slow) {
+    animation: bounce-in $duration $hikari-ease-bounce forwards;
+}
+
+@keyframes bounce-in {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+// ============================================
+// FUI 交互状态 Mixins
+// ============================================
+
+/// 悬浮提升效果
+@mixin hover-lift($amount: 2px) {
+    transition: transform $hikari-duration-fast $hikari-ease-smooth,
+                box-shadow $hikari-duration-fast $hikari-ease-smooth;
+
+    &:hover {
+        transform: translateY(-$amount);
+        box-shadow: $hikari-glow-md;
+    }
+}
+
+/// 悬浮发光
+@mixin hover-glow($color: var(--hi-color-primary)) {
+    transition: all $hikari-duration-fast $hikari-ease-smooth;
+
+    &:hover {
+        box-shadow: 0 0 20px rgba($color, 0.5);
+    }
+}
+
+/// 点击按压效果
+@mixin active-press($scale: 0.98) {
+    &:active {
+        transform: scale($scale);
+        transition: transform $hikari-duration-instant ease-out;
+    }
+}
+
+// ============================================
+// FUI 组件基础样式
+// ============================================
+
+/// FUI 卡片基础
+@mixin fui-card-base {
+    @include acrylic-material;
+    @include hover-lift(2px);
+    border-radius: $hikari-radius-fui-md;
+    padding: $hikari-spacing-lg;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/// FUI 按钮基础
+@mixin fui-button-base {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: $hikari-spacing-sm $hikari-spacing-md;
+    border-radius: $hikari-radius-fui-sm;
+    font-weight: 500;
+    font-size: $hikari-font-size-sm;
+    transition: all $hikari-duration-fast $hikari-ease-smooth;
+    border: 1px solid transparent;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+
+    @include active-press(0.98);
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.2),
+            transparent
+        );
+        transition: left $hikari-duration-slow $hikari-ease-smooth;
+    }
+
+    &:hover::before {
+        left: 100%;
+    }
+}
+
+/// FUI 输入框基础
+@mixin fui-input-base {
+    @include acrylic-focus;
+    border-radius: $hikari-radius-fui-sm;
+    padding: $hikari-spacing-sm $hikari-spacing-md;
+    font-size: $hikari-font-size-sm;
+    color: var(--hi-color-text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    outline: none;
+
+    &::placeholder {
+        color: var(--hi-color-text-secondary);
+        opacity: 0.7;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+// ============================================
+// Pagination Mixins
+// ============================================
+
+/// Pagination compact variant
+@mixin pagination-compact {
+    .hi-pagination-size-selector,
+    .hi-pagination-total,
+    .hi-pagination-jumper {
+        display: none;
+    }
+
+    .hi-pagination-item {
+        min-width: 1.75rem;
+        height: 1.75rem;
+        padding: 0 0.5rem;
+        font-size: 0.8125rem;
+        margin: 0.0625rem;
+
+        svg {
+            width: 0.875rem;
+            height: 0.875rem;
+        }
     }
 }

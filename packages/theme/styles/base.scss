@@ -5,6 +5,28 @@
 @use './mixins.scss' as *;
 
 // ============================================
+// CSS 自定义属性（默认值）
+// ============================================
+
+:root {
+    // 颜色系统 - 默认暗色主题
+    --hi-color-background: #0F172A;
+    --hi-color-surface: #1E293B;
+    --hi-color-border: #334155;
+
+    // 文字颜色
+    --hi-color-text-primary: #F1F5F9;
+    --hi-color-text-secondary: #94A3B8;
+
+    // 主题色
+    --hi-color-primary: #3B82F6;
+    --hi-color-success: #10B981;
+    --hi-color-warning: #F59E0B;
+    --hi-color-danger: #EF4444;
+    --hi-color-info: #06B6D4;
+}
+
+// ============================================
 // 全局重置
 // ============================================
 
@@ -19,16 +41,26 @@
 html {
     font-size: 16px;
     scroll-behavior: smooth;
+
+    // 全局自定义滚动条
+    @include scrollbar;
 }
 
 body {
     font-family: $hikari-font-family-sans;
     font-size: $hikari-font-size-base;
     line-height: 1.5;
-    color: var(--hikari-color-text-primary);
-    background-color: var(--hikari-color-background);
+    color: var(--hi-color-text-primary);
+    background-color: var(--hi-color-background);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+
+    // 确保滚动条继承
+    overflow-y: scroll;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
 }
 
 // ============================================
@@ -70,7 +102,7 @@ p {
 }
 
 a {
-    color: var(--hikari-color-primary);
+    color: var(--hi-color-primary);
     text-decoration: none;
     transition: color $hikari-transition-fast;
     
@@ -83,7 +115,7 @@ code {
     font-family: $hikari-font-family-mono;
     font-size: 0.9em;
     padding: 0.2em 0.4em;
-    background-color: var(--hikari-color-border);
+    background-color: var(--hi-color-border);
     border-radius: $hikari-radius-sm;
 }
 
@@ -91,8 +123,8 @@ pre {
     font-family: $hikari-font-family-mono;
     font-size: $hikari-font-size-sm;
     padding: $hikari-spacing-md;
-    background-color: var(--hikari-color-background);
-    border: 1px solid var(--hikari-color-border);
+    background-color: var(--hi-color-background);
+    border: 1px solid var(--hi-color-border);
     border-radius: $hikari-radius-md;
     overflow-x: auto;
     
@@ -139,7 +171,7 @@ label {
     display: block;
     margin-bottom: $hikari-spacing-xs;
     font-weight: 500;
-    color: var(--hikari-color-text-secondary);
+    color: var(--hi-color-text-secondary);
 }
 
 // ============================================
@@ -174,12 +206,12 @@ th,
 td {
     padding: $hikari-spacing-sm $hikari-spacing-md;
     text-align: left;
-    border-bottom: 1px solid var(--hikari-color-border);
+    border-bottom: 1px solid var(--hi-color-border);
 }
 
 th {
     font-weight: 600;
-    color: var(--hikari-color-text-secondary);
+    color: var(--hi-color-text-secondary);
 }
 
 // ============================================
@@ -189,7 +221,7 @@ th {
 hr {
     border: none;
     height: 1px;
-    background-color: var(--hikari-color-border);
+    background-color: var(--hi-color-border);
     margin: $hikari-spacing-lg 0;
 }
 
@@ -240,23 +272,23 @@ hr {
 }
 
 .text-muted {
-    color: var(--hikari-color-text-secondary);
+    color: var(--hi-color-text-secondary);
 }
 
 .text-primary {
-    color: var(--hikari-color-primary);
+    color: var(--hi-color-primary);
 }
 
 .text-success {
-    color: var(--hikari-color-success);
+    color: var(--hi-color-success);
 }
 
 .text-warning {
-    color: var(--hikari-color-warning);
+    color: var(--hi-color-warning);
 }
 
 .text-danger {
-    color: var(--hikari-color-danger);
+    color: var(--hi-color-danger);
 }
 
 .mt-1 { margin-top: $hikari-spacing-xs; }

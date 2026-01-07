@@ -1,0 +1,442 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari Badge Component - FUI Styling
+// Design: Arknights + Future UI (FUI) aesthetics
+// Features: Glowing variants, pulse animations, smooth transitions
+// ============================================
+
+// ============================================
+// Base Badge Styles
+// ============================================
+
+.hi-badge {
+  // Layout
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  // Spacing
+  padding: 0.25rem 0.5rem;
+
+  // Typography
+  font-family: vars.$hikari-font-family-sans;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  color: #ffffff;
+
+  // Appearance - FUI subtle rounded corners
+  border-radius: vars.$hikari-radius-fui-sm;
+  border: 1px solid transparent;
+
+  // Transitions - smooth GSAP-style easing
+  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+  // Default background
+  background: rgba(107, 114, 128, 0.9);
+  box-shadow: 0 0 8px rgba(107, 114, 128, 0.3);
+
+  // Position context for dot variant
+  position: relative;
+  vertical-align: middle;
+}
+
+// ============================================
+// Color Variants
+// ============================================
+
+// Primary (Blue)
+.hi-badge-primary {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9));
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow:
+    0 0 8px rgba(59, 130, 246, 0.4),
+    inset 0 0 4px rgba(255, 255, 255, 0.1);
+
+  &:hover {
+    box-shadow:
+      0 0 12px rgba(59, 130, 246, 0.6),
+      inset 0 0 6px rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+  }
+}
+
+// Secondary (Gray)
+.hi-badge-secondary {
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.9), rgba(75, 85, 99, 0.9));
+  border-color: rgba(156, 163, 175, 0.5);
+  box-shadow:
+    0 0 8px rgba(107, 114, 128, 0.3),
+    inset 0 0 4px rgba(255, 255, 255, 0.1);
+
+  &:hover {
+    box-shadow:
+      0 0 12px rgba(107, 114, 128, 0.5),
+      inset 0 0 6px rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+  }
+}
+
+// Success (Green)
+.hi-badge-success {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.9));
+  border-color: rgba(52, 211, 153, 0.5);
+  box-shadow:
+    0 0 8px rgba(16, 185, 129, 0.4),
+    inset 0 0 4px rgba(255, 255, 255, 0.1);
+
+  &:hover {
+    box-shadow:
+      0 0 12px rgba(16, 185, 129, 0.6),
+      inset 0 0 6px rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+  }
+}
+
+// Warning (Yellow/Orange)
+.hi-badge-warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.9));
+  border-color: rgba(251, 191, 36, 0.5);
+  box-shadow:
+    0 0 8px rgba(245, 158, 11, 0.4),
+    inset 0 0 4px rgba(255, 255, 255, 0.1);
+
+  &:hover {
+    box-shadow:
+      0 0 12px rgba(245, 158, 11, 0.6),
+      inset 0 0 6px rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+  }
+}
+
+// Danger (Red)
+.hi-badge-danger {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
+  border-color: rgba(248, 113, 113, 0.5);
+  box-shadow:
+    0 0 8px rgba(239, 68, 68, 0.4),
+    inset 0 0 4px rgba(255, 255, 255, 0.1);
+
+  &:hover {
+    box-shadow:
+      0 0 12px rgba(239, 68, 68, 0.6),
+      inset 0 0 6px rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+  }
+}
+
+// Info (Cyan)
+.hi-badge-info {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.9), rgba(8, 145, 178, 0.9));
+  border-color: rgba(34, 211, 238, 0.5);
+  box-shadow:
+    0 0 8px rgba(6, 182, 212, 0.4),
+    inset 0 0 4px rgba(255, 255, 255, 0.1);
+
+  &:hover {
+    box-shadow:
+      0 0 12px rgba(6, 182, 212, 0.6),
+      inset 0 0 6px rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+  }
+}
+
+// ============================================
+// Glowing Variant (Enhanced FUI effect)
+// ============================================
+
+.hi-badge-glow {
+  animation: badge-glow-pulse 2s ease-in-out infinite;
+
+  &.hi-badge-primary {
+    animation: badge-glow-primary 2s ease-in-out infinite;
+  }
+
+  &.hi-badge-success {
+    animation: badge-glow-success 2s ease-in-out infinite;
+  }
+
+  &.hi-badge-warning {
+    animation: badge-glow-warning 2s ease-in-out infinite;
+  }
+
+  &.hi-badge-danger {
+    animation: badge-glow-danger 2s ease-in-out infinite;
+  }
+
+  &.hi-badge-info {
+    animation: badge-glow-info 2s ease-in-out infinite;
+  }
+}
+
+@keyframes badge-glow-primary {
+  0%, 100% {
+    box-shadow:
+      0 0 8px rgba(59, 130, 246, 0.4),
+      0 0 16px rgba(59, 130, 246, 0.2),
+      inset 0 0 4px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 12px rgba(59, 130, 246, 0.6),
+      0 0 24px rgba(59, 130, 246, 0.4),
+      inset 0 0 6px rgba(255, 255, 255, 0.15);
+  }
+}
+
+@keyframes badge-glow-success {
+  0%, 100% {
+    box-shadow:
+      0 0 8px rgba(16, 185, 129, 0.4),
+      0 0 16px rgba(16, 185, 129, 0.2),
+      inset 0 0 4px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 12px rgba(16, 185, 129, 0.6),
+      0 0 24px rgba(16, 185, 129, 0.4),
+      inset 0 0 6px rgba(255, 255, 255, 0.15);
+  }
+}
+
+@keyframes badge-glow-warning {
+  0%, 100% {
+    box-shadow:
+      0 0 8px rgba(245, 158, 11, 0.4),
+      0 0 16px rgba(245, 158, 11, 0.2),
+      inset 0 0 4px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 12px rgba(245, 158, 11, 0.6),
+      0 0 24px rgba(245, 158, 11, 0.4),
+      inset 0 0 6px rgba(255, 255, 255, 0.15);
+  }
+}
+
+@keyframes badge-glow-danger {
+  0%, 100% {
+    box-shadow:
+      0 0 8px rgba(239, 68, 68, 0.4),
+      0 0 16px rgba(239, 68, 68, 0.2),
+      inset 0 0 4px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 12px rgba(239, 68, 68, 0.6),
+      0 0 24px rgba(239, 68, 68, 0.4),
+      inset 0 0 6px rgba(255, 255, 255, 0.15);
+  }
+}
+
+@keyframes badge-glow-info {
+  0%, 100% {
+    box-shadow:
+      0 0 8px rgba(6, 182, 212, 0.4),
+      0 0 16px rgba(6, 182, 212, 0.2),
+      inset 0 0 4px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 12px rgba(6, 182, 212, 0.6),
+      0 0 24px rgba(6, 182, 212, 0.4),
+      inset 0 0 6px rgba(255, 255, 255, 0.15);
+  }
+}
+
+// ============================================
+// Pulse Animation Variant
+// ============================================
+
+.hi-badge-pulse {
+  animation: badge-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.9;
+  }
+}
+
+// ============================================
+// Dot Variant (Small indicator)
+// ============================================
+
+.hi-badge-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border-radius: 50%;
+
+  &.hi-badge-primary {
+    background: radial-gradient(circle, rgba(96, 165, 250, 1), rgba(59, 130, 246, 0.8));
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+  }
+
+  &.hi-badge-success {
+    background: radial-gradient(circle, rgba(52, 211, 153, 1), rgba(16, 185, 129, 0.8));
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  }
+
+  &.hi-badge-warning {
+    background: radial-gradient(circle, rgba(251, 191, 36, 1), rgba(245, 158, 11, 0.8));
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+  }
+
+  &.hi-badge-danger {
+    background: radial-gradient(circle, rgba(248, 113, 113, 1), rgba(239, 68, 68, 0.8));
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+  }
+
+  &.hi-badge-pulse {
+    animation: badge-dot-pulse 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes badge-dot-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 8px currentColor;
+  }
+  50% {
+    transform: scale(1.2);
+    box-shadow: 0 0 16px currentColor;
+  }
+}
+
+// ============================================
+// Positioning Variants (for parent elements)
+// ============================================
+
+.hi-badge-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.hi-badge-absolute {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  transform: translate(50%, -50%);
+  z-index: 10;
+}
+
+// ============================================
+// Size Variants
+// ============================================
+
+.hi-badge-sm {
+  padding: 0.125rem 0.375rem;
+  font-size: 0.625rem;
+  border-radius: 3px;
+}
+
+.hi-badge-md {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: vars.$hikari-radius-fui-sm;
+}
+
+.hi-badge-lg {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: vars.$hikari-radius-fui-md;
+}
+
+// ============================================
+// Count Badge (for numbers)
+// ============================================
+
+.hi-badge-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95));
+  box-shadow:
+    0 0 8px rgba(239, 68, 68, 0.5),
+    inset 0 0 4px rgba(255, 255, 255, 0.15);
+
+  &.hi-badge-count-lg {
+    min-width: 24px;
+    height: 24px;
+    line-height: 24px;
+    font-size: 0.875rem;
+    padding: 0 0.5rem;
+  }
+}
+
+// ============================================
+// Status Badge (Online/Offline/Away)
+// ============================================
+
+.hi-badge-status {
+  &.hi-badge-online {
+    background: radial-gradient(circle, rgba(52, 211, 153, 1), rgba(16, 185, 129, 0.8));
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  }
+
+  &.hi-badge-offline {
+    background: radial-gradient(circle, rgba(107, 114, 128, 1), rgba(75, 85, 99, 0.8));
+    box-shadow: 0 0 4px rgba(107, 114, 128, 0.3);
+  }
+
+  &.hi-badge-away {
+    background: radial-gradient(circle, rgba(251, 191, 36, 1), rgba(245, 158, 11, 0.8));
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+  }
+
+  &.hi-badge-busy {
+    background: radial-gradient(circle, rgba(248, 113, 113, 1), rgba(239, 68, 68, 0.8));
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+  }
+}
+
+// ============================================
+// Animations
+// ============================================
+
+.hi-badge-animate-in {
+  animation: badge-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+}
+
+@keyframes badge-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// Bounce animation for new badges
+.hi-badge-bounce {
+  animation: badge-bounce 0.6s vars.$hikari-ease-bounce;
+}
+
+@keyframes badge-bounce {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

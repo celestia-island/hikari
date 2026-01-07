@@ -5,8 +5,44 @@ use dioxus::prelude::*;
 
 use super::column::ColumnDef;
 
-// Re-export SortDirection from sort module to avoid ambiguity
-pub use super::sort::SortDirection;
+// TODO: Re-export from sort module when implemented
+// pub use super::sort::SortDirection;
+
+/// Sort direction enum (temporary local definition)
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum SortDirection {
+    #[default]
+    None,
+    Ascending,
+    Descending,
+}
+
+impl SortDirection {
+    pub fn toggle(&self) -> Self {
+        match self {
+            SortDirection::None => SortDirection::Ascending,
+            SortDirection::Ascending => SortDirection::Descending,
+            SortDirection::Descending => SortDirection::None,
+        }
+    }
+
+    pub fn icon(&self) -> &'static str {
+        match self {
+            SortDirection::None => "⇅",
+            SortDirection::Ascending => "↑",
+            SortDirection::Descending => "↓",
+        }
+    }
+
+    /// Get CSS class for sort direction
+    pub fn class(&self) -> &'static str {
+        match self {
+            SortDirection::None => "",
+            SortDirection::Ascending => "hi-sort-asc",
+            SortDirection::Descending => "hi-sort-desc",
+        }
+    }
+}
 
 /// Header component props
 #[derive(Clone, PartialEq, Props, Default)]

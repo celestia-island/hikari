@@ -465,40 +465,40 @@ Customize the node graph appearance:
 
 ```css
 .hikari-node-graph {
-    background-color: var(--hikari-color-background);
+    background-color: var(--hi-color-background);
     background-image:
-        linear-gradient(var(--hikari-color-border) 1px, transparent 1px),
-        linear-gradient(90deg, var(--hikari-color-border) 1px, transparent 1px);
+        linear-gradient(var(--hi-color-border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--hi-color-border) 1px, transparent 1px);
     background-size: 20px 20px;
 }
 
 .hikari-node {
-    background-color: var(--hikari-color-surface);
-    border: 2px solid var(--hikari-color-border);
-    border-radius: var(--hikari-radius-lg);
-    box-shadow: var(--hikari-shadow-lg);
+    background-color: var(--hi-color-surface);
+    border: 2px solid var(--hi-color-border);
+    border-radius: var(--hi-radius-lg);
+    box-shadow: var(--hi-shadow-lg);
 }
 
 .hikari-node.selected {
-    border-color: var(--hikari-color-primary);
-    box-shadow: 0 0 10px var(--hikari-color-primary);
+    border-color: var(--hi-color-primary);
+    box-shadow: 0 0 10px var(--hi-color-primary);
 }
 
 .hikari-port {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background-color: var(--hikari-color-border);
-    transition: all var(--hikari-transition-fast);
+    background-color: var(--hi-color-border);
+    transition: all var(--hi-transition-fast);
 }
 
 .hikari-port:hover {
-    background-color: var(--hikari-color-primary);
+    background-color: var(--hi-color-primary);
     transform: scale(1.2);
 }
 
 .hikari-connection {
-    stroke: var(--hikari-color-primary);
+    stroke: var(--hi-color-primary);
     stroke-width: 2;
     fill: none;
 }

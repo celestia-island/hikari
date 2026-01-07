@@ -1,34 +1,42 @@
 // hikari-components/src/layout/header.rs
-//! Header component - Top application header bar
+//! Header component - Modern application header bar
+//!
+//! Inspired by Element Plus and Material App Bar designs.
+//!
+//! # Example
+//!
+//! ```rust
+//! use hikari_components::layout::Header;
+//! use dioxus::prelude::*;
+//!
+//! rsx! {
+//!     Header {
+//!         h1 { "My Application" }
+//!     }
+//! }
+//! ```
 
 use dioxus::prelude::*;
 
-/// Header component - Top application header bar
+/// Header component - Modern application header bar
 ///
-/// # Example
+/// # Design Features
+/// - Glassmorphism effect with backdrop blur
+/// - Subtle border for visual separation
+/// - Smooth elevation shadow
+/// - Refined spacing and typography
 ///
-/// ```rust
-/// use hikari_components::layout::Header;
-/// use dioxus::prelude::*;
-///
-/// rsx! {
-///     Header {
-///         h1 { "My Application" }
-///     }
-/// }
-/// ```
+/// # Elevation System
+/// - Default: elevation-1 (subtle shadow)
+/// - Can be customized with elevation prop
 #[component]
 pub fn Header(
     /// Header content
     children: Element,
 
-    /// Background color (default: #1a1a2e)
-    #[props(default = "#1a1a2e".to_string())]
-    background_color: String,
-
-    /// Text color (default: white)
-    #[props(default = "text-white".to_string())]
-    text_color: String,
+    /// Border bottom (default: true)
+    #[props(default = true)]
+    bordered: bool,
 
     /// Whether to show mobile menu toggle button
     #[props(default = false)]
@@ -44,34 +52,48 @@ pub fn Header(
     rsx! {
         header {
             class: format!(
-                "flex items-center justify-between p-4 {} {class}",
-                match text_color.as_str() {
-                    "text-white" => "text-white",
-                    _ => &text_color
-                }
+                "hi-header hi-header-sticky hi-header-md {} {class}",
+                if bordered { "" } else { "hi-header-transparent" },
             ),
-            style: "background-color: {background_color}",
 
-            // Menu toggle button (mobile)
-            if show_menu_toggle {
-                button {
-                    class: "lg:hidden p-2 rounded-lg hover:bg-white/10 transition-colors",
-                    onclick: move |_| on_menu_toggle.call(()),
-                    // Menu icon (hamburger)
-                    svg {
-                        xmlns: "http://www.w3.org/2000/svg",
-                        fill: "none",
-                        view_box: "0 0 24 24",
-                        stroke: "currentColor",
-                        class: "w-6 h-6",
-                        stroke_width: "2",
-                        path { d: "M4 6h16M4 12h16M4 18h16" }
+            // Left section: Menu toggle + optional content
+            div {
+                class: "hi-header-left",
+
+                // Menu toggle button (mobile)
+                if show_menu_toggle {
+                    button {
+                        class: "hi-header-toggle",
+                        onclick: move |_| on_menu_toggle.call(()),
+                        "aria-label": "Toggle menu",
+
+                        // Menu icon (hamburger)
+                        svg {
+                            xmlns: "http://www.w3.org/2000/svg",
+                            fill: "none",
+                            view_box: "0 0 24 24",
+                            stroke: "currentColor",
+                            stroke_width: "2",
+                            stroke_linecap: "round",
+                            stroke_linejoin: "round",
+                            path { d: "M4 6h16M4 12h16M4 18h16" }
+                        }
                     }
+                }
+
+                // Header content
+                div {
+                    class: "flex items-center gap-3 min-w-0 flex-shrink-0",
+                    { children }
                 }
             }
 
-            // Header content
-            div { class: "flex-1", { children } }
+            // Right section (optional actions)
+            div {
+                class: "hi-header-right",
+                // Placeholder for right-side content
+                // Can be used for user menu, notifications, etc.
+            }
         }
     }
 }

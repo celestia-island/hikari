@@ -12,8 +12,8 @@
     align-items: center;
     gap: $hikari-spacing-xs;
     padding: $hikari-spacing-sm;
-    background-color: rgba(var(--hikari-color-surface), 0.95);
-    border: 1px solid var(--hikari-color-border);
+    background-color: rgba(var(--hi-color-surface), 0.95);
+    border: 1px solid var(--hi-color-border);
     border-radius: $hikari-radius-lg;
     box-shadow: $hikari-shadow-lg;
     backdrop-filter: blur(8px);
@@ -21,7 +21,7 @@
 
     // FUI glow on hover
     &:hover {
-        border-color: var(--hikari-color-primary);
+        border-color: var(--hi-color-primary);
         box-shadow:
             $hikari-shadow-xl,
             0 0 20px rgba(59, 130, 246, 0.3);
@@ -45,10 +45,10 @@
     justify-content: center;
     width: 36px;
     height: 36px;
-    background-color: var(--hikari-color-surface);
-    border: 1px solid var(--hikari-color-border);
+    background-color: var(--hi-color-surface);
+    border: 1px solid var(--hi-color-border);
     border-radius: $hikari-radius-md;
-    color: var(--hikari-color-text-primary);
+    color: var(--hi-color-text-primary);
     cursor: pointer;
     transition: all $hikari-transition-fast;
     user-select: none;
@@ -56,8 +56,8 @@
     // FUI glow effect on hover
     &:hover:not(:disabled) {
         background-color: rgba(59, 130, 246, 0.1);
-        border-color: var(--hikari-color-primary);
-        color: var(--hikari-color-primary);
+        border-color: var(--hi-color-primary);
+        color: var(--hi-color-primary);
         box-shadow:
             0 0 15px rgba(59, 130, 246, 0.4),
             inset 0 0 10px rgba(59, 130, 246, 0.1);
@@ -75,9 +75,9 @@
 
     // Active state
     &.hikari-zoom-button-active {
-        background-color: var(--hikari-color-primary);
-        border-color: var(--hikari-color-primary);
-        color: var(--hikari-color-text-primary);
+        background-color: var(--hi-color-primary);
+        border-color: var(--hi-color-primary);
+        color: var(--hi-color-text-primary);
 
         // Enhanced FUI glow
         box-shadow:
@@ -103,19 +103,19 @@
     min-width: 60px;
     padding: $hikari-spacing-xs $hikari-spacing-sm;
     background-color: rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--hikari-color-border);
+    border: 1px solid var(--hi-color-border);
     border-radius: $hikari-radius-md;
     font-family: $hikari-font-family-mono;
     font-size: $hikari-font-size-sm;
     font-weight: 600;
-    color: var(--hikari-color-text-primary);
+    color: var(--hi-color-text-primary);
     user-select: none;
     transition: all $hikari-transition-fast;
 
     // FUI glow
     &.hikari-zoom-display-active {
-        border-color: var(--hikari-color-accent);
-        color: var(--hikari-color-accent);
+        border-color: var(--hi-color-accent);
+        color: var(--hi-color-accent);
         box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
     }
 }
@@ -135,7 +135,7 @@
     appearance: none;
     width: 100px;
     height: 4px;
-    background-color: var(--hikari-color-border);
+    background-color: var(--hi-color-border);
     border-radius: $hikari-radius-full;
     outline: none;
     cursor: pointer;
@@ -146,8 +146,8 @@
         height: 4px;
         background: linear-gradient(
             90deg,
-            var(--hikari-color-primary),
-            var(--hikari-color-secondary)
+            var(--hi-color-primary),
+            var(--hi-color-secondary)
         );
         border-radius: $hikari-radius-full;
     }
@@ -156,8 +156,8 @@
         height: 4px;
         background: linear-gradient(
             90deg,
-            var(--hikari-color-primary),
-            var(--hikari-color-secondary)
+            var(--hi-color-primary),
+            var(--hi-color-secondary)
         );
         border-radius: $hikari-radius-full;
     }
@@ -168,8 +168,8 @@
         appearance: none;
         width: 16px;
         height: 16px;
-        background-color: var(--hikari-color-surface);
-        border: 2px solid var(--hikari-color-primary);
+        background-color: var(--hi-color-surface);
+        border: 2px solid var(--hi-color-primary);
         border-radius: 50%;
         cursor: grab;
         transition: all $hikari-transition-fast;
@@ -191,8 +191,8 @@
     &::-moz-range-thumb {
         width: 16px;
         height: 16px;
-        background-color: var(--hikari-color-surface);
-        border: 2px solid var(--hikari-color-primary);
+        background-color: var(--hi-color-surface);
+        border: 2px solid var(--hi-color-primary);
         border-radius: 50%;
         cursor: grab;
         transition: all $hikari-transition-fast;
@@ -212,16 +212,16 @@
         &::-webkit-slider-runnable-track {
             background: linear-gradient(
                 90deg,
-                var(--hikari-color-primary),
-                var(--hikari-color-accent)
+                var(--hi-color-primary),
+                var(--hi-color-accent)
             );
         }
 
         &::-moz-range-track {
             background: linear-gradient(
                 90deg,
-                var(--hikari-color-primary),
-                var(--hikari-color-accent)
+                var(--hi-color-primary),
+                var(--hi-color-accent)
             );
         }
     }
@@ -235,26 +235,26 @@
     display: flex;
     gap: $hikari-spacing-xs;
     padding-left: $hikari-spacing-sm;
-    border-left: 1px solid var(--hikari-color-border);
+    border-left: 1px solid var(--hi-color-border);
 }
 
 .hikari-zoom-preset {
     padding: $hikari-spacing-xs $hikari-spacing-sm;
     background-color: transparent;
-    border: 1px solid var(--hikari-color-border);
+    border: 1px solid var(--hi-color-border);
     border-radius: $hikari-radius-sm;
     font-family: $hikari-font-family-mono;
     font-size: $hikari-font-size-xs;
     font-weight: 600;
-    color: var(--hikari-color-text-secondary);
+    color: var(--hi-color-text-secondary);
     cursor: pointer;
     transition: all $hikari-transition-fast;
     user-select: none;
 
     &:hover {
         background-color: rgba(59, 130, 246, 0.1);
-        border-color: var(--hikari-color-primary);
-        color: var(--hikari-color-primary);
+        border-color: var(--hi-color-primary);
+        color: var(--hi-color-primary);
     }
 
     &:active {
@@ -262,9 +262,9 @@
     }
 
     &.hikari-zoom-preset-active {
-        background-color: var(--hikari-color-primary);
-        border-color: var(--hikari-color-primary);
-        color: var(--hikari-color-text-primary);
+        background-color: var(--hi-color-primary);
+        border-color: var(--hi-color-primary);
+        color: var(--hi-color-text-primary);
 
         // FUI glow
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
@@ -376,7 +376,7 @@
         padding-left: 0;
         padding-top: $hikari-spacing-sm;
         border-left: none;
-        border-top: 1px solid var(--hikari-color-border);
+        border-top: 1px solid var(--hi-color-border);
     }
 
     .hikari-zoom-slider-container {
@@ -392,8 +392,8 @@
             height: 100px;
             background: linear-gradient(
                 180deg,
-                var(--hikari-color-primary),
-                var(--hikari-color-secondary)
+                var(--hi-color-primary),
+                var(--hi-color-secondary)
             );
         }
 
@@ -402,8 +402,8 @@
             height: 100px;
             background: linear-gradient(
                 180deg,
-                var(--hikari-color-primary),
-                var(--hikari-color-secondary)
+                var(--hi-color-primary),
+                var(--hi-color-secondary)
             );
         }
     }
@@ -420,7 +420,7 @@
     box-shadow: none;
 
     .hikari-zoom-button {
-        background-color: rgba(var(--hikari-color-surface), 0.8);
+        background-color: rgba(var(--hi-color-surface), 0.8);
         backdrop-filter: blur(4px);
     }
 }
@@ -439,10 +439,10 @@
         padding: 2px;
         background: linear-gradient(
             135deg,
-            var(--hikari-color-primary),
-            var(--hikari-color-secondary),
-            var(--hikari-color-accent),
-            var(--hikari-color-primary)
+            var(--hi-color-primary),
+            var(--hi-color-secondary),
+            var(--hi-color-accent),
+            var(--hi-color-primary)
         );
         background-size: 300% 300%;
         animation: hikari-zoom-gradient-shift 4s ease infinite;
@@ -483,11 +483,11 @@
         left: 50%;
         transform: translateX(-50%) translateY(-8px);
         padding: $hikari-spacing-xs $hikari-spacing-sm;
-        background-color: var(--hikari-color-background);
-        border: 1px solid var(--hikari-color-border);
+        background-color: var(--hi-color-background);
+        border: 1px solid var(--hi-color-border);
         border-radius: $hikari-radius-sm;
         font-size: $hikari-font-size-xs;
-    color: var(--hikari-color-text-primary);
+    color: var(--hi-color-text-primary);
         white-space: nowrap;
         opacity: 0;
         pointer-events: none;

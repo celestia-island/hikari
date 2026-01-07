@@ -8,3 +8,6 @@ license.workspace = true
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
 
+[features]
+chinese-names = []  # Include Chinese color names (disabled by default to minimize wasm size)
+

@@ -3,20 +3,38 @@
 
 use dioxus::prelude::*;
 
+use crate::{app::Route, components::Layout};
+
 /// CSS utilities showcase page
 #[allow(non_snake_case)]
 #[component]
 pub fn SystemCSS() -> Element {
     rsx! {
-        div { class: "space-y-6",
-            div { class: "mb-8",
-                h1 { class: "hi-text-4xl hi-font-bold hi-text-gray-800 hi-mb-2", "CSS Utilities" }
-                p { class: "hi-text-gray-600", "Tailwind-compatible utility classes for rapid styling" }
-            }
+        Layout {
+            current_route: Route::SystemCSS {},
+            children: rsx! {
+                div {
+                    class: "page-container",
 
-            div { class: "bg-blue-50 hi-border border-blue-200 hi-rounded-lg hi-p-6",
-                p { class: "hi-text-blue-800",
-                    "This page is under construction. Check back soon for detailed documentation and examples!"
+                    div {
+                        class: "page-header",
+                        h1 {
+                            class: "page-title",
+                            "CSS Utilities"
+                        }
+                        p {
+                            class: "page-description",
+                            "Tailwind-compatible utility classes for rapid styling"
+                        }
+                    }
+
+                    div {
+                        class: "info-box",
+                        p {
+                            class: "info-box-text",
+                            "This page is under construction. Check back soon for detailed documentation and examples!"
+                        }
+                    }
                 }
             }
         }

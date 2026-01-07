@@ -1,10 +1,15 @@
-// demo-app/src/pages/basic_components.rs
-// Basic components demonstration page
+// demo-app/src/pages/components/basic.rs
+// Basic components demonstration page with FUI styling
+
+extern crate components as hikari_components;
 
 use dioxus::prelude::*;
-use components::*;
+use hikari_components::{
+    Button, ButtonVariant, ButtonSize, Input, Card, Badge, BadgeVariant,
+    layout::{Container, Section, Row}
+};
 
-use crate::{app::Route, components::{Layout, Section}};
+use crate::{app::Route, components::Layout};
 
 #[component]
 pub fn ComponentsBasic() -> Element {
@@ -12,77 +17,238 @@ pub fn ComponentsBasic() -> Element {
         Layout {
             current_route: Route::ComponentsBasic {},
 
-            h1 { class: "hi-text-3xl lg:text-4xl hi-font-bold mb-8 hi-text-dark-theme",
-                "Basic Components"
-            }
-
-            Section {
-                title: "Buttons".to_string(),
-                children: rsx! {
-                    div { class: "hi-flex hi-flex-wrap gap-3 hi-items-center",
-                        Button { variant: ButtonVariant::Primary, "Primary Button" }
-                        Button { variant: ButtonVariant::Secondary, "Secondary Button" }
-                        Button { variant: ButtonVariant::Ghost, "Ghost Button" }
-                        Button { variant: ButtonVariant::Danger, "Danger Button" }
-                        Button { variant: ButtonVariant::Success, "Success Button" }
+            Container {
+                // Page header
+                div {
+                    class: "showcase-header",
+                    h1 {
+                        class: "showcase-page-title",
+                        "Basic Components"
                     }
-
-                    div { class: "hi-flex hi-flex-wrap gap-3 hi-items-center mt-5",
-                        Button { size: ButtonSize::Small, "Small" }
-                        Button { size: ButtonSize::Medium, "Medium" }
-                        Button { size: ButtonSize::Large, "Large" }
-                    }
-
-                    div { class: "hi-flex hi-flex-wrap gap-3 hi-items-center mt-5",
-                        Button { loading: true, "Loading..." }
-                        Button { disabled: true, "Disabled" }
+                    p {
+                        class: "showcase-page-description",
+                        "Essential UI building blocks with FUI aesthetics"
                     }
                 }
-            }
 
-            Section {
-                title: "Inputs".to_string(),
-                children: rsx! {
-                    div { class: "hi-flex hi-flex-col gap-4 max-w-md",
-                        div {
-                            label { class: "hi-block mb-1.5 hi-font-medium hi-text-gray-700", "Default Input" }
-                            Input { placeholder: "Enter text..." }
+                // Buttons Section
+                Section {
+                    title: Some("Buttons".to_string()),
+                    class: "showcase-section",
+
+                    // Button variants
+                    div {
+                        class: "showcase-subsection",
+                        h3 {
+                            class: "showcase-subtitle",
+                            "Button Variants"
                         }
+                        Row {
+                            gap: "md".to_string(),
+                            Button { variant: ButtonVariant::Primary, "Primary" }
+                            Button { variant: ButtonVariant::Secondary, "Secondary" }
+                            Button { variant: ButtonVariant::Ghost, "Ghost" }
+                            Button { variant: ButtonVariant::Danger, "Danger" }
+                            Button { variant: ButtonVariant::Success, "Success" }
+                        }
+                    }
 
-                        div {
-                            label { class: "hi-block mb-1.5 hi-font-medium hi-text-gray-700", "Disabled Input" }
-                            Input { disabled: true, value: "Disabled input" }
+                    // Button sizes
+                    div {
+                        class: "showcase-subsection",
+                        h3 {
+                            class: "showcase-subtitle",
+                            "Button Sizes"
+                        }
+                        Row {
+                            gap: "md".to_string(),
+                            Button { size: ButtonSize::Small, "Small" }
+                            Button { size: ButtonSize::Medium, "Medium" }
+                            Button { size: ButtonSize::Large, "Large" }
+                        }
+                    }
+
+                    // Button states
+                    div {
+                        class: "showcase-subsection",
+                        h3 {
+                            class: "showcase-subtitle",
+                            "Button States"
+                        }
+                        Row {
+                            gap: "md".to_string(),
+                            Button { loading: true, "Loading..." }
+                            Button { disabled: true, "Disabled" }
                         }
                     }
                 }
-            }
 
-            Section {
-                title: "Cards".to_string(),
-                children: rsx! {
-                    div { class: "hi-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-5",
+                // Inputs Section
+                Section {
+                    title: Some("Inputs".to_string()),
+                    class: "showcase-section",
+
+                    div {
+                        class: "demo-card-grid",
+
+                        // Default input
+                        div {
+                            label {
+                                class: "showcase-label",
+                                "Default Input"
+                            }
+                            Input {
+                                placeholder: "Enter text..."
+                            }
+                        }
+
+                        // Disabled input
+                        div {
+                            label {
+                                class: "showcase-label",
+                                "Disabled Input"
+                            }
+                            Input {
+                                disabled: true,
+                                value: "Disabled input"
+                            }
+                        }
+
+                        // Search input
+                        div {
+                            label {
+                                class: "showcase-label",
+                                "Search Input"
+                            }
+                            Input {
+                                placeholder: "Search..."
+                            }
+                        }
+
+                        // Password input
+                        div {
+                            label {
+                                class: "showcase-label",
+                                "Password Input"
+                            }
+                            Input {
+                                placeholder: "Enter password..."
+                            }
+                        }
+                    }
+                }
+
+                // Cards Section
+                Section {
+                    title: Some("Cards".to_string()),
+                    class: "showcase-section",
+
+                    div {
+                        class: "showcase-grid",
+
+                        // Basic card with header
                         Card {
                             title: "Card Title".to_string(),
-                            div { class: "hi-m-0 hi-text-gray-600", "This is a simple card with header and content." }
+                            div {
+                                class: "demo-description",
+                                "This is a simple card with header and content. Perfect for displaying grouped information."
+                            }
                         }
 
+                        // Card without header
                         Card {
-                            h3 { class: "hi-m-0 mb-2.5", "Simple Card" }
-                            p { class: "hi-m-0 hi-text-gray-600", "Card without header, just content." }
+                            h3 {
+                                class: "section-subtitle",
+                                "Simple Card"
+                            }
+                            p {
+                                class: "demo-description",
+                                "Card without header, just content. Flexible and minimal design."
+                            }
+                        }
+
+                        // Card with action buttons
+                        Card {
+                            title: "Interactive Card".to_string(),
+                            div {
+                                class: "demo-description mb-4",
+                                "This card includes action buttons for user interactions."
+                            }
+                            div {
+                                class: "showcase-vertical-stack",
+                                Button { size: ButtonSize::Small, variant: ButtonVariant::Primary, "Action" }
+                                Button { size: ButtonSize::Small, variant: ButtonVariant::Ghost, "Cancel" }
+                            }
+                        }
+
+                        // Card with badge
+                        Card {
+                            title: "Card with Badge".to_string(),
+                            div {
+                                class: "showcase-vertical-stack mb-4",
+                                Badge { variant: BadgeVariant::Primary, "New" }
+                                Badge { variant: BadgeVariant::Success, "Active" }
+                            }
+                            p {
+                                class: "demo-description",
+                                "Cards can include badges to show status or other metadata."
+                            }
                         }
                     }
                 }
-            }
 
-            Section {
-                title: "Badges".to_string(),
-                children: rsx! {
-                    div { class: "hi-flex hi-flex-wrap gap-3 hi-items-center",
-                        Badge { variant: BadgeVariant::Default, "Default" }
-                        Badge { variant: BadgeVariant::Primary, "Primary" }
-                        Badge { variant: BadgeVariant::Success, "Success" }
-                        Badge { variant: BadgeVariant::Warning, "Warning" }
-                        Badge { variant: BadgeVariant::Danger, "Danger" }
+                // Badges Section
+                Section {
+                    title: Some("Badges".to_string()),
+                    class: "showcase-section",
+
+                    // Badge variants
+                    div {
+                        class: "showcase-subsection",
+                        h3 {
+                            class: "showcase-subtitle",
+                            "Badge Variants"
+                        }
+                        Row {
+                            gap: "md".to_string(),
+                            Badge { variant: BadgeVariant::Default, "Default" }
+                            Badge { variant: BadgeVariant::Primary, "Primary" }
+                            Badge { variant: BadgeVariant::Success, "Success" }
+                            Badge { variant: BadgeVariant::Warning, "Warning" }
+                            Badge { variant: BadgeVariant::Danger, "Danger" }
+                        }
+                    }
+
+                    // Badge styles
+                    div {
+                        class: "showcase-subsection",
+                        h3 {
+                            class: "showcase-subtitle",
+                            "Badge with Dots"
+                        }
+                        Row {
+                            gap: "md".to_string(),
+                            Badge { variant: BadgeVariant::Primary, dot: true, "Online" }
+                            Badge { variant: BadgeVariant::Success, dot: true, "Completed" }
+                            Badge { variant: BadgeVariant::Warning, dot: true, "Pending" }
+                            Badge { variant: BadgeVariant::Danger, dot: true, "Error" }
+                        }
+                    }
+
+                    // Badge counts
+                    div {
+                        class: "showcase-subsection",
+                        h3 {
+                            class: "showcase-subtitle",
+                            "Badge Counts"
+                        }
+                        Row {
+                            gap: "md".to_string(),
+                            Badge { variant: BadgeVariant::Primary, "5" }
+                            Badge { variant: BadgeVariant::Success, "99+" }
+                            Badge { variant: BadgeVariant::Danger, "1" }
+                            Badge { variant: BadgeVariant::Warning, "12" }
+                        }
                     }
                 }
             }

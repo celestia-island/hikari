@@ -1,8 +1,8 @@
 /* Primary - Primary color scheme */
 :root[data-theme="primary"] {
-  --hikari-BLUE_500: #3B82F6;
-  --hikari-BLUE_600: #2563EB;
-  --hikari-BLUE_50: #EFF6FF;
-  --hikari-SLATE_900: #0F172A;
-  --hikari-SLATE_50: #F8FAFC;
+  --hi-BLUE_500: #3B82F6;
+  --hi-BLUE_600: #2563EB;
+  --hi-BLUE_50: #EFF6FF;
+  --hi-SLATE_900: #0F172A;
+  --hi-SLATE_50: #F8FAFC;
 }

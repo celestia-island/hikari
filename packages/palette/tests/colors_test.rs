@@ -5,35 +5,35 @@ use hikari_palette::*;
 
 #[test]
 fn test_color_properties() {
-    let color = 朱砂;
-    assert_eq!(color.name, "朱砂");
-    assert_eq!(color.hex, "#FF4C00");
+    let color = 彤;
+    assert_eq!(color.hex(), "#F35336");
     assert_eq!(color.category, ColorCategory::Red);
 }
 
 #[test]
 fn test_all_colors_are_unique() {
     let colors = vec![
-        朱砂, 石青, 藤黄, 靛蓝, 月白, 墨色, 丹雘, 黛色, 葱倩, 鹅黄, 缟色, 云白, 烟灰,
+        丹, 石青, 姜黄, 靛蓝, 月白, 墨灰, 朱红, 黛紫, 葱倩, 鹅黄, 莹白, 象牙白,
     ];
 
-    let mut seen: std::collections::HashMap<String, bool> = std::collections::HashMap::new();
+    let mut seen = std::collections::HashSet::new();
     for color in colors {
+        let hex = color.hex();
         assert!(
-            !seen.contains_key(&color.name.to_string()),
+            !seen.contains(&hex),
             "Duplicate color: {}",
-            color.name
+            hex
         );
-        seen.insert(color.name.to_string(), true);
+        seen.insert(hex);
     }
 }
 
 #[test]
 fn test_palette_default() {
     let palette = Palette::default();
-    assert_eq!(palette.primary.name, 石青.name);
-    assert_eq!(palette.secondary.name, 朱砂.name);
-    assert_eq!(palette.success.name, 葱倩.name);
+    assert_eq!(palette.primary.hex(), 石青.hex());
+    assert_eq!(palette.secondary.hex(), 朱红.hex());
+    assert_eq!(palette.success.hex(), 葱倩.hex());
 }
 
 #[test]
@@ -41,9 +41,9 @@ fn test_palettes() {
     let primary = primary_palette();
     let fui_dark = fui_dark_palette();
 
-    assert_eq!(primary.background, 墨色);
-    assert_eq!(fui_dark.background, 墨色);
+    assert_eq!(primary.background.hex(), 墨色.hex());
+    assert_eq!(fui_dark.background.hex(), 墨色.hex());
 
-    assert_eq!(primary.primary.name, 石青.name);
-    assert_eq!(fui_dark.accent.name, 靛蓝.name);
+    assert_eq!(primary.primary.hex(), 石青.hex());
+    assert_eq!(fui_dark.accent.hex(), 靛蓝.hex());
 }

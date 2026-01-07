@@ -84,10 +84,23 @@ impl Default for TabsProps {
     }
 }
 
-/// Tabs component with Arknights + FUI styling
+/// Tabs component with modern, premium styling
+///
+/// A tabbed interface component for organizing content into separate panels.
+/// Inspired by Material UI and Element Plus with smooth ink bar animations.
+///
+/// # Features
+/// - **Smooth Ink Bar**: Animated indicator that slides between tabs (Material UI style)
+/// - **Multiple Positions**: Top, Bottom, Left, Right tab placements
+/// - **Type Variants**: Line (default), Card, Border Card, and Segment styles
+/// - **Hover Effects**: Subtle background transitions on hover
+/// - **Icons**: Support for icons alongside tab labels
+/// - **Animations**: Smooth content transitions between tabs
+/// - **Responsive**: Size variants (sm, lg) and mobile-optimized scrolling
 ///
 /// # Examples
 ///
+/// ## Basic Tabs
 /// ```rust
 /// use dioxus::prelude::*;
 /// use hikari_components::{Tabs, TabPane};
@@ -95,13 +108,113 @@ impl Default for TabsProps {
 /// fn app() -> Element {
 ///     rsx! {
 ///         Tabs {
-///             default_active: "1",
-///             TabPane { item_key: "1".to_string(), tab: "Tab 1", "Content 1" }
-///             TabPane { item_key: "2".to_string(), tab: "Tab 2", "Content 2" }
+///             default_active: "1".to_string(),
+///             TabPane {
+///                 item_key: "1".to_string(),
+///                 tab: "Overview".to_string(),
+///                 "Overview content"
+///             }
+///             TabPane {
+///                 item_key: "2".to_string(),
+///                 tab: "Details".to_string(),
+///                 "Details content"
+///             }
 ///         }
 ///     }
 /// }
 /// ```
+///
+/// ## Tabs with Icons
+/// ```rust
+/// use dioxus::prelude::*;
+/// use hikari_components::{Tabs, TabPane};
+///
+/// fn app() -> Element {
+///     rsx! {
+///         Tabs {
+///             TabPane {
+///                 item_key: "1".to_string(),
+///                 tab: "Home".to_string(),
+///                 icon: rsx! {
+///                     svg { /* Home icon */ }
+///                 },
+///                 "Home content"
+///             }
+///             TabPane {
+///                 item_key: "2".to_string(),
+///                 tab: "Profile".to_string(),
+///                 icon: rsx! {
+///                     svg { /* Profile icon */ }
+///                 },
+///                 "Profile content"
+///             }
+///         }
+///     }
+/// }
+/// ```
+///
+/// ## Card Style Tabs
+/// ```rust
+/// rsx! {
+///     Tabs {
+///         class: "hi-tabs-card",
+///         TabPane { item_key: "1".to_string(), tab: "Tab 1", "Content 1" }
+///         TabPane { item_key: "2".to_string(), tab: "Tab 2", "Content 2" }
+///     }
+/// }
+/// ```
+///
+/// ## Segment Style Tabs (Pill-shaped)
+/// ```rust
+/// rsx! {
+///     Tabs {
+///         class: "hi-tabs-segment",
+///         TabPane { item_key: "1".to_string(), tab: "Tab 1", "Content 1" }
+///         TabPane { item_key: "2".to_string(), tab: "Tab 2", "Content 2" }
+///     }
+/// }
+/// ```
+///
+/// # Position Variants
+/// - **Top** (`.hi-tabs-top`): Tabs above content (default)
+/// - **Bottom** (`.hi-tabs-bottom`): Tabs below content
+/// - **Left** (`.hi-tabs-left`): Tabs on the left side
+/// - **Right** (`.hi-tabs-right`): Tabs on the right side
+///
+/// # Type Variants
+/// - **Line** (default): Minimal style with ink bar indicator
+/// - **Card** (`.hi-tabs-card`): Card-like container with background
+/// - **Border Card** (`.hi-tabs-border-card`): Card with visible borders
+/// - **Segment** (`.hi-tabs-segment`): Pill-shaped tab container
+///
+/// # Styling
+/// The component uses CSS custom properties for theming:
+/// - `--hi-primary-600`: Active tab and ink bar color
+/// - `--hi-text-primary`: Active tab text color
+/// - `--hi-text-secondary`: Inactive tab text color
+/// - `--hi-border`: Border color for card variants
+/// - `--hi-surface`: Background for card variants
+///
+/// # Size Variants
+/// - **Default**: 14px font, 10px padding
+/// - **Small** (`.hi-tabs-sm`): 13px font, 8px padding
+/// - **Large** (`.hi-tabs-lg`): 15px font, 12px padding
+///
+/// # Animations
+/// The component includes smooth animations:
+/// - Ink bar slides between tabs (300ms cubic-bezier)
+/// - Tab content fades in with slide (200ms)
+/// - Hover states transition smoothly (150ms)
+///
+/// # Accessibility
+/// - Proper `role="tablist"` and `role="tab"` attributes
+/// - `aria-selected` for active tabs
+/// - `aria-disabled` for disabled tabs
+/// - Keyboard navigation support (Arrow keys)
+/// - Focus-visible states for keyboard users
+///
+/// # Dark Mode
+/// The component automatically adapts to dark mode when `data-theme="dark"` is set on the root element.
 #[component]
 pub fn Tabs(props: TabsProps) -> Element {
     let _active_key = use_signal(|| props.default_active.clone());

@@ -1,8 +1,8 @@
 /* Arknights - Arknights-inspired dark theme */
 :root[data-theme="arknights"] {
-  --hikari-CYAN_500: #06B6D4;
-  --hikari-CYAN_600: #0891B2;
-  --hikari-CYAN_50: #ECFEFF;
-  --hikari-SLATE_900: #0F172A;
-  --hikari-SLATE_800: #1E293B;
+  --hi-CYAN_500: #06B6D4;
+  --hi-CYAN_600: #0891B2;
+  --hi-CYAN_50: #ECFEFF;
+  --hi-SLATE_900: #0F172A;
+  --hi-SLATE_800: #1E293B;
 }

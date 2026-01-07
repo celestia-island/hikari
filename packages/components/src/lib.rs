@@ -29,6 +29,7 @@
 //! ## Modules
 //!
 //! - [`layout`] - Layout components (Layout, Header, Aside, Content)
+//! - [`hooks`] - Responsive design hooks and media queries
 //! - [`basic`] - Basic UI components
 //! - [`feedback`] - Feedback and notification components
 //! - [`navigation`] - Navigation and routing components
@@ -37,6 +38,12 @@
 
 // Layout components (always available)
 pub mod layout;
+
+// Responsive hooks (always available)
+pub mod hooks;
+
+// JavaScript utilities (always available)
+pub mod scripts;
 
 // Feature-gated modules
 #[cfg(any(
@@ -68,13 +75,7 @@ pub mod navigation;
     feature = "data",
     feature = "table",
     feature = "tree",
-    feature = "pagination",
-    feature = "virtual-scroll",
-    feature = "collapse",
-    feature = "drag",
-    feature = "sort",
-    feature = "filter",
-    feature = "selection"
+    feature = "pagination"
 ))]
 pub mod data;
 

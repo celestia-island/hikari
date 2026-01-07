@@ -4,43 +4,58 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use crate::app::Route;
+use crate::{app::Route, components::Layout};
 
 /// System overview page
 #[allow(non_snake_case)]
 #[component]
 pub fn SystemOverview() -> Element {
     rsx! {
-        div { class: "hi-space-y-6",
-            div { class: "hi-mb-8",
-                h1 { class: "hi-text-4xl hi-font-bold hi-text-gray-800 hi-mb-2", "System" }
-                p { class: "hi-text-gray-600", "Explore Hikari's foundational systems and utilities" }
-            }
+        Layout {
+            current_route: Route::SystemOverview {},
+            children: rsx! {
+                div {
+                    class: "page-container",
 
-            // System categories grid
-            div { class: "hi-grid hi-grid-cols-1 hi-md:grid-cols-2 hi-gap-6",
-                SystemCard {
-                    title: "CSS Utilities".to_string(),
-                    description: "Tailwind-compatible utility classes for rapid styling".to_string(),
-                    route: Route::SystemCSS {}
-                }
+                    div {
+                        class: "page-header",
+                        h1 {
+                            class: "page-title",
+                            "System"
+                        }
+                        p {
+                            class: "page-description",
+                            "Explore Hikari's foundational systems and utilities"
+                        }
+                    }
 
-                SystemCard {
-                    title: "Icons".to_string(),
-                    description: "Comprehensive icon library powered by Lucide".to_string(),
-                    route: Route::SystemIcons {}
-                }
+                    // System categories grid
+                    div {
+                        class: "component-grid",
+                        SystemCard {
+                            title: "CSS Utilities".to_string(),
+                            description: "Tailwind-compatible utility classes for rapid styling".to_string(),
+                            route: Route::SystemCSS {}
+                        }
 
-                SystemCard {
-                    title: "Palette".to_string(),
-                    description: "Chinese traditional color system with 500+ colors".to_string(),
-                    route: Route::SystemPalette {}
-                }
+                        SystemCard {
+                            title: "Icons".to_string(),
+                            description: "Comprehensive icon library powered by Lucide".to_string(),
+                            route: Route::SystemIcons {}
+                        }
 
-                SystemCard {
-                    title: "Animations".to_string(),
-                    description: "GSAP-inspired animation system for smooth transitions".to_string(),
-                    route: Route::SystemAnimations {}
+                        SystemCard {
+                            title: "Palette".to_string(),
+                            description: "Chinese traditional color system with 500+ colors".to_string(),
+                            route: Route::SystemPalette {}
+                        }
+
+                        SystemCard {
+                            title: "Animations".to_string(),
+                            description: "GSAP-inspired animation system for smooth transitions".to_string(),
+                            route: Route::SystemAnimations {}
+                        }
+                    }
                 }
             }
         }
@@ -57,11 +72,17 @@ fn SystemCard(
     rsx! {
         Link {
             to: route,
-            class: "hi-block group",
+            class: "system-card",
             div {
-                class: "hi-bg-white hi-rounded-lg shadow-md hi-p-6 hover:shadow-lg hover:-translate-y-1 hi-transition-all duration-200 border-2 border-transparent hover:border-[#4a9eff]",
-                h3 { class: "hi-text-2xl hi-font-semibold hi-text-gray-800 hi-mb-2", "{title}" }
-                p { class: "hi-text-gray-600", "{description}" }
+                class: "system-card-inner",
+                h3 {
+                    class: "system-card-title",
+                    "{title}"
+                }
+                p {
+                    class: "system-card-description",
+                    "{description}"
+                }
             }
         }
     }

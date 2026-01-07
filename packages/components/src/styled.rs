@@ -113,19 +113,18 @@ impl StyleRegistry {
     #[cfg(feature = "data")]
     pub fn register_data_components(&mut self) {
         use crate::data::{
-            CollapseComponent, DragComponent, FilterComponent, PaginationComponent,
-            SelectionComponent, SortComponent, TableComponent, TreeComponent,
-            VirtualScrollComponent,
+            PaginationComponent, TableComponent, TreeComponent,
         };
         TableComponent::register(self);
         TreeComponent::register(self);
         PaginationComponent::register(self);
-        VirtualScrollComponent::register(self);
-        CollapseComponent::register(self);
-        DragComponent::register(self);
-        SortComponent::register(self);
-        FilterComponent::register(self);
-        SelectionComponent::register(self);
+        // TODO: Uncomment when implemented
+        // VirtualScrollComponent::register(self);
+        // CollapseComponent::register(self);
+        // DragComponent::register(self);
+        // SortComponent::register(self);
+        // FilterComponent::register(self);
+        // SelectionComponent::register(self);
     }
 
     /// No-op if data feature is disabled

@@ -3,20 +3,38 @@
 
 use dioxus::prelude::*;
 
+use crate::{app::Route, components::Layout};
+
 /// Palette showcase page
 #[allow(non_snake_case)]
 #[component]
 pub fn SystemPalette() -> Element {
     rsx! {
-        div { class: "space-y-6",
-            div { class: "mb-8",
-                h1 { class: "hi-text-4xl hi-font-bold hi-text-gray-800 hi-mb-2", "Chinese Traditional Colors" }
-                p { class: "hi-text-gray-600", "500+ traditional colors from Chinese culture and history" }
-            }
+        Layout {
+            current_route: Route::SystemPalette {},
+            children: rsx! {
+                div {
+                    class: "page-container",
 
-            div { class: "bg-blue-50 hi-border border-blue-200 hi-rounded-lg hi-p-6",
-                p { class: "hi-text-blue-800",
-                    "This page is under construction. Check back soon for detailed documentation and examples!"
+                    div {
+                        class: "page-header",
+                        h1 {
+                            class: "page-title",
+                            "Chinese Traditional Colors"
+                        }
+                        p {
+                            class: "page-description",
+                            "500+ traditional colors from Chinese culture and history"
+                        }
+                    }
+
+                    div {
+                        class: "info-box",
+                        p {
+                            class: "info-box-text",
+                            "This page is under construction. Check back soon for detailed documentation and examples!"
+                        }
+                    }
                 }
             }
         }

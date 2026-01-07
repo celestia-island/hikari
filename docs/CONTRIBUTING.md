@@ -166,9 +166,9 @@ Follow SCSS best practices:
 ```scss
 // Use variables for all values
 .my-component {
-    background-color: var(--hikari-color-surface);
-    padding: var(--hikari-spacing-md);
-    border-radius: var(--hikari-radius-lg);
+    background-color: var(--hi-color-surface);
+    padding: var(--hi-spacing-md);
+    border-radius: var(--hi-radius-lg);
 }
 
 // Use nesting for related styles

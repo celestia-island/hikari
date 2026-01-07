@@ -2,71 +2,13 @@
 // CSS 变量（使用 hikari-palette）
 
 // ============================================
-// 主题变量
+// 1. Color System (Import from auto-generated file)
 // ============================================
 
-// Primary 主题
-:root[data-theme="primary"] {
-    --hikari-color-primary: #3B82F6;
-    --hikari-color-secondary: #FF4C00;
-    --hikari-color-accent: #FFC107;
-    --hikari-color-success: #5CBF91;
-    --hikari-color-warning: #FFE4A6;
-    --hikari-color-danger: #FF4C00;
-    --hikari-color-background: #1F1F1F;
-    --hikari-color-surface: #2D2D2D;
-    --hikari-color-border: #3A3A3A;
-    --hikari-color-text-primary: #F8FAFC;
-    --hikari-color-text-secondary: #9CA3AF;
-}
-
-// FUI Dark 主题
-:root[data-theme="fui-dark"] {
-    --hikari-color-primary: #8B5CF6;
-    --hikari-color-secondary: #A855F7;
-    --hikari-color-accent: #10B981;
-    --hikari-color-success: #5CBF91;
-    --hikari-color-warning: #FBBF24;
-    --hikari-color-danger: #EF4444;
-    --hikari-color-background: #0F172A;
-    --hikari-color-surface: #1E293B;
-    --hikari-color-border: #334155;
-    --hikari-color-text-primary: #F1F5F9;
-    --hikari-color-text-secondary: #94A3B8;
-}
-
-// Arknights 主题
-:root[data-theme="arknights"] {
-    --hikari-color-primary: #06B6D4;
-    --hikari-color-secondary: #E74C3C;
-    --hikari-color-accent: #F59E0B;
-    --hikari-color-success: #10B981;
-    --hikari-color-warning: #F59E0B;
-    --hikari-color-danger: #DC2626;
-    --hikari-color-background: #1F1F1F;
-    --hikari-color-surface: #2D2D2D;
-    --hikari-color-border: #3A3A3A;
-    --hikari-color-text-primary: #F1F5F9;
-    --hikari-color-text-secondary: #94A3B8;
-}
-
-// Fresh 主题
-:root[data-theme="fresh"] {
-    --hikari-color-primary: #10B981;
-    --hikari-color-secondary: #8B5CF6;
-    --hikari-color-accent: #F59E0B;
-    --hikari-color-success: #10B981;
-    --hikari-color-warning: #F59E0B;
-    --hikari-color-danger: #EF4444;
-    --hikari-color-background: #FFFFFF;
-    --hikari-color-surface: #F8FAFC;
-    --hikari-color-border: #E2E8F0;
-    --hikari-color-text-primary: #1E293B;
-    --hikari-color-text-secondary: #64748B;
-}
+@import '_colors.scss';
 
 // ============================================
-// 字体变量
+// 2. Typography Variables
 // ============================================
 
 $hikari-font-family-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -117,3 +59,46 @@ $hikari-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 $hikari-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
 $hikari-transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
 $hikari-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+// ============================================
+// FUI 设计系统变量
+// ============================================
+
+// 亚克力效果参数
+$hikari-acrylic-blur: 20px;
+$hikari-acrylic-noise: 0.5;
+$hikari-acrylic-opacity: 0.85;
+
+// 发光效果参数
+$hikari-glow-sm: 0 0 8px rgba(139, 92, 246, 0.4);
+$hikari-glow-md: 0 0 16px rgba(139, 92, 246, 0.5);
+$hikari-glow-lg: 0 0 24px rgba(139, 92, 246, 0.6);
+$hikari-glow-focus: 0 0 20px rgba(139, 92, 246, 0.7);
+
+// 强调色条参数
+$hikari-accent-bar-width: 3px;
+$hikari-accent-bar-position: left; // left, right, top, bottom
+
+// 细微圆角（FUI 风格）
+$hikari-radius-fui-sm: 4px;
+$hikari-radius-fui-md: 6px;
+$hikari-radius-fui-lg: 8px;
+
+// 边框发光
+$hikari-border-glow-color: rgba(139, 92, 246, 0.6);
+$hikari-border-glow-width: 1px;
+
+// 动画缓动函数（GSAP 风格）
+$hikari-ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+$hikari-ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+$hikari-ease-elastic: cubic-bezier(0.5, 1.5, 0.5, 1);
+
+// 动画时长
+$hikari-duration-instant: 100ms;
+$hikari-duration-fast: 200ms;
+$hikari-duration-normal: 300ms;
+$hikari-duration-slow: 500ms;
+
+// 背景微动参数
+$hikari-ambient-duration: 8s;
+$hikari-ambient-easing: ease-in-out;

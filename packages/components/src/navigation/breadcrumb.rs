@@ -59,10 +59,22 @@ impl Default for BreadcrumbProps {
     }
 }
 
-/// Breadcrumb component with Arknights + FUI styling
+/// Breadcrumb component with modern, premium styling
+///
+/// A navigation breadcrumb component that shows the current page's location
+/// in the site hierarchy. Inspired by Material UI and Element Plus.
+///
+/// # Features
+/// - **Chevron Separators**: Default SVG chevron-right icons (refined, not text-based)
+/// - **Hover Effects**: Subtle background and color transitions
+/// - **Custom Separators**: Support for custom separator styles (slash, arrow, dot)
+/// - **Style Variants**: Background and pill styles for different contexts
+/// - **Responsive**: Size variants (sm, lg) for different screen sizes
+/// - **Icons**: Support for icons alongside breadcrumb text
 ///
 /// # Examples
 ///
+/// ## Basic Breadcrumb
 /// ```rust
 /// use dioxus::prelude::*;
 /// use hikari_components::{Breadcrumb, BreadcrumbItem};
@@ -70,14 +82,24 @@ impl Default for BreadcrumbProps {
 /// fn app() -> Element {
 ///     rsx! {
 ///         Breadcrumb {
-///             separator: ">",
-///             BreadcrumbItem { item_key: "home".to_string(), "Home" }
-///             BreadcrumbItem { item_key: "library".to_string(), "Library" }
-///             BreadcrumbItem { item_key: "book".to_string(), "Book" }
+///             BreadcrumbItem { item_key: "1".to_string(), "Home" }
+///             BreadcrumbItem { item_key: "2".to_string(), "Library" }
+///             BreadcrumbItem { item_key: "3".to_string(), "Book" }
 ///         }
 ///     }
 /// }
 /// ```
+///
+/// # Styling
+/// The component uses CSS custom properties for theming:
+/// - `--hi-text-primary`: Current page text color
+/// - `--hi-text-secondary`: Clickable item color
+/// - `--hi-primary-600`: Hover state color
+///
+/// # Size Variants
+/// - **Default**: 14px font
+/// - **Small** (`.hi-breadcrumb-sm`): 12px font
+/// - **Large** (`.hi-breadcrumb-lg`): 16px font
 #[component]
 pub fn Breadcrumb(props: BreadcrumbProps) -> Element {
     rsx! {
@@ -156,9 +178,25 @@ pub fn BreadcrumbSeparator(#[props(default)] separator: String) -> Element {
     rsx! {
         li {
             class: "hi-breadcrumb-separator",
-            span {
-                class: "hi-breadcrumb-separator-icon",
-                "{separator}"
+            if separator.is_empty() {
+                // Default chevron-right icon
+                svg {
+                    xmlns: "http://www.w3.org/2000/svg",
+                    view_box: "0 0 24 24",
+                    fill: "none",
+                    stroke: "currentColor",
+                    "stroke-width": "2",
+                    "stroke-linecap": "round",
+                    "stroke-linejoin": "round",
+                    path {
+                        d: "M9 18l6-6-6-6"
+                    }
+                }
+            } else {
+                span {
+                    class: "hi-breadcrumb-separator-icon",
+                    "{separator}"
+                }
             }
         }
     }

@@ -29,8 +29,8 @@
         transform $hikari-transition-fast;
 
     // Arknights clean design with FUI glow
-    background-color: var(--hikari-color-surface);
-    border: 2px solid var(--hikari-color-primary);
+    background-color: var(--hi-color-surface);
+    border: 2px solid var(--hi-color-primary);
     border-radius: $hikari-radius-md;
     box-shadow:
         $hikari-shadow-xl,
@@ -81,7 +81,7 @@
     justify-content: center;
     gap: $hikari-spacing-sm;
     font-size: $hikari-font-size-sm;
-    color: var(--hikari-color-text-primary);
+    color: var(--hi-color-text-primary);
     white-space: nowrap;
 
     // Ghost text effect
@@ -91,7 +91,7 @@
 .hikari-drag-preview-icon {
     width: 20px;
     height: 20px;
-    color: var(--hikari-color-primary);
+    color: var(--hi-color-primary);
     filter: drop-shadow(0 0 8px currentColor);
 }
 
@@ -134,7 +134,7 @@
 
     // Valid drop target
     &.hikari-drop-zone-valid {
-        border-color: var(--hikari-color-success);
+        border-color: var(--hi-color-success);
         background-color: rgba(16, 185, 129, 0.05);
         box-shadow:
             inset 0 0 20px rgba(16, 185, 129, 0.2),
@@ -143,7 +143,7 @@
 
     // Invalid drop target
     &.hikari-drop-zone-invalid {
-        border-color: var(--hikari-color-danger);
+        border-color: var(--hi-color-danger);
         background-color: rgba(239, 68, 68, 0.05);
         box-shadow:
             inset 0 0 20px rgba(239, 68, 68, 0.2),
@@ -152,7 +152,7 @@
 
     // Active drop target (dragging over)
     &.hikari-drop-zone-active {
-        border-color: var(--hikari-color-accent);
+        border-color: var(--hi-color-accent);
         background-color: rgba(245, 158, 11, 0.1);
         box-shadow:
             inset 0 0 30px rgba(245, 158, 11, 0.3),
@@ -205,7 +205,7 @@
     gap: $hikari-spacing-xs;
     padding: $hikari-spacing-xs $hikari-spacing-sm;
     background-color: rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--hikari-color-border);
+    border: 1px solid var(--hi-color-border);
     border-radius: $hikari-radius-sm;
     cursor: grab;
     transition: all $hikari-transition-fast;
@@ -213,8 +213,8 @@
 
     &:hover {
         background-color: rgba(59, 130, 246, 0.1);
-        border-color: var(--hikari-color-primary);
-        color: var(--hikari-color-primary);
+        border-color: var(--hi-color-primary);
+        color: var(--hi-color-primary);
 
         // FUI glow
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
@@ -260,8 +260,8 @@
 
 // List item preview
 .hikari-drag-preview-list-item {
-    background-color: var(--hikari-color-surface);
-    border-left: 3px solid var(--hikari-color-primary);
+    background-color: var(--hi-color-surface);
+    border-left: 3px solid var(--hi-color-primary);
     border-radius: $hikari-radius-sm;
     padding: $hikari-spacing-sm $hikari-spacing-md;
     min-width: 150px;
@@ -276,14 +276,14 @@
 .hikari-drag-preview-table-row {
     display: flex;
     align-items: center;
-    background-color: var(--hikari-color-surface);
-    border: 1px solid var(--hikari-color-border);
+    background-color: var(--hi-color-surface);
+    border: 1px solid var(--hi-color-border);
     border-radius: $hikari-radius-sm;
     overflow: hidden;
 
     .hikari-drag-preview-cell {
         padding: $hikari-spacing-sm $hikari-spacing-md;
-        border-right: 1px solid var(--hikari-color-border);
+        border-right: 1px solid var(--hi-color-border);
         font-size: $hikari-font-size-sm;
         white-space: nowrap;
 
@@ -299,7 +299,7 @@
 
 .hikari-drag-line {
     position: absolute;
-    background-color: var(--hikari-color-primary);
+    background-color: var(--hi-color-primary);
     transition: all $hikari-transition-fast;
     z-index: 100;
 
@@ -352,26 +352,26 @@
         right: -10px;
         width: 24px;
         height: 24px;
-        background-color: var(--hikari-color-primary);
-        border: 2px solid var(--hikari-color-surface);
+        background-color: var(--hi-color-primary);
+        border: 2px solid var(--hi-color-surface);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: $hikari-font-size-xs;
         font-weight: 700;
-        color: var(--hikari-color-text-primary);
+        color: var(--hi-color-text-primary);
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
     }
 }
 
 .hikari-drag-preview-item {
-    background-color: var(--hikari-color-surface);
-    border: 1px solid var(--hikari-color-border);
+    background-color: var(--hi-color-surface);
+    border: 1px solid var(--hi-color-border);
     border-radius: $hikari-radius-sm;
     padding: $hikari-spacing-xs $hikari-spacing-sm;
     font-size: $hikari-font-size-xs;
-    color: var(--hikari-color-text-secondary);
+    color: var(--hi-color-text-secondary);
     white-space: nowrap;
 }
 

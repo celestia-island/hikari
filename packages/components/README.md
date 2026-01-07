@@ -524,16 +524,16 @@ All components use CSS variables and can be customized:
 ```css
 /* Custom button styles */
 .my-button {
-    background-color: var(--hikari-color-primary);
-    border-radius: var(--hikari-radius-lg);
-    padding: var(--hikari-spacing-sm) var(--hikari-spacing-md);
+    background-color: var(--hi-color-primary);
+    border-radius: var(--hi-radius-lg);
+    padding: var(--hi-spacing-sm) var(--hi-spacing-md);
 }
 
 /* Custom card styles */
 .my-card {
-    background-color: var(--hikari-color-surface);
-    border: 1px solid var(--hikari-color-border);
-    box-shadow: var(--hikari-shadow-lg);
+    background-color: var(--hi-color-surface);
+    border: 1px solid var(--hi-color-border);
+    box-shadow: var(--hi-shadow-lg);
 }
 ```
 

@@ -1,0 +1,650 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari Tooltip Component - FUI Styling
+// Design: Arknights + Future UI (FUI) aesthetics
+// Features: Fade-in animations, glowing arrows, smooth transitions
+// ============================================
+
+// ============================================
+// Base Tooltip Styles
+// ============================================
+
+.hi-tooltip {
+  // Layout
+  position: absolute;
+  z-index: 10000;
+
+  // Spacing
+  padding: 0.5rem 0.75rem;
+
+  // Typography
+  font-family: vars.$hikari-font-family-sans;
+  font-size: vars.$hikari-font-size-sm;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--hi-color-text-primary);
+
+  // Appearance - FUI subtle rounded corners
+  border-radius: vars.$hikari-radius-fui-sm;
+  border: 1px solid var(--hi-color-border);
+
+  // Acrylic background effect
+  background: rgba(15, 15, 15, 0.95);
+  backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
+
+  // Elevated shadow
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+
+  // Transitions - smooth GSAP-style easing
+  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+  // Position for arrow
+  position: relative;
+
+  // Opacity for animation
+  opacity: 0;
+  pointer-events: none;
+
+  // Arrow (pseudo-element)
+  &::before {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: 5px solid transparent;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  }
+
+  // Glow effect on arrow
+  &::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: rgba(139, 92, 246, 0.6);
+    filter: blur(4px);
+    opacity: 0;
+    transition: opacity vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  }
+}
+
+// ============================================
+// Visible State
+// ============================================
+
+.hi-tooltip-visible {
+  opacity: 1;
+  pointer-events: auto;
+
+  &::after {
+    opacity: 0.6;
+  }
+}
+
+// ============================================
+// Arrow Positions
+// ============================================
+
+// Top
+.hi-tooltip-top {
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+
+  &.hi-tooltip-visible {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  &::before {
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-top-color: var(--hi-color-border);
+  }
+
+  &::after {
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+// Bottom
+.hi-tooltip-bottom {
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+
+  &.hi-tooltip-visible {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  &::before {
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-bottom-color: var(--hi-color-border);
+  }
+
+  &::after {
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+// Left
+.hi-tooltip-left {
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+
+  &.hi-tooltip-visible {
+    transform: translateY(-50%) translateX(0);
+  }
+
+  &::before {
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-left-color: var(--hi-color-border);
+  }
+
+  &::after {
+    right: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
+// Right
+.hi-tooltip-right {
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+
+  &.hi-tooltip-visible {
+    transform: translateY(-50%) translateX(0);
+  }
+
+  &::before {
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-right-color: var(--hi-color-border);
+  }
+
+  &::after {
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
+// Top-left
+.hi-tooltip-top-left {
+  bottom: calc(100% + 8px);
+  right: 0;
+  transform: translateY(-4px);
+
+  &.hi-tooltip-visible {
+    transform: translateY(0);
+  }
+
+  &::before {
+    bottom: -10px;
+    right: 8px;
+    border-top-color: var(--hi-color-border);
+  }
+
+  &::after {
+    bottom: -12px;
+    right: 6px;
+  }
+}
+
+// Top-right
+.hi-tooltip-top-right {
+  bottom: calc(100% + 8px);
+  left: 0;
+  transform: translateY(-4px);
+
+  &.hi-tooltip-visible {
+    transform: translateY(0);
+  }
+
+  &::before {
+    bottom: -10px;
+    left: 8px;
+    border-top-color: var(--hi-color-border);
+  }
+
+  &::after {
+    bottom: -12px;
+    left: 6px;
+  }
+}
+
+// Bottom-left
+.hi-tooltip-bottom-left {
+  top: calc(100% + 8px);
+  right: 0;
+  transform: translateY(4px);
+
+  &.hi-tooltip-visible {
+    transform: translateY(0);
+  }
+
+  &::before {
+    top: -10px;
+    right: 8px;
+    border-bottom-color: var(--hi-color-border);
+  }
+
+  &::after {
+    top: -12px;
+    right: 6px;
+  }
+}
+
+// Bottom-right
+.hi-tooltip-bottom-right {
+  top: calc(100% + 8px);
+  left: 0;
+  transform: translateY(4px);
+
+  &.hi-tooltip-visible {
+    transform: translateY(0);
+  }
+
+  &::before {
+    top: -10px;
+    left: 8px;
+    border-bottom-color: var(--hi-color-border);
+  }
+
+  &::after {
+    top: -12px;
+    left: 6px;
+  }
+}
+
+// Left-top
+.hi-tooltip-left-top {
+  right: calc(100% + 8px);
+  bottom: 0;
+  transform: translateX(-4px);
+
+  &.hi-tooltip-visible {
+    transform: translateX(0);
+  }
+
+  &::before {
+    right: -10px;
+    bottom: 8px;
+    border-left-color: var(--hi-color-border);
+  }
+
+  &::after {
+    right: -12px;
+    bottom: 6px;
+  }
+}
+
+// Left-bottom
+.hi-tooltip-left-bottom {
+  right: calc(100% + 8px);
+  top: 0;
+  transform: translateX(-4px);
+
+  &.hi-tooltip-visible {
+    transform: translateX(0);
+  }
+
+  &::before {
+    right: -10px;
+    top: 8px;
+    border-left-color: var(--hi-color-border);
+  }
+
+  &::after {
+    right: -12px;
+    top: 6px;
+  }
+}
+
+// Right-top
+.hi-tooltip-right-top {
+  left: calc(100% + 8px);
+  bottom: 0;
+  transform: translateX(4px);
+
+  &.hi-tooltip-visible {
+    transform: translateX(0);
+  }
+
+  &::before {
+    left: -10px;
+    bottom: 8px;
+    border-right-color: var(--hi-color-border);
+  }
+
+  &::after {
+    left: -12px;
+    bottom: 6px;
+  }
+}
+
+// Right-bottom
+.hi-tooltip-right-bottom {
+  left: calc(100% + 8px);
+  top: 0;
+  transform: translateX(4px);
+
+  &.hi-tooltip-visible {
+    transform: translateX(0);
+  }
+
+  &::before {
+    left: -10px;
+    top: 8px;
+    border-right-color: var(--hi-color-border);
+  }
+
+  &::after {
+    left: -12px;
+    top: 6px;
+  }
+}
+
+// ============================================
+// Size Variants
+// ============================================
+
+.hi-tooltip-sm {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 3px;
+
+  &::before {
+    border-width: 4px;
+  }
+}
+
+.hi-tooltip-md {
+  padding: 0.5rem 0.75rem;
+  font-size: vars.$hikari-font-size-sm;
+  border-radius: vars.$hikari-radius-fui-sm;
+}
+
+.hi-tooltip-lg {
+  padding: 0.625rem 1rem;
+  font-size: 0.9375rem;
+  border-radius: vars.$hikari-radius-fui-md;
+
+  &::before {
+    border-width: 6px;
+  }
+}
+
+// ============================================
+// Color Variants
+// ============================================
+
+// Primary (Blue)
+.hi-tooltip-primary {
+  border-color: rgba(59, 130, 246, 0.5);
+  background: rgba(15, 15, 15, 0.95);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 0 12px rgba(59, 130, 246, 0.2),
+    0 0 0 1px rgba(59, 130, 246, 0.3) inset;
+
+  &::after {
+    background: rgba(59, 130, 246, 0.6);
+  }
+}
+
+// Success (Green)
+.hi-tooltip-success {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: rgba(15, 15, 15, 0.95);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 0 12px rgba(16, 185, 129, 0.2),
+    0 0 0 1px rgba(16, 185, 129, 0.3) inset;
+
+  &::after {
+    background: rgba(16, 185, 129, 0.6);
+  }
+}
+
+// Warning (Yellow)
+.hi-tooltip-warning {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(15, 15, 15, 0.95);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 0 12px rgba(245, 158, 11, 0.2),
+    0 0 0 1px rgba(245, 158, 11, 0.3) inset;
+
+  &::after {
+    background: rgba(245, 158, 11, 0.6);
+  }
+}
+
+// Error (Red)
+.hi-tooltip-error {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(15, 15, 15, 0.95);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 0 12px rgba(239, 68, 68, 0.2),
+    0 0 0 1px rgba(239, 68, 68, 0.3) inset;
+
+  &::after {
+    background: rgba(239, 68, 68, 0.6);
+  }
+}
+
+// ============================================
+// With Icon
+// ============================================
+
+.hi-tooltip-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .hi-tooltip-icon {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+// ============================================
+// Multiline Tooltip
+// ============================================
+
+.hi-tooltip-multiline {
+  white-space: normal;
+  max-width: 250px;
+}
+
+// ============================================
+// Rich Content Tooltip
+// ============================================
+
+.hi-tooltip-rich {
+  white-space: normal;
+  max-width: 300px;
+
+  .hi-tooltip-title {
+    margin: 0 0 0.25rem 0;
+    font-size: vars.$hikari-font-size-sm;
+    font-weight: 600;
+    color: var(--hi-color-text-primary);
+  }
+
+  .hi-tooltip-content {
+    margin: 0;
+    font-size: vars.$hikari-font-size-sm;
+    color: var(--hi-color-text-secondary);
+    line-height: 1.5;
+  }
+}
+
+// ============================================
+// Dark/Light Theme
+// ============================================
+
+.hi-tooltip-light {
+  background: rgba(255, 255, 255, 0.95);
+  color: #1e293b;
+  border-color: rgba(0, 0, 0, 0.1);
+
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+}
+
+// ============================================
+// Animations
+// ============================================
+
+// Fade-in animation
+.hi-tooltip-fade-in {
+  &.hi-tooltip-visible {
+    animation: tooltip-fade-in vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
+  }
+}
+
+@keyframes tooltip-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// Scale-in animation
+.hi-tooltip-scale-in {
+  &.hi-tooltip-visible {
+    animation: tooltip-scale-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  }
+}
+
+@keyframes tooltip-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// Slide-in animation (position-specific)
+.hi-tooltip-top.hi-tooltip-slide-in,
+.hi-tooltip-top-left.hi-tooltip-slide-in,
+.hi-tooltip-top-right.hi-tooltip-slide-in {
+  &.hi-tooltip-visible {
+    animation: tooltip-slide-in-top vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  }
+}
+
+.hi-tooltip-bottom.hi-tooltip-slide-in,
+.hi-tooltip-bottom-left.hi-tooltip-slide-in,
+.hi-tooltip-bottom-right.hi-tooltip-slide-in {
+  &.hi-tooltip-visible {
+    animation: tooltip-slide-in-bottom vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  }
+}
+
+.hi-tooltip-left.hi-tooltip-slide-in,
+.hi-tooltip-left-top.hi-tooltip-slide-in,
+.hi-tooltip-left-bottom.hi-tooltip-slide-in {
+  &.hi-tooltip-visible {
+    animation: tooltip-slide-in-left vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  }
+}
+
+.hi-tooltip-right.hi-tooltip-slide-in,
+.hi-tooltip-right-top.hi-tooltip-slide-in,
+.hi-tooltip-right-bottom.hi-tooltip-slide-in {
+  &.hi-tooltip-visible {
+    animation: tooltip-slide-in-right vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  }
+}
+
+@keyframes tooltip-slide-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tooltip-slide-in-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tooltip-slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes tooltip-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Delay variants
+.hi-tooltip-delay-short {
+  transition-delay: 0.3s;
+}
+
+.hi-tooltip-delay-medium {
+  transition-delay: 0.6s;
+}
+
+.hi-tooltip-delay-long {
+  transition-delay: 1s;
+}

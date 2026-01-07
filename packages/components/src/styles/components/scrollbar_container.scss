@@ -1,0 +1,136 @@
+// Custom DOM-based Scrollbar Styles
+//
+// This is a manually created scrollbar that doesn't use native webkit scrollbar.
+// It uses a layered DOM structure to keep the track fixed while content scrolls.
+//
+// DOM Structure:
+// container (relative, padding: 0)
+//   └── wrapper (flex, row)     ← separation layer
+//         ├── content_layer (flex:1, column, padding: original)  ← scrollable content
+//         └── track (absolute, right: 0)  ← fixed scrollbar track
+//               └── thumb (absolute)     ← draggable thumb
+
+// Container with custom scrollbar
+.custom-scrollbar-container {
+    position: relative;
+
+    // Hide native scrollbar
+    &::-webkit-scrollbar {
+        display: none;
+    }
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+// Wrapper layer (flex container, provides positioning context for track)
+.custom-scrollbar-wrapper {
+    position: relative;  // Provide positioning context for absolute track
+    pointer-events: none;  // Let events pass through to children
+}
+
+// Content layer (scrollable content)
+.custom-scrollbar-content {
+    pointer-events: auto;  // Re-enable events for content
+
+    // Hide native scrollbar in content layer
+    &::-webkit-scrollbar {
+        display: none;
+    }
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+// Scrollbar track (the rail) - flex child, won't scroll with content
+.custom-scrollbar-track {
+    position: relative;  // Relative to wrapper, which is flex row
+    // height matches content layer (controlled by flex)
+    // width is set dynamically via JavaScript (6px → 10px)
+    flex-shrink: 0;  // Don't shrink
+    background: rgba(241, 245, 249, 0.3);
+    border-radius: 3px;
+    pointer-events: auto;  // Enable interaction for thumb
+    // Note: width transition is now handled by JavaScript state machine
+    z-index: 100;
+
+    // Top and bottom fade indicators (via CSS)
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: linear-gradient(
+            to bottom,
+            rgba(100, 116, 139, 0.2),
+            transparent
+        );
+        pointer-events: none;
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: linear-gradient(
+            to top,
+            rgba(100, 116, 139, 0.2),
+            transparent
+        );
+        pointer-events: none;
+    }
+}
+
+// Hover state: background darkens (width is handled by JavaScript state machine)
+.custom-scrollbar-track:hover {
+    background: rgba(226, 232, 240, 0.6);
+}
+
+// Scrollbar thumb (the draggable handle)
+.custom-scrollbar-thumb {
+    position: absolute;
+    right: 0;
+    width: 100%;
+    min-height: 20px;
+    background: rgba(148, 163, 184, 0.4);
+    border-radius: 3px;
+    cursor: pointer;
+    pointer-events: auto; // Re-enable clicks for thumb
+    transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    // Gradient for visual appeal
+    background-image: linear-gradient(
+        to bottom,
+        rgba(148, 163, 184, 0.3) 0%,
+        rgba(148, 163, 184, 0.6) 50%,
+        rgba(148, 163, 184, 0.3) 100%
+    );
+}
+
+// Hover state: thumb glows
+.custom-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.7);
+    background-image: linear-gradient(
+        to bottom,
+        rgba(148, 163, 184, 0.5) 0%,
+        rgba(203, 213, 225, 0.9) 50%,
+        rgba(148, 163, 184, 0.5) 100%
+    );
+    box-shadow: 0 0 12px rgba(148, 163, 184, 0.6);
+}
+
+// Active state: thumb being dragged
+.custom-scrollbar-thumb:active {
+    background: rgba(203, 213, 225, 0.9);
+    box-shadow: 0 0 16px rgba(203, 213, 225, 0.7);
+}
+
+// Hidden state (when content doesn't need scrolling)
+.custom-scrollbar-track.custom-scrollbar-hidden {
+    opacity: 0;
+    pointer-events: none;
+}

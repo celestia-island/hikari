@@ -28,16 +28,16 @@ impl Default for Palette {
     fn default() -> Self {
         Palette {
             primary: 石青,
-            secondary: 朱砂,
-            accent: 藤黄,
+            secondary: 朱红,
+            accent: 姜黄,
             success: 葱倩,
             warning: 鹅黄,
-            danger: 朱砂,
+            danger: 朱红,
             background: 墨色,
-            surface: 缟色,
-            border: 缟色,
+            surface: 素,
+            border: 素,
             text_primary: 月白,
-            text_secondary: 黛色,
+            text_secondary: 黛,
         }
     }
 }
@@ -46,16 +46,16 @@ impl Default for Palette {
 pub fn primary_palette() -> Palette {
     Palette {
         primary: 石青,
-        secondary: 朱砂,
-        accent: 藤黄,
+        secondary: 朱红,
+        accent: 姜黄,
         success: 葱倩,
         warning: 鹅黄,
-        danger: 朱砂,
+        danger: 朱红,
         background: 墨色,
-        surface: 缟色,
-        border: 缟色,
+        surface: 素,
+        border: 素,
         text_primary: 月白,
-        text_secondary: 黛色,
+        text_secondary: 黛,
     }
 }
 
@@ -63,15 +63,15 @@ pub fn primary_palette() -> Palette {
 pub fn fui_dark_palette() -> Palette {
     Palette {
         background: 墨色,
-        surface: 缟色,
+        surface: 素,
         primary: 石青,
         accent: 靛蓝,
         success: 葱倩,
         warning: 鹅黄,
-        danger: 朱砂,
-        border: 缟色,
+        danger: 朱红,
+        border: 素,
         text_primary: 月白,
-        text_secondary: 黛色,
+        text_secondary: 黛,
         ..Default::default()
     }
 }
@@ -80,32 +80,32 @@ pub fn fui_dark_palette() -> Palette {
 pub fn arknights_palette() -> Palette {
     Palette {
         background: 墨色,
-        surface: 缟色,
+        surface: 素,
         primary: 石青,
-        secondary: 丹雘,
-        accent: 藤黄,
+        secondary: 绛紫,
+        accent: 姜黄,
         success: 葱倩,
         warning: 鹅黄,
-        danger: 朱砂,
-        border: 烟灰,
+        danger: 朱红,
+        border: 墨灰,
         text_primary: 月白,
-        text_secondary: 黛色,
+        text_secondary: 黛,
     }
 }
 
 /// 清新雅致配色方案
 pub fn fresh_palette() -> Palette {
     Palette {
-        background: 云白,
+        background: 精白,
         surface: 月白,
         primary: 群青,
         secondary: 紫檀,
-        accent: 藤黄,
+        accent: 姜黄,
         success: 竹青,
         warning: 鹅黄,
-        danger: 丹雘,
-        border: 烟灰,
+        danger: 绯红,
+        border: 墨灰,
         text_primary: 墨色,
-        text_secondary: 烟灰,
+        text_secondary: 墨灰,
     }
 }

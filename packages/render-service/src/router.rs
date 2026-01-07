@@ -117,16 +117,17 @@ pub fn build_router(
         router = router.route(&route.path, route.method_router);
     }
 
-    // Add style service routes if registry is configured
-    // Note: These will use AppState's style_registry, not a separate StyleService
-    if app_state.style_registry.is_some() {
-        router = router.route("/styles/bundle.css", axum::routing::get(css_bundle_handler));
-        router = router.route(
-            "/styles/components/<name>.css",
-            axum::routing::get(component_css_handler),
-        );
-        router = router.route("/styles/info", axum::routing::get(style_info_handler));
-    }
+    // Note: Style service routes are DISABLED to allow static file serving
+    // The /styles/bundle.css is served from public/styles/ directory
+    // This ensures the complete CSS bundle (including all components) is served
+    // if app_state.style_registry.is_some() {
+    //     router = router.route("/styles/bundle.css", axum::routing::get(css_bundle_handler));
+    //     router = router.route(
+    //         "/styles/components/<name>.css",
+    //         axum::routing::get(component_css_handler),
+    //     );
+    //     router = router.route("/styles/info", axum::routing::get(style_info_handler));
+    // }
 
     // Add Tailwind CSS route (always available if built)
     router = router.route(
@@ -146,7 +147,7 @@ pub fn build_router(
     // Static files are served, but 404s fall through to index.html for SPA routing
     for mount_config in static_mounts {
         let serve_dir = ServeDir::new(&mount_config.local_path)
-            .fallback(ServeDir::new("dist").fallback(
+            .fallback(ServeDir::new("public").fallback(
                 axum::routing::get(spa_fallback_handler)
             ));
         router = router.nest_service(&mount_config.url_path, serve_dir);
@@ -170,11 +171,12 @@ pub fn build_router(
 /// This is the entry point for the application. For Dioxus WASM apps,
 /// the index.html contains everything needed to bootstrap the app.
 async fn index_handler() -> impl IntoResponse {
-    // Try to read index.html from dist directory
-    let html = match tokio::fs::read_to_string("dist/index.html").await {
+    // Try to read index.html from public directory
+    let html = match tokio::fs::read_to_string("public/index.html").await {
         Ok(content) => content,
-        Err(_) => {
+        Err(e) => {
             // Fallback HTML if index.html not found
+            eprintln!("❌ Failed to read public/index.html: {}", e);
             r#"<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -189,7 +191,7 @@ async fn index_handler() -> impl IntoResponse {
 </head>
 <body>
     <div class="error">
-        <h1>dist/index.html not found</h1>
+        <h1>public/index.html not found</h1>
         <p class="hint">Run 'just build-client' or 'dx build' first.</p>
     </div>
 </body>
@@ -212,7 +214,7 @@ async fn index_handler() -> impl IntoResponse {
 async fn spa_fallback_handler(_uri: Uri) -> impl IntoResponse {
     // For SPAs, all routes should return index.html
     // The frontend router handles showing the right page
-    let html = match tokio::fs::read_to_string("dist/index.html").await {
+    let html = match tokio::fs::read_to_string("public/index.html").await {
         Ok(content) => content,
         Err(_) => {
             // Fallback HTML if index.html not found
@@ -226,7 +228,7 @@ async fn spa_fallback_handler(_uri: Uri) -> impl IntoResponse {
 <body>
     <div style="font-family: system-ui; text-align: center; padding: 2rem;">
         <h1 style="color: #f55;">Application Not Built</h1>
-        <p>dist/index.html not found. Please build the application first.</p>
+        <p>public/index.html not found. Please build the application first.</p>
     </div>
 </body>
 </html>"#.to_string()
@@ -244,8 +246,8 @@ async fn spa_fallback_handler(_uri: Uri) -> impl IntoResponse {
 ///
 /// This handler serves the Dioxus application with server-side rendering.
 async fn ssr_handler(uri: Uri) -> impl IntoResponse {
-    // Try to read index.html from dist directory
-    let html = match tokio::fs::read_to_string("dist/index.html").await {
+    // Try to read index.html from public directory
+    let html = match tokio::fs::read_to_string("public/index.html").await {
         Ok(content) => content,
         Err(_) => {
             // Fallback to default HTML if index.html not found
@@ -262,7 +264,7 @@ async fn ssr_handler(uri: Uri) -> impl IntoResponse {
     <div id="main">
         <h1>Hello from Hikari SSR!</h1>
         <p>Path: {}</p>
-        <p><strong>Note:</strong> dist/index.html not found. Run 'just build-client' first.</p>
+        <p><strong>Note:</strong> public/index.html not found. Run 'just build-client' first.</p>
     </div>
 </body>
 </html>"#,

@@ -1,0 +1,66 @@
+// hikari-components/styles/index.scss
+// Component styles entry point
+//
+// This file imports all component SCSS files, which will be compiled
+// to CSS by the Grass compiler during the build process.
+
+// ============================================
+// 1. Theme Variables & Color System
+// ============================================
+
+// Use @use with as * to make variables available to all imported files
+@use '../../../theme/styles/variables.scss' as *;
+@use '../../../theme/styles/mixins.scss' as *;
+
+// ============================================
+// 2. Basic Components
+// ============================================
+
+@import './components/button.scss';
+@import './components/input.scss';
+@import './components/card.scss';
+@import './components/badge.scss';
+
+// ============================================
+// Feedback Components
+// ============================================
+
+@import './components/alert.scss';
+@import './components/toast.scss';
+@import './components/tooltip.scss';
+
+// ============================================
+// Navigation Components
+// ============================================
+
+@import './components/menu.scss';
+@import './components/tabs.scss';
+@import './components/breadcrumb.scss';
+
+// ============================================
+// Layout Components
+// ============================================
+
+@import './components/layout.scss';
+@import './components/header.scss';
+@import './components/aside.scss';
+@import './components/container.scss';
+@import './components/grid.scss';
+@import './components/section.scss';
+@import './components/scrollbar_container.scss';
+
+// ============================================
+// Data Components
+// ============================================
+
+@import './components/table.scss';
+@import './components/tree.scss';
+@import './components/pagination.scss';
+
+// ============================================
+// Demo App Specific Styles
+// ============================================
+
+@import '../../../../examples/demo-app/src/styles/sidebar.scss';
+@import '../../../../examples/demo-app/src/styles/pages.scss';
+@import '../../../../examples/demo-app/src/styles/home.scss';

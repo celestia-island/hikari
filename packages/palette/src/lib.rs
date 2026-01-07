@@ -14,15 +14,15 @@
 //! ## Usage
 //!
 //! ```rust,no_run
-//! use hikari_palette::{ChineseColor, primary_palette};
+//! use hikari_palette::{朱红, primary_palette};
 //!
 //! // Use a specific color
-//! let red = ChineseColor::朱砂;
-//! println!("{} - {}", red.name, red.hex);
+//! let red = 朱红;
+//! println!("{:?}", red.hex());
 //!
 //! // Use a predefined palette
 //! let palette = primary_palette();
-//! println!("Primary: {}", palette.primary.name);
+//! println!("{:?}", palette.primary.hex());
 //! ```
 
 pub mod colors;

@@ -1,10 +1,11 @@
 // hikari-components/build.rs
-// CSS build script - copies CSS files to OUT_DIR for compile-time inclusion
+// SCSS build script - compiles SCSS files to CSS using Grass compiler
 
 use std::{env, fs, path::Path};
+use grass::Options;
 
 fn main() {
-    println!("cargo:rerun-if-changed=styles");
+    println!("cargo:rerun-if-changed=src/styles");
 
     let out_dir = env::var("OUT_DIR").unwrap();
     let styles_out_dir = Path::new(&out_dir).join("styles");
@@ -12,92 +13,94 @@ fn main() {
     // 创建输出目录
     fs::create_dir_all(&styles_out_dir).unwrap();
 
-    println!("🔨 Copying CSS files...");
+    println!("🔨 Compiling SCSS files with Grass...");
 
-    let css_files = get_css_files();
+    let scss_files = get_scss_files();
 
-    for (feature_name, files) in css_files {
+    for (feature_name, files) in scss_files {
         if feature_enabled(&feature_name) {
-            for css_path in files {
-                if let Err(e) = copy_css(css_path, &styles_out_dir) {
-                    eprintln!("   ✗ Failed to copy {}: {}", css_path, e);
+            for scss_path in files {
+                if let Err(e) = compile_scss(scss_path, &styles_out_dir) {
+                    eprintln!("   ✗ Failed to compile {}: {}", scss_path, e);
                     std::process::exit(1);
                 }
             }
         }
     }
 
-    println!("✅ CSS file copy complete!");
+    println!("✅ SCSS compilation complete!");
 }
 
-fn get_css_files() -> Vec<(&'static str, Vec<&'static str>)> {
+fn get_scss_files() -> Vec<(&'static str, Vec<&'static str>)> {
     vec![
         // Component groups (check group flag)
         (
             "basic",
             vec![
-                "styles/components/button.css",
-                "styles/components/input.css",
-                "styles/components/card.css",
-                "styles/components/badge.css",
+                "src/styles/components/button.scss",
+                "src/styles/components/input.scss",
+                "src/styles/components/card.scss",
+                "src/styles/components/badge.scss",
             ],
         ),
         (
             "feedback",
             vec![
-                "styles/components/alert.css",
-                "styles/components/toast.css",
-                "styles/components/tooltip.css",
+                "src/styles/components/alert.scss",
+                "src/styles/components/toast.scss",
+                "src/styles/components/tooltip.scss",
             ],
         ),
         (
             "navigation",
             vec![
-                "styles/components/menu.css",
-                "styles/components/tabs.css",
-                "styles/components/breadcrumb.css",
+                "src/styles/components/menu.scss",
+                "src/styles/components/tabs.scss",
+                "src/styles/components/breadcrumb.scss",
             ],
         ),
         (
             "data",
             vec![
-                "styles/components/table.css",
-                "styles/components/tree.css",
-                "styles/components/pagination.css",
-                "styles/components/virtual-scroll.css",
-                "styles/components/collapse.css",
-                "styles/components/drag.css",
-                "styles/components/sort.css",
-                "styles/components/filter.css",
-                "styles/components/selection.css",
+                "src/styles/components/table.scss",
+                "src/styles/components/tree.scss",
+                "src/styles/components/pagination.scss",
+            ],
+        ),
+        (
+            "layout",
+            vec![
+                "src/styles/components/layout.scss",
+                "src/styles/components/header.scss",
+                "src/styles/components/aside.scss",
+                "src/styles/components/container.scss",
+                "src/styles/components/grid.scss",
+                "src/styles/components/section.scss",
             ],
         ),
         // Individual components (check specific flag)
-        ("button", vec!["styles/components/button.css"]),
-        ("input", vec!["styles/components/input.css"]),
-        ("card", vec!["styles/components/card.css"]),
-        ("badge", vec!["styles/components/badge.css"]),
-        ("alert", vec!["styles/components/alert.css"]),
-        ("toast", vec!["styles/components/toast.css"]),
-        ("tooltip", vec!["styles/components/tooltip.css"]),
-        ("menu", vec!["styles/components/menu.css"]),
-        ("tabs", vec!["styles/components/tabs.css"]),
-        ("breadcrumb", vec!["styles/components/breadcrumb.css"]),
-        ("table", vec!["styles/components/table.css"]),
-        ("tree", vec!["styles/components/tree.css"]),
-        ("pagination", vec!["styles/components/pagination.css"]),
-        ("virtual-scroll", vec!["styles/components/virtual-scroll.css"]),
-        ("collapse", vec!["styles/components/collapse.css"]),
-        ("drag", vec!["styles/components/drag.css"]),
-        ("sort", vec!["styles/components/sort.css"]),
-        ("filter", vec!["styles/components/filter.css"]),
-        ("selection", vec!["styles/components/selection.css"]),
+        ("button", vec!["src/styles/components/button.scss"]),
+        ("input", vec!["src/styles/components/input.scss"]),
+        ("card", vec!["src/styles/components/card.scss"]),
+        ("badge", vec!["src/styles/components/badge.scss"]),
+        ("alert", vec!["src/styles/components/alert.scss"]),
+        ("toast", vec!["src/styles/components/toast.scss"]),
+        ("tooltip", vec!["src/styles/components/tooltip.scss"]),
+        ("menu", vec!["src/styles/components/menu.scss"]),
+        ("tabs", vec!["src/styles/components/tabs.scss"]),
+        ("breadcrumb", vec!["src/styles/components/breadcrumb.scss"]),
+        ("table", vec!["src/styles/components/table.scss"]),
+        ("tree", vec!["src/styles/components/tree.scss"]),
+        ("pagination", vec!["src/styles/components/pagination.scss"]),
+        ("layout-component", vec!["src/styles/components/layout.scss"]),
+        ("header", vec!["src/styles/components/header.scss"]),
+        ("aside", vec!["src/styles/components/aside.scss"]),
     ]
 }
 
 fn feature_enabled(feature: &str) -> bool {
     // First check group flags
-    let group_features = ["basic", "feedback", "navigation", "data"];
+    let group_features = ["basic", "feedback", "navigation", "data", "layout"];
     for group in group_features {
         if env::var(format!("CARGO_FEATURE_{}", group.to_uppercase())).is_ok() {
             return true;
@@ -108,23 +111,31 @@ fn feature_enabled(feature: &str) -> bool {
     env::var(format!("CARGO_FEATURE_{}", feature.to_uppercase())).is_ok()
 }
 
-fn copy_css(input_path: &str, output_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+fn compile_scss(input_path: &str, output_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")?;
     let full_path = Path::new(&manifest_dir).join(input_path);
 
-    let css_content = fs::read_to_string(&full_path)?;
-
-    // Get filename without path
+    // Get filename without path and extension
     let css_name = full_path
         .file_name()
         .unwrap()
         .to_string_lossy()
-        .into_owned();
+        .replace(".scss", ".css");
+
+    // Set up Grass options with load path for theme package
+    let theme_styles_dir = Path::new(&manifest_dir)
+        .join("../theme/styles")
+        .canonicalize()?;
+
+    let options = Options::default().load_path(&theme_styles_dir);
+
+    // Compile SCSS to CSS using Grass (from_path handles imports correctly)
+    let css_content = grass::from_path(&full_path, &options)?;
 
     // Write to output directory
     let output_path = output_dir.join(&css_name);
     fs::write(&output_path, css_content)?;
 
-    println!("   ✓ Copied: {}", css_name);
+    println!("   ✓ Compiled: {} -> {}", input_path, css_name);
     Ok(())
 }

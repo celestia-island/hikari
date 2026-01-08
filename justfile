@@ -9,11 +9,12 @@
 #   just build           - Build everything (Release)
 #   just build-dev       - Build everything (Debug)
 #   just dev             - Development mode (build and start website)
+#   just dev-by-agent    - Start dev server and exit when ready (for AI agent)
 #   just fmt             - Format code
 #   just clippy          - Run Clippy checks
 #   just clean           - Clean build artifacts
 
-# Configure Windows to use PowerShell (UTF-8 encoding)
+# Windows uses PowerShell with UTF-8 encoding
 set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding'] = 'utf8';"]
 
 # Python command (platform adaptive)
@@ -75,14 +76,11 @@ build-client:
 
 # Development mode for website (build WASM client and start server)
 dev:
-    # Step 1: Check and clean port 3000
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Checking port 3000..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @{{py}} scripts/utils/clean_process.py
     @echo ""
-
-    # Step 2: Build WASM client
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Building website WASM client..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -96,8 +94,6 @@ dev:
     @echo ""
     @echo "✅ WASM client built successfully"
     @echo ""
-
-    # Step 3: Start server
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Starting website server..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -105,7 +101,15 @@ dev:
     @echo ""
     @echo "Press Ctrl+C to stop the server"
     @echo ""
-    cargo run --manifest-path examples/website/Cargo.toml --features server
+    @cargo run --manifest-path examples/website/Cargo.toml --features server
+
+# Start dev server and exit when ready (for AI agent)
+# This starts the dev server in background and exits when it's listening on port 3000
+dev-by-agent:
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Starting dev server (agent mode)..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @{{py}} scripts/build/dev_by_agent.py
 
 # Alias for dev
 serve: dev
@@ -153,14 +157,11 @@ build-watch-internal:
 
 # Run website (one-click start, no WASM rebuild)
 run:
-    # Step 1: Check and clean port 3000
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Checking port 3000..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @{{py}} scripts/utils/clean_process.py
     @echo ""
-
-    # Step 2: Start server
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Starting website server (skipping WASM build)..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -168,7 +169,7 @@ run:
     @echo ""
     @echo "Press Ctrl+C to stop the server"
     @echo ""
-    cargo run --manifest-path examples/website/Cargo.toml --features server
+    @cargo run --manifest-path examples/website/Cargo.toml --features server
 
 # ============================================================================
 # Code quality
@@ -189,27 +190,26 @@ clippy:
     @cargo clippy --all-targets --all-features -- -D warnings
 
 # ============================================================================
-# Cleaning
+# Cleaning (cross-platform)
 # ============================================================================
 
 # Clean build artifacts
+[linux]
 clean:
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Cleaning build artifacts..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @cargo clean
-    #!/usr/bin/env sh
-    rm -rf examples/website/public examples/website/dist packages/builder/src/generated public 2>/dev/null; true
-    @echo "✅ Clean completed"
+    @bash -c "echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'; echo 'Cleaning build artifacts...'; cargo clean; rm -rf examples/website/public examples/website/dist packages/builder/src/generated public 2>/dev/null || true; echo '✅ Clean completed'"
+
+[windows]
+clean:
+    @pwsh.exe -NoLogo -Command "echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'; echo 'Cleaning build artifacts...'; cargo clean; if (Test-Path examples/website/public) { Remove-Item -Recurse -Force examples/website/public }; if (Test-Path examples/website/dist) { Remove-Item -Recurse -Force examples/website/dist }; if (Test-Path packages/builder/src/generated) { Remove-Item -Recurse -Force packages/builder/src/generated }; if (Test-Path public) { Remove-Item -Recurse -Force public }; echo '✅ Clean completed'"
 
 # Clean only old dist/ directories (migrated to public/)
+[linux]
 clean-dist:
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Cleaning old dist/ directories..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    #!/usr/bin/env sh
-    find . -type d -name "dist" -exec rm -rf {} + 2>/dev/null; true
-    @echo "✅ Old dist/ directories removed"
+    @bash -c "echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'; echo 'Cleaning old dist/ directories...'; find . -type d -name 'dist' -exec rm -rf {} + 2>/dev/null || true; echo '✅ Old dist/ directories removed'"
+
+[windows]
+clean-dist:
+    @pwsh.exe -NoLogo -Command "echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'; echo 'Cleaning old dist/ directories...'; Get-ChildItem -Path . -Recurse -Directory -Filter 'dist' -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force; echo '✅ Old dist/ directories removed'"
 
 # ============================================================================
 # Testing
@@ -253,10 +253,3 @@ generate-scss:
     @echo "Generating SCSS bundle..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @cargo build --manifest-path packages/builder/Cargo.toml
-
-# Generate bulk import mod.rs files for website
-generate-imports:
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Generating bulk import files..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/generate_bulk_imports.py

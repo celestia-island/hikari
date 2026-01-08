@@ -16,6 +16,9 @@
 # Configure Windows to use PowerShell (UTF-8 encoding)
 set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding'] = 'utf8';"]
 
+# Python command (platform adaptive)
+py := if os_family() == "windows" { "python" } else { "python3" }
+
 # ============================================================================
 # Core tasks
 # ============================================================================
@@ -50,7 +53,7 @@ check-port:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Checking port 3000..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @python scripts/utils/clean_process.py
+    @{{py}} scripts/utils/clean_process.py
 
 # Build website WASM client (debug mode)
 # Note: build.rs will automatically compile SCSS and copy assets to public/
@@ -76,7 +79,7 @@ dev:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Checking port 3000..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @python scripts/utils/clean_process.py
+    @{{py}} scripts/utils/clean_process.py
     @echo ""
 
     # Step 2: Build WASM client
@@ -122,7 +125,7 @@ watch:
     @echo "🔄 Will automatically rebuild and restart on file changes"
     @echo "Press Ctrl+C to stop"
     @echo ""
-    @python scripts/utils/clean_process.py
+    @{{py}} scripts/utils/clean_process.py
     @cargo watch \
         --clear \
         --watch packages \
@@ -136,16 +139,16 @@ watch:
 # Advanced watch mode with parallel server (recommended for development)
 # Auto-rebuilds WASM and restarts server on file changes
 watch-dev:
-    @python scripts/build/watch_dev.py
+    @{{py}} scripts/build/watch_dev.py
 
 # Internal: Watch mode build step (called by cargo-watch)
 build-watch-internal:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "🔨 Rebuilding... [$(Get-Date -Format 'HH:mm:ss')]"
+    @echo "🔨 Rebuilding..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @cargo build --package hikari-builder
     @cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/website/Cargo.toml
-    @wasm-bindgen --target web --out-dir public/assets --no-typescript examples/website/target/wasm32-unknown-unknown/debug/website.wasm 2>$null
+    @wasm-bindgen --target web --out-dir public/assets --no-typescript examples/website/target/wasm32-unknown-unknown/debug/website.wasm 2>/dev/null || true
     @echo "✅ Build complete - server will restart automatically"
 
 # Run website (one-click start, no WASM rebuild)
@@ -154,7 +157,7 @@ run:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Checking port 3000..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @python scripts/utils/clean_process.py
+    @{{py}} scripts/utils/clean_process.py
     @echo ""
 
     # Step 2: Start server
@@ -195,9 +198,8 @@ clean:
     @echo "Cleaning build artifacts..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @cargo clean
-    @if (Test-Path examples/website/public) { Remove-Item -Recurse -Force examples/website/public }
-    @if (Test-Path examples/website/dist) { Remove-Item -Recurse -Force examples/website/dist }
-    @if (Test-Path packages/builder/src/generated) { Remove-Item -Recurse -Force packages/builder/src/generated }
+    #!/usr/bin/env sh
+    rm -rf examples/website/public examples/website/dist packages/builder/src/generated public 2>/dev/null; true
     @echo "✅ Clean completed"
 
 # Clean only old dist/ directories (migrated to public/)
@@ -205,7 +207,8 @@ clean-dist:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Cleaning old dist/ directories..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @Get-ChildItem -Path . -Recurse -Directory -Filter "dist" | Remove-Item -Recurse -Force
+    #!/usr/bin/env sh
+    find . -type d -name "dist" -exec rm -rf {} + 2>/dev/null; true
     @echo "✅ Old dist/ directories removed"
 
 # ============================================================================
@@ -256,4 +259,4 @@ generate-imports:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Generating bulk import files..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @python scripts/generate_bulk_imports.py
+    @{{py}} scripts/generate_bulk_imports.py

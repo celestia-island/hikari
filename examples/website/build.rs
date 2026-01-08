@@ -16,8 +16,7 @@
 //! - `/assets/*` → assets_mount
 //! - `/styles/*` → styles_mount
 
-use std::path::{Path, absolute as path_absolute};
-use std::process::Command;
+use std::{path::{Path, absolute as path_absolute}, process::Command};
 
 /// Filesystem paths (MUST match src/paths.rs::STATIC_PATHS)
 const PUBLIC_DIR: &str = "public";

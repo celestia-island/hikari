@@ -2,11 +2,11 @@
 // Feedback components: Alert, Toast, Tooltip, Spotlight
 
 pub mod alert;
+pub mod spotlight;
 pub mod toast;
 pub mod tooltip;
-pub mod spotlight;
 
 pub use alert::*;
+pub use spotlight::{Spotlight, SpotlightColor, SpotlightComponent};
 pub use toast::*;
 pub use tooltip::*;
-pub use spotlight::{Spotlight, SpotlightColor, SpotlightComponent};

@@ -18,8 +18,7 @@
 //! ```
 
 use dioxus::prelude::*;
-use palette::ClassesBuilder;
-use palette::classes::components::*;
+use palette::{classes::components::*, ClassesBuilder};
 
 /// Grid component - 12-column responsive grid container
 ///
@@ -178,7 +177,11 @@ pub fn Row(
         _ => "align-items: center;", // center (default)
     };
 
-    let wrap_style = if wrap { "flex-wrap: wrap;" } else { "flex-wrap: nowrap;" };
+    let wrap_style = if wrap {
+        "flex-wrap: wrap;"
+    } else {
+        "flex-wrap: nowrap;"
+    };
 
     let classes = ClassesBuilder::new()
         .add(RowClass::Row)

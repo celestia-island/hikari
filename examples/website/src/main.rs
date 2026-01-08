@@ -6,9 +6,10 @@ use tokio::net::TcpListener;
 
 use axum::response::IntoResponse;
 use http::StatusCode;
-use components::StyleRegistry;
-use render_service::{HikariRenderServicePlugin, plugin::StaticMountConfig, static_files::StaticFileConfig};
 use tower_http::cors::{Any, CorsLayer};
+
+use _components::StyleRegistry;
+use _render_service::{HikariRenderServicePlugin, plugin::StaticMountConfig, static_files::StaticFileConfig};
 
 // Import centralized path configuration
 use website::paths::STATIC_PATHS;

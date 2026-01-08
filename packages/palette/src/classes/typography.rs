@@ -2,7 +2,8 @@
 //!
 //! Font size, weight, alignment, and other text utilities.
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+
 use super::UtilityClass;
 
 /// Font size utilities

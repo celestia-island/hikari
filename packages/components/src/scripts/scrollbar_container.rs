@@ -17,13 +17,14 @@
 //! - requestAnimationFrame drives smooth width transitions
 //! - Callback-based style updates ensure responsive feedback
 
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use std::rc::Rc;
-use std::cell::RefCell;
+use std::{cell::RefCell, rc::Rc};
+
+use animation::{
+    style::{CssProperty, StyleBuilder},
+    TimerManager,
+};
 use js_sys::Date;
-use animation::TimerManager;
-use animation::style::{CssProperty, StyleBuilder};
+use wasm_bindgen::{prelude::*, JsCast};
 
 /// Animation state for scrollbar width transition
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -57,13 +58,13 @@ impl ScrollbarAnimationState {
 struct ScrollbarAnimator {
     state: RefCell<ScrollbarAnimationState>,
     track: web_sys::Element,
-    animation_handle: RefCell<Option<i32>>,  // requestAnimationFrame handle
-    start_time: RefCell<Option<f64>>,  // Animation start time
-    start_width: RefCell<f64>,  // Starting width
-    target_width: RefCell<f64>,  // Target width
-    timer_manager: TimerManager,  // For delayed state transitions
-    scroll_hover_timer: RefCell<Option<animation::TimerId>>,  // Scroll hover timer
-    is_mouse_over: RefCell<bool>,  // Track mouse position for drag end logic
+    animation_handle: RefCell<Option<i32>>, // requestAnimationFrame handle
+    start_time: RefCell<Option<f64>>,       // Animation start time
+    start_width: RefCell<f64>,              // Starting width
+    target_width: RefCell<f64>,             // Target width
+    timer_manager: TimerManager,            // For delayed state transitions
+    scroll_hover_timer: RefCell<Option<animation::TimerId>>, // Scroll hover timer
+    is_mouse_over: RefCell<bool>,           // Track mouse position for drag end logic
 }
 
 impl ScrollbarAnimator {
@@ -159,10 +160,9 @@ impl ScrollbarAnimator {
             animator.restore_from_scroll_hover();
         });
 
-        let timer_id = self.timer_manager.set_timeout(
-            callback,
-            std::time::Duration::from_millis(500),
-        );
+        let timer_id = self
+            .timer_manager
+            .set_timeout(callback, std::time::Duration::from_millis(500));
         *self.scroll_hover_timer.borrow_mut() = Some(timer_id);
     }
 
@@ -240,7 +240,7 @@ impl ScrollbarAnimator {
             None => return,
         };
 
-        const DURATION_MS: f64 = 300.0;  // Animation duration
+        const DURATION_MS: f64 = 300.0; // Animation duration
         let elapsed = Date::now() - start_time;
         let progress = (elapsed / DURATION_MS).min(1.0);
 
@@ -357,10 +357,18 @@ fn setup_custom_scrollbar(container: &web_sys::Element) {
         None => return,
     };
 
-    let padding_top = computed_style.get_property_value("padding-top").unwrap_or_default();
-    let padding_right = computed_style.get_property_value("padding-right").unwrap_or_default();
-    let padding_bottom = computed_style.get_property_value("padding-bottom").unwrap_or_default();
-    let padding_left = computed_style.get_property_value("padding-left").unwrap_or_default();
+    let padding_top = computed_style
+        .get_property_value("padding-top")
+        .unwrap_or_default();
+    let padding_right = computed_style
+        .get_property_value("padding-right")
+        .unwrap_or_default();
+    let padding_bottom = computed_style
+        .get_property_value("padding-bottom")
+        .unwrap_or_default();
+    let padding_left = computed_style
+        .get_property_value("padding-left")
+        .unwrap_or_default();
 
     // Set container position and remove padding
     StyleBuilder::new(container_html)
@@ -438,7 +446,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element) {
         .add(CssProperty::Top, "0")
         .add(CssProperty::Right, "0")
         .add(CssProperty::Bottom, "0")
-        .add(CssProperty::Width, "6px")  // Initial width (animated by state machine)
+        .add(CssProperty::Width, "6px") // Initial width (animated by state machine)
         .apply();
 
     // Create animation controller for this track
@@ -498,10 +506,8 @@ fn setup_custom_scrollbar(container: &web_sys::Element) {
         }
     }) as Box<dyn FnMut()>);
 
-    let _ = content_layer.add_event_listener_with_callback(
-        "scroll",
-        closure_scroll.as_ref().unchecked_ref(),
-    );
+    let _ = content_layer
+        .add_event_listener_with_callback("scroll", closure_scroll.as_ref().unchecked_ref());
     closure_scroll.forget();
 
     // Watch resize events
@@ -513,14 +519,17 @@ fn setup_custom_scrollbar(container: &web_sys::Element) {
         update_scrollbar(&content_layer_resize, &track_resize, &thumb_resize);
     }) as Box<dyn FnMut()>);
 
-    let _ = window.add_event_listener_with_callback(
-        "resize",
-        closure_resize.as_ref().unchecked_ref(),
-    );
+    let _ =
+        window.add_event_listener_with_callback("resize", closure_resize.as_ref().unchecked_ref());
     closure_resize.forget();
 
     // Setup drag functionality
-    setup_drag_scroll(&content_layer_clone, &thumb_clone, cached_thumb_height, &animator);
+    setup_drag_scroll(
+        &content_layer_clone,
+        &thumb_clone,
+        cached_thumb_height,
+        &animator,
+    );
 
     // Setup hover animation using state machine
     let track_for_hover = track.clone();
@@ -756,13 +765,15 @@ fn setup_drag_scroll(
             // Remove mousemove listener
             if let Some(mousemove) = mousemove_holder_clone.borrow_mut().take() {
                 let mousemove_js: &js_sys::Function = mousemove.as_ref().unchecked_ref();
-                let _ = window_for_mouseup.remove_event_listener_with_callback("mousemove", mousemove_js);
+                let _ = window_for_mouseup
+                    .remove_event_listener_with_callback("mousemove", mousemove_js);
             }
 
             // Remove mouseup listener itself
             if let Some(mouseup) = mouseup_holder_clone.borrow_mut().take() {
                 let mouseup_js: &js_sys::Function = mouseup.as_ref().unchecked_ref();
-                let _ = window_for_mouseup.remove_event_listener_with_callback("mouseup", mouseup_js);
+                let _ =
+                    window_for_mouseup.remove_event_listener_with_callback("mouseup", mouseup_js);
             }
         }) as Box<dyn FnMut(_)>);
 
@@ -774,10 +785,8 @@ fn setup_drag_scroll(
         *mouseup_holder.borrow_mut() = Some(mouseup_handler);
     }) as Box<dyn FnMut(_)>);
 
-    let _ = thumb.add_event_listener_with_callback(
-        "mousedown",
-        closure_mousedown.as_ref().unchecked_ref(),
-    );
+    let _ = thumb
+        .add_event_listener_with_callback("mousedown", closure_mousedown.as_ref().unchecked_ref());
     closure_mousedown.forget();
 }
 

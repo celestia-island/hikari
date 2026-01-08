@@ -1,19 +1,12 @@
 // website/src/pages/components/alert.rs
 // Alert component showcase page with real rendered examples
 
-extern crate components as hikari_components;
 
 use dioxus::prelude::*;
-use components::{
-    Alert, AlertVariant, Button, ButtonVariant,
-    layout::{Container, Section, Row}
-};
-use icons::{Icon, LucideIcon};
-use palette::classes::{
-    ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor,
-    Padding, PaddingLeft, Margin,
-};
 
+use _components::{Alert, AlertVariant, Button, ButtonVariant, layout::{Container, Row, Section}};
+use _icons::{Icon, LucideIcon};
+use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
 use crate::{app::Route, components::Layout};
 
 #[allow(non_snake_case)]

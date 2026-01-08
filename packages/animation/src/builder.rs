@@ -51,13 +51,15 @@
 //!     .apply();
 //! ```
 
-use super::context::AnimationContext;
-use super::style::{CssProperty, StyleBuilder};
 use std::collections::HashMap;
-use wasm_bindgen::closure::Closure;
-use wasm_bindgen::JsCast;
-use wasm_bindgen::JsValue;
+
+use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 use web_sys::{Element, HtmlElement};
+
+use super::{
+    context::AnimationContext,
+    style::{CssProperty, StyleBuilder},
+};
 
 /// Dynamic value that can be computed at runtime
 ///
@@ -124,9 +126,13 @@ impl Clone for AnimationAction {
             AnimationAction::Class(class) => AnimationAction::Class(class.clone()),
             AnimationAction::Style(prop, value) => {
                 match value {
-                    DynamicValue::Static(s) => AnimationAction::Style(*prop, DynamicValue::Static(s.clone())),
+                    DynamicValue::Static(s) => {
+                        AnimationAction::Style(*prop, DynamicValue::Static(s.clone()))
+                    }
                     // Dynamic closures cannot be cloned - create placeholder
-                    DynamicValue::Dynamic(_) => AnimationAction::Style(*prop, DynamicValue::static_value("")),
+                    DynamicValue::Dynamic(_) => {
+                        AnimationAction::Style(*prop, DynamicValue::static_value(""))
+                    }
                 }
             }
         }
@@ -214,7 +220,12 @@ impl<'a> AnimationBuilder<'a> {
     /// * `element_name` - Name of the element to animate
     /// * `property` - CSS property to set
     /// * `value` - Static value for the property
-    pub fn add_style(mut self, element_name: &str, property: CssProperty, value: impl Into<String>) -> Self {
+    pub fn add_style(
+        mut self,
+        element_name: &str,
+        property: CssProperty,
+        value: impl Into<String>,
+    ) -> Self {
         self.actions
             .entry(element_name.to_string())
             .or_insert_with(Vec::new)
@@ -334,13 +345,9 @@ impl<'a> AnimationBuilder<'a> {
 
         // Apply styles using StyleBuilder
         if !styles.is_empty() {
-            let style_refs: Vec<(CssProperty, &str)> = styles
-                .iter()
-                .map(|(p, v)| (*p, v.as_str()))
-                .collect();
-            StyleBuilder::new(element)
-                .add_all(&style_refs)
-                .apply();
+            let style_refs: Vec<(CssProperty, &str)> =
+                styles.iter().map(|(p, v)| (*p, v.as_str())).collect();
+            StyleBuilder::new(element).add_all(&style_refs).apply();
         }
 
         // Apply classes
@@ -510,7 +517,12 @@ impl<'a> AnimationBuilderDebounced<'a> {
     /// * `element_name` - Name of the element to animate
     /// * `property` - CSS property to set
     /// * `value` - Static value for the property
-    pub fn add_style(&mut self, element_name: &str, property: CssProperty, value: impl Into<String>) -> &mut Self {
+    pub fn add_style(
+        &mut self,
+        element_name: &str,
+        property: CssProperty,
+        value: impl Into<String>,
+    ) -> &mut Self {
         let action = AnimationAction::style_static(property, value);
         self.pending_actions
             .entry(element_name.to_string())
@@ -527,7 +539,12 @@ impl<'a> AnimationBuilderDebounced<'a> {
     /// * `element_name` - Name of the element to animate
     /// * `property` - CSS property to set
     /// * `f` - Closure that computes the value dynamically
-    pub fn add_style_dynamic<F>(&mut self, element_name: &str, property: CssProperty, f: F) -> &mut Self
+    pub fn add_style_dynamic<F>(
+        &mut self,
+        element_name: &str,
+        property: CssProperty,
+        f: F,
+    ) -> &mut Self
     where
         F: Fn(&AnimationContext) -> String + 'static,
     {
@@ -613,7 +630,8 @@ impl<'a> AnimationBuilderDebounced<'a> {
 
         match result {
             Ok(handle) => {
-                self.timeout_handles.insert(element_name_for_timeout, handle);
+                self.timeout_handles
+                    .insert(element_name_for_timeout, handle);
                 closure.forget();
             }
             Err(_) => {
@@ -686,13 +704,9 @@ fn apply_actions_to_element(element: &HtmlElement, actions: &[AnimationAction]) 
 
     // Apply styles using StyleBuilder
     if !styles.is_empty() {
-        let style_refs: Vec<(CssProperty, &str)> = styles
-            .iter()
-            .map(|(p, v)| (*p, v.as_str()))
-            .collect();
-        StyleBuilder::new(element)
-            .add_all(&style_refs)
-            .apply();
+        let style_refs: Vec<(CssProperty, &str)> =
+            styles.iter().map(|(p, v)| (*p, v.as_str())).collect();
+        StyleBuilder::new(element).add_all(&style_refs).apply();
     }
 
     // Apply classes

@@ -5,9 +5,9 @@ use dioxus::prelude::*;
 use dioxus_router::components::Router;
 
 // Import scrollbar system
-use components::scripts::scrollbar_container;
+use _components::scripts::scrollbar_container;
 // Import ThemeProvider
-use components::ThemeProvider;
+use _components::ThemeProvider;
 
 /// Main application routes
 #[derive(Clone, Routable, Debug, PartialEq)]
@@ -104,35 +104,35 @@ fn Home() -> Element {
 #[allow(non_snake_case)]
 fn ComponentsOverview() -> Element {
     rsx! {
-        crate::pages::components::ComponentsOverview {}
+        crate::pages::components::overview::ComponentsOverview {}
     }
 }
 
 #[allow(non_snake_case)]
 fn ComponentsBasic() -> Element {
     rsx! {
-        crate::pages::components::ComponentsBasic {}
+        crate::pages::components::basic::ComponentsBasic {}
     }
 }
 
 #[allow(non_snake_case)]
 fn ComponentsFeedback() -> Element {
     rsx! {
-        crate::pages::components::ComponentsFeedback {}
+        crate::pages::components::feedback::ComponentsFeedback {}
     }
 }
 
 #[allow(non_snake_case)]
 fn ComponentsNavigation() -> Element {
     rsx! {
-        crate::pages::components::ComponentsNavigation {}
+        crate::pages::components::navigation::ComponentsNavigation {}
     }
 }
 
 #[allow(non_snake_case)]
 fn ComponentsData() -> Element {
     rsx! {
-        crate::pages::components::ComponentsData {}
+        crate::pages::components::data::ComponentsData {}
     }
 }
 
@@ -140,28 +140,28 @@ fn ComponentsData() -> Element {
 #[allow(non_snake_case)]
 fn ComponentsLayout() -> Element {
     rsx! {
-        crate::pages::components::ComponentsLayout {}
+        crate::pages::components::layout::ComponentsLayout {}
     }
 }
 
 #[allow(non_snake_case)]
 fn LayoutContainer() -> Element {
     rsx! {
-        crate::pages::components::ComponentsLayout {}
+        crate::pages::components::layout::ComponentsLayout {}
     }
 }
 
 #[allow(non_snake_case)]
 fn LayoutGrid() -> Element {
     rsx! {
-        crate::pages::components::ComponentsLayout {}
+        crate::pages::components::layout::ComponentsLayout {}
     }
 }
 
 #[allow(non_snake_case)]
 fn LayoutSection() -> Element {
     rsx! {
-        crate::pages::components::ComponentsLayout {}
+        crate::pages::components::layout::ComponentsLayout {}
     }
 }
 
@@ -169,28 +169,28 @@ fn LayoutSection() -> Element {
 #[allow(non_snake_case)]
 fn BasicButton() -> Element {
     rsx! {
-        crate::pages::components::ComponentsButton {}
+        crate::pages::components::button::ComponentsButton {}
     }
 }
 
 #[allow(non_snake_case)]
 fn BasicInput() -> Element {
     rsx! {
-        crate::pages::components::ComponentsInput {}
+        crate::pages::components::input::ComponentsInput {}
     }
 }
 
 #[allow(non_snake_case)]
 fn BasicCard() -> Element {
     rsx! {
-        crate::pages::components::ComponentsCard {}
+        crate::pages::components::card::ComponentsCard {}
     }
 }
 
 #[allow(non_snake_case)]
 fn BasicBadge() -> Element {
     rsx! {
-        crate::pages::components::ComponentsBadge {}
+        crate::pages::components::badge::ComponentsBadge {}
     }
 }
 
@@ -198,21 +198,21 @@ fn BasicBadge() -> Element {
 #[allow(non_snake_case)]
 fn FeedbackAlert() -> Element {
     rsx! {
-        crate::pages::components::ComponentsAlert {}
+        crate::pages::components::alert::ComponentsAlert {}
     }
 }
 
 #[allow(non_snake_case)]
 fn FeedbackToast() -> Element {
     rsx! {
-        crate::pages::components::ComponentsToast {}
+        crate::pages::components::toast::ComponentsToast {}
     }
 }
 
 #[allow(non_snake_case)]
 fn FeedbackTooltip() -> Element {
     rsx! {
-        crate::pages::components::ComponentsTooltip {}
+        crate::pages::components::tooltip::ComponentsTooltip {}
     }
 }
 
@@ -220,21 +220,21 @@ fn FeedbackTooltip() -> Element {
 #[allow(non_snake_case)]
 fn NavigationMenu() -> Element {
     rsx! {
-        crate::pages::components::ComponentsMenu {}
+        crate::pages::components::menu::ComponentsMenu {}
     }
 }
 
 #[allow(non_snake_case)]
 fn NavigationTabs() -> Element {
     rsx! {
-        crate::pages::components::ComponentsTabs {}
+        crate::pages::components::tabs::ComponentsTabs {}
     }
 }
 
 #[allow(non_snake_case)]
 fn NavigationBreadcrumb() -> Element {
     rsx! {
-        crate::pages::components::ComponentsBreadcrumb {}
+        crate::pages::components::breadcrumb::ComponentsBreadcrumb {}
     }
 }
 
@@ -242,21 +242,21 @@ fn NavigationBreadcrumb() -> Element {
 #[allow(non_snake_case)]
 fn DataTable() -> Element {
     rsx! {
-        crate::pages::components::ComponentsData {}
+        crate::pages::components::data::ComponentsData {}
     }
 }
 
 #[allow(non_snake_case)]
 fn DataTree() -> Element {
     rsx! {
-        crate::pages::components::ComponentsData {}
+        crate::pages::components::data::ComponentsData {}
     }
 }
 
 #[allow(non_snake_case)]
 fn DataPagination() -> Element {
     rsx! {
-        crate::pages::components::ComponentsData {}
+        crate::pages::components::data::ComponentsData {}
     }
 }
 

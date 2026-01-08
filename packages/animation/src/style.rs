@@ -556,7 +556,9 @@ mod tests {
         for prop in props {
             let name = prop.as_str();
             // All property names should contain only lowercase letters, numbers, and hyphens
-            assert!(name.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-'));
+            assert!(name
+                .chars()
+                .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-'));
             // Property names should not be empty
             assert!(!name.is_empty());
         }

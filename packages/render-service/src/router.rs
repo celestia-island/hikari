@@ -144,9 +144,7 @@ pub fn build_router(
     // Static files are served, but 404s fall through to index.html for SPA routing
     for mount_config in static_mounts {
         let serve_dir = ServeDir::new(&mount_config.local_path)
-            .fallback(ServeDir::new("public").fallback(
-                axum::routing::get(spa_fallback_handler)
-            ));
+            .fallback(ServeDir::new("public").fallback(axum::routing::get(spa_fallback_handler)));
         router = router.nest_service(&mount_config.url_path, serve_dir);
     }
 
@@ -228,7 +226,8 @@ async fn spa_fallback_handler(_uri: Uri) -> impl IntoResponse {
         <p>public/index.html not found. Please build the application first.</p>
     </div>
 </body>
-</html>"#.to_string()
+</html>"#
+                .to_string()
         }
     };
 

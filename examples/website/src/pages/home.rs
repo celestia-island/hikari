@@ -1,15 +1,13 @@
 // website/src/pages/home.rs
 // Home page - Showcasing Hikari Component Library
 
-extern crate components as hikari_components;
 
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
-use palette::classes::{ClassesBuilder, FontSize, FontWeight, TextColor, TextAlign, MarginBottom};
 
+use _palette::classes::{ClassesBuilder, FontSize, FontWeight, TextColor, TextAlign, MarginBottom};
 use crate::{app::Route, components::Layout};
-use components::layout::{Container, Grid, Row, Section, Spacer};
-use components::{Button, ButtonSize, ButtonVariant, Card};
+use _components::{Button, ButtonSize, ButtonVariant, Card, layout::{Container, Grid, Row, Section, Spacer}};
 
 #[component]
 pub fn Home() -> Element {

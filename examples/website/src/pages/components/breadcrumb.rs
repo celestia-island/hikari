@@ -1,19 +1,12 @@
 // website/src/pages/components/breadcrumb.rs
 // Breadcrumb component showcase page with real rendered examples
 
-extern crate components as hikari_components;
 
 use dioxus::prelude::*;
-use components::{
-    Breadcrumb, BreadcrumbItem, BreadcrumbSeparator,
-    layout::{Container, Section}
-};
-use icons::{Icon, LucideIcon};
-use palette::classes::{
-    ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor,
-    Padding, PaddingLeft, Margin,
-};
 
+use _components::{Breadcrumb, BreadcrumbItem, BreadcrumbSeparator, layout::{Container, Section}};
+use _icons::{Icon, LucideIcon};
+use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
 use crate::{app::Route, components::Layout};
 
 #[allow(non_snake_case)]

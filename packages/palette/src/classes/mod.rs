@@ -26,25 +26,25 @@
 //! // Output: "hi-flex hi-flex-row hi-gap-4 hi-header-main"
 //! ```
 
-pub mod display;
-pub mod layout;
-pub mod spacing;
-pub mod sizing;
-pub mod typography;
 pub mod colors;
-pub mod effects;
-pub mod transitions;
 pub mod components;
+pub mod display;
+pub mod effects;
+pub mod layout;
+pub mod sizing;
+pub mod spacing;
+pub mod transitions;
+pub mod typography;
 
-pub use display::*;
-pub use layout::*;
-pub use spacing::*;
-pub use sizing::*;
-pub use typography::*;
 pub use colors::*;
-pub use effects::*;
-pub use transitions::*;
 pub use components::*;
+pub use display::*;
+pub use effects::*;
+pub use layout::*;
+pub use sizing::*;
+pub use spacing::*;
+pub use transitions::*;
+pub use typography::*;
 
 /// Base trait for all utility classes
 ///
@@ -147,9 +147,7 @@ mod tests {
 
     #[test]
     fn test_builder_single() {
-        let classes = ClassesBuilder::new()
-            .add(Display::Flex)
-            .build();
+        let classes = ClassesBuilder::new().add(Display::Flex).build();
 
         assert_eq!(classes, "hi-flex");
     }

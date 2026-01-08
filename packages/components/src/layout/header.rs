@@ -17,8 +17,7 @@
 //! ```
 
 use dioxus::prelude::*;
-use palette::classes::*;
-use palette::ClassesBuilder;
+use palette::{classes::*, ClassesBuilder};
 
 /// Header component - Modern application header bar
 ///

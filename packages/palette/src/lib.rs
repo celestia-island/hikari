@@ -35,10 +35,10 @@
 //! // Output: "hi-flex hi-flex-row hi-gap-4"
 //! ```
 
+pub mod classes;
 pub mod colors;
 pub mod themes;
-pub mod classes;
 
+pub use classes::*;
 pub use colors::*;
 pub use themes::*;
-pub use classes::*;

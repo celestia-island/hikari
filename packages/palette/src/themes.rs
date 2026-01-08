@@ -4,9 +4,9 @@
 //! - **Hikari** - Light theme (光) - Pink + White
 //! - **Tairitsu** - Dark theme (tairitsu) - Deep Blue + Black
 
+use std::{collections::HashMap, sync::RwLock};
+
 use super::colors::*;
-use std::collections::HashMap;
-use std::sync::RwLock;
 
 /// Theme mode enumeration
 ///
@@ -51,17 +51,17 @@ impl Hikari {
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Light,
-            primary: 粉红,          // 粉色系
-            secondary: 朱红,        // 红色系
-            accent: 姜黄,           // 黄色系
-            success: 葱倩,          // 绿色系
-            warning: 鹅黄,          // 黄色系
-            danger: 朱红,           // 红色系
-            background: 素,         // 浅灰 (224, 240, 233)
-            surface: 月白,          // 白色 (214, 236, 240)
-            border: 素,             // 浅灰
-            text_primary: 墨色,     // 深色 (80, 97, 109)
-            text_secondary: 黛,     // 灰蓝色 (74, 66, 102)
+            primary: 粉红,      // 粉色系
+            secondary: 朱红,    // 红色系
+            accent: 姜黄,       // 黄色系
+            success: 葱倩,      // 绿色系
+            warning: 鹅黄,      // 黄色系
+            danger: 朱红,       // 红色系
+            background: 素,     // 浅灰 (224, 240, 233)
+            surface: 月白,      // 白色 (214, 236, 240)
+            border: 素,         // 浅灰
+            text_primary: 墨色, // 深色 (80, 97, 109)
+            text_secondary: 黛, // 灰蓝色 (74, 66, 102)
         }
     }
 }
@@ -83,17 +83,17 @@ impl Tairitsu {
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Dark,
-            primary: 靛蓝,          // 深蓝色 (6, 82, 121)
-            secondary: 宝蓝,        // 蓝色 (75, 92, 196)
-            accent: 姜黄,           // 黄色系
-            success: 葱倩,          // 绿色系
-            warning: 鹅黄,          // 黄色系
-            danger: 朱红,           // 红色系
-            background: 黛,         // 深蓝灰 (74, 66, 102)
-            surface: 墨色,          // 灰蓝黑 (80, 97, 109)
-            border: 黛,             // 深蓝灰
-            text_primary: 月白,     // 白色 (214, 236, 240)
-            text_secondary: 素,     // 浅灰 (224, 240, 233)
+            primary: 靛蓝,      // 深蓝色 (6, 82, 121)
+            secondary: 宝蓝,    // 蓝色 (75, 92, 196)
+            accent: 姜黄,       // 黄色系
+            success: 葱倩,      // 绿色系
+            warning: 鹅黄,      // 黄色系
+            danger: 朱红,       // 红色系
+            background: 黛,     // 深蓝灰 (74, 66, 102)
+            surface: 墨色,      // 灰蓝黑 (80, 97, 109)
+            border: 黛,         // 深蓝灰
+            text_primary: 月白, // 白色 (214, 236, 240)
+            text_secondary: 素, // 浅灰 (224, 240, 233)
         }
     }
 }
@@ -133,7 +133,9 @@ impl ThemeRegistry {
     /// * `Ok(())` if successfully registered
     /// * `Err(String)` if a palette with this name already exists
     pub fn register(&self, name: &str, palette: Palette) -> Result<(), String> {
-        let mut palettes = self.palettes.write()
+        let mut palettes = self
+            .palettes
+            .write()
             .map_err(|e| format!("Failed to acquire write lock: {}", e))?;
 
         if palettes.contains_key(name) {
@@ -153,7 +155,8 @@ impl ThemeRegistry {
     /// * `Some(Palette)` if found
     /// * `None` if not found
     pub fn get(&self, name: &str) -> Option<Palette> {
-        self.palettes.read()
+        self.palettes
+            .read()
             .ok()
             .and_then(|palettes| palettes.get(name).cloned())
     }
@@ -168,7 +171,9 @@ impl ThemeRegistry {
     /// * `Ok(())` if successfully updated
     /// * `Err(String)` if palette not found or lock failed
     pub fn update(&self, name: &str, palette: Palette) -> Result<(), String> {
-        let mut palettes = self.palettes.write()
+        let mut palettes = self
+            .palettes
+            .write()
             .map_err(|e| format!("Failed to acquire write lock: {}", e))?;
 
         if !palettes.contains_key(name) {
@@ -181,7 +186,8 @@ impl ThemeRegistry {
 
     /// List all registered palette names
     pub fn list(&self) -> Vec<String> {
-        self.palettes.read()
+        self.palettes
+            .read()
             .ok()
             .map(|palettes| palettes.keys().cloned().collect())
             .unwrap_or_default()

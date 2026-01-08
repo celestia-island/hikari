@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hikari Demo App</title>
+    <title>Hikari UI - Component Library</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/images/logo.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/images/logo.png">
     <link rel="shortcut icon" type="image/png" href="/images/logo.png">
@@ -35,17 +35,17 @@
     <link rel="stylesheet" href="/styles/bundle.css">
 </head>
 <body>
-    <div id="loading">Loading Hikari Demo...</div>
+    <div id="loading">Loading Hikari UI...</div>
     <div id="main"></div>
 
     <!-- Load WASM module -->
     <script type="module">
-        import init, { hydrate } from '/assets/demo_app.js';
+        import init, { hydrate } from '/assets/website.js';
 
         async function main() {
             try {
                 // Initialize WASM module
-                await init('/assets/demo_app_bg.wasm');
+                await init('/assets/website_bg.wasm');
 
                 // Hide loading indicator
                 document.getElementById('loading').style.display = 'none';

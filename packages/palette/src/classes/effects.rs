@@ -2,7 +2,8 @@
 //!
 //! Shadow, opacity, border radius, and other visual effects.
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+
 use super::UtilityClass;
 
 /// Border radius utilities

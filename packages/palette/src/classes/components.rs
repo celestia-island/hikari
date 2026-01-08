@@ -4,7 +4,8 @@
 //! that start with `hi-`. Each component in hikari-components
 //! should expose its classes here.
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+
 use super::UtilityClass;
 
 /// Header component classes

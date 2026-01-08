@@ -1,10 +1,10 @@
 // website/src/components/sidebar_tree.rs
 // Sidebar navigation using Tree component for 3-level structure
 
-use components::data::{Tree, TreeNodeData};
 use dioxus::prelude::*;
-use palette::classes::*;
 
+use _components::data::{Tree, TreeNodeData};
+use _palette::classes::*;
 use crate::app::Route;
 
 /// Sidebar component with 3-level Tree navigation

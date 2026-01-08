@@ -242,9 +242,10 @@ pub mod timeline;
 pub mod timer;
 pub mod tween;
 
+pub use core::*;
+
 pub use builder::*;
 pub use context::*;
-pub use core::*;
 pub use easing::*;
 pub use events::*;
 pub use hooks::*;
@@ -252,5 +253,5 @@ pub use presets::*;
 pub use spotlight::*;
 pub use style::*;
 pub use timeline::*;
-pub use tween::*;
 pub use timer::*;
+pub use tween::*;

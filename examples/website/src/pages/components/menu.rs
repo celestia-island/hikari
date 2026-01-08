@@ -1,19 +1,12 @@
 // website/src/pages/components/menu.rs
 // Menu component showcase page with real rendered examples
 
-extern crate components as hikari_components;
 
 use dioxus::prelude::*;
-use components::{
-    Menu, MenuItem, SubMenu, MenuMode,
-    layout::{Container, Section}
-};
-use icons::{Icon, LucideIcon};
-use palette::classes::{
-    ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor,
-    Padding, PaddingLeft, Margin,
-};
 
+use _components::{Menu, MenuItem, MenuMode, SubMenu, layout::{Container, Section}};
+use _icons::{Icon, LucideIcon};
+use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
 use crate::{app::Route, components::Layout};
 
 #[allow(non_snake_case)]

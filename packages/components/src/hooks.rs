@@ -90,9 +90,7 @@ impl ScreenSize {
 /// }
 /// ```
 pub fn use_screen_size() -> Signal<ScreenSize> {
-    let screen_size = use_signal(|| {
-        get_screen_size_from_window()
-    });
+    let screen_size = use_signal(|| get_screen_size_from_window());
 
     // Set up resize listener
     use_effect(move || {
@@ -204,9 +202,7 @@ fn get_screen_size_from_window() -> ScreenSize {
 /// }
 /// ```
 pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> Signal<bool> {
-    let matches = use_signal(|| {
-        check_media_query(min_width, max_width)
-    });
+    let matches = use_signal(|| check_media_query(min_width, max_width));
 
     use_effect(move || {
         let window = web_sys::window().expect("no window");

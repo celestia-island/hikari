@@ -2,8 +2,9 @@
 // SCSS build script - auto-discovers and compiles SCSS files using Grass compiler
 
 use anyhow::Result;
-use grass::Options;
 use std::{env, fs, path::Path};
+
+use grass::Options;
 
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=src/styles");
@@ -60,11 +61,7 @@ fn discover_scss_files(dir: &Path) -> Vec<std::path::PathBuf> {
     files
 }
 
-fn compile_scss(
-    full_path: &Path,
-    output_dir: &Path,
-    relative_path: &str,
-) -> Result<()> {
+fn compile_scss(full_path: &Path, output_dir: &Path, relative_path: &str) -> Result<()> {
     // Get filename without extension
     let css_name = full_path
         .file_name()
@@ -75,9 +72,7 @@ fn compile_scss(
     // Set up Grass options with load path for theme package
     let manifest_dir_str = env::var("CARGO_MANIFEST_DIR")?;
     let manifest_dir = Path::new(&manifest_dir_str);
-    let theme_styles_dir = manifest_dir
-        .join("../theme/styles")
-        .canonicalize()?;
+    let theme_styles_dir = manifest_dir.join("../theme/styles").canonicalize()?;
 
     let options = Options::default().load_path(&theme_styles_dir);
 

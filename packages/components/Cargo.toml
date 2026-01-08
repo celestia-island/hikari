@@ -53,10 +53,14 @@ web-sys = { version = "0.3", features = [
     "NodeList",
     "CssStyleDeclaration",
     "DomTokenList",
+    "MediaQueryList",
 ] }
-wasm-bindgen = "0.2"
-js-sys = "0.3"
+wasm-bindgen = "^0.2"
+js-sys = "^0.3"
+
+# Browser utilities library (higher-level than web-sys)
+gloo = { version = "^0.11", features = ["utils"] }
 
 [build-dependencies]
-grass = "0.13"
-anyhow = "1.0"
+grass = "^0.13"
+anyhow = "^1"

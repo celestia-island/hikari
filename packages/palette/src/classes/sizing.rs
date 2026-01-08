@@ -2,7 +2,8 @@
 //!
 //! Width, height, and other sizing utilities.
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+
 use super::UtilityClass;
 
 /// Width utilities
@@ -11,7 +12,12 @@ pub enum Width {
     Full,
     Screen,
     Auto,
-    W6, W8, W12, W16, W24, W64,
+    W6,
+    W8,
+    W12,
+    W16,
+    W24,
+    W64,
 }
 
 impl UtilityClass for Width {
@@ -36,7 +42,9 @@ pub enum Height {
     Full,
     Screen,
     Auto,
-    H6, H8, H12,
+    H6,
+    H8,
+    H12,
 }
 
 impl UtilityClass for Height {

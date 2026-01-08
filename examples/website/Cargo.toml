@@ -19,18 +19,18 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = []
-server = ["dep:tokio", "dep:axum", "dep:tower-http", "dep:tower", "dep:anyhow", "dep:tracing", "dep:tracing-subscriber", "dep:http", "dep:render-service"]
+server = ["dep:tokio", "dep:axum", "dep:tower-http", "dep:tower", "dep:anyhow", "dep:tracing", "dep:tracing-subscriber", "dep:http", "dep:_render_service"]
 
 # Optional integrations
-embedded = ["icons/embedded"]
+embedded = ["_icons/embedded"]
 
 [dependencies]
-# Workspace dependencies (with short aliases)
-components = { path = "../../packages/components", package = "hikari-components", features = ["basic", "feedback", "navigation", "data", "layout"] }
-icons = { path = "../../packages/icons", package = "hikari-icons" }
-palette = { path = "../../packages/palette", package = "hikari-palette" }
-animations = { path = "../../packages/animation", package = "hikari-animation" }
-render-service = { path = "../../packages/render-service", package = "hikari-render-service", optional = true }
+# Workspace dependencies (short aliases for internal packages)
+_components = { path = "../../packages/components", package = "hikari-components", features = ["basic", "feedback", "navigation", "data", "layout"] }
+_icons = { path = "../../packages/icons", package = "hikari-icons" }
+_palette = { path = "../../packages/palette", package = "hikari-palette" }
+_animation = { path = "../../packages/animation", package = "hikari-animation" }
+_render_service = { path = "../../packages/render-service", package = "hikari-render-service", optional = true }
 
 # Dioxus frontend framework
 dioxus = { version = "0.7", features = ["web"] }

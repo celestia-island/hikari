@@ -65,9 +65,10 @@
 //! }
 //! ```
 
+use std::rc::Rc;
+
 use dioxus::prelude::*;
 use palette::*;
-use std::rc::Rc;
 
 /// Theme palette with CSS variable values
 #[derive(Clone, PartialEq)]
@@ -129,17 +130,39 @@ impl ThemePalette {
         text_primary: Option<String>,
         text_secondary: Option<String>,
     ) -> Self {
-        if let Some(color) = primary { self.primary = color; }
-        if let Some(color) = secondary { self.secondary = color; }
-        if let Some(color) = accent { self.accent = color; }
-        if let Some(color) = success { self.success = color; }
-        if let Some(color) = warning { self.warning = color; }
-        if let Some(color) = danger { self.danger = color; }
-        if let Some(color) = background { self.background = color; }
-        if let Some(color) = surface { self.surface = color; }
-        if let Some(color) = border { self.border = color; }
-        if let Some(color) = text_primary { self.text_primary = color; }
-        if let Some(color) = text_secondary { self.text_secondary = color; }
+        if let Some(color) = primary {
+            self.primary = color;
+        }
+        if let Some(color) = secondary {
+            self.secondary = color;
+        }
+        if let Some(color) = accent {
+            self.accent = color;
+        }
+        if let Some(color) = success {
+            self.success = color;
+        }
+        if let Some(color) = warning {
+            self.warning = color;
+        }
+        if let Some(color) = danger {
+            self.danger = color;
+        }
+        if let Some(color) = background {
+            self.background = color;
+        }
+        if let Some(color) = surface {
+            self.surface = color;
+        }
+        if let Some(color) = border {
+            self.border = color;
+        }
+        if let Some(color) = text_primary {
+            self.text_primary = color;
+        }
+        if let Some(color) = text_secondary {
+            self.text_secondary = color;
+        }
         self
     }
 
@@ -298,22 +321,19 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
     };
 
     // Create theme palette and apply custom overrides
-    let theme_palette = Rc::new(
-        ThemePalette::from_palette(&base_palette)
-            .with_overrides(
-                props.primary,
-                props.secondary,
-                props.accent,
-                props.success,
-                props.warning,
-                props.danger,
-                props.background,
-                props.surface,
-                props.border,
-                props.text_primary,
-                props.text_secondary,
-            )
-    );
+    let theme_palette = Rc::new(ThemePalette::from_palette(&base_palette).with_overrides(
+        props.primary,
+        props.secondary,
+        props.accent,
+        props.success,
+        props.warning,
+        props.danger,
+        props.background,
+        props.surface,
+        props.border,
+        props.text_primary,
+        props.text_secondary,
+    ));
 
     let css_vars = theme_palette.css_variables();
 
@@ -379,8 +399,82 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 ///     }
 /// }
 /// ```
-pub fn use_theme() -> Option<ThemeContext> {
-    try_consume_context::<ThemeContext>()
+///
+/// # Returns
+///
+/// Returns the current `ThemeContext`. If called outside of a `ThemeProvider`,
+/// returns a default theme based on system color scheme (Hikari for light mode,
+/// Tairitsu for dark mode) and logs a warning to the browser console.
+pub fn use_theme() -> ThemeContext {
+    try_consume_context::<ThemeContext>().unwrap_or_else(|| {
+        #[cfg(target_arch = "wasm32")]
+        {
+            web_sys::console::warn_1(
+                &"use_theme() called outside of ThemeProvider. Using system default theme.".into(),
+            );
+
+            if prefers_dark_mode() {
+                ThemeContext {
+                    palette: Rc::new(ThemePalette::from_palette(&Tairitsu::palette())),
+                    theme_name: "tairitsu".to_string(),
+                }
+            } else {
+                ThemeContext {
+                    palette: Rc::new(ThemePalette::from_palette(&Hikari::palette())),
+                    theme_name: "hikari".to_string(),
+                }
+            }
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            eprintln!("use_theme() called outside of ThemeProvider. Using default Hikari theme.");
+
+            ThemeContext {
+                palette: Rc::new(ThemePalette::from_palette(&Hikari::palette())),
+                theme_name: "hikari".to_string(),
+            }
+        }
+    })
+}
+
+/// Detect if the system prefers dark mode using `prefers-color-scheme`.
+///
+/// This function checks the user's system color scheme preference.
+/// Returns `true` if dark mode is preferred, `false` otherwise.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// # use hikari_components::prefers_dark_mode;
+/// if prefers_dark_mode() {
+///     // Use dark theme
+/// }
+/// ```
+///
+/// # Platform Support
+///
+/// - **WASM**: Returns the actual `prefers-color-scheme: dark` media query result
+/// - **Non-WASM**: Always returns `false` (light mode default)
+pub fn prefers_dark_mode() -> bool {
+    #[cfg(target_arch = "wasm32")]
+    {
+        use gloo::utils::window;
+
+        // match_media returns Result<Option<MediaQueryList>, JsValue>
+        // because the JS method can return null
+        window()
+            .match_media("(prefers-color-scheme: dark)")
+            .ok()
+            .flatten() // Option<Option<MediaQueryList>> -> Option<MediaQueryList>
+            .map(|mql| mql.matches()) // matches() returns bool directly
+            .unwrap_or(false)
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        false
+    }
 }
 
 #[cfg(test)]
@@ -410,20 +504,19 @@ mod tests {
     #[test]
     fn test_color_overrides() {
         let palette = Hikari::palette();
-        let theme_palette = ThemePalette::from_palette(&palette)
-            .with_overrides(
-                Some("#FF0000".to_string()),  // primary
-                None,                          // secondary
-                None,                          // accent
-                None,                          // success
-                None,                          // warning
-                None,                          // danger
-                None,                          // background
-                None,                          // surface
-                None,                          // border
-                None,                          // text_primary
-                None,                          // text_secondary
-            );
+        let theme_palette = ThemePalette::from_palette(&palette).with_overrides(
+            Some("#FF0000".to_string()), // primary
+            None,                        // secondary
+            None,                        // accent
+            None,                        // success
+            None,                        // warning
+            None,                        // danger
+            None,                        // background
+            None,                        // surface
+            None,                        // border
+            None,                        // text_primary
+            None,                        // text_secondary
+        );
 
         assert_eq!(theme_palette.primary, "#FF0000");
         assert_eq!(theme_palette.secondary, palette.secondary.hex()); // unchanged
@@ -432,20 +525,19 @@ mod tests {
     #[test]
     fn test_all_color_overrides() {
         let palette = Hikari::palette();
-        let theme_palette = ThemePalette::from_palette(&palette)
-            .with_overrides(
-                Some("#111111".to_string()),
-                Some("#222222".to_string()),
-                Some("#333333".to_string()),
-                Some("#444444".to_string()),
-                Some("#555555".to_string()),
-                Some("#666666".to_string()),
-                Some("#777777".to_string()),
-                Some("#888888".to_string()),
-                Some("#999999".to_string()),
-                Some("#AAAAAA".to_string()),
-                Some("#BBBBBB".to_string()),
-            );
+        let theme_palette = ThemePalette::from_palette(&palette).with_overrides(
+            Some("#111111".to_string()),
+            Some("#222222".to_string()),
+            Some("#333333".to_string()),
+            Some("#444444".to_string()),
+            Some("#555555".to_string()),
+            Some("#666666".to_string()),
+            Some("#777777".to_string()),
+            Some("#888888".to_string()),
+            Some("#999999".to_string()),
+            Some("#AAAAAA".to_string()),
+            Some("#BBBBBB".to_string()),
+        );
 
         assert_eq!(theme_palette.primary, "#111111");
         assert_eq!(theme_palette.secondary, "#222222");
@@ -469,7 +561,7 @@ mod tests {
         assert!(theme_palette.primary.starts_with('#'));
         assert!(theme_palette.secondary.starts_with('#'));
         assert!(theme_palette.accent.starts_with('#'));
-        assert!(theme_palette.primary.len() == 7);  // #RRGGBB
+        assert!(theme_palette.primary.len() == 7); // #RRGGBB
         assert!(theme_palette.secondary.len() == 7);
         assert!(theme_palette.accent.len() == 7);
     }
@@ -486,4 +578,3 @@ mod tests {
         assert!(theme_palette.text_primary.len() == 7);
     }
 }
-

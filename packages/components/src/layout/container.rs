@@ -15,8 +15,7 @@
 //! ```
 
 use dioxus::prelude::*;
-use palette::ClassesBuilder;
-use palette::classes::components::*;
+use palette::{classes::components::*, ClassesBuilder};
 
 /// Container component - Responsive content container
 ///

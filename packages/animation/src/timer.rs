@@ -7,11 +7,9 @@
 //! - Temporary visual feedback
 //! - Debouncing and throttling
 
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::time::Duration;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
+use std::{cell::RefCell, rc::Rc, time::Duration};
+
+use wasm_bindgen::{prelude::*, JsCast};
 
 /// Timer ID for tracking scheduled timers
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

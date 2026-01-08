@@ -14,9 +14,10 @@
 //! }
 //! ```
 
-use std::env;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+};
 
 /// Main build function
 pub fn build() -> anyhow::Result<()> {

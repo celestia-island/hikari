@@ -2,7 +2,8 @@
 //!
 //! CSS display properties with `hi-` prefix.
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+
 use super::UtilityClass;
 
 /// Display property values

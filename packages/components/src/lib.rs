@@ -100,7 +100,7 @@ pub use data::*;
 pub use styled::{StyleRegistry, StyledComponent};
 
 // Theme provider exports
-pub use theme_provider::{ThemeProvider, use_theme, ThemePalette, ThemeContext};
+pub use theme_provider::{prefers_dark_mode, use_theme, ThemeContext, ThemePalette, ThemeProvider};
 
 /// # Hierarchical Theme System
 ///
@@ -144,7 +144,7 @@ pub use theme_provider::{ThemeProvider, use_theme, ThemePalette, ThemeContext};
 /// use hikari_components::use_theme;
 ///
 /// fn MyComponent() -> Element {
-///     let theme = use_theme()?;
+///     let theme = use_theme();  // Always returns a ThemeContext
 ///
 ///     rsx! {
 ///         div {
@@ -155,10 +155,13 @@ pub use theme_provider::{ThemeProvider, use_theme, ThemePalette, ThemeContext};
 /// }
 /// ```
 ///
+/// If called outside of a `ThemeProvider`, `use_theme()` returns a default
+/// theme based on system color scheme (Hikari for light mode, Tairitsu for
+/// dark mode) and logs a warning to the browser console.
+///
 /// For detailed documentation, see:
 /// - `packages/components/docs/HIERARCHICAL_THEME.md`
 /// - `ThemeProvider` component documentation
-
 
 /// Get Hikari utility classes CSS
 ///
@@ -166,7 +169,7 @@ pub use theme_provider::{ThemeProvider, use_theme, ThemePalette, ThemeContext};
 /// These are basic utility classes for layout, spacing, typography, etc.
 #[deprecated(note = "Utility classes are now managed by the CSS bundle. Use CSS classes directly.")]
 pub fn get_utility_classes() -> &'static str {
-    ""  // Utility classes are now in the SCSS bundle
+    "" // Utility classes are now in the SCSS bundle
 }
 
 /// Get complete CSS bundle (utility classes + component styles)

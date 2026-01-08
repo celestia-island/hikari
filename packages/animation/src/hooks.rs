@@ -370,4 +370,3 @@ pub fn use_interval(_duration_ms: u64, _callback: impl Fn() + 'static) {
     // TODO: Implement proper interval with cleanup
     // This requires use_resource or use_effect for cleanup
 }
-

@@ -14,7 +14,7 @@ use console_error_panic_hook::set_once;
 
 // Import spotlight initialization
 #[cfg(target_arch = "wasm32")]
-use animations::init_spotlights;
+use _animation::spotlight::init_spotlights;
 
 // Re-export the app
 pub use app::App;

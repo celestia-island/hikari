@@ -1,19 +1,12 @@
 // website/src/pages/components/button.rs
 // Button component showcase page with real rendered examples
 
-extern crate components as hikari_components;
 
 use dioxus::prelude::*;
-use components::{
-    Button, ButtonVariant, ButtonSize, ButtonAnimation,
-    layout::{Container, Section}
-};
-use icons::{Icon, LucideIcon};
-use palette::classes::{
-    ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor,
-    Padding, PaddingLeft, Margin,
-};
 
+use _components::{Button, ButtonAnimation, ButtonSize, ButtonVariant, layout::{Container, Section}};
+use _icons::{Icon, LucideIcon};
+use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
 use crate::{app::Route, components::Layout};
 
 #[allow(non_snake_case)]

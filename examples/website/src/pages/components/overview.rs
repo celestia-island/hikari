@@ -2,9 +2,9 @@
 // Components overview page
 
 use dioxus::prelude::*;
-use icons::{Icon, LucideIcon};
-use palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, Padding, MarginBottom, FontSize, FontWeight, TextColor};
 
+use _icons::{Icon, LucideIcon};
+use _palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, Padding, MarginBottom, FontSize, FontWeight, TextColor};
 use crate::components::Layout;
 
 /// Components Overview

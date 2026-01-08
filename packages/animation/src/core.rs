@@ -536,7 +536,10 @@ impl std::fmt::Debug for Tween {
             .field("options", &self.options)
             .field("targets", &self.targets)
             .field("on_update", &self.on_update.as_ref().map(|_| "<callback>"))
-            .field("on_complete", &self.on_complete.as_ref().map(|_| "<callback>"))
+            .field(
+                "on_complete",
+                &self.on_complete.as_ref().map(|_| "<callback>"),
+            )
             .field("progress", &self.progress)
             .field("elapsed", &self.elapsed)
             .field("repeat_count", &self.repeat_count)

@@ -2,8 +2,9 @@
 //!
 //! Padding, margin, and related spacing utilities.
 
-use super::UtilityClass;
 use serde::{Deserialize, Serialize};
+
+use super::UtilityClass;
 
 /// Padding all sides
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

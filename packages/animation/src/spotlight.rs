@@ -3,11 +3,10 @@
 
 #![allow(dead_code)]
 
+use std::{cell::RefCell, rc::Rc, vec::Vec};
+
 use wasm_bindgen::prelude::*;
 use web_sys::{HtmlElement, MouseEvent, Window};
-use std::rc::Rc;
-use std::cell::RefCell;
-use std::vec::Vec;
 
 /// Spotlight effect configuration
 #[derive(Clone, Debug)]
@@ -27,10 +26,10 @@ pub struct SpotlightConfig {
 impl Default for SpotlightConfig {
     fn default() -> Self {
         Self {
-            radius: 400.0,          // Increased from 200 - larger detection area
-            max_opacity: 1.0,       // Increased from 0.6 - much more visible
+            radius: 400.0,    // Increased from 200 - larger detection area
+            max_opacity: 1.0, // Increased from 0.6 - much more visible
             throttle_ms: 16.0,
-            color: "255, 255, 255".to_string(),  // Changed to white - more visible on colored buttons
+            color: "255, 255, 255".to_string(), // Changed to white - more visible on colored buttons
             scale_on_hover: false,
         }
     }
@@ -65,7 +64,9 @@ pub fn init_spotlights() {
     let containers = match document.query_selector_all("[data-spotlight]") {
         Ok(els) => els,
         Err(e) => {
-            web_sys::console::error_1(&format!("❌ Failed to query spotlight elements: {:?}", e).into());
+            web_sys::console::error_1(
+                &format!("❌ Failed to query spotlight elements: {:?}", e).into(),
+            );
             return;
         }
     };
@@ -77,7 +78,9 @@ pub fn init_spotlights() {
         if let Some(container) = containers.get(i) {
             if let Some(element) = container.dyn_ref::<HtmlElement>() {
                 spotlight_elements.push(element.clone());
-                web_sys::console::log_1(&format!("✅ Registered spotlight element: {:?}", element.tag_name()).into());
+                web_sys::console::log_1(
+                    &format!("✅ Registered spotlight element: {:?}", element.tag_name()).into(),
+                );
             }
         }
     }
@@ -197,4 +200,3 @@ fn update_spotlight(
 pub fn init_spotlights() {
     // No-op on non-WASM targets
 }
-

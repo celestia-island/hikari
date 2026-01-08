@@ -1,19 +1,12 @@
 // website/src/pages/components/input.rs
 // Input component showcase page with real rendered examples
 
-extern crate components as hikari_components;
 
 use dioxus::prelude::*;
-use components::{
-    Input, InputSize,
-    layout::{Container, Section}
-};
-use icons::{Icon, LucideIcon};
-use palette::classes::{
-    ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor,
-    Padding, PaddingLeft, Margin,
-};
 
+use _components::{Input, InputSize, layout::{Container, Section}};
+use _icons::{Icon, LucideIcon};
+use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
 use crate::{app::Route, components::Layout};
 
 #[allow(non_snake_case)]

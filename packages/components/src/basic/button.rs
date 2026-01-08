@@ -3,9 +3,10 @@
 
 use dioxus::prelude::*;
 
-use crate::styled::StyledComponent;
-use crate::feedback::Spotlight;
-use crate::feedback::SpotlightColor;
+use crate::{
+    feedback::{Spotlight, SpotlightColor},
+    styled::StyledComponent,
+};
 
 /// Animation types for button hover/focus effects
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -154,11 +155,7 @@ pub fn Button(props: ButtonProps) -> Element {
     } else {
         ""
     };
-    let block_class = if props.block {
-        "hi-button-block"
-    } else {
-        ""
-    };
+    let block_class = if props.block { "hi-button-block" } else { "" };
 
     // Convert animation type to data attribute value
     let animation_attr = match props.animation {
@@ -175,9 +172,7 @@ pub fn Button(props: ButtonProps) -> Element {
         ButtonVariant::Primary | ButtonVariant::Danger | ButtonVariant::Success => {
             SpotlightColor::Auto
         }
-        ButtonVariant::Secondary | ButtonVariant::Ghost => {
-            SpotlightColor::Theme
-        }
+        ButtonVariant::Secondary | ButtonVariant::Ghost => SpotlightColor::Theme,
     };
 
     let button_content = rsx! {

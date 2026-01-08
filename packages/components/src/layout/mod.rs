@@ -10,18 +10,18 @@
 //! - Section - Content section component
 //! - Spacer - Spacing component
 
-mod layout;
-mod header;
 mod aside;
-mod content;
 mod container;
+mod content;
 mod grid;
+mod header;
+mod layout;
 mod section;
 
-pub use layout::*;
-pub use header::*;
 pub use aside::*;
-pub use content::*;
 pub use container::*;
+pub use content::*;
 pub use grid::*;
+pub use header::*;
+pub use layout::*;
 pub use section::*;

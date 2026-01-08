@@ -19,11 +19,7 @@ fn test_all_colors_are_unique() {
     let mut seen = std::collections::HashSet::new();
     for color in colors {
         let hex = color.hex();
-        assert!(
-            !seen.contains(&hex),
-            "Duplicate color: {}",
-            hex
-        );
+        assert!(!seen.contains(&hex), "Duplicate color: {}", hex);
         seen.insert(hex);
     }
 }

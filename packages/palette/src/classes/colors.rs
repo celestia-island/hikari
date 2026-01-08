@@ -2,7 +2,8 @@
 //!
 //! Text color, background color, and other color utilities.
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+
 use super::UtilityClass;
 
 /// Text color utilities

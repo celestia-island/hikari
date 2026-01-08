@@ -238,9 +238,10 @@
 //! - **Windows**: ✅ Fully supported
 //! - **WASM**: ✅ Can cross-compile for WASM target
 
-use std::env;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+};
 
 /// Main build function - compiles SCSS and generates components
 ///
@@ -343,10 +344,7 @@ fn scan_scss_files(workspace_root: &Path) -> anyhow::Result<Vec<String>> {
 }
 
 /// Generate Rust constants for discovered components
-fn generate_component_constants(
-    output_dir: &Path,
-    components: &[String],
-) -> anyhow::Result<()> {
+fn generate_component_constants(output_dir: &Path, components: &[String]) -> anyhow::Result<()> {
     let mut content = String::from(
         r#"//! Auto-generated component list
 //!
@@ -393,10 +391,8 @@ fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
     println!("cargo:warning=   Entry point: {:?}", index_scss);
 
     // Compile with Grass - it will handle @import and @use resolution automatically
-    let css_content = grass::from_path(
-        &index_scss,
-        &grass::Options::default(),
-    ).map_err(|e| anyhow::anyhow!("SCSS compilation failed: {:?}", e))?;
+    let css_content = grass::from_path(&index_scss, &grass::Options::default())
+        .map_err(|e| anyhow::anyhow!("SCSS compilation failed: {:?}", e))?;
 
     // Get file size
     let file_size = css_content.len();

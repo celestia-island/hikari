@@ -1,18 +1,15 @@
 // website/src/components/layout.rs
 // Layout component using modernized Hikari components
 
-extern crate components as hikari_components;
 
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
-use icons::{Icon, LucideIcon};
 
-use crate::{app::Route, app::ThemeContext, components::Sidebar};
-use components::layout::{Aside, Header, Layout as HikariLayout};
-use palette::classes::{
-    AlignItems, BgColor, BorderRadius, ClassesBuilder, Cursor, Display, Duration, Flex, FontSize,
-    FontWeight, Gap, Height, JustifyContent, Margin, Padding, TextColor, Transition, Width,
-};
+use _icons::{Icon, LucideIcon};
+use crate::app::{Route, ThemeContext};
+use super::sidebar::Sidebar;
+use _components::layout::{Aside, Header, Layout as HikariLayout};
+use _palette::classes::{ AlignItems, BgColor, BorderRadius, ClassesBuilder, Cursor, Display, Duration, Flex, FontSize, FontWeight, Gap, Height, JustifyContent, Margin, Padding, TextColor, Transition, Width, };
 
 /// Layout component that wraps all pages with modern design
 ///

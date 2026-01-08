@@ -3,8 +3,7 @@
 //! Provides runtime information for computing dynamic animation values,
 //! including DOM dimensions, mouse positions, and element metrics.
 
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{HtmlElement, Window};
 
 /// Context for computing dynamic animation values
@@ -45,8 +44,7 @@ pub struct AnimationContext {
 impl AnimationContext {
     /// Create a new AnimationContext for the given element
     pub fn new(element: &HtmlElement) -> Self {
-        let window = web_sys::window()
-            .expect("No window reference");
+        let window = web_sys::window().expect("No window reference");
 
         Self {
             element: element.clone(),
@@ -241,7 +239,8 @@ impl AnimationContext {
 
     /// Get window inner width
     pub fn window_width(&self) -> f64 {
-        self.window.inner_width()
+        self.window
+            .inner_width()
             .ok()
             .and_then(|w| w.as_f64())
             .unwrap_or(0.0)
@@ -249,7 +248,8 @@ impl AnimationContext {
 
     /// Get window inner height
     pub fn window_height(&self) -> f64 {
-        self.window.inner_height()
+        self.window
+            .inner_height()
             .ok()
             .and_then(|h| h.as_f64())
             .unwrap_or(0.0)
@@ -259,10 +259,7 @@ impl AnimationContext {
 
     /// Get current timestamp in milliseconds
     pub fn now(&self) -> f64 {
-        self.window
-            .performance()
-            .map(|p| p.now())
-            .unwrap_or(0.0)
+        self.window.performance().map(|p| p.now()).unwrap_or(0.0)
     }
 
     // ===== Helpers =====

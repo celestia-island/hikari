@@ -1,19 +1,12 @@
 // website/src/pages/components/tabs.rs
 // Tabs component showcase page with real rendered examples
 
-extern crate components as hikari_components;
 
-use components::{
-    layout::{Container, Section},
-    TabPane, TabPosition, Tabs,
-};
 use dioxus::prelude::*;
-use icons::{Icon, LucideIcon};
-use palette::classes::{
-    BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, Margin, MarginBottom, Padding,
-    PaddingLeft, TextColor,
-};
 
+use _components::{TabPane, TabPosition, Tabs, layout::{Container, Section}};
+use _icons::{Icon, LucideIcon};
+use _palette::classes::{ BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, Margin, MarginBottom, Padding, PaddingLeft, TextColor, };
 use crate::{app::Route, components::Layout};
 
 #[allow(non_snake_case)]

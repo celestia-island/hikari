@@ -112,9 +112,7 @@ impl StyleRegistry {
     /// Registers all data display components.
     #[cfg(feature = "data")]
     pub fn register_data_components(&mut self) {
-        use crate::data::{
-            PaginationComponent, TableComponent, TreeComponent,
-        };
+        use crate::data::{PaginationComponent, TableComponent, TreeComponent};
         TableComponent::register(self);
         TreeComponent::register(self);
         PaginationComponent::register(self);

@@ -1,19 +1,11 @@
 // website/src/pages/components/toast.rs
 // Toast component showcase page with documentation
 
-extern crate components as hikari_components;
 
 use dioxus::prelude::*;
-use components::{
-    Toast, ToastVariant, ToastPosition,
-    layout::{Container, Section}
-};
-use palette::classes::{
-    ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor,
-    Padding, PaddingLeft, Margin, Display, FlexDirection, Gap,
-    BgColor, BorderRadius,
-};
 
+use _components::{Toast, ToastPosition, ToastVariant, layout::{Container, Section}};
+use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, Display, FlexDirection, Gap, BgColor, BorderRadius, };
 use crate::{app::Route, components::Layout};
 
 #[allow(non_snake_case)]

@@ -2,7 +2,8 @@
 //!
 //! Animation and transition utilities.
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+
 use super::UtilityClass;
 
 /// Transition property utilities

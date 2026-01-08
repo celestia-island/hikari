@@ -4,10 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use palette::classes::{
-    ClassesBuilder, Display, FlexDirection, Gap, Margin,
-    FontSize, FontWeight, TextColor, BgColor, BorderRadius, Padding
-};
+use _palette::classes::{ ClassesBuilder, Display, FlexDirection, Gap, Margin, FontSize, FontWeight, TextColor, BgColor, BorderRadius, Padding };
 
 /// Palette showcase page
 #[allow(non_snake_case)]

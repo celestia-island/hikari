@@ -2,7 +2,8 @@
 //!
 //! Position, overflow, and other layout properties.
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+
 use super::UtilityClass;
 
 /// Position property

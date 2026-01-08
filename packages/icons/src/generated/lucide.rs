@@ -539,19 +539,35 @@ impl std::fmt::Display for LucideIcon {
             LucideIcon::align_center_vertical => write!(f, "align-center-vertical"),
             LucideIcon::align_end_horizontal => write!(f, "align-end-horizontal"),
             LucideIcon::align_end_vertical => write!(f, "align-end-vertical"),
-            LucideIcon::align_horizontal_distribute_center => write!(f, "align-horizontal-distribute-center"),
-            LucideIcon::align_horizontal_distribute_end => write!(f, "align-horizontal-distribute-end"),
-            LucideIcon::align_horizontal_distribute_start => write!(f, "align-horizontal-distribute-start"),
-            LucideIcon::align_horizontal_justify_center => write!(f, "align-horizontal-justify-center"),
+            LucideIcon::align_horizontal_distribute_center => {
+                write!(f, "align-horizontal-distribute-center")
+            }
+            LucideIcon::align_horizontal_distribute_end => {
+                write!(f, "align-horizontal-distribute-end")
+            }
+            LucideIcon::align_horizontal_distribute_start => {
+                write!(f, "align-horizontal-distribute-start")
+            }
+            LucideIcon::align_horizontal_justify_center => {
+                write!(f, "align-horizontal-justify-center")
+            }
             LucideIcon::align_horizontal_justify_end => write!(f, "align-horizontal-justify-end"),
-            LucideIcon::align_horizontal_justify_start => write!(f, "align-horizontal-justify-start"),
+            LucideIcon::align_horizontal_justify_start => {
+                write!(f, "align-horizontal-justify-start")
+            }
             LucideIcon::align_horizontal_space_around => write!(f, "align-horizontal-space-around"),
-            LucideIcon::align_horizontal_space_between => write!(f, "align-horizontal-space-between"),
+            LucideIcon::align_horizontal_space_between => {
+                write!(f, "align-horizontal-space-between")
+            }
             LucideIcon::align_start_horizontal => write!(f, "align-start-horizontal"),
             LucideIcon::align_start_vertical => write!(f, "align-start-vertical"),
-            LucideIcon::align_vertical_distribute_center => write!(f, "align-vertical-distribute-center"),
+            LucideIcon::align_vertical_distribute_center => {
+                write!(f, "align-vertical-distribute-center")
+            }
             LucideIcon::align_vertical_distribute_end => write!(f, "align-vertical-distribute-end"),
-            LucideIcon::align_vertical_distribute_start => write!(f, "align-vertical-distribute-start"),
+            LucideIcon::align_vertical_distribute_start => {
+                write!(f, "align-vertical-distribute-start")
+            }
             LucideIcon::align_vertical_justify_center => write!(f, "align-vertical-justify-center"),
             LucideIcon::align_vertical_justify_end => write!(f, "align-vertical-justify-end"),
             LucideIcon::align_vertical_justify_start => write!(f, "align-vertical-justify-start"),
@@ -832,8 +848,12 @@ impl std::fmt::Display for LucideIcon {
             LucideIcon::chart_line => write!(f, "chart-line"),
             LucideIcon::chart_network => write!(f, "chart-network"),
             LucideIcon::chart_no_axes_column => write!(f, "chart-no-axes-column"),
-            LucideIcon::chart_no_axes_column_decreasing => write!(f, "chart-no-axes-column-decreasing"),
-            LucideIcon::chart_no_axes_column_increasing => write!(f, "chart-no-axes-column-increasing"),
+            LucideIcon::chart_no_axes_column_decreasing => {
+                write!(f, "chart-no-axes-column-decreasing")
+            }
+            LucideIcon::chart_no_axes_column_increasing => {
+                write!(f, "chart-no-axes-column-increasing")
+            }
             LucideIcon::chart_no_axes_combined => write!(f, "chart-no-axes-combined"),
             LucideIcon::chart_no_axes_gantt => write!(f, "chart-no-axes-gantt"),
             LucideIcon::chart_pie => write!(f, "chart-pie"),
@@ -7782,7 +7802,6 @@ pub mod svgs {
   stroke-linecap="round"
   stroke-linejoin="round"
 ><path d="M4 9a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h4a1 1 0 0 1 1 1v4a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-4a1 1 0 0 1 1-1h4a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-4a1 1 0 0 1-1-1V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4a1 1 0 0 1-1 1z" /></svg>"#;
-
 
     /// Get SVG content by icon name
     pub fn get(name: &str) -> Option<&'static str> {

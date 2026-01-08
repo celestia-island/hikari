@@ -2,10 +2,10 @@
 // CSS 变量（使用 hikari-palette）
 
 // ============================================
-// 1. Color System (Import from auto-generated file)
+// 1. Color System
 // ============================================
-
-@import '_colors.scss';
+// Colors are defined via CSS variables in the index.scss
+// and by the hikari-palette crate
 
 // ============================================
 // 2. Typography Variables

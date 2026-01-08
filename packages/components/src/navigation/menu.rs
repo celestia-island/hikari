@@ -187,11 +187,7 @@ pub fn Menu(props: MenuProps) -> Element {
         MenuMode::Vertical => "hi-menu-vertical",
         MenuMode::Horizontal => "hi-menu-horizontal",
     };
-    let inline_class = if props.inline {
-        "hi-menu-inline"
-    } else {
-        ""
-    };
+    let inline_class = if props.inline { "hi-menu-inline" } else { "" };
 
     rsx! {
         ul {

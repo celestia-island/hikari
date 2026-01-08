@@ -3,9 +3,10 @@
 
 use dioxus::prelude::*;
 
-use crate::styled::StyledComponent;
-use crate::feedback::Spotlight;
-use crate::feedback::SpotlightColor;
+use crate::{
+    feedback::{Spotlight, SpotlightColor},
+    styled::StyledComponent,
+};
 
 /// Input 组件的类型包装器（用于实现 StyledComponent）
 pub struct InputComponent;

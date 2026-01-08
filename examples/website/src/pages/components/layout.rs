@@ -1,15 +1,11 @@
 // website/src/pages/components/layout.rs
 // Layout components showcase page
 
-extern crate components as hikari_components;
 
-use components::layout::{Container, Row, Section};
 use dioxus::prelude::*;
-use palette::classes::{
-    BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap,
-    Margin, MarginBottom, Padding, PaddingLeft, TextColor,
-};
 
+use _components::layout::{Container, Row, Section};
+use _palette::classes::{ BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, Margin, MarginBottom, Padding, PaddingLeft, TextColor, };
 use crate::{app::Route, components::Layout};
 
 #[allow(non_snake_case)]

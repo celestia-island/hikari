@@ -3,16 +3,12 @@
 //! Provides high-level bindings between DOM events and animations,
 //! supporting both continuous and state-machine-based triggers.
 
-use super::context::AnimationContext;
-use super::style::CssProperty;
-use std::collections::HashMap;
-use std::rc::Rc;
-use std::cell::RefCell;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen::closure::Closure;
-use wasm_bindgen::JsValue;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
+
+use wasm_bindgen::{closure::Closure, prelude::*, JsCast, JsValue};
 use web_sys::HtmlElement;
+
+use super::{context::AnimationContext, style::CssProperty};
 
 /// Trigger mode for event-driven animations
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -142,10 +138,9 @@ impl<'a> EventDrivenAnimation<'a> {
             }
         }) as Box<dyn FnMut(_)>);
 
-        let _ = self.element.add_event_listener_with_callback(
-            "mouseenter",
-            closure.as_ref().unchecked_ref(),
-        );
+        let _ = self
+            .element
+            .add_event_listener_with_callback("mouseenter", closure.as_ref().unchecked_ref());
         self.closures.push(closure);
         self
     }
@@ -171,10 +166,9 @@ impl<'a> EventDrivenAnimation<'a> {
             }
         }) as Box<dyn FnMut(_)>);
 
-        let _ = self.element.add_event_listener_with_callback(
-            "mouseleave",
-            closure.as_ref().unchecked_ref(),
-        );
+        let _ = self
+            .element
+            .add_event_listener_with_callback("mouseleave", closure.as_ref().unchecked_ref());
         self.closures.push(closure);
         self
     }
@@ -211,10 +205,9 @@ impl<'a> EventDrivenAnimation<'a> {
             }
         }) as Box<dyn FnMut(_)>);
 
-        let _ = self.element.add_event_listener_with_callback(
-            "mousemove",
-            closure.as_ref().unchecked_ref(),
-        );
+        let _ = self
+            .element
+            .add_event_listener_with_callback("mousemove", closure.as_ref().unchecked_ref());
         self.closures.push(closure);
         self
     }
@@ -255,10 +248,8 @@ impl<'a> EventDrivenAnimation<'a> {
             }
         }) as Box<dyn FnMut(_)>);
 
-        let _ = window.add_event_listener_with_callback(
-            "mousemove",
-            closure.as_ref().unchecked_ref(),
-        );
+        let _ =
+            window.add_event_listener_with_callback("mousemove", closure.as_ref().unchecked_ref());
         self.closures.push(closure);
         self
     }

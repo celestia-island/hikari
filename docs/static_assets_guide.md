@@ -100,7 +100,7 @@ async fn main() -> anyhow::Result<()> {
         // Component styles
         .component_style_registry(style_registry)
         // Static assets (HTML, CSS, WASM, JS)
-        .static_assets("./examples/demo-app/dist", "/static")
+        .static_assets("./examples/website/dist", "/static")
         // Icon assets (Lucide SVG files)
         .icon_assets("./packages/icons/dist/lucide/icons", "/static/icons")
         // Custom routes
@@ -159,8 +159,8 @@ rsx! {
 <body>
     <div id="main"></div>
     <script type="module">
-        import init from '/static/assets/demo_app.js';
-        await init('/static/assets/demo_app_bg.wasm');
+        import init from '/static/assets/website.js';
+        await init('/static/assets/website_bg.wasm');
         // hydrate app...
     </script>
 </body>

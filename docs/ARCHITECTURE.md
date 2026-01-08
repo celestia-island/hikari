@@ -538,7 +538,7 @@ Example applications serve as integration tests:
 
 ```
 examples/
-├── demo-app/        # Full integration test
+├── website/         # Full integration test
 ├── table-demo/      # Table component test
 ├── tree-demo/       # Tree component test
 ├── node-graph-demo/ # Node graph test

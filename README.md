@@ -183,7 +183,7 @@ hikari/
 │   └── hikari-render-service/   # SSR + style service
 │
 ├── examples/
-│   ├── demo-app/                # Comprehensive demo
+│   ├── website/                 # Comprehensive website
 │   ├── table-demo/              # Table component demo
 │   ├── tree-demo/               # Tree component demo
 │   ├── node-graph-demo/         # Node graph demo

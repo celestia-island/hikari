@@ -39,7 +39,7 @@ def write_info(message: str):
 
 def write_success(message: str):
     """Print success message in green"""
-    print(f"{Colors.GREEN}‚úÖ {message}{Colors.RESET}")
+    print(f"{Colors.GREEN}‚ú?{message}{Colors.RESET}")
 
 
 def write_warning(message: str):
@@ -49,7 +49,7 @@ def write_warning(message: str):
 
 def write_error(message: str):
     """Print error message in red"""
-    print(f"{Colors.RED}‚ùå {message}{Colors.RESET}")
+    print(f"{Colors.RED}‚ù?{message}{Colors.RESET}")
 
 
 def write_step(message: str):
@@ -114,12 +114,12 @@ def main():
     # Build WASM
     exit_code = run_command(
         ["cargo", "build", "--lib", "--target", "wasm32-unknown-unknown",
-         "--manifest-path", "examples/demo-app/Cargo.toml"],
+         "--manifest-path", "examples/website/Cargo.toml"],
         "WASM build failed"
     )
 
     # Run wasm-bindgen
-    wasm_path = "examples/demo-app/target/wasm32-unknown-unknown/debug/demo_app.wasm"
+    wasm_path = "examples/website/target/wasm32-unknown-unknown/debug/website.wasm"
     exit_code = run_command(
         ["wasm-bindgen", "--target", "web", "--out-dir", "public/assets",
          "--no-typescript", wasm_path],
@@ -138,8 +138,8 @@ def main():
         "cargo", "watch",
         "--clear",
         "--watch", "packages",
-        "--watch", "examples/demo-app/src",
-        "--watch", "examples/demo-app/index.html",
+        "--watch", "examples/website/src",
+        "--watch", "examples/website/index.html",
         "--ignore", "*/target/*",
         "--ignore", "*/generated/*",
         "--ignore", "public/assets/*",
@@ -147,8 +147,8 @@ def main():
         "--delay", "1",
         "--shell",
         "cargo build -p hikari-builder && "
-        "cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/demo-app/Cargo.toml && "
-        "wasm-bindgen --target web --out-dir public/assets --no-typescript examples/demo-app/target/wasm32-unknown-unknown/debug/demo_app.wasm"
+        "cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/website/Cargo.toml && "
+        "wasm-bindgen --target web --out-dir public/assets --no-typescript examples/website/target/wasm32-unknown-unknown/debug/website.wasm"
     ]
 
     watch_process: Optional[subprocess.Popen] = None
@@ -198,7 +198,7 @@ def main():
 
         server_cmd = [
             "cargo", "run",
-            "--manifest-path", "examples/demo-app/Cargo.toml",
+            "--manifest-path", "examples/website/Cargo.toml",
             "--features", "server"
         ]
 

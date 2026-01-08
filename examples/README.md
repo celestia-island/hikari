@@ -4,7 +4,7 @@ Welcome to the Hikari UI examples! This directory contains comprehensive, runnab
 
 ## 📁 Examples Overview
 
-### 1. [demo-app](./demo-app/) - Comprehensive Component Demo
+### 1. [website](./website/) - Comprehensive Component Demo
 
 A complete showcase of all Hikari components with sidebar navigation.
 
@@ -18,7 +18,7 @@ A complete showcase of all Hikari components with sidebar navigation.
 **Run:**
 
 ```bash
-cargo run --bin demo-app
+cargo run --bin website
 ```
 
 ### 2. [table-demo](./table-demo/) - Advanced Table Component
@@ -115,7 +115,7 @@ From the project root:
 cargo run --bin <example-name>
 
 # For example:
-cargo run --bin demo-app
+cargo run --bin website
 cargo run --bin table-demo
 cargo run --bin tree-demo
 cargo run --bin node-graph-demo
@@ -133,7 +133,7 @@ cargo run
 
 ```
 examples/
-├── demo-app/           # Comprehensive component showcase
+├── website/            # Comprehensive component showcase
 │   ├── Cargo.toml
 │   ├── README.md
 │   └── src/main.rs
@@ -179,7 +179,7 @@ For development with hot reloading:
 
 ```bash
 cargo install dioxus-cli
-dx watch --bin demo-app
+dx watch --bin website
 ```
 
 ### Building Examples

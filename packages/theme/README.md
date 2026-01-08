@@ -423,7 +423,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element
 ## Examples
 
 See the [examples](../../examples/) directory for complete working examples:
-- `demo-app/` - Comprehensive theme showcase
+- `website/` - Comprehensive theme showcase
 - `ssr-demo/` - Server-side rendering with theming
 
 ## License

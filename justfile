@@ -8,7 +8,7 @@
 # Main tasks:
 #   just build           - Build everything (Release)
 #   just build-dev       - Build everything (Debug)
-#   just dev             - Development mode (build and start demo-app)
+#   just dev             - Development mode (build and start website)
 #   just fmt             - Format code
 #   just clippy          - Run Clippy checks
 #   just clean           - Clean build artifacts
@@ -52,25 +52,25 @@ check-port:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @python scripts/utils/clean_process.py
 
-# Build demo-app WASM client (debug mode)
+# Build website WASM client (debug mode)
 # Note: build.rs will automatically compile SCSS and copy assets to public/
 build-client:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Building demo-app WASM client..."
+    @echo "Building website WASM client..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Step 1: Build hikari-builder to generate CSS bundle"
     @cargo build --package hikari-builder
     @echo "Step 2: Build WASM library (triggers build.rs to copy index.html and logo)"
-    @cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/demo-app/Cargo.toml
+    @cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/website/Cargo.toml
     @echo ""
     @echo "🔧 Binding WASM..."
-    @wasm-bindgen --target web --out-dir public/assets --no-typescript examples/demo-app/target/wasm32-unknown-unknown/debug/demo_app.wasm
+    @wasm-bindgen --target web --out-dir public/assets --no-typescript examples/website/target/wasm32-unknown-unknown/debug/website.wasm
     @echo ""
     @echo "✅ WASM client built successfully"
     @echo ""
     @echo "📦 Output: public/"
 
-# Development mode for demo-app (build WASM client and start server)
+# Development mode for website (build WASM client and start server)
 dev:
     # Step 1: Check and clean port 3000
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -81,28 +81,28 @@ dev:
 
     # Step 2: Build WASM client
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Building demo-app WASM client..."
+    @echo "Building website WASM client..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Step 1: Build hikari-builder to generate CSS bundle"
     @cargo build --package hikari-builder
     @echo "Step 2: Build WASM library (triggers build.rs to copy index.html and logo)"
-    @cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/demo-app/Cargo.toml
+    @cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/website/Cargo.toml
     @echo ""
     @echo "🔧 Binding WASM..."
-    @wasm-bindgen --target web --out-dir public/assets --no-typescript examples/demo-app/target/wasm32-unknown-unknown/debug/demo_app.wasm
+    @wasm-bindgen --target web --out-dir public/assets --no-typescript examples/website/target/wasm32-unknown-unknown/debug/website.wasm
     @echo ""
     @echo "✅ WASM client built successfully"
     @echo ""
 
     # Step 3: Start server
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Starting demo-app server..."
+    @echo "Starting website server..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "🌐 Server will be available at: http://localhost:3000"
     @echo ""
     @echo "Press Ctrl+C to stop the server"
     @echo ""
-    cargo run --manifest-path examples/demo-app/Cargo.toml --features server
+    cargo run --manifest-path examples/website/Cargo.toml --features server
 
 # Alias for dev
 serve: dev
@@ -126,9 +126,9 @@ watch:
     @cargo watch \
         --clear \
         --watch packages \
-        --watch examples/demo-app/src \
-        --watch examples/demo-app/index.html \
-        --watch examples/demo-app/Cargo.toml \
+        --watch examples/website/src \
+        --watch examples/website/index.html \
+        --watch examples/website/Cargo.toml \
         --ignore '*/target/*' \
         --ignore '*/generated/*' \
         --shell 'just build-watch-internal'
@@ -144,11 +144,11 @@ build-watch-internal:
     @echo "🔨 Rebuilding... [$(Get-Date -Format 'HH:mm:ss')]"
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @cargo build --package hikari-builder
-    @cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/demo-app/Cargo.toml
-    @wasm-bindgen --target web --out-dir public/assets --no-typescript examples/demo-app/target/wasm32-unknown-unknown/debug/demo_app.wasm 2>$null
+    @cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/website/Cargo.toml
+    @wasm-bindgen --target web --out-dir public/assets --no-typescript examples/website/target/wasm32-unknown-unknown/debug/website.wasm 2>$null
     @echo "✅ Build complete - server will restart automatically"
 
-# Run demo-app (one-click start, no WASM rebuild)
+# Run website (one-click start, no WASM rebuild)
 run:
     # Step 1: Check and clean port 3000
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -159,13 +159,13 @@ run:
 
     # Step 2: Start server
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Starting demo-app server (skipping WASM build)..."
+    @echo "Starting website server (skipping WASM build)..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "🌐 Server will be available at: http://localhost:3000"
     @echo ""
     @echo "Press Ctrl+C to stop the server"
     @echo ""
-    cargo run --manifest-path examples/demo-app/Cargo.toml --features server
+    cargo run --manifest-path examples/website/Cargo.toml --features server
 
 # ============================================================================
 # Code quality
@@ -195,8 +195,8 @@ clean:
     @echo "Cleaning build artifacts..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @cargo clean
-    @if (Test-Path examples/demo-app/public) { Remove-Item -Recurse -Force examples/demo-app/public }
-    @if (Test-Path examples/demo-app/dist) { Remove-Item -Recurse -Force examples/demo-app/dist }
+    @if (Test-Path examples/website/public) { Remove-Item -Recurse -Force examples/website/public }
+    @if (Test-Path examples/website/dist) { Remove-Item -Recurse -Force examples/website/dist }
     @if (Test-Path packages/builder/src/generated) { Remove-Item -Recurse -Force packages/builder/src/generated }
     @echo "✅ Clean completed"
 
@@ -250,3 +250,10 @@ generate-scss:
     @echo "Generating SCSS bundle..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @cargo build --manifest-path packages/builder/Cargo.toml
+
+# Generate bulk import mod.rs files for website
+generate-imports:
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Generating bulk import files..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @python scripts/generate_bulk_imports.py

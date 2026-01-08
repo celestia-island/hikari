@@ -317,7 +317,7 @@ def main():
     # Get target directory
     if len(sys.argv) < 2:
         print("Usage: python convert_tailwind_to_hikari.py <target_directory>")
-        print("Example: python convert_tailwind_to_hikari.py examples/demo-app/src")
+        print("Example: python convert_tailwind_to_hikari.py examples/website/src")
         sys.exit(1)
 
     target_dir = Path(sys.argv[1])

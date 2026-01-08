@@ -83,8 +83,8 @@ cargo build --workspace
 ### Run Examples
 
 ```bash
-# Run the demo app
-cd examples/demo-app
+# Run the website
+cd examples/website
 cargo run
 
 # Run SSR demo
@@ -433,7 +433,7 @@ When adding a new component:
 
 4. **Documentation**: Document in package README
 
-5. **Example**: Add to demo-app or create dedicated example
+5. **Example**: Add to website or create dedicated example
 
 ### Adding a New Package
 

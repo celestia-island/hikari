@@ -593,7 +593,7 @@ All components follow WCAG 2.1 guidelines:
 ## Examples
 
 See the [examples](../../examples/) directory:
-- `demo-app/` - Component showcase
+- `website/` - Component showcase
 - `table-demo/` - Advanced table features
 - `tree-demo/` - Tree component features
 

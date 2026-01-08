@@ -17,8 +17,8 @@ def fix_index_html(html_path: Path, base_dir: Path) -> bool:
     Fix resource paths in index.html to use absolute paths.
 
     Changes:
-    - './assets/demo_app.js' â†’ '/assets/demo_app.js'
-    - './assets/demo_app_bg.wasm' â†’ '/assets/demo_app_bg.wasm'
+    - './assets/website.js' â†?'/assets/website.js'
+    - './assets/website_bg.wasm' â†?'/assets/website_bg.wasm'
 
     Also adds <base href="/"> tag to ensure all relative paths
     are resolved from the root.
@@ -74,7 +74,7 @@ def main():
         print("Usage: python fix_index_html.py <index.html_path>")
         print("")
         print("Example:")
-        print("  python fix_index_html.py examples/demo-app/dist/index.html")
+        print("  python fix_index_html.py examples/website/dist/index.html")
         sys.exit(1)
 
     html_path = Path(sys.argv[1]).resolve()
@@ -99,7 +99,7 @@ def main():
         print("")
         print("Changes:")
         print("  - Added <base href=\"/\"> to <head>")
-        print("  - Changed './assets/' â†’ '/assets/' in scripts")
+        print("  - Changed './assets/' â†?'/assets/' in scripts")
         print("  - Resources now load correctly on all routes")
     else:
         print("[ERROR] Fix failed")

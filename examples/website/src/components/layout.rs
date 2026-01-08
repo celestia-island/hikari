@@ -8,6 +8,7 @@ use dioxus_router::components::Link;
 use _icons::{Icon, LucideIcon};
 use crate::app::{Route, ThemeContext};
 use super::sidebar::Sidebar;
+use _components::basic::Logo;
 use _components::layout::{Aside, Header, Layout as HikariLayout};
 use _palette::classes::{ AlignItems, BgColor, BorderRadius, ClassesBuilder, Cursor, Display, Duration, Flex, FontSize, FontWeight, Gap, Height, JustifyContent, Margin, Padding, TextColor, Transition, Width, };
 
@@ -38,13 +39,15 @@ pub fn Layout(children: Element, current_route: Route) -> Element {
                 // Icon based on current theme
 
     
-    
-    
 
-                    img {
-                        class: ClassesBuilder::new().add(Width::W8).add(Height::H8).build(),
-                        src: "/images/logo.png",
-                        alt: "Hikari Logo",
+
+
+
+                    Logo {
+                        src: "/images/logo.png".to_string(),
+                        alt: "Hikari Logo".to_string(),
+                        height: 36,
+                        max_width: 140,
                     }
                     h2 {
                         class: ClassesBuilder::new()

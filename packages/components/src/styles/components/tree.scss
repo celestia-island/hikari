@@ -20,19 +20,15 @@
   max-width: 100%;
 
   // Appearance
-  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
-  backdrop-filter: blur(vars.$hikari-acrylic-blur);
-  -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
-  border: 1px solid var(--hi-color-border);
-  border-radius: vars.$hikari-radius-fui-md;
+  background: transparent;
+  border: none;
+  border-radius: 0;
 
   // Padding
-  padding: 0.5rem;
+  padding: 0;
 
   // Shadow
-  box-shadow:
-    0 4px 8px rgba(214, 236, 240, 0.5),
-    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
+  box-shadow: none;
 
   // Transitions
   // DISABLED - migrated to JS animation
@@ -41,6 +37,17 @@
 
   // Custom scrollbar
   @include mix.scrollbar;
+
+  // Card variant (when used as a standalone card)
+  &.hi-tree-card {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--hi-color-border);
+    border-radius: vars.$hikari-radius-fui-md;
+    padding: 0.5rem;
+    box-shadow:
+      0 4px 8px rgba(214, 236, 240, 0.5),
+      0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
+  }
 }
 
 // ============================================

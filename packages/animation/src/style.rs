@@ -161,6 +161,7 @@ pub enum CssProperty {
     Cursor,
     PointerEvents,
     UserSelect,
+    ObjectFit,
 
     // Transform & Animation
     Transform,
@@ -325,6 +326,7 @@ impl CssProperty {
             CssProperty::Cursor => "cursor",
             CssProperty::PointerEvents => "pointer-events",
             CssProperty::UserSelect => "user-select",
+            CssProperty::ObjectFit => "object-fit",
 
             // Transform & Animation
             CssProperty::Transform => "transform",
@@ -455,6 +457,12 @@ impl<'a> StyleBuilder<'a> {
         self
     }
 
+    /// Add a CSS property with pixel value
+    pub fn add_px(mut self, property: CssProperty, pixels: u32) -> Self {
+        self.properties.push((property, format!("{}px", pixels)));
+        self
+    }
+
     /// Add multiple CSS properties at once
     pub fn add_all(mut self, properties: &[(CssProperty, &str)]) -> Self {
         for &(property, value) in properties {
@@ -470,6 +478,92 @@ impl<'a> StyleBuilder<'a> {
         for (property, value) in self.properties {
             let _ = style.set_property(property.as_str(), &value);
         }
+    }
+
+    /// Build the style as a CSS string (for Dioxus style attribute)
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let style = StyleBuilder::build_string(|builder| {
+    ///     builder.add(CssProperty::Width, "100px")
+    ///           .add(CssProperty::Height, "50px")
+    /// });
+    /// // Returns: "width:100px;height:50px;"
+    /// ```
+    pub fn build_string<F>(f: F) -> String
+    where
+        F: FnOnce(StyleStringBuilder) -> StyleStringBuilder,
+    {
+        f(StyleStringBuilder(Vec::new())).build()
+    }
+
+    /// Build the style as a clean CSS string (without trailing semicolons)
+    pub fn build_clean<F>(f: F) -> String
+    where
+        F: FnOnce(StyleStringBuilder) -> StyleStringBuilder,
+    {
+        f(StyleStringBuilder(Vec::new())).build_clean()
+    }
+}
+
+/// String-based style builder for Dioxus components
+///
+/// This version doesn't require an HtmlElement and is used for
+/// generating style strings for the `style` attribute.
+///
+/// # Example
+///
+/// ```ignore
+/// use animation::style::StyleStringBuilder;
+/// use animation::style::CssProperty;
+///
+/// let style = StyleStringBuilder::new()
+///     .add(CssProperty::Width, "100px")
+///     .add_px(CssProperty::Height, 50)
+///     .build_clean();
+/// // Returns: "width:100px;height:50px"
+/// ```
+pub struct StyleStringBuilder(pub Vec<(CssProperty, String)>);
+
+impl StyleStringBuilder {
+    /// Create a new style string builder
+    pub fn new() -> Self {
+        Self(Vec::new())
+    }
+
+    /// Add a CSS property
+    pub fn add(mut self, property: CssProperty, value: &str) -> Self {
+        self.0.push((property, format!("{}:{}", property.as_str(), value)));
+        self
+    }
+
+    /// Add a CSS property with pixel value
+    pub fn add_px(mut self, property: CssProperty, pixels: u32) -> Self {
+        self.0.push((property, format!("{}:{}px", property.as_str(), pixels)));
+        self
+    }
+
+    /// Add a raw style string
+    pub fn add_raw(mut self, style: &str) -> Self {
+        self.0.push((CssProperty::Display, format!("{};", style)));
+        self
+    }
+
+    /// Build the final style string (with trailing semicolons)
+    pub fn build(self) -> String {
+        self.0.iter().map(|(_, s)| s.as_str()).collect::<Vec<_>>().join(";")
+    }
+
+    /// Build the final style string without trailing semicolons
+    pub fn build_clean(self) -> String {
+        self.0.iter().map(|(_, s)| s.as_str()).collect::<Vec<_>>().join(";")
+    }
+}
+
+impl Default for StyleStringBuilder {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

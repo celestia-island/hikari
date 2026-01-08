@@ -394,15 +394,28 @@ fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
     let css_content = grass::from_path(&index_scss, &grass::Options::default())
         .map_err(|e| anyhow::anyhow!("SCSS compilation failed: {:?}", e))?;
 
+    // Apply autoprefixer using lightningcss
+    println!("cargo:warning=🔄 Applying autoprefixer...");
+    let stylesheet = lightningcss::stylesheet::StyleSheet::parse(&css_content, Default::default())
+        .map_err(|e| anyhow::anyhow!("CSS parsing failed: {:?}", e))?;
+
+    let prefixed_css = stylesheet
+        .to_css(lightningcss::stylesheet::PrinterOptions {
+            targets: lightningcss::targets::Targets::default(),
+            ..Default::default()
+        })
+        .map_err(|e| anyhow::anyhow!("CSS autoprefixer failed: {:?}", e))?
+        .code;
+
     // Get file size
-    let file_size = css_content.len();
+    let file_size = prefixed_css.len();
 
     // Write to output directory
     let output_dir = workspace_root.join("public/styles");
     fs::create_dir_all(&output_dir)?;
 
     let css_output = output_dir.join("bundle.css");
-    fs::write(&css_output, css_content)?;
+    fs::write(&css_output, prefixed_css)?;
 
     println!("cargo:warning=✅ CSS bundle generated: {:?}", css_output);
     println!("cargo:warning=   Size: {} bytes", file_size);

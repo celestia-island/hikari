@@ -19,8 +19,12 @@
   justify-content: space-between;
   gap: 1rem;
 
+  // Fixed height - 64px for consistent header sizing
+  height: 64px;
+  min-height: 64px;
+
   // Spacing - 减小内边距
-  padding: 0.5rem 0.75rem;
+  padding: 0 1rem;
   margin: 0;
 
   // Appearance - 移除圆角
@@ -75,17 +79,17 @@
     }
   }
 
-  // Responsive padding - 减小左侧内边距
+  // Responsive padding - 固定64px高度，调整内边距
   @include mix.mobile {
-    padding: 0.5rem 0.75rem;
+    padding: 0 0.75rem;
   }
 
   @include mix.tablet {
-    padding: 0.5rem 0.75rem;
+    padding: 0 1rem;
   }
 
   @include mix.desktop {
-    padding: 0.5rem 0.75rem;
+    padding: 0 1rem;
   }
 }
 
@@ -586,8 +590,8 @@
 }
 
 .hi-header-md {
-  padding: 0.5rem 1rem;
-  min-height: 2.5rem;
+  // Inherits 64px height from base .hi-header
+  padding: 0 1rem;
 }
 
 .hi-header-lg {

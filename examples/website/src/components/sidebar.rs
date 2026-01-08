@@ -1,399 +1,313 @@
 // website/src/components/sidebar.rs
-// Sidebar navigation using Tree component for 3-level structure
+// Website-specific sidebar using hikari-components Sidebar
 
 use dioxus::prelude::*;
-
-use _components::data::{Tree, TreeNodeData};
+use dioxus_router::components::Link;
+use _components::{Sidebar as HikariSidebar, SidebarSection, SidebarItem, SidebarLeaf};
+use _icons::Icon;
+use _icons::LucideIcon;
 use crate::app::Route;
 
-/// Sidebar component with 3-level Tree navigation
+/// Sidebar navigation with 3-level hierarchy
 ///
-/// Structure:
-/// - Level 1: Overview, Components, System, Demos
-/// - Level 2: Categories (Layout Components, Basic Components, etc.)
-/// - Level 3: Individual components (Button, Input, Card, etc.)
+/// Uses the generic hikari-components Sidebar component with
+/// website-specific navigation data.
 #[component]
 pub fn Sidebar(current_route: Route) -> Element {
-    // Build 3-level tree data
-    let tree_data = build_navigation_tree();
+    // Get current route identifier for active state
+    let active_id = format!("{:?}", std::mem::discriminant(&current_route));
 
     rsx! {
-        // Logo and title
-        div { class: "sidebar-header",
-            img {
-                class: "sidebar-logo",
-                src: "/images/logo.png",
-                alt: "Hikari Logo",
-            }
-            div { class: "sidebar-title-group",
-                h1 { class: "sidebar-title", "Hikari UI" }
-                span { class: "sidebar-subtitle", "Component Library" }
-            }
-        }
-
-        // Navigation Tree
-        div { class: "sidebar-nav",
-            Tree {
-                data: tree_data,
-                on_select: move |key: String| {
-                    if let Some(route) = map_key_to_route(&key) {
-                        // Use Link navigation instead of push
-                        // The router will handle navigation automatically
-                        dioxus_router::router().push(route);
-                    }
-                },
-            }
-        }
-
-        // Footer
-        div { class: "sidebar-footer",
-            div { class: "sidebar-footer-content",
-                div { class: "sidebar-footer-text",
-                    span { "🔗" }
-                    span { "Version 0.1.0" }
+        HikariSidebar { active_id,
+            // Render each top-level category
+            for category in NAVIGATION_CATEGORIES {
+                SidebarCategorySection {
+                    category,
+                    current_route: current_route.clone(),
                 }
             }
         }
     }
 }
 
-/// Build 3-level navigation tree data
-fn build_navigation_tree() -> Vec<TreeNodeData> {
-    vec![
-        // Overview
-        TreeNodeData {
-            key: "overview".to_string(),
-            label: "Overview".to_string(),
-            children: Some(vec![TreeNodeData {
-                key: "home".to_string(),
-                label: "Home".to_string(),
-                children: None,
-                disabled: false,
-            }]),
-            disabled: false,
-        },
-        // Components - Top level
-        TreeNodeData {
-            key: "components".to_string(),
-            label: "Components".to_string(),
-            children: Some(vec![
-                // Layout Components category
-                TreeNodeData {
-                    key: "components-layout".to_string(),
-                    label: "布局组件 Layout".to_string(),
-                    children: Some(vec![
-                        TreeNodeData {
-                            key: "layout-overview".to_string(),
-                            label: "概览 Overview".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "layout-container".to_string(),
-                            label: "Container 容器".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "layout-grid".to_string(),
-                            label: "Grid 网格".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "layout-section".to_string(),
-                            label: "Section 分区".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                    ]),
-                    disabled: false,
-                },
-                // Basic Components category
-                TreeNodeData {
-                    key: "components-basic".to_string(),
-                    label: "基础组件 Basic".to_string(),
-                    children: Some(vec![
-                        TreeNodeData {
-                            key: "basic-overview".to_string(),
-                            label: "概览 Overview".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "basic-button".to_string(),
-                            label: "Button 按钮".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "basic-input".to_string(),
-                            label: "Input 输入框".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "basic-card".to_string(),
-                            label: "Card 卡片".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "basic-badge".to_string(),
-                            label: "Badge 徽章".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                    ]),
-                    disabled: false,
-                },
-                // Feedback Components category
-                TreeNodeData {
-                    key: "components-feedback".to_string(),
-                    label: "反馈组件 Feedback".to_string(),
-                    children: Some(vec![
-                        TreeNodeData {
-                            key: "feedback-overview".to_string(),
-                            label: "概览 Overview".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "feedback-alert".to_string(),
-                            label: "Alert 警告".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "feedback-toast".to_string(),
-                            label: "Toast 提示".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "feedback-tooltip".to_string(),
-                            label: "Tooltip 文字提示".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                    ]),
-                    disabled: false,
-                },
-                // Navigation Components category
-                TreeNodeData {
-                    key: "components-navigation".to_string(),
-                    label: "导航组件 Navigation".to_string(),
-                    children: Some(vec![
-                        TreeNodeData {
-                            key: "navigation-overview".to_string(),
-                            label: "概览 Overview".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "navigation-menu".to_string(),
-                            label: "Menu 菜单".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "navigation-breadcrumb".to_string(),
-                            label: "Breadcrumb 面包屑".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "navigation-tabs".to_string(),
-                            label: "Tabs 标签页".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                    ]),
-                    disabled: false,
-                },
-                // Data Components category
-                TreeNodeData {
-                    key: "components-data".to_string(),
-                    label: "数据组件 Data".to_string(),
-                    children: Some(vec![
-                        TreeNodeData {
-                            key: "data-overview".to_string(),
-                            label: "概览 Overview".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "data-table".to_string(),
-                            label: "Table 表格".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "data-tree".to_string(),
-                            label: "Tree 树形控件".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
-                            key: "data-list".to_string(),
-                            label: "List 列表".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                    ]),
-                    disabled: false,
-                },
-            ]),
-            disabled: false,
-        },
-        // System
-        TreeNodeData {
-            key: "system".to_string(),
-            label: "System".to_string(),
-            children: Some(vec![
-                TreeNodeData {
-                    key: "system-overview".to_string(),
-                    label: "All Systems".to_string(),
-                    children: None,
-                    disabled: false,
-                },
-                TreeNodeData {
-                    key: "system-css".to_string(),
-                    label: "CSS Utilities".to_string(),
-                    children: None,
-                    disabled: false,
-                },
-                TreeNodeData {
-                    key: "system-icons".to_string(),
-                    label: "Icons".to_string(),
-                    children: None,
-                    disabled: false,
-                },
-                TreeNodeData {
-                    key: "system-palette".to_string(),
-                    label: "Palette".to_string(),
-                    children: None,
-                    disabled: false,
-                },
-                TreeNodeData {
-                    key: "system-animations".to_string(),
-                    label: "Animations".to_string(),
-                    children: None,
-                    disabled: false,
-                },
-            ]),
-            disabled: false,
-        },
-        // Demos
-        TreeNodeData {
-            key: "demos".to_string(),
-            label: "Demos".to_string(),
-            children: Some(vec![TreeNodeData {
-                key: "demos-overview".to_string(),
-                label: "All Demos".to_string(),
-                children: None,
-                disabled: false,
-            }]),
-            disabled: false,
-        },
-    ]
-}
+/// Render a category section with its subcategories
+#[component]
+fn SidebarCategorySection(
+    category: &'static NavCategory,
+    current_route: Route,
+) -> Element {
+    rsx! {
+        SidebarSection {
+            id: category.id.to_string(),
+            title: category.title_en.to_string(),
+            secondary_title: Some(category.title_zh.to_string()),
+            default_expanded: category.id == "components",
 
-/// Map tree node key to Route enum
-fn map_key_to_route(key: &str) -> Option<Route> {
-    match key {
-        // Home
-        "home" => Some(Route::Home {}),
-
-        // Components category pages (Level 2)
-        "layout-overview" => Some(Route::ComponentsLayout {}),
-        "basic-overview" => Some(Route::ComponentsBasic {}),
-        "feedback-overview" => Some(Route::ComponentsFeedback {}),
-        "navigation-overview" => Some(Route::ComponentsNavigation {}),
-        "data-overview" => Some(Route::ComponentsData {}),
-
-        // Layout components (Level 3)
-        "layout-container" => Some(Route::LayoutContainer {}),
-        "layout-grid" => Some(Route::LayoutGrid {}),
-        "layout-section" => Some(Route::LayoutSection {}),
-
-        // Basic components (Level 3)
-        "basic-button" => Some(Route::BasicButton {}),
-        "basic-input" => Some(Route::BasicInput {}),
-        "basic-card" => Some(Route::BasicCard {}),
-        "basic-badge" => Some(Route::BasicBadge {}),
-
-        // Feedback components (Level 3)
-        "feedback-alert" => Some(Route::FeedbackAlert {}),
-        "feedback-toast" => Some(Route::FeedbackToast {}),
-        "feedback-tooltip" => Some(Route::FeedbackTooltip {}),
-
-        // Navigation components (Level 3)
-        "navigation-menu" => Some(Route::NavigationMenu {}),
-        "navigation-breadcrumb" => Some(Route::NavigationBreadcrumb {}),
-        "navigation-tabs" => Some(Route::NavigationTabs {}),
-
-        // Data components (Level 3)
-        "data-table" => Some(Route::DataTable {}),
-        "data-tree" => Some(Route::DataTree {}),
-        "data-list" => Some(Route::DataPagination {}), // Using pagination route
-
-        // System pages
-        "system-overview" => Some(Route::SystemOverview {}),
-        "system-css" => Some(Route::SystemCSS {}),
-        "system-icons" => Some(Route::SystemIcons {}),
-        "system-palette" => Some(Route::SystemPalette {}),
-        "system-animations" => Some(Route::SystemAnimations {}),
-
-        // Demos
-        "demos-overview" => Some(Route::DemosOverview {}),
-
-        // Parent nodes (no route, just expand/collapse)
-        "overview"
-        | "components"
-        | "components-layout"
-        | "components-basic"
-        | "components-feedback"
-        | "components-navigation"
-        | "components-data"
-        | "system"
-        | "demos" => None,
-
-        _ => None,
+            // Render subcategories
+            for subcategory in category.subcategories {
+                SidebarSubcategoryItem {
+                    subcategory,
+                    current_route: current_route.clone(),
+                }
+            }
+        }
     }
 }
 
-/// Convert Route to URL path
-fn route_to_path(route: &Route) -> String {
-    match route {
-        Route::Home {} => "/".to_string(),
-        Route::ComponentsOverview {} => "/components".to_string(),
-        Route::ComponentsLayout {} => "/components/layout".to_string(),
-        Route::LayoutContainer {} => "/components/layout/container".to_string(),
-        Route::LayoutGrid {} => "/components/layout/grid".to_string(),
-        Route::LayoutSection {} => "/components/layout/section".to_string(),
-        Route::ComponentsBasic {} => "/components/basic".to_string(),
-        Route::BasicButton {} => "/components/basic/button".to_string(),
-        Route::BasicInput {} => "/components/basic/input".to_string(),
-        Route::BasicCard {} => "/components/basic/card".to_string(),
-        Route::BasicBadge {} => "/components/basic/badge".to_string(),
-        Route::ComponentsFeedback {} => "/components/feedback".to_string(),
-        Route::FeedbackAlert {} => "/components/feedback/alert".to_string(),
-        Route::FeedbackToast {} => "/components/feedback/toast".to_string(),
-        Route::FeedbackTooltip {} => "/components/feedback/tooltip".to_string(),
-        Route::ComponentsNavigation {} => "/components/navigation".to_string(),
-        Route::NavigationMenu {} => "/components/navigation/menu".to_string(),
-        Route::NavigationTabs {} => "/components/navigation/tabs".to_string(),
-        Route::NavigationBreadcrumb {} => "/components/navigation/breadcrumb".to_string(),
-        Route::ComponentsData {} => "/components/data".to_string(),
-        Route::DataTable {} => "/components/data/table".to_string(),
-        Route::DataTree {} => "/components/data/tree".to_string(),
-        Route::DataPagination {} => "/components/data/pagination".to_string(),
-        Route::SystemOverview {} => "/system".to_string(),
-        Route::SystemCSS {} => "/system/css".to_string(),
-        Route::SystemIcons {} => "/system/icons".to_string(),
-        Route::SystemPalette {} => "/system/palette".to_string(),
-        Route::SystemAnimations {} => "/system/animations".to_string(),
-        Route::DemosOverview {} => "/demos".to_string(),
+/// Render a subcategory (Level 2) with optional nested items
+#[component]
+fn SidebarSubcategoryItem(
+    subcategory: &'static NavSubcategory,
+    current_route: Route,
+) -> Element {
+    let has_children = !subcategory.items.is_empty();
+
+    // Check if this subcategory's route matches current route
+    let is_active = subcategory.route.as_ref()
+        .map(|r| std::mem::discriminant(r) == std::mem::discriminant(&current_route))
+        .unwrap_or(false);
+
+    // Create the Link content
+    let link_content = rsx!(
+        dioxus_router::components::Link {
+            to: subcategory.route.clone().unwrap_or(Route::Home {}),
+            class: "hi-sidebar-item-content-inner",
+            "{subcategory.label_en} "
+            span { class: "hi-sidebar-item-zh", "{subcategory.label_zh}" }
+        }
+    );
+
+    if has_children {
+        // Has nested items - use SidebarItem with content and items
+        rsx! {
+            SidebarItem {
+                id: subcategory.label_en.to_string(),
+                label: subcategory.label_en.to_string(),
+                secondary_label: Some(subcategory.label_zh.to_string()),
+                default_expanded: true,
+                content: Some(link_content),
+                items: Some(rsx! {
+                    // Render nested items
+                    for item in subcategory.items {
+                        SidebarNestedItem {
+                            item,
+                            current_route: current_route.clone(),
+                        }
+                    }
+                }),
+            }
+        }
+    } else {
+        // No children - direct link using SidebarLeaf
+        rsx! {
+            SidebarLeaf {
+                id: subcategory.label_en.to_string(),
+                class: if is_active { "active" } else { "" },
+                { link_content }
+            }
+        }
     }
 }
+
+/// Render a nested item (Level 3)
+#[component]
+fn SidebarNestedItem(
+    item: &'static NavItem,
+    current_route: Route,
+) -> Element {
+    let is_active = std::mem::discriminant(&item.route) == std::mem::discriminant(&current_route);
+
+    rsx! {
+        SidebarLeaf {
+            id: format!("{:?}", std::mem::discriminant(&item.route)),
+            class: if is_active { "active" } else { "" },
+
+            dioxus_router::components::Link {
+                to: item.route.clone(),
+                class: "hi-sidebar-item-content-inner",
+                Icon {
+                    icon: item.icon,
+                    size: 16
+                }
+                span { "{item.label}" }
+            }
+        }
+    }
+}
+
+// ============================================
+// Navigation Data Structures
+// ============================================
+
+#[derive(Clone, Debug)]
+pub struct NavCategory {
+    pub id: &'static str,
+    pub title_en: &'static str,
+    pub title_zh: &'static str,
+    pub subcategories: &'static [NavSubcategory],
+}
+
+impl PartialEq for NavCategory {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for NavCategory {}
+
+#[derive(Clone, Debug)]
+pub struct NavSubcategory {
+    pub label_en: &'static str,
+    pub label_zh: &'static str,
+    pub route: Option<Route>,
+    pub items: &'static [NavItem],
+}
+
+impl PartialEq for NavSubcategory {
+    fn eq(&self, other: &Self) -> bool {
+        self.label_en == other.label_en
+            && self.route.as_ref().map(|r| std::mem::discriminant(r)) == other.route.as_ref().map(|r| std::mem::discriminant(r))
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct NavItem {
+    pub label: &'static str,
+    pub icon: LucideIcon,
+    pub route: Route,
+}
+
+impl PartialEq for NavItem {
+    fn eq(&self, other: &Self) -> bool {
+        self.label == other.label
+            && std::mem::discriminant(&self.route) == std::mem::discriminant(&other.route)
+    }
+}
+
+// ============================================
+// Navigation Data
+// ============================================
+
+pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
+    NavCategory {
+        id: "overview",
+        title_en: "Overview",
+        title_zh: "概览",
+        subcategories: &[
+            NavSubcategory {
+                label_en: "Home",
+                label_zh: "首页",
+                route: Some(Route::Home {}),
+                items: &[],
+            },
+        ],
+    },
+    NavCategory {
+        id: "components",
+        title_en: "Components",
+        title_zh: "组件",
+        subcategories: &[
+            NavSubcategory {
+                label_en: "Layout",
+                label_zh: "布局",
+                route: Some(Route::ComponentsLayout {}),
+                items: &[
+                    NavItem { label: "Container", icon: LucideIcon::container, route: Route::LayoutContainer {} },
+                    NavItem { label: "Grid", icon: LucideIcon::columns_2, route: Route::LayoutGrid {} },
+                    NavItem { label: "Section", icon: LucideIcon::component, route: Route::LayoutSection {} },
+                ],
+            },
+            NavSubcategory {
+                label_en: "Basic",
+                label_zh: "基础",
+                route: Some(Route::ComponentsBasic {}),
+                items: &[
+                    NavItem { label: "Button", icon: LucideIcon::accessibility, route: Route::BasicButton {} },
+                    NavItem { label: "Input", icon: LucideIcon::clipboard_type, route: Route::BasicInput {} },
+                    NavItem { label: "Card", icon: LucideIcon::credit_card, route: Route::BasicCard {} },
+                    NavItem { label: "Badge", icon: LucideIcon::badge, route: Route::BasicBadge {} },
+                ],
+            },
+            NavSubcategory {
+                label_en: "Feedback",
+                label_zh: "反馈",
+                route: Some(Route::ComponentsFeedback {}),
+                items: &[
+                    NavItem { label: "Alert", icon: LucideIcon::badge_alert, route: Route::FeedbackAlert {} },
+                    NavItem { label: "Toast", icon: LucideIcon::bell, route: Route::FeedbackToast {} },
+                    NavItem { label: "Tooltip", icon: LucideIcon::badge_info, route: Route::FeedbackTooltip {} },
+                ],
+            },
+            NavSubcategory {
+                label_en: "Navigation",
+                label_zh: "导航",
+                route: Some(Route::ComponentsNavigation {}),
+                items: &[
+                    NavItem { label: "Menu", icon: LucideIcon::clipboard_list, route: Route::NavigationMenu {} },
+                    NavItem { label: "Breadcrumb", icon: LucideIcon::chevrons_right, route: Route::NavigationBreadcrumb {} },
+                    NavItem { label: "Tabs", icon: LucideIcon::credit_card, route: Route::NavigationTabs {} },
+                ],
+            },
+            NavSubcategory {
+                label_en: "Data",
+                label_zh: "数据",
+                route: Some(Route::ComponentsData {}),
+                items: &[
+                    NavItem { label: "Table", icon: LucideIcon::clipboard_list, route: Route::DataTable {} },
+                    NavItem { label: "Tree", icon: LucideIcon::chart_network, route: Route::DataTree {} },
+                    NavItem { label: "Pagination", icon: LucideIcon::chevron_left, route: Route::DataPagination {} },
+                ],
+            },
+        ],
+    },
+    NavCategory {
+        id: "system",
+        title_en: "System",
+        title_zh: "系统",
+        subcategories: &[
+            NavSubcategory {
+                label_en: "Overview",
+                label_zh: "概览",
+                route: Some(Route::SystemOverview {}),
+                items: &[],
+            },
+            NavSubcategory {
+                label_en: "CSS Utilities",
+                label_zh: "CSS 工具",
+                route: Some(Route::SystemCSS {}),
+                items: &[],
+            },
+            NavSubcategory {
+                label_en: "Icons",
+                label_zh: "图标",
+                route: Some(Route::SystemIcons {}),
+                items: &[],
+            },
+            NavSubcategory {
+                label_en: "Palette",
+                label_zh: "调色板",
+                route: Some(Route::SystemPalette {}),
+                items: &[],
+            },
+            NavSubcategory {
+                label_en: "Animations",
+                label_zh: "动画",
+                route: Some(Route::SystemAnimations {}),
+                items: &[],
+            },
+        ],
+    },
+    NavCategory {
+        id: "demos",
+        title_en: "Demos",
+        title_zh: "演示",
+        subcategories: &[
+            NavSubcategory {
+                label_en: "All Demos",
+                label_zh: "全部演示",
+                route: Some(Route::DemosOverview {}),
+                items: &[],
+            },
+        ],
+    },
+];

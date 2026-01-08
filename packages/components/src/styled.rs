@@ -153,10 +153,11 @@ impl StyleRegistry {
     /// Registers all navigation and routing components.
     #[cfg(feature = "navigation")]
     pub fn register_navigation_components(&mut self) {
-        use crate::navigation::{BreadcrumbComponent, MenuComponent, TabsComponent};
+        use crate::navigation::{BreadcrumbComponent, MenuComponent, SidebarComponent, TabsComponent};
         MenuComponent::register(self);
         TabsComponent::register(self);
         BreadcrumbComponent::register(self);
+        SidebarComponent::register(self);
     }
 
     /// No-op if navigation feature is disabled

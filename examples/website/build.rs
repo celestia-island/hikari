@@ -79,6 +79,7 @@ fn main() {
     // Create public directory paths (using lexical paths)
     let public_dir = workspace_root.join("public");
     let images_dir = public_dir.join("images");
+    let styles_dir = public_dir.join("styles");
 
     println!("cargo:warning=📂 Public dir: {:?}", public_dir);
 

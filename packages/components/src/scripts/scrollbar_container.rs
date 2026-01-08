@@ -813,6 +813,9 @@ pub fn init_all() {
     init(".hi-tabs-nav");
     init(".hi-table-container");
 
+    // Sidebar components
+    init(".hi-sidebar");
+
     // Demo app specific
     init(".sidebar-nav");
     init(".showcase-table-container");

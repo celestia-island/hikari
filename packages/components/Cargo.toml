@@ -12,7 +12,7 @@ doctest = false
 default = ["basic", "feedback", "navigation", "layout", "data"]
 
 # Component groups (shortcuts) - enable multiple components at once
-basic = ["button", "input", "card", "badge"]
+basic = ["button", "input", "card", "badge", "image", "avatar"]
 feedback = ["alert", "toast", "tooltip"]
 navigation = ["menu", "tabs", "breadcrumb"]
 layout = ["layout-component", "header", "aside"]
@@ -23,6 +23,8 @@ button = []
 input = []
 card = []
 badge = []
+image = []
+avatar = []
 alert = []
 toast = []
 tooltip = []

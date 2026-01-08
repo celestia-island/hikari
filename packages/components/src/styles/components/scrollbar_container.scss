@@ -40,16 +40,16 @@
     scrollbar-width: none;
 }
 
-// Scrollbar track (the rail) - flex child, won't scroll with content
+// Scrollbar track (the rail) - absolutely positioned on right edge
 .custom-scrollbar-track {
-    position: relative;  // Relative to wrapper, which is flex row
-    // height matches content layer (controlled by flex)
+    position: absolute;  // Absolute positioning on right edge of wrapper
+    top: 0;
+    right: 0;
+    bottom: 0;
     // width is set dynamically via JavaScript (6px → 10px)
-    flex-shrink: 0;  // Don't shrink
     background: rgba(241, 245, 249, 0.3);
     border-radius: 3px;
     pointer-events: auto;  // Enable interaction for thumb
-    // Note: width transition is now handled by JavaScript state machine
     z-index: 100;
 
     // Top and bottom fade indicators (via CSS)

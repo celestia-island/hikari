@@ -1,0 +1,456 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari Sidebar Component - Multi-level Navigation
+// Design: Arknights + Future UI (FUI) aesthetics
+// Features: Arbitrary nesting, collapsible sections, smooth transitions
+// ============================================
+
+// ============================================
+// Base Sidebar Styles
+// ============================================
+
+.hi-sidebar {
+  // Layout
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+
+  // Appearance - transparent background for integration
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+
+  // Overflow handling
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  // Hide scrollbar for cleaner look
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--hi-color-border, rgba(0, 0, 0, 0.2));
+    border-radius: 2px;
+
+    &:hover {
+      background: var(--hi-color-text-secondary, rgba(0, 0, 0, 0.3));
+    }
+  }
+}
+
+// ============================================
+// Sidebar Section - Top-level collapsible category
+// ============================================
+
+.hi-sidebar-section {
+  // Layout
+  display: flex;
+  flex-direction: column;
+
+  // Border between sections
+  border-bottom: 1px solid var(--hi-color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.hi-sidebar-section-header {
+  // Layout
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+
+  // Spacing
+  padding: 0.875rem 1rem;
+
+  // Cursor
+  cursor: pointer;
+
+  // Prevent text selection - behave like a button
+  user-select: none;
+
+  // Transition
+  transition: background-color vars.$hikari-duration-fast ease;
+
+  // Hover state
+  &:hover {
+    background: var(--hi-primary-bg, rgba(123, 207, 166, 0.1));
+  }
+}
+
+.hi-sidebar-section-title-group {
+  // Layout
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+}
+
+.hi-sidebar-section-title-primary {
+  // Typography
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--hi-color-text-primary);
+}
+
+.hi-sidebar-section-title-secondary {
+  // Typography
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--hi-color-text-secondary);
+}
+
+.hi-sidebar-section-arrow {
+  // Layout
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // Size
+  width: 1rem;
+  height: 1rem;
+
+  // Color
+  color: var(--hi-color-text-secondary);
+
+  // Transition
+  transition: transform vars.$hikari-duration-normal ease;
+
+  // Rotated state (expanded)
+  &.rotated {
+    transform: rotate(180deg);
+  }
+
+  // SVG styling
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.hi-sidebar-section-children {
+  // Layout
+  display: flex;
+  flex-direction: column;
+
+  // Background for nested content
+  background: var(--hi-secondary-bg, rgba(248, 250, 252, 0.5));
+
+  // Hide when collapsed
+  &[data-expanded="false"] {
+    display: none;
+  }
+
+  // Dark theme support
+  [data-theme="tairitus"] &,
+  [data-theme="dark"] & {
+    background: var(--hi-secondary-bg, rgba(45, 45, 45, 0.5));
+  }
+}
+
+// ============================================
+// Sidebar Item - Clickable navigation item
+// ============================================
+
+.hi-sidebar-item {
+  // Layout
+  display: flex;
+  flex-direction: column;
+
+  // Border between items
+  border-bottom: 1px solid var(--hi-color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.hi-sidebar-item-header {
+  // Layout
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+
+  // Spacing
+  padding: 0.75rem 1rem 0.75rem 1.5rem;
+
+  // Typography - increase to 14px
+  font-size: 0.875rem;  // 14px
+  line-height: 1.25;    // 17.5px for proper alignment
+  font-weight: 500;
+  color: var(--hi-color-text-primary);
+
+  // Cursor - pointer when clickable
+  cursor: default;
+  text-decoration: none;
+
+  // Prevent text selection and dragging - behave like a button
+  user-select: none;
+
+  // Transition
+  transition: all vars.$hikari-duration-fast ease;
+
+  // Make entire header clickable when it has nested items
+  &[data-has-children="true"] {
+    cursor: pointer;
+
+    &:hover {
+      background: var(--hi-primary-bg, rgba(123, 207, 166, 0.1));
+    }
+  }
+}
+
+.hi-sidebar-item-content {
+  // Layout
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;  // 14px gap between icon and text
+
+  // Make content fill available space
+  flex: 1;
+
+  // Prevent text selection - behave like a button
+  user-select: none;
+
+  // Ensure links inside content are clickable and don't bubble to header
+  & a {
+    color: inherit;
+    text-decoration: none;
+    // Allow pointer events on links but prevent bubbling to parent
+    pointer-events: auto;
+  }
+}
+
+.hi-sidebar-item-arrow {
+  // Layout
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // Size - visual only, no padding since header handles clicks
+  width: 1rem;
+  height: 1rem;
+
+  // Cursor - inherit from parent header
+  cursor: default;
+
+  // Color - inherit from theme
+  color: var(--hi-color-text-secondary);
+
+  // Transition - only rotation
+  transition: transform vars.$hikari-duration-normal ease;
+
+  // Rotated state (expanded)
+  &.rotated {
+    transform: rotate(90deg);
+  }
+
+  // SVG styling
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.hi-sidebar-item-children {
+  // Layout
+  display: flex;
+  flex-direction: column;
+
+  // Background for nested content
+  background: var(--hi-tertiary-bg, rgba(243, 244, 246, 0.5));
+
+  // Hide when collapsed
+  &[data-expanded="false"] {
+    display: none;
+  }
+
+  // Dark theme support
+  [data-theme="tairitus"] &,
+  [data-theme="dark"] & {
+    background: var(--hi-tertiary-bg, rgba(35, 35, 35, 0.5));
+  }
+}
+
+// ============================================
+// Sidebar Leaf - Terminal item without children
+// ============================================
+
+.hi-sidebar-leaf {
+  // Border between items
+  border-bottom: 1px solid var(--hi-color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.hi-sidebar-leaf-content {
+  // Layout
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;  // 14px gap between icon and text
+
+  // Spacing
+  padding: 0.625rem 1rem 0.625rem 2.5rem;
+
+  // Typography - increased to 14px
+  font-size: 0.875rem;  // 14px
+  line-height: 1.25;    // 17.5px for proper alignment
+  font-weight: 400;
+  color: var(--hi-color-text-secondary);
+  text-decoration: none;
+
+  // Prevent text selection and dragging - behave like a button
+  user-select: none;
+
+  // Transition
+  transition: all vars.$hikari-duration-fast ease;
+
+  // Cursor
+  cursor: pointer;
+
+  // Inherit styling for links
+  & a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  // Hover state
+  &:hover {
+    background: var(--hi-primary-bg, rgba(123, 207, 166, 0.15));
+    color: var(--hi-color-primary);
+  }
+
+  // Active state
+  &.active {
+    color: var(--hi-color-primary);
+    background: var(--hi-primary-bg, rgba(123, 207, 166, 0.2));
+    font-weight: 500;
+    border-left: 3px solid var(--hi-color-primary);
+    padding-left: calc(2.5rem - 3px);
+  }
+}
+
+// ============================================
+// Active State Support
+// ============================================
+
+// Add active state styling to item content when parent has data-active
+.hi-sidebar-item[data-active="true"] > .hi-sidebar-item-header > .hi-sidebar-item-content {
+  color: var(--hi-color-primary);
+  background: var(--hi-primary-bg, rgba(123, 207, 166, 0.2));
+  font-weight: 500;
+  border-left: 3px solid var(--hi-color-primary);
+  padding-left: calc(1.5rem - 3px);
+  margin-left: -3px;
+}
+
+// ============================================
+// Nested Level Indentation
+// ============================================
+
+// Each nested level adds indentation
+.hi-sidebar-item-children .hi-sidebar-item-header {
+  padding-left: 2rem;
+}
+
+.hi-sidebar-item-children .hi-sidebar-item-children .hi-sidebar-item-header {
+  padding-left: 2.5rem;
+}
+
+.hi-sidebar-item-children .hi-sidebar-item-children .hi-sidebar-item-children .hi-sidebar-item-header {
+  padding-left: 3rem;
+}
+
+// ============================================
+// Icon Alignment
+// ============================================
+
+// Fix Icon component wrapper alignment in flex containers
+.hi-sidebar-item-content .hikari-icon,
+.hi-sidebar-leaf-content .hikari-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 0.875rem;   // 14px
+  height: 0.875rem;  // 14px
+}
+
+// Icon size variants (used by Icon component)
+// These override default sizes when used in sidebar
+.hi-sidebar-item-content .hikari-icon-16,
+.hi-sidebar-leaf-content .hikari-icon-16 {
+  width: 0.875rem;  // 14px
+  height: 0.875rem; // 14px
+}
+
+.hi-sidebar-item-content .hikari-icon-24,
+.hi-sidebar-leaf-content .hikari-icon-24 {
+  width: 1rem;     // 16px
+  height: 1rem;    // 16px
+}
+
+// Link content inside sidebar items - make them flex containers
+.hi-sidebar-item-content-inner,
+.hi-sidebar-leaf-content > a {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;  // 14px gap between icon and text
+  width: 100%;
+}
+
+// Direct SVG styling (for inline SVGs)
+.hi-sidebar-item-content svg,
+.hi-sidebar-leaf-content svg {
+  flex-shrink: 0;
+  display: block;
+  width: 0.875rem;   // 14px
+  height: 0.875rem;  // 14px
+  color: currentColor;
+}
+
+// ============================================
+// Responsive Variants
+// ============================================
+
+// Compact variant
+.hi-sidebar-compact {
+  .hi-sidebar-section-header {
+    padding: 0.625rem 0.75rem;
+  }
+
+  .hi-sidebar-item-header {
+    padding: 0.5rem 0.75rem 0.5rem 1.25rem;
+  }
+
+  .hi-sidebar-leaf-content {
+    padding: 0.5rem 0.75rem 0.5rem 2rem;
+  }
+}
+
+// Minimal variant (icon-only on small screens)
+@media (max-width: 768px) {
+  .hi-sidebar-minimal {
+    .hi-sidebar-section-title-secondary,
+    .hi-sidebar-item-arrow {
+      display: none;
+    }
+  }
+}

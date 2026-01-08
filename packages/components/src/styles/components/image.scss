@@ -1,0 +1,19 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+
+// ============================================
+// Hikari Image Component
+// ============================================
+
+// Base image class - resets global img styles from base.scss
+.hi-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+// Logo variant for app logos
+.hi-logo {
+  display: inline-block;
+  width: auto;
+}

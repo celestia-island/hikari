@@ -32,12 +32,14 @@ Tooling:         Python 3.11+ 用于预构建脚本
 **职责**: 中国传统色彩管理和工具类系统
 
 **核心功能**:
+
 - 500+ 中国传统颜色定义（colors.rs）
 - 主题色板系统（themes.rs: Hikari, Tairitsu）
 - 类型安全的工具类系统（classes/）
 - 透明度和颜色混合工具
 
 **关键类型**:
+
 ```rust
 // 颜色使用
 use hikari_palette::{朱砂, 石青, opacity};
@@ -51,6 +53,7 @@ use hikari_palette::ClassesBuilder;
 ```
 
 **注意事项**:
+
 - ❌ **不要创建新的颜色常量** - 使用现有的 500+ 颜色
 - ✅ **优先使用主题色板** - Hikari::palette() 或 Tairitsu::palette()
 - ✅ **使用工具类进行样式** - 避免内联样式字符串
@@ -62,11 +65,13 @@ use hikari_palette::ClassesBuilder;
 **职责**: 主题上下文和样式注入
 
 **核心功能**:
+
 - ThemeProvider 组件（provider.rs）
 - ThemeContext 和 hooks（context.rs）
 - 自动生成的主题资源（generated/）
 
 **关键 API**:
+
 ```rust
 use hikari_theme::ThemeProvider;
 
@@ -90,10 +95,12 @@ let color = theme.palette.primary;
 ```
 
 **支持的主题**:
+
 - `"hikari"` - 浅色主题（光）
 - `"tairitsu"` - 深色主题（tairitsu）
 
 **注意事项**:
+
 - ✅ **ThemeProvider 应该在应用根部**
 - ✅ **支持嵌套主题进行局部覆盖**
 - ❌ **不要修改现有主题，创建新的主题结构体**
@@ -105,6 +112,7 @@ let color = theme.palette.primary;
 **职责**: 声明式动画和动态值
 
 **核心模块**:
+
 - **builder.rs** - AnimationBuilder（主要 API）
 - **context.rs** - AnimationContext（运行时状态）
 - **style.rs** - StyleBuilder（类型安全的 CSS）
@@ -115,6 +123,7 @@ let color = theme.palette.primary;
 - **spotlight.rs** - 聚光灯效果
 
 **关键 API**:
+
 ```rust
 use hikari_animation::{AnimationBuilder, AnimationContext};
 use hikari_animation::style::CssProperty;
@@ -140,11 +149,13 @@ debounced.flush(); // 立即应用
 ```
 
 **性能优化**:
+
 - ✅ **使用防抖动画** - 处理频繁更新（如滚动）
 - ✅ **优先使用 CSS 过渡** - 简单状态改变
 - ✅ **使用 requestAnimationFrame** - 帧级动画
 
 **注意事项**:
+
 - ⚠️ **仅支持 WASM 目标** (`#[cfg(target_arch = "wasm32")]`)
 - ❌ **不要创建新的缓动函数** - 使用现有的 30+ 函数
 - ✅ **AnimationContext 提供丰富的运行时信息**
@@ -156,11 +167,13 @@ debounced.flush(); // 立即应用
 **职责**: 图标枚举和 SVG 内容
 
 **核心功能**:
+
 - Lucide Icons 枚举（generated/lucide.rs）
 - SVG 内容生成
 - Icon 组件
 
 **关键 API**:
+
 ```rust
 use hikari_icons::{Icon, LucideIcon};
 
@@ -174,6 +187,7 @@ rsx! {
 ```
 
 **注意事项**:
+
 - ✅ **使用 LucideIcon 枚举** - 类型安全
 - ❌ **不要手动创建 SVG 字符串** - 使用 Icon 组件
 - ✅ **图标会自动继承颜色**
@@ -204,6 +218,7 @@ rsx! {
 **模块化设计示例**:
 
 表格组件（8 个模块）:
+
 ```
 data/table/
  ├── table.rs         # 核心逻辑
@@ -217,6 +232,7 @@ data/table/
 ```
 
 树形控件（5 个模块）:
+
 ```
 data/tree/
  ├── tree.rs          # 核心逻辑
@@ -227,6 +243,7 @@ data/tree/
 ```
 
 **关键 API**:
+
 ```rust
 use hikari_components::{
     ThemeProvider, Button, Input, Card,
@@ -249,6 +266,7 @@ registry.register_all();
 ```
 
 **注意事项**:
+
 - ✅ **使用 feature flags** - 按需启用组件组
 - ✅ **遵循模块化设计** - 复杂组件拆分为多个模块
 - ❌ **不要在组件中使用全局样式** - 使用 StyledComponent trait
@@ -261,24 +279,23 @@ registry.register_all();
 **职责**: 编译时代码生成和 SCSS 编译
 
 **核心功能**:
+
 - SCSS 编译（使用 Grass）
 - 组件发现和代码生成
 - 资源打包
 
 **构建流程**:
-```
-1. 查找工作空间根目录
-   ↓
-2. 扫描 packages/components/src/styles/components/*.scss
-   ↓
-3. 生成 packages/builder/src/generated/components.rs
-   ↓
-4. 编译 packages/components/src/styles/index.scss
-   ↓
-5. 输出 public/styles/bundle.css
+
+```mermaid
+flowchart TD
+    A[1. 查找工作空间根目录] --> B[2. 扫描 packages/components/src/styles/components/*.scss]
+    B --> C[3. 生成 packages/builder/src/generated/components.rs]
+    C --> D[4. 编译 packages/components/src/styles/index.scss]
+    D --> E[5. 输出 public/styles/bundle.css]
 ```
 
 **使用方式**:
+
 ```rust
 // build.rs
 fn main() {
@@ -287,6 +304,7 @@ fn main() {
 ```
 
 **关键配置**:
+
 ```rust
 BuildConfig {
     components: vec!["button".to_string(), "card".to_string()],
@@ -298,6 +316,7 @@ BuildConfig {
 ```
 
 **注意事项**:
+
 - ✅ **自动运行** - 在 `cargo build` 时自动执行
 - ❌ **不要编辑 generated/*.rs** - 自动生成的文件
 - ✅ **使用 Grass** - 纯 Rust，无需 Ruby Sass
@@ -310,6 +329,7 @@ BuildConfig {
 **职责**: SSR 和静态资源服务
 
 **核心模块**:
+
 - **plugin.rs** - HikariRenderServicePlugin（主要 API）
 - **html.rs** - HtmlService（HTML 模板）
 - **registry.rs** - StyleRegistry（样式管理）
@@ -318,6 +338,7 @@ BuildConfig {
 - **styles_service.rs** - 样式注入
 
 **关键 API**:
+
 ```rust
 use hikari_render_service::HikariRenderServicePlugin;
 
@@ -341,6 +362,7 @@ let app = HikariRenderServicePlugin::new()
 ```
 
 **注意事项**:
+
 - ✅ **集成 Axum** - 与 Dioxus SSR 无缝集成
 - ✅ **静态资源缓存** - 可配置 Cache-Control
 - ❌ **不要直接使用 HtmlService** - 通过 Plugin 使用
@@ -349,14 +371,184 @@ let app = HikariRenderServicePlugin::new()
 
 ## 开发指南
 
+### 样式构建系统
+
+Hikari 使用 **三个层级** 的样式构建工具，遵循类型安全和系统化原则：
+
+#### 1. ClassesBuilder - CSS 类名生成（palette 包）
+
+用于生成 Tailwind 风格的工具类名。
+
+```rust
+use palette::classes::{ClassesBuilder, Display, Flex, Gap, Padding};
+
+let classes = ClassesBuilder::new()
+    .add(Display::Flex)
+    .add(Flex::FlexCol)
+    .add(Gap::Gap4)
+    .add(Padding::P4)
+    .build();
+// 输出: "hi-flex hi-flex-col hi-gap-4 hi-p-4"
+```
+
+**使用场景**：
+
+- ✅ 大多数布局样式（display、flex、grid、spacing）
+- ✅ 可以添加到 SCSS 中的预定义类
+- ✅ 对应 CSS 中的 `.hi-flex` 等工具类
+
+**注意事项**：
+
+- ✅ **枚举必须与 SCSS 类一一对应** - 添加新枚举时必须同步添加 SCSS 样式
+- ❌ **不要擅自添加裸样式字符串** - 使用 ClassesBuilder 或 SCSS
+
+#### 2. StyleStringBuilder - 内联样式生成（animation 包）
+
+用于生成 Dioxus 组件的 `style` 属性字符串，覆盖全局样式或处理动态值。
+
+```rust
+use animation::style::{StyleStringBuilder, CssProperty};
+
+let style = StyleStringBuilder::new()
+    .add_px(CssProperty::Height, 36)
+    .add_px(CssProperty::MaxWidth, 140)
+    .add(CssProperty::Width, "auto")
+    .add(CssProperty::ObjectFit, "contain")
+    .build_clean();
+// 输出: "height:36px;max-width:140px;width:auto;object-fit:contain"
+```
+
+**使用场景**：
+
+- ✅ 需要覆盖 base.scss 全局样式时（如 `img { height: auto; }`）
+- ✅ 动态计算的样式值（如像素尺寸）
+- ✅ 组件特定样式不需要复用的情况
+
+**注意事项**：
+
+- ✅ **优先使用 ClassesBuilder** - 更系统化
+- ✅ **样式必须在 animation::style::CssProperty 枚举中** - 添加新属性时同步更新枚举
+
+#### 3. SCSS 组件样式 - 可复用样式（components 包）
+
+用于定义可复用的组件样式。与 ClassesBuilder 的枚举是**双向绑定**关系：
+
+```scss
+// packages/components/src/styles/components/my-component.scss
+.hi-my-component {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+```
+
+```rust
+// packages/palette/src/classes/components.rs
+pub enum Display {
+    Flex,  // 对应 .hi-flex
+    Block, // 对应 .hi-block
+}
+```
+
+**双向绑定原理**：
+
+- **SCSS → 枚举**：`.hi-flex` ↔ `Display::Flex`
+- **只要实现 `UtilityClass` trait 的枚举**都能被 `ClassesBuilder` 使用
+- **添加新枚举时**：必须同步在 SCSS 中添加对应的 `.hi-*` 类
+
+**使用场景**：
+
+- ✅ 复杂的组件样式（如 card、button）
+- ✅ 需要组合多个工具类的样式
+- ✅ 有伪类/嵌套关系的样式
+
+### 样式选择决策树
+
+```mermaid
+flowchart TD
+    START[需要添加样式？] --> Q1{简单布局/间距？}
+    Q1 -->|是| CB[使用 ClassesBuilder<br/>palette 包]
+    Q1 -->|否| Q2{覆盖全局样式？<br/>如 img}
+    Q2 -->|是| SSB[使用 StyleStringBuilder<br/>animation 包]
+    Q2 -->|否| Q3{复杂组件样式<br/>需要复用？}
+    Q3 -->|是| SCSS[在 components/src/styles/components/<br/>创建 SCSS]
+    Q3 -->|否| Q4{动态值？<br/>JS 计算的像素、颜色}
+    Q4 -->|是| SSB
+
+    CB --> CB_ACTION[在 palette 添加枚举<br/>在 SCSS 添加 .hi-* 类]
+    SSB --> SSB_ACTION[在 animation::style<br/>添加 CssProperty 变体]
+    SCSS --> SCSS_ACTION[创建组件 SCSS 文件<br/>使用 @apply 组合工具类]
+```
+
+### 添加新样式类的完整流程
+
+**示例：添加一个新的宽高类**
+
+1. **在 palette 中添加枚举**：
+
+   ```rust
+   // packages/palette/src/classes/sizing.rs
+   #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+   pub enum Height {
+       // ...existing variants
+       H10,  // 新增：40px
+   }
+   ```
+
+2. **在 SCSS 中添加对应样式**：
+
+   ```scss
+   // packages/components/src/styles/index.scss 或对应组件 SCSS
+   .hi-h-10 {
+     height: 2.5rem; // 40px
+   }
+   ```
+
+3. **在组件中使用**：
+
+   ```rust
+   use palette::classes::ClassesBuilder;
+   let classes = ClassesBuilder::new().add(Height::H10).build();
+   ```
+
+### 添加新 CSS 属性
+
+**示例：添加 filter 支持**
+
+1. **在 animation::style 中添加枚举变体**：
+
+   ```rust
+   // packages/animation/src/style.rs
+   pub enum CssProperty {
+       // ...existing
+       Filter,  // 新增
+   }
+   ```
+
+2. **在 as_str() 方法中添加映射**：
+
+   ```rust
+   CssProperty::Filter => "filter",
+   ```
+
+3. **在 StyleStringBuilder 中使用**：
+
+   ```rust
+   let style = StyleStringBuilder::new()
+       .add(CssProperty::Filter, "blur(4px)")
+       .build_clean();
+   ```
+
 ### 添加新组件
 
 1. **创建组件文件**
+
    ```
    packages/components/src/basic/my_component.rs
    ```
 
 2. **实现 StyledComponent trait**
+
    ```rust
    use hikari_components::StyledComponent;
 
@@ -370,6 +562,7 @@ let app = HikariRenderServicePlugin::new()
    ```
 
 3. **创建 SCSS 文件**
+
    ```scss
    // packages/components/src/styles/components/my-component.scss
    .hi-my-component {
@@ -378,18 +571,21 @@ let app = HikariRenderServicePlugin::new()
    ```
 
 4. **在 mod.rs 中导出**
+
    ```rust
    pub mod my_component;
    pub use my_component::MyComponent;
    ```
 
 5. **添加 feature flag**
+
    ```toml
    [features]
    my-component = []
    ```
 
 6. **编写文档和测试**
+
    ```rust
    /// MyComponent - 我的组件
    ///
@@ -402,6 +598,7 @@ let app = HikariRenderServicePlugin::new()
 ### 组件模块化策略
 
 **表格组件（8 个模块）**:
+
 ```
 table/
  ├── table.rs         # 核心逻辑
@@ -415,6 +612,7 @@ table/
 ```
 
 **树形控件（5 个模块）**:
+
 ```
 tree/
  ├── tree.rs          # 核心逻辑
@@ -427,12 +625,14 @@ tree/
 ### 样式系统
 
 **SCSS 编译**:
+
 - 入口点: `packages/components/src/styles/index.scss`
 - 组件样式: `packages/components/src/styles/components/*.scss`
 - 工具类: `packages/palette/src/classes/`
 - 输出: `public/styles/bundle.css`
 
 **CSS 变量**:
+
 ```css
 .hi-theme-provider[data-theme="hikari"] {
     --hi-primary: #00A0E9;
@@ -443,6 +643,7 @@ tree/
 ```
 
 **使用主题变量**:
+
 ```rust
 rsx! {
     div {
@@ -489,6 +690,7 @@ let primary = theme.primary;
   - `🔖 Bump version to 0.2.0`
 
 **注意**:
+
 - 使用单个 emoji
 - 只有一句话的英语描述（不使用中文）
 - **不要 push 到云端**（除非明确要求）
@@ -498,17 +700,20 @@ let primary = theme.primary;
 ## 设计风格
 
 ### Arknights 平面设计
+
 - 干净的线条、清晰的信息层级
 - 高对比度，避免模糊
 - 简约而不失精致
 
 ### FUI 科幻感
+
 - 微妙的发光效果（`box-shadow`, `text-shadow`）
 - 动态指示（呼吸灯、脉冲动画）
 - 精细的边框（1px 半透明）
 - 几何图案（六边形、网格）
 
 ### 中国传统色应用
+
 - **主色**: 石青（蓝）、朱砂（红）、藤黄（黄）、靛蓝（深蓝）
 - **中性色**: 月白（淡白）、墨色（深黑）、缟色（浅灰）
 - **功能色**: 葱倩（成功）、鹅黄（警告）、朱砂（危险）
@@ -518,11 +723,13 @@ let primary = theme.primary;
 ## 命名规范
 
 ### 子包命名
+
 - 所有子包使用 `hikari-*` 前缀
 - 避免使用 `hikari`（已被占用）
 - 内部包使用 `_hikari-*` 下划线前缀
 
 ### 代码风格
+
 - **常量名**: 中文（如 `朱砂`、`石青`）用于调色板
 - **其他**: 英文命名，遵循 Rust 约定
 - **组件名**: PascalCase（如 `Button`, `DataTable`）
@@ -554,6 +761,7 @@ python scripts/fetch_lucide_icons.py   # 下载并生成 Lucide Icons
 ```
 
 生成的文件位于：
+
 - `packages/theme/src/generated/` - Tailwind CSS 和主题资源
 - `packages/icons/src/generated/` - Lucide Icons 枚举和 SVG 内容
 - `packages/palette/src/colors.rs` - 中国传统色定义
@@ -625,6 +833,7 @@ python scripts/fetch_lucide_icons.py   # 下载并生成 Lucide Icons
    - ✅ 包含使用示例
    - ✅ 说明性能考虑
    - ✅ 标注平台支持（WASM/SSR）
+   - ✅ **流程图使用 mermaid 格式** - 不要用制表符或 ASCII 艺术图
 
 ### 避免的常见错误
 
@@ -636,6 +845,7 @@ python scripts/fetch_lucide_icons.py   # 下载并生成 Lucide Icons
 6. ❌ **忽略模块化设计** - 复杂组件应该拆分
 7. ❌ **使用中文提交信息** - 使用 emoji + 英语
 8. ❌ **跳过文档** - 公共 API 必须有文档
+9. ❌ **用制表符画流程图** - 使用 mermaid 格式
 
 ---
 
@@ -643,13 +853,13 @@ python scripts/fetch_lucide_icons.py   # 下载并生成 Lucide Icons
 
 - **文档**: `docs/` 目录（多语言）
 - **示例**: `examples/` 目录
-- **API 文档**: https://docs.rs/hikari-components
+- **API 文档**: <https://docs.rs/hikari-components>
 - **设计规范**: `docs/zh-CN/design/`
 - **贡献指南**: `CONTRIBUTING.md`
 - **许可证**: `LICENSE`
 
 ---
 
-**最后更新**: 2026-01-08
+**最后更新**: 2026-01-09
 **维护者**: Hikari Contributors
 **许可**: MIT OR Apache-2.0

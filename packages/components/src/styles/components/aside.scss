@@ -238,7 +238,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 0.5rem;
+  padding: 0 0 0 0.5rem;  // Only left padding, no right padding
 
   // Custom scrollbar (no mask - will be applied dynamically via JS)
   @include mix.scrollbar;

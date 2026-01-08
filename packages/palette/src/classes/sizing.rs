@@ -44,6 +44,7 @@ pub enum Height {
     Auto,
     H6,
     H8,
+    H10,
     H12,
 }
 
@@ -55,6 +56,7 @@ impl UtilityClass for Height {
             Height::Auto => "h-auto",
             Height::H6 => "h-6",
             Height::H8 => "h-8",
+            Height::H10 => "h-10",
             Height::H12 => "h-12",
         }
     }
@@ -81,6 +83,7 @@ pub enum MaxWidth {
     MaxW2xl,
     MaxW3xl,
     MaxW4xl,
+    MaxWLogo,
 }
 
 impl UtilityClass for MaxWidth {
@@ -90,6 +93,29 @@ impl UtilityClass for MaxWidth {
             MaxWidth::MaxW2xl => "max-w-2xl",
             MaxWidth::MaxW3xl => "max-w-3xl",
             MaxWidth::MaxW4xl => "max-w-4xl",
+            MaxWidth::MaxWLogo => "max-w-logo",
+        }
+    }
+}
+
+/// Object-fit utilities for images
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ObjectFit {
+    Contain,
+    Cover,
+    Fill,
+    None,
+    ScaleDown,
+}
+
+impl UtilityClass for ObjectFit {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            ObjectFit::Contain => "object-contain",
+            ObjectFit::Cover => "object-cover",
+            ObjectFit::Fill => "object-fill",
+            ObjectFit::None => "object-none",
+            ObjectFit::ScaleDown => "object-scale-down",
         }
     }
 }

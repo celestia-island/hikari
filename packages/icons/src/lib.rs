@@ -45,10 +45,13 @@ pub fn Icon(
     // Get SVG content from the icon
     let svg_content = icon.get_svg();
 
+    // Build class list with size variant
+    let size_class = format!("hikari-icon-{size}");
+    let full_class = format!("hikari-icon {size_class} {class}");
+
     rsx! {
         div {
-            class: "hikari-icon {class}",
-            style: "display: inline-block; width: {size}px; height: {size}px;",
+            class: full_class,
             dangerous_inner_html: svg_content
         }
     }

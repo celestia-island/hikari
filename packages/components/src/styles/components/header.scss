@@ -33,7 +33,7 @@
 
   // 简洁边框
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.05));
 
   // Transitions - smooth GSAP-style easing
   // DISABLED - migrated to JS animation
@@ -62,12 +62,12 @@
 
   // Scrolled state (applied via JS)
   &.hi-header-scrolled {
-    background: rgba(45, 45, 45, 0.98);
+    background: var(--hi-card-bg, rgba(45, 45, 45, 0.98));
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
     box-shadow:
       0 8px 24px rgba(23, 89, 168, 0.25),
-      0 0 40px rgba(139, 92, 246, 0.2);
+      0 0 40px var(--hi-primary, rgba(123, 207, 166, 0.2));
 
     &::before {
       opacity: 1;
@@ -127,15 +127,15 @@
 
     // Glow effect
     border-radius: vars.$hikari-radius-fui-sm;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+    background: linear-gradient(135deg, var(--hi-primary, rgba(123, 207, 166, 0.2)), rgba(59, 130, 246, 0.2));
     box-shadow:
-      0 0 12px rgba(139, 92, 246, 0.4),
-      inset 0 0 8px rgba(139, 92, 246, 0.2);
+      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.4)),
+      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2));
 
     svg {
       width: 100%;
       height: 100%;
-      filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.6));
+      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.6)));
       // DISABLED - migrated to JS animation
 
       // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
@@ -144,12 +144,12 @@
     // Animation on hover
     .hi-header-logo:hover & {
       box-shadow:
-        0 0 20px rgba(139, 92, 246, 0.6),
-        inset 0 0 12px rgba(139, 92, 246, 0.3);
+        0 0 20px var(--hi-primary, rgba(123, 207, 166, 0.6)),
+        inset 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
       transform: scale(1.05);
 
       svg {
-        filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.8));
+        filter: drop-shadow(0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.8)));
       }
     }
   }
@@ -163,7 +163,7 @@
     letter-spacing: 0.02em;
 
     // Subtle text glow
-    text-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+    text-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.4));
 
     // Truncate on small screens
     @include mix.mobile {
@@ -193,7 +193,7 @@
     color: var(--hi-color-text-primary);
 
     .hi-header-logo-text {
-      text-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+      text-shadow: 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.6));
     }
   }
 }
@@ -235,13 +235,13 @@
     // Hover state
     &:hover {
       color: var(--hi-color-text-primary);
-      background: rgba(139, 92, 246, 0.1);
+      background: var(--hi-primary, rgba(123, 207, 166, 0.1));
     }
 
     // Active state
     &.hi-header-nav-item-active {
       color: var(--hi-color-primary);
-      background: rgba(139, 92, 246, 0.15);
+      background: var(--hi-primary, rgba(123, 207, 166, 0.15));
 
       // Bottom accent line
       &::after {
@@ -252,7 +252,7 @@
         right: 1rem;
         height: 2px;
         background: var(--hi-color-primary);
-        box-shadow: 0 0 8px rgba(139, 92, 246, 0.8);
+        box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.8));
         border-radius: 1px;
       }
     }
@@ -312,14 +312,14 @@
   // Hover state
   &:hover {
     color: var(--hi-color-text-primary);
-    background: rgba(139, 92, 246, 0.15);
-    border-color: rgba(139, 92, 246, 0.3);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
+    border-color: var(--hi-primary, rgba(123, 207, 166, 0.3));
     box-shadow:
-      0 0 12px rgba(139, 92, 246, 0.3),
-      inset 0 0 8px rgba(139, 92, 246, 0.1);
+      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
 
     svg {
-      filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.6));
+      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.6)));
       transform: scale(1.1);
     }
   }
@@ -334,8 +334,8 @@
     outline: none;
     border-color: var(--hi-color-primary);
     box-shadow:
-      0 0 0 2px rgba(139, 92, 246, 0.3),
-      0 0 12px rgba(139, 92, 246, 0.4);
+      0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.4));
   }
 
   // Badge indicator
@@ -393,7 +393,7 @@
     font-size: vars.$hikari-font-size-sm;
     color: var(--hi-color-text-primary);
     background: rgba(214, 236, 240, 0.5);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.2));
     border-radius: vars.$hikari-radius-fui-sm;
     outline: none;
     // DISABLED - migrated to JS animation
@@ -407,7 +407,7 @@
 
     // Hover state
     &:hover {
-      border-color: rgba(139, 92, 246, 0.4);
+      border-color: var(--hi-primary, rgba(123, 207, 166, 0.4));
       background: rgba(23, 89, 168, 0.2);
     }
 
@@ -416,8 +416,8 @@
       border-color: var(--hi-color-primary);
       background: rgba(23, 89, 168, 0.25);
       box-shadow:
-        0 0 0 2px rgba(139, 92, 246, 0.2),
-        0 0 12px rgba(139, 92, 246, 0.3);
+        0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.2)),
+        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
     }
   }
 
@@ -467,8 +467,8 @@
     height: 2rem;
     border-radius: vars.$hikari-radius-fui-sm;
     object-fit: cover;
-    border: 2px solid rgba(139, 92, 246, 0.3);
-    box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+    border: 2px solid var(--hi-primary, rgba(123, 207, 166, 0.3));
+    box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.4));
     // DISABLED - migrated to JS animation
 
     // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
@@ -521,17 +521,17 @@
 
   // Hover state
   &:hover {
-    background: rgba(139, 92, 246, 0.1);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.1));
 
     .hi-header-user-avatar {
-      border-color: rgba(139, 92, 246, 0.6);
-      box-shadow: 0 0 16px rgba(139, 92, 246, 0.6);
+      border-color: var(--hi-primary, rgba(123, 207, 166, 0.6));
+      box-shadow: 0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.6));
     }
   }
 
   // Open state
   &.hi-header-user-open {
-    background: rgba(139, 92, 246, 0.15);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
 
     .hi-header-user-arrow {
       transform: rotate(180deg);
@@ -586,8 +586,8 @@
 }
 
 .hi-header-md {
-  padding: 0.75rem 1.5rem;
-  min-height: 4rem;
+  padding: 0.5rem 1rem;
+  min-height: 2.5rem;
 }
 
 .hi-header-lg {
@@ -641,7 +641,7 @@
   border-bottom: 1px solid transparent;
 
   &.hi-header-scrolled {
-    background: rgba(45, 45, 45, 0.95);
+    background: var(--hi-card-bg, rgba(45, 45, 45, 0.95));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
@@ -670,7 +670,7 @@
         order: 3;
         margin-top: 0.5rem;
         padding-top: 0.5rem;
-        border-top: 1px solid rgba(139, 92, 246, 0.2);
+        border-top: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.2));
       }
     }
   }
@@ -726,7 +726,7 @@
   gap: 0.5rem;
   margin-left: 1rem;
   padding-left: 1rem;
-  border-left: 1px solid rgba(139, 92, 246, 0.2);
+  border-left: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.2));
 
   @include mix.mobile {
     display: none;

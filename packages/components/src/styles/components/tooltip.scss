@@ -40,7 +40,7 @@
   // Elevated shadow
   box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+    0 0 0 1px var(--hi-white-8, rgba(255, 255, 255, 0.08)) inset;
 
   // Transitions - smooth GSAP-style easing
   // DISABLED - migrated to JS animation
@@ -72,7 +72,7 @@
     position: absolute;
     width: 8px;
     height: 8px;
-    background: rgba(139, 92, 246, 0.6);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.6));
     filter: blur(4px);
     opacity: 0;
     // DISABLED - migrated to JS animation
@@ -520,10 +520,10 @@
 .hi-tooltip-light {
   background: rgba(255, 255, 255, 0.95);
   color: #1e293b;
-  border-color: rgba(0, 0, 0, 0.1);
+  border-color: var(--hi-black-10, rgba(0, 0, 0, 0.1));
 
   box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 4px 12px var(--hi-black-20, rgba(0, 0, 0, 0.15)),
     0 0 0 1px rgba(255, 255, 255, 0.5) inset;
 }
 

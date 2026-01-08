@@ -1,273 +1,73 @@
 // demo-app/src/styles/sidebar.scss
-// Unified styles for sidebar and layout components
+// Tree component style overrides for sidebar usage
+// All layout/spacing/typography uses ClassesBuilder in sidebar_tree.rs
 
 // ============================================
-// Sidebar Header
+// Tree Component Overrides
 // ============================================
 
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding-bottom: 1.5rem;
-  margin-bottom: 1.25rem;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+// Override Tree component's default dark background for sidebar
+.hi-tree-container {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
 
-  // Hide on desktop (header already shows logo and title)
-  @media (min-width: 768px) {
-    display: none;
+.hi-tree {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.hi-tree-node-content {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  color: #475569;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  box-shadow: none;
+  cursor: pointer;
+  
+  &:hover {
+    background: rgba(241, 245, 249, 0.8);
+    color: #1e293b;
+    box-shadow: none;
   }
 }
 
-.sidebar-logo {
-  width: 1.75rem;
-  height: 1.75rem;
-}
-
-.sidebar-title-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-title {
-  margin: 0;
-  font-size: 1.125rem;
+.hi-tree-node-selected .hi-tree-node-content {
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+  border-left: 3px solid #3b82f6;
+  color: #1e40af;
   font-weight: 600;
-  background: linear-gradient(to right, #2563eb, #4f46e5);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  box-shadow: none;
+  
+  &:hover {
+    background: linear-gradient(to right, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.08));
+    box-shadow: none;
+  }
 }
 
-.sidebar-subtitle {
-  font-size: 0.75rem;
-  color: #64748b;
-  font-weight: 500;
-  letter-spacing: 0.025em;
+// Hide tree connectors in sidebar (cleaner look)
+.hi-tree-node::before,
+.hi-tree-node-content::after {
+  display: none;
 }
 
-// ============================================
-// Sidebar Navigation
-// ============================================
-
-.sidebar-nav {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding-top: 1rem; // 添加顶部留白
-}
-
-.nav-group {
-  margin-bottom: 1rem;
-}
-
-.nav-group-title {
-  padding: 0.25rem 0.75rem 0.5rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.625rem 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s;
-  border: 1px solid transparent;
-  color: #334155;
-  text-decoration: none;
-}
-
-.nav-item:hover {
-  background: rgba(241, 245, 249, 0.8);
-}
-
-.nav-item-active {
-  background: rgba(219, 234, 254, 0.8);
-  color: #1d4ed8;
-  border-color: rgba(191, 219, 254, 0.6);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.nav-item-icon {
-  transition: color 200ms;
+// Expand/collapse icon
+.hi-tree-expand-icon {
   color: #94a3b8;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    color: #64748b;
+  }
 }
 
-.nav-item-active .nav-item-icon {
-  color: #2563eb;
-}
-
-.nav-item-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.nav-subitem {
-  display: flex;
-  align-items: center;
-  padding: 0.625rem 0.75rem;
-  padding-left: 2.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s;
-  border: 1px solid transparent;
-  position: relative;
-  color: #475569;
-  text-decoration: none;
-}
-
-.nav-subitem:hover {
-  background: rgba(241, 245, 249, 0.8);
-}
-
-.nav-subitem-active {
-  background: rgba(219, 234, 254, 0.8);
-  color: #1d4ed8;
-  border-color: rgba(191, 219, 254, 0.6);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-// ============================================
-// Sidebar Footer
-// ============================================
-
-.sidebar-footer {
-  padding: 0.75rem; // 四周都有内边距
-  margin-top: 0.75rem;
-  border-top: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.sidebar-footer-content {
-  display: flex;
-  align-items: center;
-  justify-content: center; // 居中显示
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  background: rgba(248, 250, 252, 0.8);
-  transition: background-color 150ms;
-}
-
-.sidebar-footer-content:hover {
-  background: rgba(241, 245, 249, 0.9);
-}
-
-.sidebar-footer-text {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: #64748b;
-  font-weight: 500;
-}
-
-// ============================================
-// Layout Header
-// ============================================
-
-.layout-header-left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-shrink: 0; // 不收缩
-}
-
-.layout-header-logo {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-.layout-header-title {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  background: linear-gradient(to right, #2563eb, #4f46e5);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.layout-header-nav {
-  display: inline-flex;
-  gap: 0.25rem;
-  margin-left: auto; // 推到右侧
-}
-
-.layout-header-nav-tab {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s;
-  color: #64748b;
-  text-decoration: none;
-  border-bottom: 2px solid transparent;
-}
-
-.layout-header-nav-tab:hover {
-  color: #2563eb;
-}
-
-.layout-header-nav-tab-active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
-}
-
-// ============================================
-// Breadcrumb
-// ============================================
-
-.breadcrumb-nav {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  padding: 0.5rem 1rem;
-  background: rgba(249, 250, 251, 0.5);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-}
-
-.breadcrumb-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
-  color: #64748b;
-  text-decoration: none;
-  transition: all 0.15s;
-}
-
-.breadcrumb-link:hover {
-  background: rgba(241, 245, 249, 0.8);
-}
-
-.breadcrumb-separator {
-  color: #cbd5e1;
-}
-
-.breadcrumb-item {
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
-  color: #475569;
-}
-
-.breadcrumb-item-current {
-  background: rgba(241, 245, 249, 0.5);
-  font-weight: 500;
-}
-
-.breadcrumb-item-disabled {
-  color: #64748b;
+// Adjust indentation for nested levels
+.hi-tree-node-children {
+  margin-left: 0.75rem;
 }

@@ -2,100 +2,78 @@
 // Components overview page
 
 use dioxus::prelude::*;
-use dioxus_router::components::Link;
+use icons::{Icon, LucideIcon};
+use palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, Padding, MarginBottom, FontSize, FontWeight, TextColor};
 
-use crate::{app::Route, components::Layout};
+use crate::components::Layout;
 
-/// Component overview page
-#[component]
+/// Components Overview
+#[allow(non_snake_case)]
 pub fn ComponentsOverview() -> Element {
-    let basic_route = Route::ComponentsBasic {};
-    let feedback_route = Route::ComponentsFeedback {};
-    let navigation_route = Route::ComponentsNavigation {};
-    let data_route = Route::ComponentsData {};
-
     rsx! {
         Layout {
-            current_route: Route::ComponentsOverview {},
-            div {
-                class: "page-container",
+            current_route: crate::app::Route::ComponentsOverview {
+            },
+            h1 { "组件总览" }
+            p { "Components Overview - Hikari UI 组件库" }
 
-                // Header
-                div {
-                    class: "page-header",
-                    h1 {
-                        class: "page-title",
-                        "Components"
+            div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
+                h2 { "布局组件 Layout" }
+                div { class: ClassesBuilder::new().add(Display::Grid).add(Gap::Gap6).build(),
+                    div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P4).build(),
+                        Icon { icon: LucideIcon::badge, size: 24 }
+                        div {
+                            h3 { "Container 容器" }
+                            p { "内容容器组件" }
+                        }
                     }
-                    p {
-                        class: "page-description",
-                        "Explore all Hikari UI components organized by category"
+                    div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P4).build(),
+                        Icon { icon: LucideIcon::badge, size: 24 }
+                        div {
+                            h3 { "Grid 网格" }
+                            p { "网格布局系统" }
+                        }
                     }
-                }
-
-                // Component categories grid
-                div {
-                    class: "component-grid",
-                    ComponentCategoryCard {
-                        title: "Basic Components".to_string(),
-                        description: "Fundamental building blocks for your UI".to_string(),
-                        route: basic_route,
-                        components: vec!["Button".to_string(), "Input".to_string(), "Card".to_string(), "Badge".to_string()],
-                    }
-
-                    ComponentCategoryCard {
-                        title: "Feedback Components".to_string(),
-                        description: "Provide status and feedback to users".to_string(),
-                        route: feedback_route,
-                        components: vec!["Alert".to_string(), "Toast".to_string(), "Tooltip".to_string()],
-                    }
-
-                    ComponentCategoryCard {
-                        title: "Navigation Components".to_string(),
-                        description: "Help users navigate your application".to_string(),
-                        route: navigation_route,
-                        components: vec!["Menu".to_string(), "Tabs".to_string(), "Breadcrumb".to_string()],
-                    }
-
-                    ComponentCategoryCard {
-                        title: "Data Components".to_string(),
-                        description: "Display and manage complex data".to_string(),
-                        route: data_route,
-                        components: vec!["Table".to_string(), "Tree".to_string(), "Pagination".to_string()],
+                    div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P4).build(),
+                        Icon { icon: LucideIcon::badge, size: 24 }
+                        div {
+                            h3 { "Section 分区" }
+                            p { "内容分区组件" }
+                        }
                     }
                 }
             }
-        }
-    }
-}
 
-/// Component category card
-#[component]
-fn ComponentCategoryCard(
-    title: String,
-    description: String,
-    route: Route,
-    components: Vec<String>,
-) -> Element {
-    rsx! {
-        Link {
-            to: route,
-            class: "component-category-card",
-
-            h3 {
-                class: "component-category-title",
-                "{title}"
-            }
-            p {
-                class: "component-category-description",
-                "{description}"
-            }
-            div {
-                class: "component-list",
-                for component in &components {
-                    span {
-                        class: "component-tag",
-                        "{component}"
+            div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
+                h2 { "基础组件 Basic" }
+                div { class: ClassesBuilder::new().add(Display::Grid).add(Gap::Gap6).build(),
+                    div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P4).build(),
+                        Icon { icon: LucideIcon::badge, size: 24 }
+                        div {
+                            h3 { "Button 按钮" }
+                            p { "操作按钮组件" }
+                        }
+                    }
+                    div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P4).build(),
+                        Icon { icon: LucideIcon::badge, size: 24 }
+                        div {
+                            h3 { "Input 输入框" }
+                            p { "文本输入组件" }
+                        }
+                    }
+                    div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P4).build(),
+                        Icon { icon: LucideIcon::badge, size: 24 }
+                        div {
+                            h3 { "Card 卡片" }
+                            p { "内容卡片组件" }
+                        }
+                    }
+                    div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P4).build(),
+                        Icon { icon: LucideIcon::badge, size: 24 }
+                        div {
+                            h3 { "Badge 徽章" }
+                            p { "状态徽章组件" }
+                        }
                     }
                 }
             }

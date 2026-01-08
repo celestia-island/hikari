@@ -5,6 +5,7 @@ extern crate components as hikari_components;
 
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
+use palette::classes::{ClassesBuilder, FontSize, FontWeight, TextColor, TextAlign, MarginBottom};
 
 use crate::{app::Route, components::Layout};
 use components::layout::{Container, Grid, Row, Section, Spacer};
@@ -21,14 +22,28 @@ pub fn Home() -> Element {
                 Section { size: "lg".to_string(),
 
                     // Hero Content using semantic HTML
-                    div { class: "hero-content",
+                    div { class: ClassesBuilder::new().add(TextAlign::Center).build(),
 
-                        h1 { class: "hero-title", "Hikari UI" }
-                        p { class: "hero-subtitle", "光 · Light · Brilliance" }
+                        h1 {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::X4xl)
+                                .add(FontWeight::Bold)
+                                .add(MarginBottom::Mb4)
+                                .build(),
+                            "Hikari UI"
+                        }
+                        p {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::X2xl)
+                                .add(TextColor::Gray600)
+                                .add(MarginBottom::Mb6)
+                                .build(),
+                            "光 · Light · Brilliance"
+                        }
 
                         Spacer { size: "md".to_string() }
 
-                        p { class: "hero-description",
+                        p { class: ClassesBuilder::new().add(FontSize::Lg).add(TextColor::Gray700).build(),
                             "A modern Rust UI component library for Dioxus, inspired by Arknights aesthetics with FUI elements and traditional Chinese colors."
                         }
                     }

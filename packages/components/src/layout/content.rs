@@ -23,8 +23,8 @@ pub fn Content(
     /// Content
     children: Element,
 
-    /// Background color (default: #f5f5f5)
-    #[props(default = "#f5f5f5".to_string())]
+    /// Background color (default: uses theme background variable)
+    #[props(default = "var(--hi-background, #f5f5f5)".to_string())]
     background_color: String,
 
     /// Padding (default: p-6 lg:p-10)

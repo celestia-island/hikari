@@ -59,7 +59,7 @@
       // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
       // Glow effect on separator
-      filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.3));
+      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.3)));
 
       svg {
         width: 1rem;
@@ -77,7 +77,7 @@
       pointer-events: none;
 
       // Subtle glow on current item
-      text-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+      text-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.3));
     }
   }
 }
@@ -128,24 +128,24 @@
   // Hover state
   &:hover {
     color: var(--hi-color-primary);
-    background: rgba(139, 92, 246, 0.1);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.1));
 
     .hi-breadcrumb-icon {
       color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.5));
+      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.5)));
     }
 
     // Glow effect on text
-    text-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+    text-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.4));
   }
 
   // Active/focus state
   &:focus-visible {
     outline: none;
-    background: rgba(139, 92, 246, 0.15);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
     box-shadow:
-      0 0 0 2px rgba(139, 92, 246, 0.3),
-      0 0 12px rgba(139, 92, 246, 0.3);
+      0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
   }
 
   // Active state (for non-last items)
@@ -176,7 +176,7 @@
   &.hi-breadcrumb-separator-glow {
     color: var(--hi-color-primary);
     opacity: 0.8;
-    filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6));
+    filter: drop-shadow(0 0 6px var(--hi-primary, rgba(123, 207, 166, 0.6)));
   }
 }
 
@@ -275,8 +275,8 @@
     backdrop-filter: blur(vars.$hikari-acrylic-blur);
     -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
     box-shadow:
-      0 8px 16px rgba(0, 0, 0, 0.3),
-      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
+      0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
 
     // Padding
     padding: 0.5rem;
@@ -328,11 +328,11 @@
 
       // Hover state
       &:hover {
-        background: rgba(139, 92, 246, 0.15);
+        background: var(--hi-primary, rgba(123, 207, 166, 0.15));
         color: var(--hi-color-primary);
         box-shadow:
-          0 0 12px rgba(139, 92, 246, 0.15),
-          inset 0 0 8px rgba(139, 92, 246, 0.1);
+          0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.15)),
+          inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
       }
     }
   }
@@ -433,7 +433,7 @@
   gap: 0;
 
   .hi-breadcrumb-item {
-    background: rgba(45, 45, 45, 0.5);
+    background: var(--hi-card-bg, rgba(45, 45, 45, 0.5));
     padding: 0.375rem 0.75rem;
     border-radius: vars.$hikari-radius-fui-sm;
     // DISABLED - migrated to JS animation
@@ -441,14 +441,14 @@
     // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     &:not(:last-child):hover {
-      background: rgba(139, 92, 246, 0.15);
+      background: var(--hi-primary, rgba(123, 207, 166, 0.15));
     }
 
     &:last-child {
-      background: rgba(139, 92, 246, 0.2);
+      background: var(--hi-primary, rgba(123, 207, 166, 0.2));
       box-shadow:
-        0 0 12px rgba(139, 92, 246, 0.15),
-        inset 0 0 8px rgba(139, 92, 246, 0.1);
+        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.15)),
+        inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
     }
   }
 }
@@ -456,7 +456,7 @@
 // Pill style
 .hi-breadcrumb-pill {
   .hi-breadcrumb-item {
-    background: rgba(45, 45, 45, 0.5);
+    background: var(--hi-card-bg, rgba(45, 45, 45, 0.5));
     padding: 0.375rem 0.875rem;
     border-radius: 999px;
     border: 1px solid var(--hi-color-border);
@@ -466,17 +466,17 @@
 
     &:not(:last-child) {
       &:hover {
-        background: rgba(139, 92, 246, 0.15);
-        border-color: rgba(139, 92, 246, 0.4);
+        background: var(--hi-primary, rgba(123, 207, 166, 0.15));
+        border-color: var(--hi-primary, rgba(123, 207, 166, 0.4));
       }
     }
 
     &:last-child {
-      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.1));
-      border-color: rgba(139, 92, 246, 0.5);
+      background: linear-gradient(135deg, var(--hi-primary, rgba(123, 207, 166, 0.2)), var(--hi-primary, rgba(123, 207, 166, 0.1)));
+      border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
       box-shadow:
-        0 0 12px rgba(139, 92, 246, 0.2),
-        inset 0 0 8px rgba(139, 92, 246, 0.1);
+        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.2)),
+        inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
     }
   }
 }
@@ -496,11 +496,11 @@
 // @keyframes breadcrumb-separator-pulse {
 //   0%, 100% {
 //     opacity: 0.5;
-//     filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.3));
+//     filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.3)));
 //   }
 //   50% {
 //     opacity: 1;
-//     filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6));
+//     filter: drop-shadow(0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.6)));
 //   }
 // }
 

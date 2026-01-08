@@ -32,8 +32,8 @@
 
   // Elevated shadow
   box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    0 4px 8px var(--hi-black-20, rgba(0, 0, 0, 0.2)),
+    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
 
   // Transitions - smooth GSAP-style easing
   // DISABLED - migrated to JS animation
@@ -139,8 +139,8 @@
   &:hover {
     transform: translateY(-1px);
     box-shadow:
-      0 6px 12px rgba(0, 0, 0, 0.25),
-      0 0 12px rgba(139, 92, 246, 0.15);
+      0 6px 12px var(--hi-black-30, rgba(0, 0, 0, 0.25)),
+      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.15));
 
     &::before {
       opacity: 0.6;
@@ -157,9 +157,9 @@
   border-color: rgba(16, 185, 129, 0.4);
   color: var(--hi-color-success);
   box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.2),
+    0 4px 8px var(--hi-black-20, rgba(0, 0, 0, 0.2)),
     0 0 12px rgba(16, 185, 129, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
 
   .hi-alert-icon {
     color: var(--hi-color-success);
@@ -169,7 +169,7 @@
   &:hover {
     border-color: rgba(16, 185, 129, 0.6);
     box-shadow:
-      0 6px 12px rgba(0, 0, 0, 0.25),
+      0 6px 12px var(--hi-black-30, rgba(0, 0, 0, 0.25)),
       0 0 16px rgba(16, 185, 129, 0.25);
   }
 }
@@ -179,9 +179,9 @@
   border-color: rgba(59, 130, 246, 0.4);
   color: var(--hi-color-primary);
   box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.2),
+    0 4px 8px var(--hi-black-20, rgba(0, 0, 0, 0.2)),
     0 0 12px rgba(59, 130, 246, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
 
   .hi-alert-icon {
     color: var(--hi-color-primary);
@@ -191,7 +191,7 @@
   &:hover {
     border-color: rgba(59, 130, 246, 0.6);
     box-shadow:
-      0 6px 12px rgba(0, 0, 0, 0.25),
+      0 6px 12px var(--hi-black-30, rgba(0, 0, 0, 0.25)),
       0 0 16px rgba(59, 130, 246, 0.25);
   }
 }
@@ -201,9 +201,9 @@
   border-color: rgba(245, 158, 11, 0.4);
   color: var(--hi-color-warning);
   box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.2),
+    0 4px 8px var(--hi-black-20, rgba(0, 0, 0, 0.2)),
     0 0 12px rgba(245, 158, 11, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
 
   .hi-alert-icon {
     color: var(--hi-color-warning);
@@ -213,7 +213,7 @@
   &:hover {
     border-color: rgba(245, 158, 11, 0.6);
     box-shadow:
-      0 6px 12px rgba(0, 0, 0, 0.25),
+      0 6px 12px var(--hi-black-30, rgba(0, 0, 0, 0.25)),
       0 0 16px rgba(245, 158, 11, 0.25);
   }
 }
@@ -223,9 +223,9 @@
   border-color: rgba(239, 68, 68, 0.4);
   color: var(--hi-color-danger);
   box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.2),
+    0 4px 8px var(--hi-black-20, rgba(0, 0, 0, 0.2)),
     0 0 12px rgba(239, 68, 68, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
 
   .hi-alert-icon {
     color: var(--hi-color-danger);
@@ -235,7 +235,7 @@
   &:hover {
     border-color: rgba(239, 68, 68, 0.6);
     box-shadow:
-      0 6px 12px rgba(0, 0, 0, 0.25),
+      0 6px 12px var(--hi-black-30, rgba(0, 0, 0, 0.25)),
       0 0 16px rgba(239, 68, 68, 0.25);
   }
 }

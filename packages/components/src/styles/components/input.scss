@@ -58,14 +58,14 @@
     // Glowing border effect
     box-shadow:
       0 0 0 1px var(--hi-color-primary),
-      0 0 12px rgba(139, 92, 246, 0.4),
-      inset 0 0 8px rgba(139, 92, 246, 0.1);
+      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.4)),
+      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
   }
 
   // Hover state
   &:hover:not(:focus) {
-    border-color: rgba(139, 92, 246, 0.5);
-    box-shadow: 0 0 8px rgba(139, 92, 246, 0.2);
+    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
+    box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2));
   }
 
   // Disabled state
@@ -125,8 +125,8 @@
   // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   &:hover {
-    border-color: rgba(139, 92, 246, 0.5);
-    box-shadow: 0 0 8px rgba(139, 92, 246, 0.2);
+    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
+    box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2));
   }
 
   &:focus-within {
@@ -134,8 +134,8 @@
     background: rgba(255, 255, 255, 0.95);
     box-shadow:
       0 0 0 1px var(--hi-color-primary),
-      0 0 12px rgba(139, 92, 246, 0.4),
-      inset 0 0 8px rgba(139, 92, 246, 0.1);
+      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.4)),
+      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
   }
 
   .hi-input {

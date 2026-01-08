@@ -1,0 +1,28 @@
+// demo-app/src/styles/layout.scss
+// Component-specific overrides and pseudo-class styles
+// All layout/spacing/typography uses ClassesBuilder in layout.rs
+
+// ============================================
+// Header Customizations
+// ============================================
+
+// Logo - using ClassesBuilder (w-8 h-8)
+// Additional styling for image rendering
+img[alt="Hikari Logo"] {
+  object-fit: contain;
+}
+
+// Theme toggle button - using ClassesBuilder
+// Additional hover/active states (pseudo-classes not in ClassesBuilder yet)
+button[data-theme] {
+  // Remove default button border
+  border: none;
+
+  &:hover {
+    background: rgba(241, 245, 249, 0.8) !important;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}

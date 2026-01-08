@@ -29,8 +29,8 @@
 
   // Elevated shadow
   box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
+    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
 
   // Transitions - smooth GSAP-style easing
   // DISABLED - migrated to JS animation
@@ -144,13 +144,13 @@
 
   // Hover state
   &:hover {
-    background: rgba(139, 92, 246, 0.1);
-    border-color: rgba(139, 92, 246, 0.3);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.1));
+    border-color: var(--hi-primary, rgba(123, 207, 166, 0.3));
     color: var(--hi-color-text-primary);
 
     .hi-menu-item-icon {
       color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.5));
+      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.5)));
     }
 
     .hi-menu-item-arrow {
@@ -161,16 +161,16 @@
 
   // Active state (selected)
   &.hi-menu-item-active {
-    background: linear-gradient(90deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.05));
-    border-color: rgba(139, 92, 246, 0.5);
+    background: linear-gradient(90deg, var(--hi-primary, rgba(123, 207, 166, 0.2)), var(--hi-primary, rgba(123, 207, 166, 0.05)));
+    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
     color: var(--hi-color-text-primary);
     box-shadow:
-      0 0 12px rgba(139, 92, 246, 0.2),
-      inset 0 0 8px rgba(139, 92, 246, 0.1);
+      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.2)),
+      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
 
     .hi-menu-item-icon {
       color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6));
+      filter: drop-shadow(0 0 6px var(--hi-primary, rgba(123, 207, 166, 0.6)));
     }
 
     .hi-menu-item-arrow {
@@ -188,11 +188,11 @@
   // Focus state
   &:focus-visible {
     outline: none;
-    background: rgba(139, 92, 246, 0.15);
-    border-color: rgba(139, 92, 246, 0.5);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
+    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
     box-shadow:
-      0 0 0 2px rgba(139, 92, 246, 0.3),
-      0 0 12px rgba(139, 92, 246, 0.3);
+      0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
   }
 }
 
@@ -242,7 +242,7 @@
   border-bottom: 1px solid var(--hi-color-border);
 
   // Subtle glow on text
-  text-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+  text-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.3));
 }
 
 // ============================================
@@ -278,7 +278,7 @@
   // Nested menu list
   margin: 0.25rem 0 0.25rem 1rem;
   padding: 0.5rem;
-  border-left: 2px solid rgba(139, 92, 246, 0.3);
+  border-left: 2px solid var(--hi-primary, rgba(123, 207, 166, 0.3));
   list-style: none;
 
   opacity: 0;
@@ -289,7 +289,7 @@
   // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Glow on the border
-  box-shadow: -2px 0 8px rgba(139, 92, 246, 0.2);
+  box-shadow: -2px 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2));
 }
 
 // ============================================
@@ -506,13 +506,13 @@
 // @keyframes menu-item-pulse {
 //   0%, 100% {
 //     box-shadow:
-//       0 0 12px rgba(139, 92, 246, 0.2),
-//       inset 0 0 8px rgba(139, 92, 246, 0.1);
+//       0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.2)),
+//       inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
 //   }
 //   50% {
 //     box-shadow:
-//       0 0 20px rgba(139, 92, 246, 0.4),
-//       inset 0 0 12px rgba(139, 92, 246, 0.15);
+//       0 0 20px var(--hi-primary, rgba(123, 207, 166, 0.4)),
+//       inset 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.15));
 //   }
 // }
 
@@ -525,7 +525,7 @@
     left: 50%;
     width: 0;
     height: 0;
-    background: rgba(139, 92, 246, 0.3);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.3));
     border-radius: 50%;
     transform: translate(-50%, -50%);
     // DISABLED - migrated to JS animation

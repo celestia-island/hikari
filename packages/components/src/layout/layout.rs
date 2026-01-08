@@ -61,8 +61,8 @@ pub fn Layout(
     #[props(default = true)]
     glassmorphism: bool,
 
-    /// Background color (default: subtle gray)
-    #[props(default = "#f8fafc".to_string())]
+    /// Background color (default: uses theme background variable)
+    #[props(default = "var(--hi-background, #f8fafc)".to_string())]
     background_color: String,
 
     /// Custom CSS classes

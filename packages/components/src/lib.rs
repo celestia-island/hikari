@@ -39,6 +39,9 @@
 // Layout components (always available)
 pub mod layout;
 
+// Theme provider (always available)
+pub mod theme_provider;
+
 // Responsive hooks (always available)
 pub mod hooks;
 
@@ -95,6 +98,67 @@ pub use navigation::*;
 pub use data::*;
 
 pub use styled::{StyleRegistry, StyledComponent};
+
+// Theme provider exports
+pub use theme_provider::{ThemeProvider, use_theme, ThemePalette, ThemeContext};
+
+/// # Hierarchical Theme System
+///
+/// Hikari components support a powerful hierarchical theme system that allows
+/// you to use different themes at different levels of your application.
+///
+/// ## Basic Usage
+///
+/// ```rust,no_run
+/// use hikari_components::ThemeProvider;
+///
+/// rsx! {
+///     ThemeProvider { palette: "hikari" } {
+///         // Your entire app uses Hikari (light) theme
+///     }
+/// }
+/// ```
+///
+/// ## Nested Providers (Local Theme Override)
+///
+/// ```rust,no_run
+/// rsx! {
+///     ThemeProvider { palette: "hikari" } {
+///         // Most of the app uses Hikari (light) theme
+///
+///         Sidebar { }
+///
+///         div {
+///             ThemeProvider { palette: "tairitsu" } {
+///                 // This section uses Tairitsu (dark) theme
+///                 DarkWidget { }
+///             }
+///         }
+///     }
+/// }
+/// ```
+///
+/// ## Accessing Theme in Components
+///
+/// ```rust,no_run
+/// use hikari_components::use_theme;
+///
+/// fn MyComponent() -> Element {
+///     let theme = use_theme()?;
+///
+///     rsx! {
+///         div {
+///             style: "color: {theme.palette.primary}",
+///             "Themed content"
+///         }
+///     }
+/// }
+/// ```
+///
+/// For detailed documentation, see:
+/// - `packages/components/docs/HIERARCHICAL_THEME.md`
+/// - `ThemeProvider` component documentation
+
 
 /// Get Hikari utility classes CSS
 ///

@@ -85,8 +85,8 @@
 
   // Elevated shadow
   box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
+    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
 
   // Transitions - smooth GSAP-style easing
   // DISABLED - migrated to JS animation
@@ -178,7 +178,7 @@
   left: 0;
   width: 100%;
   height: 3px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--hi-white-10, rgba(255, 255, 255, 0.1));
   overflow: hidden;
 
   &::after {
@@ -212,7 +212,7 @@
 .hi-toast-success {
   border-color: rgba(16, 185, 129, 0.5);
   box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
     0 0 12px rgba(16, 185, 129, 0.2);
 
   .hi-toast-icon {
@@ -230,7 +230,7 @@
 .hi-toast-info {
   border-color: rgba(59, 130, 246, 0.5);
   box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
     0 0 12px rgba(59, 130, 246, 0.2);
 
   .hi-toast-icon {
@@ -248,7 +248,7 @@
 .hi-toast-warning {
   border-color: rgba(245, 158, 11, 0.5);
   box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
     0 0 12px rgba(245, 158, 11, 0.2);
 
   .hi-toast-icon {
@@ -266,7 +266,7 @@
 .hi-toast-error {
   border-color: rgba(239, 68, 68, 0.5);
   box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
     0 0 12px rgba(239, 68, 68, 0.2);
 
   .hi-toast-icon {
@@ -284,7 +284,7 @@
 .hi-toast-loading {
   border-color: rgba(59, 130, 246, 0.5);
   box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
     0 0 12px rgba(59, 130, 246, 0.2);
 
   .hi-toast-icon {
@@ -318,7 +318,7 @@
     transform: translateX(-4px);
     box-shadow:
       0 12px 24px rgba(0, 0, 0, 0.4),
-      0 0 20px rgba(139, 92, 246, 0.15);
+      0 0 20px var(--hi-primary, rgba(123, 207, 166, 0.15));
 
     .hi-toast-progress {
       &::after {
@@ -591,7 +591,7 @@
     border-color: var(--hi-color-primary);
     box-shadow:
       0 12px 24px rgba(0, 0, 0, 0.4),
-      0 0 20px rgba(139, 92, 246, 0.25),
+      0 0 20px var(--hi-primary, rgba(123, 207, 166, 0.25)),
       0 0 0 1px rgba(59, 130, 246, 0.3) inset;
   }
 

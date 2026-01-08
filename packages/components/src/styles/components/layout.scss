@@ -32,8 +32,8 @@
     right: 0;
     bottom: 0;
     background-image:
-      linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+      linear-gradient(var(--hi-primary, rgba(123, 207, 166, 0.03)) 1px, transparent 1px),
+      linear-gradient(90deg, var(--hi-primary, rgba(123, 207, 166, 0.03)) 1px, transparent 1px);
     background-size: 50px 50px;
     pointer-events: none;
     z-index: 0;
@@ -49,7 +49,7 @@
     height: 200%;
     background: radial-gradient(
       circle at 50% 50%,
-      rgba(139, 92, 246, 0.04) 0%,
+      var(--hi-primary, rgba(123, 207, 166, 0.04)) 0%,
       transparent 50%
     );
     // DISABLED - migrated to JS animation
@@ -92,7 +92,7 @@
   z-index: 100;
 
   // Simple background only
-  background: rgba(45, 45, 45, 0.95);
+  background: var(--hi-card-bg, rgba(45, 45, 45, 0.95));
 
   // Transition for scroll state
   // DISABLED - migrated to JS animation
@@ -101,10 +101,10 @@
 
   // Scrolled state (applied via JS)
   &.hi-layout-header-scrolled {
-    background: rgba(45, 45, 45, 0.98);
+    background: var(--hi-card-bg, rgba(45, 45, 45, 0.98));
     box-shadow:
       0 8px 16px rgba(23, 89, 168, 0.25),
-      0 0 30px rgba(139, 92, 246, 0.15);
+      0 0 30px var(--hi-primary, rgba(123, 207, 166, 0.15));
   }
 }
 
@@ -271,7 +271,7 @@
 
 .hi-layout-footer {
   // Simple background only
-  background: rgba(45, 45, 45, 0.95);
+  background: var(--hi-card-bg, rgba(45, 45, 45, 0.95));
 
   // Padding
   padding: vars.$hikari-spacing-lg;
@@ -338,17 +338,17 @@
 
 // Light theme
 .hi-layout-light {
-  background-color: #f8fafc;
+  background-color: var(--hi-text-primary, #f8fafc);
 
   &::before {
     background-image:
-      linear-gradient(rgba(139, 92, 246, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(139, 92, 246, 0.05) 1px, transparent 1px);
+      linear-gradient(var(--hi-primary, rgba(123, 207, 166, 0.05)) 1px, transparent 1px),
+      linear-gradient(90deg, var(--hi-primary, rgba(123, 207, 166, 0.05)) 1px, transparent 1px);
   }
 
   .hi-layout-content {
     background: rgba(255, 255, 255, 0.8);
-    box-shadow: inset 0 0 40px rgba(139, 92, 246, 0.08);
+    box-shadow: inset 0 0 40px var(--hi-primary, rgba(123, 207, 166, 0.08));
   }
 }
 

@@ -32,7 +32,7 @@
   // Shadow
   box-shadow:
     0 4px 8px rgba(214, 236, 240, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
 
   // Transitions
   // DISABLED - migrated to JS animation
@@ -83,11 +83,11 @@
     background: linear-gradient(
       180deg,
       transparent,
-      rgba(139, 92, 246, 0.2) 20%,
-      rgba(139, 92, 246, 0.2) 80%,
+      var(--hi-primary, rgba(123, 207, 166, 0.2)) 20%,
+      var(--hi-primary, rgba(123, 207, 166, 0.2)) 80%,
       transparent
     );
-    box-shadow: 0 0 4px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.3));
     pointer-events: none;
   }
 
@@ -96,8 +96,8 @@
     background: linear-gradient(
       180deg,
       transparent,
-      rgba(139, 92, 246, 0.2) 20%,
-      rgba(139, 92, 246, 0.2) 50%,
+      var(--hi-primary, rgba(123, 207, 166, 0.2)) 20%,
+      var(--hi-primary, rgba(123, 207, 166, 0.2)) 50%,
       transparent
     );
   }
@@ -146,8 +146,8 @@
     top: 50%;
     width: 0.5rem;
     height: 1px;
-    background: rgba(139, 92, 246, 0.2);
-    box-shadow: 0 0 4px rgba(139, 92, 246, 0.3);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.2));
+    box-shadow: 0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.3));
     pointer-events: none;
   }
 
@@ -158,15 +158,15 @@
 
   // Hover glow effects
   &:hover {
-    background: rgba(139, 92, 246, 0.1);
-    border-color: rgba(139, 92, 246, 0.3);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.1));
+    border-color: var(--hi-primary, rgba(123, 207, 166, 0.3));
     box-shadow:
-      0 0 12px rgba(139, 92, 246, 0.15),
-      inset 0 0 8px rgba(139, 92, 246, 0.08);
+      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.15)),
+      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.08));
 
     .hi-tree-node-icon {
       color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.5));
+      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.5)));
     }
 
     .hi-tree-node-label {
@@ -176,15 +176,15 @@
 
   // Selected state with glow background
   &.hi-tree-node-selected {
-    background: rgba(139, 92, 246, 0.2);
-    border-color: rgba(139, 92, 246, 0.5);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.2));
+    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
     box-shadow:
-      0 0 16px rgba(139, 92, 246, 0.25),
-      inset 0 0 12px rgba(139, 92, 246, 0.12);
+      0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.25)),
+      inset 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.12));
 
     .hi-tree-node-icon {
       color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.7));
+      filter: drop-shadow(0 0 6px var(--hi-primary, rgba(123, 207, 166, 0.7)));
     }
 
     .hi-tree-node-label {
@@ -195,7 +195,7 @@
 
   // Active state with accent bar
   &.hi-tree-node-active {
-    background: rgba(139, 92, 246, 0.15);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
 
     // Accent bar on the left
     &::before {
@@ -208,7 +208,7 @@
       background: var(--hi-color-primary);
       box-shadow:
         0 0 8px var(--hi-color-primary),
-        2px 0 8px rgba(139, 92, 246, 0.4);
+        2px 0 8px var(--hi-primary, rgba(123, 207, 166, 0.4));
       border-radius: 2px 0 0 2px;
     }
   }
@@ -217,8 +217,8 @@
   &:focus-visible {
     outline: none;
     box-shadow:
-      0 0 0 2px rgba(139, 92, 246, 0.5),
-      0 0 16px rgba(139, 92, 246, 0.4);
+      0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.5)),
+      0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.4));
   }
 
   // Disabled state
@@ -275,13 +275,13 @@
   .hi-tree-node-expanded > .hi-tree-node-content & {
     transform: rotate(90deg);
     color: var(--hi-color-primary);
-    filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.5));
+    filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.5)));
   }
 
   // Hover effect
   &:hover {
     color: var(--hi-color-primary);
-    background: rgba(139, 92, 246, 0.1);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.1));
     border-radius: 50%;
   }
 }
@@ -420,7 +420,7 @@
   // Appearance
   border: 1px solid var(--hi-color-border);
   border-radius: 3px;
-  background: rgba(45, 45, 45, 0.9);
+  background: var(--hi-card-bg, rgba(45, 45, 45, 0.9));
 
   // Cursor
   cursor: pointer;
@@ -432,15 +432,15 @@
 
   // Hover effect
   &:hover {
-    border-color: rgba(139, 92, 246, 0.5);
-    box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
+    box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.3));
   }
 
   // Checked state
   &.hi-tree-checkbox-checked {
     background: var(--hi-color-primary);
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.5));
 
     &::after {
       content: '';
@@ -459,7 +459,7 @@
   &.hi-tree-checkbox-indeterminate {
     background: var(--hi-color-primary);
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.5));
 
     &::after {
       content: '';
@@ -511,9 +511,9 @@
     height: 1rem;
     background: linear-gradient(
       90deg,
-      rgba(139, 92, 246, 0.1) 0%,
-      rgba(139, 92, 246, 0.2) 50%,
-      rgba(139, 92, 246, 0.1) 100%
+      var(--hi-primary, rgba(123, 207, 166, 0.1)) 0%,
+      var(--hi-primary, rgba(123, 207, 166, 0.2)) 50%,
+      var(--hi-primary, rgba(123, 207, 166, 0.1)) 100%
     );
     background-size: 200% 100%;
     border-radius: vars.$hikari-radius-fui-sm;
@@ -713,7 +713,7 @@
   // Dragging state
   .hi-tree-node-dragging {
     opacity: 0.5;
-    background: rgba(139, 92, 246, 0.15);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
   }
 
   // Drop indicator
@@ -722,7 +722,7 @@
     background: var(--hi-color-primary);
     box-shadow:
       0 0 8px var(--hi-color-primary),
-      0 0 16px rgba(139, 92, 246, 0.6);
+      0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.6));
     margin: 0.25rem 0;
     border-radius: 1px;
     // DISABLED - migrated to JS animation

@@ -36,22 +36,37 @@ pub fn build() -> anyhow::Result<()> {
     let scss_files = scan_scss_files(&workspace_root)?;
     println!("cargo:warning=📄 Found {} SCSS files", scss_files.len());
 
-    // Track all SCSS files for rebuild detection
-    for scss_file in &scss_files {
-        println!("cargo:rerun-if-changed={}", scss_file);
-    }
-
-    // Also track key SCSS directories to catch new files
-    let scss_dirs = [
+    // Track SCSS directories for rebuild detection (catch new files and modifications)
+    let scss_watch_paths = [
         "packages/components/src/styles",
+        "packages/components/src/styles/components",
         "packages/theme/styles",
         "examples/demo-app/src/styles",
     ];
-    for dir in &scss_dirs {
-        let full_path = workspace_root.join(dir);
+
+    for watch_path in &scss_watch_paths {
+        let full_path = workspace_root.join(watch_path);
         if full_path.exists() {
             println!("cargo:rerun-if-changed={}", full_path.display());
+            println!("cargo:warning=👁️  Watching: {:?}", full_path);
+
+            // Also watch individual SCSS files in this directory
+            if let Ok(entries) = fs::read_dir(&full_path) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    if path.extension().and_then(|s| s.to_str()) == Some("scss") {
+                        println!("cargo:rerun-if-changed={}", path.display());
+                    }
+                }
+            }
         }
+    }
+
+    // Watch the index.scss entry point
+    let index_scss = workspace_root.join("packages/components/src/styles/index.scss");
+    if index_scss.exists() {
+        println!("cargo:rerun-if-changed={}", index_scss.display());
+        println!("cargo:warning=👁️  Watching index.scss");
     }
 
     // Generate Rust constants
@@ -95,9 +110,10 @@ fn find_workspace_root(start: &Path) -> PathBuf {
 fn scan_scss_files(workspace_root: &Path) -> anyhow::Result<Vec<String>> {
     let mut scss_files = Vec::new();
 
-    // Scan packages/components/src/styles/components/
+    // 1. Scan packages/components/src/styles/components/
     let components_dir = workspace_root.join("packages/components/src/styles/components");
     if components_dir.exists() {
+        println!("cargo:warning=📁 Scanning: {:?}", components_dir);
         let entries = fs::read_dir(&components_dir)?;
         for entry in entries {
             let entry = entry?;
@@ -105,12 +121,59 @@ fn scan_scss_files(workspace_root: &Path) -> anyhow::Result<Vec<String>> {
             if path.extension().and_then(|s| s.to_str()) == Some("scss") {
                 if let Some(file_name) = path.file_stem().and_then(|s| s.to_str()) {
                     scss_files.push(file_name.to_string());
+                    println!("cargo:warning=   ✓ {}.scss", file_name);
+                }
+            }
+        }
+    }
+
+    // 2. Scan examples/demo-app/src/styles/ (app-specific styles)
+    let demo_styles_dir = workspace_root.join("examples/demo-app/src/styles");
+    if demo_styles_dir.exists() {
+        println!(
+            "cargo:warning=📁 Scanning demo-app styles: {:?}",
+            demo_styles_dir
+        );
+        let entries = fs::read_dir(&demo_styles_dir)?;
+        for entry in entries {
+            let entry = entry?;
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("scss") {
+                if let Some(file_name) = path.file_stem().and_then(|s| s.to_str()) {
+                    // Add with demo- prefix to distinguish from component styles
+                    scss_files.push(format!("demo-{}", file_name));
+                    println!("cargo:warning=   ✓ demo-{}.scss", file_name);
+                }
+            }
+        }
+    }
+
+    // 3. Scan packages/theme/styles/ (theme base files)
+    let theme_styles_dir = workspace_root.join("packages/theme/styles");
+    if theme_styles_dir.exists() {
+        println!(
+            "cargo:warning=📁 Scanning theme styles: {:?}",
+            theme_styles_dir
+        );
+        let entries = fs::read_dir(&theme_styles_dir)?;
+        for entry in entries {
+            let entry = entry?;
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("scss") {
+                if let Some(file_name) = path.file_stem().and_then(|s| s.to_str()) {
+                    // Add with theme- prefix
+                    scss_files.push(format!("theme-{}", file_name));
+                    println!("cargo:warning=   ✓ theme-{}.scss", file_name);
                 }
             }
         }
     }
 
     scss_files.sort();
+    println!(
+        "cargo:warning=📊 Total SCSS files discovered: {}",
+        scss_files.len()
+    );
     Ok(scss_files)
 }
 

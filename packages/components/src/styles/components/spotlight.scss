@@ -43,7 +43,7 @@
     circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
     rgba(255, 255, 255, 1.0) 0%,
     rgba(255, 255, 255, 0.6) 30%,
-    rgba(255, 255, 255, 0.2) 60%,
+    var(--hi-white-20, rgba(255, 255, 255, 0.2)) 60%,
     transparent 100%
   );
 }
@@ -88,7 +88,7 @@
       circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
       rgba(0, 0, 0, 1.0) 0%,
       rgba(0, 0, 0, 0.6) 30%,
-      rgba(0, 0, 0, 0.2) 60%,
+      var(--hi-black-20, rgba(0, 0, 0, 0.2)) 60%,
       transparent 100%
     );
   }

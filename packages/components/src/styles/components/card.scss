@@ -32,7 +32,7 @@
 
   // Elevated shadow
   box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.08)),
     0 0 0 1px rgba(241, 245, 249, 0.5) inset;
 
   // Transitions - smooth GSAP-style easing
@@ -54,7 +54,7 @@
     background: linear-gradient(
       180deg,
       var(--hi-color-primary) 0%,
-      rgba(139, 92, 246, 0.6) 50%,
+      var(--hi-primary, rgba(123, 207, 166, 0.6)) 50%,
       var(--hi-color-primary) 100%
     );
     opacity: 0;
@@ -67,7 +67,7 @@
   &:hover {
     transform: translateY(-2px);
     box-shadow:
-      0 4px 12px rgba(0, 0, 0, 0.1),
+      0 4px 12px var(--hi-black-10, rgba(0, 0, 0, 0.1)),
       0 0 0 1px rgba(226, 232, 240, 0.8) inset;
     border-color: rgba(59, 130, 246, 0.3);
 
@@ -107,7 +107,7 @@
     letter-spacing: 0.02em;
 
     // Subtle text shadow
-    text-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+    text-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.3));
   }
 
   // Subtitle
@@ -180,8 +180,8 @@
     transform: translateY(-4px);
     box-shadow:
       0 12px 24px rgba(23, 89, 168, 0.2),
-      0 0 30px rgba(139, 92, 246, 0.3),
-      0 0 0 1px rgba(139, 92, 246, 0.2) inset;
+      0 0 30px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+      0 0 0 1px var(--hi-primary, rgba(123, 207, 166, 0.2)) inset;
     border-color: var(--hi-color-primary);
 
     &::before {
@@ -210,7 +210,7 @@
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(255, 255, 255, 0.1),
+      var(--hi-white-10, rgba(255, 255, 255, 0.1)),
       transparent
     );
     // DISABLED - migrated to JS animation
@@ -237,8 +237,8 @@
 .hi-card-bordered {
   border-width: 2px;
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+    0 2px 4px var(--hi-black-20, rgba(0, 0, 0, 0.15)),
+    0 0 0 1px var(--hi-white-8, rgba(255, 255, 255, 0.08)) inset;
 }
 
 // Flat variant (no shadow, no hover effect)

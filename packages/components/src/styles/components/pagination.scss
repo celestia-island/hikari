@@ -44,7 +44,7 @@
   margin: 0.125rem;
 
   // Appearance
-  background: rgba(45, 45, 45, 0.9);
+  background: var(--hi-card-bg, rgba(45, 45, 45, 0.9));
   border: 1px solid var(--hi-color-border);
   border-radius: vars.$hikari-radius-fui-sm;
 
@@ -76,28 +76,28 @@
 
   // Hover effect
   &:hover:not(:disabled) {
-    background: rgba(139, 92, 246, 0.15);
-    border-color: rgba(139, 92, 246, 0.4);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
+    border-color: var(--hi-primary, rgba(123, 207, 166, 0.4));
     color: var(--hi-color-primary);
     box-shadow:
-      0 0 12px rgba(139, 92, 246, 0.25),
-      inset 0 0 8px rgba(139, 92, 246, 0.1);
+      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.25)),
+      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
     transform: translateY(-1px);
 
     svg {
-      filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.5));
+      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.5)));
     }
   }
 
   // Active state (current page with glow)
   &.hi-pagination-active {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(109, 40, 217, 0.9));
+    background: linear-gradient(135deg, var(--hi-primary, rgba(123, 207, 166, 0.9)), rgba(109, 40, 217, 0.9));
     border-color: var(--hi-color-primary);
     color: #ffffff;
     box-shadow:
-      0 0 16px rgba(139, 92, 246, 0.5),
-      0 0 24px rgba(139, 92, 246, 0.3),
-      inset 0 0 8px rgba(255, 255, 255, 0.1);
+      0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.5)),
+      0 0 24px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+      inset 0 0 8px var(--hi-white-10, rgba(255, 255, 255, 0.1));
     font-weight: 600;
 
     // Pulse animation for active page
@@ -110,15 +110,15 @@
 // @keyframes pagination-active-pulse {
 //     0%, 100% {
 //       box-shadow:
-//         0 0 16px rgba(139, 92, 246, 0.5),
-//         0 0 24px rgba(139, 92, 246, 0.3),
-//         inset 0 0 8px rgba(255, 255, 255, 0.1);
+//         0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.5)),
+//         0 0 24px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+//         inset 0 0 8px var(--hi-white-10, rgba(255, 255, 255, 0.1));
 //     }
 //     50% {
 //       box-shadow:
-//         0 0 20px rgba(139, 92, 246, 0.6),
-//         0 0 32px rgba(139, 92, 246, 0.4),
-//         inset 0 0 12px rgba(255, 255, 255, 0.15);
+//         0 0 20px var(--hi-primary, rgba(123, 207, 166, 0.6)),
+//         0 0 32px var(--hi-primary, rgba(123, 207, 166, 0.4)),
+//         inset 0 0 12px var(--hi-white-15, rgba(255, 255, 255, 0.15));
 //     }
 //   }
 
@@ -127,15 +127,15 @@
     opacity: 0.4;
     cursor: not-allowed;
     pointer-events: none;
-    background: rgba(45, 45, 45, 0.5);
+    background: var(--hi-card-bg, rgba(45, 45, 45, 0.5));
   }
 
   // Focus state
   &:focus-visible {
     outline: none;
     box-shadow:
-      0 0 0 2px rgba(139, 92, 246, 0.5),
-      0 0 16px rgba(139, 92, 246, 0.4);
+      0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.5)),
+      0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.4));
   }
 
   // Active press effect
@@ -239,20 +239,20 @@
 //   0% {
 //     transform: scale(1);
 //     box-shadow:
-//       0 0 16px rgba(139, 92, 246, 0.5),
-//       0 0 24px rgba(139, 92, 246, 0.3);
+//       0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.5)),
+//       0 0 24px var(--hi-primary, rgba(123, 207, 166, 0.3));
 //   }
 //   50% {
 //     transform: scale(1.1);
 //     box-shadow:
-//       0 0 24px rgba(139, 92, 246, 0.7),
-//       0 0 36px rgba(139, 92, 246, 0.5);
+//       0 0 24px var(--hi-primary, rgba(123, 207, 166, 0.7)),
+//       0 0 36px var(--hi-primary, rgba(123, 207, 166, 0.5));
 //   }
 //   100% {
 //     transform: scale(1);
 //     box-shadow:
-//       0 0 16px rgba(139, 92, 246, 0.5),
-//       0 0 24px rgba(139, 92, 246, 0.3);
+//       0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.5)),
+//       0 0 24px var(--hi-primary, rgba(123, 207, 166, 0.3));
 //   }
 // }
 
@@ -284,9 +284,9 @@
   // Hover effect
   &:hover {
     color: var(--hi-color-primary);
-    background: rgba(139, 92, 246, 0.1);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.1));
     border-radius: vars.$hikari-radius-fui-sm;
-    box-shadow: 0 0 8px rgba(139, 92, 246, 0.2);
+    box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2));
   }
 }
 
@@ -314,7 +314,7 @@
     padding: 0.375rem 0.75rem;
 
     // Appearance
-    background: rgba(45, 45, 45, 0.9);
+    background: var(--hi-card-bg, rgba(45, 45, 45, 0.9));
     border: 1px solid var(--hi-color-border);
     border-radius: vars.$hikari-radius-fui-sm;
 
@@ -334,23 +334,23 @@
     // Focus state with glow
     &:focus {
       outline: none;
-      border-color: rgba(139, 92, 246, 0.5);
+      border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
       box-shadow:
-        0 0 0 2px rgba(139, 92, 246, 0.3),
-        0 0 12px rgba(139, 92, 246, 0.3);
+        0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
     }
 
     // Hover effect
     &:hover {
-      border-color: rgba(139, 92, 246, 0.4);
+      border-color: var(--hi-primary, rgba(123, 207, 166, 0.4));
       box-shadow:
-        0 0 8px rgba(139, 92, 246, 0.2),
-        inset 0 0 6px rgba(139, 92, 246, 0.1);
+        0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2)),
+        inset 0 0 6px var(--hi-primary, rgba(123, 207, 166, 0.1));
     }
 
     // Options
     option {
-      background: rgba(45, 45, 45, 0.95);
+      background: var(--hi-card-bg, rgba(45, 45, 45, 0.95));
       color: var(--hi-color-text-primary);
       padding: 0.5rem;
     }
@@ -378,7 +378,7 @@
   .hi-pagination-total-highlight {
     color: var(--hi-color-primary);
     font-weight: 600;
-    text-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+    text-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.4));
   }
 
   // Separator
@@ -414,7 +414,7 @@
     text-align: center;
 
     // Appearance
-    background: rgba(45, 45, 45, 0.9);
+    background: var(--hi-card-bg, rgba(45, 45, 45, 0.9));
     border: 1px solid var(--hi-color-border);
     border-radius: vars.$hikari-radius-fui-sm;
 
@@ -431,10 +431,10 @@
     // Focus state with glow
     &:focus {
       outline: none;
-      border-color: rgba(139, 92, 246, 0.5);
+      border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
       box-shadow:
-        0 0 0 2px rgba(139, 92, 246, 0.3),
-        0 0 12px rgba(139, 92, 246, 0.3);
+        0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
     }
 
     // Validation states
@@ -458,8 +458,8 @@
     padding: 0.375rem 0.75rem;
 
     // Appearance
-    background: rgba(139, 92, 246, 0.2);
-    border: 1px solid rgba(139, 92, 246, 0.4);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.2));
+    border: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.4));
     border-radius: vars.$hikari-radius-fui-sm;
 
     // Typography
@@ -478,11 +478,11 @@
 
     // Hover effect
     &:hover:not(:disabled) {
-      background: rgba(139, 92, 246, 0.3);
-      border-color: rgba(139, 92, 246, 0.6);
+      background: var(--hi-primary, rgba(123, 207, 166, 0.3));
+      border-color: var(--hi-primary, rgba(123, 207, 166, 0.6));
       box-shadow:
-        0 0 12px rgba(139, 92, 246, 0.3),
-        inset 0 0 8px rgba(139, 92, 246, 0.1);
+        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+        inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
     }
 
     // Disabled state
@@ -702,7 +702,7 @@
       width: 1rem;
       height: 1rem;
       margin: -0.5rem 0 0 -0.5rem;
-      border: 2px solid rgba(139, 92, 246, 0.3);
+      border: 2px solid var(--hi-primary, rgba(123, 207, 166, 0.3));
       border-top-color: var(--hi-color-primary);
       border-radius: 50%;
       // DISABLED - migrated to JS animation
@@ -816,13 +816,13 @@
 
 @media (prefers-color-scheme: dark) {
   .hi-pagination-item {
-    background: rgba(45, 45, 45, 0.95);
-    border-color: rgba(255, 255, 255, 0.1);
+    background: var(--hi-card-bg, rgba(45, 45, 45, 0.95));
+    border-color: var(--hi-white-10, rgba(255, 255, 255, 0.1));
   }
 
   .hi-pagination-size-select,
   .hi-pagination-jumper-input {
-    background: rgba(45, 45, 45, 0.95);
-    border-color: rgba(255, 255, 255, 0.1);
+    background: var(--hi-card-bg, rgba(45, 45, 45, 0.95));
+    border-color: var(--hi-white-10, rgba(255, 255, 255, 0.1));
   }
 }

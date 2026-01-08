@@ -1,8 +1,9 @@
-// demo-app/src/components/sidebar.rs
+// demo-app/src/components/sidebar_tree.rs
 // Sidebar navigation using Tree component for 3-level structure
 
 use components::data::{Tree, TreeNodeData};
 use dioxus::prelude::*;
+use palette::classes::*;
 
 use crate::app::Route;
 
@@ -19,36 +20,67 @@ pub fn Sidebar(current_route: Route) -> Element {
 
     rsx! {
         // Logo and title
-        div { class: "sidebar-header",
+        div {
+            class: ClassesBuilder::new()
+                .add(Display::Flex)
+                .add(AlignItems::Center)
+                .add(Gap::Gap3)
+                .add(Padding::P6)
+                .add(Margin::M0)
+                .build(),
             img {
-                class: "sidebar-logo",
+                class: ClassesBuilder::new().add(Width::W8).add(Height::H8).build(),
                 src: "/images/logo.png",
                 alt: "Hikari Logo",
             }
-            div { class: "sidebar-title-group",
-                h1 { class: "sidebar-title", "Hikari UI" }
-                span { class: "sidebar-subtitle", "Component Library" }
+            div { class: ClassesBuilder::new().add(Display::Flex).add(FlexDirection::Column).build(),
+                h1 {
+                    class: ClassesBuilder::new()
+                        .add(Margin::M0)
+                        .add(FontSize::Lg)
+                        .add(FontWeight::Semibold)
+                        .add(TextColor::Primary)
+                        .build(),
+                    "Hikari UI"
+                }
+                span {
+                    class: ClassesBuilder::new()
+                        .add(FontSize::Xs)
+                        .add(TextColor::Gray500)
+                        .add(FontWeight::Medium)
+                        .build(),
+                    "Component Library"
+                }
             }
         }
 
         // Navigation Tree
-        div { class: "sidebar-nav",
-            Tree {
-                data: tree_data,
-                on_select: move |key: String| {
-                    if let Some(route) = map_key_to_route(&key) {
-                        // Use Link navigation instead of push
-                        // The router will handle navigation automatically
-                        dioxus_router::router().push(route);
-                    }
-                },
-            }
+        div {
+            class: ClassesBuilder::new()
+                .add(Flex::Flex1)
+                .add(OverflowY::Auto)
+                .add(OverflowX::Hidden)
+                .build(),
+            Tree { data: tree_data, on_select: move |_key| {} }
         }
 
         // Footer
-        div { class: "sidebar-footer",
-            div { class: "sidebar-footer-content",
-                div { class: "sidebar-footer-text",
+        div { class: ClassesBuilder::new().add(Padding::P4).add(Margin::M0).build(),
+            div {
+                class: ClassesBuilder::new()
+                    .add(Display::Flex)
+                    .add(FlexDirection::Column)
+                    .add(Gap::Gap2)
+                    .build(),
+                div {
+                    class: ClassesBuilder::new()
+                        .add(Display::Flex)
+                        .add(AlignItems::Center)
+                        .add(Gap::Gap2)
+                        .add(FontSize::Xs)
+                        .add(TextColor::Gray500)
+                        .add(FontWeight::Medium)
+                        .build(),
                     span { "🔗" }
                     span { "Version 0.1.0" }
                 }
@@ -297,103 +329,4 @@ fn build_navigation_tree() -> Vec<TreeNodeData> {
             disabled: false,
         },
     ]
-}
-
-/// Map tree node key to Route enum
-fn map_key_to_route(key: &str) -> Option<Route> {
-    match key {
-        // Home
-        "home" => Some(Route::Home {}),
-
-        // Components category pages (Level 2)
-        "layout-overview" => Some(Route::ComponentsLayout {}),
-        "basic-overview" => Some(Route::ComponentsBasic {}),
-        "feedback-overview" => Some(Route::ComponentsFeedback {}),
-        "navigation-overview" => Some(Route::ComponentsNavigation {}),
-        "data-overview" => Some(Route::ComponentsData {}),
-
-        // Layout components (Level 3)
-        "layout-container" => Some(Route::LayoutContainer {}),
-        "layout-grid" => Some(Route::LayoutGrid {}),
-        "layout-section" => Some(Route::LayoutSection {}),
-
-        // Basic components (Level 3)
-        "basic-button" => Some(Route::BasicButton {}),
-        "basic-input" => Some(Route::BasicInput {}),
-        "basic-card" => Some(Route::BasicCard {}),
-        "basic-badge" => Some(Route::BasicBadge {}),
-
-        // Feedback components (Level 3)
-        "feedback-alert" => Some(Route::FeedbackAlert {}),
-        "feedback-toast" => Some(Route::FeedbackToast {}),
-        "feedback-tooltip" => Some(Route::FeedbackTooltip {}),
-
-        // Navigation components (Level 3)
-        "navigation-menu" => Some(Route::NavigationMenu {}),
-        "navigation-breadcrumb" => Some(Route::NavigationBreadcrumb {}),
-        "navigation-tabs" => Some(Route::NavigationTabs {}),
-
-        // Data components (Level 3)
-        "data-table" => Some(Route::DataTable {}),
-        "data-tree" => Some(Route::DataTree {}),
-        "data-list" => Some(Route::DataPagination {}), // Using pagination route
-
-        // System pages
-        "system-overview" => Some(Route::SystemOverview {}),
-        "system-css" => Some(Route::SystemCSS {}),
-        "system-icons" => Some(Route::SystemIcons {}),
-        "system-palette" => Some(Route::SystemPalette {}),
-        "system-animations" => Some(Route::SystemAnimations {}),
-
-        // Demos
-        "demos-overview" => Some(Route::DemosOverview {}),
-
-        // Parent nodes (no route, just expand/collapse)
-        "overview"
-        | "components"
-        | "components-layout"
-        | "components-basic"
-        | "components-feedback"
-        | "components-navigation"
-        | "components-data"
-        | "system"
-        | "demos" => None,
-
-        _ => None,
-    }
-}
-
-/// Convert Route to URL path
-fn route_to_path(route: &Route) -> String {
-    match route {
-        Route::Home {} => "/".to_string(),
-        Route::ComponentsOverview {} => "/components".to_string(),
-        Route::ComponentsLayout {} => "/components/layout".to_string(),
-        Route::LayoutContainer {} => "/components/layout/container".to_string(),
-        Route::LayoutGrid {} => "/components/layout/grid".to_string(),
-        Route::LayoutSection {} => "/components/layout/section".to_string(),
-        Route::ComponentsBasic {} => "/components/basic".to_string(),
-        Route::BasicButton {} => "/components/basic/button".to_string(),
-        Route::BasicInput {} => "/components/basic/input".to_string(),
-        Route::BasicCard {} => "/components/basic/card".to_string(),
-        Route::BasicBadge {} => "/components/basic/badge".to_string(),
-        Route::ComponentsFeedback {} => "/components/feedback".to_string(),
-        Route::FeedbackAlert {} => "/components/feedback/alert".to_string(),
-        Route::FeedbackToast {} => "/components/feedback/toast".to_string(),
-        Route::FeedbackTooltip {} => "/components/feedback/tooltip".to_string(),
-        Route::ComponentsNavigation {} => "/components/navigation".to_string(),
-        Route::NavigationMenu {} => "/components/navigation/menu".to_string(),
-        Route::NavigationTabs {} => "/components/navigation/tabs".to_string(),
-        Route::NavigationBreadcrumb {} => "/components/navigation/breadcrumb".to_string(),
-        Route::ComponentsData {} => "/components/data".to_string(),
-        Route::DataTable {} => "/components/data/table".to_string(),
-        Route::DataTree {} => "/components/data/tree".to_string(),
-        Route::DataPagination {} => "/components/data/pagination".to_string(),
-        Route::SystemOverview {} => "/system".to_string(),
-        Route::SystemCSS {} => "/system/css".to_string(),
-        Route::SystemIcons {} => "/system/icons".to_string(),
-        Route::SystemPalette {} => "/system/palette".to_string(),
-        Route::SystemAnimations {} => "/system/animations".to_string(),
-        Route::DemosOverview {} => "/demos".to_string(),
-    }
 }

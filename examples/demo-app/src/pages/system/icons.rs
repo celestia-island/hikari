@@ -4,6 +4,10 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
+use palette::classes::{
+    ClassesBuilder, Display, FlexDirection, Gap, Margin,
+    FontSize, FontWeight, TextColor, BgColor, BorderRadius, Padding
+};
 
 /// Icons showcase page
 #[allow(non_snake_case)]
@@ -14,29 +18,41 @@ pub fn SystemIcons() -> Element {
             current_route: Route::SystemIcons {},
             children: rsx! {
                 div {
-                    class: "page-container",
+                    class: ClassesBuilder::new()
+                        .add(Display::Flex)
+                        .add(FlexDirection::Column)
+                        .add(Gap::Gap6)
+                        .build(),
 
-                    div {
-                        class: "page-header",
+    
+
+                    div { class: ClassesBuilder::new().add(Margin::M0).build(),
                         h1 {
-                            class: "page-title",
+                            class: ClassesBuilder::new()
+                                .add(FontSize::X4xl)
+                                .add(FontWeight::Bold)
+                                .add(TextColor::Gray900)
+                                .add(Margin::M0)
+                                .build(),
                             "Icons"
                         }
-                        p {
-                            class: "page-description",
+                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
                             "Powered by Lucide - 1000+ beautifully crafted icons"
                         }
                     }
-
+    
                     div {
-                        class: "info-box",
-                        p {
-                            class: "info-box-text",
+                        class: ClassesBuilder::new()
+                            .add(BgColor::Gray100)
+                            .add(BorderRadius::Lg)
+                            .add(Padding::P6)
+                            .build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Gray700).add(Margin::M0).build(),
                             "This page is under construction. Check back soon for detailed documentation and examples!"
                         }
                     }
                 }
-            }
+            },
         }
     }
 }

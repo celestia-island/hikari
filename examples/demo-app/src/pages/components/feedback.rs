@@ -1,260 +1,31 @@
-// demo-app/src/pages/components/feedback.rs
-// Feedback components demonstration page with interactive demos
-
-extern crate components as hikari_components;
+// demo-app/src/pages/components/feedback_overview.rs
+// Feedback components overview page
 
 use dioxus::prelude::*;
-use components::{
-    Alert, AlertVariant, Button, ButtonVariant, ButtonSize, Tooltip, Card, Input
-};
-use components::layout::{Container, Grid, Row, Section, Col};
 
-use crate::{app::Route, components::Layout};
+use crate::components::Layout;
 
-#[component]
+/// Feedback Components Overview
+#[allow(non_snake_case)]
 pub fn ComponentsFeedback() -> Element {
-    // Toast state management
-    let mut show_toast = use_signal(|| false);
-    let mut toast_variant = use_signal(|| AlertVariant::Info);
-    let mut toast_message = use_signal(|| "Default toast message".to_string());
-
     rsx! {
         Layout {
-            current_route: Route::ComponentsFeedback {},
+            current_route: crate::app::Route::ComponentsFeedback {},
+            h1 { "反馈组件" }
+            p { "Feedback Components - 反馈组件" }
 
-            Container {
-                // Page header
-                div {
-                    class: "showcase-header",
-                    h1 {
-                        class: "showcase-title",
-                        "Feedback Components"
-                    }
-                    p {
-                        class: "showcase-description",
-                        "Interactive feedback and notification components"
-                    }
+            div { class: "component-grid",
+                div { class: "component-card",
+                    h3 { "Alert 警告" }
+                    p { "警告提示组件" }
                 }
-
-                // Alerts Section
-                Section {
-                    title: "Alerts".to_string(),
-                    description: "Alert components for displaying important messages to users.".to_string(),
-
-                    Container {
-                        max_width: "lg".to_string(),
-                        class: "showcase-vertical-stack".to_string(),
-                        Alert {
-                            variant: AlertVariant::Info,
-                            description: "This is an info alert message with important information.".to_string()
-                        }
-                        Alert {
-                            variant: AlertVariant::Success,
-                            description: "Operation completed successfully! Your changes have been saved.".to_string()
-                        }
-                        Alert {
-                            variant: AlertVariant::Warning,
-                            description: "Please review this warning message before proceeding.".to_string()
-                        }
-                        Alert {
-                            variant: AlertVariant::Error,
-                            description: "An error has occurred. Please try again later.".to_string()
-                        }
-                    }
+                div { class: "component-card",
+                    h3 { "Toast 提示" }
+                    p { "轻量级消息提示" }
                 }
-
-                // Toasts Section
-                Section {
-                    title: "Toast Notifications".to_string(),
-                    description: "Click buttons below to trigger toast notifications:".to_string(),
-
-                    // Toast trigger buttons
-                    Row {
-                        gap: "sm".to_string(),
-                        Button {
-                            variant: ButtonVariant::Primary,
-                            onclick: move |_| {
-                                toast_variant.set(AlertVariant::Info);
-                                toast_message.set("This is an info toast notification".to_string());
-                                show_toast.set(true);
-                                // Note: Auto-hide functionality removed for simplicity
-                            },
-                            "Show Info Toast"
-                        }
-                        Button {
-                            variant: ButtonVariant::Success,
-                            onclick: move |_| {
-                                toast_variant.set(AlertVariant::Success);
-                                toast_message.set("Operation completed successfully!".to_string());
-                                show_toast.set(true);
-                            },
-                            "Show Success Toast"
-                        }
-                        Button {
-                            variant: ButtonVariant::Secondary,
-                            onclick: move |_| {
-                                toast_variant.set(AlertVariant::Warning);
-                                toast_message.set("Please review this warning message".to_string());
-                                show_toast.set(true);
-                            },
-                            "Show Warning Toast"
-                        }
-                        Button {
-                            variant: ButtonVariant::Danger,
-                            onclick: move |_| {
-                                toast_variant.set(AlertVariant::Error);
-                                toast_message.set("An error has occurred".to_string());
-                                show_toast.set(true);
-                            },
-                            "Show Error Toast"
-                        }
-                    }
-
-                    // Toast display (demo implementation)
-                    if *show_toast.read() {
-                        div {
-                            class: format!(
-                                "toast-notification toast-notification-{}",
-                                match *toast_variant.read() {
-                                    AlertVariant::Info => "info",
-                                    AlertVariant::Success => "success",
-                                    AlertVariant::Warning => "warning",
-                                    AlertVariant::Error => "error",
-                                }
-                            ),
-
-                            div {
-                                class: "toast-content",
-                                div {
-                                    class: "toast-message",
-                                    div {
-                                        class: "toast-title",
-                                        {match *toast_variant.read() {
-                                            AlertVariant::Info => "Information",
-                                            AlertVariant::Success => "Success",
-                                            AlertVariant::Warning => "Warning",
-                                            AlertVariant::Error => "Error",
-                                        }}
-                                    }
-                                    div {
-                                        class: "toast-text",
-                                        "{toast_message.read().clone()}"
-                                    }
-                                }
-                                button {
-                                    class: "toast-close",
-                                    onclick: move |_| show_toast.set(false),
-                                    "✕"
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Tooltips Section
-                Section {
-                    title: "Tooltips".to_string(),
-                    description: "Hover over elements to see tooltip content.".to_string(),
-
-                    Row {
-                        gap: "lg".to_string(),
-
-                        // Basic tooltip
-                        div {
-                            class: "tooltip-wrapper",
-                            Button {
-                                "Hover me"
-                            }
-                            div {
-                                class: "tooltip-content",
-                                "This is a helpful tooltip"
-                            }
-                        }
-
-                        // Tooltip with icon
-                        div {
-                            class: "tooltip-wrapper",
-                            Button {
-                                variant: ButtonVariant::Ghost,
-                                "With Icon"
-                            }
-                            div {
-                                class: "tooltip-content",
-                                "Tooltip with icon ℹ️"
-                            }
-                        }
-                    }
-                }
-
-                // Interactive Demo Section
-                Section {
-                    title: "Interactive Demo".to_string(),
-
-                    Grid {
-                        columns: 12,
-                        gap: "lg".to_string(),
-
-                        // Demo card 1
-                        Col {
-                            span: Some(6),
-                            Card {
-                                title: "Form Validation".to_string(),
-                                spotlight: true,
-                                div {
-                                    class: "demo-form-group",
-                                    Input {
-                                        placeholder: "Enter email address...",
-                                        spotlight: true,
-                                    }
-                                }
-                                Row {
-                                    gap: "sm".to_string(),
-                                    Button {
-                                        variant: ButtonVariant::Primary,
-                                        onclick: move |_| {
-                                            toast_variant.set(AlertVariant::Info);
-                                            toast_message.set("Validating email...".to_string());
-                                            show_toast.set(true);
-                                        },
-                                        "Validate"
-                                    }
-                                }
-                            }
-                        }
-
-                        // Demo card 2
-                        Col {
-                            span: Some(6),
-                            Card {
-                                title: "Action Feedback".to_string(),
-                                div {
-                                    class: "demo-description",
-                                    "Click a button to see feedback"
-                                }
-                                div {
-                                    class: "showcase-vertical-stack",
-                                    Button {
-                                        variant: ButtonVariant::Success,
-                                        onclick: move |_| {
-                                            toast_variant.set(AlertVariant::Success);
-                                            toast_message.set("Changes saved successfully!".to_string());
-                                            show_toast.set(true);
-                                        },
-                                        "Save Changes"
-                                    }
-                                    Button {
-                                        variant: ButtonVariant::Danger,
-                                        onclick: move |_| {
-                                            toast_variant.set(AlertVariant::Error);
-                                            toast_message.set("Failed to delete item".to_string());
-                                            show_toast.set(true);
-                                        },
-                                        "Delete Item"
-                                    }
-                                }
-                            }
-                        }
-                    }
+                div { class: "component-card",
+                    h3 { "Tooltip 文字提示" }
+                    p { "悬浮提示组件" }
                 }
             }
         }

@@ -1,103 +1,22 @@
 // demo-app/src/styles/pages.scss
-// Unified styles for all page components
+// Component-specific overrides and complex styles (hover, transitions, etc.)
+// All basic layout/spacing/typography uses ClassesBuilder in component files
+
+// NOTE: This file should only contain:
+// 1. Pseudo-class styles (hover, focus, active) that ClassesBuilder doesn't support yet
+// 2. Complex visual effects (gradients, shadows with transitions, transforms)
+// 3. Styles for external libraries that we override
 
 // ============================================
-// Page Layout
+// Component Category Cards - Hover Effects
 // ============================================
-
-.page-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.page-content {
-  padding: 0 1.5rem 1.5rem 1.5rem;
-}
-
-.page-header {
-  margin-bottom: 2rem;
-}
-
-.page-title {
-  font-size: 2.25rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 0.5rem;
-}
-
-.page-description {
-  color: #4b5563;
-}
-
-// ============================================
-// Component Category Cards
-// ============================================
-
-.component-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-}
 
 .component-category-card {
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  background: white;
-  text-decoration: none;
-  color: inherit;
-  transition: all 0.2s;
-  display: block;
-}
-
-.component-category-card:hover {
-  border-color: rgba(139, 92, 246, 0.3);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
-  transform: translateY(-2px);
-}
-
-.component-category-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 0.5rem;
-}
-
-.component-category-description {
-  color: #6b7280;
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
-}
-
-.component-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.component-tag {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  background: rgba(243, 244, 246, 0.8);
-  color: #374151;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-// ============================================
-// Section Styles
-// ============================================
-
-.section {
-  margin-bottom: 2rem;
-}
-
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 1rem;
+  &:hover {
+    border-color: rgba(139, 92, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+    transform: translateY(-2px);
+  }
 }
 
 .section-subtitle {

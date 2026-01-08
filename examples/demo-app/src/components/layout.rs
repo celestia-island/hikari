@@ -7,8 +7,12 @@ use dioxus::prelude::*;
 use dioxus_router::components::Link;
 use icons::{Icon, LucideIcon};
 
-use crate::{app::Route, components::Sidebar};
+use crate::{app::Route, app::ThemeContext, components::Sidebar};
 use components::layout::{Aside, Header, Layout as HikariLayout};
+use palette::classes::{
+    AlignItems, BgColor, BorderRadius, ClassesBuilder, Cursor, Display, Duration, Flex, FontSize,
+    FontWeight, Gap, Height, JustifyContent, Margin, Padding, TextColor, Transition, Width,
+};
 
 /// Layout component that wraps all pages with modern design
 ///
@@ -18,6 +22,9 @@ use components::layout::{Aside, Header, Layout as HikariLayout};
 pub fn Layout(children: Element, current_route: Route) -> Element {
     let mut is_drawer_open = use_signal(|| false);
 
+    // Consume theme context
+    let mut theme_context = use_context::<ThemeContext>();
+
     rsx! {
         HikariLayout {
             header: rsx! {
@@ -26,36 +33,58 @@ pub fn Layout(children: Element, current_route: Route) -> Element {
                     on_menu_toggle: move |_| is_drawer_open.toggle(),
                     bordered: true,
 
-                // Logo and title
+                // Logo and title (will be inside hi-header-left)
 
+                // Spacer to push theme toggle to the right
 
-                    // Right side: navigation tabs
-                    div { class: "layout-header-left",
-                        img {
-                            class: "layout-header-logo",
-                            src: "/images/logo.png",
-                            alt: "Hikari Logo",
-                        }
-                        h2 { class: "layout-header-title", "Hikari UI" }
+                // Theme toggle button
+                // Icon based on current theme
+
+    
+    
+    
+
+                    img {
+                        class: ClassesBuilder::new().add(Width::W8).add(Height::H8).build(),
+                        src: "/images/logo.png",
+                        alt: "Hikari Logo",
                     }
-
-                    div { class: "layout-header-nav",
-                        NavTab {
-                            to: Route::ComponentsOverview {},
-                            current_route: current_route.clone(),
-                            is_components: true,
-                            label: "组件",
-                        }
-                        NavTab {
-                            to: Route::SystemOverview {},
-                            current_route: current_route.clone(),
-                            is_system: true,
-                            label: "系统",
-                        }
-                        NavTab {
-                            to: Route::DemosOverview {},
-                            current_route: current_route.clone(),
-                            label: "案例",
+                    h2 {
+                        class: ClassesBuilder::new()
+                            .add(Margin::M0)
+                            .add(FontSize::Xl)
+                            .add(FontWeight::Semibold)
+                            .add(TextColor::Gray900)
+                            .build(),
+                        "Hikari UI"
+                    }
+    
+                    div { class: ClassesBuilder::new().add(Flex::Flex1).build() }
+    
+                    button {
+                        class: ClassesBuilder::new()
+                            .add(Display::Flex)
+                            .add(AlignItems::Center)
+                            .add(JustifyContent::Center)
+                            .add(Width::W8)
+                            .add(Height::H8)
+                            .add(BgColor::Transparent)
+                            .add(BorderRadius::Lg)
+                            .add(Cursor::Pointer)
+                            .add(FontSize::Xl)
+                            .add(Transition::All)
+                            .add(Duration::D300)
+                            .build(),
+                        "data-theme": "{theme_context.theme}",
+                        onclick: move |_| {
+                            let current = theme_context.theme.read().clone();
+                            let new_theme = if current.as_str() == "hikari" { "tairitsu" } else { "hikari" };
+                            theme_context.theme.set(new_theme.to_string());
+                        },
+                        if theme_context.theme.read().as_str() == "hikari" {
+                            "☀️"
+                        } else {
+                            "🌙"
                         }
                     }
                 }
@@ -68,55 +97,18 @@ pub fn Layout(children: Element, current_route: Route) -> Element {
                     initial_open: *is_drawer_open.read(),
                     on_close: move |_| is_drawer_open.set(false),
 
-
+    
                     Sidebar { current_route: current_route.clone() }
                 }
             },
 
             // Breadcrumb navigation
-            div { class: "breadcrumb-nav",
+            div { class: ClassesBuilder::new().add(Padding::P4).build(),
                 BreadcrumbNav { current_route: current_route.clone() }
             }
 
             // Main content
-            div { class: "page-content", {children} }
-        }
-    }
-}
-
-/// Navigation tab button with refined styling
-#[component]
-fn NavTab(
-    to: Route,
-    current_route: Route,
-    label: String,
-    #[props(optional)] is_components: bool,
-    #[props(optional)] is_system: bool,
-) -> Element {
-    let is_active = if is_components {
-        matches_route(&current_route, Route::ComponentsOverview {})
-            || matches_route(&current_route, Route::ComponentsBasic {})
-            || matches_route(&current_route, Route::ComponentsFeedback {})
-            || matches_route(&current_route, Route::ComponentsNavigation {})
-            || matches_route(&current_route, Route::ComponentsData {})
-    } else if is_system {
-        matches_route(&current_route, Route::SystemOverview {})
-            || matches_route(&current_route, Route::SystemCSS {})
-            || matches_route(&current_route, Route::SystemIcons {})
-            || matches_route(&current_route, Route::SystemPalette {})
-            || matches_route(&current_route, Route::SystemAnimations {})
-    } else {
-        std::mem::discriminant(&current_route) == std::mem::discriminant(&to)
-    };
-
-    rsx! {
-        Link {
-            to,
-            class: format!(
-                "layout-header-nav-tab {}",
-                if is_active { "layout-header-nav-tab-active" } else { "" },
-            ),
-            "{label}"
+            div { class: ClassesBuilder::new().add(Padding::P6).build(), {children} }
         }
     }
 }
@@ -127,29 +119,52 @@ fn BreadcrumbNav(current_route: Route) -> Element {
     let breadcrumb_items = get_breadcrumb_items(&current_route);
 
     rsx! {
-        nav { class: "breadcrumb-nav",
+        nav {
+            class: ClassesBuilder::new()
+                .add(Display::Flex)
+                .add(AlignItems::Center)
+                .add(Gap::Gap2)
+                .build(),
 
-            // Home link with refined styling
-            Link { to: Route::Home {}, class: "breadcrumb-link",
+            // Home link
+            Link {
+                to: Route::Home {},
+                class: ClassesBuilder::new()
+                    .add(TextColor::Gray600)
+                    .add(Transition::Colors)
+                    .add(Duration::D150)
+                    .build(),
                 Icon { icon: LucideIcon::award, size: 16 }
             }
 
-            // Breadcrumb items with refined separators
+            // Breadcrumb items with separators
             for (i , item) in breadcrumb_items.iter().enumerate() {
-                // Refined separator icon
-                div { class: "breadcrumb-separator",
+                // Separator icon
+                div { class: ClassesBuilder::new().add(TextColor::Gray400).build(),
                     Icon { icon: LucideIcon::chevron_right, size: 16 }
                 }
 
                 // Item
                 if i == breadcrumb_items.len() - 1 {
                     // Current page (not a link)
-                    span { class: "breadcrumb-item breadcrumb-item-current", "{item.label}" }
+                    span { class: ClassesBuilder::new().add(TextColor::Gray900).add(FontWeight::Medium).build(),
+                        "{item.label}"
+                    }
                 } else if let Some(route) = &item.route {
                     // Clickable link
-                    Link { to: route.clone(), class: "breadcrumb-item", "{item.label}" }
+                    Link {
+                        to: route.clone(),
+                        class: ClassesBuilder::new()
+                            .add(TextColor::Gray600)
+                            .add(Transition::Colors)
+                            .add(Duration::D150)
+                            .build(),
+                        "{item.label}"
+                    }
                 } else {
-                    span { class: "breadcrumb-item breadcrumb-item-disabled", "{item.label}" }
+                    span { class: ClassesBuilder::new().add(TextColor::Gray400).build(),
+                        "{item.label}"
+                    }
                 }
             }
         }
@@ -242,7 +257,7 @@ fn get_breadcrumb_items(route: &Route) -> Vec<BreadcrumbItem> {
                 route: Some(Route::SystemOverview {}),
             },
             BreadcrumbItem {
-                label: "CSS Utilities".to_string(),
+                label: "CSS".to_string(),
                 route: None,
             },
         ],
@@ -290,10 +305,12 @@ fn get_breadcrumb_items(route: &Route) -> Vec<BreadcrumbItem> {
                 route: None,
             },
         ],
+
+        _ => vec![],
     }
 }
 
-/// Helper function to check if current route matches a target route
-fn matches_route(current: &Route, target: Route) -> bool {
-    std::mem::discriminant(current) == std::mem::discriminant(&target)
+/// Helper function to match routes
+fn matches_route(route: &Route, target: Route) -> bool {
+    std::mem::discriminant(route) == std::mem::discriminant(&target)
 }

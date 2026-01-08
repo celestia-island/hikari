@@ -5,12 +5,132 @@
 // to CSS by the Grass compiler during the build process.
 
 // ============================================
-// 1. Theme Variables & Color System
+// SCSS Variables & Mixins (must be first)
 // ============================================
 
 // Use @use with as * to make variables available to all imported files
 @use '../../../theme/styles/variables.scss' as *;
 @use '../../../theme/styles/mixins.scss' as *;
+
+// ============================================
+// Utility Classes (from palette ClassesBuilder)
+// ============================================
+
+@import '../../../theme/styles/utilities.scss';
+
+// ============================================
+// CSS Variables (Default Fallback Values)
+// ============================================
+//
+// These CSS custom properties provide default fallback values.
+// The ThemeProvider component will override these values at runtime
+// based on the selected theme (Hikari light or Tairitsu dark).
+//
+// Benefits:
+// - Components outside ThemeProvider still have valid colors
+// - Development preview without ThemeProvider wrapper
+// - Graceful degradation for older browsers
+//
+// Note: These are fallback values only. ThemeProvider injects
+// actual theme colors via inline styles at runtime.
+
+:root {
+  // Theme Colors (fallback to Hikari light theme)
+  --hi-primary: #7BCFA6;     // 石青
+  --hi-secondary: #FF4C00;   // 朱红
+  --hi-accent: #F59E0B;      // 姜黄
+  --hi-success: #10B981;     // 葱倩
+  --hi-warning: #FBBF24;     // 鹅黄
+  --hi-danger: #EF4444;      // 朱红
+  --hi-info: #7BCFA6;        // 石青
+
+  // Surface & Background Colors
+  --hi-background: #F5F5F5;  // 素
+  --hi-surface: #FAFAFA;     // 月白
+  --hi-border: #E5E5E5;      // 素
+
+  // Text Colors
+  --hi-text-primary: #2D2D2D;   // 墨色
+  --hi-text-secondary: #6B7280;  // 黛
+  --hi-text-disabled: #9CA3AF;
+
+  // Component-specific Colors
+  --hi-button-bg: rgba(45, 45, 45, 0.85);
+  --hi-button-bg-hover: rgba(65, 65, 65, 0.9);
+  --hi-button-text: #FFFFFF;
+  --hi-button-border: rgba(255, 255, 255, 0.1);
+
+  --hi-input-bg: rgba(45, 45, 45, 0.85);
+  --hi-input-bg-focus: rgba(55, 55, 55, 0.9);
+  --hi-input-border: rgba(255, 255, 255, 0.1);
+  --hi-input-border-focus: rgba(139, 92, 246, 0.7);
+  --hi-input-text: #F8FAFC;
+  --hi-input-placeholder: #94A3B8;
+
+  --hi-card-bg: rgba(45, 45, 45, 0.85);
+  --hi-card-border: rgba(255, 255, 255, 0.1);
+
+  --hi-badge-bg-primary: rgba(59, 130, 246, 0.9);
+  --hi-badge-bg-success: rgba(16, 185, 129, 0.9);
+  --hi-badge-bg-warning: rgba(251, 191, 36, 0.9);
+  --hi-badge-bg-danger: rgba(239, 68, 68, 0.9);
+  --hi-badge-text: #FFFFFF;
+
+  // Opacity Variants
+  --hi-opacity-0: 0;
+  --hi-opacity-10: 0.1;
+  --hi-opacity-20: 0.2;
+  --hi-opacity-30: 0.3;
+  --hi-opacity-40: 0.4;
+  --hi-opacity-50: 0.5;
+  --hi-opacity-60: 0.6;
+  --hi-opacity-70: 0.7;
+  --hi-opacity-80: 0.8;
+  --hi-opacity-90: 0.9;
+  --hi-opacity-100: 1;
+
+  // Shadow & Glow Effects
+  --hi-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --hi-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --hi-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --hi-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
+  --hi-glow-primary-sm: 0 0 8px rgba(59, 130, 246, 0.3);
+  --hi-glow-primary-md: 0 0 16px rgba(59, 130, 246, 0.5);
+  --hi-glow-primary-lg: 0 0 24px rgba(59, 130, 246, 0.4);
+
+  --hi-glow-danger-sm: 0 0 8px rgba(239, 68, 68, 0.3);
+  --hi-glow-danger-md: 0 0 16px rgba(239, 68, 68, 0.5);
+
+  --hi-glow-success-sm: 0 0 8px rgba(16, 185, 129, 0.3);
+  --hi-glow-success-md: 0 0 16px rgba(16, 185, 129, 0.5);
+
+  --hi-glow-warning-sm: 0 0 8px rgba(251, 191, 36, 0.3);
+  --hi-glow-warning-md: 0 0 16px rgba(251, 191, 36, 0.5);
+
+  // Common Values
+  --hi-white-5: rgba(255, 255, 255, 0.05);
+  --hi-white-8: rgba(255, 255, 255, 0.08);
+  --hi-white-10: rgba(255, 255, 255, 0.1);
+  --hi-white-15: rgba(255, 255, 255, 0.15);
+  --hi-white-20: rgba(255, 255, 255, 0.2);
+  --hi-white-30: rgba(255, 255, 255, 0.3);
+
+  --hi-black-10: rgba(0, 0, 0, 0.1);
+  --hi-black-20: rgba(0, 0, 0, 0.2);
+  --hi-black-30: rgba(0, 0, 0, 0.3);
+}
+
+// Dark theme specific overrides
+[data-theme="tairitsu"] {
+  --hi-button-bg: rgba(250, 250, 250, 0.1);
+  --hi-button-bg-hover: rgba(250, 250, 250, 0.15);
+
+  --hi-input-bg: rgba(250, 250, 250, 0.08);
+  --hi-input-bg-focus: rgba(250, 250, 250, 0.12);
+
+  --hi-card-bg: rgba(250, 250, 250, 0.08);
+}
 
 // ============================================
 // 2. Basic Components

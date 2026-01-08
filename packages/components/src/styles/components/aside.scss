@@ -91,8 +91,8 @@
   padding-bottom: calc(0.75rem + vars.$hikari-spacing-md);
 
   // Bottom border with subtle glow
-  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
-  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.05);
+  border-bottom: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.2));
+  box-shadow: 0 4px 8px var(--hi-primary, rgba(123, 207, 166, 0.05));
 
   // Transition
   // DISABLED - migrated to JS animation
@@ -120,15 +120,15 @@
 
       // Glow effect
       border-radius: vars.$hikari-radius-fui-sm;
-      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+      background: linear-gradient(135deg, var(--hi-primary, rgba(123, 207, 166, 0.2)), rgba(59, 130, 246, 0.2));
       box-shadow:
-        0 0 12px rgba(139, 92, 246, 0.4),
-        inset 0 0 8px rgba(139, 92, 246, 0.2);
+        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.4)),
+        inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2));
 
       svg {
         width: 1.25rem;
         height: 1.25rem;
-        filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.6));
+        filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.6)));
       }
     }
 
@@ -141,7 +141,7 @@
       letter-spacing: 0.02em;
 
       // Subtle text glow
-      text-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+      text-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.4));
 
       // Truncate
       @include mix.text-ellipsis;
@@ -155,8 +155,8 @@
     // Hover state
     &:hover .hi-aside-logo-icon {
       box-shadow:
-        0 0 20px rgba(139, 92, 246, 0.6),
-        inset 0 0 12px rgba(139, 92, 246, 0.3);
+        0 0 20px var(--hi-primary, rgba(123, 207, 166, 0.6)),
+        inset 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
       transform: scale(1.05);
     }
   }
@@ -189,14 +189,14 @@
     // Hover state
     &:hover {
       color: var(--hi-color-text-primary);
-      background: rgba(139, 92, 246, 0.15);
-      border-color: rgba(139, 92, 246, 0.3);
+      background: var(--hi-primary, rgba(123, 207, 166, 0.15));
+      border-color: var(--hi-primary, rgba(123, 207, 166, 0.3));
       box-shadow:
-        0 0 12px rgba(139, 92, 246, 0.3),
-        inset 0 0 8px rgba(139, 92, 246, 0.1);
+        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+        inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
 
       svg {
-        filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.6));
+        filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.6)));
       }
     }
 
@@ -210,8 +210,8 @@
       outline: none;
       border-color: var(--hi-color-primary);
       box-shadow:
-        0 0 0 2px rgba(139, 92, 246, 0.3),
-        0 0 12px rgba(139, 92, 246, 0.4);
+        0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.4));
     }
   }
 
@@ -377,10 +377,10 @@
     font-size: 0.75rem;
     font-weight: 500;
     color: var(--hi-color-text-primary);
-    background: rgba(139, 92, 246, 0.2);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.2));
     border-radius: vars.$hikari-radius-fui-sm;
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+    border: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.3));
+    box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.3));
   }
 
   // Submenu indicator arrow
@@ -401,16 +401,16 @@
 
   // Hover state - Glow effect
   &:hover {
-    background: rgba(139, 92, 246, 0.1);
-    border-color: rgba(139, 92, 246, 0.3);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.1));
+    border-color: var(--hi-primary, rgba(123, 207, 166, 0.3));
     color: var(--hi-color-text-primary);
     box-shadow:
-      0 0 12px rgba(139, 92, 246, 0.2),
-      inset 0 0 8px rgba(139, 92, 246, 0.1);
+      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.2)),
+      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
 
     .hi-aside-menu-item-icon {
       color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.5));
+      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.5)));
       transform: scale(1.1);
     }
 
@@ -422,12 +422,12 @@
 
   // Active state (selected) - Accent bar on left
   &.hi-aside-menu-item-active {
-    background: linear-gradient(90deg, rgba(139, 92, 246, 0.25), rgba(139, 92, 246, 0.05));
-    border-color: rgba(139, 92, 246, 0.5);
+    background: linear-gradient(90deg, var(--hi-primary, rgba(123, 207, 166, 0.25)), var(--hi-primary, rgba(123, 207, 166, 0.05)));
+    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
     color: var(--hi-color-text-primary);
     box-shadow:
-      0 0 16px rgba(139, 92, 246, 0.3),
-      inset 0 0 12px rgba(139, 92, 246, 0.15);
+      0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+      inset 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.15));
 
     // Left accent bar
     &::before {
@@ -445,7 +445,7 @@
 
     .hi-aside-menu-item-icon {
       color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6));
+      filter: drop-shadow(0 0 6px var(--hi-primary, rgba(123, 207, 166, 0.6)));
     }
 
     .hi-aside-menu-item-arrow {
@@ -463,11 +463,11 @@
   // Focus state
   &:focus-visible {
     outline: none;
-    background: rgba(139, 92, 246, 0.15);
-    border-color: rgba(139, 92, 246, 0.5);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
+    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
     box-shadow:
-      0 0 0 2px rgba(139, 92, 246, 0.3),
-      0 0 12px rgba(139, 92, 246, 0.3);
+      0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
   }
 }
 
@@ -522,7 +522,7 @@
       }
 
       &:hover {
-        background: rgba(139, 92, 246, 0.08);
+        background: var(--hi-primary, rgba(123, 207, 166, 0.08));
         color: var(--hi-color-text-primary);
       }
     }
@@ -586,11 +586,11 @@
   // Nested submenu list
   .hi-aside-submenu-list {
     padding: 0.5rem 0.5rem 0.5rem 2rem;
-    border-left: 2px solid rgba(139, 92, 246, 0.3);
+    border-left: 2px solid var(--hi-primary, rgba(123, 207, 166, 0.3));
     list-style: none;
 
     // Glow on the border
-    box-shadow: -2px 0 8px rgba(139, 92, 246, 0.2);
+    box-shadow: -2px 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2));
 
     // Animation
     opacity: 1;
@@ -626,8 +626,8 @@
   padding-top: vars.$hikari-spacing-md;
 
   // Top border with subtle glow
-  border-top: 1px solid rgba(139, 92, 246, 0.2);
-  box-shadow: 0 -4px 8px rgba(139, 92, 246, 0.05);
+  border-top: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.2));
+  box-shadow: 0 -4px 8px var(--hi-primary, rgba(123, 207, 166, 0.05));
 
   // Transition
   // DISABLED - migrated to JS animation
@@ -652,8 +652,8 @@
       height: 2rem;
       border-radius: vars.$hikari-radius-fui-sm;
       object-fit: cover;
-      border: 2px solid rgba(139, 92, 246, 0.3);
-      box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+      border: 2px solid var(--hi-primary, rgba(123, 207, 166, 0.3));
+      box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.4));
       // DISABLED - migrated to JS animation
 
       // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
@@ -690,11 +690,11 @@
 
     // Hover state
     &:hover {
-      background: rgba(139, 92, 246, 0.1);
+      background: var(--hi-primary, rgba(123, 207, 166, 0.1));
 
       .hi-aside-user-avatar {
-        border-color: rgba(139, 92, 246, 0.6);
-        box-shadow: 0 0 16px rgba(139, 92, 246, 0.6);
+        border-color: var(--hi-primary, rgba(123, 207, 166, 0.6));
+        box-shadow: 0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.6));
       }
     }
   }
@@ -805,7 +805,7 @@
 
 // Dark variant (default)
 .hi-aside-dark {
-  background: rgba(45, 45, 45, 0.9);
+  background: var(--hi-card-bg, rgba(45, 45, 45, 0.9));
 }
 
 // Light variant
@@ -835,7 +835,7 @@
 // Primary variant
 .hi-aside-primary {
   background: linear-gradient(180deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9));
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--hi-white-20, rgba(255, 255, 255, 0.2));
 
   &::before {
     background: linear-gradient(
@@ -924,7 +924,7 @@
     left: 50%;
     width: 0;
     height: 0;
-    background: rgba(139, 92, 246, 0.3);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.3));
     border-radius: 50%;
     transform: translate(-50%, -50%);
     // DISABLED - migrated to JS animation

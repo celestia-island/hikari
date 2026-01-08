@@ -30,7 +30,7 @@
   // Shadow
   box-shadow:
     0 4px 8px rgba(214, 236, 240, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
 
   // Transitions
   // DISABLED - migrated to JS animation
@@ -63,14 +63,14 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(139, 92, 246, 0.4);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.4));
     border-radius: 4px;
     // DISABLED - migrated to JS animation
 
     // transition: background vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     &:hover {
-      background: rgba(139, 92, 246, 0.6);
+      background: var(--hi-primary, rgba(123, 207, 166, 0.6));
     }
   }
 }
@@ -102,7 +102,7 @@
   z-index: 10;
 
   // Glass effect
-  background: rgba(45, 45, 45, 0.95);
+  background: var(--hi-card-bg, rgba(45, 45, 45, 0.95));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 
@@ -110,7 +110,7 @@
   border-bottom: 2px solid var(--hi-color-border);
 
   // Shadow for depth
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px var(--hi-black-30, rgba(0, 0, 0, 0.3));
 
   // Transitions
   // DISABLED - migrated to JS animation
@@ -166,7 +166,7 @@
   // Sortable indicator
   &.hi-table-header-sortable {
     &:hover {
-      background: rgba(139, 92, 246, 0.1);
+      background: var(--hi-primary, rgba(123, 207, 166, 0.1));
       color: var(--hi-color-primary);
     }
 
@@ -191,10 +191,10 @@
   // Sorted state
   &.hi-table-header-sorted {
     color: var(--hi-color-primary);
-    background: rgba(139, 92, 246, 0.15);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
 
     // Glow effect
-    box-shadow: inset 0 0 12px rgba(139, 92, 246, 0.2);
+    box-shadow: inset 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.2));
 
     &::before {
       content: '';
@@ -206,7 +206,7 @@
       background: var(--hi-color-primary);
       box-shadow:
         0 0 8px var(--hi-color-primary),
-        0 0 16px rgba(139, 92, 246, 0.5);
+        0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.5));
     }
   }
 }
@@ -237,7 +237,7 @@
   .hi-table-header-sorted & {
     color: var(--hi-color-primary);
     opacity: 1;
-    filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.6));
+    filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.6)));
   }
 
   // Rotation animations
@@ -284,25 +284,25 @@
 
   // Hover glow effect (subtle purple/blue glow)
   &:hover {
-    background: rgba(139, 92, 246, 0.08);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.08));
     box-shadow:
-      0 0 12px rgba(139, 92, 246, 0.1),
-      inset 0 0 8px rgba(139, 92, 246, 0.05);
+      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.1)),
+      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.05));
 
     .hi-table-cell {
-      border-color: rgba(139, 92, 246, 0.2);
+      border-color: var(--hi-primary, rgba(123, 207, 166, 0.2));
     }
   }
 
   // Selected state
   &.hi-table-row-selected {
-    background: rgba(139, 92, 246, 0.15);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
     box-shadow:
-      0 0 16px rgba(139, 92, 246, 0.2),
-      inset 0 0 12px rgba(139, 92, 246, 0.1);
+      0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.2)),
+      inset 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.1));
 
     .hi-table-cell {
-      border-color: rgba(139, 92, 246, 0.3);
+      border-color: var(--hi-primary, rgba(123, 207, 166, 0.3));
       color: var(--hi-color-primary);
     }
   }
@@ -311,8 +311,8 @@
   &.hi-table-row-focus {
     outline: none;
     box-shadow:
-      0 0 0 2px rgba(139, 92, 246, 0.5),
-      0 0 20px rgba(139, 92, 246, 0.4);
+      0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.5)),
+      0 0 20px var(--hi-primary, rgba(123, 207, 166, 0.4));
   }
 }
 
@@ -350,10 +350,10 @@
   // Focus accent on selected cells
   &.hi-table-cell-focus {
     outline: none;
-    background: rgba(139, 92, 246, 0.12);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.12));
     box-shadow:
-      inset 0 0 8px rgba(139, 92, 246, 0.15),
-      0 0 0 1px rgba(139, 92, 246, 0.4);
+      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.15)),
+      0 0 0 1px var(--hi-primary, rgba(123, 207, 166, 0.4));
   }
 
   // Cell variants
@@ -396,7 +396,7 @@
     height: 1rem;
     border: 1px solid var(--hi-color-border);
     border-radius: 3px;
-    background: rgba(45, 45, 45, 0.9);
+    background: var(--hi-card-bg, rgba(45, 45, 45, 0.9));
     cursor: pointer;
     // DISABLED - migrated to JS animation
 
@@ -404,14 +404,14 @@
     position: relative;
 
     &:hover {
-      border-color: rgba(139, 92, 246, 0.5);
-      box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+      border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
+      box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.3));
     }
 
     &:checked {
       background: var(--hi-color-primary);
       border-color: var(--hi-color-primary);
-      box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
+      box-shadow: 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.5));
 
       &::after {
         content: '';
@@ -501,8 +501,8 @@
   margin: 0.25rem;
 
   // Appearance
-  background: rgba(139, 92, 246, 0.1);
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: var(--hi-primary, rgba(123, 207, 166, 0.1));
+  border: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.3));
   border-radius: vars.$hikari-radius-fui-sm;
 
   // Typography
@@ -520,20 +520,20 @@
 
   // Hover glow
   &:hover {
-    background: rgba(139, 92, 246, 0.2);
-    border-color: rgba(139, 92, 246, 0.5);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.2));
+    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
     box-shadow:
-      0 0 12px rgba(139, 92, 246, 0.3),
-      inset 0 0 8px rgba(139, 92, 246, 0.1);
+      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
   }
 
   // Active state
   &.hi-table-filter-active {
-    background: rgba(139, 92, 246, 0.25);
-    border-color: rgba(139, 92, 246, 0.6);
+    background: var(--hi-primary, rgba(123, 207, 166, 0.25));
+    border-color: var(--hi-primary, rgba(123, 207, 166, 0.6));
     box-shadow:
-      0 0 16px rgba(139, 92, 246, 0.4),
-      inset 0 0 12px rgba(139, 92, 246, 0.15);
+      0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.4)),
+      inset 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.15));
   }
 
   // Close button
@@ -652,7 +652,7 @@
       background: rgba(214, 236, 240, 0.4);
 
       &:hover {
-        background: rgba(139, 92, 246, 0.1);
+        background: var(--hi-primary, rgba(123, 207, 166, 0.1));
       }
     }
   }
@@ -671,11 +671,11 @@
 
 .hi-table-grid-lines {
   .hi-table-cell {
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--hi-white-5, rgba(255, 255, 255, 0.05));
   }
 
   .hi-table-header-cell {
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--hi-white-8, rgba(255, 255, 255, 0.08));
   }
 }
 
@@ -736,7 +736,7 @@
   .hi-table-loading-spinner {
     width: 2rem;
     height: 2rem;
-    border: 3px solid rgba(139, 92, 246, 0.2);
+    border: 3px solid var(--hi-primary, rgba(123, 207, 166, 0.2));
     border-top-color: var(--hi-color-primary);
     border-radius: 50%;
     // DISABLED - migrated to JS animation

@@ -1,21 +1,69 @@
-use std::{env, path::Path};
+//! Build script for hikari-icons
+//!
+//! Generates selected MDI icons at build time.
+
+use hikari_builder::icons::{IconConfig, IconSelection, MdiStyle};
 
 fn main() {
-    println!("cargo:rerun-if-changed=../../../scripts/build_lucide_assets.py");
-    println!("cargo:rerun-if-changed=../../../scripts/generate_lucide_icons.py");
-    println!("cargo:rerun-if-changed=assets");
+    println!("cargo:warning=🎨 hikari-icons: Building selected MDI icons...");
 
-    if env::var("CARGO_FEATURE_EMBEDDED").is_ok() {
-        let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-        let assets_dir = Path::new(&manifest_dir).join("assets");
-        let json_file = assets_dir.join("lucide_svgs.json");
+    // Only include filled icons to reduce WASM size
+    // Outline icons are only included where explicitly needed
+    let config = IconConfig {
+        selection: IconSelection::ByName(vec![
+            // Navigation
+            "chevron-left".into(),
+            "chevron-right".into(),
+            "chevron-up".into(),
+            "chevron-down".into(),
+            "chevron-double-right".into(),
+            "menu".into(),
+            "close".into(),
+            // Actions
+            "magnify".into(),
+            "cog".into(),
+            "check".into(),
+            // Status / Feedback
+            "alert".into(),
+            "information".into(),
+            "bell".into(),
+            "bell-outline".into(),
+            // Layout
+            "home".into(),
+            "view-column".into(),
+            "image".into(),
+            "cube-outline".into(),
+            // Content
+            "account".into(),
+            "calendar".into(),
+            "clock-outline".into(),
+            "book".into(),
+            "credit-card".into(),
+            "text-box-edit".into(),
+            "format-list-bulleted".into(),
+            // Theme
+            "moon-waning-crescent".into(),
+            "white-balance-sunny".into(),
+            // Other
+            "gesture-tap".into(),
+            "graph".into(),
+            "heart".into(),
+            "star".into(),
+            "trophy-award".into(),
+        ]),
+        styles: vec![MdiStyle::Filled], // Only filled style to reduce WASM size
+        output_file: "src/generated/mdi_selected.rs".into(),
+        ..Default::default()
+    };
 
-        if !json_file.exists() {
-            eprintln!("⚠️  Lucide SVG assets not found");
-            eprintln!("   Run: cd packages/icons && npm run build");
-            eprintln!("   Or run: python scripts/build_lucide_assets.py");
-        } else {
-            println!("✅ Lucide SVG assets ready");
+    match hikari_builder::icons::build_selected_icons(&config) {
+        Ok(()) => println!("cargo:warning=✅ MDI icons built successfully"),
+        Err(e) => {
+            println!("cargo:warning=⚠️  Failed to build MDI icons: {}", e);
+            println!("cargo:warning=   Run: python scripts/icons/fetch_mdi_icons.py");
         }
     }
+
+    println!("cargo:rerun-if-changed=../../packages/builder/generated/mdi_svgs");
+    println!("cargo:rerun-if-changed=../../packages/builder/generated/mdi_styles.json");
 }

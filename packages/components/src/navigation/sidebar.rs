@@ -7,8 +7,8 @@
 // - Fully customizable through props and classes
 // - Styles via SCSS with CSS variables for theming
 
-use dioxus::prelude::*;
 use crate::styled::StyledComponent;
+use dioxus::prelude::*;
 
 /// Sidebar component type wrapper (for StyledComponent)
 pub struct SidebarComponent;

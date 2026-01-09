@@ -206,8 +206,8 @@
     overflow-y: auto;
     overflow-x: hidden;
 
-    // Padding inside scrollable area
-    padding: vars.$hikari-spacing-md;
+    // Padding inside scrollable area (no left padding)
+    padding: vars.$hikari-spacing-md vars.$hikari-spacing-md vars.$hikari-spacing-md 0;
 
     // Custom scrollbar with cool effects
     @include mix.scrollbar;

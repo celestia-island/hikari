@@ -6,7 +6,7 @@
 //! # Features
 //! - Absolute positioned on the right side
 //! - No layout shift (doesn't affect content width)
-//! - Smooth animations (6px → 10px) managed by state machine
+//! - Smooth animations (4px → 8px) managed by state machine
 //! - Auto-hide when content doesn't need scrolling
 //! - Drag to scroll functionality
 //! - Smart width expansion on drag and scroll events
@@ -23,19 +23,20 @@ use animation::{
     style::{CssProperty, StyleBuilder},
     TimerManager,
 };
-use js_sys::Date;
+use js_sys::{Array, Date};
 use wasm_bindgen::{prelude::*, JsCast};
+use web_sys::{MutationObserver, MutationObserverInit, ResizeObserver, ResizeObserverOptions};
 
 /// Animation state for scrollbar width transition
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ScrollbarAnimationState {
-    /// Scrollbar at normal width (6px)
+    /// Scrollbar at normal width (4px)
     Idle,
-    /// Scrollbar at expanded width (10px) - mouse hover
+    /// Scrollbar at expanded width (8px) - mouse hover
     Active,
-    /// Scrollbar at expanded width (10px) - currently dragging
+    /// Scrollbar at expanded width (8px) - currently dragging
     Dragging,
-    /// Scrollbar at expanded width (10px) - temporarily expanded after scroll
+    /// Scrollbar at expanded width (8px) - temporarily expanded after scroll
     ScrollHover,
 }
 
@@ -43,10 +44,10 @@ impl ScrollbarAnimationState {
     /// Returns the target width for this state
     fn target_width(&self) -> f64 {
         match self {
-            ScrollbarAnimationState::Idle => 6.0,
-            ScrollbarAnimationState::Active => 10.0,
-            ScrollbarAnimationState::Dragging => 10.0,
-            ScrollbarAnimationState::ScrollHover => 10.0,
+            ScrollbarAnimationState::Idle => 4.0,
+            ScrollbarAnimationState::Active => 8.0,
+            ScrollbarAnimationState::Dragging => 8.0,
+            ScrollbarAnimationState::ScrollHover => 8.0,
         }
     }
 }
@@ -75,8 +76,8 @@ impl ScrollbarAnimator {
             track,
             animation_handle: RefCell::new(None),
             start_time: RefCell::new(None),
-            start_width: RefCell::new(6.0),
-            target_width: RefCell::new(6.0),
+            start_width: RefCell::new(4.0),
+            target_width: RefCell::new(4.0),
             timer_manager: TimerManager::new(),
             scroll_hover_timer: RefCell::new(None),
             is_mouse_over: RefCell::new(false),
@@ -213,18 +214,18 @@ impl ScrollbarAnimator {
     fn get_current_width(&self) -> f64 {
         let window = match web_sys::window() {
             Some(w) => w,
-            None => return 6.0,
+            None => return 4.0,
         };
         let style = match window.get_computed_style(&self.track).ok().flatten() {
             Some(s) => s,
-            None => return 6.0,
+            None => return 4.0,
         };
         match style.get_property_value("width") {
             Ok(width) => {
-                // Parse "6px" or "10px" to f64
-                width.trim_end_matches("px").parse().unwrap_or(6.0)
+                // Parse "4px" or "8px" to f64
+                width.trim_end_matches("px").parse().unwrap_or(4.0)
             }
-            Err(_) => 6.0,
+            Err(_) => 4.0,
         }
     }
 
@@ -313,11 +314,66 @@ pub fn init(container_selector: &str) {
     // Process each container
     for i in 0..containers.length() {
         if let Some(element) = containers.get(i) {
-            if let Some(container) = element.dyn_ref::<web_sys::Element>() {
-                setup_custom_scrollbar(container);
+            if let Ok(container) = element.dyn_into::<web_sys::Element>() {
+                setup_custom_scrollbar(&container, 0);
             }
         }
     }
+}
+
+/// Initialize custom scrollbar for a single element (direct reference)
+///
+/// This is used by MutationObserver when we already have the element reference.
+/// It checks both the class AND the actual DOM structure to handle cases where
+/// Dioxus re-renders and removes the scrollbar elements but keeps the container.
+fn init_single(element: &web_sys::Element) {
+    // Check if already initialized AND structure is intact
+    let has_container_class = has_class(element, "custom-scrollbar-container");
+    let structure_ok = verify_scrollbar_structure(element);
+
+    if !has_container_class || !structure_ok {
+        // If structure is broken but class exists, save scroll position and clean up
+        let saved_scroll_top = if has_container_class && !structure_ok {
+            cleanup_broken_scrollbar_and_save_scroll(element)
+        } else {
+            0
+        };
+
+        setup_custom_scrollbar(element, saved_scroll_top);
+    }
+}
+
+/// Clean up a broken scrollbar structure before re-initializing
+/// Returns the saved scroll position to restore after re-initialization
+fn cleanup_broken_scrollbar_and_save_scroll(container: &web_sys::Element) -> i32 {
+    let mut scroll_top = 0;
+
+    // Try to save scroll position from the existing content layer
+    if let Ok(Some(content)) = container.query_selector(".custom-scrollbar-content") {
+        if let Some(html_el) = content.dyn_ref::<web_sys::HtmlElement>() {
+            scroll_top = html_el.scroll_top();
+        }
+    }
+
+    let _ = container
+        .class_list()
+        .remove_1("custom-scrollbar-container");
+
+    // Remove any orphaned custom-scrollbar elements
+    if let Ok(Some(wrapper)) = container.query_selector(".custom-scrollbar-wrapper") {
+        let wrapper_node = wrapper.dyn_into::<web_sys::Node>().ok();
+        if let Some(node) = wrapper_node {
+            let _ = container.remove_child(&node);
+        }
+    }
+    if let Ok(Some(track)) = container.query_selector(".custom-scrollbar-track") {
+        let track_node = track.dyn_into::<web_sys::Node>().ok();
+        if let Some(node) = track_node {
+            let _ = container.remove_child(&node);
+        }
+    }
+
+    scroll_top
 }
 
 /// Find elements by selector
@@ -327,8 +383,49 @@ fn find_elements(selector: &str) -> Option<web_sys::NodeList> {
     document.query_selector_all(selector).ok()
 }
 
+/// Helper: Check if element has a class
+fn has_class(element: &web_sys::Element, class_name: &str) -> bool {
+    element.class_list().contains(class_name)
+}
+
+/// Helper: Check if element matches a selector
+fn matches_selector(element: &web_sys::Element, selector: &str) -> bool {
+    element.matches(selector).unwrap_or(false)
+}
+
+/// Verify that the custom scrollbar structure is complete
+/// Returns true if all required elements (wrapper, content, track, thumb) exist
+fn verify_scrollbar_structure(container: &web_sys::Element) -> bool {
+    // Check for wrapper
+    let wrapper = match container.query_selector(".custom-scrollbar-wrapper") {
+        Ok(Some(el)) => el,
+        _ => return false,
+    };
+
+    // Check for content layer
+    let _ = match wrapper.query_selector(".custom-scrollbar-content") {
+        Ok(Some(_)) => true,
+        _ => return false,
+    };
+
+    // Check for track
+    let _ = match wrapper.query_selector(".custom-scrollbar-track") {
+        Ok(Some(_)) => true,
+        _ => return false,
+    };
+
+    // Check for thumb
+    let _ = match wrapper.query_selector(".custom-scrollbar-thumb") {
+        Ok(Some(_)) => true,
+        _ => return false,
+    };
+
+    true
+}
+
 /// Setup custom scrollbar for a single container
-fn setup_custom_scrollbar(container: &web_sys::Element) {
+/// initial_scroll_top: the scroll position to restore after setup
+fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32) {
     let window = match web_sys::window() {
         Some(w) => w,
         None => return,
@@ -419,7 +516,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element) {
         .add(CssProperty::PaddingTop, &padding_top)
         .add(CssProperty::PaddingRight, &padding_right)
         .add(CssProperty::PaddingBottom, &padding_bottom)
-        .add(CssProperty::PaddingLeft, &padding_left)
+        .add(CssProperty::PaddingLeft, "0") // No left padding for sidebar content
         .apply();
 
     // Move all children from container to content layer
@@ -446,7 +543,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element) {
         .add(CssProperty::Top, "0")
         .add(CssProperty::Right, "0")
         .add(CssProperty::Bottom, "0")
-        .add(CssProperty::Width, "6px") // Initial width (animated by state machine)
+        .add(CssProperty::Width, "4px") // Initial width (animated by state machine)
         .apply();
 
     // Create animation controller for this track
@@ -470,14 +567,25 @@ fn setup_custom_scrollbar(container: &web_sys::Element) {
     let _ = wrapper.append_child(&track);
     let _ = container.append_child(&wrapper);
 
+    // Restore scroll position if this is a re-initialization
+    if initial_scroll_top > 0 {
+        if let Some(content_html) = content_layer.dyn_ref::<web_sys::HtmlElement>() {
+            content_html.set_scroll_top(initial_scroll_top);
+        }
+    }
+
     // Clone for closures
-    let wrapper_clone = wrapper.clone();
+    let _wrapper_clone = wrapper.clone();
     let content_layer_clone = content_layer.clone();
     let track_clone = track.clone();
     let thumb_clone = thumb.clone();
 
     // Cached dimensions for drag operations (to prevent layout thrashing)
     let cached_thumb_height = std::rc::Rc::new(std::cell::RefCell::new(None::<f64>));
+
+    // Store the last known scroll ratio (0.0 to 1.0) - continuously updated by scroll events
+    // This is used by ResizeObserver to restore scroll position after content size changes
+    let scroll_ratio = std::rc::Rc::new(std::cell::RefCell::new(0.0));
 
     // Initial update
     update_scrollbar(&content_layer_clone, &track_clone, &thumb_clone);
@@ -488,8 +596,19 @@ fn setup_custom_scrollbar(container: &web_sys::Element) {
     let thumb_scroll = thumb_clone.clone();
     let cached_thumb_height_scroll = cached_thumb_height.clone();
     let animator_scroll = animator.clone();
+    let scroll_ratio_scroll = scroll_ratio.clone();
 
     let closure_scroll = Closure::wrap(Box::new(move || {
+        // Update scroll ratio continuously
+        if let Some(el) = content_layer_scroll.dyn_ref::<web_sys::HtmlElement>() {
+            let scroll_top = el.scroll_top() as f64;
+            let scroll_height = el.scroll_height() as f64;
+            let client_height = el.client_height() as f64;
+            let max_scroll = (scroll_height - client_height).max(1.0);
+            let ratio = (scroll_top / max_scroll).min(1.0).max(0.0);
+            *scroll_ratio_scroll.borrow_mut() = ratio;
+        }
+
         // Trigger scroll hover effect (expand for 500ms)
         animator_scroll.trigger_scroll_hover();
 
@@ -510,11 +629,19 @@ fn setup_custom_scrollbar(container: &web_sys::Element) {
         .add_event_listener_with_callback("scroll", closure_scroll.as_ref().unchecked_ref());
     closure_scroll.forget();
 
-    // Watch resize events
+    // Watch resize events (window resize) and content size changes (ResizeObserver)
+    // We need to clone before creating closures
     let content_layer_resize = content_layer_clone.clone();
     let track_resize = track_clone.clone();
     let thumb_resize = thumb_clone.clone();
 
+    // For ResizeObserver - clone for observer callback
+    let content_layer_obs = content_layer_resize.clone();
+    let track_obs = track_resize.clone();
+    let thumb_obs = thumb_resize.clone();
+    let scroll_ratio_obs = scroll_ratio.clone();
+
+    // Window resize callback
     let closure_resize = Closure::wrap(Box::new(move || {
         update_scrollbar(&content_layer_resize, &track_resize, &thumb_resize);
     }) as Box<dyn FnMut()>);
@@ -522,6 +649,40 @@ fn setup_custom_scrollbar(container: &web_sys::Element) {
     let _ =
         window.add_event_listener_with_callback("resize", closure_resize.as_ref().unchecked_ref());
     closure_resize.forget();
+
+    // ResizeObserver callback - watches content size changes
+    // This is crucial for when menu items expand/collapse
+    let observer_closure = Closure::wrap(Box::new(move |_: js_sys::Array| {
+        let content_html = match content_layer_obs.dyn_ref::<web_sys::HtmlElement>() {
+            Some(el) => el,
+            None => return,
+        };
+
+        // Use the last known scroll ratio from scroll events (more reliable than reading now)
+        let scroll_percentage = *scroll_ratio_obs.borrow();
+
+        // Update scrollbar (this updates thumb position)
+        update_scrollbar(&content_layer_obs, &track_obs, &thumb_obs);
+
+        // After size change, restore scroll position using saved ratio
+        let new_scroll_height = content_html.scroll_height() as f64;
+        let new_client_height = content_html.client_height() as f64;
+        let new_max_scroll = (new_scroll_height - new_client_height).max(0.0);
+
+        // Only restore if we had meaningful scroll position (>1%) and there's room to scroll
+        if scroll_percentage > 0.01 && new_max_scroll > 1.0 {
+            let new_scroll_top = (scroll_percentage * new_max_scroll).round() as i32;
+            content_html.set_scroll_top(new_scroll_top);
+
+            // Update thumb again to match new scroll position
+            update_scrollbar(&content_layer_obs, &track_obs, &thumb_obs);
+        }
+    }) as Box<dyn FnMut(js_sys::Array)>);
+
+    if let Ok(observer) = ResizeObserver::new(observer_closure.as_ref().unchecked_ref()) {
+        let _ = observer.observe(&content_layer);
+        observer_closure.forget();
+    }
 
     // Setup drag functionality
     setup_drag_scroll(
@@ -574,13 +735,15 @@ fn update_scrollbar(
         0.0
     };
 
-    // Update thumb height
-    let thumb_style = match thumb.dyn_ref::<web_sys::HtmlElement>() {
-        Some(el) => el.style(),
+    // Update thumb height using StyleBuilder
+    let thumb_html = match thumb.dyn_ref::<web_sys::HtmlElement>() {
+        Some(el) => el,
         None => return,
     };
 
-    let _ = thumb_style.set_property("height", &format!("{}px", ideal_thumb_height));
+    StyleBuilder::new(thumb_html)
+        .add(CssProperty::Height, &format!("{}px", ideal_thumb_height))
+        .apply();
 
     // Read actual thumb height from DOM (respects CSS min-height: 20px)
     let actual_thumb_height = thumb.client_height() as f64;
@@ -595,7 +758,9 @@ fn update_scrollbar(
         0.0
     };
 
-    let _ = thumb_style.set_property("top", &format!("{}px", thumb_top));
+    StyleBuilder::new(thumb_html)
+        .add(CssProperty::Top, &format!("{}px", thumb_top))
+        .apply();
 
     // Show/hide track based on whether scrolling is needed
     let track_class_list = track.class_list();
@@ -630,13 +795,15 @@ fn update_scrollbar_with_cached_height(
         0.0
     };
 
-    // Update thumb style (don't update height)
-    let thumb_style = match thumb.dyn_ref::<web_sys::HtmlElement>() {
-        Some(el) => el.style(),
+    // Update thumb style (don't update height) using StyleBuilder
+    let thumb_html = match thumb.dyn_ref::<web_sys::HtmlElement>() {
+        Some(el) => el,
         None => return,
     };
 
-    let _ = thumb_style.set_property("top", &format!("{}px", thumb_top));
+    StyleBuilder::new(thumb_html)
+        .add(CssProperty::Top, &format!("{}px", thumb_top))
+        .apply();
 
     // Show/hide track based on whether scrolling is needed
     let track_class_list = track.class_list();
@@ -819,4 +986,91 @@ pub fn init_all() {
     // Demo app specific
     init(".sidebar-nav");
     init(".showcase-table-container");
+
+    // VDOM ScrollbarContainer components
+    init(".custom-scrollbar-content-vdom");
+
+    // Setup MutationObserver to auto-initialize newly added elements
+    // This handles route changes and dynamic DOM updates
+    setup_mutation_observer();
+}
+
+/// Set up MutationObserver to watch for DOM changes and auto-initialize scrollbars
+///
+/// This is crucial for SPA route changes where Dioxus re-renders the DOM.
+/// When new sidebar elements are added, the MutationObserver detects them
+/// and initializes custom scrollbars automatically.
+fn setup_mutation_observer() {
+    let window = match web_sys::window() {
+        Some(w) => w,
+        None => return,
+    };
+    let document = match window.document() {
+        Some(d) => d,
+        None => return,
+    };
+
+    // Selectors to watch for
+    let selectors = [
+        ".hi-aside-content",
+        ".hi-layout-aside-content",
+        ".hi-layout-content",
+        ".hi-layout-scrollable",
+        ".hi-tree-virtual",
+        ".hi-tabs-nav",
+        ".hi-table-container",
+        ".hi-sidebar",
+        ".sidebar-nav",
+        ".showcase-table-container",
+        ".custom-scrollbar-content-vdom", // VDOM ScrollbarContainer
+    ];
+
+    let observer_callback = Closure::wrap(Box::new(move |mutations: js_sys::Array| {
+        // If there are any mutations, schedule rescan before next paint
+        if mutations.length() > 0 {
+            let selectors = selectors.to_vec();
+            let callback = Closure::wrap(Box::new(move || {
+                if let Some(window) = web_sys::window() {
+                    if let Some(document) = window.document() {
+                        // Rescan all selectors
+                        for selector in &selectors {
+                            if let Ok(elements) = document.query_selector_all(selector) {
+                                for i in 0..elements.length() {
+                                    if let Some(node) = elements.get(i) {
+                                        if let Ok(element) = node.dyn_into::<web_sys::Element>() {
+                                            if !has_class(&element, "custom-scrollbar-container") {
+                                                init_single(&element);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }) as Box<dyn FnMut()>);
+
+            // Use requestAnimationFrame to run before next paint
+            if let Some(window) = web_sys::window() {
+                let _ = window.request_animation_frame(callback.as_ref().unchecked_ref());
+            }
+            callback.forget();
+        }
+    }) as Box<dyn FnMut(js_sys::Array)>);
+
+    if let Ok(observer) = MutationObserver::new(observer_callback.as_ref().unchecked_ref()) {
+        let options = MutationObserverInit::new();
+        options.set_child_list(true);
+        options.set_subtree(true);
+        // Also watch for attributes and character data
+        options.set_attributes(true);
+        options.set_character_data(true);
+        options.set_character_data_old_value(true);
+
+        // Observe the entire body for changes
+        if let Some(body) = document.body() {
+            let _ = observer.observe_with_options(&body, &options);
+        }
+        observer_callback.forget();
+    }
 }

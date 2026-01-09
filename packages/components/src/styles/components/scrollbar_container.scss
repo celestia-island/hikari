@@ -10,6 +10,38 @@
 //         └── track (absolute, right: 0)  ← fixed scrollbar track
 //               └── thumb (absolute)     ← draggable thumb
 
+// ============================================================================
+// IMPORTANT: Hide native scrollbars IMMEDIATELY on page load
+// This prevents the flash of native scrollbar before custom one is set up
+// ============================================================================
+
+// Target elements that will get custom scrollbars
+.hi-aside-content,
+.hi-layout-aside-content,
+.hi-layout-content,
+.hi-layout-scrollable,
+.hi-tree-virtual,
+.hi-tabs-nav,
+.hi-table-container,
+.hi-sidebar,
+.sidebar-nav,
+.showcase-table-container,
+.custom-scrollbar-content-vdom {
+    // Hide native scrollbar IMMEDIATELY (before JS runs)
+    // This prevents the flash of native scrollbar on page load
+    &::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+    -ms-overflow-style: none !important;  // IE/Edge
+    scrollbar-width: none !important;  // Firefox
+}
+
+// ============================================================================
+// Custom scrollbar styles (applied after JS wraps elements)
+// ============================================================================
+
 // Container with custom scrollbar
 .custom-scrollbar-container {
     position: relative;
@@ -46,10 +78,10 @@
     top: 0;
     right: 0;
     bottom: 0;
-    // width is set dynamically via JavaScript (6px → 10px)
+    // width is set dynamically via JavaScript (4px → 8px)
     background: rgba(241, 245, 249, 0.3);
     border-radius: 3px;
-    pointer-events: auto;  // Enable interaction for thumb
+    pointer-events: none;  // Don't capture clicks - let them pass through to content
     z-index: 100;
 
     // Top and bottom fade indicators (via CSS)
@@ -98,7 +130,7 @@
     background: rgba(148, 163, 184, 0.4);
     border-radius: 3px;
     cursor: pointer;
-    pointer-events: auto; // Re-enable clicks for thumb
+    pointer-events: auto;  // Re-enable clicks for thumb (overrides track's none)
     // DISABLED - migrated to JS animation
 
     // transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),

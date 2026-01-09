@@ -237,6 +237,23 @@
 //! - **macOS**: ✅ Fully supported
 //! - **Windows**: ✅ Fully supported
 //! - **WASM**: ✅ Can cross-compile for WASM target
+//!
+//! ## Icon Build System
+//!
+//! The icon build system provides on-demand icon selection and packaging:
+//!
+//! ```rust,ignore
+//! use hikari_builder::icons::{build_icons, MdiStyle};
+//!
+//! build_icons()
+//!     .names(["moon", "sun", "star"])
+//!     .styles(vec![MdiStyle::Filled, MdiStyle::Outline])
+//!     .build()?;
+//! ```
+//!
+//! See [`icons`] module for more details.
+
+pub mod icons;
 
 use std::{
     env, fs,
@@ -267,7 +284,7 @@ use std::{
 /// }
 /// ```
 pub fn build() -> anyhow::Result<()> {
-    println!("cargo:warning=🔨 Hikari Builder starting...");
+    println!("🔨 Hikari Builder starting...");
 
     // Get workspace root
     let workspace_root = env::var("CARGO_MANIFEST_DIR")
@@ -277,11 +294,11 @@ pub fn build() -> anyhow::Result<()> {
     // Find workspace root (go up until we find Cargo.toml with workspace members)
     let workspace_root = find_workspace_root(&workspace_root);
 
-    println!("cargo:warning=📂 Workspace root: {:?}", workspace_root);
+    println!("📂 Workspace root: {:?}", workspace_root);
 
     // Scan for SCSS files
     let scss_files = scan_scss_files(&workspace_root)?;
-    println!("cargo:warning=📄 Found {} SCSS files", scss_files.len());
+    println!("📄 Found {} SCSS files", scss_files.len());
 
     // Generate Rust constants
     let generated_dir = workspace_root.join("packages/builder/src/generated");
@@ -292,7 +309,7 @@ pub fn build() -> anyhow::Result<()> {
     // Compile SCSS bundle
     compile_scss_bundle(&workspace_root)?;
 
-    println!("cargo:warning=✅ Hikari Builder completed!");
+    println!("✅ Hikari Builder completed!");
 
     Ok(())
 }
@@ -373,14 +390,14 @@ pub fn default_components() -> HashSet<String> {
     );
 
     fs::write(output_dir.join("components.rs"), content)?;
-    println!("cargo:warning=📝 Generated components.rs");
+    println!("📝 Generated components.rs");
 
     Ok(())
 }
 
 /// Compile SCSS to CSS bundle using Grass (Rust Sass compiler)
 fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
-    println!("cargo:warning=🎨 Compiling SCSS with Grass...");
+    println!("🎨 Compiling SCSS with Grass...");
 
     // Use index.scss as entry point (has @import for all components)
     let index_scss = workspace_root.join("packages/components/src/styles/index.scss");
@@ -388,14 +405,14 @@ fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
         return Err(anyhow::anyhow!("index.scss not found at {:?}", index_scss));
     }
 
-    println!("cargo:warning=   Entry point: {:?}", index_scss);
+    println!("   Entry point: {:?}", index_scss);
 
     // Compile with Grass - it will handle @import and @use resolution automatically
     let css_content = grass::from_path(&index_scss, &grass::Options::default())
         .map_err(|e| anyhow::anyhow!("SCSS compilation failed: {:?}", e))?;
 
     // Apply autoprefixer using lightningcss
-    println!("cargo:warning=🔄 Applying autoprefixer...");
+    println!("🔄 Applying autoprefixer...");
     let stylesheet = lightningcss::stylesheet::StyleSheet::parse(&css_content, Default::default())
         .map_err(|e| anyhow::anyhow!("CSS parsing failed: {:?}", e))?;
 
@@ -417,8 +434,8 @@ fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
     let css_output = output_dir.join("bundle.css");
     fs::write(&css_output, prefixed_css)?;
 
-    println!("cargo:warning=✅ CSS bundle generated: {:?}", css_output);
-    println!("cargo:warning=   Size: {} bytes", file_size);
+    println!("✅ CSS bundle generated: {:?}", css_output);
+    println!("   Size: {} bytes", file_size);
 
     Ok(())
 }

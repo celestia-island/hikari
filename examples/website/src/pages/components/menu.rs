@@ -5,7 +5,7 @@
 use dioxus::prelude::*;
 
 use _components::{Menu, MenuItem, MenuMode, SubMenu, layout::{Container, Section}};
-use _icons::{Icon, LucideIcon};
+use _icons::{Icon, MdiIcon};
 use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
 use crate::{app::Route, components::Layout};
 
@@ -86,21 +86,21 @@ pub fn ComponentsMenu() -> Element {
                                 MenuItem {
                                     item_key: "1".to_string(),
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 16 }
+                                        Icon { icon: MdiIcon::Alert, size: 16 }
                                     },
                                     "Dashboard"
                                 }
                                 MenuItem {
                                     item_key: "2".to_string(),
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 16 }
+                                        Icon { icon: MdiIcon::Alert, size: 16 }
                                     },
                                     "Settings"
                                 }
                                 MenuItem {
                                     item_key: "3".to_string(),
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 16 }
+                                        Icon { icon: MdiIcon::Alert, size: 16 }
                                     },
                                     "Profile"
                                 }
@@ -126,7 +126,7 @@ pub fn ComponentsMenu() -> Element {
                                 MenuItem {
                                     item_key: "1".to_string(),
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 16 }
+                                        Icon { icon: MdiIcon::Alert, size: 16 }
                                     },
                                     "Home"
                                 }
@@ -134,7 +134,7 @@ pub fn ComponentsMenu() -> Element {
                                     item_key: "2".to_string(),
                                     title: "Products".to_string(),
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 16 }
+                                        Icon { icon: MdiIcon::Alert, size: 16 }
                                     },
                                     MenuItem { item_key: "2-1".to_string(), "Category A" }
                                     MenuItem { item_key: "2-2".to_string(), "Category B" }
@@ -144,7 +144,7 @@ pub fn ComponentsMenu() -> Element {
                                     item_key: "3".to_string(),
                                     title: "Services".to_string(),
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 16 }
+                                        Icon { icon: MdiIcon::Alert, size: 16 }
                                     },
                                     MenuItem { item_key: "3-1".to_string(), "Consulting" }
                                     MenuItem { item_key: "3-2".to_string(), "Development" }
@@ -222,21 +222,21 @@ pub fn ComponentsMenu() -> Element {
                                 MenuItem {
                                     item_key: "1".to_string(),
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 16 }
+                                        Icon { icon: MdiIcon::Alert, size: 16 }
                                     },
                                     "Home"
                                 }
                                 MenuItem {
                                     item_key: "2".to_string(),
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 16 }
+                                        Icon { icon: MdiIcon::Alert, size: 16 }
                                     },
                                     "Search"
                                 }
                                 MenuItem {
                                     item_key: "3".to_string(),
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 16 }
+                                        Icon { icon: MdiIcon::Alert, size: 16 }
                                     },
                                     "Notifications"
                                 }
@@ -317,7 +317,7 @@ pub fn ComponentsMenu() -> Element {
     MenuItem {{
         item_key: "1".to_string(),
         icon: rsx! {{
-            Icon {{ icon: LucideIcon::badge, size: 16 }}
+            Icon {{ icon: MdiIcon::Alert, size: 16 }}
         }},
         "Dashboard"
     }}

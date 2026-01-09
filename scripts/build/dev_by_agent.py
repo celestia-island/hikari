@@ -41,6 +41,10 @@ def write_error(message: str):
     print(f"{Colors.RED}❌ {message}{Colors.RESET}")
 
 
+def write_warning(message: str):
+    print(f"{Colors.YELLOW}⚠️  {message}{Colors.RESET}")
+
+
 def main():
     # Get workspace root
     workspace_root = Path(__file__).parent.parent.parent.resolve()
@@ -72,15 +76,13 @@ def main():
     write_info("Waiting for server to be ready...")
     print()
 
-    # Monitor output for "listening" or "localhost:3000"
+    # Monitor output for the actual "listening" message from the server
+    # NOT just "Server will be available" which is printed before compilation
     server_ready_indicators = [
-        "listening",
-        "localhost:3000",
-        "127.0.0.1:3000",
-        "Server will be available",
+        "Server listening on",
     ]
 
-    timeout = 60  # 60 seconds timeout
+    timeout = 120  # 120 seconds timeout (server binary compilation can take time)
     start_time = time.time()
 
     try:
@@ -110,7 +112,7 @@ def main():
         # Check if we timed out
         if time.time() - start_time >= timeout:
             print()
-            write_warning("Server startup timed out after 60 seconds")
+            write_warning("Server startup timed out after 120 seconds")
             write_info("The server is still running in the background")
             write_info("You can check its status manually")
 

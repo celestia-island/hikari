@@ -21,9 +21,6 @@ crate-type = ["cdylib", "rlib"]
 default = []
 server = ["dep:tokio", "dep:axum", "dep:tower-http", "dep:tower", "dep:anyhow", "dep:tracing", "dep:tracing-subscriber", "dep:http", "dep:_render_service"]
 
-# Optional integrations
-embedded = ["_icons/embedded"]
-
 [dependencies]
 # Workspace dependencies (short aliases for internal packages)
 _components = { path = "../../packages/components", package = "hikari-components", features = ["basic", "feedback", "navigation", "data", "layout"] }

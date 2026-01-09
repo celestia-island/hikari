@@ -298,7 +298,7 @@ pub fn App() -> Element {
     // Initialize custom scrollbars on mount
     use_effect(move || {
         // Initialize custom DOM-based scrollbars for all containers
-        // This provides smooth 6px → 10px width animation on hover
+        // This provides smooth 4px → 8px width animation on hover
         // And intelligent expansion during drag and scroll
         scrollbar_container::init_all();
     });
@@ -316,4 +316,3 @@ pub fn App() -> Element {
 pub struct ThemeContext {
     pub theme: Signal<String>,
 }
-

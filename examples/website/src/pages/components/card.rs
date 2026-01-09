@@ -5,7 +5,7 @@
 use dioxus::prelude::*;
 
 use _components::{Badge, BadgeVariant, Button, ButtonSize, ButtonVariant, Card, layout::{Container, Row, Section}};
-use _icons::{Icon, LucideIcon};
+use _icons::{Icon, MdiIcon};
 use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, Display, GridCols, Gap, };
 use crate::{app::Route, components::Layout};
 
@@ -217,7 +217,7 @@ pub fn ComponentsCard() -> Element {
                                             size: ButtonSize::Small,
                                             variant: ButtonVariant::Ghost,
                                             icon: rsx! {
-                                                Icon { icon: LucideIcon::badge, size: 16 }
+                                                Icon { icon: MdiIcon::Alert, size: 16 }
                                             },
                                         }
                                     }

@@ -1,8 +1,8 @@
 // hikari-components/src/basic/image.rs
 //! Image component with configurable sizing and fit modes
 
+use animation::style::{CssProperty, StyleStringBuilder};
 use dioxus::prelude::*;
-use animation::style::{StyleStringBuilder, CssProperty};
 
 /// Image fit mode - how the image scales to fit its container
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -84,8 +84,7 @@ pub fn Image(
     class: String,
 ) -> Element {
     // Build inline styles using StyleStringBuilder
-    let mut builder = StyleStringBuilder::new()
-        .add(CssProperty::ObjectFit, fit.as_str());
+    let mut builder = StyleStringBuilder::new().add(CssProperty::ObjectFit, fit.as_str());
 
     if let Some(w) = width {
         builder = builder.add_px(CssProperty::Width, w);

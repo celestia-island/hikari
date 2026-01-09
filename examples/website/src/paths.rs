@@ -39,6 +39,9 @@ pub struct StaticPaths {
     /// Server mount point for images directory
     pub images_mount: &'static str,
 
+    /// Server mount point for icons directory
+    pub icons_mount: &'static str,
+
     /// Filesystem path to assets directory (relative to project root)
     pub assets_fs: &'static str,
 
@@ -47,6 +50,9 @@ pub struct StaticPaths {
 
     /// Filesystem path to images directory (relative to project root)
     pub images_fs: &'static str,
+
+    /// Filesystem path to icons directory (relative to project root)
+    pub icons_fs: &'static str,
 }
 
 /// Global static paths configuration
@@ -61,11 +67,13 @@ pub const STATIC_PATHS: StaticPaths = StaticPaths {
     assets_mount: "/assets",
     styles_mount: "/styles",
     images_mount: "/images",
+    icons_mount: "/icons",
 
     // Filesystem paths (relative to project root)
     assets_fs: "public/assets",
     styles_fs: "public/styles",
     images_fs: "public/images",
+    icons_fs: "public/icons",
 };
 
 #[cfg(test)]
@@ -84,6 +92,7 @@ mod tests {
         assert!(STATIC_PATHS.assets_mount.starts_with('/'), "Assets mount must be absolute");
         assert!(STATIC_PATHS.styles_mount.starts_with('/'), "Styles mount must be absolute");
         assert!(STATIC_PATHS.images_mount.starts_with('/'), "Images mount must be absolute");
+        assert!(STATIC_PATHS.icons_mount.starts_with('/'), "Icons mount must be absolute");
     }
 
     #[test]

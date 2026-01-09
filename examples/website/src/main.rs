@@ -44,6 +44,7 @@ async fn main() -> anyhow::Result<()> {
                 .config(StaticFileConfig::default().no_cache())
         )
         .static_assets(STATIC_PATHS.images_fs, STATIC_PATHS.images_mount)
+        .static_assets(STATIC_PATHS.icons_fs, STATIC_PATHS.icons_mount)
         .build()?
         .layer(cors);
 

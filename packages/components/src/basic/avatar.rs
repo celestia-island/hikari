@@ -1,8 +1,8 @@
 // hikari-components/src/basic/avatar.rs
 //! Avatar component for user profile images
 
+use animation::style::{CssProperty, StyleStringBuilder};
 use dioxus::prelude::*;
-use animation::style::{StyleStringBuilder, CssProperty};
 
 /// Avatar size preset
 #[derive(Clone, Copy, PartialEq, Eq)]

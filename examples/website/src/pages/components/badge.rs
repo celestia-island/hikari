@@ -5,7 +5,7 @@
 use dioxus::prelude::*;
 
 use _components::{Badge, BadgeVariant, Button, ButtonVariant, layout::{Container, Row, Section}};
-use _icons::{Icon, LucideIcon};
+use _icons::{Icon, MdiIcon};
 use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
 use crate::{app::Route, components::Layout};
 
@@ -104,17 +104,17 @@ pub fn ComponentsBadge() -> Element {
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
                             div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
                                 Row { gap: "md".to_string(),
-                                    Icon { icon: LucideIcon::badge, size: 20 }
+                                    Icon { icon: MdiIcon::Alert, size: 20 }
                                     Badge { variant: BadgeVariant::Success, "Completed" }
                                     span { "Task finished successfully" }
                                 }
                                 Row { gap: "md".to_string(),
-                                    Icon { icon: LucideIcon::badge, size: 20 }
+                                    Icon { icon: MdiIcon::Alert, size: 20 }
                                     Badge { variant: BadgeVariant::Warning, "Warning" }
                                     span { "Action required" }
                                 }
                                 Row { gap: "md".to_string(),
-                                    Icon { icon: LucideIcon::badge, size: 20 }
+                                    Icon { icon: MdiIcon::Alert, size: 20 }
                                     Badge { variant: BadgeVariant::Danger, "Error" }
                                     span { "Operation failed" }
                                 }
@@ -167,7 +167,7 @@ pub fn ComponentsBadge() -> Element {
                                 Button {
                                     variant: ButtonVariant::Ghost,
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 18 }
+                                        Icon { icon: MdiIcon::Alert, size: 18 }
                                     },
                                 }
                             }
@@ -175,7 +175,7 @@ pub fn ComponentsBadge() -> Element {
                                 Button {
                                     variant: ButtonVariant::Ghost,
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 18 }
+                                        Icon { icon: MdiIcon::Alert, size: 18 }
                                     },
                                 }
                             }
@@ -183,7 +183,7 @@ pub fn ComponentsBadge() -> Element {
                                 Button {
                                     variant: ButtonVariant::Ghost,
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 18 }
+                                        Icon { icon: MdiIcon::Alert, size: 18 }
                                     },
                                 }
                             }
@@ -214,7 +214,7 @@ pub fn ComponentsBadge() -> Element {
                                 Button {
                                     variant: ButtonVariant::Ghost,
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 18 }
+                                        Icon { icon: MdiIcon::Alert, size: 18 }
                                     },
                                 }
                             }
@@ -222,7 +222,7 @@ pub fn ComponentsBadge() -> Element {
                                 Button {
                                     variant: ButtonVariant::Ghost,
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 18 }
+                                        Icon { icon: MdiIcon::Alert, size: 18 }
                                     },
                                 }
                             }
@@ -230,7 +230,7 @@ pub fn ComponentsBadge() -> Element {
                                 Button {
                                     variant: ButtonVariant::Ghost,
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 18 }
+                                        Icon { icon: MdiIcon::Alert, size: 18 }
                                     },
                                 }
                             }
@@ -326,7 +326,7 @@ pub fn ComponentsBadge() -> Element {
                                         Button {
                                             variant: ButtonVariant::Primary,
                                             icon: rsx! {
-                                                Icon { icon: LucideIcon::badge, size: 16 }
+                                                Icon { icon: MdiIcon::Alert, size: 16 }
                                             },
                                             "Notifications"
                                         }
@@ -339,7 +339,7 @@ pub fn ComponentsBadge() -> Element {
                                         Button {
                                             variant: ButtonVariant::Secondary,
                                             icon: rsx! {
-                                                Icon { icon: LucideIcon::badge, size: 16 }
+                                                Icon { icon: MdiIcon::Alert, size: 16 }
                                             },
                                             "Messages"
                                         }
@@ -352,7 +352,7 @@ pub fn ComponentsBadge() -> Element {
                                         Button {
                                             variant: ButtonVariant::Ghost,
                                             icon: rsx! {
-                                                Icon { icon: LucideIcon::badge, size: 16 }
+                                                Icon { icon: MdiIcon::Alert, size: 16 }
                                             },
                                             "Alerts"
                                         }
@@ -413,13 +413,13 @@ pub fn ComponentsBadge() -> Element {
                             Row { gap: "md".to_string(),
                                 Badge { variant: BadgeVariant::Success, dot: true,
                                     div { style: "display: flex; align-items: center; gap: 8px;",
-                                        Icon { icon: LucideIcon::badge, size: 20 }
+                                        Icon { icon: MdiIcon::Alert, size: 20 }
                                         span { "John Doe" }
                                     }
                                 }
                                 Badge { variant: BadgeVariant::Warning, dot: true,
                                     div { style: "display: flex; align-items: center; gap: 8px;",
-                                        Icon { icon: LucideIcon::badge, size: 20 }
+                                        Icon { icon: MdiIcon::Alert, size: 20 }
                                         span { "Jane Smith" }
                                     }
                                 }

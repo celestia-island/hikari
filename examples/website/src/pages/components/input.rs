@@ -5,7 +5,7 @@
 use dioxus::prelude::*;
 
 use _components::{Input, InputSize, layout::{Container, Section}};
-use _icons::{Icon, LucideIcon};
+use _icons::{Icon, MdiIcon};
 use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
 use crate::{app::Route, components::Layout};
 
@@ -240,7 +240,7 @@ pub fn ComponentsInput() -> Element {
                             Input {
                                 placeholder: "Search...",
                                 prefix_icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 16 }
+                                    Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                             }
                         }
@@ -263,7 +263,7 @@ pub fn ComponentsInput() -> Element {
                             Input {
                                 placeholder: "Enter email...",
                                 suffix_icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 16 }
+                                    Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                             }
                         }
@@ -286,10 +286,10 @@ pub fn ComponentsInput() -> Element {
                             Input {
                                 placeholder: "https://example.com",
                                 prefix_icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 16 }
+                                    Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                                 suffix_icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 16 }
+                                    Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                             }
                         }
@@ -312,7 +312,7 @@ pub fn ComponentsInput() -> Element {
                             Input {
                                 placeholder: "Search with spotlight...",
                                 prefix_icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 16 }
+                                    Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                                 spotlight: true,
                             }
@@ -380,7 +380,7 @@ Input {{
                                 r#"Input {{
     placeholder: "Search...",
     prefix_icon: rsx! {{
-        Icon {{ icon: LucideIcon::badge, size: 16 }}
+        Icon {{ icon: MdiIcon::Alert, size: 16 }}
     }},
     spotlight: true,
 }}"#
@@ -434,7 +434,7 @@ Input {{
                             Input {
                                 placeholder: "Search...",
                                 prefix_icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 16 }
+                                    Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                                 spotlight: true,
                             }
@@ -455,7 +455,7 @@ Input {{
                             Input {
                                 placeholder: "your@email.com",
                                 prefix_icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 16 }
+                                    Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                             }
                         }
@@ -475,10 +475,10 @@ Input {{
                             Input {
                                 placeholder: "https://",
                                 prefix_icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 16 }
+                                    Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                                 suffix_icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 16 }
+                                    Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                             }
                         }
@@ -498,10 +498,10 @@ Input {{
                             Input {
                                 placeholder: "Enter password...",
                                 prefix_icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 16 }
+                                    Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                                 suffix_icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 16 }
+                                    Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                             }
                         }

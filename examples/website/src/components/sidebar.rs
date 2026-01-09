@@ -4,8 +4,7 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 use _components::{Sidebar as HikariSidebar, SidebarSection, SidebarItem, SidebarLeaf};
-use _icons::Icon;
-use _icons::LucideIcon;
+use _icons::{Icon, MdiIcon};
 use crate::app::Route;
 
 /// Sidebar navigation with 3-level hierarchy
@@ -67,25 +66,22 @@ fn SidebarSubcategoryItem(
         .map(|r| std::mem::discriminant(r) == std::mem::discriminant(&current_route))
         .unwrap_or(false);
 
-    // Create the Link content
-    let link_content = rsx!(
-        dioxus_router::components::Link {
-            to: subcategory.route.clone().unwrap_or(Route::Home {}),
-            class: "hi-sidebar-item-content-inner",
-            "{subcategory.label_en} "
-            span { class: "hi-sidebar-item-zh", "{subcategory.label_zh}" }
-        }
-    );
-
     if has_children {
-        // Has nested items - use SidebarItem with content and items
+        // Has nested items - render as expandable ONLY, no link navigation
+        // The content is plain text, not wrapped in a Link
+        let content = rsx!(
+            div { class: "hi-sidebar-item-content-inner",
+                "{subcategory.label_en} "
+                span { class: "hi-sidebar-item-zh", "{subcategory.label_zh}" }
+            }
+        );
         rsx! {
             SidebarItem {
                 id: subcategory.label_en.to_string(),
                 label: subcategory.label_en.to_string(),
                 secondary_label: Some(subcategory.label_zh.to_string()),
                 default_expanded: true,
-                content: Some(link_content),
+                content: Some(content),
                 items: Some(rsx! {
                     // Render nested items
                     for item in subcategory.items {
@@ -103,7 +99,12 @@ fn SidebarSubcategoryItem(
             SidebarLeaf {
                 id: subcategory.label_en.to_string(),
                 class: if is_active { "active" } else { "" },
-                { link_content }
+                dioxus_router::components::Link {
+                    to: subcategory.route.clone().unwrap_or(Route::Home {}),
+                    class: "hi-sidebar-item-content-inner",
+                    "{subcategory.label_en} "
+                    span { class: "hi-sidebar-item-zh", "{subcategory.label_zh}" }
+                }
             }
         }
     }
@@ -173,7 +174,7 @@ impl PartialEq for NavSubcategory {
 #[derive(Clone, Debug)]
 pub struct NavItem {
     pub label: &'static str,
-    pub icon: LucideIcon,
+    pub icon: MdiIcon,
     pub route: Route,
 }
 
@@ -212,9 +213,9 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                 label_zh: "布局",
                 route: Some(Route::ComponentsLayout {}),
                 items: &[
-                    NavItem { label: "Container", icon: LucideIcon::container, route: Route::LayoutContainer {} },
-                    NavItem { label: "Grid", icon: LucideIcon::columns_2, route: Route::LayoutGrid {} },
-                    NavItem { label: "Section", icon: LucideIcon::component, route: Route::LayoutSection {} },
+                    NavItem { label: "Container", icon: MdiIcon::Image, route: Route::LayoutContainer {} },
+                    NavItem { label: "Grid", icon: MdiIcon::ViewColumn, route: Route::LayoutGrid {} },
+                    NavItem { label: "Section", icon: MdiIcon::CubeOutline, route: Route::LayoutSection {} },
                 ],
             },
             NavSubcategory {
@@ -222,10 +223,10 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                 label_zh: "基础",
                 route: Some(Route::ComponentsBasic {}),
                 items: &[
-                    NavItem { label: "Button", icon: LucideIcon::accessibility, route: Route::BasicButton {} },
-                    NavItem { label: "Input", icon: LucideIcon::clipboard_type, route: Route::BasicInput {} },
-                    NavItem { label: "Card", icon: LucideIcon::credit_card, route: Route::BasicCard {} },
-                    NavItem { label: "Badge", icon: LucideIcon::badge, route: Route::BasicBadge {} },
+                    NavItem { label: "Button", icon: MdiIcon::GestureTap, route: Route::BasicButton {} },
+                    NavItem { label: "Input", icon: MdiIcon::TextBoxEdit, route: Route::BasicInput {} },
+                    NavItem { label: "Card", icon: MdiIcon::CreditCard, route: Route::BasicCard {} },
+                    NavItem { label: "Badge", icon: MdiIcon::Alert, route: Route::BasicBadge {} },
                 ],
             },
             NavSubcategory {
@@ -233,9 +234,9 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                 label_zh: "反馈",
                 route: Some(Route::ComponentsFeedback {}),
                 items: &[
-                    NavItem { label: "Alert", icon: LucideIcon::badge_alert, route: Route::FeedbackAlert {} },
-                    NavItem { label: "Toast", icon: LucideIcon::bell, route: Route::FeedbackToast {} },
-                    NavItem { label: "Tooltip", icon: LucideIcon::badge_info, route: Route::FeedbackTooltip {} },
+                    NavItem { label: "Alert", icon: MdiIcon::Alert, route: Route::FeedbackAlert {} },
+                    NavItem { label: "Toast", icon: MdiIcon::Bell, route: Route::FeedbackToast {} },
+                    NavItem { label: "Tooltip", icon: MdiIcon::Information, route: Route::FeedbackTooltip {} },
                 ],
             },
             NavSubcategory {
@@ -243,9 +244,9 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                 label_zh: "导航",
                 route: Some(Route::ComponentsNavigation {}),
                 items: &[
-                    NavItem { label: "Menu", icon: LucideIcon::clipboard_list, route: Route::NavigationMenu {} },
-                    NavItem { label: "Breadcrumb", icon: LucideIcon::chevrons_right, route: Route::NavigationBreadcrumb {} },
-                    NavItem { label: "Tabs", icon: LucideIcon::credit_card, route: Route::NavigationTabs {} },
+                    NavItem { label: "Menu", icon: MdiIcon::FormatListBulleted, route: Route::NavigationMenu {} },
+                    NavItem { label: "Breadcrumb", icon: MdiIcon::ChevronDoubleRight, route: Route::NavigationBreadcrumb {} },
+                    NavItem { label: "Tabs", icon: MdiIcon::CreditCard, route: Route::NavigationTabs {} },
                 ],
             },
             NavSubcategory {
@@ -253,9 +254,9 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                 label_zh: "数据",
                 route: Some(Route::ComponentsData {}),
                 items: &[
-                    NavItem { label: "Table", icon: LucideIcon::clipboard_list, route: Route::DataTable {} },
-                    NavItem { label: "Tree", icon: LucideIcon::chart_network, route: Route::DataTree {} },
-                    NavItem { label: "Pagination", icon: LucideIcon::chevron_left, route: Route::DataPagination {} },
+                    NavItem { label: "Table", icon: MdiIcon::FormatListBulleted, route: Route::DataTable {} },
+                    NavItem { label: "Tree", icon: MdiIcon::Graph, route: Route::DataTree {} },
+                    NavItem { label: "Pagination", icon: MdiIcon::ChevronLeft, route: Route::DataPagination {} },
                 ],
             },
         ],

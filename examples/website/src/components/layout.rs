@@ -5,7 +5,7 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use _icons::{Icon, LucideIcon};
+use _icons::{Icon, MdiIcon};
 use crate::app::{Route, ThemeContext};
 use super::sidebar::Sidebar;
 use _components::basic::Logo;
@@ -134,14 +134,14 @@ fn BreadcrumbNav(current_route: Route) -> Element {
                     .add(Transition::Colors)
                     .add(Duration::D150)
                     .build(),
-                Icon { icon: LucideIcon::award, size: 16 }
+                Icon { icon: MdiIcon::TrophyAward, size: 16 }
             }
 
             // Breadcrumb items with separators
             for (i , item) in breadcrumb_items.iter().enumerate() {
                 // Separator icon
                 div { class: ClassesBuilder::new().add(TextColor::Gray400).build(),
-                    Icon { icon: LucideIcon::chevron_right, size: 16 }
+                    Icon { icon: MdiIcon::ChevronRight, size: 16 }
                 }
 
                 // Item

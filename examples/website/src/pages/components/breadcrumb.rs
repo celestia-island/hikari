@@ -5,7 +5,7 @@
 use dioxus::prelude::*;
 
 use _components::{Breadcrumb, BreadcrumbItem, BreadcrumbSeparator, layout::{Container, Section}};
-use _icons::{Icon, LucideIcon};
+use _icons::{Icon, MdiIcon};
 use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
 use crate::{app::Route, components::Layout};
 
@@ -108,15 +108,15 @@ pub fn ComponentsBreadcrumb() -> Element {
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             Breadcrumb {
                                 BreadcrumbItem { item_key: "1".to_string(),
-                                    Icon { icon: LucideIcon::badge, size: 14 }
+                                    Icon { icon: MdiIcon::Alert, size: 14 }
                                     span { "Home" }
                                 }
                                 BreadcrumbItem { item_key: "2".to_string(),
-                                    Icon { icon: LucideIcon::badge, size: 14 }
+                                    Icon { icon: MdiIcon::Alert, size: 14 }
                                     span { "Projects" }
                                 }
                                 BreadcrumbItem { item_key: "3".to_string(),
-                                    Icon { icon: LucideIcon::badge, size: 14 }
+                                    Icon { icon: MdiIcon::Alert, size: 14 }
                                     span { "Details" }
                                 }
                             }
@@ -307,7 +307,7 @@ pub fn ComponentsBreadcrumb() -> Element {
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             Breadcrumb {
                                 BreadcrumbItem { item_key: "1".to_string(),
-                                    Icon { icon: LucideIcon::badge, size: 14 }
+                                    Icon { icon: MdiIcon::Alert, size: 14 }
                                     "Home"
                                 }
                                 BreadcrumbItem { item_key: "2".to_string(), "Documentation" }
@@ -333,7 +333,7 @@ pub fn ComponentsBreadcrumb() -> Element {
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             Breadcrumb {
                                 BreadcrumbItem { item_key: "1".to_string(),
-                                    Icon { icon: LucideIcon::badge, size: 14 }
+                                    Icon { icon: MdiIcon::Alert, size: 14 }
                                     "Root"
                                 }
                                 BreadcrumbItem { item_key: "2".to_string(), "Users" }
@@ -408,7 +408,7 @@ pub fn ComponentsBreadcrumb() -> Element {
                                 r#"Breadcrumb {{
     BreadcrumbItem {{
         item_key: "1".to_string(),
-        Icon {{ icon: LucideIcon::badge, size: 14 }}
+        Icon {{ icon: MdiIcon::Alert, size: 14 }}
         "Home"
     }}
     BreadcrumbItem {{

@@ -5,7 +5,7 @@
 use dioxus::prelude::*;
 
 use _components::{TabPane, TabPosition, Tabs, layout::{Container, Section}};
-use _icons::{Icon, LucideIcon};
+use _icons::{Icon, MdiIcon};
 use _palette::classes::{ BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, Margin, MarginBottom, Padding, PaddingLeft, TextColor, };
 use crate::{app::Route, components::Layout};
 
@@ -129,7 +129,7 @@ pub fn ComponentsTabs() -> Element {
                                     item_key: "1".to_string(),
                                     tab: "Home".to_string(),
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 16 }
+                                        Icon { icon: MdiIcon::Alert, size: 16 }
                                     },
                                     div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
                                         "Home page content"
@@ -139,7 +139,7 @@ pub fn ComponentsTabs() -> Element {
                                     item_key: "2".to_string(),
                                     tab: "Profile".to_string(),
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 16 }
+                                        Icon { icon: MdiIcon::Alert, size: 16 }
                                     },
                                     div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
                                         "User profile information"
@@ -149,7 +149,7 @@ pub fn ComponentsTabs() -> Element {
                                     item_key: "3".to_string(),
                                     tab: "Settings".to_string(),
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 16 }
+                                        Icon { icon: MdiIcon::Alert, size: 16 }
                                     },
                                     div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
                                         "Application settings"
@@ -527,7 +527,7 @@ pub fn ComponentsTabs() -> Element {
         item_key: "1".to_string(),
         tab: "Home".to_string(),
         icon: rsx! {{
-            Icon {{ icon: LucideIcon::badge, size: 16 }}
+            Icon {{ icon: MdiIcon::Alert, size: 16 }}
         }},
         "Home content"
     }}

@@ -8,6 +8,7 @@
 //! - Container - Responsive content container
 //! - Grid/Row/Col - Grid system components
 //! - Section - Content section component
+//! - ScrollbarContainer - Custom scrollbar component
 //! - Spacer - Spacing component
 
 mod aside;
@@ -16,6 +17,7 @@ mod content;
 mod grid;
 mod header;
 mod layout;
+mod scrollbar;
 mod section;
 
 pub use aside::*;
@@ -24,4 +26,5 @@ pub use content::*;
 pub use grid::*;
 pub use header::*;
 pub use layout::*;
+pub use scrollbar::*;
 pub use section::*;

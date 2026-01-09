@@ -5,7 +5,7 @@
 use dioxus::prelude::*;
 
 use _components::{Button, ButtonAnimation, ButtonSize, ButtonVariant, layout::{Container, Section}};
-use _icons::{Icon, LucideIcon};
+use _icons::{Icon, MdiIcon};
 use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
 use crate::{app::Route, components::Layout};
 
@@ -97,7 +97,7 @@ pub fn ComponentsButton() -> Element {
                                 variant: ButtonVariant::Primary,
                                 size: ButtonSize::Small,
                                 spotlight: true,
-                                Icon { icon: LucideIcon::badge, size: 16 }
+                                Icon { icon: MdiIcon::Alert, size: 16 }
                                 " Add New"
                             }
                         }
@@ -125,7 +125,7 @@ pub fn ComponentsButton() -> Element {
                             Button {
                                 variant: ButtonVariant::Secondary,
                                 spotlight: true,
-                                Icon { icon: LucideIcon::badge, size: 16 }
+                                Icon { icon: MdiIcon::Alert, size: 16 }
                                 " Settings"
                             }
                         }
@@ -153,7 +153,7 @@ pub fn ComponentsButton() -> Element {
                             Button {
                                 variant: ButtonVariant::Ghost,
                                 spotlight: true,
-                                Icon { icon: LucideIcon::badge, size: 16 }
+                                Icon { icon: MdiIcon::Alert, size: 16 }
                                 " Edit"
                             }
                         }
@@ -181,7 +181,7 @@ pub fn ComponentsButton() -> Element {
                             Button {
                                 variant: ButtonVariant::Danger,
                                 spotlight: true,
-                                Icon { icon: LucideIcon::badge, size: 16 }
+                                Icon { icon: MdiIcon::Alert, size: 16 }
                                 " Remove"
                             }
                         }
@@ -209,7 +209,7 @@ pub fn ComponentsButton() -> Element {
                             Button {
                                 variant: ButtonVariant::Success,
                                 spotlight: true,
-                                Icon { icon: LucideIcon::badge, size: 16 }
+                                Icon { icon: MdiIcon::Alert, size: 16 }
                                 " Approve"
                             }
                         }
@@ -481,7 +481,7 @@ pub fn ComponentsButton() -> Element {
                                 variant: ButtonVariant::Primary,
                                 animation: ButtonAnimation::IconRotate,
                                 icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 16 }
+                                    Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                                 spotlight: true,
                                 "Icon Rotate"
@@ -513,7 +513,7 @@ pub fn ComponentsButton() -> Element {
                                 variant: ButtonVariant::Primary,
                                 spotlight: true,
                                 icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 16 }
+                                    Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                                 "Download"
                             }
@@ -521,7 +521,7 @@ pub fn ComponentsButton() -> Element {
                                 variant: ButtonVariant::Secondary,
                                 spotlight: true,
                                 icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 16 }
+                                    Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                                 "Upload"
                             }
@@ -547,7 +547,7 @@ pub fn ComponentsButton() -> Element {
                                 size: ButtonSize::Medium,
                                 spotlight: true,
                                 icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 18 }
+                                    Icon { icon: MdiIcon::Alert, size: 18 }
                                 },
                             }
                             Button {
@@ -555,7 +555,7 @@ pub fn ComponentsButton() -> Element {
                                 size: ButtonSize::Medium,
                                 spotlight: true,
                                 icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 18 }
+                                    Icon { icon: MdiIcon::Alert, size: 18 }
                                 },
                             }
                             Button {
@@ -563,7 +563,7 @@ pub fn ComponentsButton() -> Element {
                                 size: ButtonSize::Medium,
                                 spotlight: true,
                                 icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 18 }
+                                    Icon { icon: MdiIcon::Alert, size: 18 }
                                 },
                             }
                         }
@@ -625,7 +625,7 @@ pub fn ComponentsButton() -> Element {
                             code {
                                 r#"Button {{
     variant: ButtonVariant::Success,
-    icon: rsx! {{ Icon {{ icon: LucideIcon::badge }} }},
+    icon: rsx! {{ Icon {{ icon: MdiIcon::Alert }} }},
     onclick: move |_| println!("Clicked!"),
     "Confirm"
 }}"#

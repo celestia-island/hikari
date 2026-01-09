@@ -14,12 +14,18 @@
 //! - [`Cell`] - Table cell rendering
 //! - [`Column`] - Table column definitions
 //! - [`Header`] - Table header component
-//! - [`Node`] - Tree node representation
+//! - [`TreeNode`] - Tree node representation
+//! - [`TreeNodeArrow`] - Tree node expand/collapse arrow
+//! - [`TreeNodeContent`] - Tree node content wrapper
+//! - [`TreeNodeLabel`] - Tree node label text
 
 pub mod cell;
 pub mod column;
 pub mod header;
 pub mod node;
+pub mod node_arrow;
+pub mod node_content;
+pub mod node_label;
 pub mod pagination;
 pub mod table;
 pub mod tree;
@@ -36,6 +42,9 @@ pub use cell::*;
 pub use column::*;
 pub use header::*;
 pub use node::*;
+pub use node_arrow::*;
+pub use node_content::*;
+pub use node_label::*;
 pub use pagination::*;
 pub use table::*;
 pub use tree::*;

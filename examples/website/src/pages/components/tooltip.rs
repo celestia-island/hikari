@@ -5,7 +5,7 @@
 use dioxus::prelude::*;
 
 use _components::{Button, ButtonVariant, Tooltip, TooltipPlacement, layout::{Container, Row, Section}};
-use _icons::{Icon, LucideIcon};
+use _icons::{Icon, MdiIcon};
 use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, BgColor, BorderRadius, };
 use crate::{app::Route, components::Layout};
 
@@ -232,7 +232,7 @@ pub fn ComponentsTooltip() -> Element {
                                 Button {
                                     variant: ButtonVariant::Ghost,
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 18 }
+                                        Icon { icon: MdiIcon::Alert, size: 18 }
                                     },
                                 }
                             }
@@ -242,7 +242,7 @@ pub fn ComponentsTooltip() -> Element {
                                 Button {
                                     variant: ButtonVariant::Ghost,
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 18 }
+                                        Icon { icon: MdiIcon::Alert, size: 18 }
                                     },
                                 }
                             }
@@ -252,7 +252,7 @@ pub fn ComponentsTooltip() -> Element {
                                 Button {
                                     variant: ButtonVariant::Ghost,
                                     icon: rsx! {
-                                        Icon { icon: LucideIcon::badge, size: 18 }
+                                        Icon { icon: MdiIcon::Alert, size: 18 }
                                     },
                                 }
                             }
@@ -388,7 +388,7 @@ pub fn ComponentsTooltip() -> Element {
     Button {{
         variant: ButtonVariant::Ghost,
         icon: rsx! {{
-            Icon {{ icon: LucideIcon::badge }}
+            Icon {{ icon: MdiIcon::Alert }}
         }},
     }}
 }}"#

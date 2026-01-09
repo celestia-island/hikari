@@ -217,8 +217,9 @@ impl Default for TabsProps {
 /// The component automatically adapts to dark mode when `data-theme="dark"` is set on the root element.
 #[component]
 pub fn Tabs(props: TabsProps) -> Element {
-    let _active_key = use_signal(|| props.default_active.clone());
-    let _tabs = use_context::<Signal<Vec<Vec<String>>>>();
+    // Create and provide the active key signal for child TabPane components
+    let active_key = use_signal(|| props.default_active.clone());
+    use_context_provider(|| active_key.clone());
 
     let position_class = match props.tab_position {
         TabPosition::Top => "hi-tabs-top",

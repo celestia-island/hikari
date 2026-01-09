@@ -16,6 +16,10 @@ use console_error_panic_hook::set_once;
 #[cfg(target_arch = "wasm32")]
 use _animation::spotlight::init_spotlights;
 
+// Import scrollbar initialization
+#[cfg(target_arch = "wasm32")]
+use _components::scripts::scrollbar_container::init_all;
+
 // Re-export the app
 pub use app::App;
 
@@ -41,23 +45,18 @@ pub fn hydrate() {
     // Use dioxus::launch first to render the app
     launch(App);
 
-    // Initialize spotlight effects after app is mounted
-    // Use web_sys window.setTimeout to delay initialization
+    // Initialize UI effects immediately after launch
+    // Dioxus launch() is synchronous for initial render, so DOM should be ready
     #[cfg(target_arch = "wasm32")]
     {
-        use wasm_bindgen::JsCast;
-        use wasm_bindgen::prelude::*;
+        web_sys::console::log_1(&"[Website] Initializing UI effects...".into());
 
-        if let Some(window) = web_sys::window() {
-            let init_closure = wasm_bindgen::closure::Closure::once(|| {
-                init_spotlights();
-            });
+        // Initialize scrollbars (sets up MutationObserver for future updates)
+        init_all();
 
-            let _ = window.set_timeout_with_callback_and_timeout_and_arguments_0(
-                init_closure.as_ref().unchecked_ref(),
-                100,
-            );
-            init_closure.forget();
-        }
+        // Initialize spotlights
+        init_spotlights();
+
+        web_sys::console::log_1(&"[Website] UI effects initialized".into());
     }
 }

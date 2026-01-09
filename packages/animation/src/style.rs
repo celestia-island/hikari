@@ -534,13 +534,15 @@ impl StyleStringBuilder {
 
     /// Add a CSS property
     pub fn add(mut self, property: CssProperty, value: &str) -> Self {
-        self.0.push((property, format!("{}:{}", property.as_str(), value)));
+        self.0
+            .push((property, format!("{}:{}", property.as_str(), value)));
         self
     }
 
     /// Add a CSS property with pixel value
     pub fn add_px(mut self, property: CssProperty, pixels: u32) -> Self {
-        self.0.push((property, format!("{}:{}px", property.as_str(), pixels)));
+        self.0
+            .push((property, format!("{}:{}px", property.as_str(), pixels)));
         self
     }
 
@@ -552,12 +554,20 @@ impl StyleStringBuilder {
 
     /// Build the final style string (with trailing semicolons)
     pub fn build(self) -> String {
-        self.0.iter().map(|(_, s)| s.as_str()).collect::<Vec<_>>().join(";")
+        self.0
+            .iter()
+            .map(|(_, s)| s.as_str())
+            .collect::<Vec<_>>()
+            .join(";")
     }
 
     /// Build the final style string without trailing semicolons
     pub fn build_clean(self) -> String {
-        self.0.iter().map(|(_, s)| s.as_str()).collect::<Vec<_>>().join(";")
+        self.0
+            .iter()
+            .map(|(_, s)| s.as_str())
+            .collect::<Vec<_>>()
+            .join(";")
     }
 }
 

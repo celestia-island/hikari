@@ -5,7 +5,7 @@
 use dioxus::prelude::*;
 
 use _components::{Alert, AlertVariant, Button, ButtonVariant, layout::{Container, Row, Section}};
-use _icons::{Icon, LucideIcon};
+use _icons::{Icon, MdiIcon};
 use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
 use crate::{app::Route, components::Layout};
 
@@ -245,7 +245,7 @@ pub fn ComponentsAlert() -> Element {
                                 title: Some("New Message".to_string()),
                                 description: Some("You have received a new message.".to_string()),
                                 icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 20 }
+                                    Icon { icon: MdiIcon::Alert, size: 20 }
                                 },
                             }
                             Alert {
@@ -253,7 +253,7 @@ pub fn ComponentsAlert() -> Element {
                                 title: Some("Download Complete".to_string()),
                                 description: Some("Your file is ready.".to_string()),
                                 icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 20 }
+                                    Icon { icon: MdiIcon::Alert, size: 20 }
                                 },
                             }
                             Alert {
@@ -261,7 +261,7 @@ pub fn ComponentsAlert() -> Element {
                                 title: Some("Storage Warning".to_string()),
                                 description: Some("You're running low on disk space.".to_string()),
                                 icon: rsx! {
-                                    Icon { icon: LucideIcon::badge, size: 20 }
+                                    Icon { icon: MdiIcon::Alert, size: 20 }
                                 },
                             }
                         }
@@ -336,7 +336,7 @@ Alert {{
     title: Some("Warning".to_string()),
     description: Some("Custom icon alert.".to_string()),
     icon: rsx! {{
-        Icon {{ icon: LucideIcon::badge }}
+        Icon {{ icon: MdiIcon::Alert }}
     }},
 }}"#
                             }

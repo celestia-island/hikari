@@ -3,6 +3,8 @@
 
 use dioxus::prelude::*;
 
+use crate::data::{TreeNodeArrow, TreeNodeContent, TreeNodeLabel};
+
 /// Shared data structure for tree nodes
 #[derive(Clone, PartialEq, Debug)]
 pub struct TreeNodeData {
@@ -55,11 +57,15 @@ pub struct TreeNodeProps {
 }
 
 /// TreeNode component - A single tree node that can be expanded/collapsed
+///
+/// This component is composed of smaller sub-components for better modularity:
+/// - [`TreeNodeContent`] - Wraps the content with proper indentation
+/// - [`TreeNodeArrow`] - Expand/collapse arrow indicator
+/// - [`TreeNodeLabel`] - Text and optional icon display
 #[component]
 pub fn TreeNode(props: TreeNodeProps) -> Element {
     let mut is_expanded = use_signal(|| props.expanded);
     let has_children = props.node_children.is_some();
-    let indentation_style = format!("padding-left: {}px;", props.level * 24);
 
     let node_class = format!(
         "hi-tree-node {} {} {} {}",
@@ -91,10 +97,11 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
             aria_selected: props.selected.to_string(),
             aria_disabled: props.disabled.to_string(),
 
-            div {
-                class: "hi-tree-node-content",
-                style: "{indentation_style}",
-                onclick: move |e| {
+            TreeNodeContent {
+                level: props.level,
+                disabled: props.disabled,
+                class: props.class.clone(),
+                onclick: Some(EventHandler::new(move |e| {
                     if !props.disabled {
                         if has_children {
                             is_expanded.set(!is_expanded());
@@ -104,35 +111,25 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
                             handler.call(e);
                         }
                     }
-                },
+                })),
 
                 // Expand/collapse arrow
-                if has_children {
-                    span {
-                        class: format!(
-                            "hi-tree-node-arrow {}",
-                            if is_expanded() { "hi-tree-node-arrow-expanded" } else { "" }
-                        ),
-                        aria_hidden: "true",
-                        onclick: move |e| {
-                            e.stop_propagation();
-                            if !props.disabled {
-                                is_expanded.set(!is_expanded());
-                            }
-                        },
-                        "›"
-                    }
-                } else {
-                    span { class: "hi-tree-node-arrow-placeholder" }
+                TreeNodeArrow {
+                    expanded: is_expanded(),
+                    disabled: props.disabled,
+                    onclick: Some(EventHandler::new(move |e: MouseEvent| {
+                        e.stop_propagation();
+                        if !props.disabled {
+                            is_expanded.set(!is_expanded());
+                        }
+                    }))
                 }
 
-                // Custom icon if provided
-                if let Some(icon) = &props.icon {
-                    span { class: "hi-tree-node-icon", { icon } }
+                // Node label with optional icon
+                TreeNodeLabel {
+                    label: props.label.clone(),
+                    icon: props.icon.clone(),
                 }
-
-                // Node label
-                span { class: "hi-tree-node-label", "{props.label}" }
             }
 
             // Render children if expanded

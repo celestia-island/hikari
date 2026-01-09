@@ -201,8 +201,8 @@
 //! }
 //! ```
 
+pub mod assets;
 pub mod context;
-pub mod generated;
 pub mod provider;
 
 pub use context::*;

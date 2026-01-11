@@ -1,18 +1,210 @@
-// Hikari Icons - Material Design Icons integration for Dioxus
-//
-// This crate provides type-safe icon components integrating with:
-// - Material Design Icons (https://pictogrammers.com/library/mdi/) - 7,447 icons
-//
-// # Usage
-//
-// ```rust,ignore
-// use hikari_icons::{Icon, MdiIcon};
-//
-// rsx! {
-//     Icon { icon: MdiIcon::MoonWaningCrescent, class: "w-6 h-6" }
-//     Icon { icon: MdiIcon::WhiteBalanceSunny, size: 32 }
-// }
-// ```
+//! # Hikari Icons
+//!
+//! Type-safe Material Design Icons (MDI) integration for Dioxus with 7,447 icons.
+//!
+//! ## Overview
+//!
+//! `hikari-icons` provides:
+//!
+//! - **7,447 MDI Icons** - Complete Material Design Icons collection
+//! - **Type-Safe Enum** - Compile-time icon name checking
+//! - **Inline SVG Rendering** - No external requests or icon fonts
+//! - **Zero Runtime Overhead** - Icons loaded on-demand
+//! - **Convenient Shortcuts** - Helper functions for common icons
+//!
+//! ## Icon Sources
+//!
+//! - Material Design Icons (https://pictogrammers.com/library/mdi/) - 7,447 icons
+//!
+//! ## Quick Start
+//!
+//! ### Static Icons
+//!
+//! ```rust,ignore
+//! use hikari_icons::{Icon, MdiIcon};
+//!
+//! rsx! {
+//!     Icon { icon: MdiIcon::Search, size: 24, class: "text-primary" }
+//!     Icon { icon: MdiIcon::MoonWaningCrescent, class: "w-6 h-6" }
+//!     Icon { icon: MdiIcon::WhiteBalanceSunny, size: 32 }
+//! }
+//! ```
+//!
+//! ### Icon Shortcuts
+//!
+//! ```rust,ignore
+//! use hikari_icons::mdi;
+//!
+//! rsx! {
+//!     mdi::Moon("w-6 h-6".to_string())
+//!     mdi::Sun("text-yellow-500".to_string())
+//!     mdi::Settings("cursor-pointer".to_string())
+//! }
+//! ```
+//!
+//! ## Dynamic Icons
+//!
+//! **⚠️ Important**: When you need to dynamically change icons based on state
+//! (e.g., theme toggle, status change), you MUST use a `key` attribute on a **wrapper component**.
+//!
+//! ### Why This Happens
+//!
+//! The `Icon` component uses `use_resource` to asynchronously fetch SVG content.
+//! This hook only runs once when the component is first mounted.
+//! When the `icon` prop changes, `use_resource` does NOT re-run automatically,
+//! so the SVG content won't update.
+//!
+//! ### Correct Solution: Reactive Key on Wrapper
+//!
+//! ```rust,ignore
+//! use hikari_icons::{Icon, MdiIcon};
+//! use dioxus::prelude::*;
+//!
+//! #[component]
+//! fn ThemeToggleButton() -> Element {
+//!     let mut is_dark = use_signal(|| false);
+//!
+//!     // ✅ REACTIVE: Create a key that changes when theme changes
+//!     let icon_key = use_memo(move || {
+//!         if *is_dark.read() { "moon" } else { "sun" }
+//!     });
+//!
+//!     rsx! {
+//!         button {
+//!             onclick: move |_| is_dark.toggle(),
+//!
+//!             // ✅ IMPORTANT: Key on wrapper, not on Icon
+//!             key: "{icon_key}",
+//!
+//!             Icon {
+//!                 icon: if *is_dark.read() {
+//!                     MdiIcon::MoonWaningCrescent
+//!                 } else {
+//!                     MdiIcon::WhiteBalanceSunny
+//!                 },
+//!                 size: 20,
+//!             }
+//!         }
+//!     }
+//! }
+//! ```
+//!
+//! ### Why a Helper Component Like `DynamicIcon` Doesn't Work
+//!
+//! You might try to create a helper component to handle the key automatically:
+//!
+//! ```rust,ignore
+//! #[component]
+//! pub fn DynamicIcon(
+//!     #[props(into)] icon: IconRef,
+//!     #[props(default)] class: String,
+//!     #[props(default = 24)] size: u32,
+//! ) -> Element {
+//!     // ⚠️ STATIC: Key calculated once, never changes
+//!     let icon_key = format!("{:?}", icon);
+//!
+//!     rsx! {
+//!         Icon {
+//!             key: "{icon_key}",  // Key never updates!
+//!             icon: icon,
+//!             class: class,
+//!             size: size,
+//!         }
+//!     }
+//! }
+//! ```
+//!
+//! **Why it doesn't work**: The `icon_key` is calculated **once** when the `DynamicIcon` component
+//! function runs. It's a static calculation, not reactive. Even when the `icon` prop changes,
+//! `icon_key` is not recalculated, so it remains the initial value.
+//!
+//! **The correct approach** is to create a **reactive** key using `use_memo` in the
+//! parent component, then apply the key to a wrapper component.
+//!
+//! ## Available Icons
+//!
+//! ### Icon Categories
+//!
+//! #### Navigation Icons
+//! - `Home`, `Menu`, `Search`, `Settings`
+//! - `ChevronLeft`, `ChevronRight`, `ChevronUp`, `ChevronDown`
+//! - `ArrowLeft`, `ArrowRight`, `ArrowUp`, `ArrowDown`
+//!
+//! #### Action Icons
+//! - `Edit`, `Trash`, `Check`, `Close`, `Plus`, `Minus`
+//! - `Copy`, `Cut`, `Paste`
+//! - `Undo`, `Redo`
+//! - `ZoomIn`, `ZoomOut`
+//!
+//! #### Status Icons
+//! - `Alert`, `AlertCircle`, `AlertOctagon`
+//! - `CheckCircle`, `Information`, `Help`
+//! - `Loading`, `Refresh`
+//!
+//! #### UI Icons
+//! - `Account`, `Lock`, `Unlock`, `Eye`, `EyeOff`
+//! - `Calendar`, `Clock`, `MapPin`, `Navigation`
+//!
+//! #### And 7,000+ more...
+//!
+//! See [Material Design Icons](https://pictogrammers.com/library/mdi/) for the complete list.
+//!
+//! ## Icon Shortcuts
+//!
+//! Use convenient shortcuts for frequently used icons:
+//!
+//! | Shortcut | MDI Icon | Description |
+//! |----------|-----------|-------------|
+//! | `Moon(class)` | `MoonWaningCrescent` | Moon icon |
+//! | `Sun(class)` | `WhiteBalanceSunny` | Sun icon |
+//! | `Settings(class)` | `Cog` | Settings gear icon |
+//! | `Account(class)` | `Account` | User account icon |
+//! | `Home(class)` | `Home` | Home icon |
+//! | `Search(class)` | `Magnify` | Search icon |
+//! | `Close(class)` | `Close` | Close/X icon |
+//! | `Check(class)` | `Check` | Checkmark icon |
+//! | `Menu(class)` | `Menu` | Menu/hamburger icon |
+//! | `Bell(class)` | `BellOutline` | Notification bell icon |
+//! | `Star(class)` | `Star` | Star/favorite icon |
+//! | `Heart(class)` | `Heart` | Heart icon |
+//! | `Calendar(class)` | `Calendar` | Calendar icon |
+//! | `Clock(class)` | `ClockOutline` | Clock/time icon |
+//! | `ChevronLeft(class)` | `ChevronLeft` | Left chevron |
+//! | `ChevronRight(class)` | `ChevronRight` | Right chevron |
+//! | `ChevronUp(class)` | `ChevronUp` | Up chevron |
+//! | `ChevronDown(class)` | `ChevronDown` | Down chevron |
+//! | `X(class)` | `Close` | X icon |
+//! | `Award(class)` | `TrophyAward` | Award/trophy icon |
+//! | `Book(class)` | `Book` | Book icon |
+//! | `Badge(class)` | `Alert` | Alert/badge icon |
+//!
+//! ## Props
+//!
+//! ### `Icon` Component
+//!
+//! | Prop | Type | Default | Description |
+//! |------|------|---------|-------------|
+//! | `icon` | `IconRef` (MdiIcon) | (required) | Icon to render |
+//! | `class` | `String` | `""` | CSS classes to apply |
+//! | `size` | `u32` | `24` | Icon size in pixels |
+//!
+//! ## Integration with Other Crates
+//!
+//! - **hikari-components** - Icons used in Button, Input, and other components
+//! - **hikari-render-service** - Static icon file service
+//! - **hikari-theme** - Icon colors inherit from theme
+//!
+//! ```rust,ignore
+//! use hikari_theme::ThemeProvider;
+//! use hikari_icons::Icon;
+//!
+//! rsx! {
+//!     ThemeProvider { palette: "hikari".to_string(),
+//!         // Icon colors inherit from theme
+//!         Icon { icon: MdiIcon::Star, class: "text-primary" }
+//!     }
+//! }
+//! ```
 
 pub mod mdi_minimal;
 
@@ -50,7 +242,9 @@ impl IconRef {
 /// - `class`: Optional CSS classes
 /// - `size`: Optional size in pixels (default: 24)
 ///
-/// # Example
+/// # Static Icons
+///
+/// For static icons (icon doesn't change during component lifecycle), use directly:
 ///
 /// ```rust,ignore
 /// use hikari_icons::{Icon, MdiIcon};
@@ -60,6 +254,121 @@ impl IconRef {
 ///     Icon { icon: MdiIcon::WhiteBalanceSunny, size: 32 }
 /// }
 /// ```
+///
+/// # Dynamic Icons
+///
+/// **Important**: When you need to dynamically change the icon based on state
+/// (e.g., theme toggle, status change), you MUST use a `key` attribute.
+///
+/// The Icon component uses `use_resource` to fetch SVG content asynchronously,
+/// which only runs once on component mount. Without a changing key, the SVG
+/// will not update when the `icon` prop changes.
+///
+/// ## Why This Happens
+///
+/// The Icon component uses `use_resource` to asynchronously fetch SVG content:
+///
+/// ```rust,ignore
+/// let icon_path = format!("/icons/{}.svg", icon.name());
+/// let svg_content = use_resource(move || {
+///     let path = icon_path.clone();  // Captured on component mount
+///     async move { fetch_svg(&path).await }
+/// });
+/// ```
+///
+/// **Problem**: `use_resource` only runs once when the Icon component is first mounted.
+/// The closure captures `icon_path` (a static string), not the `icon` prop itself.
+/// When the `icon` prop changes later, `use_resource` doesn't detect this change
+/// and never re-runs, so the old SVG remains displayed.
+///
+/// ## Why a Helper Component Like `DynamicIcon` Doesn't Work
+///
+/// You might try to create a helper component to handle the key automatically:
+///
+/// ```rust,ignore
+/// #[component]
+/// pub fn DynamicIcon(
+///     #[props(into)] icon: IconRef,
+///     #[props(default)] class: String,
+///     #[props(default = 24)] size: u32,
+/// ) -> Element {
+///     let icon_key = format!("{:?}", icon);  // ⚠️ Static, not reactive!
+///
+///     rsx! {
+///         Icon {
+///             key: "{icon_key}",  // Key never changes
+///             icon: icon,
+///             class: class,
+///             size: size,
+///         }
+///     }
+/// }
+/// ```
+///
+/// **Why it doesn't work**:
+///
+/// The `icon_key` is calculated **once** when `DynamicIcon` component function runs.
+/// It's a static calculation, not reactive. Even when the `icon` prop changes,
+/// `icon_key` is not recalculated, so it remains the initial value.
+///
+/// ## Correct Solution: Reactive Key with `use_memo`
+///
+/// The solution is to create a **reactive** key using `use_memo` in the
+/// parent component, then apply the key to a **wrapper component**:
+///
+/// ```rust,ignore
+/// use hikari_icons::{Icon, MdiIcon};
+/// use dioxus::prelude::*;
+///
+/// #[component]
+/// fn ThemeToggleButton() -> Element {
+///     let mut is_dark = use_signal(|| false);
+///
+///     // ✅ REACTIVE: Create a key that changes when theme changes
+///     let icon_key = use_memo(move || {
+///         if *is_dark.read() { "moon" } else { "sun" }
+///     });
+///
+///     rsx! {
+///         button {
+///             onclick: move |_| is_dark.toggle(),
+///
+///             // ✅ IMPORTANT: Key on wrapper, not on Icon
+///             key: "{icon_key}",
+///
+///             Icon {
+///                 icon: if *is_dark.read() {
+///                     MdiIcon::MoonWaningCrescent
+///                 } else {
+///                     MdiIcon::WhiteBalanceSunny
+///                 },
+///                 size: 20,
+///             }
+///         }
+///     }
+/// }
+/// ```
+///
+/// **Why this works**:
+///
+/// 1. `use_memo` creates a **reactive** dependency on `is_dark`
+/// 2. When `is_dark` changes, `icon_key` is **automatically recalculated**
+/// 3. The `key` prop on `button` changes, forcing Dioxus to:
+///    - Completely destroy and recreate the `button` component
+///    - Which destroys and recreates the `Icon` component inside
+///    - Which triggers `use_resource` to run again and fetch the new SVG
+///
+/// **Key Point**: The key must be on the **wrapper component** (button),
+/// not on `Icon` itself. When the key is on the wrapper, Dioxus
+/// recreates the entire component tree, ensuring `use_resource` runs again.
+///
+/// ## Why Key on Wrapper, Not on Icon?
+///
+/// The `key` attribute forces Dioxus to completely destroy and recreate the
+/// component tree when the key changes. When the key is on the wrapper
+/// component (Button), it forces the Button to be recreated, which in turn
+/// forces the Icon to be recreated, triggering `use_resource` to run again
+/// and fetch the new SVG.
 #[component]
 pub fn Icon(
     #[props(into)] icon: IconRef,

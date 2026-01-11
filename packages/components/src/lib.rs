@@ -1,7 +1,35 @@
-//! Hikari Components Library
+//! # Hikari Components Library
 //!
 //! Comprehensive UI component library with Arknights-style design
 //! and FUI (Future User Interface) aesthetics.
+//!
+//! ## Overview
+//!
+//! `hikari-components` provides:
+//!
+//! - **Basic Components** - Button, Input, Card, Badge
+//! - **Feedback Components** - Alert, Toast, Tooltip
+//! - **Navigation Components** - Menu, Tabs, Breadcrumb
+//! - **Data Components** - Table, Tree, Pagination (with modular sub-components)
+//! - **Layout Components** - Layout, Header, Aside, Content, Footer
+//! - **Arknights + FUI Styling** - Consistent design language
+//! - **Type-Safe Props** - Full TypeScript-like safety in Rust
+//! - **Accessible** - WCAG compliant components
+//!
+//! ## Design Philosophy
+//!
+//! Hikari components follow these design principles:
+//!
+//! ### Arknights Aesthetics
+//! - Clean lines and clear information hierarchy
+//! - High contrast for readability
+//! - Minimalist yet refined design
+//!
+//! ### FUI (Future User Interface)
+//! - Subtle glow effects (box-shadow, text-shadow)
+//! - Dynamic indicators (breathing lights, pulse animations)
+//! - Fine borders (1px semi-transparent)
+//! - Geometric patterns (hexagons, grids)
 //!
 //! ## Features
 //!
@@ -17,18 +45,42 @@
 //! Enable all basic components:
 //! ```toml
 //! [dependencies]
-//! hi-components = { features = ["basic"] }
+//! hikari-components = { features = ["basic"] }
 //! ```
 //!
 //! Enable specific components:
 //! ```toml
 //! [dependencies]
-//! hi-components = { features = ["button", "input", "card"] }
+//! hikari-components = { features = ["button", "input", "card"] }
+//! ```
+//!
+//! ## Quick Start
+//!
+//! ### Basic Usage
+//!
+//! ```rust,no_run
+//! use dioxus::prelude::*;
+//! use hikari_components::*;
+//! use hikari_theme::ThemeProvider;
+//!
+//! fn app() -> Element {
+//!     rsx! {
+//!         ThemeProvider { palette: "arknights".to_string(),
+//!             div { class: "container",
+//!                 Button { variant: ButtonVariant::Primary, "Click Me" }
+//!                 Card {
+//!                     header: rsx! { h2 { "Card Title" } },
+//!                     "Card content goes here"
+//!                 }
+//!             }
+//!         }
+//!     }
+//! }
 //! ```
 //!
 //! ## Modules
 //!
-//! - [`layout`] - Layout components (Layout, Header, Aside, Content)
+//! - [`layout`] - Layout components (Layout, Header, Aside, Content, Footer)
 //! - [`hooks`] - Responsive design hooks and media queries
 //! - [`basic`] - Basic UI components
 //! - [`feedback`] - Feedback and notification components

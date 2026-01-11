@@ -94,11 +94,9 @@ dev:
     @echo ""
     @echo "✅ WASM client built successfully"
     @echo ""
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Starting website server..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "🌐 Server will be available at: http://localhost:3000"
-    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Press Ctrl+C to stop the server"
     @echo ""
     @cargo run --manifest-path examples/website/Cargo.toml --features server

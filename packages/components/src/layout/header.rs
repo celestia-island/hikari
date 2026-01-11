@@ -17,7 +17,9 @@
 //! ```
 
 use dioxus::prelude::*;
+use dioxus_core::VNode;
 use palette::{classes::*, ClassesBuilder};
+use std::result::Result;
 
 /// Header component - Modern application header bar
 ///
@@ -49,6 +51,10 @@ pub fn Header(
     /// Custom CSS classes
     #[props(default)]
     class: String,
+
+    /// Right side content (e.g., theme toggle, user menu)
+    #[props(default = VNode::empty())]
+    right_content: Element,
 ) -> Element {
     // Build utility classes for header content container
     let content_classes = ClassesBuilder::new()
@@ -101,8 +107,7 @@ pub fn Header(
             // Right section (optional actions)
             div {
                 class: "hi-header-right",
-                // Placeholder for right-side content
-                // Can be used for user menu, notifications, etc.
+                { right_content }
             }
         }
     }

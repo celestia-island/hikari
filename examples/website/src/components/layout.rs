@@ -1,16 +1,18 @@
 // website/src/components/layout.rs
 // Layout component using modernized Hikari components
 
-
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use _icons::{Icon, MdiIcon};
-use crate::app::{Route, ThemeContext};
 use super::sidebar::Sidebar;
-use _components::basic::Logo;
+use crate::app::{Route, ThemeContext};
+use _components::basic::{Button, ButtonVariant, Logo};
 use _components::layout::{Aside, Header, Layout as HikariLayout};
-use _palette::classes::{ AlignItems, BgColor, BorderRadius, ClassesBuilder, Cursor, Display, Duration, Flex, FontSize, FontWeight, Gap, Height, JustifyContent, Margin, Padding, TextColor, Transition, Width, };
+use _icons::{Icon, MdiIcon};
+use _palette::classes::{
+    AlignItems, BgColor, BorderRadius, ClassesBuilder, Cursor, Display, Duration, Flex, FontSize,
+    FontWeight, Gap, Height, JustifyContent, Margin, Padding, TextColor, Transition, Width,
+};
 
 /// Layout component that wraps all pages with modern design
 ///
@@ -23,6 +25,29 @@ pub fn Layout(children: Element, current_route: Route) -> Element {
     // Consume theme context
     let mut theme_context = use_context::<ThemeContext>();
 
+    // Compute current icon based on theme
+    // Use use_memo to automatically track theme changes
+    let current_icon = use_memo(move || {
+        let theme = theme_context.theme.read();
+        if theme.as_str() == "hikari" {
+            MdiIcon::WhiteBalanceSunny
+        } else {
+            MdiIcon::MoonWaningCrescent
+        }
+    });
+
+    // Create a key that changes when theme changes to force Icon to re-render
+    // IMPORTANT: Icon component uses use_resource which only runs once on mount
+    // We need a changing key to force complete re-creation of Icon component
+    // NOTE: The key must be on the Button (wrapper component), NOT on the Icon itself
+    // This forces Dioxus to completely destroy and recreate the Button when key changes,
+    // which in turn forces the Icon to be recreated, triggering use_resource to run again
+    // and fetch the new SVG.
+    let icon_key = use_memo(move || {
+        let icon = current_icon.read();
+        format!("{:?}", icon)
+    });
+
     rsx! {
         HikariLayout {
             header: rsx! {
@@ -31,24 +56,30 @@ pub fn Layout(children: Element, current_route: Route) -> Element {
                     on_menu_toggle: move |_| is_drawer_open.toggle(),
                     bordered: true,
 
-                // Logo and title (will be inside hi-header-left)
-
-                // Spacer to push theme toggle to the right
-
-                // Theme toggle button
-                // Icon based on current theme
-
-    
-
-
-
+                    right_content: rsx! {
+                        Button {
+                            variant: ButtonVariant::Ghost,
+                            key: "{icon_key}",
+                            icon: rsx! {
+                                Icon {
+                                    icon: *current_icon.read(),
+                                    size: 20,
+                                }
+                            },
+                            onclick: move |_| {
+                                let current = theme_context.theme.read().clone();
+                                let new_theme = if current.as_str() == "hikari" { "tairitsu" } else { "hikari" };
+                                theme_context.theme.set(new_theme.to_string());
+                            }
+                        }
+                    },
 
                     Logo {
                         src: "/images/logo.png".to_string(),
                         alt: "Hikari Logo".to_string(),
                         height: 36,
                         max_width: 140,
-                    }
+                    },
                     h2 {
                         class: ClassesBuilder::new()
                             .add(Margin::M0)
@@ -57,36 +88,7 @@ pub fn Layout(children: Element, current_route: Route) -> Element {
                             .add(TextColor::Gray900)
                             .build(),
                         "Hikari UI"
-                    }
-    
-                    div { class: ClassesBuilder::new().add(Flex::Flex1).build() }
-    
-                    button {
-                        class: ClassesBuilder::new()
-                            .add(Display::Flex)
-                            .add(AlignItems::Center)
-                            .add(JustifyContent::Center)
-                            .add(Width::W8)
-                            .add(Height::H8)
-                            .add(BgColor::Transparent)
-                            .add(BorderRadius::Lg)
-                            .add(Cursor::Pointer)
-                            .add(FontSize::Xl)
-                            .add(Transition::All)
-                            .add(Duration::D300)
-                            .build(),
-                        "data-theme": "{theme_context.theme}",
-                        onclick: move |_| {
-                            let current = theme_context.theme.read().clone();
-                            let new_theme = if current.as_str() == "hikari" { "tairitsu" } else { "hikari" };
-                            theme_context.theme.set(new_theme.to_string());
-                        },
-                        if theme_context.theme.read().as_str() == "hikari" {
-                            "☀️"
-                        } else {
-                            "🌙"
-                        }
-                    }
+                    },
                 }
             },
 
@@ -97,7 +99,7 @@ pub fn Layout(children: Element, current_route: Route) -> Element {
                     initial_open: *is_drawer_open.read(),
                     on_close: move |_| is_drawer_open.set(false),
 
-    
+
                     Sidebar { current_route: current_route.clone() }
                 }
             },

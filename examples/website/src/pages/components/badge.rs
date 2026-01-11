@@ -1,13 +1,18 @@
 // website/src/pages/components/badge.rs
 // Badge component showcase page with real rendered examples
 
-
 use dioxus::prelude::*;
 
-use _components::{Badge, BadgeVariant, Button, ButtonVariant, layout::{Container, Row, Section}};
-use _icons::{Icon, MdiIcon};
-use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
 use crate::{app::Route, components::Layout};
+use _animation::style::{CssProperty, StyleStringBuilder};
+use _components::{
+    layout::{Container, Row, Section},
+    Badge, BadgeVariant, Button, ButtonVariant,
+};
+use _icons::{Icon, MdiIcon};
+use _palette::classes::{
+    ClassesBuilder, FontSize, FontWeight, Margin, MarginBottom, Padding, PaddingLeft, TextColor,
+};
 
 #[allow(non_snake_case)]
 pub fn ComponentsBadge() -> Element {
@@ -21,12 +26,12 @@ pub fn ComponentsBadge() -> Element {
                         class: ClassesBuilder::default()
                             .add(FontSize::X4xl)
                             .add(FontWeight::Bold)
-                            .add(Margin::M0)
+                            .add(MarginBottom::Mb0)
                             .add(MarginBottom::Mb2)
                             .build(),
                         "Badge"
                     }
-                    p { class: ClassesBuilder::default().add(Margin::M0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::default().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
                         "Small status indicators and counters with FUI aesthetics"
                     }
                 }
@@ -40,7 +45,7 @@ pub fn ComponentsBadge() -> Element {
                         p {
                             "Badges are small status indicators used to highlight information or show counts. They support:"
                         }
-                        ul { class: ClassesBuilder::default().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::default().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Multiple variants" }
                                 " - Default, Primary, Success, Warning, Danger"
@@ -319,7 +324,7 @@ pub fn ComponentsBadge() -> Element {
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
                             div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
-                                div { style: "display: flex; gap: 16px; align-items: center;",
+                                div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::Gap, "16px").add(CssProperty::AlignItems, "center").build_clean(),
                                     Badge {
                                         variant: BadgeVariant::Primary,
                                         count: 5,
@@ -330,26 +335,26 @@ pub fn ComponentsBadge() -> Element {
                                             },
                                             "Notifications"
                                         }
+                                         }
                                     }
-                                }
-                                div { style: "display: flex; gap: 16px; align-items: center;",
-                                    Badge {
-                                        variant: BadgeVariant::Success,
-                                        count: 3,
-                                        Button {
+                                    div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::Gap, "16px").add(CssProperty::AlignItems, "center").build_clean(),
+                                        Badge {
+                                            variant: BadgeVariant::Success,
+                                            count: 3,
+                                            Button {
                                             variant: ButtonVariant::Secondary,
                                             icon: rsx! {
                                                 Icon { icon: MdiIcon::Alert, size: 16 }
                                             },
                                             "Messages"
                                         }
+                                         }
                                     }
-                                }
-                                div { style: "display: flex; gap: 16px; align-items: center;",
-                                    Badge {
-                                        variant: BadgeVariant::Danger,
-                                        count: 12,
-                                        Button {
+                                    div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::Gap, "16px").add(CssProperty::AlignItems, "center").build_clean(),
+                                        Badge {
+                                            variant: BadgeVariant::Danger,
+                                            count: 12,
+                                            Button {
                                             variant: ButtonVariant::Ghost,
                                             icon: rsx! {
                                                 Icon { icon: MdiIcon::Alert, size: 16 }
@@ -377,15 +382,15 @@ pub fn ComponentsBadge() -> Element {
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
                             div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
-                                div { style: "display: flex; gap: 12px; align-items: center;",
+                                div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::Gap, "12px").add(CssProperty::AlignItems, "center").build_clean(),
                                     strong { "Server Status:" }
                                     Badge { variant: BadgeVariant::Success, "Online" }
                                 }
-                                div { style: "display: flex; gap: 12px; align-items: center;",
+                                div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::Gap, "12px").add(CssProperty::AlignItems, "center").build_clean(),
                                     strong { "Build Status:" }
                                     Badge { variant: BadgeVariant::Warning, "In Progress" }
                                 }
-                                div { style: "display: flex; gap: 12px; align-items: center;",
+                                div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::Gap, "12px").add(CssProperty::AlignItems, "center").build_clean(),
                                     strong { "Deployment:" }
                                     Badge { variant: BadgeVariant::Danger, "Failed" }
                                 }
@@ -412,13 +417,13 @@ pub fn ComponentsBadge() -> Element {
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
                             Row { gap: "md".to_string(),
                                 Badge { variant: BadgeVariant::Success, dot: true,
-                                    div { style: "display: flex; align-items: center; gap: 8px;",
+                                    div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::AlignItems, "center").add(CssProperty::Gap, "8px").build_clean(),
                                         Icon { icon: MdiIcon::Alert, size: 20 }
                                         span { "John Doe" }
                                     }
                                 }
                                 Badge { variant: BadgeVariant::Warning, dot: true,
-                                    div { style: "display: flex; align-items: center; gap: 8px;",
+                                    div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::AlignItems, "center").add(CssProperty::Gap, "8px").build_clean(),
                                         Icon { icon: MdiIcon::Alert, size: 20 }
                                         span { "Jane Smith" }
                                     }
@@ -439,15 +444,15 @@ pub fn ComponentsBadge() -> Element {
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
                             div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
-                                div { style: "display: flex; justify-content: space-between; align-items: center;",
+                                div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::JustifyContent, "space-between").add(CssProperty::AlignItems, "center").build_clean(),
                                     span { "Design Review" }
                                     Badge { variant: BadgeVariant::Success, "Done" }
                                 }
-                                div { style: "display: flex; justify-content: space-between; align-items: center;",
+                                div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::JustifyContent, "space-between").add(CssProperty::AlignItems, "center").build_clean(),
                                     span { "Implementation" }
                                     Badge { variant: BadgeVariant::Primary, "In Progress" }
                                 }
-                                div { style: "display: flex; justify-content: space-between; align-items: center;",
+                                div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::JustifyContent, "space-between").add(CssProperty::AlignItems, "center").build_clean(),
                                     span { "Testing" }
                                     Badge { variant: BadgeVariant::Default, "Pending" }
                                 }
@@ -471,7 +476,7 @@ pub fn ComponentsBadge() -> Element {
                                 .build(),
                             "Basic Badge"
                         }
-                        div { class: "code-example",
+                        div { class: ClassesBuilder::new().add(Padding::P4).add_raw("bg-gray-900").add_raw("rounded").build(),
                             code { r#"Badge {{
     variant: BadgeVariant::Primary,
     "New"
@@ -489,7 +494,7 @@ pub fn ComponentsBadge() -> Element {
                                 .build(),
                             "Dot Badge"
                         }
-                        div { class: "code-example",
+                        div { class: ClassesBuilder::new().add(Padding::P4).add_raw("bg-gray-900").add_raw("rounded").build(),
                             code {
                                 r#"Badge {{
     variant: BadgeVariant::Success,
@@ -510,7 +515,7 @@ pub fn ComponentsBadge() -> Element {
                                 .build(),
                             "Count Badge"
                         }
-                        div { class: "code-example",
+                        div { class: ClassesBuilder::new().add(Padding::P4).add_raw("bg-gray-900").add_raw("rounded").build(),
                             code {
                                 r#"Badge {{
     variant: BadgeVariant::Danger,
@@ -532,7 +537,7 @@ pub fn ComponentsBadge() -> Element {
                                 .build(),
                             "Status Indicator"
                         }
-                        div { class: "code-example",
+                        div { class: ClassesBuilder::new().add(Padding::P4).add_raw("bg-gray-900").add_raw("rounded").build(),
                             code {
                                 r#"Badge {{
     variant: BadgeVariant::Success,

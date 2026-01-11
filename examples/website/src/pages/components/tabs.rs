@@ -6,7 +6,7 @@ use dioxus::prelude::*;
 
 use _components::{TabPane, TabPosition, Tabs, layout::{Container, Section}};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{ BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, Margin, MarginBottom, Padding, PaddingLeft, TextColor, };
+use _palette::classes::{ BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, PaddingLeft, TextColor, };
 use crate::{app::Route, components::Layout};
 
 #[allow(non_snake_case)]
@@ -21,12 +21,12 @@ pub fn ComponentsTabs() -> Element {
                         class: ClassesBuilder::default()
                             .add(FontSize::X4xl)
                             .add(FontWeight::Bold)
-                            .add(Margin::M0)
+                            .add(MarginBottom::Mb0)
                             .add(MarginBottom::Mb2)
                             .build(),
                         "Tabs"
                     }
-                    p { class: ClassesBuilder::default().add(Margin::M0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::default().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
                         "Tabbed interface for organizing content into separate panels with FUI aesthetics"
                     }
                 }
@@ -40,7 +40,7 @@ pub fn ComponentsTabs() -> Element {
                         p {
                             "Tabs organize content into separate panels, showing one panel at a time. They support:"
                         }
-                        ul { class: ClassesBuilder::default().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::default().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Multiple positions" }
                                 " - Top, Bottom, Left, Right"
@@ -612,7 +612,7 @@ pub fn ComponentsTabs() -> Element {
                                 .build(),
                             "When to Use Tabs"
                         }
-                        ul { class: ClassesBuilder::default().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::default().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Content organization" }
                                 " - Grouping related content"
@@ -640,7 +640,7 @@ pub fn ComponentsTabs() -> Element {
                                 .build(),
                             "Tab Organization Guidelines"
                         }
-                        ul { class: ClassesBuilder::default().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::default().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Keep it concise" }
                                 " - 3-7 tabs maximum"
@@ -668,7 +668,7 @@ pub fn ComponentsTabs() -> Element {
                                 .build(),
                             "Position Guidelines"
                         }
-                        ul { class: ClassesBuilder::default().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::default().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Top" }
                                 " - Most common, default choice"

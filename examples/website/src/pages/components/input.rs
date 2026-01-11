@@ -6,7 +6,7 @@ use dioxus::prelude::*;
 
 use _components::{Input, InputSize, layout::{Container, Section}};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
+use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, };
 use crate::{app::Route, components::Layout};
 
 #[allow(non_snake_case)]
@@ -21,12 +21,12 @@ pub fn ComponentsInput() -> Element {
                         class: ClassesBuilder::new()
                             .add(FontSize::X4xl)
                             .add(FontWeight::Bold)
-                            .add(Margin::M0)
+                            .add(MarginBottom::Mb0)
                             .add(MarginBottom::Mb2)
                             .build(),
                         "Input"
                     }
-                    p { class: ClassesBuilder::new().add(Margin::M0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
                         "Text input fields for user data entry with FUI aesthetics"
                     }
                 }
@@ -38,7 +38,7 @@ pub fn ComponentsInput() -> Element {
 
                     div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
                         p { "Input fields allow users to enter and edit text. They support:" }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Multiple sizes" }
                                 " - Small, Medium, Large"

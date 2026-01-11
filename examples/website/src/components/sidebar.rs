@@ -1,11 +1,11 @@
 // website/src/components/sidebar.rs
 // Website-specific sidebar using hikari-components Sidebar
 
+use crate::app::Route;
+use _components::{Sidebar as HikariSidebar, SidebarItem, SidebarLeaf, SidebarSection};
+use _icons::{Icon, MdiIcon};
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
-use _components::{Sidebar as HikariSidebar, SidebarSection, SidebarItem, SidebarLeaf};
-use _icons::{Icon, MdiIcon};
-use crate::app::Route;
 
 /// Sidebar navigation with 3-level hierarchy
 ///
@@ -31,10 +31,7 @@ pub fn Sidebar(current_route: Route) -> Element {
 
 /// Render a category section with its subcategories
 #[component]
-fn SidebarCategorySection(
-    category: &'static NavCategory,
-    current_route: Route,
-) -> Element {
+fn SidebarCategorySection(category: &'static NavCategory, current_route: Route) -> Element {
     rsx! {
         SidebarSection {
             id: category.id.to_string(),
@@ -55,14 +52,13 @@ fn SidebarCategorySection(
 
 /// Render a subcategory (Level 2) with optional nested items
 #[component]
-fn SidebarSubcategoryItem(
-    subcategory: &'static NavSubcategory,
-    current_route: Route,
-) -> Element {
+fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: Route) -> Element {
     let has_children = !subcategory.items.is_empty();
 
     // Check if this subcategory's route matches current route
-    let is_active = subcategory.route.as_ref()
+    let is_active = subcategory
+        .route
+        .as_ref()
         .map(|r| std::mem::discriminant(r) == std::mem::discriminant(&current_route))
         .unwrap_or(false);
 
@@ -98,12 +94,12 @@ fn SidebarSubcategoryItem(
         rsx! {
             SidebarLeaf {
                 id: subcategory.label_en.to_string(),
+                secondary_label: Some(subcategory.label_zh.to_string()),
                 class: if is_active { "active" } else { "" },
                 dioxus_router::components::Link {
                     to: subcategory.route.clone().unwrap_or(Route::Home {}),
-                    class: "hi-sidebar-item-content-inner",
                     "{subcategory.label_en} "
-                    span { class: "hi-sidebar-item-zh", "{subcategory.label_zh}" }
+                    "{subcategory.label_zh}"
                 }
             }
         }
@@ -112,10 +108,7 @@ fn SidebarSubcategoryItem(
 
 /// Render a nested item (Level 3)
 #[component]
-fn SidebarNestedItem(
-    item: &'static NavItem,
-    current_route: Route,
-) -> Element {
+fn SidebarNestedItem(item: &'static NavItem, current_route: Route) -> Element {
     let is_active = std::mem::discriminant(&item.route) == std::mem::discriminant(&current_route);
 
     rsx! {
@@ -167,7 +160,8 @@ pub struct NavSubcategory {
 impl PartialEq for NavSubcategory {
     fn eq(&self, other: &Self) -> bool {
         self.label_en == other.label_en
-            && self.route.as_ref().map(|r| std::mem::discriminant(r)) == other.route.as_ref().map(|r| std::mem::discriminant(r))
+            && self.route.as_ref().map(|r| std::mem::discriminant(r))
+                == other.route.as_ref().map(|r| std::mem::discriminant(r))
     }
 }
 
@@ -194,14 +188,12 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
         id: "overview",
         title_en: "Overview",
         title_zh: "概览",
-        subcategories: &[
-            NavSubcategory {
-                label_en: "Home",
-                label_zh: "首页",
-                route: Some(Route::Home {}),
-                items: &[],
-            },
-        ],
+        subcategories: &[NavSubcategory {
+            label_en: "Home",
+            label_zh: "首页",
+            route: Some(Route::Home {}),
+            items: &[],
+        }],
     },
     NavCategory {
         id: "components",
@@ -213,9 +205,21 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                 label_zh: "布局",
                 route: Some(Route::ComponentsLayout {}),
                 items: &[
-                    NavItem { label: "Container", icon: MdiIcon::Image, route: Route::LayoutContainer {} },
-                    NavItem { label: "Grid", icon: MdiIcon::ViewColumn, route: Route::LayoutGrid {} },
-                    NavItem { label: "Section", icon: MdiIcon::CubeOutline, route: Route::LayoutSection {} },
+                    NavItem {
+                        label: "Container",
+                        icon: MdiIcon::Image,
+                        route: Route::LayoutContainer {},
+                    },
+                    NavItem {
+                        label: "Grid",
+                        icon: MdiIcon::ViewColumn,
+                        route: Route::LayoutGrid {},
+                    },
+                    NavItem {
+                        label: "Section",
+                        icon: MdiIcon::CubeOutline,
+                        route: Route::LayoutSection {},
+                    },
                 ],
             },
             NavSubcategory {
@@ -223,10 +227,26 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                 label_zh: "基础",
                 route: Some(Route::ComponentsBasic {}),
                 items: &[
-                    NavItem { label: "Button", icon: MdiIcon::GestureTap, route: Route::BasicButton {} },
-                    NavItem { label: "Input", icon: MdiIcon::TextBoxEdit, route: Route::BasicInput {} },
-                    NavItem { label: "Card", icon: MdiIcon::CreditCard, route: Route::BasicCard {} },
-                    NavItem { label: "Badge", icon: MdiIcon::Alert, route: Route::BasicBadge {} },
+                    NavItem {
+                        label: "Button",
+                        icon: MdiIcon::GestureTap,
+                        route: Route::BasicButton {},
+                    },
+                    NavItem {
+                        label: "Input",
+                        icon: MdiIcon::TextBoxEdit,
+                        route: Route::BasicInput {},
+                    },
+                    NavItem {
+                        label: "Card",
+                        icon: MdiIcon::CreditCard,
+                        route: Route::BasicCard {},
+                    },
+                    NavItem {
+                        label: "Badge",
+                        icon: MdiIcon::Alert,
+                        route: Route::BasicBadge {},
+                    },
                 ],
             },
             NavSubcategory {
@@ -234,9 +254,21 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                 label_zh: "反馈",
                 route: Some(Route::ComponentsFeedback {}),
                 items: &[
-                    NavItem { label: "Alert", icon: MdiIcon::Alert, route: Route::FeedbackAlert {} },
-                    NavItem { label: "Toast", icon: MdiIcon::Bell, route: Route::FeedbackToast {} },
-                    NavItem { label: "Tooltip", icon: MdiIcon::Information, route: Route::FeedbackTooltip {} },
+                    NavItem {
+                        label: "Alert",
+                        icon: MdiIcon::Alert,
+                        route: Route::FeedbackAlert {},
+                    },
+                    NavItem {
+                        label: "Toast",
+                        icon: MdiIcon::Bell,
+                        route: Route::FeedbackToast {},
+                    },
+                    NavItem {
+                        label: "Tooltip",
+                        icon: MdiIcon::Information,
+                        route: Route::FeedbackTooltip {},
+                    },
                 ],
             },
             NavSubcategory {
@@ -244,9 +276,21 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                 label_zh: "导航",
                 route: Some(Route::ComponentsNavigation {}),
                 items: &[
-                    NavItem { label: "Menu", icon: MdiIcon::FormatListBulleted, route: Route::NavigationMenu {} },
-                    NavItem { label: "Breadcrumb", icon: MdiIcon::ChevronDoubleRight, route: Route::NavigationBreadcrumb {} },
-                    NavItem { label: "Tabs", icon: MdiIcon::CreditCard, route: Route::NavigationTabs {} },
+                    NavItem {
+                        label: "Menu",
+                        icon: MdiIcon::FormatListBulleted,
+                        route: Route::NavigationMenu {},
+                    },
+                    NavItem {
+                        label: "Breadcrumb",
+                        icon: MdiIcon::ChevronDoubleRight,
+                        route: Route::NavigationBreadcrumb {},
+                    },
+                    NavItem {
+                        label: "Tabs",
+                        icon: MdiIcon::CreditCard,
+                        route: Route::NavigationTabs {},
+                    },
                 ],
             },
             NavSubcategory {
@@ -254,9 +298,21 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                 label_zh: "数据",
                 route: Some(Route::ComponentsData {}),
                 items: &[
-                    NavItem { label: "Table", icon: MdiIcon::FormatListBulleted, route: Route::DataTable {} },
-                    NavItem { label: "Tree", icon: MdiIcon::Graph, route: Route::DataTree {} },
-                    NavItem { label: "Pagination", icon: MdiIcon::ChevronLeft, route: Route::DataPagination {} },
+                    NavItem {
+                        label: "Table",
+                        icon: MdiIcon::FormatListBulleted,
+                        route: Route::DataTable {},
+                    },
+                    NavItem {
+                        label: "Tree",
+                        icon: MdiIcon::Graph,
+                        route: Route::DataTree {},
+                    },
+                    NavItem {
+                        label: "Pagination",
+                        icon: MdiIcon::ChevronLeft,
+                        route: Route::DataPagination {},
+                    },
                 ],
             },
         ],
@@ -302,13 +358,11 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
         id: "demos",
         title_en: "Demos",
         title_zh: "演示",
-        subcategories: &[
-            NavSubcategory {
-                label_en: "All Demos",
-                label_zh: "全部演示",
-                route: Some(Route::DemosOverview {}),
-                items: &[],
-            },
-        ],
+        subcategories: &[NavSubcategory {
+            label_en: "All Demos",
+            label_zh: "全部演示",
+            route: Some(Route::DemosOverview {}),
+            items: &[],
+        }],
     },
 ];

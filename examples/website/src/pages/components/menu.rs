@@ -6,7 +6,7 @@ use dioxus::prelude::*;
 
 use _components::{Menu, MenuItem, MenuMode, SubMenu, layout::{Container, Section}};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
+use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, };
 use crate::{app::Route, components::Layout};
 
 #[allow(non_snake_case)]
@@ -21,12 +21,12 @@ pub fn ComponentsMenu() -> Element {
                         class: ClassesBuilder::new()
                             .add(FontSize::X4xl)
                             .add(FontWeight::Bold)
-                            .add(Margin::M0)
+                            .add(MarginBottom::Mb0)
                             .add(MarginBottom::Mb2)
                             .build(),
                         "Menu"
                     }
-                    p { class: ClassesBuilder::new().add(Margin::M0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
                         "Navigation menu for organizing and structuring content with FUI aesthetics"
                     }
                 }
@@ -38,7 +38,7 @@ pub fn ComponentsMenu() -> Element {
 
                     div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
                         p { "Menus provide navigation through your application. They support:" }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Multiple modes" }
                                 " - Vertical, Horizontal, Inline"
@@ -390,7 +390,7 @@ pub fn ComponentsMenu() -> Element {
                                 .build(),
                             "When to Use Menus"
                         }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Vertical menus" }
                                 " - Sidebars, settings panels"
@@ -418,7 +418,7 @@ pub fn ComponentsMenu() -> Element {
                                 .build(),
                             "Organization Guidelines"
                         }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Keep it simple" }
                                 " - Limit to 7 items per level"

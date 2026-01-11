@@ -1,13 +1,19 @@
 // website/src/pages/components/tooltip.rs
 // Tooltip component showcase page with documentation
 
-
 use dioxus::prelude::*;
 
-use _components::{Button, ButtonVariant, Tooltip, TooltipPlacement, layout::{Container, Row, Section}};
-use _icons::{Icon, MdiIcon};
-use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, BgColor, BorderRadius, };
 use crate::{app::Route, components::Layout};
+use _animation::style::{CssProperty, StyleStringBuilder};
+use _components::{
+    layout::{Container, Row, Section},
+    Button, ButtonVariant, Tooltip, TooltipPlacement,
+};
+use _icons::{Icon, MdiIcon};
+use _palette::classes::{
+    BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, Margin, MarginBottom, Padding,
+    PaddingLeft, TextColor,
+};
 
 #[allow(non_snake_case)]
 pub fn ComponentsTooltip() -> Element {
@@ -21,12 +27,12 @@ pub fn ComponentsTooltip() -> Element {
                         class: ClassesBuilder::new()
                             .add(FontSize::X4xl)
                             .add(FontWeight::Bold)
-                            .add(Margin::M0)
+                            .add(MarginBottom::Mb0)
                             .add(MarginBottom::Mb2)
                             .build(),
                         "Tooltip"
                     }
-                    p { class: ClassesBuilder::new().add(Margin::M0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
                         "Floating labels for additional context with FUI aesthetics"
                     }
                 }
@@ -40,7 +46,7 @@ pub fn ComponentsTooltip() -> Element {
                         p {
                             "Tooltips provide additional context when users hover over or focus on elements. They support:"
                         }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Multiple placements" }
                                 " - Top, Bottom, Left, Right"
@@ -79,9 +85,9 @@ pub fn ComponentsTooltip() -> Element {
                         p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
                             "Tooltip appears above the element (default)"
                         }
-                        div { style: "padding: 40px;",
+                        div { style: StyleStringBuilder::new().add(CssProperty::Padding, "40px").build_clean(),
                             Tooltip {
-                                content: "This tooltip appears above the button".to_string(),
+                                content: "This tooltip appears above button".to_string(),
                                 placement: TooltipPlacement::Top,
                                 Button { variant: ButtonVariant::Primary, "Hover Me (Top)" }
                             }
@@ -101,9 +107,9 @@ pub fn ComponentsTooltip() -> Element {
                         p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
                             "Tooltip appears below the element"
                         }
-                        div { style: "padding: 40px;",
+                        div { style: StyleStringBuilder::new().add(CssProperty::Padding, "40px").build_clean(),
                             Tooltip {
-                                content: "This tooltip appears below the button".to_string(),
+                                content: "This tooltip appears below button".to_string(),
                                 placement: TooltipPlacement::Bottom,
                                 Button { variant: ButtonVariant::Secondary, "Hover Me (Bottom)" }
                             }
@@ -123,7 +129,7 @@ pub fn ComponentsTooltip() -> Element {
                         p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
                             "Tooltip appears to the left of the element"
                         }
-                        div { style: "padding: 40px;",
+                        div { style: StyleStringBuilder::new().add(CssProperty::Padding, "40px").build_clean(),
                             Tooltip {
                                 content: "This tooltip appears on the left".to_string(),
                                 placement: TooltipPlacement::Left,
@@ -145,7 +151,7 @@ pub fn ComponentsTooltip() -> Element {
                         p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
                             "Tooltip appears to the right of the element"
                         }
-                        div { style: "padding: 40px;",
+                        div { style: StyleStringBuilder::new().add(CssProperty::Padding, "40px").build_clean(),
                             Tooltip {
                                 content: "This tooltip appears on the right".to_string(),
                                 placement: TooltipPlacement::Right,
@@ -173,7 +179,7 @@ pub fn ComponentsTooltip() -> Element {
                         p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
                             "Arrow indicator pointing to the element (default: true)"
                         }
-                        div { style: "padding: 40px;",
+                        div { style: StyleStringBuilder::new().add(CssProperty::Padding, "40px").build_clean(),
                             Tooltip {
                                 content: "Tooltip with arrow".to_string(),
                                 placement: TooltipPlacement::Top,
@@ -196,7 +202,7 @@ pub fn ComponentsTooltip() -> Element {
                         p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
                             "Clean tooltip without arrow indicator"
                         }
-                        div { style: "padding: 40px;",
+                        div { style: StyleStringBuilder::new().add(CssProperty::Padding, "40px").build_clean(),
                             Tooltip {
                                 content: "Tooltip without arrow".to_string(),
                                 placement: TooltipPlacement::Top,
@@ -272,11 +278,11 @@ pub fn ComponentsTooltip() -> Element {
                         p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
                             "Provide additional context for text elements"
                         }
-                        div { style: "padding: 20px;",
+                        div { style: StyleStringBuilder::new().add(CssProperty::Padding, "20px").build_clean(),
                             Tooltip {
                                 content: "This is an important term that needs explanation".to_string(),
                                 placement: TooltipPlacement::Top,
-                                span { style: "border-bottom: 1px dotted; cursor: help;",
+                                span { style: StyleStringBuilder::new().add(CssProperty::BorderBottom, "1px dotted").add(CssProperty::Cursor, "help").build_clean(),
                                     "Hover over this text"
                                 }
                             }
@@ -296,9 +302,9 @@ pub fn ComponentsTooltip() -> Element {
                         p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
                             "Tooltips can contain longer text descriptions"
                         }
-                        div { style: "padding: 40px;",
+                        div { style: StyleStringBuilder::new().add(CssProperty::Padding, "40px").build_clean(),
                             Tooltip {
-                                content: "This is a much longer tooltip that provides detailed information about the element. It can contain multiple sentences and will wrap appropriately."
+                                content: "This is a much longer tooltip that provides detailed information about element. It can contain multiple sentences and will wrap appropriately."
                                     .to_string(),
                                 placement: TooltipPlacement::Top,
                                 Button { variant: ButtonVariant::Primary, "Long Tooltip" }
@@ -438,7 +444,7 @@ pub fn ComponentsTooltip() -> Element {
                                 .build(),
                             "When to Use Tooltips"
                         }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Icon buttons" }
                                 " - Explain icon actions"
@@ -466,7 +472,7 @@ pub fn ComponentsTooltip() -> Element {
                                 .build(),
                             "Content Guidelines"
                         }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Keep it brief" }
                                 " - 1-2 sentences maximum"
@@ -494,7 +500,7 @@ pub fn ComponentsTooltip() -> Element {
                                 .build(),
                             "Placement Guidelines"
                         }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Top" }
                                 " - Default, most common choice"

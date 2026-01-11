@@ -350,6 +350,10 @@ pub struct SidebarLeafProps {
     /// Unique identifier for this item
     pub id: String,
 
+    /// Secondary label (e.g., "基础" for Chinese)
+    #[props(default)]
+    pub secondary_label: Option<String>,
+
     /// Additional CSS classes
     #[props(default)]
     pub class: String,
@@ -363,6 +367,7 @@ impl Default for SidebarLeafProps {
     fn default() -> Self {
         Self {
             id: String::default(),
+            secondary_label: None,
             class: String::default(),
             children: VNode::empty(),
         }
@@ -380,6 +385,9 @@ pub fn SidebarLeaf(props: SidebarLeafProps) -> Element {
             div {
                 class: "hi-sidebar-leaf-content",
                 { props.children }
+                if let Some(secondary) = &props.secondary_label {
+                    span { class: "hi-sidebar-item-zh", "{secondary}" }
+                }
             }
         }
     }

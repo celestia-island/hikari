@@ -5,7 +5,7 @@
 use dioxus::prelude::*;
 
 use _components::layout::{Container, Row, Section};
-use _palette::classes::{ BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, Margin, MarginBottom, Padding, PaddingLeft, TextColor, };
+use _palette::classes::{ BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding, PaddingLeft, TextColor, };
 use crate::{app::Route, components::Layout};
 
 #[allow(non_snake_case)]
@@ -20,12 +20,12 @@ pub fn ComponentsLayout() -> Element {
                         class: ClassesBuilder::default()
                             .add(FontSize::X4xl)
                             .add(FontWeight::Bold)
-                            .add(Margin::M0)
+                            .add(MarginBottom::Mb0)
                             .add(MarginBottom::Mb2)
                             .build(),
                         "Layout Components"
                     }
-                    p { class: ClassesBuilder::default().add(Margin::M0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::default().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
                         "Structural components for building application layouts with FUI aesthetics"
                     }
                 }
@@ -39,7 +39,7 @@ pub fn ComponentsLayout() -> Element {
                         p {
                             "The Hikari Layout system provides a flexible set of components for building responsive application layouts. It includes:"
                         }
-                        ul { class: ClassesBuilder::default().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::default().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Layout" }
                                 " - Main layout container with header, aside, and content areas"

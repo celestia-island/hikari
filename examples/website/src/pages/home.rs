@@ -1,13 +1,16 @@
 // website/src/pages/home.rs
 // Home page - Showcasing Hikari Component Library
 
-
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use _palette::classes::{ClassesBuilder, FontSize, FontWeight, TextColor, TextAlign, MarginBottom};
 use crate::{app::Route, components::Layout};
-use _components::{Button, ButtonSize, ButtonVariant, Card, layout::{Container, Grid, Row, Section, Spacer}};
+use _animation::style::{CssProperty, StyleStringBuilder};
+use _components::{
+    layout::{Container, Grid, Row, Section, Spacer},
+    Button, ButtonSize, ButtonVariant, Card,
+};
+use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextAlign, TextColor};
 
 #[component]
 pub fn Home() -> Element {
@@ -109,10 +112,11 @@ pub fn Home() -> Element {
 #[component]
 fn FeatureCard(icon: String, title: String, description: String) -> Element {
     rsx! {
-        Card { hoverable: true, title: Some(title), class: "feature-card",
-
-            div { class: "feature-icon", "{icon}" }
-            p { class: "feature-description", "{description}" }
+        Card { hoverable: true, title: Some(title),
+            div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::FlexDirection, "column").add(CssProperty::AlignItems, "center").build_clean(),
+                div { class: ClassesBuilder::new().add_raw("feature-icon").build(), "{icon}" }
+                p { class: ClassesBuilder::new().add_raw("feature-description").build(), "{description}" }
+            }
         }
     }
 }

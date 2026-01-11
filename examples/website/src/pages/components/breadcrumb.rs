@@ -6,7 +6,7 @@ use dioxus::prelude::*;
 
 use _components::{Breadcrumb, BreadcrumbItem, BreadcrumbSeparator, layout::{Container, Section}};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
+use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, };
 use crate::{app::Route, components::Layout};
 
 #[allow(non_snake_case)]
@@ -21,12 +21,12 @@ pub fn ComponentsBreadcrumb() -> Element {
                         class: ClassesBuilder::new()
                             .add(FontSize::X4xl)
                             .add(FontWeight::Bold)
-                            .add(Margin::M0)
+                            .add(MarginBottom::Mb0)
                             .add(MarginBottom::Mb2)
                             .build(),
                         "Breadcrumb"
                     }
-                    p { class: ClassesBuilder::new().add(Margin::M0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
                         "Navigation breadcrumbs showing current page location with FUI aesthetics"
                     }
                 }
@@ -40,7 +40,7 @@ pub fn ComponentsBreadcrumb() -> Element {
                         p {
                             "Breadcrumbs show the current page's location in the site hierarchy. They support:"
                         }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Default separator" }
                                 " - Chevron-right icon (refined)"
@@ -485,7 +485,7 @@ pub fn ComponentsBreadcrumb() -> Element {
                                 .build(),
                             "When to Use Breadcrumbs"
                         }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Deep hierarchies" }
                                 " - 3+ levels deep"
@@ -513,7 +513,7 @@ pub fn ComponentsBreadcrumb() -> Element {
                                 .build(),
                             "Content Guidelines"
                         }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Keep it concise" }
                                 " - Short, clear labels"
@@ -541,7 +541,7 @@ pub fn ComponentsBreadcrumb() -> Element {
                                 .build(),
                             "Design Guidelines"
                         }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Placement" }
                                 " - Below header, above content"

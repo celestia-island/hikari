@@ -6,7 +6,7 @@ use dioxus::prelude::*;
 
 use _components::{Alert, AlertVariant, Button, ButtonVariant, layout::{Container, Row, Section}};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
+use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, };
 use crate::{app::Route, components::Layout};
 
 #[allow(non_snake_case)]
@@ -21,12 +21,12 @@ pub fn ComponentsAlert() -> Element {
                         class: ClassesBuilder::default()
                             .add(FontSize::X4xl)
                             .add(FontWeight::Bold)
-                            .add(Margin::M0)
+                            .add(MarginBottom::Mb0)
                             .add(MarginBottom::Mb2)
                             .build(),
                         "Alert"
                     }
-                    p { class: ClassesBuilder::default().add(Margin::M0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::default().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
                         "Inline alert messages for feedback and notifications with FUI aesthetics"
                     }
                 }
@@ -38,7 +38,7 @@ pub fn ComponentsAlert() -> Element {
 
                     div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
                         p { "Alerts display important messages to users. They support:" }
-                        ul { class: ClassesBuilder::default().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::default().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Multiple variants" }
                                 " - Info, Success, Warning, Error"
@@ -283,7 +283,7 @@ pub fn ComponentsAlert() -> Element {
                                 .build(),
                             "Basic Alert"
                         }
-                        div { class: "code-example",
+                        div { class: ClassesBuilder::new().add(Padding::P4).add_raw("bg-gray-900").add_raw("rounded").build(),
                             code {
                                 r#"Alert {{
     variant: AlertVariant::Info,
@@ -304,7 +304,7 @@ pub fn ComponentsAlert() -> Element {
                                 .build(),
                             "Closable Alert with Handler"
                         }
-                        div { class: "code-example",
+                        div { class: ClassesBuilder::new().add(Padding::P4).add_raw("bg-gray-900").add_raw("rounded").build(),
                             code {
                                 r#"let mut show_alert = use_signal(|| true);
 
@@ -329,7 +329,7 @@ Alert {{
                                 .build(),
                             "Alert with Custom Icon"
                         }
-                        div { class: "code-example",
+                        div { class: ClassesBuilder::new().add(Padding::P4).add_raw("bg-gray-900").add_raw("rounded").build(),
                             code {
                                 r#"Alert {{
     variant: AlertVariant::Warning,
@@ -353,7 +353,7 @@ Alert {{
                                 .build(),
                             "Simple Alert"
                         }
-                        div { class: "code-example",
+                        div { class: ClassesBuilder::new().add(Padding::P4).add_raw("bg-gray-900").add_raw("rounded").build(),
                             code {
                                 r#"Alert {{
     variant: AlertVariant::Info,
@@ -390,7 +390,7 @@ Alert {{
                                     description: Some("Please fix the following issues:".to_string()),
                                     closable: true,
                                 }
-                                div { class: "demo-description",
+                                div { class: ClassesBuilder::new().add(TextColor::Gray600).add(MarginBottom::Mb4).build(),
                                     ul {
                                         li { "Email address is required" }
                                         li { "Password must be at least 8 characters" }

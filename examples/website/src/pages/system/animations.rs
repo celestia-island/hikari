@@ -4,6 +4,10 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
+use _palette::classes::{
+    ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding,
+    TextColor,
+};
 
 /// Animations showcase page
 #[allow(non_snake_case)]
@@ -14,24 +18,24 @@ pub fn SystemAnimations() -> Element {
             current_route: Route::SystemAnimations {},
             children: rsx! {
                 div {
-                    class: "page-container",
+                    class: ClassesBuilder::new().add_raw("page-container").build(),
 
                     div {
-                        class: "page-header",
+                        class: ClassesBuilder::new().add_raw("page-header").build(),
                         h1 {
-                            class: "page-title",
+                            class: ClassesBuilder::new().add_raw("page-title").add(FontSize::X4xl).add(FontWeight::Bold).add(MarginBottom::Mb0).build(),
                             "Animation System"
                         }
                         p {
-                            class: "page-description",
+                            class: ClassesBuilder::new().add_raw("page-description").add(TextColor::Gray600).build(),
                             "GSAP-inspired state machine for smooth, declarative animations"
                         }
                     }
 
                     div {
-                        class: "info-box",
+                        class: ClassesBuilder::new().add_raw("info-box").build(),
                         p {
-                            class: "info-box-text",
+                            class: ClassesBuilder::new().add_raw("info-box-text").build(),
                             "This page is under construction. Check back soon for detailed documentation and examples!"
                         }
                     }

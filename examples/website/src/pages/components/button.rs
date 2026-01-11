@@ -1,13 +1,17 @@
 // website/src/pages/components/button.rs
 // Button component showcase page with real rendered examples
 
-
 use dioxus::prelude::*;
 
-use _components::{Button, ButtonAnimation, ButtonSize, ButtonVariant, layout::{Container, Section}};
-use _icons::{Icon, MdiIcon};
-use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, };
 use crate::{app::Route, components::Layout};
+use _components::{
+    layout::{Container, Section},
+    Button, ButtonAnimation, ButtonSize, ButtonVariant,
+};
+use _icons::{Icon, MdiIcon};
+use _palette::classes::{
+    ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, PaddingLeft, TextColor,
+};
 
 #[allow(non_snake_case)]
 pub fn ComponentsButton() -> Element {
@@ -21,12 +25,12 @@ pub fn ComponentsButton() -> Element {
                         class: ClassesBuilder::new()
                             .add(FontSize::X4xl)
                             .add(FontWeight::Bold)
-                            .add(Margin::M0)
+                            .add(MarginBottom::Mb0)
                             .add(MarginBottom::Mb2)
                             .build(),
                         "Button"
                     }
-                    p { class: ClassesBuilder::new().add(Margin::M0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
                         "Buttons trigger actions and come in various styles with FUI aesthetics"
                     }
                 }
@@ -40,7 +44,7 @@ pub fn ComponentsButton() -> Element {
                         p {
                             "Buttons allow users to take actions, make choices, and navigate through your application. They support:"
                         }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Multiple variants" }
                                 " - Primary, Secondary, Ghost, Danger, Success"

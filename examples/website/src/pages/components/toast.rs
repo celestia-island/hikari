@@ -5,7 +5,7 @@
 use dioxus::prelude::*;
 
 use _components::{Toast, ToastPosition, ToastVariant, layout::{Container, Section}};
-use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Margin, Display, FlexDirection, Gap, BgColor, BorderRadius, };
+use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Display, FlexDirection, Gap, BgColor, BorderRadius, };
 use crate::{app::Route, components::Layout};
 
 #[allow(non_snake_case)]
@@ -20,12 +20,12 @@ pub fn ComponentsToast() -> Element {
                         class: ClassesBuilder::new()
                             .add(FontSize::X4xl)
                             .add(FontWeight::Bold)
-                            .add(Margin::M0)
+                            .add(MarginBottom::Mb0)
                             .add(MarginBottom::Mb2)
                             .build(),
                         "Toast"
                     }
-                    p { class: ClassesBuilder::new().add(Margin::M0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
                         "Floating notification messages for user feedback with FUI aesthetics"
                     }
                 }
@@ -39,7 +39,7 @@ pub fn ComponentsToast() -> Element {
                         p {
                             "Toasts are floating notification messages that appear temporarily to provide feedback. They support:"
                         }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Multiple variants" }
                                 " - Info, Success, Warning, Error"
@@ -458,7 +458,7 @@ pub fn ComponentsToast() -> Element {
                                 .build(),
                             "When to Use Toasts"
                         }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Success feedback" }
                                 " - Confirm completed actions"
@@ -486,7 +486,7 @@ pub fn ComponentsToast() -> Element {
                                 .build(),
                             "Position Guidelines"
                         }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "Top-Right" }
                                 " - Most common, non-intrusive"
@@ -514,7 +514,7 @@ pub fn ComponentsToast() -> Element {
                                 .build(),
                             "Duration Recommendations"
                         }
-                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(Margin::M0).build(),
+                        ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
                                 strong { "2-3 seconds" }
                                 " - Short info messages"

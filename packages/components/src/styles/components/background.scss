@@ -1,0 +1,64 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Background Component - Global Gradient
+// ============================================
+
+.hi-background {
+  // Fixed positioning - covers entire viewport, ignores scroll
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  // Full viewport dimensions
+  width: 100vw;
+  height: 100vh;
+
+  // Behind all content
+  z-index: -1;
+
+  // Click-through - does not block interactions
+  pointer-events: none;
+}
+
+// Light theme gradient (Hikari - 素 + 粉红) with 60s rotation
+[data-theme="hikari"] .hi-background {
+  background: linear-gradient(0deg, #E0F0E9 0%, #FFC0CB 100%);
+  animation: rotate-gradient-hikari 60s linear infinite;
+}
+
+// Dark theme gradient (Tairitsu - 深蓝 + 纯黑) with 60s rotation
+[data-theme="tairitsu"] .hi-background {
+  background: linear-gradient(0deg, #0a2e4d 0%, #000000 100%);
+  animation: rotate-gradient-tairitsu 60s linear infinite;
+}
+
+// Light theme 60-second rotating gradient animation
+@keyframes rotate-gradient-hikari {
+  0% {
+    background: linear-gradient(0deg, #E0F0E9 0%, #FFC0CB 100%);
+  }
+  50% {
+    background: linear-gradient(180deg, #E0F0E9 0%, #FFC0CB 100%);
+  }
+  100% {
+    background: linear-gradient(360deg, #E0F0E9 0%, #FFC0CB 100%);
+  }
+}
+
+// Dark theme 60-second rotating gradient animation
+@keyframes rotate-gradient-tairitsu {
+  0% {
+    background: linear-gradient(0deg, #0a2e4d 0%, #000000 100%);
+  }
+  50% {
+    background: linear-gradient(180deg, #0a2e4d 0%, #000000 100%);
+  }
+  100% {
+    background: linear-gradient(360deg, #0a2e4d 0%, #000000 100%);
+  }
+}

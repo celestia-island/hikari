@@ -94,7 +94,10 @@ impl StyleRegistry {
     /// Registers all basic UI components.
     #[cfg(feature = "basic")]
     pub fn register_basic_components(&mut self) {
-        use crate::basic::{BadgeComponent, ButtonComponent, CardComponent, InputComponent};
+        use crate::basic::{
+            BackgroundComponent, BadgeComponent, ButtonComponent, CardComponent, InputComponent,
+        };
+        BackgroundComponent::register(self);
         ButtonComponent::register(self);
         InputComponent::register(self);
         CardComponent::register(self);

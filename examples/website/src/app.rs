@@ -288,7 +288,7 @@ fn DemosOverview() -> Element {
 #[allow(non_snake_case)]
 pub fn App() -> Element {
     // Theme state (default to hikari light theme)
-    let mut theme = use_signal(|| "hikari".to_string());
+    let theme = use_signal(|| "hikari".to_string());
 
     // Provide theme context to all children
     use_context_provider(|| ThemeContext {
@@ -305,7 +305,7 @@ pub fn App() -> Element {
 
     rsx! {
         ThemeProvider {
-            palette: "{theme.read()}",
+            palette: theme.read().clone(),
             Router::<Route> {}
         }
     }

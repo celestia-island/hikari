@@ -30,13 +30,13 @@
   // Appearance - 移除圆角
   border-radius: 0;
 
-  // 轻量白色背景
-  background: rgba(255, 255, 255, 0.95);
+  // Semi-transparent surface background (theme-aware)
+  background: var(--hi-surface);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 
-  // 简洁边框
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  // Simple border
+  border-bottom: 1px solid var(--hi-border);
   box-shadow: 0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.05));
 
   // Transitions - smooth GSAP-style easing

@@ -237,31 +237,33 @@
 // Note: These are fallback values only. ThemeProvider injects
 // actual theme colors via inline styles at runtime.
 
-:root {
+ :root {
   // Theme Colors (fallback to Hikari light theme)
-  --hi-primary: #7BCFA6;     // 石青
+  --hi-primary: #FFC0CB;     // 粉红
   --hi-secondary: #FF4C00;   // 朱红
   --hi-accent: #F59E0B;      // 姜黄
   --hi-success: #10B981;     // 葱倩
   --hi-warning: #FBBF24;     // 鹅黄
   --hi-danger: #EF4444;      // 朱红
-  --hi-info: #7BCFA6;        // 石青
+  --hi-info: #FFC0CB;        // 粉红
 
   // Surface & Background Colors
-  --hi-background: #F5F5F5;  // 素
-  --hi-surface: #FAFAFA;     // 月白
-  --hi-border: #E5E5E5;      // 素
+  --hi-background: #E0F0E9;  // 素
+  --hi-surface: rgba(255, 255, 255, 0.85);  // 小幅透明白色
+  --hi-border: #E0F0E9;     // 素
 
   // Text Colors
-  --hi-text-primary: #2D2D2D;   // 墨色
-  --hi-text-secondary: #6B7280;  // 黛
+  --hi-text-primary: #50616D;   // 墨色
+  --hi-text-secondary: #4A4266;  // 黛
   --hi-text-disabled: #9CA3AF;
 
-  // Aliases for sidebar (with color- prefix for consistency)
+  // Aliases for components (with color- prefix for consistency)
   --hi-color-text-primary: var(--hi-text-primary);
   --hi-color-text-secondary: var(--hi-text-secondary);
   --hi-color-border: var(--hi-border);
   --hi-color-primary: var(--hi-primary);
+  --hi-color-background: var(--hi-background);
+  --hi-color-surface: var(--hi-surface);
   --hi-primary-bg: rgba(123, 207, 166, 0.15);
   --hi-secondary-bg: rgba(248, 250, 252, 0.5);
   --hi-tertiary-bg: rgba(243, 244, 246, 0.5);
@@ -335,6 +337,34 @@
 
 // Dark theme specific overrides
 [data-theme="tairitsu"] {
+  // Theme Colors
+  --hi-primary: #065279;     // 靛蓝
+  --hi-secondary: #4B5CC4;   // 宝蓝
+  --hi-accent: #F59E0B;      // 姜黄
+  --hi-success: #10B981;     // 葱倩
+  --hi-warning: #FBBF24;     // 鹅黄
+  --hi-danger: #EF4444;      // 朱红
+  --hi-info: #065279;        // 靛蓝
+
+  // Surface & Background Colors
+  --hi-background: #4A4266;  // 黛
+  --hi-surface: rgba(0, 0, 0, 0.85);  // 小幅透明黑色
+  --hi-border: #4A4266;      // 黛
+
+  // Text Colors
+  --hi-text-primary: #D6ECF0;   // 月白
+  --hi-text-secondary: #E0F0E9;  // 素
+  --hi-text-disabled: #9CA3AF;
+
+  // Aliases for components (with color- prefix for consistency)
+  --hi-color-text-primary: var(--hi-text-primary);
+  --hi-color-text-secondary: var(--hi-text-secondary);
+  --hi-color-border: var(--hi-border);
+  --hi-color-primary: var(--hi-primary);
+  --hi-color-background: var(--hi-background);
+  --hi-color-surface: var(--hi-surface);
+
+  // Component-specific Colors
   --hi-button-bg: rgba(250, 250, 250, 0.1);
   --hi-button-bg-hover: rgba(250, 250, 250, 0.15);
 
@@ -348,6 +378,7 @@
 // 2. Basic Components
 // ============================================
 
+@import './components/background.scss';
 @import './components/avatar.scss';
 @import './components/button.scss';
 @import './components/input.scss';

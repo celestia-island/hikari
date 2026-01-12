@@ -140,6 +140,10 @@ pub fn build_router(
     // Add Dioxus SSR catch-all route
     router = router.route("/ssr/<*path>", any(ssr_handler));
 
+    // Add icon fallback route for /icons/<path>
+    // This ensures icon requests don't fall through to SPA fallback
+    router = router.route("/icons/<*path>", any(icon_fallback_handler));
+
     // CRITICAL: Add static asset mounts with SPA fallback
     // Static files are served, but 404s fall through to index.html for SPA routing
     for mount_config in static_mounts {
@@ -198,6 +202,33 @@ async fn index_handler() -> impl IntoResponse {
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
         .body(Body::from(html))
+        .unwrap()
+}
+
+/// Icon fallback handler - returns 404 for missing icon files
+///
+/// This prevents icon requests from falling through to SPA fallback.
+/// Icon files should be served from the mounted /icons directory.
+/// If an icon is not found, return a clear 404 SVG instead of HTML.
+async fn icon_fallback_handler(Path(path): Path<String>) -> impl IntoResponse {
+    // Return a clear 404 SVG instead of HTML
+    let svg_404 = r#"<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>"#;
+
+    eprintln!("❌ Icon not found: /icons/{}", path);
+    eprintln!("   Make sure MDI icons are downloaded: python scripts/icons/fetch_mdi_icons.py");
+    eprintln!(
+        "   Icon should be in: packages/builder/generated/mdi_svgs/{}.svg",
+        path
+    );
+
+    Response::builder()
+        .status(StatusCode::NOT_FOUND)
+        .header(header::CONTENT_TYPE, "image/svg+xml; charset=utf-8")
+        .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+        .body(Body::from(svg_404))
         .unwrap()
 }
 

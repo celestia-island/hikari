@@ -29,6 +29,7 @@
 //! }
 //! ```
 
+use crate::basic::Background;
 use dioxus::prelude::*;
 
 /// Layout component - Modern application layout wrapper
@@ -40,6 +41,7 @@ use dioxus::prelude::*;
 /// - Glass morphism effects for modern feel
 ///
 /// # Features
+/// - Global gradient background (via Background component)
 /// - Responsive sidebar with backdrop overlay on mobile
 /// - Optional glassmorphism header
 /// - Smooth slide-in/out animations
@@ -72,6 +74,9 @@ pub fn Layout(
     let mut is_drawer_open = use_signal(|| false);
 
     rsx! {
+        // Global gradient background (fixed, behind everything)
+        Background {}
+
         div {
             class: format!(
                 "hi-layout hi-layout-light {} {}",

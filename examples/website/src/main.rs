@@ -9,7 +9,9 @@ use http::StatusCode;
 use tower_http::cors::{Any, CorsLayer};
 
 use _components::StyleRegistry;
-use _render_service::{HikariRenderServicePlugin, plugin::StaticMountConfig, static_files::StaticFileConfig};
+use _render_service::{
+    plugin::StaticMountConfig, static_files::StaticFileConfig, HikariRenderServicePlugin,
+};
 
 // Import centralized path configuration
 use website::paths::STATIC_PATHS;
@@ -41,10 +43,12 @@ async fn main() -> anyhow::Result<()> {
         // Disable cache for styles directory to force reload during development
         .mount_static(
             StaticMountConfig::new(STATIC_PATHS.styles_fs, STATIC_PATHS.styles_mount)
-                .config(StaticFileConfig::default().no_cache())
+                .config(StaticFileConfig::default().no_cache()),
         )
         .static_assets(STATIC_PATHS.images_fs, STATIC_PATHS.images_mount)
-        .static_assets(STATIC_PATHS.icons_fs, STATIC_PATHS.icons_mount)
+        // Mount icons at /icons (not /static/icons) to match Icon component path
+        // This ensures icon requests don't fall through to SPA fallback
+        .icon_assets(STATIC_PATHS.icons_fs, "/icons")
         .build()?
         .layer(cors);
 
@@ -71,4 +75,3 @@ async fn health_handler() -> impl IntoResponse {
 async fn dioxus_hmr_handler() -> impl IntoResponse {
     (StatusCode::NOT_FOUND, "Hot reload is disabled")
 }
-

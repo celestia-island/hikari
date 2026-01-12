@@ -18,46 +18,10 @@
   display: flex;
   flex-direction: column;
 
-  // Ambient background pattern
+  // Transparent to let body gradient show through
   position: relative;
-  background-color: var(--hi-color-background);
+  background: transparent;
   overflow: hidden;
-
-  // Subtle grid pattern overlay (FUI aesthetic)
-  &::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image:
-      linear-gradient(var(--hi-primary, rgba(123, 207, 166, 0.03)) 1px, transparent 1px),
-      linear-gradient(90deg, var(--hi-primary, rgba(123, 207, 166, 0.03)) 1px, transparent 1px);
-    background-size: 50px 50px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  // Ambient glow animation
-  &::after {
-    content: '';
-    position: fixed;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(
-      circle at 50% 50%,
-      var(--hi-primary, rgba(123, 207, 166, 0.04)) 0%,
-      transparent 50%
-    );
-    // DISABLED - migrated to JS animation
-
-    // animation: layout-ambient-move vars.$hikari-ambient-duration vars.$hikari-ambient-easing infinite;
-    pointer-events: none;
-    z-index: 0;
-  }
 
   // Ensure content stays above background
   > * {
@@ -135,8 +99,8 @@
   // Content padding - 减小间距
   padding: 0;
 
-  // Simple background only
-  background: rgba(248, 250, 252, 1);
+  // Transparent to let body gradient show through
+  background: transparent;
 
   // Transitions
   // DISABLED - migrated to JS animation
@@ -223,7 +187,7 @@
       left: 0;
       right: 0;
       height: 20px;
-      background: linear-gradient(to bottom, rgba(248, 250, 252, 0.9), transparent);
+      background: transparent;
       pointer-events: none;
       opacity: var(--fade-top-opacity, 0); // Controlled by JS
       // DISABLED - migrated to JS animation
@@ -239,7 +203,7 @@
       left: 0;
       right: 0;
       height: 20px;
-      background: linear-gradient(to top, rgba(248, 250, 252, 0.9), transparent);
+      background: transparent;
       pointer-events: none;
       opacity: var(--fade-bottom-opacity, 0); // Controlled by JS
       // DISABLED - migrated to JS animation
@@ -331,24 +295,22 @@
 // Layout Background Variants
 // ============================================
 
-// Default dark theme
+// Default dark theme (transparent - let Background component handle it)
 .hi-layout-dark {
-  background-color: var(--hi-color-background);
+  background-color: transparent;
 }
 
-// Light theme
+// Light theme (transparent - let Background component handle it)
 .hi-layout-light {
-  background-color: var(--hi-text-primary, #f8fafc);
+  background-color: transparent;
 
   &::before {
-    background-image:
-      linear-gradient(var(--hi-primary, rgba(123, 207, 166, 0.05)) 1px, transparent 1px),
-      linear-gradient(90deg, var(--hi-primary, rgba(123, 207, 166, 0.05)) 1px, transparent 1px);
+    display: none;
   }
 
   .hi-layout-content {
-    background: rgba(255, 255, 255, 0.8);
-    box-shadow: inset 0 0 40px var(--hi-primary, rgba(123, 207, 166, 0.08));
+    background: transparent;
+    box-shadow: none;
   }
 }
 

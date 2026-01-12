@@ -36,17 +36,9 @@ pub fn Layout(children: Element, current_route: Route) -> Element {
         }
     });
 
-    // Create a key that changes when theme changes to force Icon to re-render
-    // IMPORTANT: Icon component uses use_resource which only runs once on mount
-    // We need a changing key to force complete re-creation of Icon component
-    // NOTE: The key must be on the Button (wrapper component), NOT on the Icon itself
-    // This forces Dioxus to completely destroy and recreate the Button when key changes,
-    // which in turn forces the Icon to be recreated, triggering use_resource to run again
-    // and fetch the new SVG.
-    let icon_key = use_memo(move || {
-        let icon = current_icon.read();
-        format!("{:?}", icon)
-    });
+    // Create a reactive key that changes when the theme/icon changes
+    // This forces the Button component to be destroyed and recreated
+    let icon_key = use_memo(move || format!("{:?}", current_icon.read()));
 
     rsx! {
         HikariLayout {
@@ -58,8 +50,8 @@ pub fn Layout(children: Element, current_route: Route) -> Element {
 
                     right_content: rsx! {
                         Button {
-                            variant: ButtonVariant::Ghost,
                             key: "{icon_key}",
+                            variant: ButtonVariant::Ghost,
                             icon: rsx! {
                                 Icon {
                                     icon: *current_icon.read(),

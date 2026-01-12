@@ -11,7 +11,7 @@ button[data-theme] {
   border: none;
 
   &:hover {
-    background: rgba(241, 245, 249, 0.8) !important;
+    background: var(--hi-surface) !important;
   }
 
   &:active {

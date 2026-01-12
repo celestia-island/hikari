@@ -227,13 +227,39 @@ impl HikariRenderServicePlugin {
     /// * `local_path` - Local filesystem path to icon assets
     /// * `url_path` - URL path to mount at (default: "/static/icons")
     ///
-    /// # Example
+    /// # Important: Icon Path Configuration
+    ///
+    /// Icon assets should be mounted at **/icons** or **/static/icons** to ensure:
+    /// - Icon requests (`/icons/moon.svg`) don't fall through to SPA fallback
+    /// - Missing icons return 404 SVG (not HTML)
+    /// - Icon routes are properly scoped under the icons path
+    ///
+    /// # Recommended Configuration
+    ///
+    /// ```rust,no_run
+    /// # use render_service::HikariRenderServicePlugin;
+    /// let plugin = HikariRenderServicePlugin::new()
+    ///     .icon_assets("./packages/builder/generated/mdi_svgs", "/icons");
+    /// ```
+    ///
+    /// # Example with Custom Mount
     ///
     /// ```rust,no_run
     /// # use render_service::HikariRenderServicePlugin;
     /// let plugin = HikariRenderServicePlugin::new()
     ///     .icon_assets("./packages/icons/dist/lucide/icons", "/static/icons");
     /// ```
+    ///
+    /// # Icon Fallback Handler
+    ///
+    /// The render-service includes a dedicated icon fallback handler at `/icons/*` that:
+    /// - Returns 404 SVG for missing icons (not HTML)
+    /// - Logs helpful error messages
+    /// - Prevents icon requests from falling through to SPA fallback
+    ///
+    /// This ensures that when an icon is missing, the frontend won't accidentally
+    /// render the entire application HTML inside an Icon component (which would cause
+    /// nested DOM rendering issues).
     pub fn icon_assets<S, T>(mut self, local_path: S, url_path: T) -> Self
     where
         S: Into<PathBuf>,

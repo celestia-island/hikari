@@ -59,8 +59,18 @@ fn main() {
     match hikari_builder::icons::build_selected_icons(&config) {
         Ok(()) => println!("cargo:warning=✅ MDI icons built successfully"),
         Err(e) => {
-            println!("cargo:warning=⚠️  Failed to build MDI icons: {}", e);
-            println!("cargo:warning=   Run: python scripts/icons/fetch_mdi_icons.py");
+            eprintln!("❌ BUILD ERROR: Failed to build MDI icons");
+            eprintln!("   Error: {}", e);
+            eprintln!("");
+            eprintln!(
+                "   Solution: Run 'python scripts/icons/fetch_mdi_icons.py' to download icons"
+            );
+            eprintln!("");
+            eprintln!("   This is required because icons are fetched at build time");
+            eprintln!("   from the generated cache directory.");
+            eprintln!("");
+            eprintln!("   Cache location: packages/builder/generated/mdi_svgs/");
+            std::process::exit(1);
         }
     }
 

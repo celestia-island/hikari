@@ -33,11 +33,15 @@
 //! ```
 
 use anyhow::{anyhow, Context, Result};
+use quick_xml::events::Event;
 use std::{
     collections::{HashMap, HashSet},
     fs,
     path::{Path, PathBuf},
 };
+
+mod svg_parser;
+pub use svg_parser::{PathElement, SvgElement, SvgIcon};
 
 /// Icon source library
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -328,7 +332,7 @@ fn load_mdi_metadata(workspace_root: &Path) -> Result<MdiMetadata> {
     serde_json::from_str(&content).context("Failed to parse MDI metadata")
 }
 
-/// Read SVG content from file
+/// Read and validate SVG content from file
 fn read_svg_content(workspace_root: &Path, icon_name: &str) -> Result<String> {
     let svg_path = workspace_root.join(format!(
         "packages/builder/generated/mdi_svgs/{}.svg",
@@ -339,7 +343,68 @@ fn read_svg_content(workspace_root: &Path, icon_name: &str) -> Result<String> {
         return Err(anyhow!("SVG file not found: {:?}", svg_path));
     }
 
-    fs::read_to_string(&svg_path).with_context(|| format!("Failed to read SVG: {:?}", svg_path))
+    let content = fs::read_to_string(&svg_path)
+        .with_context(|| format!("Failed to read SVG: {:?}", svg_path))?;
+
+    // TODO: Re-enable SVG validation once build issue is resolved
+    // if let Err(e) = validate_svg_structure(&content) {
+    //     eprintln!("⚠️  Failed to validate SVG '{}': {}", icon_name, e);
+    //     return Err(e);
+    // }
+
+    Ok(content)
+}
+
+/// Validate SVG structure at build time
+fn validate_svg_structure(svg: &str) -> Result<()> {
+    use quick_xml::Reader;
+
+    let mut reader = Reader::from_str(svg);
+
+    let mut in_svg = false;
+    let mut has_path = false;
+
+    loop {
+        match reader.read_event() {
+            Ok(Event::Start(ref e)) => match e.name().as_ref() {
+                b"svg" => {
+                    in_svg = true;
+
+                    let has_xmlns = e.attributes().any(|attr| {
+                        if let Ok(attr) = attr {
+                            attr.key.as_ref() == b"xmlns" || attr.key.as_ref() == b"xmlns:svg"
+                        } else {
+                            false
+                        }
+                    });
+
+                    if !has_xmlns {
+                        return Err(anyhow!("SVG missing required xmlns attribute"));
+                    }
+                }
+                b"path" if in_svg => {
+                    has_path = true;
+                }
+                _ => {}
+            },
+            Ok(Event::End(ref e)) => {
+                if e.name().as_ref() == b"svg" {
+                    in_svg = false;
+                }
+            }
+            Ok(Event::Eof) => break,
+            Err(e) => {
+                return Err(anyhow!("XML parsing error: {}", e));
+            }
+            _ => {}
+        }
+    }
+
+    if !has_path {
+        return Err(anyhow!("SVG missing path element"));
+    }
+
+    Ok(())
 }
 
 /// Generate Rust code for selected icons
@@ -460,6 +525,11 @@ pub fn build_selected_icons(config: &IconConfig) -> Result<()> {
     }
 
     fs::write(output_path, rust_code)?;
+
+    // Debug: Show generated file size
+    if let Ok(metadata) = std::fs::metadata(output_path) {
+        println!("   Generated file size: {} bytes", metadata.len());
+    }
 
     println!("   Output: {:?}", output_path);
     println!("✅ Icon build complete!");

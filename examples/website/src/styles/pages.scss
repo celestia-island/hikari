@@ -43,10 +43,10 @@
 }
 
 .demo-card {
-  padding: 1.5rem;
+  padding:1.5rem;
   border-radius: 0.75rem;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  background: white;
+  border: 1px solid var(--hi-border);
+  background: var(--hi-surface);
 }
 
 .demo-card-title {
@@ -73,9 +73,9 @@
 .color-card {
   padding: 1rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  border: 1px solid var(--hi-border);
   text-align: center;
-  background: white;
+  background: var(--hi-surface);
 }
 
 .color-swatch {
@@ -112,9 +112,9 @@
 .icon-card {
   padding: 1rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  border: 1px solid var(--hi-border);
   text-align: center;
-  background: white;
+  background: var(--hi-surface);
   transition: all 0.2s;
 }
 
@@ -141,8 +141,8 @@
 .animation-demo {
   padding: 2rem;
   border-radius: 0.75rem;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  background: white;
+  border: 1px solid var(--hi-border);
+  background: var(--hi-surface);
   margin-bottom: 1.5rem;
 }
 
@@ -231,7 +231,7 @@
 }
 
 .system-card-inner {
-  background: white;
+  background: var(--hi-surface);
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
@@ -690,10 +690,10 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(45, 45, 45, 0.85);
+  background: var(--hi-surface);
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+  border-bottom: 1px solid var(--hi-border);
+  box-shadow: 0 0 20px var(--hi-primary, 0.2);
   padding: 1rem 1.5rem 1rem 1rem;
 }
 

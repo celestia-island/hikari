@@ -34,6 +34,20 @@ default:
 # Complete build (Debug mode)
 build-dev:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Fetching MDI icons..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @{{py}} scripts/icons/fetch_mdi_icons.py
+    @if [ $? -ne 0 ]; then \
+        echo ""; \
+        echo "❌ ERROR: Failed to fetch MDI icons"; \
+        echo ""; \
+        echo "   The build cannot continue without MDI icons."; \
+        echo "   Please check your internet connection and try again."; \
+        echo ""; \
+        exit 1; \
+    fi
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Building all (Debug mode)..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     cargo build --workspace
@@ -60,6 +74,20 @@ check-port:
 # Note: build.rs will automatically compile SCSS and copy assets to public/
 build-client:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Fetching MDI icons..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @{{py}} scripts/icons/fetch_mdi_icons.py
+    @if [ $? -ne 0 ]; then \
+        echo ""; \
+        echo "❌ ERROR: Failed to fetch MDI icons"; \
+        echo ""; \
+        echo "   The build cannot continue without MDI icons."; \
+        echo "   Please check your internet connection and try again."; \
+        echo ""; \
+        exit 1; \
+    fi
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Building website WASM client..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Step 1: Build hikari-builder to generate CSS bundle"
@@ -82,6 +110,20 @@ dev:
     @{{py}} scripts/utils/clean_process.py
     @echo ""
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Fetching MDI icons..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @{{py}} scripts/icons/fetch_mdi_icons.py
+    @if [ $? -ne 0 ]; then \
+        echo ""; \
+        echo "❌ ERROR: Failed to fetch MDI icons"; \
+        echo ""; \
+        echo "   The build cannot continue without MDI icons."; \
+        echo "   Please check your internet connection and try again."; \
+        echo ""; \
+        exit 1; \
+    fi
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Building website WASM client..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Step 1: Build hikari-builder to generate CSS bundle"
@@ -94,10 +136,10 @@ dev:
     @echo ""
     @echo "✅ WASM client built successfully"
     @echo ""
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Starting website server..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Press Ctrl+C to stop the server"
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Press Ctrl+C to stop server"
     @echo ""
     @cargo run --manifest-path examples/website/Cargo.toml --features server
 

@@ -413,7 +413,10 @@ async fn fetch_svg(path: &str) -> String {
                     if let Ok(text) = response.text() {
                         if let Ok(svg) = wasm_bindgen_futures::JsFuture::from(text).await {
                             if let Some(s) = svg.as_string() {
-                                return s;
+                                // Validate the response is actually an SVG
+                                if validate_svg_response(&s) {
+                                    return s;
+                                }
                             }
                         }
                     }
@@ -422,6 +425,37 @@ async fn fetch_svg(path: &str) -> String {
         }
     }
     DEFAULT_SVG.to_string()
+}
+
+/// Validate browser response is an SVG (not HTML fallback)
+#[cfg(target_arch = "wasm32")]
+fn validate_svg_response(content: &str) -> bool {
+    let trimmed = content.trim();
+
+    // Check 1: Must start with <svg
+    if !trimmed.starts_with("<svg") {
+        return false;
+    }
+
+    // Check 2: Must contain xmlns attribute
+    if !trimmed.contains("xmlns=") && !trimmed.contains("xmlns:") {
+        return false;
+    }
+
+    // Check 3: Must end with </svg>
+    if !trimmed.ends_with("</svg>") {
+        return false;
+    }
+
+    // Check 4: Must not contain HTML structure indicators
+    let forbidden_patterns = ["<!DOCTYPE", "<html", "<head", "<body", "<div"];
+    for pattern in &forbidden_patterns {
+        if trimmed.contains(pattern) {
+            return false;
+        }
+    }
+
+    true
 }
 
 #[cfg(not(target_arch = "wasm32"))]

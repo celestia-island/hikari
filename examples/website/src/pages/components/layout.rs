@@ -25,7 +25,7 @@ pub fn ComponentsLayout() -> Element {
                             .build(),
                         "Layout Components"
                     }
-                    p { class: ClassesBuilder::default().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::default().add(MarginBottom::Mb0).add(TextColor::Secondary).build(),
                         "Structural components for building application layouts with FUI aesthetics"
                     }
                 }
@@ -35,7 +35,7 @@ pub fn ComponentsLayout() -> Element {
                     title: Some("Layout System".to_string()),
                     class: ClassesBuilder::default().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                         p {
                             "The Hikari Layout system provides a flexible set of components for building responsive application layouts. It includes:"
                         }
@@ -78,12 +78,12 @@ pub fn ComponentsLayout() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Basic Container"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Container provides consistent spacing and max-width for content"
                         }
                         Container {
@@ -92,7 +92,7 @@ pub fn ComponentsLayout() -> Element {
                                     .add(Padding::P6)
                                     .add(BorderRadius::Lg)
                                     .add(BgColor::White)
-                                    .add(TextColor::Gray700)
+                                    .add(TextColor::Primary)
                                     .build(),
                                 "This is content wrapped in a Container component. Containers automatically handle responsive width and padding."
                             }
@@ -110,13 +110,13 @@ pub fn ComponentsLayout() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Section with Title"
                         }
                         Section { title: Some("Section Title".to_string()),
-                            div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                            div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                 "Sections provide themed styling with optional headers. Perfect for grouping related content."
                             }
                         }
@@ -127,13 +127,13 @@ pub fn ComponentsLayout() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Section without Title"
                         }
                         Section {
-                            div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                            div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                 "Sections can also be used without titles for simple content grouping."
                             }
                         }
@@ -150,12 +150,12 @@ pub fn ComponentsLayout() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Row Layout"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Row component for horizontal layouts with configurable gaps"
                         }
                         Row { gap: "md".to_string(),
@@ -164,7 +164,7 @@ pub fn ComponentsLayout() -> Element {
                                     .add(Padding::P4)
                                     .add(BorderRadius::Rounded)
                                     .add(BgColor::White)
-                                    .add(TextColor::Gray700)
+                                    .add(TextColor::Primary)
                                     .build(),
                                 "Item 1"
                             }
@@ -173,7 +173,7 @@ pub fn ComponentsLayout() -> Element {
                                     .add(Padding::P4)
                                     .add(BorderRadius::Rounded)
                                     .add(BgColor::White)
-                                    .add(TextColor::Gray700)
+                                    .add(TextColor::Primary)
                                     .build(),
                                 "Item 2"
                             }
@@ -182,7 +182,7 @@ pub fn ComponentsLayout() -> Element {
                                     .add(Padding::P4)
                                     .add(BorderRadius::Rounded)
                                     .add(BgColor::White)
-                                    .add(TextColor::Gray700)
+                                    .add(TextColor::Primary)
                                     .build(),
                                 "Item 3"
                             }
@@ -200,7 +200,7 @@ pub fn ComponentsLayout() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Layout Structure"
@@ -209,8 +209,8 @@ pub fn ComponentsLayout() -> Element {
                             class: ClassesBuilder::default()
                                 .add(Padding::P4)
                                 .add(BorderRadius::Rounded)
-                                .add(BgColor::Gray900)
-                                .add(TextColor::Gray400)
+                                .add(BgColor::Surface)
+                                .add(TextColor::Muted)
                                 .build(),
                             code {
                                 r#"HikariLayout {{

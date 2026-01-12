@@ -8,6 +8,12 @@ use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
 
+#[cfg(target_arch = "wasm32")]
+use animation::{
+    style::{CssProperty, StyleBuilder},
+    TimerManager,
+};
+
 /// Background component type wrapper (for implementing StyledComponent)
 pub struct BackgroundComponent;
 
@@ -44,12 +50,58 @@ pub struct BackgroundProps {
 /// # Animation
 ///
 /// The gradient slowly rotates over 60 seconds, creating a subtle, non-static background.
+/// The animation is managed by `hikari-animation`'s `TimerManager` with 60fps updates.
 #[component]
 pub fn Background(props: BackgroundProps) -> Element {
+    #[cfg(target_arch = "wasm32")]
+    {
+        use_hook(|| start_gradient_rotation());
+    }
+
     rsx! {
         div {
             class: "hi-background",
             {props.children}
+        }
+    }
+}
+
+/// Starts gradient rotation animation using TimerManager from hikari-animation
+#[cfg(target_arch = "wasm32")]
+fn start_gradient_rotation() {
+    use wasm_bindgen::JsCast;
+
+    if let Some(window) = web_sys::window() {
+        if let Some(document) = window.document() {
+            let timer_manager = TimerManager::new();
+            let position = std::cell::RefCell::new(0.0);
+
+            let duration = 60000.0;
+            let fps = 60;
+            let interval_ms = (1000.0 / fps as f64) as u64;
+            let position_per_frame = 100.0 / (duration / interval_ms as f64);
+
+            timer_manager.set_interval(
+                std::rc::Rc::new(move || {
+                    *position.borrow_mut() = (*position.borrow() + position_per_frame) % 100.0;
+                    let current_position = *position.borrow();
+
+                    if let Some(element) = document
+                        .query_selector(".hi-background")
+                        .ok()
+                        .flatten()
+                        .and_then(|el| el.dyn_into::<web_sys::HtmlElement>().ok())
+                    {
+                        StyleBuilder::new(&element)
+                            .add(
+                                CssProperty::BackgroundPosition,
+                                &format!("{}% 50%", current_position),
+                            )
+                            .apply();
+                    }
+                }),
+                std::time::Duration::from_millis(interval_ms),
+            );
         }
     }
 }

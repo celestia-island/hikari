@@ -26,7 +26,7 @@ pub fn ComponentsTabs() -> Element {
                             .build(),
                         "Tabs"
                     }
-                    p { class: ClassesBuilder::default().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::default().add(MarginBottom::Mb0).add(TextColor::Secondary).build(),
                         "Tabbed interface for organizing content into separate panels with FUI aesthetics"
                     }
                 }
@@ -36,7 +36,7 @@ pub fn ComponentsTabs() -> Element {
                     title: Some("Overview".to_string()),
                     class: ClassesBuilder::default().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                         p {
                             "Tabs organize content into separate panels, showing one panel at a time. They support:"
                         }
@@ -75,12 +75,12 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Default Tabs"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Basic tabs with top positioning and ink bar animation"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
@@ -88,21 +88,21 @@ pub fn ComponentsTabs() -> Element {
                                 TabPane {
                                     item_key: "1".to_string(),
                                     tab: "Overview".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Overview content goes here. This is the first tab panel."
                                     }
                                 }
                                 TabPane {
                                     item_key: "2".to_string(),
                                     tab: "Details".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Detailed information is displayed in this tab."
                                     }
                                 }
                                 TabPane {
                                     item_key: "3".to_string(),
                                     tab: "Reviews".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "User reviews and ratings appear in this section."
                                     }
                                 }
@@ -115,12 +115,12 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Tabs with Icons"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Enhanced tabs with visual icons"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
@@ -131,7 +131,7 @@ pub fn ComponentsTabs() -> Element {
                                     icon: rsx! {
                                         Icon { icon: MdiIcon::Alert, size: 16 }
                                     },
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Home page content"
                                     }
                                 }
@@ -141,7 +141,7 @@ pub fn ComponentsTabs() -> Element {
                                     icon: rsx! {
                                         Icon { icon: MdiIcon::Alert, size: 16 }
                                     },
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "User profile information"
                                     }
                                 }
@@ -151,7 +151,7 @@ pub fn ComponentsTabs() -> Element {
                                     icon: rsx! {
                                         Icon { icon: MdiIcon::Alert, size: 16 }
                                     },
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Application settings"
                                     }
                                 }
@@ -164,12 +164,12 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Tabs with Disabled State"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Tabs that cannot be activated"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
@@ -177,7 +177,7 @@ pub fn ComponentsTabs() -> Element {
                                 TabPane {
                                     item_key: "1".to_string(),
                                     tab: "Active".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "This tab is active"
                                     }
                                 }
@@ -185,14 +185,14 @@ pub fn ComponentsTabs() -> Element {
                                     item_key: "2".to_string(),
                                     tab: "Disabled".to_string(),
                                     disabled: true,
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "This tab is disabled"
                                     }
                                 }
                                 TabPane {
                                     item_key: "3".to_string(),
                                     tab: "Another Active".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "This tab is also active"
                                     }
                                 }
@@ -211,12 +211,12 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Top Tabs (Default)"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Tabs positioned above content"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
@@ -226,14 +226,14 @@ pub fn ComponentsTabs() -> Element {
                                 TabPane {
                                     item_key: "1".to_string(),
                                     tab: "Tab 1".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Top tabs content"
                                     }
                                 }
                                 TabPane {
                                     item_key: "2".to_string(),
                                     tab: "Tab 2".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "More content here"
                                     }
                                 }
@@ -246,12 +246,12 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Bottom Tabs"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Tabs positioned below content"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
@@ -261,14 +261,14 @@ pub fn ComponentsTabs() -> Element {
                                 TabPane {
                                     item_key: "1".to_string(),
                                     tab: "Tab 1".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Bottom tabs content"
                                     }
                                 }
                                 TabPane {
                                     item_key: "2".to_string(),
                                     tab: "Tab 2".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Second tab content"
                                     }
                                 }
@@ -281,12 +281,12 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Left Tabs"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Tabs positioned on the left side"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
@@ -296,14 +296,14 @@ pub fn ComponentsTabs() -> Element {
                                 TabPane {
                                     item_key: "1".to_string(),
                                     tab: "Overview".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Overview content with left tabs"
                                     }
                                 }
                                 TabPane {
                                     item_key: "2".to_string(),
                                     tab: "Details".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Details content with left tabs"
                                     }
                                 }
@@ -316,12 +316,12 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Right Tabs"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Tabs positioned on the right side"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
@@ -331,14 +331,14 @@ pub fn ComponentsTabs() -> Element {
                                 TabPane {
                                     item_key: "1".to_string(),
                                     tab: "Tab 1".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Content with right tabs"
                                     }
                                 }
                                 TabPane {
                                     item_key: "2".to_string(),
                                     tab: "Tab 2".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "More content here"
                                     }
                                 }
@@ -357,12 +357,12 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Card Style Tabs"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Card-like container with background"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
@@ -372,14 +372,14 @@ pub fn ComponentsTabs() -> Element {
                                 TabPane {
                                     item_key: "1".to_string(),
                                     tab: "Settings".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Settings options"
                                     }
                                 }
                                 TabPane {
                                     item_key: "2".to_string(),
                                     tab: "Privacy".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Privacy settings"
                                     }
                                 }
@@ -392,12 +392,12 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Border Card Style"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Card with visible borders"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
@@ -407,14 +407,14 @@ pub fn ComponentsTabs() -> Element {
                                 TabPane {
                                     item_key: "1".to_string(),
                                     tab: "Profile".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Profile information"
                                     }
                                 }
                                 TabPane {
                                     item_key: "2".to_string(),
                                     tab: "Security".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Security settings"
                                     }
                                 }
@@ -427,12 +427,12 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Segment Style (Pill-shaped)"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Pill-shaped tab container for compact layouts"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
@@ -442,21 +442,21 @@ pub fn ComponentsTabs() -> Element {
                                 TabPane {
                                     item_key: "1".to_string(),
                                     tab: "Day".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Day view content"
                                     }
                                 }
                                 TabPane {
                                     item_key: "2".to_string(),
                                     tab: "Week".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Week view content"
                                     }
                                 }
                                 TabPane {
                                     item_key: "3".to_string(),
                                     tab: "Month".to_string(),
-                                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Month view content"
                                     }
                                 }
@@ -475,7 +475,7 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Basic Tabs"
@@ -483,7 +483,7 @@ pub fn ComponentsTabs() -> Element {
                         div {
                             class: ClassesBuilder::new()
                                 .add(Padding::P4)
-                                .add(BgColor::Gray900)
+                                .add(BgColor::Surface)
                                 .add(BorderRadius::Rounded)
                                 .build(),
                             code {
@@ -509,7 +509,7 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Tabs with Icons"
@@ -517,7 +517,7 @@ pub fn ComponentsTabs() -> Element {
                         div {
                             class: ClassesBuilder::new()
                                 .add(Padding::P4)
-                                .add(BgColor::Gray900)
+                                .add(BgColor::Surface)
                                 .add(BorderRadius::Rounded)
                                 .build(),
                             code {
@@ -541,7 +541,7 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Left Positioned Tabs"
@@ -549,7 +549,7 @@ pub fn ComponentsTabs() -> Element {
                         div {
                             class: ClassesBuilder::new()
                                 .add(Padding::P4)
-                                .add(BgColor::Gray900)
+                                .add(BgColor::Surface)
                                 .add(BorderRadius::Rounded)
                                 .build(),
                             code {
@@ -571,7 +571,7 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Card Style Tabs"
@@ -579,7 +579,7 @@ pub fn ComponentsTabs() -> Element {
                         div {
                             class: ClassesBuilder::new()
                                 .add(Padding::P4)
-                                .add(BgColor::Gray900)
+                                .add(BgColor::Surface)
                                 .add(BorderRadius::Rounded)
                                 .build(),
                             code {
@@ -602,12 +602,12 @@ pub fn ComponentsTabs() -> Element {
                     title: Some("Best Practices".to_string()),
                     class: ClassesBuilder::default().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                         h3 {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "When to Use Tabs"
@@ -635,7 +635,7 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Tab Organization Guidelines"
@@ -663,7 +663,7 @@ pub fn ComponentsTabs() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Position Guidelines"

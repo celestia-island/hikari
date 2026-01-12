@@ -3,6 +3,21 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
+// Icon color inheritance for theme support
+// ============================================
+
+.hi-card,
+.hi-card-header,
+.hi-card-body,
+.hi-card-footer {
+  // Ensure SVG icons inherit theme colors
+  svg {
+    fill: currentColor;
+    stroke: currentColor;
+  }
+}
+
+// ============================================
 // Hikari Card Component - FUI Styling
 // Design: Arknights + Future UI (FUI) aesthetics
 // Features: Elevated shadows, hover accent bar, smooth transitions
@@ -25,10 +40,15 @@
   border-radius: vars.$hikari-radius-fui-md;
   border: 1px solid rgba(226, 232, 240, 0.8);
 
-  // 明亮主题背景
-  background: rgba(255, 255, 255, 0.95);
+  // 使用主题变量背景
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+
+  // 暗黑模式覆盖
+  [data-theme="tairitsu"] & {
+    background: rgba(80, 97, 109, 0.9);
+  }
 
   // Elevated shadow
   box-shadow:

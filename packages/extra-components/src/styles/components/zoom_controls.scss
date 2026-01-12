@@ -459,15 +459,6 @@
     }
 }
 
-@keyframes hikari-zoom-gradient-shift {
-    0%, 100% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-}
-
 // ============================================
 // Tooltip Support
 // ============================================
@@ -507,34 +498,14 @@
 // Animation States
 // ============================================
 
-// Zoom in animation
-@keyframes hikari-zoom-in {
-    from {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
+// Zoom in animation - use utility class
 .hikari-zoom-controls-enter {
-    animation: hikari-zoom-in $hikari-transition-base;
+    animation: hi-zoom-in 0.3s ease-out forwards;
 }
 
-// Pulse animation for active zoom
+// Pulse animation for active zoom - use utility class
 .hikari-zoom-display-pulse {
-    animation: hikari-zoom-pulse 2s ease-in-out infinite;
-}
-
-@keyframes hikari-zoom-pulse {
-    0%, 100% {
-        box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
-    }
-    50% {
-        box-shadow: 0 0 25px rgba(245, 158, 11, 0.6);
-    }
+    animation: hi-pulse 2s ease-in-out infinite;
 }
 
 // ============================================

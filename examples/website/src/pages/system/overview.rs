@@ -34,12 +34,12 @@ pub fn SystemOverview() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::X4xl)
                                 .add(FontWeight::Bold)
-                                .add(TextColor::Gray900)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb0)
                                 .build(),
                             "System"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Explore Hikari's foundational systems and utilities"
                         }
                     }
@@ -99,12 +99,12 @@ fn SystemCard(title: String, description: String, route: Route) -> Element {
                     class: ClassesBuilder::new()
                         .add(FontSize::X2xl)
                         .add(FontWeight::Semibold)
-                        .add(TextColor::Gray900)
+                        .add(TextColor::Primary)
                         .add(MarginBottom::Mb0)
                         .build(),
                     "{title}"
                 }
-                p { class: ClassesBuilder::new().add(TextColor::Gray600).add(MarginBottom::Mb0).build(),
+                p { class: ClassesBuilder::new().add(TextColor::Secondary).add(MarginBottom::Mb0).build(),
                     "{description}"
                 }
             }

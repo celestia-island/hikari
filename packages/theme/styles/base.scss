@@ -5,25 +5,51 @@
 @use './mixins.scss' as *;
 
 // ============================================
-// CSS 自定义属性（默认值）
+// CSS 自定义属性（Hikari Light Theme）
 // ============================================
 
-:root {
-    // 颜色系统 - 默认暗色主题
-    --hi-color-background: #0F172A;
-    --hi-color-surface: #1E293B;
-    --hi-color-border: #334155;
+[data-theme="hikari"] {
+    // 颜色系统 - 亮色主题
+    --hi-color-background: #D6ECF0;  // 素
+    --hi-color-surface: #D6F0F0;  // 月白
+    --hi-color-border: #C4D8DA;
 
     // 文字颜色
-    --hi-color-text-primary: #F1F5F9;
-    --hi-color-text-secondary: #94A3B8;
+    --hi-color-text-primary: #50616D;  // 墨色
+    --hi-color-text-secondary: #4A4266;  // 黛
 
     // 主题色
-    --hi-color-primary: #3B82F6;
-    --hi-color-success: #10B981;
-    --hi-color-warning: #F59E0B;
-    --hi-color-danger: #EF4444;
-    --hi-color-info: #06B6D4;
+    --hi-color-primary: #E9A2B5;  // 粉红
+    --hi-color-secondary: #E85A4F;  // 朱红
+    --hi-color-accent: #F7B500;  // 姜黄
+    --hi-color-success: #5CBF91;  // 葱倩
+    --hi-color-warning: #EED677;  // 鹅黄
+    --hi-color-danger: #E85A4F;  // 朱红
+    --hi-color-info: #6ABED6;  // 鸭卵青
+}
+
+// ============================================
+// CSS 自定义属性（Tairitsu Dark Theme）
+// ============================================
+
+[data-theme="tairitsu"] {
+    // 颜色系统 - 暗色主题
+    --hi-color-background: #4A4266;  // 黛
+    --hi-color-surface: #50616D;  // 墨色
+    --hi-color-border: #6E7689;
+
+    // 文字颜色
+    --hi-color-text-primary: #D6F0F0;  // 月白
+    --hi-color-text-secondary: #E0F0F0;  // 浅灰
+
+    // 主题色
+    --hi-color-primary: #065279;  // 靛蓝
+    --hi-color-secondary: #4B5CC4;  // 宝蓝
+    --hi-color-accent: #F7B500;  // 姜黄
+    --hi-color-success: #5CBF91;  // 葱倩
+    --hi-color-warning: #EED677;  // 鹅黄
+    --hi-color-danger: #E85A4F;  // 朱红
+    --hi-color-info: #6ABED6;  // 鸭卵青
 }
 
 // ============================================
@@ -64,13 +90,14 @@ body {
 }
 
 // ============================================
-// 排版样式
+// 排版样式 - 使用主题变量
 // ============================================
 
 h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
     line-height: 1.25;
     margin-bottom: $hikari-spacing-md;
+    color: var(--hi-color-text-primary);
 }
 
 h1 {
@@ -97,15 +124,15 @@ h6 {
     font-size: $hikari-font-size-sm;
 }
 
-p {
-    margin-bottom: $hikari-spacing-md;
+p, span, div, label {
+    color: var(--hi-color-text-primary);
 }
 
 a {
     color: var(--hi-color-primary);
     text-decoration: none;
     transition: color $hikari-transition-fast;
-    
+
     &:hover {
         text-decoration: underline;
     }
@@ -289,6 +316,12 @@ hr {
 
 .text-danger {
     color: var(--hi-color-danger);
+}
+
+// SVG 图标默认颜色
+svg {
+    fill: currentColor;
+    stroke: currentColor;
 }
 
 .mt-1 { margin-top: $hikari-spacing-xs; }

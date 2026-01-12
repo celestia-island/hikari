@@ -25,40 +25,26 @@
   pointer-events: none;
 }
 
-// Light theme gradient (Hikari - 素 + 粉红) with 60s rotation
+// Light theme gradient (Hikari - 素 + 粉红)
 [data-theme="hikari"] .hi-background {
-  background: linear-gradient(0deg, #E0F0E9 0%, #FFC0CB 100%);
-  animation: rotate-gradient-hikari 60s linear infinite;
+  background: radial-gradient(
+    circle at center,
+    var(--hi-color-background-light, #E0F0E9) 0%,
+    var(--hi-color-primary-light, #FFC0CB) 50%,
+    var(--hi-color-background-light, #E0F0E9) 100%
+  );
+  background-size: 200% 200%;
+  will-change: background-position;
 }
 
-// Dark theme gradient (Tairitsu - 深蓝 + 纯黑) with 60s rotation
+// Dark theme gradient (Tairitsu - 深蓝 + 纯黑)
 [data-theme="tairitsu"] .hi-background {
-  background: linear-gradient(0deg, #0a2e4d 0%, #000000 100%);
-  animation: rotate-gradient-tairitsu 60s linear infinite;
-}
-
-// Light theme 60-second rotating gradient animation
-@keyframes rotate-gradient-hikari {
-  0% {
-    background: linear-gradient(0deg, #E0F0E9 0%, #FFC0CB 100%);
-  }
-  50% {
-    background: linear-gradient(180deg, #E0F0E9 0%, #FFC0CB 100%);
-  }
-  100% {
-    background: linear-gradient(360deg, #E0F0E9 0%, #FFC0CB 100%);
-  }
-}
-
-// Dark theme 60-second rotating gradient animation
-@keyframes rotate-gradient-tairitsu {
-  0% {
-    background: linear-gradient(0deg, #0a2e4d 0%, #000000 100%);
-  }
-  50% {
-    background: linear-gradient(180deg, #0a2e4d 0%, #000000 100%);
-  }
-  100% {
-    background: linear-gradient(360deg, #0a2e4d 0%, #000000 100%);
-  }
+  background: radial-gradient(
+    circle at center,
+    var(--hi-color-background-dark, #0a2e4d) 0%,
+    var(--hi-color-surface-dark, #000000) 50%,
+    var(--hi-color-background-dark, #0a2e4d) 100%
+  );
+  background-size: 200% 200%;
+  will-change: background-position;
 }

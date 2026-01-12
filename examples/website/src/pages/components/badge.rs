@@ -31,7 +31,7 @@ pub fn ComponentsBadge() -> Element {
                             .build(),
                         "Badge"
                     }
-                    p { class: ClassesBuilder::default().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::default().add(MarginBottom::Mb0).add(TextColor::Secondary).build(),
                         "Small status indicators and counters with FUI aesthetics"
                     }
                 }
@@ -41,7 +41,7 @@ pub fn ComponentsBadge() -> Element {
                     title: Some("Overview".to_string()),
                     class: ClassesBuilder::default().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                         p {
                             "Badges are small status indicators used to highlight information or show counts. They support:"
                         }
@@ -76,12 +76,12 @@ pub fn ComponentsBadge() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "All Variants"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Badges come in different variants for different semantic meanings"
                         }
                         Row { gap: "md".to_string(),
@@ -98,16 +98,16 @@ pub fn ComponentsBadge() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Semantic Usage"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Use appropriate variants for different contexts"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
-                            div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                            div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                 Row { gap: "md".to_string(),
                                     Icon { icon: MdiIcon::Alert, size: 20 }
                                     Badge { variant: BadgeVariant::Success, "Completed" }
@@ -138,12 +138,12 @@ pub fn ComponentsBadge() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Status Indicators"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Dot badges are perfect for showing online status or active states"
                         }
                         Row { gap: "md".to_string(),
@@ -159,12 +159,12 @@ pub fn ComponentsBadge() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Notification Dots"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Use dots to indicate unread notifications"
                         }
                         Row { gap: "lg".to_string(),
@@ -206,12 +206,12 @@ pub fn ComponentsBadge() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Basic Counts"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Display numeric values on buttons or icons"
                         }
                         Row { gap: "lg".to_string(),
@@ -247,12 +247,12 @@ pub fn ComponentsBadge() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Maximum Value"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Use the max prop to cap the displayed value"
                         }
                         Row { gap: "lg".to_string(),
@@ -282,12 +282,12 @@ pub fn ComponentsBadge() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Show Zero"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Control whether to show badge when count is zero"
                         }
                         Row { gap: "lg".to_string(),
@@ -314,16 +314,16 @@ pub fn ComponentsBadge() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Wrapping Components"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Badges can wrap any component to show status or counts"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
-                            div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                            div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                 div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::Gap, "16px").add(CssProperty::AlignItems, "center").build_clean(),
                                     Badge {
                                         variant: BadgeVariant::Primary,
@@ -372,16 +372,16 @@ pub fn ComponentsBadge() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Status Labels"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Use badges inline with text for status labels"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
-                            div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                            div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                 div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::Gap, "12px").add(CssProperty::AlignItems, "center").build_clean(),
                                     strong { "Server Status:" }
                                     Badge { variant: BadgeVariant::Success, "Online" }
@@ -409,7 +409,7 @@ pub fn ComponentsBadge() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "User Status"
@@ -437,13 +437,13 @@ pub fn ComponentsBadge() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Task Status"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
-                            div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                            div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                 div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::JustifyContent, "space-between").add(CssProperty::AlignItems, "center").build_clean(),
                                     span { "Design Review" }
                                     Badge { variant: BadgeVariant::Success, "Done" }
@@ -471,7 +471,7 @@ pub fn ComponentsBadge() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Basic Badge"
@@ -489,7 +489,7 @@ pub fn ComponentsBadge() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Dot Badge"
@@ -510,7 +510,7 @@ pub fn ComponentsBadge() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Count Badge"
@@ -532,7 +532,7 @@ pub fn ComponentsBadge() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Status Indicator"

@@ -41,7 +41,7 @@ use std::{
 };
 
 mod svg_parser;
-pub use svg_parser::{PathElement, SvgElement, SvgIcon};
+pub use svg_parser::{IconData, PathData, PathElement, SvgElem, SvgElement, SvgIcon};
 
 /// Icon source library
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -422,52 +422,195 @@ fn generate_icon_module(selected_icons: &HashSet<String>, workspace_root: &Path)
     output.push_str("#![allow(non_snake_case)]\n");
     output.push_str("#![allow(dead_code)]\n\n");
 
-    // Module with SVG constants
-    output.push_str("/// Selected Material Design Icons SVG content\n");
-    output.push_str("pub mod svgs {\n");
+    // Type definitions
+    output.push_str("/// Path data for generating Rust constants\n");
+    output.push_str("#[derive(Copy, Clone, Debug)]\n");
+    output.push_str("pub struct PathData {\n");
+    output.push_str("    pub d: Option<&'static str>,\n");
+    output.push_str("    pub fill: Option<&'static str>,\n");
+    output.push_str("    pub stroke: Option<&'static str>,\n");
+    output.push_str("    pub stroke_width: Option<&'static str>,\n");
+    output.push_str("    pub stroke_linecap: Option<&'static str>,\n");
+    output.push_str("    pub stroke_linejoin: Option<&'static str>,\n");
+    output.push_str("    pub transform: Option<&'static str>,\n");
+    output.push_str("}\n\n");
 
-    // Generate SVG content constants
+    output.push_str("/// SVG element for generating Rust constants\n");
+    output.push_str("#[derive(Copy, Clone, Debug)]\n");
+    output.push_str("pub struct SvgElem {\n");
+    output.push_str("    pub tag: &'static str,\n");
+    output.push_str("    pub attributes: &'static [(&'static str, &'static str)],\n");
+    output.push_str("}\n\n");
+
+    output.push_str("/// Icon data for generating Rust constants\n");
+    output.push_str("#[derive(Copy, Clone, Debug)]\n");
+    output.push_str("pub struct IconData {\n");
+    output.push_str("    pub view_box: Option<&'static str>,\n");
+    output.push_str("    pub width: Option<&'static str>,\n");
+    output.push_str("    pub height: Option<&'static str>,\n");
+    output.push_str("    pub path: Option<&'static str>,\n");
+    output.push_str("    pub paths: &'static [PathData],\n");
+    output.push_str("    pub elements: &'static [SvgElem],\n");
+    output.push_str("}\n\n");
+
+    // Generate icon data using structured types
     let mut sorted_icons: Vec<_> = selected_icons.iter().collect();
     sorted_icons.sort();
 
-    // Collect SVG data first
-    let mut svg_data: Vec<(String, String, String)> = Vec::new();
+    // Collect icon data first
+    let mut icon_data: Vec<(String, String, SvgIcon)> = Vec::new();
     for icon_name in &sorted_icons {
         if let Ok(svg_content) = read_svg_content(workspace_root, icon_name) {
-            let const_name = icon_name.replace('-', "_").to_uppercase();
-            svg_data.push((const_name, (**icon_name).clone(), svg_content));
+            if let Ok(icon) = svg_parser::parse_svg(&svg_content) {
+                let const_name = icon_name.replace('-', "_").to_uppercase();
+                icon_data.push((const_name, (**icon_name).clone(), icon));
+            }
         }
     }
 
-    // Write SVG constants
-    for (const_name, icon_name, svg_content) in &svg_data {
-        output.push_str("\n");
-        output.push_str("    /// SVG content for '");
+    // Generate structured data
+    output.push_str("/// Structured icon data\n");
+    output.push_str("pub mod data {\n");
+    output.push_str("    use super::IconData;\n\n");
+
+    for (const_name, icon_name, icon) in &icon_data {
+        output.push_str("    /// Icon data for '");
         output.push_str(icon_name);
         output.push_str("'\n");
         output.push_str("    pub const ");
         output.push_str(const_name);
-        output.push_str(": &str = r#\"");
-        output.push_str(svg_content);
-        output.push_str("\"#;\n");
+        output.push_str(": IconData = IconData {\n");
+
+        // view_box
+        output.push_str("        view_box: ");
+        if let Some(vb) = &icon.view_box {
+            output.push_str("Some(\"");
+            output.push_str(vb);
+            output.push_str("\"),\n");
+        } else {
+            output.push_str("None,\n");
+        }
+
+        // width
+        output.push_str("        width: ");
+        if let Some(w) = &icon.width {
+            output.push_str("Some(\"");
+            output.push_str(w);
+            output.push_str("\"),\n");
+        } else {
+            output.push_str("None,\n");
+        }
+
+        // height
+        output.push_str("        height: ");
+        if let Some(h) = &icon.height {
+            output.push_str("Some(\"");
+            output.push_str(h);
+            output.push_str("\"),\n");
+        } else {
+            output.push_str("None,\n");
+        }
+
+        // path
+        output.push_str("        path: ");
+        if let Some(p) = &icon.path {
+            output.push_str("Some(\"");
+            output.push_str(p);
+            output.push_str("\"),\n");
+        } else {
+            output.push_str("None,\n");
+        }
+
+        // paths
+        output.push_str("        paths: &[");
+        for path in &icon.paths {
+            output.push_str("\n            PathData {");
+            if let Some(d) = &path.d {
+                output.push_str(" d: Some(\"");
+                output.push_str(d);
+                output.push_str("\"),");
+            }
+            if let Some(f) = &path.fill {
+                output.push_str(" fill: Some(\"");
+                output.push_str(f);
+                output.push_str("\"),");
+            }
+            if let Some(s) = &path.stroke {
+                output.push_str(" stroke: Some(\"");
+                output.push_str(s);
+                output.push_str("\"),");
+            }
+            if let Some(sw) = &path.stroke_width {
+                output.push_str(" stroke_width: Some(\"");
+                output.push_str(sw);
+                output.push_str("\"),");
+            }
+            if let Some(slc) = &path.stroke_linecap {
+                output.push_str(" stroke_linecap: Some(\"");
+                output.push_str(slc);
+                output.push_str("\"),");
+            }
+            if let Some(slj) = &path.stroke_linejoin {
+                output.push_str(" stroke_linejoin: Some(\"");
+                output.push_str(slj);
+                output.push_str("\"),");
+            }
+            if let Some(t) = &path.transform {
+                output.push_str(" transform: Some(\"");
+                output.push_str(t);
+                output.push_str("\"),");
+            }
+            output.push_str(" },");
+        }
+        if icon.paths.is_empty() {
+            output.push_str("],\n");
+        } else {
+            output.push_str("\n        ],\n");
+        }
+
+        // elements
+        output.push_str("        elements: &[");
+        for elem in &icon.elements {
+            output.push_str("\n            SvgElem {\n");
+            output.push_str("                tag: \"");
+            output.push_str(&elem.tag);
+            output.push_str("\",\n");
+            output.push_str("                attributes: &[");
+            for (key, value) in &elem.attributes {
+                output.push_str("(\"");
+                output.push_str(key);
+                output.push_str("\", \"");
+                output.push_str(value);
+                output.push_str("\"), ");
+            }
+            output.push_str("],\n");
+            output.push_str("            },");
+        }
+        if icon.elements.is_empty() {
+            output.push_str("],\n");
+        } else {
+            output.push_str("\n        ],\n");
+        }
+
+        output.push_str("    };\n");
     }
 
-    // Get function
-    output.push_str("\n");
-    output.push_str("    /// Get SVG content by icon name\n");
-    output.push_str("    pub fn get(name: &str) -> Option<&'static str> {\n");
-    output.push_str("        match name {\n");
+    output.push_str("}\n\n");
 
-    for (const_name, icon_name, _) in &svg_data {
-        output.push_str("            \"");
+    // Get function
+    output.push_str("/// Get icon data by name\n");
+    output.push_str("pub fn get(name: &str) -> Option<&'static IconData> {\n");
+    output.push_str("    match name {\n");
+
+    for (const_name, icon_name, _) in &icon_data {
+        output.push_str("        \"");
         output.push_str(icon_name);
-        output.push_str("\" => Some(");
+        output.push_str("\" => Some(&data::");
         output.push_str(const_name);
         output.push_str("),\n");
     }
 
-    output.push_str("            _ => None,\n");
-    output.push_str("        }\n");
+    output.push_str("        _ => None,\n");
     output.push_str("    }\n");
     output.push_str("}\n");
 

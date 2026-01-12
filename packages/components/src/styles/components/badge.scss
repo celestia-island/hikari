@@ -27,7 +27,7 @@
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;
-  color: #ffffff;
+  color: var(--hi-color-text-inverted, #ffffff);
 
   // Appearance - FUI subtle rounded corners
   border-radius: vars.$hikari-radius-fui-sm;

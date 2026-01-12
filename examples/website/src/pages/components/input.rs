@@ -26,7 +26,7 @@ pub fn ComponentsInput() -> Element {
                             .build(),
                         "Input"
                     }
-                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Secondary).build(),
                         "Text input fields for user data entry with FUI aesthetics"
                     }
                 }
@@ -36,7 +36,7 @@ pub fn ComponentsInput() -> Element {
                     title: Some("Overview".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         p { "Input fields allow users to enter and edit text. They support:" }
                         ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
@@ -73,12 +73,12 @@ pub fn ComponentsInput() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Default Input"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Basic text input with placeholder"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -91,12 +91,12 @@ pub fn ComponentsInput() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Input with Value"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Input with pre-filled value"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -115,12 +115,12 @@ pub fn ComponentsInput() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Size Variants"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Inputs come in three sizes for different contexts"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -150,12 +150,12 @@ pub fn ComponentsInput() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Disabled Input"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Disabled inputs cannot be edited"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -171,12 +171,12 @@ pub fn ComponentsInput() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Readonly Input"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Readonly inputs can be focused but not edited"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -193,7 +193,7 @@ pub fn ComponentsInput() -> Element {
                     title: Some("Spotlight Effect".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         p {
                             "The spotlight effect creates a FUI-style glow that follows your cursor when hovering over the input field."
                         }
@@ -204,7 +204,7 @@ pub fn ComponentsInput() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Input with Spotlight"
@@ -228,12 +228,12 @@ pub fn ComponentsInput() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Prefix Icon"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Icon displayed before the input text"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -251,12 +251,12 @@ pub fn ComponentsInput() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Suffix Icon"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Icon displayed after the input text"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -274,12 +274,12 @@ pub fn ComponentsInput() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Both Prefix and Suffix Icons"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Icons on both sides of the input"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -300,12 +300,12 @@ pub fn ComponentsInput() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Icons with Spotlight"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Combined icon and spotlight effect"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -330,7 +330,7 @@ pub fn ComponentsInput() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Basic Input"
@@ -347,7 +347,7 @@ pub fn ComponentsInput() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Controlled Input"
@@ -370,7 +370,7 @@ Input {{
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Input with Icons"
@@ -393,7 +393,7 @@ Input {{
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Input with Event Handlers"
@@ -425,7 +425,7 @@ Input {{
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Search Input"
@@ -446,7 +446,7 @@ Input {{
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Email Input"
@@ -466,7 +466,7 @@ Input {{
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "URL Input"
@@ -489,7 +489,7 @@ Input {{
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Password Input"

@@ -140,18 +140,24 @@
 .hi-text-left { text-align: left; }
 .hi-text-right { text-align: right; }
 
-// Text Color
-.hi-text-primary { color: var(--hi-text-primary, #2D2D2D); }
-.hi-text-secondary { color: var(--hi-text-secondary, #6B7280); }
-.hi-text-white { color: #FFFFFF; }
-.hi-text-gray-600 { color: #4B5563; }
-.hi-text-gray-900 { color: #111827; }
+// Text Color - 语义化颜色，支持主题切换
+.hi-text-white { color: var(--hi-color-text-inverted, #FFFFFF); }
+.hi-text-black { color: var(--hi-color-text-primary, #000000); }
+.hi-text-primary { color: var(--hi-color-text-primary, #2D2D2D); }
+.hi-text-secondary { color: var(--hi-color-text-secondary, #6B7280); }
+.hi-text-muted { color: var(--hi-color-text-secondary, #9CA3AF); }
+.hi-text-accent { color: var(--hi-color-accent, #F59E0B); }
 
-// Background Color
-.hi-bg-primary { background-color: var(--hi-primary, #7BCFA6); }
-.hi-bg-white { background-color: #FFFFFF; }
-.hi-bg-transparent { background-color: transparent; }
-.hi-bg-surface { background-color: var(--hi-surface, #FAFAFA); }
+// Background Color - 语义化背景色，支持主题切换
+.hi-bg-primary { background-color: var(--hi-color-primary, #7BCFA6); }
+.hi-bg-secondary { background-color: var(--hi-color-secondary, #FF4C00); }
+.hi-bg-accent { background-color: var(--hi-color-accent, #F59E0B); }
+.hi-bg-white { background-color: var(--hi-color-surface, #FFFFFF); }
+.hi-bg-black { background-color: var(--hi-color-background, #000000); }
+.hi-bg-surface { background-color: var(--hi-color-surface, #FAFAFA); }
+
+// Border Color - 语义化边框色，支持主题切换
+.hi-border-transparent { border-color: transparent; }
 
 // Border Radius
 .hi-radius-sm { border-radius: 0.125rem; }
@@ -195,6 +201,103 @@
 .hi-z-10 { z-index: 10; }
 .hi-z-20 { z-index: 20; }
 .hi-z-50 { z-index: 50; }
+
+// ============================================
+// Animation Utility Classes (通用动画)
+// ============================================
+
+// Spin (旋转)
+.hi-spin { animation: hi-spin 1s linear infinite; }
+@keyframes hi-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+// Pulse (脉搏)
+.hi-pulse { animation: hi-pulse 2s ease-in-out infinite; }
+@keyframes hi-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+// Bounce (弹跳)
+.hi-bounce { animation: hi-bounce 1s ease-in-out infinite; }
+@keyframes hi-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+// Fade In (淡入)
+.hi-fade-in { animation: hi-fade-in 0.3s ease-out forwards; }
+@keyframes hi-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// Zoom In (缩放淡入)
+.hi-zoom-in { animation: hi-zoom-in 0.3s ease-out forwards; }
+@keyframes hi-zoom-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+// Slide In Left (从左滑入)
+.hi-slide-in-left { animation: hi-slide-in-left 0.3s ease-out forwards; }
+@keyframes hi-slide-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+// Slide In Right (从右滑入)
+.hi-slide-in-right { animation: hi-slide-in-right 0.3s ease-out forwards; }
+@keyframes hi-slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+// Slide In Top (从上滑入)
+.hi-slide-in-top { animation: hi-slide-in-top 0.3s ease-out forwards; }
+@keyframes hi-slide-in-top {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// Slide In Bottom (从下滑入)
+.hi-slide-in-bottom { animation: hi-slide-in-bottom 0.3s ease-out forwards; }
+@keyframes hi-slide-in-bottom {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// Fade In Scale (淡入+缩放)
+.hi-fade-in-scale { animation: hi-fade-in-scale 0.3s ease-out forwards; }
+@keyframes hi-fade-in-scale {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+// Fade Out Scale (淡出+缩放)
+.hi-fade-out-scale { animation: hi-fade-out-scale 0.3s ease-out forwards; }
+@keyframes hi-fade-out-scale {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.9); }
+}
+
+// Blur In (模糊淡入)
+.hi-blur-in { animation: hi-blur-in 0.3s ease-out forwards; }
+@keyframes hi-blur-in {
+  from { opacity: 0; filter: blur(10px); }
+  to { opacity: 1; filter: blur(0); }
+}
+
+// Bounce In (弹性进入)
+.hi-bounce-in { animation: hi-bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards; }
+@keyframes hi-bounce-in {
+  0% { opacity: 0; transform: scale(0.3); }
+  50% { transform: scale(1.05); }
+  70% { transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
 
 // Grid
 .hi-grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
@@ -249,7 +352,7 @@
 
   // Surface & Background Colors
   --hi-background: #E0F0E9;  // 素
-  --hi-surface: rgba(255, 255, 255, 0.85);  // 小幅透明白色
+  --hi-surface: rgba(255, 255, 255, 0.7);  // 透明白色
   --hi-border: #E0F0E9;     // 素
 
   // Text Colors
@@ -348,7 +451,7 @@
 
   // Surface & Background Colors
   --hi-background: #4A4266;  // 黛
-  --hi-surface: rgba(0, 0, 0, 0.85);  // 小幅透明黑色
+  --hi-surface: rgba(0, 0, 0, 0.7);  // 透明黑色
   --hi-border: #4A4266;      // 黛
 
   // Text Colors
@@ -385,6 +488,7 @@
 @import './components/card.scss';
 @import './components/image.scss';
 @import './components/badge.scss';
+@import './components/icon.scss';
 
 // ============================================
 // Feedback Components

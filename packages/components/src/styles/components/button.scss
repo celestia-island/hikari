@@ -128,7 +128,7 @@
 
 .hi-button-primary {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9));
-  color: #ffffff;
+  color: var(--hi-color-text-inverted, #ffffff);
   border: 1px solid rgba(96, 165, 250, 0.5);
   box-shadow:
     0 0 8px rgba(59, 130, 246, 0.3),
@@ -164,7 +164,7 @@
 
 .hi-button-secondary {
   background: linear-gradient(135deg, rgba(107, 114, 128, 0.9), rgba(75, 85, 99, 0.9));
-  color: #ffffff;
+  color: var(--hi-color-text-inverted, #ffffff);
   border: 1px solid rgba(156, 163, 175, 0.5);
   box-shadow:
     0 0 8px rgba(107, 114, 128, 0.2),
@@ -217,7 +217,7 @@
 
 .hi-button-danger {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
-  color: #ffffff;
+  color: var(--hi-color-text-inverted, #ffffff);
   border: 1px solid rgba(248, 113, 113, 0.5);
   box-shadow:
     0 0 8px rgba(239, 68, 68, 0.3),
@@ -245,7 +245,7 @@
 
 .hi-button-success {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.9));
-  color: #ffffff;
+  color: var(--hi-color-text-inverted, #ffffff);
   border: 1px solid rgba(52, 211, 153, 0.5);
   box-shadow:
     0 0 8px rgba(16, 185, 129, 0.3),
@@ -314,12 +314,6 @@
   border-radius: 50%;
   animation: hi-spin 0.6s linear infinite;
   opacity: 0.9;
-}
-
-@keyframes hi-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 // ============================================

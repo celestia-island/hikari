@@ -519,7 +519,7 @@
 
 .hi-tooltip-light {
   background: rgba(255, 255, 255, 0.95);
-  color: #1e293b;
+  color: var(--hi-color-text-primary, #1e293b);
   border-color: var(--hi-black-10, rgba(0, 0, 0, 0.1));
 
   box-shadow:

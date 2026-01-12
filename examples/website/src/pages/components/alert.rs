@@ -26,7 +26,7 @@ pub fn ComponentsAlert() -> Element {
                             .build(),
                         "Alert"
                     }
-                    p { class: ClassesBuilder::default().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::default().add(MarginBottom::Mb0).add(TextColor::Secondary).build(),
                         "Inline alert messages for feedback and notifications with FUI aesthetics"
                     }
                 }
@@ -36,7 +36,7 @@ pub fn ComponentsAlert() -> Element {
                     title: Some("Overview".to_string()),
                     class: ClassesBuilder::default().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                         p { "Alerts display important messages to users. They support:" }
                         ul { class: ClassesBuilder::default().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
@@ -69,12 +69,12 @@ pub fn ComponentsAlert() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Info Alert"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Used for informational messages"
                         }
                         Alert {
@@ -89,12 +89,12 @@ pub fn ComponentsAlert() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Success Alert"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Used to indicate successful operations"
                         }
                         Alert {
@@ -109,12 +109,12 @@ pub fn ComponentsAlert() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Warning Alert"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Used for warning messages that need attention"
                         }
                         Alert {
@@ -129,12 +129,12 @@ pub fn ComponentsAlert() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Error Alert"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Used for error messages and failures"
                         }
                         Alert {
@@ -155,15 +155,15 @@ pub fn ComponentsAlert() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Alerts without Title"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Minimal alerts with only description text"
                         }
-                        div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             Alert {
                                 variant: AlertVariant::Info,
                                 description: Some("New version available. Click to update.".to_string()),
@@ -190,15 +190,15 @@ pub fn ComponentsAlert() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "With Close Button"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Alerts can be dismissed by clicking the close button"
                         }
-                        div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             Alert {
                                 variant: AlertVariant::Info,
                                 title: Some("Update Available".to_string()),
@@ -231,15 +231,15 @@ pub fn ComponentsAlert() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Alerts with Custom Icons"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "You can override the default icon with custom content"
                         }
-                        div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             Alert {
                                 variant: AlertVariant::Info,
                                 title: Some("New Message".to_string()),
@@ -278,7 +278,7 @@ pub fn ComponentsAlert() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Basic Alert"
@@ -299,7 +299,7 @@ pub fn ComponentsAlert() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Closable Alert with Handler"
@@ -324,7 +324,7 @@ Alert {{
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Alert with Custom Icon"
@@ -348,7 +348,7 @@ Alert {{
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Simple Alert"
@@ -374,23 +374,23 @@ Alert {{
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Form Validation"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Use alerts to show form validation errors"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
-                            div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                            div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                 Alert {
                                     variant: AlertVariant::Error,
                                     title: Some("Form Errors".to_string()),
                                     description: Some("Please fix the following issues:".to_string()),
                                     closable: true,
                                 }
-                                div { class: ClassesBuilder::new().add(TextColor::Gray600).add(MarginBottom::Mb4).build(),
+                                div { class: ClassesBuilder::new().add(TextColor::Secondary).add(MarginBottom::Mb4).build(),
                                     ul {
                                         li { "Email address is required" }
                                         li { "Password must be at least 8 characters" }
@@ -405,16 +405,16 @@ Alert {{
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Success Feedback"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Confirm successful actions to users"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
-                            div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                            div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                 Alert {
                                     variant: AlertVariant::Success,
                                     title: Some("Settings Saved".to_string()),
@@ -434,12 +434,12 @@ Alert {{
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "System Status"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Display system status or maintenance notifications"
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),

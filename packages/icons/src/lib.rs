@@ -64,7 +64,7 @@
 //! fn ThemeToggleButton() -> Element {
 //!     let mut is_dark = use_signal(|| false);
 //!
-//!     // ✅ REACTIVE: Create a key that changes when theme changes
+//!     // ✅ REACTIVE: Create a key that changes when the theme changes
 //!     let icon_key = use_memo(move || {
 //!         if *is_dark.read() { "moon" } else { "sun" }
 //!     });
@@ -116,7 +116,7 @@
 //!
 //! **Why it doesn't work**: The `icon_key` is calculated **once** when the `DynamicIcon` component
 //! function runs. It's a static calculation, not reactive. Even when the `icon` prop changes,
-//! `icon_key` is not recalculated, so it remains the initial value.
+//! `icon_key` is not recalculated, so it remains at its initial value.
 //!
 //! **The correct approach** is to create a **reactive** key using `use_memo` in the
 //! parent component, then apply the key to a wrapper component.
@@ -208,10 +208,20 @@
 
 pub mod mdi_minimal;
 
+pub mod svg_macro;
+
+pub mod generated;
+
 use dioxus::prelude::*;
 
 // Re-export MDI icon enum (minimal version to avoid WASM size limits)
 pub use mdi_minimal::MdiIcon;
+
+// Re-export structured icon data types
+pub use generated::mdi_selected::{get, IconData, PathData, SvgElem};
+
+// Re-export generated data module
+pub use generated::data;
 
 /// Icon reference - wrapper for MDI icon
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
@@ -241,6 +251,7 @@ impl IconRef {
 /// - `icon`: The MDI icon to render (automatically converts from `MdiIcon`)
 /// - `class`: Optional CSS classes
 /// - `size`: Optional size in pixels (default: 24)
+/// - `color`: Optional color (default: inherits from theme's text primary color)
 ///
 /// # Static Icons
 ///
@@ -250,66 +261,97 @@ impl IconRef {
 /// use hikari_icons::{Icon, MdiIcon};
 ///
 /// rsx! {
-///     Icon { icon: MdiIcon::MoonWaningCrescent, class: "w-6 h-6" }
+///     // Inherits theme text color
+///     Icon { icon: MdiIcon::MoonWaningCrescent }
+///     // Custom size
 ///     Icon { icon: MdiIcon::WhiteBalanceSunny, size: 32 }
+///     // Custom color (hex)
+///     Icon { icon: MdiIcon::Settings, color: "#FF0000" }
+///     // Use CSS variable from theme
+///     Icon { icon: MdiIcon::Search, color: "var(--hi-primary)" }
 /// }
 /// ```
+///
+/// # Color Inheritance
+///
+/// By default, icons inherit their color from the current theme's text primary color
+/// (`--hi-text-primary`). This means icons automatically switch between light and dark
+/// themes along with text:
+///
+/// - **Hikari (light)**: Icons use dark text color (#50616D)
+/// - **Tairitsu (dark)**: Icons use light text color (#D6ECF0)
+///
+/// # Custom Colors
+///
+/// You can override the default color using the `color` prop:
+///
+/// ```rust,ignore
+/// // Use semantic color from theme
+/// Icon { icon: MdiIcon::Star, color: "var(--hi-accent)" }
+///
+/// // Use specific hex color
+/// Icon { icon: MdiIcon::Warning, color: "#FBBF24" }
+///
+/// // Use CSS color name
+/// Icon { icon: MdiIcon::Error, color: "red" }
+/// ```
+///
+/// # CSS Classes for Colors
+///
+/// Alternatively, you can use utility classes:
+///
+/// ```rust,ignore
+/// // Primary color
+/// Icon { icon: MdiIcon::Heart, class: "hikari-icon-primary" }
+///
+/// // Secondary color
+/// Icon { icon: MdiIcon::Share, class: "hikari-icon-secondary" }
+///
+/// // Accent color
+/// Icon { icon: MdiIcon::Star, class: "hikari-icon-accent" }
+///
+/// // Success color
+/// Icon { icon: MdiIcon::Check, class: "hikari-icon-success" }
+///
+/// // Warning color
+/// Icon { icon: MdiIcon::Alert, class: "hikari-icon-warning" }
+///
+/// // Danger color
+/// Icon { icon: MdiIcon::Close, class: "hikari-icon-danger" }
+///
+/// // Muted text color
+/// Icon { icon: MdiIcon::Info, class: "hikari-icon-muted" }
+/// ```
+///
+/// # Structured Icon Data
+///
+/// This component uses structured icon data and macros to generate SVG at runtime,
+/// avoiding the need for external HTTP requests or raw SVG strings in the binary.
+///
+/// The icon data is generated at build time from parsed SVG files, stored as
+/// compile-time constants (`IconData`), and reconstructed using the `build_svg!` macro.
 ///
 /// # Dynamic Icons
 ///
-/// **Important**: When you need to dynamically change the icon based on state
+/// **Important**: When you need to dynamically change icon based on state
 /// (e.g., theme toggle, status change), you MUST use a `key` attribute.
 ///
-/// The Icon component uses `use_resource` to fetch SVG content asynchronously,
-/// which only runs once on component mount. Without a changing key, the SVG
-/// will not update when the `icon` prop changes.
+/// The Icon component uses `use_memo` to rebuild SVG content reactively,
+/// which automatically updates when the `icon` prop changes.
 ///
 /// ## Why This Happens
 ///
-/// The Icon component uses `use_resource` to asynchronously fetch SVG content:
+/// The SVG content is built using the `build_svg!` macro:
 ///
 /// ```rust,ignore
-/// let icon_path = format!("/icons/{}.svg", icon.name());
-/// let svg_content = use_resource(move || {
-///     let path = icon_path.clone();  // Captured on component mount
-///     async move { fetch_svg(&path).await }
+/// let icon_data = generated::get(icon.name()).unwrap();
+/// let svg_content = use_memo(move || {
+///     build_svg!(icon_data)
 /// });
 /// ```
 ///
-/// **Problem**: `use_resource` only runs once when the Icon component is first mounted.
-/// The closure captures `icon_path` (a static string), not the `icon` prop itself.
-/// When the `icon` prop changes later, `use_resource` doesn't detect this change
-/// and never re-runs, so the old SVG remains displayed.
-///
-/// ## Why a Helper Component Like `DynamicIcon` Doesn't Work
-///
-/// You might try to create a helper component to handle the key automatically:
-///
-/// ```rust,ignore
-/// #[component]
-/// pub fn DynamicIcon(
-///     #[props(into)] icon: IconRef,
-///     #[props(default)] class: String,
-///     #[props(default = 24)] size: u32,
-/// ) -> Element {
-///     let icon_key = format!("{:?}", icon);  // ⚠️ Static, not reactive!
-///
-///     rsx! {
-///         Icon {
-///             key: "{icon_key}",  // Key never changes
-///             icon: icon,
-///             class: class,
-///             size: size,
-///         }
-///     }
-/// }
-/// ```
-///
-/// **Why it doesn't work**:
-///
-/// The `icon_key` is calculated **once** when `DynamicIcon` component function runs.
-/// It's a static calculation, not reactive. Even when the `icon` prop changes,
-/// `icon_key` is not recalculated, so it remains the initial value.
+/// The `use_memo` creates a reactive dependency on the `icon_data`,
+/// automatically rebuilding the SVG when the icon changes.
 ///
 /// ## Correct Solution: Reactive Key with `use_memo`
 ///
@@ -356,112 +398,59 @@ impl IconRef {
 /// 3. The `key` prop on `button` changes, forcing Dioxus to:
 ///    - Completely destroy and recreate the `button` component
 ///    - Which destroys and recreates the `Icon` component inside
-///    - Which triggers `use_resource` to run again and fetch the new SVG
+///    - Which triggers `use_memo` to run again and rebuild the SVG
 ///
-/// **Key Point**: The key must be on the **wrapper component** (button),
-/// not on `Icon` itself. When the key is on the wrapper, Dioxus
-/// recreates the entire component tree, ensuring `use_resource` runs again.
+/// **Key Point**: The key must be on the **wrapper component** (the button),
+/// not on the `Icon` itself. When the key is on the wrapper component, Dioxus
+/// recreates the entire component tree, ensuring the SVG is rebuilt correctly.
 ///
 /// ## Why Key on Wrapper, Not on Icon?
 ///
 /// The `key` attribute forces Dioxus to completely destroy and recreate the
 /// component tree when the key changes. When the key is on the wrapper
-/// component (Button), it forces the Button to be recreated, which in turn
-/// forces the Icon to be recreated, triggering `use_resource` to run again
-/// and fetch the new SVG.
+/// component (the Button), it forces the Button to be recreated, which in turn
+/// forces the Icon to be recreated, triggering `use_memo` to run again
+/// and rebuild the SVG.
 #[component]
 pub fn Icon(
     #[props(into)] icon: IconRef,
     #[props(default)] class: String,
     #[props(default = 24)] size: u32,
+    #[props(default)] color: String,
 ) -> Element {
-    let icon_path = format!("/icons/{}.svg", icon.name());
-    let svg_content = use_resource(move || {
-        let path = icon_path.clone();
-        async move { fetch_svg(&path).await }
-    });
+    // Get icon data from generated constants
+    let icon_data = match generated::get(&icon.name()) {
+        Some(data) => data,
+        None => {
+            eprintln!("Icon not found: {}", icon.name());
+            return rsx! {
+                div {
+                    class: "hikari-icon",
+                    dangerous_inner_html: DEFAULT_SVG,
+                }
+            };
+        }
+    };
 
-    let size_class = format!("hikari-icon-{size}");
-    let full_class = format!("hikari-icon {size_class} {class}");
+    // Build SVG reactively using the macro
+    let svg_content = use_memo(move || build_svg!(icon_data));
+
+    let size_style = format!("width: {size}px; height: {size}px;");
+    let full_style = if color.is_empty() {
+        size_style
+    } else {
+        format!("{}color: {};", size_style, color)
+    };
+
+    let full_class = format!("hikari-icon {class}");
 
     rsx! {
         div {
             class: full_class,
-            dangerous_inner_html: match &*svg_content.read() {
-                Some(svg) => svg.as_str(),
-                None => DEFAULT_SVG,
-            },
+            style: "{full_style}",
+            dangerous_inner_html: "{svg_content}",
         }
     }
-}
-
-#[cfg(target_arch = "wasm32")]
-async fn fetch_svg(path: &str) -> String {
-    use wasm_bindgen::JsCast;
-    use web_sys::{Request, RequestInit, RequestMode, Response};
-
-    let opts = RequestInit::new();
-    opts.set_method("GET");
-    opts.set_mode(RequestMode::Cors);
-
-    if let Ok(request) = Request::new_with_str_and_init(path, &opts) {
-        if let Some(window) = web_sys::window() {
-            if let Ok(response_val) =
-                wasm_bindgen_futures::JsFuture::from(window.fetch_with_request(&request)).await
-            {
-                if let Ok(response) = response_val.dyn_into::<Response>() {
-                    if let Ok(text) = response.text() {
-                        if let Ok(svg) = wasm_bindgen_futures::JsFuture::from(text).await {
-                            if let Some(s) = svg.as_string() {
-                                // Validate the response is actually an SVG
-                                if validate_svg_response(&s) {
-                                    return s;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    DEFAULT_SVG.to_string()
-}
-
-/// Validate browser response is an SVG (not HTML fallback)
-#[cfg(target_arch = "wasm32")]
-fn validate_svg_response(content: &str) -> bool {
-    let trimmed = content.trim();
-
-    // Check 1: Must start with <svg
-    if !trimmed.starts_with("<svg") {
-        return false;
-    }
-
-    // Check 2: Must contain xmlns attribute
-    if !trimmed.contains("xmlns=") && !trimmed.contains("xmlns:") {
-        return false;
-    }
-
-    // Check 3: Must end with </svg>
-    if !trimmed.ends_with("</svg>") {
-        return false;
-    }
-
-    // Check 4: Must not contain HTML structure indicators
-    let forbidden_patterns = ["<!DOCTYPE", "<html", "<head", "<body", "<div"];
-    for pattern in &forbidden_patterns {
-        if trimmed.contains(pattern) {
-            return false;
-        }
-    }
-
-    true
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-async fn fetch_svg(_path: &str) -> String {
-    // On non-wasm32 targets, return default SVG
-    DEFAULT_SVG.to_string()
 }
 
 /// Default SVG fallback icon (exclamation mark)

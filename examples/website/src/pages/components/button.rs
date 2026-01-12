@@ -30,7 +30,7 @@ pub fn ComponentsButton() -> Element {
                             .build(),
                         "Button"
                     }
-                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Secondary).build(),
                         "Buttons trigger actions and come in various styles with FUI aesthetics"
                     }
                 }
@@ -40,7 +40,7 @@ pub fn ComponentsButton() -> Element {
                     title: Some("Overview".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         p {
                             "Buttons allow users to take actions, make choices, and navigate through your application. They support:"
                         }
@@ -83,12 +83,12 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Primary Button"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Use for the main action in a page or dialog"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -112,12 +112,12 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Secondary Button"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Use for alternative or secondary actions"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -140,12 +140,12 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Ghost Button"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Minimal button for low-emphasis actions"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -168,12 +168,12 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Danger Button"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Use for destructive or dangerous actions"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -196,12 +196,12 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Success Button"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Use for positive or confirm actions"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -230,12 +230,12 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Size Variants"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Buttons come in three sizes for different contexts"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -271,12 +271,12 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Loading State"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Buttons can show a loading spinner during async operations"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -298,12 +298,12 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Disabled State"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Disabled buttons prevent user interaction"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -325,12 +325,12 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Block Button"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Full-width button for mobile or form contexts"
                         }
                         Button {
@@ -347,7 +347,7 @@ pub fn ComponentsButton() -> Element {
                     title: Some("Spotlight Effect".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         p {
                             "The spotlight effect creates a FUI-style glow that follows your cursor. Hover over the buttons below to see the effect in action."
                         }
@@ -358,7 +358,7 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "With Spotlight"
@@ -387,7 +387,7 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Without Spotlight"
@@ -404,7 +404,7 @@ pub fn ComponentsButton() -> Element {
                     title: Some("Button Animations".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         p {
                             "Buttons support various hover animations for enhanced interactivity. Hover over the buttons to see the animations."
                         }
@@ -415,7 +415,7 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Scale Animation"
@@ -435,7 +435,7 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Scale + Elevate Animation"
@@ -455,7 +455,7 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Ripple Animation"
@@ -475,7 +475,7 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Icon Rotation Animation"
@@ -504,12 +504,12 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Button with Prefix Icon"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Icons can be placed before the text"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -537,12 +537,12 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Icon-Only Buttons"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Compact buttons with only an icon"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -584,7 +584,7 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Basic Button"
@@ -599,7 +599,7 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Primary Button with Spotlight"
@@ -620,7 +620,7 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Button with Icon and Handler"
@@ -642,7 +642,7 @@ pub fn ComponentsButton() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Loading Button"

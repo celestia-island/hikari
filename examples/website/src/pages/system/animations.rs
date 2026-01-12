@@ -27,7 +27,7 @@ pub fn SystemAnimations() -> Element {
                             "Animation System"
                         }
                         p {
-                            class: ClassesBuilder::new().add_raw("page-description").add(TextColor::Gray600).build(),
+                            class: ClassesBuilder::new().add_raw("page-description").add(TextColor::Secondary).build(),
                             "GSAP-inspired state machine for smooth, declarative animations"
                         }
                     }

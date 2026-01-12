@@ -26,7 +26,7 @@ pub fn ComponentsMenu() -> Element {
                             .build(),
                         "Menu"
                     }
-                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Secondary).build(),
                         "Navigation menu for organizing and structuring content with FUI aesthetics"
                     }
                 }
@@ -36,7 +36,7 @@ pub fn ComponentsMenu() -> Element {
                     title: Some("Overview".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         p { "Menus provide navigation through your application. They support:" }
                         ul { class: ClassesBuilder::new().add(PaddingLeft::Pl6).add(MarginBottom::Mb0).build(),
                             li {
@@ -73,12 +73,12 @@ pub fn ComponentsMenu() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Basic Vertical Menu"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Default vertical menu for sidebar navigation"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -113,12 +113,12 @@ pub fn ComponentsMenu() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Menu with Submenus"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Nested menu items with expandable sections"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -158,12 +158,12 @@ pub fn ComponentsMenu() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Menu with Disabled Items"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Non-interactive menu items for unavailable features"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -186,12 +186,12 @@ pub fn ComponentsMenu() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Basic Horizontal Menu"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Horizontal menu for top navigation bars"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -209,12 +209,12 @@ pub fn ComponentsMenu() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Horizontal Menu with Icons"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Icon-enhanced horizontal navigation"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -255,12 +255,12 @@ pub fn ComponentsMenu() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Compact Inline Menu"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Space-saving inline variant for compact layouts"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -283,7 +283,7 @@ pub fn ComponentsMenu() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Basic Vertical Menu"
@@ -305,7 +305,7 @@ pub fn ComponentsMenu() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Menu with Icons"
@@ -331,7 +331,7 @@ pub fn ComponentsMenu() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Menu with Submenus"
@@ -357,7 +357,7 @@ pub fn ComponentsMenu() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Horizontal Menu"
@@ -380,12 +380,12 @@ pub fn ComponentsMenu() -> Element {
                     title: Some("Best Practices".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         h3 {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "When to Use Menus"
@@ -413,7 +413,7 @@ pub fn ComponentsMenu() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Organization Guidelines"

@@ -26,13 +26,13 @@ pub fn SystemCSS() -> Element {
                             "CSS Utilities"
                         }
                         p {
-                            class: ClassesBuilder::new().add_raw("page-description").add(TextColor::Gray600).build(),
+                            class: ClassesBuilder::new().add_raw("page-description").add(TextColor::Secondary).build(),
                             "Tailwind-compatible utility classes for rapid styling"
                         }
                     }
 
                     div {
-                        class: ClassesBuilder::new().add_raw("info-box").add(BgColor::Gray50).build(),
+                        class: ClassesBuilder::new().add_raw("info-box").add(BgColor::Surface).build(),
                         p {
                             class: ClassesBuilder::new().add_raw("info-box-text").build(),
                             "This page is under construction. Check back soon for detailed documentation and examples!"

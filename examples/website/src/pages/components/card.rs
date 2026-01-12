@@ -32,7 +32,7 @@ pub fn ComponentsCard() -> Element {
                             .build(),
                         "Card"
                     }
-                    p { class: ClassesBuilder::default().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::default().add(MarginBottom::Mb0).add(TextColor::Secondary).build(),
                         "Container component for grouping content with FUI aesthetics"
                     }
                 }
@@ -42,7 +42,7 @@ pub fn ComponentsCard() -> Element {
                     title: Some("Overview".to_string()),
                     class: ClassesBuilder::default().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                         p {
                             "Cards are versatile containers for grouping related content and actions. They support:"
                         }
@@ -77,17 +77,17 @@ pub fn ComponentsCard() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Card with Title"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Simple card with header title and content"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::MaxWidth, "400px").build_clean(),
                             Card { title: "Card Title".to_string(),
-                                p { class: ClassesBuilder::default().add(TextColor::Gray600).add(MarginBottom::Mb4).build(),
+                                p { class: ClassesBuilder::default().add(TextColor::Secondary).add(MarginBottom::Mb4).build(),
                                     "This is a simple card with a title. Cards are great for grouping related content and actions."
                                 }
                             }
@@ -99,18 +99,18 @@ pub fn ComponentsCard() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Card without Header"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Minimal card with only content"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::MaxWidth, "400px").build_clean(),
                             Card {
-                                h3 { class: ClassesBuilder::new().add(MarginBottom::Mb4).add(FontSize::Lg).add(FontWeight::Semibold).add(TextColor::Gray700).build(), "Custom Content" }
-                                p { class: ClassesBuilder::default().add(TextColor::Gray600).add(MarginBottom::Mb4).build(),
+                                h3 { class: ClassesBuilder::new().add(MarginBottom::Mb4).add(FontSize::Lg).add(FontWeight::Semibold).add(TextColor::Primary).build(), "Custom Content" }
+                                p { class: ClassesBuilder::default().add(TextColor::Secondary).add(MarginBottom::Mb4).build(),
                                     "Cards without headers are perfect for simple content display with minimal styling."
                                 }
                             }
@@ -128,19 +128,19 @@ pub fn ComponentsCard() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Bordered Card"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Card with visible border"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::MaxWidth, "400px").build_clean(),
                             Card {
                                 bordered: true,
                                 title: "Bordered Card".to_string(),
-                                p { class: ClassesBuilder::default().add(TextColor::Gray600).add(MarginBottom::Mb4).build(),
+                                p { class: ClassesBuilder::default().add(TextColor::Secondary).add(MarginBottom::Mb4).build(),
                                     "This card has a visible border for clearer separation from the background."
                                 }
                             }
@@ -152,19 +152,19 @@ pub fn ComponentsCard() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Hoverable Card"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Card with hover effect (hover over me)"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::MaxWidth, "400px").build_clean(),
                             Card {
                                 hoverable: true,
                                 title: "Hoverable Card".to_string(),
-                                p { class: ClassesBuilder::default().add(TextColor::Gray600).add(MarginBottom::Mb4).build(),
+                                p { class: ClassesBuilder::default().add(TextColor::Secondary).add(MarginBottom::Mb4).build(),
                                     "This card has a hover effect that highlights it when you move your mouse over it."
                                 }
                             }
@@ -176,19 +176,19 @@ pub fn ComponentsCard() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Card with Spotlight"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Card with FUI-style spotlight effect (hover over me)"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::MaxWidth, "400px").build_clean(),
                             Card {
                                 spotlight: true,
                                 title: "Spotlight Card".to_string(),
-                                p { class: ClassesBuilder::default().add(TextColor::Gray600).add(MarginBottom::Mb4).build(),
+                                p { class: ClassesBuilder::default().add(TextColor::Secondary).add(MarginBottom::Mb4).build(),
                                     "This card has a spotlight effect that follows your cursor, creating a futuristic FUI aesthetic."
                                 }
                             }
@@ -206,12 +206,12 @@ pub fn ComponentsCard() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Card with Title Actions"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Extra content in the header for actions"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::MaxWidth, "400px").build_clean(),
@@ -228,7 +228,7 @@ pub fn ComponentsCard() -> Element {
                                         }
                                     }
                                 },
-                                p { class: ClassesBuilder::default().add(TextColor::Gray600).add(MarginBottom::Mb4).build(),
+                                p { class: ClassesBuilder::default().add(TextColor::Secondary).add(MarginBottom::Mb4).build(),
                                     "The extra slot allows you to add actions or other elements to the card header."
                                 }
                             }
@@ -240,17 +240,17 @@ pub fn ComponentsCard() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Interactive Card"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Card with action buttons in the body"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::MaxWidth, "400px").build_clean(),
                             Card { title: "Profile".to_string(),
-                                div { class: ClassesBuilder::default().add(TextColor::Gray600).add(MarginBottom::Mb4).build(),
+                                div { class: ClassesBuilder::default().add(TextColor::Secondary).add(MarginBottom::Mb4).build(),
                                     "John Doe"
                                     br {}
                                     "Software Engineer"
@@ -276,19 +276,19 @@ pub fn ComponentsCard() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Clickable Card"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Entire card is clickable (click me)"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::MaxWidth, "400px").build_clean(),
                             Card {
                                 hoverable: true,
                                 title: "Clickable Card".to_string(),
-                                div { class: ClassesBuilder::default().add(TextColor::Gray600).add(MarginBottom::Mb4).build(),
+                                div { class: ClassesBuilder::default().add(TextColor::Secondary).add(MarginBottom::Mb4).build(),
                                     "Click anywhere on this card to trigger the action. Great for navigation or selection."
                                 }
                             }
@@ -306,12 +306,12 @@ pub fn ComponentsCard() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Status Badges"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Cards can display status information using badges"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::MaxWidth, "400px").build_clean(),
@@ -320,8 +320,8 @@ pub fn ComponentsCard() -> Element {
                                 extra: rsx! {
                                     Badge { variant: BadgeVariant::Success, "Active" }
                                 },
-                                div { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
-                                    p { class: ClassesBuilder::default().add(TextColor::Gray600).add(MarginBottom::Mb4).build(),
+                                div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
+                                    p { class: ClassesBuilder::default().add(TextColor::Secondary).add(MarginBottom::Mb4).build(),
                                         "This card uses badges to indicate the status of the project or item."
                                     }
                                     Row { gap: "sm".to_string(),
@@ -345,12 +345,12 @@ pub fn ComponentsCard() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Multiple Cards"
                         }
-                        p { class: ClassesBuilder::default().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Cards work well in grid layouts for displaying multiple items"
                         }
                         div {
@@ -362,28 +362,28 @@ pub fn ComponentsCard() -> Element {
 
                             // Card 1
                             Card { title: "Features".to_string(),
-                                div { class: ClassesBuilder::default().add(TextColor::Gray600).add(MarginBottom::Mb4).build(),
+                                div { class: ClassesBuilder::default().add(TextColor::Secondary).add(MarginBottom::Mb4).build(),
                                     "Explore all the powerful features Hikari has to offer for your next project."
                                 }
                             }
 
                             // Card 2
                             Card { title: "Documentation".to_string(),
-                                div { class: ClassesBuilder::default().add(TextColor::Gray600).add(MarginBottom::Mb4).build(),
+                                div { class: ClassesBuilder::default().add(TextColor::Secondary).add(MarginBottom::Mb4).build(),
                                     "Comprehensive guides and API references to help you get started quickly."
                                 }
                             }
 
                             // Card 3
                             Card { title: "Examples".to_string(),
-                                div { class: ClassesBuilder::default().add(TextColor::Gray600).add(MarginBottom::Mb4).build(),
+                                div { class: ClassesBuilder::default().add(TextColor::Secondary).add(MarginBottom::Mb4).build(),
                                     "Browse through our collection of examples and demos to learn by doing."
                                 }
                             }
 
                             // Card 4
                             Card { title: "Community".to_string(),
-                                div { class: ClassesBuilder::default().add(TextColor::Gray600).add(MarginBottom::Mb4).build(),
+                                div { class: ClassesBuilder::default().add(TextColor::Secondary).add(MarginBottom::Mb4).build(),
                                     "Join our community to connect with other developers and share your work."
                                 }
                             }
@@ -401,12 +401,12 @@ pub fn ComponentsCard() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Basic Card"
                         }
-                        div { class: ClassesBuilder::new().add(Padding::P4).add(BgColor::Gray900).add(BorderRadius::Rounded).build(),
+                        div { class: ClassesBuilder::new().add(Padding::P4).add(BgColor::Surface).add(BorderRadius::Rounded).build(),
                             code {
                                 r#"Card {{
     title: "Card Title".to_string(),
@@ -421,12 +421,12 @@ pub fn ComponentsCard() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Card with Actions"
                         }
-                        div { class: ClassesBuilder::new().add(Padding::P4).add(BgColor::Gray900).add(BorderRadius::Rounded).build(),
+                        div { class: ClassesBuilder::new().add(Padding::P4).add(BgColor::Surface).add(BorderRadius::Rounded).build(),
                             code {
                                 r#"Card {{
     title: "Settings".to_string(),
@@ -447,12 +447,12 @@ pub fn ComponentsCard() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Hoverable Card with Spotlight"
                         }
-                        div { class: ClassesBuilder::new().add(Padding::P4).add(BgColor::Gray900).add(BorderRadius::Rounded).build(),
+                        div { class: ClassesBuilder::new().add(Padding::P4).add(BgColor::Surface).add(BorderRadius::Rounded).build(),
                             code {
                                 r#"Card {{
     hoverable: true,
@@ -469,12 +469,12 @@ pub fn ComponentsCard() -> Element {
                             class: ClassesBuilder::default()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Clickable Card"
                         }
-                        div { class: ClassesBuilder::new().add(Padding::P4).add(BgColor::Gray900).add(BorderRadius::Rounded).build(),
+                        div { class: ClassesBuilder::new().add(Padding::P4).add(BgColor::Surface).add(BorderRadius::Rounded).build(),
                             code {
                                 r#"Card {{
     hoverable: true,

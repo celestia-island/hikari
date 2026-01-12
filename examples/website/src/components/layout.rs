@@ -71,16 +71,7 @@ pub fn Layout(children: Element, current_route: Route) -> Element {
                         alt: "Hikari Logo".to_string(),
                         height: 36,
                         max_width: 140,
-                    },
-                    h2 {
-                        class: ClassesBuilder::new()
-                            .add(Margin::M0)
-                            .add(FontSize::Xl)
-                            .add(FontWeight::Semibold)
-                            .add(TextColor::Gray900)
-                            .build(),
-                        "Hikari UI"
-                    },
+                    }
                 }
             },
 
@@ -121,27 +112,27 @@ fn BreadcrumbNav(current_route: Route) -> Element {
                 .build(),
 
             // Home link
-            Link {
-                to: Route::Home {},
-                class: ClassesBuilder::new()
-                    .add(TextColor::Gray600)
-                    .add(Transition::Colors)
-                    .add(Duration::D150)
-                    .build(),
-                Icon { icon: MdiIcon::TrophyAward, size: 16 }
-            }
-
-            // Breadcrumb items with separators
-            for (i , item) in breadcrumb_items.iter().enumerate() {
-                // Separator icon
-                div { class: ClassesBuilder::new().add(TextColor::Gray400).build(),
-                    Icon { icon: MdiIcon::ChevronRight, size: 16 }
+                Link {
+                    to: Route::Home {},
+                    class: ClassesBuilder::new()
+                        .add(TextColor::Secondary)
+                        .add(Transition::Colors)
+                        .add(Duration::D150)
+                        .build(),
+                    Icon { icon: MdiIcon::TrophyAward, size: 16 }
                 }
 
-                // Item
+                // Breadcrumb items with separators
+                for (i , item) in breadcrumb_items.iter().enumerate() {
+                    // Separator icon
+                    div { class: ClassesBuilder::new().add(TextColor::Muted).build(),
+                        Icon { icon: MdiIcon::ChevronRight, size: 16 }
+                    }
+
+                    // Item
                 if i == breadcrumb_items.len() - 1 {
                     // Current page (not a link)
-                    span { class: ClassesBuilder::new().add(TextColor::Gray900).add(FontWeight::Medium).build(),
+                    span { class: ClassesBuilder::new().add(TextColor::Primary).add(FontWeight::Medium).build(),
                         "{item.label}"
                     }
                 } else if let Some(route) = &item.route {
@@ -149,14 +140,14 @@ fn BreadcrumbNav(current_route: Route) -> Element {
                     Link {
                         to: route.clone(),
                         class: ClassesBuilder::new()
-                            .add(TextColor::Gray600)
+                            .add(TextColor::Secondary)
                             .add(Transition::Colors)
                             .add(Duration::D150)
                             .build(),
                         "{item.label}"
                     }
                 } else {
-                    span { class: ClassesBuilder::new().add(TextColor::Gray400).build(),
+                    span { class: ClassesBuilder::new().add(TextColor::Muted).build(),
                         "{item.label}"
                     }
                 }

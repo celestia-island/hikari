@@ -156,9 +156,15 @@
   }
 
   // Dark theme support
-  [data-theme="tairitus"] &,
+  [data-theme="tairitsu"] &,
   [data-theme="dark"] & {
     background: var(--hi-secondary-bg, rgba(45, 45, 45, 0.5));
+  }
+
+  // Dark theme support
+  [data-theme="tairitsu"] &,
+  [data-theme="dark"] & {
+    background: var(--hi-tertiary-bg, rgba(35, 35, 35, 0.5));
   }
 }
 

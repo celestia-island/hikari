@@ -7,8 +7,9 @@ use dioxus_router::components::Link;
 use crate::{app::Route, components::Layout};
 use _animation::style::{CssProperty, StyleStringBuilder};
 use _components::{
-    layout::{Container, Grid, Row, Section, Spacer},
-    Button, ButtonSize, ButtonVariant, Card,
+    basic::{Logo, Logo as HikariLogo},
+    layout::{Container, Row, Section, Spacer},
+    Button, ButtonSize, ButtonVariant,
 };
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextAlign, TextColor};
 
@@ -25,18 +26,16 @@ pub fn Home() -> Element {
                     // Hero Content using semantic HTML
                     div { class: ClassesBuilder::new().add(TextAlign::Center).build(),
 
-                        h1 {
-                            class: ClassesBuilder::new()
-                                .add(FontSize::X4xl)
-                                .add(FontWeight::Bold)
-                                .add(MarginBottom::Mb4)
-                                .build(),
-                            "Hikari UI"
+                        HikariLogo {
+                            src: "/images/logo.png".to_string(),
+                            alt: "Hikari Logo".to_string(),
+                            height: 80,
+                            max_width: 300,
                         }
                         p {
                             class: ClassesBuilder::new()
                                 .add(FontSize::X2xl)
-                                .add(TextColor::Gray600)
+                                .add(TextColor::Secondary)
                                 .add(MarginBottom::Mb6)
                                 .build(),
                             "光 · Light · Brilliance"
@@ -44,8 +43,12 @@ pub fn Home() -> Element {
 
                         Spacer { size: "md".to_string() }
 
-                        p { class: ClassesBuilder::new().add(FontSize::Lg).add(TextColor::Gray700).build(),
-                            "A modern Rust UI component library for Dioxus, inspired by Arknights aesthetics with FUI elements and traditional Chinese colors."
+                        p { class: ClassesBuilder::new().add(FontSize::Lg).add(TextColor::Primary).build(),
+                            "A modern Rust UI component library for Dioxus."
+                        }
+
+                        p { class: ClassesBuilder::new().add(FontSize::Sm).add(TextColor::Primary).build(),
+                            "There is no shame in wanting to feel happy."
                         }
                     }
                 }
@@ -76,46 +79,6 @@ pub fn Home() -> Element {
                 }
 
                 Spacer { size: "xl".to_string() }
-
-                // Feature Cards Grid
-                Grid { columns: 4, gap: "lg".to_string(),
-
-                    FeatureCard {
-                        icon: "🎨",
-                        title: "Chinese Colors".to_string(),
-                        description: "161 traditional Chinese colors with historical significance".to_string(),
-                    }
-
-                    FeatureCard {
-                        icon: "⚡",
-                        title: "FUI Design".to_string(),
-                        description: "Futuristic interface inspired by Arknights and sci-fi aesthetics".to_string(),
-                    }
-
-                    FeatureCard {
-                        icon: "🚀",
-                        title: "WASM Optimized".to_string(),
-                        description: "Minimal binary size with feature-gated Chinese names".to_string(),
-                    }
-
-                    FeatureCard {
-                        icon: "📦",
-                        title: "Component Library".to_string(),
-                        description: "Complete set of UI components for modern applications".to_string(),
-                    }
-                }
-            }
-        }
-    }
-}
-
-#[component]
-fn FeatureCard(icon: String, title: String, description: String) -> Element {
-    rsx! {
-        Card { hoverable: true, title: Some(title),
-            div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::FlexDirection, "column").add(CssProperty::AlignItems, "center").build_clean(),
-                div { class: ClassesBuilder::new().add_raw("feature-icon").build(), "{icon}" }
-                p { class: ClassesBuilder::new().add_raw("feature-description").build(), "{description}" }
             }
         }
     }

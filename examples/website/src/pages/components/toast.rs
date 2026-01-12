@@ -25,7 +25,7 @@ pub fn ComponentsToast() -> Element {
                             .build(),
                         "Toast"
                     }
-                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Secondary).build(),
                         "Floating notification messages for user feedback with FUI aesthetics"
                     }
                 }
@@ -35,7 +35,7 @@ pub fn ComponentsToast() -> Element {
                     title: Some("Overview".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         p {
                             "Toasts are floating notification messages that appear temporarily to provide feedback. They support:"
                         }
@@ -74,12 +74,12 @@ pub fn ComponentsToast() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Info Toast"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Used for informational messages"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -98,12 +98,12 @@ pub fn ComponentsToast() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Success Toast"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Used to indicate successful operations"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -122,12 +122,12 @@ pub fn ComponentsToast() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Warning Toast"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Used for warning messages"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -146,12 +146,12 @@ pub fn ComponentsToast() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Error Toast"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Used for error messages"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -171,7 +171,7 @@ pub fn ComponentsToast() -> Element {
                     title: Some("Toast Positions".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         p { "Toasts can be positioned at different corners of the screen:" }
                     }
 
@@ -180,7 +180,7 @@ pub fn ComponentsToast() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Position Options"
@@ -255,12 +255,12 @@ pub fn ComponentsToast() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "With Title"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Add a title to provide more context"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -280,12 +280,12 @@ pub fn ComponentsToast() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Custom Duration"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Control how long the toast remains visible (in milliseconds)"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -305,12 +305,12 @@ pub fn ComponentsToast() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Non-Closable"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Toasts without close button (must wait for duration)"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -337,7 +337,7 @@ pub fn ComponentsToast() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Basic Toast"
@@ -345,7 +345,7 @@ pub fn ComponentsToast() -> Element {
                         div {
                             class: ClassesBuilder::new()
                                 .add(Padding::P4)
-                                .add(BgColor::Gray900)
+                                .add(BgColor::Surface)
                                 .add(BorderRadius::Rounded)
                                 .build(),
                             code {
@@ -363,7 +363,7 @@ pub fn ComponentsToast() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Toast with Title and Duration"
@@ -371,7 +371,7 @@ pub fn ComponentsToast() -> Element {
                         div {
                             class: ClassesBuilder::new()
                                 .add(Padding::P4)
-                                .add(BgColor::Gray900)
+                                .add(BgColor::Surface)
                                 .add(BorderRadius::Rounded)
                                 .build(),
                             code {
@@ -391,7 +391,7 @@ pub fn ComponentsToast() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Error Toast with Manual Close"
@@ -399,7 +399,7 @@ pub fn ComponentsToast() -> Element {
                         div {
                             class: ClassesBuilder::new()
                                 .add(Padding::P4)
-                                .add(BgColor::Gray900)
+                                .add(BgColor::Surface)
                                 .add(BorderRadius::Rounded)
                                 .build(),
                             code {
@@ -419,7 +419,7 @@ pub fn ComponentsToast() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Temporary Notification"
@@ -427,7 +427,7 @@ pub fn ComponentsToast() -> Element {
                         div {
                             class: ClassesBuilder::new()
                                 .add(Padding::P4)
-                                .add(BgColor::Gray900)
+                                .add(BgColor::Surface)
                                 .add(BorderRadius::Rounded)
                                 .build(),
                             code {
@@ -448,12 +448,12 @@ pub fn ComponentsToast() -> Element {
                     title: Some("Best Practices".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         h3 {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "When to Use Toasts"
@@ -481,7 +481,7 @@ pub fn ComponentsToast() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Position Guidelines"
@@ -509,7 +509,7 @@ pub fn ComponentsToast() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Duration Recommendations"

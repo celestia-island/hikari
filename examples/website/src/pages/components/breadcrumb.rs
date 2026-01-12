@@ -26,7 +26,7 @@ pub fn ComponentsBreadcrumb() -> Element {
                             .build(),
                         "Breadcrumb"
                     }
-                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Secondary).build(),
                         "Navigation breadcrumbs showing current page location with FUI aesthetics"
                     }
                 }
@@ -36,7 +36,7 @@ pub fn ComponentsBreadcrumb() -> Element {
                     title: Some("Overview".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         p {
                             "Breadcrumbs show the current page's location in the site hierarchy. They support:"
                         }
@@ -75,12 +75,12 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Default Breadcrumb"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Basic breadcrumb with chevron separator"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -97,12 +97,12 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Breadcrumb with Icons"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Enhanced breadcrumbs with visual icons"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -128,12 +128,12 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Clickable Breadcrumb"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Breadcrumb items with click handlers"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -168,12 +168,12 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Slash Separator"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Classic slash separator"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -192,12 +192,12 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Arrow Separator"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Arrow symbol separator"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -216,12 +216,12 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Dot Separator"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Minimal dot separator"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -246,12 +246,12 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Background Style"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Breadcrumb with background fill"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -268,12 +268,12 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Pill Style"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Pill-shaped breadcrumb items"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -296,12 +296,12 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Site Navigation"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Standard site hierarchy navigation"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -322,12 +322,12 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "File System Path"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "File or directory path representation"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -348,12 +348,12 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Process Flow"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Multi-step process indicator"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
@@ -377,7 +377,7 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Basic Breadcrumb"
@@ -398,7 +398,7 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Breadcrumb with Icons"
@@ -425,7 +425,7 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Custom Separator"
@@ -447,7 +447,7 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Clickable Items"
@@ -475,12 +475,12 @@ pub fn ComponentsBreadcrumb() -> Element {
                     title: Some("Best Practices".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         h3 {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "When to Use Breadcrumbs"
@@ -508,7 +508,7 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Content Guidelines"
@@ -536,7 +536,7 @@ pub fn ComponentsBreadcrumb() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Design Guidelines"

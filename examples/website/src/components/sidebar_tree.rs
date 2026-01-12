@@ -46,7 +46,7 @@ pub fn Sidebar(current_route: Route) -> Element {
                 span {
                     class: ClassesBuilder::new()
                         .add(FontSize::Xs)
-                        .add(TextColor::Gray500)
+                        .add(TextColor::Secondary)
                         .add(FontWeight::Medium)
                         .build(),
                     "Component Library"
@@ -78,7 +78,7 @@ pub fn Sidebar(current_route: Route) -> Element {
                         .add(AlignItems::Center)
                         .add(Gap::Gap2)
                         .add(FontSize::Xs)
-                        .add(TextColor::Gray500)
+                        .add(TextColor::Secondary)
                         .add(FontWeight::Medium)
                         .build(),
                     span { "🔗" }

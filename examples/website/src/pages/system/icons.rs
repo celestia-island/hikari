@@ -31,23 +31,23 @@ pub fn SystemIcons() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::X4xl)
                                 .add(FontWeight::Bold)
-                                .add(TextColor::Gray900)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb0)
                                 .build(),
                             "Icons"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Powered by Lucide - 1000+ beautifully crafted icons"
                         }
                     }
 
                     div {
                         class: ClassesBuilder::new()
-                            .add(BgColor::Gray100)
+                            .add(BgColor::Surface)
                             .add(BorderRadius::Lg)
                             .add(Padding::P6)
                             .build(),
-                        p { class: ClassesBuilder::new().add(TextColor::Gray700).add(MarginBottom::Mb0).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Primary).add(MarginBottom::Mb0).build(),
                             "This page is under construction. Check back soon for detailed documentation and examples!"
                         }
                     }

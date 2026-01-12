@@ -32,7 +32,7 @@ pub fn ComponentsTooltip() -> Element {
                             .build(),
                         "Tooltip"
                     }
-                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Gray600).build(),
+                    p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Secondary).build(),
                         "Floating labels for additional context with FUI aesthetics"
                     }
                 }
@@ -42,7 +42,7 @@ pub fn ComponentsTooltip() -> Element {
                     title: Some("Overview".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         p {
                             "Tooltips provide additional context when users hover over or focus on elements. They support:"
                         }
@@ -77,12 +77,12 @@ pub fn ComponentsTooltip() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Top Placement"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Tooltip appears above the element (default)"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::Padding, "40px").build_clean(),
@@ -99,12 +99,12 @@ pub fn ComponentsTooltip() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Bottom Placement"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Tooltip appears below the element"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::Padding, "40px").build_clean(),
@@ -121,12 +121,12 @@ pub fn ComponentsTooltip() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Left Placement"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Tooltip appears to the left of the element"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::Padding, "40px").build_clean(),
@@ -143,12 +143,12 @@ pub fn ComponentsTooltip() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Right Placement"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Tooltip appears to the right of the element"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::Padding, "40px").build_clean(),
@@ -171,12 +171,12 @@ pub fn ComponentsTooltip() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "With Arrow"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Arrow indicator pointing to the element (default: true)"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::Padding, "40px").build_clean(),
@@ -194,12 +194,12 @@ pub fn ComponentsTooltip() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Without Arrow"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Clean tooltip without arrow indicator"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::Padding, "40px").build_clean(),
@@ -223,12 +223,12 @@ pub fn ComponentsTooltip() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Icon Tooltips"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Add tooltips to icon buttons for clarity"
                         }
                         Row { gap: "lg".to_string(),
@@ -270,12 +270,12 @@ pub fn ComponentsTooltip() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Text Tooltips"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Provide additional context for text elements"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::Padding, "20px").build_clean(),
@@ -294,12 +294,12 @@ pub fn ComponentsTooltip() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Long Content"
                         }
-                        p { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                             "Tooltips can contain longer text descriptions"
                         }
                         div { style: StyleStringBuilder::new().add(CssProperty::Padding, "40px").build_clean(),
@@ -323,7 +323,7 @@ pub fn ComponentsTooltip() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Basic Tooltip"
@@ -331,7 +331,7 @@ pub fn ComponentsTooltip() -> Element {
                         div {
                             class: ClassesBuilder::new()
                                 .add(Padding::P4)
-                                .add(BgColor::Gray900)
+                                .add(BgColor::Surface)
                                 .add(BorderRadius::Rounded)
                                 .build(),
                             code {
@@ -349,7 +349,7 @@ pub fn ComponentsTooltip() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Tooltip without Arrow"
@@ -357,7 +357,7 @@ pub fn ComponentsTooltip() -> Element {
                         div {
                             class: ClassesBuilder::new()
                                 .add(Padding::P4)
-                                .add(BgColor::Gray900)
+                                .add(BgColor::Surface)
                                 .add(BorderRadius::Rounded)
                                 .build(),
                             code {
@@ -376,7 +376,7 @@ pub fn ComponentsTooltip() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Icon Button with Tooltip"
@@ -384,7 +384,7 @@ pub fn ComponentsTooltip() -> Element {
                         div {
                             class: ClassesBuilder::new()
                                 .add(Padding::P4)
-                                .add(BgColor::Gray900)
+                                .add(BgColor::Surface)
                                 .add(BorderRadius::Rounded)
                                 .build(),
                             code {
@@ -407,7 +407,7 @@ pub fn ComponentsTooltip() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Side Placement"
@@ -415,7 +415,7 @@ pub fn ComponentsTooltip() -> Element {
                         div {
                             class: ClassesBuilder::new()
                                 .add(Padding::P4)
-                                .add(BgColor::Gray900)
+                                .add(BgColor::Surface)
                                 .add(BorderRadius::Rounded)
                                 .build(),
                             code {
@@ -434,12 +434,12 @@ pub fn ComponentsTooltip() -> Element {
                     title: Some("Best Practices".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
-                    div { class: ClassesBuilder::new().add(TextColor::Gray600).build(),
+                    div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         h3 {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "When to Use Tooltips"
@@ -467,7 +467,7 @@ pub fn ComponentsTooltip() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Content Guidelines"
@@ -495,7 +495,7 @@ pub fn ComponentsTooltip() -> Element {
                             class: ClassesBuilder::new()
                                 .add(FontSize::Lg)
                                 .add(FontWeight::Semibold)
-                                .add(TextColor::Gray700)
+                                .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
                             "Placement Guidelines"

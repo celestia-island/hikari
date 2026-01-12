@@ -26,7 +26,7 @@ pub fn DemosOverview() -> Element {
                             "Demos"
                         }
                         p {
-                            class: ClassesBuilder::new().add_raw("page-description").add(TextColor::Gray600).build(),
+                            class: ClassesBuilder::new().add_raw("page-description").add(TextColor::Secondary).build(),
                             "Complete application examples showcasing Hikari in action"
                         }
                     }

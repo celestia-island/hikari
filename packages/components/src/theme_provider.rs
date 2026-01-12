@@ -108,7 +108,7 @@ impl ThemePalette {
             warning: palette.warning.hex(),
             danger: palette.danger.hex(),
             background: palette.background.hex(),
-            surface: palette.surface.hex(),
+            surface: palette.surface.rgba(0.7),
             border: palette.border.hex(),
             text_primary: palette.text_primary.hex(),
             text_secondary: palette.text_secondary.hex(),

@@ -93,7 +93,7 @@
   &.hi-pagination-active {
     background: linear-gradient(135deg, var(--hi-primary, rgba(123, 207, 166, 0.9)), rgba(109, 40, 217, 0.9));
     border-color: var(--hi-color-primary);
-    color: #ffffff;
+    color: var(--hi-color-text-inverted, #ffffff);
     box-shadow:
       0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.5)),
       0 0 24px var(--hi-primary, rgba(123, 207, 166, 0.3)),

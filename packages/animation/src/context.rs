@@ -15,6 +15,7 @@ use web_sys::{HtmlElement, Window};
 /// - Scroll position
 /// - Window size
 /// - Current timestamp
+/// - Delta time for smooth frame-based animations
 ///
 /// # Example
 ///
@@ -31,6 +32,10 @@ use web_sys::{HtmlElement, Window};
 /// let mouse_x = ctx.mouse_x();
 /// let mouse_y = ctx.mouse_y();
 ///
+/// // Get delta time for smooth animations
+/// let delta = ctx.delta_time();
+/// let new_pos = current_pos + speed * delta;
+///
 /// // Get scroll position
 /// let scroll_y = ctx.scroll_y();
 /// ```
@@ -39,17 +44,48 @@ pub struct AnimationContext {
     element: HtmlElement,
     /// Window reference
     window: Window,
+    /// Previous frame timestamp for delta calculation
+    previous_time: f64,
+    /// Current frame timestamp
+    current_time: f64,
+    /// Delta time between frames (in milliseconds)
+    delta_time: f64,
 }
 
 impl AnimationContext {
     /// Create a new AnimationContext for the given element
     pub fn new(element: &HtmlElement) -> Self {
         let window = web_sys::window().expect("No window reference");
+        let now = window.performance().map(|p| p.now()).unwrap_or(0.0);
 
         Self {
             element: element.clone(),
             window,
+            previous_time: now,
+            current_time: now,
+            delta_time: 16.67, // ~60fps default
         }
+    }
+
+    /// Create a new AnimationContext with custom timing
+    pub fn new_with_timing(element: &HtmlElement, previous_time: f64, current_time: f64) -> Self {
+        let window = web_sys::window().expect("No window reference");
+        let delta_time = current_time - previous_time;
+
+        Self {
+            element: element.clone(),
+            window,
+            previous_time,
+            current_time,
+            delta_time: delta_time.max(0.0),
+        }
+    }
+
+    /// Update timing for the next frame
+    pub fn update_timing(&mut self, new_time: f64) {
+        self.previous_time = self.current_time;
+        self.current_time = new_time;
+        self.delta_time = (self.current_time - self.previous_time).max(0.0);
     }
 
     /// Get the target element
@@ -259,7 +295,31 @@ impl AnimationContext {
 
     /// Get current timestamp in milliseconds
     pub fn now(&self) -> f64 {
-        self.window.performance().map(|p| p.now()).unwrap_or(0.0)
+        self.current_time
+    }
+
+    /// Get previous frame timestamp in milliseconds
+    pub fn previous_time(&self) -> f64 {
+        self.previous_time
+    }
+
+    /// Get delta time between frames in milliseconds
+    pub fn delta_time(&self) -> f64 {
+        self.delta_time
+    }
+
+    /// Get delta time in seconds (useful for physics calculations)
+    pub fn delta_seconds(&self) -> f64 {
+        self.delta_time / 1000.0
+    }
+
+    /// Get frames per second based on delta time
+    pub fn fps(&self) -> f64 {
+        if self.delta_time > 0.0 {
+            1000.0 / self.delta_time
+        } else {
+            60.0
+        }
     }
 
     // ===== Helpers =====

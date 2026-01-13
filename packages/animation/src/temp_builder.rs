@@ -235,7 +235,7 @@ impl<'a> AnimationBuilder<'a> {
         self.actions
             .entry(element_name.to_string())
             .or_insert_with(Vec::new)
-            .push(AnimationAction::style_static(property, value));
+            .push(AnimationAction::style_static(property, value);
         self
     }
 
@@ -256,7 +256,7 @@ impl<'a> AnimationBuilder<'a> {
         self.actions
             .entry(element_name.to_string())
             .or_insert_with(Vec::new)
-            .push(AnimationAction::style_dynamic(property, f));
+            .push(AnimationAction::style_dynamic(property, f);
         self
     }
 
@@ -277,7 +277,7 @@ impl<'a> AnimationBuilder<'a> {
         self.actions
             .entry(element_name.to_string())
             .or_insert_with(Vec::new)
-            .push(AnimationAction::style_stateful_dynamic(property, f));
+            .push(AnimationAction::style_stateful_dynamic(property, f);
         self
     }
 
@@ -291,7 +291,7 @@ impl<'a> AnimationBuilder<'a> {
         self.actions
             .entry(element_name.to_string())
             .or_insert_with(Vec::new)
-            .push(AnimationAction::class(class));
+            .push(AnimationAction::class(class);
         self
     }
 
@@ -306,7 +306,7 @@ impl<'a> AnimationBuilder<'a> {
             self.actions
                 .entry(element_name.to_string())
                 .or_insert_with(Vec::new)
-                .push(AnimationAction::class(class.as_ref()));
+                .push(AnimationAction::class(class.as_ref());
         }
         self
     }
@@ -348,151 +348,199 @@ impl<'a> AnimationBuilder<'a> {
     /// over animation lifecycle. Useful for complex scenarios.
     ///
     /// Returns a stop function that should be called to clean up animation.
-    pub fn start_animation_loop(self) -> Box<dyn FnOnce()> {
-        let elements = self.elements.clone();
-        let actions = self.actions;
-        let mut state = self.initial_state;
+/// Start an animation loop with manual control
+///
+/// Similar to `start_continuous_animation` but gives more control
+/// over animation lifecycle. Useful for complex scenarios.
+///
+/// Returns a stop function that should be called to clean up animation.
+pub fn start_animation_loop(self) -> Box<dyn FnOnce()> {
+    use wasm_bindgen::closure::Closure;
+    use wasm_bindgen::JsCast;
 
-        // Store callback reference for self-reference
-        let f = Rc::new(RefCell::new(None::<js_sys::Function>));
-        let g = f.clone();
+    let elements = self.elements.clone();
+    let actions = self.actions;
+    let mut state = self.initial_state;
 
-        // Stop flag
-        let should_stop = Rc::new(RefCell::new(false));
-        let should_stop_clone = should_stop.clone();
+    // Stop flag
+    let should_stop = std::rc::Rc::new(std::cell::RefCell::new(false));
+    let should_stop_clone = should_stop.clone();
 
-        // Timing state for delta calculation
-        let timing = Rc::new(RefCell::new((0.0, 0.0))); // (previous_time, current_time)
+    // Timing state for delta calculation
+    let timing = std::rc::Rc::new(std::cell::RefCell::new((0.0, 0.0)));
 
-        // Create animation loop closure
-        let animation_closure = Closure::wrap(Box::new(move || {
-            // Update timing for delta calculation
-            let window = match web_sys::window() {
-                Some(w) => w,
-                None => return,
-            };
+    // Store callback reference for self-reference
+    let f = std::rc::Rc::new(std::cell::RefCell::new(None::<js_sys::Function>));
+    let g = f.clone();
 
-            let current_time = window.performance().map(|p| p.now()).unwrap_or(0.0);
-            let mut timing_ref = timing.borrow_mut();
-            let previous_time = timing_ref.1;
-            timing_ref.0 = timing_ref.1;
-            timing_ref.1 = current_time;
-            drop(timing_ref);
+    // Create animation loop closure
+    let animation_closure = Closure::wrap(Box::new(move || {
+        web_sys::console::log_1(&"🔄 Animation frame started".into());
 
-            // Update each element with dynamic styles
-            for (element_name, js_value) in &elements {
-                if let Some(element_actions) = actions.get(element_name) {
-                    if let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
-                        let ctx = AnimationContext::new_with_timing(
-                            &element,
-                            previous_time,
-                            current_time,
-                        );
-                        let mut has_dynamic = false;
-                        let mut styles: Vec<(CssProperty, String)> = Vec::new();
-
-                        for action in element_actions {
-                            if let AnimationAction::Style(prop, value) = action {
-                                if matches!(
-                                    value,
-                                    DynamicValue::Dynamic(_) | DynamicValue::StatefulDynamic(_)
-                                ) {
-                                    has_dynamic = true;
-                                    styles.push((*prop, value.evaluate(&ctx, &mut state)));
-                                }
-                            }
-                        }
-
-                        if has_dynamic && !styles.is_empty() {
-                            // Create new StyleBuilder for each frame to avoid move issues
-                            let mut builder = StyleBuilder::new(&element);
-                            for (prop, value_str) in &styles {
-                                builder.clone().add(*prop, value_str);
-                            }
-                            builder.apply();
-                        }
-                    }
-                }
-            }
-
-            // Check stop flag after processing current frame to prevent extra frames
-            if *should_stop_clone.borrow() {
+        // Update timing for delta calculation
+        let window = match web_sys::window() {
+            Some(w) => w,
+            None => {
+                web_sys::console::log_1(&"❌ No window available".into());
                 return;
             }
+        };
 
-            // Request next frame using stored callback reference
-            if let Some(callback) = &*f.borrow() {
-                let _ = web_sys::window().and_then(|w| w.request_animation_frame(&callback).ok());
-            }
-        }) as Box<dyn FnMut()>);
+        let current_time = window.performance().map(|p| p.now()).unwrap_or(0.0);
+        let mut timing_ref = timing.borrow_mut();
+        let previous_time = timing_ref.1;
 
-        // Convert closure to js_sys::Function and store for self-reference
-        let callback: &js_sys::Function = animation_closure.as_ref().unchecked_ref();
-        *g.borrow_mut() = Some(callback.clone());
+        // For first frame, set previous_time = current_time to avoid huge delta
+        let effective_previous_time = if previous_time == 0.0 {
+            current_time
+        } else {
+            previous_time
+        };
 
-        // Start animation loop
-        let _ = web_sys::window().and_then(|w| w.request_animation_frame(&callback).ok());
-        animation_closure.forget();
+        timing_ref.0 = timing_ref.1;
+        timing_ref.1 = current_time;
+        drop(timing_ref);
 
-        // Return stop function
-        let should_stop_final = should_stop.clone();
-        Box::new(move || {
-            *should_stop_final.borrow_mut() = true;
-        })
-    }
+        web_sys::console::log_2(
+            &format!(
+                "⏱️ Timing: previous={:.2}, current={:.2}, delta={:.4}",
+                effective_previous_time,
+                current_time,
+                current_time - effective_previous_time
+            )
+            .into(),
+            &(current_time - effective_previous_time).into(),
+        );
 
-    // ===== Internal methods =====
+        // Update each element with dynamic styles
+        for (element_name, js_value) in &elements {
+            if let Some(element_actions) = actions.get(element_name) {
+                if let Ok(element) = js_value.clone().dyn_into::<web_sys::HtmlElement>() {
+                    let ctx = AnimationContext::new_with_timing(
+                        &element,
+                        effective_previous_time,
+                        current_time,
+                    );
 
-    /// Internal apply method
-    fn apply_internal(self, _is_transition: bool) {
-        for (element_name, actions) in self.actions {
-            if let Some(js_value) = self.elements.get(&element_name) {
-                if let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
-                    let ctx = AnimationContext::new(&element);
-                    let mut state = self.initial_state.clone();
-                    let mut builder = StyleBuilder::new(&element);
-                    let mut has_style = false;
+                    let mut has_dynamic = false;
+                    let mut styles: Vec<(CssProperty, String)> = Vec::new();
 
-                    for action in &actions {
-                        match action {
-                            AnimationAction::Style(prop, value) => {
-                                has_style = true;
-                                let value_str = value.evaluate(&ctx, &mut state);
-                                builder.clone().add(*prop, &value_str);
-                            }
-                            AnimationAction::Class(class) => {
-                                element.class_list().add_1(class).unwrap();
+                    web_sys::console::log_2(
+                        &format!(
+                            "Processing {} actions for element: {}",
+                            element_actions.len(),
+                            element_name
+                        )
+                        .into(),
+                        &element_actions.len().into(),
+                    );
+
+                    for (i, action) in element_actions.iter().enumerate() {
+                        web_sys::console::log_2(
+                            &format!("Processing action {} of {}", i, element_actions.len()).into(),
+                            &i.into(),
+                        );
+
+                        if let AnimationAction::Style(prop, value) = action {
+                            if matches!(
+                                value,
+                                DynamicValue::Dynamic(_) | DynamicValue::StatefulDynamic(_)
+                            ) {
+                                has_dynamic = true;
+                                let evaluated_value = value.evaluate(&ctx, &mut state);
+
+                                web_sys::console::log_3(
+                                    &format!(
+                                        "Adding dynamic style: {} = {}",
+                                        prop.as_str(),
+                                        evaluated_value
+                                    )
+                                    .into(),
+                                    &prop.as_str().into(),
+                                    &evaluated_value.clone().into(),
+                                );
+
+                                styles.push((*prop, evaluated_value));
                             }
                         }
                     }
 
-                    if has_style {
-                        builder.apply();
+                    if has_dynamic && !styles.is_empty() {
+                        web_sys::console::log_2(
+                            &format!("Applying {} styles to element", styles.len()).into(),
+                            &styles.len().into(),
+                        );
+
+                        // Apply each style individually to avoid conflicts
+                        for (prop, value_str) in &styles {
+                            web_sys::console::log_2(
+                                &format!("Setting CSS: {} = {}", prop.as_str(), value_str).into(),
+                                &value_str.into(),
+                            );
+
+                            let builder = StyleBuilder::new(&element);
+                            builder.add(*prop, value_str).apply();
+                        }
+
+                        // Verify the final style
+                        let current_style = element
+                            .style()
+                            .get_property_value("background-position")
+                            .unwrap_or_default();
+                        web_sys::console::log_2(
+                            &"✅ Final background-position:".into(),
+                            &current_style.into(),
+                        );
+                    } else {
+                        web_sys::console::log_1(&"⚠️ No dynamic styles to apply".into());
                     }
                 }
             }
         }
-    }
 
-    /// Internal apply with transition method
-    fn apply_with_transition_internal(self, duration: &str, easing: &str, _is_transition: bool) {
-        // First set transition on all elements
-        for element_name in self.actions.keys() {
-            if let Some(js_value) = self.elements.get(element_name) {
-                if let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
-                    StyleBuilder::new(&element)
-                        .add(
-                            CssProperty::Transition,
-                            &format!("all {} {}", duration, easing),
-                        )
-                        .apply();
-                }
-            }
+        // Check stop flag after processing current frame to prevent extra frames
+        if *should_stop_clone.borrow() {
+            web_sys::console::log_1(&"🛑 Animation stopped by flag".into());
+            return;
         }
 
-        // Then apply styles
-        self.apply();
+        // Request next frame using stored callback reference
+        if let Some(callback) = &*f.borrow() {
+            web_sys::console::log_1(&"🔄 Requesting next animation frame".into());
+            let _ = web_sys::window().and_then(|w| w.request_animation_frame(&callback).ok());
+        } else {
+            web_sys::console::log_1(&"⚠️ No callback available for next frame".into());
+        }
+    }) as Box<dyn FnMut()>);
+
+    // Convert closure to js_sys::Function and store for self-reference
+    let callback: &js_sys::Function = animation_closure.as_ref().unchecked_ref();
+    *g.borrow_mut() = Some(callback.clone());
+
+    // Debug: Log that we're about to start the animation loop
+    web_sys::console::log_2(
+        &"🚀 Starting animation loop with callback".into(),
+        &"Requesting first frame".into(),
+    );
+
+    // Start animation loop
+    if let Some(window) = web_sys::window() {
+        if window.request_animation_frame(&callback).is_err() {
+            web_sys::console::log_1(&"❌ Failed to request first animation frame".into());
+        } else {
+            web_sys::console::log_1(&"✅ First animation frame requested successfully".into());
+        }
     }
+
+    // Prevent the closure from being dropped to keep it alive
+    animation_closure.forget();
+
+    // Return stop function
+    let should_stop_final = should_stop.clone();
+    Box::new(move || {
+        web_sys::console::log_1(&"🛑 Animation stop function called".into());
+        *should_stop_final.borrow_mut() = true;
+    })
 }
 
 // ===== Backward compatibility =====
@@ -500,82 +548,4 @@ impl<'a> AnimationBuilder<'a> {
 /// Create a new AnimationBuilder (backward compatibility function)
 pub fn new_animation_builder(elements: &HashMap<String, JsValue>) -> AnimationBuilder {
     AnimationBuilder::new(elements)
-}
-
-/// Helper function to start animation with global manager
-#[cfg(target_arch = "wasm32")]
-pub fn start_animation_with_global_manager(
-    elements: &HashMap<String, JsValue>,
-    actions: &HashMap<String, Vec<AnimationAction>>,
-    initial_state: AnimationState,
-) -> Box<dyn FnOnce()> {
-    use crate::global_manager;
-    use web_sys::HtmlElement;
-
-    let element_name = elements.keys().next().expect("No elements to animate");
-    let element_actions = actions.get(&element_name).expect("No actions for element");
-
-    let js_value = elements.get(&element_name).expect("Element not found");
-    let element = js_value
-        .dyn_into::<HtmlElement>()
-        .expect("Failed to convert to HtmlElement");
-
-    web_sys::console::log_2(
-        &format!(
-            "🎬 Starting animation: {} with {} actions",
-            element_name,
-            element_actions.len()
-        )
-        .into(),
-        &element_name.into(),
-    );
-
-    let mut state = initial_state;
-    state.set_f64("rotation_speed", 2.0 * std::f64::consts::PI / 60.0);
-    state.set_f64("radius_percent", 10.0);
-    state.set_f64("center_x", 50.0);
-    state.set_f64("center_y", 50.0);
-    state.set_f64("angle", 0.0);
-
-    let callback =
-        global_manager::create_animation_callback(element, state, element_actions, |ctx, state| {
-            let rotation_speed = state.get_f64("rotation_speed", 0.0);
-            let delta_seconds = ctx.delta_seconds();
-            state.add_f64("angle", rotation_speed * delta_seconds);
-
-            let mut angle = state.get_f64("angle", 0.0);
-            if angle > 2.0 * std::f64::consts::PI {
-                angle -= 2.0 * std::f64::consts::PI;
-                state.set_f64("angle", angle);
-            }
-
-            let radius = state.get_f64("radius_percent", 10.0);
-            let center_x = state.get_f64("center_x", 50.0);
-            let center_y = state.get_f64("center_y", 50.0);
-
-            let x = center_x + radius * angle.cos();
-            let y = center_y + radius * angle.sin();
-
-            format!("{:.1}% {:.1}%", x, y)
-        });
-
-    let animation_name = format!("bg_anim_{:?}", std::time::Instant::now());
-    global_manager().register(animation_name.clone(), callback);
-
-    web_sys::console::log_2(
-        &format!(
-            "✅ Animation {} registered with global manager",
-            animation_name
-        )
-        .into(),
-        &animation_name.into(),
-    );
-
-    Box::new(move || {
-        web_sys::console::log_2(
-            &format!("🛑 Stopping animation: {}", animation_name).into(),
-            &animation_name.into(),
-        );
-        global_manager().unregister(&animation_name);
-    })
 }

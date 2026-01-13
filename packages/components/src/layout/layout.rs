@@ -29,8 +29,9 @@
 //! }
 //! ```
 
-use crate::basic::Background;
 use dioxus::prelude::*;
+
+use crate::basic::Background;
 
 /// Layout component - Modern application layout wrapper
 ///

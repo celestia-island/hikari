@@ -5,15 +5,9 @@ use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
 use _animation::style::{CssProperty, StyleStringBuilder};
-use _components::{
-    layout::{Container, Row, Section},
-    Button, ButtonVariant, Tooltip, TooltipPlacement,
-};
+use _components::{Button, ButtonVariant, Tooltip, TooltipPlacement, layout::{Container, Row, Section}};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{
-    BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, Margin, MarginBottom, Padding,
-    PaddingLeft, TextColor,
-};
+use _palette::classes::{ BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, Margin, MarginBottom, Padding, PaddingLeft, TextColor, };
 
 #[allow(non_snake_case)]
 pub fn ComponentsTooltip() -> Element {

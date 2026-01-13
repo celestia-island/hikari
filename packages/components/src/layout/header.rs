@@ -16,10 +16,11 @@
 //! }
 //! ```
 
+use std::result::Result;
+
 use dioxus::prelude::*;
 use dioxus_core::VNode;
 use palette::{classes::*, ClassesBuilder};
-use std::result::Result;
 
 /// Header component - Modern application header bar
 ///

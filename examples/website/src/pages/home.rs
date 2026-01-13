@@ -6,11 +6,7 @@ use dioxus_router::components::Link;
 
 use crate::{app::Route, components::Layout};
 use _animation::style::{CssProperty, StyleStringBuilder};
-use _components::{
-    basic::{Logo, Logo as HikariLogo},
-    layout::{Container, Row, Section, Spacer},
-    Button, ButtonSize, ButtonVariant,
-};
+use _components::{Button, ButtonSize, ButtonVariant, basic::{Logo, Logo as HikariLogo}, layout::{Container, Row, Section, Spacer}};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextAlign, TextColor};
 
 #[component]

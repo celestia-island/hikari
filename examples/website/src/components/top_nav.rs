@@ -5,10 +5,7 @@ use dioxus::prelude::*;
 
 use crate::app::Route;
 use _animation::style::{CssProperty, StyleStringBuilder};
-use _palette::classes::{
-    AlignItems, BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize,
-    FontWeight, Gap, JustifyContent, MarginBottom, Padding, TextColor,
-};
+use _palette::classes::{ AlignItems, BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, JustifyContent, MarginBottom, Padding, TextColor, };
 
 /// Top navigation bar with FUI styling
 ///

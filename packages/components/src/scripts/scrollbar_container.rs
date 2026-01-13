@@ -463,9 +463,6 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
     let padding_bottom = computed_style
         .get_property_value("padding-bottom")
         .unwrap_or_default();
-    let padding_left = computed_style
-        .get_property_value("padding-left")
-        .unwrap_or_default();
 
     // Set container position and remove padding
     StyleBuilder::new(container_html)

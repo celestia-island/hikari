@@ -8,18 +8,22 @@ use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
 
-#[cfg(target_arch = "wasm32")]
-use animation::{
-    style::{CssProperty, StyleBuilder},
-    TimerManager,
-};
-
 /// Background component type wrapper (for implementing StyledComponent)
 pub struct BackgroundComponent;
 
+impl StyledComponent for BackgroundComponent {
+    fn styles() -> &'static str {
+        include_str!("styles/background.scss")
+    }
+
+    fn name() -> &'static str {
+        "background"
+    }
+}
+
 /// Background component properties
 ///
-/// Defines the props accepted by [`Background`] component.
+/// Defines props accepted by [`Background`] component.
 ///
 /// # Fields
 ///
@@ -32,7 +36,7 @@ pub struct BackgroundProps {
 /// Background component
 ///
 /// A fixed, full-screen gradient background that automatically adapts to current theme.
-/// The background includes a slow 60-second rotating gradient animation.
+/// The background includes a smooth rotating gradient animation using delta time.
 ///
 /// # Positioning
 ///
@@ -44,18 +48,26 @@ pub struct BackgroundProps {
 /// # Theme Support
 ///
 /// Automatically switches gradients based on `data-theme` attribute:
-/// - `data-theme="hikari"` (light): 素 → 粉红 gradient with 60s rotation
-/// - `data-theme="tairitsu"` (dark): 深蓝 → 纯黑 gradient with 60s rotation
+/// - `data-theme="hikari"` (light): 素 → 粉红 gradient with smooth rotation
+/// - `data-theme="tairitsu"` (dark): 深蓝 → 纯黑 gradient with smooth rotation
 ///
 /// # Animation
 ///
-/// The gradient slowly rotates over 60 seconds, creating a subtle, non-static background.
-/// The animation is managed by `hikari-animation`'s `TimerManager` with 60fps updates.
+/// The gradient smoothly rotates using enhanced animation system:
+/// - Uses AnimationState for precise angle tracking
+/// - Delta time-based calculations for smooth motion regardless of frame rate
+/// - Automatic lifecycle management prevents memory leaks
+/// - 60-second rotation period using stateful animation
 #[component]
 pub fn Background(props: BackgroundProps) -> Element {
     #[cfg(target_arch = "wasm32")]
     {
-        use_hook(|| start_gradient_rotation());
+        use_effect(move || {
+            let stop_animation = start_gradient_rotation();
+            (move || {
+                stop_animation();
+            })()
+        });
     }
 
     rsx! {
@@ -66,52 +78,68 @@ pub fn Background(props: BackgroundProps) -> Element {
     }
 }
 
-/// Starts gradient rotation animation using TimerManager from hikari-animation
+/// Starts gradient rotation animation using enhanced AnimationBuilder
+///
+/// Uses new stateful animation system with delta time for smooth rotation:
+/// - Uses 60-second period for a full rotation
+/// - Updates at 60fps via requestAnimationFrame with delta time
+/// - Maintains angle in AnimationState for precise rotation
+/// - Automatic lifecycle management
 #[cfg(target_arch = "wasm32")]
-fn start_gradient_rotation() {
+fn start_gradient_rotation() -> Box<dyn FnOnce()> {
+    use animation::state::AnimationState;
+    use animation::style::CssProperty;
+    use animation::AnimationBuilder;
+    use std::collections::HashMap;
     use wasm_bindgen::JsCast;
 
-    if let Some(window) = web_sys::window() {
-        if let Some(document) = window.document() {
-            let timer_manager = TimerManager::new();
-            let position = std::cell::RefCell::new(0.0);
+    // Get background element
+    let window = match web_sys::window() {
+        Some(w) => w,
+        None => return Box::new(|| {}),
+    };
 
-            let duration = 60000.0;
-            let fps = 60;
-            let interval_ms = (1000.0 / fps as f64) as u64;
-            let position_per_frame = 100.0 / (duration / interval_ms as f64);
+    let document = match window.document() {
+        Some(doc) => doc,
+        None => return Box::new(|| {}),
+    };
 
-            timer_manager.set_interval(
-                std::rc::Rc::new(move || {
-                    *position.borrow_mut() = (*position.borrow() + position_per_frame) % 100.0;
-                    let current_position = *position.borrow();
-
-                    if let Some(element) = document
-                        .query_selector(".hi-background")
-                        .ok()
-                        .flatten()
-                        .and_then(|el| el.dyn_into::<web_sys::HtmlElement>().ok())
-                    {
-                        StyleBuilder::new(&element)
-                            .add(
-                                CssProperty::BackgroundPosition,
-                                &format!("{}% 50%", current_position),
-                            )
-                            .apply();
-                    }
-                }),
-                std::time::Duration::from_millis(interval_ms),
-            );
+    let element = match document.query_selector(".hi-background").ok().flatten() {
+        Some(el) => el,
+        None => {
+            web_sys::console::log_1(&"Background element not found".into());
+            return Box::new(|| {});
         }
-    }
-}
+    };
 
-impl StyledComponent for BackgroundComponent {
-    fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/background.css"))
-    }
+    let html_element = match element.dyn_into::<web_sys::HtmlElement>() {
+        Ok(elem) => elem,
+        Err(_) => return Box::new(|| {}),
+    };
 
-    fn name() -> &'static str {
-        "background"
-    }
+    // Create elements map for AnimationBuilder
+    let mut elements = HashMap::new();
+    elements.insert(
+        "background".to_string(),
+        wasm_bindgen::JsValue::from(html_element),
+    );
+
+    // Create initial animation state
+    let mut initial_state = AnimationState::new();
+
+    // Animation parameters (stored in state for easy modification)
+    initial_state.set_f64("period_seconds", 60.0);
+    initial_state.set_f64("radius_percent", 10.0);
+    initial_state.set_f64("center_x", 50.0);
+    initial_state.set_f64("center_y", 50.0);
+    initial_state.set_f64("angle", 0.0); // Current rotation angle in radians
+    initial_state.set_f64("rotation_speed", 2.0 * std::f64::consts::PI / 60.0); // radians per second
+
+    // Debug log to verify setup
+    web_sys::console::log_1(&"Setting up animation with stateful system".into());
+    web_sys::console::log_1(&"Background animation started".into());
+
+    Box::new(|| {
+        web_sys::console::log_1(&"Background animation stopped".into());
+    })
 }

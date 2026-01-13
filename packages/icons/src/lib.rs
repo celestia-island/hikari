@@ -206,11 +206,9 @@
 //! }
 //! ```
 
-pub mod mdi_minimal;
-
-pub mod svg_macro;
-
 pub mod generated;
+pub mod mdi_minimal;
+pub mod svg_macro;
 
 use dioxus::prelude::*;
 

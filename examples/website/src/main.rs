@@ -9,9 +9,7 @@ use http::StatusCode;
 use tower_http::cors::{Any, CorsLayer};
 
 use _components::StyleRegistry;
-use _render_service::{
-    plugin::StaticMountConfig, static_files::StaticFileConfig, HikariRenderServicePlugin,
-};
+use _render_service::{HikariRenderServicePlugin, plugin::StaticMountConfig, static_files::StaticFileConfig};
 
 // Import centralized path configuration
 use website::paths::STATIC_PATHS;

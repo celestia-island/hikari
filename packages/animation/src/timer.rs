@@ -6,6 +6,7 @@
 //! - Toast auto-dismissal
 //! - Temporary visual feedback
 //! - Debouncing and throttling
+//! - requestAnimationFrame-based animations
 
 use std::{cell::RefCell, rc::Rc, time::Duration};
 
@@ -21,7 +22,23 @@ impl TimerId {
         Self(id)
     }
 
-    /// Get the raw timer ID
+    /// Get raw timer ID
+    pub fn as_u32(&self) -> u32 {
+        self.0
+    }
+}
+
+/// Frame ID for tracking requestAnimationFrame callbacks
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct FrameId(u32);
+
+impl FrameId {
+    /// Create a new frame ID from raw value
+    pub fn new(id: u32) -> Self {
+        Self(id)
+    }
+
+    /// Get raw frame ID
     pub fn as_u32(&self) -> u32 {
         self.0
     }
@@ -29,6 +46,9 @@ impl TimerId {
 
 /// Callback type for timer events
 pub type TimerCallback = Rc<dyn Fn()>;
+
+/// Frame callback type for requestAnimationFrame
+pub type FrameCallback = Rc<RefCell<dyn FnMut(f64)>>;
 
 /// Timer manager for scheduling and cancelling delayed callbacks
 ///
@@ -52,6 +72,7 @@ pub type TimerCallback = Rc<dyn Fn()>;
 pub struct TimerManager {
     next_id: Rc<RefCell<u32>>,
     timers: Rc<RefCell<std::collections::HashMap<TimerId, i32>>>,
+    animation_frames: Rc<RefCell<std::collections::HashMap<FrameId, i32>>>,
 }
 
 impl TimerManager {
@@ -60,6 +81,7 @@ impl TimerManager {
         Self {
             next_id: Rc::new(RefCell::new(0)),
             timers: Rc::new(RefCell::new(std::collections::HashMap::new())),
+            animation_frames: Rc::new(RefCell::new(std::collections::HashMap::new())),
         }
     }
 
@@ -193,6 +215,101 @@ impl TimerManager {
             let _ = window.clear_timeout_with_handle(*handle);
         }
         timers.clear();
+    }
+
+    /// Schedule a requestAnimationFrame callback
+    ///
+    /// # Arguments
+    ///
+    /// * `callback` - Function to call each frame with timestamp (ms since page load)
+    ///
+    /// # Returns
+    ///
+    /// Frame ID that can be used to cancel the animation
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use animation::TimerManager;
+    ///
+    /// let manager = TimerManager::new();
+    ///
+    /// let callback = Rc::new(RefCell::new(move |timestamp| {
+    ///     let angle = (timestamp / 100.0) % 360.0;
+    ///     // Update element with angle...
+    /// }));
+    ///
+    /// let id = manager.request_animation_frame(callback);
+    ///
+    /// // Cancel if needed
+    /// manager.cancel_animation_frame(id);
+    /// ```
+    pub fn request_animation_frame(&self, callback: FrameCallback) -> FrameId {
+        let window = match web_sys::window() {
+            Some(w) => w,
+            None => return FrameId(0),
+        };
+
+        // Generate unique frame ID
+        let id = {
+            let mut next_id = self.next_id.borrow_mut();
+            let id = FrameId(*next_id);
+            *next_id = next_id.wrapping_add(1);
+            id
+        };
+
+        // Schedule requestAnimationFrame
+        let callback_clone = callback.clone();
+        let callback_js = Closure::wrap(Box::new(move |timestamp: f64| {
+            if let Ok(mut cb) = callback_clone.try_borrow_mut() {
+                cb(timestamp);
+            }
+        }) as Box<dyn FnMut(f64)>);
+
+        let handle = window.request_animation_frame(callback_js.as_ref().unchecked_ref());
+
+        match handle {
+            Ok(handle) => {
+                let mut frames = self.animation_frames.borrow_mut();
+                frames.insert(id, handle as i32);
+                callback_js.forget();
+            }
+            Err(_) => {
+                callback_js.forget();
+            }
+        }
+
+        id
+    }
+
+    /// Cancel a requestAnimationFrame callback
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - Frame ID returned by `request_animation_frame`
+    pub fn cancel_animation_frame(&self, id: FrameId) {
+        let window = match web_sys::window() {
+            Some(w) => w,
+            None => return,
+        };
+
+        if let Some(handle) = self.animation_frames.borrow_mut().remove(&id) {
+            let _ = window.cancel_animation_frame(handle);
+        }
+    }
+
+    /// Clear all active animation frames
+    pub fn clear_all_animation_frames(&self) {
+        let window = match web_sys::window() {
+            Some(w) => w,
+            None => return,
+        };
+
+        let mut frames = self.animation_frames.borrow_mut();
+        for (_id, handle) in frames.iter() {
+            let _ = window.cancel_animation_frame(*handle);
+        }
+        frames.clear();
     }
 }
 

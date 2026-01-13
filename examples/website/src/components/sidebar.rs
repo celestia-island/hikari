@@ -1,11 +1,12 @@
 // website/src/components/sidebar.rs
 // Website-specific sidebar using hikari-components Sidebar
 
+use dioxus::prelude::*;
+use dioxus_router::components::Link;
+
 use crate::app::Route;
 use _components::{Sidebar as HikariSidebar, SidebarItem, SidebarLeaf, SidebarSection};
 use _icons::{Icon, MdiIcon};
-use dioxus::prelude::*;
-use dioxus_router::components::Link;
 
 /// Sidebar navigation with 3-level hierarchy
 ///

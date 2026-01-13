@@ -209,7 +209,7 @@ pub enum CssProperty {
 
 impl CssProperty {
     /// Convert to CSS property name (kebab-case)
-    fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> &'static str {
         match self {
             // Layout
             CssProperty::Display => "display",
@@ -440,6 +440,15 @@ pub fn set_styles(element: &HtmlElement, properties: &[(CssProperty, &str)]) {
 pub struct StyleBuilder<'a> {
     element: &'a HtmlElement,
     properties: Vec<(CssProperty, String)>,
+}
+
+impl<'a> Clone for StyleBuilder<'a> {
+    fn clone(&self) -> Self {
+        Self {
+            element: self.element,
+            properties: self.properties.clone(),
+        }
+    }
 }
 
 impl<'a> StyleBuilder<'a> {

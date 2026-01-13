@@ -32,15 +32,16 @@
 //! }
 //! ```
 
+mod svg_parser;
+
 use anyhow::{anyhow, Context, Result};
-use quick_xml::events::Event;
 use std::{
     collections::{HashMap, HashSet},
     fs,
     path::{Path, PathBuf},
 };
 
-mod svg_parser;
+use quick_xml::events::Event;
 pub use svg_parser::{IconData, PathData, PathElement, SvgElem, SvgElement, SvgIcon};
 
 /// Icon source library

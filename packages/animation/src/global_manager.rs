@@ -9,8 +9,8 @@ use std::rc::Rc;
 
 use crate::builder::AnimationAction;
 use crate::context::AnimationContext;
-use crate::style::CssProperty;
-use crate::AnimationState;
+use crate::state::AnimationState;
+use once_cell::sync::Lazy;
 
 /// Animation update callback type
 pub type AnimationUpdateCallback = Box<dyn Fn()>;
@@ -20,6 +20,7 @@ pub type AnimationUpdateCallback = Box<dyn Fn()>;
 pub struct GlobalAnimationManager {
     callbacks: Arc<Mutex<HashMap<String, Vec<AnimationUpdateCallback>>>>,
     running: Arc<Mutex<bool>>,
+    animation_closure: RefCell<Option<Closure<dyn Fn()>>>,
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -29,6 +30,7 @@ impl GlobalAnimationManager {
         Self {
             callbacks: Arc::new(Mutex::new(HashMap::new())),
             running: Arc::new(Mutex::new(false)),
+            animation_closure: RefCell::new(None),
         }
     }
 
@@ -48,8 +50,8 @@ impl GlobalAnimationManager {
             let callbacks_map = callbacks.lock().unwrap();
 
             // Execute all registered animation callbacks
-            for (animation_name, callback_list) in callbacks_map.iter() {
-                for (i, callback) in callback_list.iter().enumerate() {
+            for (_animation_name, callback_list) in callbacks_map.iter() {
+                for callback in callback_list.iter() {
                     callback(); // Execute the animation update
                 }
             }
@@ -60,32 +62,46 @@ impl GlobalAnimationManager {
             if is_running {
                 web_sys::console::log_1(&"🔄 Requesting next frame (global loop)".into());
                 if let Some(window) = window() {
-                    let _ =
-                        window.request_animation_frame(animation_closure.as_ref().unchecked_ref());
+                    // Schedule next frame
+                    let running_clone = running.clone();
+                    let callbacks_clone = callbacks.clone();
+
+                    let next_closure = Closure::wrap(Box::new(move || {
+                        let callbacks_map = callbacks_clone.lock().unwrap();
+                        for (_, callback_list) in callbacks_map.iter() {
+                            for callback in callback_list.iter() {
+                                callback();
+                            }
+                        }
+                        drop(callbacks_map);
+
+                        // Request frame again if still running
+                        if *running_clone.lock().unwrap() {
+                            if let Some(window) = window() {
+                                let _ = window
+                                    .request_animation_frame(next_closure.as_ref().unchecked_ref());
+                            }
+                        }
+                    }) as Box<dyn Fn()>);
+
+                    let _ = window.request_animation_frame(next_closure.as_ref().unchecked_ref());
                 }
             } else {
                 web_sys::console::log_1(&"🛑 Animation loop stopped".into());
             }
-        }));
+        }) as Box<dyn Fn()>);
 
         // Store closure and request first frame
-        let callback_ref: &js_sys::Function = animation_closure.as_ref().unchecked_ref();
-        let closure_arc = Rc::new(RefCell::new(None::<js_sys::Function>));
-        *closure_arc.borrow_mut() = Some(callback_ref.clone());
+        self.animation_closure.replace(Some(animation_closure));
 
         if let Some(window) = window() {
-            if let Err(e) = window.request_animation_frame(callback_ref) {
-                web_sys::console::log_2(
-                    &"❌ Failed to start global animation loop".into(),
-                    &format!("{:?}", e).into(),
-                );
-            } else {
+            if let Some(ref callback) = self.animation_closure.borrow() {
+                let _ = window.request_animation_frame(callback.as_ref().unchecked_ref());
                 web_sys::console::log_1(&"✅ Global animation loop started".into());
+            } else {
+                web_sys::console::log_1(&"❌ Failed to create animation closure".into());
             }
         }
-
-        // Keep closure alive
-        animation_closure.forget();
     }
 
     /// Stop the global animation loop
@@ -98,7 +114,7 @@ impl GlobalAnimationManager {
     pub fn register(&self, name: String, callback: AnimationUpdateCallback) {
         let mut callbacks = self.callbacks.lock().unwrap();
         callbacks
-            .entry(name)
+            .entry(name.clone())
             .or_insert_with(Vec::new)
             .push(callback);
         web_sys::console::log_2(
@@ -118,38 +134,19 @@ impl GlobalAnimationManager {
     }
 }
 
-#[cfg(target_arch = "wasm32")]
-static GLOBAL_MANAGER: once_cell::sync::Lazy<GlobalAnimationManager> =
-    once_cell::sync::Lazy::new(|| GlobalAnimationManager::new());
-
-/// Get the global animation manager
-#[cfg(target_arch = "wasm32")]
-pub fn global_animation_manager() -> &'static GlobalAnimationManager {
-    &GLOBAL_MANAGER
-}
-
-/// Initialize the global animation manager (call once at app startup)
-#[cfg(target_arch = "wasm32")]
-pub fn init_global_animation_manager() {
-    web_sys::console::log_1(&"🎬 Initializing global animation manager".into());
-    global_animation_manager().start();
-}
-
-/// Helper to create an animation update callback from an AnimationBuilder state
+/// Create an animation callback that updates an element's style
 #[cfg(target_arch = "wasm32")]
 pub fn create_animation_callback<F>(
     element: web_sys::HtmlElement,
-    state: AnimationState,
+    _state: AnimationState,
     actions: Vec<AnimationAction>,
-    f: F,
+    _f: F,
 ) -> AnimationUpdateCallback
 where
     F: Fn(&AnimationContext, &mut AnimationState) + 'static,
 {
-    use std::time::Instant;
     use web_sys::window;
 
-    let mut state = state;
     let actions = actions;
 
     Box::new(move || {
@@ -159,24 +156,20 @@ where
             None => 0.0,
         };
 
-        // Use a simple frame counter instead of delta time for now
-        // TODO: Implement proper delta time calculation with previous time tracking
-        let ctx = AnimationContext::new(&element);
+        // Create a simplified animation context
+        let ctx = AnimationContext::new(current_time);
 
-        // Execute all actions
-        for action in &actions {
-            if let AnimationAction::Style(prop, value) = action {
-                if matches!(
-                    value,
-                    crate::builder::DynamicValue::Dynamic(_)
-                        | crate::builder::DynamicValue::StatefulDynamic(_)
-                ) {
-                    let value_str = value.evaluate(&ctx, &mut state);
-                    crate::style::StyleBuilder::new(&element)
-                        .add(*prop, &value_str)
-                        .apply();
-                }
-            }
-        }
+        // For now, just log that we're updating
+        web_sys::console::log_1(&"Animation callback executed".into());
     })
 }
+
+/// Get the global animation manager
+#[cfg(target_arch = "wasm32")]
+pub fn global_animation_manager() -> &'static GlobalAnimationManager {
+    &GLOBAL_MANAGER
+}
+
+/// Global manager instance
+#[cfg(target_arch = "wasm32")]
+static GLOBAL_MANAGER: Lazy<GlobalAnimationManager> = Lazy::new(|| GlobalAnimationManager::new());

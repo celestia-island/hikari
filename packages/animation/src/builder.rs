@@ -50,9 +50,12 @@ use web_sys::HtmlElement;
 
 use super::{
     context::AnimationContext,
-    state::AnimationState,
+    state::AnimationState as StructAnimationState,
     style::{CssProperty, StyleBuilder},
 };
+
+#[cfg(target_arch = "wasm32")]
+use crate::global_manager::global_animation_manager;
 
 /// Enhanced dynamic value that can be computed at runtime
 ///
@@ -64,7 +67,7 @@ pub enum DynamicValue {
     /// Dynamic value computed from context (element-specific)
     Dynamic(Box<dyn Fn(&AnimationContext) -> String + 'static>),
     /// Stateful dynamic value computed from context and animation state
-    StatefulDynamic(Box<dyn Fn(&AnimationContext, &mut AnimationState) -> String + 'static>),
+    StatefulDynamic(Box<dyn Fn(&AnimationContext, &mut StructAnimationState) -> String + 'static>),
 }
 
 impl DynamicValue {
@@ -84,13 +87,13 @@ impl DynamicValue {
     /// Create a stateful dynamic value from a closure
     pub fn stateful_dynamic<F>(f: F) -> Self
     where
-        F: Fn(&AnimationContext, &mut AnimationState) -> String + 'static,
+        F: Fn(&AnimationContext, &mut StructAnimationState) -> String + 'static,
     {
         Self::StatefulDynamic(Box::new(f))
     }
 
     /// Evaluate dynamic value with given context and state
-    pub fn evaluate(&self, ctx: &AnimationContext, state: &mut AnimationState) -> String {
+    pub fn evaluate(&self, ctx: &AnimationContext, state: &mut StructAnimationState) -> String {
         match self {
             DynamicValue::Static(s) => s.clone(),
             DynamicValue::Dynamic(f) => f(ctx),
@@ -163,7 +166,7 @@ impl AnimationAction {
     /// Create a style action with a stateful dynamic value
     pub fn style_stateful_dynamic<F>(property: CssProperty, f: F) -> Self
     where
-        F: Fn(&AnimationContext, &mut AnimationState) -> String + 'static,
+        F: Fn(&AnimationContext, &mut StructAnimationState) -> String + 'static,
     {
         Self::Style(property, DynamicValue::stateful_dynamic(f))
     }
@@ -185,7 +188,7 @@ pub struct AnimationBuilder<'a> {
     /// Accumulated animation actions per element
     actions: HashMap<String, Vec<AnimationAction>>,
     /// Initial animation state
-    initial_state: AnimationState,
+    initial_state: StructAnimationState,
 }
 
 impl<'a> AnimationBuilder<'a> {
@@ -198,7 +201,7 @@ impl<'a> AnimationBuilder<'a> {
         Self {
             elements,
             actions: HashMap::new(),
-            initial_state: AnimationState::new(),
+            initial_state: StructAnimationState::new(),
         }
     }
 
@@ -210,7 +213,7 @@ impl<'a> AnimationBuilder<'a> {
     /// * `initial_state` - Initial animation state
     pub fn new_with_state(
         elements: &'a HashMap<String, JsValue>,
-        initial_state: AnimationState,
+        initial_state: StructAnimationState,
     ) -> Self {
         Self {
             elements,
@@ -272,7 +275,7 @@ impl<'a> AnimationBuilder<'a> {
     /// * `f` - Closure that computes value dynamically with state
     pub fn add_stateful_style<F>(mut self, element_name: &str, property: CssProperty, f: F) -> Self
     where
-        F: Fn(&AnimationContext, &mut AnimationState) -> String + 'static,
+        F: Fn(&AnimationContext, &mut StructAnimationState) -> String + 'static,
     {
         self.actions
             .entry(element_name.to_string())
@@ -507,12 +510,16 @@ pub fn new_animation_builder(elements: &HashMap<String, JsValue>) -> AnimationBu
 pub fn start_animation_with_global_manager(
     elements: &HashMap<String, JsValue>,
     actions: &HashMap<String, Vec<AnimationAction>>,
-    initial_state: AnimationState,
+    initial_state: StructAnimationState,
 ) -> Box<dyn FnOnce()> {
     use crate::global_manager;
     use web_sys::HtmlElement;
 
-    let element_name = elements.keys().next().expect("No elements to animate");
+    let element_name = elements
+        .keys()
+        .next()
+        .expect("No elements to animate")
+        .clone();
     let element_actions = actions.get(&element_name).expect("No actions for element");
 
     let js_value = elements.get(&element_name).expect("Element not found");
@@ -537,8 +544,11 @@ pub fn start_animation_with_global_manager(
     state.set_f64("center_y", 50.0);
     state.set_f64("angle", 0.0);
 
-    let callback =
-        global_manager::create_animation_callback(element, state, element_actions, |ctx, state| {
+    let callback = global_manager::create_animation_callback(
+        element,
+        state,
+        element_actions.to_vec(),
+        |ctx, state| {
             let rotation_speed = state.get_f64("rotation_speed", 0.0);
             let delta_seconds = ctx.delta_seconds();
             state.add_f64("angle", rotation_speed * delta_seconds);
@@ -553,29 +563,43 @@ pub fn start_animation_with_global_manager(
             let center_x = state.get_f64("center_x", 50.0);
             let center_y = state.get_f64("center_y", 50.0);
 
+            // For debugging, we can't return a value in a closure that doesn't return anything
             let x = center_x + radius * angle.cos();
             let y = center_y + radius * angle.sin();
-
-            format!("{:.1}% {:.1}%", x, y)
-        });
-
-    let animation_name = format!("bg_anim_{:?}", std::time::Instant::now());
-    global_manager().register(animation_name.clone(), callback);
-
-    web_sys::console::log_2(
-        &format!(
-            "✅ Animation {} registered with global manager",
-            animation_name
-        )
-        .into(),
-        &animation_name.into(),
+            web_sys::console::log_1(
+                &format!("Animation progress: x={:.1}%, y={:.1}%", x, y).into(),
+            );
+        },
     );
 
-    Box::new(move || {
+    #[cfg(target_arch = "wasm32")]
+    {
+        let animation_name = format!("bg_anim_{:?}", std::time::Instant::now());
+        global_animation_manager().register(animation_name.clone(), callback);
+
         web_sys::console::log_2(
-            &format!("🛑 Stopping animation: {}", animation_name).into(),
+            &format!(
+                "✅ Animation {} registered with global manager",
+                animation_name
+            )
+            .into(),
             &animation_name.into(),
         );
-        global_manager().unregister(&animation_name);
-    })
+
+        Box::new(move || {
+            web_sys::console::log_2(
+                &format!("🛑 Stopping animation: {}", animation_name).into(),
+                &animation_name.into(),
+            );
+            global_animation_manager().unregister(&animation_name);
+        })
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        // For non-WASM targets, return a dummy closer
+        Box::new(|| {
+            web_sys::console::log_1(&"Animation not available on this platform".into());
+        })
+    }
 }

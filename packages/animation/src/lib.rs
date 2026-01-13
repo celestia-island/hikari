@@ -246,7 +246,7 @@ pub mod timeline;
 pub mod timer;
 pub mod tween;
 
-pub use core::*;
+pub use core::{AnimationEngine, AnimationOptions, PlaybackMode, Tween, TweenId};
 
 pub use builder::*;
 pub use context::*;

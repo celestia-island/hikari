@@ -6,9 +6,15 @@ use dioxus_router::components::Link;
 
 use super::sidebar::Sidebar;
 use crate::app::{Route, ThemeContext};
-use _components::{basic::{Button, ButtonVariant, Logo}, layout::{Aside, Header, Layout as HikariLayout}};
+use _components::{
+    basic::{Background, Button, ButtonVariant, Logo},
+    layout::{Aside, Header, Layout as HikariLayout},
+};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{ AlignItems, BgColor, BorderRadius, ClassesBuilder, Cursor, Display, Duration, Flex, FontSize, FontWeight, Gap, Height, JustifyContent, Margin, Padding, TextColor, Transition, Width, };
+use _palette::classes::{
+    AlignItems, BgColor, BorderRadius, ClassesBuilder, Cursor, Display, Duration, Flex, FontSize,
+    FontWeight, Gap, Height, JustifyContent, Margin, Padding, TextColor, Transition, Width,
+};
 
 /// Layout component that wraps all pages with modern design
 ///
@@ -37,6 +43,7 @@ pub fn Layout(children: Element, current_route: Route) -> Element {
     let icon_key = use_memo(move || format!("{:?}", current_icon.read()));
 
     rsx! {
+        Background { div { class: "layout-container",
         HikariLayout {
             header: rsx! {
                 Header {
@@ -91,6 +98,7 @@ pub fn Layout(children: Element, current_route: Route) -> Element {
             // Main content
             div { class: ClassesBuilder::new().add(Padding::P6).build(), {children} }
         }
+        } }
     }
 }
 

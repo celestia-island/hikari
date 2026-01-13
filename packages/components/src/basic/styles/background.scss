@@ -7,30 +7,17 @@
   z-index: -1;
   pointer-events: none;
   
-  /* Hikari theme (light) - 素 → 粉红 gradient */
-  [data-theme="hikari"] & {
-    background: radial-gradient(
-      circle at 50% 50%,
-      rgba(245, 245, 245, 0.9) 0%,
-      rgba(255, 182, 193, 0.8) 30%,
-      rgba(255, 105, 180, 0.7) 60%,
-      rgba(219, 112, 147, 0.6) 100%
-    );
-  }
+  /* Default static gradient - will be overridden by JavaScript animation */
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(245, 245, 245, 0.9) 0%,
+    rgba(255, 182, 193, 0.8) 30%,
+    rgba(255, 105, 180, 0.7) 60%,
+    rgba(219, 112, 147, 0.6) 100%
+  );
   
-  /* Tairitsu theme (dark) - 深蓝 → 纯黑 gradient */
-  [data-theme="tairitsu"] & {
-    background: radial-gradient(
-      circle at 50% 50%,
-      rgba(25, 25, 112, 0.9) 0%,
-      rgba(0, 0, 139, 0.8) 30%,
-      rgba(0, 0, 80, 0.7) 60%,
-      rgba(0, 0, 0, 0.6) 100%
-    );
-  }
-  
-  /* Smooth gradient animation via CSS transitions */
-  transition: background 0.3s ease-in-out;
+  /* Smooth gradient transition for animation */
+  transition: background 0.1s ease-out;
   
   /* Subtle breathing animation */
   animation: background-breathing 4s ease-in-out infinite;

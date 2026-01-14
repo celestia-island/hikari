@@ -83,23 +83,49 @@ mod tests {
     #[test]
     fn test_all_paths_are_absolute() {
         // Ensure all HTML reference paths start with "/"
-        assert!(STATIC_PATHS.css_bundle.starts_with('/'), "CSS bundle path must be absolute");
-        assert!(STATIC_PATHS.wasm_js.starts_with('/'), "WASM JS path must be absolute");
-        assert!(STATIC_PATHS.wasm_bg.starts_with('/'), "WASM BG path must be absolute");
-        assert!(STATIC_PATHS.logo.starts_with('/'), "Logo path must be absolute");
+        assert!(
+            STATIC_PATHS.css_bundle.starts_with('/'),
+            "CSS bundle path must be absolute"
+        );
+        assert!(
+            STATIC_PATHS.wasm_js.starts_with('/'),
+            "WASM JS path must be absolute"
+        );
+        assert!(
+            STATIC_PATHS.wasm_bg.starts_with('/'),
+            "WASM BG path must be absolute"
+        );
+        assert!(
+            STATIC_PATHS.logo.starts_with('/'),
+            "Logo path must be absolute"
+        );
 
         // Ensure all mount points start with "/"
-        assert!(STATIC_PATHS.assets_mount.starts_with('/'), "Assets mount must be absolute");
-        assert!(STATIC_PATHS.styles_mount.starts_with('/'), "Styles mount must be absolute");
-        assert!(STATIC_PATHS.images_mount.starts_with('/'), "Images mount must be absolute");
-        assert!(STATIC_PATHS.icons_mount.starts_with('/'), "Icons mount must be absolute");
+        assert!(
+            STATIC_PATHS.assets_mount.starts_with('/'),
+            "Assets mount must be absolute"
+        );
+        assert!(
+            STATIC_PATHS.styles_mount.starts_with('/'),
+            "Styles mount must be absolute"
+        );
+        assert!(
+            STATIC_PATHS.images_mount.starts_with('/'),
+            "Images mount must be absolute"
+        );
+        assert!(
+            STATIC_PATHS.icons_mount.starts_with('/'),
+            "Icons mount must be absolute"
+        );
     }
 
     #[test]
     fn test_paths_consistency() {
         // Mount points should match HTML reference prefixes
         assert!(
-            STATIC_PATHS.css_bundle.starts_with(STATIC_PATHS.styles_mount),
+            STATIC_PATHS
+                .css_bundle
+                .starts_with(STATIC_PATHS.styles_mount),
             "CSS bundle should be under styles mount"
         );
         assert!(

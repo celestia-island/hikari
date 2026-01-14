@@ -95,6 +95,56 @@ pub struct ThemePalette {
     pub text_primary: String,
     /// Secondary text color
     pub text_secondary: String,
+
+    // Button specific colors (rgba format for gradients and shadows)
+    /// Button primary background (rgba)
+    pub button_primary: String,
+    /// Button primary dark (rgba for gradient)
+    pub button_primary_dark: String,
+    /// Button primary light (rgba for hover)
+    pub button_primary_light: String,
+    /// Button secondary background
+    pub button_secondary: String,
+    /// Button secondary dark
+    pub button_secondary_dark: String,
+    /// Button secondary light
+    pub button_secondary_light: String,
+    /// Button danger background
+    pub button_danger: String,
+    /// Button danger dark
+    pub button_danger_dark: String,
+    /// Button danger light
+    pub button_danger_light: String,
+    /// Button success background
+    pub button_success: String,
+    /// Button success dark
+    pub button_success_dark: String,
+    /// Button success light
+    pub button_success_light: String,
+
+    // Button icon colors
+    /// Icon color for primary/secondary/danger/success buttons (high contrast, usually white)
+    pub button_icon_on_dark: String,
+    /// Icon color for ghost buttons (uses theme color)
+    pub button_icon_on_light: String,
+
+    // Button text colors (based on background color)
+    /// Text color on primary button background
+    pub text_color_on_primary: String,
+    /// Text color on secondary button background
+    pub text_color_on_secondary: String,
+    /// Text color on danger button background
+    pub text_color_on_danger: String,
+    /// Text color on success button background
+    pub text_color_on_success: String,
+    /// Text color on ghost button (transparent background)
+    pub text_color_on_ghost: String,
+
+    // Button border colors
+    /// Border color for solid buttons (light gray)
+    pub border_light: String,
+    /// Border color for ghost button (uses primary color)
+    pub border_ghost: String,
 }
 
 impl ThemePalette {
@@ -112,6 +162,35 @@ impl ThemePalette {
             border: palette.border.hex(),
             text_primary: palette.text_primary.hex(),
             text_secondary: palette.text_secondary.hex(),
+
+            // Button colors (rgba format)
+            button_primary: palette.primary.rgba(0.9),
+            button_primary_dark: palette.primary.rgba(0.75),
+            button_primary_light: palette.primary.rgba(0.95),
+            button_secondary: palette.secondary.rgba(0.9),
+            button_secondary_dark: palette.secondary.rgba(0.75),
+            button_secondary_light: palette.secondary.rgba(0.95),
+            button_danger: palette.danger.rgba(0.9),
+            button_danger_dark: palette.danger.rgba(0.75),
+            button_danger_light: palette.danger.rgba(0.95),
+            button_success: palette.success.rgba(0.9),
+            button_success_dark: palette.success.rgba(0.75),
+            button_success_light: palette.success.rgba(0.95),
+
+            // Button icon colors
+            button_icon_on_dark: "#ffffff".to_string(),
+            button_icon_on_light: palette.primary.hex(),
+
+            // Button text colors (based on background)
+            text_color_on_primary: "#ffffff".to_string(),
+            text_color_on_secondary: "#ffffff".to_string(),
+            text_color_on_danger: "#ffffff".to_string(),
+            text_color_on_success: "#ffffff".to_string(),
+            text_color_on_ghost: palette.primary.hex(),
+
+            // Button border colors
+            border_light: "rgba(255, 255, 255, 0.2)".to_string(),
+            border_ghost: palette.primary.hex(),
         }
     }
 
@@ -179,7 +258,28 @@ impl ThemePalette {
              --hi-surface: {}; \
              --hi-border: {}; \
              --hi-text-primary: {}; \
-             --hi-text-secondary: {};",
+             --hi-text-secondary: {}; \
+             --hi-button-primary: {}; \
+             --hi-button-primary-dark: {}; \
+             --hi-button-primary-light: {}; \
+             --hi-button-secondary: {}; \
+             --hi-button-secondary-dark: {}; \
+             --hi-button-secondary-light: {}; \
+             --hi-button-danger: {}; \
+             --hi-button-danger-dark: {}; \
+             --hi-button-danger-light: {}; \
+             --hi-button-success: {}; \
+             --hi-button-success-dark: {}; \
+             --hi-button-success-light: {}; \
+             --hi-button-icon-on-dark: {}; \
+             --hi-button-icon-on-light: {}; \
+             --hi-color-text-on-primary: {}; \
+             --hi-color-text-on-secondary: {}; \
+             --hi-color-text-on-danger: {}; \
+             --hi-color-text-on-success: {}; \
+             --hi-color-text-on-ghost: {}; \
+             --hi-color-border-ghost: {}; \
+             --hi-border-light: {};",
             self.primary,
             self.secondary,
             self.accent,
@@ -190,7 +290,28 @@ impl ThemePalette {
             self.surface,
             self.border,
             self.text_primary,
-            self.text_secondary
+            self.text_secondary,
+            self.button_primary,
+            self.button_primary_dark,
+            self.button_primary_light,
+            self.button_secondary,
+            self.button_secondary_dark,
+            self.button_secondary_light,
+            self.button_danger,
+            self.button_danger_dark,
+            self.button_danger_light,
+            self.button_success,
+            self.button_success_dark,
+            self.button_success_light,
+            self.button_icon_on_dark,
+            self.button_icon_on_light,
+            self.text_color_on_primary,
+            self.text_color_on_secondary,
+            self.text_color_on_danger,
+            self.text_color_on_success,
+            self.text_color_on_ghost,
+            self.border_ghost,
+            self.border_light
         )
     }
 }

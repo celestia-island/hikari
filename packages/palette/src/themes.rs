@@ -51,8 +51,8 @@ impl Hikari {
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Light,
-            primary: 石青,      // 青蓝色系
-            secondary: 朱红,    // 红色系
+            primary: 粉红,      // 粉红色系 (255, 179, 167)
+            secondary: 靛青,    // 蓝色系 (23, 124, 176) - 互补色
             accent: 姜黄,       // 黄色系
             success: 葱倩,      // 绿色系
             warning: 鹅黄,      // 黄色系
@@ -83,13 +83,13 @@ impl Tairitsu {
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Dark,
-            primary: 石青,      // 青蓝色系 (123, 207, 166)
-            secondary: 朱红,    // 红色系
+            primary: 靛蓝,      // 深蓝色系 (6, 82, 121)
+            secondary: 粉红,    // 粉红色系 (255, 179, 167)
             accent: 姜黄,       // 黄色系
             success: 葱倩,      // 绿色系
             warning: 鹅黄,      // 黄色系
             danger: 朱红,       // 红色系
-            background: 墨色,   // 纯黑/深蓝黑 (80, 97, 109)
+            background: 墨色,   // 紫黑/深蓝黑 (80, 97, 109)
             surface: 黛,        // 深蓝灰 (74, 66, 102)
             border: 黛,         // 深蓝灰
             text_primary: 月白, // 纯白 (214, 236, 240)
@@ -242,7 +242,7 @@ mod tests {
         let palette = Hikari::palette();
         assert_eq!(palette.mode, ThemeMode::Light);
         assert_eq!(palette.primary, 粉红);
-        assert_eq!(palette.background, 素);
+        assert_eq!(palette.background, 月白);
         assert_eq!(palette.text_primary, 墨色);
     }
 
@@ -251,7 +251,7 @@ mod tests {
         let palette = Tairitsu::palette();
         assert_eq!(palette.mode, ThemeMode::Dark);
         assert_eq!(palette.primary, 靛蓝);
-        assert_eq!(palette.background, 黛);
+        assert_eq!(palette.background, 墨色);
         assert_eq!(palette.text_primary, 月白);
     }
 
@@ -259,7 +259,7 @@ mod tests {
     fn test_default_is_hikari() {
         let palette = default_theme();
         assert_eq!(palette.mode, ThemeMode::Light);
-        assert_eq!(palette.background, 素);
+        assert_eq!(palette.background, 月白);
     }
 
     #[test]
@@ -281,14 +281,14 @@ mod tests {
         // Test registration
         let custom = Palette {
             mode: ThemeMode::Light,
-            primary: 石青,
-            secondary: 朱红,
+            primary: 粉红,
+            secondary: 石青,
             accent: 姜黄,
             success: 葱倩,
             warning: 鹅黄,
             danger: 朱红,
-            background: 素,
-            surface: 月白,
+            background: 月白,
+            surface: 素,
             border: 素,
             text_primary: 墨色,
             text_secondary: 黛,
@@ -296,7 +296,7 @@ mod tests {
 
         registry.register("custom", custom.clone()).unwrap();
         let retrieved = registry.get("custom").unwrap();
-        assert_eq!(retrieved.primary, 石青);
+        assert_eq!(retrieved.primary, 粉红);
 
         // Test update
         let updated = Palette {

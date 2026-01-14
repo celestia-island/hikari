@@ -58,10 +58,6 @@ pub fn ComponentsButton() -> Element {
                                 " - Loading, Disabled, Normal"
                             }
                             li {
-                                strong { "Spotlight effect" }
-                                " - FUI-style cursor-following glow"
-                            }
-                            li {
                                 strong { "Animations" }
                                 " - Scale, Ripple, Icon rotation"
                             }
@@ -93,15 +89,11 @@ pub fn ComponentsButton() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             Button {
-                                variant: ButtonVariant::Primary,
-                                spotlight: true,
-                                "Primary Action"
+                                variant: ButtonVariant::Primary,                                "Primary Action"
                             }
                             Button {
                                 variant: ButtonVariant::Primary,
-                                size: ButtonSize::Small,
-                                spotlight: true,
-                                Icon { icon: MdiIcon::Alert, size: 16 }
+                                size: ButtonSize::Small,                                Icon { icon: MdiIcon::Alert, size: 16 }
                                 " Add New"
                             }
                         }
@@ -122,14 +114,10 @@ pub fn ComponentsButton() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             Button {
-                                variant: ButtonVariant::Secondary,
-                                spotlight: true,
-                                "Secondary"
+                                variant: ButtonVariant::Secondary,                                "Secondary"
                             }
                             Button {
-                                variant: ButtonVariant::Secondary,
-                                spotlight: true,
-                                Icon { icon: MdiIcon::Alert, size: 16 }
+                                variant: ButtonVariant::Secondary,                                Icon { icon: MdiIcon::Alert, size: 16 }
                                 " Settings"
                             }
                         }
@@ -150,14 +138,10 @@ pub fn ComponentsButton() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             Button {
-                                variant: ButtonVariant::Ghost,
-                                spotlight: true,
-                                "Ghost"
+                                variant: ButtonVariant::Ghost,                                "Ghost"
                             }
                             Button {
-                                variant: ButtonVariant::Ghost,
-                                spotlight: true,
-                                Icon { icon: MdiIcon::Alert, size: 16 }
+                                variant: ButtonVariant::Ghost,                                Icon { icon: MdiIcon::Alert, size: 16 }
                                 " Edit"
                             }
                         }
@@ -178,14 +162,10 @@ pub fn ComponentsButton() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             Button {
-                                variant: ButtonVariant::Danger,
-                                spotlight: true,
-                                "Delete"
+                                variant: ButtonVariant::Danger,                                "Delete"
                             }
                             Button {
-                                variant: ButtonVariant::Danger,
-                                spotlight: true,
-                                Icon { icon: MdiIcon::Alert, size: 16 }
+                                variant: ButtonVariant::Danger,                                Icon { icon: MdiIcon::Alert, size: 16 }
                                 " Remove"
                             }
                         }
@@ -206,14 +186,10 @@ pub fn ComponentsButton() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             Button {
-                                variant: ButtonVariant::Success,
-                                spotlight: true,
-                                "Confirm"
+                                variant: ButtonVariant::Success,                                "Confirm"
                             }
                             Button {
-                                variant: ButtonVariant::Success,
-                                spotlight: true,
-                                Icon { icon: MdiIcon::Alert, size: 16 }
+                                variant: ButtonVariant::Success,                                Icon { icon: MdiIcon::Alert, size: 16 }
                                 " Approve"
                             }
                         }
@@ -241,21 +217,15 @@ pub fn ComponentsButton() -> Element {
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             Button {
                                 variant: ButtonVariant::Primary,
-                                size: ButtonSize::Small,
-                                spotlight: true,
-                                "Small"
+                                size: ButtonSize::Small,                                "Small"
                             }
                             Button {
                                 variant: ButtonVariant::Primary,
-                                size: ButtonSize::Medium,
-                                spotlight: true,
-                                "Medium"
+                                size: ButtonSize::Medium,                                "Medium"
                             }
                             Button {
                                 variant: ButtonVariant::Primary,
-                                size: ButtonSize::Large,
-                                spotlight: true,
-                                "Large"
+                                size: ButtonSize::Large,                                "Large"
                             }
                         }
                     }
@@ -335,66 +305,7 @@ pub fn ComponentsButton() -> Element {
                         }
                         Button {
                             variant: ButtonVariant::Primary,
-                            block: true,
-                            spotlight: true,
-                            "Full Width Button"
-                        }
-                    }
-                }
-
-                // Spotlight Effect
-                Section {
-                    title: Some("Spotlight Effect".to_string()),
-                    class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
-
-                    div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                        p {
-                            "The spotlight effect creates a FUI-style glow that follows your cursor. Hover over the buttons below to see the effect in action."
-                        }
-                    }
-
-                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
-                        h3 {
-                            class: ClassesBuilder::new()
-                                .add(FontSize::Lg)
-                                .add(FontWeight::Semibold)
-                                .add(TextColor::Primary)
-                                .add(MarginBottom::Mb3)
-                                .build(),
-                            "With Spotlight"
-                        }
-                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Button {
-                                variant: ButtonVariant::Primary,
-                                spotlight: true,
-                                "Hover Me"
-                            }
-                            Button {
-                                variant: ButtonVariant::Secondary,
-                                spotlight: true,
-                                "And Me"
-                            }
-                            Button {
-                                variant: ButtonVariant::Ghost,
-                                spotlight: true,
-                                "Me Too"
-                            }
-                        }
-                    }
-
-                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
-                        h3 {
-                            class: ClassesBuilder::new()
-                                .add(FontSize::Lg)
-                                .add(FontWeight::Semibold)
-                                .add(TextColor::Primary)
-                                .add(MarginBottom::Mb3)
-                                .build(),
-                            "Without Spotlight"
-                        }
-                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Button { variant: ButtonVariant::Primary, "No Spotlight" }
-                            Button { variant: ButtonVariant::Secondary, "Standard Style" }
+                            block: true,                            "Full Width Button"
                         }
                     }
                 }
@@ -423,9 +334,7 @@ pub fn ComponentsButton() -> Element {
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             Button {
                                 variant: ButtonVariant::Primary,
-                                animation: ButtonAnimation::Scale,
-                                spotlight: true,
-                                "Scale (1.0 → 1.05)"
+                                animation: ButtonAnimation::Scale,                                "Scale (1.0 → 1.05)"
                             }
                         }
                     }
@@ -443,9 +352,7 @@ pub fn ComponentsButton() -> Element {
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             Button {
                                 variant: ButtonVariant::Primary,
-                                animation: ButtonAnimation::ScaleElevate,
-                                spotlight: true,
-                                "Scale + Elevate"
+                                animation: ButtonAnimation::ScaleElevate,                                "Scale + Elevate"
                             }
                         }
                     }
@@ -463,9 +370,7 @@ pub fn ComponentsButton() -> Element {
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             Button {
                                 variant: ButtonVariant::Primary,
-                                animation: ButtonAnimation::Ripple,
-                                spotlight: true,
-                                "Ripple Effect"
+                                animation: ButtonAnimation::Ripple,                                "Ripple Effect"
                             }
                         }
                     }
@@ -486,9 +391,7 @@ pub fn ComponentsButton() -> Element {
                                 animation: ButtonAnimation::IconRotate,
                                 icon: rsx! {
                                     Icon { icon: MdiIcon::Alert, size: 16 }
-                                },
-                                spotlight: true,
-                                "Icon Rotate"
+                                },                                "Icon Rotate"
                             }
                         }
                     }
@@ -514,17 +417,13 @@ pub fn ComponentsButton() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             Button {
-                                variant: ButtonVariant::Primary,
-                                spotlight: true,
-                                icon: rsx! {
+                                variant: ButtonVariant::Primary,                                icon: rsx! {
                                     Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                                 "Download"
                             }
                             Button {
-                                variant: ButtonVariant::Secondary,
-                                spotlight: true,
-                                icon: rsx! {
+                                variant: ButtonVariant::Secondary,                                icon: rsx! {
                                     Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
                                 "Upload"
@@ -548,25 +447,19 @@ pub fn ComponentsButton() -> Element {
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             Button {
                                 variant: ButtonVariant::Primary,
-                                size: ButtonSize::Medium,
-                                spotlight: true,
-                                icon: rsx! {
+                                size: ButtonSize::Medium,                                icon: rsx! {
                                     Icon { icon: MdiIcon::Alert, size: 18 }
                                 },
                             }
                             Button {
                                 variant: ButtonVariant::Secondary,
-                                size: ButtonSize::Medium,
-                                spotlight: true,
-                                icon: rsx! {
+                                size: ButtonSize::Medium,                                icon: rsx! {
                                     Icon { icon: MdiIcon::Alert, size: 18 }
                                 },
                             }
                             Button {
                                 variant: ButtonVariant::Ghost,
-                                size: ButtonSize::Medium,
-                                spotlight: true,
-                                icon: rsx! {
+                                size: ButtonSize::Medium,                                icon: rsx! {
                                     Icon { icon: MdiIcon::Alert, size: 18 }
                                 },
                             }
@@ -602,14 +495,12 @@ pub fn ComponentsButton() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Primary Button with Spotlight"
+                            "Primary Button"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
                                 r#"Button {{
-    variant: ButtonVariant::Primary,
-    spotlight: true,
-    "Primary Action"
+    variant: ButtonVariant::Primary,    "Primary Action"
 }}"#
                             }
                         }

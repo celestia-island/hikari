@@ -1,0 +1,191 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari Glow Component - Unified Acrylic + Spotlight
+// ============================================
+
+// Base glow wrapper styles
+.hi-glow-wrapper {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+  overflow: hidden;
+
+  // Ensure child respects parent's border-radius
+  border-radius: inherit;
+
+  // Create dynamic glow overlay
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+    border-radius: inherit;
+    opacity: var(--glow-opacity, 0);
+
+    // Smooth opacity transition
+    transition: opacity 0.2s ease-out;
+  }
+
+  // Ensure children don't block the glow overlay
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+// ============================================
+// Blur Intensity Levels
+// ============================================
+
+.hi-glow-blur-none > * {
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+}
+
+.hi-glow-blur-light > * {
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.hi-glow-blur-medium > * {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.hi-glow-blur-heavy > * {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+// ============================================
+// Color Modes
+// ============================================
+
+// Auto mode: gray for light theme, white for dark theme
+.hi-glow-auto::after {
+  background-image: radial-gradient(
+    circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    color-mix(in srgb, var(--hi-color-text-secondary) 20%, transparent) 0%,
+    color-mix(in srgb, var(--hi-color-text-secondary) 10%, transparent) 30%,
+    color-mix(in srgb, var(--hi-color-text-secondary) 5%, transparent) 60%,
+    transparent 100%
+  );
+}
+
+// Theme color mode: always use primary theme color
+.hi-glow-theme::after {
+  background-image: radial-gradient(
+    circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    color-mix(in srgb, var(--hi-color-primary) 80%, transparent) 0%,
+    color-mix(in srgb, var(--hi-color-primary) 50%, transparent) 25%,
+    color-mix(in srgb, var(--hi-color-primary) 20%, transparent) 50%,
+    color-mix(in srgb, var(--hi-color-primary) 5%, transparent) 70%,
+    transparent 100%
+  );
+}
+
+// White mode: always use white
+.hi-glow-white::after {
+  background-image: radial-gradient(
+    circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    color-mix(in srgb, white 100%, transparent) 0%,
+    color-mix(in srgb, white 60%, transparent) 25%,
+    color-mix(in srgb, white 20%, transparent) 50%,
+    color-mix(in srgb, white 5%, transparent) 70%,
+    transparent 100%
+  );
+}
+
+// ============================================
+// Glow Intensity
+// ============================================
+
+// Subtle - light and subtle
+.hi-glow-subtle::after {
+  --glow-intensity: 0.3;
+  background-image: radial-gradient(
+    circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    color-mix(in srgb, white 30%, transparent) 0%,
+    color-mix(in srgb, white 15%, transparent) 30%,
+    color-mix(in srgb, white 5%, transparent) 60%,
+    transparent 100%
+  );
+}
+
+// Standard - balanced
+.hi-glow-standard::after {
+  --glow-intensity: 0.6;
+  background-image: radial-gradient(
+    circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    color-mix(in srgb, white 60%, transparent) 0%,
+    color-mix(in srgb, white 30%, transparent) 25%,
+    color-mix(in srgb, white 10%, transparent) 50%,
+    color-mix(in srgb, white 2%, transparent) 70%,
+    transparent 100%
+  );
+}
+
+// Intense - strong and prominent
+.hi-glow-intense::after {
+  --glow-intensity: 0.9;
+  background-image: radial-gradient(
+    circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    color-mix(in srgb, white 90%, transparent) 0%,
+    color-mix(in srgb, white 50%, transparent) 20%,
+    color-mix(in srgb, white 20%, transparent) 45%,
+    color-mix(in srgb, white 5%, transparent) 65%,
+    transparent 100%
+  );
+}
+
+// ============================================
+// Dark Mode Support
+// ============================================
+
+@media (prefers-color-scheme: dark) {
+  .hi-glow-auto::after {
+    background-image: radial-gradient(
+      circle at var(--glow-x, 50%) var(--glow-y, 50%),
+      color-mix(in srgb, var(--hi-color-text-primary) 20%, transparent) 0%,
+      color-mix(in srgb, var(--hi-color-text-primary) 10%, transparent) 30%,
+      color-mix(in srgb, var(--hi-color-text-primary) 5%, transparent) 60%,
+      transparent 100%
+    );
+  }
+
+  .hi-glow-theme::after {
+    background-image: radial-gradient(
+      circle at var(--glow-x, 50%) var(--glow-y, 50%),
+      color-mix(in srgb, var(--hi-color-primary) 60%, transparent) 0%,
+      color-mix(in srgb, var(--hi-color-primary) 40%, transparent) 25%,
+      color-mix(in srgb, var(--hi-color-primary) 15%, transparent) 50%,
+      color-mix(in srgb, var(--hi-color-primary) 5%, transparent) 70%,
+      transparent 100%
+    );
+  }
+}
+
+// ============================================
+// Button Hover Enhancement (without transform)
+// ============================================
+
+// Remove transform translateY from button hover when wrapped in glow
+.hi-glow-wrapper .hi-button:hover {
+  transform: none !important;
+}
+
+
+// Input hover enhancement
+.hi-glow-wrapper .hi-input-wrapper:hover {
+  box-shadow: 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.2));
+}
+
+.hi-glow-wrapper .hi-input-wrapper:focus-within {
+  box-shadow:
+    0 0 0 1px var(--hi-color-primary),
+    0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.4));
+}

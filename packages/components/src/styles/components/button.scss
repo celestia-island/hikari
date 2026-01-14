@@ -37,9 +37,8 @@
   white-space: nowrap;
   outline: none;
 
-  // Transitions - DISABLED by default, handled by JS animation library
-  // Uncomment if you want CSS-only fallback:
-  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // Transitions - Global transition for all states
+  transition: all 0.3s vars.$hikari-ease-smooth;
 
   // Position for pseudo-elements
   position: relative;
@@ -123,91 +122,67 @@
 }
 
 // ============================================
-// Variant: Primary (Blue glow accent)
+// Variant: Primary (Pink glow accent)
 // ============================================
 
 .hi-button-primary {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9));
-  color: var(--hi-color-text-inverted, #ffffff);
-  border: 1px solid rgba(96, 165, 250, 0.5);
-  box-shadow:
-    0 0 8px rgba(59, 130, 246, 0.3),
-    inset 0 1px 0 var(--hi-white-10, rgba(255, 255, 255, 0.1));
+  background: linear-gradient(135deg, var(--hi-button-primary), var(--hi-button-primary-dark));
+  color: var(--hi-color-text-on-primary, #ffffff);
+  border: 1px solid var(--hi-border-light, rgba(255, 255, 255, 0.2));
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, rgba(96, 165, 250, 0.95), rgba(59, 130, 246, 0.95));
-    box-shadow:
-      0 0 16px rgba(59, 130, 246, 0.5),
-      0 0 24px rgba(59, 130, 246, 0.3),
-      inset 0 1px 0 var(--hi-white-20, rgba(255, 255, 255, 0.2));
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, var(--hi-button-primary-light), var(--hi-button-primary));
+    box-shadow: 2px 0 0 var(--hi-border-light, rgba(255, 255, 255, 0.3));
+    // transform: translateY(-1px); // Disabled when glow is enabled
   }
 
   &:active:not(:disabled) {
     box-shadow:
-      0 0 8px rgba(59, 130, 246, 0.4),
+      0 0 4px var(--hi-button-primary, rgba(255, 179, 167, 0.4)),
       inset 0 1px 0 var(--hi-white-10, rgba(255, 255, 255, 0.1));
     transform: translateY(0) scale(0.98);
   }
-
-  // Focus state with glow ring
-  &:focus-visible {
-    box-shadow:
-      0 0 0 2px rgba(59, 130, 246, 0.5),
-      0 0 20px rgba(59, 130, 246, 0.6);
-  }
 }
 
 // ============================================
-// Variant: Secondary (Gray/Silver accent)
+// Variant: Secondary (Blue accent)
 // ============================================
 
 .hi-button-secondary {
-  background: linear-gradient(135deg, rgba(107, 114, 128, 0.9), rgba(75, 85, 99, 0.9));
-  color: var(--hi-color-text-inverted, #ffffff);
-  border: 1px solid rgba(156, 163, 175, 0.5);
-  box-shadow:
-    0 0 8px rgba(107, 114, 128, 0.2),
-    inset 0 1px 0 var(--hi-white-10, rgba(255, 255, 255, 0.1));
+  background: linear-gradient(135deg, var(--hi-button-secondary), var(--hi-button-secondary-dark));
+  color: var(--hi-color-text-on-secondary, #ffffff);
+  border: 1px solid var(--hi-border-light, rgba(255, 255, 255, 0.2));
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, rgba(156, 163, 175, 0.95), rgba(107, 114, 128, 0.95));
-    box-shadow:
-      0 0 16px rgba(107, 114, 128, 0.4),
-      inset 0 1px 0 var(--hi-white-20, rgba(255, 255, 255, 0.2));
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, var(--hi-button-secondary-light), var(--hi-button-secondary));
+    box-shadow: 2px 0 0 var(--hi-border-light, rgba(255, 255, 255, 0.3));
+    // transform: translateY(-1px); // Disabled when glow is enabled
   }
 
   &:focus-visible {
     box-shadow:
-      0 0 0 2px rgba(107, 114, 128, 0.5),
-      0 0 20px rgba(107, 114, 128, 0.5);
+      0 0 0 2px var(--hi-button-secondary, rgba(23, 124, 176, 0.5)),
+      0 0 8px var(--hi-button-secondary, rgba(23, 124, 176, 0.6));
   }
 }
 
 // ============================================
-// Variant: Ghost (Transparent with glow border)
+// Variant: Ghost (Transparent with theme color border)
 // ============================================
 
 .hi-button-ghost {
   background-color: transparent;
-  color: #96c7ff;
-  border: 1px solid rgba(150, 199, 255, 0.3);
-  box-shadow: inset 0 0 8px rgba(150, 199, 255, 0.1);
+  color: var(--hi-color-text-on-ghost, var(--hi-primary, #FFB3A7));
+  border: 1px solid var(--hi-border-ghost, var(--hi-primary, #FFB3A7));
 
   &:hover:not(:disabled) {
-    background-color: rgba(150, 199, 255, 0.1);
-    border-color: rgba(150, 199, 255, 0.6);
-    box-shadow:
-      0 0 12px rgba(150, 199, 255, 0.3),
-      inset 0 0 12px rgba(150, 199, 255, 0.15);
-    transform: translateY(-1px);
+    box-shadow: 2px 0 0 var(--hi-primary);
   }
 
-  &:focus-visible {
+  &:active:not(:disabled) {
     box-shadow:
-      0 0 0 2px rgba(150, 199, 255, 0.4),
-      0 0 16px rgba(150, 199, 255, 0.4);
+      0 0 4px var(--hi-primary, rgba(255, 179, 167, 0.4));
+    transform: scale(0.98);
   }
 }
 
@@ -216,26 +191,20 @@
 // ============================================
 
 .hi-button-danger {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
-  color: var(--hi-color-text-inverted, #ffffff);
-  border: 1px solid rgba(248, 113, 113, 0.5);
-  box-shadow:
-    0 0 8px rgba(239, 68, 68, 0.3),
-    inset 0 1px 0 var(--hi-white-10, rgba(255, 255, 255, 0.1));
+  background: linear-gradient(135deg, var(--hi-button-danger), var(--hi-button-danger-dark));
+  color: var(--hi-color-text-on-danger, #ffffff);
+  border: 1px solid var(--hi-border-light, rgba(255, 255, 255, 0.2));
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, rgba(248, 113, 113, 0.95), rgba(239, 68, 68, 0.95));
-    box-shadow:
-      0 0 16px rgba(239, 68, 68, 0.5),
-      0 0 24px rgba(239, 68, 68, 0.3),
-      inset 0 1px 0 var(--hi-white-20, rgba(255, 255, 255, 0.2));
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, var(--hi-button-danger-light), var(--hi-button-danger));
+    box-shadow: 2px 0 0 var(--hi-border-light, rgba(255, 255, 255, 0.3));
+    // transform: translateY(-1px); // Disabled when glow is enabled
   }
 
   &:focus-visible {
     box-shadow:
-      0 0 0 2px rgba(239, 68, 68, 0.5),
-      0 0 20px rgba(239, 68, 68, 0.6);
+      0 0 0 2px var(--hi-button-danger, rgba(255, 68, 68, 0.5)),
+      0 0 8px var(--hi-button-danger, rgba(255, 68, 68, 0.6));
   }
 }
 
@@ -244,26 +213,20 @@
 // ============================================
 
 .hi-button-success {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.9));
-  color: var(--hi-color-text-inverted, #ffffff);
-  border: 1px solid rgba(52, 211, 153, 0.5);
-  box-shadow:
-    0 0 8px rgba(16, 185, 129, 0.3),
-    inset 0 1px 0 var(--hi-white-10, rgba(255, 255, 255, 0.1));
+  background: linear-gradient(135deg, var(--hi-button-success), var(--hi-button-success-dark));
+  color: var(--hi-color-text-on-success, #ffffff);
+  border: 1px solid var(--hi-border-light, rgba(255, 255, 255, 0.2));
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, rgba(52, 211, 153, 0.95), rgba(16, 185, 129, 0.95));
-    box-shadow:
-      0 0 16px rgba(16, 185, 129, 0.5),
-      0 0 24px rgba(16, 185, 129, 0.3),
-      inset 0 1px 0 var(--hi-white-20, rgba(255, 255, 255, 0.2));
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, var(--hi-button-success-light), var(--hi-button-success));
+    box-shadow: 2px 0 0 var(--hi-border-light, rgba(255, 255, 255, 0.3));
+    // transform: translateY(-1px); // Disabled when glow is enabled
   }
 
   &:focus-visible {
     box-shadow:
-      0 0 0 2px rgba(16, 185, 129, 0.5),
-      0 0 20px rgba(16, 185, 129, 0.6);
+      0 0 0 2px var(--hi-button-success, rgba(92, 191, 145, 0.5)),
+      0 0 8px var(--hi-button-success, rgba(92, 191, 145, 0.6));
   }
 }
 
@@ -317,18 +280,6 @@
 }
 
 // ============================================
-// Button with Icon
-// ============================================
-
-.hi-button {
-  svg {
-    width: 1em;
-    height: 1em;
-    flex-shrink: 0;
-  }
-}
-
-// ============================================
 // Entrance Animation (Optional)
 // ============================================
 
@@ -361,7 +312,7 @@
 //     left: 50%;
 //     width: 0;
 //     height: 0;
-//     background: var(--hi-white-30, rgba(255, 255, 255, 0.3));
+//     background: var(--hi-white-30, rgba(255,255,255, 0.3));
 //     border-radius: 50%;
 //     transform: translate(-50%, -50%);
 //     transition: width 0.6s ease-out, height 0.6s ease-out;
@@ -372,3 +323,51 @@
 //     height: 300px;
 //   }
 // }
+
+// Icons inside buttons inherit button color
+button.hi-button-primary .hikari-icon,
+button.hi-button-secondary .hikari-icon,
+button.hi-button-danger .hikari-icon,
+button.hi-button-success .hikari-icon,
+button.hi-button-ghost .hikari-icon {
+  color: var(--hi-color-text-on-primary, currentColor);
+}
+
+button.hi-button-secondary .hikari-icon {
+  color: var(--hi-color-text-on-secondary, currentColor);
+}
+
+button.hi-button-danger .hikari-icon {
+  color: var(--hi-color-text-on-danger, currentColor);
+}
+
+button.hi-button-success .hikari-icon {
+  color: var(--hi-color-text-on-success, currentColor);
+}
+
+button.hi-button-ghost .hikari-icon {
+  color: var(--hi-color-text-on-ghost, var(--hi-primary, currentColor));
+}
+
+// SVG elements inherit color from parent
+button .hikari-icon svg,
+button .hikari-icon svg path,
+button .hikari-icon svg circle,
+button .hikari-icon svg rect,
+button .hikari-icon svg ellipse,
+button .hikari-icon svg polygon,
+button .hikari-icon svg polyline,
+button .hikari-icon svg line {
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+// Hover state opacity
+button.hi-button-primary:hover .hikari-icon,
+button.hi-button-secondary:hover .hikari-icon,
+button.hi-button-danger:hover .hikari-icon,
+button.hi-button-success:hover .hikari-icon,
+button.hi-button-ghost:hover .hikari-icon {
+  opacity: 0.9;
+}
+

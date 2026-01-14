@@ -12,9 +12,9 @@ use dioxus::prelude::*;
 #[cfg(target_arch = "wasm32")]
 use console_error_panic_hook::set_once;
 
-// Import spotlight initialization
+// Import glow initialization
 #[cfg(target_arch = "wasm32")]
-use _animation::spotlight::init_spotlights;
+use _animation::glow::init_glow;
 
 // Import scrollbar initialization
 #[cfg(target_arch = "wasm32")]
@@ -54,8 +54,8 @@ pub fn hydrate() {
         // Initialize scrollbars (sets up MutationObserver for future updates)
         init_all();
 
-        // Initialize spotlights
-        init_spotlights();
+        // Initialize glow effects
+        init_glow();
 
         web_sys::console::log_1(&"[Website] UI effects initialized".into());
     }

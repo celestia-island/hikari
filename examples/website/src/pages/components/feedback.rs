@@ -30,6 +30,10 @@ pub fn ComponentsFeedback() -> Element {
                     h3 { class: ClassesBuilder::new().add(MarginBottom::Mb4).add(FontSize::Lg).add(FontWeight::Semibold).build(), "Tooltip 文字提示" }
                     p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "悬浮提示组件" }
                 }
+                div { class: ClassesBuilder::new().add_raw("component-card").add(Padding::P6).build(),
+                    h3 { class: ClassesBuilder::new().add(MarginBottom::Mb4).add(FontSize::Lg).add(FontWeight::Semibold).build(), "Glow 发光" }
+                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "鼠标跟随高光效果" }
+                }
             }
         }
     }

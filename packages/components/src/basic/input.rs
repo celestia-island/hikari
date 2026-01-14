@@ -4,7 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::{
-    feedback::{Spotlight, SpotlightColor},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
     styled::StyledComponent,
 };
 
@@ -55,9 +55,21 @@ pub struct InputProps {
 
     pub onkeydown: Option<EventHandler<KeyboardEvent>>,
 
-    /// Enable spotlight effect (uses Theme color for solid backgrounds)
+    /// Enable glow effect (Win10-style blur and mouse-following highlight)
     #[props(default)]
-    pub spotlight: bool,
+    pub glow: bool,
+
+    /// Glow blur intensity (requires glow: true)
+    #[props(default)]
+    pub glow_blur: GlowBlur,
+
+    /// Glow intensity (requires glow: true)
+    #[props(default)]
+    pub glow_intensity: GlowIntensity,
+
+    /// Glow color mode (requires glow: true)
+    #[props(default)]
+    pub glow_color: GlowColor,
 }
 
 /// Input component with Arknights + FUI styling
@@ -132,12 +144,13 @@ pub fn Input(props: InputProps) -> Element {
         }
     };
 
-    // Wrap with spotlight if enabled
-    if props.spotlight {
+    // Wrap with glow if enabled
+    if props.glow {
         rsx! {
-            Spotlight {
-                color: SpotlightColor::Theme,
-                class: "has-solid-bg", // Enable blend mode for solid backgrounds
+            Glow {
+                blur: props.glow_blur,
+                color: props.glow_color,
+                intensity: props.glow_intensity,
                 { input_content }
             }
         }

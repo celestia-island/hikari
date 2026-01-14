@@ -4,7 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::{
-    feedback::{Spotlight, SpotlightColor},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
     styled::StyledComponent,
 };
 
@@ -88,9 +88,21 @@ pub struct ButtonProps {
     #[props(default)]
     pub animation: ButtonAnimation,
 
-    /// Enable spotlight effect (auto-detects color based on variant)
+    /// Enable glow effect (Win10-style blur and mouse-following highlight)
+    #[props(default = true)]
+    pub glow: bool,
+
+    /// Glow blur intensity (requires glow: true)
     #[props(default)]
-    pub spotlight: bool,
+    pub glow_blur: GlowBlur,
+
+    /// Glow intensity (requires glow: true)
+    #[props(default)]
+    pub glow_intensity: GlowIntensity,
+
+    /// Glow color mode (requires glow: true)
+    #[props(default)]
+    pub glow_color: GlowColor,
 
     pub onclick: Option<EventHandler<MouseEvent>>,
 }
@@ -107,7 +119,10 @@ impl Default for ButtonProps {
             children: VNode::empty(),
             class: String::default(),
             animation: Default::default(),
-            spotlight: false,
+            glow: false,
+            glow_blur: Default::default(),
+            glow_intensity: Default::default(),
+            glow_color: GlowColor::Auto,
             onclick: None,
         }
     }
@@ -166,15 +181,6 @@ pub fn Button(props: ButtonProps) -> Element {
         ButtonAnimation::IconRotate => Some("icon-rotate"),
     };
 
-    // Determine spotlight color based on variant
-    // Auto mode for colored buttons, Theme mode for ghost/secondary
-    let spotlight_color = match props.variant {
-        ButtonVariant::Primary | ButtonVariant::Danger | ButtonVariant::Success => {
-            SpotlightColor::Auto
-        }
-        ButtonVariant::Secondary | ButtonVariant::Ghost => SpotlightColor::Theme,
-    };
-
     let button_content = rsx! {
         button {
             class: format!(
@@ -205,11 +211,13 @@ pub fn Button(props: ButtonProps) -> Element {
         }
     };
 
-    // Wrap with spotlight container if enabled
-    if props.spotlight {
+    // Wrap with glow container if enabled
+    if props.glow {
         rsx! {
-            Spotlight {
-                color: spotlight_color,
+            Glow {
+                blur: props.glow_blur,
+                color: props.glow_color,
+                intensity: props.glow_intensity,
                 { button_content }
             }
         }

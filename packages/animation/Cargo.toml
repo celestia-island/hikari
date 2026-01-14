@@ -16,6 +16,9 @@ web-sys = { version = "0.3", features = [
     "DomRect",
     "Document",
     "CssStyleDeclaration",
+    "MutationObserver",
+    "MutationObserverInit",
+    "MutationRecord",
 ] }
 js-sys = "0.3"
 serde = { version = "1.0", features = ["derive"] }

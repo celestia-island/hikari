@@ -216,7 +216,7 @@ pub fn ComponentsInput() -> Element {
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             Input {
                                 placeholder: "Hover over me...",
-                                spotlight: true,
+                                glow: true,
                             }
                         }
                     }
@@ -318,7 +318,7 @@ pub fn ComponentsInput() -> Element {
                                 prefix_icon: rsx! {
                                     Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
-                                spotlight: true,
+                                glow: true,
                             }
                         }
                     }
@@ -386,7 +386,7 @@ Input {{
     prefix_icon: rsx! {{
         Icon {{ icon: MdiIcon::Alert, size: 16 }}
     }},
-    spotlight: true,
+    glow: true,
 }}"#
                             }
                         }
@@ -440,7 +440,7 @@ Input {{
                                 prefix_icon: rsx! {
                                     Icon { icon: MdiIcon::Alert, size: 16 }
                                 },
-                                spotlight: true,
+                                glow: true,
                             }
                         }
                     }

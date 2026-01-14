@@ -458,6 +458,13 @@
   --hi-black-10: rgba(0, 0, 0, 0.1);
   --hi-black-20: rgba(0, 0, 0, 0.2);
   --hi-black-30: rgba(0, 0, 0, 0.3);
+
+  // Scrollbar Colors
+  --hi-scrollbar-track-dark: rgba(74, 66, 102, 0.25);  // 黛 with 25% opacity
+  --hi-scrollbar-track-light: rgba(74, 66, 102, 0.12); // 黛 with 12% opacity
+  --hi-scrollbar-thumb: rgba(148, 163, 184, 0.6);         // Slate with 60% opacity
+  --hi-scrollbar-thumb-hover: rgba(203, 213, 225, 0.8);   // Slate with 80% opacity
+  --hi-scrollbar-thumb-active-filter: brightness(0.85);     // Darken in light mode
 }
 
 // Dark theme specific overrides
@@ -488,6 +495,13 @@
   --hi-color-primary: var(--hi-primary);
   --hi-color-background: var(--hi-background);
   --hi-color-surface: var(--hi-surface);
+
+  // Scrollbar Colors
+  --hi-scrollbar-track-dark: rgba(255,255, 255, 0.25);  // White with 25% opacity
+  --hi-scrollbar-track-light: rgba(255, 255, 255, 0.12); // White with 12% opacity
+  --hi-scrollbar-thumb: rgba(203, 213, 225, 0.7);       // Slate with 70% opacity
+  --hi-scrollbar-thumb-hover: rgba(224, 240, 233, 0.9); // 素 with 90% opacity
+  --hi-scrollbar-thumb-active-filter: brightness(1.15);     // Brighten in dark mode
 
   // Component-specific Colors
   --hi-button-bg: rgba(250, 250, 250, 0.1);

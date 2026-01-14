@@ -6,16 +6,16 @@
 //! # Features
 //! - Absolute positioned on the right side
 //! - No layout shift (doesn't affect content width)
-//! - Smooth animations (4px → 8px) managed by state machine
+//! - Smooth animations (4px → 8px) managed by hikari-animation
 //! - Auto-hide when content doesn't need scrolling
 //! - Drag to scroll functionality
 //! - Smart width expansion on drag and scroll events
 //!
 //! # Animation Architecture
 //! - State machine manages scrollbar width (Idle/Active/Dragging/ScrollHover)
-//! - hikari-animation's TimerManager handles delayed state transitions
-//! - requestAnimationFrame drives smooth width transitions
-//! - Callback-based style updates ensure responsive feedback
+//! - hikari-animation's scrollbar module handles width transitions
+//! - requestAnimationFrame drives smooth width transitions (300ms)
+//! - CSS cubic-bezier for smooth easing
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -42,6 +42,7 @@ enum ScrollbarAnimationState {
 
 impl ScrollbarAnimationState {
     /// Returns the target width for this state
+    #[allow(dead_code)]
     fn target_width(&self) -> f64 {
         match self {
             ScrollbarAnimationState::Idle => 4.0,
@@ -55,29 +56,26 @@ impl ScrollbarAnimationState {
 /// Animation controller for scrollbar width transitions
 ///
 /// Manages state and animation lifecycle for hover effects.
-/// Inspired by hikari-animation's state machine pattern.
+/// Uses hikari-animation's scrollbar module for smooth transitions.
 struct ScrollbarAnimator {
     state: RefCell<ScrollbarAnimationState>,
-    track: web_sys::Element,
-    animation_handle: RefCell<Option<i32>>, // requestAnimationFrame handle
-    start_time: RefCell<Option<f64>>,       // Animation start time
-    start_width: RefCell<f64>,              // Starting width
-    target_width: RefCell<f64>,             // Target width
-    timer_manager: TimerManager,            // For delayed state transitions
-    scroll_hover_timer: RefCell<Option<animation::TimerId>>, // Scroll hover timer
-    is_mouse_over: RefCell<bool>,           // Track mouse position for drag end logic
+    scrollbar_id: String,
+    timer_manager: TimerManager,
+    scroll_hover_timer: RefCell<Option<animation::TimerId>>,
+    is_mouse_over: RefCell<bool>,
 }
 
 impl ScrollbarAnimator {
     /// Create a new animator for the given track element
     fn new(track: web_sys::Element) -> Self {
+        // Generate unique ID using timestamp
+        let scrollbar_id = format!("scrollbar-{}", js_sys::Date::now());
+
+        animation::register_scrollbar(scrollbar_id.clone(), track.into());
+
         Self {
             state: RefCell::new(ScrollbarAnimationState::Idle),
-            track,
-            animation_handle: RefCell::new(None),
-            start_time: RefCell::new(None),
-            start_width: RefCell::new(4.0),
-            target_width: RefCell::new(4.0),
+            scrollbar_id,
             timer_manager: TimerManager::new(),
             scroll_hover_timer: RefCell::new(None),
             is_mouse_over: RefCell::new(false),
@@ -95,7 +93,7 @@ impl ScrollbarAnimator {
             // For Idle and ScrollHover, transition to Active
             ScrollbarAnimationState::Idle | ScrollbarAnimationState::ScrollHover => {
                 *self.state.borrow_mut() = ScrollbarAnimationState::Active;
-                self.start_animation(10.0);
+                animation::update_scrollbar_width(self.scrollbar_id.clone(), 8.0);
             }
             // Already active, nothing to do
             ScrollbarAnimationState::Active => {}
@@ -113,7 +111,7 @@ impl ScrollbarAnimator {
             // Active -> Idle
             ScrollbarAnimationState::Active => {
                 *self.state.borrow_mut() = ScrollbarAnimationState::Idle;
-                self.start_animation(6.0);
+                animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
             }
             // Already idle, nothing to do
             ScrollbarAnimationState::Idle => {}
@@ -123,18 +121,13 @@ impl ScrollbarAnimator {
     /// Transition to dragging state
     fn start_drag(&self) {
         *self.state.borrow_mut() = ScrollbarAnimationState::Dragging;
-        self.start_animation(10.0);
+        animation::update_scrollbar_width(self.scrollbar_id.clone(), 8.0);
     }
 
-    /// End dragging - check mouse position to determine next state
+    /// End dragging - always return to idle state
     fn end_drag(&self) {
-        let is_over = *self.is_mouse_over.borrow();
-        if is_over {
-            *self.state.borrow_mut() = ScrollbarAnimationState::Active;
-        } else {
-            *self.state.borrow_mut() = ScrollbarAnimationState::Idle;
-            self.start_animation(6.0);
-        }
+        *self.state.borrow_mut() = ScrollbarAnimationState::Idle;
+        animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
     }
 
     /// Trigger scroll hover state (expands for 500ms then returns to previous state)
@@ -148,7 +141,7 @@ impl ScrollbarAnimator {
 
         // Transition to ScrollHover
         *self.state.borrow_mut() = ScrollbarAnimationState::ScrollHover;
-        self.start_animation(10.0);
+        animation::update_scrollbar_width(self.scrollbar_id.clone(), 8.0);
 
         // Cancel existing scroll hover timer
         if let Some(timer_id) = self.scroll_hover_timer.borrow_mut().take() {
@@ -174,105 +167,7 @@ impl ScrollbarAnimator {
             *self.state.borrow_mut() = ScrollbarAnimationState::Active;
         } else {
             *self.state.borrow_mut() = ScrollbarAnimationState::Idle;
-            self.start_animation(6.0);
-        }
-    }
-
-    /// Start animation to target width using custom easing
-    fn start_animation(&self, target: f64) {
-        // Get current width from computed style
-        let current_width = self.get_current_width();
-        *self.start_width.borrow_mut() = current_width;
-        *self.target_width.borrow_mut() = target;
-
-        // Record start time
-        *self.start_time.borrow_mut() = Some(Date::now());
-
-        // Cancel any existing animation frame
-        let window = match web_sys::window() {
-            Some(w) => w,
-            None => return,
-        };
-        if let Some(handle) = self.animation_handle.borrow_mut().take() {
-            let _ = window.cancel_animation_frame(handle);
-        }
-
-        // Start new animation
-        let animator_ref = self.clone();
-        let closure = Closure::wrap(Box::new(move || {
-            animator_ref.animate_step();
-        }) as Box<dyn FnMut()>);
-
-        let handle = window.request_animation_frame(closure.as_ref().unchecked_ref());
-        if let Ok(handle) = handle {
-            *self.animation_handle.borrow_mut() = Some(handle);
-        }
-        closure.forget();
-    }
-
-    /// Get current width from computed style
-    fn get_current_width(&self) -> f64 {
-        let window = match web_sys::window() {
-            Some(w) => w,
-            None => return 4.0,
-        };
-        let style = match window.get_computed_style(&self.track).ok().flatten() {
-            Some(s) => s,
-            None => return 4.0,
-        };
-        match style.get_property_value("width") {
-            Ok(width) => {
-                // Parse "4px" or "8px" to f64
-                width.trim_end_matches("px").parse().unwrap_or(4.0)
-            }
-            Err(_) => 4.0,
-        }
-    }
-
-    /// Animation step callback
-    fn animate_step(&self) {
-        let window = match web_sys::window() {
-            Some(w) => w,
-            None => return,
-        };
-
-        let start_time = match *self.start_time.borrow() {
-            Some(t) => t,
-            None => return,
-        };
-
-        const DURATION_MS: f64 = 300.0; // Animation duration
-        let elapsed = Date::now() - start_time;
-        let progress = (elapsed / DURATION_MS).min(1.0);
-
-        // Cubic ease out easing
-        let eased: f64 = 1.0 - (1.0 - progress).powf(3.0);
-
-        let start = *self.start_width.borrow();
-        let target = *self.target_width.borrow();
-        let current = start + (target - start) * eased;
-
-        // Apply current width
-        if let Some(el) = self.track.dyn_ref::<web_sys::HtmlElement>() {
-            use animation::style::set_style;
-            set_style(el, CssProperty::Width, &format!("{}px", current));
-        }
-
-        // Continue animation or stop
-        if progress < 1.0 {
-            let animator_ref = self.clone();
-            let closure = Closure::wrap(Box::new(move || {
-                animator_ref.animate_step();
-            }) as Box<dyn FnMut()>);
-
-            let handle = window.request_animation_frame(closure.as_ref().unchecked_ref());
-            if let Ok(handle) = handle {
-                *self.animation_handle.borrow_mut() = Some(handle);
-            }
-            closure.forget();
-        } else {
-            *self.animation_handle.borrow_mut() = None;
-            *self.start_time.borrow_mut() = None;
+            animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
         }
     }
 }
@@ -282,11 +177,7 @@ impl Clone for ScrollbarAnimator {
     fn clone(&self) -> Self {
         Self {
             state: self.state.clone(),
-            track: self.track.clone(),
-            animation_handle: self.animation_handle.clone(),
-            start_time: self.start_time.clone(),
-            start_width: self.start_width.clone(),
-            target_width: self.target_width.clone(),
+            scrollbar_id: self.scrollbar_id.clone(),
             timer_manager: self.timer_manager.clone(),
             scroll_hover_timer: self.scroll_hover_timer.clone(),
             is_mouse_over: self.is_mouse_over.clone(),
@@ -691,6 +582,8 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
 
     // Setup hover animation using state machine
     let track_for_hover = track.clone();
+    let track_for_click = track.clone();
+    let content_for_click = content_layer.clone();
     let closure_mouseenter = Closure::wrap(Box::new(move || {
         animator_for_events.activate();
     }) as Box<dyn FnMut()>);
@@ -710,6 +603,45 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
         closure_mouseleave.as_ref().unchecked_ref(),
     );
     closure_mouseleave.forget();
+
+    // Setup track click to jump to position
+    let track_click = track_for_click.clone();
+    let closure_click = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+        event.stop_propagation();
+
+        // Calculate click position relative to track
+        let track_rect = track_click.get_bounding_client_rect();
+
+        let click_y = event.client_y() as f64 - track_rect.top();
+        let track_height = track_rect.height();
+
+        // Calculate thumb height
+        let thumb_height = match track_click.query_selector(".custom-scrollbar-thumb") {
+            Ok(Some(thumb_el)) => {
+                let thumb_rect = thumb_el.get_bounding_client_rect();
+                thumb_rect.height()
+            }
+            _ => 20.0,
+        };
+
+        // Calculate scroll position
+        let scroll_height = content_for_click.scroll_height() as f64;
+        let client_height = content_for_click.client_height() as f64;
+        let max_scroll = (scroll_height - client_height).max(0.0);
+
+        // Center thumb at click position
+        let thumb_center_offset = thumb_height / 2.0;
+        let click_ratio = ((click_y - thumb_center_offset) / track_height)
+            .max(0.0)
+            .min(1.0);
+        let new_scroll_top = click_ratio * max_scroll;
+
+        let _ = content_for_click.set_scroll_top(new_scroll_top as i32);
+    }) as Box<dyn FnMut(_)>);
+
+    let _ = track_for_click
+        .add_event_listener_with_callback("click", closure_click.as_ref().unchecked_ref());
+    closure_click.forget();
 }
 
 /// Update scrollbar position and size

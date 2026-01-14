@@ -3,7 +3,6 @@
 //! Provides runtime information for computing dynamic animation values,
 //! including DOM dimensions, mouse positions, and element metrics.
 
-use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{HtmlElement, Window};
 
 /// Context for computing dynamic animation values

@@ -8,8 +8,8 @@ pub mod overview;
 pub mod palette;
 
 // Re-export page components
-pub use overview::SystemOverview;
+pub use animations::SystemAnimations;
 pub use css::SystemCSS;
 pub use icons::SystemIcons;
+pub use overview::SystemOverview;
 pub use palette::SystemPalette;
-pub use animations::SystemAnimations;

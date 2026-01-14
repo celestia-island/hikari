@@ -6,28 +6,97 @@
   bottom: 0;
   z-index: -1;
   pointer-events: none;
+  overflow: hidden;
   
-  /* Default static gradient - will be overridden by JavaScript animation */
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(245, 245, 245, 0.9) 0%,
-    rgba(255, 182, 193, 0.8) 30%,
-    rgba(255, 105, 180, 0.7) 60%,
-    rgba(219, 112, 147, 0.6) 100%
-  );
+  /* Hikari theme (light) */
+  &[data-theme="hikari"] &__gradient {
+    background: radial-gradient(
+      circle at center,
+      rgba(245, 245, 245, 0.9) 0%,
+      rgba(255, 182, 193, 0.8) 30%,
+      rgba(255, 105, 180, 0.7) 60%,
+      rgba(219, 112, 147, 0.6) 100%
+    );
+  }
   
-  /* Smooth gradient transition for animation */
-  transition: background 0.1s ease-out;
-  
-  /* Subtle breathing animation */
-  animation: background-breathing 4s ease-in-out infinite;
+  /* Tairitsu theme (dark) */
+  &[data-theme="tairitsu"] &__gradient {
+    background: radial-gradient(
+      circle at center,
+      rgba(25, 35, 55, 0.95) 0%,
+      rgba(45, 55, 85, 0.9) 30%,
+      rgba(65, 75, 105, 0.85) 60%,
+      rgba(25, 35, 55, 0.8) 100%
+    );
+  }
 }
 
-@keyframes background-breathing {
-  0%, 100% {
-    opacity: 0.8;
+.hi-background__gradient {
+  position: absolute;
+  width: 150vw;
+  height: 150vh;
+  top: -25vh;
+  left: -25vw;
+  will-change: transform;
+  
+  /* Hikari theme (light) */
+  .hi-background[data-theme="hikari"] & {
+    background: radial-gradient(
+      circle at center,
+      rgba(245, 245, 245, 0.9) 0%,
+      rgba(255, 182, 193, 0.8) 30%,
+      rgba(255, 105, 180, 0.7) 60%,
+      rgba(219, 112, 147, 0.6) 100%
+    );
+    animation: gradient-move-hikari 60s linear infinite;
+  }
+  
+  /* Tairitsu theme (dark) */
+  .hi-background[data-theme="tairitsu"] & {
+    background: radial-gradient(
+      circle at center,
+      rgba(25, 35, 55, 0.95) 0%,
+      rgba(45, 55, 85, 0.9) 30%,
+      rgba(65, 75, 105, 0.85) 60%,
+      rgba(25, 35, 55, 0.8) 100%
+    );
+    animation: gradient-move-tairitsu 60s linear infinite;
+  }
+}
+
+/* Hardware-accelerated animations using transform */
+@keyframes gradient-move-hikari {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(10vw, 0) rotate(90deg);
   }
   50% {
-    opacity: 1.0;
+    transform: translate(10vw, 10vh) rotate(180deg);
+  }
+  75% {
+    transform: translate(0, 10vh) rotate(270deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(360deg);
+  }
+}
+
+@keyframes gradient-move-tairitsu {
+  0% {
+    transform: translate(-5vw, -5vh) rotate(0deg);
+  }
+  25% {
+    transform: translate(15vw, -5vh) rotate(90deg);
+  }
+  50% {
+    transform: translate(15vw, 15vh) rotate(180deg);
+  }
+  75% {
+    transform: translate(-5vw, 15vh) rotate(270deg);
+  }
+  100% {
+    transform: translate(-5vw, -5vh) rotate(360deg);
   }
 }

@@ -43,62 +43,61 @@ pub fn Layout(children: Element, current_route: Route) -> Element {
     let icon_key = use_memo(move || format!("{:?}", current_icon.read()));
 
     rsx! {
-        Background { div { class: "layout-container",
-        HikariLayout {
-            header: rsx! {
-                Header {
-                    show_menu_toggle: true,
-                    on_menu_toggle: move |_| is_drawer_open.toggle(),
-                    bordered: true,
+        div { class: "layout-container",
+            HikariLayout {
+                header: rsx! {
+                    Header {
+                        show_menu_toggle: true,
+                        on_menu_toggle: move |_| is_drawer_open.toggle(),
+                        bordered: true,
 
-                    right_content: rsx! {
-                        Button {
-                            key: "{icon_key}",
-                            variant: ButtonVariant::Ghost,
-                            icon: rsx! {
-                                Icon {
-                                    icon: *current_icon.read(),
-                                    size: 20,
+                        right_content: rsx! {
+                            Button {
+                                key: "{icon_key}",
+                                variant: ButtonVariant::Ghost,
+                                class: "theme-toggle-button",
+                                icon: rsx! {
+                                    Icon {
+                                        icon: *current_icon.read(),
+                                        size: 16,
+                                    }
+                                },
+                                onclick: move |_| {
+                                    let current = theme_context.theme.read().clone();
+                                    let new_theme = if current.as_str() == "hikari" { "tairitsu" } else { "hikari" };
+                                    theme_context.theme.set(new_theme.to_string());
                                 }
-                            },
-                            onclick: move |_| {
-                                let current = theme_context.theme.read().clone();
-                                let new_theme = if current.as_str() == "hikari" { "tairitsu" } else { "hikari" };
-                                theme_context.theme.set(new_theme.to_string());
                             }
+                        },
+
+                        Logo {
+                            src: "/images/logo.png".to_string(),
+                            alt: "Hikari Logo".to_string(),
+                            height: 36,
+                            max_width: 140,
                         }
-                    },
-
-                    Logo {
-                        src: "/images/logo.png".to_string(),
-                        alt: "Hikari Logo".to_string(),
-                        height: 36,
-                        max_width: 140,
                     }
+                },
+
+                aside: rsx! {
+                    Aside {
+                        width: "lg".to_string(),
+                        variant: "light".to_string(),
+                        initial_open: *is_drawer_open.read(),
+                        on_close: move |_| is_drawer_open.set(false),
+
+                        Sidebar { current_route: current_route.clone() }
+                    }
+                },
+
+                // Breadcrumb navigation (outside sidebar, before content)
+                div { class: ClassesBuilder::new().add(Padding::P4).build(),
+                    BreadcrumbNav { current_route: current_route.clone() }
                 }
-            },
 
-            aside: rsx! {
-                Aside {
-                    width: "lg".to_string(),
-                    variant: "light".to_string(),
-                    initial_open: *is_drawer_open.read(),
-                    on_close: move |_| is_drawer_open.set(false),
-
-
-                    Sidebar { current_route: current_route.clone() }
-                }
-            },
-
-            // Breadcrumb navigation
-            div { class: ClassesBuilder::new().add(Padding::P4).build(),
-                BreadcrumbNav { current_route: current_route.clone() }
+                {children}
             }
-
-            // Main content
-            div { class: ClassesBuilder::new().add(Padding::P6).build(), {children} }
         }
-        } }
     }
 }
 
@@ -116,24 +115,26 @@ fn BreadcrumbNav(current_route: Route) -> Element {
                 .build(),
 
             // Home link
-                Link {
-                    to: Route::Home {},
-                    class: ClassesBuilder::new()
-                        .add(TextColor::Secondary)
-                        .add(Transition::Colors)
-                        .add(Duration::D150)
-                        .build(),
-                    Icon { icon: MdiIcon::TrophyAward, size: 16 }
+            Link {
+                to: Route::Home {},
+                class: ClassesBuilder::new()
+                    .add(TextColor::Secondary)
+                    .add(Transition::Colors)
+                    .add(Duration::D150)
+                    .add(Display::Flex)
+                    .add(AlignItems::Center)
+                    .build(),
+                Icon { icon: MdiIcon::Home, size: 18 }
+            }
+
+            // Breadcrumb items with separators
+            for (i, item) in breadcrumb_items.iter().enumerate() {
+                // Separator icon
+                div { class: ClassesBuilder::new().add(TextColor::Muted).build(),
+                    Icon { icon: MdiIcon::ChevronRight, size: 16 }
                 }
 
-                // Breadcrumb items with separators
-                for (i , item) in breadcrumb_items.iter().enumerate() {
-                    // Separator icon
-                    div { class: ClassesBuilder::new().add(TextColor::Muted).build(),
-                        Icon { icon: MdiIcon::ChevronRight, size: 16 }
-                    }
-
-                    // Item
+                // Item
                 if i == breadcrumb_items.len() - 1 {
                     // Current page (not a link)
                     span { class: ClassesBuilder::new().add(TextColor::Primary).add(FontWeight::Medium).build(),

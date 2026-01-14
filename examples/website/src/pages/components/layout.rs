@@ -1,12 +1,14 @@
 // website/src/pages/components/layout.rs
 // Layout components showcase page
 
-
 use dioxus::prelude::*;
 
-use _components::layout::{Container, Row, Section};
-use _palette::classes::{ BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding, PaddingLeft, TextColor, };
 use crate::{app::Route, components::Layout};
+use _components::layout::{Container, Row, Section};
+use _palette::classes::{
+    BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap,
+    MarginBottom, Padding, PaddingLeft, TextColor,
+};
 
 #[allow(non_snake_case)]
 pub fn ComponentsLayout() -> Element {

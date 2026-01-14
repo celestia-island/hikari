@@ -11,16 +11,6 @@ use crate::styled::StyledComponent;
 /// Background component type wrapper (for implementing StyledComponent)
 pub struct BackgroundComponent;
 
-impl StyledComponent for BackgroundComponent {
-    fn styles() -> &'static str {
-        include_str!("styles/background.scss")
-    }
-
-    fn name() -> &'static str {
-        "background"
-    }
-}
-
 /// Background component properties
 ///
 /// Defines props accepted by [`Background`] component.
@@ -36,7 +26,7 @@ pub struct BackgroundProps {
 /// Background component
 ///
 /// A fixed, full-screen gradient background that automatically adapts to current theme.
-/// The background includes a smooth rotating gradient animation using delta time.
+/// The background includes a slow 60-second rotating gradient animation.
 ///
 /// # Positioning
 ///
@@ -48,25 +38,22 @@ pub struct BackgroundProps {
 /// # Theme Support
 ///
 /// Automatically switches gradients based on `data-theme` attribute:
-/// - `data-theme="hikari"` (light): 素 → 粉红 gradient with smooth rotation
-/// - `data-theme="tairitsu"` (dark): 深蓝 → 纯黑 gradient with smooth rotation
+/// - `data-theme="hikari"` (light): 白 → 粉红 gradient with 60s rotation
+/// - `data-theme="tairitsu"` (dark): 黑 → 深蓝 gradient with 60s rotation
 ///
 /// # Animation
 ///
-/// The gradient smoothly rotates using enhanced animation system:
-/// - Uses AnimationState for precise angle tracking
-/// - Delta time-based calculations for smooth motion regardless of frame rate
-/// - Automatic lifecycle management prevents memory leaks
-/// - 60-second rotation period using stateful animation
+/// The gradient smoothly rotates using CSS variables:
+/// - Uses `--bg-center-x` and `--bg-center-y` for circle position
+/// - Updates variables via AnimationBuilder in requestAnimationFrame loop
+/// - 60-second rotation period
+/// - Cleanup on unmount to prevent multiple animation loops
 #[component]
 pub fn Background(props: BackgroundProps) -> Element {
     #[cfg(target_arch = "wasm32")]
     {
         use_effect(move || {
-            let stop_animation = start_gradient_rotation();
-            (move || {
-                stop_animation();
-            })()
+            let _stop = start_gradient_rotation();
         });
     }
 
@@ -78,22 +65,23 @@ pub fn Background(props: BackgroundProps) -> Element {
     }
 }
 
-/// Starts gradient rotation animation using simple requestAnimationFrame
+/// Starts gradient rotation animation using CSS variables
 ///
-/// Uses direct DOM manipulation for smooth rotation:
-/// - Uses 60-second period for a full rotation
-/// - Updates at 60fps via requestAnimationFrame
-/// - Simple and reliable animation approach
+/// The gradient smoothly rotates by updating CSS variables:
+/// - Updates `--bg-center-x` and `--bg-center-y` in each frame
+/// - Uses web_sys style.setProperty for efficient updates
+/// - Automatic requestAnimationFrame loop
+/// - 60-second rotation period
+/// - Returns cleanup function to stop animation on unmount
 #[cfg(target_arch = "wasm32")]
 fn start_gradient_rotation() -> Box<dyn FnOnce()> {
     use std::cell::RefCell;
     use std::rc::Rc;
-    use wasm_bindgen::prelude::*;
+    use wasm_bindgen::closure::Closure;
     use wasm_bindgen::JsCast;
-    use web_sys::{window, HtmlElement};
 
     // Get background element
-    let window = match window() {
+    let window = match web_sys::window() {
         Some(w) => w,
         None => return Box::new(|| {}),
     };
@@ -105,81 +93,82 @@ fn start_gradient_rotation() -> Box<dyn FnOnce()> {
 
     let element = match document.query_selector(".hi-background").ok().flatten() {
         Some(el) => el,
-        None => {
-            web_sys::console::log_1(&"Background element not found".into());
-            return Box::new(|| {});
-        }
+        None => return Box::new(|| {}),
     };
 
-    let html_element = match element.dyn_into::<HtmlElement>() {
+    let html_element = match element.dyn_into::<web_sys::HtmlElement>() {
         Ok(elem) => elem,
         Err(_) => return Box::new(|| {}),
     };
 
-    // Animation state in Rc<RefCell>
-    let angle = Rc::new(RefCell::new(0.0_f64));
-    let rotation_speed = 2.0 * std::f64::consts::PI / 60.0; // radians per second
-    let start_time = window.performance().unwrap().now();
+    // Animation parameters
+    let period_ms = 30000.0;
+    let radius_percent = 20.0;
+    let center_x = 50.0;
+    let center_y = 50.0;
 
-    // Create animation closure with self-reference
-    let closure: Rc<RefCell<Option<Closure<dyn Fn()>>>> = Rc::new(RefCell::new(None));
-    let closure_clone = closure.clone();
-    let angle_clone = angle.clone();
+    // Store callback for self-reference
+    let f = Rc::new(RefCell::new(None::<js_sys::Function>));
+    let g = f.clone();
 
-    let anim_closure = Closure::wrap(Box::new(move || {
-        let current_time = window.performance().unwrap().now();
-        let delta_time = (current_time - start_time) / 1000.0; // Convert to seconds
+    // Stop flag
+    let should_stop = Rc::new(RefCell::new(false));
+    let should_stop_clone = should_stop.clone();
 
-        // Update angle
-        let mut angle_mut = angle_clone.borrow_mut();
-        *angle_mut = rotation_speed * delta_time;
-        let current_angle = *angle_mut;
-
-        // Calculate gradient position based on angle
-        let center_x = 50.0 + 10.0 * current_angle.cos();
-        let center_y = 50.0 + 10.0 * current_angle.sin();
-
-        // Create gradient with moving center
-        let gradient = format!(
-            "radial-gradient(circle at {}% {}%, rgba(245, 245, 245, 0.9) 0%, rgba(255, 182, 193, 0.8) 30%, rgba(255, 105, 180, 0.7) 60%, rgba(219, 112, 147, 0.6) 100%)",
-            center_x, center_y
-        );
-
-        // Apply gradient style
-        let _ = html_element.style().set_property("background", &gradient);
-
-        // Log progress every few seconds
-        if (current_angle as i32) % 2 == 0 {
-            web_sys::console::log_1(
-                &format!(
-                    "Animation angle: {:.2}°, center: ({:.1}%, {:.1}%)",
-                    current_angle.to_degrees(),
-                    center_x,
-                    center_y
-                )
-                .into(),
-            );
+    // Create animation loop closure
+    let animation_closure = Closure::wrap(Box::new(move || {
+        // Check stop flag first
+        if *should_stop_clone.borrow() {
+            return;
         }
 
-        // Continue animation with self-reference
-        if let Some(ref closure) = *closure_clone.borrow() {
-            let _ = window
-                .request_animation_frame(closure.as_ref().unchecked_ref::<js_sys::Function>());
+        // Get current time
+        let window = match web_sys::window() {
+            Some(w) => w,
+            None => return,
+        };
+
+        let current_time = window.performance().map(|p| p.now()).unwrap_or(0.0);
+
+        // Calculate angle (0 to 2π over 60 seconds)
+        let angle = (current_time / period_ms) * 2.0 * std::f64::consts::PI;
+
+        // Calculate circular position
+        let x = center_x + radius_percent * angle.cos();
+        let y = center_y + radius_percent * angle.sin();
+
+        // Update CSS variables for gradient center
+        let style = html_element.style();
+        let _ = style.set_property("--bg-center-x", &format!("{:.1}%", x));
+        let _ = style.set_property("--bg-center-y", &format!("{:.1}%", y));
+
+        // Request next frame
+        if let Some(callback) = &*f.borrow() {
+            let _ = web_sys::window().and_then(|w| w.request_animation_frame(&callback).ok());
         }
-    }) as Box<dyn Fn()>);
+    }) as Box<dyn FnMut()>);
 
-    // Store closure in Rc for self-reference
-    *closure.borrow_mut() = Some(anim_closure);
+    // Convert closure to js_sys::Function and store for self-reference
+    let callback: &js_sys::Function = animation_closure.as_ref().unchecked_ref();
+    *g.borrow_mut() = Some(callback.clone());
 
-    // Start animation
-    if let Some(ref anim_closure) = *closure.borrow() {
-        let _ = window
-            .request_animation_frame(anim_closure.as_ref().unchecked_ref::<js_sys::Function>());
+    // Start animation loop
+    let _ = web_sys::window().and_then(|w| w.request_animation_frame(&callback).ok());
+    animation_closure.forget();
+
+    // Return stop function
+    let should_stop_final = should_stop.clone();
+    Box::new(move || {
+        *should_stop_final.borrow_mut() = true;
+    })
+}
+
+impl StyledComponent for BackgroundComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/background.css"))
     }
 
-    // Return cleanup function
-    Box::new(move || {
-        web_sys::console::log_1(&"Background animation stopped".into());
-        // The closure will be dropped when this function returns
-    })
+    fn name() -> &'static str {
+        "background"
+    }
 }

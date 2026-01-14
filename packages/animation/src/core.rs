@@ -10,7 +10,6 @@ use std::{cell::RefCell, sync::Arc, time::Duration};
 
 use slotmap::{new_key_type, SlotMap};
 
-/// Unique identifier for a tween animation
 new_key_type! { pub struct TweenId; }
 
 /// Represents the current state of an animation

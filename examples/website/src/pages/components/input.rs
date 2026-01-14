@@ -1,13 +1,17 @@
 // website/src/pages/components/input.rs
 // Input component showcase page with real rendered examples
 
-
 use dioxus::prelude::*;
 
-use _components::{Input, InputSize, layout::{Container, Section}};
-use _icons::{Icon, MdiIcon};
-use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, };
 use crate::{app::Route, components::Layout};
+use _components::{
+    layout::{Container, Section},
+    Input, InputSize,
+};
+use _icons::{Icon, MdiIcon};
+use _palette::classes::{
+    ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, PaddingLeft, TextColor,
+};
 
 #[allow(non_snake_case)]
 pub fn ComponentsInput() -> Element {

@@ -336,7 +336,7 @@ pub fn use_animation_frame(_callback: impl Fn(f64) + 'static) {
 ///     }
 /// }
 /// ```
-pub fn use_timeout(duration_ms: u64, _callback: impl Fn() + 'static) -> impl Fn() {
+pub fn use_timeout(_duration_ms: u64, _callback: impl Fn() + 'static) -> impl Fn() {
     // TODO: Implement proper timeout with cleanup
     move || {
         // Placeholder implementation

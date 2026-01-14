@@ -146,15 +146,21 @@
   &:hover {
     background: var(--hi-primary, rgba(123, 207, 166, 0.1));
     border-color: var(--hi-primary, rgba(123, 207, 166, 0.3));
-    color: var(--hi-color-text-primary);
 
-    .hi-menu-item-icon {
-      color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.5)));
+    // Theme-specific hover effects
+    [data-theme="hikari"] & {
+      filter: brightness(0.7);
     }
 
+    [data-theme="tairitsu"] & {
+      filter: brightness(1.2);
+    }
+ 
+    .hi-menu-item-icon {
+      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.5)));
+    }
+ 
     .hi-menu-item-arrow {
-      color: var(--hi-color-primary);
       transform: translateX(2px);
     }
   }

@@ -3,9 +3,12 @@
 
 use dioxus::prelude::*;
 
-use _icons::{Icon, MdiIcon};
-use _palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, Padding, MarginBottom, FontSize, FontWeight, TextColor};
 use crate::components::Layout;
+use _icons::{Icon, MdiIcon};
+use _palette::classes::{
+    ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding,
+    TextColor,
+};
 
 /// Components Overview
 #[allow(non_snake_case)]

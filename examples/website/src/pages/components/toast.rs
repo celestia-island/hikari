@@ -1,12 +1,17 @@
 // website/src/pages/components/toast.rs
 // Toast component showcase page with documentation
 
-
 use dioxus::prelude::*;
 
-use _components::{Toast, ToastPosition, ToastVariant, layout::{Container, Section}};
-use _palette::classes::{ ClassesBuilder, MarginBottom, FontSize, FontWeight, TextColor, Padding, PaddingLeft, Display, FlexDirection, Gap, BgColor, BorderRadius, };
 use crate::{app::Route, components::Layout};
+use _components::{
+    layout::{Container, Section},
+    Toast, ToastPosition, ToastVariant,
+};
+use _palette::classes::{
+    BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap,
+    MarginBottom, Padding, PaddingLeft, TextColor,
+};
 
 #[allow(non_snake_case)]
 pub fn ComponentsToast() -> Element {

@@ -7,7 +7,7 @@ use std::{cell::RefCell, sync::Arc, time::Duration};
 
 use slotmap::SlotMap;
 
-use crate::core::{AnimationOptions, AnimationState, PlaybackMode, Tween, TweenId};
+use crate::core::{AnimationState, Tween, TweenId};
 
 /// State of a timeline
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

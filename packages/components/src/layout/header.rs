@@ -16,8 +16,6 @@
 //! }
 //! ```
 
-use std::result::Result;
-
 use dioxus::prelude::*;
 use dioxus_core::VNode;
 use palette::{classes::*, ClassesBuilder};

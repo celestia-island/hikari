@@ -1,9 +1,8 @@
-use std::{cell::RefCell, rc::Rc, time::Duration};
+use std::time::Duration;
 
 use crate::core::{
-    {AnimationDirection, AnimationState, EasingFunction, PlaybackMode},
     {AnimationEngine, AnimationOptions, PropertyTarget, Tween, TweenId},
-    {CompletionCallback, TweenCallback},
+    {EasingFunction, PlaybackMode},
 };
 
 /// Color configuration for FUI animations

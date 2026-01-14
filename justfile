@@ -68,7 +68,7 @@ check-port:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Checking port 3000..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/utils/clean_process.py
+    @{{py}} scripts/utils/clean_process_linux.py
 
 # Build website WASM client (debug mode)
 # Note: build.rs will automatically compile SCSS and copy assets to public/
@@ -107,7 +107,7 @@ dev:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Checking port 3000..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/utils/clean_process.py
+    @{{py}} scripts/utils/clean_process_linux.py
     @echo ""
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Fetching MDI icons..."
@@ -169,7 +169,7 @@ watch:
     @echo "🔄 Will automatically rebuild and restart on file changes"
     @echo "Press Ctrl+C to stop"
     @echo ""
-    @{{py}} scripts/utils/clean_process.py
+    @{{py}} scripts/utils/clean_process_linux.py
     @cargo watch \
         --clear \
         --watch packages \
@@ -200,7 +200,7 @@ run:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Checking port 3000..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/utils/clean_process.py
+    @{{py}} scripts/utils/clean_process_linux.py
     @echo ""
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Starting website server (skipping WASM build)..."

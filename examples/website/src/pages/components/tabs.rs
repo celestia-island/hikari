@@ -1,13 +1,18 @@
 // website/src/pages/components/tabs.rs
 // Tabs component showcase page with real rendered examples
 
-
 use dioxus::prelude::*;
 
-use _components::{TabPane, TabPosition, Tabs, layout::{Container, Section}};
-use _icons::{Icon, MdiIcon};
-use _palette::classes::{ BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, PaddingLeft, TextColor, };
 use crate::{app::Route, components::Layout};
+use _components::{
+    layout::{Container, Section},
+    TabPane, TabPosition, Tabs,
+};
+use _icons::{Icon, MdiIcon};
+use _palette::classes::{
+    BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding,
+    PaddingLeft, TextColor,
+};
 
 #[allow(non_snake_case)]
 pub fn ComponentsTabs() -> Element {

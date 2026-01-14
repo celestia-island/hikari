@@ -8,48 +8,48 @@
 // CSS 自定义属性（Hikari Light Theme）
 // ============================================
 
-[data-theme="hikari"] {
+ [data-theme="hikari"] {
     // 颜色系统 - 亮色主题
-    --hi-color-background: #D6ECF0;  // 素
-    --hi-color-surface: #D6F0F0;  // 月白
+    --hi-color-background: #D6ECF0;  // 月白
+    --hi-color-surface: #F0F4F8;  // 更亮的白色
     --hi-color-border: #C4D8DA;
 
     // 文字颜色
-    --hi-color-text-primary: #50616D;  // 墨色
+    --hi-color-text-primary: #1A202C;  // 深墨色
     --hi-color-text-secondary: #4A4266;  // 黛
 
     // 主题色
-    --hi-color-primary: #E9A2B5;  // 粉红
+    --hi-color-primary: #7BCFA6;  // 石青
     --hi-color-secondary: #E85A4F;  // 朱红
     --hi-color-accent: #F7B500;  // 姜黄
     --hi-color-success: #5CBF91;  // 葱倩
     --hi-color-warning: #EED677;  // 鹅黄
     --hi-color-danger: #E85A4F;  // 朱红
-    --hi-color-info: #6ABED6;  // 鸭卵青
+    --hi-color-info: #6ABED6;  // 魁卵青
 }
 
 // ============================================
 // CSS 自定义属性（Tairitsu Dark Theme）
 // ============================================
 
-[data-theme="tairitsu"] {
+ [data-theme="tairitsu"] {
     // 颜色系统 - 暗色主题
-    --hi-color-background: #4A4266;  // 黛
-    --hi-color-surface: #50616D;  // 墨色
-    --hi-color-border: #6E7689;
+    --hi-color-background: #1A202C;  // 纯黑背景
+    --hi-color-surface: #2D3748;  // 墨色/深灰
+    --hi-color-border: #4A4266;
 
     // 文字颜色
-    --hi-color-text-primary: #D6F0F0;  // 月白
-    --hi-color-text-secondary: #E0F0F0;  // 浅灰
+    --hi-color-text-primary: #FFFFFF;  // 纯白
+    --hi-color-text-secondary: #D6ECF0;  // 月白
 
     // 主题色
-    --hi-color-primary: #065279;  // 靛蓝
-    --hi-color-secondary: #4B5CC4;  // 宝蓝
+    --hi-color-primary: #7BCFA6;  // 石青
+    --hi-color-secondary: #E85A4F;  // 朱红
     --hi-color-accent: #F7B500;  // 姜黄
     --hi-color-success: #5CBF91;  // 葱倩
     --hi-color-warning: #EED677;  // 鹅黄
     --hi-color-danger: #E85A4F;  // 朱红
-    --hi-color-info: #6ABED6;  // 鸭卵青
+    --hi-color-info: #6ABED6;  // 魁卵青
 }
 
 // ============================================
@@ -129,13 +129,24 @@ p, span, div, label {
 }
 
 a {
-    color: var(--hi-color-primary);
+    color: var(--hi-color-text-primary);
     text-decoration: none;
     transition: color $hikari-transition-fast;
 
     &:hover {
         text-decoration: underline;
     }
+}
+
+// Theme-specific link hover colors
+[data-theme="hikari"] a:hover {
+    color: var(--hi-color-text-primary);
+    filter: brightness(0.7);
+}
+
+[data-theme="tairitsu"] a:hover {
+    color: #FFFFFF;
+    filter: brightness(1.2);
 }
 
 code {

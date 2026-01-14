@@ -42,9 +42,9 @@ use web_sys::HtmlElement;
 
 /// Common CSS properties with type-safe names
 ///
-/// This enum covers the most commonly used CSS properties in DOM manipulation.
+/// This enum covers most commonly used CSS properties in DOM manipulation.
 /// It provides compile-time safety and IDE autocompletion.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CssProperty {
     // Layout
     Display,
@@ -481,12 +481,53 @@ impl<'a> StyleBuilder<'a> {
     }
 
     /// Apply all accumulated properties to the element
+    ///
+    /// **Optimized**: Uses CSSOM batch updates to minimize reflows.
+    /// All properties are set in a single pass to reduce DOM access.
     pub fn apply(self) {
+        if self.properties.is_empty() {
+            return;
+        }
+
         let elem = self.element.clone().dyn_into::<web_sys::Element>().unwrap();
         let style = elem.dyn_ref::<web_sys::HtmlElement>().unwrap().style();
+
+        // Batch update all properties to minimize DOM access
         for (property, value) in self.properties {
             let _ = style.set_property(property.as_str(), &value);
         }
+    }
+
+    /// Apply only changed properties, skipping duplicates
+    ///
+    /// **Performance optimization**: Compares with current element styles
+    /// and only updates properties that have actually changed.
+    ///
+    /// Returns number of properties actually updated.
+    pub fn apply_smart(self) -> usize {
+        if self.properties.is_empty() {
+            return 0;
+        }
+
+        let elem = self.element.clone().dyn_into::<web_sys::Element>().unwrap();
+        let style = elem.dyn_ref::<web_sys::HtmlElement>().unwrap().style();
+
+        let mut updated = 0;
+        for (property, value) in self.properties {
+            let property_name = property.as_str();
+
+            // Get current value
+            let current_value = style.get_property_value(property_name).unwrap_or_default();
+
+            // Only update if value changed
+            if current_value != value {
+                if style.set_property(property_name, &value).is_ok() {
+                    updated += 1;
+                }
+            }
+        }
+
+        updated
     }
 
     /// Build the style as a CSS string (for Dioxus style attribute)

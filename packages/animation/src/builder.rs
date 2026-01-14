@@ -350,6 +350,11 @@ impl<'a> AnimationBuilder<'a> {
     /// Similar to `start_continuous_animation` but gives more control
     /// over animation lifecycle. Useful for complex scenarios.
     ///
+    /// **Performance optimizations**:
+    /// - Throttled updates (60fps target, ~16.67ms between updates)
+    /// - Value caching to avoid unnecessary DOM updates
+    /// - Batch style updates to minimize reflows
+    ///
     /// Returns a stop function that should be called to clean up animation.
     pub fn start_animation_loop(self) -> Box<dyn FnOnce()> {
         let elements = self.elements.clone();
@@ -364,11 +369,22 @@ impl<'a> AnimationBuilder<'a> {
         let should_stop = Rc::new(RefCell::new(false));
         let should_stop_clone = should_stop.clone();
 
-        // Timing state for delta calculation
-        let timing = Rc::new(RefCell::new((0.0, 0.0))); // (previous_time, current_time)
+        // Timing state for delta calculation and throttling
+        let timing = Rc::new(RefCell::new((0.0, 0.0, 0.0))); // (previous_time, current_time, last_update)
+        const THROTTLE_MS: f64 = 16.67; // ~60fps (1000ms / 60)
+
+        // Cached values to avoid unnecessary DOM updates
+        // Key: element_name -> property -> previous_value
+        let cached_values: Rc<RefCell<HashMap<String, HashMap<CssProperty, String>>>> =
+            Rc::new(RefCell::new(HashMap::new()));
 
         // Create animation loop closure
         let animation_closure = Closure::wrap(Box::new(move || {
+            // Check stop flag first to avoid unnecessary work
+            if *should_stop_clone.borrow() {
+                return;
+            }
+
             // Update timing for delta calculation
             let window = match web_sys::window() {
                 Some(w) => w,
@@ -378,11 +394,30 @@ impl<'a> AnimationBuilder<'a> {
             let current_time = window.performance().map(|p| p.now()).unwrap_or(0.0);
             let mut timing_ref = timing.borrow_mut();
             let previous_time = timing_ref.1;
+            let time_since_last_update = current_time - timing_ref.2;
+
+            // Throttle: only update if enough time has passed
+            if time_since_last_update < THROTTLE_MS {
+                timing_ref.1 = current_time;
+                drop(timing_ref);
+
+                // Request next frame but skip update
+                if let Some(callback) = &*f.borrow() {
+                    let _ =
+                        web_sys::window().and_then(|w| w.request_animation_frame(&callback).ok());
+                }
+                return;
+            }
+
             timing_ref.0 = timing_ref.1;
             timing_ref.1 = current_time;
+            timing_ref.2 = current_time;
             drop(timing_ref);
 
             // Update each element with dynamic styles
+            let mut cached_ref = cached_values.borrow_mut();
+            let mut needs_update = false;
+
             for (element_name, js_value) in &elements {
                 if let Some(element_actions) = actions.get(element_name) {
                     if let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
@@ -391,8 +426,12 @@ impl<'a> AnimationBuilder<'a> {
                             previous_time,
                             current_time,
                         );
-                        let mut has_dynamic = false;
-                        let mut styles: Vec<(CssProperty, String)> = Vec::new();
+
+                        // Collect new values and compare with cache
+                        let mut new_styles: Vec<(CssProperty, String)> = Vec::new();
+                        let element_cache = cached_ref
+                            .entry(element_name.clone())
+                            .or_insert_with(HashMap::new);
 
                         for action in element_actions {
                             if let AnimationAction::Style(prop, value) = action {
@@ -400,30 +439,39 @@ impl<'a> AnimationBuilder<'a> {
                                     value,
                                     DynamicValue::Dynamic(_) | DynamicValue::StatefulDynamic(_)
                                 ) {
-                                    has_dynamic = true;
-                                    styles.push((*prop, value.evaluate(&ctx, &mut state)));
+                                    let new_value = value.evaluate(&ctx, &mut state);
+
+                                    // Only update if value changed
+                                    if let Some(old_value) = element_cache.get(prop) {
+                                        if old_value != &new_value {
+                                            new_styles.push((*prop, new_value.clone()));
+                                            element_cache.insert(*prop, new_value);
+                                            needs_update = true;
+                                        }
+                                    } else {
+                                        new_styles.push((*prop, new_value.clone()));
+                                        element_cache.insert(*prop, new_value);
+                                        needs_update = true;
+                                    }
                                 }
                             }
                         }
 
-                        if has_dynamic && !styles.is_empty() {
-                            // Create new StyleBuilder for each frame to avoid move issues
+                        // Batch update DOM if values changed
+                        if needs_update && !new_styles.is_empty() {
                             let mut builder = StyleBuilder::new(&element);
-                            for (prop, value_str) in &styles {
-                                builder.clone().add(*prop, value_str);
+                            for (prop, value_str) in &new_styles {
+                                builder = builder.add(*prop, value_str);
                             }
                             builder.apply();
+                            needs_update = false;
                         }
                     }
                 }
             }
+            drop(cached_ref);
 
-            // Check stop flag after processing current frame to prevent extra frames
-            if *should_stop_clone.borrow() {
-                return;
-            }
-
-            // Request next frame using stored callback reference
+            // Request next frame
             if let Some(callback) = &*f.borrow() {
                 let _ = web_sys::window().and_then(|w| w.request_animation_frame(&callback).ok());
             }
@@ -453,7 +501,7 @@ impl<'a> AnimationBuilder<'a> {
                 if let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
                     let ctx = AnimationContext::new(&element);
                     let mut state = self.initial_state.clone();
-                    let mut builder = StyleBuilder::new(&element);
+                    let builder = StyleBuilder::new(&element);
                     let mut has_style = false;
 
                     for action in &actions {
@@ -501,7 +549,7 @@ impl<'a> AnimationBuilder<'a> {
 // ===== Backward compatibility =====
 
 /// Create a new AnimationBuilder (backward compatibility function)
-pub fn new_animation_builder(elements: &HashMap<String, JsValue>) -> AnimationBuilder {
+pub fn new_animation_builder(elements: &HashMap<String, JsValue>) -> AnimationBuilder<'_> {
     AnimationBuilder::new(elements)
 }
 
@@ -524,6 +572,7 @@ pub fn start_animation_with_global_manager(
 
     let js_value = elements.get(&element_name).expect("Element not found");
     let element = js_value
+        .clone()
         .dyn_into::<HtmlElement>()
         .expect("Failed to convert to HtmlElement");
 
@@ -577,20 +626,15 @@ pub fn start_animation_with_global_manager(
         let animation_name = format!("bg_anim_{:?}", std::time::Instant::now());
         global_animation_manager().register(animation_name.clone(), callback);
 
-        web_sys::console::log_2(
-            &format!(
-                "✅ Animation {} registered with global manager",
-                animation_name
-            )
-            .into(),
-            &animation_name.into(),
+        let log_msg = format!(
+            "✅ Animation {} registered with global manager",
+            animation_name
         );
+        web_sys::console::log_2(&log_msg.into(), &animation_name.clone().into());
 
         Box::new(move || {
-            web_sys::console::log_2(
-                &format!("🛑 Stopping animation: {}", animation_name).into(),
-                &animation_name.into(),
-            );
+            let stop_msg = format!("🛑 Stopping animation: {}", animation_name);
+            web_sys::console::log_2(&stop_msg.into(), &animation_name.clone().into());
             global_animation_manager().unregister(&animation_name);
         })
     }

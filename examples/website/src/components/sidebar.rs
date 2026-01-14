@@ -68,15 +68,13 @@ fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: R
         // The content is plain text, not wrapped in a Link
         let content = rsx!(
             div { class: "hi-sidebar-item-content-inner",
-                "{subcategory.label_en} "
-                span { class: "hi-sidebar-item-zh", "{subcategory.label_zh}" }
+                "{subcategory.label_en}"
             }
         );
         rsx! {
             SidebarItem {
+                // Don't set label parameter to avoid duplication
                 id: subcategory.label_en.to_string(),
-                label: subcategory.label_en.to_string(),
-                secondary_label: Some(subcategory.label_zh.to_string()),
                 default_expanded: true,
                 content: Some(content),
                 items: Some(rsx! {
@@ -95,12 +93,10 @@ fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: R
         rsx! {
             SidebarLeaf {
                 id: subcategory.label_en.to_string(),
-                secondary_label: Some(subcategory.label_zh.to_string()),
                 class: if is_active { "active" } else { "" },
                 dioxus_router::components::Link {
                     to: subcategory.route.clone().unwrap_or(Route::Home {}),
-                    "{subcategory.label_en} "
-                    "{subcategory.label_zh}"
+                    "{subcategory.label_en}"
                 }
             }
         }
@@ -351,6 +347,12 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                 label_en: "Animations",
                 label_zh: "动画",
                 route: Some(Route::SystemAnimations {}),
+                items: &[],
+            },
+            NavSubcategory {
+                label_en: "Animation Demo",
+                label_zh: "动画演示",
+                route: Some(Route::AnimationDemo {}),
                 items: &[],
             },
         ],

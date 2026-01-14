@@ -5,9 +5,14 @@ use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
 use _animation::style::{CssProperty, StyleStringBuilder};
-use _components::{Badge, BadgeVariant, Button, ButtonVariant, layout::{Container, Row, Section}};
+use _components::{
+    layout::{Container, Row, Section},
+    Badge, BadgeVariant, Button, ButtonVariant,
+};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{ ClassesBuilder, FontSize, FontWeight, Margin, MarginBottom, Padding, PaddingLeft, TextColor, };
+use _palette::classes::{
+    ClassesBuilder, FontSize, FontWeight, Margin, MarginBottom, Padding, PaddingLeft, TextColor,
+};
 
 #[allow(non_snake_case)]
 pub fn ComponentsBadge() -> Element {

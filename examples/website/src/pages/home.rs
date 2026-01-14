@@ -6,7 +6,11 @@ use dioxus_router::components::Link;
 
 use crate::{app::Route, components::Layout};
 use _animation::style::{CssProperty, StyleStringBuilder};
-use _components::{Button, ButtonSize, ButtonVariant, basic::{Logo, Logo as HikariLogo}, layout::{Container, Row, Section, Spacer}};
+use _components::{
+    basic::{Logo, Logo as HikariLogo},
+    layout::{Container, Row, Section, Spacer},
+    Button, ButtonSize, ButtonVariant,
+};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextAlign, TextColor};
 
 #[component]
@@ -34,7 +38,7 @@ pub fn Home() -> Element {
                                 .add(TextColor::Secondary)
                                 .add(MarginBottom::Mb6)
                                 .build(),
-                            "光 · Light · Brilliance"
+                            "Hikari"
                         }
 
                         Spacer { size: "md".to_string() }

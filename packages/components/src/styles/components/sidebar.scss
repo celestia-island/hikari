@@ -87,7 +87,16 @@
 
   // Hover state
   &:hover {
-    background: var(--hi-primary-bg, rgba(123, 207, 166, 0.1));
+    // Theme-specific hover effects
+    [data-theme="hikari"] & {
+      background: var(--hi-primary-bg, rgba(123, 207, 166, 0.15));
+      filter: brightness(0.8);
+    }
+
+    [data-theme="tairitsu"] & {
+      background: var(--hi-primary-bg, rgba(123, 207, 166, 0.15));
+      filter: brightness(1.3);
+    }
   }
 }
 
@@ -359,13 +368,23 @@
 
   // Hover state
   &:hover {
-    background: var(--hi-primary-bg, rgba(123, 207, 166, 0.15));
-    color: var(--hi-color-primary);
+    // Theme-specific hover effects
+    [data-theme="hikari"] & {
+      background: var(--hi-primary-bg, rgba(123, 207, 166, 0.15));
+      filter: brightness(0.8);
+      color: var(--hi-color-text-primary);  // 保持正文色
+    }
+
+    [data-theme="tairitsu"] & {
+      background: var(--hi-primary-bg, rgba(123, 207, 166, 0.15));
+      filter: brightness(1.3);
+      color: #FFFFFF;  // 纯白
+    }
   }
 
   // Active state
   &.active {
-    color: var(--hi-color-primary);
+    color: var(--hi-color-text-primary);  // Use text-primary instead of primary
     background: var(--hi-primary-bg, rgba(123, 207, 166, 0.2));
     font-weight: 500;
     border-left: 3px solid var(--hi-color-primary);
@@ -379,7 +398,7 @@
 
 // Add active state styling to item content when parent has data-active
 .hi-sidebar-item[data-active="true"] > .hi-sidebar-item-header > .hi-sidebar-item-content {
-  color: var(--hi-color-primary);
+  color: var(--hi-color-text-primary);  // Use text-primary instead of primary
   background: var(--hi-primary-bg, rgba(123, 207, 166, 0.2));
   font-weight: 500;
   border-left: 3px solid var(--hi-color-primary);

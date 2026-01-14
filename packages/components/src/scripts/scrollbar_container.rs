@@ -23,9 +23,9 @@ use animation::{
     style::{CssProperty, StyleBuilder},
     TimerManager,
 };
-use js_sys::{Array, Date};
+use js_sys::Date;
 use wasm_bindgen::{prelude::*, JsCast};
-use web_sys::{MutationObserver, MutationObserverInit, ResizeObserver, ResizeObserverOptions};
+use web_sys::{MutationObserver, MutationObserverInit, ResizeObserver};
 
 /// Animation state for scrollbar width transition
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

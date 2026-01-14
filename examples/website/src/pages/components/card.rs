@@ -5,9 +5,15 @@ use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
 use _animation::style::{CssProperty, StyleStringBuilder};
-use _components::{Badge, BadgeVariant, Button, ButtonSize, ButtonVariant, Card, layout::{Container, Row, Section}};
+use _components::{
+    layout::{Container, Row, Section},
+    Badge, BadgeVariant, Button, ButtonSize, ButtonVariant, Card,
+};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{ BgColor, BorderRadius, ClassesBuilder, Display, FontSize, FontWeight, Gap, GridCols, MarginBottom, Padding, PaddingLeft, TextColor, };
+use _palette::classes::{
+    BgColor, BorderRadius, ClassesBuilder, Display, FontSize, FontWeight, Gap, GridCols,
+    MarginBottom, Padding, PaddingLeft, TextColor,
+};
 
 #[allow(non_snake_case)]
 pub fn ComponentsCard() -> Element {

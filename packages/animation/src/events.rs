@@ -5,10 +5,10 @@
 
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use wasm_bindgen::{closure::Closure, prelude::*, JsCast, JsValue};
+use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 use web_sys::HtmlElement;
 
-use super::{context::AnimationContext, style::CssProperty};
+use super::context::AnimationContext;
 
 /// Trigger mode for event-driven animations
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -123,7 +123,7 @@ impl<'a> EventDrivenAnimation<'a> {
     {
         let element = self.element.clone();
         let elements = self.elements.clone();
-        let trigger = AnimationTrigger::new(AnimationEventType::MouseEnter);
+        let _trigger = AnimationTrigger::new(AnimationEventType::MouseEnter);
 
         let closure = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
             if let Ok(el) = element.clone().dyn_into::<HtmlElement>() {
@@ -182,7 +182,7 @@ impl<'a> EventDrivenAnimation<'a> {
         let elements = self.elements.clone();
         let last_time = Rc::new(RefCell::new(0_f64));
 
-        let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+        let closure = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
             let now = js_sys::Date::now();
             let mut last = last_time.borrow_mut();
 
@@ -225,7 +225,7 @@ impl<'a> EventDrivenAnimation<'a> {
         };
         let last_time = Rc::new(RefCell::new(0_f64));
 
-        let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+        let closure = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
             let now = js_sys::Date::now();
             let mut last = last_time.borrow_mut();
 

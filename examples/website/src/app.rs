@@ -84,6 +84,10 @@ pub enum Route {
     #[route("/system/animations")]
     SystemAnimations {},
 
+    // Animation Demo
+    #[route("/animation-demo")]
+    AnimationDemo {},
+
     // Demos Routes
     #[route("/demos")]
     DemosOverview {},
@@ -276,6 +280,13 @@ system_page!(SystemCSS);
 system_page!(SystemIcons);
 system_page!(SystemPalette);
 system_page!(SystemAnimations);
+
+#[allow(non_snake_case)]
+fn AnimationDemo() -> Element {
+    rsx! {
+        crate::pages::animation_demo::AnimationDemo {}
+    }
+}
 
 #[allow(non_snake_case)]
 fn DemosOverview() -> Element {

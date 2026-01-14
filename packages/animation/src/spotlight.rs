@@ -3,8 +3,9 @@
 
 #![allow(dead_code)]
 
-use std::{cell::RefCell, rc::Rc, vec::Vec};
-
+use std::cell::RefCell;
+use std::rc::Rc;
+use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::prelude::*;
 use web_sys::{HtmlElement, MouseEvent, Window};
 

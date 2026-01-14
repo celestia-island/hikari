@@ -51,14 +51,14 @@ impl Hikari {
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Light,
-            primary: 粉红,      // 粉色系
+            primary: 石青,      // 青蓝色系
             secondary: 朱红,    // 红色系
             accent: 姜黄,       // 黄色系
             success: 葱倩,      // 绿色系
             warning: 鹅黄,      // 黄色系
             danger: 朱红,       // 红色系
-            background: 素,     // 浅灰 (224, 240, 233)
-            surface: 月白,      // 白色 (214, 236, 240)
+            background: 月白,   // 白色 (214, 236, 240)
+            surface: 素,        // 浅灰 (236, 241, 245)
             border: 素,         // 浅灰
             text_primary: 墨色, // 深色 (80, 97, 109)
             text_secondary: 黛, // 灰蓝色 (74, 66, 102)
@@ -83,16 +83,16 @@ impl Tairitsu {
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Dark,
-            primary: 靛蓝,      // 深蓝色 (6, 82, 121)
-            secondary: 宝蓝,    // 蓝色 (75, 92, 196)
+            primary: 石青,      // 青蓝色系 (123, 207, 166)
+            secondary: 朱红,    // 红色系
             accent: 姜黄,       // 黄色系
             success: 葱倩,      // 绿色系
             warning: 鹅黄,      // 黄色系
             danger: 朱红,       // 红色系
-            background: 黛,     // 深蓝灰 (74, 66, 102)
-            surface: 墨色,      // 灰蓝黑 (80, 97, 109)
+            background: 墨色,   // 纯黑/深蓝黑 (80, 97, 109)
+            surface: 黛,        // 深蓝灰 (74, 66, 102)
             border: 黛,         // 深蓝灰
-            text_primary: 月白, // 白色 (214, 236, 240)
+            text_primary: 月白, // 纯白 (214, 236, 240)
             text_secondary: 素, // 浅灰 (224, 240, 233)
         }
     }

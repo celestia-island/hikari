@@ -7,13 +7,13 @@ use dioxus_router::components::Link;
 use super::sidebar::Sidebar;
 use crate::app::{Route, ThemeContext};
 use _components::{
-    basic::{Background, Button, ButtonVariant, Logo},
+    basic::{Button, ButtonVariant, Logo},
     layout::{Aside, Header, Layout as HikariLayout},
 };
 use _icons::{Icon, MdiIcon};
 use _palette::classes::{
-    AlignItems, BgColor, BorderRadius, ClassesBuilder, Cursor, Display, Duration, Flex, FontSize,
-    FontWeight, Gap, Height, JustifyContent, Margin, Padding, TextColor, Transition, Width,
+    AlignItems, ClassesBuilder, Display, Duration, FontSize, FontWeight, Gap, Padding, TextColor,
+    Transition,
 };
 
 /// Layout component that wraps all pages with modern design

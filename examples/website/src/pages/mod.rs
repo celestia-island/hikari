@@ -15,6 +15,3 @@ pub mod demos;
 
 // Animation demo page
 pub mod animation_demo;
-
-// Re-export home page component
-pub use home::Home;

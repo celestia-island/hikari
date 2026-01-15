@@ -7,6 +7,7 @@
 use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
+use animation::style::StyleBuilder;
 
 /// Background component type wrapper (for implementing StyledComponent)
 pub struct BackgroundComponent;
@@ -138,9 +139,10 @@ fn start_gradient_rotation() -> Box<dyn FnOnce()> {
         let y = center_y + radius_percent * angle.sin();
 
         // Update CSS variables for gradient center
-        let style = html_element.style();
-        let _ = style.set_property("--bg-center-x", &format!("{:.1}%", x));
-        let _ = style.set_property("--bg-center-y", &format!("{:.1}%", y));
+        StyleBuilder::new(&html_element)
+            .add_custom("--bg-center-x", &format!("{:.1}%", x))
+            .add_custom("--bg-center-y", &format!("{:.1}%", y))
+            .apply();
 
         // Request next frame
         if let Some(callback) = &*f.borrow() {

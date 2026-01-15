@@ -2,8 +2,6 @@
 //!
 //! Provides a simple global animation loop for WASM only.
 
-use wasm_bindgen::prelude::*;
-
 /// Global animation manager (no global state - just functions)
 #[cfg(target_arch = "wasm32")]
 pub struct GlobalAnimationManager;

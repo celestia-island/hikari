@@ -10,4 +10,3 @@ pub mod top_nav;
 
 // Re-export commonly used components
 pub use layout::Layout;
-pub use sidebar::Sidebar;

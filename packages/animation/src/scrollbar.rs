@@ -1,5 +1,7 @@
 // animation/src/scrollbar.rs
-// Scrollbar animation system using AnimationBuilder
+// Scrollbar animation system using StyleBuilder
+
+#![allow(unused_imports)]
 
 use std::collections::HashMap;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -53,7 +55,7 @@ pub fn update_scrollbar_width(id: String, width: f64) {
     unsafe {
         if let Some(scrollbars) = &SCROLLBARS {
             if let Some(track) = scrollbars.get(&id) {
-                // Use StyleBuilder to set transition and width
+                // Use StyleBuilder (consistent with AnimationBuilder architecture)
                 StyleBuilder::new(track)
                     .add(
                         CssProperty::Transition,

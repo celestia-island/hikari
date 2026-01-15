@@ -4,7 +4,7 @@
 //! The scrollbar is absolutely positioned and won't affect layout.
 //!
 //! # Features
-//! - Absolute positioned on the right side
+//! - Absolute positioned on right side
 //! - No layout shift (doesn't affect content width)
 //! - Smooth animations (4px → 8px) managed by hikari-animation
 //! - Auto-hide when content doesn't need scrolling
@@ -16,6 +16,8 @@
 //! - hikari-animation's scrollbar module handles width transitions
 //! - requestAnimationFrame drives smooth width transitions (300ms)
 //! - CSS cubic-bezier for smooth easing
+
+#![allow(unused_imports)]
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -280,6 +282,7 @@ fn has_class(element: &web_sys::Element, class_name: &str) -> bool {
 }
 
 /// Helper: Check if element matches a selector
+#[allow(dead_code)]
 fn matches_selector(element: &web_sys::Element, selector: &str) -> bool {
     element.matches(selector).unwrap_or(false)
 }

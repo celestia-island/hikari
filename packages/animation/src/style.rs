@@ -248,6 +248,11 @@ impl CssProperty {
             CssProperty::BorderWidth => "border-width",
             CssProperty::BorderStyle => "border-style",
             CssProperty::BorderColor => "border-color",
+            CssProperty::Outline => "outline",
+            CssProperty::OutlineOffset => "outline-offset",
+            CssProperty::OutlineWidth => "outline-width",
+            CssProperty::OutlineStyle => "outline-style",
+            CssProperty::OutlineColor => "outline-color",
 
             // Flexbox
             CssProperty::Flex => "flex",
@@ -305,6 +310,9 @@ impl CssProperty {
             CssProperty::WordBreak => "word-break",
             CssProperty::WordWrap => "word-wrap",
 
+            // Content & Lists
+            CssProperty::Content => "content",
+
             // Color & Background
             CssProperty::Color => "color",
             CssProperty::Background => "background",
@@ -360,12 +368,6 @@ impl CssProperty {
             CssProperty::MaskOrigin => "mask-origin",
 
             // Other
-            CssProperty::Content => "content",
-            CssProperty::Outline => "outline",
-            CssProperty::OutlineOffset => "outline-offset",
-            CssProperty::OutlineWidth => "outline-width",
-            CssProperty::OutlineStyle => "outline-style",
-            CssProperty::OutlineColor => "outline-color",
             CssProperty::ListStyle => "list-style",
             CssProperty::ListStyleType => "list-style-type",
             CssProperty::ListStylePosition => "list-style-position",
@@ -424,6 +426,24 @@ pub fn set_styles(element: &HtmlElement, properties: &[(CssProperty, &str)]) {
     }
 }
 
+/// Property type for StyleBuilder
+///
+/// Wraps either a known CSS property or a custom property name.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Property {
+    Known(CssProperty),
+    Custom(String),
+}
+
+impl Property {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Property::Known(prop) => prop.as_str(),
+            Property::Custom(s) => s,
+        }
+    }
+}
+
 /// Builder for applying multiple CSS properties atomically
 ///
 /// Provides a fluent interface for setting multiple styles at once.
@@ -439,7 +459,7 @@ pub fn set_styles(element: &HtmlElement, properties: &[(CssProperty, &str)]) {
 /// ```
 pub struct StyleBuilder<'a> {
     element: &'a HtmlElement,
-    properties: Vec<(CssProperty, String)>,
+    properties: Vec<(Property, String)>,
 }
 
 impl<'a> Clone for StyleBuilder<'a> {
@@ -462,20 +482,30 @@ impl<'a> StyleBuilder<'a> {
 
     /// Add a CSS property to be set
     pub fn add(mut self, property: CssProperty, value: &str) -> Self {
-        self.properties.push((property, value.to_string()));
+        self.properties
+            .push((Property::Known(property), value.to_string()));
+        self
+    }
+
+    /// Add a custom CSS property (e.g., CSS variables like --my-var)
+    pub fn add_custom(mut self, property: &str, value: &str) -> Self {
+        self.properties
+            .push((Property::Custom(property.to_string()), value.to_string()));
         self
     }
 
     /// Add a CSS property with pixel value
     pub fn add_px(mut self, property: CssProperty, pixels: u32) -> Self {
-        self.properties.push((property, format!("{}px", pixels)));
+        self.properties
+            .push((Property::Known(property), format!("{}px", pixels)));
         self
     }
 
     /// Add multiple CSS properties at once
     pub fn add_all(mut self, properties: &[(CssProperty, &str)]) -> Self {
         for &(property, value) in properties {
-            self.properties.push((property, value.to_string()));
+            self.properties
+                .push((Property::Known(property), value.to_string()));
         }
         self
     }

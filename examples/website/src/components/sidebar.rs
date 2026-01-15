@@ -2,7 +2,6 @@
 // Website-specific sidebar using hikari-components Sidebar
 
 use dioxus::prelude::*;
-use dioxus_router::components::Link;
 
 use crate::app::Route;
 use _components::{Sidebar as HikariSidebar, SidebarItem, SidebarLeaf, SidebarSection};

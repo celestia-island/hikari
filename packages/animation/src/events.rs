@@ -9,6 +9,7 @@ use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 use web_sys::HtmlElement;
 
 use super::context::AnimationContext;
+use super::style::{CssProperty, StyleBuilder};
 
 /// Trigger mode for event-driven animations
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -132,7 +133,9 @@ impl<'a> EventDrivenAnimation<'a> {
 
                 for (_name, js_val) in elements.iter() {
                     if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
-                        let _ = el.style().set_property("transform", &value);
+                        StyleBuilder::new(&el)
+                            .add(CssProperty::Transform, &value)
+                            .apply();
                     }
                 }
             }
@@ -160,7 +163,9 @@ impl<'a> EventDrivenAnimation<'a> {
 
                 for (_name, js_val) in elements.iter() {
                     if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
-                        let _ = el.style().set_property("transform", &value);
+                        StyleBuilder::new(&el)
+                            .add(CssProperty::Transform, &value)
+                            .apply();
                     }
                 }
             }
@@ -198,8 +203,10 @@ impl<'a> EventDrivenAnimation<'a> {
 
                 for (_name, js_val) in elements.iter() {
                     if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
-                        let _ = el.style().set_property("transform", &value);
-                        let _ = el.style().set_property("transition", "none");
+                        StyleBuilder::new(&el)
+                            .add(CssProperty::Transform, &value)
+                            .add(CssProperty::Transition, "none")
+                            .apply();
                     }
                 }
             }
@@ -241,8 +248,10 @@ impl<'a> EventDrivenAnimation<'a> {
 
                 for (_name, js_val) in elements.iter() {
                     if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
-                        let _ = el.style().set_property("transform", &value);
-                        let _ = el.style().set_property("transition", "none");
+                        StyleBuilder::new(&el)
+                            .add(CssProperty::Transform, &value)
+                            .add(CssProperty::Transition, "none")
+                            .apply();
                     }
                 }
             }
@@ -271,7 +280,9 @@ impl<'a> EventDrivenAnimation<'a> {
 
                         for (_name, js_val) in elements.iter() {
                             if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
-                                let _ = el.style().set_property("transform", &value);
+                                StyleBuilder::new(&el)
+                                    .add(CssProperty::Transform, &value)
+                                    .apply();
                             }
                         }
                     }
@@ -294,7 +305,9 @@ impl<'a> EventDrivenAnimation<'a> {
 
                         for (_name, js_val) in elements.iter() {
                             if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
-                                let _ = el.style().set_property("transform", &value);
+                                StyleBuilder::new(&el)
+                                    .add(CssProperty::Transform, &value)
+                                    .apply();
                             }
                         }
                     }

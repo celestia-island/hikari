@@ -5,13 +5,12 @@ use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
 use crate::{app::Route, components::Layout};
-use _animation::style::{CssProperty, StyleStringBuilder};
 use _components::{
-    basic::{Logo, Logo as HikariLogo},
+    basic::Logo as HikariLogo,
     layout::{Container, Row, Section, Spacer},
     Button, ButtonSize, ButtonVariant,
 };
-use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextAlign, TextColor};
+use _palette::classes::{ClassesBuilder, FontSize, MarginBottom, TextAlign, TextColor};
 
 #[component]
 pub fn Home() -> Element {

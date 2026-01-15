@@ -14,7 +14,7 @@ use console_error_panic_hook::set_once;
 
 // Import glow initialization
 #[cfg(target_arch = "wasm32")]
-use _animation::glow::init_glow;
+use _animation::glow::auto_init_glow;
 
 // Import scrollbar initialization
 #[cfg(target_arch = "wasm32")]
@@ -55,7 +55,7 @@ pub fn hydrate() {
         init_all();
 
         // Initialize glow effects
-        init_glow();
+        auto_init_glow();
 
         web_sys::console::log_1(&"[Website] UI effects initialized".into());
     }

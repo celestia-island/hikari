@@ -12,15 +12,8 @@ use dioxus::prelude::*;
 #[cfg(target_arch = "wasm32")]
 use console_error_panic_hook::set_once;
 
-// Import glow initialization
-#[cfg(target_arch = "wasm32")]
-use _animation::glow::auto_init_glow;
-
-// Import scrollbar initialization
-#[cfg(target_arch = "wasm32")]
-use _components::scripts::scrollbar_container::init_all;
-
 // Re-export the app
+#[cfg(target_arch = "wasm32")]
 pub use app::App;
 
 mod app;
@@ -42,21 +35,5 @@ pub fn init_panic_hook() {
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn hydrate() {
-    // Use dioxus::launch first to render the app
     launch(App);
-
-    // Initialize UI effects immediately after launch
-    // Dioxus launch() is synchronous for initial render, so DOM should be ready
-    #[cfg(target_arch = "wasm32")]
-    {
-        web_sys::console::log_1(&"[Website] Initializing UI effects...".into());
-
-        // Initialize scrollbars (sets up MutationObserver for future updates)
-        init_all();
-
-        // Initialize glow effects
-        auto_init_glow();
-
-        web_sys::console::log_1(&"[Website] UI effects initialized".into());
-    }
 }

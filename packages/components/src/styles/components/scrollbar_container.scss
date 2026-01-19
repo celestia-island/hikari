@@ -30,12 +30,12 @@
     // Hide native scrollbar IMMEDIATELY (before JS runs)
     // This prevents the flash of native scrollbar on page load
     &::-webkit-scrollbar {
-        display: none !important;
-        width: 0 !important;
-        height: 0 !important;
+        display: none;
+        width: 0;
+        height: 0;
     }
-    -ms-overflow-style: none !important;  // IE/Edge
-    scrollbar-width: none !important;  // Firefox
+    -ms-overflow-style: none;  // IE/Edge
+    scrollbar-width: none;  // Firefox
 }
 
 // ============================================================================
@@ -120,7 +120,7 @@
     // Disable top transition to prevent drag lag
     transition: background 300ms cubic-bezier(0.25, 0.1, 0.25, 1),
                 box-shadow 300ms cubic-bezier(0.25, 0.1, 0.25, 1),
-                top 0s linear !important;
+                top 0s linear;
 }
 
 // Hover state: thumb glows

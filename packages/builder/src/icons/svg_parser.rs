@@ -116,6 +116,7 @@ pub fn parse_svg(svg: &str) -> Result<SvgIcon> {
     };
 
     let mut current_attrs: HashMap<String, String> = HashMap::new();
+    #[allow(unused_assignments)]
     let mut current_tag = String::new();
 
     loop {

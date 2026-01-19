@@ -587,10 +587,28 @@ impl<'a> StyleBuilder<'a> {
     }
 }
 
+/// Style entry for storing CSS properties
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+enum StyleEntry {
+    Known(CssProperty, String),
+    Custom(String, String), // (property_name, value)
+}
+
+impl StyleEntry {
+    /// Get the CSS style string for this entry
+    fn as_style_string(&self) -> &str {
+        match self {
+            StyleEntry::Known(_, s) => s,
+            StyleEntry::Custom(_, s) => s,
+        }
+    }
+}
+
 /// String-based style builder for Dioxus components
 ///
 /// This version doesn't require an HtmlElement and is used for
-/// generating style strings for the `style` attribute.
+/// generating style strings for `style` attribute.
 ///
 /// # Example
 ///
@@ -601,10 +619,11 @@ impl<'a> StyleBuilder<'a> {
 /// let style = StyleStringBuilder::new()
 ///     .add(CssProperty::Width, "100px")
 ///     .add_px(CssProperty::Height, 50)
+///     .add_custom("--glow-x", "50px")
 ///     .build_clean();
-/// // Returns: "width:100px;height:50px"
+/// // Returns: "width:100px;height:50px;--glow-x:50px"
 /// ```
-pub struct StyleStringBuilder(pub Vec<(CssProperty, String)>);
+pub struct StyleStringBuilder(Vec<StyleEntry>);
 
 impl StyleStringBuilder {
     /// Create a new style string builder
@@ -614,46 +633,71 @@ impl StyleStringBuilder {
 
     /// Add a CSS property
     pub fn add(mut self, property: CssProperty, value: &str) -> Self {
-        self.0
-            .push((property, format!("{}:{}", property.as_str(), value)));
+        self.0.push(StyleEntry::Known(
+            property,
+            format!("{}:{}", property.as_str(), value),
+        ));
         self
     }
 
     /// Add a CSS property with pixel value
     pub fn add_px(mut self, property: CssProperty, pixels: u32) -> Self {
-        self.0
-            .push((property, format!("{}:{}px", property.as_str(), pixels)));
+        self.0.push(StyleEntry::Known(
+            property,
+            format!("{}:{}px", property.as_str(), pixels),
+        ));
+        self
+    }
+
+    /// Add a custom CSS property (e.g., CSS variables like --my-var)
+    ///
+    /// # Arguments
+    ///
+    /// * `property` - Custom property name (e.g., "--glow-x")
+    /// * `value` - Property value
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let style = StyleStringBuilder::new()
+    ///     .add_custom("--glow-x", "100px")
+    ///     .add_custom("--glow-y", "200px")
+    ///     .build_clean();
+    /// // Returns: "--glow-x:100px;--glow-y:200px"
+    /// ```
+    pub fn add_custom(mut self, property: &str, value: &str) -> Self {
+        self.0.push(StyleEntry::Custom(
+            property.to_string(),
+            format!("{}:{}", property, value),
+        ));
         self
     }
 
     /// Add a raw style string
     pub fn add_raw(mut self, style: &str) -> Self {
-        self.0.push((CssProperty::Display, format!("{};", style)));
+        self.0.push(StyleEntry::Known(
+            CssProperty::Display,
+            format!("{};", style),
+        ));
         self
     }
 
-    /// Build the final style string (with trailing semicolons)
+    /// Build final style string (with trailing semicolons)
     pub fn build(self) -> String {
         self.0
             .iter()
-            .map(|(_, s)| s.as_str())
+            .map(|entry| entry.as_style_string())
             .collect::<Vec<_>>()
             .join(";")
     }
 
-    /// Build the final style string without trailing semicolons
+    /// Build final style string without trailing semicolons
     pub fn build_clean(self) -> String {
         self.0
             .iter()
-            .map(|(_, s)| s.as_str())
+            .map(|entry| entry.as_style_string())
             .collect::<Vec<_>>()
             .join(";")
-    }
-}
-
-impl Default for StyleStringBuilder {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -687,7 +731,7 @@ pub fn remove_style(element: &HtmlElement, property: CssProperty) {
 ///
 /// # Returns
 ///
-/// The computed value of the property, or an empty string if it fails
+/// The computed value of property, or an empty string if it fails
 ///
 /// # Example
 ///
@@ -701,6 +745,120 @@ pub fn get_style(element: &HtmlElement, property: CssProperty) -> String {
         .style()
         .get_property_value(property.as_str())
         .unwrap_or_default()
+}
+
+/// Builder for applying multiple HTML attributes atomically
+///
+/// Provides a fluent interface for setting multiple attributes at once.
+/// This is a type-safe alternative to direct DOM manipulation.
+///
+/// # Example
+///
+/// ```ignore
+/// AttributeBuilder::new(&element)
+///     .add("data-id", "123")
+///     .add("aria-label", "Close button")
+///     .add_bool("disabled", true)
+///     .apply();
+/// ```
+pub struct AttributeBuilder<'a> {
+    element: &'a HtmlElement,
+    attributes: Vec<(String, AttributeValue)>,
+}
+
+/// Attribute value types
+#[derive(Debug, Clone)]
+enum AttributeValue {
+    String(String),
+    Bool(bool),
+}
+
+impl<'a> Clone for AttributeBuilder<'a> {
+    fn clone(&self) -> Self {
+        Self {
+            element: self.element,
+            attributes: self.attributes.clone(),
+        }
+    }
+}
+
+impl<'a> AttributeBuilder<'a> {
+    /// Create a new AttributeBuilder for given element
+    pub fn new(element: &'a HtmlElement) -> Self {
+        Self {
+            element,
+            attributes: Vec::new(),
+        }
+    }
+
+    /// Add an HTML attribute
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// AttributeBuilder::new(&element)
+    ///     .add("data-id", "123")
+    ///     .add("aria-label", "Close");
+    /// ```
+    pub fn add(mut self, name: &str, value: &str) -> Self {
+        self.attributes
+            .push((name.to_string(), AttributeValue::String(value.to_string())));
+        self
+    }
+
+    /// Add a boolean attribute (true adds it, false removes it)
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// AttributeBuilder::new(&element)
+    ///     .add_bool("disabled", true)
+    ///     .add_bool("checked", false);
+    /// ```
+    pub fn add_bool(mut self, name: &str, value: bool) -> Self {
+        self.attributes
+            .push((name.to_string(), AttributeValue::Bool(value)));
+        self
+    }
+
+    /// Add a data-* attribute (e.g., data-custom-scrollbar)
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// AttributeBuilder::new(&element)
+    ///     .add_data("custom-scrollbar", "wrapper")
+    ///     .add_data("id", "123");
+    /// ```
+    pub fn add_data(self, name: &str, value: &str) -> Self {
+        self.add(&format!("data-{}", name), value)
+    }
+
+    /// Apply all accumulated attributes to element
+    ///
+    /// **Optimized**: Batches all attribute updates in a single pass.
+    pub fn apply(self) {
+        if self.attributes.is_empty() {
+            return;
+        }
+
+        let elem = self.element.clone().dyn_into::<web_sys::Element>().unwrap();
+
+        for (name, value) in self.attributes {
+            match value {
+                AttributeValue::String(v) => {
+                    let _ = elem.set_attribute(&name, &v);
+                }
+                AttributeValue::Bool(v) => {
+                    if v {
+                        let _ = elem.set_attribute(&name, "");
+                    } else {
+                        let _ = elem.remove_attribute(&name);
+                    }
+                }
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -746,5 +904,40 @@ mod tests {
             // Property names should not be empty
             assert!(!name.is_empty());
         }
+    }
+
+    #[test]
+    fn test_style_string_builder_basic() {
+        let style = StyleStringBuilder::new()
+            .add(CssProperty::Width, "100px")
+            .add_px(CssProperty::Height, 50)
+            .build_clean();
+
+        assert!(style.contains("width:100px"));
+        assert!(style.contains("height:50px"));
+    }
+
+    #[test]
+    fn test_style_string_builder_add_custom() {
+        let style = StyleStringBuilder::new()
+            .add_custom("--glow-x", "100px")
+            .add_custom("--glow-y", "200px")
+            .build_clean();
+
+        assert!(style.contains("--glow-x:100px"));
+        assert!(style.contains("--glow-y:200px"));
+    }
+
+    #[test]
+    fn test_style_string_builder_mixed() {
+        let style = StyleStringBuilder::new()
+            .add(CssProperty::Position, "relative")
+            .add_custom("--glow-x", "50px")
+            .add_px(CssProperty::Height, 100)
+            .build_clean();
+
+        assert!(style.contains("position:relative"));
+        assert!(style.contains("--glow-x:50px"));
+        assert!(style.contains("height:100px"));
     }
 }

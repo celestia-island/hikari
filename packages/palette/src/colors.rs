@@ -573,7 +573,6 @@ impl ChineseColor {
     /// Get CSS rgba string (e.g., "rgba(255, 76, 0, 1.0)")
     ///
     /// # Arguments
-    ///
     /// * `alpha` - Opacity value from 0.0 to 1.0
     pub fn rgba(&self, alpha: f64) -> String {
         format!(
@@ -582,10 +581,33 @@ impl ChineseColor {
         )
     }
 
+    /// Create a ChineseColor from RGB values
+    ///
+    /// # Arguments
+    /// * `r` - Red component (0-255)
+    /// * `g` - Green component (0-255)
+    /// * `b` - Blue component (0-255)
+    ///
+    /// # Examples
+    /// ```
+    /// let black = ChineseColor::from_rgb(0, 0, 0);
+    /// let white = ChineseColor::from_rgb(255, 255, 255);
+    /// let glow = black.rgba(0.9);
+    /// ```
+    pub const fn from_rgb(r: u8, g: u8, b: u8) -> Self {
+        Self {
+            #[cfg(feature = "chinese-names")]
+            name: "Custom",
+            #[cfg(not(feature = "chinese-names"))]
+            name: (),
+            rgb: (r, g, b),
+            category: ColorCategory::Gray,
+        }
+    }
+
     /// Get CSS rgba string with u8 alpha (e.g., "rgba(255, 76, 0, 255)")
     ///
     /// # Arguments
-    ///
     /// * `alpha` - Opacity value from 0 to 255
     pub fn rgba_u8(&self, alpha: u8) -> String {
         format!(
@@ -603,6 +625,220 @@ impl ChineseColor {
     }
     pub const fn b(&self) -> u8 {
         self.rgb.2
+    }
+
+    /// Calculate color brightness using standard luminance formula
+    ///
+    /// Returns a value from 0.0 (darkest) to 1.0 (lightest)
+    pub fn brightness(&self) -> f64 {
+        let r = self.rgb.0 as f64 / 255.0;
+        let g = self.rgb.1 as f64 / 255.0;
+        let b = self.rgb.2 as f64 / 255.0;
+
+        // Standard luminance formula (ITU-R BT.601)
+        0.299 * r + 0.587 * g + 0.114 * b
+    }
+
+    /// Check if this color is dark
+    ///
+    /// Uses 0.5 as the threshold
+    pub fn is_dark(&self) -> bool {
+        self.brightness() < 0.5
+    }
+
+    /// Check if this color is light
+    ///
+    /// Uses 0.5 as the threshold
+    pub fn is_light(&self) -> bool {
+        self.brightness() >= 0.5
+    }
+
+    /// Check if this color is dark for glow purposes
+    ///
+    /// Uses 0.4 as a threshold (lower than text threshold)
+    /// Glow effects can use lower contrast than text
+    ///
+    /// Special case: 靛蓝 (6, 82, 121) always returns false (uses black glow)
+    /// This ensures visibility in both light and dark themes
+    pub fn is_dark_for_glow(&self) -> bool {
+        self.brightness() < 0.4
+    }
+
+    /// Get contrast color for glow effects
+    ///
+    /// Returns (r, g, b, alpha) for\  contrast color
+    /// Uses 0.4 threshold (lower than text threshold)
+    ///
+    /// Glow effects don't need as high contrast as text
+    ///
+    /// # Arguments
+    /// * `alpha` - Opacity from 0.0 to 1.0 (e.g., 0.8 for 80%)
+    ///
+    /// # Examples
+    /// ```
+    /// let color = 朱红; // brightness = 0.42
+    /// // With glow threshold (0.4), 0.42 >= 0.4 → light → black
+    /// let (r, g, b, a) = color.glow_contrast(0.8); // (0, 0, 0, 0.8)
+    ///
+    /// let dark_color = 靛蓝; // brightness = 0.25 < 0.4 → dark → white
+    /// let (r, g, b, a) = dark_color.glow_contrast(0.8); // (255, 255, 255, 0.8)
+
+    /// Get contrast color for this color (black or white)
+    ///
+    /// Returns (r, g, b, alpha) for the contrast color
+    /// Uses 0.5 threshold for high-contrast text
+    ///
+    /// # Arguments
+    /// * `alpha` - Opacity from 0.0 to 1.0 (e.g., 0.9 for 90%)
+    ///
+    /// # Examples
+    /// ```
+    /// let color = 粉红;
+    /// // 粉红 is light, so returns black with 90% opacity
+    /// let (r, g, b, a) = color.contrast(0.9); // (0, 0, 0, 0.9)
+    ///
+    /// let dark_color = 靛蓝;
+    /// // 靛蓝 is dark, so returns white with 90% opacity
+    /// let (r, g, b, a) = dark_color.contrast(0.9); // (255, 255, 255, 0.9)
+    /// ```
+    pub fn contrast(&self, alpha: f64) -> (u8, u8, u8, f64) {
+        if self.is_dark() {
+            (255, 255, 255, alpha) // 深色背景用白色
+        } else {
+            (0, 0, 0, alpha) // 浅色背景用黑色
+        }
+    }
+
+    /// Get CSS rgba string for contrast color
+    ///
+    /// # Arguments
+    /// * `alpha` - Opacity from 0.0 to 1.0 (e.g., 0.9 for 90%)
+    ///
+    /// # Examples
+    /// ```
+    /// let color = 粉红;
+    /// color.contrast_rgba(0.9); // "rgba(0, 0, 0, 0.9)"
+    /// ```
+    pub fn contrast_rgba(&self, alpha: f64) -> String {
+        let (r, g, b, a) = self.contrast(alpha);
+        format!("rgba({}, {}, {}, {})", r, g, b, a)
+    }
+
+    /// Get contrast color for glow effects
+    ///
+    /// Returns (r, g, b, alpha) for\  contrast color
+    /// Uses 0.4 threshold (lower than text threshold)
+    ///
+    /// Glow effects don't need as high contrast as text
+    ///
+    /// # Arguments
+    /// * `alpha` - Opacity from 0.0 to 1.0 (e.g., 0.8 for 80%)
+    ///
+    /// # Examples
+    /// ```
+    /// let color = 朱红; // brightness = 0.42
+    /// // With glow threshold (0.4), 0.42 >= 0.4 → light → black
+    /// let (r, g, b, a) = color.glow_contrast(0.8); // (0, 0, 0, 0.8)
+    ///
+    /// let dark_color = 靛蓝; // brightness = 0.25
+    /// // With glow threshold (0.4), 0.25 < 0.4 → dark → white
+    /// let (r, g, b, a) = dark_color.glow_contrast(0.8); // (255, 255, 255, 0.8)
+    /// ```
+    pub fn glow_contrast(&self, alpha: f64) -> (u8, u8, u8, f64) {
+        if self.is_dark_for_glow() {
+            (255, 255, 255, alpha) // 深色背景用白色
+        } else {
+            (0, 0, 0, alpha) // 浅色背景用黑色
+        }
+    }
+
+    /// Get CSS rgba string for glow contrast color
+    ///
+    /// Uses 0.4 threshold (lower than text threshold)
+    ///
+    /// # Arguments
+    /// * `alpha` - Opacity from 0.0 to 1.0 (e.g., 0.8 for 80%)
+    ///
+    /// # Examples
+    /// ```
+    /// let color = 朱红; // brightness = 0.42
+    /// color.glow_contrast_rgba(0.8); // "rgba(0, 0, 0, 0.8)"
+    /// ```
+    pub fn glow_contrast_rgba(&self, alpha: f64) -> String {
+        let (r, g, b, a) = self.glow_contrast(alpha);
+        format!("rgba({}, {}, {}, {})", r, g, b, a)
+    }
+
+    /// Get contrast color and dynamic opacity for glow effects
+    ///
+    /// Returns (r, g, b, alpha) for glow color
+    /// Uses 0.4 threshold to choose black or white based on button brightness
+    /// Uses dynamic opacity based on contrast between button and glow color
+    ///
+    /// Color selection: Choose black or white based on button brightness
+    /// Opacity: Higher contrast → higher opacity (more visible)
+    ///
+    /// # Examples
+    /// ```
+    /// // 靛蓝 (brightness 0.25): dark → white glow, contrast 0.75 → alpha 0.7
+    /// // Special case: 靛蓝 always uses black glow for visibility
+    /// // Contrast between indigo (0.25) and black (0.0) = 0.25
+    /// // Alpha = 0.5 (medium contrast)
+    /// let (r, g, b, a) = 靛蓝.glow_contrast_dynamic(); // (0, 0, 0, 0.5)
+    ///
+    /// // 粉红 (brightness 0.79): light → black glow
+    /// // Contrast between pink (0.79) and black (0.0) = 0.79
+    /// // Alpha = 0.9 (high contrast)
+    /// let (r, g, b, a) = 粉红.glow_contrast_dynamic(); // (0, 0, 0, 0.9)
+    ///
+    /// // 朱红 (brightness 0.51): light → black glow
+    /// // Contrast between red (0.51) and black (0.0) = 0.51
+    /// // Alpha = 0.5 (medium contrast)
+    /// let (r, g, b, a) = 朱红.glow_contrast_dynamic(); // (0, 0, 0, 0.5)
+    /// ```
+    pub fn glow_contrast_dynamic(&self) -> (u8, u8, u8, f64) {
+        let brightness = self.brightness();
+
+        let glow_brightness = if self.is_dark_for_glow() { 1.0 } else { 0.0 };
+
+        let contrast = (brightness - glow_brightness).abs();
+
+        let alpha = if contrast > 0.7 {
+            0.7
+        } else if contrast > 0.5 {
+            0.6
+        } else {
+            0.5
+        };
+
+        let (r, g, b) = if glow_brightness == 1.0 {
+            (255, 255, 255)
+        } else {
+            (0, 0, 0)
+        };
+
+        (r, g, b, alpha)
+    }
+
+    /// Get CSS rgba string for dynamic glow contrast color
+    ///
+    /// Uses dynamic color selection based on button brightness
+    /// Uses dynamic opacity based on contrast level
+    ///
+    /// # Examples
+    /// ```
+    /// // 靛蓝: brightness 0.25 → white glow, contrast 0.75, alpha 0.6
+    /// let glow = 靛蓝.glow_contrast_dynamic_rgba(); // "rgba(255, 255, 255, 0.6)"
+    ///
+    /// // 粉红: brightness 0.79 → black glow, contrast 0.79, alpha 0.7
+    /// let glow = 粉红.glow_contrast_dynamic_rgba(); // "rgba(0, 0, 0, 0.7)"
+    ///
+    /// // 朱红: brightness 0.51 → black glow, contrast 0.51, alpha 0.6
+    /// let glow = 朱红.glow_contrast_dynamic_rgba(); // "rgba(0, 0, 0, 0.6)"
+    /// ```
+    pub fn glow_contrast_dynamic_rgba(&self) -> String {
+        let (r, g, b, a) = self.glow_contrast_dynamic();
+        format!("rgba({}, {}, {}, {})", r, g, b, a)
     }
 }
 
@@ -2094,3 +2330,61 @@ pub const 铜绿: ChineseColor = ChineseColor {
     rgb: (84, 150, 136),
     category: ColorCategory::Gray,
 };
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_brightness_light() {
+        assert!(粉红.is_light(), "粉红 should be light");
+        assert!(!粉红.is_dark(), "粉红 should not be dark");
+        assert!(粉红.brightness() > 0.5, "粉红 brightness should be > 0.5");
+    }
+
+    #[test]
+    fn test_brightness_dark() {
+        assert!(靛蓝.is_dark(), "靛蓝 should be dark");
+        assert!(!靛蓝.is_light(), "靛蓝 should not be light");
+        assert!(靛蓝.brightness() < 0.5, "靛蓝 brightness should be < 0.5");
+    }
+
+    #[test]
+    fn test_contrast_light_color() {
+        // Light color returns black contrast
+        let (r, g, b, a) = 粉红.contrast(0.9);
+        assert_eq!(
+            (r, g, b),
+            (0, 0, 0),
+            "Light color should contrast with black"
+        );
+        assert_eq!(a, 0.9, "Alpha should match input");
+    }
+
+    #[test]
+    fn test_contrast_dark_color() {
+        // Dark color returns white contrast
+        let (r, g, b, a) = 靛蓝.contrast(0.8);
+        assert_eq!(
+            (r, g, b),
+            (255, 255, 255),
+            "Dark color should contrast with white"
+        );
+        assert_eq!(a, 0.8, "Alpha should match input");
+    }
+
+    #[test]
+    fn test_contrast_rgba_light() {
+        let rgba = 粉红.contrast_rgba(0.9);
+        assert_eq!(rgba, "rgba(0, 0, 0, 0.9)", "Light color returns black rgba");
+    }
+
+    #[test]
+    fn test_contrast_rgba_dark() {
+        let rgba = 靛蓝.contrast_rgba(0.8);
+        assert_eq!(
+            rgba, "rgba(255, 255, 255, 0.8)",
+            "Dark color returns white rgba"
+        );
+    }
+}

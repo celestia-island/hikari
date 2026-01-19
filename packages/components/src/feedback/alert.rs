@@ -4,6 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
+use palette::classes::{AlertClass, ClassesBuilder, UtilityClass};
 
 /// Alert 组件的类型包装器（用于实现 StyledComponent）
 pub struct AlertComponent;
@@ -62,16 +63,22 @@ pub struct AlertProps {
 #[component]
 pub fn Alert(props: AlertProps) -> Element {
     let variant_class = match props.variant {
-        AlertVariant::Info => "hi-alert-info",
-        AlertVariant::Success => "hi-alert-success",
-        AlertVariant::Warning => "hi-alert-warning",
-        AlertVariant::Error => "hi-alert-error",
+        AlertVariant::Info => AlertClass::AlertInfo,
+        AlertVariant::Success => AlertClass::AlertSuccess,
+        AlertVariant::Warning => AlertClass::AlertWarning,
+        AlertVariant::Error => AlertClass::AlertError,
     };
+
+    let alert_classes = ClassesBuilder::new()
+        .add(AlertClass::Alert)
+        .add(variant_class)
+        .add_raw(&props.class)
+        .build();
 
     let default_icon = match props.variant {
         AlertVariant::Info => Some(rsx! {
             svg {
-                class: "hi-alert-icon",
+                class: "{AlertClass::AlertIcon.as_class()}",
                 view_box: "0 0 24 24",
                 fill: "none",
                 stroke: "currentColor",
@@ -83,7 +90,7 @@ pub fn Alert(props: AlertProps) -> Element {
         }),
         AlertVariant::Success => Some(rsx! {
             svg {
-                class: "hi-alert-icon",
+                class: "{AlertClass::AlertIcon.as_class()}",
                 view_box: "0 0 24 24",
                 fill: "none",
                 stroke: "currentColor",
@@ -94,7 +101,7 @@ pub fn Alert(props: AlertProps) -> Element {
         }),
         AlertVariant::Warning => Some(rsx! {
             svg {
-                class: "hi-alert-icon",
+                class: "{AlertClass::AlertIcon.as_class()}",
                 view_box: "0 0 24 24",
                 fill: "none",
                 stroke: "currentColor",
@@ -106,7 +113,7 @@ pub fn Alert(props: AlertProps) -> Element {
         }),
         AlertVariant::Error => Some(rsx! {
             svg {
-                class: "hi-alert-icon",
+                class: "{AlertClass::AlertIcon.as_class()}",
                 view_box: "0 0 24 24",
                 fill: "none",
                 stroke: "currentColor",
@@ -122,28 +129,28 @@ pub fn Alert(props: AlertProps) -> Element {
 
     rsx! {
         div {
-            class: format!("hi-alert {variant_class} {}", props.class),
+            class: "{alert_classes}",
 
             if let Some(icon_element) = icon {
-                div { class: "hi-alert-icon-wrapper",
+                div { class: "{AlertClass::AlertIconWrapper.as_class()}",
                     { icon_element }
                 }
             }
 
-            div { class: "hi-alert-content",
+            div { class: "{AlertClass::AlertContent.as_class()}",
 
                 if let Some(title) = props.title {
-                    div { class: "hi-alert-title", "{title}" }
+                    div { class: "{AlertClass::AlertTitle.as_class()}", "{title}" }
                 }
 
                 if let Some(description) = props.description {
-                    div { class: "hi-alert-description", "{description}" }
+                    div { class: "{AlertClass::AlertDescription.as_class()}", "{description}" }
                 }
             }
 
             if props.closable {
                 button {
-                    class: "hi-alert-close",
+                    class: "{AlertClass::AlertClose.as_class()}",
                     onclick: move |e| {
                         if let Some(handler) = props.on_close.as_ref() {
                             handler.call(e);

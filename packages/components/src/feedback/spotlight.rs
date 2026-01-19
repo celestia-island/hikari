@@ -2,6 +2,7 @@
 // Spotlight container component - wraps any component to add mouse-following glow effect
 
 use dioxus::prelude::*;
+use palette::classes::{ClassesBuilder, SpotlightClass};
 
 /// Spotlight color mode
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -59,13 +60,19 @@ pub struct SpotlightProps {
 #[component]
 pub fn Spotlight(props: SpotlightProps) -> Element {
     let color_class = match props.color {
-        SpotlightColor::Auto => "hi-spotlight-auto",
-        SpotlightColor::Theme => "hi-spotlight-theme",
+        SpotlightColor::Auto => SpotlightClass::SpotlightAuto,
+        SpotlightColor::Theme => SpotlightClass::SpotlightTheme,
     };
+
+    let classes = ClassesBuilder::new()
+        .add(SpotlightClass::SpotlightWrapper)
+        .add(color_class)
+        .add_raw(&props.class)
+        .build();
 
     rsx! {
         div {
-            class: format!("hi-spotlight-wrapper {color_class} {}", props.class),
+            class: "{classes}",
             "data-spotlight": "true",
             { props.children }
         }

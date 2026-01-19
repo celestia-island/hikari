@@ -4,9 +4,6 @@
 
 // ============================================
 // Hikari Sidebar Component - Multi-level Navigation
-// Design: Arknights + Future UI (FUI) aesthetics
-// Features: Arbitrary nesting, collapsible sections, smooth transitions
-// ============================================
 
 // ============================================
 // Base Sidebar Styles
@@ -88,15 +85,9 @@
   // Hover state
   &:hover {
     // Theme-specific hover effects
-    [data-theme="hikari"] & {
-      background: var(--hi-primary-bg, rgba(123, 207, 166, 0.15));
-      filter: brightness(0.8);
-    }
+    
 
-    [data-theme="tairitsu"] & {
-      background: var(--hi-primary-bg, rgba(123, 207, 166, 0.15));
-      filter: brightness(1.3);
-    }
+    
   }
 }
 
@@ -165,16 +156,10 @@
   }
 
   // Dark theme support
-  [data-theme="tairitsu"] &,
-  [data-theme="dark"] & {
-    background: var(--hi-secondary-bg, rgba(45, 45, 45, 0.5));
-  }
+  
 
   // Dark theme support
-  [data-theme="tairitsu"] &,
-  [data-theme="dark"] & {
-    background: var(--hi-tertiary-bg, rgba(35, 35, 35, 0.5));
-  }
+  
 }
 
 // ============================================
@@ -222,7 +207,7 @@
 
   // Hover effect for all items
   &:hover {
-    background: var(--hi-primary-bg, rgba(123, 207, 166, 0.1));
+    background: var(--hi-color-primary);
   }
 }
 
@@ -307,10 +292,7 @@
   }
 
   // Dark theme support
-  [data-theme="tairitus"] &,
-  [data-theme="dark"] & {
-    background: var(--hi-tertiary-bg, rgba(35, 35, 35, 0.5));
-  }
+  
 }
 
 // ============================================
@@ -369,23 +351,15 @@
   // Hover state
   &:hover {
     // Theme-specific hover effects
-    [data-theme="hikari"] & {
-      background: var(--hi-primary-bg, rgba(123, 207, 166, 0.15));
-      filter: brightness(0.8);
-      color: var(--hi-color-text-primary);  // 保持正文色
-    }
+    
 
-    [data-theme="tairitsu"] & {
-      background: var(--hi-primary-bg, rgba(123, 207, 166, 0.15));
-      filter: brightness(1.3);
-      color: #FFFFFF;  // 纯白
-    }
+    
   }
 
   // Active state
   &.active {
     color: var(--hi-color-text-primary);  // Use text-primary instead of primary
-    background: var(--hi-primary-bg, rgba(123, 207, 166, 0.2));
+    background: var(--hi-color-primary);
     font-weight: 500;
     border-left: 3px solid var(--hi-color-primary);
     padding-left: calc(2.5rem - 3px);
@@ -399,7 +373,7 @@
 // Add active state styling to item content when parent has data-active
 .hi-sidebar-item[data-active="true"] > .hi-sidebar-item-header > .hi-sidebar-item-content {
   color: var(--hi-color-text-primary);  // Use text-primary instead of primary
-  background: var(--hi-primary-bg, rgba(123, 207, 166, 0.2));
+  background: var(--hi-color-primary);
   font-weight: 500;
   border-left: 3px solid var(--hi-color-primary);
   padding-left: calc(1.5rem - 3px);

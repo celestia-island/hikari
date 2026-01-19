@@ -3,10 +3,7 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Tree View Component - FUI Styling
-// Design: Arknights + Future UI (FUI) aesthetics
-// Features: Node connectors, glow effects, smooth animations
-// ============================================
+// Hikari // Hikari // Hikari // Hikari // Hikari Tree View Component - FUI Styling Component Component Component Component
 
 // ============================================
 // Base Tree Styles
@@ -90,11 +87,13 @@
     background: linear-gradient(
       180deg,
       transparent,
-      var(--hi-primary, rgba(123, 207, 166, 0.2)) 20%,
-      var(--hi-primary, rgba(123, 207, 166, 0.2)) 80%,
+      var(--hi-primary) 20%,
+      var(--hi-primary) 80%,
       transparent
     );
-    box-shadow: 0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.3));
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-color-surface);
+    box-shadow: 0 0 4px var(--hi-glow-color);
     pointer-events: none;
   }
 
@@ -103,8 +102,8 @@
     background: linear-gradient(
       180deg,
       transparent,
-      var(--hi-primary, rgba(123, 207, 166, 0.2)) 20%,
-      var(--hi-primary, rgba(123, 207, 166, 0.2)) 50%,
+      var(--hi-primary) 20%,
+      var(--hi-primary) 50%,
       transparent
     );
   }
@@ -153,8 +152,10 @@
     top: 50%;
     width: 0.5rem;
     height: 1px;
-    background: var(--hi-primary, rgba(123, 207, 166, 0.2));
-    box-shadow: 0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.3));
+    background: var(--hi-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-color-surface);
+    box-shadow: 0 0 4px var(--hi-glow-color);
     pointer-events: none;
   }
 
@@ -165,15 +166,17 @@
 
   // Hover glow effects
   &:hover {
-    background: var(--hi-primary, rgba(123, 207, 166, 0.1));
-    border-color: var(--hi-primary, rgba(123, 207, 166, 0.3));
+    background: var(--hi-primary);
+    border-color: var(--hi-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-primary);
     box-shadow:
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.15)),
-      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.08));
+      0 0 12px var(--hi-glow-color),
+      inset 0 0 8px var(--hi-glow-color);
 
     .hi-tree-node-icon {
       color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.5)));
+      filter: drop-shadow(0 0 4px var(--hi-glow-color));
     }
 
     .hi-tree-node-label {
@@ -183,26 +186,26 @@
 
   // Selected state with glow background
   &.hi-tree-node-selected {
-    background: var(--hi-primary, rgba(123, 207, 166, 0.2));
-    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
+    background: var(--hi-primary);
+    border-color: var(--hi-primary);
     box-shadow:
-      0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.25)),
-      inset 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.12));
+      0 0 16px var(--hi-primary),
+      inset 0 0 12px var(--hi-primary);
 
     .hi-tree-node-icon {
       color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 6px var(--hi-primary, rgba(123, 207, 166, 0.7)));
+      filter: drop-shadow(0 0 6px var(--hi-primary));
     }
 
     .hi-tree-node-label {
-      color: var(--hi-color-primary);
+      color: var(--hi-color-text-primary);
       font-weight: 500;
     }
   }
 
   // Active state with accent bar
   &.hi-tree-node-active {
-    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
+    background: var(--hi-primary);
 
     // Accent bar on the left
     &::before {
@@ -215,7 +218,7 @@
       background: var(--hi-color-primary);
       box-shadow:
         0 0 8px var(--hi-color-primary),
-        2px 0 8px var(--hi-primary, rgba(123, 207, 166, 0.4));
+        2px 0 8px var(--hi-primary);
       border-radius: 2px 0 0 2px;
     }
   }
@@ -224,8 +227,8 @@
   &:focus-visible {
     outline: none;
     box-shadow:
-      0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.5)),
-      0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.4));
+      0 0 0 2px var(--hi-primary),
+      0 0 16px var(--hi-primary);
   }
 
   // Disabled state
@@ -237,11 +240,11 @@
 
   // Drag-over state for drop targets
   &.hi-tree-node-drag-over {
-    background: rgba(16, 185, 129, 0.15);
-    border-color: rgba(16, 185, 129, 0.5);
+    background: rgba(14, 184, 64, 0.15);
+    border-color: rgba(14, 184, 64, 0.5);
     box-shadow:
-      0 0 16px rgba(16, 185, 129, 0.3),
-      inset 0 0 12px rgba(16, 185, 129, 0.1);
+      0 0 16px rgba(14, 184, 64, 0.3),
+      inset 0 0 12px rgba(14, 184, 64, 0.1);
   }
 }
 
@@ -282,13 +285,13 @@
   .hi-tree-node-expanded > .hi-tree-node-content & {
     transform: rotate(90deg);
     color: var(--hi-color-primary);
-    filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.5)));
+    filter: drop-shadow(0 0 4px var(--hi-primary));
   }
 
   // Hover effect
   &:hover {
     color: var(--hi-color-primary);
-    background: var(--hi-primary, rgba(123, 207, 166, 0.1));
+    background: var(--hi-primary);
     border-radius: 50%;
   }
 }
@@ -439,15 +442,19 @@
 
   // Hover effect
   &:hover {
-    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
-    box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.3));
+    border-color: var(--hi-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-color-surface);
+    box-shadow: 0 0 8px var(--hi-glow-color);
   }
 
   // Checked state
   &.hi-tree-checkbox-checked {
     background: var(--hi-color-primary);
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.5));
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-color-primary);
+    box-shadow: 0 0 12px var(--hi-glow-color);
 
     &::after {
       content: '';
@@ -466,7 +473,9 @@
   &.hi-tree-checkbox-indeterminate {
     background: var(--hi-color-primary);
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.5));
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-color-primary);
+    box-shadow: 0 0 12px var(--hi-glow-color);
 
     &::after {
       content: '';
@@ -518,9 +527,9 @@
     height: 1rem;
     background: linear-gradient(
       90deg,
-      var(--hi-primary, rgba(123, 207, 166, 0.1)) 0%,
-      var(--hi-primary, rgba(123, 207, 166, 0.2)) 50%,
-      var(--hi-primary, rgba(123, 207, 166, 0.1)) 100%
+      var(--hi-primary) 0%,
+      var(--hi-primary) 50%,
+      var(--hi-primary) 100%
     );
     background-size: 200% 100%;
     border-radius: vars.$hikari-radius-fui-sm;
@@ -720,7 +729,7 @@
   // Dragging state
   .hi-tree-node-dragging {
     opacity: 0.5;
-    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
+    background: var(--hi-primary);
   }
 
   // Drop indicator
@@ -729,7 +738,7 @@
     background: var(--hi-color-primary);
     box-shadow:
       0 0 8px var(--hi-color-primary),
-      0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.6));
+      0 0 16px var(--hi-primary);
     margin: 0.25rem 0;
     border-radius: 1px;
     // DISABLED - migrated to JS animation

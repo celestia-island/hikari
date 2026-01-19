@@ -4,6 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
+use palette::classes::{components::BreadcrumbClass, ClassesBuilder};
 
 /// Breadcrumb 组件的类型包装器（用于实现 StyledComponent）
 pub struct BreadcrumbComponent;
@@ -102,9 +103,14 @@ impl Default for BreadcrumbProps {
 /// - **Large** (`.hi-breadcrumb-lg`): 16px font
 #[component]
 pub fn Breadcrumb(props: BreadcrumbProps) -> Element {
+    let classes = ClassesBuilder::new()
+        .add(BreadcrumbClass::Breadcrumb)
+        .add_raw(&props.class)
+        .build();
+
     rsx! {
         nav {
-            class: format!("hi-breadcrumb {}", props.class),
+            class: "{classes}",
             "aria-label": "Breadcrumb",
 
             ol {
@@ -129,9 +135,14 @@ impl StyledComponent for BreadcrumbComponent {
 /// Breadcrumb item component
 #[component]
 pub fn BreadcrumbItem(props: BreadcrumbItemProps) -> Element {
+    let classes = ClassesBuilder::new()
+        .add(BreadcrumbClass::BreadcrumbItem)
+        .add_raw(&props.class)
+        .build();
+
     rsx! {
         li {
-            class: format!("hi-breadcrumb-item {}", props.class),
+            class: "{classes}",
 
             if props.href.is_some() || props.onclick.is_some() {
                 {
@@ -177,27 +188,27 @@ pub fn BreadcrumbItem(props: BreadcrumbItemProps) -> Element {
 pub fn BreadcrumbSeparator(#[props(default)] separator: String) -> Element {
     rsx! {
         li {
-            class: "hi-breadcrumb-separator",
-            if separator.is_empty() {
-                // Default chevron-right icon
-                svg {
-                    xmlns: "http://www.w3.org/2000/svg",
-                    view_box: "0 0 24 24",
-                    fill: "none",
-                    stroke: "currentColor",
-                    "stroke-width": "2",
-                    "stroke-linecap": "round",
-                    "stroke-linejoin": "round",
-                    path {
-                        d: "M9 18l6-6-6-6"
-                    }
-                }
-            } else {
-                span {
-                    class: "hi-breadcrumb-separator-icon",
-                    "{separator}"
-                }
-            }
-        }
+             class: "hi-breadcrumb-separator",
+             if separator.is_empty() {
+                 // Default chevron-right icon
+                 svg {
+                     xmlns: "http://www.w3.org/2000/svg",
+                     view_box: "0 0 24 24",
+                     fill: "none",
+                     stroke: "currentColor",
+                     "stroke-width": "0",
+                     "stroke-linecap": "round",
+                     "stroke-linejoin": "round",
+                     path {
+                         d: "M9 18l6-6-6-6"
+                     }
+                 }
+             } else {
+                 span {
+                     class: "hi-breadcrumb-separator-icon",
+                     "{separator}"
+                 }
+             }
+         }
     }
 }

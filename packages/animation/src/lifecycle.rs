@@ -8,8 +8,7 @@ use std::collections::HashMap;
 
 use wasm_bindgen::JsValue;
 
-use super::builder::AnimationBuilder;
-use super::state::AnimationState;
+use super::{builder::AnimationBuilder, state::AnimationState};
 
 /// Animation registry for managing active animations
 ///

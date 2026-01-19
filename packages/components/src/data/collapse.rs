@@ -4,10 +4,9 @@
 use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
+use palette::classes::{components::CollapseClass, ClassesBuilder};
 
 /// Collapse component wrapper (for StyledComponent)
-pub struct CollapseComponent;
-
 #[derive(Clone, PartialEq, Props)]
 pub struct CollapseProps {
     #[props(default)]
@@ -97,9 +96,14 @@ pub fn Collapse(props: CollapseProps) -> Element {
                 }
             }
 
+            let content_classes = ClassesBuilder::new()
+                .add(CollapseClass::CollapseContent)
+                .add_if(CollapseClass::Expanded, || *is_expanded.read())
+                .add_if(CollapseClass::Collapsed, || !*is_expanded.read())
+                .build();
+
             div {
-                class: "hi-collapse-content",
-                class: if *is_expanded.read() { "hi-collapse-expanded" } else { "hi-collapse-collapsed" },
+                class: "{content_classes}",
                 style: format!(
                     "max-height: {}; overflow: hidden; opacity: {}; {}",
                     max_height, opacity, animation_style
@@ -217,11 +221,14 @@ pub fn TreeCollapse(props: TreeCollapseProps) -> Element {
                 }
             }
 
+            let tree_children_classes = ClassesBuilder::new()
+                .add(CollapseClass::TreeNodeChildren)
+                .add_if(CollapseClass::TreeExpanded, || *is_expanded.read())
+                .add_if(CollapseClass::TreeCollapsed, || !*is_expanded.read())
+                .build();
+
             div {
-                class: format!(
-                    "hi-tree-node-children {}",
-                    if *is_expanded.read() { "hi-tree-expanded" } else { "hi-tree-collapsed" }
-                ),
+                class: "{tree_children_classes}",
                 style: format!(
                     "max-height: {}; overflow: hidden; opacity: {}; padding-left: 24px; {}",
                     max_height, opacity, animation_style

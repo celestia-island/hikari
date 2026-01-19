@@ -4,6 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::data::{TreeNodeArrow, TreeNodeContent, TreeNodeLabel};
+use palette::classes::{ClassesBuilder, TreeNodeClass};
 
 /// Shared data structure for tree nodes
 #[derive(Clone, PartialEq, Debug)]
@@ -67,29 +68,17 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
     let mut is_expanded = use_signal(|| props.expanded);
     let has_children = props.node_children.is_some();
 
-    let node_class = format!(
-        "hi-tree-node {} {} {} {}",
-        if props.selected {
-            "hi-tree-node-selected"
-        } else {
-            ""
-        },
-        if props.disabled {
-            "hi-tree-node-disabled"
-        } else {
-            ""
-        },
-        if has_children {
-            "hi-tree-node-parent"
-        } else {
-            ""
-        },
-        props.class
-    );
+    let node_classes = ClassesBuilder::new()
+        .add(TreeNodeClass::TreeNode)
+        .add_if(TreeNodeClass::TreeNodeSelected, || props.selected)
+        .add_if(TreeNodeClass::TreeNodeDisabled, || props.disabled)
+        .add_if(TreeNodeClass::TreeNodeParent, || has_children)
+        .add_raw(&props.class)
+        .build();
 
     rsx! {
         li {
-            class: "{node_class}",
+            class: "{node_classes}",
             role: "treeitem",
             "data-node-key": "{props.node_key}",
             "data-level": "{props.level}",

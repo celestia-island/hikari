@@ -5,6 +5,9 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[lib]
+path = "src/lib.rs"
+
 [dependencies]
 grass = "0.12"
 serde = { workspace = true, features = ["derive"] }

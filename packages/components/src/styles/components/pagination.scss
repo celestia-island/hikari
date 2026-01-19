@@ -3,10 +3,7 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Pagination Component - FUI Styling
-// Design: Arknights + Future UI (FUI) aesthetics
-// Features: Glow indicators, smooth transitions, jump animations
-// ============================================
+// Hikari // Hikari // Hikari // Hikari // Hikari Pagination Component - FUI Styling Component Component Component Component
 
 // ============================================
 // Base Pagination Styles
@@ -76,27 +73,27 @@
 
   // Hover effect
   &:hover:not(:disabled) {
-    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
-    border-color: var(--hi-primary, rgba(123, 207, 166, 0.4));
-    color: var(--hi-color-primary);
+    background: var(--hi-primary);
+    border-color: var(--hi-primary);
+    color: var(--hi-color-text-primary);
     box-shadow:
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.25)),
-      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
+      0 0 12px var(--hi-primary),
+      inset 0 0 8px var(--hi-primary);
     transform: translateY(-1px);
 
     svg {
-      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.5)));
+      filter: drop-shadow(0 0 4px var(--hi-primary));
     }
   }
 
   // Active state (current page with glow)
   &.hi-pagination-active {
-    background: linear-gradient(135deg, var(--hi-primary, rgba(123, 207, 166, 0.9)), rgba(109, 40, 217, 0.9));
+    background: linear-gradient(135deg, var(--hi-primary), rgba(109, 40, 217, 0.9));
     border-color: var(--hi-color-primary);
     color: var(--hi-color-text-inverted, #ffffff);
     box-shadow:
-      0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.5)),
-      0 0 24px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+      0 0 16px var(--hi-primary),
+      0 0 24px var(--hi-primary),
       inset 0 0 8px var(--hi-white-10, rgba(255, 255, 255, 0.1));
     font-weight: 600;
 
@@ -110,14 +107,14 @@
 // @keyframes pagination-active-pulse {
 //     0%, 100% {
 //       box-shadow:
-//         0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.5)),
-//         0 0 24px var(--hi-primary, rgba(123, 207, 166, 0.3)),
+//         0 0 16px var(--hi-primary),
+//         0 0 24px var(--hi-primary),
 //         inset 0 0 8px var(--hi-white-10, rgba(255, 255, 255, 0.1));
 //     }
 //     50% {
 //       box-shadow:
-//         0 0 20px var(--hi-primary, rgba(123, 207, 166, 0.6)),
-//         0 0 32px var(--hi-primary, rgba(123, 207, 166, 0.4)),
+//         0 0 20px var(--hi-primary),
+//         0 0 32px var(--hi-primary),
 //         inset 0 0 12px var(--hi-white-15, rgba(255, 255, 255, 0.15));
 //     }
 //   }
@@ -134,8 +131,8 @@
   &:focus-visible {
     outline: none;
     box-shadow:
-      0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.5)),
-      0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.4));
+      0 0 0 2px var(--hi-primary),
+      0 0 16px var(--hi-primary);
   }
 
   // Active press effect
@@ -239,20 +236,20 @@
 //   0% {
 //     transform: scale(1);
 //     box-shadow:
-//       0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.5)),
-//       0 0 24px var(--hi-primary, rgba(123, 207, 166, 0.3));
+//       0 0 16px var(--hi-primary),
+//       0 0 24px var(--hi-primary);
 //   }
 //   50% {
 //     transform: scale(1.1);
 //     box-shadow:
-//       0 0 24px var(--hi-primary, rgba(123, 207, 166, 0.7)),
-//       0 0 36px var(--hi-primary, rgba(123, 207, 166, 0.5));
+//       0 0 24px var(--hi-primary),
+//       0 0 36px var(--hi-primary);
 //   }
 //   100% {
 //     transform: scale(1);
 //     box-shadow:
-//       0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.5)),
-//       0 0 24px var(--hi-primary, rgba(123, 207, 166, 0.3));
+//       0 0 16px var(--hi-primary),
+//       0 0 24px var(--hi-primary);
 //   }
 // }
 
@@ -283,10 +280,12 @@
 
   // Hover effect
   &:hover {
-    color: var(--hi-color-primary);
-    background: var(--hi-primary, rgba(123, 207, 166, 0.1));
+    color: var(--hi-color-text-primary);
+    background: var(--hi-primary);
     border-radius: vars.$hikari-radius-fui-sm;
-    box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2));
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-primary);
+    box-shadow: 0 0 8px var(--hi-glow-color);
   }
 }
 
@@ -334,18 +333,18 @@
     // Focus state with glow
     &:focus {
       outline: none;
-      border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
+      border-color: var(--hi-primary);
       box-shadow:
-        0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.3)),
-        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
+        0 0 0 2px var(--hi-primary),
+        0 0 12px var(--hi-primary);
     }
 
     // Hover effect
     &:hover {
-      border-color: var(--hi-primary, rgba(123, 207, 166, 0.4));
+      border-color: var(--hi-primary);
       box-shadow:
-        0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2)),
-        inset 0 0 6px var(--hi-primary, rgba(123, 207, 166, 0.1));
+        0 0 8px var(--hi-primary),
+        inset 0 0 6px var(--hi-primary);
     }
 
     // Options
@@ -378,7 +377,7 @@
   .hi-pagination-total-highlight {
     color: var(--hi-color-primary);
     font-weight: 600;
-    text-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.4));
+    text-shadow: 0 0 8px var(--hi-primary);
   }
 
   // Separator
@@ -431,16 +430,16 @@
     // Focus state with glow
     &:focus {
       outline: none;
-      border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
+      border-color: var(--hi-primary);
       box-shadow:
-        0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.3)),
-        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
+        0 0 0 2px var(--hi-primary),
+        0 0 12px var(--hi-primary);
     }
 
     // Validation states
     &.hi-pagination-jumper-invalid {
       border-color: var(--hi-color-danger);
-      box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+      box-shadow: 0 0 8px rgba(255, 76, 0, 0.4);
     }
 
     &::placeholder {
@@ -458,15 +457,15 @@
     padding: 0.375rem 0.75rem;
 
     // Appearance
-    background: var(--hi-primary, rgba(123, 207, 166, 0.2));
-    border: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.4));
+    background: var(--hi-primary);
+    border: 1px solid var(--hi-primary);
     border-radius: vars.$hikari-radius-fui-sm;
 
     // Typography
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-sm;
     font-weight: 500;
-    color: var(--hi-color-primary);
+    color: var(--hi-color-text-primary);
 
     // Cursor
     cursor: pointer;
@@ -478,11 +477,11 @@
 
     // Hover effect
     &:hover:not(:disabled) {
-      background: var(--hi-primary, rgba(123, 207, 166, 0.3));
-      border-color: var(--hi-primary, rgba(123, 207, 166, 0.6));
+      background: var(--hi-primary);
+      border-color: var(--hi-primary);
       box-shadow:
-        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3)),
-        inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
+        0 0 12px var(--hi-primary),
+        inset 0 0 8px var(--hi-primary);
     }
 
     // Disabled state
@@ -702,7 +701,7 @@
       width: 1rem;
       height: 1rem;
       margin: -0.5rem 0 0 -0.5rem;
-      border: 2px solid var(--hi-primary, rgba(123, 207, 166, 0.3));
+      border: 2px solid var(--hi-primary);
       border-top-color: var(--hi-color-primary);
       border-radius: 50%;
       // DISABLED - migrated to JS animation

@@ -6,8 +6,10 @@
 
 use dioxus::prelude::*;
 
-use crate::styled::StyledComponent;
+#[cfg(target_arch = "wasm32")]
 use animation::style::StyleBuilder;
+
+use crate::styled::StyledComponent;
 
 /// Background component type wrapper (for implementing StyledComponent)
 pub struct BackgroundComponent;

@@ -3,8 +3,9 @@
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    
+
+use super::*;
+
     #[cfg(target_arch = "wasm32")]
     #[test]
     fn test_background_animation_setup() {

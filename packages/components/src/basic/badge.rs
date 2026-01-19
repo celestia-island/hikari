@@ -4,6 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
+use palette::classes::{BadgeClass, ClassesBuilder};
 
 /// Badge 组件的类型包装器（用于实现 StyledComponent）
 pub struct BadgeComponent;
@@ -75,14 +76,6 @@ impl Default for BadgeProps {
 /// ```
 #[component]
 pub fn Badge(props: BadgeProps) -> Element {
-    let variant_class = match props.variant {
-        BadgeVariant::Default => "hi-badge-default",
-        BadgeVariant::Primary => "hi-badge-primary",
-        BadgeVariant::Success => "hi-badge-success",
-        BadgeVariant::Warning => "hi-badge-warning",
-        BadgeVariant::Danger => "hi-badge-danger",
-    };
-
     let display_count = if let Some(count) = props.count {
         if count == 0 && !props.show_zero {
             None
@@ -99,17 +92,24 @@ pub fn Badge(props: BadgeProps) -> Element {
         None
     };
 
+    // Pre-compute badge classes outside rsx
+    let badge_classes = if props.dot || display_count.is_some() {
+        ClassesBuilder::new()
+            .add(BadgeClass::Badge)
+            .add_if(BadgeClass::Dot, || props.dot)
+            .build()
+    } else {
+        String::new()
+    };
+
     rsx! {
         div { class: format!("hi-badge-wrapper {}", props.class),
 
             { props.children }
 
-            if props.dot || display_count.is_some() {
+            if !badge_classes.is_empty() {
                 span {
-                    class: format!(
-                        "hi-badge {variant_class} {}",
-                        if props.dot { "hi-badge-dot" } else { "" }
-                    ),
+                    class: "{badge_classes}",
 
                     if props.dot {
                         span { class: "hi-badge-dot" }

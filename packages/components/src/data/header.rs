@@ -4,6 +4,7 @@
 use dioxus::prelude::*;
 
 use super::column::ColumnDef;
+use palette::classes::{ClassesBuilder, TableHeaderClass};
 
 // TODO: Re-export from sort module when implemented
 // pub use super::sort::SortDirection;
@@ -105,11 +106,16 @@ pub struct HeaderProps {
 /// ```
 #[component]
 pub fn Header(props: HeaderProps) -> Element {
+    let thead_classes = ClassesBuilder::new()
+        .add(TableHeaderClass::TableHeader)
+        .add_raw(&props.class)
+        .build();
+
     rsx! {
         thead {
-            class: "hi-table-header {props.class}",
+            class: "{thead_classes}",
             tr {
-                class: "hi-header-row",
+                class: "TableHeaderClass::HeaderRow.as_class()",
 
                 {props.columns.iter().map(|column| {
                     let is_sorted = props.sort_column.as_ref() == Some(&column.column_key);
@@ -119,27 +125,11 @@ pub fn Header(props: HeaderProps) -> Element {
                         SortDirection::None
                     };
 
-                    let base_classes = "hi-header-cell";
-                    let column_classes = column.build_classes();
-                    let sortable_class = column.sortable_class();
-                    let fixed_class = column.fixed_class();
-                    let active_class = if is_sorted {
-                        "hi-header-cell-active"
-                    } else {
-                        ""
-                    };
-
-                    let classes = format!(
-                        "{} {} {} {} {}",
-                        base_classes,
-                        column_classes,
-                        sortable_class,
-                        fixed_class,
-                        active_class
-                    )
-                    .split_whitespace()
-                    .collect::<Vec<&str>>()
-                    .join(" ");
+                    let cell_classes = ClassesBuilder::new()
+                        .add(TableHeaderClass::HeaderCell)
+                        .add_raw(&column.class)
+                        .add_if(TableHeaderClass::HeaderCellActive, || is_sorted)
+                        .build();
 
                     let width_styles = column.width_styles();
                     let column_key = column.column_key.clone();
@@ -150,7 +140,7 @@ pub fn Header(props: HeaderProps) -> Element {
 
                     rsx! {
                         th {
-                            class: "{classes} {column.class}",
+                            class: "{cell_classes}",
                             style: "{width_styles}",
                             "data-key": "{column.column_key}",
                             "data-align": "{column.align as i32}",
@@ -167,14 +157,14 @@ pub fn Header(props: HeaderProps) -> Element {
 
                             // Column title
                             span {
-                                class: "hi-header-cell-content",
+                                class: "TableHeaderClass::HeaderCellContent.as_class()",
                                 { title }
                             }
 
                             // Sort indicator
                             if column.sortable {
                                 span {
-                                    class: "hi-sort-indicator {sort_dir.class()}",
+                                    class: "TableHeaderClass::SortIndicator.as_class() {sort_dir.class()}",
                                     aria_hidden: "true",
                                     { sort_dir.icon() }
                                 }
@@ -183,7 +173,7 @@ pub fn Header(props: HeaderProps) -> Element {
                             // Filter icon
                             if has_filter {
                                 span {
-                                    class: "hi-filter-icon",
+                                    class: "TableHeaderClass::FilterIcon.as_class()",
                                     aria_hidden: "true",
                                     "⚬"
                                 }
@@ -192,7 +182,7 @@ pub fn Header(props: HeaderProps) -> Element {
                             // Resize handle
                             if column.resizable {
                                 span {
-                                    class: "hi-resize-handle",
+                                    class: "TableHeaderClass::ResizeHandle.as_class()",
                                     aria_hidden: "true"
                                 }
                             }

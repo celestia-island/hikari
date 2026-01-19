@@ -7,6 +7,7 @@ use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
     styled::StyledComponent,
 };
+use palette::classes::{ClassesBuilder, InputClass, UtilityClass};
 
 /// Input 组件的类型包装器（用于实现 StyledComponent）
 pub struct InputComponent;
@@ -19,7 +20,7 @@ pub enum InputSize {
     Large,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[derive(Clone, PartialEq, Props)]
 pub struct InputProps {
     #[props(default)]
     pub size: InputSize,
@@ -56,7 +57,7 @@ pub struct InputProps {
     pub onkeydown: Option<EventHandler<KeyboardEvent>>,
 
     /// Enable glow effect (Win10-style blur and mouse-following highlight)
-    #[props(default)]
+    #[props(default = true)]
     pub glow: bool,
 
     /// Glow blur intensity (requires glow: true)
@@ -68,8 +69,32 @@ pub struct InputProps {
     pub glow_intensity: GlowIntensity,
 
     /// Glow color mode (requires glow: true)
+    /// Uses Ghost glow color (black/white based on theme)
     #[props(default)]
     pub glow_color: GlowColor,
+}
+
+impl Default for InputProps {
+    fn default() -> Self {
+        Self {
+            size: Default::default(),
+            disabled: false,
+            readonly: false,
+            placeholder: None,
+            value: None,
+            class: String::default(),
+            prefix_icon: None,
+            suffix_icon: None,
+            oninput: None,
+            onfocus: None,
+            onblur: None,
+            onkeydown: None,
+            glow: true,
+            glow_blur: Default::default(),
+            glow_intensity: Default::default(),
+            glow_color: GlowColor::Ghost,
+        }
+    }
 }
 
 /// Input component with Arknights + FUI styling
@@ -91,27 +116,30 @@ pub struct InputProps {
 /// ```
 #[component]
 pub fn Input(props: InputProps) -> Element {
-    let size_class = match props.size {
-        InputSize::Small => "hi-input-sm",
-        InputSize::Medium => "hi-input-md",
-        InputSize::Large => "hi-input-lg",
-    };
+    let wrapper_classes = ClassesBuilder::new()
+        .add(InputClass::InputWrapper)
+        .add(match props.size {
+            InputSize::Small => InputClass::InputSm,
+            InputSize::Medium => InputClass::InputMd,
+            InputSize::Large => InputClass::InputLg,
+        })
+        .add_raw(&props.class)
+        .build();
 
-    let disabled_class = if props.disabled {
-        "hi-input-disabled"
-    } else {
-        ""
-    };
+    let input_classes = ClassesBuilder::new()
+        .add(InputClass::Input)
+        .add_if(InputClass::InputDisabled, || props.disabled)
+        .build();
 
     let input_content = rsx! {
-        div { class: format!("hi-input-wrapper {size_class} {}", props.class),
+        div { class: "{wrapper_classes}",
 
             if let Some(icon) = props.prefix_icon {
-                span { class: "hi-input-prefix", { icon } }
+                span { class: "{InputClass::InputPrefix.as_class()}", { icon } }
             }
 
             input {
-                class: format!("hi-input {disabled_class}"),
+                class: "{input_classes}",
                 disabled: props.disabled,
                 readonly: props.readonly,
                 placeholder: props.placeholder,
@@ -139,7 +167,7 @@ pub fn Input(props: InputProps) -> Element {
             }
 
             if let Some(icon) = props.suffix_icon {
-                span { class: "hi-input-suffix", { icon } }
+                span { class: "{InputClass::InputSuffix.as_class()}", { icon } }
             }
         }
     };

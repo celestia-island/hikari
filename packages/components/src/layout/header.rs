@@ -64,12 +64,17 @@ pub fn Header(
         .add(Flex::Shrink0)
         .build();
 
+    let header_classes = ClassesBuilder::new()
+        .add(components::Header::Header)
+        .add(components::Header::Sticky)
+        .add(components::Header::Md)
+        .add_if(components::Header::Transparent, || !bordered)
+        .add_raw(&class)
+        .build();
+
     rsx! {
         header {
-            class: format!(
-                "hi-header hi-header-sticky hi-header-md {} {class}",
-                if bordered { "" } else { "hi-header-transparent" },
-            ),
+            class: "{header_classes}",
 
             // Left section: Menu toggle + optional content
             div {

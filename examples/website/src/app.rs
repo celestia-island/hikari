@@ -1,16 +1,17 @@
 // website/src/app.rs
 // Main application component with new routing structure
 
-use dioxus::prelude::*;
-use dioxus_router::components::Router;
-
-// Import scrollbar system
-use _components::scripts::scrollbar_container;
-// Import ThemeProvider
+// Import ThemeProvider (used by all targets)
 use _components::ThemeProvider;
 
+// Import scrollbar system (used by all targets)
+use _components::scripts::scrollbar_container;
+
+// Import Dioxus (needed for all targets)
+use dioxus::prelude::*;
+
 /// Main application routes
-#[derive(Clone, Routable, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Routable)]
 pub enum Route {
     // Home
     #[route("/")]
@@ -296,6 +297,7 @@ fn DemosOverview() -> Element {
 }
 
 /// Main App component
+#[cfg(target_arch = "wasm32")]
 #[allow(non_snake_case)]
 pub fn App() -> Element {
     // Theme state (default to hikari light theme)

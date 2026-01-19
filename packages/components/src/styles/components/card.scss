@@ -18,8 +18,7 @@
 }
 
 // ============================================
-// Hikari Card Component - FUI Styling
-// Design: Arknights + Future UI (FUI) aesthetics
+// Hikari Card Component
 // Features: Elevated shadows, hover accent bar, smooth transitions
 // ============================================
 
@@ -36,19 +35,13 @@
   // Spacing
   margin: 0;
 
-  // Appearance - FUI subtle rounded corners
+  // Appearance - Subtle rounded corners
   border-radius: vars.$hikari-radius-fui-md;
   border: 1px solid rgba(226, 232, 240, 0.8);
 
   // 使用主题变量背景
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-
-  // 暗黑模式覆盖
-  [data-theme="tairitsu"] & {
-    background: rgba(80, 97, 109, 0.9);
-  }
+  background: var(--hi-color-surface);
+  backdrop-filter: blur(4px);
 
   // Elevated shadow
   box-shadow:
@@ -74,7 +67,7 @@
     background: linear-gradient(
       180deg,
       var(--hi-color-primary) 0%,
-      var(--hi-primary, rgba(123, 207, 166, 0.6)) 50%,
+      var(--hi-primary) 50%,
       var(--hi-color-primary) 100%
     );
     opacity: 0;
@@ -127,7 +120,7 @@
     letter-spacing: 0.02em;
 
     // Subtle text shadow
-    text-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.3));
+    text-shadow: 0 0 8px var(--hi-primary);
   }
 
   // Subtitle
@@ -198,15 +191,17 @@
 
   &:hover {
     transform: translateY(-4px);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-color-surface);
     box-shadow:
       0 12px 24px rgba(23, 89, 168, 0.2),
-      0 0 30px var(--hi-primary, rgba(123, 207, 166, 0.3)),
-      0 0 0 1px var(--hi-primary, rgba(123, 207, 166, 0.2)) inset;
+      0 0 30px var(--hi-glow-color),
+      0 0 0 1px var(--hi-primary) inset;
     border-color: var(--hi-color-primary);
 
     &::before {
       opacity: 1;
-      box-shadow: 0 0 12px var(--hi-color-primary);
+      box-shadow: 0 0 12px var(--hi-glow-color);
     }
   }
 }

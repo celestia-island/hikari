@@ -3,10 +3,7 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Toast Component - FUI Styling
-// Design: Arknights + Future UI (FUI) aesthetics
-// Features: Slide-in animations, progress bars, smooth transitions
-// ============================================
+// Hikari // Hikari // Hikari // Hikari // Hikari Toast Component - FUI Styling Component Component Component Component
 
 // ============================================
 // Toast Container
@@ -74,14 +71,13 @@
   min-width: 320px;
   max-width: 480px;
 
-  // Appearance - FUI subtle rounded corners
+  // Appearance - subtle rounded corners
   border-radius: vars.$hikari-radius-fui-md;
   border: 1px solid var(--hi-color-border);
 
   // Acrylic background effect
   background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
-  backdrop-filter: blur(vars.$hikari-acrylic-blur);
-  -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  backdrop-filter: blur(4px);
 
   // Elevated shadow
   box-shadow:
@@ -157,8 +153,8 @@
 
     &:hover {
       color: var(--hi-color-text-primary);
-      background: rgba(239, 68, 68, 0.2);
-      box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+      background: rgba(255, 76, 0, 0.2);
+      box-shadow: 0 0 8px rgba(255, 76, 0, 0.3);
     }
 
     svg {
@@ -210,19 +206,19 @@
 
 // Success (Green)
 .hi-toast-success {
-  border-color: rgba(16, 185, 129, 0.5);
+  border-color: rgba(14, 184, 64, 0.5);
   box-shadow:
     0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 12px rgba(16, 185, 129, 0.2);
+    0 0 12px rgba(14, 184, 64, 0.2);
 
   .hi-toast-icon {
     color: var(--hi-color-success);
-    filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.6));
+    filter: drop-shadow(0 0 4px rgba(14, 184, 64, 0.6));
   }
 
   .hi-toast-progress::after {
     background: var(--hi-color-success);
-    box-shadow: 0 0 8px var(--hi-color-success);
+    box-shadow: 0 0 8px var(--hi-glow-color);
   }
 }
 
@@ -240,7 +236,7 @@
 
   .hi-toast-progress::after {
     background: var(--hi-color-primary);
-    box-shadow: 0 0 8px var(--hi-color-primary);
+    box-shadow: 0 0 8px var(--hi-glow-color);
   }
 }
 
@@ -258,25 +254,25 @@
 
   .hi-toast-progress::after {
     background: var(--hi-color-warning);
-    box-shadow: 0 0 8px var(--hi-color-warning);
+    box-shadow: 0 0 8px var(--hi-glow-color);
   }
 }
 
 // Error (Red)
 .hi-toast-error {
-  border-color: rgba(239, 68, 68, 0.5);
+  border-color: rgba(255, 76, 0, 0.5);
   box-shadow:
     0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 12px rgba(239, 68, 68, 0.2);
+    0 0 12px rgba(255, 76, 0, 0.2);
 
   .hi-toast-icon {
     color: var(--hi-color-danger);
-    filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.6));
+    filter: drop-shadow(0 0 4px rgba(255, 76, 0, 0.6));
   }
 
   .hi-toast-progress::after {
     background: var(--hi-color-danger);
-    box-shadow: 0 0 8px var(--hi-color-danger);
+    box-shadow: 0 0 8px var(--hi-glow-color);
   }
 }
 
@@ -318,7 +314,7 @@
     transform: translateX(-4px);
     box-shadow:
       0 12px 24px rgba(0, 0, 0, 0.4),
-      0 0 20px var(--hi-primary, rgba(123, 207, 166, 0.15));
+      0 0 20px var(--hi-primary);
 
     .hi-toast-progress {
       &::after {
@@ -591,7 +587,7 @@
     border-color: var(--hi-color-primary);
     box-shadow:
       0 12px 24px rgba(0, 0, 0, 0.4),
-      0 0 20px var(--hi-primary, rgba(123, 207, 166, 0.25)),
+      0 0 20px var(--hi-primary),
       0 0 0 1px rgba(59, 130, 246, 0.3) inset;
   }
 

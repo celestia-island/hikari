@@ -8,8 +8,10 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 use web_sys::HtmlElement;
 
-use super::context::AnimationContext;
-use super::style::{CssProperty, StyleBuilder};
+use super::{
+    context::AnimationContext,
+    style::{CssProperty, StyleBuilder},
+};
 
 /// Trigger mode for event-driven animations
 #[derive(Clone, Copy, PartialEq, Debug)]

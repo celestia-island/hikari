@@ -3,10 +3,7 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Tooltip Component - FUI Styling
-// Design: Arknights + Future UI (FUI) aesthetics
-// Features: Fade-in animations, glowing arrows, smooth transitions
-// ============================================
+// Hikari // Hikari // Hikari // Hikari // Hikari Tooltip Component - FUI Styling Component Component Component Component
 
 // ============================================
 // Base Tooltip Styles
@@ -28,14 +25,13 @@
   white-space: nowrap;
   color: var(--hi-color-text-primary);
 
-  // Appearance - FUI subtle rounded corners
+  // Appearance - subtle rounded corners
   border-radius: vars.$hikari-radius-fui-sm;
   border: 1px solid var(--hi-color-border);
 
   // Acrylic background effect
   background: rgba(15, 15, 15, 0.95);
-  backdrop-filter: blur(vars.$hikari-acrylic-blur);
-  -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  backdrop-filter: blur(4px);
 
   // Elevated shadow
   box-shadow:
@@ -72,7 +68,7 @@
     position: absolute;
     width: 8px;
     height: 8px;
-    background: var(--hi-primary, rgba(123, 207, 166, 0.6));
+    background: var(--hi-primary);
     filter: blur(4px);
     opacity: 0;
     // DISABLED - migrated to JS animation
@@ -420,15 +416,15 @@
 
 // Success (Green)
 .hi-tooltip-success {
-  border-color: rgba(16, 185, 129, 0.5);
+  border-color: rgba(14, 184, 64, 0.5);
   background: rgba(15, 15, 15, 0.95);
   box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.4),
-    0 0 12px rgba(16, 185, 129, 0.2),
-    0 0 0 1px rgba(16, 185, 129, 0.3) inset;
+    0 0 12px rgba(14, 184, 64, 0.2),
+    0 0 0 1px rgba(14, 184, 64, 0.3) inset;
 
   &::after {
-    background: rgba(16, 185, 129, 0.6);
+    background: rgba(14, 184, 64, 0.6);
   }
 }
 
@@ -448,15 +444,15 @@
 
 // Error (Red)
 .hi-tooltip-error {
-  border-color: rgba(239, 68, 68, 0.5);
+  border-color: rgba(255, 76, 0, 0.5);
   background: rgba(15, 15, 15, 0.95);
   box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.4),
-    0 0 12px rgba(239, 68, 68, 0.2),
-    0 0 0 1px rgba(239, 68, 68, 0.3) inset;
+    0 0 12px rgba(255, 76, 0, 0.2),
+    0 0 0 1px rgba(255, 76, 0, 0.3) inset;
 
   &::after {
-    background: rgba(239, 68, 68, 0.6);
+    background: rgba(255, 76, 0, 0.6);
   }
 }
 

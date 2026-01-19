@@ -249,11 +249,13 @@ pub mod tween;
 
 pub use core::{AnimationEngine, AnimationOptions, PlaybackMode, Tween, TweenId};
 
+// Re-export Glow component for use in Dioxus components
+pub use glow::Glow;
+
 pub use builder::*;
 pub use context::*;
 pub use easing::*;
 pub use events::*;
-pub use glow::*;
 pub use hooks::*;
 pub use lifecycle::*;
 pub use presets::*;

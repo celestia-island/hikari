@@ -210,7 +210,7 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
                         view_box: "0 0 24 24",
                         fill: "none",
                         stroke: "currentColor",
-                        "stroke-width": "2",
+                        "stroke-width": "0",
                         "stroke-linecap": "round",
                         "stroke-linejoin": "round",
                         path { d: "M6 9l6 6 6-6" }
@@ -318,7 +318,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
                             view_box: "0 0 24 24",
                             fill: "none",
                             stroke: "currentColor",
-                            "stroke-width": "2",
+                            "stroke-width": "0",
                             "stroke-linecap": "round",
                             "stroke-linejoin": "round",
                             path { d: "M9 18l6-6-6-6" }

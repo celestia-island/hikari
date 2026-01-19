@@ -1,0 +1,7 @@
+[package]
+name = "debug_glow"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hikari-palette = { path = "../../packages/palette" }

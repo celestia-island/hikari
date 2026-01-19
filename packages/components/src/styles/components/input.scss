@@ -3,8 +3,7 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Input Component - FUI Styling
-// Design: Arknights + Future UI (FUI) aesthetics
+// Hikari Input Component
 // Features: Acrylic focus, glowing borders, smooth transitions
 // ============================================
 
@@ -27,19 +26,9 @@
   // Spacing
   padding: 0.5rem 0.75rem;
 
-  // Appearance - FUI subtle rounded corners
+  // Appearance - Subtle rounded corners
   border-radius: vars.$hikari-radius-fui-sm;
   border: 1px solid var(--hi-color-border);
-
-  // Light acrylic background effect
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(vars.$hikari-acrylic-blur);
-  -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
-
-  // Transitions - smooth GSAP-style easing
-  // DISABLED - migrated to JS animation
-
-  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Remove default outline
   outline: none;
@@ -50,29 +39,28 @@
     opacity: 0.6;
   }
 
-  // Focus state with acrylic glow
+  // Focus state with sharp border (no blur, only offset)
   &:focus {
     border-color: var(--hi-color-primary);
-    background: rgba(255, 255, 255, 0.95);
 
-    // Glowing border effect
+    // Sharp border effect (no blur, only offset) + glow
     box-shadow:
-      0 0 0 1px var(--hi-color-primary),
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.4)),
-      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
-  }
+      0 0 0 2px var(--hi-color-primary),
+      0 0 8px var(--hi-glow-color);
 
-  // Hover state
-  &:hover:not(:focus) {
-    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
-    box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2));
+    // Active state: add additional glow on top of focus shadow
+    &:active {
+      box-shadow:
+        0 0 0 2px var(--hi-color-primary),
+        0 0 12px var(--hi-glow-color);
+    }
   }
 
   // Disabled state
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255,255,255, 0.5);
   }
 
   // Error state
@@ -82,8 +70,7 @@
     &:focus {
       box-shadow:
         0 0 0 1px var(--hi-color-danger),
-        0 0 12px rgba(239, 68, 68, 0.4),
-        inset 0 0 8px rgba(239, 68, 68, 0.1);
+        0 0 12px var(--hi-glow-color);
     }
   }
 
@@ -94,8 +81,7 @@
     &:focus {
       box-shadow:
         0 0 0 1px var(--hi-color-success),
-        0 0 12px rgba(16, 185, 129, 0.4),
-        inset 0 0 8px rgba(16, 185, 129, 0.1);
+        0 0 12px var(--hi-glow-color);
     }
   }
 }
@@ -111,10 +97,9 @@
   width: 100%;
   max-width: 320px;
 
-  // Light acrylic background
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(vars.$hikari-acrylic-blur);
-  -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  // Acrylic background effect with theme support
+  background: var(--hi-color-surface);
+  backdrop-filter: blur(4px);
 
   border-radius: vars.$hikari-radius-fui-sm;
   border: 1px solid var(--hi-color-border);
@@ -124,18 +109,31 @@
 
   // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
-  &:hover {
-    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
-    box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2));
-  }
-
   &:focus-within {
     border-color: var(--hi-color-primary);
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--hi-color-surface);
+
+    // Sharp border effect (no blur, only offset) + glow - inherits border-radius
     box-shadow:
-      0 0 0 1px var(--hi-color-primary),
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.4)),
-      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
+      0 0 0 2px var(--hi-color-primary),
+      0 0 8px var(--hi-glow-color);
+
+    // Active state: add additional glow on top of focus shadow
+    &:active {
+      box-shadow:
+        0 0 0 2px var(--hi-color-primary),
+        0 0 12px var(--hi-glow-color);
+    }
+
+    // Ensure inner input doesn't override wrapper's box-shadow
+    .hi-input:focus {
+      box-shadow: none;
+    }
+
+    // Ensure inner input active state doesn't override wrapper's box-shadow
+    .hi-input:focus:active {
+      box-shadow: none;
+    }
   }
 
   .hi-input {
@@ -189,8 +187,7 @@
 
   &:hover {
     color: var(--hi-color-text-primary);
-    background: rgba(239, 68, 68, 0.2);
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+    background: rgba(255, 76, 0, 0.2);
   }
 }
 
@@ -217,7 +214,6 @@
 
     &:hover {
       color: var(--hi-color-primary);
-      text-shadow: 0 0 8px var(--hi-color-primary);
     }
   }
 }
@@ -235,7 +231,6 @@
 
     &:hover {
       color: var(--hi-color-primary);
-      text-shadow: 0 0 8px var(--hi-color-primary);
     }
   }
 }
@@ -417,10 +412,10 @@
     border-radius: inherit;
     opacity: var(--spotlight-opacity, 0);
 
-    // Blue radial gradient spotlight positioned by CSS variables
+    // Primary color radial gradient spotlight positioned by CSS variables
     background-image: radial-gradient(
       circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
-      rgba(59, 130, 246, 0.5) 0%,
+      var(--hi-color-primary) 0%,
       transparent 70%
     );
 

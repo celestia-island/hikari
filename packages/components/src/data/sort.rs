@@ -5,6 +5,7 @@ use dioxus::prelude::*;
 
 pub use super::column::ColumnDef;
 use crate::styled::StyledComponent;
+use palette::classes::{ClassesBuilder, SortClass};
 
 /// Sort component wrapper (for StyledComponent)
 pub struct SortComponent;
@@ -106,8 +107,13 @@ pub fn Sort(props: SortProps) -> Element {
 
     let has_active_sort = props.direction != SortDirection::None;
 
+    let container_classes = ClassesBuilder::new()
+        .add(SortClass::Sort)
+        .add_raw(&props.class)
+        .build();
+
     rsx! {
-        div { class: format!("hi-sort {}", props.class),
+        div { class: "{container_classes}",
 
             {props.columns.iter().filter(|column| column.sortable).map(|column| {
                 let column_key = column.column_key.clone();
@@ -118,13 +124,14 @@ pub fn Sort(props: SortProps) -> Element {
                 let sort_direction = current_direction.clone();
                 let sort_handler = on_sort_handler.clone();
 
+                let button_classes = ClassesBuilder::new()
+                    .add(SortClass::SortButton)
+                    .add_if(SortClass::SortActive, || is_active)
+                    .build();
+
                 rsx! {
                     button {
-                        class: if is_active {
-                            "hi-sort-button hi-sort-active"
-                        } else {
-                            "hi-sort-button"
-                        },
+                        class: "{button_classes}",
                         onclick: move |_| {
                             let new_direction = if sort_column == column_key {
                                 sort_direction.toggle()
@@ -140,11 +147,11 @@ pub fn Sort(props: SortProps) -> Element {
                             }
                         },
 
-                        span { class: "hi-sort-title",
+                        span { class: "{SortClass::SortTitle}",
                             {column.title.clone()}
                         }
 
-                        span { class: "hi-sort-indicator",
+                        span { class: "{SortClass::SortIndicator}",
                             {if is_active {
                                 props.direction.icon()
                             } else {
@@ -157,13 +164,13 @@ pub fn Sort(props: SortProps) -> Element {
 
             if has_active_sort {
                 button {
-                    class: "hi-sort-clear",
+                    class: "{SortClass::SortClear}",
                     onclick: handle_clear,
 
-                    span { class: "hi-sort-clear-text", "Clear" }
+                    span { class: "{SortClass::SortClearText}", "Clear" }
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: "hi-sort-clear-icon",
+                        class: "{SortClass::SortClearIcon}",
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,

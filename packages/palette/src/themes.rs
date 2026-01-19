@@ -40,6 +40,130 @@ pub struct Palette {
     pub text_secondary: ChineseColor,
 }
 
+impl Palette {
+    /// Get contrast color for a button variant color (for glow effects)
+    ///
+    /// Returns rgba string for contrast color (black or white) with 0.9 opacity
+    ///
+    /// Note: For ghost/transparent buttons, use `ghost_glow_color()` instead
+    /// Note: Actual glow colors are defined in CSS (base.scss)
+    ///       based on button color brightness only (theme-independent)
+    ///
+    /// # Arguments
+    /// * `variant_color` - The button color to get contrast for
+    ///
+    /// # Examples
+    /// ```
+    /// use hikari_palette::*;
+    ///
+    /// let palette = Hikari::palette();
+    /// // Returns dynamic opacity based on button brightness (theme-independent)
+    /// let contrast = palette.button_glow_color(&palette.primary);
+    /// // e.g., "rgba(0, 0, 0, 0.7)" for pink, "rgba(255, 255, 255, 0.6)" for indigo
+    /// ```
+    pub fn button_glow_color(&self, color: &ChineseColor) -> String {
+        // Use the color's glow contrast method (theme-independent)
+        // Dynamic opacity based on contrast between button and glow color
+        color.glow_contrast_dynamic_rgba()
+    }
+
+    /// Get contrast color for ghost buttons (text color and border)
+    ///
+    /// Returns rgba string for 90% opacity
+    ///
+    /// # Examples
+    /// ```
+    /// use hikari_palette::*;
+    ///
+    /// let hikari = Hikari::palette();
+    /// // hikari is light mode, ghost uses black text
+    /// let text_color = hikari.ghost_text_color(0.9);
+    /// // "rgba(0, 0, 0, 0.9)"
+    ///
+    /// let tairitsu = Tairitsu::palette();
+    /// // tairitsu is dark mode, ghost uses white text
+    /// let text_color = tairitsu.ghost_text_color(0.9);
+    /// // "rgba(255, 255, 255, 0.9)"
+    /// ```
+    pub fn ghost_text_color(&self, alpha: f64) -> String {
+        let color = match self.mode {
+            ThemeMode::Light => ChineseColor::from_rgb(0, 0, 0),
+            ThemeMode::Dark => ChineseColor::from_rgb(255, 255, 255),
+        };
+        color.rgba(alpha)
+    }
+
+    /// Get ghost border color (low opacity)
+    ///
+    /// # Examples
+    /// ```
+    /// use hikari_palette::*;
+    ///
+    /// let palette = Hikari::palette();
+    /// let border = palette.ghost_border_color(0.2);
+    /// // "rgba(0, 0, 0, 0.2)"
+    /// ```
+    pub fn ghost_border_color(&self, alpha: f64) -> String {
+        let color = match self.mode {
+            ThemeMode::Light => ChineseColor::from_rgb(0, 0, 0),
+            ThemeMode::Dark => ChineseColor::from_rgb(255, 255, 255),
+        };
+        color.rgba(alpha)
+    }
+
+    /// Get glow color for ghost buttons
+    ///
+    /// # Examples
+    /// ```
+    /// use hikari_palette::*;
+    ///
+    /// let hikari = Hikari::palette();
+    /// let glow = hikari.ghost_glow_color(0.8);
+    /// // "rgba(0, 0, 0, 0.8)"
+    ///
+    /// let tairitsu = Tairitsu::palette();
+    /// let glow = tairitsu.ghost_glow_color(0.8);
+    /// // "rgba(255, 255, 255, 0.8)"
+    /// ```
+    pub fn ghost_glow_color(&self, alpha: f64) -> String {
+        let color = match self.mode {
+            ThemeMode::Light => ChineseColor::from_rgb(0, 0, 0),
+            ThemeMode::Dark => ChineseColor::from_rgb(255, 255, 255),
+        };
+        color.rgba(alpha)
+    }
+
+    /// Get focus brightness filter value for a button variant color
+    ///
+    /// Returns "1.2" for dark buttons (to brighten on focus)
+    /// Returns "0.8" for light buttons (to dim on focus)
+    ///
+    /// This matches the glow color selection logic:
+    /// - Dark colors (< 0.4 brightness) need to be brighter on focus
+    /// - Light colors (>= 0.4 brightness) need to be darker on focus
+    ///
+    /// # Examples
+    /// ```
+    /// use hikari_palette::*;
+    ///
+    /// let hikari = Hikari::palette();
+    /// let primary_brightness = hikari.focus_brightness_filter(&hikari.primary);
+    /// // "0.8" (primary is light, should dim on focus)
+    ///
+    /// let tairitsu = Tairitsu::palette();
+    /// let secondary_brightness = tairitsu.focus_brightness_filter(&tairitsu.secondary);
+    /// // "1.2" (secondary is dark, should brighten on focus)
+    /// ```
+    pub fn focus_brightness_filter(&self, color: &ChineseColor) -> String {
+        let brightness = color.brightness();
+        if brightness < 0.4 {
+            "1.2".to_string() // Dark button: brighten on focus
+        } else {
+            "0.8".to_string() // Light button: dim on focus
+        }
+    }
+}
+
 /// Hikari theme - Light theme (光)
 ///
 /// Represents light and brightness. This is the default light theme
@@ -52,7 +176,7 @@ impl Hikari {
         Palette {
             mode: ThemeMode::Light,
             primary: 粉红,      // 粉红色系 (255, 179, 167)
-            secondary: 靛青,    // 蓝色系 (23, 124, 176) - 互补色
+            secondary: 靛蓝,    // 蓝色系 (6, 82, 121) - 互补色
             accent: 姜黄,       // 黄色系
             success: 葱倩,      // 绿色系
             warning: 鹅黄,      // 黄色系
@@ -307,4 +431,70 @@ mod tests {
         let updated_retrieved = registry.get("custom").unwrap();
         assert_eq!(updated_retrieved.mode, ThemeMode::Dark);
     }
+}
+
+#[test]
+fn test_palette_button_glow() {
+    let hikari = Hikari::palette();
+    let tairitsu = Tairitsu::palette();
+
+    // hikari Primary (粉红 - brightness 0.79) should get black glow
+    // Contrast: |0.79 - 0.0| = 0.79 > 0.7, alpha = 0.7
+    let hikari_primary_glow = hikari.button_glow_color(&hikari.primary);
+    assert_eq!(hikari_primary_glow, "rgba(0, 0, 0, 0.7)");
+
+    // tairitsu Primary (靛蓝 - brightness 0.25) should get white glow
+    // Contrast: |0.25 - 1.0| = 0.75 > 0.7, alpha = 0.7
+    let tairitsu_primary_glow = tairitsu.button_glow_color(&tairitsu.primary);
+    assert_eq!(tairitsu_primary_glow, "rgba(255, 255, 255, 0.7)");
+
+    // hikari Secondary (靛蓝 - brightness 0.25) should get white glow
+    // Contrast: |0.25 - 1.0| = 0.75 > 0.7, alpha = 0.7
+    let hikari_secondary_glow = hikari.button_glow_color(&hikari.secondary);
+    assert_eq!(hikari_secondary_glow, "rgba(255, 255, 255, 0.7)");
+
+    // tairitsu Secondary (粉红 - brightness 0.79) should get black glow
+    // Contrast: |0.79 - 0.0| = 0.79 > 0.7, alpha = 0.7
+    let tairitsu_secondary_glow = tairitsu.button_glow_color(&tairitsu.secondary);
+    assert_eq!(tairitsu_secondary_glow, "rgba(0, 0, 0, 0.7)");
+
+    // Success (葱倩 - brightness 0.47) should get black glow
+    // Contrast: |0.47 - 0.0| = 0.47 < 0.5, alpha = 0.5
+    let success_glow = hikari.button_glow_color(&hikari.success);
+    assert_eq!(success_glow, "rgba(0, 0, 0, 0.5)");
+
+    // Danger (朱红 - brightness 0.47) should get black glow
+    // Contrast: |0.47 - 0.0| = 0.47 < 0.5, alpha = 0.5
+    let danger_glow = hikari.button_glow_color(&hikari.danger);
+    assert_eq!(danger_glow, "rgba(0, 0, 0, 0.5)");
+
+    // tairitsu Success (葱倩 - brightness 0.47) should get black glow
+    let tairitsu_success_glow = tairitsu.button_glow_color(&tairitsu.success);
+    assert_eq!(tairitsu_success_glow, "rgba(0, 0, 0, 0.5)");
+
+    // tairitsu Danger (朱红 - brightness 0.47) should get black glow
+    let tairitsu_danger_glow = tairitsu.button_glow_color(&tairitsu.danger);
+    assert_eq!(tairitsu_danger_glow, "rgba(0, 0, 0, 0.5)");
+}
+
+#[test]
+fn test_palette_ghost_colors() {
+    let hikari = Hikari::palette();
+    let tairitsu = Tairitsu::palette();
+
+    // hikari ghost text should be black
+    let hikari_ghost_text = hikari.ghost_text_color(0.9);
+    assert_eq!(hikari_ghost_text, "rgba(0, 0, 0, 0.9)");
+
+    // tairitsu ghost text should be white
+    let tairitsu_ghost_text = tairitsu.ghost_text_color(0.9);
+    assert_eq!(tairitsu_ghost_text, "rgba(255, 255, 255, 0.9)");
+
+    // hikari ghost glow should be black with low opacity
+    let hikari_ghost_glow = hikari.ghost_glow_color(0.2);
+    assert_eq!(hikari_ghost_glow, "rgba(0, 0, 0, 0.2)");
+
+    // tairitsu ghost glow should be white
+    let tairitsu_ghost_glow = tairitsu.ghost_glow_color(0.8);
+    assert_eq!(tairitsu_ghost_glow, "rgba(255, 255, 255, 0.8)");
 }

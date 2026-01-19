@@ -4,6 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
+use palette::classes::{ClassesBuilder, FilterClass};
 
 /// Filter component wrapper (for StyledComponent)
 pub struct FilterComponent;
@@ -90,21 +91,27 @@ pub fn Filter(props: FilterProps) -> Element {
         is_open.set(false);
     };
 
-    rsx! {
-        div { class: format!("hi-filter {}", props.class),
+    let container_classes = ClassesBuilder::new()
+        .add(FilterClass::Filter)
+        .add_raw(&props.class)
+        .build();
 
-            div { class: "hi-filter-container",
+    let trigger_classes = ClassesBuilder::new()
+        .add(FilterClass::FilterTrigger)
+        .add_if(FilterClass::FilterActive, || active_count > 0)
+        .build();
+
+    rsx! {
+        div { class: "{container_classes}",
+
+            div { class: "{FilterClass::FilterContainer}",
                 button {
-                    class: if active_count > 0 {
-                        "hi-filter-trigger hi-filter-active"
-                    } else {
-                        "hi-filter-trigger"
-                    },
+                    class: "{trigger_classes}",
                     onclick: handle_toggle,
 
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: "hi-filter-icon",
+                        class: "{FilterClass::FilterIcon}",
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,
@@ -117,14 +124,14 @@ pub fn Filter(props: FilterProps) -> Element {
                     }
 
                     if active_count > 0 {
-                        span { class: "hi-filter-badge",
+                        span { class: "{FilterClass::FilterBadge}",
                             "{active_count}"
                         }
                     }
 
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: "hi-filter-dropdown-icon",
+                        class: "{FilterClass::FilterDropdownIcon}",
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,
@@ -135,24 +142,24 @@ pub fn Filter(props: FilterProps) -> Element {
             }
 
             if is_open() {
-                div { class: "hi-filter-dropdown",
+                div { class: "{FilterClass::FilterDropdown}",
                     onclick: close_dropdown,
 
-                    div { class: "hi-filter-header",
-                        span { class: "hi-filter-title",
+                    div { class: "{FilterClass::FilterHeader}",
+                        span { class: "{FilterClass::FilterTitle}",
                             "{props.column}"
                         }
 
                         if active_count > 0 {
                             button {
-                                class: "hi-filter-clear-btn",
+                                class: "{FilterClass::FilterClearBtn}",
                                 onclick: handle_clear,
                                 "Clear"
                             }
                         }
                     }
 
-                    div { class: "hi-filter-options",
+                    div { class: "{FilterClass::FilterOptions}",
                         {props.filters.iter().map(|option| {
                             let opt_value = option.value.clone();
                             let label_text = option.label.clone();
@@ -160,16 +167,16 @@ pub fn Filter(props: FilterProps) -> Element {
 
                             rsx! {
                                 label {
-                                    class: "hi-filter-option",
+                                    class: "{FilterClass::FilterOption}",
                                     onclick: move |_| handle_select(opt_value.clone()),
 
                                     input {
-                                        class: "hi-filter-checkbox",
+                                        class: "{FilterClass::FilterCheckbox}",
                                         r#type: "checkbox",
                                         checked: checked,
                                     }
 
-                                    span { class: "hi-filter-label",
+                                    span { class: "{FilterClass::FilterLabel}",
                                         "{label_text}"
                                     }
                                 }
@@ -177,8 +184,8 @@ pub fn Filter(props: FilterProps) -> Element {
                         })}
                     }
 
-                    div { class: "hi-filter-footer",
-                        span { class: "hi-filter-hint",
+                    div { class: "{FilterClass::FilterFooter}",
+                        span { class: "{FilterClass::FilterHint}",
                             if active_count > 0 {
                                 "{active_count} selected"
                             } else {

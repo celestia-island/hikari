@@ -4,6 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
+use palette::classes::{ClassesBuilder, TooltipClass};
 
 /// Tooltip 组件的类型包装器（用于实现 StyledComponent）
 pub struct TooltipComponent;
@@ -71,36 +72,51 @@ impl Default for TooltipProps {
 #[component]
 pub fn Tooltip(props: TooltipProps) -> Element {
     let placement_class = match props.placement {
-        TooltipPlacement::Top => "hi-tooltip-top",
-        TooltipPlacement::Bottom => "hi-tooltip-bottom",
-        TooltipPlacement::Left => "hi-tooltip-left",
-        TooltipPlacement::Right => "hi-tooltip-right",
+        TooltipPlacement::Top => TooltipClass::TooltipTop,
+        TooltipPlacement::Bottom => TooltipClass::TooltipBottom,
+        TooltipPlacement::Left => TooltipClass::TooltipLeft,
+        TooltipPlacement::Right => TooltipClass::TooltipRight,
     };
 
     let arrow_class = match props.placement {
-        TooltipPlacement::Top => "hi-tooltip-arrow-top",
-        TooltipPlacement::Bottom => "hi-tooltip-arrow-bottom",
-        TooltipPlacement::Left => "hi-tooltip-arrow-left",
-        TooltipPlacement::Right => "hi-tooltip-arrow-right",
+        TooltipPlacement::Top => TooltipClass::TooltipArrowTop,
+        TooltipPlacement::Bottom => TooltipClass::TooltipArrowBottom,
+        TooltipPlacement::Left => TooltipClass::TooltipArrowLeft,
+        TooltipPlacement::Right => TooltipClass::TooltipArrowRight,
     };
+
+    let wrapper_classes = ClassesBuilder::new()
+        .add(TooltipClass::TooltipWrapper)
+        .add_raw(&props.class)
+        .build();
+
+    let tooltip_classes = ClassesBuilder::new()
+        .add(TooltipClass::Tooltip)
+        .add(placement_class)
+        .build();
+
+    let arrow_classes = ClassesBuilder::new()
+        .add(TooltipClass::TooltipArrow)
+        .add(arrow_class)
+        .build();
 
     rsx! {
         div {
-            class: format!("hi-tooltip-wrapper {}", props.class),
+            class: "{wrapper_classes}",
 
             div {
-                class: "hi-tooltip-trigger",
+                class: "TooltipClass::TooltipTrigger.as_class()",
                 { props.children }
             }
 
             div {
-                class: format!("hi-tooltip {placement_class}"),
+                class: "{tooltip_classes}",
 
-                div { class: "hi-tooltip-content",
+                div { class: "TooltipClass::TooltipContent.as_class()",
                     "{props.content}"
 
                     if props.arrow {
-                        div { class: format!("hi-tooltip-arrow {arrow_class}") }
+                        div { class: "{arrow_classes}" }
                     }
                 }
             }

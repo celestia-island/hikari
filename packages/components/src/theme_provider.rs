@@ -145,6 +145,42 @@ pub struct ThemePalette {
     pub border_light: String,
     /// Border color for ghost button (uses primary color)
     pub border_ghost: String,
+
+    // Button glow colors (black/white with dynamic opacity)
+    /// Glow color for primary button (calculated from button color brightness)
+    pub glow_button_primary: String,
+    /// Glow color for secondary button
+    pub glow_button_secondary: String,
+    /// Glow color for success button
+    pub glow_button_success: String,
+    /// Glow color for danger button
+    pub glow_button_danger: String,
+    /// Glow color for warning button
+    pub glow_button_warning: String,
+    /// Glow color for info button
+    pub glow_button_info: String,
+
+    // Ghost button colors (theme-dependent)
+    /// Ghost text color (black in light mode, white in dark mode)
+    pub ghost_text: String,
+    /// Ghost border color (based on primary color)
+    pub ghost_border: String,
+    /// Ghost glow color (black in light mode, white in dark mode)
+    pub ghost_glow: String,
+
+    // Button focus brightness (for filter effect)
+    /// Focus brightness for primary button (1.2 or 0.8 based on contrast)
+    pub focus_brightness_primary: String,
+    /// Focus brightness for secondary button
+    pub focus_brightness_secondary: String,
+    /// Focus brightness for success button
+    pub focus_brightness_success: String,
+    /// Focus brightness for danger button
+    pub focus_brightness_danger: String,
+    /// Focus brightness for warning button
+    pub focus_brightness_warning: String,
+    /// Focus brightness for info button
+    pub focus_brightness_info: String,
 }
 
 impl ThemePalette {
@@ -189,8 +225,29 @@ impl ThemePalette {
             text_color_on_ghost: palette.primary.hex(),
 
             // Button border colors
-            border_light: "rgba(255, 255, 255, 0.2)".to_string(),
+            border_light: "rgba(255,255,255, 0.2)".to_string(),
             border_ghost: palette.primary.hex(),
+
+            // Button glow colors (black/white with dynamic opacity)
+            glow_button_primary: palette.button_glow_color(&palette.primary),
+            glow_button_secondary: palette.button_glow_color(&palette.secondary),
+            glow_button_danger: palette.button_glow_color(&palette.danger),
+            glow_button_success: palette.button_glow_color(&palette.success),
+            glow_button_warning: palette.button_glow_color(&palette.warning),
+            glow_button_info: palette.button_glow_color(&palette.accent),
+
+            // Ghost button colors (theme-dependent)
+            ghost_text: palette.ghost_text_color(1.0),
+            ghost_border: palette.ghost_border_color(0.4),
+            ghost_glow: palette.ghost_glow_color(0.5),
+
+            // Button focus brightness (based on button color brightness)
+            focus_brightness_primary: palette.focus_brightness_filter(&palette.primary),
+            focus_brightness_secondary: palette.focus_brightness_filter(&palette.secondary),
+            focus_brightness_danger: palette.focus_brightness_filter(&palette.danger),
+            focus_brightness_success: palette.focus_brightness_filter(&palette.success),
+            focus_brightness_warning: palette.focus_brightness_filter(&palette.warning),
+            focus_brightness_info: palette.focus_brightness_filter(&palette.accent),
         }
     }
 
@@ -242,77 +299,98 @@ impl ThemePalette {
         if let Some(color) = text_secondary {
             self.text_secondary = color;
         }
+
         self
     }
 
     /// Generate CSS variables string for inline styles
-    fn css_variables(&self) -> String {
-        format!(
-            "--hi-primary: {}; \
-             --hi-secondary: {}; \
-             --hi-accent: {}; \
-             --hi-success: {}; \
-             --hi-warning: {}; \
-             --hi-danger: {}; \
-             --hi-background: {}; \
-             --hi-surface: {}; \
-             --hi-border: {}; \
-             --hi-text-primary: {}; \
-             --hi-text-secondary: {}; \
-             --hi-button-primary: {}; \
-             --hi-button-primary-dark: {}; \
-             --hi-button-primary-light: {}; \
-             --hi-button-secondary: {}; \
-             --hi-button-secondary-dark: {}; \
-             --hi-button-secondary-light: {}; \
-             --hi-button-danger: {}; \
-             --hi-button-danger-dark: {}; \
-             --hi-button-danger-light: {}; \
-             --hi-button-success: {}; \
-             --hi-button-success-dark: {}; \
-             --hi-button-success-light: {}; \
-             --hi-button-icon-on-dark: {}; \
-             --hi-button-icon-on-light: {}; \
-             --hi-color-text-on-primary: {}; \
-             --hi-color-text-on-secondary: {}; \
-             --hi-color-text-on-danger: {}; \
-             --hi-color-text-on-success: {}; \
-             --hi-color-text-on-ghost: {}; \
-             --hi-color-border-ghost: {}; \
-             --hi-border-light: {};",
-            self.primary,
-            self.secondary,
-            self.accent,
-            self.success,
-            self.warning,
-            self.danger,
-            self.background,
-            self.surface,
-            self.border,
-            self.text_primary,
-            self.text_secondary,
-            self.button_primary,
-            self.button_primary_dark,
-            self.button_primary_light,
-            self.button_secondary,
-            self.button_secondary_dark,
-            self.button_secondary_light,
-            self.button_danger,
-            self.button_danger_dark,
-            self.button_danger_light,
-            self.button_success,
-            self.button_success_dark,
-            self.button_success_light,
-            self.button_icon_on_dark,
-            self.button_icon_on_light,
-            self.text_color_on_primary,
-            self.text_color_on_secondary,
-            self.text_color_on_danger,
-            self.text_color_on_success,
-            self.text_color_on_ghost,
-            self.border_ghost,
-            self.border_light
-        )
+    pub fn css_variables(&self) -> String {
+        [
+            format!("--hi-primary: {};", self.primary),
+            format!("--hi-secondary: {};", self.secondary),
+            format!("--hi-accent: {};", self.accent),
+            format!("--hi-success: {};", self.success),
+            format!("--hi-warning: {};", self.warning),
+            format!("--hi-danger: {};", self.danger),
+            format!("--hi-background: {};", self.background),
+            format!("--hi-surface: {};", self.surface),
+            format!("--hi-border: {};", self.border),
+            format!("--hi-text-primary: {};", self.text_primary),
+            format!("--hi-text-secondary: {};", self.text_secondary),
+            format!("--hi-button-primary: {};", self.button_primary),
+            format!("--hi-button-primary-dark: {};", self.button_primary_dark),
+            format!("--hi-button-primary-light: {};", self.button_primary_light),
+            format!("--hi-button-secondary: {};", self.button_secondary),
+            format!(
+                "--hi-button-secondary-dark: {};",
+                self.button_secondary_dark
+            ),
+            format!(
+                "--hi-button-secondary-light: {};",
+                self.button_secondary_light
+            ),
+            format!("--hi-button-danger: {};", self.button_danger),
+            format!("--hi-button-danger-dark: {};", self.button_danger_dark),
+            format!("--hi-button-danger-light: {};", self.button_danger_light),
+            format!("--hi-button-success: {};", self.button_success),
+            format!("--hi-button-success-dark: {};", self.button_success_dark),
+            format!("--hi-button-success-light: {};", self.button_success_light),
+            format!("--hi-button-icon-on-dark: {};", self.button_icon_on_dark),
+            format!("--hi-button-icon-on-light: {};", self.button_icon_on_light),
+            format!(
+                "--hi-color-text-on-primary: {};",
+                self.text_color_on_primary
+            ),
+            format!(
+                "--hi-color-text-on-secondary: {};",
+                self.text_color_on_secondary
+            ),
+            format!("--hi-color-text-on-danger: {};", self.text_color_on_danger),
+            format!(
+                "--hi-color-text-on-success: {};",
+                self.text_color_on_success
+            ),
+            format!("--hi-color-text-on-ghost: {};", self.text_color_on_ghost),
+            format!("--hi-color-border-ghost: {};", self.border_ghost),
+            format!("--hi-border-light: {};", self.border_light),
+            format!("--hi-glow-button-primary: {};", self.glow_button_primary),
+            format!(
+                "--hi-glow-button-secondary: {};",
+                self.glow_button_secondary
+            ),
+            format!("--hi-glow-button-danger: {};", self.glow_button_danger),
+            format!("--hi-glow-button-success: {};", self.glow_button_success),
+            format!("--hi-glow-button-warning: {};", self.glow_button_warning),
+            format!("--hi-glow-button-info: {};", self.glow_button_info),
+            format!("--hi-ghost-text: {};", self.ghost_text),
+            format!("--hi-ghost-border: {};", self.ghost_border),
+            format!("--hi-ghost-glow: {};", self.ghost_glow),
+            format!(
+                "--hi-focus-brightness-primary: {};",
+                self.focus_brightness_primary
+            ),
+            format!(
+                "--hi-focus-brightness-secondary: {};",
+                self.focus_brightness_secondary
+            ),
+            format!(
+                "--hi-focus-brightness-danger: {};",
+                self.focus_brightness_danger
+            ),
+            format!(
+                "--hi-focus-brightness-success: {};",
+                self.focus_brightness_success
+            ),
+            format!(
+                "--hi-focus-brightness-warning: {};",
+                self.focus_brightness_warning
+            ),
+            format!(
+                "--hi-focus-brightness-info: {};",
+                self.focus_brightness_info
+            ),
+        ]
+        .join(" ")
     }
 }
 

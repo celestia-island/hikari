@@ -4,10 +4,9 @@
 use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
+use palette::classes::{components::MenuClass, ClassesBuilder};
 
 /// Menu 组件的类型包装器（用于实现 StyledComponent）
-pub struct MenuComponent;
-
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum MenuMode {
     #[default]
@@ -187,17 +186,26 @@ pub fn Menu(props: MenuProps) -> Element {
         MenuMode::Vertical => "hi-menu-vertical",
         MenuMode::Horizontal => "hi-menu-horizontal",
     };
-    let inline_class = if props.inline { "hi-menu-inline" } else { "" };
+
+    let menu_classes = ClassesBuilder::new()
+        .add(MenuClass::Menu)
+        .add_if(MenuClass::Inline, || props.inline)
+        .add_raw(&mode_class)
+        .add_raw(&props.class)
+        .build();
 
     rsx! {
         ul {
-            class: format!("hi-menu {mode_class} {inline_class} {}", props.class),
+            class: "{menu_classes}",
             role: "menu",
 
             { props.children }
         }
     }
 }
+
+/// Menu 组件的类型包装器（用于实现 StyledComponent）
+pub struct MenuComponent;
 
 impl StyledComponent for MenuComponent {
     fn styles() -> &'static str {
@@ -240,9 +248,22 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
 pub fn SubMenu(props: SubMenuProps) -> Element {
     let mut is_open = use_signal(|| false);
 
+    let submenu_classes = ClassesBuilder::new()
+        .add(MenuClass::Submenu)
+        .add_raw(&props.class)
+        .build();
+
+    let arrow_classes = ClassesBuilder::new()
+        .add_if(MenuClass::SubmenuArrowOpen, || *is_open.read())
+        .build();
+
+    let list_classes = ClassesBuilder::new()
+        .add_if(MenuClass::SubmenuListOpen, || *is_open.read())
+        .build();
+
     rsx! {
         li {
-            class: format!("hi-menu-submenu {}", props.class),
+            class: "{submenu_classes}",
             role: "none",
             "data-key": "{props.item_key}",
 
@@ -262,13 +283,13 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
                 span { class: "hi-menu-item-content", "{props.title}" }
 
                 span {
-                    class: format!("hi-menu-submenu-arrow {}", if is_open() { "open" } else { "" }),
+                    class: "{arrow_classes}",
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
                         view_box: "0 0 24 24",
                         fill: "none",
                         stroke: "currentColor",
-                        "stroke-width": "2",
+                        "stroke-width": "0",
                         "stroke-linecap": "round",
                         "stroke-linejoin": "round",
                         path {
@@ -279,7 +300,7 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
             }
 
             ul {
-                class: format!("hi-menu-submenu-list {}", if is_open() { "open" } else { "" }),
+                class: "{list_classes}",
                 role: "menu",
                 "aria-hidden": "{!is_open()}",
 

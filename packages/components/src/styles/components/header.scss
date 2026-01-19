@@ -3,8 +3,7 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Header Component - FUI Styling
-// Design: Arknights + Future UI (FUI) aesthetics
+// Hikari Header Component
 // Features: Glass/acrylic effects, bottom accent bar, glow effects
 // ============================================
 
@@ -32,8 +31,7 @@
 
   // Semi-transparent surface background (theme-aware)
   background: var(--hi-surface);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
 
   // Simple border
   border-bottom: 1px solid var(--hi-border);
@@ -67,11 +65,12 @@
   // Scrolled state (applied via JS)
   &.hi-header-scrolled {
     background: var(--hi-card-bg, rgba(45, 45, 45, 0.98));
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
+    backdrop-filter: blur(4px);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-card-bg, rgba(45, 45, 45, 0.98));
     box-shadow:
       0 8px 24px rgba(23, 89, 168, 0.25),
-      0 0 40px var(--hi-primary, rgba(123, 207, 166, 0.2));
+      0 0 40px var(--hi-glow-color);
 
     &::before {
       opacity: 1;
@@ -131,15 +130,17 @@
 
     // Glow effect
     border-radius: vars.$hikari-radius-fui-sm;
-    background: linear-gradient(135deg, var(--hi-primary, rgba(123, 207, 166, 0.2)), rgba(59, 130, 246, 0.2));
+    background: linear-gradient(135deg, var(--hi-primary), rgba(59, 130, 246, 0.2));
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-primary);
     box-shadow:
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.4)),
-      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2));
+      0 0 12px var(--hi-glow-color),
+      inset 0 0 8px var(--hi-glow-color);
 
     svg {
       width: 100%;
       height: 100%;
-      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.6)));
+      filter: drop-shadow(0 0 4px var(--hi-glow-color));
       // DISABLED - migrated to JS animation
 
       // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
@@ -148,12 +149,12 @@
     // Animation on hover
     .hi-header-logo:hover & {
       box-shadow:
-        0 0 20px var(--hi-primary, rgba(123, 207, 166, 0.6)),
-        inset 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
+        0 0 20px var(--hi-glow-color),
+        inset 0 0 12px var(--hi-glow-color);
       transform: scale(1.05);
 
       svg {
-        filter: drop-shadow(0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.8)));
+        filter: drop-shadow(0 0 8px var(--hi-glow-color));
       }
     }
   }
@@ -167,7 +168,9 @@
     letter-spacing: 0.02em;
 
     // Subtle text glow
-    text-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.4));
+    --hi-glow-transparent: true;
+    --hi-glow-bg-color: transparent;
+    text-shadow: 0 0 8px var(--hi-glow-color);
 
     // Truncate on small screens
     @include mix.mobile {
@@ -197,7 +200,9 @@
     color: var(--hi-color-text-primary);
 
     .hi-header-logo-text {
-      text-shadow: 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.6));
+      --hi-glow-transparent: true;
+      --hi-glow-bg-color: transparent;
+      text-shadow: 0 0 12px var(--hi-glow-color);
     }
   }
 }
@@ -239,13 +244,15 @@
     // Hover state
     &:hover {
       color: var(--hi-color-text-primary);
-      background: var(--hi-primary, rgba(123, 207, 166, 0.1));
+      background: var(--hi-primary);
     }
 
     // Active state
     &.hi-header-nav-item-active {
-      color: var(--hi-color-primary);
-      background: var(--hi-primary, rgba(123, 207, 166, 0.15));
+      color: var(--hi-color-text-primary);
+      background: var(--hi-primary);
+      --hi-glow-transparent: false;
+      --hi-glow-bg-color: var(--hi-primary);
 
       // Bottom accent line
       &::after {
@@ -256,7 +263,7 @@
         right: 1rem;
         height: 2px;
         background: var(--hi-color-primary);
-        box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.8));
+        box-shadow: 0 0 8px var(--hi-glow-color);
         border-radius: 1px;
       }
     }
@@ -316,14 +323,16 @@
   // Hover state
   &:hover {
     color: var(--hi-color-text-primary);
-    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
-    border-color: var(--hi-primary, rgba(123, 207, 166, 0.3));
+    background: var(--hi-primary);
+    border-color: var(--hi-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-primary);
     box-shadow:
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3)),
-      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
+      0 0 12px var(--hi-glow-color),
+      inset 0 0 8px var(--hi-glow-color);
 
     svg {
-      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.6)));
+      filter: drop-shadow(0 0 4px var(--hi-glow-color));
       transform: scale(1.1);
     }
   }
@@ -337,9 +346,11 @@
   &:focus-visible {
     outline: none;
     border-color: var(--hi-color-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-primary);
     box-shadow:
-      0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.3)),
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.4));
+      0 0 0 2px var(--hi-primary),
+      0 0 12px var(--hi-glow-color);
   }
 
   // Badge indicator
@@ -353,7 +364,7 @@
       height: 0.5rem;
       background: var(--hi-color-danger);
       border-radius: 50%;
-      box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
+      box-shadow: 0 0 6px rgba(255, 76, 0, 0.8);
       // DISABLED - migrated to JS animation
 
       // animation: header-badge-pulse 2s ease-in-out infinite;
@@ -397,7 +408,7 @@
     font-size: vars.$hikari-font-size-sm;
     color: var(--hi-color-text-primary);
     background: rgba(214, 236, 240, 0.5);
-    border: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.2));
+    border: 1px solid var(--hi-primary);
     border-radius: vars.$hikari-radius-fui-sm;
     outline: none;
     // DISABLED - migrated to JS animation
@@ -411,7 +422,7 @@
 
     // Hover state
     &:hover {
-      border-color: var(--hi-primary, rgba(123, 207, 166, 0.4));
+      border-color: var(--hi-primary);
       background: rgba(23, 89, 168, 0.2);
     }
 
@@ -419,9 +430,11 @@
     &:focus {
       border-color: var(--hi-color-primary);
       background: rgba(23, 89, 168, 0.25);
+      --hi-glow-transparent: false;
+      --hi-glow-bg-color: rgba(23, 89, 168, 0.25);
       box-shadow:
-        0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.2)),
-        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
+        0 0 0 2px var(--hi-primary),
+        0 0 12px var(--hi-glow-color);
     }
   }
 
@@ -471,8 +484,10 @@
     height: 2rem;
     border-radius: vars.$hikari-radius-fui-sm;
     object-fit: cover;
-    border: 2px solid var(--hi-primary, rgba(123, 207, 166, 0.3));
-    box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.4));
+    border: 2px solid var(--hi-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-color-surface);
+    box-shadow: 0 0 8px var(--hi-glow-color);
     // DISABLED - migrated to JS animation
 
     // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
@@ -525,17 +540,19 @@
 
   // Hover state
   &:hover {
-    background: var(--hi-primary, rgba(123, 207, 166, 0.1));
+    background: var(--hi-primary);
 
     .hi-header-user-avatar {
-      border-color: var(--hi-primary, rgba(123, 207, 166, 0.6));
-      box-shadow: 0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.6));
+      border-color: var(--hi-primary);
+      --hi-glow-transparent: false;
+      --hi-glow-bg-color: var(--hi-color-surface);
+      box-shadow: 0 0 16px var(--hi-glow-color);
     }
   }
 
   // Open state
   &.hi-header-user-open {
-    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
+    background: var(--hi-primary);
 
     .hi-header-user-arrow {
       transform: rotate(180deg);
@@ -639,15 +656,14 @@
 // Transparent variant
 .hi-header-transparent {
   background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   box-shadow: none;
   border-bottom: 1px solid transparent;
 
   &.hi-header-scrolled {
     background: var(--hi-card-bg, rgba(45, 45, 45, 0.95));
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(4px);
   }
 }
 
@@ -674,7 +690,7 @@
         order: 3;
         margin-top: 0.5rem;
         padding-top: 0.5rem;
-        border-top: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.2));
+        border-top: 1px solid var(--hi-primary);
       }
     }
   }
@@ -728,9 +744,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-left: 1rem;
   padding-left: 1rem;
-  border-left: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.2));
+  border-left: 1px solid var(--hi-primary);
 
   @include mix.mobile {
     display: none;

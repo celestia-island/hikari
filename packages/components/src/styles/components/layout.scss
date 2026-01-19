@@ -3,8 +3,7 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Layout Component - FUI Styling
-// Design: Arknights + Future UI (FUI) aesthetics
+// Hikari Layout Component
 // Features: Ambient patterns, grid effects, acrylic materials
 // ============================================
 
@@ -22,6 +21,40 @@
   position: relative;
   background: transparent;
   overflow: hidden;
+
+  // 兜底自定义滚动条（为全页面）
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hi-color-gray-40) var(--hi-color-gray-20);
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--hi-color-gray-20);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--hi-color-gray-40);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--hi-color-gray-50);
+    box-shadow: 0 0 12px var(--hi-color-gray-50);
+  }
+
+  &::-webkit-scrollbar-thumb:active {
+    background: var(--hi-color-white-20);
+    box-shadow: 0 0 16px var(--hi-color-white-20);
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 
   // Ensure content stays above background
   > * {
@@ -68,7 +101,7 @@
     background: var(--hi-card-bg, rgba(45, 45, 45, 0.98));
     box-shadow:
       0 8px 16px rgba(23, 89, 168, 0.25),
-      0 0 30px var(--hi-primary, rgba(123, 207, 166, 0.15));
+      0 0 30px var(--hi-primary);
   }
 }
 
@@ -93,19 +126,11 @@
   overflow-y: auto;
   overflow-x: hidden;
 
-  // Custom scrollbar with cool effects
-  @include mix.scrollbar;
-
   // Content padding - 减小间距
   padding: 0;
 
   // Transparent to let body gradient show through
   background: transparent;
-
-  // Transitions
-  // DISABLED - migrated to JS animation
-
-  // transition: background vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Responsive padding
   @include mix.mobile {
@@ -118,6 +143,41 @@
 
   @include mix.desktop {
     padding: vars.$hikari-spacing-xl;
+  }
+}
+
+// Custom scrollbar styles for layout content
+.hi-layout-content {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hi-color-gray-40) var(--hi-color-gray-20);
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--hi-color-gray-20);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--hi-color-gray-40);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--hi-color-gray-50);
+  }
+
+  &::-webkit-scrollbar-thumb:active {
+    background: var(--hi-color-white-20);
+    box-shadow: 0 0 16px var(--hi-color-white-20);
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }
 
@@ -377,7 +437,6 @@
       bottom: 0;
       background: rgba(23, 89, 168, 0.3);
       backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
       z-index: 199;
       opacity: 0;
       pointer-events: none;

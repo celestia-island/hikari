@@ -7,8 +7,7 @@ use crate::styled::StyledComponent;
 
 /// Tabs 组件的类型包装器（用于实现 StyledComponent）
 pub struct TabsComponent;
-
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
 pub enum TabPosition {
     #[default]
     Top,
@@ -277,16 +276,26 @@ impl StyledComponent for TabsComponent {
 /// Tab pane component
 #[component]
 pub fn TabPane(props: TabPaneProps) -> Element {
+    use palette::classes::{components::TabsClass, ClassesBuilder};
+
     let active_key = use_context::<Signal<String>>();
     let is_active = active_key() == props.item_key;
 
+    let tab_classes = ClassesBuilder::new()
+        .add(TabsClass::TabsTab)
+        .add_if(TabsClass::TabActive, || is_active)
+        .add_if(TabsClass::TabDisabled, || props.disabled)
+        .build();
+
+    let tabpane_classes = ClassesBuilder::new()
+        .add(TabsClass::TabsTabpane)
+        .add_if(TabsClass::TabpaneActive, || is_active)
+        .add_if(TabsClass::TabpaneInactive, || !is_active)
+        .build();
+
     rsx! {
         div {
-            class: format!(
-                "hi-tabs-tab {} {}",
-                if is_active { "hi-tabs-tab-active" } else { "" },
-                if props.disabled { "hi-tabs-tab-disabled" } else { "" }
-            ),
+            class: "{tab_classes}",
             role: "tab",
             "data-key": "{props.item_key}",
             "aria-selected": "{is_active}",
@@ -300,10 +309,7 @@ pub fn TabPane(props: TabPaneProps) -> Element {
         }
 
         div {
-            class: format!(
-                "hi-tabs-tabpane {}",
-                if is_active { "hi-tabs-tabpane-active" } else { "hi-tabs-tabpane-inactive" }
-            ),
+            class: "{tabpane_classes}",
             role: "tabpanel",
             "data-key": "{props.item_key}",
             "aria-hidden": "{!is_active}",

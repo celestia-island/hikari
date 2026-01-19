@@ -3,8 +3,10 @@
 
 use dioxus::prelude::*;
 
-use _animation::presets::{glow, neon, tech, transition, FUIColors};
-use _animation::style::{CssProperty, StyleStringBuilder};
+use _animation::{
+    presets::{glow, neon, tech, transition, FUIColors},
+    style::{CssProperty, StyleStringBuilder},
+};
 use _components::{
     basic::{Background, Button, ButtonSize, ButtonVariant},
     layout::{Container, Row, Section, Spacer},

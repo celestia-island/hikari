@@ -4,10 +4,9 @@
 use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
+use palette::classes::{components::TreeClass, ClassesBuilder};
 
 /// VirtualScroll component wrapper (for StyledComponent)
-pub struct VirtualScrollComponent;
-
 /// Tree node data structure
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct VirtualTreeNodeData {
@@ -135,12 +134,14 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
                     }).collect();
 
                     items_data.into_iter().map(|(id, title, disabled, idx, depth)| {
+                        let node_classes = ClassesBuilder::new()
+                            .add(TreeClass::VirtualTree)
+                            .add_if(TreeClass::NodeDisabled, || disabled)
+                            .build();
+
                         rsx! {
                             div {
-                                class: format!(
-                                    "hi-virtual-tree-node {}",
-                                    if disabled { "hi-tree-node-disabled" } else { "" }
-                                ),
+                                class: "{node_classes}",
                                 style: "position: absolute; top: {(idx as f64 * props.item_height as f64)}px; left: 0; right: 0; height: {props.item_height}px; padding-left: {(depth * 24)}px; display: flex; align-items: center;",
                                 "data-key": "{id}",
 

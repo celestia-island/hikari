@@ -41,18 +41,12 @@
 //!     .start_continuous_animation();
 //! ```
 
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::rc::Rc;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use wasm_bindgen::{closure::Closure, JsCast, JsValue};
+use wasm_bindgen::{JsCast, JsValue, closure::Closure};
 use web_sys::HtmlElement;
 
-use super::{
-    context::AnimationContext,
-    state::AnimationState,
-    style::{CssProperty, StyleBuilder},
-};
+use super::{context::AnimationContext, state::AnimationState, style::{CssProperty, StyleBuilder}};
 
 /// Enhanced dynamic value that can be computed at runtime
 ///

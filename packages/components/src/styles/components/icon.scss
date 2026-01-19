@@ -11,16 +11,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  
+
   // Default: inherit text color from theme
-  color: var(--hi-text-primary);
-  
-  // Ensure SVG elements inherit the color
+  color: var(--hi-color-text-primary);
+
+  // Ensure SVG elements inherit  color
   svg {
     width: 100%;
     height: 100%;
     fill: currentColor;
-    
+
     // Also apply color to paths, circles, rects, etc.
     path,
     circle,
@@ -80,37 +80,37 @@
 
 // Use theme primary color
 .hikari-icon-primary {
-  color: var(--hi-primary);
+  color: var(--hi-color-primary);
 }
 
 // Use theme secondary color
 .hikari-icon-secondary {
-  color: var(--hi-secondary);
+  color: var(--hi-color-secondary);
 }
 
 // Use theme accent color
 .hikari-icon-accent {
-  color: var(--hi-accent);
+  color: var(--hi-color-accent);
 }
 
 // Use theme success color
 .hikari-icon-success {
-  color: var(--hi-success);
+  color: var(--hi-color-success);
 }
 
 // Use theme warning color
 .hikari-icon-warning {
-  color: var(--hi-warning);
+  color: var(--hi-color-warning);
 }
 
 // Use theme danger color
 .hikari-icon-danger {
-  color: var(--hi-danger);
+  color: var(--hi-color-danger);
 }
 
 // Use secondary text color
 .hikari-icon-muted {
-  color: var(--hi-text-secondary);
+  color: var(--hi-color-text-secondary);
 }
 
 // ============================================

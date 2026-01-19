@@ -4,6 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
+use palette::classes::{ClassesBuilder, PaginationClass};
 
 /// Pagination component wrapper (for StyledComponent)
 pub struct PaginationComponent;
@@ -162,17 +163,22 @@ pub fn Pagination(props: PaginationProps) -> Element {
         }
     };
 
+    let container_classes = ClassesBuilder::new()
+        .add(PaginationClass::Pagination)
+        .add_raw(&props.class)
+        .build();
+
     rsx! {
-        div { class: format!("hi-pagination {}", props.class),
+        div { class: "{container_classes}",
 
             if props.show_total {
-                div { class: "hi-pagination-total",
+                div { class: "PaginationClass::PaginationTotal.as_class()",
                     "{start}-{end} of {total_items}"
                 }
             }
 
             if props.show_size_changer {
-                div { class: "hi-pagination-sizer",
+                div { class: "PaginationClass::PaginationSizer.as_class()",
                     select {
                         class: "hi-select hi-select-sm",
                         value: "{current_size}",
@@ -184,10 +190,10 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 }
             }
 
-            div { class: "hi-pagination-pages",
+            div { class: "PaginationClass::PaginationPages.as_class()",
 
                 button {
-                    class: "hi-pagination-prev",
+                    class: "PaginationClass::PaginationPrev.as_class()",
                     disabled: current_page() <= 1,
                     onclick: handle_prev,
                     svg {
@@ -204,16 +210,17 @@ pub fn Pagination(props: PaginationProps) -> Element {
                     let page_num = *page;
                     if page_num == 0 {
                         rsx! {
-                            span { class: "hi-pagination-ellipsis", "..." }
+                            span { class: "PaginationClass::PaginationEllipsis.as_class()", "..." }
                         }
                     } else {
+                        let item_classes = ClassesBuilder::new()
+                            .add(PaginationClass::PaginationItem)
+                            .add_if(PaginationClass::PaginationActive, || page_num == current_page())
+                            .build();
+
                         rsx! {
                             button {
-                                class: if page_num == current_page() {
-                                    "hi-pagination-item hi-pagination-active"
-                                } else {
-                                    "hi-pagination-item"
-                                },
+                                class: "{item_classes}",
                                 onclick: move |_| handle_page_change(page_num),
                                 "{page_num}"
                             }
@@ -222,7 +229,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 })}
 
                 button {
-                    class: "hi-pagination-next",
+                    class: "PaginationClass::PaginationNext.as_class()",
                     disabled: current_page() >= total_pages,
                     onclick: handle_next,
                     svg {
@@ -236,8 +243,8 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 }
             }
 
-            div { class: "hi-pagination-jump",
-                span { class: "hi-pagination-jump-label", "Go to" }
+            div { class: "PaginationClass::PaginationJump.as_class()",
+                span { class: "PaginationClass::PaginationJumpLabel.as_class()", "Go to" }
                 input {
                     class: "hi-input hi-input-sm",
                     r#type: "number",

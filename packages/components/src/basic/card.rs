@@ -4,6 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
+use palette::classes::{CardClass, ClassesBuilder, UtilityClass};
 
 /// Card 组件的类型包装器（用于实现 StyledComponent）
 pub struct CardComponent;
@@ -69,21 +70,18 @@ impl Default for CardProps {
 /// ```
 #[component]
 pub fn Card(props: CardProps) -> Element {
-    let hoverable_class = if props.hoverable {
-        "hi-card-hoverable"
-    } else {
-        ""
-    };
-    let bordered_class = if props.bordered {
-        "hi-card-bordered"
-    } else {
-        ""
-    };
+    let card_classes = ClassesBuilder::new()
+        .add(CardClass::Card)
+        .add_if(CardClass::CardHoverable, || props.hoverable)
+        .add_if(CardClass::CardBordered, || props.bordered)
+        .add_raw(&props.class)
+        .build();
+
     let _clickable = props.onclick.is_some();
 
     let card_content = rsx! {
         div {
-            class: format!("hi-card {hoverable_class} {bordered_class} {}", props.class),
+            class: "{card_classes}",
             onclick: move |e| {
                 if let Some(handler) = props.onclick.as_ref() {
                     handler.call(e);
@@ -91,19 +89,19 @@ pub fn Card(props: CardProps) -> Element {
             },
 
             if props.title.is_some() || props.extra.is_some() {
-                div { class: "hi-card-header",
+                div { class: "{CardClass::CardHeader.as_class()}",
 
                     if let Some(title) = props.title {
-                        div { class: "hi-card-title", "{title}" }
+                        div { class: "{CardClass::CardTitle.as_class()}", "{title}" }
                     }
 
                     if let Some(extra) = props.extra {
-                        div { class: "hi-card-extra", { extra } }
+                        div { class: "{CardClass::CardExtra.as_class()}", { extra } }
                     }
                 }
             }
 
-            div { class: "hi-card-body",
+            div { class: "{CardClass::CardBody.as_class()}",
                 { props.children }
             }
         }
@@ -113,7 +111,7 @@ pub fn Card(props: CardProps) -> Element {
     if props.spotlight {
         rsx! {
             div {
-                class: "hi-card-spotlight-wrapper",
+                class: "{CardClass::CardSpotlightWrapper.as_class()}",
                 "data-spotlight": "true",
                 { card_content }
             }

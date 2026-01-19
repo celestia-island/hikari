@@ -50,7 +50,7 @@ pub struct ThemeProviderProps {
 /// ```
 #[component]
 pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
-    let _colors = match props.palette.as_str() {
+    let _palette = match props.palette.as_str() {
         "hikari" => themes::Hikari::palette(),
         "tairitsu" => themes::Tairitsu::palette(),
         _ => themes::Hikari::palette(),

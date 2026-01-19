@@ -7,6 +7,8 @@ use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
     styled::StyledComponent,
 };
+use palette::classes::ButtonClass;
+use palette::classes::ClassesBuilder;
 
 /// Animation types for button hover/focus effects
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -101,8 +103,9 @@ pub struct ButtonProps {
     pub glow_intensity: GlowIntensity,
 
     /// Glow color mode (requires glow: true)
+    /// If not specified, automatically determined by button variant based on background lightness
     #[props(default)]
-    pub glow_color: GlowColor,
+    pub glow_color: Option<GlowColor>,
 
     pub onclick: Option<EventHandler<MouseEvent>>,
 }
@@ -119,10 +122,10 @@ impl Default for ButtonProps {
             children: VNode::empty(),
             class: String::default(),
             animation: Default::default(),
-            glow: false,
+            glow: true,
             glow_blur: Default::default(),
             glow_intensity: Default::default(),
-            glow_color: GlowColor::Auto,
+            glow_color: None,
             onclick: None,
         }
     }
@@ -151,26 +154,29 @@ impl Default for ButtonProps {
 #[component]
 pub fn Button(props: ButtonProps) -> Element {
     let variant_class = match props.variant {
-        ButtonVariant::Primary => "hi-button-primary",
-        ButtonVariant::Secondary => "hi-button-secondary",
-        ButtonVariant::Ghost => "hi-button-ghost",
-        ButtonVariant::Danger => "hi-button-danger",
-        ButtonVariant::Success => "hi-button-success",
+        ButtonVariant::Primary => ButtonClass::Primary,
+        ButtonVariant::Secondary => ButtonClass::Secondary,
+        ButtonVariant::Ghost => ButtonClass::Ghost,
+        ButtonVariant::Danger => ButtonClass::Danger,
+        ButtonVariant::Success => ButtonClass::Success,
     };
 
     let size_class = match props.size {
-        ButtonSize::Small => "hi-button-sm",
-        ButtonSize::Medium => "hi-button-md",
-        ButtonSize::Large => "hi-button-lg",
+        ButtonSize::Small => ButtonClass::Sm,
+        ButtonSize::Medium => ButtonClass::Md,
+        ButtonSize::Large => ButtonClass::Lg,
     };
 
     let disabled = props.disabled || props.loading;
-    let loading_class = if props.loading {
-        "hi-button-loading"
-    } else {
-        ""
-    };
-    let block_class = if props.block { "hi-button-block" } else { "" };
+
+    let classes = ClassesBuilder::new()
+        .add(ButtonClass::Button)
+        .add(variant_class)
+        .add(size_class)
+        .add_if(ButtonClass::Loading, || props.loading)
+        .add_if(ButtonClass::Block, || props.block)
+        .add_raw(&props.class)
+        .build();
 
     // Convert animation type to data attribute value
     let animation_attr = match props.animation {
@@ -183,10 +189,7 @@ pub fn Button(props: ButtonProps) -> Element {
 
     let button_content = rsx! {
         button {
-            class: format!(
-                "hi-button {variant_class} {size_class} {loading_class} {block_class} {}",
-                props.class
-            ),
+            class: "{classes}",
             "data-button-animation": animation_attr,
             disabled: disabled,
             onclick: move |e| {
@@ -213,10 +216,23 @@ pub fn Button(props: ButtonProps) -> Element {
 
     // Wrap with glow container if enabled
     if props.glow {
+        // Determine glow color based on variant and button background lightness
+        let glow_color = if let Some(color) = props.glow_color {
+            color
+        } else {
+            match props.variant {
+                ButtonVariant::Ghost => GlowColor::Ghost,
+                ButtonVariant::Primary => GlowColor::Primary,
+                ButtonVariant::Secondary => GlowColor::Secondary,
+                ButtonVariant::Danger => GlowColor::Danger,
+                ButtonVariant::Success => GlowColor::Success,
+            }
+        };
+
         rsx! {
             Glow {
                 blur: props.glow_blur,
-                color: props.glow_color,
+                color: glow_color,
                 intensity: props.glow_intensity,
                 { button_content }
             }

@@ -4,6 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
+use palette::classes::{ClassesBuilder, SelectionClassNew}, UtilityClass;
 
 /// Selection component wrapper (for StyledComponent)
 pub struct SelectionComponent;
@@ -115,20 +116,26 @@ pub fn Selection(props: SelectionProps) -> Element {
         SelectionType::Radio => "radio",
     };
 
-    rsx! {
-        div { class: format!("hi-selection {}", props.class),
+    let container_classes = ClassesBuilder::new()
+        .add(SelectionClassNew::Selection)
+        .add_raw(&props.class)
+        .build();
 
-            div { class: if props.fixed_column {
-                "hi-selection-column hi-selection-fixed"
-            } else {
-                "hi-selection-column"
-            },
+    let column_classes = ClassesBuilder::new()
+        .add(SelectionClassNew::SelectionColumn)
+        .add_if(SelectionClassNew::SelectionFixed, || props.fixed_column)
+        .build();
+
+    rsx! {
+        div { class: "{container_classes}",
+
+            div { class: "{column_classes}",
 
                 if props.selection_type == SelectionType::Checkbox {
-                    div { class: "hi-selection-header",
-                        label { class: "hi-selection-all",
+                    div { class: "{SelectionClassNew::SelectionHeader}",
+                        label { class: "{SelectionClassNew::SelectionAll}",
                             input {
-                                class: "hi-selection-checkbox",
+                                class: "{SelectionClassNew::SelectionCheckbox}",
                                 r#type: "checkbox",
                                 checked: is_all_selected(),
                                 onchange: handle_select_all,
@@ -142,10 +149,10 @@ pub fn Selection(props: SelectionProps) -> Element {
                     let checked = is_row_selected(key);
 
                     rsx! {
-                        div { class: "hi-selection-row",
-                            label { class: "hi-selection-item",
+                        div { class: "{SelectionClassNew::SelectionRow}",
+                            label { class: "{SelectionClassNew::SelectionItem}",
                                 input {
-                                    class: "hi-selection-checkbox",
+                                    class: "{SelectionClassNew::SelectionCheckbox}",
                                     r#type: get_input_type(),
                                     checked: checked,
                                     name: if props.selection_type == SelectionType::Radio {
@@ -208,11 +215,21 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
         SelectionType::Radio => "radio",
     };
 
+    let container_classes = ClassesBuilder::new()
+        .add(SelectionClassNew::RowSelection)
+        .add_raw(&props.class)
+        .build();
+
+    let custom_classes = ClassesBuilder::new()
+        .add(SelectionClassNew::RowSelectionCustom)
+        .add_if(SelectionClassNew::RowSelectionChecked, || is_selected)
+        .build();
+
     rsx! {
-        div { class: format!("hi-row-selection {}", props.class),
-            label { class: "hi-row-selection-label",
+        div { class: "{container_classes}",
+            label { class: "{SelectionClassNew::RowSelectionLabel}",
                 input {
-                    class: "hi-row-selection-input",
+                    class: "{SelectionClassNew::RowSelectionInput}",
                     r#type: input_type,
                     checked: is_selected,
                     name: if props.selection_type == SelectionType::Radio {
@@ -224,11 +241,7 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
                 }
 
                 span {
-                    class: if is_selected {
-                        "hi-row-selection-custom hi-row-selection-checked"
-                    } else {
-                        "hi-row-selection-custom"
-                    },
+                    class: "{custom_classes}",
 
                     if props.selection_type == SelectionType::Checkbox && is_selected {
                         svg {
@@ -246,7 +259,7 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
                     }
 
                     if props.selection_type == SelectionType::Radio && is_selected {
-                        span { class: "hi-row-selection-radio-dot" }
+                        span { class: "{SelectionClassNew::RowSelectionRadioDot}" }
                     }
                 }
             }

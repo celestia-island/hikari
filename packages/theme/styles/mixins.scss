@@ -203,11 +203,11 @@
 // ============================================
 
 @mixin arknights-border {
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--hi-color-white-10);
 }
 
 @mixin arknights-glow {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 20px var(--hi-color-secondary);
 }
 
 // ============================================
@@ -215,7 +215,7 @@
 // ============================================
 
 @mixin fui-glow {
-    box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 10px var(--hi-color-purple-50);
 }
 
 @mixin fui-pulse {
@@ -246,7 +246,7 @@
 
     // Firefox: 设置滚动条宽度为细（不会动态变化）
     scrollbar-width: thin;
-    scrollbar-color: rgba(148, 163, 184, 0.4) rgba(241, 245, 249, 0.5);
+    scrollbar-color: var(--hi-color-gray-40) var(--hi-color-gray-20);
 
     // 基础滚动条 - 固定 6px 宽度（通过 CSS 变量确保）
     &::-webkit-scrollbar {
@@ -260,14 +260,14 @@
 
     // 滚动条轨道 - 使用轻量灰色
     &::-webkit-scrollbar-track {
-        background: rgba(241, 245, 249, 0.5);
+        background: var(--hi-color-gray-20);
         border-radius: 3px;
 
         // 上边缘箭头指示（通过渐变实现）
         background-image:
-            linear-gradient(to bottom, transparent 0%, transparent 45%, rgba(100, 116, 139, 0.2) 48%, rgba(100, 116, 139, 0.3) 50%, rgba(100, 116, 139, 0.2) 52%, transparent 55%, transparent 100%),
-            linear-gradient(to bottom, rgba(100, 116, 139, 0.15) 0%, transparent 15%),
-            linear-gradient(to top, rgba(100, 116, 139, 0.15) 0%, transparent 15%);
+            linear-gradient(to bottom, transparent 0%, transparent 45%, var(--hi-color-gray-30) 48%, var(--hi-color-gray-30) 50%, var(--hi-color-gray-30) 52%, transparent 55%, transparent 100%),
+            linear-gradient(to bottom, var(--hi-color-gray-15) 0%, transparent 15%),
+            linear-gradient(to top, var(--hi-color-gray-15) 0%, transparent 15%);
         background-size:
             100% 100%,
             100% 12px,
@@ -285,17 +285,17 @@
 
     // 滚动条滑块 - 使用灰色，hover 变亮
     &::-webkit-scrollbar-thumb {
-        background: rgba(148, 163, 184, 0.4);
+        background: var(--hi-color-gray-40);
         border-radius: 3px;
 
         // 从中间向上下扩散的高亮效果（使用渐变）
         background-image: linear-gradient(
             to bottom,
-            rgba(148, 163, 184, 0.3) 0%,
-            rgba(148, 163, 184, 0.5) 40%,
-            rgba(148, 163, 184, 0.6) 50%,
-            rgba(148, 163, 184, 0.5) 60%,
-            rgba(148, 163, 184, 0.3) 100%
+            var(--hi-color-gray-30) 0%,
+            var(--hi-color-gray-50) 40%,
+            var(--hi-color-gray-50) 50%,
+            var(--hi-color-gray-50) 60%,
+            var(--hi-color-gray-30) 100%
         );
 
         // 平滑过渡动画
@@ -308,24 +308,24 @@
     // Hover 状态 - 滚动条滑块变亮并增加发光
     // 注意：这里不改变宽度，只改变外观
     &:hover::-webkit-scrollbar-track {
-        background: rgba(226, 232, 240, 0.6);
+        background: var(--hi-color-gray-20);
     }
 
     &:hover::-webkit-scrollbar-thumb {
-        background: rgba(148, 163, 184, 0.7);
+        background: var(--hi-color-gray-50);
         background-image: linear-gradient(
             to bottom,
-            rgba(148, 163, 184, 0.5) 0%,
-            rgba(203, 213, 225, 0.8) 50%,
-            rgba(148, 163, 184, 0.5) 100%
+            var(--hi-color-gray-50) 0%,
+            var(--hi-color-white-20) 50%,
+            var(--hi-color-gray-50) 100%
         );
-        box-shadow: 0 0 12px rgba(148, 163, 184, 0.6);
+        box-shadow: 0 0 12px var(--hi-color-gray-50);
     }
 
     // Active/dragging 状态
     &:active::-webkit-scrollbar-thumb {
-        background: rgba(203, 213, 225, 0.9);
-        box-shadow: 0 0 16px rgba(203, 213, 225, 0.7);
+        background: var(--hi-color-white-20);
+        box-shadow: 0 0 16px var(--hi-color-white-20);
     }
 
     // 滚动条角落（横向+纵向滚动条交界处）

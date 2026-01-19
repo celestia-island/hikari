@@ -32,6 +32,8 @@
 use dioxus::prelude::*;
 
 use crate::basic::Background;
+use palette::classes::components::Layout as LayoutClass;
+use palette::classes::ClassesBuilder;
 
 /// Layout component - Modern application layout wrapper
 ///
@@ -74,16 +76,23 @@ pub fn Layout(
 ) -> Element {
     let mut is_drawer_open = use_signal(|| false);
 
+    let layout_classes = ClassesBuilder::new()
+        .add(LayoutClass::Layout)
+        .add(LayoutClass::Light)
+        .add_if(LayoutClass::HasSidebar, || aside.is_some())
+        .add_raw(&class)
+        .build();
+
+    let overlay_classes = ClassesBuilder::new()
+        .add_if(LayoutClass::OverlayOpen, || *is_drawer_open.read())
+        .build();
+
     rsx! {
         // Global gradient background (fixed, behind everything)
         Background {}
 
         div {
-            class: format!(
-                "hi-layout hi-layout-light {} {}",
-                if aside.is_some() { "hi-layout-has-sidebar" } else { "" },
-                class,
-            ),
+            class: "{layout_classes}",
 
             // Header (if provided) - full width at top
             if let Some(header_content) = header {
@@ -96,7 +105,7 @@ pub fn Layout(
                 // Mobile overlay (backdrop) with blur effect
                 if aside.is_some() {
                     div {
-                        class: if *is_drawer_open.read() { "hi-layout-overlay-open" } else { "" },
+                        class: "{overlay_classes}",
                         onclick: move |_| is_drawer_open.set(false),
                     }
                 }

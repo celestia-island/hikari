@@ -3,10 +3,7 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Table Component - FUI Styling
-// Design: Arknights + Future UI (FUI) aesthetics
-// Features: Row hover glow, sticky glass header, smooth animations
-// ============================================
+// Hikari // Hikari // Hikari // Hikari // Hikari Table Component - FUI Styling Component Component Component Component
 
 // ============================================
 // Base Table Styles
@@ -22,8 +19,7 @@
 
   // Appearance
   background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
-  backdrop-filter: blur(vars.$hikari-acrylic-blur);
-  -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  backdrop-filter: blur(4px);
   border: 1px solid var(--hi-color-border);
   border-radius: vars.$hikari-radius-fui-md;
 
@@ -63,14 +59,14 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--hi-primary, rgba(123, 207, 166, 0.4));
+    background: var(--hi-primary);
     border-radius: 4px;
     // DISABLED - migrated to JS animation
 
     // transition: background vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     &:hover {
-      background: var(--hi-primary, rgba(123, 207, 166, 0.6));
+      background: var(--hi-primary-light);
     }
   }
 }
@@ -103,8 +99,7 @@
 
   // Glass effect
   background: var(--hi-card-bg, rgba(45, 45, 45, 0.95));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(4px);
 
   // Border
   border-bottom: 2px solid var(--hi-color-border);
@@ -166,7 +161,7 @@
   // Sortable indicator
   &.hi-table-header-sortable {
     &:hover {
-      background: var(--hi-primary, rgba(123, 207, 166, 0.1));
+      background: var(--hi-primary);
       color: var(--hi-color-primary);
     }
 
@@ -191,10 +186,12 @@
   // Sorted state
   &.hi-table-header-sorted {
     color: var(--hi-color-primary);
-    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
+    background: var(--hi-primary);
 
     // Glow effect
-    box-shadow: inset 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.2));
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-primary);
+    box-shadow: inset 0 0 12px var(--hi-glow-color);
 
     &::before {
       content: '';
@@ -206,7 +203,7 @@
       background: var(--hi-color-primary);
       box-shadow:
         0 0 8px var(--hi-color-primary),
-        0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.5));
+        0 0 16px var(--hi-primary);
     }
   }
 }
@@ -237,7 +234,7 @@
   .hi-table-header-sorted & {
     color: var(--hi-color-primary);
     opacity: 1;
-    filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.6)));
+    filter: drop-shadow(0 0 4px var(--hi-primary));
   }
 
   // Rotation animations
@@ -284,25 +281,29 @@
 
   // Hover glow effect (subtle purple/blue glow)
   &:hover {
-    background: var(--hi-primary, rgba(123, 207, 166, 0.08));
+    background: var(--hi-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-primary);
     box-shadow:
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.1)),
-      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.05));
+      0 0 12px var(--hi-glow-color),
+      inset 0 0 8px var(--hi-glow-color);
 
     .hi-table-cell {
-      border-color: var(--hi-primary, rgba(123, 207, 166, 0.2));
+      border-color: var(--hi-primary);
     }
   }
 
   // Selected state
   &.hi-table-row-selected {
-    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
+    background: var(--hi-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-primary);
     box-shadow:
-      0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.2)),
-      inset 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.1));
+      0 0 16px var(--hi-glow-color),
+      inset 0 0 12px var(--hi-glow-color);
 
     .hi-table-cell {
-      border-color: var(--hi-primary, rgba(123, 207, 166, 0.3));
+      border-color: var(--hi-primary);
       color: var(--hi-color-primary);
     }
   }
@@ -310,9 +311,11 @@
   // Focus state
   &.hi-table-row-focus {
     outline: none;
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-primary);
     box-shadow:
-      0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.5)),
-      0 0 20px var(--hi-primary, rgba(123, 207, 166, 0.4));
+      0 0 0 2px var(--hi-primary),
+      0 0 20px var(--hi-glow-color);
   }
 }
 
@@ -350,10 +353,12 @@
   // Focus accent on selected cells
   &.hi-table-cell-focus {
     outline: none;
-    background: var(--hi-primary, rgba(123, 207, 166, 0.12));
+    background: var(--hi-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-primary);
     box-shadow:
-      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.15)),
-      0 0 0 1px var(--hi-primary, rgba(123, 207, 166, 0.4));
+      inset 0 0 8px var(--hi-glow-color),
+      0 0 0 1px var(--hi-primary);
   }
 
   // Cell variants
@@ -404,14 +409,18 @@
     position: relative;
 
     &:hover {
-      border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
-      box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.3));
+      border-color: var(--hi-primary);
+      --hi-glow-transparent: false;
+      --hi-glow-bg-color: var(--hi-color-surface);
+      box-shadow: 0 0 8px var(--hi-glow-color);
     }
 
     &:checked {
       background: var(--hi-color-primary);
       border-color: var(--hi-color-primary);
-      box-shadow: 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.5));
+      --hi-glow-transparent: false;
+      --hi-glow-bg-color: var(--hi-color-primary);
+      box-shadow: 0 0 12px var(--hi-glow-color);
 
       &::after {
         content: '';
@@ -501,8 +510,8 @@
   margin: 0.25rem;
 
   // Appearance
-  background: var(--hi-primary, rgba(123, 207, 166, 0.1));
-  border: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.3));
+  background: var(--hi-primary);
+  border: 1px solid var(--hi-primary);
   border-radius: vars.$hikari-radius-fui-sm;
 
   // Typography
@@ -520,20 +529,20 @@
 
   // Hover glow
   &:hover {
-    background: var(--hi-primary, rgba(123, 207, 166, 0.2));
-    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
+    background: var(--hi-primary);
+    border-color: var(--hi-primary);
     box-shadow:
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3)),
-      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
+      0 0 12px var(--hi-primary),
+      inset 0 0 8px var(--hi-primary);
   }
 
   // Active state
   &.hi-table-filter-active {
-    background: var(--hi-primary, rgba(123, 207, 166, 0.25));
-    border-color: var(--hi-primary, rgba(123, 207, 166, 0.6));
+    background: var(--hi-primary);
+    border-color: var(--hi-primary);
     box-shadow:
-      0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.4)),
-      inset 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.15));
+      0 0 16px var(--hi-primary),
+      inset 0 0 12px var(--hi-primary);
   }
 
   // Close button
@@ -555,7 +564,7 @@
 
     &:hover {
       opacity: 1;
-      background: rgba(239, 68, 68, 0.2);
+      background: rgba(255, 76, 0, 0.2);
       color: var(--hi-color-danger);
     }
 
@@ -652,7 +661,7 @@
       background: rgba(214, 236, 240, 0.4);
 
       &:hover {
-        background: var(--hi-primary, rgba(123, 207, 166, 0.1));
+        background: var(--hi-primary);
       }
     }
   }
@@ -736,7 +745,7 @@
   .hi-table-loading-spinner {
     width: 2rem;
     height: 2rem;
-    border: 3px solid var(--hi-primary, rgba(123, 207, 166, 0.2));
+    border: 3px solid var(--hi-primary);
     border-top-color: var(--hi-color-primary);
     border-radius: 50%;
     // DISABLED - migrated to JS animation
@@ -850,7 +859,7 @@
 
   .hi-table-thead {
     background: #f0f0f0;
-    backdrop-filter: none;
+    backdrop-filter: blur(4px);
   }
 
   .hi-table-row {

@@ -29,7 +29,7 @@ fn test_palette_default() {
     let palette = default_theme();
     assert_eq!(palette.mode, ThemeMode::Light);
     assert_eq!(palette.primary.hex(), 粉红.hex());
-    assert_eq!(palette.secondary.hex(), 靛青.hex());
+    assert_eq!(palette.secondary.hex(), 靛蓝.hex());
     assert_eq!(palette.success.hex(), 葱倩.hex());
 }
 

@@ -3,8 +3,7 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Breadcrumb Component - FUI Styling
-// Design: Arknights + Future UI (FUI) aesthetics
+// Hikari Breadcrumb Component
 // Features: Glowing separators, smooth transitions, hover effects
 // ============================================
 
@@ -59,7 +58,7 @@
       // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
       // Glow effect on separator
-      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.3)));
+      filter: drop-shadow(0 0 4px var(--hi-primary));
 
       svg {
         width: 1rem;
@@ -77,7 +76,7 @@
       pointer-events: none;
 
       // Subtle glow on current item
-      text-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.3));
+      text-shadow: 0 0 8px var(--hi-primary);
     }
   }
 }
@@ -127,30 +126,30 @@
 
   // Hover state
   &:hover {
-    color: var(--hi-color-primary);
-    background: var(--hi-primary, rgba(123, 207, 166, 0.1));
+    color: var(--hi-color-text-primary);
+    background: var(--hi-primary);
 
     .hi-breadcrumb-icon {
       color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.5)));
+      filter: drop-shadow(0 0 4px var(--hi-primary));
     }
 
     // Glow effect on text
-    text-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.4));
+    text-shadow: 0 0 8px var(--hi-primary);
   }
 
   // Active/focus state
   &:focus-visible {
     outline: none;
-    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
+    background: var(--hi-primary);
     box-shadow:
-      0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.3)),
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
+      0 0 0 2px var(--hi-primary),
+      0 0 12px var(--hi-primary);
   }
 
   // Active state (for non-last items)
   &.hi-breadcrumb-link-active {
-    color: var(--hi-color-primary);
+    color: var(--hi-color-text-primary);
     font-weight: 500;
   }
 }
@@ -176,7 +175,7 @@
   &.hi-breadcrumb-separator-glow {
     color: var(--hi-color-primary);
     opacity: 0.8;
-    filter: drop-shadow(0 0 6px var(--hi-primary, rgba(123, 207, 166, 0.6)));
+    filter: drop-shadow(0 0 6px var(--hi-primary));
   }
 }
 
@@ -272,8 +271,7 @@
     border-radius: vars.$hikari-radius-fui-md;
     border: 1px solid var(--hi-color-border);
     background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
-    backdrop-filter: blur(vars.$hikari-acrylic-blur);
-    -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
+    backdrop-filter: blur(4px);
     box-shadow:
       0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
       0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
@@ -328,11 +326,11 @@
 
       // Hover state
       &:hover {
-        background: var(--hi-primary, rgba(123, 207, 166, 0.15));
-        color: var(--hi-color-primary);
+        background: var(--hi-primary);
+        color: var(--hi-color-text-primary);
         box-shadow:
-          0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.15)),
-          inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
+          0 0 12px var(--hi-primary),
+          inset 0 0 8px var(--hi-primary);
       }
     }
   }
@@ -441,14 +439,14 @@
     // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     &:not(:last-child):hover {
-      background: var(--hi-primary, rgba(123, 207, 166, 0.15));
+      background: var(--hi-primary);
     }
 
     &:last-child {
-      background: var(--hi-primary, rgba(123, 207, 166, 0.2));
+      background: var(--hi-primary);
       box-shadow:
-        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.15)),
-        inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
+        0 0 12px var(--hi-primary),
+        inset 0 0 8px var(--hi-primary);
     }
   }
 }
@@ -466,17 +464,17 @@
 
     &:not(:last-child) {
       &:hover {
-        background: var(--hi-primary, rgba(123, 207, 166, 0.15));
-        border-color: var(--hi-primary, rgba(123, 207, 166, 0.4));
+        background: var(--hi-primary);
+        border-color: var(--hi-primary);
       }
     }
 
     &:last-child {
-      background: linear-gradient(135deg, var(--hi-primary, rgba(123, 207, 166, 0.2)), var(--hi-primary, rgba(123, 207, 166, 0.1)));
-      border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
+      background: linear-gradient(135deg, var(--hi-primary), var(--hi-primary));
+      border-color: var(--hi-primary);
       box-shadow:
-        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.2)),
-        inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
+        0 0 12px var(--hi-primary),
+        inset 0 0 8px var(--hi-primary);
     }
   }
 }
@@ -496,11 +494,11 @@
 // @keyframes breadcrumb-separator-pulse {
 //   0%, 100% {
 //     opacity: 0.5;
-//     filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.3)));
+//     filter: drop-shadow(0 0 4px var(--hi-primary));
 //   }
 //   50% {
 //     opacity: 1;
-//     filter: drop-shadow(0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.6)));
+//     filter: drop-shadow(0 0 8px var(--hi-primary));
 //   }
 // }
 

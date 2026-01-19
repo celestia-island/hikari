@@ -3,8 +3,7 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Badge Component - FUI Styling
-// Design: Arknights + Future UI (FUI) aesthetics
+// Hikari Badge Component
 // Features: Glowing variants, pulse animations, smooth transitions
 // ============================================
 
@@ -29,7 +28,7 @@
   white-space: nowrap;
   color: var(--hi-color-text-inverted, #ffffff);
 
-  // Appearance - FUI subtle rounded corners
+  // Appearance - Subtle rounded corners
   border-radius: vars.$hikari-radius-fui-sm;
   border: 1px solid transparent;
 
@@ -85,15 +84,15 @@
 
 // Success (Green)
 .hi-badge-success {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.9));
+  background: linear-gradient(135deg, rgba(14, 184, 64, 0.9), rgba(5, 150, 105, 0.9));
   border-color: rgba(52, 211, 153, 0.5);
   box-shadow:
-    0 0 8px rgba(16, 185, 129, 0.4),
+    0 0 8px rgba(14, 184, 64, 0.4),
     inset 0 0 4px var(--hi-white-10, rgba(255, 255, 255, 0.1));
 
   &:hover {
     box-shadow:
-      0 0 12px rgba(16, 185, 129, 0.6),
+      0 0 12px rgba(14, 184, 64, 0.6),
       inset 0 0 6px var(--hi-white-15, rgba(255, 255, 255, 0.15));
     transform: scale(1.05);
   }
@@ -117,15 +116,15 @@
 
 // Danger (Red)
 .hi-badge-danger {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
+  background: linear-gradient(135deg, rgba(255, 76, 0, 0.9), rgba(220, 38, 38, 0.9));
   border-color: rgba(248, 113, 113, 0.5);
   box-shadow:
-    0 0 8px rgba(239, 68, 68, 0.4),
+    0 0 8px rgba(255, 76, 0, 0.4),
     inset 0 0 4px var(--hi-white-10, rgba(255, 255, 255, 0.1));
 
   &:hover {
     box-shadow:
-      0 0 12px rgba(239, 68, 68, 0.6),
+      0 0 12px rgba(255, 76, 0, 0.6),
       inset 0 0 6px var(--hi-white-15, rgba(255, 255, 255, 0.15));
     transform: scale(1.05);
   }
@@ -207,14 +206,14 @@
 // @keyframes badge-glow-success {
 //   0%, 100% {
 //     box-shadow:
-//       0 0 8px rgba(16, 185, 129, 0.4),
-//       0 0 16px rgba(16, 185, 129, 0.2),
+//       0 0 8px rgba(14, 184, 64, 0.4),
+//       0 0 16px rgba(14, 184, 64, 0.2),
 //       inset 0 0 4px var(--hi-white-10, rgba(255, 255, 255, 0.1));
 //   }
 //   50% {
 //     box-shadow:
-//       0 0 12px rgba(16, 185, 129, 0.6),
-//       0 0 24px rgba(16, 185, 129, 0.4),
+//       0 0 12px rgba(14, 184, 64, 0.6),
+//       0 0 24px rgba(14, 184, 64, 0.4),
 //       inset 0 0 6px var(--hi-white-15, rgba(255, 255, 255, 0.15));
 //   }
 // }
@@ -239,14 +238,14 @@
 // @keyframes badge-glow-danger {
 //   0%, 100% {
 //     box-shadow:
-//       0 0 8px rgba(239, 68, 68, 0.4),
-//       0 0 16px rgba(239, 68, 68, 0.2),
+//       0 0 8px rgba(255, 76, 0, 0.4),
+//       0 0 16px rgba(255, 76, 0, 0.2),
 //       inset 0 0 4px var(--hi-white-10, rgba(255, 255, 255, 0.1));
 //   }
 //   50% {
 //     box-shadow:
-//       0 0 12px rgba(239, 68, 68, 0.6),
-//       0 0 24px rgba(239, 68, 68, 0.4),
+//       0 0 12px rgba(255, 76, 0, 0.6),
+//       0 0 24px rgba(255, 76, 0, 0.4),
 //       inset 0 0 6px var(--hi-white-15, rgba(255, 255, 255, 0.15));
 //   }
 // }
@@ -305,8 +304,8 @@
   }
 
   &.hi-badge-success {
-    background: radial-gradient(circle, rgba(52, 211, 153, 1), rgba(16, 185, 129, 0.8));
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+    background: radial-gradient(circle, rgba(52, 211, 153, 1), rgba(14, 184, 64, 0.8));
+    box-shadow: 0 0 8px rgba(14, 184, 64, 0.6);
   }
 
   &.hi-badge-warning {
@@ -315,8 +314,8 @@
   }
 
   &.hi-badge-danger {
-    background: radial-gradient(circle, rgba(248, 113, 113, 1), rgba(239, 68, 68, 0.8));
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+    background: radial-gradient(circle, rgba(248, 113, 113, 1), rgba(255, 76, 0, 0.8));
+    box-shadow: 0 0 8px rgba(255, 76, 0, 0.6);
   }
 
   &.hi-badge-pulse {
@@ -390,9 +389,9 @@
   line-height: 20px;
   text-align: center;
   border-radius: 10px;
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95));
+  background: linear-gradient(135deg, rgba(255, 76, 0, 0.95), rgba(220, 38, 38, 0.95));
   box-shadow:
-    0 0 8px rgba(239, 68, 68, 0.5),
+    0 0 8px rgba(255, 76, 0, 0.5),
     inset 0 0 4px var(--hi-white-15, rgba(255, 255, 255, 0.15));
 
   &.hi-badge-count-lg {
@@ -410,8 +409,8 @@
 
 .hi-badge-status {
   &.hi-badge-online {
-    background: radial-gradient(circle, rgba(52, 211, 153, 1), rgba(16, 185, 129, 0.8));
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+    background: radial-gradient(circle, rgba(52, 211, 153, 1), rgba(14, 184, 64, 0.8));
+    box-shadow: 0 0 8px rgba(14, 184, 64, 0.6);
   }
 
   &.hi-badge-offline {
@@ -425,8 +424,8 @@
   }
 
   &.hi-badge-busy {
-    background: radial-gradient(circle, rgba(248, 113, 113, 1), rgba(239, 68, 68, 0.8));
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    background: radial-gradient(circle, rgba(248, 113, 113, 1), rgba(255, 76, 0, 0.8));
+    box-shadow: 0 0 8px rgba(255, 76, 0, 0.5);
   }
 }
 

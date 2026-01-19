@@ -6,6 +6,7 @@ use std::rc::Rc;
 use dioxus::prelude::*;
 
 use super::column::ColumnDef;
+use palette::classes::{CellClass, ClassesBuilder};
 
 /// Cell component props
 #[derive(Clone, Props, Default)]
@@ -83,19 +84,19 @@ impl PartialEq for CellProps {
 /// ```
 #[component]
 pub fn Cell(props: CellProps) -> Element {
-    let base_classes = "hi-cell";
-    let align_class = props.column.align_class();
-    let hover_class = "hi-cell-hover";
-    let editable_class = if props.editable {
-        "hi-cell-editable"
-    } else {
-        ""
+    let align_class = match props.column.align {
+        super::column::ColumnAlign::Left => CellClass::AlignLeft,
+        super::column::ColumnAlign::Center => CellClass::AlignCenter,
+        super::column::ColumnAlign::Right => CellClass::AlignRight,
     };
 
-    let classes = format!(
-        "{} {} {} {} {}",
-        base_classes, align_class, hover_class, editable_class, props.class
-    );
+    let classes = ClassesBuilder::new()
+        .add(CellClass::Cell)
+        .add(align_class)
+        .add(CellClass::CellHover)
+        .add_if(CellClass::CellEditable, || props.editable)
+        .add_raw(&props.class)
+        .build();
 
     // Use custom render callback if provided
     if let Some(render_fn) = &props.render {

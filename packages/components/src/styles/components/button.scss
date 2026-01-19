@@ -3,12 +3,11 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Button Component - FUI Styling
-// Design: Arknights + Future UI (FUI) aesthetics
+// Hikari Button Component
 // Features: Subtle rounded corners, glow effects, ambient animations
 // ============================================
 
-// Base button styles with FUI foundation
+// Base button styles
 .hi-button {
   // Layout
   display: inline-flex;
@@ -27,7 +26,7 @@
   line-height: 1.5;
   letter-spacing: 0.01em;
 
-  // Appearance - FUI subtle rounded corners
+  // Appearance - Subtle rounded corners
   border-radius: vars.$hikari-radius-fui-sm;
   border: 1px solid transparent;
 
@@ -44,10 +43,9 @@
   position: relative;
   overflow: hidden;
 
-  // Subtle ambient background
-  background-color: var(--hi-card-bg, rgba(45, 45, 45, 0.85));
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  // Acrylic background with theme support
+  background-color: var(--hi-color-surface);
+  backdrop-filter: blur(4px);
 
   // Shine effect on hover (animated sweep) - DISABLED for JS animation
   // &::before {
@@ -132,14 +130,17 @@
 
   &:hover:not(:disabled) {
     background: linear-gradient(135deg, var(--hi-button-primary-light), var(--hi-button-primary));
-    box-shadow: 2px 0 0 var(--hi-border-light, rgba(255, 255, 255, 0.3));
-    // transform: translateY(-1px); // Disabled when glow is enabled
+    box-shadow: var(--hi-glow-color);
+  }
+
+  &:focus-visible {
+    filter: brightness(var(--hi-focus-brightness-primary));
   }
 
   &:active:not(:disabled) {
     box-shadow:
-      0 0 4px var(--hi-button-primary, rgba(255, 179, 167, 0.4)),
-      inset 0 1px 0 var(--hi-white-10, rgba(255, 255, 255, 0.1));
+      0 0 4px var(--hi-button-primary),
+      inset 0 1px 0 var(--hi-white-10, rgba(255,255,255, 0.1));
     transform: translateY(0) scale(0.98);
   }
 }
@@ -155,14 +156,18 @@
 
   &:hover:not(:disabled) {
     background: linear-gradient(135deg, var(--hi-button-secondary-light), var(--hi-button-secondary));
-    box-shadow: 2px 0 0 var(--hi-border-light, rgba(255, 255, 255, 0.3));
-    // transform: translateY(-1px); // Disabled when glow is enabled
+    box-shadow: var(--hi-glow-color);
   }
 
   &:focus-visible {
+    filter: brightness(var(--hi-focus-brightness-secondary));
+  }
+
+  &:active:not(:disabled) {
     box-shadow:
-      0 0 0 2px var(--hi-button-secondary, rgba(23, 124, 176, 0.5)),
-      0 0 8px var(--hi-button-secondary, rgba(23, 124, 176, 0.6));
+      0 0 4px var(--hi-button-secondary),
+      inset 0 1px 0 var(--hi-white-10, rgba(255,255,255, 0.1));
+    transform: translateY(0) scale(0.98);
   }
 }
 
@@ -172,20 +177,26 @@
 
 .hi-button-ghost {
   background-color: transparent;
-  color: var(--hi-color-text-on-ghost, var(--hi-primary, #FFB3A7));
-  border: 1px solid var(--hi-border-ghost, var(--hi-primary, #FFB3A7));
+  color: var(--hi-ghost-text);
+  border: 1px solid var(--hi-ghost-border);
+  --hi-glow-transparent: true;
+  --hi-glow-bg-color: transparent;
+  --hi-glow-color: var(--hi-ghost-glow);
 
   &:hover:not(:disabled) {
-    box-shadow: 2px 0 0 var(--hi-primary);
+    box-shadow: var(--hi-glow-color);
+  }
+
+  &:focus-visible {
+    filter: brightness(var(--hi-focus-brightness-primary));
   }
 
   &:active:not(:disabled) {
-    box-shadow:
-      0 0 4px var(--hi-primary, rgba(255, 179, 167, 0.4));
+    box-shadow: 0 0 4px var(--hi-glow-color);
     transform: scale(0.98);
   }
 }
-
+ 
 // ============================================
 // Variant: Danger (Red glow accent)
 // ============================================
@@ -197,14 +208,18 @@
 
   &:hover:not(:disabled) {
     background: linear-gradient(135deg, var(--hi-button-danger-light), var(--hi-button-danger));
-    box-shadow: 2px 0 0 var(--hi-border-light, rgba(255, 255, 255, 0.3));
-    // transform: translateY(-1px); // Disabled when glow is enabled
+    box-shadow: var(--hi-glow-color);
   }
 
   &:focus-visible {
+    filter: brightness(var(--hi-focus-brightness-danger));
+  }
+
+  &:active:not(:disabled) {
     box-shadow:
-      0 0 0 2px var(--hi-button-danger, rgba(255, 68, 68, 0.5)),
-      0 0 8px var(--hi-button-danger, rgba(255, 68, 68, 0.6));
+      0 0 4px var(--hi-button-danger),
+      inset 0 1px 0 var(--hi-white-10, rgba(255,255,255, 0.1));
+    transform: translateY(0) scale(0.98);
   }
 }
 
@@ -219,14 +234,18 @@
 
   &:hover:not(:disabled) {
     background: linear-gradient(135deg, var(--hi-button-success-light), var(--hi-button-success));
-    box-shadow: 2px 0 0 var(--hi-border-light, rgba(255, 255, 255, 0.3));
-    // transform: translateY(-1px); // Disabled when glow is enabled
+    box-shadow: var(--hi-glow-color);
   }
 
   &:focus-visible {
+    filter: brightness(var(--hi-focus-brightness-success));
+  }
+
+  &:active:not(:disabled) {
     box-shadow:
-      0 0 0 2px var(--hi-button-success, rgba(92, 191, 145, 0.5)),
-      0 0 8px var(--hi-button-success, rgba(92, 191, 145, 0.6));
+      0 0 4px var(--hi-button-success),
+      inset 0 1px 0 var(--hi-white-10, rgba(255,255,255, 0.1));
+    transform: translateY(0) scale(0.98);
   }
 }
 
@@ -328,8 +347,7 @@
 button.hi-button-primary .hikari-icon,
 button.hi-button-secondary .hikari-icon,
 button.hi-button-danger .hikari-icon,
-button.hi-button-success .hikari-icon,
-button.hi-button-ghost .hikari-icon {
+button.hi-button-success .hikari-icon {
   color: var(--hi-color-text-on-primary, currentColor);
 }
 
@@ -346,7 +364,7 @@ button.hi-button-success .hikari-icon {
 }
 
 button.hi-button-ghost .hikari-icon {
-  color: var(--hi-color-text-on-ghost, var(--hi-primary, currentColor));
+  color: var(--hi-ghost-text-color, currentColor);
 }
 
 // SVG elements inherit color from parent

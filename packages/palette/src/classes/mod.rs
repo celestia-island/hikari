@@ -115,6 +115,32 @@ impl ClassesBuilder {
         self
     }
 
+    /// Conditionally add a utility class based on a boolean condition
+    ///
+    /// # Arguments
+    ///
+    /// * `class` - The class to add (must implement UtilityClass)
+    /// * `condition` - A closure that returns true if the class should be added
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let is_active = true;
+    /// let classes = ClassesBuilder::new()
+    ///     .add(Display::Flex)
+    ///     .add_if(FlexDirection::Row, || is_active)
+    ///     .build();
+    /// // Output: "hi-flex hi-flex-row" (only if is_active is true)
+    /// ```
+    pub fn add_if<T: UtilityClass>(mut self, class: T, condition: impl Fn() -> bool) -> Self {
+        if condition() {
+            for class_str in class.as_classes() {
+                self.classes.push(class_str);
+            }
+        }
+        self
+    }
+
     /// Build the final class string
     pub fn build(self) -> String {
         self.classes.join(" ")

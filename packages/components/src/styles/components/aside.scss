@@ -6,7 +6,10 @@
 // Icon color inheritance for theme support
 // ============================================
 
-.hi-icon {
+.hi-aside,
+.hi-sidebar,
+.hi-sidebar-item,
+.hi-sidebar-link {
   // Ensure SVG icons inherit theme colors
   svg {
     fill: currentColor;
@@ -15,8 +18,7 @@
 }
 
 // ============================================
-// Hikari Aside (Sidebar) Component - FUI Styling
-// Design: Arknights + Future UI (FUI) aesthetics
+// Hikari Aside (Sidebar) Component
 // Features: Hover glow effects, collapsible sections, icon animations
 // ============================================
 
@@ -103,8 +105,10 @@
   padding-bottom: calc(0.75rem + vars.$hikari-spacing-md);
 
   // Bottom border with subtle glow
-  border-bottom: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.2));
-  box-shadow: 0 4px 8px var(--hi-primary, rgba(123, 207, 166, 0.05));
+  border-bottom: 1px solid var(--hi-primary);
+  --hi-glow-transparent: false;
+  --hi-glow-bg-color: var(--hi-color-surface);
+  box-shadow: 0 4px 8px var(--hi-glow-color);
 
   // Transition
   // DISABLED - migrated to JS animation
@@ -132,15 +136,17 @@
 
       // Glow effect
       border-radius: vars.$hikari-radius-fui-sm;
-      background: linear-gradient(135deg, var(--hi-primary, rgba(123, 207, 166, 0.2)), rgba(59, 130, 246, 0.2));
+      background: linear-gradient(135deg, var(--hi-primary), rgba(59, 130, 246, 0.2));
+      --hi-glow-transparent: false;
+      --hi-glow-bg-color: var(--hi-primary);
       box-shadow:
-        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.4)),
-        inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2));
+        0 0 12px var(--hi-glow-color),
+        inset 0 0 8px var(--hi-glow-color);
 
       svg {
         width: 1.25rem;
         height: 1.25rem;
-        filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.6)));
+        filter: drop-shadow(0 0 4px var(--hi-glow-color));
       }
     }
 
@@ -153,7 +159,7 @@
       letter-spacing: 0.02em;
 
       // Subtle text glow
-      text-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.4));
+      text-shadow: 0 0 8px var(--hi-primary);
 
       // Truncate
       @include mix.text-ellipsis;
@@ -167,8 +173,8 @@
     // Hover state
     &:hover .hi-aside-logo-icon {
       box-shadow:
-        0 0 20px var(--hi-primary, rgba(123, 207, 166, 0.6)),
-        inset 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
+        0 0 20px var(--hi-primary),
+        inset 0 0 12px var(--hi-primary);
       transform: scale(1.05);
     }
   }
@@ -201,14 +207,14 @@
     // Hover state
     &:hover {
       color: var(--hi-color-text-primary);
-      background: var(--hi-primary, rgba(123, 207, 166, 0.15));
-      border-color: var(--hi-primary, rgba(123, 207, 166, 0.3));
+      background: var(--hi-primary);
+      border-color: var(--hi-primary);
       box-shadow:
-        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3)),
-        inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
+        0 0 12px var(--hi-primary),
+        inset 0 0 8px var(--hi-primary);
 
       svg {
-        filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.6)));
+        filter: drop-shadow(0 0 4px var(--hi-primary));
       }
     }
 
@@ -222,8 +228,8 @@
       outline: none;
       border-color: var(--hi-color-primary);
       box-shadow:
-        0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.3)),
-        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.4));
+        0 0 0 2px var(--hi-primary),
+        0 0 12px var(--hi-primary);
     }
   }
 
@@ -389,10 +395,12 @@
     font-size: 0.75rem;
     font-weight: 500;
     color: var(--hi-color-text-primary);
-    background: var(--hi-primary, rgba(123, 207, 166, 0.2));
+    background: var(--hi-primary);
     border-radius: vars.$hikari-radius-fui-sm;
-    border: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.3));
-    box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.3));
+    border: 1px solid var(--hi-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-primary);
+    box-shadow: 0 0 8px var(--hi-glow-color);
   }
 
   // Submenu indicator arrow
@@ -413,16 +421,18 @@
 
   // Hover state - Glow effect
   &:hover {
-    background: var(--hi-color-primary, rgba(123, 207, 166, 0.1));
-    border-color: var(--hi-color-primary, rgba(123, 207, 166, 0.3));
+    background: var(--hi-color-primary);
+    border-color: var(--hi-color-primary);
     color: var(--hi-color-text-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-color-primary);
     box-shadow:
-      0 0 12px var(--hi-color-primary, rgba(123, 207, 166, 0.2)),
-      inset 0 0 8px var(--hi-color-primary, rgba(123, 207, 166, 0.1));
+      0 0 12px var(--hi-glow-color),
+      inset 0 0 8px var(--hi-glow-color);
 
     .hi-aside-menu-item-icon {
       color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 4px var(--hi-color-primary, rgba(123, 207, 166, 0.5)));
+      filter: drop-shadow(0 0 4px var(--hi-glow-color));
       transform: scale(1.1);
     }
 
@@ -434,12 +444,14 @@
 
   // Active state (selected) - Accent bar on left
   &.hi-aside-menu-item-active {
-    background: linear-gradient(90deg, var(--hi-color-primary, rgba(123, 207, 166, 0.25)), var(--hi-color-primary, rgba(123, 207, 166, 0.05)));
-    border-color: var(--hi-color-primary, rgba(123, 207, 166, 0.5));
+    background: linear-gradient(90deg, var(--hi-color-primary), var(--hi-color-primary));
+    border-color: var(--hi-color-primary);
     color: var(--hi-color-text-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-color-primary);
     box-shadow:
-      0 0 16px var(--hi-color-primary, rgba(123, 207, 166, 0.3)),
-      inset 0 0 12px var(--hi-color-primary, rgba(123, 207, 166, 0.15));
+      0 0 16px var(--hi-glow-color),
+      inset 0 0 12px var(--hi-glow-color);
 
     // Left accent bar
     &::before {
@@ -452,12 +464,12 @@
       height: 60%;
       background: var(--hi-color-primary);
       border-radius: 0 2px 2px 0;
-      box-shadow: 0 0 8px var(--hi-color-primary);
+      box-shadow: 0 0 8px var(--hi-glow-color);
     }
 
     .hi-aside-menu-item-icon {
       color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 6px var(--hi-color-primary, rgba(123, 207, 166, 0.6)));
+      filter: drop-shadow(0 0 6px var(--hi-glow-color));
     }
 
     .hi-aside-menu-item-arrow {
@@ -475,11 +487,13 @@
   // Focus state
   &:focus-visible {
     outline: none;
-    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
-    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
+    background: var(--hi-primary);
+    border-color: var(--hi-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-primary);
     box-shadow:
-      0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.3)),
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
+      0 0 0 2px var(--hi-primary),
+      0 0 12px var(--hi-glow-color);
   }
 }
 
@@ -534,7 +548,7 @@
       }
 
       &:hover {
-        background: var(--hi-primary, rgba(123, 207, 166, 0.08));
+        background: var(--hi-primary);
         color: var(--hi-color-text-primary);
       }
     }
@@ -598,11 +612,13 @@
   // Nested submenu list
   .hi-aside-submenu-list {
     padding: 0.5rem 0.5rem 0.5rem 2rem;
-    border-left: 2px solid var(--hi-primary, rgba(123, 207, 166, 0.3));
+    border-left: 2px solid var(--hi-primary);
     list-style: none;
 
     // Glow on the border
-    box-shadow: -2px 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2));
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-color-surface);
+    box-shadow: -2px 0 8px var(--hi-glow-color);
 
     // Animation
     opacity: 1;
@@ -638,8 +654,10 @@
   padding-top: vars.$hikari-spacing-md;
 
   // Top border with subtle glow
-  border-top: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.2));
-  box-shadow: 0 -4px 8px var(--hi-primary, rgba(123, 207, 166, 0.05));
+  border-top: 1px solid var(--hi-primary);
+  --hi-glow-transparent: false;
+  --hi-glow-bg-color: var(--hi-color-surface);
+  box-shadow: 0 -4px 8px var(--hi-glow-color);
 
   // Transition
   // DISABLED - migrated to JS animation
@@ -664,8 +682,10 @@
       height: 2rem;
       border-radius: vars.$hikari-radius-fui-sm;
       object-fit: cover;
-      border: 2px solid var(--hi-primary, rgba(123, 207, 166, 0.3));
-      box-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.4));
+      border: 2px solid var(--hi-primary);
+      --hi-glow-transparent: false;
+      --hi-glow-bg-color: var(--hi-color-surface);
+      box-shadow: 0 0 8px var(--hi-glow-color);
       // DISABLED - migrated to JS animation
 
       // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
@@ -702,11 +722,13 @@
 
     // Hover state
     &:hover {
-      background: var(--hi-primary, rgba(123, 207, 166, 0.1));
+      background: var(--hi-primary);
 
       .hi-aside-user-avatar {
-        border-color: var(--hi-primary, rgba(123, 207, 166, 0.6));
-        box-shadow: 0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.6));
+        border-color: var(--hi-primary);
+        --hi-glow-transparent: false;
+        --hi-glow-bg-color: var(--hi-primary);
+        box-shadow: 0 0 16px var(--hi-glow-color);
       }
     }
   }
@@ -747,7 +769,6 @@
       bottom: 0;
       background: rgba(23, 89, 168, 0.3);
       backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
       z-index: -1;
       opacity: 0;
       pointer-events: none;
@@ -936,7 +957,7 @@
     left: 50%;
     width: 0;
     height: 0;
-    background: var(--hi-primary, rgba(123, 207, 166, 0.3));
+    background: var(--hi-primary);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     // DISABLED - migrated to JS animation

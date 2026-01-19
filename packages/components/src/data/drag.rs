@@ -4,10 +4,9 @@
 use dioxus::prelude::*;
 
 use crate::styled::StyledComponent;
+use palette::classes::{components::TreeClass, ClassesBuilder};
 
 /// Drag component wrapper (for StyledComponent)
-pub struct DragComponent;
-
 #[derive(Clone, PartialEq, Props, Default)]
 pub struct DragTreeNodeData {
     #[props(default)]
@@ -139,14 +138,16 @@ fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
 
     let is_drag_over = props.drag_over_key.read().as_ref() == Some(&item_key_1);
 
+    let drag_node_classes = ClassesBuilder::new()
+        .add(TreeClass::DragNode)
+        .add_if(TreeClass::Dragging, || is_dragging)
+        .add_if(TreeClass::DragOver, || is_drag_over)
+        .add_if(TreeClass::NodeDisabled, || disabled)
+        .build();
+
     rsx! {
         div {
-            class: format!(
-                "hi-drag-node {} {} {}",
-                if is_dragging { "hi-dragging" } else { "" },
-                if is_drag_over { "hi-drag-over" } else { "" },
-                if disabled { "hi-node-disabled" } else { "" }
-            ),
+            class: "{drag_node_classes}",
             style: format!("padding-left: {}px;", props.depth * 24),
             draggable: props.draggable && !disabled,
             "data-key": "{item_key_1}",

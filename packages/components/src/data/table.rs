@@ -5,6 +5,7 @@ use dioxus::prelude::*;
 
 pub use super::column::{ColumnAlign, ColumnDef};
 use crate::styled::StyledComponent;
+use palette::classes::{ClassesBuilder, TableClass};
 
 /// Table component wrapper (for StyledComponent)
 pub struct TableComponent;
@@ -123,29 +124,18 @@ impl Default for TableProps {
 /// ```
 #[component]
 pub fn Table(props: TableProps) -> Element {
-    let size_class = match props.size {
-        TableSize::Small => "hi-table-sm",
-        TableSize::Medium => "hi-table-md",
-        TableSize::Large => "hi-table-lg",
-    };
-
-    let bordered_class = if props.bordered {
-        "hi-table-bordered"
-    } else {
-        ""
-    };
-
-    let striped_class = if props.striped {
-        "hi-table-striped"
-    } else {
-        ""
-    };
-
-    let hoverable_class = if props.hoverable {
-        "hi-table-hover"
-    } else {
-        ""
-    };
+    let table_classes = ClassesBuilder::new()
+        .add(TableClass::Table)
+        .add(match props.size {
+            TableSize::Small => TableClass::TableSm,
+            TableSize::Medium => TableClass::TableMd,
+            TableSize::Large => TableClass::TableLg,
+        })
+        .add_if(TableClass::TableBordered, || props.bordered)
+        .add_if(TableClass::TableStriped, || props.striped)
+        .add_if(TableClass::TableHover, || props.hoverable)
+        .add_raw(&props.class)
+        .build();
 
     // Determine if we should show the table or empty state
     let has_data = !props.data.is_empty();
@@ -153,43 +143,41 @@ pub fn Table(props: TableProps) -> Element {
     let colspan_count = if has_columns { props.columns.len() } else { 1 };
 
     rsx! {
-        div { class: "hi-table-wrapper",
+        div { class: "TableClass::TableWrapper.as_class()",
             table {
-                class: format!(
-                    "hi-table {size_class} {bordered_class} {striped_class} {hoverable_class} {}",
-                    props.class
-                ),
+                class: "{table_classes}",
 
                 // Render table header if columns are defined
                 if has_columns {
                     thead {
                         tr {
-                            class: "hi-table-header-row",
+                            class: "TableClass::TableHeaderRow.as_class()",
                             {props.columns.iter().map(|column| {
                                 let align_class = match column.align {
-                                    ColumnAlign::Left => "hi-text-left",
-                                    ColumnAlign::Center => "hi-text-center",
-                                    ColumnAlign::Right => "hi-text-right",
+                                    ColumnAlign::Left => TableClass::TextLeft,
+                                    ColumnAlign::Center => TableClass::TextCenter,
+                                    ColumnAlign::Right => TableClass::TextRight,
                                 };
 
                                 let width_style = column.width.as_ref()
                                     .map_or(String::new(), |w| format!("width: {w};"));
 
-                                let sortable_class = if column.sortable {
-                                    "hi-table-sortable"
-                                } else {
-                                    ""
-                                };
+                                let cell_classes = ClassesBuilder::new()
+                                    .add(TableClass::TableHeaderCell)
+                                    .add(align_class)
+                                    .add_if(TableClass::TableSortable, || column.sortable)
+                                    .add_raw(&column.class)
+                                    .build();
 
                                 rsx! {
                                     th {
-                                        class: format!("hi-table-header-cell {align_class} {sortable_class}"),
+                                        class: "{cell_classes}",
                                         style: "{width_style}",
 
                                         {column.title.clone()}
 
                                         if column.sortable {
-                                            span { class: "hi-table-sort-icon", "" }
+                                            span { class: "TableClass::TableSortIcon.as_class()", "" }
                                         }
                                     }
                                 }
@@ -200,29 +188,34 @@ pub fn Table(props: TableProps) -> Element {
 
                 // Render table body
                 tbody {
-                    class: "hi-table-body",
+                    class: "TableClass::TableBody.as_class()",
 
                     if has_data {
                         {props.data.iter().enumerate().map(|(row_index, row)| {
                             rsx! {
                                 tr {
-                                    class: "hi-table-row",
+                                    class: "TableClass::TableRow.as_class()",
                                     key: "{row_index}",
 
                                     {row.iter().enumerate().map(|(col_index, cell)| {
                                         let align_class = if has_columns && col_index < props.columns.len() {
                                             match props.columns[col_index].align {
-                                                ColumnAlign::Left => "hi-text-left",
-                                                ColumnAlign::Center => "hi-text-center",
-                                                ColumnAlign::Right => "hi-text-right",
+                                                ColumnAlign::Left => TableClass::TextLeft,
+                                                ColumnAlign::Center => TableClass::TextCenter,
+                                                ColumnAlign::Right => TableClass::TextRight,
                                             }
                                         } else {
-                                            ""
+                                            TableClass::TextLeft
                                         };
+
+                                        let cell_classes = ClassesBuilder::new()
+                                            .add(TableClass::TableCell)
+                                            .add(align_class)
+                                            .build();
 
                                         rsx! {
                                             td {
-                                                class: format!("hi-table-cell {align_class}"),
+                                                class: "{cell_classes}",
                                                 key: "{row_index}-{col_index}",
 
                                                 {cell.clone()}
@@ -235,11 +228,11 @@ pub fn Table(props: TableProps) -> Element {
                     } else {
                         // Empty state
                         tr {
-                            class: "hi-table-row",
+                            class: "TableClass::TableRow.as_class()",
                             td {
-                                class: "hi-table-empty",
+                                class: "TableClass::TableEmpty.as_class()",
                                 colspan: "{colspan_count}",
-                                div { class: "hi-table-empty-content",
+                                div { class: "TableClass::TableEmptyContent.as_class()",
                                     {props.empty_text.clone()}
                                 }
                             }

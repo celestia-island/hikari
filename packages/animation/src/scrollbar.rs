@@ -4,9 +4,8 @@
 #![allow(unused_imports)]
 
 use std::collections::HashMap;
-use wasm_bindgen::prelude::wasm_bindgen;
-use wasm_bindgen::JsCast;
-use wasm_bindgen::JsValue;
+
+use wasm_bindgen::{prelude::wasm_bindgen, JsCast, JsValue};
 use web_sys::HtmlElement;
 
 use super::style::{CssProperty, StyleBuilder};
@@ -33,11 +32,13 @@ pub fn register_scrollbar(id: String, track: JsValue) {
     };
 
     unsafe {
-        if SCROLLBARS.is_none() {
-            SCROLLBARS = Some(HashMap::new());
+        let scrollbars_ptr = &raw mut SCROLLBARS;
+
+        if (*scrollbars_ptr).is_none() {
+            *scrollbars_ptr = Some(HashMap::new());
         }
 
-        if let Some(scrollbars) = &mut SCROLLBARS {
+        if let Some(scrollbars) = &mut *scrollbars_ptr {
             scrollbars.insert(id, track_element);
         }
     }
@@ -53,7 +54,9 @@ pub fn register_scrollbar(id: String, track: JsValue) {
 #[wasm_bindgen(js_name = updateScrollbarWidth)]
 pub fn update_scrollbar_width(id: String, width: f64) {
     unsafe {
-        if let Some(scrollbars) = &SCROLLBARS {
+        let scrollbars_ptr = &raw const SCROLLBARS;
+
+        if let Some(scrollbars) = &*scrollbars_ptr {
             if let Some(track) = scrollbars.get(&id) {
                 // Use StyleBuilder (consistent with AnimationBuilder architecture)
                 StyleBuilder::new(track)

@@ -3,9 +3,7 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Menu Component - FUI Styling
-// Design: Arknights + Future UI (FUI) aesthetics
-// Features: Active state glow, slide animations, smooth transitions
+// Hikari Menu Component
 // ============================================
 
 // ============================================
@@ -18,14 +16,13 @@
   flex-direction: column;
   min-width: 200px;
 
-  // Appearance - FUI subtle rounded corners
+  // Appearance - subtle rounded corners
   border-radius: vars.$hikari-radius-fui-md;
   border: 1px solid var(--hi-color-border);
 
   // Acrylic background effect
   background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
-  backdrop-filter: blur(vars.$hikari-acrylic-blur);
-  -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  backdrop-filter: blur(4px);
 
   // Elevated shadow
   box-shadow:
@@ -144,20 +141,11 @@
 
   // Hover state
   &:hover {
-    background: var(--hi-primary, rgba(123, 207, 166, 0.1));
-    border-color: var(--hi-primary, rgba(123, 207, 166, 0.3));
-
-    // Theme-specific hover effects
-    [data-theme="hikari"] & {
-      filter: brightness(0.7);
-    }
-
-    [data-theme="tairitsu"] & {
-      filter: brightness(1.2);
-    }
+    background: var(--hi-primary);
+    border-color: var(--hi-primary);
  
     .hi-menu-item-icon {
-      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.5)));
+      filter: drop-shadow(0 0 4px var(--hi-primary));
     }
  
     .hi-menu-item-arrow {
@@ -167,16 +155,16 @@
 
   // Active state (selected)
   &.hi-menu-item-active {
-    background: linear-gradient(90deg, var(--hi-primary, rgba(123, 207, 166, 0.2)), var(--hi-primary, rgba(123, 207, 166, 0.05)));
-    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
+    background: linear-gradient(90deg, var(--hi-primary), var(--hi-primary));
+    border-color: var(--hi-primary);
     color: var(--hi-color-text-primary);
     box-shadow:
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.2)),
-      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
+      0 0 12px var(--hi-primary),
+      inset 0 0 8px var(--hi-primary);
 
     .hi-menu-item-icon {
       color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 6px var(--hi-primary, rgba(123, 207, 166, 0.6)));
+      filter: drop-shadow(0 0 6px var(--hi-primary));
     }
 
     .hi-menu-item-arrow {
@@ -194,11 +182,11 @@
   // Focus state
   &:focus-visible {
     outline: none;
-    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
-    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
+    background: var(--hi-primary);
+    border-color: var(--hi-primary);
     box-shadow:
-      0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.3)),
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
+      0 0 0 2px var(--hi-primary),
+      0 0 12px var(--hi-primary);
   }
 }
 
@@ -248,7 +236,7 @@
   border-bottom: 1px solid var(--hi-color-border);
 
   // Subtle glow on text
-  text-shadow: 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.3));
+  text-shadow: 0 0 8px var(--hi-primary);
 }
 
 // ============================================
@@ -284,7 +272,7 @@
   // Nested menu list
   margin: 0.25rem 0 0.25rem 1rem;
   padding: 0.5rem;
-  border-left: 2px solid var(--hi-primary, rgba(123, 207, 166, 0.3));
+  border-left: 2px solid var(--hi-primary);
   list-style: none;
 
   opacity: 0;
@@ -295,7 +283,9 @@
   // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Glow on the border
-  box-shadow: -2px 0 8px var(--hi-primary, rgba(123, 207, 166, 0.2));
+  --hi-glow-transparent: false;
+  --hi-glow-bg-color: var(--hi-color-surface);
+  box-shadow: -2px 0 8px var(--hi-glow-color);
 }
 
 // ============================================
@@ -381,22 +371,22 @@
 // Danger item
 .hi-menu-item-danger {
   &:hover {
-    background: rgba(239, 68, 68, 0.1);
-    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(255, 76, 0, 0.1);
+    border-color: rgba(255, 76, 0, 0.3);
     color: var(--hi-color-danger);
 
     .hi-menu-item-icon {
       color: var(--hi-color-danger);
-      filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.5));
+      filter: drop-shadow(0 0 4px rgba(255, 76, 0, 0.5));
     }
   }
 
   &.hi-menu-item-active {
-    background: linear-gradient(90deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.05));
-    border-color: rgba(239, 68, 68, 0.5);
+    background: linear-gradient(90deg, rgba(255, 76, 0, 0.2), rgba(255, 76, 0, 0.05));
+    border-color: rgba(255, 76, 0, 0.5);
     box-shadow:
-      0 0 12px rgba(239, 68, 68, 0.2),
-      inset 0 0 8px rgba(239, 68, 68, 0.1);
+      0 0 12px rgba(255, 76, 0, 0.2),
+      inset 0 0 8px rgba(255, 76, 0, 0.1);
   }
 }
 
@@ -512,13 +502,13 @@
 // @keyframes menu-item-pulse {
 //   0%, 100% {
 //     box-shadow:
-//       0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.2)),
-//       inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
+//       0 0 12px var(--hi-primary),
+//       inset 0 0 8px var(--hi-primary);
 //   }
 //   50% {
 //     box-shadow:
-//       0 0 20px var(--hi-primary, rgba(123, 207, 166, 0.4)),
-//       inset 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.15));
+//       0 0 20px var(--hi-primary),
+//       inset 0 0 12px var(--hi-primary);
 //   }
 // }
 
@@ -531,7 +521,7 @@
     left: 50%;
     width: 0;
     height: 0;
-    background: var(--hi-primary, rgba(123, 207, 166, 0.3));
+    background: var(--hi-primary);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     // DISABLED - migrated to JS animation

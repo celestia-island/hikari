@@ -47,10 +47,10 @@ $hikari-radius-full: 9999px;
 // 阴影变量
 // ============================================
 
-$hikari-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-$hikari-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-$hikari-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-$hikari-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+$hikari-shadow-sm: var(--hi-shadow-sm);
+$hikari-shadow-md: var(--hi-shadow-md);
+$hikari-shadow-lg: var(--hi-shadow-lg);
+$hikari-shadow-xl: var(--hi-shadow-xl);
 
 // ============================================
 // 过渡变量
@@ -70,10 +70,10 @@ $hikari-acrylic-noise: 0.5;
 $hikari-acrylic-opacity: 0.85;
 
 // 发光效果参数
-$hikari-glow-sm: 0 0 8px rgba(139, 92, 246, 0.4);
-$hikari-glow-md: 0 0 16px rgba(139, 92, 246, 0.5);
-$hikari-glow-lg: 0 0 24px rgba(139, 92, 246, 0.6);
-$hikari-glow-focus: 0 0 20px rgba(139, 92, 246, 0.7);
+$hikari-glow-sm: var(--hi-glow-sm);
+$hikari-glow-md: var(--hi-glow-md);
+$hikari-glow-lg: var(--hi-glow-lg);
+$hikari-glow-focus: var(--hi-glow-focus);
 
 // 强调色条参数
 $hikari-accent-bar-width: 3px;
@@ -85,8 +85,8 @@ $hikari-radius-fui-md: 6px;
 $hikari-radius-fui-lg: 8px;
 
 // 边框发光
-$hikari-border-glow-color: rgba(139, 92, 246, 0.6);
-$hikari-border-glow-width: 1px;
+$hikari-border-glow-color: var(--hi-border-glow);
+$hikari-border-glow-width: var(--hi-border-glow-width);
 
 // 动画缓动函数（GSAP 风格）
 $hikari-ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);

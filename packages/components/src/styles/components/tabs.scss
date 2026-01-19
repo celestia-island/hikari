@@ -3,10 +3,7 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Tabs Component - FUI Styling
-// Design: Arknights + Future UI (FUI) aesthetics
-// Features: Glowing indicators, slide transitions, smooth animations
-// ============================================
+// Hikari // Hikari // Hikari // Hikari // Hikari Tabs Component - FUI Styling Component Component Component Component
 
 // ============================================
 // Base Tabs Styles
@@ -59,11 +56,11 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--hi-primary, rgba(123, 207, 166, 0.3));
+    background: var(--hi-primary);
     border-radius: 2px;
 
     &:hover {
-      background: var(--hi-primary, rgba(123, 207, 166, 0.5));
+      background: var(--hi-primary);
     }
   }
 }
@@ -171,19 +168,19 @@
 
     &:hover {
       color: var(--hi-color-danger);
-      background: rgba(239, 68, 68, 0.2);
-      box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+      background: rgba(255, 76, 0, 0.2);
+      box-shadow: 0 0 8px rgba(255, 76, 0, 0.3);
     }
   }
 
   // Hover state
   &:hover {
     color: var(--hi-color-text-primary);
-    background: var(--hi-primary, rgba(123, 207, 166, 0.1));
+    background: var(--hi-primary);
 
     .hi-tab-icon {
       color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 4px var(--hi-primary, rgba(123, 207, 166, 0.4)));
+      filter: drop-shadow(0 0 4px var(--hi-primary));
     }
 
     .hi-tab-close {
@@ -193,15 +190,15 @@
 
   // Active state
   &.hi-tab-active {
-    color: var(--hi-color-primary);
-    background: var(--hi-primary, rgba(123, 207, 166, 0.15));
+    color: var(--hi-color-text-primary);
+    background: var(--hi-primary);
     box-shadow:
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.15)),
-      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
+      0 0 12px var(--hi-primary),
+      inset 0 0 8px var(--hi-primary);
 
     .hi-tab-icon {
       color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 6px var(--hi-primary, rgba(123, 207, 166, 0.6)));
+      filter: drop-shadow(0 0 6px var(--hi-primary));
     }
 
     .hi-tab-close {
@@ -220,8 +217,8 @@
   &:focus-visible {
     outline: none;
     box-shadow:
-      0 0 0 2px var(--hi-primary, rgba(123, 207, 166, 0.3)),
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
+      0 0 0 2px var(--hi-primary),
+      0 0 12px var(--hi-primary);
   }
 }
 
@@ -240,14 +237,14 @@
   background: linear-gradient(
     90deg,
     var(--hi-color-primary) 0%,
-    var(--hi-primary, rgba(123, 207, 166, 0.8)) 50%,
+    var(--hi-primary) 50%,
     var(--hi-color-primary) 100%
   );
 
   // Glow effect
   box-shadow:
     0 0 8px var(--hi-color-primary),
-    0 0 16px var(--hi-primary, rgba(123, 207, 166, 0.6));
+    0 0 16px var(--hi-primary);
 
   // Transitions - smooth sliding animation
   // DISABLED - migrated to JS animation
@@ -407,8 +404,7 @@
 // Card type (with background and border)
 .hi-tabs-type-card {
   background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
-  backdrop-filter: blur(vars.$hikari-acrylic-blur);
-  -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  backdrop-filter: blur(4px);
   border: 1px solid var(--hi-color-border);
   border-radius: vars.$hikari-radius-fui-md;
   box-shadow:
@@ -426,10 +422,10 @@
     margin: 0.25rem;
 
     &.hi-tab-active {
-      background: var(--hi-primary, rgba(123, 207, 166, 0.2));
+      background: var(--hi-primary);
       box-shadow:
-        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.2)),
-        inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
+        0 0 12px var(--hi-primary),
+        inset 0 0 8px var(--hi-primary);
     }
   }
 
@@ -441,8 +437,7 @@
 // Border card type (more prominent border)
 .hi-tabs-type-border-card {
   background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
-  backdrop-filter: blur(vars.$hikari-acrylic-blur);
-  -webkit-backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  backdrop-filter: blur(4px);
   border: 2px solid var(--hi-color-border);
   border-radius: vars.$hikari-radius-fui-md;
   box-shadow:
@@ -458,11 +453,11 @@
     margin: 0.25rem;
 
     &.hi-tab-active {
-      background: var(--hi-primary, rgba(123, 207, 166, 0.2));
-      border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
+      background: var(--hi-primary);
+      border-color: var(--hi-primary);
       box-shadow:
-        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.2)),
-        inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
+        0 0 12px var(--hi-primary),
+        inset 0 0 8px var(--hi-primary);
     }
   }
 }
@@ -481,9 +476,9 @@
     border-radius: vars.$hikari-radius-fui-sm;
 
     &.hi-tab-active {
-      background: linear-gradient(135deg, var(--hi-primary, rgba(123, 207, 166, 0.9)), rgba(109, 40, 217, 0.9));
+      background: linear-gradient(135deg, var(--hi-primary), rgba(109, 40, 217, 0.9));
       box-shadow:
-        0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.4)),
+        0 0 12px var(--hi-primary),
         inset 0 0 8px var(--hi-white-10, rgba(255, 255, 255, 0.1));
     }
   }
@@ -556,8 +551,8 @@
   margin-left: 0.5rem;
 
   // Appearance
-  background: var(--hi-primary, rgba(123, 207, 166, 0.1));
-  border: 1px solid var(--hi-primary, rgba(123, 207, 166, 0.3));
+  background: var(--hi-primary);
+  border: 1px solid var(--hi-primary);
   border-radius: vars.$hikari-radius-fui-sm;
   color: var(--hi-color-primary);
 
@@ -576,11 +571,11 @@
   }
 
   &:hover {
-    background: var(--hi-primary, rgba(123, 207, 166, 0.2));
-    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
+    background: var(--hi-primary);
+    border-color: var(--hi-primary);
     box-shadow:
-      0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3)),
-      inset 0 0 8px var(--hi-primary, rgba(123, 207, 166, 0.1));
+      0 0 12px var(--hi-primary),
+      inset 0 0 8px var(--hi-primary);
   }
 
   &:active {
@@ -710,7 +705,7 @@
 
   // Appearance
   background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
-  backdrop-filter: blur(vars.$hikari-acrylic-blur);
+  backdrop-filter: blur(4px);
   border: 1px solid var(--hi-color-border);
   border-radius: vars.$hikari-radius-fui-sm;
   color: var(--hi-color-text-primary);
@@ -730,9 +725,11 @@
   }
 
   &:hover {
-    background: var(--hi-primary, rgba(123, 207, 166, 0.2));
-    border-color: var(--hi-primary, rgba(123, 207, 166, 0.5));
-    box-shadow: 0 0 12px var(--hi-primary, rgba(123, 207, 166, 0.3));
+    background: var(--hi-primary);
+    border-color: var(--hi-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-primary);
+    box-shadow: 0 0 12px var(--hi-glow-color);
   }
 
   &:disabled {

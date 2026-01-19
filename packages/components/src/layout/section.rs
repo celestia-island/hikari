@@ -17,6 +17,7 @@
 //! ```
 
 use dioxus::prelude::*;
+use palette::classes::{ClassesBuilder, SectionClass, UtilityClass};
 
 /// Section component - Content section with optional header
 ///
@@ -50,28 +51,36 @@ pub fn Section(
     class: String,
 ) -> Element {
     let size_class = match size.as_str() {
-        "sm" => "hi-section-sm",
-        "lg" => "hi-section-lg",
-        _ => "hi-section-md", // md (default)
+        "sm" => SectionClass::SectionSm,
+        "lg" => SectionClass::SectionLg,
+        _ => SectionClass::SectionMd, // md (default)
     };
+
+    let section_classes = ClassesBuilder::new()
+        .add(SectionClass::Section)
+        .add(size_class)
+        .add_raw(&class)
+        .build();
+
+    let section_classes_str = section_classes.as_str();
 
     rsx! {
         section {
-            class: format!("hi-section {size_class} {class}"),
+            class: "{section_classes_str}",
 
             // Optional header
             if title.is_some() || description.is_some() {
                 div {
-                    class: "hi-section-header",
+                    class: "{SectionClass::SectionHeader.as_class()}",
                     if let Some(t) = title {
                         h2 {
-                            class: "hi-section-title",
+                            class: "{SectionClass::SectionTitle.as_class()}",
                             "{t}"
                         }
                     }
                     if let Some(d) = description {
                         p {
-                            class: "hi-section-description",
+                            class: "{SectionClass::SectionDescription.as_class()}",
                             "{d}"
                         }
                     }
@@ -80,7 +89,7 @@ pub fn Section(
 
             // Section content
             div {
-                class: "hi-section-body",
+                class: "{SectionClass::SectionBody.as_class()}",
                 { children }
             }
         }
@@ -123,9 +132,16 @@ pub fn Spacer(
         format!("height: {size_value};")
     };
 
+    let classes = ClassesBuilder::new()
+        .add(SectionClass::Spacer)
+        .add_raw(&class)
+        .build();
+
+    let classes_str = classes.as_str();
+
     rsx! {
         div {
-            class: format!("hi-spacer {class}"),
+            class: "{classes_str}",
             style: style,
         }
     }

@@ -13,6 +13,13 @@
 @use '../../../theme/styles/mixins.scss' as *;
 
 // ============================================
+// Theme Base Styles (before components)
+// ============================================
+
+// Import theme base styles with CSS variables for hikari and tairitsu themes
+@import '../../../theme/styles/base.scss';
+
+// ============================================
 // Utility Classes (Tailwind-compatible)
 // ============================================
 // Basic utility classes for the Hikari UI framework
@@ -367,7 +374,6 @@
   --hi-color-primary: var(--hi-primary);
   --hi-color-background: var(--hi-background);
   --hi-color-surface: var(--hi-surface);
-  --hi-primary-bg: rgba(123, 207, 166, 0.15);
   --hi-secondary-bg: rgba(248, 250, 252, 0.5);
   --hi-tertiary-bg: rgba(243, 244, 246, 0.5);
 
@@ -388,7 +394,7 @@
   --hi-card-border: rgba(255, 255, 255, 0.1);
 
   --hi-badge-bg-primary: rgba(59, 130, 246, 0.9);
-  --hi-badge-bg-success: rgba(16, 185, 129, 0.9);
+  --hi-badge-bg-success: rgba(14, 184, 64, 0.9);
 
 
   // Button Variant Colors (rgba format for gradients)
@@ -400,11 +406,11 @@
   --hi-button-secondary-dark: rgba(75, 85, 99, 0.9);
   --hi-button-secondary-light: rgba(156, 163, 175, 0.95);
   
-  --hi-button-danger: rgba(239, 68, 68, 0.9);      // Red
+  --hi-button-danger: rgba(255, 76, 0, 0.9);      // Red
   --hi-button-danger-dark: rgba(220, 38, 38, 0.9);
   --hi-button-danger-light: rgba(248, 113, 113, 0.95);
   
-  --hi-button-success: rgba(16, 185, 129, 0.9);    // Green
+  --hi-button-success: rgba(14, 184, 64, 0.9);    // Green
   --hi-button-success-dark: rgba(5, 150, 105, 0.9);
   --hi-button-success-light: rgba(52, 211, 153, 0.95);
   
@@ -412,7 +418,7 @@
   --hi-button-icon-on-dark: #ffffff;  // White for solid buttons
   --hi-button-icon-on-light: #96c7ff;  // Light blue for ghost buttons (fallback)
   --hi-badge-bg-warning: rgba(251, 191, 36, 0.9);
-  --hi-badge-bg-danger: rgba(239, 68, 68, 0.9);
+  --hi-badge-bg-danger: rgba(255, 76, 0, 0.9);
   --hi-badge-text: #FFFFFF;
 
   // Opacity Variants
@@ -438,11 +444,11 @@
   --hi-glow-primary-md: 0 0 16px rgba(59, 130, 246, 0.5);
   --hi-glow-primary-lg: 0 0 24px rgba(59, 130, 246, 0.4);
 
-  --hi-glow-danger-sm: 0 0 8px rgba(239, 68, 68, 0.3);
-  --hi-glow-danger-md: 0 0 16px rgba(239, 68, 68, 0.5);
+  --hi-glow-danger-sm: 0 0 8px rgba(255, 76, 0, 0.3);
+  --hi-glow-danger-md: 0 0 16px rgba(255, 76, 0, 0.5);
 
-  --hi-glow-success-sm: 0 0 8px rgba(16, 185, 129, 0.3);
-  --hi-glow-success-md: 0 0 16px rgba(16, 185, 129, 0.5);
+  --hi-glow-success-sm: 0 0 8px rgba(14, 184, 64, 0.3);
+  --hi-glow-success-md: 0 0 16px rgba(14, 184, 64, 0.5);
 
   --hi-glow-warning-sm: 0 0 8px rgba(251, 191, 36, 0.3);
   --hi-glow-warning-md: 0 0 16px rgba(251, 191, 36, 0.5);

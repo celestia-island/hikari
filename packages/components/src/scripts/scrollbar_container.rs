@@ -22,7 +22,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use animation::{
-    style::{CssProperty, StyleBuilder},
+    style::{AttributeBuilder, CssProperty, StyleBuilder},
     TimerManager,
 };
 use js_sys::Date;
@@ -370,7 +370,13 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
         Err(_) => return,
     };
     let _ = wrapper.class_list().add_1("custom-scrollbar-wrapper");
-    let _ = wrapper.set_attribute("data-custom-scrollbar", "wrapper");
+    let wrapper_html = match wrapper.dyn_ref::<web_sys::HtmlElement>() {
+        Some(el) => el,
+        None => return,
+    };
+    AttributeBuilder::new(wrapper_html)
+        .add_data("custom-scrollbar", "wrapper")
+        .apply();
 
     // Set wrapper to flex positioning, filling the entire container
     let wrapper_html = match wrapper.dyn_ref::<web_sys::HtmlElement>() {
@@ -390,7 +396,13 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
         Err(_) => return,
     };
     let _ = content_layer.class_list().add_1("custom-scrollbar-content");
-    let _ = content_layer.set_attribute("data-custom-scrollbar", "content");
+    let content_layer_html = match content_layer.dyn_ref::<web_sys::HtmlElement>() {
+        Some(el) => el,
+        None => return,
+    };
+    AttributeBuilder::new(content_layer_html)
+        .add_data("custom-scrollbar", "content")
+        .apply();
 
     // Set content layer to flex with overflow-y: auto
     let content_html = match content_layer.dyn_ref::<web_sys::HtmlElement>() {
@@ -422,7 +434,13 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
         Err(_) => return,
     };
     let _ = track.class_list().add_1("custom-scrollbar-track");
-    let _ = track.set_attribute("data-custom-scrollbar", "track");
+    let track_html = match track.dyn_ref::<web_sys::HtmlElement>() {
+        Some(el) => el,
+        None => return,
+    };
+    AttributeBuilder::new(track_html)
+        .add_data("custom-scrollbar", "track")
+        .apply();
 
     // Set track to absolute positioning, attached to container's right edge
     let track_html = match track.dyn_ref::<web_sys::HtmlElement>() {
@@ -447,8 +465,14 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
         Err(_) => return,
     };
     let _ = thumb.class_list().add_1("custom-scrollbar-thumb");
-    let _ = thumb.set_attribute("data-custom-scrollbar", "thumb");
-    let _ = thumb.set_attribute("tabindex", "0"); // Make focusable
+    let thumb_html = match thumb.dyn_ref::<web_sys::HtmlElement>() {
+        Some(el) => el,
+        None => return,
+    };
+    AttributeBuilder::new(thumb_html)
+        .add_data("custom-scrollbar", "thumb")
+        .add("tabindex", "0")
+        .apply(); // Make focusable
 
     // Append thumb to track
     let _ = track.append_child(&thumb);

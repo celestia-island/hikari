@@ -152,7 +152,10 @@ pub use data::*;
 pub use styled::{StyleRegistry, StyledComponent};
 
 // Theme provider exports
-pub use theme_provider::{prefers_dark_mode, use_theme, ThemeContext, ThemePalette, ThemeProvider};
+pub use theme_provider::{
+    get_default_theme, get_registered_theme, prefers_dark_mode, register_theme, use_theme,
+    ThemeContext, ThemePalette, ThemeProvider,
+};
 
 /// # Hierarchical Theme System
 ///

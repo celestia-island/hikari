@@ -266,39 +266,12 @@ html {
     font-size: 16px;
     scroll-behavior: smooth;
 
-    // 全局自定义滚动条 - 直接定义
-    scrollbar-gutter: stable;
-    scrollbar-width: thin;
-    scrollbar-color: var(--hi-color-gray-40) var(--hi-color-gray-20);
-
+    // Hide native scrollbar (using custom scrollbar component)
     &::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
+        display: none;
     }
-
-    &::-webkit-scrollbar-track {
-        background: var(--hi-color-gray-20);
-        border-radius: 3px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: var(--hi-color-gray-40);
-        border-radius: 3px;
-    }
-
-    &::-webkit-scrollbar-thumb:hover {
-        background: var(--hi-color-gray-50);
-        box-shadow: 0 0 12px var(--hi-color-gray-50);
-    }
-
-    &::-webkit-scrollbar-thumb:active {
-        background: var(--hi-color-white-20);
-        box-shadow: 0 0 16px var(--hi-color-white-20);
-    }
-
-    &::-webkit-scrollbar-corner {
-        background: transparent;
-    }
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
 body {
@@ -360,20 +333,6 @@ a {
     }
 }
 
-// Theme-specific link hover colors
-@media (prefers-color-scheme: light) {
-    a:hover {
-        color: var(--hi-color-text-primary);
-        filter: brightness(0.7);
-    }
-}
-
-@media (prefers-color-scheme: dark) {
-    a:hover {
-        color: var(--hi-color-white-100);
-        filter: brightness(1.2);
-    }
-}
 
 code {
     font-family: $hikari-font-family-mono;
@@ -391,8 +350,8 @@ pre {
     border: 1px solid var(--hi-color-border);
     border-radius: $hikari-radius-md;
     overflow-x: auto;
-    
-    @include scrollbar;
+
+    @include scrollbar-hidden;
 }
 
 // ============================================
@@ -401,11 +360,10 @@ pre {
 
 ul, ol {
     list-style: none;
-    margin-bottom: $hikari-spacing-md;
 }
 
 li {
-    margin-bottom: $hikari-spacing-sm;
+    // No global margin - components control their own spacing
 }
 
 // ============================================

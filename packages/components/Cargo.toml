@@ -43,6 +43,7 @@ pagination = []
 palette = { path = "../palette", package = "hikari-palette" }
 theme = { path = "../theme", package = "hikari-theme" }
 animation = { path = "../animation", package = "hikari-animation" }
+icons = { path = "../icons", package = "hikari-icons" }
 
 # MCP / network and protocols
 dioxus.workspace = true
@@ -67,6 +68,9 @@ js-sys = "^0.3"
 
 # Browser utilities library (higher-level than web-sys)
 gloo = { version = "^0.11", features = ["utils"] }
+
+# Global static variables
+once_cell = "1.19"
 
 [build-dependencies]
 grass = "^0.13"

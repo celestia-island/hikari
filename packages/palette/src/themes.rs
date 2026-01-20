@@ -27,17 +27,17 @@ pub enum ThemeMode {
 pub struct Palette {
     /// Theme mode (light or dark)
     pub mode: ThemeMode,
-    pub primary: ChineseColor,
-    pub secondary: ChineseColor,
-    pub accent: ChineseColor,
-    pub success: ChineseColor,
-    pub warning: ChineseColor,
-    pub danger: ChineseColor,
-    pub background: ChineseColor,
-    pub surface: ChineseColor,
-    pub border: ChineseColor,
-    pub text_primary: ChineseColor,
-    pub text_secondary: ChineseColor,
+    pub primary: Color,
+    pub secondary: Color,
+    pub accent: Color,
+    pub success: Color,
+    pub warning: Color,
+    pub danger: Color,
+    pub background: Color,
+    pub surface: Color,
+    pub border: Color,
+    pub text_primary: Color,
+    pub text_secondary: Color,
 }
 
 impl Palette {
@@ -61,7 +61,7 @@ impl Palette {
     /// let contrast = palette.button_glow_color(&palette.primary);
     /// // e.g., "rgba(0, 0, 0, 0.7)" for pink, "rgba(255, 255, 255, 0.6)" for indigo
     /// ```
-    pub fn button_glow_color(&self, color: &ChineseColor) -> String {
+    pub fn button_glow_color(&self, color: &Color) -> String {
         // Use the color's glow contrast method (theme-independent)
         // Dynamic opacity based on contrast between button and glow color
         color.glow_contrast_dynamic_rgba()
@@ -87,8 +87,8 @@ impl Palette {
     /// ```
     pub fn ghost_text_color(&self, alpha: f64) -> String {
         let color = match self.mode {
-            ThemeMode::Light => ChineseColor::from_rgb(0, 0, 0),
-            ThemeMode::Dark => ChineseColor::from_rgb(255, 255, 255),
+            ThemeMode::Light => Color::from_rgb(0, 0, 0),
+            ThemeMode::Dark => Color::from_rgb(255, 255, 255),
         };
         color.rgba(alpha)
     }
@@ -105,8 +105,8 @@ impl Palette {
     /// ```
     pub fn ghost_border_color(&self, alpha: f64) -> String {
         let color = match self.mode {
-            ThemeMode::Light => ChineseColor::from_rgb(0, 0, 0),
-            ThemeMode::Dark => ChineseColor::from_rgb(255, 255, 255),
+            ThemeMode::Light => Color::from_rgb(0, 0, 0),
+            ThemeMode::Dark => Color::from_rgb(255, 255, 255),
         };
         color.rgba(alpha)
     }
@@ -127,8 +127,8 @@ impl Palette {
     /// ```
     pub fn ghost_glow_color(&self, alpha: f64) -> String {
         let color = match self.mode {
-            ThemeMode::Light => ChineseColor::from_rgb(0, 0, 0),
-            ThemeMode::Dark => ChineseColor::from_rgb(255, 255, 255),
+            ThemeMode::Light => Color::from_rgb(0, 0, 0),
+            ThemeMode::Dark => Color::from_rgb(255, 255, 255),
         };
         color.rgba(alpha)
     }
@@ -154,7 +154,7 @@ impl Palette {
     /// let secondary_brightness = tairitsu.focus_brightness_filter(&tairitsu.secondary);
     /// // "1.2" (secondary is dark, should brighten on focus)
     /// ```
-    pub fn focus_brightness_filter(&self, color: &ChineseColor) -> String {
+    pub fn focus_brightness_filter(&self, color: &Color) -> String {
         let brightness = color.brightness();
         if brightness < 0.4 {
             "1.2".to_string() // Dark button: brighten on focus
@@ -175,17 +175,17 @@ impl Hikari {
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Light,
-            primary: 粉红,      // 粉红色系 (255, 179, 167)
-            secondary: 靛蓝,    // 蓝色系 (6, 82, 121) - 互补色
-            accent: 姜黄,       // 黄色系
-            success: 葱倩,      // 绿色系
-            warning: 鹅黄,      // 黄色系
-            danger: 朱红,       // 红色系
-            background: 月白,   // 白色 (214, 236, 240)
-            surface: 素,        // 浅灰 (236, 241, 245)
-            border: 素,         // 浅灰
-            text_primary: 墨色, // 深色 (80, 97, 109)
-            text_secondary: 黛, // 灰蓝色 (74, 66, 102)
+            primary: 牡丹粉红, // 牡丹粉红 (238, 162, 164)
+            secondary: 苍翠,   // 苍翠 (81, 154, 115) - 与粉红互补
+            accent: 姜黄,      // 黄色系
+            success: 葱倩,     // 绿色系
+            warning: 鹅黄,     // 黄色系
+            danger: 朱红,      // 红色系
+            background: 月白,  // 白色 (214, 236, 240)
+            surface: 素,       // 浅灰 (236, 241, 245)
+            border: 素,        // 浅灰
+            text_primary: Color::from_rgb_float(0.15, 0.15, 0.15), // 90% opacity black (no alpha)
+            text_secondary: Color::from_rgb_float(0.4, 0.4, 0.4), // 60% opacity black (no alpha)
         }
     }
 }
@@ -207,17 +207,17 @@ impl Tairitsu {
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Dark,
-            primary: 靛蓝,      // 深蓝色系 (6, 82, 121)
-            secondary: 粉红,    // 粉红色系 (255, 179, 167)
-            accent: 姜黄,       // 黄色系
-            success: 葱倩,      // 绿色系
-            warning: 鹅黄,      // 黄色系
-            danger: 朱红,       // 红色系
-            background: 墨色,   // 紫黑/深蓝黑 (80, 97, 109)
-            surface: 黛,        // 深蓝灰 (74, 66, 102)
-            border: 黛,         // 深蓝灰
-            text_primary: 月白, // 纯白 (214, 236, 240)
-            text_secondary: 素, // 浅灰 (224, 240, 233)
+            primary: 鷃蓝,                                         // 鷃蓝 (20, 74, 116)
+            secondary: 姜黄,  // 姜黄 (255, 199, 115) - 与深蓝互补
+            accent: 姜黄,     // 黄色系
+            success: 葱倩,    // 绿色系
+            warning: 鹅黄,    // 黄色系
+            danger: 朱红,     // 红色系
+            background: 墨色, // 紫黑/深蓝黑 (80, 97, 109)
+            surface: 黛,      // 深蓝灰 (74, 66, 102)
+            border: 黛,       // 深蓝灰
+            text_primary: Color::from_rgb_float(0.95, 0.95, 0.95), // 95% opacity white (no alpha) - brighter
+            text_secondary: Color::from_rgb_float(0.85, 0.85, 0.85), // 85% opacity white (no alpha) - less gray
         }
     }
 }
@@ -365,18 +365,24 @@ mod tests {
     fn test_hikari_theme() {
         let palette = Hikari::palette();
         assert_eq!(palette.mode, ThemeMode::Light);
-        assert_eq!(palette.primary, 粉红);
+        assert_eq!(palette.primary, 牡丹粉红);
         assert_eq!(palette.background, 月白);
-        assert_eq!(palette.text_primary, 墨色);
+        assert_eq!(
+            palette.text_primary,
+            Color::from_rgb_float(0.15, 0.15, 0.15)
+        );
     }
 
     #[test]
     fn test_tairitsu_theme() {
         let palette = Tairitsu::palette();
         assert_eq!(palette.mode, ThemeMode::Dark);
-        assert_eq!(palette.primary, 靛蓝);
+        assert_eq!(palette.primary, 鷃蓝);
         assert_eq!(palette.background, 墨色);
-        assert_eq!(palette.text_primary, 月白);
+        assert_eq!(
+            palette.text_primary,
+            Color::from_rgb_float(0.95, 0.95, 0.95)
+        );
     }
 
     #[test]
@@ -438,23 +444,23 @@ fn test_palette_button_glow() {
     let hikari = Hikari::palette();
     let tairitsu = Tairitsu::palette();
 
-    // hikari Primary (粉红 - brightness 0.79) should get black glow
-    // Contrast: |0.79 - 0.0| = 0.79 > 0.7, alpha = 0.7
+    // hikari Primary (牡丹粉红 - brightness 0.73) should get black glow
+    // Contrast: |0.73 - 0.0| = 0.73 > 0.7, alpha = 0.7
     let hikari_primary_glow = hikari.button_glow_color(&hikari.primary);
     assert_eq!(hikari_primary_glow, "rgba(0, 0, 0, 0.7)");
 
-    // tairitsu Primary (靛蓝 - brightness 0.25) should get white glow
+    // tairitsu Primary (鷃蓝 - brightness 0.25) should get white glow
     // Contrast: |0.25 - 1.0| = 0.75 > 0.7, alpha = 0.7
     let tairitsu_primary_glow = tairitsu.button_glow_color(&tairitsu.primary);
     assert_eq!(tairitsu_primary_glow, "rgba(255, 255, 255, 0.7)");
 
-    // hikari Secondary (靛蓝 - brightness 0.25) should get white glow
-    // Contrast: |0.25 - 1.0| = 0.75 > 0.7, alpha = 0.7
+    // hikari Secondary (苍翠 - brightness 0.501) should get black glow
+    // Contrast: |0.501 - 0.0| = 0.501 > 0.5, <= 0.7, alpha = 0.6
     let hikari_secondary_glow = hikari.button_glow_color(&hikari.secondary);
-    assert_eq!(hikari_secondary_glow, "rgba(255, 255, 255, 0.7)");
+    assert_eq!(hikari_secondary_glow, "rgba(0, 0, 0, 0.6)");
 
-    // tairitsu Secondary (粉红 - brightness 0.79) should get black glow
-    // Contrast: |0.79 - 0.0| = 0.79 > 0.7, alpha = 0.7
+    // tairitsu Secondary (姜黄 - brightness 0.808) should get black glow
+    // Contrast: |0.808 - 0.0| = 0.808 > 0.7, alpha = 0.7
     let tairitsu_secondary_glow = tairitsu.button_glow_color(&tairitsu.secondary);
     assert_eq!(tairitsu_secondary_glow, "rgba(0, 0, 0, 0.7)");
 

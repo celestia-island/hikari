@@ -47,22 +47,8 @@
   overflow-x: auto;
   overflow-y: hidden;
 
-  &::-webkit-scrollbar {
-    height: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: rgba(214, 236, 240, 0.5);
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--hi-primary);
-    border-radius: 2px;
-
-    &:hover {
-      background: var(--hi-primary);
-    }
-  }
+  // Hide native scrollbar (using custom scrollbar component)
+  @include mix.scrollbar-hidden;
 }
 
 // ============================================

@@ -11,7 +11,7 @@ use _components::{
 };
 use _icons::{Icon, MdiIcon};
 use _palette::classes::{
-    BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, Margin, MarginBottom, Padding,
+    BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding,
     PaddingLeft, TextColor,
 };
 

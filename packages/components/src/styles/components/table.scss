@@ -26,15 +26,27 @@
   // Shadow
   box-shadow:
     0 4px 8px rgba(214, 236, 240, 0.5),
-    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
+    0 0 0 1px var(--hi-white-5, rgba(255,255,255, 0.05)) inset;
 
   // Transitions
   // DISABLED - migrated to JS animation
 
   // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+}
 
-  // Custom scrollbar
-  @include mix.scrollbar;
+// ============================================
+// Table Container (Scrollable)
+// ============================================
+
+.hi-table-container {
+  // Layout
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  position: relative;
+
+  // Hide native scrollbar (using custom scrollbar component)
+  @include mix.scrollbar-hidden;
 }
 
 // ============================================

@@ -153,9 +153,11 @@
 //! For more details, see the [crate documentation](https://docs.rs/hikari-palette)
 
 pub mod classes;
+pub mod color_math;
 pub mod colors;
 pub mod themes;
 
 pub use classes::*;
+pub use color_math::*;
 pub use colors::*;
 pub use themes::*;

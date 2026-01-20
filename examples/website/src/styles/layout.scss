@@ -1,38 +1,28 @@
 // demo-app/src/styles/layout.scss
-// Component-specific overrides and pseudo-class styles
-// All layout/spacing/typography uses ClassesBuilder in layout.rs
+// Component-specific overrides for sidebar
 
 // ============================================
 // Theme toggle button
 // ============================================
 
 .hi-button.theme-toggle-button {
-  // Remove default button border
   border: none !important;
-
-  // Override ghost variant styles
   background: transparent !important;
   color: var(--hi-color-text-secondary) !important;
   box-shadow: none !important;
-
-  // Smaller padding for icon-only button
   padding: 0.375rem !important;
 
-  // Remove hover background
   &:hover {
     background: var(--hi-surface) !important;
     transform: scale(1.05);
   }
 
-  // Active state
   &:active {
     transform: scale(0.95);
   }
 }
 
-// Additional hover/active states (pseudo-classes not in ClassesBuilder yet)
 button[data-theme] {
-  // Remove default button border
   border: none;
 
   &:hover {

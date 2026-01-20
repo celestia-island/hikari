@@ -65,10 +65,141 @@
 //! }
 //! ```
 
+use std::collections::HashMap;
 use std::rc::Rc;
+
+use std::sync::RwLock;
 
 use dioxus::prelude::*;
 use palette::*;
+
+/// Trait for converting theme identifiers to string
+///
+/// Components can define their own enums that implement this trait,
+/// providing type-safe theme selection without string literals.
+///
+/// # Example
+///
+/// ```rust
+/// use hikari_components::IntoThemeName;
+///
+/// enum MyThemes {
+///     Light,
+///     Dark,
+/// }
+///
+/// impl IntoThemeName for MyThemes {
+///     fn as_theme_name(&self) -> String {
+///         match self {
+///             MyThemes::Light => "hikari".to_string(),
+///             MyThemes::Dark => "tairitsu".to_string(),
+///         }
+///     }
+/// }
+///
+/// // Now you can use MyThemes::Light instead of "hikari"
+/// ThemeProvider { palette: MyThemes::Light } { }
+/// ```
+pub trait IntoThemeName: std::fmt::Display + 'static {
+    /// Convert to theme identifier to a string name
+    fn as_theme_name(&self) -> String;
+}
+
+/// Default implementation for String (backwards compatibility)
+///
+/// Note: This implementation is discouraged. Use &'static str or
+/// a custom enum implementing IntoThemeName instead.
+impl IntoThemeName for String {
+    fn as_theme_name(&self) -> String {
+        self.clone()
+    }
+}
+
+/// Default implementation for &str (backwards compatibility)
+impl IntoThemeName for &'static str {
+    fn as_theme_name(&self) -> String {
+        (*self).to_string()
+    }
+}
+
+/// Theme registry - global map of registered themes
+type ThemeRegistry = HashMap<String, Palette>;
+
+/// Global theme registry storage
+static THEME_REGISTRY: once_cell::sync::Lazy<RwLock<ThemeRegistry>> =
+    once_cell::sync::Lazy::new(|| {
+        let mut registry = ThemeRegistry::new();
+
+        // Register default themes
+        registry.insert("hikari".to_string(), Hikari::palette());
+        registry.insert("tairitsu".to_string(), Tairitsu::palette());
+
+        RwLock::new(registry)
+    });
+
+/// Register a custom theme
+///
+/// Allows adding new themes to the global registry that can be used
+/// by ThemeProvider via the palette prop.
+///
+/// # Arguments
+///
+/// * `name` - Unique identifier for the theme (e.g., "custom-dark")
+/// * `palette` - Palette containing all theme colors
+///
+/// # Example
+///
+/// ```rust,no_run
+/// use hikari_components::register_theme;
+/// use hikari_palette::{Palette, ChineseColor};
+///
+/// register_theme("custom", Palette {
+///     primary: ChineseColor::from_rgb(255, 100, 100),
+///     secondary: ChineseColor::from_rgb(100, 100, 255),
+///     // ... other colors
+///     ..Default::default()
+/// });
+/// ```
+pub fn register_theme(name: &str, palette: Palette) {
+    let mut registry = THEME_REGISTRY.write().unwrap();
+    registry.insert(name.to_string(), palette);
+}
+
+/// Get registered theme by name
+///
+/// Returns the Palette for a registered theme, or None if not found.
+///
+/// # Arguments
+///
+/// * `name` - Theme name (e.g., "hikari", "tairitsu")
+pub fn get_registered_theme(name: &str) -> Option<Palette> {
+    let registry = THEME_REGISTRY.read().unwrap();
+    registry.get(name).cloned()
+}
+
+/// Get default theme based on system color scheme
+///
+/// Returns Hikari for light mode, Tairitsu for dark mode.
+///
+/// # Platform Support
+///
+/// - **WASM**: Returns actual `prefers-color-scheme: dark` media query result
+/// - **Non-WASM**: Always returns Hikari (light mode default)
+pub fn get_default_theme() -> &'static str {
+    #[cfg(target_arch = "wasm32")]
+    {
+        if prefers_dark_mode() {
+            "tairitsu"
+        } else {
+            "hikari"
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        "hikari"
+    }
+}
 
 /// Theme palette with CSS variable values
 #[derive(Clone, PartialEq)]
@@ -91,10 +222,20 @@ pub struct ThemePalette {
     pub surface: String,
     /// Border color
     pub border: String,
+
     /// Primary text color
     pub text_primary: String,
     /// Secondary text color
     pub text_secondary: String,
+
+    // Aside/Header background colors (90% opacity with color tint)
+    /// Aside background (white with red tint for light, black with blue tint for dark)
+    pub aside_bg: String,
+    /// Header background (same as aside)
+    pub header_bg: String,
+
+    // Menu hover glow color (white for light, black for dark)
+    pub menu_hover_glow: String,
 
     // Button specific colors (rgba format for gradients and shadows)
     /// Button primary background (rgba)
@@ -121,6 +262,24 @@ pub struct ThemePalette {
     pub button_success_dark: String,
     /// Button success light
     pub button_success_light: String,
+
+    // Button hover colors (dynamically selected based on contrast)
+    /// Hover start color (light for dark buttons, light for light buttons)
+    pub button_primary_hover_start: String,
+    /// Hover end color (normal for dark buttons, normal for light buttons)
+    pub button_primary_hover_end: String,
+    /// Hover start color
+    pub button_secondary_hover_start: String,
+    /// Hover end color
+    pub button_secondary_hover_end: String,
+    /// Hover start color
+    pub button_danger_hover_start: String,
+    /// Hover end color
+    pub button_danger_hover_end: String,
+    /// Hover start color
+    pub button_success_hover_start: String,
+    /// Hover end color
+    pub button_success_hover_end: String,
 
     // Button icon colors
     /// Icon color for primary/secondary/danger/success buttons (high contrast, usually white)
@@ -213,6 +372,50 @@ impl ThemePalette {
             button_success_dark: palette.success.rgba(0.75),
             button_success_light: palette.success.rgba(0.95),
 
+            // Button hover colors (dynamically selected based on contrast)
+            // Dark buttons (< 0.4 brightness): hover uses normal → dark (dim)
+            // Light buttons (>= 0.4 brightness): hover uses light → normal (brighten)
+            button_primary_hover_start: if palette.primary.brightness() < 0.4 {
+                palette.primary.rgba(0.9) // normal
+            } else {
+                palette.primary.rgba(0.95) // light
+            },
+            button_primary_hover_end: if palette.primary.brightness() < 0.4 {
+                palette.primary.rgba(0.75) // dark
+            } else {
+                palette.primary.rgba(0.9) // normal
+            },
+            button_secondary_hover_start: if palette.secondary.brightness() < 0.4 {
+                palette.secondary.rgba(0.9)
+            } else {
+                palette.secondary.rgba(0.95)
+            },
+            button_secondary_hover_end: if palette.secondary.brightness() < 0.4 {
+                palette.secondary.rgba(0.75)
+            } else {
+                palette.secondary.rgba(0.9)
+            },
+            button_danger_hover_start: if palette.danger.brightness() < 0.4 {
+                palette.danger.rgba(0.9)
+            } else {
+                palette.danger.rgba(0.95)
+            },
+            button_danger_hover_end: if palette.danger.brightness() < 0.4 {
+                palette.danger.rgba(0.75)
+            } else {
+                palette.danger.rgba(0.9)
+            },
+            button_success_hover_start: if palette.success.brightness() < 0.4 {
+                palette.success.rgba(0.9)
+            } else {
+                palette.success.rgba(0.95)
+            },
+            button_success_hover_end: if palette.success.brightness() < 0.4 {
+                palette.success.rgba(0.75)
+            } else {
+                palette.success.rgba(0.9)
+            },
+
             // Button icon colors
             button_icon_on_dark: "#ffffff".to_string(),
             button_icon_on_light: palette.primary.hex(),
@@ -236,10 +439,33 @@ impl ThemePalette {
             glow_button_warning: palette.button_glow_color(&palette.warning),
             glow_button_info: palette.button_glow_color(&palette.accent),
 
-            // Ghost button colors (theme-dependent)
-            ghost_text: palette.ghost_text_color(1.0),
-            ghost_border: palette.ghost_border_color(0.4),
+            // Ghost button colors (follow text colors)
+            ghost_text: palette.text_primary.hex(),
+            ghost_border: palette.text_secondary.rgba(0.4),
             ghost_glow: palette.ghost_glow_color(0.5),
+
+            // Aside/Header background colors (90% opacity, slight color tint)
+            aside_bg: if palette.mode == ThemeMode::Light {
+                // 90% white with slight red tint (0.1, 0.1, 0.1)
+                "rgba(255, 255, 255, 0.9)".to_string()
+            } else {
+                // 90% black with slight blue tint (0.1, 0.1, 0.2)
+                "rgba(25, 25, 51, 0.9)".to_string()
+            },
+            header_bg: if palette.mode == ThemeMode::Light {
+                // 90% white with slight red tint
+                "rgba(255, 255, 255, 0.9)".to_string()
+            } else {
+                // 90% black with slight blue tint
+                "rgba(25, 25, 51, 0.9)".to_string()
+            },
+
+            // Menu hover glow color (white for light, black for dark)
+            menu_hover_glow: if palette.mode == ThemeMode::Light {
+                "rgba(255, 255, 255, 0.6)".to_string()
+            } else {
+                "rgba(0, 0, 0, 0.6)".to_string()
+            },
 
             // Button focus brightness (based on button color brightness)
             focus_brightness_primary: palette.focus_brightness_filter(&palette.primary),
@@ -335,6 +561,38 @@ impl ThemePalette {
             format!("--hi-button-success: {};", self.button_success),
             format!("--hi-button-success-dark: {};", self.button_success_dark),
             format!("--hi-button-success-light: {};", self.button_success_light),
+            format!(
+                "--hi-button-primary-hover-start: {};",
+                self.button_primary_hover_start
+            ),
+            format!(
+                "--hi-button-primary-hover-end: {};",
+                self.button_primary_hover_end
+            ),
+            format!(
+                "--hi-button-secondary-hover-start: {};",
+                self.button_secondary_hover_start
+            ),
+            format!(
+                "--hi-button-secondary-hover-end: {};",
+                self.button_secondary_hover_end
+            ),
+            format!(
+                "--hi-button-danger-hover-start: {};",
+                self.button_danger_hover_start
+            ),
+            format!(
+                "--hi-button-danger-hover-end: {};",
+                self.button_danger_hover_end
+            ),
+            format!(
+                "--hi-button-success-hover-start: {};",
+                self.button_success_hover_start
+            ),
+            format!(
+                "--hi-button-success-hover-end: {};",
+                self.button_success_hover_end
+            ),
             format!("--hi-button-icon-on-dark: {};", self.button_icon_on_dark),
             format!("--hi-button-icon-on-light: {};", self.button_icon_on_light),
             format!(
@@ -389,6 +647,9 @@ impl ThemePalette {
                 "--hi-focus-brightness-info: {};",
                 self.focus_brightness_info
             ),
+            format!("--hi-aside-bg: {};", self.aside_bg),
+            format!("--hi-header-bg: {};", self.header_bg),
+            format!("--hi-menu-hover-glow: {};", self.menu_hover_glow),
         ]
         .join(" ")
     }
@@ -405,6 +666,31 @@ pub struct ThemeContext {
 #[derive(Clone, Props, PartialEq)]
 pub struct ThemeProviderProps {
     /// Theme identifier: "hikari" (light) or "tairitsu" (dark)
+    ///
+    /// # Type Safety with IntoThemeName
+    ///
+    /// For better type safety, use a custom enum implementing IntoThemeName:
+    ///
+    /// ```rust
+    /// use hikari_components::IntoThemeName;
+    ///
+    /// enum MyTheme {
+    ///     Light,
+    ///     Dark,
+    /// }
+    ///
+    /// impl IntoThemeName for MyTheme {
+    ///     fn as_theme_name(&self) -> String {
+    ///         match self {
+    ///             MyTheme::Light => "hikari".to_string(),
+    ///             MyTheme::Dark => "tairitsu".to_string(),
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// // Usage
+    /// ThemeProvider { palette: MyTheme::Light.as_theme_name() } { }
+    /// ```
     #[props(default = "hikari".to_string())]
     pub palette: String,
 
@@ -512,12 +798,9 @@ pub struct ThemeProviderProps {
 /// ```
 #[component]
 pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
-    // Get the base palette based on theme name
-    let base_palette = match props.palette.as_str() {
-        "hikari" => themes::Hikari::palette(),
-        "tairitsu" => themes::Tairitsu::palette(),
-        _ => themes::Hikari::palette(),
-    };
+    // Get the base palette from theme registry
+    let base_palette = get_registered_theme(&props.palette)
+        .unwrap_or_else(|| get_registered_theme(get_default_theme()).unwrap());
 
     // Create theme palette and apply custom overrides
     let theme_palette = Rc::new(ThemePalette::from_palette(&base_palette).with_overrides(
@@ -536,12 +819,6 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 
     let css_vars = theme_palette.css_variables();
 
-    // Provide theme context to children (overrides any parent context)
-    use_context_provider(|| ThemeContext {
-        palette: theme_palette.clone(),
-        theme_name: props.palette.clone(),
-    });
-
     rsx! {
         div {
             class: "hi-theme-provider",
@@ -554,17 +831,20 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 
 /// Hook to access the current theme
 ///
-/// This hook automatically finds the nearest parent ThemeProvider and returns
-/// its theme context. It supports the hierarchical theme system.
+/// Reads the current theme from the DOM by finding the nearest ancestor
+/// `.hi-theme-provider[data-theme]` element and reading its `data-theme` attribute.
+/// Supports nested ThemeProviders with proper proximity - always returns the theme
+/// from the closest (most nested) provider.
 ///
-/// # Returns
+/// # Platform Support
 ///
-/// * `Option<ThemeContext>` - The current theme context, or None if used outside any ThemeProvider
+/// - **WASM**: Reads theme from DOM elements
+/// - **Non-WASM**: Returns default Hikari theme
 ///
 /// # Hierarchical Behavior
 ///
-/// When multiple ThemeProviders are nested, `use_theme()` returns the context
-/// from the **nearest** provider (closest parent in the component tree).
+/// When multiple ThemeProviders are nested, `use_theme()` returns the theme
+/// from the **nearest** provider (closest parent in the DOM hierarchy).
 ///
 /// # Example
 ///
@@ -573,7 +853,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 /// use hikari_components::use_theme;
 ///
 /// fn MyComponent() -> Element {
-///     let theme = use_theme()?;  // Gets nearest theme provider
+///     let theme = use_theme();
 ///     let primary_color = &theme.palette.primary;
 ///
 ///     rsx! {
@@ -601,40 +881,75 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 ///
 /// # Returns
 ///
-/// Returns the current `ThemeContext`. If called outside of a `ThemeProvider`,
+/// Returns the current `ThemeContext`. If called outside of any `ThemeProvider`,
 /// returns a default theme based on system color scheme (Hikari for light mode,
 /// Tairitsu for dark mode) and logs a warning to the browser console.
+///
+/// # Note
+///
+/// This implementation reads theme directly from DOM rather than using Dioxus
+/// context, ensuring real-time updates even in animation loops.
 pub fn use_theme() -> ThemeContext {
-    try_consume_context::<ThemeContext>().unwrap_or_else(|| {
-        #[cfg(target_arch = "wasm32")]
+    #[cfg(target_arch = "wasm32")]
+    {
+        let window = match web_sys::window() {
+            Some(w) => w,
+            None => return default_theme_context(),
+        };
+
+        let document = match window.document() {
+            Some(doc) => doc,
+            None => return default_theme_context(),
+        };
+
+        let theme_name = match document
+            .query_selector(".hi-theme-provider[data-theme]")
+            .ok()
+            .flatten()
+            .and_then(|el| el.get_attribute("data-theme"))
         {
-            web_sys::console::warn_1(
-                &"use_theme() called outside of ThemeProvider. Using system default theme.".into(),
-            );
+            Some(theme) => theme,
+            None => return default_theme_context(),
+        };
 
-            if prefers_dark_mode() {
-                ThemeContext {
-                    palette: Rc::new(ThemePalette::from_palette(&Tairitsu::palette())),
-                    theme_name: "tairitsu".to_string(),
-                }
-            } else {
-                ThemeContext {
-                    palette: Rc::new(ThemePalette::from_palette(&Hikari::palette())),
-                    theme_name: "hikari".to_string(),
-                }
-            }
+        let palette = get_registered_theme(&theme_name)
+            .unwrap_or_else(|| get_registered_theme(get_default_theme()).unwrap());
+
+        ThemeContext {
+            palette: Rc::new(ThemePalette::from_palette(&palette)),
+            theme_name,
         }
+    }
 
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            eprintln!("use_theme() called outside of ThemeProvider. Using default Hikari theme.");
+    #[cfg(not(target_arch = "wasm32"))]
+    default_theme_context()
+}
 
-            ThemeContext {
-                palette: Rc::new(ThemePalette::from_palette(&Hikari::palette())),
-                theme_name: "hikari".to_string(),
-            }
-        }
-    })
+fn default_theme_context() -> ThemeContext {
+    #[cfg(target_arch = "wasm32")]
+    {
+        web_sys::console::warn_1(
+            &"use_theme() called outside of ThemeProvider. Using system default theme.".into(),
+        );
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        eprintln!("use_theme() called outside of ThemeProvider. Using default Hikari theme.");
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    if prefers_dark_mode() {
+        return ThemeContext {
+            palette: Rc::new(ThemePalette::from_palette(&Tairitsu::palette())),
+            theme_name: "tairitsu".to_string(),
+        };
+    }
+
+    ThemeContext {
+        palette: Rc::new(ThemePalette::from_palette(&Hikari::palette())),
+        theme_name: "hikari".to_string(),
+    }
 }
 
 /// Detect if the system prefers dark mode using `prefers-color-scheme`.

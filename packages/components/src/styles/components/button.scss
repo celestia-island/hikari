@@ -129,12 +129,13 @@
   border: 1px solid var(--hi-border-light, rgba(255, 255, 255, 0.2));
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--hi-button-primary-light), var(--hi-button-primary));
+    background: linear-gradient(135deg, var(--hi-button-primary-hover-start), var(--hi-button-primary-hover-end));
     box-shadow: var(--hi-glow-color);
   }
 
   &:focus-visible {
-    filter: brightness(var(--hi-focus-brightness-primary));
+    outline: 2px solid var(--hi-button-primary);
+    outline-offset: 2px;
   }
 
   &:active:not(:disabled) {
@@ -155,12 +156,13 @@
   border: 1px solid var(--hi-border-light, rgba(255, 255, 255, 0.2));
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--hi-button-secondary-light), var(--hi-button-secondary));
+    background: linear-gradient(135deg, var(--hi-button-secondary-hover-start), var(--hi-button-secondary-hover-end));
     box-shadow: var(--hi-glow-color);
   }
 
   &:focus-visible {
-    filter: brightness(var(--hi-focus-brightness-secondary));
+    outline: 2px solid var(--hi-button-secondary);
+    outline-offset: 2px;
   }
 
   &:active:not(:disabled) {
@@ -188,7 +190,8 @@
   }
 
   &:focus-visible {
-    filter: brightness(var(--hi-focus-brightness-primary));
+    outline: 2px solid var(--hi-ghost-border);
+    outline-offset: 2px;
   }
 
   &:active:not(:disabled) {
@@ -207,12 +210,13 @@
   border: 1px solid var(--hi-border-light, rgba(255, 255, 255, 0.2));
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--hi-button-danger-light), var(--hi-button-danger));
+    background: linear-gradient(135deg, var(--hi-button-danger-hover-start), var(--hi-button-danger-hover-end));
     box-shadow: var(--hi-glow-color);
   }
 
   &:focus-visible {
-    filter: brightness(var(--hi-focus-brightness-danger));
+    outline: 2px solid var(--hi-button-danger);
+    outline-offset: 2px;
   }
 
   &:active:not(:disabled) {
@@ -233,12 +237,13 @@
   border: 1px solid var(--hi-border-light, rgba(255, 255, 255, 0.2));
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--hi-button-success-light), var(--hi-button-success));
+    background: linear-gradient(135deg, var(--hi-button-success-hover-start), var(--hi-button-success-hover-end));
     box-shadow: var(--hi-glow-color);
   }
 
   &:focus-visible {
-    filter: brightness(var(--hi-focus-brightness-success));
+    outline: 2px solid var(--hi-button-success);
+    outline-offset: 2px;
   }
 
   &:active:not(:disabled) {

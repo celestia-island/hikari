@@ -5,7 +5,7 @@ use dioxus::prelude::*;
 
 use crate::components::Layout;
 use _palette::classes::{
-    ClassesBuilder, Display, FontSize, FontWeight, Gap, GridCols, MarginBottom, Padding, TextColor,
+    ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor,
 };
 
 /// Feedback Components Overview

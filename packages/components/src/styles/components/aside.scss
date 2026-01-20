@@ -32,8 +32,8 @@
   flex-direction: column;
   height: 100%;
 
-  // Semi-transparent surface background (theme-aware)
-  background: var(--hi-color-surface);
+  // Transparent background (blends with page background)
+  background: transparent;
   border-right: 1px solid var(--hi-color-border);
 
   // Overflow
@@ -258,8 +258,8 @@
   overflow-x: hidden;
   padding: 0 0 0 0.5rem;  // Only left padding, no right padding
 
-  // Custom scrollbar (no mask - will be applied dynamically via JS)
-  @include mix.scrollbar;
+  // Hide native scrollbar (using custom scrollbar component)
+  @include mix.scrollbar-hidden;
 
   // Smooth scroll
   scroll-behavior: smooth;
@@ -327,6 +327,11 @@
 
 // Menu item
 .hi-aside-menu-item {
+  // Glow effect variables (fixed position for aside)
+  --glow-x: 50%;
+  --glow-y: 50%;
+  --glow-intensity: 1.0;
+
   // Layout
   display: flex;
   align-items: center;
@@ -347,7 +352,7 @@
 
   // Appearance
   border-radius: vars.$hikari-radius-fui-sm;
-  border: 1px solid transparent;
+  border: 1px solid var(--hi-color-border); // Default border (like buttons)
 
   // Cursor
   cursor: pointer;
@@ -361,6 +366,25 @@
   // Position for effects
   position: relative;
   overflow: hidden;
+
+  // Spotlight effect (same as Glow component)
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    border-radius: vars.$hikari-radius-fui-sm;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+
+    // Radial gradient for spotlight effect (same as Glow component)
+    background: radial-gradient(
+      circle at var(--glow-x, 50%) var(--glow-y, 50%),
+      var(--hi-color-secondary) 0%,
+      transparent calc(150% * var(--glow-intensity, 1.0))
+    );
+  }
 
   // Icon
   .hi-aside-menu-item-icon {
@@ -419,61 +443,24 @@
     }
   }
 
-  // Hover state - Glow effect
+  // Hover state - Spotlight effect
   &:hover {
-    background: var(--hi-color-primary);
-    border-color: var(--hi-color-primary);
+    background: transparent;
+    border-color: var(--hi-color-text-primary);
     color: var(--hi-color-text-primary);
-    --hi-glow-transparent: false;
-    --hi-glow-bg-color: var(--hi-color-primary);
-    box-shadow:
-      0 0 12px var(--hi-glow-color),
-      inset 0 0 8px var(--hi-glow-color);
+    transform: translateX(4px);
 
-    .hi-aside-menu-item-icon {
-      color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 4px var(--hi-glow-color));
-      transform: scale(1.1);
-    }
-
-    .hi-aside-menu-item-arrow {
-      color: var(--hi-color-primary);
-      transform: translateX(2px);
-    }
-  }
-
-  // Active state (selected) - Accent bar on left
-  &.hi-aside-menu-item-active {
-    background: linear-gradient(90deg, var(--hi-color-primary), var(--hi-color-primary));
-    border-color: var(--hi-color-primary);
-    color: var(--hi-color-text-primary);
-    --hi-glow-transparent: false;
-    --hi-glow-bg-color: var(--hi-color-primary);
-    box-shadow:
-      0 0 16px var(--hi-glow-color),
-      inset 0 0 12px var(--hi-glow-color);
-
-    // Left accent bar
+    // Show spotlight glow
     &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 3px;
-      height: 60%;
-      background: var(--hi-color-primary);
-      border-radius: 0 2px 2px 0;
-      box-shadow: 0 0 8px var(--hi-glow-color);
+      opacity: 0.2;
     }
 
     .hi-aside-menu-item-icon {
-      color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 6px var(--hi-glow-color));
+      color: var(--hi-color-text-primary);
     }
 
     .hi-aside-menu-item-arrow {
-      color: var(--hi-color-primary);
+      color: var(--hi-color-text-secondary);
     }
   }
 
@@ -486,18 +473,10 @@
 
   // Focus state
   &:focus-visible {
-    outline: none;
-    background: var(--hi-primary);
-    border-color: var(--hi-primary);
-    --hi-glow-transparent: false;
-    --hi-glow-bg-color: var(--hi-primary);
-    box-shadow:
-      0 0 0 2px var(--hi-primary),
-      0 0 12px var(--hi-glow-color);
+    outline: 2px solid var(--hi-color-text-primary);
+    outline-offset: 2px;
   }
 }
-
-// ============================================
 // Aside Menu Groups (Collapsible Sections)
 // ============================================
 

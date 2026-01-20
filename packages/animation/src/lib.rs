@@ -229,6 +229,7 @@
 //! This animation system is designed for **WASM targets only** (`#[cfg(target_arch = "wasm32")]`).
 //! It will not compile for non-WASM targets.
 
+pub mod breathing;
 pub mod builder;
 pub mod context;
 pub mod core;
@@ -247,6 +248,7 @@ pub mod timeline;
 pub mod timer;
 pub mod tween;
 
+pub use breathing::*;
 pub use core::{AnimationEngine, AnimationOptions, PlaybackMode, Tween, TweenId};
 
 // Re-export Glow component for use in Dioxus components

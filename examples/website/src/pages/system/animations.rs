@@ -5,7 +5,7 @@ use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
 use _palette::classes::{
-    ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding,
+    ClassesBuilder, FontSize, FontWeight, MarginBottom,
     TextColor,
 };
 

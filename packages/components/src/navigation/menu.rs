@@ -3,7 +3,12 @@
 
 use dioxus::prelude::*;
 
-use crate::styled::StyledComponent;
+use crate::{
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    styled::StyledComponent,
+};
+use animation::style::{CssProperty, StyleStringBuilder};
+use icons::{Icon, MdiIcon};
 use palette::classes::{components::MenuClass, ClassesBuilder};
 
 /// Menu 组件的类型包装器（用于实现 StyledComponent）
@@ -32,6 +37,9 @@ pub struct MenuItemProps {
     pub class: String,
 
     pub onclick: Option<EventHandler<MouseEvent>>,
+
+    #[props(default)]
+    pub glow: bool,
 }
 
 impl Default for MenuItemProps {
@@ -43,6 +51,7 @@ impl Default for MenuItemProps {
             children: VNode::empty(),
             class: String::default(),
             onclick: None,
+            glow: false,
         }
     }
 }
@@ -62,6 +71,9 @@ pub struct SubMenuProps {
     pub disabled: bool,
 
     #[props(default)]
+    pub default_expanded: bool,
+
+    #[props(default)]
     pub children: Element,
 
     #[props(default)]
@@ -75,6 +87,7 @@ impl Default for SubMenuProps {
             title: String::default(),
             icon: None,
             disabled: false,
+            default_expanded: false,
             children: VNode::empty(),
             class: String::default(),
         }
@@ -220,9 +233,14 @@ impl StyledComponent for MenuComponent {
 /// Menu item component
 #[component]
 pub fn MenuItem(props: MenuItemProps) -> Element {
-    rsx! {
+    let item_classes = ClassesBuilder::new()
+        .add_raw("hi-menu-item")
+        .add_raw(&props.class)
+        .build();
+
+    let item_content = rsx! {
         li {
-            class: format!("hi-menu-item {}", props.class),
+            class: "{item_classes}",
             role: "menuitem",
             "data-key": "{props.item_key}",
             aria_disabled: props.disabled.to_string(),
@@ -234,48 +252,83 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
                 }
             },
 
-            if let Some(icon) = props.icon {
-                span { class: "hi-menu-item-icon", { icon } }
-            }
+            div { class: "hi-menu-item-inner",
+                if let Some(icon) = props.icon {
+                    span { class: "hi-menu-item-icon", { icon } }
+                }
 
-            span { class: "hi-menu-item-content", { props.children } }
+                span { class: "hi-menu-item-content", { props.children } }
+            }
         }
+    };
+
+    if props.glow {
+        rsx! {
+            div {
+                class: "hi-menu-item-wrapper",
+                style: "width: 100%; position: relative;",
+                Glow {
+                    blur: GlowBlur::Medium,
+                    color: GlowColor::Ghost,
+                    intensity: GlowIntensity::Subtle,
+                    children: item_content
+                }
+            }
+        }
+    } else {
+        item_content
     }
 }
 
 /// Submenu component with nested items
 #[component]
 pub fn SubMenu(props: SubMenuProps) -> Element {
-    let mut is_open = use_signal(|| false);
+    let mut is_open = use_signal(|| props.default_expanded);
 
     let submenu_classes = ClassesBuilder::new()
         .add(MenuClass::Submenu)
+        .add_if(MenuClass::SubmenuListOpen, || *is_open.read())
         .add_raw(&props.class)
         .build();
 
     let arrow_classes = ClassesBuilder::new()
-        .add_if(MenuClass::SubmenuArrowOpen, || *is_open.read())
+        .add_raw("hi-menu-item-arrow")
+        .add_raw(if *is_open.read() {
+            "hi-menu-submenu-arrow-open"
+        } else {
+            ""
+        })
         .build();
 
     let list_classes = ClassesBuilder::new()
-        .add_if(MenuClass::SubmenuListOpen, || *is_open.read())
+        .add_raw("hi-menu-submenu-list")
         .build();
 
-    rsx! {
-        li {
-            class: "{submenu_classes}",
-            role: "none",
-            "data-key": "{props.item_key}",
+    let list_style = use_memo(move || {
+        let (display, opacity, transform) = if is_open() {
+            ("block", "1", "translateX(0)")
+        } else {
+            ("none", "0", "translateX(-8px)")
+        };
 
-            div {
-                class: "hi-menu-submenu-title",
-                aria_disabled: props.disabled.to_string(),
-                onclick: move |_| {
-                    if !props.disabled {
-                        is_open.set(!is_open());
-                    }
-                },
+        StyleStringBuilder::new()
+            .add(CssProperty::Display, display)
+            .add(CssProperty::Opacity, opacity)
+            .add(CssProperty::Transform, transform)
+            .build()
+    });
 
+    let title_content = rsx! {
+        div {
+            class: "hi-menu-submenu-title",
+            aria_disabled: props.disabled.to_string(),
+            onclick: move |_e| {
+                if !props.disabled {
+                    is_open.set(!is_open());
+                }
+            },
+
+            div { class: "hi-menu-submenu-title-inner",
                 if let Some(icon) = props.icon {
                     span { class: "hi-menu-item-icon", { icon } }
                 }
@@ -284,23 +337,36 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
 
                 span {
                     class: "{arrow_classes}",
-                    svg {
-                        xmlns: "http://www.w3.org/2000/svg",
-                        view_box: "0 0 24 24",
-                        fill: "none",
-                        stroke: "currentColor",
-                        "stroke-width": "0",
-                        "stroke-linecap": "round",
-                        "stroke-linejoin": "round",
-                        path {
-                            d: "M9 18l6-6-6-6"
-                        }
-                    }
+                    Icon { icon: MdiIcon::ChevronRight }
                 }
             }
+        }
+    };
+
+    let title_with_glow = rsx! {
+        div {
+            class: "hi-menu-item-wrapper",
+            style: "width: 100%; position: relative;",
+            Glow {
+                blur: GlowBlur::Medium,
+                color: GlowColor::Ghost,
+                intensity: GlowIntensity::Subtle,
+                children: title_content
+            }
+        }
+    };
+
+    rsx! {
+        li {
+            class: "{submenu_classes}",
+            role: "none",
+            "data-key": "{props.item_key}",
+
+            { title_with_glow }
 
             ul {
                 class: "{list_classes}",
+                style: "{list_style}",
                 role: "menu",
                 "aria-hidden": "{!is_open()}",
 

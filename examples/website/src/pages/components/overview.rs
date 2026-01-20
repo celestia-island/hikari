@@ -6,8 +6,7 @@ use dioxus::prelude::*;
 use crate::components::Layout;
 use _icons::{Icon, MdiIcon};
 use _palette::classes::{
-    ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding,
-    TextColor,
+    ClassesBuilder, Display, Gap, MarginBottom, Padding,
 };
 
 /// Components Overview

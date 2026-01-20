@@ -27,23 +27,8 @@
   overflow-x: hidden;
   overflow-y: auto;
 
-  // Hide scrollbar for cleaner look
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--hi-color-border, rgba(0, 0, 0, 0.2));
-    border-radius: 2px;
-
-    &:hover {
-      background: var(--hi-color-text-secondary, rgba(0, 0, 0, 0.3));
-    }
-  }
+  // Hide native scrollbar (using custom scrollbar component)
+  @include mix.scrollbar-hidden;
 }
 
 // ============================================
@@ -80,14 +65,17 @@
   user-select: none;
 
   // Transition
-  transition: background-color vars.$hikari-duration-fast ease;
+  transition: all vars.$hikari-duration-fast ease;
 
-  // Hover state
+  // Hover state - border glow
   &:hover {
-    // Theme-specific hover effects
-    
-
-    
+    background: transparent;
+    border-color: var(--hi-color-text-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-color-text-primary);
+    box-shadow:
+      0 0 12px var(--hi-glow-color),
+      inset 0 0 4px var(--hi-glow-color);
   }
 }
 
@@ -147,19 +135,13 @@
   display: flex;
   flex-direction: column;
 
-  // Background for nested content
-  background: var(--hi-secondary-bg, rgba(248, 250, 252, 0.5));
+  // Transparent background (blends with page, no "whitewash")
+  background: transparent;
 
   // Hide when collapsed
   &[data-expanded="false"] {
     display: none;
   }
-
-  // Dark theme support
-  
-
-  // Dark theme support
-  
 }
 
 // ============================================
@@ -205,9 +187,15 @@
   // Transition
   transition: all vars.$hikari-duration-fast ease;
 
-  // Hover effect for all items
+  // Hover effect for all items - border glow
   &:hover {
-    background: var(--hi-color-primary);
+    background: transparent;
+    border-color: var(--hi-color-text-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-color-text-primary);
+    box-shadow:
+      0 0 12px var(--hi-glow-color),
+      inset 0 0 4px var(--hi-glow-color);
   }
 }
 
@@ -283,16 +271,13 @@
   display: flex;
   flex-direction: column;
 
-  // Background for nested content
-  background: var(--hi-tertiary-bg, rgba(243, 244, 246, 0.5));
+  // Transparent background (no "whitewash")
+  background: transparent;
 
   // Hide when collapsed
   &[data-expanded="false"] {
     display: none;
   }
-
-  // Dark theme support
-  
 }
 
 // ============================================
@@ -348,12 +333,15 @@
     padding-left: 2.5rem;
   }
 
-  // Hover state
+  // Hover state - border glow
   &:hover {
-    // Theme-specific hover effects
-    
-
-    
+    background: transparent;
+    border-color: var(--hi-color-text-primary);
+    --hi-glow-transparent: false;
+    --hi-glow-bg-color: var(--hi-color-text-primary);
+    box-shadow:
+      0 0 12px var(--hi-glow-color),
+      inset 0 0 4px var(--hi-glow-color);
   }
 
   // Active state

@@ -32,8 +32,8 @@
 
   // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
-  // Custom scrollbar
-  @include mix.scrollbar;
+  // Hide native scrollbar (using custom scrollbar component)
+  @include mix.scrollbar-hidden;
 
   // Card variant (when used as a standalone card)
   &.hi-tree-card {
@@ -500,8 +500,8 @@
   overflow-x: hidden;
   max-height: 400px;
 
-  // Custom scrollbar with cool effects
-  @include mix.scrollbar;
+  // Hide native scrollbar (using custom scrollbar component)
+  @include mix.scrollbar-hidden;
 
   // Virtual placeholder
   .hi-tree-virtual-placeholder {

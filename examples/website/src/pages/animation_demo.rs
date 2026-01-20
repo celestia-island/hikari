@@ -3,18 +3,10 @@
 
 use dioxus::prelude::*;
 
-use _animation::{
-    presets::{glow, neon, tech, transition, FUIColors},
-    style::{CssProperty, StyleStringBuilder},
-};
+use _animation::presets::{glow, neon, tech, transition};
 use _components::{
-    basic::{Background, Button, ButtonSize, ButtonVariant},
-    layout::{Container, Row, Section, Spacer},
-};
-use _icons::{Icon, MdiIcon};
-use _palette::classes::{
-    ClassesBuilder, Display, Flex, FlexDirection, FontSize, FontWeight, Gap, JustifyContent,
-    Margin, Padding, TextAlign, TextColor,
+    basic::{Button, ButtonSize, ButtonVariant},
+    layout::{Row, Section},
 };
 
 /// Animation demonstration page

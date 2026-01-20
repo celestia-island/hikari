@@ -29,7 +29,7 @@
     background: radial-gradient(
       circle at var(--glow-x, 50%) var(--glow-y, 50%),
       var(--hi-glow-color) 0%,
-      transparent calc(60% * var(--glow-intensity, 1.0))
+      transparent calc(150% * var(--glow-intensity, 1.0))
     );
   }
 

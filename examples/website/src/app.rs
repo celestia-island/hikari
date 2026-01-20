@@ -1,13 +1,7 @@
 // website/src/app.rs
 // Main application component with new routing structure
 
-// Import ThemeProvider (used by all targets)
-use _components::ThemeProvider;
-
-// Import scrollbar system (used by all targets)
-use _components::scripts::scrollbar_container;
-
-// Import Dioxus (needed for all targets)
+use _components::{scripts::scrollbar_container, ThemeProvider};
 use dioxus::prelude::*;
 
 /// Main application routes

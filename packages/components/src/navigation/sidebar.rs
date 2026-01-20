@@ -9,7 +9,12 @@
 
 use dioxus::prelude::*;
 
-use crate::styled::StyledComponent;
+use crate::{
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    styled::StyledComponent,
+};
+
+use icons::{Icon, MdiIcon};
 
 /// Sidebar component type wrapper (for StyledComponent)
 pub struct SidebarComponent;
@@ -181,39 +186,35 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
             class: format!("hi-sidebar-section {}", props.class),
             "data-id": "{props.id}",
 
-            // Section header (clickable to toggle)
-            div {
-                class: "hi-sidebar-section-header",
-                onclick: move |_| { is_expanded.toggle(); },
-                aria_expanded: expanded_attr,
-
+            // Section header (clickable to toggle) - wrapped with Glow
+            Glow {
+                blur: GlowBlur::Light,
+                color: GlowColor::Primary,
+                intensity: GlowIntensity::Subtle,
                 div {
-                    class: "hi-sidebar-section-title-group",
+                    class: "hi-sidebar-section-header",
+                    onclick: move |_| { is_expanded.toggle(); },
+                    aria_expanded: expanded_attr,
 
-                    span {
-                        class: "hi-sidebar-section-title-primary",
-                        "{props.title}"
-                    }
+                    div {
+                        class: "hi-sidebar-section-title-group",
 
-                    if let Some(secondary) = &props.secondary_title {
                         span {
-                            class: "hi-sidebar-section-title-secondary",
-                            "{secondary}"
+                            class: "hi-sidebar-section-title-primary",
+                            "{props.title}"
+                        }
+
+                        if let Some(secondary) = &props.secondary_title {
+                            span {
+                                class: "hi-sidebar-section-title-secondary",
+                                "{secondary}"
+                            }
                         }
                     }
-                }
 
-                div {
-                    class: format!("hi-sidebar-section-arrow {arrow_class}"),
-                    svg {
-                        xmlns: "http://www.w3.org/2000/svg",
-                        view_box: "0 0 24 24",
-                        fill: "none",
-                        stroke: "currentColor",
-                        "stroke-width": "0",
-                        "stroke-linecap": "round",
-                        "stroke-linejoin": "round",
-                        path { d: "M6 9l6 6 6-6" }
+                    div {
+                        class: format!("hi-sidebar-section-arrow {arrow_class}"),
+                        Icon { icon: MdiIcon::ChevronDown }
                     }
                 }
             }
@@ -281,17 +282,21 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
 
             // Item header (always visible)
             // Make entire header clickable when it has nested items
-            div {
-                class: "hi-sidebar-item-header",
-                "data-has-children": "{has_items}",
+            Glow {
+                blur: GlowBlur::Light,
+                color: GlowColor::Primary,
+                intensity: GlowIntensity::Subtle,
+                div {
+                    class: "hi-sidebar-item-header",
+                    "data-has-children": "{has_items}",
 
-                // Add onclick handler to entire header for expand/collapse
-                // When has children, clicking anywhere on the header toggles
-                onclick: move |_| {
-                    if has_items {
-                        is_expanded.toggle();
-                    }
-                },
+                    // Add onclick handler to entire header for expand/collapse
+                    // When has children, clicking anywhere on the header toggles
+                    onclick: move |_| {
+                        if has_items {
+                            is_expanded.toggle();
+                        }
+                    },
 
                 // Custom content slot - user provides Link or other content
                 // If content is provided, use it; otherwise render labels
@@ -313,21 +318,11 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
                     div {
                         class: format!("hi-sidebar-item-arrow {arrow_class}"),
                         aria_expanded: expanded_attr,
-                        svg {
-                            xmlns: "http://www.w3.org/2000/svg",
-                            view_box: "0 0 24 24",
-                            fill: "none",
-                            stroke: "currentColor",
-                            "stroke-width": "0",
-                            "stroke-linecap": "round",
-                            "stroke-linejoin": "round",
-                            path { d: "M9 18l6-6-6-6" }
-                        }
+                        Icon { icon: MdiIcon::ChevronRight }
                     }
                 }
+                }
             }
-
-            // Nested items container (visible when expanded)
             if let Some(items) = &props.items {
                 div {
                     class: "hi-sidebar-item-children",

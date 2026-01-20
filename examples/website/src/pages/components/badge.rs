@@ -11,7 +11,7 @@ use _components::{
 };
 use _icons::{Icon, MdiIcon};
 use _palette::classes::{
-    ClassesBuilder, FontSize, FontWeight, Margin, MarginBottom, Padding, PaddingLeft, TextColor,
+    ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, PaddingLeft, TextColor,
 };
 
 #[allow(non_snake_case)]

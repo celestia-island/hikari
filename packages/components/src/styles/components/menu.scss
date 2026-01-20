@@ -24,11 +24,6 @@
   background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
   backdrop-filter: blur(4px);
 
-  // Elevated shadow
-  box-shadow:
-    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
-
   // Transitions - smooth GSAP-style easing
   // DISABLED - migrated to JS animation
 
@@ -39,6 +34,14 @@
 
   // Overflow
   overflow: visible;
+}
+
+// Sidebar-specific override
+aside .hi-menu {
+  background: transparent;
+  backdrop-filter: none;
+  border: none;
+  box-shadow: none;
 }
 
 // ============================================
@@ -55,30 +58,45 @@
 }
 
 // ============================================
+// Menu Item Wrapper (for Glow)
+// ============================================
+
+.hi-menu-item-wrapper {
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+// ============================================
 // Menu Item
 // ============================================
 
 .hi-menu-item {
-  // Layout
+  // Layout - use flex for alignment
   display: flex;
   align-items: center;
   gap: 0.75rem;
 
-  // Spacing
-  padding: 0.625rem 0.875rem;
+  // No padding/margin - applied in inner wrapper for full-width glow
+  padding: 0;
   margin: 0;
+  width: 100%;
 
-  // Typography
+  // Height - ensure clickable area
+  min-height: auto;
+
+  // Typography - unified 14px
   font-family: vars.$hikari-font-family-sans;
-  font-size: vars.$hikari-font-size-sm;
+  font-size: 14px;
   font-weight: 400;
-  line-height: 1.5;
+  line-height: 1;
   color: var(--hi-color-text-primary);
   text-decoration: none;
   white-space: nowrap;
 
   // Appearance
-  border-radius: vars.$hikari-radius-fui-sm;
+  border-radius: 0;
   border: 1px solid transparent;
 
   // Cursor
@@ -94,20 +112,48 @@
   position: relative;
   overflow: hidden;
 
-  // Icon
+  // Inner content wrapper - applies padding here
+  .hi-menu-item-inner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.625rem 0.875rem;
+    margin: 0;
+    width: 100%;
+    border-radius: vars.$hikari-radius-fui-sm;
+    line-height: 1;
+
+    // Height - ensure clickable area
+    min-height: 2.5rem;
+  }
+
+  // Icon - unified 16px
   .hi-menu-item-icon {
     flex-shrink: 0;
-    width: 1rem;
-    height: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    min-height: 16px;
     color: var(--hi-color-text-secondary);
     // DISABLED - migrated to JS animation
 
     // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     svg {
-      width: 100%;
-      height: 100%;
+      width: 16px;
+      height: 16px;
+      display: block;
     }
+  }
+
+  // Content - for text labels
+  .hi-menu-item-content {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
   }
 
   // Label
@@ -126,41 +172,107 @@
   // Submenu indicator
   .hi-menu-item-arrow {
     flex-shrink: 0;
-    width: 0.75rem;
-    height: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    min-height: 16px;
+    color: var(--hi-color-text-secondary);
+    transition: transform 0.3s ease;
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+  }
+
+  // Icon
+  .hi-menu-item-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    min-width: 1.25rem;
+    min-height: 1.25rem;
     color: var(--hi-color-text-secondary);
     // DISABLED - migrated to JS animation
 
     // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     svg {
-      width: 100%;
-      height: 100%;
+      width: 1.25rem;
+      height: 1.25rem;
     }
   }
 
-  // Hover state
-  &:hover {
-    background: var(--hi-primary);
-    border-color: var(--hi-primary);
- 
-    .hi-menu-item-icon {
-      filter: drop-shadow(0 0 4px var(--hi-primary));
-    }
- 
-    .hi-menu-item-arrow {
-      transform: translateX(2px);
+  // Content - for text labels
+  .hi-menu-item-content {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  // Label
+  .hi-menu-item-label {
+    flex: 1;
+  }
+
+  // Shortcut
+  .hi-menu-item-shortcut {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--hi-color-text-secondary);
+    opacity: 0.7;
+  }
+
+  // Submenu indicator
+  .hi-menu-item-arrow {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.875rem;
+    height: 0.875rem;
+    min-width: 0.875rem;
+    min-height: 0.875rem;
+    color: var(--hi-color-text-secondary);
+    // DISABLED - migrated to JS animation
+
+    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    svg {
+      width: 0.875rem;
+      height: 0.875rem;
     }
   }
+
+  // Hover state - no extra hover styles for ghost button style
+  // &:hover {
+  //   background: var(--hi-primary);
+  //   border-color: var(--hi-primary);
+  //
+  //   .hi-menu-item-icon {
+  //     filter: drop-shadow(0 0 4px var(--hi-primary));
+  //   }
+  //
+  //   .hi-menu-item-arrow {
+  //     transform: translateX(2px);
+  //   }
+  // }
 
   // Active state (selected)
   &.hi-menu-item-active {
     background: linear-gradient(90deg, var(--hi-primary), var(--hi-primary));
     border-color: var(--hi-primary);
     color: var(--hi-color-text-primary);
-    box-shadow:
-      0 0 12px var(--hi-primary),
-      inset 0 0 8px var(--hi-primary);
 
     .hi-menu-item-icon {
       color: var(--hi-color-primary);
@@ -179,17 +291,34 @@
     pointer-events: none;
   }
 
-  // Focus state
+  // Focus state - no underline, only outline
   &:focus-visible {
     outline: none;
-    background: var(--hi-primary);
+    background: linear-gradient(90deg, var(--hi-primary), var(--hi-primary));
     border-color: var(--hi-primary);
-    box-shadow:
-      0 0 0 2px var(--hi-primary),
-      0 0 12px var(--hi-primary);
   }
 }
 
+// Link element inside menu item - fill entire area
+.hi-menu-item a {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+// Remove underline from links
+.hi-menu-item a:hover,
+.hi-menu-item a:focus,
+.hi-menu-item a:visited {
+  text-decoration: none;
+}
+
+// ============================================
+// Menu Divider
 // ============================================
 // Menu Divider
 // ============================================
@@ -246,48 +375,163 @@
 .hi-menu-submenu {
   position: relative;
 
+  // Title container - use flex for alignment
   .hi-menu-submenu-title {
+    // Layout - flex for proper alignment
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+
+    // No padding/margin - applied in inner wrapper for full-width glow
+    padding: 0;
+    margin: 0;
+    width: 100%;
+
+    // Typography - unified 14px
+    font-family: vars.$hikari-font-family-sans;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--hi-color-text-primary);
+
+    // Appearance
+    border-radius: 0;
+    border: 1px solid transparent;
+
+    // Cursor
+    cursor: pointer;
+    user-select: none;
+
+    // Position
+    position: relative;
+
+    // Height limit to constrain icons
+    min-height: auto;
+    max-height: auto;
+
+    // Ensure proper vertical alignment
+    vertical-align: middle;
+
+    // Inner content wrapper - applies padding here
+    .hi-menu-submenu-title-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.625rem 0.875rem;
+      margin: 0.25rem 0;
+      width: 100%;
+      border-radius: vars.$hikari-radius-fui-sm;
+      line-height: 1;
+
+      // Height limit to constrain icons
+      min-height: 2.5rem;
+      max-height: 2.5rem;
+    }
+
+    // Icon inside title
+    .hi-menu-item-icon {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      min-width: 16px;
+      min-height: 16px;
+      color: var(--hi-color-text-secondary);
+
+      svg {
+        width: 16px;
+        height: 16px;
+        display: block;
+      }
+    }
+
+    // Content text - ensure flex behavior
+    .hi-menu-item-content {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    // Arrow icon
     .hi-menu-item-arrow {
-      transform: rotate(0deg);
-      // DISABLED - migrated to JS animation
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      min-width: 16px;
+      min-height: 16px;
+      color: var(--hi-color-text-secondary);
+      transition: transform 0.3s ease;
 
-      // transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+      svg {
+        width: 16px;
+        height: 16px;
+        display: block;
+      }
+
+      &.hi-menu-submenu-arrow-open {
+        transform: rotate(90deg);
+      }
     }
   }
 
-  &.hi-menu-submenu-open {
-    > .hi-menu-item-arrow {
-      transform: rotate(90deg);
-    }
+  // Sidebar-specific overrides
+  aside & {
+    .hi-menu-submenu-title {
+      background: transparent;
 
-    > .hi-menu-submenu-list {
-      opacity: 1;
-      transform: translateX(0);
-      pointer-events: auto;
+      // Arrow icon - smaller for sidebar
+      .hi-menu-item-arrow {
+        width: 0.75rem;
+        height: 0.75rem;
+        min-width: 0.75rem;
+        min-height: 0.75rem;
+
+        svg {
+          width: 0.75rem;
+          height: 0.75rem;
+        }
+      }
     }
-  }
+   }
 }
+
+// ============================================
+// Submenu List
+// ============================================
 
 .hi-menu-submenu-list {
   // Nested menu list
-  margin: 0.25rem 0 0.25rem 1rem;
-  padding: 0.5rem;
-  border-left: 2px solid var(--hi-primary);
   list-style: none;
+  margin: 0;
+  padding: 0.5rem 0 0.5rem 1rem;
+  border-left: 2px solid var(--hi-primary);
 
-  opacity: 0;
-  transform: translateX(-8px);
-  pointer-events: none;
-  // DISABLED - migrated to JS animation
-
-  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
-
-  // Glow on the border
-  --hi-glow-transparent: false;
-  --hi-glow-bg-color: var(--hi-color-surface);
-  box-shadow: -2px 0 8px var(--hi-glow-color);
+  // Sidebar-specific
+  aside & {
+    border: none;
+    background: transparent;
+    padding-left: 1.5rem;
+  }
 }
 
+// ============================================
+// Arrow rotation animation
+// ============================================
+
+.hi-menu-submenu-arrow-open {
+  transform: rotate(90deg) !important;
+}
+
+// ============================================
+// Horizontal Menu
+// ============================================
 // ============================================
 // Horizontal Menu
 // ============================================

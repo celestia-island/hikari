@@ -22,39 +22,12 @@
   background: transparent;
   overflow: hidden;
 
-  // 兜底自定义滚动条（为全页面）
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: var(--hi-color-gray-40) var(--hi-color-gray-20);
-
+  // Hide native scrollbar (using custom scrollbar component)
   &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    display: none;
   }
-
-  &::-webkit-scrollbar-track {
-    background: var(--hi-color-gray-20);
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--hi-color-gray-40);
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: var(--hi-color-gray-50);
-    box-shadow: 0 0 12px var(--hi-color-gray-50);
-  }
-
-  &::-webkit-scrollbar-thumb:active {
-    background: var(--hi-color-white-20);
-    box-shadow: 0 0 16px var(--hi-color-white-20);
-  }
-
-  &::-webkit-scrollbar-corner {
-    background: transparent;
-  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 
   // Ensure content stays above background
   > * {
@@ -146,39 +119,13 @@
   }
 }
 
-// Custom scrollbar styles for layout content
+// Hide native scrollbar for layout content (using custom scrollbar component)
 .hi-layout-content {
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: var(--hi-color-gray-40) var(--hi-color-gray-20);
-
   &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    display: none;
   }
-
-  &::-webkit-scrollbar-track {
-    background: var(--hi-color-gray-20);
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--hi-color-gray-40);
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: var(--hi-color-gray-50);
-  }
-
-  &::-webkit-scrollbar-thumb:active {
-    background: var(--hi-color-white-20);
-    box-shadow: 0 0 16px var(--hi-color-white-20);
-  }
-
-  &::-webkit-scrollbar-corner {
-    background: transparent;
-  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 // ============================================
@@ -232,9 +179,6 @@
 
     // Padding inside scrollable area (no left padding)
     padding: vars.$hikari-spacing-md vars.$hikari-spacing-md vars.$hikari-spacing-md 0;
-
-    // Custom scrollbar with cool effects
-    @include mix.scrollbar;
 
     // Position relative for gradient overlays
     position: relative;
@@ -535,7 +479,7 @@
 // Scrollable layout
 .hi-layout-scrollable {
   overflow-y: auto;
-  @include mix.scrollbar;
+  @include mix.scrollbar-hidden;
 }
 
 // No scroll layout

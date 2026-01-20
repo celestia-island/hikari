@@ -12,7 +12,7 @@ use _components::{
 };
 use _icons::{Icon, MdiIcon};
 use _palette::classes::{
-    AlignItems, ClassesBuilder, Display, Duration, FontSize, FontWeight, Gap, Padding, TextColor,
+    AlignItems, ClassesBuilder, Display, Duration, FontWeight, Gap, Padding, TextColor,
     Transition,
 };
 

@@ -1,23 +1,28 @@
 // website/src/components/sidebar.rs
-// Website-specific sidebar using hikari-components Sidebar
+// Website-specific sidebar using hikari-components Menu component
 
 use dioxus::prelude::*;
+use dioxus_router::components::Link;
 
 use crate::app::Route;
-use _components::{Sidebar as HikariSidebar, SidebarItem, SidebarLeaf, SidebarSection};
+use _components::navigation::{Menu, MenuItem, MenuMode, SubMenu};
 use _icons::{Icon, MdiIcon};
 
-/// Sidebar navigation with 3-level hierarchy
+/// Sidebar navigation with 3-level hierarchy using Menu component
 ///
-/// Uses the generic hikari-components Sidebar component with
-/// website-specific navigation data.
+/// Structure:
+/// - Level 1: Overview, Components, System, Demos (SubMenu)
+/// - Level 2: Categories (Layout, Basic, Feedback, etc.) (SubMenu)
+/// - Level 3: Individual components (Button, Input, Card, etc.) (MenuItem)
 #[component]
 pub fn Sidebar(current_route: Route) -> Element {
-    // Get current route identifier for active state
-    let active_id = format!("{:?}", std::mem::discriminant(&current_route));
-
     rsx! {
-        HikariSidebar { active_id,
+        Menu {
+            mode: MenuMode::Vertical,
+            inline: true,
+            default_active: get_active_key(&current_route),
+            on_select: move |_key| {},
+
             // Render each top-level category
             for category in NAVIGATION_CATEGORIES {
                 SidebarCategorySection {
@@ -29,14 +34,13 @@ pub fn Sidebar(current_route: Route) -> Element {
     }
 }
 
-/// Render a category section with its subcategories
+/// Render a category section (Level 1) with its subcategories
 #[component]
 fn SidebarCategorySection(category: &'static NavCategory, current_route: Route) -> Element {
     rsx! {
-        SidebarSection {
-            id: category.id.to_string(),
+        SubMenu {
+            item_key: category.id.to_string(),
             title: category.title_en.to_string(),
-            secondary_title: Some(category.title_zh.to_string()),
             default_expanded: category.id == "components",
 
             // Render subcategories
@@ -55,45 +59,38 @@ fn SidebarCategorySection(category: &'static NavCategory, current_route: Route) 
 fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: Route) -> Element {
     let has_children = !subcategory.items.is_empty();
 
-    // Check if this subcategory's route matches current route
-    let is_active = subcategory
-        .route
-        .as_ref()
-        .map(|r| std::mem::discriminant(r) == std::mem::discriminant(&current_route))
-        .unwrap_or(false);
-
     if has_children {
-        // Has nested items - render as expandable ONLY, no link navigation
-        // The content is plain text, not wrapped in a Link
-        let content = rsx!(
-            div { class: "hi-sidebar-item-content-inner",
-                "{subcategory.label_en}"
-            }
-        );
+        // Has nested items - render as SubMenu
         rsx! {
-            SidebarItem {
-                // Don't set label parameter to avoid duplication
-                id: subcategory.label_en.to_string(),
+            SubMenu {
+                item_key: subcategory.label_en.to_string(),
+                title: subcategory.label_en.to_string(),
                 default_expanded: true,
-                content: Some(content),
-                items: Some(rsx! {
-                    // Render nested items
-                    for item in subcategory.items {
-                        SidebarNestedItem {
-                            item,
-                            current_route: current_route.clone(),
-                        }
+
+                // Render nested items
+                for item in subcategory.items {
+                    SidebarNestedItem {
+                        item,
+                        current_route: current_route.clone(),
                     }
-                }),
+                }
             }
         }
     } else {
-        // No children - direct link using SidebarLeaf
+        // No children - render as MenuItem with Link
+        let is_active = subcategory
+            .route
+            .as_ref()
+            .map(|r| std::mem::discriminant(r) == std::mem::discriminant(&current_route))
+            .unwrap_or(false);
+
         rsx! {
-            SidebarLeaf {
-                id: subcategory.label_en.to_string(),
-                class: if is_active { "active" } else { "" },
-                dioxus_router::components::Link {
+            MenuItem {
+                item_key: subcategory.label_en.to_string(),
+                class: if is_active { "hi-menu-item-active" } else { "" },
+                glow: true,
+
+                Link {
                     to: subcategory.route.clone().unwrap_or(Route::Home {}),
                     "{subcategory.label_en}"
                 }
@@ -102,22 +99,22 @@ fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: R
     }
 }
 
-/// Render a nested item (Level 3)
+/// Render a nested item (Level 3) as MenuItem
 #[component]
 fn SidebarNestedItem(item: &'static NavItem, current_route: Route) -> Element {
     let is_active = std::mem::discriminant(&item.route) == std::mem::discriminant(&current_route);
 
     rsx! {
-        SidebarLeaf {
-            id: format!("{:?}", std::mem::discriminant(&item.route)),
-            class: if is_active { "active" } else { "" },
+        MenuItem {
+            item_key: format!("{:?}", std::mem::discriminant(&item.route)),
+            class: if is_active { "hi-menu-item-active" } else { "" },
+            glow: true,
 
-            dioxus_router::components::Link {
+            Link {
                 to: item.route.clone(),
-                class: "hi-sidebar-item-content-inner",
                 Icon {
                     icon: item.icon,
-                    size: 16
+                    size:16
                 }
                 span { "{item.label}" }
             }
@@ -368,3 +365,8 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
         }],
     },
 ];
+
+/// Get active key for Menu component based on current route
+fn get_active_key(route: &Route) -> String {
+    format!("{:?}", std::mem::discriminant(route))
+}

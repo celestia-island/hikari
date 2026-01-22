@@ -191,12 +191,7 @@ impl Gradient {
         self.stops[0].color
     }
 
-    fn apply_extrapolation(
-        &self,
-        color: Color,
-        position: f64,
-        stop_pos: f64,
-    ) -> Color {
+    fn apply_extrapolation(&self, color: Color, position: f64, stop_pos: f64) -> Color {
         let hsl = color.to_hsl();
 
         if position < stop_pos {

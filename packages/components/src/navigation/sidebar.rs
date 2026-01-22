@@ -8,13 +8,12 @@
 // - Styles via SCSS with CSS variables for theming
 
 use dioxus::prelude::*;
+use icons::{Icon, MdiIcon};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
     styled::StyledComponent,
 };
-
-use icons::{Icon, MdiIcon};
 
 /// Sidebar component type wrapper (for StyledComponent)
 pub struct SidebarComponent;

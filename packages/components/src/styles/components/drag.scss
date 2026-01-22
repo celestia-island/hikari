@@ -1,0 +1,55 @@
+// Drag and drop component styles
+// Drag and drop for tree node reordering
+
+.hi-drag-drop-tree {
+  position: relative;
+}
+
+.hi-drop-indicator {
+  position: fixed;
+  height: 2px;
+  background: var(--hi-color-primary, #00a0e9);
+  box-shadow: 0 0 8px rgba(0, 160, 233, 0.8);
+  pointer-events: none;
+  z-index: 1000;
+  display: none;
+
+  &.hi-drop-indicator-visible {
+    display: block;
+  }
+}
+
+.hi-drag-node {
+  position: relative;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: move;
+  user-select: none;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+  background: transparent;
+
+  &[draggable="true"] {
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  &.hi-drag-node-dragging {
+    opacity: 0.5;
+    background: var(--hi-color-background-light, #f9fafb);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &.hi-drag-node-drag-over {
+    background: var(--hi-color-primary-light, rgba(0, 160, 233, 0.1));
+    border: 1px dashed var(--hi-color-primary, #00a0e9);
+  }
+
+  &.hi-drag-node-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}

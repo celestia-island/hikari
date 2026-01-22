@@ -2,9 +2,9 @@
 // Toast component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use palette::classes::{ClassesBuilder, ToastClass, UtilityClass};
 
 use crate::styled::StyledComponent;
-use palette::classes::{ClassesBuilder, ToastClass, UtilityClass};
 
 /// Toast 组件的类型包装器（用于实现 StyledComponent）
 pub struct ToastComponent;

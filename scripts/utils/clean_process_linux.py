@@ -7,7 +7,8 @@ This script finds and terminates processes that are listening on port 3000,
 which is typically used by development servers.
 
 Usage:
-    python scripts/utils/clean_process.py
+    python scripts/utils/clean_process.py          # Check and warn
+    python scripts/utils/clean_process.py --force  # Check and kill
 """
 
 import sys
@@ -33,7 +34,7 @@ def print_warning(message: str):
 
 
 def find_process_on_port(port: int) -> Optional[int]:
-    """Find process ID listening on the specified port"""
+    """Find process ID listening on specified port"""
     try:
         # Use ss to find process on port (Linux alternative to netstat)
         result = subprocess.run(
@@ -44,20 +45,20 @@ def find_process_on_port(port: int) -> Optional[int]:
         )
 
         # Parse output to find process
+        # Expected format: "LISTEN 0 4096 127.0.0.1:3000 0.0.0.0:* users:(("website_server",pid=642712,fd=9))"
         for line in result.stdout.splitlines():
-            if f":{port}" in line:
-                # Extract PID from the line like: "LISTEN 0 128 *:3000 *:* users:(("website_server",pid=12345))"
-                parts = line.split()
-                if len(parts) >= 7 and "pid=" in parts[-1]:
-                    # Extract PID from users:(("website_server",pid=12345))
-                    pid_part = parts[-1]
-                    if "pid=" in pid_part:
-                        pid_str = pid_part.split("pid=")[1].split(",")[0]
-                        try:
-                            pid = int(pid_str)
-                            return pid
-                        except ValueError:
-                            continue
+            # Match port in various formats: ":3000", "127.0.0.1:3000"
+            if f":{port}" in line or f"{port} " in line:
+                # Look for pid=N pattern anywhere in the line
+                # Match patterns like: pid=12345 or pid=12345,fd=9 or pid=12345))
+                import re
+                match = re.search(r'pid=(\d+)', line)
+                if match:
+                    try:
+                        pid = int(match.group(1))
+                        return pid
+                    except ValueError:
+                        continue
 
         return None
 
@@ -127,7 +128,7 @@ def kill_process(pid: int) -> bool:
         return False
 
 
-def clean_port(port: int = 3000):
+def clean_port(port: int = 3000, force: bool = False):
     """Clean processes listening on the specified port"""
     print_info(f"Checking for processes on port {port}...")
 
@@ -140,17 +141,28 @@ def clean_port(port: int = 3000):
     process_name = get_process_name(pid)
     print_warning(f"Found {process_name} (PID: {pid}) listening on port {port}")
 
-    if kill_process(pid):
-        print_success(f"Successfully terminated process {pid}")
-        return 0
+    if force:
+        # With --force, kill the process
+        if kill_process(pid):
+            print_success(f"Successfully terminated process {pid}")
+            return 0
+        else:
+            print_warning(f"Failed to terminate process {pid}")
+            return 1
     else:
-        print_warning(f"Failed to terminate process {pid}")
-        return 1
+        # Without --force, just warn and exit
+        print_warning(f"Process is running. Use 'just dev --force' to kill it.")
+        return 0
 
 
 def main():
     """Main entry point"""
-    return clean_port(3000)
+    # Parse command line arguments
+    force = False
+    if "--force" in sys.argv:
+        force = True
+
+    return clean_port(3000, force=force)
 
 
 if __name__ == "__main__":

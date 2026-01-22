@@ -5,9 +5,7 @@ use dioxus::prelude::*;
 
 use crate::components::Layout;
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{
-    ClassesBuilder, Display, Gap, MarginBottom, Padding,
-};
+use _palette::classes::{ClassesBuilder, Display, Gap, MarginBottom, Padding};
 
 /// Components Overview
 #[allow(non_snake_case)]

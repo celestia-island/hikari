@@ -9,14 +9,16 @@ license.workspace = true
 doctest = false
 
 [features]
-default = ["basic", "feedback", "navigation", "layout", "data"]
+default = ["basic", "feedback", "navigation", "layout", "data", "display", "entry"]
 
 # Component groups (shortcuts) - enable multiple components at once
-basic = ["button", "input", "card", "badge", "image", "avatar"]
-feedback = ["alert", "toast", "tooltip"]
+basic = ["button", "input", "card", "badge", "image", "avatar", "checkbox", "switch", "radio_group", "select", "slider", "textarea", "icon_button"]
+feedback = ["alert", "toast", "tooltip", "modal"]
 navigation = ["menu", "tabs", "breadcrumb"]
-layout = ["layout-component", "header", "aside"]
+layout = ["layout-component", "header", "aside", "content", "footer"]
 data = ["table", "tree", "pagination"]
+display = ["tag", "empty", "comment", "description_list", "qrcode"]
+entry = ["number_input", "search"] # "auto_complete" disabled due to Dioxus 0.7 lifetime issues
 
 # Individual component features (fine-grained control)
 button = []
@@ -25,18 +27,48 @@ card = []
 badge = []
 image = []
 avatar = []
+checkbox = []
+switch = []
+radio_group = []
+select = []
+slider = []
+textarea = []
+file_upload = []
+form_field = []
+date_picker = []
+icon_button = []
 alert = []
 toast = []
 tooltip = []
+modal = []
+popover = []
+drawer = []
+dropdown = []
+progress = []
+skeleton = []
+spin = []
+spotlight = []
+glow = []
 menu = []
 tabs = []
 breadcrumb = []
+steps = []
 layout-component = []
 header = []
 aside = []
+content = []
+footer = []
 table = []
 tree = []
 pagination = []
+tag = []
+empty = []
+comment = []
+description_list = []
+qrcode = []
+number_input = []
+search = []
+# auto_complete = [] # Disabled due to Dioxus 0.7 lifetime issues
 
 [dependencies]
 # Workspace dependencies
@@ -75,3 +107,4 @@ once_cell = "1.19"
 [build-dependencies]
 grass = "^0.13"
 anyhow = "^1"
+

@@ -1,16 +1,14 @@
 // hi-components/src/feedback/glow.rs
 // Unified glow effect component with mouse-following spotlight and acrylic blur
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, GlowClass};
-
 #[cfg(target_arch = "wasm32")]
 use animation::style::StyleBuilder;
-#[cfg(target_arch = "wasm32")]
-use web_sys::HtmlElement;
-
+use dioxus::prelude::*;
+use palette::classes::{ClassesBuilder, GlowClass};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
+#[cfg(target_arch = "wasm32")]
+use web_sys::HtmlElement;
 
 /// Glow blur intensity levels
 #[derive(Clone, Copy, PartialEq, Debug, Default)]

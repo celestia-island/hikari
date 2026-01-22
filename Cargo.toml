@@ -8,12 +8,13 @@ members = [
     "packages/icons",
     "packages/render-service",
     "packages/builder",
+    "packages/i18n",
 ]
 resolver = "2"
 
 # Exclude examples from workspace (they have their own workspaces)
 exclude = [
-    "examples/*",
+    "examples/demo",
 ]
 
 [workspace.package]
@@ -29,6 +30,7 @@ license = "MIT OR Apache-2.0"
 anyhow = "^1"
 thiserror = "^2"
 futures = "^0.3"
+yuuka = "^0.6"
 
 # =================================================================
 # Data and serialization

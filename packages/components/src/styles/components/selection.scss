@@ -1,0 +1,37 @@
+// Selection component styles
+// Row selection (checkbox/radio)
+
+.hi-selection-checkbox,
+.hi-selection-radio {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--hi-color-primary, #00a0e9);
+}
+
+.hi-selection-cell {
+  padding: 8px 12px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.hi-selection-cell:hover {
+  background: var(--hi-color-background-light, #f9fafb);
+}
+
+.hi-selection-header-cell {
+  padding: 8px 12px;
+  background: var(--hi-color-background-light, #f9fafb);
+  font-weight: 500;
+}
+
+.hi-select-all-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hi-select-all-label {
+  font-size: 14px;
+  color: var(--hi-color-text, #333333);
+}

@@ -307,9 +307,48 @@ impl UseTransition {
 ///     }
 /// }
 /// ```
+#[cfg(target_arch = "wasm32")]
+pub fn use_animation_frame(callback: impl Fn(f64) + 'static) {
+    use_effect(move || {
+        let window = web_sys::window().unwrap();
+        let performance = window.performance().unwrap();
+        let mut animation_frame_id: Option<i32> = None;
+        let mut start_time: Option<f64> = None;
+
+        let closure = wasm_bindgen::closure::Closure::wrap(Box::new(move || {
+            let current_time = performance.now();
+
+            if let Some(start) = start_time {
+                let elapsed = (current_time - start) / 1000.0;
+                callback(elapsed);
+            } else {
+                start_time = Some(current_time);
+            }
+
+            animation_frame_id = Some(
+                window
+                    .request_animation_frame(closure.as_ref().unchecked_ref())
+                    .unwrap(),
+            );
+        }) as Box<dyn FnMut()>);
+
+        animation_frame_id = Some(
+            window
+                .request_animation_frame(closure.as_ref().unchecked_ref())
+                .unwrap(),
+        );
+
+        move || {
+            if let Some(id) = animation_frame_id {
+                window.cancel_animation_frame(id).unwrap();
+            }
+        }
+    });
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 pub fn use_animation_frame(_callback: impl Fn(f64) + 'static) {
-    // TODO: Implement proper requestAnimationFrame integration
-    // This requires access to the animation loop or a coroutine
+    // No-op on non-WASM platforms
 }
 
 /// Hook for creating a timeout
@@ -336,10 +375,50 @@ pub fn use_animation_frame(_callback: impl Fn(f64) + 'static) {
 ///     }
 /// }
 /// ```
+#[cfg(target_arch = "wasm32")]
+pub fn use_timeout(duration_ms: u64, callback: impl Fn() + 'static) -> impl Fn() {
+    use std::sync::{Arc, Mutex};
+
+    let timeout_id = Arc::new(Mutex::new(Option::<i32>::None));
+
+    let trigger = move || {
+        let window = web_sys::window().unwrap();
+
+        // Clear any existing timeout
+        if let Some(id) = *timeout_id.lock().unwrap() {
+            window.clear_timeout_with_handle(id).unwrap();
+        }
+
+        let closure = wasm_bindgen::closure::Closure::once(Box::new(callback) as Box<dyn FnOnce()>);
+        let id = window
+            .set_timeout_with_callback_and_timeout_and_arguments_0(
+                closure.as_ref().unchecked_ref(),
+                duration_ms as i32,
+            )
+            .unwrap();
+
+        *timeout_id.lock().unwrap() = Some(id);
+        closure.forget();
+    };
+
+    // Cleanup on unmount
+    use_effect(move || {
+        move || {
+            if let Some(window) = web_sys::window() {
+                if let Some(id) = *timeout_id.lock().unwrap() {
+                    window.clear_timeout_with_handle(id).ok();
+                }
+            }
+        }
+    });
+
+    trigger
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 pub fn use_timeout(_duration_ms: u64, _callback: impl Fn() + 'static) -> impl Fn() {
-    // TODO: Implement proper timeout with cleanup
     move || {
-        // Placeholder implementation
+        // No-op on non-WASM platforms
     }
 }
 
@@ -366,7 +445,35 @@ pub fn use_timeout(_duration_ms: u64, _callback: impl Fn() + 'static) -> impl Fn
 ///     }
 /// }
 /// ```
+#[cfg(target_arch = "wasm32")]
+pub fn use_interval(duration_ms: u64, callback: impl Fn() + 'static) {
+    use_effect(move || {
+        let window = web_sys::window().unwrap();
+        let interval_id = std::sync::Mutex::new(Option::<i32>::None);
+
+        let closure = wasm_bindgen::closure::Closure::wrap(Box::new(move || {
+            callback();
+        }) as Box<dyn FnMut()>);
+
+        let id = window
+            .set_interval_with_callback_and_timeout_and_arguments_0(
+                closure.as_ref().unchecked_ref(),
+                duration_ms as i32,
+            )
+            .unwrap();
+
+        *interval_id.lock().unwrap() = Some(id);
+        closure.forget();
+
+        move || {
+            if let Some(id) = *interval_id.lock().unwrap() {
+                window.clear_interval_with_handle(id).unwrap();
+            }
+        }
+    });
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 pub fn use_interval(_duration_ms: u64, _callback: impl Fn() + 'static) {
-    // TODO: Implement proper interval with cleanup
-    // This requires use_resource or use_effect for cleanup
+    // No-op on non-WASM platforms
 }

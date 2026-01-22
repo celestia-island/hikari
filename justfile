@@ -64,50 +64,21 @@ build:
 # ============================================================================
 
 # Check if port 3000 is occupied (standalone command)
-check-port:
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+check-port *force="":
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Checking port 3000..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/utils/clean_process_linux.py
+    @{{py}} scripts/utils/clean_process_linux.py {{force}}
 
 # Build website WASM client (debug mode)
 # Note: build.rs will automatically compile SCSS and copy assets to public/
-build-client:
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Fetching MDI icons..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/icons/fetch_mdi_icons.py
-    @if [ $? -ne 0 ]; then \
-        echo ""; \
-        echo "❌ ERROR: Failed to fetch MDI icons"; \
-        echo ""; \
-        echo "   The build cannot continue without MDI icons."; \
-        echo "   Please check your internet connection and try again."; \
-        echo ""; \
-        exit 1; \
-    fi
-    @echo ""
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Building website WASM client..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Step 1: Build hikari-builder to generate CSS bundle"
-    @cargo build --package hikari-builder
-    @echo "Step 2: Build WASM library (triggers build.rs to copy index.html and logo)"
-    @cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/website/Cargo.toml
-    @echo ""
-    @echo "🔧 Binding WASM..."
-    @wasm-bindgen --target web --out-dir public/assets --no-typescript examples/website/target/wasm32-unknown-unknown/debug/website.wasm
-    @echo ""
-    @echo "✅ WASM client built successfully"
-    @echo ""
-    @echo "📦 Output: public/"
 
 # Development mode for website (build WASM client and start server)
-dev:
+dev *force="":
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Checking port 3000..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/utils/clean_process_linux.py
+    @{{py}} scripts/utils/clean_process_linux.py {{force}}
     @echo ""
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Fetching MDI icons..."

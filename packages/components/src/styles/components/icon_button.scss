@@ -1,0 +1,85 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari // Hikari // Hikari // Hikari IconButton Component - FUI Styling Component Component Component Component
+
+// ============================================
+// Base Button Styles
+// ============================================
+
+.hi-icon-button {
+  // Layout
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  // Square aspect ratio (28x28px for default)
+  width: 28px;
+  height: 28px;
+
+  // Remove default button styling
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: vars.$hikari-radius-fui-md;
+
+  // Typography
+  font-family: vars.$hikari-font-family-sans;
+  font-size: vars.$hikari-font-size-sm;
+  font-weight: 400;
+  color: var(--hi-color-text-primary);
+  line-height: 1;
+
+  // Transitions - smooth GSAP-style easing
+  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+  // Cursor
+  cursor: pointer;
+
+  // Hover state
+  &:hover:not(:disabled) {
+    background-color: rgba(139, 92, 246, 0.1);
+    color: var(--hi-color-text-primary);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+  }
+
+  // Active state
+  &:active:not(:disabled) {
+    background-color: rgba(139, 92, 246, 0.2);
+    transform: scale(0.95);
+    box-shadow: 0 0 16px rgba(59, 130, 246, 0.4);
+  }
+
+  // Focus state
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-primary);
+    outline-offset: 2px;
+  }
+
+  // Disabled state
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  // ============================================
+  // Icon Styles
+  // ============================================
+
+  .hi-icon-button-icon {
+    // Prevent icon from affecting button size
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hi-icon-button-disabled {
+    opacity: 0.3;
+  }
+}

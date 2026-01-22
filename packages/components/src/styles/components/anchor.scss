@@ -1,0 +1,69 @@
+// Anchor component styles
+// In-page navigation with smooth scrolling
+
+.hi-anchor-wrapper {
+  position: relative;
+}
+
+.hi-anchor-right {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--hi-color-background, #ffffff);
+  border: 1px solid var(--hi-color-border, #e5e7eb);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.hi-anchor-left {
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--hi-color-background, #ffffff);
+  border: 1px solid var(--hi-color-border, #e5e7eb);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.hi-anchor-link {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--hi-color-text, #333333);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--hi-color-primary-light, rgba(0, 160, 233, 0.1));
+    color: var(--hi-color-primary, #00a0e9);
+  }
+
+  &:focus {
+    outline: 2px solid var(--hi-color-primary, #00a0e9);
+    outline-offset: 2px;
+  }
+
+  &:active {
+    background: var(--hi-color-primary-dark, rgba(0, 160, 233, 0.2));
+  }
+}
+
+.hi-anchor-active {
+  background: var(--hi-color-primary, #00a0e9);
+  color: white;
+  font-weight: 500;
+
+  &:hover {
+    background: var(--hi-color-primary-dark, #0088c7);
+  }
+}

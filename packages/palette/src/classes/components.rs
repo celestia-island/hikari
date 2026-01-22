@@ -1210,3 +1210,18 @@ impl UtilityClass for SelectionClassNew {
         }
     }
 }
+
+/// Footer component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Footer {
+    /// `hi-footer` - Main footer class
+    Footer,
+}
+
+impl UtilityClass for Footer {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            Footer::Footer => "footer",
+        }
+    }
+}

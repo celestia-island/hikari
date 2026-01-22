@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests {
+
     use hikari_palette::*;
 
     #[test]

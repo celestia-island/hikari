@@ -4,15 +4,13 @@
 //! Automatically adapts to theme changes via global theme provider registry.
 //! Includes a 60-second rotating gradient animation with configurable breathing.
 
-use dioxus::prelude::*;
-
 #[cfg(target_arch = "wasm32")]
 use animation::style::StyleBuilder;
-
-use crate::styled::StyledComponent;
-
+use dioxus::prelude::*;
 #[cfg(target_arch = "wasm32")]
 use palette::{墨色, 月白, 粉红, 靛蓝};
+
+use crate::styled::StyledComponent;
 
 /// Background component type wrapper (for implementing StyledComponent)
 pub struct BackgroundComponent;

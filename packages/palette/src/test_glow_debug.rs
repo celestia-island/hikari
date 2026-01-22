@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use super::*;
+
+use super::*;
 
     #[test]
     fn debug_indigo_glow() {

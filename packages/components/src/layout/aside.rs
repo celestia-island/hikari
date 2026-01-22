@@ -11,9 +11,15 @@
 //!
 //! rsx! {
 //!     Aside {
+//!         header: rsx! {
+//!             h2 { "Menu" }
+//!         },
 //!         nav {
 //!             a { "Link 1" }
 //!             a { "Link 2" }
+//!         },
+//!         footer: rsx! {
+//!             Footer { "Settings" }
 //!         }
 //!     }
 //! }
@@ -38,6 +44,14 @@ use palette::{classes::components::*, ClassesBuilder, UtilityClass};
 pub fn Aside(
     /// Sidebar content
     children: Element,
+
+    /// Header content (optional)
+    #[props(optional)]
+    header: Option<Element>,
+
+    /// Footer content (optional)
+    #[props(optional)]
+    footer: Option<Element>,
 
     /// Width preset (sm: 200px, md: 250px, lg: 300px, default: md)
     #[props(default = "md".to_string())]
@@ -90,6 +104,8 @@ pub fn Aside(
 
     let classes = builder.add_raw(&class).build();
     let content_class = AsideClass::Content.as_class();
+    let header_class = "hi-layout-aside-header".to_string();
+    let footer_class = "hi-layout-aside-footer".to_string();
 
     rsx! {
         aside {
@@ -98,10 +114,20 @@ pub fn Aside(
             // - Mobile: fixed positioning, slide in/out based on is_open
             class: "{classes}",
 
+            // Sidebar header (if provided)
+            if let Some(header_content) = header {
+                div { class: "{header_class}", {header_content} }
+            }
+
             // Sidebar content with scroll support
             div {
                 class: "{content_class}",
                 { children }
+            }
+
+            // Sidebar footer (if provided)
+            if let Some(footer_content) = footer {
+                div { class: "{footer_class}", {footer_content} }
             }
         }
     }

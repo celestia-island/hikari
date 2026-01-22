@@ -534,7 +534,9 @@
 @import './components/background.scss';
 @import './components/avatar.scss';
 @import './components/button.scss';
+@import './components/icon_button.scss';
 @import './components/input.scss';
+@import './components/select.scss';
 @import './components/card.scss';
 @import './components/image.scss';
 @import './components/badge.scss';
@@ -546,8 +548,11 @@
 
 @import './components/glow.scss';
 @import './components/alert.scss';
+@import './components/dropdown.scss';
 @import './components/toast.scss';
 @import './components/tooltip.scss';
+
+@import './components/modal.scss';
 
 // ============================================
 // Navigation Components

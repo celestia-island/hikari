@@ -1,15 +1,15 @@
 // hi-components/src/navigation/menu.rs
 // Menu component with Arknights + FUI styling
 
+use animation::style::{CssProperty, StyleStringBuilder};
 use dioxus::prelude::*;
+use icons::{Icon, MdiIcon};
+use palette::classes::{components::MenuClass, ClassesBuilder};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
     styled::StyledComponent,
 };
-use animation::style::{CssProperty, StyleStringBuilder};
-use icons::{Icon, MdiIcon};
-use palette::classes::{components::MenuClass, ClassesBuilder};
 
 /// Menu 组件的类型包装器（用于实现 StyledComponent）
 #[derive(Clone, Copy, PartialEq, Debug, Default)]

@@ -4,9 +4,9 @@
 use std::rc::Rc;
 
 use dioxus::prelude::*;
+use palette::classes::{CellClass, ClassesBuilder};
 
 use super::column::ColumnDef;
-use palette::classes::{CellClass, ClassesBuilder};
 
 /// Cell component props
 #[derive(Clone, Props, Default)]

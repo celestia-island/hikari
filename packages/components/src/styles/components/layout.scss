@@ -165,10 +165,16 @@
   // No outer padding - padding should be inside scrollable content
   padding: 0;
 
+  // Vertical flex layout: content + footer
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
   // Sticky header in sidebar
   .hi-layout-aside-header {
     padding: 0.75rem 0.5rem;
     margin-bottom: vars.$hikari-spacing-md;
+    flex-shrink: 0;
   }
 
   // Scrollable content area
@@ -226,10 +232,10 @@
     }
   }
 
-  // Footer in sidebar
+  // Footer in sidebar - positioned at bottom
   .hi-layout-aside-footer {
-    margin-top: vars.$hikari-spacing-md;
-    padding-top: vars.$hikari-spacing-md;
+    flex-shrink: 0;
+    padding: vars.$hikari-spacing-md;
   }
 }
 

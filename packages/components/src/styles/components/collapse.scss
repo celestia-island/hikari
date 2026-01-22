@@ -1,0 +1,50 @@
+// Collapse component styles
+// Animated collapse/expand for tree nodes
+
+.hi-collapse {
+  display: flex;
+  flex-direction: column;
+}
+
+.hi-collapse-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: var(--hi-color-background-light, #f9fafb);
+  }
+
+  &:active {
+    background: var(--hi-color-primary-light, rgba(0, 160, 233, 0.1));
+  }
+}
+
+.hi-collapse-arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+  color: var(--hi-color-text-secondary, #666666);
+  font-size: 16px;
+}
+
+.hi-collapse-header-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.hi-collapse-content {
+  overflow: hidden;
+  transition: max-height 0.2s ease-in-out, opacity 0.2s ease-in-out;
+  opacity: 0;
+  max-height: 0;
+}
+
+.hi-collapse-content.hi-collapse-expanded {
+  opacity: 1;
+  max-height: none;
+}

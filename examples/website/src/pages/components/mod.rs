@@ -8,6 +8,7 @@ pub mod breadcrumb;
 pub mod button;
 pub mod card;
 pub mod data;
+pub mod display;
 pub mod feedback;
 pub mod input;
 pub mod layout;

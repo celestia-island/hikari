@@ -2,9 +2,9 @@
 // Badge component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use palette::classes::{BadgeClass, ClassesBuilder};
 
 use crate::styled::StyledComponent;
-use palette::classes::{BadgeClass, ClassesBuilder};
 
 /// Badge 组件的类型包装器（用于实现 StyledComponent）
 pub struct BadgeComponent;

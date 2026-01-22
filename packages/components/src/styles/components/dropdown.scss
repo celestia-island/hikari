@@ -1,0 +1,167 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari // Hikari // Hikari // Hikari // Hikari Dropdown Component - FUI Styling Component Component Component Component
+
+// ============================================
+// Dropdown Container
+// ============================================
+
+.hi-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+// ============================================
+// Dropdown Menu
+// ============================================
+
+.hi-dropdown-menu {
+  position: absolute;
+  z-index: 1000;
+  min-width: 160px;
+  max-width: 280px;
+  max-height: 400px;
+  overflow-y: auto;
+
+  // Appearance
+  border-radius: vars.$hikari-radius-fui-md;
+  border: 1px solid var(--hi-color-border);
+
+  // Acrylic background effect (themed)
+  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+  backdrop-filter: blur(4px);
+
+  // Elevated shadow with FUI glow
+  box-shadow:
+    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
+    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset,
+    0 0 12px var(--hi-primary);
+
+  // Transitions
+  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+
+  // ============================================
+  // Position Variants
+  // ============================================
+
+  &.hi-dropdown-position-bottom-right {
+    top: 100%;
+    right: 0;
+    margin-top: 0.25rem;
+  }
+
+  &.hi-dropdown-position-bottom-left {
+    top: 100%;
+    left: 0;
+    margin-top: 0.25rem;
+  }
+
+  &.hi-dropdown-position-bottom-center {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 0.25rem;
+  }
+
+  // ============================================
+  // Dropdown Item
+  // ============================================
+
+  .hi-dropdown-item {
+    // Layout
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+
+    // Spacing
+    padding: 0.5rem 0.75rem;
+
+    // Typography
+    font-family: vars.$hikari-font-family-sans;
+    font-size: vars.$hikari-font-size-sm;
+    font-weight: 400;
+    color: var(--hi-color-text-primary);
+    line-height: 1.5;
+
+    // Cursor
+    cursor: pointer;
+
+    // Transitions
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    // Hover state
+    &:hover {
+      background-color: rgba(139, 92, 246, 0.1);
+      color: var(--hi-color-text-primary);
+    }
+
+    // Active state
+    &:active {
+      background-color: rgba(139, 92, 246, 0.2);
+      transform: scale(0.98);
+    }
+
+    // Selected state
+    &.hi-dropdown-item-selected {
+      background-color: rgba(139, 92, 246, 0.15);
+      font-weight: 500;
+    }
+
+    // ============================================
+    // Item Check Icon
+    // ============================================
+
+    .hi-dropdown-item-check {
+      color: var(--hi-color-primary);
+      font-size: 0.875rem;
+    }
+  }
+
+  // ============================================
+  // Custom Scrollbar
+  // ============================================
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--hi-color-border);
+    border-radius: 3px;
+    transition: background vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--hi-color-primary);
+  }
+}
+
+// ============================================
+// Animation
+// ============================================
+
+.hi-dropdown-menu {
+  // Fade in animation
+  animation: hi-dropdown-fade-in 0.2s vars.$hikari-ease-smooth forwards;
+}
+
+@keyframes hi-dropdown-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

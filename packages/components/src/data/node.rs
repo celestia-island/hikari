@@ -2,9 +2,9 @@
 // TreeNode component for tree data structures
 
 use dioxus::prelude::*;
+use palette::classes::{ClassesBuilder, TreeNodeClass};
 
 use crate::data::{TreeNodeArrow, TreeNodeContent, TreeNodeLabel};
-use palette::classes::{ClassesBuilder, TreeNodeClass};
 
 /// Shared data structure for tree nodes
 #[derive(Clone, PartialEq, Debug)]

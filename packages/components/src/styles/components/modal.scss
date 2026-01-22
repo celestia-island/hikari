@@ -1,0 +1,241 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari // Hikari // Hikari // Hikari // Hikari Modal Component - FUI Styling Component Component Component Component
+
+// ============================================
+// Modal Overlay
+// ============================================
+
+.hi-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+
+  // Acrylic background effect - themed
+  background: rgba(0, 0, 0, vars.$hikari-acrylic-opacity);
+  backdrop-filter: blur(8px);
+
+  // Flex center
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // Transitions
+  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+}
+
+// Light theme overlay
+[data-theme="hikari"] .hi-modal-overlay {
+  background: rgba(0, 0, 0, vars.$hikari-acrylic-opacity);
+}
+
+// Dark theme overlay
+[data-theme="tairitsu"] .hi-modal-overlay {
+  background: rgba(0, 0, 0, vars.$hikari-acrylic-opacity);
+}
+
+// ============================================
+// Modal Container
+// ============================================
+
+.hi-modal {
+  position: relative;
+
+  // Layout
+  display: flex;
+  flex-direction: column;
+
+  // Appearance
+  border-radius: vars.$hikari-radius-fui-md;
+  border: 1px solid var(--hi-color-border);
+
+  // Acrylic background effect
+  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+  backdrop-filter: blur(4px);
+
+  // Elevated shadow with FUI glow
+  box-shadow:
+    0 16px 32px var(--hi-black-40, rgba(0, 0, 0, 0.4)),
+    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset,
+    0 0 24px var(--hi-primary);
+
+  // Transitions
+  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  max-height: calc(100vh - 2rem);
+
+  // Size variants
+  &.hi-modal-sm {
+    width: 90%;
+    max-width: 400px;
+  }
+
+  &.hi-modal-md {
+    width: 90%;
+    max-width: 560px;
+  }
+
+  &.hi-modal-lg {
+    width: 90%;
+    max-width: 720px;
+  }
+
+  &.hi-modal-xl {
+    width: 95%;
+    max-width: 960px;
+  }
+
+  // Position variants
+  &.hi-modal-top {
+    margin-top: 4rem;
+  }
+
+  // ============================================
+  // Modal Header
+  // ============================================
+
+  .hi-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--hi-color-border);
+  }
+
+  .hi-modal-title {
+    margin: 0;
+    font-family: vars.$hikari-font-family-sans;
+    font-size: vars.$hikari-font-size-lg;
+    font-weight: 600;
+    color: var(--hi-color-text-primary);
+    line-height: 1.4;
+  }
+
+  .hi-modal-close {
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0.25rem;
+    background: transparent;
+    border: none;
+    color: var(--hi-color-text-secondary);
+    cursor: pointer;
+    border-radius: vars.$hikari-radius-fui-sm;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    &:hover {
+      color: var(--hi-color-text-primary);
+      background: rgba(255, 76, 0, 0.2);
+      box-shadow: 0 0 8px rgba(255, 76, 0, 0.3);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  // ============================================
+  // Modal Body
+  // ============================================
+
+  .hi-modal-body {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+
+    // Custom scrollbar
+    &::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--hi-color-border);
+      border-radius: 4px;
+      transition: background vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: var(--hi-color-primary);
+    }
+  }
+
+  // ============================================
+  // Modal Footer
+  // ============================================
+
+  .hi-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--hi-color-border);
+  }
+}
+
+// ============================================
+// Responsive
+// ============================================
+
+@media (max-width: 768px) {
+  .hi-modal {
+    &.hi-modal-sm,
+    &.hi-modal-md,
+    &.hi-modal-lg,
+    &.hi-modal-xl {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      border-radius: 0;
+      max-height: 100vh;
+    }
+
+    &.hi-modal-top {
+      margin-top: 0;
+    }
+
+    .hi-modal-header {
+      padding: 1rem;
+    }
+
+    .hi-modal-body {
+      padding: 1rem;
+    }
+
+    .hi-modal-footer {
+      padding: 0.75rem 1rem;
+    }
+  }
+
+  .hi-modal-overlay {
+    padding: 0;
+  }
+}
+
+// ============================================
+// Focus Styles
+// ============================================
+
+.hi-modal-close:focus-visible {
+  outline: 2px solid var(--hi-color-primary);
+  outline-offset: 2px;
+}

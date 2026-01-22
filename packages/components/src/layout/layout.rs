@@ -24,16 +24,20 @@
 //!                 }
 //!             }
 //!         },
+//!         footer: rsx! {
+//!             Footer {
+//!                 "© 2026 Hikari UI"
+//!             }
+//!         },
 //!         h1 { "Main content" }
 //!     }
 //! }
 //! ```
 
 use dioxus::prelude::*;
+use palette::classes::{components::Layout as LayoutClass, ClassesBuilder};
 
 use crate::basic::Background;
-use palette::classes::components::Layout as LayoutClass;
-use palette::classes::ClassesBuilder;
 
 /// Layout component - Modern application layout wrapper
 ///
@@ -58,6 +62,10 @@ pub fn Layout(
     /// Sidebar/Aside content
     #[props(optional)]
     aside: Option<Element>,
+
+    /// Footer content
+    #[props(optional)]
+    footer: Option<Element>,
 
     /// Main content
     children: Element,
@@ -121,6 +129,11 @@ pub fn Layout(
                     // Main content with refined scroll
                     main { class: "hi-layout-content", {children} }
                 }
+            }
+
+            // Footer (if provided) - full width at bottom
+            if let Some(footer_content) = footer {
+                {footer_content}
             }
         }
     }

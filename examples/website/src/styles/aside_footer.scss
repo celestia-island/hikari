@@ -1,0 +1,26 @@
+// website/src/styles/aside_footer.scss
+// Aside footer styles with optimized layout
+
+.hi-aside-footer-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.hi-aside-footer-button {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hi-aside-footer-language {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--hi-color-text-secondary);
+  white-space: nowrap;
+}

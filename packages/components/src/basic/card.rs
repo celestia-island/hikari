@@ -2,9 +2,9 @@
 // Card component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use palette::classes::{CardClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;
-use palette::classes::{CardClass, ClassesBuilder, UtilityClass};
 
 /// Card 组件的类型包装器（用于实现 StyledComponent）
 pub struct CardComponent;

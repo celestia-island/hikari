@@ -2,9 +2,9 @@
 // Filter component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use palette::classes::{ClassesBuilder, FilterClass, UtilityClass};
 
 use crate::styled::StyledComponent;
-use palette::classes::{ClassesBuilder, FilterClass};
 
 /// Filter component wrapper (for StyledComponent)
 pub struct FilterComponent;
@@ -104,14 +104,14 @@ pub fn Filter(props: FilterProps) -> Element {
     rsx! {
         div { class: "{container_classes}",
 
-            div { class: "{FilterClass::FilterContainer}",
+            div { class: "{FilterClass::FilterContainer.as_class()}",
                 button {
                     class: "{trigger_classes}",
                     onclick: handle_toggle,
 
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: "{FilterClass::FilterIcon}",
+                        class: "{FilterClass::FilterIcon.as_class()}",
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,
@@ -124,14 +124,34 @@ pub fn Filter(props: FilterProps) -> Element {
                     }
 
                     if active_count > 0 {
-                        span { class: "{FilterClass::FilterBadge}",
+                        span { class: "{FilterClass::FilterBadge.as_class()}",
                             "{active_count}"
                         }
                     }
 
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: "{FilterClass::FilterDropdownIcon}",
+                        class: "{FilterClass::FilterIcon.as_class()}",
+                        fill: "none",
+                        view_box: "0 0 24 24",
+                        stroke_width: 2,
+                        stroke: "currentColor",
+                        path {
+                            stroke_linecap: "round",
+                            stroke_linejoin: "round",
+                            d: "M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z"
+                        }
+                    }
+
+                    if active_count > 0 {
+                        span { class: "{FilterClass::FilterBadge.as_class()}",
+                            "{active_count}"
+                        }
+                    }
+
+                    svg {
+                        xmlns: "http://www.w3.org/2000/svg",
+                        class: "{FilterClass::FilterDropdownIcon.as_class()}",
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,
@@ -142,24 +162,24 @@ pub fn Filter(props: FilterProps) -> Element {
             }
 
             if is_open() {
-                div { class: "{FilterClass::FilterDropdown}",
+                div { class: "{FilterClass::FilterDropdown.as_class()}",
                     onclick: close_dropdown,
 
-                    div { class: "{FilterClass::FilterHeader}",
-                        span { class: "{FilterClass::FilterTitle}",
+                    div { class: "{FilterClass::FilterHeader.as_class()}",
+                        span { class: "{FilterClass::FilterTitle.as_class()}",
                             "{props.column}"
                         }
 
                         if active_count > 0 {
                             button {
-                                class: "{FilterClass::FilterClearBtn}",
+                                class: "{FilterClass::FilterClearBtn.as_class()}",
                                 onclick: handle_clear,
                                 "Clear"
                             }
                         }
                     }
 
-                    div { class: "{FilterClass::FilterOptions}",
+                    div { class: "{FilterClass::FilterOptions.as_class()}",
                         {props.filters.iter().map(|option| {
                             let opt_value = option.value.clone();
                             let label_text = option.label.clone();
@@ -167,16 +187,16 @@ pub fn Filter(props: FilterProps) -> Element {
 
                             rsx! {
                                 label {
-                                    class: "{FilterClass::FilterOption}",
+                                    class: "{FilterClass::FilterOption.as_class()}",
                                     onclick: move |_| handle_select(opt_value.clone()),
 
                                     input {
-                                        class: "{FilterClass::FilterCheckbox}",
+                                        class: "{FilterClass::FilterCheckbox.as_class()}",
                                         r#type: "checkbox",
                                         checked: checked,
                                     }
 
-                                    span { class: "{FilterClass::FilterLabel}",
+                                    span { class: "{FilterClass::FilterLabel.as_class()}",
                                         "{label_text}"
                                     }
                                 }
@@ -184,8 +204,8 @@ pub fn Filter(props: FilterProps) -> Element {
                         })}
                     }
 
-                    div { class: "{FilterClass::FilterFooter}",
-                        span { class: "{FilterClass::FilterHint}",
+                    div { class: "{FilterClass::FilterFooter.as_class()}",
+                        span { class: "{FilterClass::FilterHint.as_class()}",
                             if active_count > 0 {
                                 "{active_count} selected"
                             } else {
@@ -208,3 +228,6 @@ impl StyledComponent for FilterComponent {
         "filter"
     }
 }
+
+/// Filter component wrapper for external use
+pub struct FilterComponentWrapper;

@@ -346,6 +346,7 @@ pub async fn internal_error(err: String) -> impl IntoResponse {
 }
 
 /// CSS bundle handler - serves all registered component styles plus utility classes.
+#[allow(dead_code)]
 async fn css_bundle_handler(State(state): State<AppState>) -> impl IntoResponse {
     // Get component styles from registry
     let component_styles = if let Some(registry) = &state.style_registry {
@@ -366,6 +367,7 @@ async fn css_bundle_handler(State(state): State<AppState>) -> impl IntoResponse 
 }
 
 /// Component CSS handler - serves a single component's styles.
+#[allow(dead_code)]
 async fn component_css_handler(
     State(state): State<AppState>,
     Path(name): Path<String>,
@@ -410,6 +412,7 @@ async fn tailwind_css_handler(State(state): State<AppState>) -> impl IntoRespons
 }
 
 /// Style info handler - returns information about registered styles.
+#[allow(dead_code)]
 async fn style_info_handler(State(state): State<AppState>) -> impl IntoResponse {
     let info = if let Some(registry) = &state.style_registry {
         serde_json::json!({

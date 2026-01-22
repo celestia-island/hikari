@@ -1,0 +1,22 @@
+[package]
+name = "hikari-i18n"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+# Workspace dependencies
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+yuuka = { workspace = true }
+
+# Dioxus frontend framework
+dioxus.workspace = true
+
+# For TOML parsing
+toml = "^0.8"

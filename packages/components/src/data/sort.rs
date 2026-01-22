@@ -2,10 +2,10 @@
 // Sort component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use palette::classes::{ClassesBuilder, SortClass, UtilityClass};
 
 pub use super::column::ColumnDef;
 use crate::styled::StyledComponent;
-use palette::classes::{ClassesBuilder, SortClass};
 
 /// Sort component wrapper (for StyledComponent)
 pub struct SortComponent;
@@ -147,11 +147,11 @@ pub fn Sort(props: SortProps) -> Element {
                             }
                         },
 
-                        span { class: "{SortClass::SortTitle}",
+                        span { class: "{SortClass::SortTitle.as_class()}",
                             {column.title.clone()}
                         }
 
-                        span { class: "{SortClass::SortIndicator}",
+                        span { class: "{SortClass::SortIndicator.as_class()}",
                             {if is_active {
                                 props.direction.icon()
                             } else {
@@ -164,13 +164,13 @@ pub fn Sort(props: SortProps) -> Element {
 
             if has_active_sort {
                 button {
-                    class: "{SortClass::SortClear}",
+                    class: "{SortClass::SortClear.as_class()}",
                     onclick: handle_clear,
 
-                    span { class: "{SortClass::SortClearText}", "Clear" }
+                    span { class: "{SortClass::SortClearText.as_class()}", "Clear" }
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: "{SortClass::SortClearIcon}",
+                        class: "{SortClass::SortClearIcon.as_class()}",
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,

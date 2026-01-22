@@ -2,13 +2,12 @@
 // Button component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use palette::classes::{ButtonClass, ClassesBuilder};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
     styled::StyledComponent,
 };
-use palette::classes::ButtonClass;
-use palette::classes::ClassesBuilder;
 
 /// Animation types for button hover/focus effects
 #[derive(Clone, Copy, PartialEq, Debug, Default)]

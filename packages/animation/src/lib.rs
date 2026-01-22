@@ -25,7 +25,6 @@
 //! - **Type-Safe CSS**: Compile-time checked CSS properties
 //! - **Dynamic Values**: Compute animation values at runtime from context
 //! - **Multi-Element**: Control multiple DOM elements simultaneously
-//! - **Debounced Updates**: Throttle animation updates with [`AnimationBuilderDebounced`]
 //! - **Easing Functions**: 30+ easing functions for natural motion
 //! - **Timeline Control**: Sequence and coordinate complex animations
 //! - **WASM Optimized**: Designed specifically for WebAssembly targets
@@ -35,8 +34,8 @@
 //! ### Static Animation
 //!
 //! ```rust,no_run
-//! use animation::{AnimationBuilder, AnimationContext};
-//! use animation::style::CssProperty;
+//! use hikari_animation::{AnimationBuilder, AnimationContext};
+//! use hikari_animation::style::CssProperty;
 //! use std::collections::HashMap;
 //!
 //! # fn example(button_element: web_sys::HtmlElement) {
@@ -53,8 +52,8 @@
 //! ### Dynamic Animation (Mouse Following)
 //!
 //! ```rust,no_run
-//! use animation::{AnimationBuilder, AnimationContext};
-//! use animation::style::CssProperty;
+//! use hikari_animation::{AnimationBuilder, AnimationContext};
+//! use hikari_animation::style::CssProperty;
 //! use std::collections::HashMap;
 //!
 //! # fn example(button_element: web_sys::HtmlElement) {
@@ -74,17 +73,14 @@
 //! ### Animation with Presets
 //!
 //! ```rust,no_run
-//! use animation::presets::*;
-//! use animation::AnimationBuilder;
-//! use std::collections::HashMap;
+//! use hikari_animation::presets::*;
 //!
-//! # fn example(button_element: web_sys::HtmlElement) {
-//! let mut elements = HashMap::new();
-//! elements.insert("button".to_string(), button_element.into());
+//! // Create transition animations
+//! let transitions = transition();
 //!
-//! // Fade in animation
-//! fade_in::AnimationBuilder::new(&elements, "button", 500).apply();
-//! # }
+//! // Fade and slide in animation
+//! // In a real application, you would apply this animation to an element
+//! let _fade_id = transitions.fade_slide_in(500, 20.0);
 //! ```
 //!
 //! ## Builder Pattern
@@ -92,8 +88,8 @@
 //! The animation system uses a fluent builder pattern for constructing complex animations:
 //!
 //! ```rust,no_run
-//! use animation::{AnimationBuilder, AnimationContext};
-//! use animation::style::CssProperty;
+//! use hikari_animation::{AnimationBuilder, AnimationContext};
+//! use hikari_animation::style::CssProperty;
 //! use std::collections::HashMap;
 //!
 //! # fn example(button_element: web_sys::HtmlElement) {
@@ -119,8 +115,8 @@
 //! - Custom state
 //!
 //! ```rust,no_run
-//! use animation::{AnimationBuilder, AnimationContext};
-//! use animation::style::CssProperty;
+//! use hikari_animation::{AnimationBuilder, AnimationContext};
+//! use hikari_animation::style::CssProperty;
 //! use std::collections::HashMap;
 //!
 //! # fn example(icon_element: web_sys::HtmlElement) {
@@ -141,37 +137,17 @@
 //!
 //! For performance-critical scenarios, use debounced animations to throttle updates:
 //!
-//! ```rust,no_run
-//! use animation::AnimationBuilderDebounced;
-//! use animation::style::CssProperty;
-//! use std::collections::HashMap;
-//!
-//! # fn example(button_element: web_sys::HtmlElement) {
-//! let mut elements = HashMap::new();
-//! elements.insert("button".to_string(), button_element.into());
-//!
-//! let mut debounced = AnimationBuilderDebounced::new(&elements, 500);
-//!
-//! // These rapid updates will be debounced
-//! debounced.add_style("button", CssProperty::Opacity, "0.5");
-//! debounced.add_style("button", CssProperty::Transform, "scale(1.1)");
-//! // Only the last state will be applied after 500ms
-//!
-//! // Or flush immediately
-//! debounced.flush();
-//! # }
-//! ```
+//! Note: This feature is currently under development and will be available in a future release.
 //!
 //! ## Easing Functions
 //!
 //! Choose from 30+ easing functions for natural motion:
 //!
 //! ```rust,no_run
-//! use animation::easing::{EasingFunction, ease_in_out_cubic};
+//! use hikari_animation::easing::ease_in_out_cubic;
 //!
-//! // Apply easing function
-//! let t = 0.5; // Progress value [0, 1]
-//! let eased = ease_in_out_cubic(t);
+//! // Create an easing function
+//! let easing = ease_in_out_cubic();
 //! ```
 //!
 //! Available easing functions include:
@@ -188,7 +164,7 @@
 //! For lower-level style manipulation, use the [`StyleBuilder`] directly:
 //!
 //! ```rust,no_run
-//! use animation::style::{StyleBuilder, CssProperty};
+//! use hikari_animation::style::{StyleBuilder, CssProperty};
 //!
 //! # fn example(element: web_sys::HtmlElement) {
 //! StyleBuilder::new(&element)
@@ -201,21 +177,10 @@
 //!
 //! ## Spotlight Effect
 //!
-//! Create mouse-following spotlight effects with the [`spotlight`] module:
+//! Create mouse-following spotlight effects using the glow module:
 //!
-//! ```rust,no_run
-//! use animation::spotlight::SpotlightEffect;
-//! use std::collections::HashMap;
-//!
-//! # fn example(button_element: web_sys::HtmlElement) {
-//! let mut elements = HashMap::new();
-//! elements.insert("button".to_string(), button_element.into());
-//!
-//! let mut spotlight = SpotlightEffect::new(&elements, "button");
-//! spotlight.enable();
-//! // Spotlight follows mouse automatically
-//! # }
-//! ```
+//! Note: Spotlight effects are available via the Glow component for Dioxus applications.
+//! See the glow module documentation for details.
 //!
 //! ## Performance Considerations
 //!
@@ -247,6 +212,13 @@ pub mod style;
 pub mod timeline;
 pub mod timer;
 pub mod tween;
+
+// Re-export transition presets for convenience
+#[cfg(target_arch = "wasm32")]
+pub use presets::transition::{
+    bounce_in, fade_in, fade_out, rotate_in, rotate_out, shake, slide_in, slide_out, zoom_in,
+    zoom_out, SlideDirection,
+};
 
 pub use breathing::*;
 pub use core::{AnimationEngine, AnimationOptions, PlaybackMode, Tween, TweenId};

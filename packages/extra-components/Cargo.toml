@@ -13,6 +13,7 @@ doctest = false
 hikari-components = { path = "../components" }
 hikari-palette = { path = "../palette" }
 hikari-theme = { path = "../theme" }
+hikari-icons = { path = "../icons" }
 
 # MCP / network and protocols
 dioxus.workspace = true

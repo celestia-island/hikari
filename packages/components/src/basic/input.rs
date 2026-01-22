@@ -2,12 +2,12 @@
 // Input component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use palette::classes::{ClassesBuilder, InputClass, UtilityClass};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
     styled::StyledComponent,
 };
-use palette::classes::{ClassesBuilder, InputClass, UtilityClass};
 
 /// Input 组件的类型包装器（用于实现 StyledComponent）
 pub struct InputComponent;

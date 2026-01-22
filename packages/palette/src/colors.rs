@@ -2379,12 +2379,9 @@ pub const 铜绿: Color = Color {
     category: ColorCategory::Gray,
 };
 
-
-
 // ============================================================
 // Additional Chinese Colors from zhongguose.com
 // ============================================================
-
 
 // ─── 红色系 补充 (147 colors) ───
 
@@ -3858,7 +3855,6 @@ pub const 龙须红: Color = Color {
     category: ColorCategory::Red,
 };
 
-
 // ─── 黄色系 补充 (125 colors) ───
 
 /// 丁香棕 (#71361d)
@@ -5111,7 +5107,6 @@ pub const 龟背黄: Color = Color {
     category: ColorCategory::Orange,
 };
 
-
 // ─── 黄色系 补充 (41 colors) ───
 
 /// 乳鸭黄 (#ffc90c)
@@ -5523,7 +5518,6 @@ pub const 黄连黄: Color = Color {
     rgb: (252, 197, 21),
     category: ColorCategory::Yellow,
 };
-
 
 // ─── 绿色系 补充 (42 colors) ───
 
@@ -5947,7 +5941,6 @@ pub const 麦苗绿: Color = Color {
     category: ColorCategory::Green,
 };
 
-
 // ─── 水色系 补充 (24 colors) ───
 
 /// 亚丁绿 (#428675)
@@ -6189,7 +6182,6 @@ pub const 霁青: Color = Color {
     rgb: (99, 187, 208),
     category: ColorCategory::Cyan,
 };
-
 
 // ─── 蓝色系 补充 (47 colors) ───
 
@@ -6663,7 +6655,6 @@ pub const 龙葵紫: Color = Color {
     category: ColorCategory::Blue,
 };
 
-
 // ─── 苍色系 补充 (6 colors) ───
 
 /// 乌梅紫 (#1e131d)
@@ -6725,7 +6716,6 @@ pub const 魏紫: Color = Color {
     rgb: (126, 22, 113),
     category: ColorCategory::Purple,
 };
-
 
 // ─── 灰白色系 补充 (20 colors) ───
 
@@ -6929,7 +6919,6 @@ pub const 马鞭草紫: Color = Color {
     category: ColorCategory::White,
 };
 
-
 // ─── 黑色系 补充 (2 colors) ───
 
 /// 槲寄生绿 (#2b312c)
@@ -6951,7 +6940,6 @@ pub const 水牛灰: Color = Color {
     rgb: (47, 47, 53),
     category: ColorCategory::Black,
 };
-
 
 // ─── 灰白色系 补充 (42 colors) ───
 
@@ -7374,7 +7362,6 @@ pub const 黄昏灰: Color = Color {
     rgb: (71, 75, 76),
     category: ColorCategory::Gray,
 };
-
 
 #[cfg(test)]
 mod tests {

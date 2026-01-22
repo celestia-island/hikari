@@ -347,11 +347,10 @@ fn read_svg_content(workspace_root: &Path, icon_name: &str) -> Result<String> {
     let content = fs::read_to_string(&svg_path)
         .with_context(|| format!("Failed to read SVG: {:?}", svg_path))?;
 
-    // TODO: Re-enable SVG validation once build issue is resolved
-    // if let Err(e) = validate_svg_structure(&content) {
-    //     eprintln!("⚠️  Failed to validate SVG '{}': {}", icon_name, e);
-    //     return Err(e);
-    // }
+    if let Err(e) = validate_svg_structure(&content) {
+        eprintln!("⚠️  Failed to validate SVG '{}': {}", icon_name, e);
+        return Err(e);
+    }
 
     Ok(content)
 }
@@ -473,7 +472,10 @@ fn generate_icon_module(selected_icons: &HashSet<String>, workspace_root: &Path)
     // Generate structured data
     output.push_str("/// Structured icon data\n");
     output.push_str("pub mod data {\n");
-    output.push_str("    use super::IconData;\n\n");
+    if !icon_data.is_empty() {
+        output.push_str("    use super::IconData;\n");
+    }
+    output.push_str("\n");
 
     for (const_name, icon_name, icon) in &icon_data {
         output.push_str("    /// Icon data for '");

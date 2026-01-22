@@ -2,9 +2,9 @@
 // Selection component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use palette::classes::{ClassesBuilder, SelectionClassNew, UtilityClass};
 
 use crate::styled::StyledComponent;
-use palette::classes::{ClassesBuilder, SelectionClassNew}, UtilityClass;
 
 /// Selection component wrapper (for StyledComponent)
 pub struct SelectionComponent;
@@ -117,8 +117,9 @@ pub fn Selection(props: SelectionProps) -> Element {
     };
 
     let container_classes = ClassesBuilder::new()
-        .add(SelectionClassNew::Selection)
-        .add_raw(&props.class)
+        .add(SelectionClassNew::RowSelection)
+        .add(SelectionClassNew::SelectionColumn)
+        .add_if(SelectionClassNew::SelectionFixed, || props.fixed_column)
         .build();
 
     let column_classes = ClassesBuilder::new()
@@ -132,10 +133,10 @@ pub fn Selection(props: SelectionProps) -> Element {
             div { class: "{column_classes}",
 
                 if props.selection_type == SelectionType::Checkbox {
-                    div { class: "{SelectionClassNew::SelectionHeader}",
-                        label { class: "{SelectionClassNew::SelectionAll}",
+                    div { class: "{SelectionClassNew::SelectionHeader.as_class()}",
+                        label { class: "{SelectionClassNew::SelectionAll.as_class()}",
                             input {
-                                class: "{SelectionClassNew::SelectionCheckbox}",
+                                class: "{SelectionClassNew::SelectionCheckbox.as_class()}",
                                 r#type: "checkbox",
                                 checked: is_all_selected(),
                                 onchange: handle_select_all,
@@ -149,10 +150,10 @@ pub fn Selection(props: SelectionProps) -> Element {
                     let checked = is_row_selected(key);
 
                     rsx! {
-                        div { class: "{SelectionClassNew::SelectionRow}",
-                            label { class: "{SelectionClassNew::SelectionItem}",
+                        div { class: "{SelectionClassNew::SelectionRow.as_class()}",
+                            label { class: "{SelectionClassNew::SelectionItem.as_class()}",
                                 input {
-                                    class: "{SelectionClassNew::SelectionCheckbox}",
+                                    class: "{SelectionClassNew::SelectionCheckbox.as_class()}",
                                     r#type: get_input_type(),
                                     checked: checked,
                                     name: if props.selection_type == SelectionType::Radio {
@@ -210,7 +211,7 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
         }
     };
 
-    let input_type = match props.selection_type {
+    let _input_type = match props.selection_type {
         SelectionType::Checkbox => "checkbox",
         SelectionType::Radio => "radio",
     };
@@ -227,10 +228,10 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
 
     rsx! {
         div { class: "{container_classes}",
-            label { class: "{SelectionClassNew::RowSelectionLabel}",
+            label { class: "{SelectionClassNew::RowSelectionLabel.as_class()}",
                 input {
-                    class: "{SelectionClassNew::RowSelectionInput}",
-                    r#type: input_type,
+                    class: "{SelectionClassNew::RowSelectionInput.as_class()}",
+                    r#type: "checkbox",
                     checked: is_selected,
                     name: if props.selection_type == SelectionType::Radio {
                         "hi-selection-radio-group"
@@ -259,7 +260,7 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
                     }
 
                     if props.selection_type == SelectionType::Radio && is_selected {
-                        span { class: "{SelectionClassNew::RowSelectionRadioDot}" }
+                        span { class: "{SelectionClassNew::RowSelectionRadioDot.as_class()}" }
                     }
                 }
             }

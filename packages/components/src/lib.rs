@@ -87,6 +87,10 @@
 //! - [`navigation`] - Navigation and routing components
 //! - [`data`] - Data display and table components
 //! - [`styled`] - Styling infrastructure traits
+//! - [`utils`] - Utility modules (positioning, etc.)
+
+// Styling infrastructure (always available)
+pub mod styled;
 
 // Layout components (always available)
 pub mod layout;
@@ -100,21 +104,51 @@ pub mod hooks;
 // JavaScript utilities (always available)
 pub mod scripts;
 
+// Utility modules (always available)
+pub mod utils;
+
 // Feature-gated modules
 #[cfg(any(
     feature = "basic",
     feature = "button",
     feature = "input",
     feature = "card",
-    feature = "badge"
+    feature = "badge",
+    feature = "checkbox",
+    feature = "radio_group",
+    feature = "switch",
+    feature = "slider",
+    feature = "textarea",
+    feature = "file_upload",
+    feature = "form_field",
+    feature = "date_picker"
 ))]
 pub mod basic;
+
+#[cfg(any(
+    feature = "display",
+    feature = "tag",
+    feature = "empty",
+    feature = "comment",
+    feature = "description_list",
+    feature = "qrcode"
+))]
+pub mod display;
 
 #[cfg(any(
     feature = "feedback",
     feature = "alert",
     feature = "toast",
-    feature = "tooltip"
+    feature = "tooltip",
+    feature = "modal",
+    feature = "popover",
+    feature = "drawer",
+    feature = "dropdown",
+    feature = "progress",
+    feature = "skeleton",
+    feature = "spin",
+    feature = "spotlight",
+    feature = "glow"
 ))]
 pub mod feedback;
 
@@ -122,7 +156,8 @@ pub mod feedback;
     feature = "navigation",
     feature = "menu",
     feature = "tabs",
-    feature = "breadcrumb"
+    feature = "breadcrumb",
+    feature = "steps"
 ))]
 pub mod navigation;
 
@@ -134,22 +169,35 @@ pub mod navigation;
 ))]
 pub mod data;
 
-pub mod styled;
+#[cfg(any(feature = "entry", feature = "number_input", feature = "search"))]
+pub mod entry;
 
-// Conditional re-exports
+// Re-export entry components when entry feature is enabled
+#[cfg(any(feature = "entry", feature = "number_input", feature = "search"))]
+pub use entry::*;
+
+// Re-export basic components when basic feature is enabled
 #[cfg(feature = "basic")]
 pub use basic::*;
 
-#[cfg(feature = "feedback")]
-pub use feedback::*;
-
+// Re-export navigation components when navigation feature is enabled
 #[cfg(feature = "navigation")]
 pub use navigation::*;
 
-#[cfg(feature = "data")]
-pub use data::*;
+// Re-export feedback components when feedback feature is enabled
+#[cfg(feature = "feedback")]
+pub use feedback::*;
+
+// Re-export display components when display feature is enabled
+#[cfg(feature = "display")]
+pub use display::*;
 
 pub use styled::{StyleRegistry, StyledComponent};
+
+// Utility exports
+pub use utils::positioning::{
+    use_position, OverlayZIndex, Placement, PositionConfig, PositionStrategy, UsePositionReturn,
+};
 
 // Theme provider exports
 pub use theme_provider::{

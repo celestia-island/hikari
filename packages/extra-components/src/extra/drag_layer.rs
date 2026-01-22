@@ -2,6 +2,8 @@
 // Drag layer component with bounds constraints
 
 use dioxus::prelude::*;
+#[cfg(target_arch = "wasm32")]
+use web_sys::{window, MouseEvent as WebMouseEvent};
 
 /// Constraints for drag boundaries
 #[derive(Clone, PartialEq, Debug, Default)]
@@ -134,17 +136,16 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
         constrained
     };
 
-    // Note: For a production implementation, you would need to use
-    // web_sys MouseEvent to access client_x/client_y coordinates
-    // This is a simplified version that works with Dioxus 0.7 event system
-    // You can extend this with:
-    // let web_event = e.downcast::<web_sys::MouseEvent>();
-    // let (client_x, client_y) = (web_event.client_x() as f64, web_event.client_y() as f64);
-
     // Clone callbacks for use in inline handlers
     let on_drag_start = props.on_drag_start;
     let on_drag = props.on_drag;
     let on_drag_end = props.on_drag_end;
+
+    // Track mouse start position
+    #[cfg_attr(not(target_arch = "wasm32"), allow(unused_variables))]
+    let mouse_start_x = use_signal(|| 0.0f64);
+    #[cfg_attr(not(target_arch = "wasm32"), allow(unused_variables))]
+    let mouse_start_y = use_signal(|| 0.0f64);
 
     rsx! {
         div {
@@ -159,7 +160,7 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
                 if props.draggable { "move" } else { "default" }
             ),
 
-            onmousedown: move |e| {
+            onmousedown: move |e: MouseEvent| {
                 if !props.draggable {
                     return;
                 }
@@ -168,6 +169,14 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
                 is_dragging.set(true);
                 drag_start_pos.set((0.0, 0.0));
                 offset_start.set(position());
+
+                #[cfg(target_arch = "wasm32")]
+                {
+                    if let Ok(web_event) = e.downcast::<WebMouseEvent>() {
+                        mouse_start_x.set(web_event.client_x() as f64);
+                        mouse_start_y.set(web_event.client_y() as f64);
+                    }
+                }
 
                 let data = DragData {
                     x: position().0,
@@ -188,12 +197,23 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
         if is_dragging() {
             div {
                 style: "position: fixed; inset: 0; z-index: 9999;",
-                onmousemove: move |e| {
+                onmousemove: move |e: MouseEvent| {
                     e.stop_propagation();
 
-                    // Movement-based drag (delta)
-                    let delta_x = 1.0;
-                    let delta_y = 1.0;
+                    // Calculate delta from actual mouse movement
+                    #[cfg(target_arch = "wasm32")]
+                    let (delta_x, delta_y) = {
+                        if let Ok(web_event) = e.downcast::<WebMouseEvent>() {
+                            let dx = (web_event.client_x() as f64 - mouse_start_x()) as f64;
+                            let dy = (web_event.client_y() as f64 - mouse_start_y()) as f64;
+                            (dx, dy)
+                        } else {
+                            (0.0, 0.0)
+                        }
+                    };
+
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let (delta_x, delta_y) = (0.0, 0.0);
 
                     let new_x = constrain_x(offset_start().0 + delta_x);
                     let new_y = constrain_y(offset_start().1 + delta_y);

@@ -15,10 +15,7 @@
 //! - `/assets/*` → assets_mount
 //! - `/styles/*` → styles_mount
 
-use std::{
-    path::{absolute as path_absolute, Path},
-    process::Command,
-};
+use std::{path::{Path, absolute as path_absolute}, process::Command};
 
 /// Filesystem paths (MUST match src/paths.rs::STATIC_PATHS)
 #[allow(dead_code)]

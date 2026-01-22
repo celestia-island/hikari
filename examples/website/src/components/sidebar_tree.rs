@@ -3,9 +3,9 @@
 
 use dioxus::prelude::*;
 
+use crate::app::Route;
 use _components::data::{Tree, TreeNodeData};
 use _palette::classes::*;
-use crate::app::Route;
 
 /// Sidebar component with 3-level Tree navigation
 ///
@@ -237,6 +237,62 @@ fn build_navigation_tree() -> Vec<TreeNodeData> {
                         TreeNodeData {
                             key: "navigation-tabs".to_string(),
                             label: "Tabs 标签页".to_string(),
+                            children: None,
+                            disabled: false,
+                        },
+                    ]),
+                    disabled: false,
+                },
+                // Display Components category
+                TreeNodeData {
+                    key: "components-display".to_string(),
+                    label: "展示组件 Display".to_string(),
+                    children: Some(vec![
+                        TreeNodeData {
+                            key: "display-overview".to_string(),
+                            label: "概览 Overview".to_string(),
+                            children: None,
+                            disabled: false,
+                        },
+                        TreeNodeData {
+                            key: "display-avatar".to_string(),
+                            label: "Avatar 头像".to_string(),
+                            children: None,
+                            disabled: false,
+                        },
+                        TreeNodeData {
+                            key: "display-image".to_string(),
+                            label: "Image 图片".to_string(),
+                            children: None,
+                            disabled: false,
+                        },
+                        TreeNodeData {
+                            key: "display-tag".to_string(),
+                            label: "Tag 标签".to_string(),
+                            children: None,
+                            disabled: false,
+                        },
+                        TreeNodeData {
+                            key: "display-empty".to_string(),
+                            label: "Empty 空状态".to_string(),
+                            children: None,
+                            disabled: false,
+                        },
+                        TreeNodeData {
+                            key: "display-comment".to_string(),
+                            label: "Comment 评论".to_string(),
+                            children: None,
+                            disabled: false,
+                        },
+                        TreeNodeData {
+                            key: "display-description-list".to_string(),
+                            label: "DescriptionList 描述列表".to_string(),
+                            children: None,
+                            disabled: false,
+                        },
+                        TreeNodeData {
+                            key: "display-qrcode".to_string(),
+                            label: "QRCode 二维码".to_string(),
                             children: None,
                             disabled: false,
                         },

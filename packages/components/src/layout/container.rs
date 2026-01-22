@@ -1,67 +1,147 @@
-// hikari-components/src/layout/container.rs
-//! Container component - Responsive content container with centered layout
-//!
-//! # Example
-//!
-//! ```rust
-//! use hikari_components::layout::Container;
-//! use dioxus::prelude::*;
-//!
-//! rsx! {
-//!     Container {
-//!         h1 { "Content is centered and max-width constrained" }
-//!     }
-//! }
-//! ```
+// hi-components/src/layout/container.rs
+// Container component for responsive content wrapping
 
 use dioxus::prelude::*;
-use palette::{classes::components::*, ClassesBuilder};
+use palette::classes::ClassesBuilder;
 
-/// Container component - Responsive content container
-///
-/// Provides a centered container with responsive max-width constraints.
-/// Perfect for main content areas.
-///
-/// # Features
-/// - Responsive max-width (sm/md/lg/xl breakpoints)
-/// - Centered layout with auto margins
-/// - Optional padding control
-/// - Clean, minimal design
-#[component]
-pub fn Container(
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum ContainerSize {
+    #[default]
+    Medium,
+    Small,
+    Large,
+    Xl,
+}
+
+#[derive(Clone, PartialEq, Props)]
+pub struct ContainerProps {
     /// Container content
-    children: Element,
-
-    /// Max width preset (sm: 640px, md: 768px, lg: 1024px, xl: 1280px, default: lg)
-    #[props(default = "lg".to_string())]
-    max_width: String,
-
-    /// Custom CSS classes
     #[props(default)]
-    class: String,
+    pub children: Element,
 
-    /// Custom inline styles
+    /// Container size preset
     #[props(default)]
-    style: String,
-) -> Element {
-    let max_width_class = match max_width.as_str() {
-        "sm" => ContainerClass::Sm,
-        "xl" => ContainerClass::Xl,
-        "xxl" => ContainerClass::Xxl,
-        _ => ContainerClass::Lg, // lg (default)
-    };
+    pub size: ContainerSize,
 
-    let classes = ClassesBuilder::new()
-        .add(ContainerClass::Container)
-        .add(max_width_class)
-        .add_raw(&class)
+    /// Custom max-width
+    #[props(default)]
+    pub max_width: Option<String>,
+
+    /// Center content
+    #[props(default = false)]
+    pub center: bool,
+
+    /// Additional CSS classes
+    #[props(default)]
+    pub class: String,
+}
+
+impl ContainerSize {
+    pub fn max_width(&self) -> &'static str {
+        match self {
+            ContainerSize::Small => "640px",
+            ContainerSize::Medium => "960px",
+            ContainerSize::Large => "1200px",
+            ContainerSize::Xl => "1400px",
+        }
+    }
+}
+
+/// Container component for responsive content wrapping
+///
+/// # Examples
+///
+/// ```rust
+/// use dioxus::prelude::*;
+/// use hikari_components::{Container, ContainerSize};
+///
+/// fn app() -> Element {
+///     rsx! {
+///         Container {
+///             size: ContainerSize::Medium,
+///             h1 { "Hello Hikari!" }
+///         }
+///     }
+/// }
+/// ```
+#[component]
+pub fn Container(props: ContainerProps) -> Element {
+    let container_classes = ClassesBuilder::new()
+        .add_raw("hi-container")
+        .add_raw(match props.size {
+            ContainerSize::Small => "hi-container-sm",
+            ContainerSize::Medium => "hi-container-md",
+            ContainerSize::Large => "hi-container-lg",
+            ContainerSize::Xl => "hi-container-xl",
+        })
+        .add_raw(if props.center {
+            "hi-container-centered"
+        } else {
+            ""
+        })
+        .add_raw(&props.class)
         .build();
+
+    let max_width = props
+        .max_width
+        .unwrap_or_else(|| props.size.max_width().to_string());
+
+    let center_style = if props.center {
+        "margin-left: auto; margin-right: auto;"
+    } else {
+        ""
+    };
 
     rsx! {
         div {
-            class: "{classes}",
-            style: "{style}",
-            { children }
+            class: "{container_classes}",
+            style: "max-width: {max_width}; {center_style}",
+            { props.children }
         }
+    }
+}
+
+/// Container component's type wrapper for StyledComponent
+pub struct ContainerComponent;
+
+impl crate::styled::StyledComponent for ContainerComponent {
+    fn styles() -> &'static str {
+        r#"
+.hi-container {
+  width: 100%;
+  padding-left: 16px;
+  padding-right: 16px;
+  box-sizing: border-box;
+}
+
+.hi-container-centered {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hi-container-sm {
+  max-width: 640px;
+}
+
+.hi-container-md {
+  max-width: 960px;
+}
+
+.hi-container-lg {
+  max-width: 1200px;
+}
+
+.hi-container-xl {
+  max-width: 1400px;
+}
+
+[data-theme="dark"] .hi-container {
+  background: var(--hi-surface);
+}
+"#
+    }
+
+    fn name() -> &'static str {
+        "container"
     }
 }

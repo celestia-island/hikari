@@ -2,11 +2,13 @@
 // Virtual scroll component for large tree data sets
 
 use dioxus::prelude::*;
+use palette::classes::{ClassesBuilder, TreeClass};
 
 use crate::styled::StyledComponent;
-use palette::classes::{components::TreeClass, ClassesBuilder};
 
 /// VirtualScroll component wrapper (for StyledComponent)
+pub struct VirtualScrollComponent;
+
 /// Tree node data structure
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct VirtualTreeNodeData {

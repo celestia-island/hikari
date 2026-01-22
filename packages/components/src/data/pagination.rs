@@ -2,9 +2,9 @@
 // Pagination component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use palette::classes::{ClassesBuilder, PaginationClass};
 
 use crate::styled::StyledComponent;
-use palette::classes::{ClassesBuilder, PaginationClass};
 
 /// Pagination component wrapper (for StyledComponent)
 pub struct PaginationComponent;

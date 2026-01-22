@@ -18,11 +18,15 @@ use palette::*;
 /// # Fields
 ///
 /// - `palette` - Theme identifier string (default: "hikari")
+/// - `language` - Language code string (default: "en-US")
 /// - `children` - Child elements to render within the theme context
 #[derive(Clone, Props, PartialEq)]
 pub struct ThemeProviderProps {
     #[props(default = "hikari".to_string())]
     pub palette: String,
+
+    #[props(default = "en-US".to_string())]
+    pub language: String,
 
     children: Element,
 }
@@ -34,6 +38,7 @@ pub struct ThemeProviderProps {
 /// # Props
 ///
 /// - `palette` - Theme identifier ("hikari" or "tairitsu")
+/// - `language` - Language code ("en-US", "zh-CN", or "zh-TW")
 /// - `children` - Child elements that receive theme context
 ///
 /// # Example
@@ -42,7 +47,10 @@ pub struct ThemeProviderProps {
 /// use theme::ThemeProvider;
 ///
 /// rsx! {
-///     ThemeProvider { palette: "tairitsu" } {
+///     ThemeProvider {
+///         palette: "tairitsu",
+///         language: "zh-CN",
+///     } {
 ///         // Children here
 ///     }
 /// }
@@ -60,6 +68,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
         div {
             class: "hi-theme-provider",
             "data-theme": "{props.palette}",
+            "data-language": "{props.language}",
             {props.children}
         }
     }

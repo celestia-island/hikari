@@ -7,10 +7,12 @@
 //!
 //! `hikari-extra-components` provides:
 //!
-//! - **Node Graph System** - Visual node editors with canvas, connections, ports, and minimap
 //! - **Drag Layer** - Advanced drag-drop functionality with boundary constraints
 //! - **Collapsible** - Animated collapsible panels with slide-in/out animations
 //! - **Zoom Controls** - Zoomable containers with keyboard shortcuts and smooth scaling
+//! - **Rich Text Editor** - WYSIWYG text editor with toolbar
+//! - **Audio Waveform** - Audio player with waveform visualization
+//! - **Video Player** - HTML5 video player with custom controls
 //!
 //! ## Quick Start
 //!
@@ -92,18 +94,12 @@
 //!
 //! ## Components
 //!
-//! ### Core Components
-//!
 //! - [`Collapsible`] - Collapsible content containers with slide animations
 //! - [`DragLayer`] - Drag and drop layer management with constraints
 //! - [`ZoomControls`] - Zoom controls for interactive content
-//!
-//! ### Node Graph System
-//!
-//! - [`NodeGraph`] - Visual node editor with canvas and connections
-//! - [`Node`] - Node data structure with inputs, outputs, and position
-//! - [`Connection`] - Bezier curve connections between node ports
-//! - [`MinimapConfig`] - Minimap configuration for navigation
+//! - [`RichTextEditor`] - Rich text editor with formatting toolbar
+//! - [`AudioWaveform`] - Audio player with waveform visualization
+//! - [`VideoPlayer`] - HTML5 video player with custom controls
 //!
 //! ## Use Cases
 //!

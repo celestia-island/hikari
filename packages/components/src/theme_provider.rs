@@ -65,10 +65,7 @@
 //! }
 //! ```
 
-use std::collections::HashMap;
-use std::rc::Rc;
-
-use std::sync::RwLock;
+use std::{collections::HashMap, rc::Rc, sync::RwLock};
 
 use dioxus::prelude::*;
 use palette::*;

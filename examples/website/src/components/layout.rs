@@ -4,17 +4,10 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use super::sidebar::Sidebar;
-use crate::app::{Route, ThemeContext};
-use _components::{
-    basic::{Button, ButtonVariant, Logo},
-    layout::{Aside, Header, Layout as HikariLayout},
-};
-use _icons::{Icon, MdiIcon};
-use _palette::classes::{
-    AlignItems, ClassesBuilder, Display, Duration, FontWeight, Gap, Padding, TextColor,
-    Transition,
-};
+use super::{AsideFooter, sidebar::Sidebar};
+use crate::app::Route;
+use _components::{basic::Logo, layout::{Aside, Header, Layout as HikariLayout}};
+use _palette::classes::{AlignItems, ClassesBuilder, Display, FontWeight, Gap, Padding};
 
 /// Layout component that wraps all pages with modern design
 ///
@@ -24,79 +17,43 @@ use _palette::classes::{
 pub fn Layout(children: Element, current_route: Route) -> Element {
     let mut is_drawer_open = use_signal(|| false);
 
-    // Consume theme context
-    let mut theme_context = use_context::<ThemeContext>();
-
-    // Compute current icon based on theme
-    // Use use_memo to automatically track theme changes
-    let current_icon = use_memo(move || {
-        let theme = theme_context.theme.read();
-        if theme.as_str() == "hikari" {
-            MdiIcon::WhiteBalanceSunny
-        } else {
-            MdiIcon::MoonWaningCrescent
-        }
-    });
-
-    // Create a reactive key that changes when the theme/icon changes
-    // This forces the Button component to be destroyed and recreated
-    let icon_key = use_memo(move || format!("{:?}", current_icon.read()));
-
     rsx! {
-        div { class: "layout-container",
-            HikariLayout {
-                header: rsx! {
-                    Header {
-                        show_menu_toggle: true,
-                        on_menu_toggle: move |_| is_drawer_open.toggle(),
-                        bordered: true,
+        HikariLayout {
+            header: rsx! {
+                Header {
+                    show_menu_toggle: true,
+                    on_menu_toggle: move |_| is_drawer_open.toggle(),
+                    bordered: true,
 
-                        right_content: rsx! {
-                            Button {
-                                key: "{icon_key}",
-                                variant: ButtonVariant::Ghost,
-                                class: "theme-toggle-button",
-                                icon: rsx! {
-                                    Icon {
-                                        icon: *current_icon.read(),
-                                        size: 16,
-                                    }
-                                },
-                                onclick: move |_| {
-                                    let current = theme_context.theme.read().clone();
-                                    let new_theme = if current.as_str() == "hikari" { "tairitsu" } else { "hikari" };
-                                    theme_context.theme.set(new_theme.to_string());
-                                }
-                            }
-                        },
-
-                        Logo {
-                            src: "/images/logo.png".to_string(),
-                            alt: "Hikari Logo".to_string(),
-                            height: 36,
-                            max_width: 140,
-                        }
+                    Logo {
+                        src: "/images/logo.png".to_string(),
+                        alt: "Hikari Logo".to_string(),
+                        height: 36,
+                        max_width: 140,
                     }
-                },
-
-                aside: rsx! {
-                    Aside {
-                        width: "lg".to_string(),
-                        variant: "light".to_string(),
-                        initial_open: *is_drawer_open.read(),
-                        on_close: move |_| is_drawer_open.set(false),
-
-                        Sidebar { current_route: current_route.clone() }
-                    }
-                },
-
-                // Breadcrumb navigation (outside sidebar, before content)
-                div { class: ClassesBuilder::new().add(Padding::P4).build(),
-                    BreadcrumbNav { current_route: current_route.clone() }
                 }
+            },
 
-                {children}
+            aside: rsx! {
+                Aside {
+                    width: "lg".to_string(),
+                    variant: "light".to_string(),
+                    initial_open: *is_drawer_open.read(),
+                    on_close: move |_| is_drawer_open.set(false),
+                    footer: rsx! {
+                        AsideFooter {}
+                    },
+
+                    Sidebar { current_route: current_route.clone() }
+                }
+            },
+
+            // Breadcrumb navigation (before content)
+            div { class: ClassesBuilder::new().add(Padding::P4).build(),
+                BreadcrumbNav { current_route }
             }
+
+            {children}
         }
     }
 }
@@ -118,26 +75,26 @@ fn BreadcrumbNav(current_route: Route) -> Element {
             Link {
                 to: Route::Home {},
                 class: ClassesBuilder::new()
-                    .add(TextColor::Secondary)
-                    .add(Transition::Colors)
-                    .add(Duration::D150)
+                    .add_raw("hi-text-secondary")
+                    .add_raw("hi-transition-colors")
+                    .add_raw("hi-duration-150")
                     .add(Display::Flex)
                     .add(AlignItems::Center)
                     .build(),
-                Icon { icon: MdiIcon::Home, size: 18 }
+                div { "Home" }
             }
 
             // Breadcrumb items with separators
             for (i, item) in breadcrumb_items.iter().enumerate() {
-                // Separator icon
-                div { class: ClassesBuilder::new().add(TextColor::Muted).build(),
-                    Icon { icon: MdiIcon::ChevronRight, size: 16 }
+                // Separator
+                div { class: ClassesBuilder::new().add_raw("hi-text-muted").build(),
+                    "/"
                 }
 
                 // Item
                 if i == breadcrumb_items.len() - 1 {
                     // Current page (not a link)
-                    span { class: ClassesBuilder::new().add(TextColor::Primary).add(FontWeight::Medium).build(),
+                    span { class: ClassesBuilder::new().add_raw("hi-text-primary").add(FontWeight::Medium).build(),
                         "{item.label}"
                     }
                 } else if let Some(route) = &item.route {
@@ -145,14 +102,14 @@ fn BreadcrumbNav(current_route: Route) -> Element {
                     Link {
                         to: route.clone(),
                         class: ClassesBuilder::new()
-                            .add(TextColor::Secondary)
-                            .add(Transition::Colors)
-                            .add(Duration::D150)
+                            .add_raw("hi-text-secondary")
+                            .add_raw("hi-transition-colors")
+                            .add_raw("hi-duration-150")
                             .build(),
                         "{item.label}"
                     }
                 } else {
-                    span { class: ClassesBuilder::new().add(TextColor::Muted).build(),
+                    span { class: ClassesBuilder::new().add_raw("hi-text-muted").build(),
                         "{item.label}"
                     }
                 }
@@ -298,9 +255,4 @@ fn get_breadcrumb_items(route: &Route) -> Vec<BreadcrumbItem> {
 
         _ => vec![],
     }
-}
-
-/// Helper function to match routes
-fn matches_route(route: &Route, target: Route) -> bool {
-    std::mem::discriminant(route) == std::mem::discriminant(&target)
 }

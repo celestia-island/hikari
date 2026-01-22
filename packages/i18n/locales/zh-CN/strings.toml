@@ -1,0 +1,52 @@
+[common]
+[common.button]
+submit = "提交"
+cancel = "取消"
+confirm = "确认"
+delete = "删除"
+edit = "编辑"
+save = "保存"
+
+[common.navigation]
+home = "首页"
+about = "关于"
+documentation = "文档"
+components = "组件"
+theme = "主题"
+
+[common.status]
+loading = "加载中..."
+success = "成功"
+error = "错误"
+warning = "警告"
+
+[theme]
+light = "浅色"
+dark = "深色"
+auto = "自动"
+
+[page]
+[page.home]
+[page.home.hero]
+title = "Hikari UI 框架"
+subtitle = "光 - 现代化 Rust UI 框架"
+description = "基于 Dioxus + Grass + Axum，融合了明日方舟美学和 FUI 风格设计。"
+
+[page.home.features]
+title = "特性"
+description = "为希望构建美观且高性能 Web 应用的开发者而生。"
+
+[page.components]
+title = "组件"
+description = "丰富的可复用 UI 组件库。"
+
+[page.documentation]
+title = "文档"
+description = "开始使用 Hikari，学习如何构建出色的应用程序。"
+getting_started = "快速开始"
+quick_start = "快速入门"
+
+[language]
+english = "English"
+chinese_simplified = "简体中文"
+chinese_traditional = "繁體中文"

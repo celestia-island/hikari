@@ -156,8 +156,8 @@ pub use data::*;
 **Purpose**: Advanced UI components
 
 **Responsibilities**:
-- Node graph system
 - Advanced utilities (DragLayer, Collapsible, ZoomControls)
+- Rich media components (RichTextEditor, AudioWaveform, VideoPlayer)
 
 **Dependencies**:
 - `hikari-components` (uses basic components)
@@ -166,7 +166,6 @@ pub use data::*;
 **Exports**:
 ```rust
 pub use extra::*;
-pub use node_graph::*;
 ```
 
 #### hikari-ssr
@@ -401,8 +400,7 @@ ThemeProvider (root)
     │   │   ├─ Sidebar
     │   │   └─ Content
     │   │       ├─ Table
-    │   │       ├─ Tree
-    │   │       └─ NodeGraph
+    │   │       └─ Tree
     │   └─ Footer
     │
     └─ ToastContainer

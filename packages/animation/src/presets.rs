@@ -657,6 +657,9 @@ impl TransitionAnimation {
     }
 }
 
+// Simple transition presets (direct AnimationBuilder integration)
+pub mod transition;
+
 /// Create a new glow animation set
 ///
 /// # Returns

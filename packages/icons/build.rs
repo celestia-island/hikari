@@ -23,6 +23,21 @@ fn main() {
             "magnify".into(),
             "cog".into(),
             "check".into(),
+            // Media / Playback
+            "play".into(),
+            "pause".into(),
+            "volume-high".into(),
+            "volume-mute".into(),
+            "fullscreen".into(),
+            "fullscreen-exit".into(),
+            // Text Formatting
+            "format-bold".into(),
+            "format-italic".into(),
+            "format-underline".into(),
+            "format-align-left".into(),
+            "format-align-center".into(),
+            "format-align-right".into(),
+            "format-list-numbered".into(),
             // Status / Feedback
             "alert".into(),
             "information".into(),

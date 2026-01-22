@@ -42,7 +42,6 @@ pub fn build() -> anyhow::Result<()> {
         "packages/components/src/styles",
         "packages/components/src/styles/components",
         "packages/theme/styles",
-        "examples/demo-app/src/styles",
     ];
 
     for watch_path in &scss_watch_paths {
@@ -128,25 +127,7 @@ fn scan_scss_files(workspace_root: &Path) -> anyhow::Result<Vec<String>> {
         }
     }
 
-    // 2. Scan examples/demo-app/src/styles/ (app-specific styles)
-    let demo_styles_dir = workspace_root.join("examples/demo-app/src/styles");
-    if demo_styles_dir.exists() {
-        println!("📁 Scanning demo-app styles: {:?}", demo_styles_dir);
-        let entries = fs::read_dir(&demo_styles_dir)?;
-        for entry in entries {
-            let entry = entry?;
-            let path = entry.path();
-            if path.extension().and_then(|s| s.to_str()) == Some("scss") {
-                if let Some(file_name) = path.file_stem().and_then(|s| s.to_str()) {
-                    // Add with demo- prefix to distinguish from component styles
-                    scss_files.push(format!("demo-{}", file_name));
-                    println!("   ✓ demo-{}.scss", file_name);
-                }
-            }
-        }
-    }
-
-    // 3. Scan packages/theme/styles/ (theme base files)
+    // 2. Scan packages/theme/styles/ (theme base files)
     let theme_styles_dir = workspace_root.join("packages/theme/styles");
     if theme_styles_dir.exists() {
         println!("📁 Scanning theme styles: {:?}", theme_styles_dir);

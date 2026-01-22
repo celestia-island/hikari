@@ -457,6 +457,15 @@ pub struct BuildConfig {
 
     /// SCSS entry point (default: "packages/components/src/styles/index.scss")
     pub scss_entry: PathBuf,
+
+    /// Whether to include i18n support (default: false)
+    pub enable_i18n: bool,
+
+    /// Supported languages (default: ["en-US", "zh-CN", "zh-TW"])
+    pub languages: Vec<String>,
+
+    /// i18n locales directory (default: "packages/i18n/locales")
+    pub i18n_dir: PathBuf,
 }
 
 impl Default for BuildConfig {
@@ -475,6 +484,13 @@ impl Default for BuildConfig {
             project_root: ".".into(),
             minify_css: false,
             scss_entry: "packages/components/src/styles/index.scss".into(),
+            enable_i18n: false,
+            languages: vec![
+                "en-US".to_string(),
+                "zh-CN".to_string(),
+                "zh-TW".to_string(),
+            ],
+            i18n_dir: "packages/i18n/locales".into(),
         }
     }
 }

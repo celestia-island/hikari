@@ -2,14 +2,13 @@
 // Component-isolated glow effect using Dioxus hooks
 
 use dioxus::prelude::*;
-
 #[cfg(target_arch = "wasm32")]
-use crate::style::StyleBuilder;
+use wasm_bindgen::JsValue;
 #[cfg(target_arch = "wasm32")]
 use web_sys::HtmlElement;
 
 #[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsValue;
+use crate::style::StyleBuilder;
 
 /// Glow component properties
 #[derive(Clone, Props, PartialEq)]

@@ -115,17 +115,20 @@ impl StyleRegistry {
     /// Registers all data display components.
     #[cfg(feature = "data")]
     pub fn register_data_components(&mut self) {
-        use crate::data::{PaginationComponent, TableComponent, TreeComponent};
+        use crate::data::{
+            CollapseComponent, DragComponent, FilterComponent, PaginationComponent,
+            SelectionComponent, SortComponent, TableComponent, TreeComponent,
+            VirtualScrollComponent,
+        };
         TableComponent::register(self);
         TreeComponent::register(self);
         PaginationComponent::register(self);
-        // TODO: Uncomment when implemented
-        // VirtualScrollComponent::register(self);
-        // CollapseComponent::register(self);
-        // DragComponent::register(self);
-        // SortComponent::register(self);
-        // FilterComponent::register(self);
-        // SelectionComponent::register(self);
+        VirtualScrollComponent::register(self);
+        CollapseComponent::register(self);
+        DragComponent::register(self);
+        SortComponent::register(self);
+        FilterComponent::register(self);
+        SelectionComponent::register(self);
     }
 
     /// No-op if data feature is disabled
@@ -139,7 +142,9 @@ impl StyleRegistry {
     /// Registers all feedback and notification components.
     #[cfg(feature = "feedback")]
     pub fn register_feedback_components(&mut self) {
-        use crate::feedback::{AlertComponent, ToastComponent, TooltipComponent};
+        use crate::feedback::{
+            alert::AlertComponent, toast::ToastComponent, tooltip::TooltipComponent,
+        };
         AlertComponent::register(self);
         ToastComponent::register(self);
         TooltipComponent::register(self);

@@ -1,8 +1,9 @@
 // website/src/app.rs
 // Main application component with new routing structure
 
-use _components::{scripts::scrollbar_container, ThemeProvider};
 use dioxus::prelude::*;
+
+use _components::{scripts::scrollbar_container, ThemeProvider};
 
 /// Main application routes
 #[derive(Clone, Debug, PartialEq, Routable)]
@@ -56,6 +57,24 @@ pub enum Route {
     NavigationTabs {},
     #[route("/components/navigation/breadcrumb")]
     NavigationBreadcrumb {},
+
+    // Display Components
+    #[route("/components/display")]
+    ComponentsDisplay {},
+    #[route("/components/display/avatar")]
+    DisplayAvatar {},
+    #[route("/components/display/image")]
+    DisplayImage {},
+    #[route("/components/display/tag")]
+    DisplayTag {},
+    #[route("/components/display/empty")]
+    DisplayEmpty {},
+    #[route("/components/display/comment")]
+    DisplayComment {},
+    #[route("/components/display/description-list")]
+    DisplayDescriptionList {},
+    #[route("/components/display/qrcode")]
+    DisplayQRCode {},
 
     // Data Components
     #[route("/components/data")]
@@ -234,6 +253,63 @@ fn NavigationTabs() -> Element {
 fn NavigationBreadcrumb() -> Element {
     rsx! {
         crate::pages::components::breadcrumb::ComponentsBreadcrumb {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn ComponentsDisplay() -> Element {
+    rsx! {
+        crate::pages::components::display::ComponentsDisplay {}
+    }
+}
+
+// Display component pages (placeholder for now)
+#[allow(non_snake_case)]
+fn DisplayAvatar() -> Element {
+    rsx! {
+        crate::pages::components::display::ComponentsDisplay {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn DisplayImage() -> Element {
+    rsx! {
+        crate::pages::components::display::ComponentsDisplay {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn DisplayTag() -> Element {
+    rsx! {
+        crate::pages::components::display::ComponentsDisplay {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn DisplayEmpty() -> Element {
+    rsx! {
+        crate::pages::components::display::ComponentsDisplay {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn DisplayComment() -> Element {
+    rsx! {
+        crate::pages::components::display::ComponentsDisplay {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn DisplayDescriptionList() -> Element {
+    rsx! {
+        crate::pages::components::display::ComponentsDisplay {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn DisplayQRCode() -> Element {
+    rsx! {
+        crate::pages::components::display::ComponentsDisplay {}
     }
 }
 

@@ -4,5 +4,3 @@
 //! for convenient importing with `use extra_components::prelude::*;`.
 
 pub use crate::extra::*;
-
-// pub use crate::node_graph::*; // TODO: Fix node_graph compilation errors

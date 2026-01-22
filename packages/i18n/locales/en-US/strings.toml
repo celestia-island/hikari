@@ -1,0 +1,52 @@
+[common]
+[common.button]
+submit = "Submit"
+cancel = "Cancel"
+confirm = "Confirm"
+delete = "Delete"
+edit = "Edit"
+save = "Save"
+
+[common.navigation]
+home = "Home"
+about = "About"
+documentation = "Documentation"
+components = "Components"
+theme = "Theme"
+
+[common.status]
+loading = "Loading..."
+success = "Success"
+error = "Error"
+warning = "Warning"
+
+[theme]
+light = "Light"
+dark = "Dark"
+auto = "Auto"
+
+[page]
+[page.home]
+[page.home.hero]
+title = "Hikari UI Framework"
+subtitle = "光 - A Modern Rust UI Framework"
+description = "Based on Dioxus + Grass + Axum, designed with Arknights aesthetics and FUI styling."
+
+[page.home.features]
+title = "Features"
+description = "Built for developers who want beautiful and performant web applications."
+
+[page.components]
+title = "Components"
+description = "A rich collection of reusable UI components."
+
+[page.documentation]
+title = "Documentation"
+description = "Get started with Hikari and learn how to build amazing applications."
+getting_started = "Getting Started"
+quick_start = "Quick Start"
+
+[language]
+english = "English"
+chinese_simplified = "简体中文"
+chinese_traditional = "繁體中文"

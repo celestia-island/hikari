@@ -66,13 +66,28 @@ fn main() {
             "star".into(),
             "trophy-award".into(),
         ]),
-        styles: vec![MdiStyle::Filled], // Only filled style to reduce WASM size
+        styles: vec![MdiStyle::Filled, MdiStyle::Outline], // Include both filled and outline styles
         output_file: "src/generated/mdi_selected.rs".into(),
         ..Default::default()
     };
 
     match hikari_builder::icons::build_selected_icons(&config) {
-        Ok(()) => println!("cargo:warning=✅ MDI icons built successfully"),
+        Ok(()) => {
+            println!("cargo:warning=✅ MDI icons built successfully");
+            // Check if the generated file has content
+            let generated_path = std::path::Path::new("src/generated/mdi_selected.rs");
+            if let Ok(content) = std::fs::read_to_string(generated_path) {
+                let line_count = content.lines().count();
+                if line_count > 50 {
+                    println!("cargo:warning=   Generated {} lines", line_count);
+                } else {
+                    println!(
+                        "cargo:warning=⚠️  Generated only {} lines - file may be incomplete!",
+                        line_count
+                    );
+                }
+            }
+        }
         Err(e) => {
             eprintln!("❌ BUILD ERROR: Failed to build MDI icons");
             eprintln!("   Error: {}", e);

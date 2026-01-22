@@ -388,6 +388,12 @@ fn validate_svg_structure(svg: &str) -> Result<()> {
                 }
                 _ => {}
             },
+            Ok(Event::Empty(ref e)) => match e.name().as_ref() {
+                b"path" if in_svg => {
+                    has_path = true;
+                }
+                _ => {}
+            },
             Ok(Event::End(ref e)) => {
                 if e.name().as_ref() == b"svg" {
                     in_svg = false;
@@ -461,12 +467,27 @@ fn generate_icon_module(selected_icons: &HashSet<String>, workspace_root: &Path)
     // Collect icon data first
     let mut icon_data: Vec<(String, String, SvgIcon)> = Vec::new();
     for icon_name in &sorted_icons {
-        if let Ok(svg_content) = read_svg_content(workspace_root, icon_name) {
-            if let Ok(icon) = svg_parser::parse_svg(&svg_content) {
-                let const_name = icon_name.replace('-', "_").to_uppercase();
-                icon_data.push((const_name, (**icon_name).clone(), icon));
+        match read_svg_content(workspace_root, icon_name) {
+            Ok(svg_content) => match svg_parser::parse_svg(&svg_content) {
+                Ok(icon) => {
+                    let const_name = icon_name.replace('-', "_").to_uppercase();
+                    icon_data.push((const_name, (**icon_name).clone(), icon));
+                }
+                Err(e) => {
+                    eprintln!("⚠️  Failed to parse SVG for '{}': {}", icon_name, e);
+                }
+            },
+            Err(e) => {
+                eprintln!("⚠️  Failed to read SVG for '{}': {}", icon_name, e);
             }
         }
+    }
+
+    if icon_data.is_empty() {
+        eprintln!(
+            "⚠️  No icon data was generated! Selected {} icons but parsed 0.",
+            sorted_icons.len()
+        );
     }
 
     // Generate structured data

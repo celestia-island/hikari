@@ -1,0 +1,321 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari // Hikari // Hikari // Hikari // Hikari Cascader Component - FUI Styling Component Component Component Component
+
+// ============================================
+// Base Cascader Styles
+// ============================================
+
+.hi-cascader-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.hi-cascader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 36px;
+    padding: 0.5rem 0.75rem;
+
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    background-color: var(--hi-input-bg, rgba(45, 45, 45, 0.85));
+    border: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
+    border-radius: vars.$hikari-radius-fui-md;
+
+    font-family: vars.$hikari-font-family-sans;
+    font-size: vars.$hikari-font-size-base;
+    font-weight: 400;
+    color: var(--hi-input-text, #F8FAFC);
+    line-height: 1.5;
+
+    cursor: pointer;
+    user-select: none;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+    &:hover {
+        border-color: var(--hi-input-border-hover, rgba(139, 92, 246, 0.5));
+        --hi-glow-transparent: false;
+        --hi-glow-bg-color: var(--hi-color-surface);
+        box-shadow: 0 0 8px var(--hi-glow-color);
+    }
+
+    &:focus {
+        outline: none;
+        border-color: var(--hi-input-border-focus, rgba(139, 92, 246, 0.7));
+        background-color: var(--hi-input-bg-focus, rgba(55, 55, 55, 0.9));
+        box-shadow:
+            0 0 0 3px rgba(139, 92, 246, 0.2),
+            0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    &.hi-cascader-open {
+        border-color: var(--hi-color-primary);
+        background-color: var(--hi-input-bg-focus, rgba(55, 55, 55, 0.9));
+        --hi-glow-transparent: false;
+        --hi-glow-bg-color: var(--hi-color-surface);
+        box-shadow: 0 0 16px var(--hi-glow-color);
+    }
+
+    &:disabled,
+    &.hi-cascader-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background-color: rgba(45, 45, 45, 0.5);
+    }
+}
+
+// ============================================
+// Cascader Display
+// ============================================
+
+.hi-cascader-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.hi-cascader-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--hi-input-text, #F8FAFC);
+
+    @include mix.text-ellipsis;
+}
+
+.hi-cascader-clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    color: var(--hi-color-text-secondary);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    &:hover {
+        opacity: 1;
+        background: var(--hi-primary);
+        --hi-glow-transparent: false;
+        --hi-glow-bg-color: var(--hi-primary);
+        box-shadow: 0 0 8px var(--hi-glow-color);
+    }
+}
+
+.hi-cascader-arrow {
+    flex-shrink: 0;
+    color: var(--hi-color-text-secondary);
+    transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+}
+
+.hi-cascader-open .hi-cascader-arrow {
+    transform: rotate(180deg);
+}
+
+// ============================================
+// Size Variants
+// ============================================
+
+.hi-cascader-sm {
+    min-height: 28px;
+    padding: 0.375rem 0.625rem;
+    font-size: 0.875rem;
+    border-radius: vars.$hikari-radius-fui-sm;
+}
+
+.hi-cascader-md {
+    min-height: 36px;
+    padding: 0.5rem 0.75rem;
+    font-size: vars.$hikari-font-size-base;
+    border-radius: vars.$hikari-radius-fui-md;
+}
+
+.hi-cascader-lg {
+    min-height: 44px;
+    padding: 0.625rem 1rem;
+    font-size: 1.125rem;
+    border-radius: vars.$hikari-radius-fui-lg;
+}
+
+// ============================================
+// Dropdown
+// ============================================
+
+.hi-cascader-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: var(--hi-z-index-dropdown, 1000);
+    min-width: 200px;
+    max-height: 320px;
+    overflow: hidden;
+    background: var(--hi-dropdown-bg, rgba(30, 30, 30, 0.95));
+    border: 1px solid var(--hi-dropdown-border, rgba(255, 255, 255, 0.1));
+    border-radius: vars.$hikari-radius-fui-md;
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.3),
+        0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
+    display: flex;
+    flex-direction: row;
+}
+
+// ============================================
+// Menu
+// ============================================
+
+.hi-cascader-menu {
+    min-width: 180px;
+    max-height: 320px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-right: 1px solid var(--hi-dropdown-border, rgba(255, 255, 255, 0.1));
+
+    @include mix.scrollbar-hidden;
+
+    &:last-child {
+        border-right: none;
+    }
+}
+
+.hi-cascader-menu-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+// ============================================
+// Menu Item
+// ============================================
+
+.hi-cascader-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    margin: 0 0.5rem;
+    border-radius: vars.$hikari-radius-fui-sm;
+    font-family: vars.$hikari-font-family-sans;
+    font-size: vars.$hikari-font-size-sm;
+    color: var(--hi-color-text-primary);
+    line-height: 1.5;
+    cursor: pointer;
+    user-select: none;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    @include mix.text-ellipsis;
+
+    &:hover {
+        background: var(--hi-primary);
+        border-color: var(--hi-primary);
+        --hi-glow-transparent: false;
+        --hi-glow-bg-color: var(--hi-primary);
+        box-shadow:
+            0 0 8px var(--hi-glow-color),
+            inset 0 0 6px var(--hi-glow-color);
+
+        color: var(--hi-color-text-primary);
+    }
+
+    &.hi-cascader-menu-item-selected {
+        background: var(--hi-primary);
+        color: var(--hi-color-primary);
+        font-weight: 500;
+        box-shadow:
+            0 0 12px var(--hi-primary),
+            inset 0 0 8px var(--hi-primary);
+    }
+
+    &.hi-cascader-menu-item-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+}
+
+.hi-cascader-menu-item-arrow {
+    flex-shrink: 0;
+    color: var(--hi-color-text-secondary);
+    opacity: 0.7;
+}
+
+// ============================================
+// Focus Styles
+// ============================================
+
+.hi-cascader:focus-visible {
+    outline: 2px solid var(--hi-color-primary);
+    outline-offset: 2px;
+}
+
+// ============================================
+// Animation
+// ============================================
+
+.hi-cascader-dropdown {
+    animation: cascader-dropdown-in vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+}
+
+@keyframes cascader-dropdown-in {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// ============================================
+// Accessibility
+// ============================================
+
+@media (prefers-reduced-motion: reduce) {
+    .hi-cascader,
+    .hi-cascader-arrow,
+    .hi-cascader-clear,
+    .hi-cascader-menu-item,
+    .hi-cascader-dropdown {
+        transition: none;
+        animation: none;
+    }
+}
+
+// ============================================
+// High Contrast Mode
+// ============================================
+
+@media (prefers-contrast: high) {
+    .hi-cascader {
+        border-width: 2px;
+    }
+
+    .hi-cascader-menu-item {
+        border: 1px solid transparent;
+    }
+
+    .hi-cascader-menu-item.hi-cascader-menu-item-selected {
+        border-width: 2px;
+    }
+}

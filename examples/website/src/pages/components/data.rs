@@ -20,18 +20,15 @@ pub fn ComponentsData() -> Element {
             div { class: ClassesBuilder::new().add(Display::Grid).add(Gap::Gap6).add(Padding::P6).build(),
                 div { class: ClassesBuilder::new().add_raw("component-card").add(Padding::P6).build(),
                     h3 { class: ClassesBuilder::new().add(MarginBottom::Mb4).add(FontSize::Lg).add(FontWeight::Semibold).build(), "Table 表格" }
-                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "表格数据展示" }
-                    p { class: ClassesBuilder::new().add(MarginBottom::Mb4).build(), "Coming Soon..." }
+                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "表格数据展示，支持边框、斑马纹、悬停效果" }
                 }
                 div { class: ClassesBuilder::new().add_raw("component-card").add(Padding::P6).build(),
                     h3 { class: ClassesBuilder::new().add(MarginBottom::Mb4).add(FontSize::Lg).add(FontWeight::Semibold).build(), "Tree 树形控件" }
-                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "树形数据展示" }
-                    p { class: ClassesBuilder::new().add(MarginBottom::Mb4).build(), "Coming Soon..." }
+                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "树形数据展示，支持展开/折叠、连接线" }
                 }
                 div { class: ClassesBuilder::new().add_raw("component-card").add(Padding::P6).build(),
                     h3 { class: ClassesBuilder::new().add(MarginBottom::Mb4).add(FontSize::Lg).add(FontWeight::Semibold).build(), "Pagination 分页" }
-                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "分页组件" }
-                    p { class: ClassesBuilder::new().add(MarginBottom::Mb4).build(), "Coming Soon..." }
+                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "分页组件，支持跳转、每页数量选择、总数显示" }
                 }
             }
         }

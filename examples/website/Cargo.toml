@@ -23,7 +23,7 @@ server = ["dep:tokio", "dep:axum", "dep:tower-http", "dep:tower", "dep:anyhow", 
 
 [dependencies]
 # Workspace dependencies (short aliases for internal packages)
-_components = { path = "../../packages/components", package = "hikari-components", features = ["basic", "feedback", "navigation", "data", "layout"] }
+_components = { path = "../../packages/components", package = "hikari-components", features = ["basic", "feedback", "navigation", "data", "display", "entry", "layout"], default-features = false }
 _icons = { path = "../../packages/icons", package = "hikari-icons" }
 _palette = { path = "../../packages/palette", package = "hikari-palette" }
 _animation = { path = "../../packages/animation", package = "hikari-animation" }

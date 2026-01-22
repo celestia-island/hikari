@@ -323,8 +323,34 @@ fn build_navigation_tree() -> Vec<TreeNodeData> {
                             disabled: false,
                         },
                         TreeNodeData {
-                            key: "data-list".to_string(),
-                            label: "List 列表".to_string(),
+                            key: "data-pagination".to_string(),
+                            label: "Pagination 分页".to_string(),
+                            children: None,
+                            disabled: false,
+                        },
+                    ]),
+                    disabled: false,
+                },
+                // Entry Components category
+                TreeNodeData {
+                    key: "components-entry".to_string(),
+                    label: "入口组件 Entry".to_string(),
+                    children: Some(vec![
+                        TreeNodeData {
+                            key: "entry-overview".to_string(),
+                            label: "概览 Overview".to_string(),
+                            children: None,
+                            disabled: false,
+                        },
+                        TreeNodeData {
+                            key: "entry-cascader".to_string(),
+                            label: "Cascader 级联选择器".to_string(),
+                            children: None,
+                            disabled: false,
+                        },
+                        TreeNodeData {
+                            key: "entry-transfer".to_string(),
+                            label: "Transfer 穿梭框".to_string(),
                             children: None,
                             disabled: false,
                         },

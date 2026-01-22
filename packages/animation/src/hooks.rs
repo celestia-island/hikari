@@ -309,13 +309,19 @@ impl UseTransition {
 /// ```
 #[cfg(target_arch = "wasm32")]
 pub fn use_animation_frame(callback: impl Fn(f64) + 'static) {
-    use_effect(move || {
+    let callback = std::rc::Rc::new(callback);
+
+    let closure: Rc<RefCell<Option<wasm_bindgen::closure::Closure<dyn FnMut()>>>> =
+        Rc::new(RefCell::new(None));
+
+    let closure_ref = closure.clone();
+    *closure.borrow_mut() = Some(wasm_bindgen::closure::Closure::wrap(Box::new({
+        let callback = callback.clone();
         let window = web_sys::window().unwrap();
         let performance = window.performance().unwrap();
-        let mut animation_frame_id: Option<i32> = None;
         let mut start_time: Option<f64> = None;
 
-        let closure = wasm_bindgen::closure::Closure::wrap(Box::new(move || {
+        move || {
             let current_time = performance.now();
 
             if let Some(start) = start_time {
@@ -325,25 +331,21 @@ pub fn use_animation_frame(callback: impl Fn(f64) + 'static) {
                 start_time = Some(current_time);
             }
 
-            animation_frame_id = Some(
+            if let Some(inner) = &*closure_ref.borrow() {
                 window
-                    .request_animation_frame(closure.as_ref().unchecked_ref())
-                    .unwrap(),
-            );
-        }) as Box<dyn FnMut()>);
-
-        animation_frame_id = Some(
-            window
-                .request_animation_frame(closure.as_ref().unchecked_ref())
-                .unwrap(),
-        );
-
-        move || {
-            if let Some(id) = animation_frame_id {
-                window.cancel_animation_frame(id).unwrap();
+                    .request_animation_frame(inner.as_ref().unchecked_ref())
+                    .unwrap();
             }
         }
-    });
+    })
+        as Box<dyn FnMut()>));
+
+    let borrowed = closure.borrow();
+    let init = borrowed.as_ref().unwrap();
+    web_sys::window()
+        .unwrap()
+        .request_animation_frame(init.as_ref().unchecked_ref())
+        .unwrap();
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -380,16 +382,30 @@ pub fn use_timeout(duration_ms: u64, callback: impl Fn() + 'static) -> impl Fn()
     use std::sync::{Arc, Mutex};
 
     let timeout_id = Arc::new(Mutex::new(Option::<i32>::None));
+    let callback_arc = Arc::new(callback);
+    let timeout_id_for_effect = timeout_id.clone();
+
+    // Cleanup on unmount
+    use_effect(move || {
+        let window = web_sys::window().unwrap();
+        if let Some(id) = *timeout_id_for_effect.lock().unwrap() {
+            window.clear_timeout_with_handle(id);
+        }
+    });
 
     let trigger = move || {
         let window = web_sys::window().unwrap();
 
         // Clear any existing timeout
         if let Some(id) = *timeout_id.lock().unwrap() {
-            window.clear_timeout_with_handle(id).unwrap();
+            window.clear_timeout_with_handle(id);
         }
 
-        let closure = wasm_bindgen::closure::Closure::once(Box::new(callback) as Box<dyn FnOnce()>);
+        let callback_clone = callback_arc.clone();
+        let closure = wasm_bindgen::closure::Closure::once(Box::new(move || {
+            callback_clone();
+        }) as Box<dyn FnOnce()>);
+
         let id = window
             .set_timeout_with_callback_and_timeout_and_arguments_0(
                 closure.as_ref().unchecked_ref(),
@@ -400,17 +416,6 @@ pub fn use_timeout(duration_ms: u64, callback: impl Fn() + 'static) -> impl Fn()
         *timeout_id.lock().unwrap() = Some(id);
         closure.forget();
     };
-
-    // Cleanup on unmount
-    use_effect(move || {
-        move || {
-            if let Some(window) = web_sys::window() {
-                if let Some(id) = *timeout_id.lock().unwrap() {
-                    window.clear_timeout_with_handle(id).ok();
-                }
-            }
-        }
-    });
 
     trigger
 }
@@ -447,12 +452,18 @@ pub fn use_timeout(_duration_ms: u64, _callback: impl Fn() + 'static) -> impl Fn
 /// ```
 #[cfg(target_arch = "wasm32")]
 pub fn use_interval(duration_ms: u64, callback: impl Fn() + 'static) {
+    use std::sync::{Arc, Mutex};
+
+    let interval_id = Arc::new(Mutex::new(Option::<i32>::None));
+    let callback_arc = Arc::new(callback);
+    let interval_id_for_effect = interval_id.clone();
+
     use_effect(move || {
         let window = web_sys::window().unwrap();
-        let interval_id = std::sync::Mutex::new(Option::<i32>::None);
 
+        let callback_clone = callback_arc.clone();
         let closure = wasm_bindgen::closure::Closure::wrap(Box::new(move || {
-            callback();
+            callback_clone();
         }) as Box<dyn FnMut()>);
 
         let id = window
@@ -465,10 +476,9 @@ pub fn use_interval(duration_ms: u64, callback: impl Fn() + 'static) {
         *interval_id.lock().unwrap() = Some(id);
         closure.forget();
 
-        move || {
-            if let Some(id) = *interval_id.lock().unwrap() {
-                window.clear_interval_with_handle(id).unwrap();
-            }
+        // Cleanup on unmount - execute directly
+        if let Some(id) = *interval_id_for_effect.lock().unwrap() {
+            window.clear_interval_with_handle(id);
         }
     });
 }

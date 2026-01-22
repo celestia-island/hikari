@@ -1,0 +1,343 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari // Hikari // Hikari // Hikari // Hikari Transfer Component - FUI Styling Component Component Component Component
+
+// ============================================
+// Base Transfer Styles
+// ============================================
+
+.hi-transfer {
+    display: flex;
+    align-items: stretch;
+    gap: 1rem;
+    width: 100%;
+}
+
+// ============================================
+// Transfer Panel
+// ============================================
+
+.hi-transfer-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    max-width: 280px;
+    height: 300px;
+    background: var(--hi-card-bg, rgba(45, 45, 45, 0.9));
+    border: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
+    border-radius: vars.$hikari-radius-fui-md;
+    overflow: hidden;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+}
+
+// ============================================
+// Panel Header
+// ============================================
+
+.hi-transfer-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    background: var(--hi-panel-header-bg, rgba(55, 55, 55, 0.9));
+    border-bottom: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
+}
+
+.hi-transfer-panel-checkbox {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+}
+
+.hi-transfer-panel-title {
+    flex: 1;
+    font-family: vars.$hikari-font-family-sans;
+    font-size: vars.$hikari-font-size-sm;
+    font-weight: 500;
+    color: var(--hi-color-text-primary);
+}
+
+.hi-transfer-panel-count {
+    font-size: vars.$hikari-font-size-xs;
+    color: var(--hi-color-text-secondary);
+    padding: 0.125rem 0.375rem;
+    background: var(--hi-primary);
+    border-radius: vars.$hikari-radius-fui-sm;
+}
+
+// ============================================
+// Panel Search
+// ============================================
+
+.hi-transfer-panel-search {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
+}
+
+.hi-transfer-panel-input {
+    width: 100%;
+    padding: 0.375rem 0.625rem;
+    font-family: vars.$hikari-font-family-sans;
+    font-size: vars.$hikari-font-size-sm;
+    color: var(--hi-input-text, #F8FAFC);
+    background: var(--hi-input-bg, rgba(45, 45, 45, 0.85));
+    border: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
+    border-radius: vars.$hikari-radius-fui-sm;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    &::placeholder {
+        color: var(--hi-input-placeholder, #94A3B8);
+    }
+
+    &:focus {
+        outline: none;
+        border-color: var(--hi-input-border-focus, rgba(139, 92, 246, 0.7));
+        background-color: var(--hi-input-bg-focus, rgba(55, 55, 55, 0.9));
+        box-shadow:
+            0 0 0 3px rgba(139, 92, 246, 0.2),
+            0 0 8px rgba(139, 92, 246, 0.3);
+    }
+}
+
+// ============================================
+// Panel List
+// ============================================
+
+.hi-transfer-panel-list {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+
+    @include mix.scrollbar-hidden;
+}
+
+// ============================================
+// Panel Item
+// ============================================
+
+.hi-transfer-panel-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    margin: 0 0.5rem;
+    border-radius: vars.$hikari-radius-fui-sm;
+    font-family: vars.$hikari-font-family-sans;
+    font-size: vars.$hikari-font-size-sm;
+    color: var(--hi-color-text-primary);
+    line-height: 1.5;
+    cursor: pointer;
+    user-select: none;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    &:hover {
+        background: var(--hi-primary);
+        border-color: var(--hi-primary);
+        --hi-glow-transparent: false;
+        --hi-glow-bg-color: var(--hi-primary);
+        box-shadow:
+            0 0 8px var(--hi-glow-color),
+            inset 0 0 6px var(--hi-glow-color);
+    }
+
+    &.hi-transfer-panel-item-selected {
+        background: var(--hi-primary);
+        color: var(--hi-color-primary);
+        font-weight: 500;
+        box-shadow:
+            0 0 12px var(--hi-primary),
+            inset 0 0 8px var(--hi-primary);
+    }
+
+    &.hi-transfer-panel-item-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+}
+
+.hi-transfer-item-checkbox {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.hi-transfer-item-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    @include mix.text-ellipsis;
+}
+
+.hi-transfer-panel-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: var(--hi-color-text-secondary);
+    font-size: vars.$hikari-font-size-sm;
+}
+
+// ============================================
+// Transfer Operations
+// ============================================
+
+.hi-transfer-operations {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-self: center;
+}
+
+.hi-transfer-operation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    background: var(--hi-button-bg, rgba(55, 55, 55, 0.9));
+    border: 1px solid var(--hi-button-border, rgba(255, 255, 255, 0.1));
+    border-radius: vars.$hikari-radius-fui-sm;
+    color: var(--hi-color-text-primary);
+    cursor: pointer;
+    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+    &:hover:not(:disabled) {
+        background: var(--hi-primary);
+        border-color: var(--hi-primary);
+        --hi-glow-transparent: false;
+        --hi-glow-bg-color: var(--hi-primary);
+        box-shadow:
+            0 0 12px var(--hi-glow-color),
+            inset 0 0 8px var(--hi-glow-color);
+    }
+
+    &:active:not(:disabled) {
+        transform: scale(0.95);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    &:focus {
+        outline: none;
+        box-shadow:
+            0 0 0 3px rgba(139, 92, 246, 0.2),
+            0 0 8px rgba(139, 92, 246, 0.3);
+    }
+}
+
+// ============================================
+// Focus Styles
+// ============================================
+
+.hi-transfer-panel-item:focus-visible {
+    outline: 2px solid var(--hi-color-primary);
+    outline-offset: -2px;
+}
+
+.hi-transfer-operation:focus-visible {
+    outline: 2px solid var(--hi-color-primary);
+    outline-offset: 2px;
+}
+
+// ============================================
+// Animation
+// ============================================
+
+.hi-transfer-panel-item {
+    animation: transfer-item-in vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+}
+
+@keyframes transfer-item-in {
+    from {
+        opacity: 0;
+        transform: translateX(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+// ============================================
+// Responsive
+// ============================================
+
+@include mix.mobile {
+    .hi-transfer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .hi-transfer-panel {
+        max-width: 100%;
+        min-width: 100%;
+    }
+
+    .hi-transfer-operations {
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .hi-transfer-operations .hi-transfer-operation {
+        transform: rotate(90deg);
+
+        &:last-child {
+            transform: rotate(-90deg);
+        }
+    }
+}
+
+// ============================================
+// Accessibility
+// ============================================
+
+@media (prefers-reduced-motion: reduce) {
+    .hi-transfer,
+    .hi-transfer-panel,
+    .hi-transfer-panel-item,
+    .hi-transfer-operation,
+    .hi-transfer-panel-input {
+        transition: none;
+        animation: none;
+    }
+}
+
+// ============================================
+// High Contrast Mode
+// ============================================
+
+@media (prefers-contrast: high) {
+    .hi-transfer-panel {
+        border-width: 2px;
+    }
+
+    .hi-transfer-panel-item {
+        border: 1px solid transparent;
+    }
+
+    .hi-transfer-panel-item.hi-transfer-panel-item-selected {
+        border-width: 2px;
+    }
+
+    .hi-transfer-operation {
+        border-width: 2px;
+    }
+}

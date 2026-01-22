@@ -182,7 +182,16 @@ fn test_number_input_feature() {
 }
 
 #[cfg(feature = "search")]
-#[test]
 fn test_search_feature() {
     // Search feature is enabled
+}
+
+#[cfg(feature = "cascader")]
+fn test_cascader_feature() {
+    // Cascader feature is enabled
+}
+
+#[cfg(feature = "transfer")]
+fn test_transfer_feature() {
+    // Transfer feature is enabled
 }

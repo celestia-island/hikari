@@ -20,19 +20,19 @@ pub fn ComponentsFeedback() -> Element {
             div { class: ClassesBuilder::new().add(Display::Grid).add(Gap::Gap6).add(Padding::P6).build(),
                 div { class: ClassesBuilder::new().add_raw("component-card").add(Padding::P6).build(),
                     h3 { class: ClassesBuilder::new().add(MarginBottom::Mb4).add(FontSize::Lg).add(FontWeight::Semibold).build(), "Alert 警告" }
-                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "警告提示组件" }
+                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "警告提示组件，支持多种类型和可关闭功能" }
                 }
                 div { class: ClassesBuilder::new().add_raw("component-card").add(Padding::P6).build(),
                     h3 { class: ClassesBuilder::new().add(MarginBottom::Mb4).add(FontSize::Lg).add(FontWeight::Semibold).build(), "Toast 提示" }
-                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "轻量级消息提示" }
+                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "轻量级消息提示，支持堆叠和自动消失" }
                 }
                 div { class: ClassesBuilder::new().add_raw("component-card").add(Padding::P6).build(),
                     h3 { class: ClassesBuilder::new().add(MarginBottom::Mb4).add(FontSize::Lg).add(FontWeight::Semibold).build(), "Tooltip 文字提示" }
-                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "悬浮提示组件" }
+                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "悬浮提示组件，支持多位置配置" }
                 }
                 div { class: ClassesBuilder::new().add_raw("component-card").add(Padding::P6).build(),
                     h3 { class: ClassesBuilder::new().add(MarginBottom::Mb4).add(FontSize::Lg).add(FontWeight::Semibold).build(), "Glow 发光" }
-                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "鼠标跟随高光效果" }
+                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "鼠标跟随高光效果，支持自定义颜色和大小" }
                 }
             }
         }

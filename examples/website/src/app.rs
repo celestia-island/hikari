@@ -86,6 +86,14 @@ pub enum Route {
     #[route("/components/data/pagination")]
     DataPagination {},
 
+    // Entry Components
+    #[route("/components/entry")]
+    ComponentsEntry {},
+    #[route("/components/entry/cascader")]
+    EntryCascader {},
+    #[route("/components/entry/transfer")]
+    EntryTransfer {},
+
     // System Routes
     #[route("/system")]
     SystemOverview {},
@@ -263,75 +271,97 @@ fn ComponentsDisplay() -> Element {
     }
 }
 
-// Display component pages (placeholder for now)
+// Display component pages
 #[allow(non_snake_case)]
 fn DisplayAvatar() -> Element {
     rsx! {
-        crate::pages::components::display::ComponentsDisplay {}
+        crate::pages::components::display_avatar::ComponentsAvatar {}
     }
 }
 
 #[allow(non_snake_case)]
 fn DisplayImage() -> Element {
     rsx! {
-        crate::pages::components::display::ComponentsDisplay {}
+        crate::pages::components::display_image::ComponentsImage {}
     }
 }
 
 #[allow(non_snake_case)]
 fn DisplayTag() -> Element {
     rsx! {
-        crate::pages::components::display::ComponentsDisplay {}
+        crate::pages::components::display_tag::ComponentsTag {}
     }
 }
 
 #[allow(non_snake_case)]
 fn DisplayEmpty() -> Element {
     rsx! {
-        crate::pages::components::display::ComponentsDisplay {}
+        crate::pages::components::display_empty::ComponentsEmpty {}
     }
 }
 
 #[allow(non_snake_case)]
 fn DisplayComment() -> Element {
     rsx! {
-        crate::pages::components::display::ComponentsDisplay {}
+        crate::pages::components::display_comment::ComponentsComment {}
     }
 }
 
 #[allow(non_snake_case)]
 fn DisplayDescriptionList() -> Element {
     rsx! {
-        crate::pages::components::display::ComponentsDisplay {}
+        crate::pages::components::display_description_list::ComponentsDescriptionList {}
     }
 }
 
 #[allow(non_snake_case)]
 fn DisplayQRCode() -> Element {
     rsx! {
-        crate::pages::components::display::ComponentsDisplay {}
+        crate::pages::components::display_qrcode::ComponentsQRCode {}
     }
 }
 
-// Data component pages (placeholder for now)
+// Data component pages
 #[allow(non_snake_case)]
 fn DataTable() -> Element {
     rsx! {
-        crate::pages::components::data::ComponentsData {}
+        crate::pages::components::data_table::ComponentsTable {}
     }
 }
 
 #[allow(non_snake_case)]
 fn DataTree() -> Element {
     rsx! {
-        crate::pages::components::data::ComponentsData {}
+        crate::pages::components::data_tree::ComponentsTree {}
     }
 }
 
 #[allow(non_snake_case)]
 fn DataPagination() -> Element {
     rsx! {
-        crate::pages::components::data::ComponentsData {}
+        crate::pages::components::data_pagination::ComponentsPagination {}
+    }
+}
+
+// Entry component pages
+#[allow(non_snake_case)]
+fn ComponentsEntry() -> Element {
+    rsx! {
+        crate::pages::components::entry::ComponentsEntry {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn EntryCascader() -> Element {
+    rsx! {
+        crate::pages::components::entry_cascader::EntryCascader {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn EntryTransfer() -> Element {
+    rsx! {
+        crate::pages::components::entry_transfer::EntryTransfer {}
     }
 }
 

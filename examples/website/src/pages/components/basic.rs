@@ -20,19 +20,19 @@ pub fn ComponentsBasic() -> Element {
             div { class: ClassesBuilder::new().add(Display::Grid).add(Gap::Gap6).add(Padding::P6).build(),
                 div { class: ClassesBuilder::new().add_raw("component-card").add(Padding::P6).build(),
                     h3 { class: ClassesBuilder::new().add(MarginBottom::Mb4).add(FontSize::Lg).add(FontWeight::Semibold).build(), "Button 按钮" }
-                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "用于触发操作的按钮组件" }
+                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "用于触发操作的按钮组件，支持多种样式和动画效果" }
                 }
                 div { class: ClassesBuilder::new().add_raw("component-card").add(Padding::P6).build(),
                     h3 { class: ClassesBuilder::new().add(MarginBottom::Mb4).add(FontSize::Lg).add(FontWeight::Semibold).build(), "Input 输入框" }
-                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "文本输入组件" }
+                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "文本输入组件，支持状态和校验" }
                 }
                 div { class: ClassesBuilder::new().add_raw("component-card").add(Padding::P6).build(),
                     h3 { class: ClassesBuilder::new().add(MarginBottom::Mb4).add(FontSize::Lg).add(FontWeight::Semibold).build(), "Card 卡片" }
-                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "内容容器卡片" }
+                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "内容容器卡片，支持标题和操作按钮" }
                 }
                 div { class: ClassesBuilder::new().add_raw("component-card").add(Padding::P6).build(),
                     h3 { class: ClassesBuilder::new().add(MarginBottom::Mb4).add(FontSize::Lg).add(FontWeight::Semibold).build(), "Badge 徽章" }
-                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "状态标识徽章" }
+                    p { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "状态标识徽章，支持多种颜色变体" }
                 }
             }
         }

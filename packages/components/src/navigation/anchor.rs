@@ -25,6 +25,12 @@
 use dioxus::prelude::*;
 use palette::classes::ClassesBuilder;
 
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::closure::Closure;
+
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsCast;
+
 /// Anchor item configuration
 #[derive(Clone, Debug, PartialEq, Props)]
 pub struct AnchorItem {
@@ -43,6 +49,7 @@ pub struct AnchorItem {
 /// - Active section highlighting
 /// - Click to scroll
 /// - Customizable position
+#[allow(unused_variables)]
 #[component]
 pub fn Anchor(
     /// Anchor items (href + title pairs)
@@ -78,20 +85,19 @@ pub fn Anchor(
                     active_anchor.set(href.clone());
 
                     // Remove '#' from href
-                    let _target_id = href.trim_start_matches('#');
+                    let target_id = href.trim_start_matches('#');
 
                     #[cfg(target_arch = "wasm32")]
                     {
-                        use web_sys::{window, Element};
+                        use web_sys::window;
                         if let Some(window) = window() {
                             if let Some(document) = window.document() {
                                 if let Some(element) = document.get_element_by_id(target_id) {
-                                    if let Ok(rect) = element.get_bounding_client_rect() {
-                                        let scroll_options = web_sys::ScrollToOptions::new();
-                                        scroll_options.set_top(rect.top() - offset as f64 - window.scroll_y().unwrap_or(0.0));
-                                        scroll_options.set_behavior(web_sys::ScrollBehavior::Smooth);
-                                        window.scroll_to_with_scroll_to_options(&scroll_options);
-                                    }
+                                    let rect = element.get_bounding_client_rect();
+                                    let scroll_options = web_sys::ScrollToOptions::new();
+                                    scroll_options.set_top(rect.top() - offset as f64 - window.scroll_y().unwrap_or(0.0));
+                                    scroll_options.set_behavior(web_sys::ScrollBehavior::Smooth);
+                                    window.scroll_to_with_scroll_to_options(&scroll_options);
                                 }
                             }
                         }
@@ -137,7 +143,7 @@ pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> Signal<String> {
 
     use_effect(move || {
         let items = anchor_items.clone();
-        let anchor = active_anchor.clone();
+        let mut anchor = active_anchor.clone();
 
         let listener = Closure::wrap(Box::new(move |_event: web_sys::Event| {
             if let Some(window) = web_sys::window() {
@@ -148,30 +154,25 @@ pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> Signal<String> {
                     for item in &items {
                         let target_id = item.href.trim_start_matches('#');
                         if let Some(element) = document.get_element_by_id(target_id) {
-                            if let Ok(rect) = element.get_bounding_client_rect() {
-                                // Check if element is in viewport
-                                if rect.top() <= scroll_y + 100.0 && rect.bottom() >= scroll_y {
-                                    anchor.set(item.href.clone());
-                                }
+                            let rect = element.get_bounding_client_rect();
+                            // Check if element is in viewport
+                            if rect.top() <= scroll_y + 100.0 && rect.bottom() >= scroll_y {
+                                anchor.set(item.href.clone());
                             }
                         }
                     }
                 }
             }
-        }) as Box<dyn Fn(_)>);
+        }) as Box<dyn FnMut(_)>);
 
         if let Some(window) = web_sys::window() {
-            if let Ok(target) = window.as_ref() {
-                target
-                    .add_event_listener_with_callback("scroll", listener.as_ref().unchecked_ref())
-                    .ok();
-            }
+            window
+                .add_event_listener_with_callback("scroll", listener.as_ref().unchecked_ref())
+                .ok();
         }
 
         // Cleanup listener on unmount
-        move || {
-            listener.forget();
-        }
+        listener.forget();
     });
 
     active_anchor

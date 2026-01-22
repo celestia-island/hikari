@@ -68,7 +68,7 @@ pub fn slide_in(
     direction: SlideDirection,
     distance: i32,
 ) -> String {
-    let transform_start = match direction {
+    let _transform_start = match direction {
         SlideDirection::Top => format!("translateY(-{}px)", distance),
         SlideDirection::Bottom => format!("translateY({}px)", distance),
         SlideDirection::Left => format!("translateX(-{}px)", distance),
@@ -100,7 +100,7 @@ pub fn slide_out(
     direction: SlideDirection,
     distance: i32,
 ) -> String {
-    let transform_end = match direction {
+    let _transform_end = match direction {
         SlideDirection::Top => format!("translateY(-{}px)", distance),
         SlideDirection::Bottom => format!("translateY({}px)", distance),
         SlideDirection::Left => format!("translateX(-{}px)", distance),

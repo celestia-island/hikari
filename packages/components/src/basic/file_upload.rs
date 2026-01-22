@@ -58,6 +58,8 @@ pub struct FileUploadProps {
     pub on_error: Option<EventHandler<String>>,
 }
 
+#[allow(unused_variables)]
+#[allow(unused_variables)]
 #[component]
 pub fn FileUpload(props: FileUploadProps) -> Element {
     let mut upload_status = use_signal(|| FileUploadStatus::Idle);
@@ -79,46 +81,6 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
         })
         .build();
 
-    let _handle_files = move |file_list: web_sys::FileList| {
-        let mut selected_files = Vec::new();
-        let mut errors = Vec::new();
-
-        for i in 0..file_list.length() {
-            if let Some(file) = file_list.get(i) {
-                let size = file.size() as usize;
-
-                if size > props.max_size {
-                    errors.push(format!(
-                        "File '{}' is too large (max: {} bytes)",
-                        file.name(),
-                        props.max_size
-                    ));
-                    continue;
-                }
-
-                selected_files.push(file.name());
-            }
-        }
-
-        if !errors.is_empty() && props.on_error.is_some() {
-            for error in errors {
-                if let Some(handler) = props.on_error.as_ref() {
-                    handler.call(error);
-                }
-            }
-        }
-
-        if !selected_files.is_empty() {
-            files.set(selected_files.clone());
-
-            if let Some(handler) = props.on_files.as_ref() {
-                handler.call(selected_files);
-            }
-
-            upload_status.set(FileUploadStatus::Success);
-        }
-    };
-
     let on_drag_over = move |e: DragEvent| {
         e.prevent_default();
         upload_status.set(FileUploadStatus::Dragging);
@@ -134,25 +96,91 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
 
         #[cfg(target_arch = "wasm32")]
         {
-            if let Some(dt) = e.data_transfer() {
-                if let Some(file_list) = dt.files() {
-                    handle_files(file_list);
+            let file_list = e.data_transfer().files();
+
+            let mut selected_files = Vec::new();
+            let mut errors = Vec::new();
+
+            for file_data in file_list {
+                let size = file_data.size() as usize;
+
+                if size > props.max_size {
+                    errors.push(format!(
+                        "File '{}' is too large (max: {} bytes)",
+                        file_data.name(),
+                        props.max_size
+                    ));
+                    continue;
                 }
+
+                selected_files.push(file_data.name());
+            }
+
+            if !errors.is_empty() && props.on_error.is_some() {
+                for error in errors {
+                    if let Some(handler) = props.on_error.as_ref() {
+                        handler.call(error);
+                    }
+                }
+            }
+
+            if !selected_files.is_empty() {
+                files.set(selected_files.clone());
+
+                if let Some(handler) = props.on_files.as_ref() {
+                    handler.call(selected_files);
+                }
+
+                upload_status.set(FileUploadStatus::Success);
             }
         }
     };
 
-    let on_change = move |_: Event<FormData>| {
+    let on_change = move |e: Event<FormData>| {
         #[cfg(target_arch = "wasm32")]
         {
-            if let Some(input) = e
-                .target()
-                .and_then(|t| t.dyn_ref::<web_sys::HtmlInputElement>().cloned())
-            {
-                if let Some(file_list) = input.files() {
-                    handle_files(file_list);
+            let file_list = e.files();
+
+            let mut selected_files = Vec::new();
+            let mut errors = Vec::new();
+
+            for file_data in file_list {
+                let size = file_data.size() as usize;
+
+                if size > props.max_size {
+                    errors.push(format!(
+                        "File '{}' is too large (max: {} bytes)",
+                        file_data.name(),
+                        props.max_size
+                    ));
+                    continue;
+                }
+
+                selected_files.push(file_data.name());
+            }
+
+            if !errors.is_empty() && props.on_error.is_some() {
+                for error in errors {
+                    if let Some(handler) = props.on_error.as_ref() {
+                        handler.call(error);
+                    }
                 }
             }
+
+            if !selected_files.is_empty() {
+                files.set(selected_files.clone());
+
+                if let Some(handler) = props.on_files.as_ref() {
+                    handler.call(selected_files);
+                }
+
+                upload_status.set(FileUploadStatus::Success);
+            }
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let _ = e;
         }
     };
 

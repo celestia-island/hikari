@@ -135,6 +135,19 @@ pub mod basic;
 ))]
 pub mod display;
 
+// Re-export display components when display feature is enabled
+#[cfg(any(
+    feature = "display",
+    feature = "avatar",
+    feature = "comment",
+    feature = "description_list",
+    feature = "empty",
+    feature = "image",
+    feature = "qrcode",
+    feature = "tag"
+))]
+pub use display::*;
+
 #[cfg(any(
     feature = "feedback",
     feature = "alert",
@@ -169,7 +182,22 @@ pub mod navigation;
 ))]
 pub mod data;
 
-#[cfg(any(feature = "entry", feature = "number_input", feature = "search"))]
+// Re-export data components when data feature is enabled
+#[cfg(any(
+    feature = "data",
+    feature = "table",
+    feature = "tree",
+    feature = "pagination"
+))]
+pub use data::*;
+
+#[cfg(any(
+    feature = "entry",
+    feature = "number_input",
+    feature = "search",
+    feature = "cascader",
+    feature = "transfer"
+))]
 pub mod entry;
 
 // Re-export entry components when entry feature is enabled
@@ -190,8 +218,10 @@ pub use feedback::*;
 
 // Re-export display components when display feature is enabled
 #[cfg(feature = "display")]
+#[allow(unused_imports)]
 pub use display::*;
 
+pub use icons::{Icon, MdiIcon};
 pub use styled::{StyleRegistry, StyledComponent};
 
 // Utility exports

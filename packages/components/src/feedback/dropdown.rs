@@ -91,11 +91,13 @@ pub fn Dropdown(props: DropdownProps) -> Element {
     let portal = use_portal();
     let open = use_signal(|| false);
     let mut dropdown_id = use_signal(String::new);
+    let mut prev_open = use_signal(|| false);
 
-    // Sync open state with portal entries
+    // Sync open state with portal entries and trigger on_open_change
     let entries = portal.entries.clone();
     let dropdown_id_sync = dropdown_id.clone();
     let open_sync = open.clone();
+    let on_open_change_sync = props.on_open_change.clone();
     use_effect(move || {
         let current_id = dropdown_id_sync.read();
         if !current_id.is_empty() {
@@ -108,6 +110,16 @@ pub fn Dropdown(props: DropdownProps) -> Element {
             });
             let mut open_ref = open_sync;
             open_ref.set(is_in_entries);
+
+            // Trigger on_open_change when state changes
+            let current_open = is_in_entries;
+            let prev_open_val = *prev_open.read();
+            if current_open != prev_open_val {
+                prev_open.set(current_open);
+                if let Some(handler) = &on_open_change_sync {
+                    handler.call(current_open);
+                }
+            }
         }
     });
 
@@ -281,10 +293,8 @@ pub fn Dropdown(props: DropdownProps) -> Element {
                 portal.remove_entry.call(id);
             }
         }
-
-        if let Some(handler) = props.on_open_change.as_ref() {
-            handler.call(new_state);
-        }
+        // Note: on_open_change is handled by use_effect to ensure consistency
+        // when dropdown is closed by menu item click or overlay click
     };
 
     let wrapper_classes = ClassesBuilder::new()

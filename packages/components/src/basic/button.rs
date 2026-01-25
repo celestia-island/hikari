@@ -2,7 +2,7 @@
 // Button component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{ButtonClass, ClassesBuilder};
+use palette::classes::{ButtonClass, ClassesBuilder, JustifyContent};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
@@ -40,6 +40,8 @@ pub enum ButtonVariant {
     Secondary,
     /// Ghost button (transparent background, border only)
     Ghost,
+    /// Borderless button (no border, minimal styling)
+    Borderless,
     /// Danger button (uses danger color for destructive actions)
     Danger,
     /// Success button (uses success color for positive actions)
@@ -60,6 +62,22 @@ pub enum ButtonSize {
     Large,
 }
 
+/// Button width variants
+///
+/// Different width options for a button component.
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum ButtonWidth {
+    /// Auto width (default)
+    #[default]
+    Auto,
+    /// Fixed width 120px
+    Width120,
+    /// Fixed width 140px
+    Width140,
+    /// Fixed width 160px
+    Width160,
+}
+
 #[derive(Clone, PartialEq, Props)]
 pub struct ButtonProps {
     #[props(default)]
@@ -67,6 +85,9 @@ pub struct ButtonProps {
 
     #[props(default)]
     pub size: ButtonSize,
+
+    #[props(default)]
+    pub width: ButtonWidth,
 
     #[props(default)]
     pub disabled: bool,
@@ -77,8 +98,13 @@ pub struct ButtonProps {
     #[props(default)]
     pub block: bool,
 
+    /// Prefix icon (displayed before text)
     #[props(default)]
     pub icon: Option<Element>,
+
+    /// Suffix icon (displayed after text)
+    #[props(default)]
+    pub suffix: Option<Element>,
 
     #[props(default)]
     pub children: Element,
@@ -114,10 +140,12 @@ impl Default for ButtonProps {
         Self {
             variant: Default::default(),
             size: Default::default(),
+            width: Default::default(),
             disabled: false,
             loading: false,
             block: false,
             icon: None,
+            suffix: None,
             children: VNode::empty(),
             class: String::default(),
             animation: Default::default(),
@@ -156,6 +184,7 @@ pub fn Button(props: ButtonProps) -> Element {
         ButtonVariant::Primary => ButtonClass::Primary,
         ButtonVariant::Secondary => ButtonClass::Secondary,
         ButtonVariant::Ghost => ButtonClass::Ghost,
+        ButtonVariant::Borderless => ButtonClass::Borderless,
         ButtonVariant::Danger => ButtonClass::Danger,
         ButtonVariant::Success => ButtonClass::Success,
     };
@@ -166,14 +195,32 @@ pub fn Button(props: ButtonProps) -> Element {
         ButtonSize::Large => ButtonClass::Lg,
     };
 
+    let width_class = match props.width {
+        ButtonWidth::Auto => ButtonClass::WidthAuto,
+        ButtonWidth::Width120 => ButtonClass::Width120,
+        ButtonWidth::Width140 => ButtonClass::Width140,
+        ButtonWidth::Width160 => ButtonClass::Width160,
+    };
+
     let disabled = props.disabled || props.loading;
+
+    // Auto-determine justify-content: space-between if both icon and suffix exist, else center
+    let has_both_sides = props.icon.is_some() && props.suffix.is_some();
+    let justify_content = if has_both_sides {
+        JustifyContent::Between
+    } else {
+        JustifyContent::Center
+    };
 
     let classes = ClassesBuilder::new()
         .add(ButtonClass::Button)
         .add(variant_class)
         .add(size_class)
+        .add(width_class)
         .add_if(ButtonClass::Loading, || props.loading)
         .add_if(ButtonClass::Block, || props.block)
+        .add(justify_content)
+        .add_if(ButtonClass::SpaceBetween, || has_both_sides)
         .add_raw(&props.class)
         .build();
 
@@ -210,6 +257,14 @@ pub fn Button(props: ButtonProps) -> Element {
             }
 
             { props.children }
+
+            if let Some(suffix) = props.suffix {
+                span {
+                    class: "hi-button-suffix",
+                    "data-button-suffix": "true",
+                    { suffix }
+                }
+            }
         }
     };
 
@@ -221,6 +276,7 @@ pub fn Button(props: ButtonProps) -> Element {
         } else {
             match props.variant {
                 ButtonVariant::Ghost => GlowColor::Ghost,
+                ButtonVariant::Borderless => GlowColor::Ghost,
                 ButtonVariant::Primary => GlowColor::Primary,
                 ButtonVariant::Secondary => GlowColor::Secondary,
                 ButtonVariant::Danger => GlowColor::Danger,

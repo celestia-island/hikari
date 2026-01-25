@@ -118,6 +118,8 @@ pub enum ButtonClass {
     Secondary,
     /// `hi-button-ghost` - Ghost variant
     Ghost,
+    /// `hi-button-borderless` - Borderless variant (no border)
+    Borderless,
     /// `hi-button-danger` - Danger variant
     Danger,
     /// `hi-button-success` - Success variant
@@ -136,6 +138,32 @@ pub enum ButtonClass {
     Spinner,
     /// `hi-button-icon` - Icon container
     Icon,
+    /// `hi-button-space-between` - Space between layout (icon + text + suffix)
+    SpaceBetween,
+    /// `hi-button-width-auto` - Auto width (default)
+    WidthAuto,
+    /// `hi-button-width-120` - Fixed width 120px
+    Width120,
+    /// `hi-button-width-140` - Fixed width 140px
+    Width140,
+    /// `hi-button-width-160` - Fixed width 160px
+    Width160,
+    /// `hi-icon-button` - IconButton (square icon-only button)
+    IconButton,
+    /// `hi-icon-button-16` - IconButton size 16px
+    IconButtonSize16,
+    /// `hi-icon-button-24` - IconButton size 24px
+    IconButtonSize24,
+    /// `hi-icon-button-32` - IconButton size 32px
+    IconButtonSize32,
+    /// `hi-icon-button-36` - IconButton size 36px
+    IconButtonSize36,
+    /// `hi-button-disabled` - Disabled state
+    Disabled,
+    /// `hi-icon-button-icon` - IconButton icon wrapper
+    IconButtonIcon,
+    /// `hi-icon-button-disabled` - IconButton disabled state
+    IconButtonDisabled,
 }
 
 impl UtilityClass for ButtonClass {
@@ -145,6 +173,7 @@ impl UtilityClass for ButtonClass {
             ButtonClass::Primary => "button-primary",
             ButtonClass::Secondary => "button-secondary",
             ButtonClass::Ghost => "button-ghost",
+            ButtonClass::Borderless => "button-borderless",
             ButtonClass::Danger => "button-danger",
             ButtonClass::Success => "button-success",
             ButtonClass::Sm => "button-sm",
@@ -154,6 +183,19 @@ impl UtilityClass for ButtonClass {
             ButtonClass::Block => "button-block",
             ButtonClass::Spinner => "button-spinner",
             ButtonClass::Icon => "button-icon",
+            ButtonClass::SpaceBetween => "button-space-between",
+            ButtonClass::WidthAuto => "button-width-auto",
+            ButtonClass::Width120 => "button-width-120",
+            ButtonClass::Width140 => "button-width-140",
+            ButtonClass::Width160 => "button-width-160",
+            ButtonClass::IconButton => "icon-button",
+            ButtonClass::IconButtonSize16 => "icon-button-16",
+            ButtonClass::IconButtonSize24 => "icon-button-24",
+            ButtonClass::IconButtonSize32 => "icon-button-32",
+            ButtonClass::IconButtonSize36 => "icon-button-36",
+            ButtonClass::Disabled => "button-disabled",
+            ButtonClass::IconButtonIcon => "icon-button-icon",
+            ButtonClass::IconButtonDisabled => "icon-button-disabled",
         }
     }
 }
@@ -1222,6 +1264,111 @@ impl UtilityClass for Footer {
     fn as_suffix(&self) -> &'static str {
         match self {
             Footer::Footer => "footer",
+        }
+    }
+}
+
+/// Portal component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum PortalClass {
+    /// `hi-portal-root` - Portal root container
+    PortalRoot,
+}
+
+impl UtilityClass for PortalClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            PortalClass::PortalRoot => "portal-root",
+        }
+    }
+}
+
+/// Modal component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ModalClass {
+    /// `hi-modal-overlay` - Modal overlay
+    Overlay,
+    /// `hi-modal-overlay-transparent` - Transparent overlay
+    OverlayTransparent,
+    /// `hi-modal` - Modal content container
+    Modal,
+    /// `hi-modal-header` - Modal header
+    Header,
+    /// `hi-modal-title` - Modal title
+    Title,
+    /// `hi-modal-close` - Modal close button
+    Close,
+    /// `hi-modal-body` - Modal body
+    Body,
+}
+
+impl UtilityClass for ModalClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            ModalClass::Overlay => "modal-overlay",
+            ModalClass::OverlayTransparent => "modal-overlay-transparent",
+            ModalClass::Modal => "modal",
+            ModalClass::Header => "modal-header",
+            ModalClass::Title => "modal-title",
+            ModalClass::Close => "modal-close",
+            ModalClass::Body => "modal-body",
+        }
+    }
+}
+
+/// Dropdown component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DropdownClass {
+    /// `hi-dropdown-overlay` - Dropdown overlay
+    Overlay,
+    /// `hi-dropdown-overlay-dimmed` - Dimmed overlay
+    OverlayDimmed,
+    /// `hi-dropdown` - Dropdown content container
+    Dropdown,
+}
+
+impl UtilityClass for DropdownClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            DropdownClass::Overlay => "dropdown-overlay",
+            DropdownClass::OverlayDimmed => "dropdown-overlay-dimmed",
+            DropdownClass::Dropdown => "dropdown",
+        }
+    }
+}
+
+/// Arrow component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ArrowClass {
+    /// `hi-arrow` - Main arrow class
+    Arrow,
+    /// `hi-arrow-right` - Points right
+    ArrowRight,
+    /// `hi-arrow-left` - Points left
+    ArrowLeft,
+    /// `hi-arrow-up` - Points up
+    ArrowUp,
+    /// `hi-arrow-down` - Points down
+    ArrowDown,
+    /// `hi-arrow-14` - Size 14px
+    Size14,
+    /// `hi-arrow-16` - Size 16px
+    Size16,
+    /// `hi-arrow-20` - Size 20px
+    Size20,
+}
+
+impl UtilityClass for ArrowClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            ArrowClass::Arrow => "arrow",
+            ArrowClass::ArrowRight => "arrow-right",
+            ArrowClass::ArrowLeft => "arrow-left",
+            ArrowClass::ArrowUp => "arrow-up",
+            ArrowClass::ArrowDown => "arrow-down",
+            ArrowClass::Size14 => "arrow-14",
+            ArrowClass::Size16 => "arrow-16",
+            ArrowClass::Size20 => "arrow-20",
         }
     }
 }

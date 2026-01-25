@@ -76,7 +76,7 @@
   border: 1px solid var(--hi-color-border);
 
   // Acrylic background effect
-  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+  background: var(--hi-surface);
   backdrop-filter: blur(4px);
 
   // Elevated shadow

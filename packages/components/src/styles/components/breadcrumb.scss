@@ -270,7 +270,7 @@
     // Appearance
     border-radius: vars.$hikari-radius-fui-md;
     border: 1px solid var(--hi-color-border);
-    background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+    background: var(--hi-surface);
     backdrop-filter: blur(4px);
     box-shadow:
       0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
@@ -431,7 +431,7 @@
   gap: 0;
 
   .hi-breadcrumb-item {
-    background: var(--hi-card-bg, rgba(45, 45, 45, 0.5));
+    background: var(--hi-card-bg);
     padding: 0.375rem 0.75rem;
     border-radius: vars.$hikari-radius-fui-sm;
     // DISABLED - migrated to JS animation
@@ -454,7 +454,7 @@
 // Pill style
 .hi-breadcrumb-pill {
   .hi-breadcrumb-item {
-    background: var(--hi-card-bg, rgba(45, 45, 45, 0.5));
+    background: var(--hi-card-bg);
     padding: 0.375rem 0.875rem;
     border-radius: 999px;
     border: 1px solid var(--hi-color-border);

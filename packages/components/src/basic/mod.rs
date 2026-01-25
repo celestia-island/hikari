@@ -7,6 +7,7 @@
 //!
 //! - [`Background`] - Full-screen gradient background
 //! - [`Avatar`] - User profile image with fixed sizes
+//! - [`Arrow`] - Arrow indicator with rotation support
 //! - [`Badge`] - Small status indicators and labels
 //! - [`Button`] - Interactive button with multiple variants
 //! - [`Card`] - Content container with optional header
@@ -22,6 +23,7 @@
 //! - [`FormField`] - Form field wrapper with label and error
 //! - [`DatePicker`] - Date picker component
 
+pub mod arrow;
 pub mod avatar;
 pub mod background;
 pub mod badge;
@@ -40,6 +42,7 @@ pub mod slider;
 pub mod switch;
 pub mod textarea;
 
+pub use arrow::{Arrow, ArrowComponent, ArrowDirection};
 pub use avatar::*;
 pub use background::*;
 pub use badge::*;

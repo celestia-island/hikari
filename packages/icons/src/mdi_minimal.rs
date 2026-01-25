@@ -24,6 +24,7 @@ pub enum MdiIcon {
     Cog,
     Check,
     GestureTap,
+    Translate,
 
     // Media / Playback
     Play,
@@ -94,6 +95,7 @@ impl std::fmt::Display for MdiIcon {
             MdiIcon::Cog => write!(f, "cog"),
             MdiIcon::Check => write!(f, "check"),
             MdiIcon::GestureTap => write!(f, "gesture-tap"),
+            MdiIcon::Translate => write!(f, "translate"),
             MdiIcon::Play => write!(f, "play"),
             MdiIcon::Pause => write!(f, "pause"),
             MdiIcon::VolumeHigh => write!(f, "volume-high"),
@@ -150,6 +152,7 @@ impl std::convert::From<&str> for MdiIcon {
             "cog" => MdiIcon::Cog,
             "check" => MdiIcon::Check,
             "gesture-tap" => MdiIcon::GestureTap,
+            "translate" => MdiIcon::Translate,
             "play" => MdiIcon::Play,
             "pause" => MdiIcon::Pause,
             "volume-high" => MdiIcon::VolumeHigh,

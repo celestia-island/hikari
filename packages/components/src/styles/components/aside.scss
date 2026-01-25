@@ -630,18 +630,20 @@
 
 .hi-aside-footer {
   margin-top: vars.$hikari-spacing-md;
-  padding-top: vars.$hikari-spacing-md;
-
-  // Top border with subtle glow
-  border-top: 1px solid var(--hi-primary);
-  --hi-glow-transparent: false;
-  --hi-glow-bg-color: var(--hi-color-surface);
-  box-shadow: 0 -4px 8px var(--hi-glow-color);
+  padding-top: vars.$hikari-spacing-lg;
+  padding-bottom: vars.$hikari-spacing-lg;
 
   // Transition
   // DISABLED - migrated to JS animation
 
   // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+
+  // Language label styling
+  .hi-aside-footer-lang-label {
+    font-size: vars.$hikari-font-size-xs;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
 
   // User info section
   .hi-aside-user {
@@ -817,7 +819,7 @@
 
 // Dark variant (default)
 .hi-aside-dark {
-  background: var(--hi-card-bg, rgba(45, 45, 45, 0.9));
+  background: var(--hi-card-bg);
 }
 
 // Light variant

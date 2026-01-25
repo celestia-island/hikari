@@ -10,6 +10,9 @@ hikari-builder = { path = "../builder" }
 # MCP / network and protocols
 dioxus = { workspace = true }
 
+# Styling
+hikari-animation = { path = "../animation" }
+
 # WASM dependencies (only for web target)
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { workspace = true }

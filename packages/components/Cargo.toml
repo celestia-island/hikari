@@ -8,11 +8,13 @@ license.workspace = true
 [lib]
 doctest = false
 
+build = "build.rs"
+
 [features]
 default = ["basic", "feedback", "navigation", "layout", "data", "display", "entry"]
 
 # Component groups (shortcuts) - enable multiple components at once
-basic = ["button", "input", "card", "badge", "image", "avatar", "checkbox", "switch", "radio_group", "select", "slider", "textarea", "icon_button"]
+basic = ["button", "input", "card", "badge", "image", "avatar", "checkbox", "switch", "radio_group", "select", "slider", "textarea", "icon_button", "arrow"]
 feedback = ["alert", "toast", "tooltip", "modal"]
 navigation = ["menu", "tabs", "breadcrumb"]
 layout = ["layout-component", "header", "aside", "content", "footer"]
@@ -27,6 +29,7 @@ card = []
 badge = []
 image = []
 avatar = []
+arrow = []
 checkbox = []
 switch = []
 radio_group = []

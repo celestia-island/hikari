@@ -3,21 +3,30 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari // Hikari // Hikari // Hikari IconButton Component - FUI Styling Component Component Component Component
-
+// Hikari // Hikari // Hikari // Hikari IconButton Component - FUI Styling Component Component Component
 // ============================================
-// Base Button Styles
+// Base Button Styles - Overrides .hi-button styles
 // ============================================
 
 .hi-icon-button {
+  // IMPORTANT: Override .hi-button defaults for square icon-only button
+  padding: 0;
+  line-height: 0;
+  gap: 0;
+
   // Layout
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 
-  // Square aspect ratio (28x28px for default)
+  // Default square size (28x28px) - IMPORTANT: Force square aspect ratio
   width: 28px;
   height: 28px;
+  min-width: 28px;
+  max-width: 28px;
+  min-height: 28px;
+  max-height: 28px;
 
   // Remove default button styling
   appearance: none;
@@ -32,7 +41,6 @@
   font-size: vars.$hikari-font-size-sm;
   font-weight: 400;
   color: var(--hi-color-text-primary);
-  line-height: 1;
 
   // Transitions - smooth GSAP-style easing
   transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
@@ -40,18 +48,16 @@
   // Cursor
   cursor: pointer;
 
-  // Hover state
+  // Hover state - neutral gray for ghost/borderless buttons
   &:hover:not(:disabled) {
-    background-color: rgba(139, 92, 246, 0.1);
+    background-color: var(--hi-color-gray-15, rgba(128, 128, 128, 0.15));
     color: var(--hi-color-text-primary);
-    box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
   }
 
   // Active state
   &:active:not(:disabled) {
-    background-color: rgba(139, 92, 246, 0.2);
+    background-color: var(--hi-color-gray-20, rgba(128, 128, 128, 0.2));
     transform: scale(0.95);
-    box-shadow: 0 0 16px rgba(59, 130, 246, 0.4);
   }
 
   // Focus state
@@ -67,16 +73,74 @@
   }
 
   // ============================================
+  // Size Variants - Force square aspect ratio using CSS variables
+  // ============================================
+
+  &.hi-icon-button-36 {
+    width: vars.$hikari-icon-button-size-36;
+    height: vars.$hikari-icon-button-size-36;
+    min-width: vars.$hikari-icon-button-size-36;
+    max-width: vars.$hikari-icon-button-size-36;
+    min-height: vars.$hikari-icon-button-size-36;
+    max-height: vars.$hikari-icon-button-size-36;
+  }
+
+  &.hi-icon-button-32 {
+    width: vars.$hikari-icon-button-size-32;
+    height: vars.$hikari-icon-button-size-32;
+    min-width: vars.$hikari-icon-button-size-32;
+    max-width: vars.$hikari-icon-button-size-32;
+    min-height: vars.$hikari-icon-button-size-32;
+    max-height: vars.$hikari-icon-button-size-32;
+  }
+
+  &.hi-icon-button-24 {
+    width: vars.$hikari-icon-button-size-24;
+    height: vars.$hikari-icon-button-size-24;
+    min-width: vars.$hikari-icon-button-size-24;
+    max-width: vars.$hikari-icon-button-size-24;
+    min-height: vars.$hikari-icon-button-size-24;
+    max-height: vars.$hikari-icon-button-size-24;
+  }
+
+  &.hi-icon-button-16 {
+    width: vars.$hikari-icon-button-size-16;
+    height: vars.$hikari-icon-button-size-16;
+    min-width: vars.$hikari-icon-button-size-16;
+    max-width: vars.$hikari-icon-button-size-16;
+    min-height: vars.$hikari-icon-button-size-16;
+    max-height: vars.$hikari-icon-button-size-16;
+  }
+
+  // ============================================
+  // ============================================
   // Icon Styles
   // ============================================
 
   .hi-icon-button-icon {
-    // Prevent icon from affecting button size
-    width: 100%;
-    height: 100%;
-    display: flex;
+    // Fixed icon size (14px as specified in IconButton component)
+    width: vars.$hikari-icon-size-sm;
+    height: vars.$hikari-icon-size-sm;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    line-height: 0;
+
+    // Constrain inner .hikari-icon div
+    .hikari-icon {
+      width: vars.$hikari-icon-size-sm;
+      height: vars.$hikari-icon-size-sm;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+
+      svg {
+        width: vars.$hikari-icon-size-sm;
+        height: vars.$hikari-icon-size-sm;
+        display: block;
+      }
+    }
   }
 
   .hi-icon-button-disabled {

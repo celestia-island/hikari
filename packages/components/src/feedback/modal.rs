@@ -1,158 +1,171 @@
 // hi-components/src/feedback/modal.rs
-// Modal component with Arknights + FUI styling
+// Modal component using Portal system
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use std::sync::atomic::{AtomicU64, Ordering};
 
+use crate::portal::{use_portal, PortalEntry};
 use crate::styled::StyledComponent;
+
+static MODAL_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 /// Modal 组件的类型包装器（用于实现 StyledComponent）
 pub struct ModalComponent;
 
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum ModalSize {
-    #[default]
-    Md,
-    Sm,
-    Lg,
-    Xl,
-}
-
+/// Modal 定位方式
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ModalPosition {
+    /// 屏幕中间居中
     #[default]
     Center,
+
+    /// 基于鼠标坐标的八个方位
+    TopLeft,
     Top,
+    TopRight,
+    Right,
+    BottomRight,
+    Bottom,
+    BottomLeft,
+    Left,
 }
 
-#[derive(Clone, PartialEq, Props)]
-pub struct ModalProps {
-    #[props(default)]
-    pub open: bool,
+/// Modal 遮掩方式
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum MaskMode {
+    /// 变黑蒙版（阻塞式 modal，如对话框）
+    #[default]
+    Opaque,
 
-    #[props(default)]
-    pub title: Option<String>,
+    /// 穿透透明（非阻塞式 modal，如 toast）
+    Transparent,
+}
 
-    #[props(default)]
-    pub size: ModalSize,
-
-    #[props(default)]
+/// Modal 实例配置
+#[derive(Clone, PartialEq)]
+pub struct ModalConfig {
+    pub id: String,
     pub position: ModalPosition,
-
-    #[props(default)]
+    pub mask_mode: MaskMode,
     pub closable: bool,
-
-    #[props(default)]
     pub mask_closable: bool,
-
-    #[props(default)]
-    pub footer: Option<Element>,
-
-    #[props(default)]
     pub class: String,
-
-    #[props(default)]
-    pub on_close: Option<EventHandler<MouseEvent>>,
-
-    children: Element,
 }
 
-/// Modal component with Arknights + FUI styling
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Modal, ModalSize};
-///
-/// fn app() -> Element {
-///     let mut open = use_signal(|| false);
-///
-///     rsx! {
-///         button { onclick: move |_| open.set(true), "Open Modal" }
-///
-///         Modal {
-///             open: open(),
-///             title: "Modal Title".to_string(),
-///             size: ModalSize::Md,
-///             on_close: move |_| open.set(false),
-///             "Modal content goes here"
-///         }
-///     }
-/// }
-/// ```
-#[component]
-pub fn Modal(props: ModalProps) -> Element {
-    if !props.open {
-        return rsx! { div {} };
+impl Default for ModalConfig {
+    fn default() -> Self {
+        Self {
+            id: format!("modal-{}", MODAL_ID_COUNTER.fetch_add(1, Ordering::SeqCst)),
+            position: ModalPosition::Center,
+            mask_mode: MaskMode::Opaque,
+            closable: true,
+            mask_closable: true,
+            class: String::new(),
+        }
     }
+}
 
-    let size_class = match props.size {
-        ModalSize::Sm => "hi-modal-sm",
-        ModalSize::Md => "hi-modal-md",
-        ModalSize::Lg => "hi-modal-lg",
-        ModalSize::Xl => "hi-modal-xl",
+/// Hook for controlling a modal instance
+pub fn use_modal(initial_config: ModalConfig) -> ModalController {
+    let portal = use_portal();
+    let config = use_signal(|| initial_config);
+
+    let open = {
+        let add_entry = portal.add_entry.clone();
+        let cfg = config.clone();
+        Callback::new(move |content: ModalContent| {
+            let current_cfg = cfg.read();
+            let entry = PortalEntry::Modal {
+                id: current_cfg.id.clone(),
+                title: content.title,
+                position: current_cfg.position,
+                mask_mode: current_cfg.mask_mode,
+                closable: current_cfg.closable,
+                mask_closable: current_cfg.mask_closable,
+                children: content.children,
+            };
+            add_entry.call(entry);
+        })
     };
 
-    let position_class = match props.position {
-        ModalPosition::Center => "hi-modal-center",
-        ModalPosition::Top => "hi-modal-top",
+    let close = {
+        let remove_entry = portal.remove_entry.clone();
+        let cfg = config.clone();
+        Callback::new(move |_| {
+            let id = cfg.read().id.clone();
+            remove_entry.call(id);
+        })
     };
 
-    rsx! {
-        div { class: "hi-modal-overlay",
-            onclick: move |e| {
-                if props.mask_closable {
-                    if let Some(handler) = props.on_close.as_ref() {
-                        handler.call(e);
-                    }
-                }
-            },
+    ModalController {
+        config,
+        open,
+        close,
+    }
+}
 
-            div { class: ClassesBuilder::new()
-                .add_raw("hi-modal")
-                .add_raw(size_class)
-                .add_raw(position_class)
-                .add_raw(&props.class)
-                .build(),
+/// Modal Content - Content to display in modal
+#[derive(Clone, PartialEq)]
+pub struct ModalContent {
+    pub title: Option<String>,
+    pub children: Element,
+}
 
-                // Header
-                div { class: "hi-modal-header",
-                    if let Some(title) = props.title {
-                        h3 { class: "hi-modal-title", "{title}" }
-                    }
+/// Modal Controller - 用于控制单个 modal 实例
+#[derive(Clone)]
+pub struct ModalController {
+    pub config: Signal<ModalConfig>,
+    pub open: Callback<ModalContent>,
+    pub close: Callback<()>,
+}
 
-                    if props.closable {
-                        button { class: "hi-modal-close",
-                            onclick: move |e| {
-                                if let Some(handler) = props.on_close.as_ref() {
-                                    handler.call(e);
-                                }
-                            },
-                            svg {
-                                view_box: "0 0 24 24",
-                                fill: "none",
-                                stroke: "currentColor",
-                                stroke_width: "2",
-                                line { x1: "18", y1: "6", x2: "6", y2: "18" }
-                                line { x1: "6", y1: "6", x2: "18", y2: "18" }
-                            }
-                        }
-                    }
-                }
+/// 计算智能定位后的实际位置（检测溢出并自动调整）
+pub fn calculate_position(
+    position: ModalPosition,
+    mouse_x: Option<f64>,
+    mouse_y: Option<f64>,
+    modal_width: f64,
+    modal_height: f64,
+    window_width: f64,
+    window_height: f64,
+) -> (f64, f64) {
+    const OFFSET: f64 = 16.0;
+    const PADDING: f64 = 16.0;
 
-                // Body
-                div { class: "hi-modal-body",
-                    { props.children }
-                }
+    match position {
+        ModalPosition::Center => (
+            (window_width - modal_width) / 2.0,
+            (window_height - modal_height) / 2.0,
+        ),
+        _ => {
+            let mx = mouse_x.unwrap_or(window_width / 2.0);
+            let my = mouse_y.unwrap_or(window_height / 2.0);
 
-                // Footer
-                if let Some(footer_element) = props.footer {
-                    div { class: "hi-modal-footer",
-                        { footer_element }
-                    }
-                }
+            let (mut x, mut y) = match position {
+                ModalPosition::TopLeft => (mx - OFFSET, my - OFFSET - modal_height),
+                ModalPosition::Top => (mx - modal_width / 2.0, my - OFFSET - modal_height),
+                ModalPosition::TopRight => (mx + OFFSET, my - OFFSET - modal_height),
+                ModalPosition::Right => (mx + OFFSET, my - modal_height / 2.0),
+                ModalPosition::BottomRight => (mx + OFFSET, my + OFFSET),
+                ModalPosition::Bottom => (mx - modal_width / 2.0, my + OFFSET),
+                ModalPosition::BottomLeft => (mx - OFFSET - modal_width, my + OFFSET),
+                ModalPosition::Left => (mx - OFFSET - modal_width, my - modal_height / 2.0),
+                ModalPosition::Center => unreachable!(),
+            };
+
+            if x < PADDING {
+                x = PADDING;
+            } else if x + modal_width > window_width - PADDING {
+                x = window_width - modal_width - PADDING;
             }
+
+            if y < PADDING {
+                y = PADDING;
+            } else if y + modal_height > window_height - PADDING {
+                y = window_height - modal_height - PADDING;
+            }
+
+            (x, y)
         }
     }
 }

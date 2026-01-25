@@ -13,7 +13,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
 
   // Spacing
   padding: 0.5rem 1rem;
@@ -199,7 +198,34 @@
     transform: scale(0.98);
   }
 }
- 
+
+// ============================================
+// Variant: Borderless (No border, minimal styling)
+// ============================================
+
+.hi-button-borderless {
+  background-color: transparent;
+  color: var(--hi-ghost-text);
+  border: none;
+  --hi-glow-transparent: true;
+  --hi-glow-bg-color: transparent;
+  --hi-glow-color: var(--hi-ghost-glow);
+
+  &:hover:not(:disabled) {
+    box-shadow: var(--hi-glow-color);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hi-ghost-border);
+    outline-offset: 2px;
+  }
+
+  &:active:not(:disabled) {
+    box-shadow: 0 0 4px var(--hi-glow-color);
+    transform: scale(0.98);
+  }
+}
+
 // ============================================
 // Variant: Danger (Red glow accent)
 // ============================================
@@ -392,5 +418,116 @@ button.hi-button-danger:hover .hikari-icon,
 button.hi-button-success:hover .hikari-icon,
 button.hi-button-ghost:hover .hikari-icon {
   opacity: 0.9;
+}
+
+// ============================================
+// Icon and Suffix wrappers - Fixed 14px size (NOT for IconButton)
+// ============================================
+
+// Only apply to Button components, not IconButton
+button.hi-button:not(.hi-icon-button) {
+  .hi-button-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: vars.$hikari-icon-size-sm;
+    height: vars.$hikari-icon-size-sm;
+
+    // Constrain icon wrapper and SVG to 14px
+    .hikari-icon {
+      width: vars.$hikari-icon-size-sm;
+      height: vars.$hikari-icon-size-sm;
+    }
+
+    .hikari-icon svg {
+      width: vars.$hikari-icon-size-sm;
+      height: vars.$hikari-icon-size-sm;
+    }
+
+    .hi-button-icon svg {
+      width: vars.$hikari-icon-size-sm;
+      height: vars.$hikari-icon-size-sm;
+    }
+  }
+
+  .hi-button-suffix {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    // Constrain Arrow to 14px
+    .hi-arrow {
+      width: vars.$hikari-icon-size-sm;
+      height: vars.$hikari-icon-size-sm;
+    }
+
+    .hi-arrow svg {
+      width: vars.$hikari-icon-size-sm;
+      height: vars.$hikari-icon-size-sm;
+    }
+
+    // Constrain icon wrapper and SVG to 14px
+    .hikari-icon {
+      width: vars.$hikari-icon-size-sm;
+      height: vars.$hikari-icon-size-sm;
+    }
+
+    .hikari-icon svg {
+      width: vars.$hikari-icon-size-sm;
+      height: vars.$hikari-icon-size-sm;
+    }
+  }
+}
+
+// ============================================
+// Space-between layout (icon + text + suffix)
+// ============================================
+
+button.hi-button-space-between {
+  // Icon and suffix on opposite edges, text in center
+  justify-content: space-between;
+
+  // Text should use line-height for baseline alignment
+  > *:not(.hi-button-icon):not(.hi-button-suffix) {
+    flex: 1;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  // Icon and suffix should be flex-centered (NOT line-height)
+  .hi-button-icon,
+  .hi-button-suffix {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+}
+
+// Default gap for center layout (8px)
+button.hi-button:not(.hi-button-space-between) {
+  gap: 8px;
+}
+
+// ============================================
+// Button width variants
+// ============================================
+
+.hi-button-width-auto {
+  width: auto;
+}
+
+.hi-button-width-120 {
+  width: 120px;
+}
+
+.hi-button-width-140 {
+  width: 140px;
+}
+
+.hi-button-width-160 {
+  width: 160px;
 }
 

@@ -6,7 +6,7 @@ use icons::{Icon, MdiIcon};
 use palette::classes::{components::ButtonClass, ClassesBuilder};
 
 use crate::{
-    feedback::{GlowBlur, GlowColor, GlowIntensity},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
     styled::StyledComponent,
 };
 
@@ -54,51 +54,71 @@ pub struct IconButtonProps {
 /// IconButton component - Square button with icon and glow effects
 #[component]
 pub fn IconButton(props: IconButtonProps) -> Element {
-    let size_px = props.size;
+    // Icon size is always 14px, independent of button size
+    let icon_size = 14;
 
-    let button_classes = ClassesBuilder::new()
+    // Determine size class based on button size
+    let size_class = match props.size {
+        36 => Some(ButtonClass::IconButtonSize36),
+        32 => Some(ButtonClass::IconButtonSize32),
+        24 => Some(ButtonClass::IconButtonSize24),
+        16 => Some(ButtonClass::IconButtonSize16),
+        _ => None,
+    };
+
+    // Build button classes
+    let mut builder = ClassesBuilder::new()
         .add(ButtonClass::Button)
-        .add(ButtonClass::Ghost)
-        .add_raw(&props.class)
-        .build();
+        .add(ButtonClass::Borderless)
+        .add(ButtonClass::IconButton);
 
-    let icon_classes = ClassesBuilder::new()
-        .add_raw("hi-icon-button-icon")
-        .add_raw(if props.disabled {
-            "hi-icon-button-disabled"
-        } else {
-            ""
-        })
-        .build();
+    // Add size class if valid
+    if let Some(size) = size_class {
+        builder = builder.add(size);
+    }
 
-    let glow_color = match props.glow_color {
-        GlowColor::Primary => "rgba(59, 130, 246, 0.5)",
-        GlowColor::Danger => "rgba(255, 76, 0, 0.5)",
-        GlowColor::Success => "rgba(14, 184, 64, 0.5)",
-        GlowColor::Warning => "rgba(245, 158, 11, 0.5)",
-        GlowColor::Info => "rgba(139, 92, 246, 0.5)",
-        GlowColor::Ghost | GlowColor::Secondary => "rgba(59, 130, 246, 0.5)",
-    };
+    // Add disabled class
+    if props.disabled {
+        builder = builder.add(ButtonClass::Disabled);
+    }
 
-    let glow_style = if props.glow && !props.disabled {
-        format!("box-shadow: 0 0 8px {};", glow_color)
-    } else {
-        String::new()
-    };
+    let button_classes = builder.build();
 
-    rsx! {
+    // Build icon classes using enums
+    let mut icon_builder = ClassesBuilder::new().add(ButtonClass::IconButtonIcon);
+
+    if props.disabled {
+        icon_builder = icon_builder.add(ButtonClass::IconButtonDisabled);
+    }
+
+    let icon_classes = icon_builder.build();
+
+    let button_content = rsx! {
         button {
             class: "{button_classes}",
             disabled: props.disabled,
             onclick: props.onclick,
-            style: "{glow_style} width: {size_px}px; height: {size_px}px; padding: 0; display: flex; align-items: center; justify-content: center;",
 
             Icon {
                 icon: props.icon,
-                size: props.size,
+                size: icon_size,
                 class: "{icon_classes}",
             }
         }
+    };
+
+    // Wrap with glow container if enabled
+    if props.glow {
+        rsx! {
+            Glow {
+                blur: props.glow_blur,
+                color: props.glow_color,
+                intensity: props.glow_intensity,
+                { button_content }
+            }
+        }
+    } else {
+        button_content
     }
 }
 

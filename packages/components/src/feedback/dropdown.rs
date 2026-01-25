@@ -1,54 +1,69 @@
 // hi-components/src/feedback/dropdown.rs
-// Dropdown component with Arknights + FUI styling
+// Dropdown component using Portal system with three positioning strategies
 
-use animation::style::{CssProperty, StyleStringBuilder};
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, Display, Position};
 
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsCast;
+
+use crate::portal::{
+    generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy,
+    TriggerPlacement,
+};
 use crate::styled::StyledComponent;
 
-/// Dropdown component types
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum DropdownPositioning {
+    #[default]
+    MouseBased,
+    TriggerBased,
+    Fixed,
+}
+
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DropdownPosition {
     #[default]
+    Bottom,
     BottomLeft,
     BottomRight,
+    Top,
     TopLeft,
     TopRight,
+    Left,
+    LeftTop,
+    LeftBottom,
+    Right,
+    RightTop,
+    RightBottom,
+}
+
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum DropdownMask {
+    Dimmed,
+    #[default]
+    Transparent,
 }
 
 #[derive(Clone, PartialEq, Props)]
 pub struct DropdownProps {
-    /// The trigger element (button, etc.)
     pub trigger: Element,
-
-    /// Dropdown content (typically Menu with MenuItems)
     pub children: Element,
-
-    /// Whether the dropdown is open
     #[props(default)]
     pub open: bool,
-
-    /// Callback when open state changes
     pub on_open_change: Option<Callback<bool>>,
-
-    /// Position of the dropdown menu
+    #[props(default)]
+    pub positioning: DropdownPositioning,
     #[props(default)]
     pub position: DropdownPosition,
-
-    /// Whether clicking outside closes the dropdown
+    #[props(default)]
+    pub mask: DropdownMask,
     #[props(default)]
     pub close_on_click_outside: bool,
-
-    /// Whether clicking an item closes the dropdown
     #[props(default)]
     pub close_on_select: bool,
-
-    /// Additional CSS class
     #[props(default)]
     pub class: String,
-
-    /// Additional CSS class for the dropdown menu
     #[props(default)]
     pub menu_class: String,
 }
@@ -60,7 +75,9 @@ impl Default for DropdownProps {
             children: VNode::empty(),
             open: false,
             on_open_change: None,
+            positioning: Default::default(),
             position: Default::default(),
+            mask: Default::default(),
             close_on_click_outside: true,
             close_on_select: true,
             class: String::default(),
@@ -69,169 +86,288 @@ impl Default for DropdownProps {
     }
 }
 
-/// Dropdown component with keyboard navigation and positioning
-///
-/// A flexible dropdown that works with any trigger element and supports
-/// Menu/MenuItem components for content.
-///
-/// # Examples
-///
-/// ## Basic Usage
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Dropdown, Menu, MenuItem, Button};
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Dropdown {
-///             trigger: rsx! {
-///                 Button { "Click me" }
-///             },
-///             Menu {
-///                 MenuItem { item_key: "1".to_string(), "Option 1" }
-///                 MenuItem { item_key: "2".to_string(), "Option 2" }
-///                 MenuItem { item_key: "3".to_string(), "Option 3" }
-///             }
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Dropdown(props: DropdownProps) -> Element {
-    let mut open = use_signal(|| props.open);
+    let portal = use_portal();
+    let open = use_signal(|| false);
+    let mut dropdown_id = use_signal(String::new);
 
-    let _handle_click_outside = move |_e: MouseEvent| {
-        if props.close_on_click_outside {
-            open.set(false);
-            if let Some(handler) = props.on_open_change.as_ref() {
-                handler.call(false);
+    // Sync open state with portal entries
+    let entries = portal.entries.clone();
+    let dropdown_id_sync = dropdown_id.clone();
+    let open_sync = open.clone();
+    use_effect(move || {
+        let current_id = dropdown_id_sync.read();
+        if !current_id.is_empty() {
+            let is_in_entries = entries.read().iter().any(|entry| {
+                if let PortalEntry::Dropdown { id, .. } = entry {
+                    id == &*current_id
+                } else {
+                    false
+                }
+            });
+            let mut open_ref = open_sync;
+            open_ref.set(is_in_entries);
+        }
+    });
+
+    let handle_trigger_click = move |e: MouseEvent| {
+        e.stop_propagation();
+
+        let current_open = open();
+        let new_state = !current_open;
+
+        if new_state {
+            let id = generate_portal_id();
+            dropdown_id.set(id.clone());
+
+            let mask_mode = match props.mask {
+                DropdownMask::Dimmed => PortalMaskMode::Dimmed,
+                DropdownMask::Transparent => PortalMaskMode::Transparent,
+            };
+
+            let placement = match props.position {
+                DropdownPosition::Bottom => TriggerPlacement::Bottom,
+                DropdownPosition::BottomLeft => TriggerPlacement::BottomLeft,
+                DropdownPosition::BottomRight => TriggerPlacement::BottomRight,
+                DropdownPosition::Top => TriggerPlacement::Top,
+                DropdownPosition::TopLeft => TriggerPlacement::TopLeft,
+                DropdownPosition::TopRight => TriggerPlacement::TopRight,
+                DropdownPosition::Left => TriggerPlacement::Left,
+                DropdownPosition::LeftTop => TriggerPlacement::LeftTop,
+                DropdownPosition::LeftBottom => TriggerPlacement::LeftBottom,
+                DropdownPosition::Right => TriggerPlacement::Right,
+                DropdownPosition::RightTop => TriggerPlacement::RightTop,
+                DropdownPosition::RightBottom => TriggerPlacement::RightBottom,
+            };
+
+            let (strategy, trigger_rect_opt) = match props.positioning {
+                DropdownPositioning::MouseBased => {
+                    let coords = e.client_coordinates();
+                    (PortalPositionStrategy::Fixed(coords.x, coords.y), None)
+                }
+                DropdownPositioning::TriggerBased => {
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        // Get trigger button element using closest()
+                        web_sys::console::log_1(&"=== Dropdown: Finding button element ===".into());
+
+                        let trigger_rect = if let Some(web_event) =
+                            e.downcast::<web_sys::MouseEvent>()
+                        {
+                            if let Some(target) = web_event.target() {
+                                // Try to get Element from EventTarget
+                                if let Some(element) = target.dyn_ref::<web_sys::Element>() {
+                                    // Find closest button element from the clicked element
+                                    let button_result = element.closest("button");
+                                    web_sys::console::log_1(
+                                        &format!(
+                                            "button closest: {:?}",
+                                            button_result.as_ref().map(|_| true).unwrap_or(false)
+                                        )
+                                        .into(),
+                                    );
+
+                                    if let Ok(Some(button)) = button_result {
+                                        if let Some(html_button) =
+                                            button.dyn_ref::<web_sys::HtmlElement>()
+                                        {
+                                            let rect = html_button.get_bounding_client_rect();
+                                            // Get button classes
+                                            let num_classes =
+                                                html_button.class_list().length() as usize;
+                                            let mut button_classes = Vec::new();
+                                            for i in 0..num_classes {
+                                                if let Some(class_name) =
+                                                    html_button.class_list().item(i as u32)
+                                                {
+                                                    button_classes.push(class_name);
+                                                }
+                                            }
+                                            // Debug logging
+                                            web_sys::console::log_1(
+                                                &format!(
+                                                 "✓ Button found! rect: ({:.1}, {:.1}, {:.1}, {:.1})",
+                                                 rect.x(), rect.y(), rect.width(), rect.height()
+                                             )
+                                                    .into(),
+                                            );
+                                            web_sys::console::log_1(
+                                                &format!("✓ Button class: {:?}", button_classes)
+                                                    .into(),
+                                            );
+                                            web_sys::console::log_1(
+                                                &format!("Dropdown placement: {:?}", placement)
+                                                    .into(),
+                                            );
+                                            web_sys::console::log_1(
+                                                &format!(
+                                                    "Expected menu position: x={:.1}, y={:.1}",
+                                                    rect.x() + rect.width(),
+                                                    rect.y() - 8.0
+                                                )
+                                                .into(),
+                                            );
+                                            Some((rect.x(), rect.y(), rect.width(), rect.height()))
+                                        } else {
+                                            web_sys::console::log_1(
+                                                &"✗ Failed to dyn_ref button as HtmlElement".into(),
+                                            );
+                                            None
+                                        }
+                                    } else {
+                                        web_sys::console::log_1(
+                                            &"✗ No button found with closest()".into(),
+                                        );
+                                        None
+                                    }
+                                } else {
+                                    web_sys::console::log_1(
+                                        &"✗ Failed to dyn_ref target as Element".into(),
+                                    );
+                                    None
+                                }
+                            } else {
+                                web_sys::console::log_1(&"✗ Event target is None".into());
+                                None
+                            }
+                        } else {
+                            web_sys::console::log_1(&"✗ Event is not MouseEvent".into());
+                            None
+                        };
+
+                        web_sys::console::log_1(
+                            &format!("Final trigger_rect: {:?}", trigger_rect).into(),
+                        );
+
+                        (
+                            PortalPositionStrategy::TriggerBased { placement },
+                            trigger_rect,
+                        )
+                    }
+
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        (PortalPositionStrategy::TriggerBased { placement }, None)
+                    }
+                }
+                DropdownPositioning::Fixed => (PortalPositionStrategy::Fixed(50.0, 50.0), None),
+            };
+
+            let entry = PortalEntry::Dropdown {
+                id: id.clone(),
+                strategy,
+                mask_mode,
+                children: props.children.clone(),
+                trigger_rect: trigger_rect_opt.clone(),
+                close_on_select: props.close_on_select,
+            };
+
+            #[cfg(target_arch = "wasm32")]
+            {
+                web_sys::console::log_1(
+                    &format!(
+                        "Dropdown adding entry: id={}, strategy={:?}, trigger_rect={:?}",
+                        id, strategy, trigger_rect_opt
+                    )
+                    .into(),
+                );
+            }
+
+            portal.add_entry.call(entry);
+        } else {
+            let id = dropdown_id();
+            if !id.is_empty() {
+                portal.remove_entry.call(id);
             }
         }
-    };
 
-    let handle_trigger_click = move |_e: MouseEvent| {
-        let new_state = !open();
-        open.set(new_state);
         if let Some(handler) = props.on_open_change.as_ref() {
             handler.call(new_state);
         }
     };
 
-    let _handle_select = move |_key: String| {
-        if props.close_on_select {
-            open.set(false);
-            if let Some(handler) = props.on_open_change.as_ref() {
-                handler.call(false);
-            }
-        }
-    };
-
-    let position_style = match props.position {
-        DropdownPosition::BottomLeft => StyleStringBuilder::new()
-            .add(CssProperty::Top, "100%")
-            .add(CssProperty::Left, "0")
-            .build_clean(),
-        DropdownPosition::BottomRight => StyleStringBuilder::new()
-            .add(CssProperty::Top, "100%")
-            .add(CssProperty::Right, "0")
-            .build_clean(),
-        DropdownPosition::TopLeft => StyleStringBuilder::new()
-            .add(CssProperty::Bottom, "100%")
-            .add(CssProperty::Left, "0")
-            .build_clean(),
-        DropdownPosition::TopRight => StyleStringBuilder::new()
-            .add(CssProperty::Bottom, "100%")
-            .add(CssProperty::Right, "0")
-            .build_clean(),
-    };
-
-    let container_classes = ClassesBuilder::new()
+    let wrapper_classes = ClassesBuilder::new()
         .add(Position::Relative)
         .add(Display::InlineBlock)
         .add_raw(&props.class)
         .build();
 
-    let dropdown_classes = ClassesBuilder::new()
-        .add_raw("hi-dropdown")
-        .add_raw(&props.menu_class)
-        .build();
-
-    let dropdown_style = use_memo(move || {
-        if open() {
-            StyleStringBuilder::new()
-                .add(CssProperty::Display, "block")
-                .add_raw(&position_style)
-                .build_clean()
-        } else {
-            StyleStringBuilder::new()
-                .add(CssProperty::Display, "none")
-                .add_raw(&position_style)
-                .build_clean()
-        }
-    });
-
     rsx! {
         div {
-            class: "{container_classes}",
+            class: "{wrapper_classes}",
 
             div {
                 onclick: handle_trigger_click,
                 { props.trigger }
             }
-
-            if open() {
-                div {
-                    class: "{dropdown_classes}",
-                    style: "{dropdown_style}",
-                    onclick: |e: MouseEvent| {
-                        e.stop_propagation();
-                    },
-                    onmousedown: |e: MouseEvent| {
-                        e.stop_propagation();
-                    },
-
-                    { props.children }
-                }
-            }
         }
     }
 }
 
-/// Dropdown component's type wrapper for StyledComponent
 pub struct DropdownComponent;
 
 impl StyledComponent for DropdownComponent {
     fn styles() -> &'static str {
         r#"
+/* Dropdown Overlay - Completely transparent for non-blocking mode */
+.hi-dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  transition: opacity 0.2s ease;
+  pointer-events: auto;
+}
+
+/* Dimmed overlay - semi-transparent black */
+.hi-dropdown-overlay-dimmed {
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(8px);
+}
+
+/* Transparent overlay - fully invisible */
+.hi-dropdown-overlay-transparent {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+/* Dropdown content - card-style appearance */
 .hi-dropdown {
-  position: absolute;
   z-index: 1000;
   min-width: 160px;
+  max-width: 100%;
   background: var(--hi-background);
   border: 1px solid var(--hi-border);
   border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   padding: 4px 0;
-  animation: hi-dropdown-fade-in 0.2s ease-out;
+  pointer-events: auto;
+  animation: hi-dropdown-fade-in 0.15s ease-out;
 }
 
+/* Fade in animation */
 @keyframes hi-dropdown-fade-in {
   from {
     opacity: 0;
-    transform: translateY(-4px);
+    transform: scale(0.95) translateY(-2px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1) translateY(0);
   }
 }
 
+/* Dark mode styling */
 [data-theme="dark"] .hi-dropdown {
   background: var(--hi-surface);
   border-color: var(--hi-border);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
+/* Menu styling within dropdown */
 .hi-dropdown .hi-menu {
   background: transparent;
   border: none;
@@ -239,12 +375,15 @@ impl StyledComponent for DropdownComponent {
   padding: 0;
 }
 
+/* Menu item styling */
 .hi-dropdown .hi-menu-item {
   padding: 8px 12px;
   margin: 0;
   border-radius: 4px;
+  cursor: pointer;
 }
 
+/* Menu item hover */
 .hi-dropdown .hi-menu-item:hover {
   background: var(--hi-primary-50);
 }

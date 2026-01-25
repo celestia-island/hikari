@@ -18,7 +18,7 @@
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-color: var(--hi-input-bg, rgba(45, 45, 45, 0.85));
+  background-color: var(--hi-input-bg);
   border: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
   border-radius: vars.$hikari-radius-fui-md;
 
@@ -59,7 +59,7 @@
   &.hi-select-disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background-color: rgba(45, 45, 45, 0.5);
+    background-color: var(--hi-card-bg);
   }
 
   // Placeholder
@@ -100,7 +100,7 @@
 // ============================================
 
 .hi-select option {
-  background-color: rgba(45, 45, 45, 0.95);
+  background-color: var(--hi-card-bg);
   color: var(--hi-input-text, #F8FAFC);
   padding: 0.5rem 0.75rem;
 

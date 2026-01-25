@@ -5,13 +5,10 @@ use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
 use _components::{
-    basic::{Avatar, AvatarSize, AvatarVariant},
     layout::{Container, Section},
     Button, ButtonVariant, Comment,
 };
-use _palette::classes::{
-    ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor,
-};
+use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, TextColor};
 
 #[allow(non_snake_case)]
 pub fn ComponentsComment() -> Element {

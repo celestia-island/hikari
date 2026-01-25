@@ -159,7 +159,7 @@ def main():
     """Main entry point"""
     # Parse command line arguments
     force = False
-    if "--force" in sys.argv:
+    if "--force" in sys.argv or "--clean" in sys.argv:
         force = True
 
     return clean_port(3000, force=force)

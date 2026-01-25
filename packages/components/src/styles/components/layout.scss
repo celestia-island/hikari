@@ -62,7 +62,7 @@
   z-index: 100;
 
   // Simple background only
-  background: var(--hi-card-bg, rgba(45, 45, 45, 0.95));
+  background: var(--hi-card-bg);
 
   // Transition for scroll state
   // DISABLED - migrated to JS animation
@@ -71,7 +71,7 @@
 
   // Scrolled state (applied via JS)
   &.hi-layout-header-scrolled {
-    background: var(--hi-card-bg, rgba(45, 45, 45, 0.98));
+    background: var(--hi-card-bg);
     box-shadow:
       0 8px 16px rgba(23, 89, 168, 0.25),
       0 0 30px var(--hi-primary);
@@ -235,7 +235,6 @@
   // Footer in sidebar - positioned at bottom
   .hi-layout-aside-footer {
     flex-shrink: 0;
-    padding: vars.$hikari-spacing-md;
   }
 }
 
@@ -245,7 +244,7 @@
 
 .hi-layout-footer {
   // Simple background only
-  background: var(--hi-card-bg, rgba(45, 45, 45, 0.95));
+  background: var(--hi-card-bg);
 
   // Padding
   padding: vars.$hikari-spacing-lg;

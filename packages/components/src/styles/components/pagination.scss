@@ -41,7 +41,7 @@
   margin: 0.125rem;
 
   // Appearance
-  background: var(--hi-card-bg, rgba(45, 45, 45, 0.9));
+  background: var(--hi-card-bg);
   border: 1px solid var(--hi-color-border);
   border-radius: vars.$hikari-radius-fui-sm;
 
@@ -124,7 +124,7 @@
     opacity: 0.4;
     cursor: not-allowed;
     pointer-events: none;
-    background: var(--hi-card-bg, rgba(45, 45, 45, 0.5));
+    background: var(--hi-card-bg);
   }
 
   // Focus state
@@ -313,7 +313,7 @@
     padding: 0.375rem 0.75rem;
 
     // Appearance
-    background: var(--hi-card-bg, rgba(45, 45, 45, 0.9));
+    background: var(--hi-card-bg);
     border: 1px solid var(--hi-color-border);
     border-radius: vars.$hikari-radius-fui-sm;
 
@@ -349,7 +349,7 @@
 
     // Options
     option {
-      background: var(--hi-card-bg, rgba(45, 45, 45, 0.95));
+      background: var(--hi-card-bg);
       color: var(--hi-color-text-primary);
       padding: 0.5rem;
     }
@@ -413,7 +413,7 @@
     text-align: center;
 
     // Appearance
-    background: var(--hi-card-bg, rgba(45, 45, 45, 0.9));
+    background: var(--hi-card-bg);
     border: 1px solid var(--hi-color-border);
     border-radius: vars.$hikari-radius-fui-sm;
 
@@ -815,13 +815,13 @@
 
 @media (prefers-color-scheme: dark) {
   .hi-pagination-item {
-    background: var(--hi-card-bg, rgba(45, 45, 45, 0.95));
+    background: var(--hi-card-bg);
     border-color: var(--hi-white-10, rgba(255, 255, 255, 0.1));
   }
 
   .hi-pagination-size-select,
   .hi-pagination-jumper-input {
-    background: var(--hi-card-bg, rgba(45, 45, 45, 0.95));
+    background: var(--hi-card-bg);
     border-color: var(--hi-white-10, rgba(255, 255, 255, 0.1));
   }
 }

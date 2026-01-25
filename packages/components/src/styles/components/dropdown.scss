@@ -6,7 +6,34 @@
 // Hikari // Hikari // Hikari // Hikari // Hikari Dropdown Component - FUI Styling Component Component Component Component
 
 // ============================================
-// Dropdown Container
+// Dropdown Overlay
+// ============================================
+
+.hi-dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  transition: opacity 0.2s ease;
+  pointer-events: auto;
+}
+
+// Dimmed overlay - semi-transparent black background
+.hi-dropdown-overlay-dimmed {
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(8px);
+}
+
+// Transparent overlay - completely invisible
+.hi-dropdown-overlay-transparent {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+// ============================================
+// Dropdown Menu
 // ============================================
 
 .hi-dropdown-container {
@@ -17,6 +44,54 @@
 // ============================================
 // Dropdown Menu
 // ============================================
+
+.hi-dropdown {
+  position: relative;
+  z-index: 1001;
+
+  // Appearance
+  border-radius: vars.$hikari-radius-fui-md;
+  border: 1px solid var(--hi-color-border);
+
+  // Themed background (using CSS variables)
+  background: var(--hi-surface);
+  backdrop-filter: blur(4px);
+
+  // Elevated shadow with FUI glow
+  box-shadow:
+    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
+    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset,
+    0 0 12px var(--hi-primary);
+
+  // Transitions
+  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+
+  // Menu item hover styling
+  .hi-menu-item:hover {
+    background-color: rgba(139, 92, 246, 0.1);
+  }
+
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--hi-color-border);
+    border-radius: 3px;
+    transition: background vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--hi-color-primary);
+  }
+}
 
 .hi-dropdown-menu {
   position: absolute;
@@ -31,7 +106,7 @@
   border: 1px solid var(--hi-color-border);
 
   // Acrylic background effect (themed)
-  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+  background: var(--hi-surface);
   backdrop-filter: blur(4px);
 
   // Elevated shadow with FUI glow

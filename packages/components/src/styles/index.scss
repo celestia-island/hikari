@@ -378,19 +378,19 @@
   --hi-tertiary-bg: rgba(243, 244, 246, 0.5);
 
   // Component-specific Colors
-  --hi-button-bg: rgba(45, 45, 45, 0.85);
+  --hi-button-bg: var(--hi-surface);
   --hi-button-bg-hover: rgba(65, 65, 65, 0.9);
   --hi-button-text: #FFFFFF;
   --hi-button-border: rgba(255, 255, 255, 0.1);
 
-  --hi-input-bg: rgba(45, 45, 45, 0.85);
-  --hi-input-bg-focus: rgba(55, 55, 55, 0.9);
+  --hi-input-bg: var(--hi-surface);
+  --hi-input-bg-focus: rgba(65, 65, 65, 0.9);
   --hi-input-border: rgba(255, 255, 255, 0.1);
   --hi-input-border-focus: rgba(139, 92, 246, 0.7);
   --hi-input-text: #F8FAFC;
   --hi-input-placeholder: #94A3B8;
 
-  --hi-card-bg: rgba(45, 45, 45, 0.85);
+  --hi-card-bg: var(--hi-surface);
   --hi-card-border: rgba(255, 255, 255, 0.1);
 
   --hi-badge-bg-primary: rgba(59, 130, 246, 0.9);
@@ -541,6 +541,7 @@
 @import './components/image.scss';
 @import './components/badge.scss';
 @import './components/icon.scss';
+@import './components/arrow.scss';
 
 // ============================================
 // Feedback Components

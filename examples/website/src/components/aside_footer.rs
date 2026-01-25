@@ -1,11 +1,18 @@
 // website/src/components/aside_footer.rs
-// Aside footer with theme toggle and language switcher - simplified version
+// Aside footer with theme toggle and language switcher using Dropdown + Menu
 
 use dioxus::prelude::*;
 
 use crate::app::ThemeContext;
-use _components::basic::{Button, ButtonVariant};
-use _icons::MdiIcon;
+use _components::{
+    basic::{Arrow, ArrowDirection, Button, ButtonVariant, ButtonWidth, IconButton},
+    feedback::{
+        Dropdown, DropdownPosition, DropdownPositioning, GlowBlur, GlowColor, GlowIntensity,
+    },
+    navigation::{Menu, MenuItem},
+};
+use _icons::{Icon, MdiIcon};
+use _palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, JustifyContent, Shadow};
 
 /// Language type
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
@@ -17,8 +24,8 @@ pub enum Language {
 }
 
 impl Language {
-    /// Get current language label (localized)
-    pub fn current_label(&self) -> &'static str {
+    /// Get full language name
+    pub fn full_name(&self) -> &'static str {
         match self {
             Language::English => "English",
             Language::SimplifiedChinese => "简体中文",
@@ -32,6 +39,7 @@ impl Language {
 pub fn AsideFooter() -> Element {
     let mut theme_context = use_context::<ThemeContext>();
     let mut selected_language = use_signal(|| Language::English);
+    let mut is_dropdown_open = use_signal(|| false);
 
     // Compute current theme icon
     let current_icon = use_memo(move || {
@@ -43,25 +51,32 @@ pub fn AsideFooter() -> Element {
         }
     });
 
-    // Create a reactive key that changes when the theme/icon changes
     let icon_key = use_memo(move || format!("{:?}", current_icon.read()));
 
-    rsx! {
-        // Theme toggle and language switcher
-        div {
-            class: "hi-aside-footer-container",
+    let lang = *selected_language.read();
 
-            // Theme toggle button
-            Button {
+    // Container styles - centered layout
+    let container_classes = ClassesBuilder::new()
+        .add(Display::Flex)
+        .add(FlexDirection::Row)
+        .add(JustifyContent::Center)
+        .add(Gap::Gap2)
+        .add(Shadow::Md)
+        .build();
+
+    rsx! {
+        div {
+            class: "hi-aside-footer {container_classes}",
+
+            // Theme toggle button - IconButton (square)
+            IconButton {
                 key: "{icon_key}",
-                variant: ButtonVariant::Ghost,
-                class: "hi-aside-footer-button",
-                icon: rsx! {
-                    _icons::Icon {
-                        icon: *current_icon.read(),
-                        size: 20,
-                    }
-                },
+                icon: *current_icon.read(),
+                size: 36,
+                glow: true,
+                glow_blur: GlowBlur::Medium,
+                glow_color: GlowColor::Ghost,
+                glow_intensity: GlowIntensity::Subtle,
                 onclick: move |_| {
                     let current = theme_context.theme.read().clone();
                     let new_theme = if current.as_str() == "hikari" { "tairitsu" } else { "hikari" };
@@ -69,31 +84,66 @@ pub fn AsideFooter() -> Element {
                 }
             }
 
-            // Language switcher button
-            Button {
-                variant: ButtonVariant::Ghost,
-                class: "hi-aside-footer-button",
-                icon: rsx! {
-                    _icons::Icon {
-                        icon: MdiIcon::Information,
-                        size: 20,
+            // Language switcher using Dropdown + Menu - Button (space-between layout)
+            Dropdown {
+                positioning: DropdownPositioning::TriggerBased,
+                position: DropdownPosition::Top,
+                close_on_click_outside: true,
+                close_on_select: true,
+                on_open_change: move |open| is_dropdown_open.set(open),
+                trigger: rsx! {
+                    Button {
+                        variant: ButtonVariant::Borderless,
+                        width: ButtonWidth::Width140,
+                        glow: true,
+                        glow_blur: GlowBlur::Medium,
+                        glow_color: Some(GlowColor::Ghost),
+                        glow_intensity: GlowIntensity::Subtle,
+                        icon: rsx! {
+                            Icon {
+                                icon: MdiIcon::Translate,
+                                size: 14,
+                            }
+                        },
+                        suffix: rsx! {
+                            Arrow {
+                                direction: if *is_dropdown_open.read() {
+                                    ArrowDirection::Up
+                                } else {
+                                    ArrowDirection::Right
+                                },
+                                size: 14,
+                            }
+                        },
+                        span {
+                            class: "hi-aside-footer-lang-label",
+                            "{lang.full_name()}"
+                        }
                     }
                 },
-                onclick: move |_| {
-                    let current_lang = *selected_language.read();
-                    let new_lang = match current_lang {
-                        Language::English => Language::SimplifiedChinese,
-                        Language::SimplifiedChinese => Language::TraditionalChinese,
-                        Language::TraditionalChinese => Language::English,
-                    };
-                    selected_language.set(new_lang);
+                Menu {
+                    MenuItem {
+                        item_key: "en".to_string(),
+                        onclick: move |_| {
+                            selected_language.set(Language::English);
+                        },
+                        "English"
+                    }
+                    MenuItem {
+                        item_key: "zh".to_string(),
+                        onclick: move |_| {
+                            selected_language.set(Language::SimplifiedChinese);
+                        },
+                        "简体中文"
+                    }
+                    MenuItem {
+                        item_key: "tw".to_string(),
+                        onclick: move |_| {
+                            selected_language.set(Language::TraditionalChinese);
+                        },
+                        "繁體中文"
+                    }
                 }
-            }
-
-            // Current language indicator
-            div {
-                class: "hi-aside-footer-language",
-                "{selected_language().current_label()}"
             }
         }
     }

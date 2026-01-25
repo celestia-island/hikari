@@ -9,7 +9,11 @@
 // Base glow wrapper styles
 .hi-glow-wrapper {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+
+  // IMPORTANT: When wrapping square buttons (like IconButton), preserve square aspect ratio
+  // Do not add width/height constraints here - let to child element determine size
 
   // Use standard radius to match Button/Input
   border-radius: vars.$hikari-radius-fui-sm;

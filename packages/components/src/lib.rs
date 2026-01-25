@@ -107,6 +107,9 @@ pub mod scripts;
 // Utility modules (always available)
 pub mod utils;
 
+// Portal system (always available)
+pub mod portal;
+
 // Feature-gated modules
 #[cfg(any(
     feature = "basic",
@@ -233,6 +236,12 @@ pub use utils::positioning::{
 pub use theme_provider::{
     get_default_theme, get_registered_theme, prefers_dark_mode, register_theme, use_theme,
     ThemeContext, ThemePalette, ThemeProvider,
+};
+
+// Portal exports
+pub use portal::{
+    generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy,
+    PortalProvider, TriggerPlacement,
 };
 
 /// # Hierarchical Theme System

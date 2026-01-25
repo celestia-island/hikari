@@ -27,7 +27,7 @@
     -webkit-appearance: none;
     -moz-appearance: none;
 
-    background-color: var(--hi-input-bg, rgba(45, 45, 45, 0.85));
+    background-color: var(--hi-input-bg);
     border: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
     border-radius: vars.$hikari-radius-fui-md;
 
@@ -71,7 +71,7 @@
     &.hi-cascader-disabled {
         opacity: 0.5;
         cursor: not-allowed;
-        background-color: rgba(45, 45, 45, 0.5);
+        background-color: var(--hi-card-bg);
     }
 }
 

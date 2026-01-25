@@ -221,6 +221,9 @@ pub use generated::mdi_selected::{get, IconData, PathData, SvgElem};
 // Re-export generated data module
 pub use generated::data;
 
+// StyleStringBuilder for building styles
+pub use hikari_animation::style::{CssProperty, StyleStringBuilder};
+
 /// Icon reference - wrapper for MDI icon
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub struct IconRef(pub MdiIcon);
@@ -433,11 +436,18 @@ pub fn Icon(
     // Build SVG reactively using the macro
     let svg_content = use_memo(move || build_svg!(icon_data));
 
-    let size_style = format!("width: {size}px; height: {size}px;");
+    // Use StyleStringBuilder for type-safe style construction
     let full_style = if color.is_empty() {
-        size_style
+        StyleStringBuilder::new()
+            .add_px(CssProperty::Width, size)
+            .add_px(CssProperty::Height, size)
+            .build_clean()
     } else {
-        format!("{}color: {};", size_style, color)
+        StyleStringBuilder::new()
+            .add_px(CssProperty::Width, size)
+            .add_px(CssProperty::Height, size)
+            .add(CssProperty::Color, &color)
+            .build_clean()
     };
 
     let full_class = format!("hikari-icon {class}");

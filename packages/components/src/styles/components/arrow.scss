@@ -1,0 +1,56 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+
+// ============================================
+// Hikari Arrow Component - FUI Styling
+// ============================================
+
+.hi-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  // Rotation states
+  &.hi-arrow-right {
+    transform: rotate(0deg);
+  }
+
+  &.hi-arrow-left {
+    transform: rotate(180deg);
+  }
+
+  &.hi-arrow-up {
+    transform: rotate(-90deg);
+  }
+
+  &.hi-arrow-down {
+    transform: rotate(90deg);
+  }
+}
+
+// ============================================
+// Size Variants
+// ============================================
+
+.hi-arrow-14 {
+  width: vars.$hikari-icon-size-sm;
+  height: vars.$hikari-icon-size-sm;
+}
+
+.hi-arrow-16 {
+  width: vars.$hikari-icon-size-md;
+  height: vars.$hikari-icon-size-md;
+}
+
+.hi-arrow-20 {
+  width: vars.$hikari-icon-size-lg;
+  height: vars.$hikari-icon-size-lg;
+}
+
+// ============================================
+// Transitions
+// ============================================
+
+.hi-arrow {
+  transition: transform 0.2s ease-out;
+}

@@ -8,7 +8,6 @@ use _components::{
     basic::{Avatar, AvatarSize, AvatarVariant},
     layout::{Container, Section},
 };
-use _icons::{Icon, MdiIcon};
 use _palette::classes::{
     ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, PaddingX, TextColor,
 };

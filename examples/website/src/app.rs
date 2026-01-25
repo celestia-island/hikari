@@ -3,7 +3,7 @@
 
 use dioxus::prelude::*;
 
-use _components::{scripts::scrollbar_container, ThemeProvider};
+use _components::{scripts::scrollbar_container, PortalProvider, ThemeProvider};
 
 /// Main application routes
 #[derive(Clone, Debug, PartialEq, Routable)]
@@ -417,9 +417,11 @@ pub fn App() -> Element {
     });
 
     rsx! {
-        ThemeProvider {
-            palette: theme.read().clone(),
-            Router::<Route> {}
+        PortalProvider {
+            ThemeProvider {
+                palette: theme.read().clone(),
+                Router::<Route> {}
+            }
         }
     }
 }

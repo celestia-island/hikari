@@ -17,7 +17,7 @@
   bottom: 0;
   z-index: 1000;
 
-  // Acrylic background effect - themed
+  // Acrylic background effect - themed (opaque mode)
   background: rgba(0, 0, 0, vars.$hikari-acrylic-opacity);
   backdrop-filter: blur(8px);
 
@@ -40,6 +40,17 @@
   background: rgba(0, 0, 0, vars.$hikari-acrylic-opacity);
 }
 
+// Transparent mode (non-blocking modal, like toast)
+.hi-modal-overlay.hi-modal-overlay-transparent {
+  background: transparent;
+  backdrop-filter: none;
+  pointer-events: none;
+
+  .hi-modal {
+    pointer-events: auto;
+  }
+}
+
 // ============================================
 // Modal Container
 // ============================================
@@ -56,7 +67,7 @@
   border: 1px solid var(--hi-color-border);
 
   // Acrylic background effect
-  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+  background: var(--hi-surface);
   backdrop-filter: blur(4px);
 
   // Elevated shadow with FUI glow

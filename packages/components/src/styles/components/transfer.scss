@@ -27,7 +27,7 @@
     min-width: 200px;
     max-width: 280px;
     height: 300px;
-    background: var(--hi-card-bg, rgba(45, 45, 45, 0.9));
+    background: var(--hi-card-bg);
     border: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
     border-radius: vars.$hikari-radius-fui-md;
     overflow: hidden;
@@ -84,7 +84,7 @@
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-sm;
     color: var(--hi-input-text, #F8FAFC);
-    background: var(--hi-input-bg, rgba(45, 45, 45, 0.85));
+    background: var(--hi-input-bg);
     border: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
     border-radius: vars.$hikari-radius-fui-sm;
     transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;

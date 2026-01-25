@@ -18,7 +18,7 @@
   overflow: hidden;
 
   // Appearance
-  background: rgba(45, 45, 45, vars.$hikari-acrylic-opacity);
+  background: var(--hi-surface);
   backdrop-filter: blur(4px);
   border: 1px solid var(--hi-color-border);
   border-radius: vars.$hikari-radius-fui-md;
@@ -110,7 +110,7 @@
   z-index: 10;
 
   // Glass effect
-  background: var(--hi-card-bg, rgba(45, 45, 45, 0.95));
+  background: var(--hi-card-bg);
   backdrop-filter: blur(4px);
 
   // Border
@@ -413,7 +413,7 @@
     height: 1rem;
     border: 1px solid var(--hi-color-border);
     border-radius: 3px;
-    background: var(--hi-card-bg, rgba(45, 45, 45, 0.9));
+    background: var(--hi-card-bg);
     cursor: pointer;
     // DISABLED - migrated to JS animation
 

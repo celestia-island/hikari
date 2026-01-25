@@ -3,12 +3,13 @@
 
 use animation::style::{CssProperty, StyleStringBuilder};
 use dioxus::prelude::*;
-use icons::{Icon, MdiIcon};
-use palette::classes::{components::MenuClass, ClassesBuilder};
+use palette::classes::{ClassesBuilder, MenuClass};
 
 use crate::{
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    basic::{Arrow, ArrowDirection},
+    feedback::Glow,
     styled::StyledComponent,
+    GlowBlur, GlowColor, GlowIntensity,
 };
 
 /// Menu 组件的类型包装器（用于实现 StyledComponent）
@@ -291,15 +292,6 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let arrow_classes = ClassesBuilder::new()
-        .add_raw("hi-menu-item-arrow")
-        .add_raw(if *is_open.read() {
-            "hi-menu-submenu-arrow-open"
-        } else {
-            ""
-        })
-        .build();
-
     let list_classes = ClassesBuilder::new()
         .add_raw("hi-menu-submenu-list")
         .build();
@@ -319,25 +311,26 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
     });
 
     let title_content = rsx! {
-        div {
-            class: "hi-menu-submenu-title",
-            aria_disabled: props.disabled.to_string(),
-            onclick: move |_e| {
-                if !props.disabled {
-                    is_open.set(!is_open());
-                }
-            },
+       div {
+           class: "hi-menu-submenu-title",
+           aria_disabled: props.disabled.to_string(),
+           onclick: move |_e| {
+               if !props.disabled {
+                   is_open.set(!is_open());
+               }
+           },
 
-            div { class: "hi-menu-submenu-title-inner",
-                if let Some(icon) = props.icon {
-                    span { class: "hi-menu-item-icon", { icon } }
-                }
+           div { class: "hi-menu-submenu-title-inner",
+               if let Some(icon) = props.icon {
+                   span { class: "hi-menu-item-icon", { icon } }
+               }
 
                 span { class: "hi-menu-item-content", "{props.title}" }
 
-                span {
-                    class: "{arrow_classes}",
-                    Icon { icon: MdiIcon::ChevronRight }
+                Arrow {
+                   direction: if *is_open.read() { ArrowDirection::Down } else { ArrowDirection::Right },
+                   size: 14,
+                   class: if *is_open.read() { "hi-menu-submenu-arrow-open" } else { "" },
                 }
             }
         }

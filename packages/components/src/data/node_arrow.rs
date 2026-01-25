@@ -1,16 +1,17 @@
 // hi-components/src/data/node_arrow.rs
 // TreeNodeArrow component - expand/collapse arrow for tree nodes
 
+use crate::basic::{Arrow, ArrowDirection};
 use dioxus::prelude::*;
 
 /// Expand/collapse arrow for tree nodes
 #[derive(Clone, PartialEq, Props)]
 pub struct TreeNodeArrowProps {
-    /// Whether the node is expanded
+    /// Whether to node is expanded
     #[props(default)]
     pub expanded: bool,
 
-    /// Whether the node is disabled
+    /// Whether to node is disabled
     #[props(default)]
     pub disabled: bool,
 
@@ -18,7 +19,7 @@ pub struct TreeNodeArrowProps {
     #[props(default)]
     pub class: String,
 
-    /// Click handler (when clicking specifically on the arrow)
+    /// Click handler (when clicking specifically on arrow)
     #[props(default)]
     pub onclick: Option<EventHandler<MouseEvent>>,
 }
@@ -44,6 +45,13 @@ pub fn TreeNodeArrow(props: TreeNodeArrowProps) -> Element {
         );
         let handler = props.onclick;
 
+        // Determine arrow direction based on expanded state
+        let direction = if props.expanded {
+            ArrowDirection::Down
+        } else {
+            ArrowDirection::Right
+        };
+
         rsx! {
             span {
                 class: "{arrow_class}",
@@ -54,7 +62,10 @@ pub fn TreeNodeArrow(props: TreeNodeArrowProps) -> Element {
                         h.call(e);
                     }
                 },
-                "›"
+                Arrow {
+                    direction,
+                    size: 14,
+                }
             }
         }
     }

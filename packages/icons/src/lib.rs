@@ -219,7 +219,7 @@ pub use mdi_minimal::MdiIcon;
 pub use generated::mdi_selected::{get, IconData, PathData, SvgElem};
 
 // Re-export generated data module
-pub use generated::data;
+pub use generated::mdi_selected::data;
 
 // StyleStringBuilder for building styles
 pub use hikari_animation::style::{CssProperty, StyleStringBuilder};
@@ -420,7 +420,7 @@ pub fn Icon(
     #[props(default)] color: String,
 ) -> Element {
     // Get icon data from generated constants
-    let icon_data = match generated::get(&icon.name()) {
+    let icon_data = match get(&icon.name()) {
         Some(data) => data,
         None => {
             eprintln!("Icon not found: {}", icon.name());

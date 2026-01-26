@@ -1,11 +1,10 @@
 // website/src/components/sidebar.rs
-// Website-specific sidebar using hikari-components Menu component
+// Sidebar navigation with 3-level hierarchy using Menu component
 
 use dioxus::prelude::*;
-use dioxus_router::components::Link;
 
 use crate::app::Route;
-use _components::navigation::{Menu, MenuItem, MenuMode, SubMenu};
+use _components::navigation::{Menu, MenuItem, MenuItemHeight, MenuMode, SubMenu};
 use _icons::{Icon, MdiIcon};
 
 /// Sidebar navigation with 3-level hierarchy using Menu component
@@ -19,8 +18,7 @@ pub fn Sidebar(current_route: Route) -> Element {
     rsx! {
         Menu {
             mode: MenuMode::Vertical,
-            inline: true,
-            default_active: get_active_key(&current_route),
+            compact: true,
             on_select: move |_key| {},
 
             // Render each top-level category
@@ -42,6 +40,8 @@ fn SidebarCategorySection(category: &'static NavCategory, current_route: Route) 
             item_key: category.id.to_string(),
             title: category.title_en.to_string(),
             default_expanded: category.id == "components",
+            level: 1,
+            height: MenuItemHeight::Compact,
 
             // Render subcategories
             for subcategory in category.subcategories {
@@ -66,6 +66,8 @@ fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: R
                 item_key: subcategory.label_en.to_string(),
                 title: subcategory.label_en.to_string(),
                 default_expanded: true,
+                level: 2,
+                height: MenuItemHeight::Compact,
 
                 // Render nested items
                 for item in subcategory.items {
@@ -77,23 +79,35 @@ fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: R
             }
         }
     } else {
-        // No children - render as MenuItem with Link
+        // No children - render as MenuItem with onclick navigation
         let is_active = subcategory
             .route
             .as_ref()
             .map(|r| std::mem::discriminant(r) == std::mem::discriminant(&current_route))
             .unwrap_or(false);
 
+        let navigator = use_navigator();
+        let route_to_navigate = subcategory.route.clone();
+        let label = subcategory.label_en;
+
         rsx! {
             MenuItem {
-                item_key: subcategory.label_en.to_string(),
+                item_key: label.to_string(),
                 class: if is_active { "hi-menu-item-active" } else { "" },
+                level: 2,
+                height: MenuItemHeight::Compact,
                 glow: true,
+                onclick: {
+                    let navigator = navigator.clone();
+                    let route_to_navigate = route_to_navigate.clone();
+                    move |_| {
+                        if let Some(route) = route_to_navigate.as_ref() {
+                            navigator.push(route.clone());
+                        }
+                    }
+                },
 
-                Link {
-                    to: subcategory.route.clone().unwrap_or(Route::Home {}),
-                    "{subcategory.label_en}"
-                }
+                "{label}"
             }
         }
     }
@@ -103,21 +117,25 @@ fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: R
 #[component]
 fn SidebarNestedItem(item: &'static NavItem, current_route: Route) -> Element {
     let is_active = std::mem::discriminant(&item.route) == std::mem::discriminant(&current_route);
+    let navigator = use_navigator();
+    let route_to_navigate = item.route.clone();
 
     rsx! {
         MenuItem {
             item_key: format!("{:?}", std::mem::discriminant(&item.route)),
             class: if is_active { "hi-menu-item-active" } else { "" },
+            level: 3,
+            height: MenuItemHeight::Compact,
             glow: true,
-
-            Link {
-                to: item.route.clone(),
-                Icon {
-                    icon: item.icon,
-                    size:16
+            icon: rsx! { Icon { icon: item.icon, size:14 } },
+            onclick: {
+                let navigator = navigator.clone();
+                move |_| {
+                    navigator.push(route_to_navigate.clone());
                 }
-                span { "{item.label}" }
-            }
+            },
+
+            "{item.label}"
         }
     }
 }
@@ -365,8 +383,3 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
         }],
     },
 ];
-
-/// Get active key for Menu component based on current route
-fn get_active_key(route: &Route) -> String {
-    format!("{:?}", std::mem::discriminant(route))
-}

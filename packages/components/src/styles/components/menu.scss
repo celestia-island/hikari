@@ -16,6 +16,9 @@
   flex-direction: column;
   min-width: 200px;
 
+  // Gap between menu items (replaces margin-bottom on individual items)
+  gap: 0.5rem;
+
   // Appearance - subtle rounded corners
   border-radius: vars.$hikari-radius-fui-md;
   border: 1px solid var(--hi-color-border);
@@ -23,11 +26,6 @@
   // Acrylic background effect
   background: var(--hi-card-bg);
   backdrop-filter: blur(4px);
-
-  // Transitions - smooth GSAP-style easing
-  // DISABLED - migrated to JS animation
-
-  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Padding
   padding: 0.5rem;
@@ -64,8 +62,18 @@ aside .hi-menu {
 .hi-menu-item-wrapper {
   width: 100%;
   position: relative;
-  display: flex;
-  align-items: center;
+
+  // Ensure entire area is clickable and full width
+  .hi-menu-item {
+    pointer-events: auto;
+    width: 100%;
+    align-self: flex-start;
+  }
+
+  // Ensure child links are clickable
+  a, button {
+    pointer-events: auto;
+  }
 }
 
 // ============================================
@@ -103,203 +111,678 @@ aside .hi-menu {
   cursor: pointer;
   user-select: none;
 
-  // Transitions
-  // DISABLED - migrated to JS animation
-
-  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
-
   // Position for effects
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 
   // Inner content wrapper - applies padding here
   .hi-menu-item-inner {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 0.625rem 0.875rem;
     margin: 0;
     width: 100%;
     border-radius: vars.$hikari-radius-fui-sm;
     line-height: 1;
 
-    // Height - ensure clickable area
-    min-height: 2.5rem;
-  }
+    // Ensure entire inner area is clickable
+    pointer-events: auto;
 
-  // Icon - unified 16px
-  .hi-menu-item-icon {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    min-width: 16px;
-    min-height: 16px;
-    color: var(--hi-color-text-secondary);
-    // DISABLED - migrated to JS animation
-
-    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
-
-    svg {
-      width: 16px;
-      height: 16px;
-      display: block;
-    }
-  }
-
-  // Content - for text labels
-  .hi-menu-item-content {
-    flex: 1;
-    display: inline-flex;
-    align-items: center;
-  }
-
-  // Label
-  .hi-menu-item-label {
-    flex: 1;
-  }
-
-  // Shortcut
-  .hi-menu-item-shortcut {
-    margin-left: auto;
-    font-size: 0.75rem;
-    color: var(--hi-color-text-secondary);
-    opacity: 0.7;
-  }
-
-  // Submenu indicator
-  .hi-menu-item-arrow {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    min-width: 16px;
-    min-height: 16px;
-    color: var(--hi-color-text-secondary);
-    transition: transform 0.3s ease;
-    // DISABLED - migrated to JS animation
-
-    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
-
-    svg {
-      width: 16px;
-      height: 16px;
-      display: block;
-    }
-  }
-
-  // Icon
-  .hi-menu-item-icon {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.25rem;
-    height: 1.25rem;
-    min-width: 1.25rem;
-    min-height: 1.25rem;
-    color: var(--hi-color-text-secondary);
-    // DISABLED - migrated to JS animation
-
-    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
-
-    svg {
-      width: 1.25rem;
-      height: 1.25rem;
-    }
-  }
-
-  // Content - for text labels
-  .hi-menu-item-content {
-    flex: 1;
-    display: inline-flex;
-    align-items: center;
-  }
-
-  // Label
-  .hi-menu-item-label {
-    flex: 1;
-  }
-
-  // Shortcut
-  .hi-menu-item-shortcut {
-    margin-left: auto;
-    font-size: 0.75rem;
-    color: var(--hi-color-text-secondary);
-    opacity: 0.7;
-  }
-
-  // Submenu indicator
-  .hi-menu-item-arrow {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 0.875rem;
-    height: 0.875rem;
-    min-width: 0.875rem;
-    min-height: 0.875rem;
-    color: var(--hi-color-text-secondary);
-    // DISABLED - migrated to JS animation
-
-    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
-
-    svg {
-      width: 0.875rem;
-      height: 0.875rem;
-    }
-  }
-
-  // Hover state - no extra hover styles for ghost button style
-  // &:hover {
-  //   background: var(--hi-primary);
-  //   border-color: var(--hi-primary);
-  //
-  //   .hi-menu-item-icon {
-  //     filter: drop-shadow(0 0 4px var(--hi-primary));
-  //   }
-  //
-  //   .hi-menu-item-arrow {
-  //     transform: translateX(2px);
-  //   }
-  // }
-
-  // Active state (selected)
-  &.hi-menu-item-active {
-    background: linear-gradient(90deg, var(--hi-primary), var(--hi-primary));
-    border-color: var(--hi-primary);
-    color: var(--hi-color-text-primary);
-
-    .hi-menu-item-icon {
-      color: var(--hi-color-primary);
-      filter: drop-shadow(0 0 6px var(--hi-primary));
+    // Ensure all child elements are clickable
+    * {
+      pointer-events: auto;
     }
 
-    .hi-menu-item-arrow {
-      color: var(--hi-color-primary);
-    }
-  }
-
-  // Disabled state
-  &.hi-menu-item-disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    pointer-events: none;
-  }
-
-  // Focus state - no underline, only outline
-  &:focus-visible {
-    outline: none;
-    background: linear-gradient(90deg, var(--hi-primary), var(--hi-primary));
-    border-color: var(--hi-primary);
+    // Height, padding, and level-based padding are controlled by height classes:
+    // - .hi-menu-height-default (normal)
+    // - .hi-menu-height-compact (smaller)
+    // - .hi-menu-height-extra-compact (smallest)
   }
 }
 
-// Link element inside menu item - fill entire area
+// ============================================
+// Menu Item Height Variants
+// ============================================
+
+// Default height (normal)
+.hi-menu-height-default.hi-menu-item {
+  height: 2.5rem;
+}
+
+.hi-menu-height-default.hi-menu-submenu-title {
+  height: 2.5rem;
+}
+
+.hi-menu-height-default .hi-menu-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 2.5rem;
+  padding: 0.5rem 0;
+}
+
+.hi-menu-height-default .hi-menu-submenu-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 2.5rem;
+  padding: 0.5rem 0;
+}
+
+// Compact height
+.hi-menu-height-compact.hi-menu-item {
+  height: 2rem;
+}
+
+.hi-menu-height-compact.hi-menu-submenu-title {
+  height: 2rem;
+}
+
+.hi-menu-height-compact .hi-menu-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 2rem;
+  padding: 0.375rem 0;
+}
+
+.hi-menu-height-compact .hi-menu-submenu-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 2rem;
+  padding: 0.375rem 0;
+}
+
+// Reduce icon size in compact mode
+.hi-menu-height-compact .hi-menu-item-icon {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.hi-menu-height-compact .hi-menu-item-arrow {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+// Extra compact height (for very deep trees)
+.hi-menu-height-extra-compact.hi-menu-item {
+  height: 1.75rem;
+}
+
+.hi-menu-height-extra-compact.hi-menu-submenu-title {
+  height: 1.75rem;
+}
+
+.hi-menu-height-extra-compact .hi-menu-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 1.75rem;
+  padding: 0.25rem 0;
+}
+
+.hi-menu-height-extra-compact .hi-menu-submenu-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 1.75rem;
+  padding: 0.25rem 0;
+}
+
+// Reduce icon size in extra compact mode
+.hi-menu-height-extra-compact .hi-menu-item-icon {
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  min-height: 12px;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+.hi-menu-height-extra-compact .hi-menu-item-arrow {
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  min-height: 12px;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+.hi-menu-height-default.hi-menu-submenu-title {
+  height: 2.5rem;
+}
+
+.hi-menu-height-default .hi-menu-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 2.5rem;
+  padding: 0.5rem 0;
+}
+
+.hi-menu-height-default .hi-menu-submenu-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 2.5rem;
+  padding: 0.5rem 0;
+}
+
+// Compact height
+.hi-menu-height-compact.hi-menu-item {
+  height: 2rem;
+}
+
+.hi-menu-height-compact.hi-menu-submenu-title {
+  height: 2rem;
+}
+
+.hi-menu-height-compact .hi-menu-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 2rem;
+  padding: 0.375rem 0;
+}
+
+.hi-menu-height-compact .hi-menu-submenu-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 2rem;
+  padding: 0.375rem 0;
+}
+
+// Reduce icon size in compact mode
+.hi-menu-height-compact .hi-menu-item-icon {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.hi-menu-height-compact .hi-menu-item-arrow {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+// Extra compact height (for very deep trees)
+.hi-menu-height-extra-compact.hi-menu-item {
+  height: 1.75rem;
+}
+
+.hi-menu-height-extra-compact.hi-menu-submenu-title {
+  height: 1.75rem;
+}
+
+.hi-menu-height-extra-compact .hi-menu-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 1.75rem;
+  padding: 0.25rem 0;
+}
+
+.hi-menu-height-extra-compact .hi-menu-submenu-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 1.75rem;
+  padding: 0.25rem 0;
+}
+
+// Reduce icon size in extra compact mode
+.hi-menu-height-extra-compact .hi-menu-item-icon {
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  min-height: 12px;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+.hi-menu-height-extra-compact .hi-menu-item-arrow {
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  min-height: 12px;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+.hi-menu-height-default.hi-menu-submenu-title {
+  height: 2.5rem;
+}
+
+.hi-menu-height-default .hi-menu-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 2.5rem;
+  padding: 0.5rem 0;
+}
+
+.hi-menu-height-default .hi-menu-submenu-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 2.5rem;
+  padding: 0.5rem 0;
+}
+
+// Compact height
+.hi-menu-height-compact.hi-menu-item {
+  min-height: 2rem;
+  max-height: 2rem;
+}
+
+.hi-menu-height-compact.hi-menu-submenu-title {
+  min-height: 2rem;
+  max-height: 2rem;
+}
+
+.hi-menu-height-compact .hi-menu-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2rem;
+  max-height: 2rem;
+  padding: 0.5rem 0;
+}
+
+.hi-menu-height-compact .hi-menu-submenu-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2rem;
+  max-height: 2rem;
+  padding: 0.5rem 0;
+}
+
+// Reduce icon size in compact mode
+.hi-menu-height-compact .hi-menu-item-icon {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.hi-menu-height-compact .hi-menu-item-arrow {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.hi-menu-height-default.hi-menu-submenu-title {
+  min-height: 2.5rem;
+  max-height: 2.5rem;
+}
+
+.hi-menu-height-default .hi-menu-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2.5rem;
+  max-height: 2.5rem;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+  padding-right: 0.875rem;
+  padding-left: 0.875rem;
+}
+
+.hi-menu-height-default .hi-menu-submenu-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2.5rem;
+  max-height: 2.5rem;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+  padding-right: 0.875rem;
+  padding-left: 0.875rem;
+}
+
+.hi-menu-height-default.hi-menu-submenu-title {
+  min-height: 2.5rem;
+  max-height: 2.5rem;
+}
+
+.hi-menu-height-default .hi-menu-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2.5rem;
+  max-height: 2.5rem;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+  padding-left: 0.875rem;
+  padding-right: 0.875rem;
+}
+
+.hi-menu-height-default .hi-menu-submenu-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2.5rem;
+  max-height: 2.5rem;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+  padding-left: 0.875rem;
+  padding-right: 0.875rem;
+}
+
+// Compact height
+.hi-menu-height-compact.hi-menu-item {
+  min-height: 2rem;
+  max-height: 2rem;
+}
+
+.hi-menu-height-compact.hi-menu-submenu-title {
+  min-height: 2rem;
+  max-height: 2rem;
+}
+
+.hi-menu-height-compact .hi-menu-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2rem;
+  max-height: 2rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.hi-menu-height-compact .hi-menu-submenu-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2rem;
+  max-height: 2rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+// Reduce icon size in compact mode
+.hi-menu-height-compact .hi-menu-item-icon {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.hi-menu-height-compact .hi-menu-item-arrow {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.hi-menu-height-compact.hi-menu-submenu-title {
+  min-height: 2rem;
+  max-height: 2rem;
+}
+
+.hi-menu-height-compact .hi-menu-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2rem;
+  max-height: 2rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.hi-menu-height-compact .hi-menu-submenu-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2rem;
+  max-height: 2rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+// Reduce icon size in compact mode
+.hi-menu-height-compact .hi-menu-item-icon {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.hi-menu-height-compact .hi-menu-item-arrow {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+// Extra compact height (for very deep trees)
+.hi-menu-height-extra-compact.hi-menu-item {
+  min-height: 1.75rem;
+  max-height: 1.75rem;
+}
+
+.hi-menu-height-extra-compact.hi-menu-submenu-title {
+  min-height: 1.75rem;
+  max-height: 1.75rem;
+}
+
+.hi-menu-height-extra-compact .hi-menu-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 1.75rem;
+  max-height: 1.75rem;
+  padding: 0.4375rem 0;
+}
+
+.hi-menu-height-extra-compact .hi-menu-submenu-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 1.75rem;
+  max-height: 1.75rem;
+  padding: 0.4375rem 0;
+}
+
+// Reduce icon size in extra compact mode
+.hi-menu-height-extra-compact .hi-menu-item-icon {
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  min-height: 12px;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+.hi-menu-height-extra-compact .hi-menu-item-arrow {
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  min-height: 12px;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+// ============================================
+// Icon
+// ============================================
+
+.hi-menu-item-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  color: var(--hi-color-text-secondary);
+
+  svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+  }
+}
+
+// ============================================
+// Content
+// ============================================
+
+.hi-menu-item-content {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hi-menu-item-label {
+  flex: 1;
+}
+
+// ============================================
+// Shortcut
+// ============================================
+
+.hi-menu-item-shortcut {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--hi-color-text-secondary);
+  opacity: 0.7;
+}
+
+// ============================================
+// Arrow (Submenu indicator)
+// ============================================
+
+.hi-menu-item-arrow {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  color: var(--hi-color-text-secondary);
+  transition: transform 0.3s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+  }
+}
+
+// ============================================
+// Disabled state
+// ============================================
+
+.hi-menu-item-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+// ============================================
+// Focus state
+// ============================================
+
+.hi-menu-item:focus-visible {
+  outline: none;
+  background: linear-gradient(90deg, var(--hi-primary), var(--hi-primary));
+  border-color: var(--hi-primary);
+}
+
+// ============================================
+// Link element inside menu item
+// ============================================
+
 .hi-menu-item a {
   display: flex;
   align-items: center;
@@ -317,8 +800,6 @@ aside .hi-menu {
   text-decoration: none;
 }
 
-// ============================================
-// Menu Divider
 // ============================================
 // Menu Divider
 // ============================================
@@ -377,107 +858,44 @@ aside .hi-menu {
 
   // Title container - use flex for alignment
   .hi-menu-submenu-title {
-    // Layout - flex for proper alignment
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
 
-    // No padding/margin - applied in inner wrapper for full-width glow
     padding: 0;
     margin: 0;
     width: 100%;
 
-    // Typography - unified 14px
     font-family: vars.$hikari-font-family-sans;
     font-size: 14px;
     font-weight: 500;
     line-height: 1;
     color: var(--hi-color-text-primary);
 
-    // Appearance
     border-radius: 0;
     border: 1px solid transparent;
 
-    // Cursor
     cursor: pointer;
     user-select: none;
 
-    // Position
     position: relative;
 
-    // Height limit to constrain icons
-    min-height: auto;
-    max-height: auto;
-
-    // Ensure proper vertical alignment
-    vertical-align: middle;
-
-    // Inner content wrapper - applies padding here
+    // Inner content wrapper - padding and height controlled by height classes
     .hi-menu-submenu-title-inner {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
-      padding: 0.625rem 0.875rem;
       margin: 0.25rem 0;
       width: 100%;
       border-radius: vars.$hikari-radius-fui-sm;
       line-height: 1;
 
-      // Height limit to constrain icons
-      min-height: 2.5rem;
-      max-height: 2.5rem;
-    }
-
-    // Icon inside title
-    .hi-menu-item-icon {
-      flex-shrink: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 16px;
-      height: 16px;
-      min-width: 16px;
-      min-height: 16px;
-      color: var(--hi-color-text-secondary);
-
-      svg {
-        width: 16px;
-        height: 16px;
-        display: block;
-      }
-    }
-
-    // Content text - ensure flex behavior
-    .hi-menu-item-content {
-      flex: 1;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    // Arrow icon
-    .hi-menu-item-arrow {
-      flex-shrink: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 16px;
-      height: 16px;
-      min-width: 16px;
-      min-height: 16px;
-      color: var(--hi-color-text-secondary);
-      transition: transform 0.3s ease;
-
-      svg {
-        width: 16px;
-        height: 16px;
-        display: block;
-      }
-
-      &.hi-menu-submenu-arrow-open {
-        transform: rotate(90deg);
-      }
+      // Height, padding, and level-based padding are controlled by height classes:
+      // - .hi-menu-height-default (normal)
+      // - .hi-menu-height-compact (smaller)
+      // - .hi-menu-height-extra-compact (smallest)
     }
   }
 
@@ -499,7 +917,7 @@ aside .hi-menu {
         }
       }
     }
-   }
+  }
 }
 
 // ============================================
@@ -511,6 +929,9 @@ aside .hi-menu {
   list-style: none;
   margin: 0;
   padding: 0.5rem 0 0.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   border-left: 2px solid var(--hi-primary);
 
   // Sidebar-specific
@@ -529,9 +950,6 @@ aside .hi-menu {
   transform: rotate(90deg) !important;
 }
 
-// ============================================
-// Horizontal Menu
-// ============================================
 // ============================================
 // Horizontal Menu
 // ============================================
@@ -609,10 +1027,28 @@ aside .hi-menu {
 }
 
 // ============================================
-// Menu Item Variants
+// Menu Item Active State
 // ============================================
 
-// Danger item
+.hi-menu-list .hi-menu-item.hi-menu-item-active {
+  background: linear-gradient(90deg, var(--hi-primary), var(--hi-primary));
+  border-color: var(--hi-primary);
+  color: var(--hi-color-text-primary);
+
+  .hi-menu-item-icon {
+    color: var(--hi-color-primary);
+    filter: drop-shadow(0 0 6px var(--hi-primary));
+  }
+
+  .hi-menu-item-arrow {
+    color: var(--hi-color-primary);
+  }
+}
+
+// ============================================
+// Danger Item
+// ============================================
+
 .hi-menu-item-danger {
   &:hover {
     background: rgba(255, 76, 0, 0.1);
@@ -676,16 +1112,13 @@ aside .hi-menu {
 }
 
 // ============================================
-// Animations
+// Animations (migrated to JS animation)
 // ============================================
 
 // Slide-in animation for menu items
 .hi-menu-animate-in {
   .hi-menu-item {
     opacity: 0;
-    // DISABLED - migrated to JS animation
-
-    // animation: menu-item-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 
     @for $i from 1 through 20 {
       &:nth-child(#{$i}) {
@@ -694,26 +1127,11 @@ aside .hi-menu {
     }
   }
 }
-
-// DISABLED - migrated to JS animation
-// @keyframes menu-item-slide-in {
-//   from {
-//     opacity: 0;
-//     transform: translateX(-12px);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: translateX(0);
-//   }
-// }
 
 // Fade-in animation
 .hi-menu-fade-in {
   .hi-menu-item {
     opacity: 0;
-    // DISABLED - migrated to JS animation
-
-    // animation: menu-item-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
 
     @for $i from 1 through 20 {
       &:nth-child(#{$i}) {
@@ -723,38 +1141,10 @@ aside .hi-menu {
   }
 }
 
-// DISABLED - migrated to JS animation
-// @keyframes menu-item-fade-in {
-//   from {
-//     opacity: 0;
-//     transform: scale(0.95);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: scale(1);
-//   }
-// }
-
 // Pulse animation for active items
 .hi-menu-item-active.hi-menu-item-pulse {
   // DISABLED - migrated to JS animation
-
-  // animation: menu-item-pulse 2s ease-in-out infinite;
 }
-
-// DISABLED - migrated to JS animation
-// @keyframes menu-item-pulse {
-//   0%, 100% {
-//     box-shadow:
-//       0 0 12px var(--hi-primary),
-//       inset 0 0 8px var(--hi-primary);
-//   }
-//   50% {
-//     box-shadow:
-//       0 0 20px var(--hi-primary),
-//       inset 0 0 12px var(--hi-primary);
-//   }
-// }
 
 // Ripple effect on click
 .hi-menu-item-ripple {
@@ -769,8 +1159,6 @@ aside .hi-menu {
     border-radius: 50%;
     transform: translate(-50%, -50%);
     // DISABLED - migrated to JS animation
-
-    // transition: width 0.6s ease-out, height 0.6s ease-out;
   }
 
   &:active::after {

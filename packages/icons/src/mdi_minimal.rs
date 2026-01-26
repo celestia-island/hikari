@@ -48,6 +48,8 @@ pub enum MdiIcon {
     Information,
     Bell,
     BellOutline,
+    Mail,
+    Chat,
 
     // Feature Icons
     Palette,
@@ -113,6 +115,8 @@ impl std::fmt::Display for MdiIcon {
             MdiIcon::Information => write!(f, "information"),
             MdiIcon::Bell => write!(f, "bell"),
             MdiIcon::BellOutline => write!(f, "bell-outline"),
+            MdiIcon::Mail => write!(f, "mail"),
+            MdiIcon::Chat => write!(f, "chat"),
             MdiIcon::Palette => write!(f, "palette"),
             MdiIcon::AutoFix => write!(f, "auto-fix"),
             MdiIcon::LightningBolt => write!(f, "lightning-bolt"),
@@ -170,6 +174,8 @@ impl std::convert::From<&str> for MdiIcon {
             "information" => MdiIcon::Information,
             "bell" => MdiIcon::Bell,
             "bell-outline" => MdiIcon::BellOutline,
+            "mail" => MdiIcon::Mail,
+            "chat" => MdiIcon::Chat,
             "palette" => MdiIcon::Palette,
             "auto-fix" => MdiIcon::AutoFix,
             "lightning-bolt" => MdiIcon::LightningBolt,

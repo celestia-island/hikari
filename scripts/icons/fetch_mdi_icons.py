@@ -22,8 +22,7 @@ import sys
 import zipfile
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Set
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Set, Tuple, Any
 
 # Set UTF-8 encoding for stdout on Windows
 if sys.platform == "win32":
@@ -49,12 +48,18 @@ METADATA_FILE = BUILDER_OUTPUT_DIR / "mdi_metadata.json"
 STYLE_METADATA_FILE = BUILDER_OUTPUT_DIR / "mdi_styles.json"
 
 
-def download_and_extract_mdi() -> Dict[str, str]:
-    """Download and extract MDI SVG files from GitHub"""
+def download_and_extract_mdi() -> Tuple[Dict[str, Dict[str, str]], List[Any]]:
+    """Download and extract MDI SVG files from GitHub
+
+    Returns:
+        Tuple of (svg_map, metadata):
+          - svg_map: Dict[str, Dict[str, str]] mapping icon name to a dict with keys
+            'svg', 'style', and 'base_name'.
+          - metadata: List[Any] metadata entries from the repository's meta.json if available.
+    """
     print("Downloading Material Design Icons from GitHub...")
 
     zip_path = Path("/tmp/mdi.zip")
-    meta_path = Path("/tmp/mdi_meta.json")
 
     # Download the repository zip
     try:
@@ -77,7 +82,8 @@ def download_and_extract_mdi() -> Dict[str, str]:
 
     with zipfile.ZipFile(zip_path, 'r') as zf:
         # Find all SVG files
-        svg_files = [f for f in zf.namelist() if f.endswith('.svg') and '/svg/' in f]
+        svg_files = [f for f in zf.namelist() if f.endswith('.svg')
+                     and '/svg/' in f]
 
         print(f"  Found {len(svg_files)} SVG files")
 
@@ -129,7 +135,7 @@ def analyze_metadata(svg_map: Dict, metadata: List) -> Dict:
     print("\nAnalyzing icon metadata...")
 
     # Build style map
-    style_map = {
+    style_map: Dict[str, Dict[str, Any]] = {
         'filled': {},
         'outline': {},
         'both': {},
@@ -157,8 +163,10 @@ def analyze_metadata(svg_map: Dict, metadata: List) -> Dict:
     outline_only = outline_names - filled_names
     filled_only = filled_names - outline_names
 
-    style_map['both'] = {name: [f'{name}', f'{name}-outline'] for name in sorted(both)}
-    style_map['outline_only'] = {name: f'{name}-outline' for name in sorted(outline_only)}
+    style_map['both'] = {name: [f'{name}', f'{name}-outline']
+                         for name in sorted(both)}
+    style_map['outline_only'] = {
+        name: f'{name}-outline' for name in sorted(outline_only)}
     style_map['filled_only'] = {name: name for name in sorted(filled_only)}
 
     # Build tag map from metadata
@@ -207,7 +215,8 @@ def generate_icon_enum(svg_map: Dict) -> str:
     output.append("")
     output.append("/// Material Design Icon names")
     output.append("///")
-    output.append("/// This enum contains all icons from the Material Design Icons library.")
+    output.append(
+        "/// This enum contains all icons from the Material Design Icons library.")
     output.append("/// See: https://pictogrammers.com/library/mdi/")
     output.append("#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]")
     output.append("pub enum MdiIcon {")
@@ -224,13 +233,15 @@ def generate_icon_enum(svg_map: Dict) -> str:
     # Display implementation
     output.append("")
     output.append("impl std::fmt::Display for MdiIcon {")
-    output.append("    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {")
+    output.append(
+        "    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {")
     output.append("        match self {")
     output.append("            MdiIcon::Unknown => write!(f, \"unknown\"),")
 
     for icon in icons:
         variant_name = escape_enum_variant(icon)
-        output.append(f"            MdiIcon::{variant_name} => write!(f, \"{icon}\"),")
+        output.append(
+            f"            MdiIcon::{variant_name} => write!(f, \"{icon}\"),")
 
     output.append("        }")
     output.append("    }")
@@ -255,12 +266,14 @@ def generate_icon_enum(svg_map: Dict) -> str:
     output.append("")
     output.append("impl MdiIcon {")
     output.append("    /// Get the style variant of this icon")
-    output.append("    pub fn get_variant(&self, style: MdiStyle) -> Option<MdiIcon> {")
+    output.append(
+        "    pub fn get_variant(&self, style: MdiStyle) -> Option<MdiIcon> {")
     output.append("        let name = self.to_string();")
     output.append("        match style {")
     output.append("            MdiStyle::Filled => {")
     output.append("                if name.ends_with(\"-outline\") {")
-    output.append("                    Some(MdiIcon::from(name.replace(\"-outline\", \"\").as_str()))")
+    output.append(
+        "                    Some(MdiIcon::from(name.replace(\"-outline\", \"\").as_str()))")
     output.append("                } else {")
     output.append("                    Some(*self)")
     output.append("                }")
@@ -269,7 +282,8 @@ def generate_icon_enum(svg_map: Dict) -> str:
     output.append("                if name.ends_with(\"-outline\") {")
     output.append("                    Some(*self)")
     output.append("                } else {")
-    output.append("                    Some(MdiIcon::from(format!(\"{}-outline\", name).as_str()))")
+    output.append(
+        "                    Some(MdiIcon::from(format!(\"{}-outline\", name).as_str()))")
     output.append("                }")
     output.append("            }")
     output.append("        }")
@@ -329,9 +343,32 @@ def save_svg_files(svg_map: Dict) -> None:
     print(f"  OK: Saved {len(svg_map)} SVG files")
 
 
+def generate_mod_rs() -> str:
+    """Generate mod.rs for the generated module"""
+    output = []
+    output.append("// Re-export MDI icon generation modules")
+    output.append("// Auto-generated by scripts/icons/fetch_mdi_icons.py")
+    output.append(f"// Generated at: {datetime.now().isoformat()}")
+    output.append("")
+    output.append("pub mod mdi;")
+    output.append("pub mod mdi_selected;")
+    return "\n".join(output)
+
+
+def save_mod_rs() -> None:
+    """Save mod.rs file"""
+    print("\nGenerating mod.rs...")
+    mod_code = generate_mod_rs()
+    mod_file = ICONS_OUTPUT_DIR / "mod.rs"
+
+    with open(mod_file, 'w', encoding='utf-8') as f:
+        f.write(mod_code)
+    print(f"  OK: {mod_file}")
+
+
 def save_metadata(analysis: Dict, svg_map: Dict) -> None:
     """Save metadata JSON files"""
-    print(f"\nSaving metadata...")
+    print("\nSaving metadata...")
 
     # Full metadata
     metadata = {
@@ -393,6 +430,9 @@ def main():
         f.write(enum_code)
     print(f"  OK: {ICON_ENUM_FILE}")
 
+    # Save mod.rs
+    save_mod_rs()
+
     # Save SVG files
     save_svg_files(svg_map)
 
@@ -404,17 +444,19 @@ def main():
     print("SUCCESS!")
     print("=" * 60)
     print(f"Total icons: {len(svg_map)}")
-    print(f"\nGenerated files:")
+    print("\nGenerated files:")
     print(f"  - {ICON_ENUM_FILE}")
+    mod_file = ICONS_OUTPUT_DIR / "mod.rs"
+    print(f"  - {mod_file}")
     print(f"  - {MDI_SVGS_DIR}/")
     print(f"  - {METADATA_FILE}")
     print(f"  - {STYLE_METADATA_FILE}")
-    print(f"\nRust usage:")
-    print(f"  use hikari_icons::generated::mdi::MdiIcon;")
-    print(f"  use hikari_icons::generated::mdi::MdiStyle;")
-    print(f"  ")
-    print(f"  let icon = MdiIcon::MoonWaningCrescent;")
-    print(f"  let outline = icon.get_variant(MdiStyle::Outline);")
+    print("\nRust usage:")
+    print("  use hikari_icons::generated::mdi::MdiIcon;")
+    print("  use hikari_icons::generated::mdi::MdiStyle;")
+    print("  ")
+    print("  let icon = MdiIcon::MoonWaningCrescent;")
+    print("  let outline = icon.get_variant(MdiStyle::Outline);")
     print("=" * 60)
 
 

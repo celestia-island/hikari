@@ -23,6 +23,8 @@ fn main() {
             "magnify".into(),
             "cog".into(),
             "check".into(),
+            "gesture-tap".into(),
+            "translate".into(),
             // Media / Playback
             "play".into(),
             "pause".into(),
@@ -43,6 +45,13 @@ fn main() {
             "information".into(),
             "bell".into(),
             "bell-outline".into(),
+            "mail".into(),
+            "chat".into(),
+            // Feature Icons
+            "palette".into(),
+            "auto-fix".into(),
+            "lightning-bolt".into(),
+            "package".into(),
             // Layout
             "home".into(),
             "view-column".into(),

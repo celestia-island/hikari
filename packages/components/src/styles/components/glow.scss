@@ -24,7 +24,7 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    z-index: 1;
+    z-index: 0;
     border-radius: inherit;
     opacity: 0;
     transition: opacity 0.3s ease-in-out;
@@ -40,6 +40,13 @@
   // Show glow on hover (softer)
   &:hover::before {
     opacity: 0.2;
+  }
+
+  // Ensure children (links, buttons) are always clickable
+  > * {
+    pointer-events: auto;
+    position: relative;
+    z-index: 1;
   }
 }
 

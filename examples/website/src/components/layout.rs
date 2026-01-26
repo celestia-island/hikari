@@ -4,9 +4,12 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use super::{AsideFooter, sidebar::Sidebar};
+use super::{sidebar::Sidebar, AsideFooter};
 use crate::app::Route;
-use _components::{basic::Logo, layout::{Aside, Header, Layout as HikariLayout}};
+use _components::{
+    basic::Logo,
+    layout::{Aside, Header, Layout as HikariLayout},
+};
 use _palette::classes::{AlignItems, ClassesBuilder, Display, FontWeight, Gap, Padding};
 
 /// Layout component that wraps all pages with modern design
@@ -14,8 +17,11 @@ use _palette::classes::{AlignItems, ClassesBuilder, Display, FontWeight, Gap, Pa
 /// This is a website specific wrapper around hikari-components Layout
 /// that adds custom navigation, breadcrumbs, and routing logic.
 #[component]
-pub fn Layout(children: Element, current_route: Route) -> Element {
+pub fn Layout(children: Element, #[allow(unused_variables)] current_route: Route) -> Element {
     let mut is_drawer_open = use_signal(|| false);
+
+    // Get current route from router (ignore passed prop)
+    let current_route = use_route::<Route>();
 
     rsx! {
         HikariLayout {

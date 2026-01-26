@@ -109,7 +109,7 @@ pub fn ComponentsBadge() -> Element {
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
                             div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                 Row { gap: "md".to_string(),
-                                    Icon { icon: MdiIcon::Alert, size: 20 }
+                                    Icon { icon: MdiIcon::Check, size: 20 }
                                     Badge { variant: BadgeVariant::Success, "Completed" }
                                     span { "Task finished successfully" }
                                 }
@@ -172,7 +172,7 @@ pub fn ComponentsBadge() -> Element {
                                 Button {
                                     variant: ButtonVariant::Ghost,
                                     icon: rsx! {
-                                        Icon { icon: MdiIcon::Alert, size: 18 }
+                                        Icon { icon: MdiIcon::Close, size: 18 }
                                     },
                                 }
                             }
@@ -180,7 +180,7 @@ pub fn ComponentsBadge() -> Element {
                                 Button {
                                     variant: ButtonVariant::Ghost,
                                     icon: rsx! {
-                                        Icon { icon: MdiIcon::Alert, size: 18 }
+                                        Icon { icon: MdiIcon::Bell, size: 18 }
                                     },
                                 }
                             }
@@ -188,7 +188,7 @@ pub fn ComponentsBadge() -> Element {
                                 Button {
                                     variant: ButtonVariant::Ghost,
                                     icon: rsx! {
-                                        Icon { icon: MdiIcon::Alert, size: 18 }
+                                        Icon { icon: MdiIcon::Check, size: 18 }
                                     },
                                 }
                             }
@@ -219,7 +219,7 @@ pub fn ComponentsBadge() -> Element {
                                 Button {
                                     variant: ButtonVariant::Ghost,
                                     icon: rsx! {
-                                        Icon { icon: MdiIcon::Alert, size: 18 }
+                                        Icon { icon: MdiIcon::Close, size: 18 }
                                     },
                                 }
                             }
@@ -227,7 +227,7 @@ pub fn ComponentsBadge() -> Element {
                                 Button {
                                     variant: ButtonVariant::Ghost,
                                     icon: rsx! {
-                                        Icon { icon: MdiIcon::Alert, size: 18 }
+                                        Icon { icon: MdiIcon::Bell, size: 18 }
                                     },
                                 }
                             }
@@ -235,7 +235,7 @@ pub fn ComponentsBadge() -> Element {
                                 Button {
                                     variant: ButtonVariant::Ghost,
                                     icon: rsx! {
-                                        Icon { icon: MdiIcon::Alert, size: 18 }
+                                        Icon { icon: MdiIcon::Check, size: 18 }
                                     },
                                 }
                             }
@@ -260,19 +260,31 @@ pub fn ComponentsBadge() -> Element {
                                 variant: BadgeVariant::Danger,
                                 count: 5,
                                 max: Some(99),
-                                Button { variant: ButtonVariant::Primary, "Notifications" }
+                                Button {
+                                    variant: ButtonVariant::Primary,
+                                    icon: rsx! { Icon { icon: MdiIcon::Bell, size: 16 } },
+                                    "Notifications"
+                                }
                             }
                             Badge {
                                 variant: BadgeVariant::Primary,
                                 count: 100,
                                 max: Some(99),
-                                Button { variant: ButtonVariant::Primary, "Messages" }
+                                Button {
+                                    variant: ButtonVariant::Primary,
+                                    icon: rsx! { Icon { icon: MdiIcon::Mail, size: 16 } },
+                                    "Messages"
+                                }
                             }
                             Badge {
                                 variant: BadgeVariant::Success,
                                 count: 999,
                                 max: Some(99),
-                                Button { variant: ButtonVariant::Primary, "Updates" }
+                                Button {
+                                    variant: ButtonVariant::Primary,
+                                    icon: rsx! { Icon { icon: MdiIcon::Chat, size: 16 } },
+                                    "Updates"
+                                }
                             }
                         }
                     }
@@ -324,17 +336,30 @@ pub fn ComponentsBadge() -> Element {
                         }
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
                             div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
-                                div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::Gap, "16px").add(CssProperty::AlignItems, "center").build_clean(),
-                                    Badge {
-                                        variant: BadgeVariant::Primary,
-                                        count: 5,
-                                        Button {
-                                            variant: ButtonVariant::Primary,
+                                    div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::Gap, "16px").add(CssProperty::AlignItems, "center").build_clean(),
+                                        Badge {
+                                            variant: BadgeVariant::Primary,
+                                            count: 5,
+                                            Button {
+                                                variant: ButtonVariant::Primary,
+                                                icon: rsx! {
+                                                    Icon { icon: MdiIcon::Bell, size: 16 }
+                                                },
+                                                "Notifications"
+                                            }
+                                         }
+                                    div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::Gap, "16px").add(CssProperty::AlignItems, "center").build_clean(),
+                                        Badge {
+                                            variant: BadgeVariant::Success,
+                                            count: 3,
+                                            Button {
+                                            variant: ButtonVariant::Secondary,
                                             icon: rsx! {
-                                                Icon { icon: MdiIcon::Alert, size: 16 }
+                                                Icon { icon: MdiIcon::Mail, size: 16 }
                                             },
-                                            "Notifications"
+                                            "Messages"
                                         }
+                                         }
                                          }
                                     }
                                     div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::Gap, "16px").add(CssProperty::AlignItems, "center").build_clean(),
@@ -418,13 +443,13 @@ pub fn ComponentsBadge() -> Element {
                             Row { gap: "md".to_string(),
                                 Badge { variant: BadgeVariant::Success, dot: true,
                                     div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::AlignItems, "center").add(CssProperty::Gap, "8px").build_clean(),
-                                        Icon { icon: MdiIcon::Alert, size: 20 }
+                                        Icon { icon: MdiIcon::Account, size: 20 }
                                         span { "John Doe" }
                                     }
                                 }
                                 Badge { variant: BadgeVariant::Warning, dot: true,
                                     div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::AlignItems, "center").add(CssProperty::Gap, "8px").build_clean(),
-                                        Icon { icon: MdiIcon::Alert, size: 20 }
+                                        Icon { icon: MdiIcon::Account, size: 20 }
                                         span { "Jane Smith" }
                                     }
                                 }

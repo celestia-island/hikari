@@ -84,7 +84,7 @@ pub fn AsideFooter() -> Element {
                 }
             }
 
-            // Language switcher using Dropdown + Menu - Button (space-between layout)
+            // Language switcher using Dropdown + Menu - Square IconButton
             Dropdown {
                 positioning: DropdownPositioning::TriggerBased,
                 position: DropdownPosition::Top,
@@ -92,33 +92,14 @@ pub fn AsideFooter() -> Element {
                 close_on_select: true,
                 on_open_change: move |open| is_dropdown_open.set(open),
                 trigger: rsx! {
-                    Button {
-                        variant: ButtonVariant::Borderless,
-                        width: ButtonWidth::Width140,
+                    IconButton {
+                        icon: MdiIcon::Translate,
+                        size: 36,
                         glow: true,
                         glow_blur: GlowBlur::Medium,
-                        glow_color: Some(GlowColor::Ghost),
+                        glow_color: GlowColor::Ghost,
                         glow_intensity: GlowIntensity::Subtle,
-                        icon: rsx! {
-                            Icon {
-                                icon: MdiIcon::Translate,
-                                size: 14,
-                            }
-                        },
-                        suffix: rsx! {
-                            Arrow {
-                                direction: if *is_dropdown_open.read() {
-                                    ArrowDirection::Up
-                                } else {
-                                    ArrowDirection::Right
-                                },
-                                size: 14,
-                            }
-                        },
-                        span {
-                            class: "hi-aside-footer-lang-label",
-                            "{lang.full_name()}"
-                        }
+                        onclick: move |_| {},
                     }
                 },
                 Menu {

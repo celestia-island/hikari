@@ -20,6 +20,25 @@ pub enum MenuMode {
     Horizontal,
 }
 
+/// Menu item height variants
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum MenuItemHeight {
+    #[default]
+    Default,
+    Compact,
+    ExtraCompact,
+}
+
+impl MenuItemHeight {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            MenuItemHeight::Default => "hi-menu-height-default",
+            MenuItemHeight::Compact => "hi-menu-height-compact",
+            MenuItemHeight::ExtraCompact => "hi-menu-height-extra-compact",
+        }
+    }
+}
+
 #[derive(Clone, PartialEq, Props)]
 pub struct MenuItemProps {
     #[props(default)]
@@ -37,6 +56,12 @@ pub struct MenuItemProps {
     #[props(default)]
     pub class: String,
 
+    #[props(default)]
+    pub level: u32,
+
+    #[props(default)]
+    pub height: MenuItemHeight,
+
     pub onclick: Option<EventHandler<MouseEvent>>,
 
     #[props(default)]
@@ -51,6 +76,8 @@ impl Default for MenuItemProps {
             icon: None,
             children: VNode::empty(),
             class: String::default(),
+            level: 0,
+            height: MenuItemHeight::Default,
             onclick: None,
             glow: false,
         }
@@ -75,6 +102,12 @@ pub struct SubMenuProps {
     pub default_expanded: bool,
 
     #[props(default)]
+    pub level: u32,
+
+    #[props(default)]
+    pub height: MenuItemHeight,
+
+    #[props(default)]
     pub children: Element,
 
     #[props(default)]
@@ -89,6 +122,8 @@ impl Default for SubMenuProps {
             icon: None,
             disabled: false,
             default_expanded: false,
+            level: 0,
+            height: MenuItemHeight::Default,
             children: VNode::empty(),
             class: String::default(),
         }
@@ -107,6 +142,9 @@ pub struct MenuProps {
     pub mode: MenuMode,
 
     #[props(default)]
+    pub compact: bool,
+
+    #[props(default)]
     pub class: String,
 
     #[props(default)]
@@ -121,6 +159,7 @@ impl Default for MenuProps {
             default_active: String::default(),
             inline: false,
             mode: Default::default(),
+            compact: false,
             class: String::default(),
             children: VNode::empty(),
             on_select: None,
@@ -201,12 +240,19 @@ pub fn Menu(props: MenuProps) -> Element {
         MenuMode::Horizontal => "hi-menu-horizontal",
     };
 
-    let menu_classes = ClassesBuilder::new()
-        .add(MenuClass::Menu)
-        .add_if(MenuClass::Inline, || props.inline)
-        .add_raw(&mode_class)
-        .add_raw(&props.class)
-        .build();
+    let menu_classes = {
+        let mut builder = ClassesBuilder::new()
+            .add(MenuClass::Menu)
+            .add_if(MenuClass::Inline, || props.inline)
+            .add_raw(&mode_class)
+            .add_raw(&props.class);
+
+        if props.compact {
+            builder = builder.add_raw("hi-menu-compact");
+        }
+
+        builder.build()
+    };
 
     rsx! {
         ul {
@@ -236,6 +282,7 @@ impl StyledComponent for MenuComponent {
 pub fn MenuItem(props: MenuItemProps) -> Element {
     let item_classes = ClassesBuilder::new()
         .add_raw("hi-menu-item")
+        .add_raw(props.height.as_str())
         .add_raw(&props.class)
         .build();
 
@@ -247,6 +294,8 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
             aria_disabled: props.disabled.to_string(),
             onclick: move |e| {
                 if !props.disabled {
+                    // Only handle clicks on the li element itself, not on child links/buttons
+                    // This allows clicking on the entire padded area
                     if let Some(handler) = props.onclick.as_ref() {
                         handler.call(e);
                     }
@@ -264,9 +313,10 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
     };
 
     if props.glow {
+        let wrapper_class = format!("hi-menu-item-wrapper {}", props.height.as_str());
         rsx! {
             div {
-                class: "hi-menu-item-wrapper",
+                class: "{wrapper_class}",
                 style: "width: 100%; position: relative;",
                 Glow {
                     blur: GlowBlur::Medium,
@@ -307,12 +357,13 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
             .add(CssProperty::Display, display)
             .add(CssProperty::Opacity, opacity)
             .add(CssProperty::Transform, transform)
+            .add(CssProperty::PaddingLeft, "1em")
             .build()
     });
 
     let title_content = rsx! {
        div {
-           class: "hi-menu-submenu-title",
+           class: "{props.height.as_str()} hi-menu-submenu-title",
            aria_disabled: props.disabled.to_string(),
            onclick: move |_e| {
                if !props.disabled {
@@ -325,20 +376,21 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
                    span { class: "hi-menu-item-icon", { icon } }
                }
 
-                span { class: "hi-menu-item-content", "{props.title}" }
+                 span { class: "hi-menu-item-content", "{props.title}" }
 
-                Arrow {
-                   direction: if *is_open.read() { ArrowDirection::Down } else { ArrowDirection::Right },
-                   size: 14,
-                   class: if *is_open.read() { "hi-menu-submenu-arrow-open" } else { "" },
-                }
-            }
-        }
+                 Arrow {
+                    direction: if *is_open.read() { ArrowDirection::Down } else { ArrowDirection::Right },
+                    size: 14,
+                    class: if *is_open.read() { "hi-menu-submenu-arrow-open" } else { "" },
+                 }
+             }
+         }
     };
 
+    let wrapper_class = format!("hi-menu-item-wrapper {}", props.height.as_str());
     let title_with_glow = rsx! {
         div {
-            class: "hi-menu-item-wrapper",
+            class: "{wrapper_class}",
             style: "width: 100%; position: relative;",
             Glow {
                 blur: GlowBlur::Medium,

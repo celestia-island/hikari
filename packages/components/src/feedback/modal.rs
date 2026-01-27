@@ -1,11 +1,14 @@
 // hi-components/src/feedback/modal.rs
 // Modal component using Portal system
 
-use dioxus::prelude::*;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use crate::portal::{use_portal, PortalEntry};
-use crate::styled::StyledComponent;
+use dioxus::prelude::*;
+
+use crate::{
+    portal::{use_portal, PortalEntry},
+    styled::StyledComponent,
+};
 
 static MODAL_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 

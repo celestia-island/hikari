@@ -16,6 +16,7 @@ pub enum MdiIcon {
     ChevronUp,
     ChevronDown,
     ChevronDoubleRight,
+    ArrowRight,
     Menu,
     Close,
 
@@ -50,6 +51,7 @@ pub enum MdiIcon {
     BellOutline,
     Mail,
     Chat,
+    DotsHorizontal,
 
     // Feature Icons
     Palette,
@@ -91,6 +93,7 @@ impl std::fmt::Display for MdiIcon {
             MdiIcon::ChevronUp => write!(f, "chevron-up"),
             MdiIcon::ChevronDown => write!(f, "chevron-down"),
             MdiIcon::ChevronDoubleRight => write!(f, "chevron-double-right"),
+            MdiIcon::ArrowRight => write!(f, "arrow-right"),
             MdiIcon::Menu => write!(f, "menu"),
             MdiIcon::Close => write!(f, "close"),
             MdiIcon::Magnify => write!(f, "magnify"),
@@ -117,6 +120,7 @@ impl std::fmt::Display for MdiIcon {
             MdiIcon::BellOutline => write!(f, "bell-outline"),
             MdiIcon::Mail => write!(f, "mail"),
             MdiIcon::Chat => write!(f, "chat"),
+            MdiIcon::DotsHorizontal => write!(f, "dots-horizontal"),
             MdiIcon::Palette => write!(f, "palette"),
             MdiIcon::AutoFix => write!(f, "auto-fix"),
             MdiIcon::LightningBolt => write!(f, "lightning-bolt"),
@@ -150,6 +154,7 @@ impl std::convert::From<&str> for MdiIcon {
             "chevron-up" => MdiIcon::ChevronUp,
             "chevron-down" => MdiIcon::ChevronDown,
             "chevron-double-right" => MdiIcon::ChevronDoubleRight,
+            "arrow-right" => MdiIcon::ArrowRight,
             "menu" => MdiIcon::Menu,
             "close" => MdiIcon::Close,
             "magnify" => MdiIcon::Magnify,
@@ -176,6 +181,7 @@ impl std::convert::From<&str> for MdiIcon {
             "bell-outline" => MdiIcon::BellOutline,
             "mail" => MdiIcon::Mail,
             "chat" => MdiIcon::Chat,
+            "dots-horizontal" => MdiIcon::DotsHorizontal,
             "palette" => MdiIcon::Palette,
             "auto-fix" => MdiIcon::AutoFix,
             "lightning-bolt" => MdiIcon::LightningBolt,

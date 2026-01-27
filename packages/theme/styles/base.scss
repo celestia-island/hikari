@@ -229,6 +229,14 @@
     // 默认 glow 颜色（由 JS 注入实际值）
     --hi-glow-color: var(--hi-glow-white-50);
 
+    // Glow 按钮颜色（基于主题色，用于按钮 glow 效果）
+    --hi-glow-button-primary: rgba(255, 179, 167, 0.6);
+    --hi-glow-button-secondary: rgba(6, 82, 121, 0.6);
+    --hi-glow-button-success: rgba(92, 191, 145, 0.6);
+    --hi-glow-button-danger: rgba(232, 90, 79, 0.6);
+    --hi-glow-button-warning: rgba(238, 214, 119, 0.6);
+    --hi-glow-button-info: rgba(106, 190, 214, 0.6);
+
     // Glow 尺寸预设
     --hi-glow-sm: 0 0 8px var(--hi-glow-color);
     --hi-glow-md: 0 0 16px var(--hi-glow-color);
@@ -400,6 +408,14 @@ textarea {
         --hi-ghost-text: var(--hi-color-white-100);
         --hi-ghost-border: var(--hi-color-white-50);
         --hi-ghost-glow: var(--hi-glow-white-50);
+
+        // 暗黑模式按钮 glow 颜色（更高的不透明度以在深色背景上显示）
+        --hi-glow-button-primary: rgba(255, 179, 167, 0.8);
+        --hi-glow-button-secondary: rgba(6, 82, 121, 0.8);
+        --hi-glow-button-success: rgba(92, 191, 145, 0.8);
+        --hi-glow-button-danger: rgba(232, 90, 79, 0.8);
+        --hi-glow-button-warning: rgba(238, 214, 119, 0.8);
+        --hi-glow-button-info: rgba(106, 190, 214, 0.8);
     }
 }
 

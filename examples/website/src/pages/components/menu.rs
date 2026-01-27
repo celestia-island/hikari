@@ -4,14 +4,9 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{
-    layout::{Container, Section},
-    Menu, MenuItem, MenuMode, SubMenu,
-};
+use _components::{Menu, MenuItem, MenuMode, SubMenu, layout::{Container, Section}};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{
-    ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, PaddingLeft, TextColor,
-};
+use _palette::classes::{ ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, PaddingLeft, TextColor, };
 
 #[allow(non_snake_case)]
 pub fn ComponentsMenu() -> Element {

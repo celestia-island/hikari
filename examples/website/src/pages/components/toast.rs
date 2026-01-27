@@ -4,14 +4,8 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{
-    layout::{Container, Section},
-    Toast, ToastPosition, ToastVariant,
-};
-use _palette::classes::{
-    BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap,
-    MarginBottom, Padding, PaddingLeft, TextColor,
-};
+use _components::{Toast, ToastPosition, ToastVariant, layout::{Container, Section}};
+use _palette::classes::{ BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding, PaddingLeft, TextColor, };
 
 #[allow(non_snake_case)]
 pub fn ComponentsToast() -> Element {

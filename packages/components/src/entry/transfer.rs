@@ -2,10 +2,10 @@
 // Transfer component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use icons::{Icon, MdiIcon};
 use palette::classes::ClassesBuilder;
 
 use crate::styled::StyledComponent;
-use icons::{Icon, MdiIcon};
 
 /// Transfer component wrapper (for StyledComponent)
 pub struct TransferComponent;

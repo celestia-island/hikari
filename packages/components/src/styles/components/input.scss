@@ -242,6 +242,7 @@
 .hi-input-sm,
 .hi-input-wrapper-sm {
   font-size: vars.$hikari-font-size-xs;
+  height: 24px;
   padding: 0.25rem 0.5rem;
 
   .hi-input {
@@ -259,10 +260,17 @@
 .hi-input-md,
 .hi-input-wrapper-md {
   font-size: vars.$hikari-font-size-sm;
-  padding: 0.5rem 0.75rem;
+  height: 32px;
+  padding: 0.375rem 0.75rem;
 
   .hi-input {
-    padding: 0.5rem 0.75rem;
+    padding: 0.375rem 0.75rem;
+    font-size: vars.$hikari-font-size-sm;
+  }
+
+  .hi-input-prefix,
+  .hi-input-suffix {
+    padding: 0 0.5rem;
     font-size: vars.$hikari-font-size-sm;
   }
 }
@@ -270,10 +278,11 @@
 .hi-input-lg,
 .hi-input-wrapper-lg {
   font-size: vars.$hikari-font-size-base;
-  padding: 0.75rem 1rem;
+  height: 40px;
+  padding: 0.5rem 1rem;
 
   .hi-input {
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 1rem;
     font-size: vars.$hikari-font-size-base;
   }
 

@@ -4,14 +4,8 @@
 use dioxus::prelude::*;
 
 use crate::app::ThemeContext;
-use _components::{
-    basic::{Arrow, ArrowDirection, Button, ButtonVariant, ButtonWidth, IconButton},
-    feedback::{
-        Dropdown, DropdownPosition, DropdownPositioning, GlowBlur, GlowColor, GlowIntensity,
-    },
-    navigation::{Menu, MenuItem},
-};
-use _icons::{Icon, MdiIcon};
+use _components::{basic::{IconButton, IconButtonSize}, feedback::{Dropdown, DropdownPosition, DropdownPositioning, GlowBlur, GlowColor, GlowIntensity}, navigation::{Menu, MenuItem}};
+use _icons::MdiIcon;
 use _palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, JustifyContent, Shadow};
 
 /// Language type
@@ -72,7 +66,7 @@ pub fn AsideFooter() -> Element {
             IconButton {
                 key: "{icon_key}",
                 icon: *current_icon.read(),
-                size: 36,
+                size: IconButtonSize::Large,
                 glow: true,
                 glow_blur: GlowBlur::Medium,
                 glow_color: GlowColor::Ghost,
@@ -94,7 +88,7 @@ pub fn AsideFooter() -> Element {
                 trigger: rsx! {
                     IconButton {
                         icon: MdiIcon::Translate,
-                        size: 36,
+                        size: IconButtonSize::Large,
                         glow: true,
                         glow_blur: GlowBlur::Medium,
                         glow_color: GlowColor::Ghost,

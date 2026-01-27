@@ -1,8 +1,9 @@
 // hi-components/src/data/node_arrow.rs
 // TreeNodeArrow component - expand/collapse arrow for tree nodes
 
-use crate::basic::{Arrow, ArrowDirection};
 use dioxus::prelude::*;
+
+use crate::basic::{Arrow, ArrowDirection};
 
 /// Expand/collapse arrow for tree nodes
 #[derive(Clone, PartialEq, Props)]

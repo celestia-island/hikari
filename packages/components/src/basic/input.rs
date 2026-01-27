@@ -14,9 +14,9 @@ pub struct InputComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum InputSize {
+    Small,
     #[default]
     Medium,
-    Small,
     Large,
 }
 
@@ -36,6 +36,12 @@ pub struct InputProps {
 
     #[props(default)]
     pub value: Option<String>,
+
+    #[props(default)]
+    pub input_type: Option<String>,
+
+    #[props(default)]
+    pub autofocus: bool,
 
     #[props(default)]
     pub class: String,
@@ -82,6 +88,8 @@ impl Default for InputProps {
             readonly: false,
             placeholder: None,
             value: None,
+            input_type: None,
+            autofocus: false,
             class: String::default(),
             prefix_icon: None,
             suffix_icon: None,
@@ -140,6 +148,8 @@ pub fn Input(props: InputProps) -> Element {
 
             input {
                 class: "{input_classes}",
+                r#type: props.input_type.unwrap_or("text".to_string()),
+                autofocus: props.autofocus,
                 disabled: props.disabled,
                 readonly: props.readonly,
                 placeholder: props.placeholder,

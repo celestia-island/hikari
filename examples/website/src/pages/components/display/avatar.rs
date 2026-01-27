@@ -4,14 +4,9 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{
-    basic::{Avatar, AvatarSize, AvatarVariant},
-    layout::{Container, Section},
-};
+use _components::{basic::{Avatar, AvatarSize, AvatarVariant}, layout::{Container, Section}};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{
-    ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor,
-};
+use _palette::classes::{ ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor, };
 
 #[allow(non_snake_case)]
 pub fn ComponentsAvatar() -> Element {

@@ -4,10 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{
-    layout::{Container, Section},
-    Pagination,
-};
+use _components::{Pagination, layout::{Container, Section}};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, TextColor};
 
 #[allow(non_snake_case)]
@@ -48,16 +45,12 @@ pub fn ComponentsPagination() -> Element {
                                 " - Previous, next, and page numbers"
                             }
                             li {
-                                strong { "Jump to page" }
-                                " - Direct input to jump to a specific page"
+                                strong { "Quick jump" }
+                                " - Click on ellipsis (...) to open jump modal"
                             }
                             li {
                                 strong { "Page size changer" }
                                 " - Select items per page"
-                            }
-                            li {
-                                strong { "Total items info" }
-                                " - Show range and total count"
                             }
                         }
                     }

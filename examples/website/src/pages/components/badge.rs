@@ -5,14 +5,9 @@ use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
 use _animation::style::{CssProperty, StyleStringBuilder};
-use _components::{
-    layout::{Container, Row, Section},
-    Badge, BadgeVariant, Button, ButtonVariant,
-};
+use _components::{Badge, BadgeVariant, Button, ButtonVariant, layout::{Container, Row, Section}};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{
-    ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, PaddingLeft, TextColor,
-};
+use _palette::classes::{ ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, PaddingLeft, TextColor, };
 
 #[allow(non_snake_case)]
 pub fn ComponentsBadge() -> Element {
@@ -119,7 +114,7 @@ pub fn ComponentsBadge() -> Element {
                                     span { "Action required" }
                                 }
                                 Row { gap: "md".to_string(),
-                                    Icon { icon: MdiIcon::Alert, size: 20 }
+                                    Icon { icon: MdiIcon::Close, size: 20 }
                                     Badge { variant: BadgeVariant::Danger, "Error" }
                                     span { "Operation failed" }
                                 }
@@ -369,7 +364,7 @@ pub fn ComponentsBadge() -> Element {
                                             Button {
                                             variant: ButtonVariant::Secondary,
                                             icon: rsx! {
-                                                Icon { icon: MdiIcon::Alert, size: 16 }
+                                                Icon { icon: MdiIcon::Information, size: 16 }
                                             },
                                             "Messages"
                                         }

@@ -10,6 +10,14 @@ use crate::{
     styled::StyledComponent,
 };
 
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum IconButtonSize {
+    Small,
+    Medium,
+    #[default]
+    Large,
+}
+
 /// IconButton component
 ///
 /// A square button containing only an icon, with optional glow effects.
@@ -19,9 +27,9 @@ pub struct IconButtonProps {
     /// Icon to display
     icon: MdiIcon,
 
-    /// Icon size in pixels (default: 16)
-    #[props(default = 16)]
-    size: u32,
+    /// Button size (default: Large = 36px)
+    #[props(default)]
+    size: IconButtonSize,
 
     /// Whether to enable glow effect (default: true)
     #[props(default = true)]
@@ -59,11 +67,9 @@ pub fn IconButton(props: IconButtonProps) -> Element {
 
     // Determine size class based on button size
     let size_class = match props.size {
-        36 => Some(ButtonClass::IconButtonSize36),
-        32 => Some(ButtonClass::IconButtonSize32),
-        24 => Some(ButtonClass::IconButtonSize24),
-        16 => Some(ButtonClass::IconButtonSize16),
-        _ => None,
+        IconButtonSize::Small => Some(ButtonClass::IconButtonSize24),
+        IconButtonSize::Medium => Some(ButtonClass::IconButtonSize32),
+        IconButtonSize::Large => Some(ButtonClass::IconButtonSize40),
     };
 
     // Build button classes

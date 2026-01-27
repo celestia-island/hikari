@@ -24,10 +24,8 @@
 
 use dioxus::prelude::*;
 use palette::classes::ClassesBuilder;
-
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::closure::Closure;
-
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 

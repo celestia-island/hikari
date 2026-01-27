@@ -4,10 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{
-    data::{Tree, TreeNodeData},
-    layout::{Container, Section},
-};
+use _components::{data::{Tree, TreeNodeData}, layout::{Container, Section}};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, TextColor};
 
 #[allow(non_snake_case)]

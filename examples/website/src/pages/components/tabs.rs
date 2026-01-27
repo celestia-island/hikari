@@ -4,15 +4,9 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{
-    layout::{Container, Section},
-    TabPane, TabPosition, Tabs,
-};
+use _components::{TabPane, TabPosition, Tabs, layout::{Container, Section}};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{
-    BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding,
-    PaddingLeft, TextColor,
-};
+use _palette::classes::{ BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, PaddingLeft, TextColor, };
 
 #[allow(non_snake_case)]
 pub fn ComponentsTabs() -> Element {
@@ -128,13 +122,16 @@ pub fn ComponentsTabs() -> Element {
                         p { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                             "Enhanced tabs with visual icons"
                         }
+
+
+
                         div { class: ClassesBuilder::default().add(Padding::P6).build(),
                             Tabs { default_active: "1".to_string(),
                                 TabPane {
                                     item_key: "1".to_string(),
                                     tab: "Home".to_string(),
                                     icon: rsx! {
-                                        Icon { icon: MdiIcon::Alert, size: 16 }
+                                        Icon { icon: MdiIcon::Home, size: 16 }
                                     },
                                     div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Home page content"
@@ -144,7 +141,7 @@ pub fn ComponentsTabs() -> Element {
                                     item_key: "2".to_string(),
                                     tab: "Profile".to_string(),
                                     icon: rsx! {
-                                        Icon { icon: MdiIcon::Alert, size: 16 }
+                                        Icon { icon: MdiIcon::Account, size: 16 }
                                     },
                                     div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "User profile information"
@@ -154,7 +151,7 @@ pub fn ComponentsTabs() -> Element {
                                     item_key: "3".to_string(),
                                     tab: "Settings".to_string(),
                                     icon: rsx! {
-                                        Icon { icon: MdiIcon::Alert, size: 16 }
+                                        Icon { icon: MdiIcon::Cog, size: 16 }
                                     },
                                     div { class: ClassesBuilder::default().add(TextColor::Secondary).build(),
                                         "Application settings"
@@ -532,7 +529,7 @@ pub fn ComponentsTabs() -> Element {
         item_key: "1".to_string(),
         tab: "Home".to_string(),
         icon: rsx! {{
-            Icon {{ icon: MdiIcon::Alert, size: 16 }}
+            Icon {{ icon: MdiIcon::Home, size: 16 }}
         }},
         "Home content"
     }}

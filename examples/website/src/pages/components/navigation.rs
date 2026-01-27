@@ -4,9 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::components::Layout;
-use _palette::classes::{
-    ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor,
-};
+use _palette::classes::{ ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor, };
 
 /// Navigation Components Overview
 #[allow(non_snake_case)]

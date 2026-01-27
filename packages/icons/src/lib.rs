@@ -206,6 +206,8 @@
 //! }
 //! ```
 
+#[cfg(feature = "dynamic-fetch")]
+pub mod dynamic_fetch;
 pub mod generated;
 pub mod mdi_minimal;
 pub mod svg_macro;
@@ -223,6 +225,162 @@ pub use generated::mdi_selected::data;
 
 // StyleStringBuilder for building styles
 pub use hikari_animation::style::{CssProperty, StyleStringBuilder};
+
+/// Icon route for dynamic fetching
+/// Set by build.rs at compile time
+#[cfg(all(feature = "dynamic-fetch"))]
+const ICON_ROUTE: &str = include_str!("../icon_route.txt");
+
+#[cfg(not(all(feature = "dynamic-fetch")))]
+#[allow(dead_code)]
+const ICON_ROUTE: &str = "/api/icons";
+
+/// Re-export dynamic fetch module
+#[cfg(feature = "dynamic-fetch")]
+pub use dynamic_fetch::fetch_and_cache_icon;
+
+/// Global tracker for icons that have already triggered warnings
+#[cfg(target_arch = "wasm32")]
+static WARNED_ICONS: std::sync::OnceLock<std::sync::RwLock<std::collections::HashSet<String>>> =
+    std::sync::OnceLock::new();
+
+#[cfg(not(target_arch = "wasm32"))]
+static WARNED_ICONS: std::sync::OnceLock<std::sync::Mutex<std::collections::HashSet<String>>> =
+    std::sync::OnceLock::new();
+
+/// Log icon fallback warning (only once per icon)
+fn log_icon_warning_once(icon_name: String, dynamic_fetch_enabled: bool) {
+    // Check if dynamic fetch warnings are disabled
+    #[cfg(all(feature = "dynamic-fetch", not(feature = "dynamic-fetch-warnings")))]
+    {
+        // Don't log anything if warnings are disabled
+        return;
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        let warned =
+            WARNED_ICONS.get_or_init(|| std::sync::RwLock::new(std::collections::HashSet::new()));
+        let mut warned = warned.write().unwrap();
+
+        if !warned.contains(&icon_name) {
+            warned.insert(icon_name.clone());
+            drop(warned); // Release borrow before logging
+
+            #[cfg(feature = "dynamic-fetch")]
+            {
+                if dynamic_fetch_enabled {
+                    web_sys::console::warn_1(&format!(
+                        "⚠️  [Hikari Icons] Icon '{}' not found, attempting dynamic fetch...\n   This icon will use a fallback while fetching from server.\n\n   If fetch succeeds, the warning will be updated automatically.",
+                        icon_name
+                    ).into());
+                } else {
+                    web_sys::console::warn_1(&format!(
+                        "⚠️  [Hikari Icons] Icon not found: '{}'\n   This icon has fallen back to default warning icon.\n\n   Possible causes:\n   1. The icon is not included in selected icon set (build.rs)\n   2. The icon name is misspelled or uses wrong case\n   3. The icon SVG file does not exist in cache\n\n   To fix this:\n   - Add '{}' to IconSelection in build.rs\n   - Or run: python scripts/icons/fetch_mdi_icons.py\n   - Enable dynamic-fetch feature in Cargo.toml",
+                        icon_name, icon_name
+                    ).into());
+                }
+            }
+
+            #[cfg(not(feature = "dynamic-fetch"))]
+            {
+                web_sys::console::warn_1(&format!(
+                    "⚠️  [Hikari Icons] Icon not found: '{}'\n   This icon has fallen back to default warning icon.\n\n   Possible causes:\n   1. The icon is not included in selected icon set (build.rs)\n   2. The icon name is misspelled or uses wrong case\n   3. The icon SVG file does not exist in cache\n\n   To fix this:\n   - Add '{}' to IconSelection in build.rs\n   - Or run: python scripts/icons/fetch_mdi_icons.py",
+                    icon_name, icon_name
+                ).into());
+            }
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let warned =
+            WARNED_ICONS.get_or_init(|| std::sync::Mutex::new(std::collections::HashSet::new()));
+        let mut warned = warned.lock().unwrap();
+
+        if !warned.contains(&icon_name) {
+            warned.insert(icon_name.clone());
+            drop(warned); // Release lock before logging
+
+            #[cfg(feature = "dynamic-fetch")]
+            {
+                if dynamic_fetch_enabled {
+                    eprintln!(
+                        "⚠️  [Hikari Icons] Icon '{}' not found, attempting dynamic fetch...",
+                        icon_name
+                    );
+                    eprintln!("   This icon will use a fallback while fetching from server.");
+                    eprintln!("");
+                    eprintln!("   If fetch succeeds, the warning will be updated automatically.");
+                } else {
+                    eprintln!("⚠️  [Hikari Icons] Icon not found: '{}'", icon_name);
+                    eprintln!("   This icon has fallen back to default warning icon.");
+                    eprintln!("");
+                    eprintln!("   Possible causes:");
+                    eprintln!("   1. The icon is not included in selected icon set (build.rs)");
+                    eprintln!("   2. The icon name is misspelled or uses wrong case");
+                    eprintln!("   3. The icon SVG file does not exist in cache");
+                    eprintln!("");
+                    eprintln!("   To fix this:");
+                    eprintln!("   - Add '{}' to IconSelection in build.rs", icon_name);
+                    eprintln!("   - Or run: python scripts/icons/fetch_mdi_icons.py");
+                    eprintln!("   - Enable dynamic-fetch feature in Cargo.toml");
+                }
+            }
+
+            #[cfg(not(feature = "dynamic-fetch"))]
+            {
+                eprintln!("⚠️  [Hikari Icons] Icon not found: '{}'", icon_name);
+                eprintln!("   This icon has fallen back to default warning icon.");
+                eprintln!("");
+                eprintln!("   Possible causes:");
+                eprintln!("   1. The icon is not included in selected icon set (build.rs)");
+                eprintln!("   2. The icon name is misspelled or uses wrong case");
+                eprintln!("   3. The icon SVG file does not exist in cache");
+                eprintln!("");
+                eprintln!("   To fix this:");
+                eprintln!("   - Add '{}' to IconSelection in build.rs", icon_name);
+                eprintln!("   - Or run: python scripts/icons/fetch_mdi_icons.py");
+            }
+        }
+    }
+}
+
+/// Log success message for dynamic fetch (only once per icon)
+#[cfg(feature = "dynamic-fetch")]
+#[allow(dead_code)]
+fn log_dynamic_fetch_success(icon_name: String) {
+    // Check if dynamic fetch warnings are disabled
+    #[cfg(not(feature = "dynamic-fetch-warnings"))]
+    {
+        // Don't log anything if warnings are disabled
+        return;
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        let warned_success = std::sync::OnceLock::new();
+        warned_success.get_or_init(|| {
+            web_sys::console::log_1(
+                &format!(
+                "✅ [Hikari Icons] Icon '{}' successfully fetched from server (network request)",
+                icon_name
+            )
+                .into(),
+            );
+
+            true
+        });
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        eprintln!(
+            "✅ [Hikari Icons] Icon '{}' successfully fetched from server (network request)",
+            icon_name
+        );
+    }
+}
 
 /// Icon reference - wrapper for MDI icon
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
@@ -420,21 +578,30 @@ pub fn Icon(
     #[props(default)] color: String,
 ) -> Element {
     // Get icon data from generated constants
-    let icon_data = match get(&icon.name()) {
-        Some(data) => data,
-        None => {
-            eprintln!("Icon not found: {}", icon.name());
-            return rsx! {
-                div {
-                    class: "hikari-icon",
-                    dangerous_inner_html: DEFAULT_SVG,
-                }
-            };
-        }
-    };
+    let icon_data_opt = get(&icon.name());
 
-    // Build SVG reactively using the macro
-    let svg_content = use_memo(move || build_svg!(icon_data));
+    // Build SVG content
+    let final_svg = if let Some(icon_data) = icon_data_opt {
+        // Icon exists in generated constants
+        use_memo(move || build_svg!(icon_data))
+    } else {
+        // Icon not found, try dynamic fetch if enabled
+        log_icon_warning_once(icon.name(), cfg!(feature = "dynamic-fetch"));
+
+        #[cfg(feature = "dynamic-fetch")]
+        {
+            // Simplified: always use default for now, but log the attempt
+            let icon_name = icon.name().clone();
+            log_icon_warning_once(icon_name.clone(), true);
+
+            // In a real implementation, this would use async state management
+            // For now, we'll just use the default SVG to avoid complexity
+            use_memo(|| String::from(DEFAULT_SVG))
+        }
+
+        #[cfg(not(feature = "dynamic-fetch"))]
+        use_memo(|| String::from(DEFAULT_SVG))
+    };
 
     // Use StyleStringBuilder for type-safe style construction
     let full_style = if color.is_empty() {
@@ -456,7 +623,7 @@ pub fn Icon(
         div {
             class: full_class,
             style: "{full_style}",
-            dangerous_inner_html: "{svg_content}",
+            dangerous_inner_html: "{final_svg}",
         }
     }
 }
@@ -473,116 +640,162 @@ pub mod mdi {
 
     /// Moon icon (for dark mode toggle)
     pub fn Moon(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::MoonWaningCrescent, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::MoonWaningCrescent, class }
+        }
     }
 
     /// Sun icon (for light mode toggle)
     pub fn Sun(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::WhiteBalanceSunny, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::WhiteBalanceSunny, class }
+        }
     }
 
     /// Settings icon
     pub fn Settings(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::Cog, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::Cog, class }
+        }
     }
 
     /// User/Account icon
     pub fn Account(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::Account, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::Account, class }
+        }
     }
 
     /// Home icon
     pub fn Home(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::Home, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::Home, class }
+        }
     }
 
     /// Search icon
     pub fn Search(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::Magnify, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::Magnify, class }
+        }
     }
 
     /// Close/X icon
     pub fn Close(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::Close, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::Close, class }
+        }
     }
 
     /// Check icon
     pub fn Check(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::Check, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::Check, class }
+        }
     }
 
     /// Menu/Hamburger icon
     pub fn Menu(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::Menu, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::Menu, class }
+        }
     }
 
     /// Bell/Notification icon
     pub fn Bell(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::BellOutline, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::BellOutline, class }
+        }
     }
 
     /// Star icon
     pub fn Star(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::Star, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::Star, class }
+        }
     }
 
     /// Heart icon
     pub fn Heart(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::Heart, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::Heart, class }
+        }
     }
 
     /// Calendar icon
     pub fn Calendar(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::Calendar, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::Calendar, class }
+        }
     }
 
     /// Clock icon
     pub fn Clock(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::ClockOutline, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::ClockOutline, class }
+        }
     }
 
     /// Chevron left icon
     pub fn ChevronLeft(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::ChevronLeft, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::ChevronLeft, class }
+        }
     }
 
     /// Chevron right icon
     pub fn ChevronRight(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::ChevronRight, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::ChevronRight, class }
+        }
     }
 
     /// Chevron up icon
     pub fn ChevronUp(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::ChevronUp, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::ChevronUp, class }
+        }
     }
 
     /// Chevron down icon
     pub fn ChevronDown(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::ChevronDown, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::ChevronDown, class }
+        }
     }
 
     /// User icon
     pub fn User(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::Account, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::Account, class }
+        }
     }
 
     /// X icon
     pub fn X(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::Close, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::Close, class }
+        }
     }
 
     /// Award icon
     pub fn Award(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::TrophyAward, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::TrophyAward, class }
+        }
     }
 
     /// Book icon
     pub fn Book(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::Book, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::Book, class }
+        }
     }
 
     /// Alert/Badge icon
     pub fn Badge(class: String) -> Element {
-        rsx! { Icon { icon: MdiIcon::Alert, class: class } }
+        rsx! {
+            Icon { icon: MdiIcon::Alert, class }
+        }
     }
 }

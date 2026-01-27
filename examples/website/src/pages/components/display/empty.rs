@@ -4,11 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{
-    display::Empty,
-    layout::{Container, Section},
-    Button, ButtonVariant,
-};
+use _components::{Button, ButtonVariant, display::Empty, layout::{Container, Section}};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, TextColor};
 
 #[allow(non_snake_case)]

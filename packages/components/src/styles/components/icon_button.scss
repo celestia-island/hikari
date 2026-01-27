@@ -28,6 +28,9 @@
   min-height: 28px;
   max-height: 28px;
 
+  // IMPORTANT: Override overflow: hidden from .hi-button to allow glow effect
+  overflow: visible;
+
   // Remove default button styling
   appearance: none;
   -webkit-appearance: none;
@@ -48,10 +51,28 @@
   // Cursor
   cursor: pointer;
 
-  // Hover state - neutral gray for ghost/borderless buttons
-  &:hover:not(:disabled) {
-    background-color: var(--hi-color-gray-15, rgba(128, 128, 128, 0.15));
-    color: var(--hi-color-text-primary);
+  // Hover state - DISABLED: Let glow wrapper handle all visual feedback
+  // &:hover:not(:disabled) {
+  //   background-color: var(--hi-color-gray-15, rgba(128, 128, 128, 0.15));
+  //   color: var(--hi-color-text-primary);
+  // }
+
+  // Active state
+  &:active:not(:disabled) {
+    background-color: var(--hi-color-gray-20, rgba(128, 128, 128, 0.2));
+    transform: scale(0.95);
+  }
+
+  // Focus state
+  &:focus-visible {
+    outline:2px solid var(--hi-color-primary);
+    outline-offset:2px;
+  }
+
+  // Disabled state
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   // Active state
@@ -83,6 +104,15 @@
     max-width: vars.$hikari-icon-button-size-36;
     min-height: vars.$hikari-icon-button-size-36;
     max-height: vars.$hikari-icon-button-size-36;
+  }
+
+  &.hi-icon-button-40 {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    min-height: 40px;
+    max-height: 40px;
   }
 
   &.hi-icon-button-32 {

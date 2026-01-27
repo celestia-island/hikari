@@ -1,11 +1,11 @@
 // hi-components/src/basic/arrow.rs
 // Arrow indicator component with rotation support
 
-use crate::StyledComponent;
 use dioxus::prelude::*;
-use icons::Icon;
-use icons::MdiIcon;
+use icons::{Icon, MdiIcon};
 use palette::classes::{components::ArrowClass, ClassesBuilder};
+
+use crate::StyledComponent;
 
 /// Arrow component style holder
 pub struct ArrowComponent;

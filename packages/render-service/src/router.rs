@@ -21,6 +21,9 @@ use super::{
     registry::StyleRegistry,
 };
 
+// Re-export icon route handler
+pub use super::icon_route::get_icon_data;
+
 /// Application state shared across all handlers.
 #[derive(Clone, Debug)]
 pub struct AppState {
@@ -125,6 +128,9 @@ pub fn build_router(
     //     );
     //     router = router.route("/styles/info", axum::routing::get(style_info_handler));
     // }
+
+    // Add dynamic icon data endpoint
+    router = router.route("/api/icons", axum::routing::get(get_icon_data));
 
     // Add Tailwind CSS route (always available if built)
     router = router.route(

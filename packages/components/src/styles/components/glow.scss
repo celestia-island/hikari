@@ -17,6 +17,10 @@
 
   // Use standard radius to match Button/Input
   border-radius: vars.$hikari-radius-fui-sm;
+  
+  // FIX: Prevent button overflow: hidden from clipping glow overlay
+  // The glow overlay extends beyond button boundaries, so we need to allow overflow
+  overflow: visible;
 
   // Create dynamic glow overlay using CSS variables (spotlight effect)
   &::before {
@@ -24,7 +28,7 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    z-index: 0;
+    z-index: 2;  // Place glow above children so it's visible on solid buttons
     border-radius: inherit;
     opacity: 0;
     transition: opacity 0.3s ease-in-out;

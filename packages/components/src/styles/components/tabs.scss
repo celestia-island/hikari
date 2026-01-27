@@ -111,7 +111,7 @@
   position: relative;
 
   // Icon
-  .hi-tab-icon {
+  .hi-tabs-tab-icon {
     flex-shrink: 0;
     width: 1rem;
     height: 1rem;
@@ -126,7 +126,7 @@
   }
 
   // Label
-  .hi-tab-label {
+  .hi-tabs-tab-label {
     flex: 1;
   }
 
@@ -164,7 +164,7 @@
     color: var(--hi-color-text-primary);
     background: var(--hi-primary);
 
-    .hi-tab-icon {
+    .hi-tabs-tab-icon {
       color: var(--hi-color-primary);
       filter: drop-shadow(0 0 4px var(--hi-primary));
     }
@@ -182,7 +182,7 @@
       0 0 12px var(--hi-primary),
       inset 0 0 8px var(--hi-primary);
 
-    .hi-tab-icon {
+    .hi-tabs-tab-icon {
       color: var(--hi-color-primary);
       filter: drop-shadow(0 0 6px var(--hi-primary));
     }

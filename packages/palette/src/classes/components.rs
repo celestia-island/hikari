@@ -158,6 +158,8 @@ pub enum ButtonClass {
     IconButtonSize32,
     /// `hi-icon-button-36` - IconButton size 36px
     IconButtonSize36,
+    /// `hi-icon-button-40` - IconButton size 40px
+    IconButtonSize40,
     /// `hi-button-disabled` - Disabled state
     Disabled,
     /// `hi-icon-button-icon` - IconButton icon wrapper
@@ -193,6 +195,7 @@ impl UtilityClass for ButtonClass {
             ButtonClass::IconButtonSize24 => "icon-button-24",
             ButtonClass::IconButtonSize32 => "icon-button-32",
             ButtonClass::IconButtonSize36 => "icon-button-36",
+            ButtonClass::IconButtonSize40 => "icon-button-40",
             ButtonClass::Disabled => "button-disabled",
             ButtonClass::IconButtonIcon => "icon-button-icon",
             ButtonClass::IconButtonDisabled => "icon-button-disabled",
@@ -762,11 +765,11 @@ pub enum InputClass {
     Input,
     /// `hi-input-wrapper` - Input wrapper
     InputWrapper,
-    /// `hi-input-sm` - Small size
+    /// `hi-input-sm` - Small size (24px height)
     InputSm,
-    /// `hi-input-md` - Medium size
+    /// `hi-input-md` - Medium size (32px height)
     InputMd,
-    /// `hi-input-lg` - Large size
+    /// `hi-input-lg` - Large size (40px height)
     InputLg,
     /// `hi-input-disabled` - Disabled state
     InputDisabled,

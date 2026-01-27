@@ -38,5 +38,5 @@ pub use glow::{Glow as Acrylic, GlowBlur as AcrylicBlur, GlowColor as AcrylicMod
 pub use modal::{use_modal, ModalConfig, ModalContent, ModalController, ModalPosition};
 
 // Dropdown re-exports for external components
-pub use dropdown::{Dropdown, DropdownMask, DropdownPosition, DropdownPositioning};
 pub use dropdown::Dropdown as DropdownComponent;
+pub use dropdown::{Dropdown, DropdownMask, DropdownPosition, DropdownPositioning};

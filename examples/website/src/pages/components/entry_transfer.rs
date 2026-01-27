@@ -4,10 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::components::Layout;
-use _palette::classes::{
-    ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, PaddingX, TextColor,
-};
-
+use _palette::classes::{ ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, PaddingX, TextColor, };
 use _components::{SelectChangeEvent, Transfer, TransferItem};
 
 /// Transfer component example page

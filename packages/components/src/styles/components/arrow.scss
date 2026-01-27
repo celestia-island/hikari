@@ -51,6 +51,7 @@
 // Transitions
 // ============================================
 
-.hi-arrow {
-  transition: transform 0.2s ease-out;
-}
+// DISABLED - avoid unwanted animations when using with Glow
+// .hi-arrow {
+//   transition: transform 0.2s ease-out;
+// }

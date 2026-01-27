@@ -5,10 +5,7 @@ use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
 use _components::layout::{Container, Row, Section};
-use _palette::classes::{
-    BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding,
-    PaddingLeft, TextColor,
-};
+use _palette::classes::{ BgColor, BorderRadius, ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, PaddingLeft, TextColor, };
 
 #[allow(non_snake_case)]
 pub fn ComponentsLayout() -> Element {

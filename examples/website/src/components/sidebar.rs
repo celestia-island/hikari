@@ -255,7 +255,7 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                     },
                     NavItem {
                         label: "Badge",
-                        icon: MdiIcon::Alert,
+                        icon: MdiIcon::Information,
                         route: Route::BasicBadge {},
                     },
                 ],

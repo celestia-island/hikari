@@ -63,7 +63,7 @@ pub struct FileUploadProps {
 #[component]
 pub fn FileUpload(props: FileUploadProps) -> Element {
     let mut upload_status = use_signal(|| FileUploadStatus::Idle);
-    let mut files = use_signal(|| Vec::<String>::new());
+    let files = use_signal(|| Vec::<String>::new());
 
     let wrapper_classes = ClassesBuilder::new()
         .add_raw("hi-file-upload-wrapper")
@@ -185,9 +185,7 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
     };
 
     rsx! {
-        div {
-            class: "{wrapper_classes}",
-            style: "{props.style}",
+        div { class: "{wrapper_classes}", style: "{props.style}",
 
             div {
                 class: "{drag_classes}",
@@ -217,7 +215,12 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
                         stroke_width: "2",
                         path { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }
                         polyline { points: "17 8 12 3 7 8" }
-                        line { x1: "12", y1: "3", x2: "12", y2: "15" }
+                        line {
+                            x1: "12",
+                            y1: "3",
+                            x2: "12",
+                            y2: "15",
+                        }
                     }
 
                     p { class: "hi-file-upload-text", "{props.upload_text}" }

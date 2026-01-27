@@ -32,6 +32,7 @@
 //! }
 //! ```
 
+pub mod auto_discovery;
 mod svg_parser;
 
 use anyhow::{anyhow, Context, Result};

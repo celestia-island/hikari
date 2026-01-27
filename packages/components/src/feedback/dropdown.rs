@@ -3,15 +3,16 @@
 
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, Display, Position};
-
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 
-use crate::portal::{
-    generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy,
-    TriggerPlacement,
+use crate::{
+    portal::{
+        generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy,
+        TriggerPlacement,
+    },
+    styled::StyledComponent,
 };
-use crate::styled::StyledComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DropdownPositioning {

@@ -4,13 +4,8 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{
-    layout::{Container, Section},
-    QRCode,
-};
-use _palette::classes::{
-    ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor,
-};
+use _components::{QRCode, layout::{Container, Section}};
+use _palette::classes::{ ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor, };
 
 #[allow(non_snake_case)]
 pub fn ComponentsQRCode() -> Element {

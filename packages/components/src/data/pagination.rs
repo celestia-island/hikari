@@ -2,9 +2,17 @@
 // Pagination component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use icons::{Icon, MdiIcon};
 use palette::classes::{ClassesBuilder, PaginationClass};
 
-use crate::styled::StyledComponent;
+use crate::{
+    basic::{Arrow, ArrowDirection, IconButton, IconButtonSize, Input, InputSize},
+    feedback::{
+        Dropdown, DropdownMask, DropdownPosition, DropdownPositioning, Glow, GlowBlur, GlowColor,
+        GlowIntensity,
+    },
+    styled::StyledComponent,
+};
 
 /// Pagination component wrapper (for StyledComponent)
 pub struct PaginationComponent;
@@ -69,51 +77,31 @@ pub fn Pagination(props: PaginationProps) -> Element {
     let mut current_size = use_signal(|| props.page_size);
     let total_items = props.total;
 
+    // Modal state for jump to page
+    let mut show_jump_modal = use_signal(|| false);
+    let mut jump_to = use_signal(|| props.current.to_string());
+
+    // Handle modal close
+    let handle_modal_close = move |is_open: bool| {
+        show_jump_modal.set(is_open);
+    };
+
     let total_pages = if total_items == 0 {
         1
     } else {
-        ((total_items - 1) / current_size()) + 1
+        (total_items.saturating_sub(1) / current_size()) + 1
     };
 
-    let start = ((current_page() - 1) * current_size()) + 1;
+    let start = (current_page().saturating_sub(1) * current_size()) + 1;
     let end = (current_page() * current_size()).min(total_items);
 
-    let get_page_numbers = || {
-        let mut pages = Vec::new();
-        let current = current_page();
-        let total = total_pages;
-
-        if total <= 7 {
-            for i in 1..=total {
-                pages.push(i);
-            }
+    let _handle_page_change = move |page: u32| {
+        let total_pages = if total_items == 0 {
+            1
         } else {
-            pages.push(1);
+            (total_items.saturating_sub(1) / current_size()) + 1
+        };
 
-            if current > 4 {
-                pages.push(0);
-            }
-
-            let start_page = (current - 2).max(2);
-            let end_page = (current + 2).min(total - 1);
-
-            for i in start_page..=end_page {
-                pages.push(i);
-            }
-
-            if current < total - 3 {
-                pages.push(0);
-            }
-
-            pages.push(total);
-        }
-
-        pages
-    };
-
-    let pages = get_page_numbers();
-
-    let mut handle_page_change = move |page: u32| {
         if page < 1 || page > total_pages || page == current_page() {
             return;
         }
@@ -127,19 +115,85 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
     let handle_prev = move |_| {
         if current_page() > 1 {
-            handle_page_change(current_page() - 1);
+            let new_page = current_page() - 1;
+            current_page.set(new_page);
+            if let Some(handler) = props.on_change.as_ref() {
+                handler.call(new_page);
+            }
         }
     };
 
     let handle_next = move |_| {
         if current_page() < total_pages {
-            handle_page_change(current_page() + 1);
+            let new_page = current_page() + 1;
+            current_page.set(new_page);
+            if let Some(handler) = props.on_change.as_ref() {
+                handler.call(new_page);
+            }
         }
     };
 
-    let handle_jump = move |evt: FormEvent| {
-        if let Ok(page) = evt.value().parse::<u32>() {
-            handle_page_change(page);
+    // Handle page jump from modal
+    let mut handle_modal_jump = move |page: u32| {
+        current_page.set(page);
+        if let Some(handler) = props.on_change.as_ref() {
+            handler.call(page);
+        }
+        show_jump_modal.set(false);
+    };
+
+    // Create jump modal content (function to avoid ownership issues)
+    let create_jump_modal_content = move || {
+        rsx! {
+            div {
+                style: "padding: 20px; min-width: 200px;",
+                div {
+                    style: "font-weight: 600; margin-bottom: 16px; font-size: 14px;",
+                    "Jump to Page"
+                }
+
+                div {
+                    style: "display: flex; gap: 8px; margin-bottom: 12px;",
+
+                    Input {
+                        size: InputSize::Medium,
+                        input_type: Some("number".to_string()),
+                        value: Some(jump_to()),
+                        placeholder: Some("Page".to_string()),
+                        autofocus: true,
+                        oninput: Some(EventHandler::new(move |val: String| {
+                            if let Ok(v) = val.parse::<u32>() {
+                                if v <= total_pages * 2 {
+                                    jump_to.set(val.to_string());
+                                }
+                            }
+                        })),
+                        glow: true,
+                        glow_blur: GlowBlur::Medium,
+                        glow_color: GlowColor::Ghost,
+                        glow_intensity: GlowIntensity::Subtle,
+                    }
+
+                    IconButton {
+                        icon: MdiIcon::ArrowRight,
+                        size: IconButtonSize::Medium,
+                        glow: true,
+                        glow_color: GlowColor::Ghost,
+                        onclick: move |_| {
+                            if let Ok(page) = jump_to().parse::<u32>() {
+                                if page >= 1 && page <= total_pages {
+                                    handle_modal_jump(page);
+                                }
+                            }
+                        },
+                    }
+                }
+
+                div {
+                    style: "font-size: 12px; color: var(--hi-color-text-secondary);",
+                    "Page 1 to {total_pages}"
+                }
+            }
         }
     };
 
@@ -150,7 +204,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
             let new_total_pages = if total_items == 0 {
                 1
             } else {
-                ((total_items - 1) / size) + 1
+                (total_items.saturating_sub(1) / size) + 1
             };
 
             if current_page() > new_total_pages {
@@ -163,22 +217,78 @@ pub fn Pagination(props: PaginationProps) -> Element {
         }
     };
 
+    // Build container classes
     let container_classes = ClassesBuilder::new()
         .add(PaginationClass::Pagination)
         .add_raw(&props.class)
         .build();
 
+    // Build total display classes
+    let total_classes = ClassesBuilder::new()
+        .add(PaginationClass::PaginationTotal)
+        .build();
+
+    // Build size selector classes
+    let size_selector_classes = ClassesBuilder::new()
+        .add(PaginationClass::PaginationSizer)
+        .build();
+
+    // Build pages container classes
+    let pages_container_classes = ClassesBuilder::new()
+        .add(PaginationClass::PaginationPages)
+        .build();
+
+    // Build navigation button classes
+    let prev_classes = ClassesBuilder::new()
+        .add(PaginationClass::PaginationItem)
+        .add(PaginationClass::PaginationPrev)
+        .build();
+
+    let next_classes = ClassesBuilder::new()
+        .add(PaginationClass::PaginationItem)
+        .add(PaginationClass::PaginationNext)
+        .build();
+
+    // Build page item classes
+    let _page_item_classes = |page_num: u32| {
+        ClassesBuilder::new()
+            .add(PaginationClass::PaginationItem)
+            .add_if(PaginationClass::PaginationActive, || {
+                page_num == current_page()
+            })
+            .build()
+    };
+
+    // Helper function for page button click handlers
+    let make_page_handler = move |page_num: u32| {
+        let total_pages_calc = if total_items == 0 {
+            1
+        } else {
+            (total_items.saturating_sub(1) / current_size()) + 1
+        };
+
+        move |_| {
+            if page_num < 1 || page_num > total_pages_calc || page_num == current_page() {
+                return;
+            }
+            current_page.set(page_num);
+            if let Some(handler) = props.on_change.as_ref() {
+                handler.call(page_num);
+            }
+        }
+    };
+
     rsx! {
         div { class: "{container_classes}",
 
             if props.show_total {
-                div { class: "PaginationClass::PaginationTotal.as_class()",
+                div { class: "{total_classes}",
                     "{start}-{end} of {total_items}"
                 }
             }
 
             if props.show_size_changer {
-                div { class: "PaginationClass::PaginationSizer.as_class()",
+                div { class: "{size_selector_classes}",
                     select {
                         class: "hi-select hi-select-sm",
                         value: "{current_size}",
@@ -190,68 +300,173 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 }
             }
 
-            div { class: "PaginationClass::PaginationPages.as_class()",
+            div { class: "{pages_container_classes}",
 
-                button {
-                    class: "PaginationClass::PaginationPrev.as_class()",
-                    disabled: current_page() <= 1,
-                    onclick: handle_prev,
-                    svg {
-                        xmlns: "http://www.w3.org/2000/svg",
-                        fill: "none",
-                        view_box: "0 0 24 24",
-                        stroke_width: 2,
-                        stroke: "currentColor",
-                        path { stroke_linecap: "round", stroke_linejoin: "round", d: "M15.75 19.5L8.25 12l7.5-7.5" }
+                // Previous button
+                Glow {
+                    blur: GlowBlur::Medium,
+                    color: GlowColor::Primary,
+                    intensity: GlowIntensity::Subtle,
+                    button {
+                        class: "{prev_classes}",
+                        disabled: current_page() <= 1,
+                        onclick: handle_prev,
+                        Arrow {
+                            direction: ArrowDirection::Left,
+                            size: 16,
+                        }
                     }
                 }
 
-                {pages.iter().map(|page| {
-                    let page_num = *page;
-                    if page_num == 0 {
-                        rsx! {
-                            span { class: "PaginationClass::PaginationEllipsis.as_class()", "..." }
+                // Simple page numbers - just handle the basic case for now
+                    if total_pages <= 7 {
+                        for i in 1..=total_pages {
+                            Glow {
+                                blur: GlowBlur::Medium,
+                                color: GlowColor::Primary,
+                                intensity: GlowIntensity::Subtle,
+                                button {
+                                    class: ClassesBuilder::new()
+                                        .add(PaginationClass::PaginationItem)
+                                        .add_if(PaginationClass::PaginationActive, || i == current_page())
+                                        .build(),
+                                    onclick: make_page_handler(i),
+                                    "{i}"
+                                }
+                            }
                         }
-                    } else {
-                        let item_classes = ClassesBuilder::new()
-                            .add(PaginationClass::PaginationItem)
-                            .add_if(PaginationClass::PaginationActive, || page_num == current_page())
-                            .build();
+                } else {
+                    // First page
+                    Glow {
+                        blur: GlowBlur::Medium,
+                        color: GlowColor::Primary,
+                        intensity: GlowIntensity::Subtle,
+                        button {
+                            class: ClassesBuilder::new()
+                                .add(PaginationClass::PaginationItem)
+                                .add_if(PaginationClass::PaginationActive, || 1 == current_page())
+                                .build(),
+                            onclick: make_page_handler(1),
+                            "1"
+                        }
+                    }
 
-                        rsx! {
+                    // Ellipsis if needed - clickable with icon
+                    if current_page() > 4 {
+                        Dropdown {
+                            positioning: DropdownPositioning::TriggerBased,
+                            position: DropdownPosition::Top,
+                            mask: DropdownMask::Transparent,
+                            close_on_click_outside: true,
+                            close_on_select: false,
+                            on_open_change: handle_modal_close,
+                            trigger: rsx! {
+                                Glow {
+                                    blur: GlowBlur::Medium,
+                                    color: GlowColor::Primary,
+                                    intensity: GlowIntensity::Subtle,
+                                    button {
+                                        class: ClassesBuilder::new()
+                                            .add(PaginationClass::PaginationItem)
+                                            .build(),
+                                        Icon {
+                                            icon: MdiIcon::DotsHorizontal,
+                                            size: 16,
+                                            color: "var(--hi-color-text-secondary)",
+                                        }
+                                    }
+                                }
+                            },
+                            {create_jump_modal_content()}
+                        }
+                    }
+
+                    // Current page and surrounding pages
+                    for i in [
+                        current_page().saturating_sub(1).max(2),
+                        current_page(),
+                        current_page() + 1,
+                    ].iter()
+                    .copied()
+                    .filter(|&i| i >= 2 && i <= total_pages.saturating_sub(1))
+                    {
+                        Glow {
+                            blur: GlowBlur::Medium,
+                            color: GlowColor::Primary,
+                            intensity: GlowIntensity::Subtle,
                             button {
-                                class: "{item_classes}",
-                                onclick: move |_| handle_page_change(page_num),
-                                "{page_num}"
+                                class: ClassesBuilder::new()
+                                    .add(PaginationClass::PaginationItem)
+                                    .add_if(PaginationClass::PaginationActive, || i == current_page())
+                                    .build(),
+                                onclick: make_page_handler(i),
+                                "{i}"
                             }
                         }
                     }
-                })}
 
-                button {
-                    class: "PaginationClass::PaginationNext.as_class()",
-                    disabled: current_page() >= total_pages,
-                    onclick: handle_next,
-                    svg {
-                        xmlns: "http://www.w3.org/2000/svg",
-                        fill: "none",
-                        view_box: "0 0 24 24",
-                        stroke_width: 2,
-                        stroke: "currentColor",
-                        path { stroke_linecap: "round", stroke_linejoin: "round", d: "M8.25 4.5l7.5 7.5-7.5 7.5" }
+                    // Ellipsis if needed - clickable with icon
+                    if current_page() < total_pages - 3 {
+                        Dropdown {
+                            positioning: DropdownPositioning::TriggerBased,
+                            position: DropdownPosition::Top,
+                            mask: DropdownMask::Transparent,
+                            close_on_click_outside: true,
+                            close_on_select: false,
+                            on_open_change: handle_modal_close,
+                            trigger: rsx! {
+                                Glow {
+                                    blur: GlowBlur::Medium,
+                                    color: GlowColor::Primary,
+                                    intensity: GlowIntensity::Subtle,
+                                    button {
+                                        class: ClassesBuilder::new()
+                                            .add(PaginationClass::PaginationItem)
+                                            .build(),
+                                        Icon {
+                                            icon: MdiIcon::DotsHorizontal,
+                                            size: 16,
+                                            color: "var(--hi-color-text-secondary)",
+                                        }
+                                    }
+                                }
+                            },
+                            {create_jump_modal_content()}
+                        }
+                    }
+
+                    // Last page
+                    if total_pages > 1 {
+                        Glow {
+                            blur: GlowBlur::Medium,
+                            color: GlowColor::Primary,
+                            intensity: GlowIntensity::Subtle,
+                        button {
+                            class: ClassesBuilder::new()
+                                .add(PaginationClass::PaginationItem)
+                                .add_if(PaginationClass::PaginationActive, || total_pages == current_page())
+                                .build(),
+                            onclick: make_page_handler(total_pages),
+                            "{total_pages}"
+                        }
+                        }
                     }
                 }
-            }
 
-            div { class: "PaginationClass::PaginationJump.as_class()",
-                span { class: "PaginationClass::PaginationJumpLabel.as_class()", "Go to" }
-                input {
-                    class: "hi-input hi-input-sm",
-                    r#type: "number",
-                    min: 1,
-                    max: "{total_pages}",
-                    value: "{current_page}",
-                    onchange: handle_jump,
+                // Next button
+                Glow {
+                    blur: GlowBlur::Medium,
+                    color: GlowColor::Primary,
+                    intensity: GlowIntensity::Subtle,
+                    button {
+                        class: "{next_classes}",
+                        disabled: current_page() >= total_pages,
+                        onclick: handle_next,
+                        Arrow {
+                            direction: ArrowDirection::Right,
+                            size: 16,
+                        }
+                    }
                 }
             }
         }

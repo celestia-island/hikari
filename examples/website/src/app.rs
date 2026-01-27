@@ -3,7 +3,7 @@
 
 use dioxus::prelude::*;
 
-use _components::{scripts::scrollbar_container, PortalProvider, ThemeProvider};
+use _components::{PortalProvider, ThemeProvider, scripts::scrollbar_container};
 
 /// Main application routes
 #[derive(Clone, Debug, PartialEq, Routable)]

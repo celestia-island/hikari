@@ -176,10 +176,10 @@
 //!
 //! See the `calculate_position` function for detailed positioning algorithm documentation.
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, DropdownClass, ModalClass, PortalClass};
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use dioxus::prelude::*;
+use palette::classes::{ClassesBuilder, DropdownClass, ModalClass, PortalClass};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 
@@ -1089,11 +1089,12 @@ mod tests {
     #[test]
     fn test_top_placement_centered() {
         // Trigger: x=100, y=100, w=80, h=40
-        // Expected: x = 140 (center), y = 92 (above - offset)
+        // Expected: x = 40 (menu left edge), y = 92 (above - offset)
+        // Menu center will be at x=140 (trigger center)
         test_position(
             TriggerPlacement::Top,
             (100.0, 100.0, 80.0, 40.0),
-            140.0,
+            40.0,
             92.0,
             "Top placement should center menu above trigger",
         );

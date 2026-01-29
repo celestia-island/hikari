@@ -17,8 +17,8 @@
   bottom: 0;
   z-index: 1000;
 
-  // Acrylic background effect - themed (opaque mode)
-  background: rgba(0, 0, 0, vars.$hikari-acrylic-opacity);
+  // Acrylic background effect - themed (opaque mode, inverse color)
+  background: var(--hi-overlay-color);
   backdrop-filter: blur(8px);
 
   // Flex center
@@ -28,16 +28,6 @@
 
   // Transitions
   transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
-}
-
-// Light theme overlay
-[data-theme="hikari"] .hi-modal-overlay {
-  background: rgba(0, 0, 0, vars.$hikari-acrylic-opacity);
-}
-
-// Dark theme overlay
-[data-theme="tairitsu"] .hi-modal-overlay {
-  background: rgba(0, 0, 0, vars.$hikari-acrylic-opacity);
 }
 
 // Transparent mode (non-blocking modal, like toast)
@@ -67,14 +57,14 @@
   border: 1px solid var(--hi-color-border);
 
   // Acrylic background effect
-  background: var(--hi-surface);
+  background: var(--hi-card-bg-light);
   backdrop-filter: blur(4px);
 
   // Elevated shadow with FUI glow
   box-shadow:
-    0 16px 32px var(--hi-black-40, rgba(0, 0, 0, 0.4)),
-    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset,
-    0 0 24px var(--hi-primary);
+    0 16px 32px var(--hi-color-black-40, rgba(0, 0, 0, 0.4)),
+    0 0 0 1px var(--hi-color-white-5, rgba(255, 255, 255, 0.05)) inset,
+    var(--hi-glow-lg);
 
   // Transitions
   transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
@@ -147,8 +137,8 @@
 
     &:hover {
       color: var(--hi-color-text-primary);
-      background: rgba(255, 76, 0, 0.2);
-      box-shadow: 0 0 8px rgba(255, 76, 0, 0.3);
+      background: var(--hi-button-danger-hover);
+      box-shadow: var(--hi-glow-button-danger);
     }
 
     &:active {
@@ -174,7 +164,7 @@
     }
 
     &::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.1);
+      background: var(--hi-color-black-10);
       border-radius: 4px;
     }
 

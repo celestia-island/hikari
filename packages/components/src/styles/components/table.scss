@@ -25,8 +25,8 @@
 
   // Shadow
   box-shadow:
-    0 4px 8px rgba(214, 236, 240, 0.5),
-    0 0 0 1px var(--hi-white-5, rgba(255,255,255, 0.05)) inset;
+    0 4px 8px var(--hi-color-gray-50),
+    0 0 0 1px var(--hi-color-white-5, rgba(255,255,255, 0.05)) inset;
 
   // Transitions
   // DISABLED - migrated to JS animation
@@ -66,7 +66,7 @@
   }
 
   &::-webkit-scrollbar-track {
-    background: rgba(214, 236, 240, 0.5);
+    background: var(--hi-color-gray-50);
     border-radius: 4px;
   }
 
@@ -458,7 +458,7 @@
   .hi-table-expandable-content {
     display: none;
     padding: 1rem;
-    background: rgba(214, 236, 240, 0.5);
+    background: var(--hi-color-gray-50);
     border-bottom: 1px solid var(--hi-color-border);
 
     // Smooth expand/collapse animation
@@ -576,7 +576,7 @@
 
     &:hover {
       opacity: 1;
-      background: rgba(255, 76, 0, 0.2);
+      background: var(--hi-button-danger-hover);
       color: var(--hi-color-danger);
     }
 
@@ -600,7 +600,7 @@
   border-top: 1px solid var(--hi-color-border);
 
   // Background
-  background: rgba(214, 236, 240, 0.5);
+  background: var(--hi-color-gray-50);
 
   // Transitions
   // DISABLED - migrated to JS animation
@@ -670,7 +670,7 @@
 .hi-table-striped {
   .hi-table-row {
     &:nth-child(even) {
-      background: rgba(214, 236, 240, 0.4);
+      background: var(--hi-color-gray-40);
 
       &:hover {
         background: var(--hi-primary);
@@ -692,11 +692,11 @@
 
 .hi-table-grid-lines {
   .hi-table-cell {
-    border: 1px solid var(--hi-white-5, rgba(255, 255, 255, 0.05));
+    border: 1px solid var(--hi-color-white-5, rgba(255, 255, 255, 0.05));
   }
 
   .hi-table-header-cell {
-    border: 1px solid var(--hi-white-8, rgba(255, 255, 255, 0.08));
+    border: 1px solid var(--hi-color-white-8, rgba(255, 255, 255, 0.08));
   }
 }
 

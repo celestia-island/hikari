@@ -18,10 +18,7 @@ fn main() {
         // Generate shared icon route
         let icon_route = "/api/icons";
 
-        // Create icon_route.txt for compile-time inclusion
-        std::fs::write("icon_route.txt", icon_route).expect("Failed to write icon_route.txt");
-
-        // Set environment variable for render-service
+        // Set environment variable for compile-time use (removes icon_route.txt dependency)
         println!("cargo:rustc-env=HIKARI_ICON_ROUTE={}", icon_route);
 
         println!("cargo:warning=   Icon route: {}", icon_route);
@@ -29,6 +26,10 @@ fn main() {
             "cargo:warning=   Render-service should serve icons at: {}",
             icon_route
         );
+    } else {
+        // Set default icon route when dynamic-fetch is disabled
+        let icon_route = "/static/dynamic-icons";
+        println!("cargo:rustc-env=HIKARI_ICON_ROUTE={}", icon_route);
     }
 
     // Find workspace root

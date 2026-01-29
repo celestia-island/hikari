@@ -20,9 +20,9 @@
   pointer-events: auto;
 }
 
-// Dimmed overlay - semi-transparent black background
+// Dimmed overlay - semi-transparent inverse background (themed)
 .hi-dropdown-overlay-dimmed {
-  background: rgba(0,0,0,0.5);
+  background: var(--hi-overlay-color);
   backdrop-filter: blur(8px);
 }
 
@@ -54,21 +54,21 @@
   border: 1px solid var(--hi-color-border);
 
   // Themed background (using CSS variables)
-  background: var(--hi-surface);
+  background: var(--hi-card-bg-light);
   backdrop-filter: blur(4px);
 
   // Elevated shadow with FUI glow
   box-shadow:
-    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 0 1px var(--hi-white-5, rgba(255,255, 255, 0.05)) inset,
-    0 0 12px var(--hi-primary);
+    0 8px 16px var(--hi-color-black-30, rgba(0, 0, 0, 0.3)),
+    0 0 0 1px var(--hi-color-white-5, rgba(255,255, 255, 0.05)) inset,
+    var(--hi-glow-md);
 
   // Transitions
   transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Menu item hover styling
   .hi-menu-item:hover {
-    background-color: rgba(139, 92, 246, 0.1);
+    background-color: var(--hi-button-primary-light);
   }
 
   // Custom scrollbar
@@ -78,7 +78,7 @@
   }
 
   &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--hi-color-black-10);
     border-radius: 3px;
   }
 
@@ -108,14 +108,14 @@
   border: 1px solid var(--hi-color-border);
 
   // Acrylic background effect (themed)
-  background: var(--hi-surface);
+  background: var(--hi-card-bg-light);
   backdrop-filter: blur(4px);
 
   // Elevated shadow with FUI glow
   box-shadow:
-    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset,
-    0 0 12px var(--hi-primary);
+    0 8px 16px var(--hi-color-black-30, rgba(0, 0, 0, 0.3)),
+    0 0 0 1px var(--hi-color-white-5, rgba(255, 255, 255, 0.05)) inset,
+    var(--hi-glow-md);
 
   // Transitions
   transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
@@ -172,19 +172,19 @@
 
     // Hover state
     &:hover {
-      background-color: rgba(139, 92, 246, 0.1);
+      background-color: var(--hi-button-primary-light);
       color: var(--hi-color-text-primary);
     }
 
     // Active state
     &:active {
-      background-color: rgba(139, 92, 246, 0.2);
+      background-color: var(--hi-button-primary);
       transform: scale(0.98);
     }
 
     // Selected state
     &.hi-dropdown-item-selected {
-      background-color: rgba(139, 92, 246, 0.15);
+      background-color: var(--hi-button-primary-hover);
       font-weight: 500;
     }
 
@@ -208,7 +208,7 @@
   }
 
   &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--hi-color-black-10);
     border-radius: 3px;
   }
 
@@ -230,6 +230,18 @@
 .hi-dropdown-menu {
   // Fade in animation
   animation: hi-dropdown-fade-in 0.2s vars.$hikari-ease-smooth forwards;
+}
+
+// Dropdown hidden state (invisible, scaled down)
+.hi-dropdown-hidden {
+  --hi-dropdown-opacity: 0;
+  --hi-dropdown-scale: 0.95;
+}
+
+// Dropdown visible state (fully visible, normal scale)
+.hi-dropdown-visible {
+  --hi-dropdown-opacity: 1;
+  --hi-dropdown-scale: 1.0;
 }
 
 @keyframes hi-dropdown-fade-in {

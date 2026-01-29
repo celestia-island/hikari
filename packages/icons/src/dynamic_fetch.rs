@@ -2,21 +2,20 @@
 //!
 //! Provides secure icon fetching with RON serialization and caching.
 
-#[cfg(feature = "dynamic-fetch")]
+#[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
 use std::{
     collections::HashMap,
-    sync::{Arc, RwLock},
+    sync::{Arc, OnceLock, RwLock},
 };
 
-// Import the route constant from lib.rs
+/// Icon route for dynamic fetching
+/// Set by build.rs at compile time via cargo:rustc-env
+/// Defaults to "/static/dynamic-icons" if not set
 #[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
-use super::ICON_ROUTE;
-
-#[cfg(feature = "dynamic-fetch")]
-use std::sync::OnceLock;
+const ICON_ROUTE: &str = option_env!("HIKARI_ICON_ROUTE").unwrap_or("/static/dynamic-icons");
 
 /// Icon cache to prevent duplicate requests
-#[cfg(feature = "dynamic-fetch")]
+#[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
 static ICON_CACHE: OnceLock<Arc<RwLock<HashMap<String, String>>>> = OnceLock::new();
 
 /// Fetch and cache icon SVG (RON format)
@@ -108,6 +107,7 @@ fn parse_safe_ron(ron_data: &str) -> Result<String, String> {
 }
 
 /// Safe icon data structure (no raw SVG strings)
+#[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
 #[derive(serde::Deserialize, Debug)]
 struct SafeIconData {
     view_box: Option<String>,
@@ -119,6 +119,7 @@ struct SafeIconData {
 }
 
 /// Safe path data structure
+#[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
 #[derive(serde::Deserialize, Debug)]
 struct SafePathData {
     d: Option<String>,

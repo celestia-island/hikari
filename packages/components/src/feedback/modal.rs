@@ -5,6 +5,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use dioxus::prelude::*;
 
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::{closure::Closure, JsCast};
+
 use crate::{
     portal::{use_portal, PortalEntry},
     styled::StyledComponent,
@@ -86,6 +89,7 @@ pub fn use_modal(initial_config: ModalConfig) -> ModalController {
                 closable: current_cfg.closable,
                 mask_closable: current_cfg.mask_closable,
                 children: content.children,
+                animation_state: crate::portal::ModalAnimationState::Appearing,
             };
             add_entry.call(entry);
         })
@@ -93,10 +97,31 @@ pub fn use_modal(initial_config: ModalConfig) -> ModalController {
 
     let close = {
         let remove_entry = portal.remove_entry.clone();
+        let start_close = portal.start_close_animation.clone();
         let cfg = config.clone();
         Callback::new(move |_| {
             let id = cfg.read().id.clone();
-            remove_entry.call(id);
+            start_close.call(id.clone());
+
+            #[cfg(target_arch = "wasm32")]
+            {
+                let remove = remove_entry.clone();
+                let id_timeout = id.clone();
+                let callback = Closure::once_into_js(move || {
+                    remove.call(id_timeout.clone());
+                });
+                let _ = web_sys::window()
+                    .unwrap()
+                    .set_timeout_with_callback_and_timeout_and_arguments_0(
+                        callback.as_ref().unchecked_ref(),
+                        200,
+                    );
+            }
+
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                remove_entry.call(id);
+            }
         })
     };
 

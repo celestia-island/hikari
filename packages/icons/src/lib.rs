@@ -226,15 +226,6 @@ pub use generated::mdi_selected::data;
 // StyleStringBuilder for building styles
 pub use hikari_animation::style::{CssProperty, StyleStringBuilder};
 
-/// Icon route for dynamic fetching
-/// Set by build.rs at compile time
-#[cfg(all(feature = "dynamic-fetch"))]
-const ICON_ROUTE: &str = include_str!("../icon_route.txt");
-
-#[cfg(not(all(feature = "dynamic-fetch")))]
-#[allow(dead_code)]
-const ICON_ROUTE: &str = "/api/icons";
-
 /// Re-export dynamic fetch module
 #[cfg(feature = "dynamic-fetch")]
 pub use dynamic_fetch::fetch_and_cache_icon;
@@ -249,11 +240,10 @@ static WARNED_ICONS: std::sync::OnceLock<std::sync::Mutex<std::collections::Hash
     std::sync::OnceLock::new();
 
 /// Log icon fallback warning (only once per icon)
-fn log_icon_warning_once(icon_name: String, dynamic_fetch_enabled: bool) {
+fn log_icon_warning_once(icon_name: String) {
     // Check if dynamic fetch warnings are disabled
     #[cfg(all(feature = "dynamic-fetch", not(feature = "dynamic-fetch-warnings")))]
     {
-        // Don't log anything if warnings are disabled
         return;
     }
 
@@ -265,21 +255,14 @@ fn log_icon_warning_once(icon_name: String, dynamic_fetch_enabled: bool) {
 
         if !warned.contains(&icon_name) {
             warned.insert(icon_name.clone());
-            drop(warned); // Release borrow before logging
+            drop(warned);
 
             #[cfg(feature = "dynamic-fetch")]
             {
-                if dynamic_fetch_enabled {
-                    web_sys::console::warn_1(&format!(
-                        "⚠️  [Hikari Icons] Icon '{}' not found, attempting dynamic fetch...\n   This icon will use a fallback while fetching from server.\n\n   If fetch succeeds, the warning will be updated automatically.",
-                        icon_name
-                    ).into());
-                } else {
-                    web_sys::console::warn_1(&format!(
-                        "⚠️  [Hikari Icons] Icon not found: '{}'\n   This icon has fallen back to default warning icon.\n\n   Possible causes:\n   1. The icon is not included in selected icon set (build.rs)\n   2. The icon name is misspelled or uses wrong case\n   3. The icon SVG file does not exist in cache\n\n   To fix this:\n   - Add '{}' to IconSelection in build.rs\n   - Or run: python scripts/icons/fetch_mdi_icons.py\n   - Enable dynamic-fetch feature in Cargo.toml",
-                        icon_name, icon_name
-                    ).into());
-                }
+                web_sys::console::warn_1(&format!(
+                    "⚠️  [Hikari Icons] Icon '{}' not found, attempting dynamic fetch...\n   This icon will use a fallback while fetching from server.\n\n   If fetch succeeds, warning will be updated automatically.",
+                    icon_name
+                ).into());
             }
 
             #[cfg(not(feature = "dynamic-fetch"))]
@@ -300,32 +283,17 @@ fn log_icon_warning_once(icon_name: String, dynamic_fetch_enabled: bool) {
 
         if !warned.contains(&icon_name) {
             warned.insert(icon_name.clone());
-            drop(warned); // Release lock before logging
+            drop(warned);
 
             #[cfg(feature = "dynamic-fetch")]
             {
-                if dynamic_fetch_enabled {
-                    eprintln!(
-                        "⚠️  [Hikari Icons] Icon '{}' not found, attempting dynamic fetch...",
-                        icon_name
-                    );
-                    eprintln!("   This icon will use a fallback while fetching from server.");
-                    eprintln!("");
-                    eprintln!("   If fetch succeeds, the warning will be updated automatically.");
-                } else {
-                    eprintln!("⚠️  [Hikari Icons] Icon not found: '{}'", icon_name);
-                    eprintln!("   This icon has fallen back to default warning icon.");
-                    eprintln!("");
-                    eprintln!("   Possible causes:");
-                    eprintln!("   1. The icon is not included in selected icon set (build.rs)");
-                    eprintln!("   2. The icon name is misspelled or uses wrong case");
-                    eprintln!("   3. The icon SVG file does not exist in cache");
-                    eprintln!("");
-                    eprintln!("   To fix this:");
-                    eprintln!("   - Add '{}' to IconSelection in build.rs", icon_name);
-                    eprintln!("   - Or run: python scripts/icons/fetch_mdi_icons.py");
-                    eprintln!("   - Enable dynamic-fetch feature in Cargo.toml");
-                }
+                eprintln!(
+                    "⚠️  [Hikari Icons] Icon '{}' not found, attempting dynamic fetch...",
+                    icon_name
+                );
+                eprintln!("   This icon will use a fallback while fetching from server.");
+                eprintln!("");
+                eprintln!("   If fetch succeeds, warning will be updated automatically.");
             }
 
             #[cfg(not(feature = "dynamic-fetch"))]
@@ -586,13 +554,13 @@ pub fn Icon(
         use_memo(move || build_svg!(icon_data))
     } else {
         // Icon not found, try dynamic fetch if enabled
-        log_icon_warning_once(icon.name(), cfg!(feature = "dynamic-fetch"));
+        log_icon_warning_once(icon.name());
 
         #[cfg(feature = "dynamic-fetch")]
         {
             // Simplified: always use default for now, but log the attempt
             let icon_name = icon.name().clone();
-            log_icon_warning_once(icon_name.clone(), true);
+            log_icon_warning_once(icon_name.clone());
 
             // In a real implementation, this would use async state management
             // For now, we'll just use the default SVG to avoid complexity

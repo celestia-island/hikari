@@ -38,8 +38,8 @@
   // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Default background
-  background: rgba(107, 114, 128, 0.9);
-  box-shadow: 0 0 8px rgba(107, 114, 128, 0.3);
+  background: var(--hi-color-gray-100);
+  box-shadow: 0 0 8px var(--hi-color-gray-30);
 
   // Position context for dot variant
   position: relative;
@@ -52,96 +52,96 @@
 
 // Primary (Blue)
 .hi-badge-primary {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9));
-  border-color: rgba(96, 165, 250, 0.5);
+  background: linear-gradient(135deg, var(--hi-button-primary), var(--hi-button-primary-dark));
+  border-color: var(--hi-button-primary-hover);
   box-shadow:
-    0 0 8px rgba(59, 130, 246, 0.4),
-    inset 0 0 4px var(--hi-white-10, rgba(255, 255, 255, 0.1));
+    0 0 8px var(--hi-glow-button-primary),
+    inset 0 0 4px var(--hi-color-white-10, rgba(255, 255, 255, 0.1));
 
   &:hover {
     box-shadow:
-      0 0 12px rgba(59, 130, 246, 0.6),
-      inset 0 0 6px var(--hi-white-15, rgba(255, 255, 255, 0.15));
+      0 0 12px var(--hi-glow-button-primary),
+      inset 0 0 6px var(--hi-color-white-15, rgba(255, 255, 255, 0.15));
     transform: scale(1.05);
   }
 }
 
 // Secondary (Gray)
 .hi-badge-secondary {
-  background: linear-gradient(135deg, rgba(107, 114, 128, 0.9), rgba(75, 85, 99, 0.9));
-  border-color: rgba(156, 163, 175, 0.5);
+  background: linear-gradient(135deg, var(--hi-color-gray-100), var(--hi-color-gray-70));
+  border-color: var(--hi-color-gray-50);
   box-shadow:
-    0 0 8px rgba(107, 114, 128, 0.3),
-    inset 0 0 4px var(--hi-white-10, rgba(255, 255, 255, 0.1));
+    0 0 8px var(--hi-glow-gray-30),
+    inset 0 0 4px var(--hi-color-white-10, rgba(255, 255, 255, 0.1));
 
   &:hover {
     box-shadow:
-      0 0 12px rgba(107, 114, 128, 0.5),
-      inset 0 0 6px var(--hi-white-15, rgba(255, 255, 255, 0.15));
+      0 0 12px var(--hi-glow-gray-50),
+      inset 0 0 6px var(--hi-color-white-15, rgba(255, 255, 255, 0.15));
     transform: scale(1.05);
   }
 }
 
 // Success (Green)
 .hi-badge-success {
-  background: linear-gradient(135deg, rgba(14, 184, 64, 0.9), rgba(5, 150, 105, 0.9));
-  border-color: rgba(52, 211, 153, 0.5);
+  background: linear-gradient(135deg, var(--hi-button-success), var(--hi-button-success-dark));
+  border-color: var(--hi-button-success-light);
   box-shadow:
-    0 0 8px rgba(14, 184, 64, 0.4),
-    inset 0 0 4px var(--hi-white-10, rgba(255, 255, 255, 0.1));
+    0 0 8px var(--hi-glow-button-success),
+    inset 0 0 4px var(--hi-color-white-10, rgba(255, 255, 255, 0.1));
 
   &:hover {
     box-shadow:
-      0 0 12px rgba(14, 184, 64, 0.6),
-      inset 0 0 6px var(--hi-white-15, rgba(255, 255, 255, 0.15));
+      0 0 12px var(--hi-glow-button-success),
+      inset 0 0 6px var(--hi-color-white-15, rgba(255, 255, 255, 0.15));
     transform: scale(1.05);
   }
 }
 
 // Warning (Yellow/Orange)
 .hi-badge-warning {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.9));
-  border-color: rgba(251, 191, 36, 0.5);
+  background: linear-gradient(135deg, var(--hi-button-warning), var(--hi-button-warning-dark));
+  border-color: var(--hi-button-warning-light);
   box-shadow:
-    0 0 8px rgba(245, 158, 11, 0.4),
-    inset 0 0 4px var(--hi-white-10, rgba(255, 255, 255, 0.1));
+    0 0 8px var(--hi-glow-button-warning),
+    inset 0 0 4px var(--hi-color-white-10, rgba(255, 255, 255, 0.1));
 
   &:hover {
     box-shadow:
-      0 0 12px rgba(245, 158, 11, 0.6),
-      inset 0 0 6px var(--hi-white-15, rgba(255, 255, 255, 0.15));
+      0 0 12px var(--hi-glow-button-warning),
+      inset 0 0 6px var(--hi-color-white-15, rgba(255, 255, 255, 0.15));
     transform: scale(1.05);
   }
 }
 
 // Danger (Red)
 .hi-badge-danger {
-  background: linear-gradient(135deg, rgba(255, 76, 0, 0.9), rgba(220, 38, 38, 0.9));
-  border-color: rgba(248, 113, 113, 0.5);
+  background: linear-gradient(135deg, var(--hi-button-danger), var(--hi-button-danger-dark));
+  border-color: var(--hi-button-danger-light);
   box-shadow:
-    0 0 8px rgba(255, 76, 0, 0.4),
-    inset 0 0 4px var(--hi-white-10, rgba(255, 255, 255, 0.1));
+    0 0 8px var(--hi-glow-button-danger),
+    inset 0 0 4px var(--hi-color-white-10, rgba(255, 255, 255, 0.1));
 
   &:hover {
     box-shadow:
-      0 0 12px rgba(255, 76, 0, 0.6),
-      inset 0 0 6px var(--hi-white-15, rgba(255, 255, 255, 0.15));
+      0 0 12px var(--hi-glow-button-danger),
+      inset 0 0 6px var(--hi-color-white-15, rgba(255, 255, 255, 0.15));
     transform: scale(1.05);
   }
 }
 
 // Info (Cyan)
 .hi-badge-info {
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.9), rgba(8, 145, 178, 0.9));
-  border-color: rgba(34, 211, 238, 0.5);
+  background: linear-gradient(135deg, var(--hi-button-info), var(--hi-button-info-dark));
+  border-color: var(--hi-button-info-light);
   box-shadow:
-    0 0 8px rgba(6, 182, 212, 0.4),
-    inset 0 0 4px var(--hi-white-10, rgba(255, 255, 255, 0.1));
+    0 0 8px var(--hi-glow-button-info),
+    inset 0 0 4px var(--hi-color-white-10, rgba(255, 255, 255, 0.1));
 
   &:hover {
     box-shadow:
-      0 0 12px rgba(6, 182, 212, 0.6),
-      inset 0 0 6px var(--hi-white-15, rgba(255, 255, 255, 0.15));
+      0 0 12px var(--hi-glow-button-info),
+      inset 0 0 6px var(--hi-color-white-15, rgba(255, 255, 255, 0.15));
     transform: scale(1.05);
   }
 }
@@ -299,23 +299,23 @@
   border-radius: 50%;
 
   &.hi-badge-primary {
-    background: radial-gradient(circle, rgba(96, 165, 250, 1), rgba(59, 130, 246, 0.8));
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+    background: radial-gradient(circle, var(--hi-button-primary-light), var(--hi-button-primary));
+    box-shadow: 0 0 8px var(--hi-glow-button-primary);
   }
 
   &.hi-badge-success {
-    background: radial-gradient(circle, rgba(52, 211, 153, 1), rgba(14, 184, 64, 0.8));
-    box-shadow: 0 0 8px rgba(14, 184, 64, 0.6);
+    background: radial-gradient(circle, var(--hi-button-success-light), var(--hi-button-success));
+    box-shadow: 0 0 8px var(--hi-glow-button-success);
   }
 
   &.hi-badge-warning {
-    background: radial-gradient(circle, rgba(251, 191, 36, 1), rgba(245, 158, 11, 0.8));
-    box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+    background: radial-gradient(circle, var(--hi-button-warning-light), var(--hi-button-warning));
+    box-shadow: 0 0 8px var(--hi-glow-button-warning);
   }
 
   &.hi-badge-danger {
-    background: radial-gradient(circle, rgba(248, 113, 113, 1), rgba(255, 76, 0, 0.8));
-    box-shadow: 0 0 8px rgba(255, 76, 0, 0.6);
+    background: radial-gradient(circle, var(--hi-button-danger-light), var(--hi-button-danger));
+    box-shadow: 0 0 8px var(--hi-glow-button-danger);
   }
 
   &.hi-badge-pulse {
@@ -389,10 +389,10 @@
   line-height: 20px;
   text-align: center;
   border-radius: 10px;
-  background: linear-gradient(135deg, rgba(255, 76, 0, 0.95), rgba(220, 38, 38, 0.95));
+  background: linear-gradient(135deg, var(--hi-button-danger), var(--hi-button-danger-dark));
   box-shadow:
-    0 0 8px rgba(255, 76, 0, 0.5),
-    inset 0 0 4px var(--hi-white-15, rgba(255, 255, 255, 0.15));
+    0 0 8px var(--hi-glow-button-danger),
+    inset 0 0 4px var(--hi-color-white-15, rgba(255, 255, 255, 0.15));
 
   &.hi-badge-count-lg {
     min-width: 24px;
@@ -409,23 +409,23 @@
 
 .hi-badge-status {
   &.hi-badge-online {
-    background: radial-gradient(circle, rgba(52, 211, 153, 1), rgba(14, 184, 64, 0.8));
-    box-shadow: 0 0 8px rgba(14, 184, 64, 0.6);
+    background: radial-gradient(circle, var(--hi-button-success-light), var(--hi-button-success));
+    box-shadow: 0 0 8px var(--hi-glow-button-success);
   }
 
   &.hi-badge-offline {
-    background: radial-gradient(circle, rgba(107, 114, 128, 1), rgba(75, 85, 99, 0.8));
-    box-shadow: 0 0 4px rgba(107, 114, 128, 0.3);
+    background: radial-gradient(circle, var(--hi-color-gray-100), var(--hi-color-gray-70));
+    box-shadow: 0 0 4px var(--hi-glow-gray-30);
   }
 
   &.hi-badge-away {
-    background: radial-gradient(circle, rgba(251, 191, 36, 1), rgba(245, 158, 11, 0.8));
-    box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+    background: radial-gradient(circle, var(--hi-button-warning-light), var(--hi-button-warning));
+    box-shadow: 0 0 8px var(--hi-glow-button-warning);
   }
 
   &.hi-badge-busy {
-    background: radial-gradient(circle, rgba(248, 113, 113, 1), rgba(255, 76, 0, 0.8));
-    box-shadow: 0 0 8px rgba(255, 76, 0, 0.5);
+    background: radial-gradient(circle, var(--hi-button-danger-light), var(--hi-button-danger));
+    box-shadow: 0 0 8px var(--hi-glow-button-danger);
   }
 }
 

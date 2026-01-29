@@ -153,8 +153,8 @@
 
     &:hover {
       color: var(--hi-color-text-primary);
-      background: rgba(255, 76, 0, 0.2);
-      box-shadow: 0 0 8px rgba(255, 76, 0, 0.3);
+      background: var(--hi-button-danger-hover);
+      box-shadow: var(--hi-glow-button-danger);
     }
 
     svg {
@@ -206,14 +206,14 @@
 
 // Success (Green)
 .hi-toast-success {
-  border-color: rgba(14, 184, 64, 0.5);
+  border-color: var(--hi-button-success-hover);
   box-shadow:
-    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 12px rgba(14, 184, 64, 0.2);
+    0 8px 16px var(--hi-color-black-30, rgba(0, 0, 0, 0.3)),
+    0 0 12px var(--hi-glow-button-success);
 
   .hi-toast-icon {
     color: var(--hi-color-success);
-    filter: drop-shadow(0 0 4px rgba(14, 184, 64, 0.6));
+    filter: drop-shadow(0 0 4px var(--hi-glow-button-success));
   }
 
   .hi-toast-progress::after {
@@ -224,14 +224,14 @@
 
 // Info (Blue)
 .hi-toast-info {
-  border-color: rgba(59, 130, 246, 0.5);
+  border-color: var(--hi-button-primary-hover);
   box-shadow:
-    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 12px rgba(59, 130, 246, 0.2);
+    0 8px 16px var(--hi-color-black-30, rgba(0, 0, 0, 0.3)),
+    0 0 12px var(--hi-glow-button-primary);
 
   .hi-toast-icon {
     color: var(--hi-color-primary);
-    filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.6));
+    filter: drop-shadow(0 0 4px var(--hi-glow-button-primary));
   }
 
   .hi-toast-progress::after {
@@ -242,14 +242,14 @@
 
 // Warning (Yellow)
 .hi-toast-warning {
-  border-color: rgba(245, 158, 11, 0.5);
+  border-color: var(--hi-button-warning-hover);
   box-shadow:
-    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 12px rgba(245, 158, 11, 0.2);
+    0 8px 16px var(--hi-color-black-30, rgba(0, 0, 0, 0.3)),
+    0 0 12px var(--hi-glow-button-warning);
 
   .hi-toast-icon {
     color: var(--hi-color-warning);
-    filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.6));
+    filter: drop-shadow(0 0 4px var(--hi-glow-button-warning));
   }
 
   .hi-toast-progress::after {
@@ -260,14 +260,14 @@
 
 // Error (Red)
 .hi-toast-error {
-  border-color: rgba(255, 76, 0, 0.5);
+  border-color: var(--hi-button-danger-hover);
   box-shadow:
-    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 12px rgba(255, 76, 0, 0.2);
+    0 8px 16px var(--hi-color-black-30, rgba(0, 0, 0, 0.3)),
+    0 0 12px var(--hi-glow-button-danger);
 
   .hi-toast-icon {
     color: var(--hi-color-danger);
-    filter: drop-shadow(0 0 4px rgba(255, 76, 0, 0.6));
+    filter: drop-shadow(0 0 4px var(--hi-glow-button-danger));
   }
 
   .hi-toast-progress::after {
@@ -278,10 +278,10 @@
 
 // Loading (Blue with spinner)
 .hi-toast-loading {
-  border-color: rgba(59, 130, 246, 0.5);
+  border-color: var(--hi-button-primary-hover);
   box-shadow:
-    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 12px rgba(59, 130, 246, 0.2);
+    0 8px 16px var(--hi-color-black-30, rgba(0, 0, 0, 0.3)),
+    0 0 12px var(--hi-glow-button-primary);
 
   .hi-toast-icon {
     color: var(--hi-color-primary);
@@ -290,7 +290,7 @@
     // animation: toast-spin 1s linear infinite;
 
     svg {
-      filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.6));
+      filter: drop-shadow(0 0 4px var(--hi-glow-button-primary));
     }
   }
 }
@@ -314,7 +314,7 @@
     transform: translateX(-4px);
     box-shadow:
       0 12px 24px rgba(0, 0, 0, 0.4),
-      0 0 20px var(--hi-primary);
+      var(--hi-glow-lg);
 
     .hi-toast-progress {
       &::after {
@@ -587,8 +587,8 @@
     border-color: var(--hi-color-primary);
     box-shadow:
       0 12px 24px rgba(0, 0, 0, 0.4),
-      0 0 20px var(--hi-primary),
-      0 0 0 1px rgba(59, 130, 246, 0.3) inset;
+      var(--hi-glow-lg),
+      0 0 0 1px var(--hi-button-primary-hover) inset;
   }
 
   &:active {

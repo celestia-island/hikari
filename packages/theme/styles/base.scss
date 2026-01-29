@@ -182,8 +182,11 @@
 
     // 背景色
     --hi-surface: var(--hi-color-surface);
-    --hi-card-bg: rgba(45, 45, 45, 0.95);
+    --hi-card-bg: var(--hi-button-secondary);
     --hi-card-bg-light: rgba(255, 255, 255, 0.95);
+
+    // Overlay遮罩色（反色）
+    --hi-overlay-color: rgba(0, 0, 0, 0.5);
 
     // 滚动条颜色
     --hi-scrollbar-thumb-hover: var(--hi-glow-color);
@@ -416,6 +419,12 @@ textarea {
         --hi-glow-button-danger: rgba(232, 90, 79, 0.8);
         --hi-glow-button-warning: rgba(238, 214, 119, 0.8);
         --hi-glow-button-info: rgba(106, 190, 214, 0.8);
+
+        // 暗黑模式Overlay遮罩色（淡白色）
+        --hi-overlay-color: rgba(255, 255, 255, 0.5);
+
+        // 暗黑模式Card背景色（黑色半透明）
+        --hi-card-bg-light: rgba(0, 0, 0, 0.95);
     }
 }
 

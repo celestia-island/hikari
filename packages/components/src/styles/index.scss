@@ -575,14 +575,11 @@
 @import './components/grid.scss';
 @import './components/section.scss';
 @import './components/scrollbar_container.scss';
-
-// ============================================
-// Data Components
-// ============================================
-
 @import './components/table.scss';
 @import './components/tree.scss';
 @import './components/pagination.scss';
+@import './components/code_block.scss';
+@import './components/markdown_renderer.scss';
 
 // ============================================
 // Demo App Specific Styles

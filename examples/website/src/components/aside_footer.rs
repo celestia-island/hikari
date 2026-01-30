@@ -3,8 +3,14 @@
 
 use dioxus::prelude::*;
 
-use crate::app::ThemeContext;
-use _components::{basic::{IconButton, IconButtonSize}, feedback::{Dropdown, DropdownPosition, DropdownPositioning, GlowBlur, GlowColor, GlowIntensity}, navigation::{Menu, MenuItem}};
+use _components::{
+    basic::{IconButton, IconButtonSize},
+    feedback::{
+        Dropdown, DropdownPosition, DropdownPositioning, GlowBlur, GlowColor, GlowIntensity,
+    },
+    navigation::{Menu, MenuItem},
+    use_theme,
+};
 use _icons::MdiIcon;
 use _palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, JustifyContent, Shadow};
 
@@ -31,14 +37,14 @@ impl Language {
 /// Aside footer component with theme toggle and language switcher
 #[component]
 pub fn AsideFooter() -> Element {
-    let mut theme_context = use_context::<ThemeContext>();
+    let theme = use_theme();
     let mut selected_language = use_signal(|| Language::English);
     let mut is_dropdown_open = use_signal(|| false);
 
     // Compute current theme icon
     let current_icon = use_memo(move || {
-        let theme = theme_context.theme.read();
-        if theme.as_str() == "hikari" {
+        let theme_name = &theme.theme_name;
+        if theme_name == "hikari" {
             MdiIcon::WhiteBalanceSunny
         } else {
             MdiIcon::MoonWaningCrescent
@@ -47,7 +53,7 @@ pub fn AsideFooter() -> Element {
 
     let icon_key = use_memo(move || format!("{:?}", current_icon.read()));
 
-    let lang = *selected_language.read();
+    let _lang = *selected_language.read();
 
     // Container styles - centered layout
     let container_classes = ClassesBuilder::new()
@@ -72,9 +78,9 @@ pub fn AsideFooter() -> Element {
                 glow_color: GlowColor::Ghost,
                 glow_intensity: GlowIntensity::Subtle,
                 onclick: move |_| {
-                    let current = theme_context.theme.read().clone();
-                    let new_theme = if current.as_str() == "hikari" { "tairitsu" } else { "hikari" };
-                    theme_context.theme.set(new_theme.to_string());
+                    // TODO: Implement theme switching
+                    // Currently, ThemeContext is read-only and doesn't support dynamic switching
+                    // For now, this is a placeholder
                 }
             }
 

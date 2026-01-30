@@ -212,117 +212,83 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
         title_zh: "组件",
         subcategories: &[
             NavSubcategory {
-                label_en: "Layout",
-                label_zh: "布局",
-                route: Some(Route::ComponentsLayout {}),
+                label_en: "Layer 1",
+                label_zh: "基础组件",
+                route: Some(Route::Layer1Basic {}),
                 items: &[
                     NavItem {
-                        label: "Container",
-                        icon: MdiIcon::Image,
-                        route: Route::LayoutContainer {},
-                    },
-                    NavItem {
-                        label: "Grid",
-                        icon: MdiIcon::ViewColumn,
-                        route: Route::LayoutGrid {},
-                    },
-                    NavItem {
-                        label: "Section",
-                        icon: MdiIcon::CubeOutline,
-                        route: Route::LayoutSection {},
-                    },
-                ],
-            },
-            NavSubcategory {
-                label_en: "Basic",
-                label_zh: "基础",
-                route: Some(Route::ComponentsBasic {}),
-                items: &[
-                    NavItem {
-                        label: "Button",
+                        label: "Basic",
                         icon: MdiIcon::GestureTap,
-                        route: Route::BasicButton {},
+                        route: Route::Layer1Basic {},
                     },
                     NavItem {
-                        label: "Input",
+                        label: "Form",
                         icon: MdiIcon::TextBoxEdit,
-                        route: Route::BasicInput {},
+                        route: Route::Layer1Form {},
                     },
                     NavItem {
-                        label: "Card",
-                        icon: MdiIcon::CreditCard,
-                        route: Route::BasicCard {},
+                        label: "Switch",
+                        icon: MdiIcon::ToggleSwitch,
+                        route: Route::Layer1Switch {},
                     },
                     NavItem {
-                        label: "Badge",
-                        icon: MdiIcon::Information,
-                        route: Route::BasicBadge {},
-                    },
-                ],
-            },
-            NavSubcategory {
-                label_en: "Feedback",
-                label_zh: "反馈",
-                route: Some(Route::ComponentsFeedback {}),
-                items: &[
-                    NavItem {
-                        label: "Alert",
+                        label: "Feedback",
                         icon: MdiIcon::Alert,
-                        route: Route::FeedbackAlert {},
+                        route: Route::Layer1Feedback {},
                     },
                     NavItem {
-                        label: "Toast",
-                        icon: MdiIcon::Bell,
-                        route: Route::FeedbackToast {},
-                    },
-                    NavItem {
-                        label: "Tooltip",
-                        icon: MdiIcon::Information,
-                        route: Route::FeedbackTooltip {},
+                        label: "Display",
+                        icon: MdiIcon::Image,
+                        route: Route::Layer1Display {},
                     },
                 ],
             },
             NavSubcategory {
-                label_en: "Navigation",
-                label_zh: "导航",
-                route: Some(Route::ComponentsNavigation {}),
+                label_en: "Layer 2",
+                label_zh: "复合组件",
+                route: Some(Route::Layer2Overview {}),
                 items: &[
                     NavItem {
-                        label: "Menu",
+                        label: "Navigation",
                         icon: MdiIcon::FormatListBulleted,
-                        route: Route::NavigationMenu {},
+                        route: Route::Layer2Navigation {},
                     },
                     NavItem {
-                        label: "Breadcrumb",
-                        icon: MdiIcon::ChevronDoubleRight,
-                        route: Route::NavigationBreadcrumb {},
-                    },
-                    NavItem {
-                        label: "Tabs",
-                        icon: MdiIcon::CreditCard,
-                        route: Route::NavigationTabs {},
-                    },
-                ],
-            },
-            NavSubcategory {
-                label_en: "Data",
-                label_zh: "数据",
-                route: Some(Route::ComponentsData {}),
-                items: &[
-                    NavItem {
-                        label: "Table",
-                        icon: MdiIcon::FormatListBulleted,
-                        route: Route::DataTable {},
-                    },
-                    NavItem {
-                        label: "Tree",
+                        label: "Data",
                         icon: MdiIcon::Graph,
-                        route: Route::DataTree {},
+                        route: Route::Layer2Data {},
                     },
                     NavItem {
-                        label: "Pagination",
-                        icon: MdiIcon::ChevronLeft,
-                        route: Route::DataPagination {},
+                        label: "Form",
+                        icon: MdiIcon::TextBoxEdit,
+                        route: Route::Layer2Form {},
+                    },
+                    NavItem {
+                        label: "Feedback",
+                        icon: MdiIcon::Bell,
+                        route: Route::Layer2Feedback {},
+                    },
+                ],
+            },
+            NavSubcategory {
+                label_en: "Layer 3",
+                label_zh: "生产级组件",
+                route: Some(Route::Layer3Overview {}),
+                items: &[
+                    NavItem {
+                        label: "Media",
+                        icon: MdiIcon::Play,
+                        route: Route::Layer3Media {},
+                    },
+                    NavItem {
+                        label: "Editor",
+                        icon: MdiIcon::FormatBold,
+                        route: Route::Layer3Editor {},
+                    },
+                    NavItem {
+                        label: "Visualization",
+                        icon: MdiIcon::CubeOutline,
+                        route: Route::Layer3Visualization {},
                     },
                 ],
             },
@@ -379,7 +345,23 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
             label_en: "All Demos",
             label_zh: "全部演示",
             route: Some(Route::DemosOverview {}),
-            items: &[],
+            items: &[
+                NavItem {
+                    label: "Form Demo",
+                    icon: MdiIcon::TextBoxEdit,
+                    route: Route::FormDemo {},
+                },
+                NavItem {
+                    label: "Dashboard Demo",
+                    icon: MdiIcon::ViewColumn,
+                    route: Route::DashboardDemo {},
+                },
+                NavItem {
+                    label: "Video Demo",
+                    icon: MdiIcon::Play,
+                    route: Route::VideoDemo {},
+                },
+            ],
         }],
     },
 ];

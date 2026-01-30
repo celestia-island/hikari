@@ -4,7 +4,10 @@
 use dioxus::prelude::*;
 
 use crate::app::Route;
-use _palette::classes::{ AlignItems, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, JustifyContent, MarginBottom, };
+use _palette::classes::{
+    AlignItems, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, JustifyContent,
+    MarginBottom,
+};
 
 /// Top navigation bar with FUI styling
 ///
@@ -16,10 +19,20 @@ pub fn TopNav(current_route: Route) -> Element {
     let mut active_tab = use_signal(|| match current_route {
         Route::Home {}
         | Route::ComponentsOverview {}
-        | Route::ComponentsBasic {}
-        | Route::ComponentsFeedback {}
-        | Route::ComponentsNavigation {}
-        | Route::ComponentsData {} => "0",
+        | Route::Layer1Basic {}
+        | Route::Layer1Form {}
+        | Route::Layer1Switch {}
+        | Route::Layer1Feedback {}
+        | Route::Layer1Display {}
+        | Route::Layer2Overview {}
+        | Route::Layer2Navigation {}
+        | Route::Layer2Data {}
+        | Route::Layer2Form {}
+        | Route::Layer2Feedback {}
+        | Route::Layer3Overview {}
+        | Route::Layer3Media {}
+        | Route::Layer3Editor {}
+        | Route::Layer3Visualization {} => "0",
 
         Route::SystemOverview {}
         | Route::SystemCSS {}
@@ -27,7 +40,10 @@ pub fn TopNav(current_route: Route) -> Element {
         | Route::SystemPalette {}
         | Route::SystemAnimations {} => "1",
 
-        Route::DemosOverview {} => "2",
+        Route::DemosOverview {}
+        | Route::FormDemo {}
+        | Route::DashboardDemo {}
+        | Route::VideoDemo {} => "2",
         _ => "0",
     });
 

@@ -4,9 +4,12 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use super::{AsideFooter, sidebar::Sidebar};
+use super::{sidebar::Sidebar, AsideFooter};
 use crate::app::Route;
-use _components::{basic::Logo, layout::{Aside, Header, Layout as HikariLayout}};
+use _components::{
+    basic::Logo,
+    layout::{Aside, Header, Layout as HikariLayout},
+};
 use _palette::classes::{AlignItems, ClassesBuilder, Display, FontWeight, Gap, Padding};
 
 /// Layout component that wraps all pages with modern design
@@ -146,46 +149,46 @@ fn get_breadcrumb_items(route: &Route) -> Vec<BreadcrumbItem> {
             },
         ],
 
-        Route::ComponentsBasic {} => vec![
+        Route::Layer1Basic {} => vec![
             BreadcrumbItem {
                 label: "Components".to_string(),
                 route: Some(Route::ComponentsOverview {}),
             },
             BreadcrumbItem {
-                label: "Basic".to_string(),
+                label: "Layer 1".to_string(),
                 route: None,
             },
         ],
 
-        Route::ComponentsFeedback {} => vec![
+        Route::Layer1Feedback {} => vec![
             BreadcrumbItem {
                 label: "Components".to_string(),
                 route: Some(Route::ComponentsOverview {}),
             },
             BreadcrumbItem {
-                label: "Feedback".to_string(),
+                label: "Layer 1".to_string(),
                 route: None,
             },
         ],
 
-        Route::ComponentsNavigation {} => vec![
+        Route::Layer2Navigation {} => vec![
             BreadcrumbItem {
                 label: "Components".to_string(),
                 route: Some(Route::ComponentsOverview {}),
             },
             BreadcrumbItem {
-                label: "Navigation".to_string(),
+                label: "Layer 2".to_string(),
                 route: None,
             },
         ],
 
-        Route::ComponentsData {} => vec![
+        Route::Layer2Data {} => vec![
             BreadcrumbItem {
                 label: "Components".to_string(),
                 route: Some(Route::ComponentsOverview {}),
             },
             BreadcrumbItem {
-                label: "Data".to_string(),
+                label: "Layer 2".to_string(),
                 route: None,
             },
         ],

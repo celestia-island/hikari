@@ -34,6 +34,9 @@ dioxus = { version = "0.7", features = ["web"] }
 dioxus-router = "0.7"
 dioxus-web = "0.7"
 
+# Markdown parsing
+pulldown-cmark = "0.12"
+
 # WASM related
 wasm-bindgen = "0.2"
 web-sys = "0.3"

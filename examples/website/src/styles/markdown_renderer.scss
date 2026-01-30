@@ -1,0 +1,141 @@
+// website/src/styles/markdown_renderer.scss
+// Markdown rendering styles
+
+.hi-markdown-content {
+    line-height: 1.75;
+    color: var(--hi-color-text-primary);
+
+    // Headings
+    h1, h2, h3, h4, h5, h6 {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: var(--hi-color-text-primary);
+    }
+
+    h1 {
+        font-size: 2.25rem;
+        border-bottom: 1px solid var(--hi-color-border);
+        padding-bottom: 0.5rem;
+    }
+
+    h2 {
+        font-size: 1.875rem;
+        border-bottom: 1px solid var(--hi-color-border);
+        padding-bottom: 0.5rem;
+    }
+
+    h3 {
+        font-size: 1.5rem;
+    }
+
+    h4 {
+        font-size: 1.25rem;
+    }
+
+    // Paragraphs
+    p {
+        margin-bottom: 1rem;
+        line-height: 1.75;
+    }
+
+    // Code blocks
+    .hi-code-block {
+        background-color: var(--hi-color-surface);
+        border: 1px solid var(--hi-color-border);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1.5rem 0;
+        overflow-x: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+
+    .hi-code-content {
+        display: block;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    // Inline code
+    .hi-inline-code {
+        background-color: var(--hi-color-surface-secondary);
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.875em;
+        color: var(--hi-color-accent);
+    }
+
+    // Lists
+    .hi-list {
+        list-style: disc;
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .hi-list-item {
+        margin-bottom: 0.5rem;
+        line-height: 1.75;
+    }
+
+    // Horizontal rule
+    .hi-hr {
+        border: none;
+        border-top: 1px solid var(--hi-color-border);
+        margin: 2rem 0;
+    }
+
+    // Inner Hikari component blocks
+    .hi-inner-hikari-block {
+        background-color: var(--hi-color-surface-secondary);
+        border: 1px solid var(--hi-color-border);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1.5rem 0;
+    }
+
+    .hi-inner-hikari-label {
+        font-size: 0.75rem;
+        color: var(--hi-color-text-secondary);
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .hi-inner-hikari-path {
+        background-color: var(--hi-color-surface);
+        padding: 0.5rem 0.75rem;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        color: var(--hi-color-accent);
+        display: inline-block;
+    }
+
+    // HTML content
+    .hi-html-content {
+        margin: 1rem 0;
+    }
+
+    // Links
+    a {
+        color: var(--hi-color-primary);
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    // Blockquotes
+    blockquote {
+        border-left: 4px solid var(--hi-color-primary);
+        padding-left: 1rem;
+        margin: 1.5rem 0;
+        color: var(--hi-color-text-secondary);
+        font-style: italic;
+    }
+}

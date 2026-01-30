@@ -12,7 +12,12 @@ use std::{
 /// Set by build.rs at compile time via cargo:rustc-env
 /// Defaults to "/static/dynamic-icons" if not set
 #[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
-const ICON_ROUTE: &str = option_env!("HIKARI_ICON_ROUTE").unwrap_or("/static/dynamic-icons");
+const ICON_ROUTE: &str = {
+    match option_env!("HIKARI_ICON_ROUTE") {
+        Some(route) => route,
+        None => "/static/dynamic-icons",
+    }
+};
 
 /// Icon cache to prevent duplicate requests
 #[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]

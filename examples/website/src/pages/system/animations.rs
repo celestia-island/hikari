@@ -4,7 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _palette::classes::{ ClassesBuilder, FontSize, FontWeight, MarginBottom, TextColor, };
+use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextColor};
 
 /// Animations showcase page
 #[allow(non_snake_case)]

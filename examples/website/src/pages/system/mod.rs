@@ -6,6 +6,7 @@ pub mod css;
 pub mod icons;
 pub mod overview;
 pub mod palette;
+pub mod registry;
 
 // Re-export page components
 pub use animations::SystemAnimations;
@@ -13,3 +14,4 @@ pub use css::SystemCSS;
 pub use icons::SystemIcons;
 pub use overview::SystemOverview;
 pub use palette::SystemPalette;
+pub use registry::ComponentRegistry;

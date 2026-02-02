@@ -1,8 +1,9 @@
-use crate::error::AnimationError;
-use crate::state_machine::{RenderOutput, StateMachineBuilder};
-use palette::color_math::{adjust_lightness_hex, adjust_saturation_hex};
 use std::collections::HashMap;
+
+use palette::color_math::{adjust_lightness_hex, adjust_saturation_hex};
 use web_sys::HtmlElement;
+
+use crate::{error::AnimationError, state_machine::{RenderOutput, StateMachineBuilder}};
 
 /// Background animation states
 #[derive(Clone, Copy, PartialEq, Debug)]

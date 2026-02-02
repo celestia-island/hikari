@@ -1,10 +1,5 @@
 // packages/components/src/entry/auto_complete.rs
 // AutoComplete component with Arknights + FUI styling
-// TEMPORARILY DISABLED DUE TO DIOXUS LIFETIME ISSUES
-
-// NOTE: This component has compilation issues due to Dioxus 0.7 lifetime requirements.
-// The component needs to be rewritten to properly handle the lifecycle of props and event handlers.
-// For now, we provide a placeholder implementation that compiles.
 
 use dioxus::prelude::*;
 use palette::classes::ClassesBuilder;
@@ -29,12 +24,13 @@ pub struct AutoCompleteComponent;
 ///     let options = vec![
 ///         "Rust".to_string(),
 ///         "Python".to_string(),
+///         "TypeScript".to_string(),
 ///     ];
 ///
 ///     rsx! {
 ///         AutoComplete {
 ///             value: value(),
-///             options: options.clone(),
+///             options: options,
 ///             placeholder: "Select a language",
 ///             on_select: move |v| value.set(v),
 ///         }
@@ -43,49 +39,166 @@ pub struct AutoCompleteComponent;
 /// ```
 #[derive(Clone, PartialEq, Props)]
 pub struct AutoCompleteProps {
+    /// Current input value
     #[props(default)]
     pub value: String,
 
+    /// All available options
     pub options: Vec<String>,
 
+    /// Callback when option is selected
+    #[props(default)]
     pub on_select: EventHandler<String>,
 
+    /// Placeholder text
     #[props(default)]
     pub placeholder: String,
 
+    /// Whether component is disabled
     #[props(default = false)]
     pub disabled: bool,
 
+    /// Whether to show clear button
     #[props(default = false)]
     pub allow_clear: bool,
 
-    #[props(default)]
-    pub filter: Option<String>,
-
+    /// Custom classes
     #[props(default)]
     pub class: String,
 
+    /// Custom styles
     #[props(default)]
     pub style: String,
 }
 
+impl Default for AutoCompleteProps {
+    fn default() -> Self {
+        Self {
+            value: String::new(),
+            options: vec![],
+            on_select: EventHandler::new(|_: String| {}),
+            placeholder: String::new(),
+            disabled: false,
+            allow_clear: false,
+            class: String::new(),
+            style: String::new(),
+        }
+    }
+}
+
 #[component]
 pub fn AutoComplete(props: AutoCompleteProps) -> Element {
-    let mut show_options = use_signal(|| false);
+    let mut is_open = use_signal(|| false);
+    let mut focused_index = use_signal(|| 0);
+    let mut filtered_options = use_signal(Vec::new);
+
+    // Clone props values before using in effects
+    let props_value = props.value.clone();
+    let props_options = props.options.clone();
+
+    // Update filtered options when props change
+    use_effect(move || {
+        let value_lower = props_value.to_lowercase();
+        let filtered = props_options
+            .iter()
+            .filter(|option| {
+                option.to_lowercase().starts_with(&value_lower) || value_lower.is_empty()
+            })
+            .cloned()
+            .collect::<Vec<_>>();
+        filtered_options.set(filtered);
+    });
+
+    // Handle input change
+    let handle_input = {
+        let on_select = props.on_select.clone();
+        move |e: Event<FormData>| {
+            on_select.call(e.value());
+            is_open.set(true);
+            focused_index.set(0);
+        }
+    };
+
+    // Handle focus
+    let handle_focus = move |_| {
+        if !props.disabled {
+            is_open.set(true);
+            focused_index.set(0);
+        }
+    };
+
+    // Handle blur (close dropdown immediately)
+    let handle_blur = move |_| {
+        is_open.set(false);
+    };
+
+    // Handle option click
+    let mut handle_option_click = {
+        let on_select = props.on_select.clone();
+        move |option: String| {
+            on_select.call(option);
+            is_open.set(false);
+        }
+    };
+
+    // Handle keyboard navigation
+    let handle_keydown = {
+        move |e: KeyboardEvent| {
+            if props.disabled {
+                return;
+            }
+
+            let options = filtered_options.read().clone();
+            let current = *focused_index.read();
+
+            match e.key() {
+                Key::Enter => {
+                    e.prevent_default();
+                    if !options.is_empty() && current < options.len() {
+                        let selected_option = options[current].clone();
+                        handle_option_click(selected_option);
+                    }
+                }
+                Key::ArrowDown => {
+                    e.prevent_default();
+                    if !options.is_empty() {
+                        let next = (current + 1) % options.len();
+                        focused_index.set(next);
+                    }
+                }
+                Key::ArrowUp => {
+                    e.prevent_default();
+                    if !options.is_empty() {
+                        let len = options.len();
+                        let prev = (current + len - 1) % len;
+                        focused_index.set(prev);
+                    }
+                }
+                Key::Escape => {
+                    e.prevent_default();
+                    is_open.set(false);
+                }
+                _ => {}
+            }
+        }
+    };
+
+    // Handle clear button
+    let handle_clear = {
+        let on_select = props.on_select.clone();
+        move |_| {
+            on_select.call(String::new());
+            is_open.set(false);
+        }
+    };
 
     let input_classes = ClassesBuilder::new()
         .add_raw("hi-autocomplete-input")
         .build();
 
-    let dropdown_classes = ClassesBuilder::new()
-        .add_raw("hi-autocomplete-dropdown")
-        .add_raw(if show_options() {
-            "hi-autocomplete-show"
-        } else {
-            ""
-        })
-        .add_raw(&props.class)
-        .build();
+    let is_open_value = *is_open.read();
+    let focused_index_value = *focused_index.read();
+    let options_vec = filtered_options.read().clone();
 
     rsx! {
         div {
@@ -98,26 +211,40 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
                 value: "{props.value}",
                 placeholder: "{props.placeholder}",
                 disabled: props.disabled,
+                oninput: handle_input,
+                onfocus: handle_focus,
+                onblur: handle_blur,
+                onkeydown: handle_keydown,
             }
 
             if props.allow_clear && !props.value.is_empty() && !props.disabled {
                 button {
                     class: "hi-autocomplete-clear",
-                    onclick: move |_| {
-                        props.on_select.call(String::new());
-                    },
+                    onclick: handle_clear,
+                    type: "button",
                     "×"
                 }
             }
 
-            div {
-                class: "{dropdown_classes}",
+            if is_open_value && !options_vec.is_empty() {
+                div {
+                    class: "hi-autocomplete-dropdown hi-autocomplete-show {props.class}",
 
-                for option in props.options.iter() {
-                    div {
-                        class: "hi-autocomplete-option",
-                        onclick: move |_| props.on_select.call(option.to_string()),
-                        "{option}"
+                    for index in 0..options_vec.len() {
+                        div {
+                            class: if index == focused_index_value {
+                                "hi-autocomplete-option hi-autocomplete-option-focused"
+                            } else {
+                                "hi-autocomplete-option"
+                            },
+                            onclick: move |_| {
+                                let options = filtered_options.read();
+                                if index < options.len() {
+                                    handle_option_click(options[index].clone())
+                                }
+                            },
+                            "{options_vec[index]}"
+                        }
                     }
                 }
             }
@@ -218,7 +345,8 @@ impl StyledComponent for AutoCompleteComponent {
     transition: all 0.15s ease;
 }
 
-.hi-autocomplete-option:hover {
+.hi-autocomplete-option:hover,
+.hi-autocomplete-option.hi-autocomplete-option-focused {
     background-color: var(--hi-color-primary);
     color: #ffffff;
 }
@@ -226,6 +354,6 @@ impl StyledComponent for AutoCompleteComponent {
     }
 
     fn name() -> &'static str {
-        "auto-complete"
+        "autocomplete"
     }
 }

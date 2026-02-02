@@ -1,0 +1,54 @@
+# Rust build artifacts
+target/
+**/*.rs.bk
+*.pdb
+
+# Dependencies
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+docs/
+*.md
+
+# Logs
+*.log
+
+# Git
+.git/
+.gitignore
+
+# Docker
+docker/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build scripts (keep for Docker build)
+# scripts/
+
+# Examples (not needed for website)
+examples/*/target/
+examples/e2e/
+
+# Test data
+**/tests/
+
+# Coverage and profiling
+**/coverage/
+**/profiling/

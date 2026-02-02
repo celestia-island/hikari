@@ -4,12 +4,9 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use super::{sidebar::Sidebar, AsideFooter};
+use super::{AsideFooter, sidebar::Sidebar};
 use crate::app::Route;
-use _components::{
-    basic::Logo,
-    layout::{Aside, Header, Layout as HikariLayout},
-};
+use _components::{basic::Logo, layout::{Aside, Header, Layout as HikariLayout}};
 use _palette::classes::{AlignItems, ClassesBuilder, Display, FontWeight, Gap, Padding};
 
 /// Layout component that wraps all pages with modern design

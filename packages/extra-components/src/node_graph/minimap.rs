@@ -1,0 +1,43 @@
+// node_graph/minimap.rs
+// Minimap component for node graph overview
+
+use dioxus::prelude::*;
+
+/// Minimap component showing overview of the node graph
+#[component]
+pub fn NodeGraphMinimap(
+    #[props(default)] width: f64,
+    #[props(default)] height: f64,
+    #[props(default)] _zoom: f64,
+    #[props(default)] _pan: (f64, f64),
+    _nodes: Vec<(String, (f64, f64), (f64, f64))>,
+    _connections: Vec<(String, (f64, f64), (f64, f64))>,
+    #[props(default)] on_minimap_click: EventHandler<(f64, f64)>,
+) -> Element {
+    let on_click = move |_e: dioxus::prelude::MouseEvent| {
+        // Simple click handler for minimap
+        on_minimap_click.call((100.0, 100.0));
+    };
+
+    rsx! {
+        div {
+            class: "hi-node-graph-minimap",
+            style: format!("width: {}px; height: {}px;", width, height),
+            onclick: on_click,
+
+            // Minimap canvas
+            svg {
+                class: "hi-minimap-svg",
+                width: "100%",
+                height: "100%",
+
+                // Background
+                rect {
+                    class: "hi-minimap-background",
+                    width: "100%",
+                    height: "100%",
+                }
+            }
+        }
+    }
+}

@@ -5,11 +5,17 @@ use std::sync::Arc;
 
 use axum::{
     extract::State,
-    http::{header, StatusCode},
+    http::{StatusCode, header},
     response::{IntoResponse, Response},
 };
 
-use crate::registry::StyleRegistry;
+use crate::{
+    models::{
+        BasicComponents, ComponentCategories, DataComponents, FeedbackComponents,
+        NavigationComponents, StyleInfo,
+    },
+    registry::StyleRegistry,
+};
 
 /// CSS 服务
 ///
@@ -70,43 +76,45 @@ impl StyleService {
     ///
     /// 端点: `/styles/info`
     pub async fn style_info(State(state): State<Self>) -> impl IntoResponse {
-        let info = serde_json::json!({
-            "total_components": state.registry.len(),
-            "components": {
-                "basic": {
-                    "button": state.registry.has("button"),
-                    "input": state.registry.has("input"),
-                    "card": state.registry.has("card"),
-                    "badge": state.registry.has("badge"),
+        let info = StyleInfo {
+            total_components: state.registry.len(),
+            components: ComponentCategories {
+                basic: BasicComponents {
+                    button: state.registry.has("button"),
+                    input: state.registry.has("input"),
+                    card: state.registry.has("card"),
+                    badge: state.registry.has("badge"),
                 },
-                "data": {
-                    "table": state.registry.has("table"),
-                    "tree": state.registry.has("tree"),
-                    "pagination": state.registry.has("pagination"),
-                    "virtual-scroll": state.registry.has("virtual-scroll"),
-                    "collapse": state.registry.has("collapse"),
-                    "drag": state.registry.has("drag"),
-                    "sort": state.registry.has("sort"),
-                    "filter": state.registry.has("filter"),
-                    "selection": state.registry.has("selection"),
+                data: DataComponents {
+                    table: state.registry.has("table"),
+                    tree: state.registry.has("tree"),
+                    pagination: state.registry.has("pagination"),
+                    virtual_scroll: state.registry.has("virtual-scroll"),
+                    collapse: state.registry.has("collapse"),
+                    drag: state.registry.has("drag"),
+                    sort: state.registry.has("sort"),
+                    filter: state.registry.has("filter"),
+                    selection: state.registry.has("selection"),
                 },
-                "feedback": {
-                    "alert": state.registry.has("alert"),
-                    "toast": state.registry.has("toast"),
-                    "tooltip": state.registry.has("tooltip"),
+                feedback: FeedbackComponents {
+                    alert: state.registry.has("alert"),
+                    toast: state.registry.has("toast"),
+                    tooltip: state.registry.has("tooltip"),
                 },
-                "navigation": {
-                    "menu": state.registry.has("menu"),
-                    "tabs": state.registry.has("tabs"),
-                    "breadcrumb": state.registry.has("breadcrumb"),
-                }
-            }
-        });
+                navigation: NavigationComponents {
+                    menu: state.registry.has("menu"),
+                    tabs: state.registry.has("tabs"),
+                    breadcrumb: state.registry.has("breadcrumb"),
+                },
+            },
+        };
+
+        let json = serde_json::to_string(&info).unwrap_or_default();
 
         Response::builder()
             .status(StatusCode::OK)
             .header(header::CONTENT_TYPE, "application/json")
-            .body(info.to_string())
+            .body(json)
             .unwrap()
     }
 }

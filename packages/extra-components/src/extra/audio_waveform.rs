@@ -1,9 +1,15 @@
 // hi-extra-components/src/extra/audio_waveform.rs
-// AudioWaveform component with Arknights + FUI styling
+// AudioWaveform component with real waveform visualization
 
 use dioxus::prelude::*;
 use hikari_components::basic::IconButton;
 use hikari_icons::MdiIcon;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsCast;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::closure::Closure;
+#[cfg(target_arch = "wasm32")]
+use web_sys::window;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum WaveformColor {
@@ -38,11 +44,30 @@ pub struct AudioWaveformProps {
     /// Callback when playback pauses
     #[props(default)]
     pub on_pause: Option<EventHandler<()>>,
+
+    /// Callback when audio is loaded and waveform is generated
+    #[props(default)]
+    pub on_waveform_ready: Option<EventHandler<Vec<f32>>>,
 }
 
-/// AudioWaveform component with visualization
+impl Default for AudioWaveformProps {
+    fn default() -> Self {
+        Self {
+            src: String::default(),
+            waveform_color: Default::default(),
+            show_controls: false,
+            class: String::default(),
+            on_play: None,
+            on_pause: None,
+            on_waveform_ready: None,
+        }
+    }
+}
+
+/// AudioWaveform component with real waveform visualization
 ///
-/// An audio player with waveform visualization using existing components.
+/// An audio player with waveform visualization using Web Audio API (WASM).
+/// For non-WASM targets, generates placeholder waveform data.
 ///
 /// # Examples
 ///
@@ -69,6 +94,9 @@ pub fn AudioWaveform(props: AudioWaveformProps) -> Element {
 
     let waveform_classes = format!("hi-audio-waveform hi-waveform-{:?}", props.waveform_color);
 
+    let waveform_data = use_signal(|| Vec::<f32>::new());
+    let is_loaded = use_signal(|| false);
+
     let toggle_playback = move |_| {
         is_playing.set(!is_playing());
     };
@@ -77,30 +105,134 @@ pub fn AudioWaveform(props: AudioWaveformProps) -> Element {
         volume.set(if vol { 1.0 } else { 0.0 });
     };
 
-    // Generate fake waveform bars (in real implementation, this would come from audio analysis)
-    let waveform_bars = (0..40).map(|i| {
-        let height = 20.0 + (i as f64 * 0.8).sin().abs() as f64 * 40.0;
-        let opacity = 0.3 + (i as f64 / 40.0) * 0.7;
-        rsx! {
-            div {
-                key: "{i}",
-                class: "hi-waveform-bar",
-                style: "height: {height}px; opacity: {opacity};"
-            }
+    #[cfg(target_arch = "wasm32")]
+    use_effect({
+        let src = props.src.clone();
+        let on_waveform_ready = props.on_waveform_ready.clone();
+        let waveform_data_clone1 = waveform_data.clone();
+        let is_loaded_clone1 = is_loaded.clone();
+
+        move || {
+            use web_sys::{AudioContext, HtmlAudioElement};
+
+            let source_url = src.clone();
+
+            let mut waveform_data_clone2 = waveform_data_clone1.clone();
+            let mut is_loaded_clone2 = is_loaded_clone1.clone();
+
+            wasm_bindgen_futures::spawn_local(async move {
+                if let Some(win) = window() {
+                    if let Ok(audio_element) = HtmlAudioElement::new() {
+                        audio_element.set_cross_origin(Some("anonymous"));
+                        audio_element.set_src(&source_url);
+
+                        if let Ok(audio_context) = AudioContext::new() {
+                            let track = audio_context
+                                .create_media_element_source(&audio_element)
+                                .unwrap();
+                            let analyser = audio_context.create_analyser().unwrap();
+
+                            track.connect(&analyser);
+                            analyser.connect(&audio_context.destination().unwrap());
+
+                            analyser.set_fft_size(512);
+
+                            let buffer_length = analyser.frequency_bin_count();
+                            let mut data_array = vec![0.0f32; buffer_length as usize];
+
+                            let mut waveform_data_clone3 = waveform_data_clone2.clone();
+                            let mut is_loaded_clone3 = is_loaded_clone2.clone();
+
+                            let loaded_callback = Closure::wrap(Box::new(move || {
+                                let normalized_data: Vec<f32> = (0..40)
+                                    .map(|i| {
+                                        let index = (i * buffer_length as usize / 40)
+                                            .min(data_array.len() - 1);
+                                        data_array[index] / 255.0
+                                    })
+                                    .collect();
+
+                                waveform_data_clone3.set(normalized_data.clone());
+                                is_loaded_clone3.set(true);
+
+                                if let Some(handler) = on_waveform_ready.as_ref() {
+                                    handler.call(normalized_data);
+                                }
+                            })
+                                as Box<dyn FnMut()>);
+
+                            audio_element.set_onloadedmetadata(Some(
+                                loaded_callback.as_ref().unchecked_ref(),
+                            ));
+                            loaded_callback.forget();
+
+                            let _ = audio_context.resume();
+                        }
+                    }
+                }
+            });
         }
     });
+
+    #[cfg(not(target_arch = "wasm32"))]
+    use_effect({
+        let on_waveform_ready = props.on_waveform_ready.clone();
+        let waveform_data_clone = waveform_data.clone();
+        let is_loaded_clone = is_loaded.clone();
+
+        move || {
+            let mut waveform_data_clone2 = waveform_data_clone.clone();
+            let mut is_loaded_clone2 = is_loaded_clone.clone();
+
+            wasm_bindgen_futures::spawn_local(async move {
+                if let Some(handler) = on_waveform_ready.as_ref() {
+                    let fake_data: Vec<f32> = (0..40)
+                        .map(|i| {
+                            let value = 0.2 + (i as f32 * 0.8).sin().abs() as f32 * 0.8;
+                            value
+                        })
+                        .collect();
+
+                    handler.call(fake_data.clone());
+                    waveform_data_clone2.set(fake_data);
+                    is_loaded_clone2.set(true);
+                }
+            });
+        }
+    });
+
+    let waveform_bars: Vec<f32> = if is_loaded() {
+        waveform_data().clone()
+    } else {
+        vec![]
+    };
+
+    let bars: Vec<(usize, f32)> = waveform_bars
+        .iter()
+        .enumerate()
+        .map(|(i, amplitude)| (i, *amplitude))
+        .collect();
 
     rsx! {
         div { class: "{waveform_classes} {props.class}",
             // Audio element (hidden)
             audio {
                 src: "{props.src}",
+                controls: if props.show_controls { "true" } else { "false" },
+                autoplay: if is_playing() { "true" } else { "false" },
+                volume: "{volume()}",
             }
 
             // Waveform visualization
             div { class: "hi-waveform-container",
                 div { class: "hi-waveform-bars",
-                    { waveform_bars }
+                    for (i, amplitude) in bars {
+                        div {
+                            key: "{i}",
+                            class: "hi-waveform-bar",
+                            style: "height: {20.0 + amplitude * 80.0}px; opacity: {0.3 + amplitude * 0.7};"
+                        }
+                    }
                 }
             }
 

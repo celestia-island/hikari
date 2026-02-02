@@ -1,0 +1,33 @@
+[package]
+name = "hikari-e2e"
+version = "0.1.0"
+description = "E2E testing framework for Hikari UI components"
+authors = ["Hikari Contributors"]
+license = "MIT OR Apache-2.0"
+edition = "2024"
+
+[dependencies]
+# Selenium WebDriver for E2E testing
+thirtyfour = { version = "0.34", features = ["reqwest"] }
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Logging and tracing
+log = "0.4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Serde for config
+serde = { version = "^1", features = ["derive"] }
+serde_json = "^1"
+
+# Utilities
+anyhow = "^1"
+
+[[bin]]
+name = "hikari-e2e"
+path = "src/main.rs"
+
+[dev-dependencies]
+headless_chrome = "1.0.1"

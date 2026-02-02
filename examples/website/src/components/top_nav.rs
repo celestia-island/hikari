@@ -4,10 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::app::Route;
-use _palette::classes::{
-    AlignItems, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, JustifyContent,
-    MarginBottom,
-};
+use _palette::classes::{ AlignItems, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, JustifyContent, MarginBottom, };
 
 /// Top navigation bar with FUI styling
 ///

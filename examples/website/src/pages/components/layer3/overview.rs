@@ -1,9 +1,10 @@
 // website/src/pages/components/layer3/overview.rs
 // Layer 3 overview page
 
+use dioxus::prelude::*;
+
 use crate::components::Layout;
 use _palette::classes::{ClassesBuilder, Display, FontSize, Padding, TextColor};
-use dioxus::prelude::*;
 
 pub fn Layer3Overview() -> Element {
     rsx! {

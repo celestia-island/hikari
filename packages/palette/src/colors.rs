@@ -711,12 +711,13 @@ impl Color {
     /// let (r, g, b, a) = color.glow_contrast(0.8); // (0, 0, 0, 0.8)
     ///
     /// let dark_color = 靛蓝; // brightness = 0.25 < 0.4 → dark → white
-    /// let (r, g, b, a) = dark_color.glow_contrast(0.8); // (255, 255, 255, 0.8)
-
+    /// let (r, g, b, a) = color.glow_contrast(0.8); // (0, 0, 0, 0.8)
+    ///
     /// Get contrast color for this color (black or white)
     ///
-    /// Returns (r, g, b, alpha) for the contrast color
+    /// Returns (r, g, b, alpha) for contrast color
     /// Uses 0.5 threshold for high-contrast text
+
     ///
     /// # Arguments
     /// * `alpha` - Opacity from 0.0 to 1.0 (e.g., 0.9 for 90%)

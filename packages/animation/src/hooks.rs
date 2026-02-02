@@ -229,7 +229,7 @@ impl UseTransition {
         self.is_visible.set(true);
         self.is_animating.set(true);
 
-        let mut is_animating = self.is_animating.clone();
+        let mut is_animating = self.is_animating;
         let duration_ms = self.duration_ms as i32;
 
         // Use setTimeout for web/WASM compatibility
@@ -253,8 +253,8 @@ impl UseTransition {
     pub fn exit(&mut self) {
         self.is_animating.set(true);
 
-        let mut is_visible = self.is_visible.clone();
-        let mut is_animating = self.is_animating.clone();
+        let mut is_visible = self.is_visible;
+        let mut is_animating = self.is_animating;
         let duration_ms = self.duration_ms as i32;
 
         // Use setTimeout for web/WASM compatibility

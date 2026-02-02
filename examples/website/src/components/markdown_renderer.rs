@@ -2,9 +2,10 @@
 // Markdown to HTML component using pulldown-cmark
 // Supports custom code blocks like ```_hikari_component
 
-use crate::components::registry::{parse_component_path, render_component, ComponentType};
 use dioxus::prelude::*;
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
+
+use crate::components::registry::{parse_component_path, render_component, ComponentType};
 
 /// Render markdown content to Dioxus elements
 pub fn render_markdown(markdown: &str) -> Element {

@@ -17,3 +17,15 @@ hikari-icons = { path = "../icons" }
 
 # MCP / network and protocols
 dioxus.workspace = true
+wasm-bindgen = "^0.2"
+wasm-bindgen-futures = "^0.4"
+
+# Serialization
+serde = { version = "^1", features = ["derive"] }
+serde_json = "^1"
+
+# Utilities
+lazy_static = "^1"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+web-sys = { version = "^0.3", features = ["Window", "MouseEvent", "AudioContext", "HtmlAudioElement", "AudioNode", "GainNode", "AnalyserNode", "MediaElementAudioSourceNode", "AudioDestinationNode", "OscillatorNode", "PeriodicWave"] }

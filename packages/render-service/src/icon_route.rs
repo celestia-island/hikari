@@ -138,8 +138,8 @@ fn is_safe_icon_name(name: &str) -> bool {
 ///
 /// Uses quick-xml to parse without interpreting raw HTML/SVG
 fn parse_svg_safe(svg: &str) -> Result<IconData, String> {
-    use quick_xml::events::Event;
     use quick_xml::Reader;
+    use quick_xml::events::Event;
 
     let mut reader = Reader::from_str(svg);
     reader.trim_text(true);

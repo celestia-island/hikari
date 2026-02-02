@@ -100,6 +100,7 @@
 //! - [`RichTextEditor`] - Rich text editor with formatting toolbar
 //! - [`AudioWaveform`] - Audio player with waveform visualization
 //! - [`VideoPlayer`] - HTML5 video player with custom controls
+//! - [`NodeGraph`] - Plugin-based visual node editor
 //!
 //! ## Use Cases
 //!
@@ -153,9 +154,109 @@
 //! | `wheel_enabled` | `bool` | `true` | Enable mouse wheel zoom |
 //! | `class` | `String` | `""` | Additional CSS classes |
 //! | `children` | `Element` | - | Zoomable content |
-
+//!
+//! ### NodeGraph
+//!
+//! | Prop | Type | Default | Description |
+//! |------|------|---------|-------------|
+//! | `width` | `f64` | - | Canvas width |
+//! | `height` | `f64` | - | Canvas height |
+//! | `on_node_add` | `EventHandler<NodeType>` | - | Node add handler |
+//! | `on_node_select` | `EventHandler<String>` | - | Node select handler |
+//! | `on_node_move` | `EventHandler<(String, f64, f64)>` | - | Node move handler |
+//! | `on_node_delete` | `EventHandler<String>` | - | Node delete handler |
+//! | `on_connection_create` | `EventHandler<(String, String, String, String)>` | - | Connection create handler |
+//! | `on_connection_delete` | `EventHandler<ConnectionId>` | - | Connection delete handler |
+//! | `children` | `Element` | - | Canvas children overlay |
+//!
+//! ## Components
+//!
+//! - [`Collapsible`] - Collapsible content containers with slide animations
+//! - [`DragLayer`] - Drag and drop layer management with constraints
+//! - [`ZoomControls`] - Zoom controls for interactive content
+//! - [`RichTextEditor`] - Rich text editor with formatting toolbar
+//! - [`AudioWaveform`] - Audio player with waveform visualization
+//! - [`VideoPlayer`] - HTML5 video player with custom controls
+//! - [`NodeGraph`] - Plugin-based visual node editor
+//!
+//! ## Features
+//!
+//! - **Plugin-based Node System** - Extensible node types via trait system
+//! - **Canvas Rendering** - High-performance 2D rendering
+//! - **Bezier Connections** - Smooth Bezier curves for connections
+//! - **Viewport Controls** - Pan and zoom support
+//! - **Node Registry** - Global node type registry
+//! - **Local State** - Each node manages its own state
+//!
+//! ## Examples
+//!
+//! ### Collapsible Panel
+//!
+//! ```rust,no_run
+//! use hikari_extra_components::Collapsible;
+//! use dioxus::prelude::*;
+//!
+//! fn app() -> Element {
+//!     let mut is_open = use_signal(|| true);
+//!
+//!     rsx! {
+//!         Collapsible {
+//!             is_open: is_open(),
+//!             duration: 300,
+//!             header: rsx! {
+//!                 div {
+//!                     onclick: move |_| is_open.toggle(),
+//!                     "Click to toggle"
+//!                 }
+//!             },
+//!             div { class: "content",
+//!                 p { "This content can be collapsed" }
+//!             }
+//!         }
+//!     }
+//! }
+//! ```
+//!
+//! ### Node Graph
+//!
+//! ```rust,no_run
+//! use hikari_extra_components::{NodeGraph, NodeGraphCanvas, register_node_plugin, NodePlugin, NodeType};
+//! use dioxus::prelude::*;
+//!
+//! // Define a custom node plugin
+//! struct MyNodePlugin;
+//!
+//! impl NodePlugin for MyNodePlugin {
+//!     fn node_type(&self) -> NodeType {
+//!         NodeType::new("custom", "MyNode")
+//!     }
+//!
+//!     fn render_node(&self, props: NodeProps) -> Element {
+//!         rsx! {
+//!             div { class: "my-node-content",
+//!                 h3 { "My Custom Node" }
+//!             }
+//!         }
+//!     }
+//! }
+//!
+//! fn app() -> Element {
+//!     rsx! {
+//!         NodeGraph {
+//!             width: 1200.0,
+//!             height: 800.0,
+//!             on_node_add: move |node_type| {
+//!                 println!("Add node: {:?}", node_type);
+//!             },
+//!             div { "Node Graph Editor" }
+//!         }
+//!     }
+//! }
+//! ```
+//!
 pub mod extra;
+pub mod node_graph;
 pub mod prelude;
 
 pub use extra::*;
-pub use prelude::*;
+pub use node_graph::*;

@@ -314,46 +314,52 @@ fn TransferPanel(
             }
 
              ul { class: "hi-transfer-panel-list",
-                {filtered_items().iter().map(|item| {
-                    let is_selected = selected_keys.contains(&item.item_key);
-                    let item_disabled = item.disabled;
-                    let on_select_clone = on_select.clone();
-                    let selected_keys_clone = selected_keys.clone();
-                    let item_key = item.item_key.clone();
+                {
+                    let items: Vec<_> = filtered_items().iter().map(|item| {
+                        let is_selected = selected_keys.contains(&item.item_key);
+                        let item_disabled = item.disabled;
+                        let on_select_clone = on_select.clone();
+                        let selected_keys_clone = selected_keys.clone();
+                        let item_key = item.item_key.clone();
 
-                    rsx! {
-                        li {
-                            class: ClassesBuilder::new()
-                                .add_raw("hi-transfer-panel-item")
-                                .add_raw(if is_selected { "hi-transfer-panel-item-selected" } else { "" })
-                                .add_raw(if item_disabled { "hi-transfer-panel-item-disabled" } else { "" })
-                                .build(),
+                        (is_selected, item_disabled, on_select_clone, selected_keys_clone, item_key, item.label.clone())
+                    }).collect();
 
-                            onclick: move |_| {
-                                if !item_disabled {
-                                    let mut new_selection = selected_keys_clone.clone();
-                                    if let Some(pos) = new_selection.iter().position(|k| k == &item_key) {
-                                        new_selection.remove(pos);
-                                    } else {
-                                        new_selection.push(item_key.clone());
+                    items.into_iter().map(|(is_selected, item_disabled, on_select_clone, selected_keys_clone, item_key, label)| {
+                        rsx! {
+                            li {
+                                class: ClassesBuilder::new()
+                                    .add_raw("hi-transfer-panel-item")
+                                    .add_raw(if is_selected { "hi-transfer-panel-item-selected" } else { "" })
+                                    .add_raw(if item_disabled { "hi-transfer-panel-item-disabled" } else { "" })
+                                    .build(),
+
+                                onclick: move |_| {
+                                    if !item_disabled {
+                                        let mut new_selection = selected_keys_clone.clone();
+                                        if let Some(pos) = new_selection.iter().position(|k| k == &item_key) {
+                                            new_selection.remove(pos);
+                                        } else {
+                                            new_selection.push(item_key.clone());
+                                        }
+                                        on_select_clone.call(new_selection);
                                     }
-                                    on_select_clone.call(new_selection);
+                                },
+
+                                input {
+                                    class: "hi-transfer-item-checkbox",
+                                    r#type: "checkbox",
+                                    checked: is_selected,
+                                    disabled: item_disabled,
                                 }
-                            },
 
-                            input {
-                                class: "hi-transfer-item-checkbox",
-                                r#type: "checkbox",
-                                checked: is_selected,
-                                disabled: item_disabled,
-                            }
-
-                            span { class: "hi-transfer-item-label",
-                                "{item.label}"
+                                span { class: "hi-transfer-item-label",
+                                    "{label}"
+                                }
                             }
                         }
-                    }
-                })}
+                    })
+                }
 
                 if filtered_items().is_empty() {
                     li { class: "hi-transfer-panel-empty",

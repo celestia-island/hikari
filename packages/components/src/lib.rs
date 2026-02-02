@@ -204,7 +204,12 @@ pub use data::*;
 pub mod entry;
 
 // Re-export entry components when entry feature is enabled
-#[cfg(any(feature = "entry", feature = "number_input", feature = "search"))]
+#[cfg(any(
+    feature = "entry",
+    feature = "number_input",
+    feature = "search",
+    feature = "auto_complete"
+))]
 pub use entry::*;
 
 // Re-export basic components when basic feature is enabled
@@ -229,19 +234,19 @@ pub use styled::{StyleRegistry, StyledComponent};
 
 // Utility exports
 pub use utils::positioning::{
-    use_position, OverlayZIndex, Placement, PositionConfig, PositionStrategy, UsePositionReturn,
+    OverlayZIndex, Placement, PositionConfig, PositionStrategy, UsePositionReturn, use_position,
 };
 
 // Theme provider exports
 pub use theme_provider::{
-    get_default_theme, get_registered_theme, prefers_dark_mode, register_theme, use_theme,
-    ThemeContext, ThemePalette, ThemeProvider,
+    ThemeContext, ThemePalette, ThemeProvider, get_default_theme, get_registered_theme,
+    prefers_dark_mode, register_theme, use_theme,
 };
 
 // Portal exports
 pub use portal::{
-    generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy,
-    PortalProvider, TriggerPlacement,
+    PortalEntry, PortalMaskMode, PortalPositionStrategy, PortalProvider, TriggerPlacement,
+    generate_portal_id, use_portal,
 };
 
 /// # Hierarchical Theme System

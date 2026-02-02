@@ -9,7 +9,7 @@ use tokio::fs;
 use axum::{
     body::Body,
     extract::Path as AxumPath,
-    http::{header, StatusCode},
+    http::{StatusCode, header},
     response::{IntoResponse, Response},
 };
 use tokio_util::io::ReaderStream;

@@ -5,9 +5,7 @@ use dioxus::prelude::*;
 
 use crate::components::Layout;
 use _components::{Button, Card, Input};
-use _palette::classes::{
-    ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor,
-};
+use _palette::classes::{ ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor, };
 
 /// Form demo
 #[component]

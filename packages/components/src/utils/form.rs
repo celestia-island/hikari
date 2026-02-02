@@ -513,10 +513,12 @@ mod tests {
         let validator = MinLength(3);
         let result = validator.validate(&"ab".to_string());
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .message
-            .contains("at least 3 characters"));
+        assert!(
+            result
+                .unwrap_err()
+                .message
+                .contains("at least 3 characters")
+        );
     }
 
     #[test]

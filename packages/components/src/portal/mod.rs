@@ -183,7 +183,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, DropdownClass, ModalClass, PortalClass};
 #[cfg(target_arch = "wasm32")]
-use wasm_bindgen::{closure::Closure, JsCast};
+use wasm_bindgen::{JsCast, closure::Closure};
 
 use super::modal::{MaskMode, ModalPosition};
 
@@ -279,7 +279,6 @@ pub enum ToastPosition {
 
 /// Animated Portal Entry Hook - Generic animation control layer for all portal types
 /// Returns (animation_state, close_callback, computed_opacity_scale)
-#[allow(dead_code)]
 fn use_animated_portal_entry(
     id: String,
     initial_state: ModalAnimationState,
@@ -289,8 +288,8 @@ fn use_animated_portal_entry(
     Callback<MouseEvent>,
     Memo<(String, String)>,
 ) {
-    let context = use_context::<PortalContext>();
-    let id_for_close = id.clone();
+    let _context = use_context::<PortalContext>();
+    let _id_for_close = id.clone();
     let internal_animation_state = use_signal(|| initial_state);
 
     let close_callback = {
@@ -807,7 +806,7 @@ pub fn PortalProvider(children: Element) -> Element {
     });
 
     rsx! {
-        { children }
+        {children}
         PortalRender { entries }
     }
 }
@@ -824,66 +823,65 @@ fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
             style: "position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 9999;",
 
             {
-                entries.iter().enumerate().map(|(index, entry)| {
-                    let z_index = 10000 + index;
-                    match entry {
-                        PortalEntry::Modal {
-                            id,
-                            title,
-                            position,
-                            mask_mode,
-                            closable,
-                            mask_closable,
-                            children,
-                            animation_state,
-                        } => rsx! {
-                            ModalPortalEntry {
-                                key: "{id}",
-                                z_index,
-                                id: id.clone(),
-                                title: title.clone(),
-                                position: *position,
-                                mask_mode: *mask_mode,
-                                closable: *closable,
-                                mask_closable: *mask_closable,
-                                children: children.clone(),
-                                animation_state: *animation_state,
-                            }
-                        },
-                        PortalEntry::Dropdown {
-                            id,
-                            strategy,
-                            mask_mode,
-                            children,
-                            trigger_rect,
-                            close_on_select,
-                        } => rsx! {
-                            DropdownPortalEntry {
-                                key: "{id}",
-                                z_index,
-                                id: id.clone(),
-                                strategy: *strategy,
-                                mask_mode: *mask_mode,
-                                children: children.clone(),
-                                trigger_rect: trigger_rect.clone(),
-                                close_on_select: *close_on_select,
-                            }
-                        },
-                        PortalEntry::Toast {
-                            id,
-                            position,
-                            children,
-                        } => rsx! {
-                            ToastPortalEntry {
-                                key: "{id}",
-                                z_index,
-                                id: id.clone(),
-                                position: *position,
-                                children: children.clone(),
-                            }
-                        },
-                    }
-                })
+                entries
+                    .iter()
+                    .enumerate()
+                    .map(|(index, entry)| {
+                        let z_index = 10000 + index;
+                        match entry {
+                            PortalEntry::Modal {
+                                id,
+                                title,
+                                position,
+                                mask_mode,
+                                closable,
+                                mask_closable,
+                                children,
+                                animation_state,
+                            } => rsx! {
+                                ModalPortalEntry {
+                                    key: "{id}",
+                                    z_index,
+                                    id: id.clone(),
+                                    title: title.clone(),
+                                    position: *position,
+                                    mask_mode: *mask_mode,
+                                    closable: *closable,
+                                    mask_closable: *mask_closable,
+                                    children: children.clone(),
+                                    animation_state: *animation_state,
+                                }
+                            },
+                            PortalEntry::Dropdown {
+                                id,
+                                strategy,
+                                mask_mode,
+                                children,
+                                trigger_rect,
+                                close_on_select,
+                            } => rsx! {
+                                DropdownPortalEntry {
+                                    key: "{id}",
+                                    z_index,
+                                    id: id.clone(),
+                                    strategy: *strategy,
+                                    mask_mode: *mask_mode,
+                                    children: children.clone(),
+                                    trigger_rect: trigger_rect.clone(),
+                                    close_on_select: *close_on_select,
+                                }
+                            },
+                            PortalEntry::Toast { id, position, children } => rsx! {
+                                ToastPortalEntry {
+                                    key: "{id}",
+                                    z_index,
+                                    id: id.clone(),
+                                    position: *position,
+                                    children: children.clone(),
+                                }
+                            },
+                        }
+                    })
             }
         }
     }
@@ -918,7 +916,10 @@ fn ModalPortalEntry(
 
     let modal_style = use_memo(move || {
         let (opacity, scale) = computed_opacity_scale.read().clone();
-        let style = format!("opacity: {}; transform: scale({}); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;", opacity, scale);
+        let style = format!(
+            "opacity: {}; transform: scale({}); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;",
+            opacity, scale
+        );
         #[cfg(target_arch = "wasm32")]
         {
             web_sys::console::log_1(&format!("Modal style computed: {}", style).into());
@@ -960,23 +961,30 @@ fn ModalPortalEntry(
                     }
 
                     if closable {
-                        button { class: "{close_classes}",
-                            onclick: button_close,
+                        button { class: "{close_classes}", onclick: button_close,
                             svg {
                                 view_box: "0 0 24 24",
                                 fill: "none",
                                 stroke: "currentColor",
                                 stroke_width: "2",
-                                line { x1: "18", y1: "6", x2: "6", y2: "18" }
-                                line { x1: "6", y1: "6", x2: "18", y2: "18" }
+                                line {
+                                    x1: "18",
+                                    y1: "6",
+                                    x2: "6",
+                                    y2: "18",
+                                }
+                                line {
+                                    x1: "6",
+                                    y1: "6",
+                                    x2: "18",
+                                    y2: "18",
+                                }
                             }
                         }
                     }
                 }
 
-                div { class: "{body_classes}",
-                    { children }
-                }
+                div { class: "{body_classes}", {children} }
             }
         }
     }
@@ -1178,7 +1186,7 @@ fn DropdownPortalEntry(
                     }
                 },
 
-                { children }
+                {children}
             }
         }
     }
@@ -1302,12 +1310,12 @@ mod tests {
         // Expected: x = 16 (clamped to PADDING), y = 120 (center)
         // Note: Raw position would be -108, but clamped to PADDING
         test_position(
-                TriggerPlacement::Left,
-                (100.0, 100.0, 80.0, 40.0),
-                16.0,
-                120.0,
-                "Left placement should position menu to left of trigger, vertically centered, with X clamped to PADDING",
-            );
+            TriggerPlacement::Left,
+            (100.0, 100.0, 80.0, 40.0),
+            16.0,
+            120.0,
+            "Left placement should position menu to left of trigger, vertically centered, with X clamped to PADDING",
+        );
     }
 
     #[test]
@@ -1315,12 +1323,12 @@ mod tests {
         // Trigger: x=100, y=100, w=80, h=40
         // Expected: x = 16 (clamped), y = 100 (top aligned)
         test_position(
-                TriggerPlacement::LeftTop,
-                (100.0, 100.0, 80.0, 40.0),
-                16.0,
-                100.0,
-                "LeftTop should position menu to left of trigger, top aligned, with X clamped to PADDING",
-            );
+            TriggerPlacement::LeftTop,
+            (100.0, 100.0, 80.0, 40.0),
+            16.0,
+            100.0,
+            "LeftTop should position menu to left of trigger, top aligned, with X clamped to PADDING",
+        );
     }
 
     #[test]
@@ -1328,12 +1336,12 @@ mod tests {
         // Trigger: x=100, y=100, w=80, h=40
         // Expected: x = 16 (clamped), y = 140 (bottom aligned)
         test_position(
-                TriggerPlacement::LeftBottom,
-                (100.0, 100.0, 80.0, 40.0),
-                16.0,
-                140.0,
-                "LeftBottom should position menu to left of trigger, bottom aligned, with X clamped to PADDING",
-            );
+            TriggerPlacement::LeftBottom,
+            (100.0, 100.0, 80.0, 40.0),
+            16.0,
+            140.0,
+            "LeftBottom should position menu to left of trigger, bottom aligned, with X clamped to PADDING",
+        );
     }
 
     // === Right family tests ===
@@ -1576,7 +1584,7 @@ fn ToastPortalEntry(
         div {
             class: "hi-toast",
             style: "{position_style} z-index: {z_index}; pointer-events: auto;",
-            { children }
+            {children}
         }
     }
 }

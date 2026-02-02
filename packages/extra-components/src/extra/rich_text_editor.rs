@@ -49,6 +49,21 @@ pub struct RichTextEditorProps {
     pub on_change: Option<EventHandler<String>>,
 }
 
+impl Default for RichTextEditorProps {
+    fn default() -> Self {
+        Self {
+            content: String::default(),
+            mode: Default::default(),
+            placeholder: None,
+            show_toolbar: true,
+            readonly: false,
+            min_height: None,
+            class: String::default(),
+            on_change: None,
+        }
+    }
+}
+
 /// RichTextEditor component with toolbar
 ///
 /// A rich text editor with formatting toolbar using existing components.

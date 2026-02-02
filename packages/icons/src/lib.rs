@@ -316,7 +316,6 @@ fn log_icon_warning_once(icon_name: String) {
 
 /// Log success message for dynamic fetch (only once per icon)
 #[cfg(feature = "dynamic-fetch")]
-#[allow(dead_code)]
 fn log_dynamic_fetch_success(icon_name: String) {
     // Check if dynamic fetch warnings are disabled
     #[cfg(not(feature = "dynamic-fetch-warnings"))]

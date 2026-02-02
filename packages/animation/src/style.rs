@@ -589,18 +589,17 @@ impl<'a> StyleBuilder<'a> {
 
 /// Style entry for storing CSS properties
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 enum StyleEntry {
     Known(CssProperty, String),
     Custom(String, String), // (property_name, value)
 }
 
 impl StyleEntry {
-    /// Get the CSS style string for this entry
-    fn as_style_string(&self) -> &str {
+    /// Get the CSS style string for this entry (property: value format)
+    fn as_style_string(&self) -> String {
         match self {
-            StyleEntry::Known(_, s) => s,
-            StyleEntry::Custom(_, s) => s,
+            StyleEntry::Known(prop, value) => format!("{}:{}", prop.as_str(), value),
+            StyleEntry::Custom(prop, value) => format!("{}:{}", prop, value),
         }
     }
 }

@@ -35,7 +35,7 @@
 pub mod auto_discovery;
 mod svg_parser;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use std::{
     collections::{HashMap, HashSet},
     fs,
@@ -357,7 +357,6 @@ fn read_svg_content(workspace_root: &Path, icon_name: &str) -> Result<String> {
 }
 
 /// Validate SVG structure at build time
-#[allow(dead_code)]
 fn validate_svg_structure(svg: &str) -> Result<()> {
     use quick_xml::Reader;
 

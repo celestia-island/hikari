@@ -16,8 +16,12 @@ pub mod registry;
 pub mod code_block;
 pub mod markdown_renderer;
 
+// Documentation components
+pub mod doc_components;
+
 // Re-export commonly used components
 pub use aside_footer::AsideFooter;
 pub use code_block::CodeBlock;
+pub use doc_components::{ExampleCard, PropsRow, PropsTable, Section};
 pub use layout::Layout;
 pub use markdown_renderer::{render_markdown, MarkdownRenderer};

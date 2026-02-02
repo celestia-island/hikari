@@ -9,8 +9,7 @@
 // This is based on the same pattern as ScrollbarAnimationState, but specifically
 // designed for dropdown overlay animations.
 
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use animation::style::{CssProperty, StyleBuilder};
 use wasm_bindgen::prelude::*;
@@ -192,6 +191,7 @@ pub fn dropdown_render(ctx: &DropdownRenderContext) -> bool {
 mod tests {
     use super::*;
 
+    #[cfg(target_arch = "wasm32")]
     #[test]
     fn test_state_transitions() {
         let context = DropdownRenderContext::new(

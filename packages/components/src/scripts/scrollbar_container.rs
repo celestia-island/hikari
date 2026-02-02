@@ -22,11 +22,11 @@
 use std::{cell::RefCell, rc::Rc};
 
 use animation::{
-    style::{AttributeBuilder, CssProperty, StyleBuilder},
     TimerManager,
+    style::{AttributeBuilder, CssProperty, StyleBuilder},
 };
 use js_sys::Date;
-use wasm_bindgen::{prelude::*, JsCast};
+use wasm_bindgen::{JsCast, prelude::*};
 use web_sys::{MutationObserver, MutationObserverInit, ResizeObserver};
 
 /// Animation state for scrollbar width transition
@@ -40,19 +40,6 @@ enum ScrollbarAnimationState {
     Dragging,
     /// Scrollbar at expanded width (8px) - temporarily expanded after scroll
     ScrollHover,
-}
-
-impl ScrollbarAnimationState {
-    /// Returns the target width for this state
-    #[allow(dead_code)]
-    fn target_width(&self) -> f64 {
-        match self {
-            ScrollbarAnimationState::Idle => 4.0,
-            ScrollbarAnimationState::Active => 8.0,
-            ScrollbarAnimationState::Dragging => 8.0,
-            ScrollbarAnimationState::ScrollHover => 8.0,
-        }
-    }
 }
 
 /// Animation controller for scrollbar width transitions
@@ -279,12 +266,6 @@ fn find_elements(selector: &str) -> Option<web_sys::NodeList> {
 /// Helper: Check if element has a class
 fn has_class(element: &web_sys::Element, class_name: &str) -> bool {
     element.class_list().contains(class_name)
-}
-
-/// Helper: Check if element matches a selector
-#[allow(dead_code)]
-fn matches_selector(element: &web_sys::Element, selector: &str) -> bool {
-    element.matches(selector).unwrap_or(false)
 }
 
 /// Verify that the custom scrollbar structure is complete

@@ -198,11 +198,7 @@ impl ColumnDef {
 
     /// Get fixed column class
     pub fn fixed_class(&self) -> &'static str {
-        if self.fixed {
-            "hi-column-fixed"
-        } else {
-            ""
-        }
+        if self.fixed { "hi-column-fixed" } else { "" }
     }
 
     /// Get sortable class

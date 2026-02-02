@@ -11,7 +11,8 @@
 //! - [`VideoPlayer`] - Video player with custom controls
 //! - [`RichTextEditor`] - Rich text editor with toolbar
 //! - [`AudioWaveform`] - Audio player with waveform visualization
-
+//! - [`NodeGraph`] - Plugin-based visual node editor
+//!
 pub mod audio_waveform;
 pub mod collapsible;
 pub mod drag_layer;

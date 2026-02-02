@@ -32,6 +32,19 @@ pub struct VideoPlayerProps {
     pub class: String,
 }
 
+impl Default for VideoPlayerProps {
+    fn default() -> Self {
+        Self {
+            src: String::default(),
+            title: None,
+            show_controls: false,
+            autoplay: false,
+            loop_video: false,
+            class: String::default(),
+        }
+    }
+}
+
 /// VideoPlayer component with custom controls
 ///
 /// A video player with Arknights-style controls and FUI aesthetics.

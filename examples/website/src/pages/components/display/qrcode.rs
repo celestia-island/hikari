@@ -327,7 +327,7 @@ pub fn ComponentsQRCode() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r##"QRCode {{
+                                r#"QRCode {{
     value: "https://example.com".to_string(),
     size: 250,
     color: "#00A0E9".to_string(),

@@ -18,7 +18,6 @@
 use std::{path::{Path, absolute as path_absolute}, process::Command};
 
 /// Filesystem paths (MUST match src/paths.rs::STATIC_PATHS)
-#[allow(dead_code)]
 const PUBLIC_DIR: &str = "public";
 
 fn main() {

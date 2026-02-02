@@ -3,7 +3,9 @@
 
 use dioxus::prelude::*;
 #[cfg(target_arch = "wasm32")]
-use web_sys::{window, MouseEvent as WebMouseEvent};
+use web_sys::Event as WebEvent;
+#[cfg(target_arch = "wasm32")]
+use web_sys::{MouseEvent as WebMouseEvent, window};
 
 /// Constraints for drag boundaries
 #[derive(Clone, PartialEq, Debug, Default)]
@@ -172,7 +174,7 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
 
                 #[cfg(target_arch = "wasm32")]
                 {
-                    if let Ok(web_event) = e.downcast::<WebMouseEvent>() {
+                    if let Some(web_event) = e.downcast::<WebMouseEvent>() {
                         mouse_start_x.set(web_event.client_x() as f64);
                         mouse_start_y.set(web_event.client_y() as f64);
                     }
@@ -203,7 +205,7 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
                     // Calculate delta from actual mouse movement
                     #[cfg(target_arch = "wasm32")]
                     let (delta_x, delta_y) = {
-                        if let Ok(web_event) = e.downcast::<WebMouseEvent>() {
+                        if let Some(web_event) = e.downcast::<WebMouseEvent>() {
                             let dx = (web_event.client_x() as f64 - mouse_start_x()) as f64;
                             let dy = (web_event.client_y() as f64 - mouse_start_y()) as f64;
                             (dx, dy)

@@ -854,8 +854,7 @@ impl AnimationEngine {
             repeat_count: 0,
             options,
         };
-        let id = tweens.insert(temp_tween);
-        id
+        tweens.insert(temp_tween)
     }
 
     /// Get a clone of a tween by ID
@@ -869,21 +868,20 @@ impl AnimationEngine {
         self.tweens.borrow().get(id).cloned()
     }
 
-    /// Get a mutable reference to a tween by ID
+    /// Apply a function to a tween mutably
     ///
     /// # Arguments
-    /// * `id` - Tween ID to retrieve
+    /// * `id` - Tween ID to modify
+    /// * `f` - Function to apply to the tween
     ///
     /// # Returns
-    /// Mutable reference to tween if found, None otherwise
-    ///
-    /// # Safety
-    /// This uses unsafe code internally for interior mutability.
-    pub fn get_tween_mut(&self, id: TweenId) -> Option<&mut Tween> {
-        unsafe {
-            let ptr = self.tweens.as_ptr();
-            (*ptr).get_mut(id)
-        }
+    /// Result of the function if tween exists, None otherwise
+    pub fn with_tween_mut<F, R>(&self, id: TweenId, f: F) -> Option<R>
+    where
+        F: FnOnce(&mut Tween) -> R,
+    {
+        let mut tweens = self.tweens.borrow_mut();
+        tweens.get_mut(id).map(f)
     }
 
     /// Remove a tween by ID
@@ -903,9 +901,9 @@ impl AnimationEngine {
     /// # Arguments
     /// * `id` - Tween ID to play
     pub fn play(&self, id: TweenId) {
-        if let Some(tween) = self.get_tween_mut(id) {
+        self.with_tween_mut(id, |tween| {
             tween.play();
-        }
+        });
     }
 
     /// Pause a running tween
@@ -913,9 +911,9 @@ impl AnimationEngine {
     /// # Arguments
     /// * `id` - Tween ID to pause
     pub fn pause(&self, id: TweenId) {
-        if let Some(tween) = self.get_tween_mut(id) {
+        self.with_tween_mut(id, |tween| {
             tween.pause();
-        }
+        });
     }
 
     /// Reverse the direction of a tween
@@ -923,9 +921,9 @@ impl AnimationEngine {
     /// # Arguments
     /// * `id` - Tween ID to reverse
     pub fn reverse(&self, id: TweenId) {
-        if let Some(tween) = self.get_tween_mut(id) {
+        self.with_tween_mut(id, |tween| {
             tween.reverse();
-        }
+        });
     }
 
     /// Restart a tween from the beginning
@@ -933,9 +931,9 @@ impl AnimationEngine {
     /// # Arguments
     /// * `id` - Tween ID to restart
     pub fn restart(&self, id: TweenId) {
-        if let Some(tween) = self.get_tween_mut(id) {
+        self.with_tween_mut(id, |tween| {
             tween.restart();
-        }
+        });
     }
 
     /// Seek a tween to a specific time
@@ -944,9 +942,9 @@ impl AnimationEngine {
     /// * `id` - Tween ID to seek
     /// * `time` - Time position to seek to
     pub fn seek(&self, id: TweenId, time: Duration) {
-        if let Some(tween) = self.get_tween_mut(id) {
+        self.with_tween_mut(id, |tween| {
             tween.seek(time);
-        }
+        });
     }
 
     /// Kill (remove) a tween
@@ -1006,9 +1004,9 @@ impl AnimationEngine {
         drop(tweens);
 
         for id in active_tweens {
-            if let Some(tween) = self.get_tween_mut(id) {
+            self.with_tween_mut(id, |tween| {
                 tween.advance(delta);
-            }
+            });
         }
     }
 }

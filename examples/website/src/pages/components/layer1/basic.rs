@@ -3,8 +3,7 @@
 
 use dioxus::prelude::*;
 
-use crate::components::Layout;
-use crate::components::MarkdownRenderer;
+use crate::components::{Layout, MarkdownRenderer};
 use _icons::{Icon, MdiIcon};
 use _palette::classes::{ClassesBuilder, Display, FontSize, MarginBottom, Padding, TextColor};
 

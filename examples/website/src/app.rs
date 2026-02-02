@@ -3,7 +3,7 @@
 
 use dioxus::prelude::*;
 
-use _components::{scripts::scrollbar_container, PortalProvider, ThemeProvider};
+use _components::{PortalProvider, ThemeProvider, scripts::scrollbar_container};
 
 /// Main application component (root)
 #[component]
@@ -53,6 +53,15 @@ pub enum Route {
     Layer1Feedback {},
     #[route("/components/layer1/display")]
     Layer1Display {},
+    // Entry components
+    #[route("/components/entry/cascader")]
+    CascaderDoc {},
+    #[route("/components/entry/transfer")]
+    TransferDoc {},
+    #[route("/components/entry/number_input")]
+    NumberInputDoc {},
+    #[route("/components/entry/search")]
+    SearchDoc {},
 
     // Layer 2 Routes
     #[route("/components/layer2")]
@@ -75,6 +84,20 @@ pub enum Route {
     Layer3Editor {},
     #[route("/components/layer3/visualization")]
     Layer3Visualization {},
+    // Extra components
+    #[route("/components/extra/collapsible")]
+    CollapsibleDoc {},
+    #[route("/components/extra/zoom_controls")]
+    ZoomControlsDoc {},
+    // Layer 3 Doc routes (temporarily disabled due to compilation issues)
+    // #[route("/components/layer3/video_player")]
+    // VideoPlayerDoc {},
+    // #[route("/components/layer3/audio_waveform")]
+    // AudioWaveformDoc {},
+    // #[route("/components/layer3/rich_text_editor")]
+    // RichTextEditorDoc {},
+    // #[route("/components/layer3/drag_layer")]
+    // DragLayerDoc {},
 
     // System Routes
     #[route("/system")]
@@ -273,5 +296,78 @@ fn Layer3Editor() -> Element {
 fn Layer3Visualization() -> Element {
     rsx! {
         crate::pages::components::layer3::Layer3Visualization {}
+    }
+}
+
+// Layer 3 Doc routes (temporarily disabled)
+// #[allow(non_snake_case)]
+// fn VideoPlayerDoc() -> Element {
+//     rsx! {
+//         crate::pages::components::layer3::VideoPlayerDoc {}
+//     }
+// }
+//
+// #[allow(non_snake_case)]
+// fn AudioWaveformDoc() -> Element {
+//     rsx! {
+//         crate::pages::components::layer3::AudioWaveformDoc {}
+//     }
+// }
+//
+// #[allow(non_snake_case)]
+// fn RichTextEditorDoc() -> Element {
+//     rsx! {
+//         crate::pages::components::layer3::RichTextEditorDoc {}
+//     }
+// }
+//
+// #[allow(non_snake_case)]
+// fn DragLayerDoc() -> Element {
+//     rsx! {
+//         crate::pages::components::layer3::DragLayerDoc {}
+//     }
+// }
+
+// Entry components
+#[allow(non_snake_case)]
+fn CascaderDoc() -> Element {
+    rsx! {
+        crate::pages::components::entry::CascaderDoc {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn TransferDoc() -> Element {
+    rsx! {
+        crate::pages::components::entry::TransferDoc {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn NumberInputDoc() -> Element {
+    rsx! {
+        crate::pages::components::entry::NumberInputDoc {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn SearchDoc() -> Element {
+    rsx! {
+        crate::pages::components::entry::SearchDoc {}
+    }
+}
+
+// Extra components
+#[allow(non_snake_case)]
+fn CollapsibleDoc() -> Element {
+    rsx! {
+        crate::pages::components::extra::CollapsibleDoc {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn ZoomControlsDoc() -> Element {
+    rsx! {
+        crate::pages::components::extra::ZoomControlsDoc {}
     }
 }

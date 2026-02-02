@@ -315,6 +315,7 @@
 
 pub mod html;
 pub mod icon_route;
+pub mod models;
 pub mod plugin;
 pub mod registry;
 pub mod router;
@@ -324,7 +325,11 @@ pub mod styles_service;
 // Re-exports
 pub use html::HtmlService;
 pub use icon_route::get_icon_data;
+pub use models::{
+    BasicComponents, ComponentCategories, DataComponents, FeedbackComponents, NavigationComponents,
+    StyleInfo,
+};
 pub use plugin::{HikariRenderServicePlugin, StaticMountConfig, StyleRegistry};
 pub use router::build_router;
-pub use static_files::{serve_static_files, StaticFileConfig};
+pub use static_files::{StaticFileConfig, serve_static_files};
 pub use styles_service::StyleService;

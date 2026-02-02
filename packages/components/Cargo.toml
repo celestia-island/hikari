@@ -18,7 +18,7 @@ navigation = ["menu", "tabs", "breadcrumb"]
 layout = ["layout-component", "header", "aside", "content", "footer"]
 data = ["table", "tree", "pagination"]
 display = ["tag", "empty", "comment", "description_list", "qrcode"]
-entry = ["number_input", "search", "cascader", "transfer"] # "auto_complete" disabled due to Dioxus 0.7 lifetime issues
+ entry = ["number_input", "search", "cascader", "transfer", "auto_complete"]
 
 # Individual component features (fine-grained control)
 button = []
@@ -69,9 +69,9 @@ description_list = []
 qrcode = []
 number_input = []
 search = []
-cascader = []
-transfer = []
-# auto_complete = [] # Disabled due to Dioxus 0.7 lifetime issues
+ cascader = []
+ transfer = []
+ auto_complete = []
 
 [dependencies]
 # Workspace dependencies

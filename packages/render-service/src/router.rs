@@ -6,12 +6,12 @@
 use std::{collections::HashMap, sync::Arc};
 
 use axum::{
+    Router,
     body::Body,
     extract::{Path, State},
-    http::{header, StatusCode, Uri},
+    http::{StatusCode, Uri, header},
     response::{IntoResponse, Response},
     routing::any,
-    Router,
 };
 use thiserror::Error;
 use tower_http::services::ServeDir;
@@ -351,51 +351,6 @@ pub async fn internal_error(err: String) -> impl IntoResponse {
         .unwrap()
 }
 
-/// CSS bundle handler - serves all registered component styles plus utility classes.
-#[allow(dead_code)]
-async fn css_bundle_handler(State(state): State<AppState>) -> impl IntoResponse {
-    // Get component styles from registry
-    let component_styles = if let Some(registry) = &state.style_registry {
-        registry.css_bundle()
-    } else {
-        String::new()
-    };
-
-    // Utility classes are now in the SCSS bundle, so we only return component styles
-    let css = component_styles;
-
-    Response::builder()
-        .status(StatusCode::OK)
-        .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
-        .header(header::CACHE_CONTROL, "public, max-age=3600")
-        .body(Body::from(css))
-        .unwrap()
-}
-
-/// Component CSS handler - serves a single component's styles.
-#[allow(dead_code)]
-async fn component_css_handler(
-    State(state): State<AppState>,
-    Path(name): Path<String>,
-) -> impl IntoResponse {
-    match state.style_registry.as_ref().and_then(|r| r.get(&name)) {
-        Some(css) => Response::builder()
-            .status(StatusCode::OK)
-            .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
-            .header(header::CACHE_CONTROL, "public, max-age=3600")
-            .body(Body::from(css.to_string()))
-            .unwrap(),
-        None => {
-            let not_found_css = format!("/* Component '{}' not found */", name);
-            Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
-                .body(Body::from(not_found_css))
-                .unwrap()
-        }
-    }
-}
-
 /// Tailwind CSS handler - serves Tailwind CSS framework.
 async fn tailwind_css_handler(State(state): State<AppState>) -> impl IntoResponse {
     match state.tailwind_css {
@@ -415,53 +370,6 @@ async fn tailwind_css_handler(State(state): State<AppState>) -> impl IntoRespons
                 .unwrap()
         }
     }
-}
-
-/// Style info handler - returns information about registered styles.
-#[allow(dead_code)]
-async fn style_info_handler(State(state): State<AppState>) -> impl IntoResponse {
-    let info = if let Some(registry) = &state.style_registry {
-        serde_json::json!({
-            "total_components": registry.len(),
-            "components": {
-                "basic": {
-                    "button": registry.has("button"),
-                    "input": registry.has("input"),
-                    "card": registry.has("card"),
-                    "badge": registry.has("badge"),
-                },
-                "data": {
-                    "table": registry.has("table"),
-                    "tree": registry.has("tree"),
-                    "pagination": registry.has("pagination"),
-                    "virtual-scroll": registry.has("virtual-scroll"),
-                    "collapse": registry.has("collapse"),
-                    "drag": registry.has("drag"),
-                    "sort": registry.has("sort"),
-                    "filter": registry.has("filter"),
-                    "selection": registry.has("selection"),
-                },
-                "feedback": {
-                    "alert": registry.has("alert"),
-                    "toast": registry.has("toast"),
-                    "tooltip": registry.has("tooltip"),
-                },
-                "navigation": {
-                    "menu": registry.has("menu"),
-                    "tabs": registry.has("tabs"),
-                    "breadcrumb": registry.has("breadcrumb"),
-                }
-            }
-        })
-    } else {
-        serde_json::json!({"total_components": 0, "components": {}})
-    };
-
-    Response::builder()
-        .status(StatusCode::OK)
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(info.to_string()))
-        .unwrap()
 }
 
 #[cfg(test)]
@@ -504,8 +412,11 @@ mod tests {
     #[tokio::test]
     async fn test_app_state_get() {
         let mut config = HashMap::new();
-        config.insert("app_name".to_string(), serde_json::json!("Test App"));
-        config.insert("version".to_string(), serde_json::json!(1));
+        config.insert(
+            "app_name".to_string(),
+            serde_json::Value::String("Test App".to_string()),
+        );
+        config.insert("version".to_string(), serde_json::Value::Number(1.into()));
 
         let state = AppState::new(config);
 

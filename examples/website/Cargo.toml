@@ -18,8 +18,8 @@ path = "src/lib.rs"
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = []
-server = ["dep:tokio", "dep:axum", "dep:tower-http", "dep:tower", "dep:anyhow", "dep:tracing", "dep:tracing-subscriber", "dep:http", "dep:_render_service"]
+default = ["dioxus"]
+server = ["dep:tokio", "dep:axum", "dep:tower-http", "dep:tower", "dep:anyhow", "dep:tracing", "dep:tracing-subscriber", "dep:http", "dep:_render_service", "dioxus"]
 
 [dependencies]
 # Workspace dependencies (short aliases for internal packages)
@@ -27,10 +27,11 @@ _components = { path = "../../packages/components", package = "hikari-components
 _icons = { path = "../../packages/icons", package = "hikari-icons", features = ["dynamic-fetch", "dynamic-fetch-warnings"] }
 _palette = { path = "../../packages/palette", package = "hikari-palette" }
 _animation = { path = "../../packages/animation", package = "hikari-animation" }
+_extra_components = { path = "../../packages/extra-components", package = "hikari-extra-components" }
 _render_service = { path = "../../packages/render-service", package = "hikari-render-service", optional = true }
 
 # Dioxus frontend framework
-dioxus = { version = "0.7", features = ["web"] }
+dioxus = { version = "0.7", features = ["web"], optional = true }
 dioxus-router = "0.7"
 dioxus-web = "0.7"
 

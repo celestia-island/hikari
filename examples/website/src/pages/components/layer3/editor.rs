@@ -3,8 +3,7 @@
 
 use dioxus::prelude::*;
 
-use crate::components::Layout;
-use crate::components::{CodeBlock, MarkdownRenderer};
+use crate::components::{Layout, {CodeBlock, MarkdownRenderer}};
 use _icons::{Icon, MdiIcon};
 use _palette::classes::{ClassesBuilder, Display, FontSize, Gap, MarginBottom, Padding, TextColor};
 
@@ -26,7 +25,7 @@ pub fn Layer3Editor() -> Element {
         ),
     ];
 
-    let sample_markdown = r##"
+    let sample_markdown = r#"
 # Markdown 渲染示例
 
 ## 标题层级
@@ -69,9 +68,9 @@ pages/components/layer1/basic
 ---
 
 以上是 markdown 渲染的示例。
-"##;
+"#;
 
-    let sample_code = r##"
+    let sample_code = r#"
 use dioxus::prelude::*;
 
 fn main() {
@@ -79,7 +78,7 @@ fn main() {
         div { "Hello, World!" }
     }
 }
-"##;
+"#;
 
     rsx! {
         Layout {

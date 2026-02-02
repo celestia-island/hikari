@@ -6,20 +6,21 @@ members = [
     "packages/components",
     "packages/extra-components",
     "packages/icons",
-    "packages/render-service",
     "packages/builder",
-    "packages/i18n",
+    "packages/e2e",
+    "packages/render-service",
 ]
+
 resolver = "2"
 
-# Exclude examples from workspace (they have their own workspaces)
 exclude = [
+    "examples/*",
     "examples/demo",
 ]
 
 [workspace.package]
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 authors = ["Hikari Contributors"]
 license = "MIT OR Apache-2.0"
 
@@ -37,51 +38,29 @@ yuuka = "^0.6"
 # =================================================================
 chrono = { version = "^0.4", features = ["serde", "unstable-locales"] }
 serde = { version = "^1", features = ["derive"] }
-serde_json = "^1"
-uuid = { version = "^1", features = [
-    "v7",
-    "fast-rng",
-    "macro-diagnostics",
-    "serde",
-] }
+serde_json = { version = "^1" }
+uuid = { version = "^1", features = ["v7", "fast-rng", "macro-diagnostics", "serde"] }
 
 # =================================================================
-# Async / concurrency runtime
+# Async runtime
 # =================================================================
 tokio = { version = "^1", features = ["full"] }
 
 # =================================================================
 # Logging and tracing
 # =================================================================
-log = "^0.4"
-tracing = "^0.1"
-tracing-subscriber = { version = "^0.3", features = ["env-filter"] }
+log = "0.4"
+tracing = "0.1"
 
 # =================================================================
 # Dioxus frontend framework
 # =================================================================
 dioxus = { version = "^0.7", features = ["web", "router"] }
-dioxus-router = "^0.7"
-
-# =================================================================
-# WASM related
-# =================================================================
-wasm-bindgen = "^0.2"
-wasm-bindgen-futures = "^0.4"
-js-sys = { version = "^0.3" }
-web-sys = { version = "^0.3", features = [
-    "Window",
-    "Document",
-    "Element",
-    "Event",
-    "MouseEvent",
-    "KeyboardEvent",
-    "HtmlElement",
-    "Storage",
-    "Location",
-] }
-gloo = "^0.11"
-gloo-net = "^0.6"
+wasm-bindgen = { version = "0.2" }
+wasm-bindgen-futures = { version = "0.4" }
+web-sys = { version = "0.3" }
+js-sys = { version = "0.3" }
+window = { version = "0.3" }
 
 # =================================================================
 # Server-side dependencies (for SSR)
@@ -90,6 +69,8 @@ axum = { version = "^0.8", features = ["macros", "ws"] }
 axum-extra = { version = "^0.12", features = ["typed-header"] }
 tower = { version = "^0.5", features = ["full"] }
 tower-http = { version = "^0.6", features = ["cors", "fs", "trace"] }
+gloo = "^0.11"
+gloo-net = "^0.6"
 
 # =================================================================
 # Data serialization and processing

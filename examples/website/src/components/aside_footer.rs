@@ -3,14 +3,7 @@
 
 use dioxus::prelude::*;
 
-use _components::{
-    basic::{IconButton, IconButtonSize},
-    feedback::{
-        Dropdown, DropdownPosition, DropdownPositioning, GlowBlur, GlowColor, GlowIntensity,
-    },
-    navigation::{Menu, MenuItem},
-    use_theme,
-};
+use _components::{basic::{IconButton, IconButtonSize}, feedback::{Dropdown, DropdownPosition, DropdownPositioning, GlowBlur, GlowColor, GlowIntensity}, navigation::{Menu, MenuItem}, use_theme};
 use _icons::MdiIcon;
 use _palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, JustifyContent, Shadow};
 

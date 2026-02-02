@@ -9,7 +9,7 @@ use thiserror::Error;
 
 use crate::{
     registry::StyleRegistry as RenderServiceStyleRegistry,
-    router::{build_router, AppState},
+    router::{AppState, build_router},
     static_files::StaticFileConfig,
 };
 
@@ -95,13 +95,12 @@ impl StaticMountConfig {
 ///     .build()
 ///     .unwrap();
 /// ```
-#[allow(dead_code)]
+
 pub struct HikariRenderServicePlugin {
     routes: Vec<RouterRoute>,
     static_mounts: Vec<StaticMountConfig>,
     state: HashMap<String, serde_json::Value>,
     style_registry: Option<RenderServiceStyleRegistry>,
-    tailwind_css: Option<&'static str>,
 }
 
 impl Default for HikariRenderServicePlugin {
@@ -118,7 +117,6 @@ impl HikariRenderServicePlugin {
             static_mounts: Vec::new(),
             state: HashMap::new(),
             style_registry: None,
-            tailwind_css: None,
         }
     }
 

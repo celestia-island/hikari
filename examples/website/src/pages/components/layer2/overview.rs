@@ -1,10 +1,11 @@
 // website/src/pages/components/layer2/overview.rs
 // Layer 2 overview page
 
+use dioxus::prelude::*;
+
 use crate::components::Layout;
 use _icons::{Icon, MdiIcon};
 use _palette::classes::{ClassesBuilder, Display, FontSize, MarginBottom, Padding, TextColor};
-use dioxus::prelude::*;
 
 pub fn Layer2Overview() -> Element {
     rsx! {

@@ -1,6 +1,9 @@
 // website/src/pages/components/mod.rs
 // Components pages (Layer 1/2/3)
 
+pub mod display;
+pub mod entry;
+pub mod extra;
 pub mod layer1;
 pub mod layer2;
 pub mod layer3;

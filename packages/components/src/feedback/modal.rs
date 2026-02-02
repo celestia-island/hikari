@@ -4,12 +4,11 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use dioxus::prelude::*;
-
 #[cfg(target_arch = "wasm32")]
-use wasm_bindgen::{closure::Closure, JsCast};
+use wasm_bindgen::{JsCast, closure::Closure};
 
 use crate::{
-    portal::{use_portal, PortalEntry},
+    portal::{PortalEntry, use_portal},
     styled::StyledComponent,
 };
 

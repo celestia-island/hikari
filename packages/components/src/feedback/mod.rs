@@ -35,7 +35,7 @@ pub use tooltip::*;
 pub use glow::{Glow as Acrylic, GlowBlur as AcrylicBlur, GlowColor as AcrylicMode};
 
 // Modal re-exports for external components
-pub use modal::{use_modal, ModalConfig, ModalContent, ModalController, ModalPosition};
+pub use modal::{ModalConfig, ModalContent, ModalController, ModalPosition, use_modal};
 
 // Dropdown re-exports for external components
 pub use dropdown::Dropdown as DropdownComponent;

@@ -1,14 +1,10 @@
 // website/src/pages/components/layer1/basic_components.rs
 // Individual component renderers for basic components
 
-use _components::{
-    Badge, Button, ButtonVariant, Card, Checkbox, Input, RadioButton, RadioDirection, RadioGroup,
-    Select, SelectOption,
-};
-use _palette::classes::AlignItems;
-use _palette::classes::FlexWrap;
-use _palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, Padding};
 use dioxus::prelude::*;
+
+use _components::{Badge, Button, ButtonVariant, Card, Checkbox, Input, RadioButton, RadioDirection, RadioGroup, Select, SelectOption};
+use _palette::classes::{AlignItems, FlexWrap, {ClassesBuilder, Display, FlexDirection, Gap, Padding}};
 
 /// Button component demonstration
 #[allow(non_snake_case)]

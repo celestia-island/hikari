@@ -3,6 +3,12 @@
 
 use dioxus::prelude::*;
 
+/// Type alias for minimap node data
+type MinimapNodeData = (String, (f64, f64), (f64, f64));
+
+/// Type alias for minimap connection data
+type MinimapConnectionData = (String, (f64, f64), (f64, f64));
+
 /// Minimap component showing overview of the node graph
 #[component]
 pub fn NodeGraphMinimap(
@@ -10,8 +16,8 @@ pub fn NodeGraphMinimap(
     #[props(default)] height: f64,
     #[props(default)] _zoom: f64,
     #[props(default)] _pan: (f64, f64),
-    _nodes: Vec<(String, (f64, f64), (f64, f64))>,
-    _connections: Vec<(String, (f64, f64), (f64, f64))>,
+    _nodes: Vec<MinimapNodeData>,
+    _connections: Vec<MinimapConnectionData>,
     #[props(default)] on_minimap_click: EventHandler<(f64, f64)>,
 ) -> Element {
     let on_click = move |_e: dioxus::prelude::MouseEvent| {

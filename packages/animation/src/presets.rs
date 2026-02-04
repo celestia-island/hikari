@@ -36,6 +36,12 @@ pub struct GlowAnimation {
     colors: FUIColors,
 }
 
+impl Default for GlowAnimation {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GlowAnimation {
     /// Create a new glow animation set with default colors
     pub fn new() -> Self {
@@ -172,6 +178,12 @@ pub struct NeonAnimation {
     colors: FUIColors,
 }
 
+impl Default for NeonAnimation {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl NeonAnimation {
     /// Create a new neon animation set with default colors
     pub fn new() -> Self {
@@ -301,6 +313,12 @@ impl NeonAnimation {
 #[derive(Clone)]
 pub struct TechAnimation {
     engine: AnimationEngine,
+}
+
+impl Default for TechAnimation {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TechAnimation {
@@ -463,6 +481,12 @@ impl TechAnimation {
 #[derive(Clone)]
 pub struct TransitionAnimation {
     engine: AnimationEngine,
+}
+
+impl Default for TransitionAnimation {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TransitionAnimation {

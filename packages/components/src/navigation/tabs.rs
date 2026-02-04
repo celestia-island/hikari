@@ -218,7 +218,7 @@ impl Default for TabsProps {
 pub fn Tabs(props: TabsProps) -> Element {
     // Create and provide the active key signal for child TabPane components
     let active_key = use_signal(|| props.default_active.clone());
-    use_context_provider(|| active_key.clone());
+    use_context_provider(|| active_key);
 
     let position_class = match props.tab_position {
         TabPosition::Top => "hi-tabs-top",
@@ -276,7 +276,7 @@ impl StyledComponent for TabsComponent {
 /// Tab pane component
 #[component]
 pub fn TabPane(props: TabPaneProps) -> Element {
-    use palette::classes::{ClassesBuilder, components::TabsClass};
+    use palette::classes::{components::TabsClass, ClassesBuilder};
 
     let active_key = use_context::<Signal<String>>();
     let is_active = active_key() == props.item_key;

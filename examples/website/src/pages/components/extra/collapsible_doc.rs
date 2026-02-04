@@ -48,7 +48,7 @@ pub fn CollapsibleDoc() -> Element {
 
     rsx! {
         Layout {
-            current_route: Route::ComponentsOverview {}, // Using existing route for now
+            current_route: Route::CollapsibleDoc {},
 
             Container {
                 // Page header

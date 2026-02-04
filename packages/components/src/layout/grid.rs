@@ -18,7 +18,7 @@
 //! ```
 
 use dioxus::prelude::*;
-use palette::{ClassesBuilder, classes::components::*};
+use palette::{classes::components::*, ClassesBuilder};
 
 /// Grid component - 12-column responsive grid container
 ///

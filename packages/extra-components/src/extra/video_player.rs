@@ -2,11 +2,13 @@
 // VideoPlayer component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use hikari_components::basic::IconButton;
-use hikari_icons::MdiIcon;
+use hikari_components::{basic::IconButton, MdiIcon};
 use hikari_palette::classes::ClassesBuilder;
 
-#[derive(Clone, PartialEq, Props)]
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsCast;
+
+#[derive(Clone, PartialEq, Props, Default)]
 pub struct VideoPlayerProps {
     /// Video source URL
     pub src: String,
@@ -32,22 +34,10 @@ pub struct VideoPlayerProps {
     pub class: String,
 }
 
-impl Default for VideoPlayerProps {
-    fn default() -> Self {
-        Self {
-            src: String::default(),
-            title: None,
-            show_controls: false,
-            autoplay: false,
-            loop_video: false,
-            class: String::default(),
-        }
-    }
-}
-
 /// VideoPlayer component with custom controls
 ///
 /// A video player with Arknights-style controls and FUI aesthetics.
+/// Supports play/pause, volume control, and fullscreen.
 ///
 /// # Examples
 ///
@@ -68,11 +58,39 @@ impl Default for VideoPlayerProps {
 #[component]
 pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
     let mut is_playing = use_signal(|| false);
+    let mut is_muted = use_signal(|| false);
+    let volume = use_signal(|| 1.0f64);
     let current_time = use_signal(|| 0.0f64);
     let _duration = use_signal(|| 0.0f64);
 
     let toggle_play = move |_| {
         is_playing.set(!is_playing());
+    };
+
+    let toggle_mute = move |_| {
+        is_muted.set(!is_muted());
+    };
+
+    let request_fullscreen = move |_| {
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(window) = web_sys::window() {
+                if let Some(document) = window.document() {
+                    if let Some(video_element) = document
+                        .get_elements_by_class_name("hi-video-element")
+                        .get(0)
+                    {
+                        if let Ok(element) = video_element.dyn_into::<web_sys::Element>() {
+                            let _ = element.request_fullscreen();
+                        }
+                    }
+                }
+            }
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let _ = ();
+        }
     };
 
     let video_classes = ClassesBuilder::new()
@@ -97,6 +115,8 @@ pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
                         autoplay: props.autoplay,
                         r#loop: props.loop_video,
                         controls: !props.show_controls,
+                        muted: is_muted(),
+                        volume: "{volume()}",
                     }
                 }
 
@@ -116,13 +136,17 @@ pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
                         }
 
                         IconButton {
-                            icon: MdiIcon::VolumeHigh,
-                            onclick: |_| {},
+                            icon: if is_muted() {
+                                MdiIcon::VolumeMute
+                            } else {
+                                MdiIcon::VolumeHigh
+                            },
+                            onclick: toggle_mute,
                         }
 
                         IconButton {
                             icon: MdiIcon::Fullscreen,
-                            onclick: |_| {},
+                            onclick: request_fullscreen,
                         }
                     }
                 }

@@ -6,6 +6,9 @@ use hikari_components::basic::IconButton;
 use hikari_icons::MdiIcon;
 use hikari_palette::classes::ClassesBuilder;
 
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsCast;
+
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum EditorMode {
     #[default]
@@ -66,7 +69,8 @@ impl Default for RichTextEditorProps {
 
 /// RichTextEditor component with toolbar
 ///
-/// A rich text editor with formatting toolbar using existing components.
+/// A rich text editor with formatting toolbar using contenteditable API.
+/// Supports bold, italic, underline, text alignment, and lists.
 ///
 /// # Examples
 ///
@@ -96,20 +100,98 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
         .map(|h| format!("min-height: {};", h))
         .unwrap_or_default();
 
+    let format_text = move |command: &str, value: Option<&str>| {
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(window) = web_sys::window() {
+                if let Some(document) = window.document() {
+                    let result = document.exec_command(command, false, value);
+                    if !result.unwrap_or(false) {
+                        web_sys::console::log_1(&format!("execCommand failed: {}", command).into());
+                    }
+                }
+            }
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let _ = command;
+            let _ = value;
+        }
+    };
+
+    let toggle_bold = move |_| {
+        format_text("bold", None);
+    };
+
+    let toggle_italic = move |_| {
+        format_text("italic", None);
+    };
+
+    let toggle_underline = move |_| {
+        format_text("underline", None);
+    };
+
+    let align_left = move |_| {
+        format_text("justifyLeft", None);
+    };
+
+    let align_center = move |_| {
+        format_text("justifyCenter", None);
+    };
+
+    let align_right = move |_| {
+        format_text("justifyRight", None);
+    };
+
+    let insert_bulleted_list = move |_| {
+        format_text("insertUnorderedList", None);
+    };
+
+    let insert_numbered_list = move |_| {
+        format_text("insertOrderedList", None);
+    };
+
+    let on_content_change = move |event: Event<FormData>| {
+        if let Some(on_change) = props.on_change.as_ref() {
+            #[cfg(target_arch = "wasm32")]
+            {
+                if let Some(window) = web_sys::window() {
+                    if let Some(document) = window.document() {
+                        if let Some(element) = document
+                            .get_elements_by_class_name("hi-editor-content")
+                            .get(0)
+                        {
+                            if let Some(element) = element.dyn_ref::<web_sys::HtmlElement>() {
+                                if let Ok(inner_html) = element.inner_html() {
+                                    on_change.call(inner_html);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let _ = event;
+                let _ = on_change;
+            }
+        }
+    };
+
     rsx! {
         div { class: "{editor_classes}",
             if props.show_toolbar {
                 div { class: "hi-editor-toolbar",
-                    IconButton { icon: MdiIcon::FormatBold, onclick: |_| {} }
-                    IconButton { icon: MdiIcon::FormatItalic, onclick: |_| {} }
-                    IconButton { icon: MdiIcon::FormatUnderline, onclick: |_| {} }
+                    IconButton { icon: MdiIcon::FormatBold, onclick: toggle_bold }
+                    IconButton { icon: MdiIcon::FormatItalic, onclick: toggle_italic }
+                    IconButton { icon: MdiIcon::FormatUnderline, onclick: toggle_underline }
                     div { class: "hi-editor-divider" }
-                    IconButton { icon: MdiIcon::FormatAlignLeft, onclick: |_| {} }
-                    IconButton { icon: MdiIcon::FormatAlignCenter, onclick: |_| {} }
-                    IconButton { icon: MdiIcon::FormatAlignRight, onclick: |_| {} }
+                    IconButton { icon: MdiIcon::FormatAlignLeft, onclick: align_left }
+                    IconButton { icon: MdiIcon::FormatAlignCenter, onclick: align_center }
+                    IconButton { icon: MdiIcon::FormatAlignRight, onclick: align_right }
                     div { class: "hi-editor-divider" }
-                    IconButton { icon: MdiIcon::FormatListBulleted, onclick: |_| {} }
-                    IconButton { icon: MdiIcon::FormatListNumbered, onclick: |_| {} }
+                    IconButton { icon: MdiIcon::FormatListBulleted, onclick: insert_bulleted_list }
+                    IconButton { icon: MdiIcon::FormatListNumbered, onclick: insert_numbered_list }
                 }
             }
 
@@ -118,7 +200,8 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
                 contenteditable: !props.readonly,
                 "data-placeholder": props.placeholder.unwrap_or_default(),
                 style: "{height_style}",
-                "{props.content}"
+                oninput: on_content_change,
+                dangerous_inner_html: "{props.content}"
             }
         }
     }
@@ -141,20 +224,6 @@ impl hikari_components::StyledComponent for RichTextEditorComponent {
 [data-theme="dark"] .hi-editor {
   background: var(--hi-background);
   border-color: var(--hi-border);
-}
-
-.hi-editor-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--hi-border);
-  background: var(--hi-surface);
-}
-
-[data-theme="dark"] .hi-editor-toolbar {
-  background: var(--hi-background);
-  border-bottom-color: var(--hi-border);
 }
 
 .hi-editor-toolbar {

@@ -717,7 +717,6 @@ impl Color {
     ///
     /// Returns (r, g, b, alpha) for contrast color
     /// Uses 0.5 threshold for high-contrast text
-
     ///
     /// # Arguments
     /// * `alpha` - Opacity from 0.0 to 1.0 (e.g., 0.9 for 90%)

@@ -138,7 +138,7 @@ pub fn Transfer(props: TransferProps) -> Element {
         let source_selected = props.source_selected_keys.clone();
         let current_target = props.target_keys.clone();
         let data_clone = props.data.clone();
-        let on_change_cb = props.on_change.clone();
+        let on_change_cb = props.on_change;
 
         move |_| {
             let mut new_target = current_target.clone();
@@ -159,7 +159,7 @@ pub fn Transfer(props: TransferProps) -> Element {
     let handle_to_source = {
         let target_selected = props.target_selected_keys.clone();
         let current_target = props.target_keys.clone();
-        let on_change_cb = props.on_change.clone();
+        let on_change_cb = props.on_change;
 
         move |_| {
             let new_target: Vec<String> = current_target
@@ -284,7 +284,7 @@ fn TransferPanel(
         .map(|item| item.item_key.clone())
         .collect();
 
-    let is_all_selected = all_keys.len() > 0 && all_keys.iter().all(|k| selected_keys.contains(k));
+    let is_all_selected = !all_keys.is_empty() && all_keys.iter().all(|k| selected_keys.contains(k));
 
     rsx! {
         div { class: "hi-transfer-panel",
@@ -318,7 +318,7 @@ fn TransferPanel(
                     let items: Vec<_> = filtered_items().iter().map(|item| {
                         let is_selected = selected_keys.contains(&item.item_key);
                         let item_disabled = item.disabled;
-                        let on_select_clone = on_select.clone();
+                        let on_select_clone = on_select;
                         let selected_keys_clone = selected_keys.clone();
                         let item_key = item.item_key.clone();
 

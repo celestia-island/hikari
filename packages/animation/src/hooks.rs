@@ -102,7 +102,7 @@ impl UseTween {
 /// }
 /// ```
 pub fn use_animation_engine() -> AnimationEngine {
-    use_hook(|| AnimationEngine::new())
+    use_hook(AnimationEngine::new)
 }
 
 /// Hook for creating and controlling a single tween
@@ -127,7 +127,7 @@ pub fn use_animation_engine() -> AnimationEngine {
 /// }
 /// ```
 pub fn use_tween() -> UseTween {
-    use_hook(|| UseTween::new())
+    use_hook(UseTween::new)
 }
 
 /// Hook for managing animated values

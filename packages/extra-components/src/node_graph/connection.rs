@@ -102,35 +102,153 @@ pub fn ConnectionLine(
     );
 
     rsx! {
-        svg {
-            class: "hi-node-graph-connections",
-            "data-connection-id": "{id}",
+            svg {
+                class: "hi-node-graph-connections",
+                "data-connection-id": "{id}",
 
-            path {
-                class: if selected { "hi-connection-selected" },
-                d: "{path_d}",
-                fill: "none",
-                stroke: "var(--hi-color-primary)",
-                "stroke-width": "2",
-                "pointer-events": "stroke",
-                onclick: move |_| on_click.call(id.clone()),
-            }
+                path {
+                    class: if selected { "hi-connection-selected" },
+                    d: "{path_d}",
+                    fill: "none",
+                    stroke: "var(--hi-color-primary)",
+                    "stroke-width": "2",
+                    "pointer-events": "stroke",
+                    onclick: move |_| on_click.call(id.clone()),
+                }
 
-            // Arrow head
-            defs {
-                marker {
-                    id: "arrowhead",
-                    "markerWidth": "10",
-                    "markerHeight": "7",
-                    "refX": "9",
-                    "refY": "3.5",
-                    "orient": "auto",
-                    polygon {
-                        points: "0 0, 10 3.5, 0 7",
-                        fill: "var(--hi-color-primary)",
+                // Arrow head
+                defs {
+                    marker {
+                        id: "arrowhead",
+                        "markerWidth": "10",
+                        "markerHeight": "7",
+                        "refX": "9",
+                        "refY": "3.5",
+                        "orient": "auto",
+                        polygon {
+                            points: "0 0, 10 3.5, 0 7",
+                            fill: "var(--hi-color-primary)",
+                        }
                     }
                 }
             }
-        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_connection_new() {
+        let connection = Connection::new("node1", "out1", "node2", "in1");
+
+        assert_eq!(connection.id, "node1_out1_node2_in1");
+        assert_eq!(connection.from_node, "node1");
+        assert_eq!(connection.from_port, "out1");
+        assert_eq!(connection.to_node, "node2");
+        assert_eq!(connection.to_port, "in1");
+        assert!(connection.path.is_empty());
+    }
+
+    #[test]
+    fn test_connection_equality() {
+        let conn1 = Connection::new("node1", "out1", "node2", "in1");
+        let conn2 = Connection::new("node1", "out1", "node2", "in1");
+        let conn3 = Connection::new("node1", "out2", "node2", "in1");
+
+        assert_eq!(conn1, conn2);
+        assert_ne!(conn1, conn3);
+    }
+
+    #[test]
+    fn test_connection_clone() {
+        let conn1 = Connection::new("node1", "out1", "node2", "in1");
+        let conn2 = conn1.clone();
+
+        assert_eq!(conn1, conn2);
+        assert_eq!(conn1.id, conn2.id);
+    }
+
+    #[test]
+    fn test_calculate_bezier_path_right_to_left() {
+        let from_pos = (100.0, 100.0);
+        let to_pos = (200.0, 100.0);
+
+        let path = Connection::calculate_bezier_path(from_pos, to_pos, "right", "left");
+
+        assert!(!path.is_empty());
+        assert_eq!(path.len(), 51);
+        assert_eq!(path[0], from_pos);
+        assert_eq!(path[50], to_pos);
+    }
+
+    #[test]
+    fn test_calculate_bezier_path_left_to_right() {
+        let from_pos = (100.0, 100.0);
+        let to_pos = (200.0, 100.0);
+
+        let path = Connection::calculate_bezier_path(from_pos, to_pos, "left", "right");
+
+        assert!(!path.is_empty());
+        assert_eq!(path.len(), 51);
+        assert_eq!(path[0], from_pos);
+        assert_eq!(path[50], to_pos);
+    }
+
+    #[test]
+    fn test_calculate_bezier_path_top_to_bottom() {
+        let from_pos = (100.0, 100.0);
+        let to_pos = (100.0, 200.0);
+
+        let path = Connection::calculate_bezier_path(from_pos, to_pos, "bottom", "top");
+
+        assert!(!path.is_empty());
+        assert_eq!(path.len(), 51);
+        assert_eq!(path[0], from_pos);
+        assert_eq!(path[50], to_pos);
+    }
+
+    #[test]
+    fn test_calculate_bezier_path_default_sides() {
+        let from_pos = (100.0, 100.0);
+        let to_pos = (200.0, 100.0);
+
+        let path1 = Connection::calculate_bezier_path(from_pos, to_pos, "right", "left");
+        let path2 = Connection::calculate_bezier_path(from_pos, to_pos, "unknown", "unknown");
+
+        assert_eq!(path1.len(), path2.len());
+    }
+
+    #[test]
+    fn test_calculate_bezier_path_different_positions() {
+        let path1 = Connection::calculate_bezier_path((0.0, 0.0), (100.0, 100.0), "right", "left");
+        let path2 =
+            Connection::calculate_bezier_path((50.0, 50.0), (150.0, 150.0), "right", "left");
+
+        assert_eq!(path1.len(), 51);
+        assert_eq!(path2.len(), 51);
+    }
+
+    #[test]
+    fn test_connection_id_format() {
+        let connection = Connection::new("node_a", "port_1", "node_b", "port_2");
+        assert_eq!(connection.id, "node_a_port_1_node_b_port_2");
+    }
+
+    #[test]
+    fn test_connection_different_ports() {
+        let conn1 = Connection::new("node1", "out1", "node2", "in1");
+        let conn2 = Connection::new("node1", "out2", "node2", "in2");
+
+        assert_ne!(conn1.id, conn2.id);
+    }
+
+    #[test]
+    fn test_connection_different_nodes() {
+        let conn1 = Connection::new("node1", "out1", "node2", "in1");
+        let conn2 = Connection::new("node3", "out1", "node4", "in1");
+
+        assert_ne!(conn1.id, conn2.id);
     }
 }

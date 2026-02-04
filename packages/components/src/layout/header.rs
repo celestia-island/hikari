@@ -18,7 +18,7 @@
 
 use dioxus::prelude::*;
 use dioxus_core::VNode;
-use palette::{ClassesBuilder, classes::*};
+use palette::{classes::*, ClassesBuilder};
 
 /// Header component - Modern application header bar
 ///

@@ -111,7 +111,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
 
     // Handle input change
     let handle_input = {
-        let on_select = props.on_select.clone();
+        let on_select = props.on_select;
         move |e: Event<FormData>| {
             on_select.call(e.value());
             is_open.set(true);
@@ -134,7 +134,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
 
     // Handle option click
     let mut handle_option_click = {
-        let on_select = props.on_select.clone();
+        let on_select = props.on_select;
         move |option: String| {
             on_select.call(option);
             is_open.set(false);
@@ -185,7 +185,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
 
     // Handle clear button
     let handle_clear = {
-        let on_select = props.on_select.clone();
+        let on_select = props.on_select;
         move |_| {
             on_select.call(String::new());
             is_open.set(false);

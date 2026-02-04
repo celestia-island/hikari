@@ -3,13 +3,19 @@
 
 use dioxus::prelude::*;
 
-use crate::components::{Layout, {CodeBlock, MarkdownRenderer}};
+use crate::components::{
+    Layout, {CodeBlock, MarkdownRenderer},
+};
+use _extra_components::extra::RichTextEditor;
 use _icons::{Icon, MdiIcon};
 use _palette::classes::{ClassesBuilder, Display, FontSize, Gap, MarginBottom, Padding, TextColor};
 
 /// Layer 3 Editor Components Index
 #[allow(non_snake_case)]
 pub fn Layer3Editor() -> Element {
+    let mut editor_content =
+        use_signal(|| "<p>欢迎使用 <strong>Hikari</strong> 富文本编辑器！</p>".to_string());
+
     let components = vec![
         (
             "RichTextEditor",
@@ -108,6 +114,37 @@ fn main() {
                             .add(FontSize::Xl)
                             .build(),
                         "生产级编辑器组件。参考 Quill.js、Monaco Editor。"
+                    }
+                }
+
+                // RichTextEditor Demo
+                div {
+                    class: ClassesBuilder::new()
+                        .add_raw("section")
+                        .add(MarginBottom::Mb8)
+                        .build(),
+
+                    h2 {
+                        class: ClassesBuilder::new()
+                            .add(FontSize::X2xl)
+                            .add(MarginBottom::Mb4)
+                            .build(),
+                        "RichTextEditor 富文本编辑器"
+                    }
+
+                    p {
+                        class: ClassesBuilder::new()
+                            .add(TextColor::Muted)
+                            .add(MarginBottom::Mb4)
+                            .build(),
+                        "支持富文本编辑，包括粗体、斜体、下划线、对齐和列表。"
+                    }
+
+                    RichTextEditor {
+                        content: editor_content(),
+                        show_toolbar: true,
+                        min_height: Some("200px".to_string()),
+                        on_change: move |content| editor_content.set(content),
                     }
                 }
 

@@ -95,10 +95,10 @@ pub fn Dropdown(props: DropdownProps) -> Element {
     let mut prev_open = use_signal(|| false);
 
     // Sync open state with portal entries and trigger on_open_change
-    let entries = portal.entries.clone();
-    let dropdown_id_sync = dropdown_id.clone();
-    let open_sync = open.clone();
-    let on_open_change_sync = props.on_open_change.clone();
+    let entries = portal.entries;
+    let dropdown_id_sync = dropdown_id;
+    let open_sync = open;
+    let on_open_change_sync = props.on_open_change;
     use_effect(move || {
         let current_id = dropdown_id_sync.read();
         if !current_id.is_empty() {
@@ -272,7 +272,7 @@ pub fn Dropdown(props: DropdownProps) -> Element {
                 strategy,
                 mask_mode,
                 children: props.children.clone(),
-                trigger_rect: trigger_rect_opt.clone(),
+                trigger_rect: trigger_rect_opt,
                 close_on_select: props.close_on_select,
             };
 

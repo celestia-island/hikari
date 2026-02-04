@@ -18,7 +18,7 @@ use crate::{
 pub struct PaginationComponent;
 
 /// Pagination component props
-#[derive(Clone, PartialEq, Props)]
+#[derive(Clone, PartialEq, Props, Debug)]
 pub struct PaginationProps {
     /// Current page number (1-based)
     #[props(default = 1)]
@@ -162,11 +162,10 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         placeholder: Some("Page".to_string()),
                         autofocus: true,
                         oninput: Some(EventHandler::new(move |val: String| {
-                            if let Ok(v) = val.parse::<u32>() {
-                                if v <= total_pages * 2 {
+                            if let Ok(v) = val.parse::<u32>()
+                                && v <= total_pages * 2 {
                                     jump_to.set(val.to_string());
                                 }
-                            }
                         })),
                         glow: true,
                         glow_blur: GlowBlur::Medium,
@@ -180,11 +179,10 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         glow: true,
                         glow_color: GlowColor::Ghost,
                         onclick: move |_| {
-                            if let Ok(page) = jump_to().parse::<u32>() {
-                                if page >= 1 && page <= total_pages {
+                            if let Ok(page) = jump_to().parse::<u32>()
+                                && page >= 1 && page <= total_pages {
                                     handle_modal_jump(page);
                                 }
-                            }
                         },
                     }
                 }
@@ -480,5 +478,166 @@ impl StyledComponent for PaginationComponent {
 
     fn name() -> &'static str {
         "pagination"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_pagination_props_default() {
+        let props = PaginationProps::default();
+        assert_eq!(props.current, 1);
+        assert_eq!(props.page_size, 10);
+        assert_eq!(props.total, 0);
+        assert!(!props.show_size_changer);
+        assert!(!props.show_total);
+    }
+
+    #[test]
+    fn test_pagination_props_current() {
+        let props1 = PaginationProps {
+            current: 5,
+            ..Default::default()
+        };
+
+        let props2 = PaginationProps {
+            current: 10,
+            ..Default::default()
+        };
+
+        assert_eq!(props1.current, 5);
+        assert_eq!(props2.current, 10);
+    }
+
+    #[test]
+    fn test_pagination_props_page_size() {
+        let props1 = PaginationProps {
+            page_size: 20,
+            ..Default::default()
+        };
+
+        let props2 = PaginationProps {
+            page_size: 50,
+            ..Default::default()
+        };
+
+        assert_eq!(props1.page_size, 20);
+        assert_eq!(props2.page_size, 50);
+    }
+
+    #[test]
+    fn test_pagination_props_total() {
+        let props = PaginationProps {
+            total: 100,
+            ..Default::default()
+        };
+        assert_eq!(props.total, 100);
+    }
+
+    #[test]
+    fn test_pagination_props_show_size_changer() {
+        let props1 = PaginationProps {
+            show_size_changer: true,
+            ..Default::default()
+        };
+
+        let props2 = PaginationProps {
+            show_size_changer: false,
+            ..Default::default()
+        };
+
+        assert!(props1.show_size_changer);
+        assert!(!props2.show_size_changer);
+    }
+
+    #[test]
+    fn test_pagination_props_show_total() {
+        let props1 = PaginationProps {
+            show_total: true,
+            ..Default::default()
+        };
+
+        let props2 = PaginationProps {
+            show_total: false,
+            ..Default::default()
+        };
+
+        assert!(props1.show_total);
+        assert!(!props2.show_total);
+    }
+
+    #[test]
+    fn test_pagination_props_clone() {
+        let props = PaginationProps {
+            current: 5,
+            page_size: 20,
+            total: 100,
+            show_size_changer: true,
+            show_total: true,
+            page_size_options: vec![10, 20, 50],
+            class: "test-class".to_string(),
+            on_change: None,
+            on_size_change: None,
+        };
+
+        let cloned = props.clone();
+        assert_eq!(cloned.current, 5);
+        assert_eq!(cloned.page_size, 20);
+        assert_eq!(cloned.total, 100);
+        assert!(cloned.show_size_changer);
+        assert!(cloned.show_total);
+    }
+
+    #[test]
+    fn test_pagination_props_partial_eq() {
+        let props1 = PaginationProps {
+            current: 5,
+            page_size: 20,
+            total: 100,
+            show_size_changer: true,
+            show_total: true,
+            page_size_options: vec![10, 20, 50],
+            class: "test-class".to_string(),
+            on_change: None,
+            on_size_change: None,
+        };
+
+        let props2 = PaginationProps {
+            current: 5,
+            page_size: 20,
+            total: 100,
+            show_size_changer: true,
+            show_total: true,
+            page_size_options: vec![10, 20, 50],
+            class: "test-class".to_string(),
+            on_change: None,
+            on_size_change: None,
+        };
+
+        assert_eq!(props1, props2);
+    }
+
+    #[test]
+    fn test_pagination_props_not_equal() {
+        let props1 = PaginationProps {
+            current: 5,
+            page_size: 20,
+            ..Default::default()
+        };
+
+        let props2 = PaginationProps {
+            current: 10,
+            page_size: 20,
+            ..Default::default()
+        };
+
+        assert_ne!(props1, props2);
+    }
+
+    #[test]
+    fn test_pagination_component_name() {
+        assert_eq!(PaginationComponent::name(), "pagination");
     }
 }

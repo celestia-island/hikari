@@ -61,6 +61,7 @@ impl SortConfig {
 }
 
 #[derive(Clone, PartialEq, Props)]
+#[derive(Default)]
 pub struct SortProps {
     #[props(default)]
     pub column: String,
@@ -77,24 +78,13 @@ pub struct SortProps {
     pub on_sort_change: Option<EventHandler<SortConfig>>,
 }
 
-impl Default for SortProps {
-    fn default() -> Self {
-        Self {
-            column: String::default(),
-            direction: Default::default(),
-            columns: Vec::default(),
-            class: String::default(),
-            on_sort_change: None,
-        }
-    }
-}
 
 #[component]
 pub fn Sort(props: SortProps) -> Element {
     // Clone props for use in closures
     let current_column = props.column.clone();
-    let current_direction = props.direction.clone();
-    let on_sort_handler = props.on_sort_change.clone();
+    let current_direction = props.direction;
+    let on_sort_handler = props.on_sort_change;
 
     let handle_clear = move |_| {
         if let Some(handler) = on_sort_handler.as_ref() {
@@ -121,8 +111,8 @@ pub fn Sort(props: SortProps) -> Element {
 
                 // Clone captured variables for this iteration
                 let sort_column = current_column.clone();
-                let sort_direction = current_direction.clone();
-                let sort_handler = on_sort_handler.clone();
+                let sort_direction = current_direction;
+                let sort_handler = on_sort_handler;
 
                 let button_classes = ClassesBuilder::new()
                     .add(SortClass::SortButton)

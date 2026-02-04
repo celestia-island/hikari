@@ -36,7 +36,7 @@ pub fn AsideFooter() -> Element {
 
     // Compute current theme icon
     let current_icon = use_memo(move || {
-        let theme_name = &theme.theme_name;
+        let theme_name = &*theme.palette.read();
         if theme_name == "hikari" {
             MdiIcon::WhiteBalanceSunny
         } else {
@@ -61,7 +61,7 @@ pub fn AsideFooter() -> Element {
         div {
             class: "hi-aside-footer {container_classes}",
 
-            // Theme toggle button - IconButton (square)
+            // Theme toggle button
             IconButton {
                 key: "{icon_key}",
                 icon: *current_icon.read(),
@@ -71,9 +71,14 @@ pub fn AsideFooter() -> Element {
                 glow_color: GlowColor::Ghost,
                 glow_intensity: GlowIntensity::Subtle,
                 onclick: move |_| {
-                    // TODO: Implement theme switching
-                    // Currently, ThemeContext is read-only and doesn't support dynamic switching
-                    // For now, this is a placeholder
+                    // Get current theme and toggle
+                    let current = &*theme.palette.read();
+                    let new_theme = if current == "hikari" {
+                        "tairitsu".to_string()
+                    } else {
+                        "hikari".to_string()
+                    };
+                    theme.set_theme.call(new_theme);
                 }
             }
 

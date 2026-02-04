@@ -92,6 +92,7 @@ impl ClassesBuilder {
     }
 
     /// Add a single utility class
+    #[allow(clippy::should_implement_trait)]
     pub fn add(mut self, class: impl UtilityClass) -> Self {
         for class_str in class.as_classes() {
             self.classes.push(class_str);
@@ -100,6 +101,7 @@ impl ClassesBuilder {
     }
 
     /// Add multiple utility classes
+    #[allow(clippy::should_implement_trait)]
     pub fn add_all(mut self, classes: &[impl UtilityClass]) -> Self {
         for class in classes {
             for class_str in class.as_classes() {

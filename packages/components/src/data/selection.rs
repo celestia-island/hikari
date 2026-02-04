@@ -17,6 +17,7 @@ pub enum SelectionType {
 }
 
 #[derive(Clone, PartialEq, Props)]
+#[derive(Default)]
 pub struct SelectionProps {
     #[props(default)]
     pub row_keys: Vec<String>,
@@ -38,19 +39,6 @@ pub struct SelectionProps {
     pub on_change: Option<EventHandler<Vec<String>>>,
 }
 
-impl Default for SelectionProps {
-    fn default() -> Self {
-        Self {
-            row_keys: Vec::default(),
-            selection_type: Default::default(),
-            fixed_column: false,
-            total_rows: 0,
-            available_keys: Vec::default(),
-            class: String::default(),
-            on_change: None,
-        }
-    }
-}
 
 #[component]
 pub fn Selection(props: SelectionProps) -> Element {
@@ -174,6 +162,7 @@ pub fn Selection(props: SelectionProps) -> Element {
 }
 
 #[derive(Clone, PartialEq, Props)]
+#[derive(Default)]
 pub struct RowSelectionProps {
     pub row_key: String,
 
@@ -189,17 +178,6 @@ pub struct RowSelectionProps {
     pub on_select: Option<EventHandler<String>>,
 }
 
-impl Default for RowSelectionProps {
-    fn default() -> Self {
-        Self {
-            row_key: String::default(),
-            selected_keys: Vec::default(),
-            selection_type: Default::default(),
-            class: String::default(),
-            on_select: None,
-        }
-    }
-}
 
 #[component]
 pub fn RowSelection(props: RowSelectionProps) -> Element {

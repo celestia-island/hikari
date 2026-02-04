@@ -47,11 +47,10 @@ pub fn TreeNodeContent(props: TreeNodeContentProps) -> Element {
             class: "{full_class}",
             style: "{indentation_style}",
             onclick: move |e| {
-                if !props.disabled {
-                    if let Some(handler) = props.onclick.as_ref() {
+                if !props.disabled
+                    && let Some(handler) = props.onclick.as_ref() {
                         handler.call(e);
                     }
-                }
             },
             { props.children }
         }

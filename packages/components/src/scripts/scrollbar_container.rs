@@ -193,11 +193,10 @@ pub fn init(container_selector: &str) {
 
     // Process each container
     for i in 0..containers.length() {
-        if let Some(element) = containers.get(i) {
-            if let Ok(container) = element.dyn_into::<web_sys::Element>() {
+        if let Some(element) = containers.get(i)
+            && let Ok(container) = element.dyn_into::<web_sys::Element>() {
                 setup_custom_scrollbar(&container, 0);
             }
-        }
     }
 }
 
@@ -229,11 +228,10 @@ fn cleanup_broken_scrollbar_and_save_scroll(container: &web_sys::Element) -> i32
     let mut scroll_top = 0;
 
     // Try to save scroll position from the existing content layer
-    if let Ok(Some(content)) = container.query_selector(".custom-scrollbar-content") {
-        if let Some(html_el) = content.dyn_ref::<web_sys::HtmlElement>() {
+    if let Ok(Some(content)) = container.query_selector(".custom-scrollbar-content")
+        && let Some(html_el) = content.dyn_ref::<web_sys::HtmlElement>() {
             scroll_top = html_el.scroll_top();
         }
-    }
 
     let _ = container
         .class_list()
@@ -324,7 +322,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
         Some(w) => w,
         None => return,
     };
-    let computed_style = match window.get_computed_style(&container).ok().flatten() {
+    let computed_style = match window.get_computed_style(container).ok().flatten() {
         Some(s) => s,
         None => return,
     };
@@ -464,11 +462,10 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
     let _ = container.append_child(&wrapper);
 
     // Restore scroll position if this is a re-initialization
-    if initial_scroll_top > 0 {
-        if let Some(content_html) = content_layer.dyn_ref::<web_sys::HtmlElement>() {
+    if initial_scroll_top > 0
+        && let Some(content_html) = content_layer.dyn_ref::<web_sys::HtmlElement>() {
             content_html.set_scroll_top(initial_scroll_top);
         }
-    }
 
     // Clone for closures
     let _wrapper_clone = wrapper.clone();
@@ -576,7 +573,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
     }) as Box<dyn FnMut(js_sys::Array)>);
 
     if let Ok(observer) = ResizeObserver::new(observer_closure.as_ref().unchecked_ref()) {
-        let _ = observer.observe(&content_layer);
+        observer.observe(&content_layer);
         observer_closure.forget();
     }
 
@@ -644,7 +641,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
             .min(1.0);
         let new_scroll_top = click_ratio * max_scroll;
 
-        let _ = content_for_click.set_scroll_top(new_scroll_top as i32);
+        content_for_click.set_scroll_top(new_scroll_top as i32);
     }) as Box<dyn FnMut(_)>);
 
     let _ = track_for_click
@@ -763,10 +760,7 @@ fn setup_drag_scroll(
 
     // Find the track element (parent of thumb)
     let track_element = match thumb.parent_node() {
-        Some(node) => match node.dyn_ref::<web_sys::Element>() {
-            Some(el) => Some(el.clone()),
-            None => None,
-        },
+        Some(node) => node.dyn_ref::<web_sys::Element>().map(|el| el.clone()),
         None => None,
     };
 
@@ -839,7 +833,7 @@ fn setup_drag_scroll(
             let clamped_scroll_top = new_scroll_top.max(0.0).min(max_scroll);
 
             // Update content_layer scroll position (scroll event will update thumb position)
-            let _ = content_layer_drag.set_scroll_top(clamped_scroll_top as i32);
+            content_layer_drag.set_scroll_top(clamped_scroll_top as i32);
         }) as Box<dyn FnMut(_)>);
 
         let window = match web_sys::window() {
@@ -967,24 +961,21 @@ fn setup_mutation_observer() {
         if mutations.length() > 0 {
             let selectors = selectors.to_vec();
             let callback = Closure::wrap(Box::new(move || {
-                if let Some(window) = web_sys::window() {
-                    if let Some(document) = window.document() {
+                if let Some(window) = web_sys::window()
+                    && let Some(document) = window.document() {
                         // Rescan all selectors
                         for selector in &selectors {
                             if let Ok(elements) = document.query_selector_all(selector) {
                                 for i in 0..elements.length() {
-                                    if let Some(node) = elements.get(i) {
-                                        if let Ok(element) = node.dyn_into::<web_sys::Element>() {
-                                            if !has_class(&element, "custom-scrollbar-container") {
+                                    if let Some(node) = elements.get(i)
+                                        && let Ok(element) = node.dyn_into::<web_sys::Element>()
+                                            && !has_class(&element, "custom-scrollbar-container") {
                                                 init_single(&element);
                                             }
-                                        }
-                                    }
                                 }
                             }
                         }
                     }
-                }
             }) as Box<dyn FnMut()>);
 
             // Use requestAnimationFrame to run before next paint

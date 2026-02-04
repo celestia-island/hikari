@@ -51,20 +51,32 @@ use super::{
     state::AnimationState as StructAnimationState,
     style::{CssProperty, StyleBuilder},
 };
-#[cfg(target_arch = "wasm32")]
-use crate::global_manager::global_animation_manager;
+
+/// Simple callback type for dynamic values
+pub type AnimationCallback = dyn Fn(&AnimationContext) -> String + 'static;
+
+/// Callback type with state access
+pub type StatefulCallback =
+    dyn Fn(&AnimationContext, &mut StructAnimationState) -> String + 'static;
+
+/// Callback type without return value
+pub type VoidCallback = dyn Fn(&AnimationContext) + 'static;
+
+/// Mouse move holder type
+#[allow(dead_code)]
+pub type MousemoveHolder = Rc<RefCell<Option<Closure<dyn Fn(web_sys::MouseEvent) + 'static>>>>;
 
 /// Enhanced dynamic value that can be computed at runtime
 ///
-/// Values can be either static strings or closures that compute
+/// Values can be either static strings or callbacks that compute
 /// values based on current animation context and state.
 pub enum DynamicValue {
     /// Static string value
     Static(String),
     /// Dynamic value computed from context (element-specific)
-    Dynamic(Box<dyn Fn(&AnimationContext) -> String + 'static>),
+    Dynamic(Box<AnimationCallback>),
     /// Stateful dynamic value computed from context and animation state
-    StatefulDynamic(Box<dyn Fn(&AnimationContext, &mut StructAnimationState) -> String + 'static>),
+    StatefulDynamic(Box<StatefulCallback>),
 }
 
 impl DynamicValue {
@@ -234,7 +246,7 @@ impl<'a> AnimationBuilder<'a> {
     ) -> Self {
         self.actions
             .entry(element_name.to_string())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(AnimationAction::style_static(property, value));
         self
     }
@@ -255,7 +267,7 @@ impl<'a> AnimationBuilder<'a> {
     {
         self.actions
             .entry(element_name.to_string())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(AnimationAction::style_dynamic(property, f));
         self
     }
@@ -276,7 +288,7 @@ impl<'a> AnimationBuilder<'a> {
     {
         self.actions
             .entry(element_name.to_string())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(AnimationAction::style_stateful_dynamic(property, f));
         self
     }
@@ -290,7 +302,7 @@ impl<'a> AnimationBuilder<'a> {
     pub fn add_class(mut self, element_name: &str, class: impl Into<String>) -> Self {
         self.actions
             .entry(element_name.to_string())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(AnimationAction::class(class));
         self
     }
@@ -305,7 +317,7 @@ impl<'a> AnimationBuilder<'a> {
         for class in classes {
             self.actions
                 .entry(element_name.to_string())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(AnimationAction::class(class.as_ref()));
         }
         self
@@ -401,7 +413,7 @@ impl<'a> AnimationBuilder<'a> {
                 // Request next frame but skip update
                 if let Some(callback) = &*f.borrow() {
                     let _ =
-                        web_sys::window().and_then(|w| w.request_animation_frame(&callback).ok());
+                        web_sys::window().and_then(|w| w.request_animation_frame(callback).ok());
                 }
                 return;
             }
@@ -426,9 +438,7 @@ impl<'a> AnimationBuilder<'a> {
 
                         // Collect new values and compare with cache
                         let mut new_styles: Vec<(CssProperty, String)> = Vec::new();
-                        let element_cache = cached_ref
-                            .entry(element_name.clone())
-                            .or_insert_with(HashMap::new);
+                        let element_cache = cached_ref.entry(element_name.clone()).or_default();
 
                         for action in element_actions {
                             if let AnimationAction::Style(prop, value) = action {
@@ -470,7 +480,7 @@ impl<'a> AnimationBuilder<'a> {
 
             // Request next frame
             if let Some(callback) = &*f.borrow() {
-                let _ = web_sys::window().and_then(|w| w.request_animation_frame(&callback).ok());
+                let _ = web_sys::window().and_then(|w| w.request_animation_frame(callback).ok());
             }
         }) as Box<dyn FnMut()>);
 
@@ -479,7 +489,7 @@ impl<'a> AnimationBuilder<'a> {
         *g.borrow_mut() = Some(callback.clone());
 
         // Start animation loop
-        let _ = web_sys::window().and_then(|w| w.request_animation_frame(&callback).ok());
+        let _ = web_sys::window().and_then(|w| w.request_animation_frame(callback).ok());
         animation_closure.forget();
 
         // Return stop function

@@ -31,6 +31,7 @@ pub struct CommentComponent;
 /// }
 /// ```
 #[derive(Clone, PartialEq, Props)]
+#[derive(Default)]
 pub struct CommentProps {
     #[props(default)]
     pub author: Option<String>,
@@ -56,20 +57,6 @@ pub struct CommentProps {
     pub style: String,
 }
 
-impl Default for CommentProps {
-    fn default() -> Self {
-        Self {
-            author: None,
-            avatar: None,
-            content: String::default(),
-            datetime: None,
-            actions: None,
-            nested: None,
-            class: String::default(),
-            style: String::default(),
-        }
-    }
-}
 
 #[component]
 pub fn Comment(props: CommentProps) -> Element {

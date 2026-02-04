@@ -7,7 +7,7 @@ pub type NodeId = String;
 pub type PortId = String;
 
 /// Node type identifier for plugins
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Default)]
 pub struct NodeType {
     pub category: String,
     pub name: String,
@@ -22,7 +22,11 @@ impl NodeType {
     }
 
     pub fn id(&self) -> String {
-        format!("{}/{}", self.category, self.name)
+        if self.category.is_empty() && self.name.is_empty() {
+            String::new()
+        } else {
+            format!("{}/{}", self.category, self.name)
+        }
     }
 }
 
@@ -85,7 +89,7 @@ pub fn Node(
         "position: absolute; left: {}px; top: {}px; width: {}px; height: {}px;",
         position.0,
         position.1,
-        if minimized { 200.0 } else { 200.0 },
+        200.0,
         if minimized {
             40.0
         } else {
@@ -176,5 +180,130 @@ fn port_position_name(position: PortPosition) -> &'static str {
         PortPosition::Bottom => "bottom",
         PortPosition::Left => "left",
         PortPosition::Right => "right",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_node_type_new() {
+        let node_type = NodeType::new("constant", "number");
+        assert_eq!(node_type.category, "constant");
+        assert_eq!(node_type.name, "number");
+    }
+
+    #[test]
+    fn test_node_type_id() {
+        let node_type = NodeType::new("constant", "number");
+        assert_eq!(node_type.id(), "constant/number");
+    }
+
+    #[test]
+    fn test_node_type_id_empty() {
+        let node_type = NodeType::default();
+        assert_eq!(node_type.id(), "");
+    }
+
+    #[test]
+    fn test_node_type_equality() {
+        let type1 = NodeType::new("constant", "number");
+        let type2 = NodeType::new("constant", "number");
+        let type3 = NodeType::new("input", "number");
+
+        assert_eq!(type1, type2);
+        assert_ne!(type1, type3);
+    }
+
+    #[test]
+    fn test_node_state_new() {
+        let state = NodeState::new("node1".to_string());
+        assert_eq!(state.id, "node1");
+        assert_eq!(state.position, (0.0, 0.0));
+        assert_eq!(state.size, (200.0, 150.0));
+        assert_eq!(state.selected, false);
+        assert_eq!(state.minimized, false);
+    }
+
+    #[test]
+    fn test_node_state_clone() {
+        let state = NodeState::new("node1".to_string());
+        let cloned = state.clone();
+        assert_eq!(state, cloned);
+    }
+
+    #[test]
+    fn test_node_state_equality() {
+        let state1 = NodeState::new("node1".to_string());
+        let state2 = NodeState::new("node1".to_string());
+        let state3 = NodeState::new("node2".to_string());
+
+        assert_eq!(state1, state2);
+        assert_ne!(state1, state3);
+    }
+
+    #[test]
+    fn test_node_port_new() {
+        let port = NodePort {
+            port_id: "port1".to_string(),
+            port_type: "output".to_string(),
+            label: "Value".to_string(),
+            position: PortPosition::Right,
+        };
+
+        assert_eq!(port.port_id, "port1");
+        assert_eq!(port.port_type, "output");
+        assert_eq!(port.label, "Value");
+        assert_eq!(port.position, PortPosition::Right);
+    }
+
+    #[test]
+    fn test_node_port_equality() {
+        let port1 = NodePort {
+            port_id: "port1".to_string(),
+            port_type: "output".to_string(),
+            label: "Value".to_string(),
+            position: PortPosition::Right,
+        };
+
+        let port2 = NodePort {
+            port_id: "port1".to_string(),
+            port_type: "output".to_string(),
+            label: "Value".to_string(),
+            position: PortPosition::Right,
+        };
+
+        let port3 = NodePort {
+            port_id: "port2".to_string(),
+            port_type: "output".to_string(),
+            label: "Value".to_string(),
+            position: PortPosition::Right,
+        };
+
+        assert_eq!(port1, port2);
+        assert_ne!(port1, port3);
+    }
+
+    #[test]
+    fn test_port_position_copy() {
+        let pos1 = PortPosition::Top;
+        let pos2 = pos1;
+        assert_eq!(pos1, pos2);
+    }
+
+    #[test]
+    fn test_port_position_values() {
+        assert_eq!(port_position_name(PortPosition::Top), "top");
+        assert_eq!(port_position_name(PortPosition::Bottom), "bottom");
+        assert_eq!(port_position_name(PortPosition::Left), "left");
+        assert_eq!(port_position_name(PortPosition::Right), "right");
+    }
+
+    #[test]
+    fn test_port_position_equality() {
+        assert_eq!(PortPosition::Top, PortPosition::Top);
+        assert_ne!(PortPosition::Top, PortPosition::Bottom);
+        assert_ne!(PortPosition::Left, PortPosition::Right);
     }
 }

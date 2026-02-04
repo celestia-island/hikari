@@ -134,7 +134,8 @@ pub mod basic;
     feature = "empty",
     feature = "comment",
     feature = "description_list",
-    feature = "qrcode"
+    feature = "qrcode",
+    feature = "carousel"
 ))]
 pub mod display;
 
@@ -309,7 +310,7 @@ pub use portal::{
 /// For detailed documentation, see:
 /// - `packages/components/docs/HIERARCHICAL_THEME.md`
 /// - `ThemeProvider` component documentation
-
+///
 /// Get Hikari utility classes CSS
 ///
 /// Returns the complete utility class system (similar to Tailwind CSS but independent).

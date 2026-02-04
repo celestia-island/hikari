@@ -95,12 +95,12 @@ impl StaticMountConfig {
 ///     .build()
 ///     .unwrap();
 /// ```
-
 pub struct HikariRenderServicePlugin {
     routes: Vec<RouterRoute>,
     static_mounts: Vec<StaticMountConfig>,
     state: HashMap<String, serde_json::Value>,
     style_registry: Option<RenderServiceStyleRegistry>,
+    public_dir: Option<String>,
 }
 
 impl Default for HikariRenderServicePlugin {
@@ -117,7 +117,18 @@ impl HikariRenderServicePlugin {
             static_mounts: Vec::new(),
             state: HashMap::new(),
             style_registry: None,
+            public_dir: None,
         }
+    }
+
+    /// Sets the public directory path for serving index.html.
+    ///
+    /// # Arguments
+    ///
+    /// * `public_dir` - Path to the public directory containing index.html
+    pub fn public_dir(mut self, public_dir: impl Into<String>) -> Self {
+        self.public_dir = Some(public_dir.into());
+        self
     }
 
     /// Sets the style registry for managing component styles.
@@ -296,7 +307,9 @@ impl HikariRenderServicePlugin {
         V: serde::Serialize,
     {
         let key_str = key.into();
-        let json_value = serde_json::to_value(value).expect("Failed to serialize state value");
+        let json_value = serde_json::to_value(value)
+            .map_err(|e| anyhow::anyhow!("Failed to serialize state value: {}", e))
+            .unwrap_or_else(|_| serde_json::json!({}));
 
         self.state.insert(key_str, json_value);
         self
@@ -308,11 +321,13 @@ impl HikariRenderServicePlugin {
     ///
     /// Returns an error if configuration is invalid.
     pub fn build(self) -> anyhow::Result<axum::Router> {
+        let public_dir = self.public_dir.unwrap_or_else(|| "public".to_string());
         build_router(
             self.routes,
             self.static_mounts,
             self.state,
             self.style_registry,
+            Some(public_dir),
         )
     }
 

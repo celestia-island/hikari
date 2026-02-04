@@ -1,0 +1,15 @@
+[package]
+name = "node-graph-demo"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dioxus = { version = "0.7", features = ["web"] }
+dioxus-web = { version = "0.7" }
+hikari-theme = { path = "../../packages/theme" }
+hikari-palette = { path = "../../packages/palette" }
+hikari-extra-components = { path = "../../packages/extra-components" }
+serde_json = "^1"
+tracing = "^0.1"
+tracing-subscriber = "^0.3"
+tokio = { version = "1", features = ["full"] }

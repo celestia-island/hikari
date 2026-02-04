@@ -1,4 +1,4 @@
-// hikari-components/src/layout/layout.rs
+// hikari-components/src/layout/app_layout.rs
 //! Layout component - Modern application layout wrapper
 //!
 //! Inspired by Material UI and Element Plus design systems.
@@ -35,7 +35,7 @@
 //! ```
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, components::Layout as LayoutClass};
+use palette::classes::{components::Layout as LayoutClass, ClassesBuilder};
 
 use crate::basic::Background;
 

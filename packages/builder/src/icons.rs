@@ -274,17 +274,15 @@ fn resolve_selection(
             for base_name in base_names {
                 if let Some(variants) = by_base_name.get(base_name) {
                     // Add filled variant if requested and exists
-                    if styles.contains(&MdiStyle::Filled) {
-                        if let Some(filled) = &variants.filled {
+                    if styles.contains(&MdiStyle::Filled)
+                        && let Some(filled) = &variants.filled {
                             selected.insert(filled.clone());
                         }
-                    }
                     // Add outline variant if requested and exists
-                    if styles.contains(&MdiStyle::Outline) {
-                        if let Some(outline) = &variants.outline {
+                    if styles.contains(&MdiStyle::Outline)
+                        && let Some(outline) = &variants.outline {
                             selected.insert(outline.clone());
                         }
-                    }
                 } else {
                     // If no metadata, try direct names
                     if styles.contains(&MdiStyle::Filled) {
@@ -302,16 +300,14 @@ fn resolve_selection(
                 .as_ref()
                 .ok_or_else(|| anyhow!("Style metadata not available"))?;
 
-            if styles.contains(&MdiStyle::Filled) {
-                if let Some(filled) = &by_style.filled {
+            if styles.contains(&MdiStyle::Filled)
+                && let Some(filled) = &by_style.filled {
                     selected.extend(filled.iter().cloned());
                 }
-            }
-            if styles.contains(&MdiStyle::Outline) {
-                if let Some(outline) = &by_style.outline {
+            if styles.contains(&MdiStyle::Outline)
+                && let Some(outline) = &by_style.outline {
                     selected.extend(outline.iter().cloned());
                 }
-            }
         }
     }
 
@@ -496,7 +492,7 @@ fn generate_icon_module(selected_icons: &HashSet<String>, workspace_root: &Path)
     if !icon_data.is_empty() {
         output.push_str("    use super::IconData;\n");
     }
-    output.push_str("\n");
+    output.push('\n');
 
     for (const_name, icon_name, icon) in &icon_data {
         output.push_str("    /// Icon data for '");
@@ -713,13 +709,11 @@ fn find_workspace_root() -> Result<PathBuf> {
 
     loop {
         let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists() {
-            if let Ok(content) = fs::read_to_string(&cargo_toml) {
-                if content.contains("[workspace]") {
+        if cargo_toml.exists()
+            && let Ok(content) = fs::read_to_string(&cargo_toml)
+                && content.contains("[workspace]") {
                     return Ok(current);
                 }
-            }
-        }
 
         match current.parent() {
             Some(parent) if parent != current => {

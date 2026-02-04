@@ -1,5 +1,7 @@
 # Rust build artifacts
 target/
+!target/debug/hikari-screenshot
+!target/release/hikari-screenshot
 **/*.rs.bk
 *.pdb
 
@@ -29,7 +31,9 @@ docs/
 .gitignore
 
 # Docker
-docker/
+# Note: docker/ directory contains useful Dockerfiles and should be copied to images
+# Only exclude .dockerignore itself
+.dockerignore
 
 # Python
 __pycache__/

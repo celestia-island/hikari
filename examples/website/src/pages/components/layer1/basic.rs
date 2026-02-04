@@ -18,6 +18,7 @@ pub fn Layer1Basic() -> Element {
         ("Select", "选择器", "选择器组件", MdiIcon::ChevronDown),
         ("Checkbox", "复选框", "复选框组件", MdiIcon::CheckboxMarked),
         ("Radio", "单选框", "单选框组件", MdiIcon::Circle),
+        ("Divider", "分割线", "分割线组件", MdiIcon::Minus),
     ];
 
     let markdown_doc = r##"
@@ -97,6 +98,16 @@ Radio 组件用于单选场景。
 
 ```_hikari_component
 pages/components/layer1/basic#radio
+```
+
+## Divider 分割线
+
+Divider 组件用于内容分隔，支持水平和垂直方向。
+
+### 基础用法
+
+```_hikari_component
+pages/components/layer1/basic#divider
 ```
 "##;
 

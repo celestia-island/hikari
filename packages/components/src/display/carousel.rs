@@ -1,0 +1,298 @@
+// display/carousel.rs
+// Carousel component - Image/content slider with Arknights + FUI styling
+
+use dioxus::prelude::*;
+
+/// Carousel indicator position
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum CarouselIndicatorPosition {
+    #[default]
+    Bottom,
+    Top,
+    Left,
+    Right,
+}
+
+/// Carousel variant
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum CarouselIndicatorType {
+    #[default]
+    Dots,
+    Line,
+    Hidden,
+}
+
+/// Carousel props
+#[derive(Props, Clone, PartialEq, Debug)]
+pub struct CarouselProps {
+    #[props(default)]
+    pub children: Element,
+
+    #[props(default = 5000)]
+    pub autoplay: u64,
+
+    #[props(default = true)]
+    pub show_arrows: bool,
+
+    #[props(default = CarouselIndicatorPosition::Bottom)]
+    pub indicator_position: CarouselIndicatorPosition,
+
+    #[props(default = CarouselIndicatorType::Dots)]
+    pub indicator_type: CarouselIndicatorType,
+
+    #[props(default = true)]
+    pub show_pause: bool,
+
+    #[props(default = false)]
+    pub infinite: bool,
+
+    #[props(default = false)]
+    pub initial_paused: bool,
+}
+
+/// Carousel component - Image/content slider with navigation
+#[component]
+pub fn Carousel(props: CarouselProps) -> Element {
+    let mut current_index = use_signal(|| 0);
+    let is_paused = use_signal(|| props.initial_paused);
+    let children_count = use_memo(move || {
+        let mut count = 0;
+        if let Some(children) = props.children.as_vnode() {
+            if let dioxus::core::VNode::Fragment(fragment) = &*children {
+                count = fragment.children.len();
+            }
+        }
+        count
+    });
+
+    let total = children_count.read();
+
+    let handle_prev = move |_| {
+        if total == 0 {
+            return;
+        }
+        let mut idx = current_index.write();
+        *idx = if *idx == 0 { total - 1 } else { *idx - 1 };
+    };
+
+    let handle_next = move |_| {
+        if total == 0 {
+            return;
+        }
+        let mut idx = current_index.write();
+        *idx = (*idx + 1) % total;
+    };
+
+    let handle_dot_click = move |index: usize| {
+        *current_index.write() = index;
+    };
+
+    let toggle_pause = move |_| {
+        *is_paused.write() = !is_paused();
+    };
+
+    let index_for_autoplay = current_index;
+    use_effect(move || {
+        if props.autoplay == 0 || is_paused() || total <= 1 {
+            return;
+        }
+
+        let index_signal = index_for_autoplay;
+        async move {
+            loop {
+                tokio::time::sleep(tokio::time::Duration::from_millis(props.autoplay)).await;
+                if total == 0 {
+                    break;
+                }
+                let mut idx = index_signal.write();
+                *idx = (*idx + 1) % total;
+            }
+        }
+    });
+
+    let track_transform = format!(
+        "transform: translateX(-{}%);",
+        current_index() as f64 * 100.0
+    );
+
+    let indicator_classes = match props.indicator_position {
+        CarouselIndicatorPosition::Bottom => "hi-carousel-indicators hi-carousel-indicators-dots",
+        CarouselIndicatorPosition::Top => "hi-carousel-indicators hi-carousel-indicators-dots",
+        CarouselIndicatorPosition::Left => "hi-carousel-indicators hi-carousel-indicators-hidden",
+        CarouselIndicatorPosition::Right => "hi-carousel-indicators hi-carousel-indicators-hidden",
+    };
+
+    let indicator_classes = format!(
+        "{} {}",
+        indicator_classes,
+        match props.indicator_type {
+            CarouselIndicatorType::Dots => "hi-carousel-indicators-dots",
+            CarouselIndicatorType::Line => "hi-carousel-indicators-line",
+            CarouselIndicatorType::Hidden => "hi-carousel-indicators-hidden",
+        }
+    );
+
+    rsx! {
+        div {
+            class: "hi-carousel",
+            
+            // Track
+            div {
+                class: "hi-carousel-track",
+                style: "{track_transform}",
+                {props.children}
+            }
+
+            // Navigation arrows
+            if props.show_arrows {
+                button {
+                    class: "hi-carousel-arrow hi-carousel-arrow-prev",
+                    onclick: handle_prev,
+                    disabled: total <= 1,
+                    "‹"
+                }
+
+                button {
+                    class: "hi-carousel-arrow hi-carousel-arrow-next",
+                    onclick: handle_next,
+                    disabled: total <= 1,
+                    "›"
+                }
+            }
+
+            // Indicator dots
+            if props.indicator_type != CarouselIndicatorType::Hidden && total > 1 {
+                div {
+                    class: "{indicator_classes}",
+                    for i in 0..total {
+                        button {
+                            class: format!(
+                                "hi-carousel-dot{}",
+                                if i == current_index() { " hi-carousel-dot-active" } else { "" }
+                            ),
+                            onclick: move |_| handle_dot_click(i),
+                            aria_label: format!("Slide {}", i + 1),
+                            disabled: total <= 1,
+                        }
+                    }
+                }
+            }
+
+            // Pause button
+            if props.show_pause && props.autoplay > 0 && total > 1 {
+                button {
+                    class: "hi-carousel-pause",
+                    onclick: toggle_pause,
+                    aria_label: if is_paused() { "Play" } else { "Pause" },
+                    if is_paused() { "▶" } else { "⏸" }
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_carousel_indicator_position_default() {
+        let position = CarouselIndicatorPosition::default();
+        assert_eq!(position, CarouselIndicatorPosition::Bottom);
+    }
+
+    #[test]
+    fn test_carousel_indicator_type_default() {
+        let indicator = CarouselIndicatorType::default();
+        assert_eq!(indicator, CarouselIndicatorType::Dots);
+    }
+
+    #[test]
+    fn test_carousel_indicator_position_variants() {
+        assert!(matches!(CarouselIndicatorPosition::Bottom, _));
+        assert!(matches!(CarouselIndicatorPosition::Top, _));
+        assert!(matches!(CarouselIndicatorPosition::Left, _));
+        assert!(matches!(CarouselIndicatorPosition::Right, _));
+    }
+
+    #[test]
+    fn test_carousel_indicator_type_variants() {
+        assert!(matches!(CarouselIndicatorType::Dots, _));
+        assert!(matches!(CarouselIndicatorType::Line, _));
+        assert!(matches!(CarouselIndicatorType::Hidden, _));
+    }
+
+    #[test]
+    fn test_carousel_props_default() {
+        let props = CarouselProps::default();
+        assert_eq!(props.autoplay, 5000);
+        assert!(props.show_arrows);
+        assert_eq!(props.indicator_position, CarouselIndicatorPosition::Bottom);
+        assert_eq!(props.indicator_type, CarouselIndicatorType::Dots);
+        assert!(props.show_pause);
+        assert!(!props.infinite);
+        assert!(!props.initial_paused);
+    }
+
+    #[test]
+    fn test_carousel_props_clone() {
+        let props = CarouselProps {
+            autoplay: 3000,
+            show_arrows: false,
+            indicator_position: CarouselIndicatorPosition::Top,
+            indicator_type: CarouselIndicatorType::Line,
+            show_pause: false,
+            infinite: true,
+            initial_paused: true,
+            children: VNode::empty(),
+        };
+
+        let cloned = props.clone();
+        assert_eq!(cloned.autoplay, 3000);
+        assert_eq!(cloned.infinite, true);
+    }
+
+    #[test]
+    fn test_carousel_props_partial_eq() {
+        let props1 = CarouselProps {
+            autoplay: 5000,
+            show_arrows: true,
+            indicator_position: CarouselIndicatorPosition::Bottom,
+            indicator_type: CarouselIndicatorType::Dots,
+            show_pause: true,
+            infinite: false,
+            initial_paused: false,
+            children: VNode::empty(),
+        };
+
+        let props2 = CarouselProps {
+            autoplay: 5000,
+            show_arrows: true,
+            indicator_position: CarouselIndicatorPosition::Bottom,
+            indicator_type: CarouselIndicatorType::Dots,
+            show_pause: true,
+            infinite: false,
+            initial_paused: false,
+            children: VNode::empty(),
+        };
+
+        assert_eq!(props1, props2);
+    }
+
+    #[test]
+    fn test_carousel_props_not_equal() {
+        let props1 = CarouselProps {
+            autoplay: 1000,
+            show_arrows: false,
+            ..Default::default()
+        };
+
+        let props2 = CarouselProps {
+            autoplay: 2000,
+            show_arrows: false,
+            ..Default::default()
+        };
+
+        assert_ne!(props1, props2);
+    }
+}

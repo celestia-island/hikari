@@ -3,7 +3,9 @@
 //! This module provides a timeline system that allows sequencing and
 //! coordinating multiple tween animations with precise timing control.
 
-use std::{cell::RefCell, sync::Arc, time::Duration};
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::time::Duration;
 
 use slotmap::SlotMap;
 
@@ -39,7 +41,7 @@ pub struct TimelineTween {
 /// scheduled at specific times and played together or in sequence.
 #[derive(Clone)]
 pub struct Timeline {
-    tweens: Arc<RefCell<SlotMap<TweenId, TimelineTween>>>,
+    tweens: Rc<RefCell<SlotMap<TweenId, TimelineTween>>>,
     state: TimelineState,
     current_time: Duration,
     total_duration: Duration,
@@ -60,7 +62,7 @@ impl Timeline {
     /// Create a new timeline
     pub fn new() -> Self {
         Self {
-            tweens: Arc::new(RefCell::new(SlotMap::with_key())),
+            tweens: Rc::new(RefCell::new(SlotMap::with_key())),
             state: TimelineState::Idle,
             current_time: Duration::ZERO,
             total_duration: Duration::ZERO,

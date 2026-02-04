@@ -14,6 +14,7 @@
 //! - Space - Spacing component
 //!
 
+mod app_layout;
 mod aside;
 mod container;
 mod content;
@@ -21,11 +22,11 @@ mod divider;
 mod footer;
 mod grid;
 mod header;
-mod layout;
 mod scrollbar;
 mod section;
 mod space;
 
+pub use app_layout::*;
 pub use aside::*;
 pub use container::*;
 pub use content::*;
@@ -33,7 +34,6 @@ pub use divider::*;
 pub use footer::*;
 pub use grid::*;
 pub use header::*;
-pub use layout::*;
 pub use scrollbar::*;
 pub use section::*;
 pub use space::*;

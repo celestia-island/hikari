@@ -34,7 +34,7 @@ fn main() -> Result<()> {
     // Always compile (in development, we want all styles available)
     for scss_path in scss_files {
         let relative_path = scss_path
-            .strip_prefix(&manifest_dir)?
+            .strip_prefix(manifest_dir)?
             .to_string_lossy()
             .replace('\\', "/");
 

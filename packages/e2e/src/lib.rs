@@ -2,11 +2,16 @@
 // E2E testing library entry point
 
 pub mod tests;
+pub mod html_assertions;
 
 pub use tests::{
     Test,
-    basic_simple::{TestResult, TestStatus},
+    basic_components::{BasicComponentsTests, TestResult, TestStatus},
+    advanced_components::AdvancedComponentsTests,
+    data_components::DataComponentsTests,
+    form_components::FormComponentsTests,
 };
+pub use html_assertions::HtmlAssertions;
 use thirtyfour::WebDriver;
 use tracing::{error, info};
 
@@ -16,12 +21,39 @@ pub async fn run_all_tests(driver: &WebDriver) -> anyhow::Result<Vec<TestResult>
 
     let mut results = vec![];
 
-    // Layer 1: Basic Components (7 tests)
-    match tests::Test::run_with_driver(&tests::basic_simple::BasicComponentsTests, driver).await {
+    // Layer 1: Basic Components (3 tests)
+    match tests::Test::run_with_driver(&tests::basic_components::BasicComponentsTests, driver).await {
         Ok(result) => results.push(result),
         Err(e) => {
             eprintln!("Basic components test suite failed: {}", e);
             results.push(TestResult::error("BasicComponents", &e.to_string()));
+        }
+    }
+
+    // Layer 2: Form Components (5 tests)
+    match tests::Test::run_with_driver(&tests::form_components::FormComponentsTests, driver).await {
+        Ok(result) => results.push(result),
+        Err(e) => {
+            eprintln!("Form components test suite failed: {}", e);
+            results.push(TestResult::error("FormComponents", &e.to_string()));
+        }
+    }
+
+    // Layer 2: Data Components (4 tests)
+    match tests::Test::run_with_driver(&tests::data_components::DataComponentsTests, driver).await {
+        Ok(result) => results.push(result),
+        Err(e) => {
+            eprintln!("Data components test suite failed: {}", e);
+            results.push(TestResult::error("DataComponents", &e.to_string()));
+        }
+    }
+
+    // Layer 3: Advanced Components (6 tests)
+    match tests::Test::run_with_driver(&tests::advanced_components::AdvancedComponentsTests, driver).await {
+        Ok(result) => results.push(result),
+        Err(e) => {
+            eprintln!("Advanced components test suite failed: {}", e);
+            results.push(TestResult::error("AdvancedComponents", &e.to_string()));
         }
     }
 
@@ -37,9 +69,12 @@ pub async fn run_all_tests(driver: &WebDriver) -> anyhow::Result<Vec<TestResult>
     info!("=== End of Test Results ===\n");
 
     println!("\n=== Test Coverage ===");
-    info!("Layer 1 (Basic): Button, Input, Card, Badge, Select, Checkbox, Radio (7 components)");
+    info!("Layer 1 (Basic): Button, Input, Card, Divider (4 components)");
+    info!("Layer 2 (Form): Form, Select, Checkbox, Radio, Switch, Stepper (6 components)");
+    info!("Layer 2 (Data): Table, Tree, Pagination, Dropdown (4 components)");
+    info!("Layer 3 (Advanced): VideoPlayer, AudioWaveform, RichTextEditor, DragLayer, Collapsible, ZoomControls, UserGuide, Timeline (10 components)");
     info!("====================");
-    info!("Total: 7 components tested");
+    info!("Total: 24 components tested");
 
     Ok(results)
 }

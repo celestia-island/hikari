@@ -26,7 +26,7 @@
 //! ```
 
 use dioxus::prelude::*;
-use palette::{ClassesBuilder, UtilityClass, classes::components::*};
+use palette::{classes::components::*, ClassesBuilder, UtilityClass};
 
 /// Aside component - Modern sidebar navigation panel
 ///

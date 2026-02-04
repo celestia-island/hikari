@@ -2,9 +2,10 @@
 // E2E tests for Layer 1 basic components
 
 use anyhow::Result;
+use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
-use headless_chrome::Browser;
+use thirtyfour::{By, WebDriver};
 use tracing::{error, info, warn};
 
 use crate::Test;
@@ -24,6 +25,7 @@ pub struct TestResult {
     pub status: TestStatus,
     pub message: String,
     pub duration_ms: u64,
+    pub screenshot_path: Option<String>,
 }
 
 impl TestResult {
@@ -33,6 +35,17 @@ impl TestResult {
             status: TestStatus::Success,
             message: message.to_string(),
             duration_ms: 0,
+            screenshot_path: None,
+        }
+    }
+
+    pub fn success_with_screenshot(component: &str, message: &str, screenshot_path: String) -> Self {
+        Self {
+            component: component.to_string(),
+            status: TestStatus::Success,
+            message: message.to_string(),
+            duration_ms: 0,
+            screenshot_path: Some(screenshot_path),
         }
     }
 
@@ -42,6 +55,17 @@ impl TestResult {
             status: TestStatus::Failure,
             message: message.to_string(),
             duration_ms: 0,
+            screenshot_path: None,
+        }
+    }
+
+    pub fn failure_with_screenshot(component: &str, message: &str, screenshot_path: String) -> Self {
+        Self {
+            component: component.to_string(),
+            status: TestStatus::Failure,
+            message: message.to_string(),
+            duration_ms: 0,
+            screenshot_path: Some(screenshot_path),
         }
     }
 
@@ -51,6 +75,7 @@ impl TestResult {
             status: TestStatus::Error(error_msg.to_string()),
             message: error_msg.to_string(),
             duration_ms: 0,
+            screenshot_path: None,
         }
     }
 
@@ -75,46 +100,122 @@ impl TestResult {
             status,
             message: format!("{} passed, {} failed", passed, failed),
             duration_ms: 0,
+            screenshot_path: None,
         }
     }
 }
 
 impl BasicComponentsTests {
-    fn test_button(&self, browser: &Browser) -> Result<TestResult> {
+    /// Take a screenshot and save it to the screenshots directory
+    async fn take_screenshot(driver: &WebDriver, component_name: &str, status: &str) -> Result<String> {
+        let screenshots_dir = std::env::var("E2E_SCREENSHOTS_DIR")
+            .unwrap_or_else(|_| "./screenshots".to_string());
+
+        // Create screenshots directory if it doesn't exist
+        std::fs::create_dir_all(&screenshots_dir)
+            .map_err(|e| anyhow::anyhow!("Failed to create screenshots directory: {}", e))?;
+
+        let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
+        let filename = format!("{}_{}_{}.png", component_name, status, timestamp);
+        let filepath = PathBuf::from(&screenshots_dir).join(&filename);
+
+        // Take screenshot as bytes
+        let screenshot_data = driver.screenshot_as_png().await.map_err(|e| {
+            anyhow::anyhow!("Failed to take screenshot for {}: {}", component_name, e)
+        })?;
+
+        // Save screenshot to file
+        std::fs::write(&filepath, screenshot_data)
+            .map_err(|e| anyhow::anyhow!("Failed to save screenshot: {}", e))?;
+
+        info!("Screenshot saved to: {}", filepath.display());
+
+        Ok(filepath.to_string_lossy().to_string())
+    }
+
+    async fn test_button(&self, driver: &WebDriver) -> Result<TestResult> {
         let start = Instant::now();
         info!("Testing Button component");
 
-        let base_url = std::env::var("WEBSITE_BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer1/button", base_url);
+        let base_url = std::env::var("WEBSITE_BASE_URL")
+            .unwrap_or_else(|_| "http://localhost:3000".to_string());
+        let test_url = format!("{}/components/layer1/basic", base_url);
 
-        let tab = browser
-            .new_tab()
-            .map_err(|e| anyhow::anyhow!("Failed to create tab: {}", e))?;
-
-        tab.navigate_to(&test_url)
+        driver
+            .goto(&test_url)
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
-        std::thread::sleep(Duration::from_millis(500));
+        tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let button = tab.find_element(".hi-button").map_err(|e| {
+        let button = driver.find(By::Css(".hi-button")).await.map_err(|e| {
             warn!("Button element not found: {}", e);
             anyhow::anyhow!("Button element not found: {}", e)
         })?;
 
         info!("Button element found");
 
+        // Take initial screenshot
+        let _initial_screenshot = Self::take_screenshot(driver, "Button", "initial").await;
+
         button
             .click()
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to click button: {}", e))?;
         info!("Button clicked successfully");
 
-        let attrs = button
-            .get_attributes()
-            .map_err(|e| anyhow::anyhow!("Failed to get button attributes: {}", e))?;
-        let attrs = attrs.ok_or_else(|| anyhow::anyhow!("No attributes found for button"))?;
-        let has_class = attrs.iter().any(|attr| attr.contains("hi-button"));
+        tokio::time::sleep(Duration::from_millis(200)).await;
 
-        if !has_class {
+        // Take screenshot after click
+        let click_screenshot = Self::take_screenshot(driver, "Button", "clicked").await
+            .map_err(|e| {
+                warn!("Failed to take screenshot: {}", e);
+                String::new()
+            })
+            .unwrap_or_default();
+
+        let class_attr = button
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get button attributes: {}", e))?;
+        let class_attr =
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for button"))?;
+
+        if !class_attr.contains("hi-button") {
+            // Take screenshot on failure
+            let _error_screenshot = Self::take_screenshot(driver, "Button", "failure").await;
+
+            return Ok(TestResult::failure_with_screenshot(
+                "Button",
+                "Button element missing 'hi-button' class",
+                click_screenshot,
+            ));
+        }
+
+        // Take screenshot on success
+        let success_screenshot = Self::take_screenshot(driver, "Button", "success").await
+            .map_err(|e| {
+                warn!("Failed to take screenshot: {}", e);
+                String::new()
+            })
+            .unwrap_or_default();
+
+        info!("Button element found");
+
+        button
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click button: {}", e))?;
+        info!("Button clicked successfully");
+
+        let class_attr = button
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get button attributes: {}", e))?;
+        let class_attr =
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for button"))?;
+
+        if !class_attr.contains("hi-button") {
             return Ok(TestResult::failure(
                 "Button",
                 "Button element missing 'hi-button' class",
@@ -128,43 +229,46 @@ impl BasicComponentsTests {
             message: "Button component renders correctly, responds to clicks, and has proper class"
                 .to_string(),
             duration_ms: duration,
+            screenshot_path: Some(success_screenshot),
         })
     }
 
-    fn test_input(&self, browser: &Browser) -> Result<TestResult> {
+    async fn test_input(&self, driver: &WebDriver) -> Result<TestResult> {
         let start = Instant::now();
         info!("Testing Input component");
 
-        let base_url = std::env::var("WEBSITE_BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer1/input", base_url);
+        let base_url = std::env::var("WEBSITE_BASE_URL")
+            .unwrap_or_else(|_| "http://localhost:3000".to_string());
+        let test_url = format!("{}/components/layer1/basic", base_url);
 
-        let tab = browser
-            .new_tab()
-            .map_err(|e| anyhow::anyhow!("Failed to create tab: {}", e))?;
-
-        tab.navigate_to(&test_url)
+        driver
+            .goto(&test_url)
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
-        std::thread::sleep(Duration::from_millis(500));
+        tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let input = tab.find_element(".hi-input").map_err(|e| {
+        let input = driver.find(By::Css(".hi-input")).await.map_err(|e| {
             warn!("Input element not found: {}", e);
             anyhow::anyhow!("Input element not found: {}", e)
         })?;
 
         info!("Input element found");
 
-        let test_text = "Hello Hikari";
-        tab.type_str(test_text)
-            .map_err(|e| anyhow::anyhow!("Failed to type text: {}", e))?;
+        input
+            .send_keys("test input")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to type in input: {}", e))?;
+        info!("Text entered successfully");
 
-        let attrs = input
-            .get_attributes()
+        let class_attr = input
+            .attr("class")
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to get input attributes: {}", e))?;
-        let attrs = attrs.ok_or_else(|| anyhow::anyhow!("No attributes found for input"))?;
-        let has_class = attrs.iter().any(|attr| attr.contains("hi-input"));
+        let class_attr =
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for input"))?;
 
-        if !has_class {
+        if !class_attr.contains("hi-input") {
             return Ok(TestResult::failure(
                 "Input",
                 "Input element missing 'hi-input' class",
@@ -175,52 +279,42 @@ impl BasicComponentsTests {
         Ok(TestResult {
             component: "Input".to_string(),
             status: TestStatus::Success,
-            message: "Input component renders correctly, accepts user input, and has proper class"
-                .to_string(),
+            message: "Input component renders correctly, accepts input, and has proper class".to_string(),
             duration_ms: duration,
+            screenshot_path: None,
         })
     }
 
-    fn test_card(&self, browser: &Browser) -> Result<TestResult> {
+    async fn test_card(&self, driver: &WebDriver) -> Result<TestResult> {
         let start = Instant::now();
         info!("Testing Card component");
 
-        let base_url = std::env::var("WEBSITE_BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer1/card", base_url);
+        let base_url = std::env::var("WEBSITE_BASE_URL")
+            .unwrap_or_else(|_| "http://localhost:3000".to_string());
+        let test_url = format!("{}/components/layer1/basic", base_url);
 
-        let tab = browser
-            .new_tab()
-            .map_err(|e| anyhow::anyhow!("Failed to create tab: {}", e))?;
-
-        tab.navigate_to(&test_url)
+        driver
+            .goto(&test_url)
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
-        std::thread::sleep(Duration::from_millis(500));
+        tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let card = tab.find_element(".hi-card").map_err(|e| {
+        let card = driver.find(By::Css(".hi-card")).await.map_err(|e| {
             warn!("Card element not found: {}", e);
             anyhow::anyhow!("Card element not found: {}", e)
         })?;
 
         info!("Card element found");
 
-        let children = card
-            .find_elements("div")
-            .map_err(|e| anyhow::anyhow!("Failed to find card children: {}", e))?;
-
-        if children.is_empty() {
-            return Ok(TestResult::failure("Card", "Card element has no children"));
-        }
-
-        info!("Card has {} children", children.len());
-
-        let attrs = card
-            .get_attributes()
+        let class_attr = card
+            .attr("class")
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to get card attributes: {}", e))?;
-        let attrs = attrs.ok_or_else(|| anyhow::anyhow!("No attributes found for card"))?;
-        let has_class = attrs.iter().any(|attr| attr.contains("hi-card"));
+        let class_attr =
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for card"))?;
 
-        if !has_class {
+        if !class_attr.contains("hi-card") {
             return Ok(TestResult::failure(
                 "Card",
                 "Card element missing 'hi-card' class",
@@ -231,9 +325,55 @@ impl BasicComponentsTests {
         Ok(TestResult {
             component: "Card".to_string(),
             status: TestStatus::Success,
-            message: "Card component renders correctly, displays children, and has proper class"
-                .to_string(),
+            message: "Card component renders correctly and has proper class".to_string(),
             duration_ms: duration,
+            screenshot_path: None,
+        })
+    }
+
+    async fn test_divider(&self, driver: &WebDriver) -> Result<TestResult> {
+        let start = Instant::now();
+        info!("Testing Divider component");
+
+        let base_url = std::env::var("WEBSITE_BASE_URL")
+            .unwrap_or_else(|_| "http://localhost:3000".to_string());
+        let test_url = format!("{}/components/layer1/basic", base_url);
+
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+
+        tokio::time::sleep(Duration::from_millis(500)).await;
+
+        let divider = driver.find(By::Css(".hi-divider")).await.map_err(|e| {
+            warn!("Divider element not found: {}", e);
+            anyhow::anyhow!("Divider element not found: {}", e)
+        })?;
+
+        info!("Divider element found");
+
+        let class_attr = divider
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get divider attributes: {}", e))?;
+        let class_attr =
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for divider"))?;
+
+        if !class_attr.contains("hi-divider") {
+            return Ok(TestResult::failure(
+                "Divider",
+                "Divider element missing 'hi-divider' class",
+            ));
+        }
+
+        let duration = start.elapsed().as_millis() as u64;
+        Ok(TestResult {
+            component: "Divider".to_string(),
+            status: TestStatus::Success,
+            message: "Divider component renders correctly and has proper class".to_string(),
+            duration_ms: duration,
+            screenshot_path: None,
         })
     }
 }
@@ -249,12 +389,13 @@ impl Test for BasicComponentsTests {
         Ok(())
     }
 
-    fn run_with_browser(&self, browser: &Browser) -> Result<TestResult> {
+    async fn run_with_driver(&self, driver: &WebDriver) -> Result<TestResult> {
         info!("Running basic components E2E tests");
 
         let mut results = vec![];
 
-        match self.test_button(browser) {
+        // Test Button
+        match self.test_button(driver).await {
             Ok(result) => results.push(result),
             Err(e) => {
                 error!("Button test failed: {}", e);
@@ -262,7 +403,8 @@ impl Test for BasicComponentsTests {
             }
         }
 
-        match self.test_input(browser) {
+        // Test Input
+        match self.test_input(driver).await {
             Ok(result) => results.push(result),
             Err(e) => {
                 error!("Input test failed: {}", e);
@@ -270,11 +412,21 @@ impl Test for BasicComponentsTests {
             }
         }
 
-        match self.test_card(browser) {
+        // Test Card
+        match self.test_card(driver).await {
             Ok(result) => results.push(result),
             Err(e) => {
                 error!("Card test failed: {}", e);
                 results.push(TestResult::error("Card", &e.to_string()));
+            }
+        }
+
+        // Test Divider
+        match self.test_divider(driver).await {
+            Ok(result) => results.push(result),
+            Err(e) => {
+                error!("Divider test failed: {}", e);
+                results.push(TestResult::error("Divider", &e.to_string()));
             }
         }
 

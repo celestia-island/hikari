@@ -33,7 +33,7 @@ fn build_tailwind_bundle() {
     }
 
     let output = std::process::Command::new("npm")
-        .args(&["run", "build:tailwind"])
+        .args(["run", "build:tailwind"])
         .current_dir(&manifest_dir)
         .output()
         .expect("Failed to execute npm run build:tailwind");

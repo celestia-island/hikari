@@ -25,9 +25,9 @@
 use dioxus::prelude::*;
 use palette::classes::ClassesBuilder;
 #[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
-#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::closure::Closure;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsCast;
 
 /// Anchor item configuration
 #[derive(Clone, Debug, PartialEq, Props)]
@@ -68,7 +68,7 @@ pub fn Anchor(
     /// Anchor content (page sections)
     children: Element,
 ) -> Element {
-    let mut active_anchor = use_signal(|| String::new());
+    let mut active_anchor = use_signal(String::new);
 
     // Build anchor links
     let anchor_links = items.iter().map(|item| {

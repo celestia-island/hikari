@@ -1,0 +1,209 @@
+// styles/components/stepper.scss
+// Stepper component with Arknights + FUI styling
+
+.hi-stepper {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+// Step wrapper
+.hi-step {
+  display: flex;
+  align-items: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+// Step number
+.hi-step-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight:  600;
+  color: var(--hi-color-surface, #ffffff);
+  border: 2px solid var(--hi-color-border, #e0e0e0);
+  background-color: var(--hi-color-surface, #ffffff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+// Step connector (horizontal)
+.hi-step-connector {
+  flex: 1;
+  height: 2px;
+  background-color: var(--hi-color-border, #e0e0e0);
+  transition: all 0.3s ease;
+}
+
+// Step connector (vertical)
+.hi-step-connector-vertical {
+  position: absolute;
+  width: 2px;
+  background-color: var(--hi-color-border, #e0e0e0);
+  top: 40px;
+  left: 20px;
+  bottom: -20px;
+  transition: all 0.3s ease;
+}
+
+// Step states
+.hi-step-pending .hi-step-number {
+  background-color: var(--hi-color-surface, #ffffff);
+  border-color: var(--hi-color-border, #e0e0e0);
+  color: var(--hi-color-text-secondary, #666);
+}
+
+.hi-step-active .hi-step-number {
+  background-color: var(--hi-color-primary, #00A0E9);
+  border-color: var(--hi-color-primary, #00A0E9);
+  color: var(--hi-color-surface, #ffffff);
+  box-shadow:
+    0 4px 12px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.4)),
+    0 0 20px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.2));
+  transform: scale(1.1);
+}
+
+.hi-step-finished .hi-step-number {
+  background-color: var(--hi-color-success, #52c41a);
+  border-color: var(--hi-color-success, #52c41a);
+  color: var(--hi-color-surface, #ffffff);
+  box-shadow: 0 2px 8px rgba(82, 196, 26, 0.1);
+}
+
+.hi-step-last {
+  padding-right: 0;
+}
+
+// Horizontal layout
+.hi-stepper-horizontal {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.hi-stepper-horizontal .hi-step-connector {
+  min-width: 2rem;
+}
+
+.hi-stepper-horizontal .hi-step {
+  padding-right: 0;
+}
+
+.hi-stepper-horizontal .hi-step:last-child {
+  padding-right: 0;
+}
+
+// Vertical layout
+.hi-stepper-vertical {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hi-stepper-vertical .hi-step {
+  flex-direction: row;
+  padding-bottom: 2rem;
+}
+
+.hi-stepper-vertical .hi-step:last-child {
+  padding-bottom: 0;
+}
+
+// FUI effects
+.hi-step-active .hi-step-number {
+  animation: hi-stepper-pulse 2s ease-in-out infinite;
+}
+
+@keyframes hi-stepper-pulse {
+  0%, 100% {
+    transform: scale(1.1);
+    box-shadow:
+      0 4px 12px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.4)),
+      0 0 20px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.2));
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow:
+      0 4px 12px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.4)),
+      0 0 20px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.2));
+  }
+}
+
+// Tairitsu theme (dark)
+[data-theme="tairitsu"] {
+  .hi-step-number {
+    background-color: #1a1a1a;
+    border-color: rgba(255, 255, 255, 0.24);
+    color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .hi-step-pending .hi-step-number {
+    background-color: #1a1a1a;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .hi-step-active .hi-step-number {
+    background-color: #1a237e;
+    border-color: #1a237e;
+    color: rgba(255, 255, 255, 0.95);
+    box-shadow:
+      0 4px 12px rgba(26, 35, 126, 0.5),
+      0 0 20px rgba(26, 35, 126, 0.3);
+  }
+
+  .hi-step-finished .hi-step-number {
+    background-color: #2e7d32;
+    border-color: #2e7d32;
+    color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 2px 8px rgba(46, 125, 50, 0.1);
+  }
+
+  .hi-step-connector,
+  .hi-step-connector-vertical {
+    background-color: rgba(255, 255, 0.24);
+  }
+
+  .hi-step-active .hi-step-number {
+    animation: hi-stepper-pulse 2s ease-in-out infinite;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .hi-stepper-horizontal {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hi-stepper-horizontal .hi-step {
+    flex-direction: row;
+    padding-right: 0;
+    padding-bottom: 1.5rem;
+  }
+
+  .hi-stepper-horizontal .hi-step:last-child {
+    padding-bottom: 0;
+  }
+
+  .hi-step-number {
+    width: 32px;
+    height: 32px;
+    font-size: 0.875rem;
+  }
+
+  .hi-step-connector-vertical {
+    left: 16px;
+    top: 32px;
+    bottom: -16px;
+  }
+
+  .hi-stepper-vertical .hi-step {
+    padding-bottom: 1.5rem;
+  }
+}

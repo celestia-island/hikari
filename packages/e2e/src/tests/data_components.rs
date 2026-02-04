@@ -4,67 +4,32 @@
 use anyhow::Result;
 use std::time::{Duration, Instant};
 
-use headless_chrome::Browser;
+use thirtyfour::{By, WebDriver};
 use tracing::info;
 
-use super::{TestResult, TestStatus};
+use super::TestResult;
 use crate::Test;
 
 /// Test suite for Layer 2 data components
 pub struct DataComponentsTests;
 
-#[derive(Debug, Clone)]
-pub struct DataComponentVerification {
-    pub component_name: String,
-    pub renders: bool,
-    pub displays_data: bool,
-    pub supports_interaction: bool,
-}
-
-impl TestResult {
-    pub fn from_data_verification(verification: &DataComponentVerification) -> Self {
-        let status = if verification.renders
-            && verification.displays_data
-            && verification.supports_interaction
-        {
-            TestStatus::Success
-        } else {
-            TestStatus::Error(format!(
-                "Failed verification - renders: {}, displays_data: {}, supports_interaction: {}",
-                verification.renders, verification.displays_data, verification.supports_interaction
-            ))
-        };
-
-        Self {
-            component: verification.component_name.clone(),
-            status,
-            message: format!(
-                "Data component {} rendering and data display",
-                verification.component_name
-            ),
-            duration_ms: 0,
-        }
-    }
-}
-
 impl DataComponentsTests {
-    fn test_table(&self, browser: &Browser) -> Result<TestResult> {
+    async fn test_table(&self, driver: &WebDriver) -> Result<TestResult> {
         let start = Instant::now();
         info!("Testing Table component");
 
-        let base_url = std::env::var("WEBSITE_BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
+        let base_url = std::env::var("WEBSITE_BASE_URL")
+            .unwrap_or_else(|_| "http://localhost:3000".to_string());
         let test_url = format!("{}/components/layer2/table", base_url);
 
-        let tab = browser
-            .new_tab()
-            .map_err(|e| anyhow::anyhow!("Failed to create tab: {}", e))?;
-
-        tab.navigate_to(&test_url)
+        driver
+            .goto(&test_url)
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
-        std::thread::sleep(Duration::from_millis(500));
+        tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let table = tab.find_element(".hi-table").map_err(|e| {
+        let table = driver.find(By::Css(".hi-table")).await.map_err(|e| {
             info!("Table element not found: {}", e);
             anyhow::anyhow!("Table element not found: {}", e)
         })?;
@@ -72,7 +37,8 @@ impl DataComponentsTests {
         info!("Table element found");
 
         let rows = table
-            .find_elements("tr")
+            .find_all(By::Css("tr"))
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to find table rows: {}", e))?;
 
         if rows.is_empty() {
@@ -81,13 +47,13 @@ impl DataComponentsTests {
 
         info!("Table has {} rows", rows.len());
 
-        let attrs = table
-            .get_attributes()
+        let class_attr = table
+            .attr("class")
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to get table attributes: {}", e))?;
-        let attrs = attrs.ok_or_else(|| anyhow::anyhow!("No attributes found for table"))?;
-        let has_class = attrs.iter().any(|attr| attr.contains("hi-table"));
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for table"))?;
 
-        if !has_class {
+        if !class_attr.contains("hi-table") {
             return Ok(TestResult::failure(
                 "Table",
                 "Table element missing 'hi-table' class",
@@ -97,32 +63,32 @@ impl DataComponentsTests {
         let duration = start.elapsed().as_millis() as u64;
         Ok(TestResult {
             component: "Table".to_string(),
-            status: TestStatus::Success,
+            status: super::TestStatus::Success,
             message: format!(
                 "Table component renders correctly with {} rows and has proper class",
                 rows.len()
             ),
             duration_ms: duration,
+            screenshot_path: None,
         })
     }
 
-    fn test_tree(&self, browser: &Browser) -> Result<TestResult> {
+    async fn test_tree(&self, driver: &WebDriver) -> Result<TestResult> {
         let start = Instant::now();
         info!("Testing Tree component");
 
-        let base_url = std::env::var("WEBSITE_BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
+        let base_url = std::env::var("WEBSITE_BASE_URL")
+            .unwrap_or_else(|_| "http://localhost:3000".to_string());
         let test_url = format!("{}/components/layer2/tree", base_url);
 
-        let tab = browser
-            .new_tab()
-            .map_err(|e| anyhow::anyhow!("Failed to create tab: {}", e))?;
-
-        tab.navigate_to(&test_url)
+        driver
+            .goto(&test_url)
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
-        std::thread::sleep(Duration::from_millis(500));
+        tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let tree = tab.find_element(".hi-tree").map_err(|e| {
+        let tree = driver.find(By::Css(".hi-tree")).await.map_err(|e| {
             info!("Tree element not found: {}", e);
             anyhow::anyhow!("Tree element not found: {}", e)
         })?;
@@ -130,7 +96,8 @@ impl DataComponentsTests {
         info!("Tree element found");
 
         let nodes = tree
-            .find_elements(".hi-tree-node")
+            .find_all(By::Css(".hi-tree-node"))
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to find tree nodes: {}", e))?;
 
         if nodes.is_empty() {
@@ -139,13 +106,13 @@ impl DataComponentsTests {
 
         info!("Tree has {} nodes", nodes.len());
 
-        let attrs = tree
-            .get_attributes()
+        let class_attr = tree
+            .attr("class")
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to get tree attributes: {}", e))?;
-        let attrs = attrs.ok_or_else(|| anyhow::anyhow!("No attributes found for tree"))?;
-        let has_class = attrs.iter().any(|attr| attr.contains("hi-tree"));
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for tree"))?;
 
-        if !has_class {
+        if !class_attr.contains("hi-tree") {
             return Ok(TestResult::failure(
                 "Tree",
                 "Tree element missing 'hi-tree' class",
@@ -155,32 +122,32 @@ impl DataComponentsTests {
         let duration = start.elapsed().as_millis() as u64;
         Ok(TestResult {
             component: "Tree".to_string(),
-            status: TestStatus::Success,
+            status: super::TestStatus::Success,
             message: format!(
                 "Tree component renders correctly with {} nodes and has proper class",
                 nodes.len()
             ),
             duration_ms: duration,
+            screenshot_path: None,
         })
     }
 
-    fn test_pagination(&self, browser: &Browser) -> Result<TestResult> {
+    async fn test_pagination(&self, driver: &WebDriver) -> Result<TestResult> {
         let start = Instant::now();
         info!("Testing Pagination component");
 
-        let base_url = std::env::var("WEBSITE_BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
+        let base_url = std::env::var("WEBSITE_BASE_URL")
+            .unwrap_or_else(|_| "http://localhost:3000".to_string());
         let test_url = format!("{}/components/layer2/pagination", base_url);
 
-        let tab = browser
-            .new_tab()
-            .map_err(|e| anyhow::anyhow!("Failed to create tab: {}", e))?;
-
-        tab.navigate_to(&test_url)
+        driver
+            .goto(&test_url)
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
-        std::thread::sleep(Duration::from_millis(500));
+        tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let pagination = tab.find_element(".hi-pagination").map_err(|e| {
+        let pagination = driver.find(By::Css(".hi-pagination")).await.map_err(|e| {
             info!("Pagination element not found: {}", e);
             anyhow::anyhow!("Pagination element not found: {}", e)
         })?;
@@ -188,7 +155,8 @@ impl DataComponentsTests {
         info!("Pagination element found");
 
         let items = pagination
-            .find_elements(".hi-pagination-item")
+            .find_all(By::Css(".hi-pagination-item"))
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to find pagination items: {}", e))?;
 
         if items.is_empty() {
@@ -200,13 +168,14 @@ impl DataComponentsTests {
 
         info!("Pagination has {} items", items.len());
 
-        let attrs = pagination
-            .get_attributes()
+        let class_attr = pagination
+            .attr("class")
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to get pagination attributes: {}", e))?;
-        let attrs = attrs.ok_or_else(|| anyhow::anyhow!("No attributes found for pagination"))?;
-        let has_class = attrs.iter().any(|attr| attr.contains("hi-pagination"));
+        let class_attr =
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for pagination"))?;
 
-        if !has_class {
+        if !class_attr.contains("hi-pagination") {
             return Ok(TestResult::failure(
                 "Pagination",
                 "Pagination element missing 'hi-pagination' class",
@@ -216,32 +185,32 @@ impl DataComponentsTests {
         let duration = start.elapsed().as_millis() as u64;
         Ok(TestResult {
             component: "Pagination".to_string(),
-            status: TestStatus::Success,
+            status: super::TestStatus::Success,
             message: format!(
                 "Pagination component renders correctly with {} items and has proper class",
                 items.len()
             ),
             duration_ms: duration,
+            screenshot_path: None,
         })
     }
 
-    fn test_dropdown(&self, browser: &Browser) -> Result<TestResult> {
+    async fn test_dropdown(&self, driver: &WebDriver) -> Result<TestResult> {
         let start = Instant::now();
         info!("Testing Dropdown component");
 
-        let base_url = std::env::var("WEBSITE_BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
+        let base_url = std::env::var("WEBSITE_BASE_URL")
+            .unwrap_or_else(|_| "http://localhost:3000".to_string());
         let test_url = format!("{}/components/layer2/dropdown", base_url);
 
-        let tab = browser
-            .new_tab()
-            .map_err(|e| anyhow::anyhow!("Failed to create tab: {}", e))?;
-
-        tab.navigate_to(&test_url)
+        driver
+            .goto(&test_url)
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
-        std::thread::sleep(Duration::from_millis(500));
+        tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let dropdown = tab.find_element(".hi-dropdown").map_err(|e| {
+        let dropdown = driver.find(By::Css(".hi-dropdown")).await.map_err(|e| {
             info!("Dropdown element not found: {}", e);
             anyhow::anyhow!("Dropdown element not found: {}", e)
         })?;
@@ -250,18 +219,19 @@ impl DataComponentsTests {
 
         dropdown
             .click()
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to click dropdown: {}", e))?;
         info!("Dropdown clicked successfully");
 
-        std::thread::sleep(Duration::from_millis(200));
+        tokio::time::sleep(Duration::from_millis(200)).await;
 
-        let attrs = dropdown
-            .get_attributes()
+        let class_attr = dropdown
+            .attr("class")
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to get dropdown attributes: {}", e))?;
-        let attrs = attrs.ok_or_else(|| anyhow::anyhow!("No attributes found for dropdown"))?;
-        let has_class = attrs.iter().any(|attr| attr.contains("hi-dropdown"));
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for dropdown"))?;
 
-        if !has_class {
+        if !class_attr.contains("hi-dropdown") {
             return Ok(TestResult::failure(
                 "Dropdown",
                 "Dropdown element missing 'hi-dropdown' class",
@@ -271,9 +241,10 @@ impl DataComponentsTests {
         let duration = start.elapsed().as_millis() as u64;
         Ok(TestResult {
             component: "Dropdown".to_string(),
-            status: TestStatus::Success,
+            status: super::TestStatus::Success,
             message: "Dropdown component renders correctly and responds to clicks".to_string(),
             duration_ms: duration,
+            screenshot_path: None,
         })
     }
 }
@@ -289,12 +260,12 @@ impl Test for DataComponentsTests {
         Ok(())
     }
 
-    fn run_with_browser(&self, browser: &Browser) -> Result<TestResult> {
+    async fn run_with_driver(&self, driver: &WebDriver) -> Result<TestResult> {
         info!("Running data components E2E tests");
 
         let mut results = vec![];
 
-        match self.test_table(browser) {
+        match self.test_table(driver).await {
             Ok(result) => results.push(result),
             Err(e) => {
                 info!("Table test failed: {}", e);
@@ -302,7 +273,7 @@ impl Test for DataComponentsTests {
             }
         }
 
-        match self.test_tree(browser) {
+        match self.test_tree(driver).await {
             Ok(result) => results.push(result),
             Err(e) => {
                 info!("Tree test failed: {}", e);
@@ -310,7 +281,7 @@ impl Test for DataComponentsTests {
             }
         }
 
-        match self.test_pagination(browser) {
+        match self.test_pagination(driver).await {
             Ok(result) => results.push(result),
             Err(e) => {
                 info!("Pagination test failed: {}", e);
@@ -318,7 +289,7 @@ impl Test for DataComponentsTests {
             }
         }
 
-        match self.test_dropdown(browser) {
+        match self.test_dropdown(driver).await {
             Ok(result) => results.push(result),
             Err(e) => {
                 info!("Dropdown test failed: {}", e);

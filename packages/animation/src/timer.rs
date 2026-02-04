@@ -144,7 +144,7 @@ impl TimerManager {
         };
 
         if let Some(handle) = self.timers.borrow_mut().remove(&id) {
-            let _ = window.clear_timeout_with_handle(handle);
+            window.clear_timeout_with_handle(handle);
         }
     }
 
@@ -212,7 +212,7 @@ impl TimerManager {
 
         let mut timers = self.timers.borrow_mut();
         for (_id, handle) in timers.iter() {
-            let _ = window.clear_timeout_with_handle(*handle);
+            window.clear_timeout_with_handle(*handle);
         }
         timers.clear();
     }
@@ -271,7 +271,7 @@ impl TimerManager {
         match handle {
             Ok(handle) => {
                 let mut frames = self.animation_frames.borrow_mut();
-                frames.insert(id, handle as i32);
+                frames.insert(id, handle);
                 callback_js.forget();
             }
             Err(_) => {

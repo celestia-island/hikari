@@ -90,12 +90,12 @@ impl ScreenSize {
 /// }
 /// ```
 pub fn use_screen_size() -> Signal<ScreenSize> {
-    let screen_size = use_signal(|| get_screen_size_from_window());
+    let screen_size = use_signal(get_screen_size_from_window);
 
     // Set up resize listener
     use_effect(move || {
         let window = web_sys::window().expect("no window");
-        let mut screen_size = screen_size.clone();
+        let mut screen_size = screen_size;
 
         let closure = Closure::wrap(Box::new(move || {
             screen_size.set(get_screen_size_from_window());
@@ -206,7 +206,7 @@ pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> Signal
 
     use_effect(move || {
         let window = web_sys::window().expect("no window");
-        let mut matches = matches.clone();
+        let mut matches = matches;
 
         let closure = Closure::wrap(Box::new(move || {
             matches.set(check_media_query(min_width, max_width));
@@ -232,17 +232,15 @@ fn check_media_query(min_width: Option<u32>, max_width: Option<u32>) -> bool {
             Err(_) => 0,
         };
 
-        if let Some(min) = min_width {
-            if width < min {
+        if let Some(min) = min_width
+            && width < min {
                 return false;
             }
-        }
 
-        if let Some(max) = max_width {
-            if width > max {
+        if let Some(max) = max_width
+            && width > max {
                 return false;
             }
-        }
 
         true
     } else {

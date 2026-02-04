@@ -198,6 +198,22 @@ pub fn get_default_theme() -> &'static str {
     }
 }
 
+/// Palette override configuration
+#[derive(Clone, Default)]
+pub struct PaletteOverrides {
+    pub primary: Option<String>,
+    pub secondary: Option<String>,
+    pub accent: Option<String>,
+    pub success: Option<String>,
+    pub warning: Option<String>,
+    pub danger: Option<String>,
+    pub background: Option<String>,
+    pub surface: Option<String>,
+    pub border: Option<String>,
+    pub text_primary: Option<String>,
+    pub text_secondary: Option<String>,
+}
+
 /// Theme palette with CSS variable values
 #[derive(Clone, PartialEq)]
 pub struct ThemePalette {
@@ -475,51 +491,38 @@ impl ThemePalette {
     }
 
     /// Apply custom color overrides to the palette
-    fn with_overrides(
-        mut self,
-        primary: Option<String>,
-        secondary: Option<String>,
-        accent: Option<String>,
-        success: Option<String>,
-        warning: Option<String>,
-        danger: Option<String>,
-        background: Option<String>,
-        surface: Option<String>,
-        border: Option<String>,
-        text_primary: Option<String>,
-        text_secondary: Option<String>,
-    ) -> Self {
-        if let Some(color) = primary {
+    fn with_overrides(mut self, overrides: PaletteOverrides) -> Self {
+        if let Some(color) = overrides.primary {
             self.primary = color;
         }
-        if let Some(color) = secondary {
+        if let Some(color) = overrides.secondary {
             self.secondary = color;
         }
-        if let Some(color) = accent {
+        if let Some(color) = overrides.accent {
             self.accent = color;
         }
-        if let Some(color) = success {
+        if let Some(color) = overrides.success {
             self.success = color;
         }
-        if let Some(color) = warning {
+        if let Some(color) = overrides.warning {
             self.warning = color;
         }
-        if let Some(color) = danger {
+        if let Some(color) = overrides.danger {
             self.danger = color;
         }
-        if let Some(color) = background {
+        if let Some(color) = overrides.background {
             self.background = color;
         }
-        if let Some(color) = surface {
+        if let Some(color) = overrides.surface {
             self.surface = color;
         }
-        if let Some(color) = border {
+        if let Some(color) = overrides.border {
             self.border = color;
         }
-        if let Some(color) = text_primary {
+        if let Some(color) = overrides.text_primary {
             self.text_primary = color;
         }
-        if let Some(color) = text_secondary {
+        if let Some(color) = overrides.text_secondary {
             self.text_secondary = color;
         }
 
@@ -655,8 +658,9 @@ impl ThemePalette {
 /// Theme context for accessing current theme
 #[derive(Clone, PartialEq)]
 pub struct ThemeContext {
-    pub palette: Rc<ThemePalette>,
-    pub theme_name: String,
+    pub palette: Signal<String>,
+    pub theme_name: Signal<String>,
+    pub set_theme: Callback<String>,
 }
 
 /// Theme provider properties
@@ -795,31 +799,52 @@ pub struct ThemeProviderProps {
 /// ```
 #[component]
 pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
-    // Get the base palette from theme registry
+    // Internal state for current theme
+    let current_palette = use_signal(|| props.palette.clone());
+    let current_theme_name = use_signal(|| props.palette.clone());
+
+    // Callback to change theme
+    let mut palette_for_callback = current_palette;
+    let mut theme_name_for_callback = current_theme_name;
+    let set_theme = Callback::new(move |new_theme: String| {
+        palette_for_callback.set(new_theme.clone());
+        theme_name_for_callback.set(new_theme);
+    });
+
+    // Provide theme context
+    use_context_provider(move || ThemeContext {
+        palette: current_palette,
+        theme_name: current_theme_name,
+        set_theme,
+    });
+
+    // Get the base palette from theme registry for initial CSS variables
     let base_palette = get_registered_theme(&props.palette)
         .unwrap_or_else(|| get_registered_theme(get_default_theme()).unwrap());
 
     // Create theme palette and apply custom overrides
-    let theme_palette = Rc::new(ThemePalette::from_palette(&base_palette).with_overrides(
-        props.primary,
-        props.secondary,
-        props.accent,
-        props.success,
-        props.warning,
-        props.danger,
-        props.background,
-        props.surface,
-        props.border,
-        props.text_primary,
-        props.text_secondary,
-    ));
+    let overrides = PaletteOverrides {
+        primary: props.primary,
+        secondary: props.secondary,
+        accent: props.accent,
+        success: props.success,
+        warning: props.warning,
+        danger: props.danger,
+        background: props.background,
+        surface: props.surface,
+        border: props.border,
+        text_primary: props.text_primary,
+        text_secondary: props.text_secondary,
+    };
+    let theme_palette =
+        Rc::new(ThemePalette::from_palette(&base_palette).with_overrides(overrides));
 
     let css_vars = theme_palette.css_variables();
 
     rsx! {
         div {
             class: "hi-theme-provider",
-            "data-theme": "{props.palette}",
+            "data-theme": "{current_theme_name.read()}",
             style: "{css_vars}",
             {props.children}
         }
@@ -909,12 +934,10 @@ pub fn use_theme() -> ThemeContext {
             None => return default_theme_context(),
         };
 
-        let palette = get_registered_theme(&theme_name)
-            .unwrap_or_else(|| get_registered_theme(get_default_theme()).unwrap());
-
         ThemeContext {
-            palette: Rc::new(ThemePalette::from_palette(&palette)),
-            theme_name,
+            palette: Signal::new(theme_name.clone()),
+            theme_name: Signal::new(theme_name),
+            set_theme: Callback::new(|_| {}),
         }
     }
 
@@ -935,17 +958,16 @@ fn default_theme_context() -> ThemeContext {
         eprintln!("use_theme() called outside of ThemeProvider. Using default Hikari theme.");
     }
 
-    #[cfg(target_arch = "wasm32")]
-    if prefers_dark_mode() {
-        return ThemeContext {
-            palette: Rc::new(ThemePalette::from_palette(&Tairitsu::palette())),
-            theme_name: "tairitsu".to_string(),
-        };
-    }
+    let default_theme = if cfg!(target_arch = "wasm32") && prefers_dark_mode() {
+        "tairitsu".to_string()
+    } else {
+        "hikari".to_string()
+    };
 
     ThemeContext {
-        palette: Rc::new(ThemePalette::from_palette(&Hikari::palette())),
-        theme_name: "hikari".to_string(),
+        palette: Signal::new(default_theme.clone()),
+        theme_name: Signal::new(default_theme),
+        set_theme: Callback::new(|_| {}),
     }
 }
 
@@ -1015,19 +1037,20 @@ mod tests {
     #[test]
     fn test_color_overrides() {
         let palette = Hikari::palette();
-        let theme_palette = ThemePalette::from_palette(&palette).with_overrides(
-            Some("#FF0000".to_string()), // primary
-            None,                        // secondary
-            None,                        // accent
-            None,                        // success
-            None,                        // warning
-            None,                        // danger
-            None,                        // background
-            None,                        // surface
-            None,                        // border
-            None,                        // text_primary
-            None,                        // text_secondary
-        );
+        let overrides = PaletteOverrides {
+            primary: Some("#FF0000".to_string()),
+            secondary: None,
+            accent: None,
+            success: None,
+            warning: None,
+            danger: None,
+            background: None,
+            surface: None,
+            border: None,
+            text_primary: None,
+            text_secondary: None,
+        };
+        let theme_palette = ThemePalette::from_palette(&palette).with_overrides(overrides);
 
         assert_eq!(theme_palette.primary, "#FF0000");
         assert_eq!(theme_palette.secondary, palette.secondary.hex()); // unchanged
@@ -1036,19 +1059,20 @@ mod tests {
     #[test]
     fn test_all_color_overrides() {
         let palette = Hikari::palette();
-        let theme_palette = ThemePalette::from_palette(&palette).with_overrides(
-            Some("#111111".to_string()),
-            Some("#222222".to_string()),
-            Some("#333333".to_string()),
-            Some("#444444".to_string()),
-            Some("#555555".to_string()),
-            Some("#666666".to_string()),
-            Some("#777777".to_string()),
-            Some("#888888".to_string()),
-            Some("#999999".to_string()),
-            Some("#AAAAAA".to_string()),
-            Some("#BBBBBB".to_string()),
-        );
+        let overrides = PaletteOverrides {
+            primary: Some("#111111".to_string()),
+            secondary: Some("#222222".to_string()),
+            accent: Some("#333333".to_string()),
+            success: Some("#444444".to_string()),
+            warning: Some("#555555".to_string()),
+            danger: Some("#666666".to_string()),
+            background: Some("#777777".to_string()),
+            surface: Some("#888888".to_string()),
+            border: Some("#999999".to_string()),
+            text_primary: Some("#AAAAAA".to_string()),
+            text_secondary: Some("#BBBBBB".to_string()),
+        };
+        let theme_palette = ThemePalette::from_palette(&palette).with_overrides(overrides);
 
         assert_eq!(theme_palette.primary, "#111111");
         assert_eq!(theme_palette.secondary, "#222222");

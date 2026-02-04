@@ -21,6 +21,7 @@ pub enum WaveformColor {
 }
 
 #[derive(Clone, PartialEq, Props)]
+#[derive(Default)]
 pub struct AudioWaveformProps {
     /// Audio source URL
     pub src: String,
@@ -50,28 +51,33 @@ pub struct AudioWaveformProps {
     pub on_waveform_ready: Option<EventHandler<Vec<f32>>>,
 }
 
-impl Default for AudioWaveformProps {
-    fn default() -> Self {
-        Self {
-            src: String::default(),
-            waveform_color: Default::default(),
-            show_controls: false,
-            class: String::default(),
-            on_play: None,
-            on_pause: None,
-            on_waveform_ready: None,
-        }
-    }
-}
 
 /// AudioWaveform component with real waveform visualization
 ///
 /// An audio player with waveform visualization using Web Audio API (WASM).
-/// For non-WASM targets, generates placeholder waveform data.
+///
+/// # Platform Support
+///
+/// ## WASM (Primary Target)
+/// - **Full Support**: Uses Web Audio API to generate real waveform from audio
+/// - Decodes actual audio data and visualizes frequency/amplitude
+/// - Provides accurate playback time and duration
+///
+/// ## Non-WASM (Limited Support)
+/// - **Placeholder Only**: Cannot decode audio without Web Audio API
+/// - Generates synthetic waveform data for visual demonstration
+/// - Audio playback still works through HTML5 audio element
+/// - **Recommendation**: Use only for UI testing, not production audio apps
+///
+/// # Why This Limitation?
+///
+/// The Web Audio API is browser-specific and not available in non-WASM environments.
+/// Alternatives like `rodio` crate could be implemented for native audio support,
+/// but would require significant additional code and dependencies.
 ///
 /// # Examples
 ///
-/// ## Basic Usage
+/// ## Basic Usage (WASM)
 /// ```rust
 /// use dioxus::prelude::*;
 /// use hikari_extra_components::AudioWaveform;
@@ -85,6 +91,17 @@ impl Default for AudioWaveformProps {
 ///     }
 /// }
 /// ```
+///
+/// ## With Waveform Callback
+/// ```rust
+/// AudioWaveform {
+///     src: "audio.mp3".to_string(),
+///     on_waveform_ready: Some(|data| {
+///         // data: Vec<f32> - waveform amplitude values (0.0 to 1.0)
+///         println!("Got {} waveform samples", data.len());
+///     }),
+/// }
+/// ```
 #[component]
 pub fn AudioWaveform(props: AudioWaveformProps) -> Element {
     let mut is_playing = use_signal(|| false);
@@ -94,7 +111,7 @@ pub fn AudioWaveform(props: AudioWaveformProps) -> Element {
 
     let waveform_classes = format!("hi-audio-waveform hi-waveform-{:?}", props.waveform_color);
 
-    let waveform_data = use_signal(|| Vec::<f32>::new());
+    let waveform_data = use_signal(Vec::<f32>::new);
     let is_loaded = use_signal(|| false);
 
     let toggle_playback = move |_| {
@@ -176,20 +193,29 @@ pub fn AudioWaveform(props: AudioWaveformProps) -> Element {
 
     #[cfg(not(target_arch = "wasm32"))]
     use_effect({
-        let on_waveform_ready = props.on_waveform_ready.clone();
-        let waveform_data_clone = waveform_data.clone();
-        let is_loaded_clone = is_loaded.clone();
+        let on_waveform_ready = props.on_waveform_ready;
+        let waveform_data_clone = waveform_data;
+        let is_loaded_clone = is_loaded;
 
         move || {
-            let mut waveform_data_clone2 = waveform_data_clone.clone();
-            let mut is_loaded_clone2 = is_loaded_clone.clone();
+            let mut waveform_data_clone2 = waveform_data_clone;
+            let mut is_loaded_clone2 = is_loaded_clone;
 
             wasm_bindgen_futures::spawn_local(async move {
                 if let Some(handler) = on_waveform_ready.as_ref() {
+                    // NOTE: Non-WASM placeholder implementation
+                    // The Web Audio API is not available outside of browsers,
+                    // so we generate synthetic waveform data for UI demonstration.
+                    // The audio element will still play, but waveform is fake.
+                    //
+                    // For production native audio apps, consider:
+                    // 1. Using rodio crate for native audio decoding
+                    // 2. Implementing FFT analysis on CPU
+                    // 3. Or disabling waveform visualization on non-WASM
                     let fake_data: Vec<f32> = (0..40)
                         .map(|i| {
-                            let value = 0.2 + (i as f32 * 0.8).sin().abs() as f32 * 0.8;
-                            value
+                            
+                            0.2 + (i as f32 * 0.8).sin().abs() * 0.8
                         })
                         .collect();
 

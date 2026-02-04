@@ -10,6 +10,12 @@ edition = "2024"
 # Selenium WebDriver for E2E testing
 thirtyfour = { version = "0.34", features = ["reqwest"] }
 
+# Chromiumoxide for headless Chrome screenshots - updated for Chrome 144 compatibility
+chromiumoxide = { version = "0.8", features = ["tokio-runtime"] }
+
+# HTML parsing and assertions
+scraper = "0.20"
+
 # Async runtime
 tokio = { version = "1", features = ["full"] }
 
@@ -24,10 +30,18 @@ serde_json = "^1"
 
 # Utilities
 anyhow = "^1"
+chrono = "^0.4"
+futures = "^0.3"
+
+# Command line parsing
+clap = { version = "^4", features = ["derive"] }
 
 [[bin]]
 name = "hikari-e2e"
 path = "src/main.rs"
 
+[[bin]]
+name = "hikari-screenshot"
+path = "src/screenshot_bin.rs"
+
 [dev-dependencies]
-headless_chrome = "1.0.1"

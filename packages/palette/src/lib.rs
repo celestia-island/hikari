@@ -38,14 +38,14 @@
 //! ```rust,no_run
 //! use hikari_palette::{石青, 朱砂, 藤黄, 月白};
 //!
-//! fn main() {
-//!     let primary = 石青;
-//!     let secondary = 朱砂;
-//!
-//!     println!("Primary color: {}", primary.name);
-//!     println!("Hex: {}", primary.hex);
-//!     println!("RGB: {:?}", primary.rgb);
-//! }
+//! # fn main() {
+//! #     let primary = 石青;
+//! #     let secondary = 朱砂;
+//! #
+//! #     println!("Primary color: {}", primary.name);
+//! #     println!("Hex: {}", primary.hex);
+//! #     println!("RGB: {:?}", primary.rgb);
+//! # }
 //! ```
 //!
 //! ### Using Pre-defined Palettes

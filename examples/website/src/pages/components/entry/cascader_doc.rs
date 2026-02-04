@@ -4,7 +4,10 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{entry::{Cascader, CascaderOption, CascaderSize}, layout::{Container, Section}};
+use _components::{
+    entry::{Cascader, CascaderOption, CascaderSize},
+    layout::{Container, Section},
+};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextColor};
 
 // Code examples as constants
@@ -53,7 +56,7 @@ pub fn CascaderDoc() -> Element {
 
     rsx! {
         Layout {
-            current_route: Route::ComponentsOverview {}, // Using existing route for now
+            current_route: Route::CascaderDoc {},
 
             Container {
                 // Page header

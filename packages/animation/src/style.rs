@@ -550,11 +550,10 @@ impl<'a> StyleBuilder<'a> {
             let current_value = style.get_property_value(property_name).unwrap_or_default();
 
             // Only update if value changed
-            if current_value != value {
-                if style.set_property(property_name, &value).is_ok() {
+            if current_value != value
+                && style.set_property(property_name, &value).is_ok() {
                     updated += 1;
                 }
-            }
         }
 
         updated
@@ -623,6 +622,12 @@ impl StyleEntry {
 /// // Returns: "width:100px;height:50px;--glow-x:50px"
 /// ```
 pub struct StyleStringBuilder(Vec<StyleEntry>);
+
+impl Default for StyleStringBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl StyleStringBuilder {
     /// Create a new style string builder

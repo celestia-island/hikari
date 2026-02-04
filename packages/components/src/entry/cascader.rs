@@ -283,7 +283,7 @@ fn CascaderMenus(
                         let opt_disabled = opt.disabled;
                         let has_children = opt.children.as_ref().map(|c| !c.is_empty()).unwrap_or(false);
                         let is_selected = selected_at_level.as_ref() == Some(&opt_value);
-                        let handler_for_item = on_select.clone();
+                        let handler_for_item = on_select;
 
                         rsx! {
                             li {
@@ -342,11 +342,10 @@ fn find_option_by_value<'a>(
         if opt.value == value {
             return Some(opt);
         }
-        if let Some(ref children) = opt.children {
-            if let Some(found) = find_option_by_value(children, value) {
+        if let Some(ref children) = opt.children
+            && let Some(found) = find_option_by_value(children, value) {
                 return Some(found);
             }
-        }
     }
     None
 }

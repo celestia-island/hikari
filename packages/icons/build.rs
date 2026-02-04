@@ -80,14 +80,14 @@ fn main() {
         Err(e) => {
             eprintln!("❌ BUILD ERROR: Failed to build MDI icons");
             eprintln!("   Error: {}", e);
-            eprintln!("");
+            eprintln!();
             eprintln!(
                 "   Solution: Run 'python scripts/icons/fetch_mdi_icons.py' to download icons"
             );
-            eprintln!("");
+            eprintln!();
             eprintln!("   This is required because icons are fetched at build time");
             eprintln!("   from the generated cache directory.");
-            eprintln!("");
+            eprintln!();
             eprintln!("   Cache location: packages/builder/generated/mdi_svgs/");
             std::process::exit(1);
         }

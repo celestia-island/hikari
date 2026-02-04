@@ -32,6 +32,7 @@ pub struct EmptyComponent;
 /// }
 /// ```
 #[derive(Clone, PartialEq, Props)]
+#[derive(Default)]
 pub struct EmptyProps {
     #[props(default)]
     pub image: Option<String>,
@@ -52,18 +53,6 @@ pub struct EmptyProps {
     pub style: String,
 }
 
-impl Default for EmptyProps {
-    fn default() -> Self {
-        Self {
-            image: None,
-            title: None,
-            description: String::default(),
-            action: None,
-            class: String::default(),
-            style: String::default(),
-        }
-    }
-}
 
 #[component]
 pub fn Empty(props: EmptyProps) -> Element {

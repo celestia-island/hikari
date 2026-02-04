@@ -236,7 +236,7 @@ fn cubic_bezier(t: f64, x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
 pub fn steps(n: u32, start: bool) -> EasingFunction {
     EasingFunction::Custom(Box::new(move |t| {
         if t <= 0.0 {
-            return if start { 0.0 } else { 0.0 };
+            return 0.0;
         }
         if t >= 1.0 {
             return 1.0;
@@ -274,7 +274,7 @@ pub fn elastic(amplitude: f64, period: f64) -> EasingFunction {
         if t == 0.0 || t == 1.0 {
             t
         } else {
-            let s = period / (2.0 * std::f64::consts::PI) * (1.0 as f64).asin();
+            let s = period / (2.0 * std::f64::consts::PI) * 1.0_f64.asin();
             amplitude
                 * 2.0_f64.powf(-10.0 * t)
                 * ((t - s) * 2.0 * std::f64::consts::PI / period).sin()

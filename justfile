@@ -221,6 +221,25 @@ clean-dist:
 [windows]
 clean-dist:
     @pwsh.exe -NoLogo -Command "echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'; echo 'Cleaning old dist/ directories...'; Get-ChildItem -Path . -Recurse -Directory -Filter 'dist' -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force; echo '✅ Old dist/ directories removed'"
+# ============================================================================
+
+# E2E Testing
+# ============================================================================
+
+# Run E2E screenshots in parallel (8 containers)
+e2e-parallel:
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Running E2E screenshot test in parallel..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @./scripts/run_parallel_screenshots.sh
+    @echo ""
+    @echo "Screenshots saved to: target/e2e_screenshots/"
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Test specific route (for debugging)
+e2e-test route="":
+    @echo "Testing single route: {{route}}..."
+    @docker run --rm --network host -v "$(pwd)/target/e2e_screenshots:/tmp/e2e_screenshots" -v "$(pwd)/examples/website/public:/public:ro" hikari/screenshot:selenium /usr/local/bin/hikari-screenshot --start "{{route}}" --end "{{route}}" > /dev/null
 
 # ============================================================================
 # Testing

@@ -6,7 +6,9 @@
 //! - Property tweening
 //! - Animation engine with global tween management
 
-use std::{cell::RefCell, sync::Arc, time::Duration};
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::time::Duration;
 
 use slotmap::{new_key_type, SlotMap};
 
@@ -79,8 +81,10 @@ impl Default for AnimationOptions {
     }
 }
 
+#[derive(Default)]
 pub enum EasingFunction {
     /// No easing (linear progress)
+    #[default]
     Linear,
 
     /// Quadratic easing in
@@ -272,12 +276,6 @@ impl PartialEq for EasingFunction {
             (EasingFunction::Custom(_), EasingFunction::Custom(_)) => false, // Can't compare closures
             _ => false,
         }
-    }
-}
-
-impl Default for EasingFunction {
-    fn default() -> Self {
-        EasingFunction::Linear
     }
 }
 
@@ -815,7 +813,7 @@ impl Tween {
 /// allowing for efficient batch updates and global control.
 #[derive(Clone)]
 pub struct AnimationEngine {
-    pub tweens: Arc<RefCell<SlotMap<TweenId, Tween>>>,
+    pub tweens: Rc<RefCell<SlotMap<TweenId, Tween>>>,
 }
 
 impl Default for AnimationEngine {
@@ -828,7 +826,7 @@ impl AnimationEngine {
     /// Create a new animation engine
     pub fn new() -> Self {
         Self {
-            tweens: Arc::new(RefCell::new(SlotMap::with_key())),
+            tweens: Rc::new(RefCell::new(SlotMap::with_key())),
         }
     }
 

@@ -44,7 +44,7 @@ impl StyleService {
             .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
             .header(header::CACHE_CONTROL, "public, max-age=3600")
             .body(css)
-            .unwrap()
+            .expect("CSS bundle response should always succeed")
     }
 
     /// 获取单个组件的 CSS 样式
@@ -60,14 +60,14 @@ impl StyleService {
                 .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
                 .header(header::CACHE_CONTROL, "public, max-age=3600")
                 .body(css.to_string())
-                .unwrap(),
+                .expect("Component CSS response should always succeed"),
             None => {
                 let not_found_css = format!("/* Component '{}' not found */", name);
                 Response::builder()
                     .status(StatusCode::NOT_FOUND)
                     .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
                     .body(not_found_css)
-                    .unwrap()
+                    .expect("NOT_FOUND CSS response should always succeed")
             }
         }
     }

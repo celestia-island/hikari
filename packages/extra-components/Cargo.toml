@@ -28,4 +28,4 @@ serde_json = "^1"
 lazy_static = "^1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-web-sys = { version = "^0.3", features = ["Window", "MouseEvent", "AudioContext", "HtmlAudioElement", "AudioNode", "GainNode", "AnalyserNode", "MediaElementAudioSourceNode", "AudioDestinationNode", "OscillatorNode", "PeriodicWave"] }
+web-sys = { version = "^0.3", features = ["Window", "MouseEvent", "AudioContext", "HtmlAudioElement", "AudioNode", "GainNode", "AnalyserNode", "MediaElementAudioSourceNode", "AudioDestinationNode", "OscillatorNode", "PeriodicWave", "Document", "HtmlElement", "Node", "HtmlVideoElement", "Element"] }

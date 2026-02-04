@@ -79,8 +79,8 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
         .add_raw("hi-number-input-input")
         .build();
 
-    let decrement_disabled = props.min.map_or(false, |min| props.value <= min);
-    let increment_disabled = props.max.map_or(false, |max| props.value >= max);
+    let decrement_disabled = props.min.is_some_and(|min| props.value <= min);
+    let increment_disabled = props.max.is_some_and(|max| props.value >= max);
 
     rsx! {
         div {

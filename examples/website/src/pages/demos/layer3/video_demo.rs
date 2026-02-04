@@ -1,19 +1,18 @@
 // website/src/pages/demos/layer3/video_demo.rs
-// Layer 3: Video player demo example
+// Layer 3: Video player and audio waveform demo example
 
 use dioxus::prelude::*;
 
 use crate::components::Layout;
 use _components::{Button, Card};
-use _palette::classes::{ ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor, };
+use _extra_components::extra::{AudioWaveform, VideoPlayer};
+use _palette::classes::{
+    ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor,
+};
 
-/// Video player demo
+/// Video player and audio waveform demo
 #[component]
 pub fn VideoDemo() -> Element {
-    let mut is_playing = use_signal(|| false);
-    let current_time = use_signal(|| "0:00");
-    let duration = use_signal(|| "10:30");
-
     rsx! {
         Layout {
             current_route: crate::app::Route::VideoDemo {},
@@ -32,7 +31,7 @@ pub fn VideoDemo() -> Element {
                             .add_raw("page-title")
                             .add(FontSize::X4xl)
                             .build(),
-                        "视频播放器示例"
+                        "视频和音频示例"
                     }
 
                     p {
@@ -41,127 +40,71 @@ pub fn VideoDemo() -> Element {
                             .add(TextColor::Muted)
                             .add(FontSize::Xl)
                             .build(),
-                        "展示 Layer 3 视频播放器组件的完整功能"
+                        "展示 Layer 3 视频播放器和音频波形组件的完整功能"
                     }
                 }
 
                 // Video Player Demo
                 div {
                     class: ClassesBuilder::new()
-                        .add(Display::Flex)
-                        .add_raw("justify-center items-center")
-                        .add(Padding::P8)
+                        .add_raw("section")
+                        .add(MarginBottom::Mb8)
                         .build(),
 
+                    h2 {
+                        class: ClassesBuilder::new()
+                            .add(FontSize::X2xl)
+                            .add(MarginBottom::Mb4)
+                            .build(),
+                        "VideoPlayer 视频播放器"
+                    }
+
+                    p {
+                        class: ClassesBuilder::new()
+                            .add(TextColor::Muted)
+                            .add(MarginBottom::Mb4)
+                            .build(),
+                        "完整的视频播放器，支持播放控制、音量调节和全屏功能。"
+                    }
+
                     Card {
-                        class: "video-player-card",
-
-                        // Video Container
-                        div {
-                            class: "video-container",
-                            div {
-                                class: "video-placeholder",
-                                "🎬 Video Placeholder"
-                            }
+                        class: "demo-card",
+                        VideoPlayer {
+                            src: "https://www.w3schools.com/html/mov_bbb.mp4".to_string(),
+                            title: Some("示例视频".to_string()),
+                            show_controls: true,
                         }
+                    }
+                }
 
-                        // Controls
-                        div {
-                            class: ClassesBuilder::new()
-                                .add_raw("video-controls")
-                                .add(Padding::P4)
-                                .build(),
+                // Audio Waveform Demo
+                div {
+                    class: ClassesBuilder::new()
+                        .add_raw("section")
+                        .add(MarginBottom::Mb8)
+                        .build(),
 
-                            // Progress Bar
-                            div {
-                                class: "progress-container",
-                                div {
-                                    class: "progress-bar",
-                                    style: "width: 30%;",
-                                }
-                            }
+                    h2 {
+                        class: ClassesBuilder::new()
+                            .add(FontSize::X2xl)
+                            .add(MarginBottom::Mb4)
+                            .build(),
+                        "AudioWaveform 音频波形"
+                    }
 
-                            // Time Display
-                            div {
-                                class: ClassesBuilder::new()
-                                    .add(Display::Flex)
-                                    .add_raw("justify-between items-center")
-                                    .add(MarginBottom::Mb4)
-                                    .build(),
+                    p {
+                        class: ClassesBuilder::new()
+                            .add(TextColor::Muted)
+                            .add(MarginBottom::Mb4)
+                            .build(),
+                        "音频播放器，带有实时波形可视化（WASM 平台）。"
+                    }
 
-                                span { class: "time-display", "{current_time}" }
-                                span { class: "time-display", "{duration}" }
-                            }
-
-                            // Action Buttons
-                            div {
-                                class: ClassesBuilder::new()
-                                    .add(Display::Flex)
-                                    .add_raw("justify-center items-center gap-4")
-                                    .build(),
-
-                                Button {
-                                    variant: _components::ButtonVariant::Ghost,
-                                    "快退 -10s"
-                                }
-
-                                Button {
-                                    variant: _components::ButtonVariant::Primary,
-                                    onclick: move |_| is_playing.toggle(),
-                                    if *is_playing.read() {
-                                        "暂停 Pause"
-                                    } else {
-                                        "播放 Play"
-                                    }
-                                }
-
-                                Button {
-                                    variant: _components::ButtonVariant::Ghost,
-                                    "快进 +10s"
-                                }
-
-                                // Volume Control
-                                div {
-                                    class: ClassesBuilder::new()
-                                        .add(Display::Flex)
-                                        .add_raw("justify-center items-center gap-4")
-                                        .build(),
-
-                                    Button {
-                                        variant: _components::ButtonVariant::Ghost,
-                                        "🔇"
-                                    }
-
-                                    div {
-                                        class: "volume-slider",
-                                        "Volume"
-                                    }
-
-                                    Button {
-                                        variant: _components::ButtonVariant::Ghost,
-                                        "🔈"
-                                    }
-                                }
-                            }
-
-                            // Settings
-                            div {
-                                class: ClassesBuilder::new()
-                                    .add(Display::Flex)
-                                    .add_raw("justify-between items-center mt-4")
-                                    .build(),
-
-                                div {
-                                    class: "video-info",
-                                    h4 { "示例视频.mp4" }
-                                    p { "1920x1080 • H.264 • 10:30" }
-                                }
-
-                                Button {
-                                    variant: _components::ButtonVariant::Ghost,
-                                    "设置"
-                                }
-                            }
+                    Card {
+                        class: "demo-card",
+                        AudioWaveform {
+                            src: "https://www.w3schools.com/html/horse.mp3".to_string(),
+                            show_controls: true,
                         }
                     }
                 }

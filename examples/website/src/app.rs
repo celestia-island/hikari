@@ -3,7 +3,7 @@
 
 use dioxus::prelude::*;
 
-use _components::{PortalProvider, ThemeProvider, scripts::scrollbar_container};
+use _components::{scripts::scrollbar_container, PortalProvider, ThemeProvider};
 
 /// Main application component (root)
 #[component]
@@ -87,6 +87,10 @@ pub enum Route {
     // Extra components
     #[route("/components/extra/collapsible")]
     CollapsibleDoc {},
+    #[route("/components/extra/timeline")]
+    TimelineDoc {},
+    #[route("/components/extra/user_guide")]
+    UserGuideDoc {},
     #[route("/components/extra/zoom_controls")]
     ZoomControlsDoc {},
     // Layer 3 Doc routes (temporarily disabled due to compilation issues)
@@ -362,6 +366,20 @@ fn SearchDoc() -> Element {
 fn CollapsibleDoc() -> Element {
     rsx! {
         crate::pages::components::extra::CollapsibleDoc {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn TimelineDoc() -> Element {
+    rsx! {
+        crate::pages::components::extra::TimelineDoc {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn UserGuideDoc() -> Element {
+    rsx! {
+        crate::pages::components::extra::UserGuideDoc {}
     }
 }
 

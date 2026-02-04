@@ -222,7 +222,8 @@ impl<T: 'static> Validators<T> {
         Self::default()
     }
 
-    pub fn add(mut self, validator: impl ValidationSchema<T> + Send + Sync + 'static) -> Self {
+    #[allow(clippy::should_implement_trait)]
+    pub fn add(mut self, validator: impl ValidationSchema<T> + 'static) -> Self {
         self.validators.push(Arc::new(validator));
         self
     }
@@ -312,7 +313,7 @@ where
 
     // Field validators registry
     let mut validators =
-        use_signal(|| HashMap::<String, Arc<dyn ValidationSchema<String> + Send + Sync>>::new());
+        use_signal(HashMap::<String, Arc<dyn ValidationSchema<String> + Send + Sync>>::new);
 
     // Register a field with validation
     let register = Callback::new(
@@ -513,12 +514,10 @@ mod tests {
         let validator = MinLength(3);
         let result = validator.validate(&"ab".to_string());
         assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .message
-                .contains("at least 3 characters")
-        );
+        assert!(result
+            .unwrap_err()
+            .message
+            .contains("at least 3 characters"));
     }
 
     #[test]

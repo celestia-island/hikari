@@ -59,7 +59,6 @@ pub struct FileUploadProps {
 }
 
 #[allow(unused_variables)]
-#[allow(unused_variables)]
 #[component]
 pub fn FileUpload(props: FileUploadProps) -> Element {
     let mut upload_status = use_signal(|| FileUploadStatus::Idle);
@@ -68,7 +67,7 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
     let mut files = use_signal(|| Vec::<String>::new());
 
     #[cfg(not(target_arch = "wasm32"))]
-    let files = use_signal(|| Vec::<String>::new());
+    let files = use_signal(Vec::<String>::new);
 
     let wrapper_classes = ClassesBuilder::new()
         .add_raw("hi-file-upload-wrapper")

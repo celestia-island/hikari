@@ -329,7 +329,7 @@ static REGISTRY: std::sync::OnceLock<ThemeRegistry> = std::sync::OnceLock::new()
 
 /// Get the global theme registry
 pub fn registry() -> &'static ThemeRegistry {
-    REGISTRY.get_or_init(|| ThemeRegistry::new())
+    REGISTRY.get_or_init(ThemeRegistry::new)
 }
 
 /// Get a palette by name from the global registry

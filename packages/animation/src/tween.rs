@@ -260,6 +260,7 @@ impl ParallelBuilder {
         self
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn add(mut self, tween: Tween) -> Self {
         self.tweens.push(tween);
         self
@@ -312,6 +313,7 @@ impl SequenceBuilder {
         self
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn add(mut self, tween: Tween) -> Self {
         self.tweens.push((tween, self.delay));
         self.delay = Duration::ZERO;

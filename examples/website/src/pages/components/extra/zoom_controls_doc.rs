@@ -47,7 +47,7 @@ pub fn ZoomControlsDoc() -> Element {
 
     rsx! {
         Layout {
-            current_route: Route::ComponentsOverview {}, // Using existing route for now
+            current_route: Route::ZoomControlsDoc {},
 
             Container {
                 // Page header

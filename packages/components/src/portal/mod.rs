@@ -293,7 +293,7 @@ fn use_animated_portal_entry(
     let internal_animation_state = use_signal(|| initial_state);
 
     let close_callback = {
-        let mut anim_state = internal_animation_state.clone();
+        let mut anim_state = internal_animation_state;
         Callback::new(move |_| {
             #[cfg(target_arch = "wasm32")]
             {
@@ -757,14 +757,14 @@ fn calculate_position(
 #[component]
 pub fn PortalProvider(children: Element) -> Element {
     let entries = use_signal(Vec::new);
-    let mut entries_for_callbacks = entries.clone();
+    let mut entries_for_callbacks = entries;
 
     let add_entry = Callback::new(move |entry: PortalEntry| {
         let mut e = entries_for_callbacks.write();
         e.push(entry);
     });
 
-    let mut entries_for_remove = entries.clone();
+    let mut entries_for_remove = entries;
     let remove_entry = Callback::new(move |id: String| {
         let mut e = entries_for_remove.write();
         e.retain(|entry| match entry {
@@ -774,13 +774,13 @@ pub fn PortalProvider(children: Element) -> Element {
         });
     });
 
-    let mut entries_for_clear = entries.clone();
+    let mut entries_for_clear = entries;
     let clear_all = Callback::new(move |_| {
         let mut e = entries_for_clear.write();
         e.clear();
     });
 
-    let mut entries_for_close_anim = entries.clone();
+    let mut entries_for_close_anim = entries;
     let start_close_animation = Callback::new(move |id: String| {
         let mut e = entries_for_close_anim.write();
         for entry in e.iter_mut() {
@@ -789,20 +789,18 @@ pub fn PortalProvider(children: Element) -> Element {
                 animation_state,
                 ..
             } = entry
-            {
-                if entry_id == &id && *animation_state == ModalAnimationState::Visible {
+                && entry_id == &id && *animation_state == ModalAnimationState::Visible {
                     *animation_state = ModalAnimationState::Disappearing;
                 }
-            }
         }
     });
 
     use_context_provider(|| PortalContext {
-        entries: entries.clone(),
-        add_entry: add_entry.clone(),
-        remove_entry: remove_entry.clone(),
-        clear_all: clear_all.clone(),
-        start_close_animation: start_close_animation.clone(),
+        entries,
+        add_entry,
+        remove_entry,
+        clear_all,
+        start_close_animation,
     });
 
     rsx! {
@@ -867,7 +865,7 @@ fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                     strategy: *strategy,
                                     mask_mode: *mask_mode,
                                     children: children.clone(),
-                                    trigger_rect: trigger_rect.clone(),
+                                    trigger_rect: *trigger_rect,
                                     close_on_select: *close_on_select,
                                 }
                             },
@@ -1109,8 +1107,8 @@ fn DropdownPortalEntry(
     };
 
     let dropdown_classes = use_memo(move || {
-        let base = ClassesBuilder::new().add(DropdownClass::Dropdown).build();
-        base
+        
+        ClassesBuilder::new().add(DropdownClass::Dropdown).build()
     });
 
     let overlay_style = format!(

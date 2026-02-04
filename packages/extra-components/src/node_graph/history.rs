@@ -6,8 +6,50 @@ use std::collections::VecDeque;
 
 pub type HistoryId = usize;
 
+/// Serialized node state for history
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct SerializedNodeState {
+    pub id: String,
+    pub position: (f64, f64),
+    pub size: (f64, f64),
+    pub minimized: bool,
+}
+
+impl From<crate::node_graph::NodeState> for SerializedNodeState {
+    fn from(state: crate::node_graph::NodeState) -> Self {
+        Self {
+            id: state.id,
+            position: state.position,
+            size: state.size,
+            minimized: state.minimized,
+        }
+    }
+}
+
+impl From<SerializedNodeState> for crate::node_graph::NodeState {
+    fn from(state: SerializedNodeState) -> Self {
+        Self {
+            id: state.id,
+            position: state.position,
+            size: state.size,
+            selected: false,
+            minimized: state.minimized,
+        }
+    }
+}
+
+/// Serialized connection state for history
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct SerializedConnectionState {
+    pub id: String,
+    pub from_node: String,
+    pub from_port: String,
+    pub to_node: String,
+    pub to_port: String,
+}
+
 /// History action type
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum HistoryAction {
     NodeAdd {
         id: String,
@@ -16,7 +58,7 @@ pub enum HistoryAction {
     },
     NodeDelete {
         id: String,
-        state: serde_json::Value,
+        state: SerializedNodeState,
     },
     NodeMove {
         id: String,
@@ -32,7 +74,7 @@ pub enum HistoryAction {
     },
     ConnectionDelete {
         id: String,
-        state: serde_json::Value,
+        state: SerializedConnectionState,
     },
 }
 
@@ -40,24 +82,24 @@ impl HistoryAction {
     /// Create the inverse action for undo
     pub fn inverse(&self) -> Option<HistoryAction> {
         match self {
-            HistoryAction::NodeAdd { id, .. } => Some(HistoryAction::NodeDelete {
+            HistoryAction::NodeAdd {
+                id,
+                node_type: _,
+                position,
+            } => Some(HistoryAction::NodeDelete {
                 id: id.clone(),
-                state: serde_json::Value::Null,
+                state: SerializedNodeState {
+                    id: id.clone(),
+                    position: *position,
+                    size: (200.0, 150.0),
+                    minimized: false,
+                },
             }),
-            HistoryAction::NodeDelete { id, state } => {
-                if let Some(obj) = state.as_object() {
-                    Some(HistoryAction::NodeAdd {
-                        id: id.clone(),
-                        node_type: obj.get("node_type")?.as_str()?.to_string(),
-                        position: (
-                            obj.get("position")?.get(0)?.as_f64()?,
-                            obj.get("position")?.get(1)?.as_f64()?,
-                        ),
-                    })
-                } else {
-                    None
-                }
-            }
+            HistoryAction::NodeDelete { id, state } => Some(HistoryAction::NodeAdd {
+                id: id.clone(),
+                node_type: "custom".to_string(),
+                position: state.position,
+            }),
             HistoryAction::NodeMove { id, from, to } => Some(HistoryAction::NodeMove {
                 id: id.clone(),
                 from: *to,
@@ -71,26 +113,21 @@ impl HistoryAction {
                 to_port,
             } => Some(HistoryAction::ConnectionDelete {
                 id: id.clone(),
-                state: serde_json::json!({
-                    "from_node": from_node,
-                    "from_port": from_port,
-                    "to_node": to_node,
-                    "to_port": to_port,
-                }),
+                state: SerializedConnectionState {
+                    id: id.clone(),
+                    from_node: from_node.clone(),
+                    from_port: from_port.clone(),
+                    to_node: to_node.clone(),
+                    to_port: to_port.clone(),
+                },
             }),
-            HistoryAction::ConnectionDelete { id, state } => {
-                if let Some(obj) = state.as_object() {
-                    Some(HistoryAction::ConnectionAdd {
-                        id: id.clone(),
-                        from_node: obj.get("from_node")?.as_str()?.to_string(),
-                        from_port: obj.get("from_port")?.as_str()?.to_string(),
-                        to_node: obj.get("to_node")?.as_str()?.to_string(),
-                        to_port: obj.get("to_port")?.as_str()?.to_string(),
-                    })
-                } else {
-                    None
-                }
-            }
+            HistoryAction::ConnectionDelete { id, state } => Some(HistoryAction::ConnectionAdd {
+                id: id.clone(),
+                from_node: state.from_node.clone(),
+                from_port: state.from_port.clone(),
+                to_node: state.to_node.clone(),
+                to_port: state.to_port.clone(),
+            }),
         }
     }
 }
@@ -144,9 +181,13 @@ impl HistoryState {
         !self.undo_stack.is_empty()
     }
 
-    /// Pop and return the next action to undo
+    /// Pop and return the next action to undo, automatically pushing inverse to redo stack
     pub fn undo(&mut self) -> Option<HistoryAction> {
-        self.undo_stack.pop_back()
+        let action = self.undo_stack.pop_back()?;
+        if let Some(inverse) = action.inverse() {
+            self.push_redo(inverse);
+        }
+        Some(action)
     }
 
     /// Get the next action to redo
@@ -154,9 +195,13 @@ impl HistoryState {
         !self.redo_stack.is_empty()
     }
 
-    /// Pop and return the next action to redo
+    /// Pop and return the next action to redo, automatically pushing inverse to undo stack
     pub fn redo(&mut self) -> Option<HistoryAction> {
-        self.redo_stack.pop_back()
+        let action = self.redo_stack.pop_back()?;
+        if let Some(inverse) = action.inverse() {
+            self.undo_stack.push_back(inverse);
+        }
+        Some(action)
     }
 
     /// Add an action to the redo stack

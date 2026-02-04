@@ -166,7 +166,7 @@ pub fn serve_static_files(
             return Response::builder()
                 .status(StatusCode::FORBIDDEN)
                 .body(Body::empty())
-                .unwrap();
+                .expect("FORBIDDEN response should always succeed");
         }
 
         let full_path = state.base_path.join(&path);
@@ -176,7 +176,7 @@ pub fn serve_static_files(
             return Response::builder()
                 .status(StatusCode::FORBIDDEN)
                 .body(Body::empty())
-                .unwrap();
+                .expect("FORBIDDEN response should always succeed");
         }
 
         match fs::metadata(&full_path).await {
@@ -204,7 +204,7 @@ pub fn serve_static_files(
                             builder = builder.header(header::CACHE_CONTROL, cache_header);
                         }
 
-                        builder.body(body).unwrap()
+                        builder.body(body).expect("OK response with body should always succeed")
                     }
                     Err(_) => not_found_response(),
                 }
@@ -232,7 +232,7 @@ fn not_found_response() -> Response {
     Response::builder()
         .status(StatusCode::NOT_FOUND)
         .body(Body::empty())
-        .unwrap()
+        .expect("NOT_FOUND response should always succeed")
 }
 
 /// Serve an individual file with proper headers.
@@ -264,7 +264,7 @@ pub async fn serve_file(file_path: PathBuf, config: StaticFileConfig) -> anyhow:
         builder = builder.header(header::CACHE_CONTROL, cache_header);
     }
 
-    Ok(builder.body(body)?)
+    builder.body(body).map_err(|e| anyhow::anyhow!("Failed to build response: {}", e))
 }
 
 #[cfg(test)]

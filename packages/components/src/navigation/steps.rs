@@ -153,11 +153,10 @@ pub fn Steps(props: StepsProps) -> Element {
                 div {
                     class: "{step_classes}",
                     onclick: move |_e| {
-                        if is_clickable {
-                            if let Some(handler) = props.on_change.as_ref() {
+                        if is_clickable
+                            && let Some(handler) = props.on_change.as_ref() {
                                 handler.call(index);
                             }
-                        }
                     },
 
                     // Step indicator

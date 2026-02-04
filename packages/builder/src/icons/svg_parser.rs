@@ -127,48 +127,42 @@ pub fn parse_svg(svg: &str) -> Result<SvgIcon> {
                     .unwrap_or_default();
 
                 if current_tag == "svg" {
-                    for attr in e.attributes() {
-                        if let Ok(attr) = attr {
-                            let key = std::str::from_utf8(attr.key.as_ref())
-                                .map(|s| s.to_string())
-                                .unwrap_or_default();
-                            let value = std::str::from_utf8(&attr.value)
-                                .map(|s| s.to_string())
-                                .unwrap_or_default();
+                    for attr in e.attributes().flatten() {
+                        let key = std::str::from_utf8(attr.key.as_ref())
+                            .map(|s| s.to_string())
+                            .unwrap_or_default();
+                        let value = std::str::from_utf8(&attr.value)
+                            .map(|s| s.to_string())
+                            .unwrap_or_default();
 
-                            match key.as_str() {
-                                "viewBox" | "viewbox" => icon.view_box = Some(value),
-                                "width" => icon.width = Some(value),
-                                "height" => icon.height = Some(value),
-                                _ => {}
-                            }
+                        match key.as_str() {
+                            "viewBox" | "viewbox" => icon.view_box = Some(value),
+                            "width" => icon.width = Some(value),
+                            "height" => icon.height = Some(value),
+                            _ => {}
                         }
                     }
                 } else if current_tag == "path" {
                     current_attrs.clear();
-                    for attr in e.attributes() {
-                        if let Ok(attr) = attr {
-                            let key = std::str::from_utf8(attr.key.as_ref())
-                                .map(|s| s.to_string())
-                                .unwrap_or_default();
-                            let value = std::str::from_utf8(&attr.value)
-                                .map(|s| s.to_string())
-                                .unwrap_or_default();
-                            current_attrs.insert(key, value);
-                        }
+                    for attr in e.attributes().flatten() {
+                        let key = std::str::from_utf8(attr.key.as_ref())
+                            .map(|s| s.to_string())
+                            .unwrap_or_default();
+                        let value = std::str::from_utf8(&attr.value)
+                            .map(|s| s.to_string())
+                            .unwrap_or_default();
+                        current_attrs.insert(key, value);
                     }
                 } else {
                     current_attrs.clear();
-                    for attr in e.attributes() {
-                        if let Ok(attr) = attr {
-                            let key = std::str::from_utf8(attr.key.as_ref())
-                                .map(|s| s.to_string())
-                                .unwrap_or_default();
-                            let value = std::str::from_utf8(&attr.value)
-                                .map(|s| s.to_string())
-                                .unwrap_or_default();
-                            current_attrs.insert(key, value);
-                        }
+                    for attr in e.attributes().flatten() {
+                        let key = std::str::from_utf8(attr.key.as_ref())
+                            .map(|s| s.to_string())
+                            .unwrap_or_default();
+                        let value = std::str::from_utf8(&attr.value)
+                            .map(|s| s.to_string())
+                            .unwrap_or_default();
+                        current_attrs.insert(key, value);
                     }
                 }
             }
@@ -188,25 +182,23 @@ pub fn parse_svg(svg: &str) -> Result<SvgIcon> {
                         transform: None,
                     };
 
-                    for attr in e.attributes() {
-                        if let Ok(attr) = attr {
-                            let key = std::str::from_utf8(attr.key.as_ref())
-                                .map(|s| s.to_string())
-                                .unwrap_or_default();
-                            let value = std::str::from_utf8(&attr.value)
-                                .map(|s| s.to_string())
-                                .unwrap_or_default();
+                    for attr in e.attributes().flatten() {
+                        let key = std::str::from_utf8(attr.key.as_ref())
+                            .map(|s| s.to_string())
+                            .unwrap_or_default();
+                        let value = std::str::from_utf8(&attr.value)
+                            .map(|s| s.to_string())
+                            .unwrap_or_default();
 
-                            match key.as_str() {
-                                "d" => path_element.d = Some(value),
-                                "fill" => path_element.fill = Some(value),
-                                "stroke" => path_element.stroke = Some(value),
-                                "stroke-width" => path_element.stroke_width = Some(value),
-                                "stroke-linecap" => path_element.stroke_linecap = Some(value),
-                                "stroke-linejoin" => path_element.stroke_linejoin = Some(value),
-                                "transform" => path_element.transform = Some(value),
-                                _ => {}
-                            }
+                        match key.as_str() {
+                            "d" => path_element.d = Some(value),
+                            "fill" => path_element.fill = Some(value),
+                            "stroke" => path_element.stroke = Some(value),
+                            "stroke-width" => path_element.stroke_width = Some(value),
+                            "stroke-linecap" => path_element.stroke_linecap = Some(value),
+                            "stroke-linejoin" => path_element.stroke_linejoin = Some(value),
+                            "transform" => path_element.transform = Some(value),
+                            _ => {}
                         }
                     }
 
@@ -219,16 +211,14 @@ pub fn parse_svg(svg: &str) -> Result<SvgIcon> {
                     }
                 } else {
                     let mut attrs = HashMap::new();
-                    for attr in e.attributes() {
-                        if let Ok(attr) = attr {
-                            let key = std::str::from_utf8(attr.key.as_ref())
-                                .map(|s| s.to_string())
-                                .unwrap_or_default();
-                            let value = std::str::from_utf8(&attr.value)
-                                .map(|s| s.to_string())
-                                .unwrap_or_default();
-                            attrs.insert(key, value);
-                        }
+                    for attr in e.attributes().flatten() {
+                        let key = std::str::from_utf8(attr.key.as_ref())
+                            .map(|s| s.to_string())
+                            .unwrap_or_default();
+                        let value = std::str::from_utf8(&attr.value)
+                            .map(|s| s.to_string())
+                            .unwrap_or_default();
+                        attrs.insert(key, value);
                     }
                     icon.elements.push(SvgElement {
                         tag: tag.clone(),

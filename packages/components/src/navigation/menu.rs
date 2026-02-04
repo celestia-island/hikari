@@ -6,10 +6,10 @@ use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, MenuClass};
 
 use crate::{
-    GlowBlur, GlowColor, GlowIntensity,
     basic::{Arrow, ArrowDirection},
     feedback::Glow,
     styled::StyledComponent,
+    GlowBlur, GlowColor, GlowIntensity,
 };
 
 /// Menu 组件的类型包装器（用于实现 StyledComponent）
@@ -244,7 +244,7 @@ pub fn Menu(props: MenuProps) -> Element {
         let mut builder = ClassesBuilder::new()
             .add(MenuClass::Menu)
             .add_if(MenuClass::Inline, || props.inline)
-            .add_raw(&mode_class)
+            .add_raw(mode_class)
             .add_raw(&props.class);
 
         if props.compact {

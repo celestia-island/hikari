@@ -4,7 +4,10 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{entry::NumberInput, layout::{Container, Section}};
+use _components::{
+    entry::NumberInput,
+    layout::{Container, Section},
+};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextColor};
 
 // Code examples as constants
@@ -47,7 +50,7 @@ pub fn NumberInputDoc() -> Element {
 
     rsx! {
         Layout {
-            current_route: Route::ComponentsOverview {}, // Using existing route for now
+            current_route: Route::NumberInputDoc {},
 
             Container {
                 // Page header

@@ -25,6 +25,7 @@ impl FilterOption {
 }
 
 #[derive(Clone, PartialEq, Props)]
+#[derive(Default)]
 pub struct FilterProps {
     pub column: String,
 
@@ -40,17 +41,6 @@ pub struct FilterProps {
     pub on_filter_change: Option<EventHandler<Vec<String>>>,
 }
 
-impl Default for FilterProps {
-    fn default() -> Self {
-        Self {
-            column: String::default(),
-            filters: Vec::default(),
-            selected_values: Vec::default(),
-            class: String::default(),
-            on_filter_change: None,
-        }
-    }
-}
 
 #[component]
 pub fn Filter(props: FilterProps) -> Element {

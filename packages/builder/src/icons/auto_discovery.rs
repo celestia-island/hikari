@@ -65,11 +65,11 @@ fn scan_directory(
 
         if path.is_dir() {
             // Skip target directory
-            if path.file_name().map_or(false, |n| n == "target") {
+            if path.file_name().is_some_and(|n| n == "target") {
                 continue;
             }
             scan_directory(&path, icons, locations)?;
-        } else if path.extension().map_or(false, |e| e == "rs") {
+        } else if path.extension().is_some_and(|e| e == "rs") {
             scan_file(&path, icons, locations)?;
         }
     }
@@ -94,10 +94,7 @@ fn scan_file(
             icons.insert(icon_name.clone());
 
             let location = format!("{:?}", file_path);
-            locations
-                .entry(icon_name)
-                .or_insert_with(Vec::new)
-                .push(location);
+            locations.entry(icon_name).or_default().push(location);
         }
     }
 
@@ -109,10 +106,7 @@ fn scan_file(
             icons.insert(icon_name.clone());
 
             let location = format!("{:?}", file_path);
-            locations
-                .entry(icon_name)
-                .or_insert_with(Vec::new)
-                .push(location);
+            locations.entry(icon_name).or_default().push(location);
         }
     }
 
@@ -156,7 +150,7 @@ fn scan_file(
             let location = format!("{:?}", file_path);
             locations
                 .entry(icon_name.to_string())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(location);
         }
     }
@@ -198,11 +192,10 @@ fn extract_enum_variants(file_path: &Path, icons: &mut HashSet<String>) -> Resul
         }
 
         // Extract icon names from Display impl
-        if in_display_impl {
-            if let Some(icon_name) = extract_icon_from_display(line) {
+        if in_display_impl
+            && let Some(icon_name) = extract_icon_from_display(line) {
                 icons.insert(icon_name);
             }
-        }
     }
 
     Ok(())
@@ -234,7 +227,7 @@ fn camel_to_kebab(camel: &str) -> String {
                         && camel
                             .chars()
                             .nth(i + 1)
-                            .map_or(false, |next| next.is_lowercase())))
+                            .is_some_and(|next| next.is_lowercase())))
             {
                 kebab.push('-');
             }

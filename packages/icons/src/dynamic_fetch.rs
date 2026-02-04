@@ -29,7 +29,15 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
     // Check cache first
     {
         let cache = ICON_CACHE.get_or_init(|| Arc::new(RwLock::new(HashMap::new())));
-        let cache = cache.read().unwrap();
+        let cache = match cache.read() {
+            Ok(guard) => guard,
+            Err(e) => {
+                web_sys::console::error_1(
+                    &format!("❌ Icon cache poisoned: {}", e).into(),
+                );
+                return None;
+            }
+        };
         if let Some(cached) = cache.get(icon_name) {
             web_sys::console::log_1(&format!("✅ Icon '{}' from cache", icon_name).into());
             return Some(cached.clone());
@@ -51,7 +59,15 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
                             {
                                 let cache = ICON_CACHE
                                     .get_or_init(|| Arc::new(RwLock::new(HashMap::new())));
-                                let mut cache = cache.write().unwrap();
+                                let mut cache = match cache.write() {
+                                    Ok(guard) => guard,
+                                    Err(e) => {
+                                        web_sys::console::error_1(
+                                            &format!("❌ Icon cache poisoned: {}", e).into(),
+                                        );
+                                        return Some(svg);
+                                    }
+                                };
                                 cache.insert(icon_name.to_string(), svg.clone());
                             }
                             web_sys::console::log_1(

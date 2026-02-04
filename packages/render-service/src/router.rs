@@ -30,14 +30,16 @@ pub struct AppState {
     pub config: HashMap<String, serde_json::Value>,
     pub style_registry: Option<Arc<StyleRegistry>>,
     pub tailwind_css: Option<&'static str>,
+    pub public_dir: String,
 }
 
 impl AppState {
-    pub fn new(config: HashMap<String, serde_json::Value>) -> Self {
+    pub fn new(config: HashMap<String, serde_json::Value>, public_dir: String) -> Self {
         Self {
             config,
             style_registry: None,
             tailwind_css: None,
+            public_dir,
         }
     }
 
@@ -100,9 +102,11 @@ pub fn build_router(
     static_mounts: Vec<StaticMountConfig>,
     state: HashMap<String, serde_json::Value>,
     style_registry: Option<StyleRegistry>,
+    public_dir: Option<String>,
 ) -> anyhow::Result<Router> {
     // Create the application state
-    let mut app_state = AppState::new(state);
+    let public_dir = public_dir.unwrap_or_else(|| "public".to_string());
+    let mut app_state = AppState::new(state, public_dir);
 
     // Add style registry to state if provided
     if let Some(registry) = style_registry {
@@ -153,8 +157,7 @@ pub fn build_router(
     // CRITICAL: Add static asset mounts with SPA fallback
     // Static files are served, but 404s fall through to index.html for SPA routing
     for mount_config in static_mounts {
-        let serve_dir = ServeDir::new(&mount_config.local_path)
-            .fallback(ServeDir::new("public").fallback(axum::routing::get(spa_fallback_handler)));
+        let serve_dir = ServeDir::new(&mount_config.local_path);
         router = router.nest_service(&mount_config.url_path, serve_dir);
     }
 
@@ -175,9 +178,10 @@ pub fn build_router(
 ///
 /// This is the entry point for the application. For Dioxus WASM apps,
 /// the index.html contains everything needed to bootstrap the app.
-async fn index_handler() -> impl IntoResponse {
+async fn index_handler(State(state): State<AppState>) -> impl IntoResponse {
     // Try to read index.html from public directory
-    let html = match tokio::fs::read_to_string("public/index.html").await {
+    let index_path = format!("{}/index.html", state.public_dir);
+    let html = match tokio::fs::read_to_string(&index_path).await {
         Ok(content) => content,
         Err(e) => {
             // Fallback HTML if index.html not found
@@ -243,10 +247,11 @@ async fn icon_fallback_handler(Path(path): Path<String>) -> impl IntoResponse {
 /// This enables client-side routing by returning the same index.html
 /// for all paths. The frontend router (Dioxus Router) will handle
 /// displaying the correct page based on the URL.
-async fn spa_fallback_handler(_uri: Uri) -> impl IntoResponse {
+async fn spa_fallback_handler(_uri: Uri, State(state): State<AppState>) -> impl IntoResponse {
     // For SPAs, all routes should return index.html
     // The frontend router handles showing the right page
-    let html = match tokio::fs::read_to_string("public/index.html").await {
+    let index_path = format!("{}/index.html", state.public_dir);
+    let html = match tokio::fs::read_to_string(&index_path).await {
         Ok(content) => content,
         Err(_) => {
             // Fallback HTML if index.html not found
@@ -278,9 +283,10 @@ async fn spa_fallback_handler(_uri: Uri) -> impl IntoResponse {
 /// Dioxus SSR handler for server-side rendering.
 ///
 /// This handler serves the Dioxus application with server-side rendering.
-async fn ssr_handler(uri: Uri) -> impl IntoResponse {
+async fn ssr_handler(uri: Uri, State(state): State<AppState>) -> impl IntoResponse {
     // Try to read index.html from public directory
-    let html = match tokio::fs::read_to_string("public/index.html").await {
+    let index_path = format!("{}/index.html", state.public_dir);
+    let html = match tokio::fs::read_to_string(&index_path).await {
         Ok(content) => content,
         Err(_) => {
             // Fallback to default HTML if index.html not found
@@ -380,23 +386,23 @@ mod tests {
 
     #[tokio::test]
     async fn test_build_router_basic() {
-        let router = build_router(vec![], vec![], HashMap::new(), None);
+        let router = build_router(vec![], vec![], HashMap::new(), None, None);
 
         assert!(router.is_ok());
     }
 
     #[tokio::test]
     async fn test_build_router_with_custom_route() {
-        async fn test_handler() -> &'static str {
+        async fn custom_test_handler() -> &'static str {
             "OK"
         }
 
         let routes = vec![RouterRoute {
             path: "/test".to_string(),
-            method_router: get(test_handler),
+            method_router: get(custom_test_handler),
         }];
 
-        let router = build_router(routes, vec![], HashMap::new(), None);
+        let router = build_router(routes, vec![], HashMap::new(), None, None);
 
         assert!(router.is_ok());
     }
@@ -404,7 +410,7 @@ mod tests {
     #[tokio::test]
     async fn test_build_router_with_static_assets() {
         let static_mounts = vec![StaticMountConfig::new("./dist", "/static")];
-        let router = build_router(vec![], static_mounts, HashMap::new(), None);
+        let router = build_router(vec![], static_mounts, HashMap::new(), None, Some("public".to_string()));
 
         assert!(router.is_ok());
     }
@@ -418,7 +424,7 @@ mod tests {
         );
         config.insert("version".to_string(), serde_json::Value::Number(1.into()));
 
-        let state = AppState::new(config);
+        let state = AppState::new(config, "public".to_string());
 
         let app_name: Option<String> = state.get("app_name");
         assert_eq!(app_name, Some("Test App".to_string()));

@@ -251,7 +251,13 @@ fn log_icon_warning_once(icon_name: String) {
     {
         let warned =
             WARNED_ICONS.get_or_init(|| std::sync::RwLock::new(std::collections::HashSet::new()));
-        let mut warned = warned.write().unwrap();
+        let mut warned = match warned.write() {
+            Ok(guard) => guard,
+            Err(_) => {
+                // Lock is poisoned, create a new set
+                std::collections::HashSet::new()
+            }
+        };
 
         if !warned.contains(&icon_name) {
             warned.insert(icon_name.clone());
@@ -300,12 +306,12 @@ fn log_icon_warning_once(icon_name: String) {
             {
                 eprintln!("⚠️  [Hikari Icons] Icon not found: '{}'", icon_name);
                 eprintln!("   This icon has fallen back to default warning icon.");
-                eprintln!("");
+                eprintln!();
                 eprintln!("   Possible causes:");
                 eprintln!("   1. The icon is not included in selected icon set (build.rs)");
                 eprintln!("   2. The icon name is misspelled or uses wrong case");
                 eprintln!("   3. The icon SVG file does not exist in cache");
-                eprintln!("");
+                eprintln!();
                 eprintln!("   To fix this:");
                 eprintln!("   - Add '{}' to IconSelection in build.rs", icon_name);
                 eprintln!("   - Or run: python scripts/icons/fetch_mdi_icons.py");
@@ -367,7 +373,7 @@ impl IconRef {
 
     /// Get the SVG path for this icon
     pub fn svg_path(&self) -> String {
-        format!("/icons/{}.svg", self.0.to_string())
+        format!("/icons/{}.svg", self.0)
     }
 }
 

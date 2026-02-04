@@ -3,8 +3,13 @@
 
 use dioxus::prelude::*;
 
-use _components::{Badge, Button, ButtonVariant, Card, Checkbox, Input, RadioButton, RadioDirection, RadioGroup, Select, SelectOption};
-use _palette::classes::{AlignItems, FlexWrap, {ClassesBuilder, Display, FlexDirection, Gap, Padding}};
+use _components::{
+    Badge, Button, ButtonVariant, Card, Checkbox, Divider, DividerOrientation, DividerTextPosition,
+    Input, RadioButton, RadioDirection, RadioGroup, Select, SelectOption,
+};
+use _palette::classes::{
+    AlignItems, FlexWrap, {ClassesBuilder, Display, FlexDirection, Gap, Margin, Padding},
+};
 
 /// Button component demonstration
 #[allow(non_snake_case)]
@@ -374,6 +379,48 @@ pub fn BasicRadio() -> Element {
                     "选项 3（禁用）"
                 }
             }
+        }
+    }
+}
+
+/// Divider component demonstration
+#[allow(non_snake_case)]
+pub fn BasicDivider() -> Element {
+    rsx! {
+        div {
+            class: ClassesBuilder::new()
+                .add(Display::Flex)
+                .add(FlexDirection::Column)
+                .add(Gap::Gap4)
+                .add(Padding::P4)
+                .build(),
+
+            div { "内容区域 1" }
+
+            Divider {}
+
+            div { "内容区域 2" }
+
+            Divider {
+                text: "分割线标题",
+                text_position: DividerTextPosition::Center,
+            }
+
+            div { "内容区域 3" }
+
+            Divider {
+                text: "左侧标题",
+                text_position: DividerTextPosition::Left,
+            }
+
+            div { "内容区域 4" }
+
+            Divider {
+                text: "右侧标题",
+                text_position: DividerTextPosition::Right,
+            }
+
+            div { "内容区域 5" }
         }
     }
 }

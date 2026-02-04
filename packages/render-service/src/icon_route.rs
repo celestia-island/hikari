@@ -56,11 +56,19 @@ pub async fn get_icon_data(Query(query): Query<IconQuery>) -> Response {
 
     // Check cache first
     let cache = ICON_CACHE.get_or_init(|| std::sync::RwLock::new(HashMap::new()));
-    {
-        let cached = cache.read().unwrap();
-        if let Some(ron_data) = cached.get(&icon_name) {
-            return (StatusCode::OK, ron_data.clone()).into_response();
+
+    // Try to read from cache, handle poisoned lock gracefully
+    let cache_hit = match cache.read() {
+        Ok(guard) => guard.get(&icon_name).cloned(),
+        Err(_) => {
+            // Lock is poisoned - log and treat as cache miss
+            eprintln!("Icon cache lock is poisoned, fetching from disk: {}", icon_name);
+            None
         }
+    };
+
+    if let Some(ron_data) = cache_hit {
+        return (StatusCode::OK, ron_data).into_response();
     }
 
     // Find workspace root and fetch SVG
@@ -69,6 +77,16 @@ pub async fn get_icon_data(Query(query): Query<IconQuery>) -> Response {
         "packages/builder/generated/mdi_svgs/{}.svg",
         icon_name
     ));
+
+    fetch_and_cache_icon(icon_name, cache, svg_path).await
+}
+
+/// Fetch icon from disk and cache it
+async fn fetch_and_cache_icon(
+    icon_name: String,
+    cache: &std::sync::RwLock<HashMap<String, String>>,
+    svg_path: std::path::PathBuf,
+) -> Response {
 
     if !svg_path.exists() {
         return (
@@ -114,10 +132,17 @@ pub async fn get_icon_data(Query(query): Query<IconQuery>) -> Response {
         }
     };
 
-    // Cache the result
+    // Cache the result - handle poisoned lock gracefully
     {
-        let mut cache = cache.write().unwrap();
-        cache.insert(icon_name.clone(), ron_data.clone());
+        match cache.write() {
+            Ok(mut guard) => {
+                guard.insert(icon_name.clone(), ron_data.clone());
+            }
+            Err(_) => {
+                // Lock is poisoned - log but don't fail the request
+                eprintln!("Icon cache lock is poisoned, skipping cache write for: {}", icon_name);
+            }
+        }
     }
 
     (StatusCode::OK, ron_data).into_response()
@@ -168,41 +193,39 @@ fn parse_svg_safe(svg: &str) -> Result<IconData, String> {
                     b"svg" => {
                         in_svg = true;
                         // Extract SVG attributes
-                        for attr in e.attributes() {
-                            if let Ok(attr) = attr {
-                                match attr.key.as_ref() {
-                                    b"viewBox" => {
-                                        let value = attr
-                                            .decode_and_unescape_value(&reader)
-                                            .map_err(|e| e.to_string())?;
-                                        icon_data.view_box = Some(value.to_string());
-                                    }
-                                    b"width" => {
-                                        let value = attr
-                                            .decode_and_unescape_value(&reader)
-                                            .map_err(|e| e.to_string())?;
-                                        icon_data.width = Some(value.to_string());
-                                    }
-                                    b"height" => {
-                                        let value = attr
-                                            .decode_and_unescape_value(&reader)
-                                            .map_err(|e| e.to_string())?;
-                                        icon_data.height = Some(value.to_string());
-                                    }
-                                    b"fill" => {
-                                        let value = attr
-                                            .decode_and_unescape_value(&reader)
-                                            .map_err(|e| e.to_string())?;
-                                        icon_data.fill = Some(value.to_string());
-                                    }
-                                    b"stroke" => {
-                                        let value = attr
-                                            .decode_and_unescape_value(&reader)
-                                            .map_err(|e| e.to_string())?;
-                                        icon_data.stroke = Some(value.to_string());
-                                    }
-                                    _ => {}
+                        for attr in e.attributes().flatten() {
+                            match attr.key.as_ref() {
+                                b"viewBox" => {
+                                    let value = attr
+                                        .decode_and_unescape_value(&reader)
+                                        .map_err(|e| e.to_string())?;
+                                    icon_data.view_box = Some(value.to_string());
                                 }
+                                b"width" => {
+                                    let value = attr
+                                        .decode_and_unescape_value(&reader)
+                                        .map_err(|e| e.to_string())?;
+                                    icon_data.width = Some(value.to_string());
+                                }
+                                b"height" => {
+                                    let value = attr
+                                        .decode_and_unescape_value(&reader)
+                                        .map_err(|e| e.to_string())?;
+                                    icon_data.height = Some(value.to_string());
+                                }
+                                b"fill" => {
+                                    let value = attr
+                                        .decode_and_unescape_value(&reader)
+                                        .map_err(|e| e.to_string())?;
+                                    icon_data.fill = Some(value.to_string());
+                                }
+                                b"stroke" => {
+                                    let value = attr
+                                        .decode_and_unescape_value(&reader)
+                                        .map_err(|e| e.to_string())?;
+                                    icon_data.stroke = Some(value.to_string());
+                                }
+                                _ => {}
                             }
                         }
                     }
@@ -215,52 +238,7 @@ fn parse_svg_safe(svg: &str) -> Result<IconData, String> {
                             stroke_width: None,
                         };
                         // Extract path attributes
-                        for attr in e.attributes() {
-                            if let Ok(attr) = attr {
-                                match attr.key.as_ref() {
-                                    b"d" => {
-                                        let value = attr
-                                            .decode_and_unescape_value(&reader)
-                                            .map_err(|e| e.to_string())?;
-                                        current_path.d = Some(value.to_string());
-                                    }
-                                    b"fill" => {
-                                        let value = attr
-                                            .decode_and_unescape_value(&reader)
-                                            .map_err(|e| e.to_string())?;
-                                        current_path.fill = Some(value.to_string());
-                                    }
-                                    b"stroke" => {
-                                        let value = attr
-                                            .decode_and_unescape_value(&reader)
-                                            .map_err(|e| e.to_string())?;
-                                        current_path.stroke = Some(value.to_string());
-                                    }
-                                    b"stroke-width" => {
-                                        let value = attr
-                                            .decode_and_unescape_value(&reader)
-                                            .map_err(|e| e.to_string())?;
-                                        current_path.stroke_width = Some(value.to_string());
-                                    }
-                                    _ => {}
-                                }
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            Ok(Event::Empty(ref e)) => {
-                // Self-closing path element
-                if e.name().as_ref() == b"path" && in_svg {
-                    current_path = PathData {
-                        d: None,
-                        fill: None,
-                        stroke: None,
-                        stroke_width: None,
-                    };
-                    for attr in e.attributes() {
-                        if let Ok(attr) = attr {
+                        for attr in e.attributes().flatten() {
                             match attr.key.as_ref() {
                                 b"d" => {
                                     let value = attr
@@ -290,6 +268,47 @@ fn parse_svg_safe(svg: &str) -> Result<IconData, String> {
                             }
                         }
                     }
+                    _ => {}
+                }
+            }
+            Ok(Event::Empty(ref e)) => {
+                // Self-closing path element
+                if e.name().as_ref() == b"path" && in_svg {
+                    current_path = PathData {
+                        d: None,
+                        fill: None,
+                        stroke: None,
+                        stroke_width: None,
+                    };
+                    for attr in e.attributes().flatten() {
+                        match attr.key.as_ref() {
+                            b"d" => {
+                                let value = attr
+                                    .decode_and_unescape_value(&reader)
+                                    .map_err(|e| e.to_string())?;
+                                current_path.d = Some(value.to_string());
+                            }
+                            b"fill" => {
+                                let value = attr
+                                    .decode_and_unescape_value(&reader)
+                                    .map_err(|e| e.to_string())?;
+                                current_path.fill = Some(value.to_string());
+                            }
+                            b"stroke" => {
+                                let value = attr
+                                    .decode_and_unescape_value(&reader)
+                                    .map_err(|e| e.to_string())?;
+                                current_path.stroke = Some(value.to_string());
+                            }
+                            b"stroke-width" => {
+                                let value = attr
+                                    .decode_and_unescape_value(&reader)
+                                    .map_err(|e| e.to_string())?;
+                                current_path.stroke_width = Some(value.to_string());
+                            }
+                            _ => {}
+                        }
+                    }
                     if current_path.d.is_some() {
                         icon_data.paths.push(current_path.clone());
                     }
@@ -298,11 +317,10 @@ fn parse_svg_safe(svg: &str) -> Result<IconData, String> {
             Ok(Event::End(ref e)) => {
                 if e.name().as_ref() == b"svg" {
                     in_svg = false;
-                } else if e.name().as_ref() == b"path" && in_svg {
-                    if current_path.d.is_some() {
+                } else if e.name().as_ref() == b"path" && in_svg
+                    && current_path.d.is_some() {
                         icon_data.paths.push(current_path.clone());
                     }
-                }
             }
             Ok(Event::Eof) => break,
             Err(e) => {
@@ -327,13 +345,11 @@ fn find_workspace_root() -> std::path::PathBuf {
 
     loop {
         let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists() {
-            if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
-                if content.contains("[workspace]") {
+        if cargo_toml.exists()
+            && let Ok(content) = std::fs::read_to_string(&cargo_toml)
+                && content.contains("[workspace]") {
                     return current;
                 }
-            }
-        }
 
         match current.parent() {
             Some(parent) if parent != current => {

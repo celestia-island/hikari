@@ -80,7 +80,7 @@ pub enum ProgressStatus {
 
 #[component]
 pub fn Progress(props: ProgressProps) -> Element {
-    let percentage = (props.value / props.max * 100.0).min(100.0).max(0.0);
+    let percentage = (props.value / props.max * 100.0).clamp(0.0, 100.0);
 
     let wrapper_classes = ClassesBuilder::new()
         .add_raw("hi-progress-wrapper")

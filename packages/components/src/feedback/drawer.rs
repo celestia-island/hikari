@@ -110,15 +110,14 @@ impl Default for DrawerProps {
 /// ```
 #[component]
 pub fn Drawer(props: DrawerProps) -> Element {
-    let on_close = props.on_close.clone();
+    let on_close = props.on_close;
     let mask_closable = props.mask_closable;
 
     let handle_mask_click = move |e: MouseEvent| {
-        if mask_closable {
-            if let Some(handler) = on_close.as_ref() {
+        if mask_closable
+            && let Some(handler) = on_close.as_ref() {
                 handler.call(e);
             }
-        }
     };
 
     let (placement_class, _size_width, _size_height) = match (props.placement, props.size) {
@@ -164,7 +163,7 @@ pub fn Drawer(props: DrawerProps) -> Element {
 
     let drawer_classes = ClassesBuilder::new()
         .add_raw("hi-drawer")
-        .add_raw(&placement_class)
+        .add_raw(placement_class)
         .add_raw(&props.class)
         .build();
 

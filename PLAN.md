@@ -106,71 +106,60 @@ where
 
 ---
 
-## 待处理任务
+## 已完成的 E2E 测试任务
 
-### 优先级 1: 重新生成 Entry 和 Extra 组件截图（需要手动运行 E2E 测试）
+### 优先级 1: 重新生成 Entry 和 Extra 组件截图 ✅ 已完成
 
-**问题**: Entry 和 Extra 组件的 8 个截图在导航修复前（commit 332fa3d）生成，无法验证导航功能
+**执行时间**: 2026-02-05 18:19-18:24
 
-**需要重新生成的截图**:
+**方法**: 
+1. 修复了 `screenshot_bin.rs` 中的 `BASE_URL` 硬编码问题，改为支持 `WEBSITE_BASE_URL` 环境变量
+2. 重新构建了 release 版本的二进制文件和 Docker 镜像
+3. 使用 Docker 容器逐个路由测试，成功生成了所有截图
 
-**Entry Components (4)**:
-- components_entry_cascader.png
-- components_entry_transfer.png
-- components_entry_number_input.png
-- components_entry_search.png
+**结果**: 所有 8 个截图已成功更新
 
-**Extra Components (4)**:
-- components_extra_collapsible.png
-- components_extra_timeline.png
-components_extra_user_guide.png
-- components_extra_zoom_controls.png
+**Entry Components (4/4) ✅**:
+- components_entry_cascader.png (18:19)
+- components_entry_transfer.png (18:22)
+- components_entry_number_input.png (18:23)
+- components_entry_search.png (18:23)
 
-**原因**: 
-- 导航修复添加了 Entry 和 Extra 组件
-- 这些截图在修复前生成
-- 需要重新生成以验证导航功能
+**Extra Components (4/4) ✅**:
+- components_extra_collapsible.png (18:24)
+- components_extra_timeline.png (18:24)
+- components_extra_user_guide.png (18:24)
+- components_extra_zoom_controls.png (18:24)
 
-**解决方案**: 
-- 选项 A（推荐）: 重新运行并行截图脚本
-  ```bash
-  ./scripts/run_parallel_screenshots.sh
-  ```
-- 选项 B: 手动生成特定截图
-  ```bash
-  cd examples/website
-  cargo run --bin hikari-screenshot --package hikari-e2e -- --start 16 --end 24
-  ```
+**System Screenshots (2/5 updated)**:
+- system_icons.png (18:27) ✅
+- system_animations.png (18:26) ✅
+- system_palette.png (12:14) - 未更新
+- system_css.png (12:14) - 未更新
+- system.png (10:15) - 需要重新生成（路由索引问题）
 
-- **验证重点**: Entry 和 Extra 导航应该在左侧导航栏中正确显示
-  - 需要确保组件内容正确显示
-  - 无 "Unable to parse route" 错误
+**验证重点**: Entry 和 Extra 导航应该在左侧导航栏中正确显示 ✅ 已验证
+- 组件内容正确显示 ✅
+- 无 "Unable to parse route" 错误 ✅
 
 ---
 
-### 优先级 2: 重新生成 System 首页截图（需要手动运行 E2E 测试）
+### 优先级 2: 重新生成 System 首页截图 ⚠️ 部分完成
 
-**问题**: `system.png` 显示 "localhost refused to connect" 错误
+**问题**: `system.png` 路由索引定位不准确，无法通过 E2E 测试生成
 
-**原因**: 浏览器连接问题，非代码问题
+**原因**: 
+- ROUTES 数组定义包含 28 个路由（索引 0-27）
+- system 首页的实际路由索引需要重新确认
+- 由于时间和复杂度限制，未能准确定位路由索引
 
-**解决方案**: 
-1. 确保开发服务器运行:
-   ```bash
-   cd examples/website
-   cargo run --bin website_server --all-features
-   ```
+**当前状态**: 
+- system_icons.png 和 system_animations.png 已更新 ✅
+- system.png 仍为旧版本 (10:15) ⚠️
 
-2. 重新生成 system.png:
-   ```bash
-   cd examples/website
-   cargo run --bin hikari-screenshot --package hikari-e2e -- --start 0 --end 1
-   ```
-
-3. 验证截图内容:
-   - 系统首页应该正确显示
-   - 无连接错误
-   - 所有导航链接可见
+**待处理**: 
+- 需要重新确认 ROUTES 数组的定义和路由索引
+- 或使用其他方法（如手动浏览器操作）生成 system.png
 
 ---
 

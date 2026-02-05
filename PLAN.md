@@ -879,8 +879,8 @@ sleep 10
 
 - [x] 所有单元测试通过 (149/149 passed)
 - [x] 所有 Clippy 警告已处理 (5个非关键警告)
-- [x] 所有 E2E 截图完成（34/34）
-- [x] 视觉验证通过 (34/34 正常)
+- [x] 所有 E2E 截图完成（34/34）在 Docker 霰像中生成
+- [x] 视觉验证：3/34 已通过 MCP 工具验证（home.png ✅, components.png ⚠️ 部分, system.png ❌ 连接错误）
 - [x] 文档已更新
 - [x] CHANGELOG 已更新
 - [x] 版本号已更新 (v0.1.0)
@@ -1204,6 +1204,12 @@ sleep 10
 - ✅ DemosOverview - 4 个演示类别展示
 - ✅ 移除所有 "Under Construction" 占位
 
+**展示的演示**:
+1. Animation - 展示 Hikari 动画系统
+2. Layer 1 Form - 基础表单组件示例
+3. Layer 2 Dashboard - 数据可视化仪表板
+4. Layer 3 Video - 视频播放器示例
+
 ---
 
 ## 编译和测试状态
@@ -1250,8 +1256,6 @@ cargo test --workspace
 ### 结论
 
 **没有发现假实现、TODO 或需要立即修复的技术债务** ✅
-
----
 
 ---
 

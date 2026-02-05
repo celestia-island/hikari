@@ -175,7 +175,7 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
             }
             #[cfg(not(target_arch = "wasm32"))]
             {
-                let _ = event;
+                let _ = _event;
                 let _ = on_change;
             }
         }

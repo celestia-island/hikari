@@ -145,9 +145,9 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
 
     // Track mouse start position
     #[cfg_attr(not(target_arch = "wasm32"), allow(unused_variables))]
-    let mut mouse_start_x = use_signal(|| 0.0f64);
+    let mouse_start_x = use_signal(|| 0.0f64);
     #[cfg_attr(not(target_arch = "wasm32"), allow(unused_variables))]
-    let mut mouse_start_y = use_signal(|| 0.0f64);
+    let mouse_start_y = use_signal(|| 0.0f64);
 
     rsx! {
         div {

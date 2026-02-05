@@ -448,7 +448,7 @@ impl VisualQualityTests {
             screenshot_after: None,
         });
 
-        match driver.find_all(By::Css(".hi-cascader, .cascader, [data-testid*='cascader'], .hi-button, button, h1, h2, h3")).await {
+        match driver.find_all(By::Css("div, button, h1, h2, h3, span, a, input, select, textarea")).await {
             Ok(elements) => {
                 if !elements.is_empty() {
                     test.add_check(VisualCheck {
@@ -507,7 +507,7 @@ impl VisualQualityTests {
             screenshot_after: None,
         });
 
-        match driver.find_all(By::Css(".hi-collapsible, .collapsible, button, [data-testid*='collapsible'], h1, h2, h3")).await {
+        match driver.find_all(By::Css("div, button, h1, h2, h3, span, a, input, select, textarea")).await {
             Ok(elements) => {
                 if !elements.is_empty() {
                     test.add_check(VisualCheck {

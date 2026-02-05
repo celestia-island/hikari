@@ -869,4 +869,131 @@ impl VisualQualityTests {
         info!("Screenshot saved: {}", filepath.display());
         Ok(filepath.to_string_lossy().to_string())
     }
+
+    /// Test all 34 pages for basic loading and rendering quality
+    pub async fn test_all_pages_quality(driver: &WebDriver) -> Result<Vec<VisualQualityTest>> {
+        let base_url = std::env::var("WEBSITE_BASE_URL")
+            .unwrap_or_else(|_| "http://localhost:3000".to_string());
+
+        const ALL_ROUTES: &[(&str, &str)] = &[
+            // Home & Demos (7)
+            ("/", "home"),
+            ("/components", "components"),
+            ("/demos", "demos"),
+            ("/demos/animation", "demos_animation"),
+            ("/demos/layer1/form", "demos_layer1_form"),
+            ("/demos/layer2/dashboard", "demos_layer2_dashboard"),
+            ("/demos/layer3/video", "demos_layer3_video"),
+            // Layer 1 Components (5)
+            ("/components/layer1/basic", "layer1_basic"),
+            ("/components/layer1/form", "layer1_form"),
+            ("/components/layer1/switch", "layer1_switch"),
+            ("/components/layer1/feedback", "layer1_feedback"),
+            ("/components/layer1/display", "layer1_display"),
+            // Entry Components (4)
+            ("/components/entry/cascader", "entry_cascader"),
+            ("/components/entry/transfer", "entry_transfer"),
+            ("/components/entry/number_input", "entry_number_input"),
+            ("/components/entry/search", "entry_search"),
+            // Layer 2 Components (5)
+            ("/components/layer2", "layer2"),
+            ("/components/layer2/navigation", "layer2_navigation"),
+            ("/components/layer2/data", "layer2_data"),
+            ("/components/layer2/form", "layer2_form"),
+            ("/components/layer2/feedback", "layer2_feedback"),
+            // Layer 3 Components (4)
+            ("/components/layer3/overview", "layer3_overview"),
+            ("/components/layer3/media", "layer3_media"),
+            ("/components/layer3/editor", "layer3_editor"),
+            ("/components/layer3/visualization", "layer3_visualization"),
+            // Extra Components (4)
+            ("/components/extra/collapsible", "extra_collapsible"),
+            ("/components/extra/timeline", "extra_timeline"),
+            ("/components/extra/user_guide", "extra_user_guide"),
+            ("/components/extra/zoom_controls", "extra_zoom_controls"),
+            // System Pages (5)
+            ("/system", "system"),
+            ("/system/css", "system_css"),
+            ("/system/icons", "system_icons"),
+            ("/system/palette", "system_palette"),
+            ("/system/animations", "system_animations"),
+        ];
+
+        let mut results = vec![];
+        let total_pages = ALL_ROUTES.len();
+
+        info!("Testing all {} pages for basic quality...", total_pages);
+
+        for (index, (route, page_name)) in ALL_ROUTES.iter().enumerate() {
+            info!("[{}/{}]: Testing {}...", index + 1, total_pages, route);
+
+            let mut test = VisualQualityTest::new(page_name, route);
+            let test_start = Instant::now();
+            let load_start = Instant::now();
+
+            driver.goto(&format!("{}{}", base_url, route)).await?;
+            tokio::time::sleep(Duration::from_millis(5000)).await;
+
+            test.page_load_time_ms = load_start.elapsed().as_millis() as u64;
+
+            test.add_check(VisualCheck {
+                check_name: "Page Loaded".to_string(),
+                check_type: VisualCheckType::Visibility,
+                description: format!("{} page loaded", route),
+                passed: true,
+                details: format!("{} navigated successfully", route),
+                screenshot_before: None,
+                screenshot_after: None,
+            });
+
+            match driver.find_all(By::Css("div, button, h1, h2, h3, span, a, input, select, textarea, img, section, article, main, nav, footer")).await {
+                Ok(elements) => {
+                    let has_content = !elements.is_empty();
+                    test.add_check(VisualCheck {
+                        check_name: "Page Content Visible".to_string(),
+                        check_type: VisualCheckType::Visibility,
+                        description: format!("Found {} DOM elements", elements.len()),
+                        passed: has_content,
+                        details: format!("Page has {} DOM elements", elements.len()),
+                        screenshot_before: None,
+                        screenshot_after: None,
+                    });
+                }
+                Err(e) => {
+                    test.add_check(VisualCheck {
+                        check_name: "Page Content Visible".to_string(),
+                        check_type: VisualCheckType::Visibility,
+                        description: "Page content is visible".to_string(),
+                        passed: false,
+                        details: format!("Failed to find DOM elements: {}", e),
+                        screenshot_before: None,
+                        screenshot_after: None,
+                    });
+                }
+            }
+
+            test.total_test_time_ms = test_start.elapsed().as_millis() as u64;
+
+            results.push(test);
+        }
+
+        info!("\n=== All Pages Test Summary ===");
+        for test in &results {
+            info!("{}: {:.0}% success rate ({} passed, {} failed) | Load: {}ms | Total: {}ms",
+                test.component_name,
+                test.success_rate() * 100.0,
+                test.passed,
+                test.failed,
+                test.page_load_time_ms,
+                test.total_test_time_ms
+            );
+        }
+
+        let total_passed: usize = results.iter().map(|t| t.passed).sum();
+        let total_failed: usize = results.iter().map(|t| t.failed).sum();
+        info!("\nTotal: {} passed, {} failed out of {} pages",
+            total_passed, total_failed, total_pages);
+
+        Ok(results)
+    }
 }

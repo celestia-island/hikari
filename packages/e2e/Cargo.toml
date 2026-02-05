@@ -44,4 +44,8 @@ path = "src/main.rs"
 name = "hikari-screenshot"
 path = "src/screenshot_bin.rs"
 
+[[bin]]
+name = "hikari-visual-quality"
+path = "src/bin/visual_quality_test.rs"
+
 [dev-dependencies]

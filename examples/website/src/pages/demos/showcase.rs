@@ -6,8 +6,8 @@ use dioxus::prelude::*;
 use crate::{app::Route, components::Layout};
 use _icons::{Icon, MdiIcon};
 use _palette::classes::{
-    ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding,
-    TextColor,
+    BgColor, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom,
+    Padding, TextColor,
 };
 
 /// Demo overview page
@@ -19,28 +19,28 @@ pub fn DemosOverview() -> Element {
             "动画演示",
             "展示 Hikari 动画系统",
             MdiIcon::Play,
-            Route::DemosAnimation {},
+            Route::AnimationDemo {},
         ),
         (
             "Layer 1 Form",
             "Layer 1 表单",
             "基础表单组件示例",
-            MdiIcon::Form,
-            Route::DemosLayer1Form {},
+            MdiIcon::TextBoxEdit,
+            Route::FormDemo {},
         ),
         (
             "Layer 2 Dashboard",
             "Layer 2 仪表板",
             "数据可视化仪表板",
-            MdiIcon::Monitor,
-            Route::DemosLayer2Dashboard {},
+            MdiIcon::ViewDashboard,
+            Route::DashboardDemo {},
         ),
         (
             "Layer 3 Video",
             "Layer 3 视频",
             "视频播放器示例",
-            MdiIcon::Video,
-            Route::DemosLayer3Video {},
+            MdiIcon::Music,
+            Route::VideoDemo {},
         ),
     ];
 

@@ -4,7 +4,10 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _palette::classes::{BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor};
+use _palette::classes::{
+    BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap,
+    MarginBottom, Padding, TextColor,
+};
 
 /// Animation system page
 #[allow(non_snake_case)]
@@ -109,22 +112,21 @@ pub fn SystemAnimations() -> Element {
                                 .build(),
 
                                 div {
-                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px2).build(),
+                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P2).build(),
                                     "Linear"
                                 }
                                 div {
-                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px2).build(),
+                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P2).build(),
                                     "EaseIn"
                                 }
                                 div {
-                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px2).build(),
+                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P2).build(),
                                     "EaseOut"
                                 }
                                 div {
-                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px2).build(),
+                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P2).build(),
                                     "EaseInOut"
                                 }
-                            }
                         }
                     }
 
@@ -148,22 +150,21 @@ pub fn SystemAnimations() -> Element {
                                 .build(),
 
                                 div {
-                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px4).add(BorderRadius::Lg).build(),
+                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P4).add(BorderRadius::Lg).build(),
                                     "Fade"
                                 }
                                 div {
-                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px4).add(BorderRadius::Lg).build(),
+                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P4).add(BorderRadius::Lg).build(),
                                     "Slide"
                                 }
                                 div {
-                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px4).add(BorderRadius::Lg).build(),
+                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P4).add(BorderRadius::Lg).build(),
                                     "Scale"
                                 }
                                 div {
-                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px4).add(BorderRadius::Lg).build(),
+                                    class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P4).add(BorderRadius::Lg).build(),
                                     "Rotate"
                                 }
-                            }
                         }
                     }
 
@@ -196,24 +197,6 @@ pub fn SystemAnimations() -> Element {
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Muted).add(FontSize::Lg).add(MarginBottom::Mb4).build(),
                             "FUI-inspired glow effects that follow mouse movement with smooth gradients"
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-                        p {
-                            class: ClassesBuilder::new().add_raw("page-description").add(TextColor::Secondary).build(),
-                            "GSAP-inspired state machine for smooth, declarative animations"
-                        }
-                    }
-
-                    div {
-                        class: ClassesBuilder::new().add_raw("info-box").build(),
-                        p {
-                            class: ClassesBuilder::new().add_raw("info-box-text").build(),
-                            "This page is under construction. Check back soon for detailed documentation and examples!"
                         }
                     }
                 }

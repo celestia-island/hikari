@@ -343,9 +343,10 @@ fn find_option_by_value<'a>(
             return Some(opt);
         }
         if let Some(ref children) = opt.children
-            && let Some(found) = find_option_by_value(children, value) {
-                return Some(found);
-            }
+            && let Some(found) = find_option_by_value(children, value)
+        {
+            return Some(found);
+        }
     }
     None
 }

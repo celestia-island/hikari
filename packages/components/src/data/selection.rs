@@ -16,8 +16,7 @@ pub enum SelectionType {
     Radio,
 }
 
-#[derive(Clone, PartialEq, Props)]
-#[derive(Default)]
+#[derive(Clone, PartialEq, Props, Default)]
 pub struct SelectionProps {
     #[props(default)]
     pub row_keys: Vec<String>,
@@ -38,7 +37,6 @@ pub struct SelectionProps {
 
     pub on_change: Option<EventHandler<Vec<String>>>,
 }
-
 
 #[component]
 pub fn Selection(props: SelectionProps) -> Element {
@@ -161,8 +159,7 @@ pub fn Selection(props: SelectionProps) -> Element {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
-#[derive(Default)]
+#[derive(Clone, PartialEq, Props, Default)]
 pub struct RowSelectionProps {
     pub row_key: String,
 
@@ -177,7 +174,6 @@ pub struct RowSelectionProps {
 
     pub on_select: Option<EventHandler<String>>,
 }
-
 
 #[component]
 pub fn RowSelection(props: RowSelectionProps) -> Element {

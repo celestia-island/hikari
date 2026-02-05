@@ -1,8 +1,9 @@
 // node_graph/plugins/constant.rs
 // Constant node plugin - provides static values
 
-use dioxus::prelude::*;
 use serde_json::Value;
+
+use dioxus::prelude::*;
 
 use crate::node_graph::node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition};
 

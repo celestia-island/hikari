@@ -60,8 +60,7 @@ impl SortConfig {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
-#[derive(Default)]
+#[derive(Clone, PartialEq, Props, Default)]
 pub struct SortProps {
     #[props(default)]
     pub column: String,
@@ -77,7 +76,6 @@ pub struct SortProps {
 
     pub on_sort_change: Option<EventHandler<SortConfig>>,
 }
-
 
 #[component]
 pub fn Sort(props: SortProps) -> Element {

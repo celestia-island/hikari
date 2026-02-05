@@ -3,18 +3,8 @@
 
 use dioxus::prelude::*;
 
-use crate::{
-    app::Route,
-    components::{CodeBlock, Layout},
-};
-use _palette::{
-    classes::{
-        BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap,
-        MarginBottom, Padding, TextColor,
-    },
-    colors::*,
-    themes::*,
-};
+use crate::{app::Route, components::{CodeBlock, Layout}};
+use _palette::{classes::{BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor}, colors::*, themes::*};
 
 /// Palette showcase page
 #[allow(non_snake_case)]

@@ -3,20 +3,9 @@
 
 use dioxus::prelude::*;
 
-use crate::{
-    app::Route,
-    components::{CodeBlock, Layout},
-};
+use crate::{app::Route, components::{CodeBlock, Layout}};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{
-    BgColor as Bg, BorderRadius as Radius, ClassesBuilder as Classes, Display as Disp,
-    FlexDirection as Flex, FontSize as FontSz, FontWeight as FWeight, Gap as Gp,
-    MarginBottom as MBot, Padding as Pdg, TextColor as TColor,
-};
-use _palette::classes::{
-    BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap,
-    MarginBottom, Padding, TextColor,
-};
+use _palette::classes::{{ BgColor as Bg, BorderRadius as Radius, ClassesBuilder as Classes, Display as Disp, FlexDirection as Flex, FontSize as FontSz, FontWeight as FWeight, Gap as Gp, MarginBottom as MBot, Padding as Pdg, TextColor as TColor, }, { BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor, }};
 
 /// Icons showcase page
 #[allow(non_snake_case)]

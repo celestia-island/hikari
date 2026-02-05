@@ -24,8 +24,7 @@ impl FilterOption {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
-#[derive(Default)]
+#[derive(Clone, PartialEq, Props, Default)]
 pub struct FilterProps {
     pub column: String,
 
@@ -40,7 +39,6 @@ pub struct FilterProps {
 
     pub on_filter_change: Option<EventHandler<Vec<String>>>,
 }
-
 
 #[component]
 pub fn Filter(props: FilterProps) -> Element {

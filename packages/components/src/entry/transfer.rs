@@ -284,7 +284,8 @@ fn TransferPanel(
         .map(|item| item.item_key.clone())
         .collect();
 
-    let is_all_selected = !all_keys.is_empty() && all_keys.iter().all(|k| selected_keys.contains(k));
+    let is_all_selected =
+        !all_keys.is_empty() && all_keys.iter().all(|k| selected_keys.contains(k));
 
     rsx! {
         div { class: "hi-transfer-panel",

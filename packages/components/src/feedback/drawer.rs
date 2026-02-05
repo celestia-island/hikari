@@ -114,10 +114,9 @@ pub fn Drawer(props: DrawerProps) -> Element {
     let mask_closable = props.mask_closable;
 
     let handle_mask_click = move |e: MouseEvent| {
-        if mask_closable
-            && let Some(handler) = on_close.as_ref() {
-                handler.call(e);
-            }
+        if mask_closable && let Some(handler) = on_close.as_ref() {
+            handler.call(e);
+        }
     };
 
     let (placement_class, _size_width, _size_height) = match (props.placement, props.size) {

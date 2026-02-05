@@ -550,10 +550,9 @@ impl<'a> StyleBuilder<'a> {
             let current_value = style.get_property_value(property_name).unwrap_or_default();
 
             // Only update if value changed
-            if current_value != value
-                && style.set_property(property_name, &value).is_ok() {
-                    updated += 1;
-                }
+            if current_value != value && style.set_property(property_name, &value).is_ok() {
+                updated += 1;
+            }
         }
 
         updated

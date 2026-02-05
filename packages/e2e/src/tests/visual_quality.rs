@@ -2,8 +2,11 @@
 // Visual quality and interactive behavior testing
 
 use anyhow::Result;
-use std::path::PathBuf;
-use std::time::{Duration, Instant};
+use std::{
+    path::PathBuf,
+    time::{Duration, Instant},
+};
+
 use thirtyfour::{By, WebDriver};
 use tracing::{info, warn};
 
@@ -94,15 +97,19 @@ impl VisualQualityTests {
         let test_start = Instant::now();
         let load_start = Instant::now();
 
-        driver.goto(&format!("{}/demos/animation", base_url)).await?;
+        driver
+            .goto(&format!("{}/demos/animation", base_url))
+            .await?;
         tokio::time::sleep(Duration::from_millis(8000)).await;
 
         test.page_load_time_ms = load_start.elapsed().as_millis() as u64;
 
-        let screenshot_before = Self::capture_screenshot(driver, "button", "initial", "before").await.unwrap_or_else(|e| {
-            warn!("Failed to capture before screenshot: {}", e);
-            String::new()
-        });
+        let screenshot_before = Self::capture_screenshot(driver, "button", "initial", "before")
+            .await
+            .unwrap_or_else(|e| {
+                warn!("Failed to capture before screenshot: {}", e);
+                String::new()
+            });
 
         match driver.find(By::Css("h1, .page-title")).await {
             Ok(_) => {
@@ -181,10 +188,12 @@ impl VisualQualityTests {
             }
         }
 
-        let _screenshot_after = Self::capture_screenshot(driver, "button", "final", "after").await.unwrap_or_else(|e| {
-            warn!("Failed to capture after screenshot: {}", e);
-            String::new()
-        });
+        let _screenshot_after = Self::capture_screenshot(driver, "button", "final", "after")
+            .await
+            .unwrap_or_else(|e| {
+                warn!("Failed to capture after screenshot: {}", e);
+                String::new()
+            });
 
         test.total_test_time_ms = test_start.elapsed().as_millis() as u64;
 
@@ -199,7 +208,9 @@ impl VisualQualityTests {
 
         info!("Testing form controls quality...");
 
-        driver.goto(&format!("{}/demos/layer1/form", base_url)).await?;
+        driver
+            .goto(&format!("{}/demos/layer1/form", base_url))
+            .await?;
         tokio::time::sleep(Duration::from_millis(8000)).await;
 
         match driver.find(By::Css("h1, .page-title")).await {
@@ -290,7 +301,9 @@ impl VisualQualityTests {
 
         info!("Testing animation controls quality...");
 
-        driver.goto(&format!("{}/demos/animation", base_url)).await?;
+        driver
+            .goto(&format!("{}/demos/animation", base_url))
+            .await?;
         tokio::time::sleep(Duration::from_millis(8000)).await;
 
         match driver.find(By::Css("h1, .page-title")).await {
@@ -327,7 +340,8 @@ impl VisualQualityTests {
                                     check_type: VisualCheckType::ClickBehavior,
                                     description: "Control button click works".to_string(),
                                     passed: true,
-                                    details: "Control button click executed successfully".to_string(),
+                                    details: "Control button click executed successfully"
+                                        .to_string(),
                                     screenshot_before: None,
                                     screenshot_after: None,
                                 });
@@ -381,7 +395,9 @@ impl VisualQualityTests {
 
         info!("Testing dashboard quality...");
 
-        driver.goto(&format!("{}/demos/layer2/dashboard", base_url)).await?;
+        driver
+            .goto(&format!("{}/demos/layer2/dashboard", base_url))
+            .await?;
         tokio::time::sleep(Duration::from_millis(8000)).await;
 
         match driver.find(By::Css("h1, .page-title")).await {
@@ -396,7 +412,10 @@ impl VisualQualityTests {
                     screenshot_after: None,
                 });
 
-                match driver.find_all(By::Css(".stat-card, button, .card, a")).await {
+                match driver
+                    .find_all(By::Css(".stat-card, button, .card, a"))
+                    .await
+                {
                     Ok(elements) => {
                         if !elements.is_empty() {
                             test.add_check(VisualCheck {
@@ -457,7 +476,9 @@ impl VisualQualityTests {
 
         info!("Testing entry components quality...");
 
-        driver.goto(&format!("{}/components/entry/cascader", base_url)).await?;
+        driver
+            .goto(&format!("{}/components/entry/cascader", base_url))
+            .await?;
         tokio::time::sleep(Duration::from_millis(15000)).await;
 
         test.add_check(VisualCheck {
@@ -470,7 +491,12 @@ impl VisualQualityTests {
             screenshot_after: None,
         });
 
-        match driver.find_all(By::Css("div, button, h1, h2, h3, span, a, input, select, textarea")).await {
+        match driver
+            .find_all(By::Css(
+                "div, button, h1, h2, h3, span, a, input, select, textarea",
+            ))
+            .await
+        {
             Ok(elements) => {
                 if !elements.is_empty() {
                     test.add_check(VisualCheck {
@@ -516,7 +542,9 @@ impl VisualQualityTests {
 
         info!("Testing extra components quality...");
 
-        driver.goto(&format!("{}/components/extra/collapsible", base_url)).await?;
+        driver
+            .goto(&format!("{}/components/extra/collapsible", base_url))
+            .await?;
         tokio::time::sleep(Duration::from_millis(15000)).await;
 
         test.add_check(VisualCheck {
@@ -529,7 +557,12 @@ impl VisualQualityTests {
             screenshot_after: None,
         });
 
-        match driver.find_all(By::Css("div, button, h1, h2, h3, span, a, input, select, textarea")).await {
+        match driver
+            .find_all(By::Css(
+                "div, button, h1, h2, h3, span, a, input, select, textarea",
+            ))
+            .await
+        {
             Ok(elements) => {
                 if !elements.is_empty() {
                     test.add_check(VisualCheck {
@@ -577,7 +610,9 @@ impl VisualQualityTests {
 
         info!("Testing layer 3 components quality...");
 
-        driver.goto(&format!("{}/components/layer3/overview", base_url)).await?;
+        driver
+            .goto(&format!("{}/components/layer3/overview", base_url))
+            .await?;
         tokio::time::sleep(Duration::from_millis(8000)).await;
 
         match driver.find(By::Css("h1, .page-title")).await {
@@ -592,7 +627,10 @@ impl VisualQualityTests {
                     screenshot_after: None,
                 });
 
-                match driver.find_all(By::Css("a, .component-card, button, [role='button']")).await {
+                match driver
+                    .find_all(By::Css("a, .component-card, button, [role='button']"))
+                    .await
+                {
                     Ok(elements) => {
                         if !elements.is_empty() {
                             test.add_check(VisualCheck {
@@ -683,7 +721,10 @@ impl VisualQualityTests {
                     screenshot_after: None,
                 });
 
-                match driver.find_all(By::Css(".color-swatch, [class*='bg-']")).await {
+                match driver
+                    .find_all(By::Css(".color-swatch, [class*='bg-']"))
+                    .await
+                {
                     Ok(swatches) => {
                         if !swatches.is_empty() {
                             test.add_check(VisualCheck {
@@ -745,8 +786,12 @@ impl VisualQualityTests {
         info!("Testing Animation Demo (Button)...");
         match Self::test_button_quality(driver).await {
             Ok(test) => {
-                info!("Animation Demo test: {} checks, {} passed, {} failed",
-                    test.tests.len(), test.passed, test.failed);
+                info!(
+                    "Animation Demo test: {} checks, {} passed, {} failed",
+                    test.tests.len(),
+                    test.passed,
+                    test.failed
+                );
                 results.push(test);
             }
             Err(e) => {
@@ -757,8 +802,12 @@ impl VisualQualityTests {
         info!("Testing Form Demo (Form Controls)...");
         match Self::test_form_controls_quality(driver).await {
             Ok(test) => {
-                info!("Form Demo test: {} checks, {} passed, {} failed",
-                    test.tests.len(), test.passed, test.failed);
+                info!(
+                    "Form Demo test: {} checks, {} passed, {} failed",
+                    test.tests.len(),
+                    test.passed,
+                    test.failed
+                );
                 results.push(test);
             }
             Err(e) => {
@@ -769,8 +818,12 @@ impl VisualQualityTests {
         info!("Testing Animation Buttons (Switch)...");
         match Self::test_switch_quality(driver).await {
             Ok(test) => {
-                info!("Animation Buttons test: {} checks, {} passed, {} failed",
-                    test.tests.len(), test.passed, test.failed);
+                info!(
+                    "Animation Buttons test: {} checks, {} passed, {} failed",
+                    test.tests.len(),
+                    test.passed,
+                    test.failed
+                );
                 results.push(test);
             }
             Err(e) => {
@@ -781,8 +834,12 @@ impl VisualQualityTests {
         info!("Testing Dashboard Demo (Tabs)...");
         match Self::test_tabs_quality(driver).await {
             Ok(test) => {
-                info!("Dashboard Demo test: {} checks, {} passed, {} failed",
-                    test.tests.len(), test.passed, test.failed);
+                info!(
+                    "Dashboard Demo test: {} checks, {} passed, {} failed",
+                    test.tests.len(),
+                    test.passed,
+                    test.failed
+                );
                 results.push(test);
             }
             Err(e) => {
@@ -793,8 +850,12 @@ impl VisualQualityTests {
         info!("Testing Entry Components (Cascader)...");
         match Self::test_entry_components_quality(driver).await {
             Ok(test) => {
-                info!("Entry Components test: {} checks, {} passed, {} failed",
-                    test.tests.len(), test.passed, test.failed);
+                info!(
+                    "Entry Components test: {} checks, {} passed, {} failed",
+                    test.tests.len(),
+                    test.passed,
+                    test.failed
+                );
                 results.push(test);
             }
             Err(e) => {
@@ -805,8 +866,12 @@ impl VisualQualityTests {
         info!("Testing Extra Components (Collapsible)...");
         match Self::test_extra_components_quality(driver).await {
             Ok(test) => {
-                info!("Extra Components test: {} checks, {} passed, {} failed",
-                    test.tests.len(), test.passed, test.failed);
+                info!(
+                    "Extra Components test: {} checks, {} passed, {} failed",
+                    test.tests.len(),
+                    test.passed,
+                    test.failed
+                );
                 results.push(test);
             }
             Err(e) => {
@@ -817,8 +882,12 @@ impl VisualQualityTests {
         info!("Testing Layer 3 Components...");
         match Self::test_layer3_components_quality(driver).await {
             Ok(test) => {
-                info!("Layer 3 Components test: {} checks, {} passed, {} failed",
-                    test.tests.len(), test.passed, test.failed);
+                info!(
+                    "Layer 3 Components test: {} checks, {} passed, {} failed",
+                    test.tests.len(),
+                    test.passed,
+                    test.failed
+                );
                 results.push(test);
             }
             Err(e) => {
@@ -829,8 +898,12 @@ impl VisualQualityTests {
         info!("Testing System Pages (Palette)...");
         match Self::test_system_pages_quality(driver).await {
             Ok(test) => {
-                info!("System Pages test: {} checks, {} passed, {} failed",
-                    test.tests.len(), test.passed, test.failed);
+                info!(
+                    "System Pages test: {} checks, {} passed, {} failed",
+                    test.tests.len(),
+                    test.passed,
+                    test.failed
+                );
                 results.push(test);
             }
             Err(e) => {
@@ -840,7 +913,8 @@ impl VisualQualityTests {
 
         info!("\n=== Visual Quality Test Summary ===");
         for test in &results {
-            info!("{}: {:.0}% success rate ({} passed, {} failed) | Load: {}ms | Total: {}ms",
+            info!(
+                "{}: {:.0}% success rate ({} passed, {} failed) | Load: {}ms | Total: {}ms",
                 test.component_name,
                 test.success_rate() * 100.0,
                 test.passed,
@@ -854,7 +928,10 @@ impl VisualQualityTests {
     }
 
     /// Check z-index layering of elements
-    async fn check_z_index_layering(driver: &WebDriver, component_name: &str) -> Result<(bool, String)> {
+    async fn check_z_index_layering(
+        driver: &WebDriver,
+        component_name: &str,
+    ) -> Result<(bool, String)> {
         let script = r#"
             (function() {
                 const elements = document.querySelectorAll('div, button, a, nav, header, footer, .dropdown, .modal, .drawer');
@@ -880,9 +957,12 @@ impl VisualQualityTests {
                     Ok(c) => c,
                     Err(_) => 0,
                 };
-                
+
                 if count > 0 {
-                    info!("Found {} elements with z-index for {}", count, component_name);
+                    info!(
+                        "Found {} elements with z-index for {}",
+                        count, component_name
+                    );
                     return Ok((true, format!("{} elements have z-index layering", count)));
                 }
             }
@@ -896,12 +976,20 @@ impl VisualQualityTests {
     }
 
     /// Capture screenshot and save to file
-    async fn capture_screenshot(driver: &WebDriver, component_name: &str, check_name: &str, suffix: &str) -> Result<String> {
+    async fn capture_screenshot(
+        driver: &WebDriver,
+        component_name: &str,
+        check_name: &str,
+        suffix: &str,
+    ) -> Result<String> {
         let output_dir = PathBuf::from("target/e2e_screenshots/visual_quality");
         std::fs::create_dir_all(&output_dir).unwrap_or_else(|_| ());
 
         let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-        let filename = format!("{}_{}_{}{}.png", component_name, check_name, suffix, timestamp);
+        let filename = format!(
+            "{}_{}_{}{}.png",
+            component_name, check_name, suffix, timestamp
+        );
         let filepath = output_dir.join(&filename);
 
         let screenshot_data = driver.screenshot_as_png().await?;
@@ -1045,7 +1133,8 @@ impl VisualQualityTests {
 
         info!("\n=== All Pages Test Summary ===");
         for test in &results {
-            info!("{}: {:.0}% success rate ({} passed, {} failed) | Load: {}ms | Total: {}ms",
+            info!(
+                "{}: {:.0}% success rate ({} passed, {} failed) | Load: {}ms | Total: {}ms",
                 test.component_name,
                 test.success_rate() * 100.0,
                 test.passed,
@@ -1057,8 +1146,10 @@ impl VisualQualityTests {
 
         let total_passed: usize = results.iter().map(|t| t.passed).sum();
         let total_failed: usize = results.iter().map(|t| t.failed).sum();
-        info!("\nTotal: {} passed, {} failed out of {} pages",
-            total_passed, total_failed, total_pages);
+        info!(
+            "\nTotal: {} passed, {} failed out of {} pages",
+            total_passed, total_failed, total_pages
+        );
 
         Ok(results)
     }

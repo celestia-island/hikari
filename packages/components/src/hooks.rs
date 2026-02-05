@@ -233,14 +233,16 @@ fn check_media_query(min_width: Option<u32>, max_width: Option<u32>) -> bool {
         };
 
         if let Some(min) = min_width
-            && width < min {
-                return false;
-            }
+            && width < min
+        {
+            return false;
+        }
 
         if let Some(max) = max_width
-            && width > max {
-                return false;
-            }
+            && width > max
+        {
+            return false;
+        }
 
         true
     } else {

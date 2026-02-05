@@ -5,10 +5,7 @@ use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{
-    BgColor, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom,
-    Padding, TextColor,
-};
+use _palette::classes::{ BgColor, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor, };
 
 /// Demo overview page
 #[component]

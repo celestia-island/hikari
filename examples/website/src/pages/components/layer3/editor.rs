@@ -3,9 +3,7 @@
 
 use dioxus::prelude::*;
 
-use crate::components::{
-    Layout, {CodeBlock, MarkdownRenderer},
-};
+use crate::components::{ Layout, {CodeBlock, MarkdownRenderer}, };
 use _extra_components::extra::RichTextEditor;
 use _icons::{Icon, MdiIcon};
 use _palette::classes::{ClassesBuilder, Display, FontSize, Gap, MarginBottom, Padding, TextColor};

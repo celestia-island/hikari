@@ -275,14 +275,16 @@ fn resolve_selection(
                 if let Some(variants) = by_base_name.get(base_name) {
                     // Add filled variant if requested and exists
                     if styles.contains(&MdiStyle::Filled)
-                        && let Some(filled) = &variants.filled {
-                            selected.insert(filled.clone());
-                        }
+                        && let Some(filled) = &variants.filled
+                    {
+                        selected.insert(filled.clone());
+                    }
                     // Add outline variant if requested and exists
                     if styles.contains(&MdiStyle::Outline)
-                        && let Some(outline) = &variants.outline {
-                            selected.insert(outline.clone());
-                        }
+                        && let Some(outline) = &variants.outline
+                    {
+                        selected.insert(outline.clone());
+                    }
                 } else {
                     // If no metadata, try direct names
                     if styles.contains(&MdiStyle::Filled) {
@@ -301,13 +303,15 @@ fn resolve_selection(
                 .ok_or_else(|| anyhow!("Style metadata not available"))?;
 
             if styles.contains(&MdiStyle::Filled)
-                && let Some(filled) = &by_style.filled {
-                    selected.extend(filled.iter().cloned());
-                }
+                && let Some(filled) = &by_style.filled
+            {
+                selected.extend(filled.iter().cloned());
+            }
             if styles.contains(&MdiStyle::Outline)
-                && let Some(outline) = &by_style.outline {
-                    selected.extend(outline.iter().cloned());
-                }
+                && let Some(outline) = &by_style.outline
+            {
+                selected.extend(outline.iter().cloned());
+            }
         }
     }
 
@@ -711,9 +715,10 @@ fn find_workspace_root() -> Result<PathBuf> {
         let cargo_toml = current.join("Cargo.toml");
         if cargo_toml.exists()
             && let Ok(content) = fs::read_to_string(&cargo_toml)
-                && content.contains("[workspace]") {
-                    return Ok(current);
-                }
+            && content.contains("[workspace]")
+        {
+            return Ok(current);
+        }
 
         match current.parent() {
             Some(parent) if parent != current => {

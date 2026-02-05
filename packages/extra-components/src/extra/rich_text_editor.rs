@@ -5,7 +5,6 @@ use dioxus::prelude::*;
 use hikari_components::basic::IconButton;
 use hikari_icons::MdiIcon;
 use hikari_palette::classes::ClassesBuilder;
-
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 

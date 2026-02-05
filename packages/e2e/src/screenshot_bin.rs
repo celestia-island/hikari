@@ -2,12 +2,14 @@
 // E2E screenshot generator using headless Chromium (chromiumoxide)
 
 use anyhow::{Context, Result};
-use chromiumoxide::browser::{Browser, BrowserConfig};
-use chromiumoxide::page::Page;
-use clap::Parser;
 use futures::StreamExt;
-use std::path::PathBuf;
-use std::time::Duration;
+use std::{path::PathBuf, time::Duration};
+
+use chromiumoxide::{
+    browser::{Browser, BrowserConfig},
+    page::Page,
+};
+use clap::Parser;
 use tracing::{error, info, warn};
 
 /// Command line arguments for screenshot generator
@@ -54,11 +56,17 @@ const ROUTES: &[(&str, &str)] = &[
     // Entry components
     ("/components/entry/cascader", "components_entry_cascader"),
     ("/components/entry/transfer", "components_entry_transfer"),
-    ("/components/entry/number_input", "components_entry_number_input"),
+    (
+        "/components/entry/number_input",
+        "components_entry_number_input",
+    ),
     ("/components/entry/search", "components_entry_search"),
     // Layer 2
     ("/components/layer2", "components_layer2"),
-    ("/components/layer2/navigation", "components_layer2_navigation"),
+    (
+        "/components/layer2/navigation",
+        "components_layer2_navigation",
+    ),
     ("/components/layer2/data", "components_layer2_data"),
     ("/components/layer2/form", "components_layer2_form"),
     ("/components/layer2/feedback", "components_layer2_feedback"),
@@ -66,12 +74,24 @@ const ROUTES: &[(&str, &str)] = &[
     ("/components/layer3/overview", "components_layer3_overview"),
     ("/components/layer3/media", "components_layer3_media"),
     ("/components/layer3/editor", "components_layer3_editor"),
-    ("/components/layer3/visualization", "components_layer3_visualization"),
+    (
+        "/components/layer3/visualization",
+        "components_layer3_visualization",
+    ),
     // Extra components
-    ("/components/extra/collapsible", "components_extra_collapsible"),
+    (
+        "/components/extra/collapsible",
+        "components_extra_collapsible",
+    ),
     ("/components/extra/timeline", "components_extra_timeline"),
-    ("/components/extra/user_guide", "components_extra_user_guide"),
-    ("/components/extra/zoom_controls", "components_extra_zoom_controls"),
+    (
+        "/components/extra/user_guide",
+        "components_extra_user_guide",
+    ),
+    (
+        "/components/extra/zoom_controls",
+        "components_extra_zoom_controls",
+    ),
     // System
     ("/system", "system"),
     ("/system/css", "system_css"),

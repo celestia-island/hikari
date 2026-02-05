@@ -30,8 +30,7 @@ pub struct CommentComponent;
 ///     }
 /// }
 /// ```
-#[derive(Clone, PartialEq, Props)]
-#[derive(Default)]
+#[derive(Clone, PartialEq, Props, Default)]
 pub struct CommentProps {
     #[props(default)]
     pub author: Option<String>,
@@ -56,7 +55,6 @@ pub struct CommentProps {
     #[props(default)]
     pub style: String,
 }
-
 
 #[component]
 pub fn Comment(props: CommentProps) -> Element {

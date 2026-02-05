@@ -40,7 +40,8 @@ impl FormComponentsTests {
             .attr("class")
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get form attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for form"))?;
+        let class_attr =
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for form"))?;
 
         if !class_attr.contains("hi-form") {
             return Ok(TestResult::failure(
@@ -93,7 +94,8 @@ impl FormComponentsTests {
             .attr("class")
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get select attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for select"))?;
+        let class_attr =
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for select"))?;
 
         if !class_attr.contains("hi-select") {
             return Ok(TestResult::failure(
@@ -196,7 +198,8 @@ impl FormComponentsTests {
             .attr("class")
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get radio attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for radio"))?;
+        let class_attr =
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for radio"))?;
 
         if !class_attr.contains("hi-radio") {
             return Ok(TestResult::failure(
@@ -247,7 +250,8 @@ impl FormComponentsTests {
             .attr("class")
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get switch attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for switch"))?;
+        let class_attr =
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for switch"))?;
 
         if !class_attr.contains("hi-switch") {
             return Ok(TestResult::failure(
@@ -305,25 +309,34 @@ impl FormComponentsTests {
         }
 
         // Verify carousel track exists
-        driver.find(By::Css(".hi-carousel-track")).await.map_err(|e| {
-            info!("Carousel track not found: {}", e);
-            anyhow::anyhow!("Carousel track not found: {}", e)
-        })?;
+        driver
+            .find(By::Css(".hi-carousel-track"))
+            .await
+            .map_err(|e| {
+                info!("Carousel track not found: {}", e);
+                anyhow::anyhow!("Carousel track not found: {}", e)
+            })?;
 
         info!("Carousel track found");
 
         // Verify carousel items exist
-        let carousel_items = driver.find_all(By::Css(".hi-carousel-item")).await.map_err(|e| {
-            info!("Carousel items not found: {}", e);
-            anyhow::anyhow!("Carousel items not found: {}", e)
-        })?;
+        let carousel_items = driver
+            .find_all(By::Css(".hi-carousel-item"))
+            .await
+            .map_err(|e| {
+                info!("Carousel items not found: {}", e);
+                anyhow::anyhow!("Carousel items not found: {}", e)
+            })?;
 
         info!("Found {} carousel items", carousel_items.len());
 
         if carousel_items.len() < 2 {
             return Ok(TestResult::failure(
                 "Carousel",
-                &format!("Expected at least 2 carousel items, found {}", carousel_items.len()),
+                &format!(
+                    "Expected at least 2 carousel items, found {}",
+                    carousel_items.len()
+                ),
             ));
         }
 
@@ -362,19 +375,24 @@ impl FormComponentsTests {
         tokio::time::sleep(Duration::from_millis(200)).await;
 
         // Verify carousel dots exist
-        let carousel_dots = driver.find_all(By::Css(".hi-carousel-dot")).await.map_err(|e| {
-            info!("Carousel dots not found: {}", e);
-            anyhow::anyhow!("Carousel dots not found: {}", e)
-        })?;
+        let carousel_dots = driver
+            .find_all(By::Css(".hi-carousel-dot"))
+            .await
+            .map_err(|e| {
+                info!("Carousel dots not found: {}", e);
+                anyhow::anyhow!("Carousel dots not found: {}", e)
+            })?;
 
         info!("Found {} carousel dots", carousel_dots.len());
 
         if carousel_dots.len() != carousel_items.len() {
             return Ok(TestResult::failure(
                 "Carousel",
-                &format!("Carousel items ({}) and dots ({}) count mismatch",
-                         carousel_items.len(),
-                         carousel_dots.len()),
+                &format!(
+                    "Carousel items ({}) and dots ({}) count mismatch",
+                    carousel_items.len(),
+                    carousel_dots.len()
+                ),
             ));
         }
 
@@ -442,28 +460,31 @@ impl FormComponentsTests {
         }
 
         // Verify step numbers exist
-        let step_numbers = driver.find_all(By::Css(".hi-step-number")).await.map_err(|e| {
-            info!("Step numbers not found: {}", e);
-            anyhow::anyhow!("Step numbers not found: {}", e)
-        })?;
+        let step_numbers = driver
+            .find_all(By::Css(".hi-step-number"))
+            .await
+            .map_err(|e| {
+                info!("Step numbers not found: {}", e);
+                anyhow::anyhow!("Step numbers not found: {}", e)
+            })?;
 
         info!("Found {} step numbers", step_numbers.len());
 
         if step_numbers.len() < 2 {
             return Ok(TestResult::failure(
                 "Stepper",
-                &format!("Expected at least 2 step numbers, found {}", step_numbers.len()),
+                &format!(
+                    "Expected at least 2 step numbers, found {}",
+                    step_numbers.len()
+                ),
             ));
         }
 
         // Verify active step exists
-        let active_step = driver
-            .find(By::Css(".hi-step-active"))
-            .await
-            .map_err(|e| {
-                info!("Active step not found: {}", e);
-                anyhow::anyhow!("Active step not found: {}", e)
-            })?;
+        let active_step = driver.find(By::Css(".hi-step-active")).await.map_err(|e| {
+            info!("Active step not found: {}", e);
+            anyhow::anyhow!("Active step not found: {}", e)
+        })?;
 
         info!("Active step found");
 
@@ -472,8 +493,8 @@ impl FormComponentsTests {
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get active step attributes: {}", e))?;
 
-        let active_class_attr =
-            active_class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for active step"))?;
+        let active_class_attr = active_class_attr
+            .ok_or_else(|| anyhow::anyhow!("No class attribute found for active step"))?;
 
         if !active_class_attr.contains("hi-step-active") {
             return Ok(TestResult::failure(
@@ -483,18 +504,18 @@ impl FormComponentsTests {
         }
 
         // Verify connectors exist
-        let connectors = driver.find_all(By::Css(".hi-step-connector")).await.map_err(|e| {
-            info!("Connectors not found: {}", e);
-            anyhow::anyhow!("Connectors not found: {}", e)
-        })?;
+        let connectors = driver
+            .find_all(By::Css(".hi-step-connector"))
+            .await
+            .map_err(|e| {
+                info!("Connectors not found: {}", e);
+                anyhow::anyhow!("Connectors not found: {}", e)
+            })?;
 
         info!("Found {} connectors", connectors.len());
 
         if connectors.is_empty() {
-            return Ok(TestResult::failure(
-                "Stepper",
-                "No connectors found",
-            ));
+            return Ok(TestResult::failure("Stepper", "No connectors found"));
         }
 
         let duration = start.elapsed().as_millis() as u64;

@@ -34,8 +34,8 @@ pub fn Layout(children: Element, #[allow(unused_variables)] current_route: Route
                     Logo {
                         src: "/images/logo.png".to_string(),
                         alt: "Hikari Logo".to_string(),
-                        height: 24,
-                        max_width: 100,
+                        height: 32,
+                        max_width: 120,
                     }
                 }
             },

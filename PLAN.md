@@ -38,14 +38,37 @@ hikari-theme   hikari-components
 
 ### 当前配置
 
-**Docker 环境**:
+**Docker 环境** (重要：截图生成在 Docker 霰像中完成):
 - **镜像**: `selenium/standalone-chrome:latest` (Chrome 144)
 - **工具**: `hikari-screenshot` binary (chromiumoxide 0.8)
+- **执行方式**: Docker Compose 并行容器（8 个容器并行）
 - **配置**:
   - 容器用户: root (避免权限问题)
-  - 输出目录: `/tmp/e2e_screenshots`
+  - 输出目录（容器内）: `/tmp/e2e_screenshots`
   - Volume 映射: `./target/e2e_screenshots:/tmp/e2e_screenshots`
   - Chrome args: `--disable-gpu --disable-dev-shm-usage --no-sandbox --headless=new`
+  - 网络模式: `--network host` (允许容器访问 host 上的 localhost:3000)
+  - 静态资源 volume: `$(pwd)/examples/website/public:/public:ro`
+
+**截图生成流程**:
+```bash
+# 1. 编译 hikari-screenshot binary（本地编译，避免 Docker 中的 edition2024 问题）
+cargo build --release --bin hikari-screenshot --package hikari-e2e
+
+# 2. 运行并行截图（8 个 Docker 容器）
+./scripts/run_parallel_screenshots.sh
+
+# 3. 每个容器独立运行：
+docker run --rm \
+    --name "hikari-screenshot-${container_id}" \
+    --network host \
+    -v "$(pwd)/target/e2e_screenshots:/tmp/e2e_screenshots" \
+    -v "$(pwd)/examples/website/public:/public:ro" \
+    hikari/screenshot:selenium \
+    /usr/local/bin/hikari-screenshot --start "${start_idx}" --end "${end_idx}"
+
+# 4. 截图保存到宿主机: ./target/e2e_screenshots/
+```
 
 **路由定义**: 34 个路由
 - Home: 1
@@ -1271,6 +1294,13 @@ cargo test --workspace
    - localhost refused to connect（浏览器连接问题，非代码问题）
 
 **结论**: 需要重新生成 components.png 和 system.png 以验证导航修复和系统页面。
+
+**重要：Docker 霰像中的截图生成流程**:
+- 截图生成在 Docker 霰像中完成（8 个并行容器）
+- 使用 `selenium/standalone-chrome:latest` 镜像
+- 容器内运行 `hikari-screenshot` binary (chromiumoxide)
+- 通过 volume 映射将截图保存到宿主机 `./target/e2e_screenshots/`
+- MCP 视觉分析在宿主机上对已生成的截图文件进行分析
 
 **测试覆盖**:
 - Home & Demos (7): ✅ 全部通过

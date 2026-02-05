@@ -4,9 +4,12 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use super::{AsideFooter, sidebar::Sidebar};
+use super::{sidebar::Sidebar, AsideFooter};
 use crate::app::Route;
-use _components::{basic::Logo, layout::{Aside, Header, Layout as HikariLayout}};
+use _components::{
+    basic::Logo,
+    layout::{Aside, Header, Layout as HikariLayout},
+};
 use _palette::classes::{AlignItems, ClassesBuilder, Display, FontWeight, Gap, Padding};
 
 /// Layout component that wraps all pages with modern design
@@ -31,8 +34,8 @@ pub fn Layout(children: Element, #[allow(unused_variables)] current_route: Route
                     Logo {
                         src: "/images/logo.png".to_string(),
                         alt: "Hikari Logo".to_string(),
-                        height: 36,
-                        max_width: 140,
+                        height: 24,
+                        max_width: 100,
                     }
                 }
             },

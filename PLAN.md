@@ -202,6 +202,116 @@ cargo run --bin hikari-screenshot --package hikari-e2e
 
 ## 下一步任务
 
+### 浏览器测试架构决策
+
+**最后更新**: 2026-02-05（与 Amphoreus 项目架构对齐）
+
+---
+
+### Hikari 的浏览器测试架构
+
+#### 基础镜像选择
+
+**最终决策**: `selenium/standalone-chrome:latest` ✅
+
+**理由**:
+- ✅ **构建速度**: 5-10 分钟（Docker 缓存有效）
+- ✅ **配置完整**: CDP 端口预配置
+- ✅ **稳定性高**: Selenium 团队维护，经过大量生产测试
+- ✅ **开发效率**: 快速迭代，Docker 层缓存可复用
+
+**Trade-off**:
+- ⚠️ 镜像较大（~1.5GB），但 Docker 层缓存可复用
+
+#### 核心组件
+
+**Dockerfile**: `docker/base-selenium.Dockerfile`
+
+**关键特性**:
+```dockerfile
+# 使用 selenium 镜像作为基础
+FROM selenium/standalone-chrome:latest
+
+# 复制本地编译的 binary
+COPY target/release/hikari-screenshot /usr/local/bin/hikari-screenshot
+
+# 设置环境变量
+ENV CHROME_BIN=/usr/bin/google-chrome \
+    SCREENSHOT_DIR=/tmp/e2e_screenshots \
+    BASE_URL=http://host.docker.internal:3000
+
+# 使用 host 网络模式允许访问 localhost:3000
+# CMD: ["/usr/local/bin/hikari-screenshot", "--start", "0"]
+```
+
+**Screenshot Binary**: `packages/e2e/src/screenshot_bin.rs`
+- 使用 `chromiumoxide` 库（Rust 绑定）
+- 支持并行截图（--concurrency 参数）
+- 支持路由范围（--start, --end 参数）
+- 自动等待 WASM 加载完成
+
+**Docker Compose**: `scripts/docker-compose-selenium.yml`
+- 并行执行（8 容器并行）
+- host 网络模式
+- Volume 映射到本地 target 目录
+
+#### E2E 测试
+
+**测试模块**: `packages/e2e/src/tests/visual_quality.rs`
+
+**测试覆盖**:
+- ✅ 视觉质量测试（8 个组件，20/20 checks）
+- ✅ 全页面质量测试（34 个页面，3 checks per page）
+- ✅ z-index 层级检查
+- ✅ 性能测试（页面加载时间、总测试时间）
+- ✅ 截图功能（before/after 拍照）
+
+#### 与 Amphoreus 对齐
+
+| 维度 | Amphoreus 选择 | Hikari 选择 | 对齐状态 |
+| --- | --- | --- | --- |
+| 基础镜像 | selenium/standalone-chrome:latest | selenium/standalone-chrome:latest | ✅ 已对齐 |
+| Chromium 安装方式 | 镜像预装（无需 apt-get） | 镜像预装 | ✅ 已对齐 |
+| screenshot 实现 | 独立 binary (polemos-screenshot) | 独立 binary (hikari-screenshot) | ✅ 已对齐 |
+| 容器管理 | NeiKos MCP 工具 | Docker Compose（无 MCP） | ⚠️ 不同（Hikari 不使用 MCP） |
+| CDP 端口 | 4444, 7900（Selenium 预配置） | chromiumoxide 自动处理 | ✅ 功能对齐 |
+| 构建优化 | Builder stage + Runtime stage | 单阶段（复制本地编译 binary） | ⚠️ 不同 |
+| 并行支持 | 容器级并行 | 容器级并行（8 容器） | ✅ 已对齐 |
+
+**架构差异说明**:
+- Hikari 使用 `chromiumoxide`（Rust 原生绑定）vs Amphoreus 使用 CDP 协议
+- Hikari 使用 Docker Compose vs Amphoreus 使用 MCP 工具（容器管理）
+- Hikari 单阶段构建 vs Amphoreus 多阶段构建（Builder + Runtime）
+
+---
+
+### 浏览器测试改进机会
+
+#### 已知问题
+- ⚠️ **无 MCP 工具层**: Hikari 没有实现 MCP 工具暴露浏览器测试能力
+  - Amphoreus 使用 MCP 工具（`browser_screenshot_binary`, `container_create_browser`, `container_stop_browser`）
+  - Hikari 直接使用 Docker Compose 脚本
+
+#### 未来改进
+- [ ] 考虑添加 MCP 工具层（如需要与其他 MCP 系统集成）
+- [ ] 优化 Dockerfile 使用多阶段构建（减少镜像大小）
+- [ ] 添加视频录制支持（如果需要）
+- [ ] 支持更多浏览器（Firefox, Safari）
+
+---
+
+### 技术文档
+
+**文档**: `docs/E2E_TESTING.md` - 完整的 E2E 测试文档
+
+**内容**:
+- ✅ Docker 环境配置
+- ✅ 截图生成流程
+- ✅ 并行测试架构
+- ✅ 使用指南
+
+---
+
 ### 优先级 1: 交互式组件测试与视觉效果审查 ✅ 已完成
 
 **最后更新**: 2026-02-05 (所有测试 100% 通过率)

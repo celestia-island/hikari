@@ -2,7 +2,9 @@
 // Visual quality and interactive behavior testing
 
 use anyhow::Result;
-use std::time::Duration;
+use chrono::Utc;
+use std::path::PathBuf;
+use std::time::{Duration, Instant};
 use thirtyfour::{By, WebDriver};
 use tracing::{info, warn};
 
@@ -14,6 +16,8 @@ pub struct VisualQualityTest {
     pub tests: Vec<VisualCheck>,
     pub passed: usize,
     pub failed: usize,
+    pub page_load_time_ms: u64,
+    pub total_test_time_ms: u64,
 }
 
 #[derive(Debug, Clone)]
@@ -55,6 +59,8 @@ impl VisualQualityTest {
             tests: vec![],
             passed: 0,
             failed: 0,
+            page_load_time_ms: 0,
+            total_test_time_ms: 0,
         }
     }
 
@@ -86,8 +92,18 @@ impl VisualQualityTests {
 
         info!("Testing button quality on Animation Demo page...");
 
+        let test_start = Instant::now();
+        let load_start = Instant::now();
+
         driver.goto(&format!("{}/demos/animation", base_url)).await?;
         tokio::time::sleep(Duration::from_millis(8000)).await;
+
+        test.page_load_time_ms = load_start.elapsed().as_millis() as u64;
+
+        let screenshot_before = Self::capture_screenshot(driver, "button", "initial", "before").await.unwrap_or_else(|e| {
+            warn!("Failed to capture before screenshot: {}", e);
+            String::new()
+        });
 
         match driver.find(By::Css("h1, .page-title")).await {
             Ok(_) => {
@@ -165,6 +181,13 @@ impl VisualQualityTests {
                 });
             }
         }
+
+        let _screenshot_after = Self::capture_screenshot(driver, "button", "final", "after").await.unwrap_or_else(|e| {
+            warn!("Failed to capture after screenshot: {}", e);
+            String::new()
+        });
+
+        test.total_test_time_ms = test_start.elapsed().as_millis() as u64;
 
         Ok(test)
     }
@@ -818,14 +841,32 @@ impl VisualQualityTests {
 
         info!("\n=== Visual Quality Test Summary ===");
         for test in &results {
-            info!("{}: {:.0}% success rate ({} passed, {} failed)",
+            info!("{}: {:.0}% success rate ({} passed, {} failed) | Load: {}ms | Total: {}ms",
                 test.component_name,
                 test.success_rate() * 100.0,
                 test.passed,
-                test.failed
+                test.failed,
+                test.page_load_time_ms,
+                test.total_test_time_ms
             );
         }
 
         Ok(results)
+    }
+
+    /// Capture screenshot and save to file
+    async fn capture_screenshot(driver: &WebDriver, component_name: &str, check_name: &str, suffix: &str) -> Result<String> {
+        let output_dir = PathBuf::from("target/e2e_screenshots/visual_quality");
+        std::fs::create_dir_all(&output_dir).unwrap_or_else(|_| ());
+
+        let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
+        let filename = format!("{}_{}_{}{}.png", component_name, check_name, suffix, timestamp);
+        let filepath = output_dir.join(&filename);
+
+        let screenshot_data = driver.screenshot_as_png().await?;
+        std::fs::write(&filepath, screenshot_data)?;
+
+        info!("Screenshot saved: {}", filepath.display());
+        Ok(filepath.to_string_lossy().to_string())
     }
 }

@@ -6,14 +6,17 @@ pub mod input_node;
 pub mod output_node;
 pub mod processor;
 
+use std::sync::Arc;
+
 pub use constant::*;
 pub use input_node::*;
 pub use output_node::*;
 pub use processor::*;
 
-use crate::node_graph::node::NodeType;
-use crate::node_graph::registry::{register_node_plugin, RegistryEntry};
-use std::sync::Arc;
+use crate::node_graph::{
+    node::NodeType,
+    registry::{RegistryEntry, register_node_plugin},
+};
 
 /// Register all default node plugins
 pub fn register_default_plugins() {

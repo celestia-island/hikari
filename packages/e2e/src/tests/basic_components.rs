@@ -2,8 +2,10 @@
 // E2E tests for Layer 1 basic components
 
 use anyhow::Result;
-use std::path::PathBuf;
-use std::time::{Duration, Instant};
+use std::{
+    path::PathBuf,
+    time::{Duration, Instant},
+};
 
 use thirtyfour::{By, WebDriver};
 use tracing::{error, info, warn};
@@ -39,7 +41,11 @@ impl TestResult {
         }
     }
 
-    pub fn success_with_screenshot(component: &str, message: &str, screenshot_path: String) -> Self {
+    pub fn success_with_screenshot(
+        component: &str,
+        message: &str,
+        screenshot_path: String,
+    ) -> Self {
         Self {
             component: component.to_string(),
             status: TestStatus::Success,
@@ -59,7 +65,11 @@ impl TestResult {
         }
     }
 
-    pub fn failure_with_screenshot(component: &str, message: &str, screenshot_path: String) -> Self {
+    pub fn failure_with_screenshot(
+        component: &str,
+        message: &str,
+        screenshot_path: String,
+    ) -> Self {
         Self {
             component: component.to_string(),
             status: TestStatus::Failure,
@@ -107,9 +117,13 @@ impl TestResult {
 
 impl BasicComponentsTests {
     /// Take a screenshot and save it to the screenshots directory
-    async fn take_screenshot(driver: &WebDriver, component_name: &str, status: &str) -> Result<String> {
-        let screenshots_dir = std::env::var("E2E_SCREENSHOTS_DIR")
-            .unwrap_or_else(|_| "./screenshots".to_string());
+    async fn take_screenshot(
+        driver: &WebDriver,
+        component_name: &str,
+        status: &str,
+    ) -> Result<String> {
+        let screenshots_dir =
+            std::env::var("E2E_SCREENSHOTS_DIR").unwrap_or_else(|_| "./screenshots".to_string());
 
         // Create screenshots directory if it doesn't exist
         std::fs::create_dir_all(&screenshots_dir)
@@ -167,7 +181,8 @@ impl BasicComponentsTests {
         tokio::time::sleep(Duration::from_millis(200)).await;
 
         // Take screenshot after click
-        let click_screenshot = Self::take_screenshot(driver, "Button", "clicked").await
+        let click_screenshot = Self::take_screenshot(driver, "Button", "clicked")
+            .await
             .map_err(|e| {
                 warn!("Failed to take screenshot: {}", e);
                 String::new()
@@ -193,7 +208,8 @@ impl BasicComponentsTests {
         }
 
         // Take screenshot on success
-        let success_screenshot = Self::take_screenshot(driver, "Button", "success").await
+        let success_screenshot = Self::take_screenshot(driver, "Button", "success")
+            .await
             .map_err(|e| {
                 warn!("Failed to take screenshot: {}", e);
                 String::new()
@@ -279,7 +295,8 @@ impl BasicComponentsTests {
         Ok(TestResult {
             component: "Input".to_string(),
             status: TestStatus::Success,
-            message: "Input component renders correctly, accepts input, and has proper class".to_string(),
+            message: "Input component renders correctly, accepts input, and has proper class"
+                .to_string(),
             duration_ms: duration,
             screenshot_path: None,
         })

@@ -192,10 +192,9 @@ fn extract_enum_variants(file_path: &Path, icons: &mut HashSet<String>) -> Resul
         }
 
         // Extract icon names from Display impl
-        if in_display_impl
-            && let Some(icon_name) = extract_icon_from_display(line) {
-                icons.insert(icon_name);
-            }
+        if in_display_impl && let Some(icon_name) = extract_icon_from_display(line) {
+            icons.insert(icon_name);
+        }
     }
 
     Ok(())

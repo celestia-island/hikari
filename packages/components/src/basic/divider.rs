@@ -33,8 +33,7 @@ pub enum DividerTextPosition {
     Right,
 }
 
-#[derive(Clone, PartialEq, Props)]
-#[derive(Default)]
+#[derive(Clone, PartialEq, Props, Default)]
 pub struct DividerProps {
     /// Divider orientation
     #[props(default)]
@@ -52,7 +51,6 @@ pub struct DividerProps {
     #[props(into, default)]
     pub class: String,
 }
-
 
 /// Divider component
 ///

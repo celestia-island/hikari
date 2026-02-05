@@ -4,10 +4,7 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{
-    entry::{SelectChangeEvent, Transfer, TransferItem},
-    layout::{Container, Section},
-};
+use _components::{entry::{SelectChangeEvent, Transfer, TransferItem}, layout::{Container, Section}};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextColor};
 
 // Code examples as constants

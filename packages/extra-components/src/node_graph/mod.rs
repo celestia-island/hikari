@@ -19,6 +19,6 @@ pub use minimap::NodeGraphMinimap;
 pub use node::{Node, NodeId, NodePlugin, NodeState, NodeType};
 pub use plugins::*;
 pub use port::{Port, PortId, PortType};
-pub use registry::{list_all_plugins, NodeRegistry, RegistryEntry};
+pub use registry::{NodeRegistry, RegistryEntry, list_all_plugins};
 pub use serialization::SerializedNodeGraph;
 pub use viewport::Viewport;

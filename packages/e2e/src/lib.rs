@@ -1,20 +1,22 @@
 // hikari-e2e/src/lib.rs
 // E2E testing library entry point
 
-pub mod tests;
 pub mod html_assertions;
+pub mod tests;
 
+pub use html_assertions::HtmlAssertions;
 pub use tests::{
     Test,
-    basic_components::{BasicComponentsTests, TestResult, TestStatus},
     advanced_components::AdvancedComponentsTests,
+    basic_components::{BasicComponentsTests, TestResult, TestStatus},
     data_components::DataComponentsTests,
     form_components::FormComponentsTests,
-    interactive_test::{InteractiveTests, InteractiveTestResult, TestStep, InteractionStep, VisualAnalysis},
-    interactive_test::{compare_visuals, analyze_test_step},
-    visual_quality::{VisualQualityTests, VisualQualityTest, VisualCheck, VisualCheckType},
+    interactive_test::{
+        InteractionStep, InteractiveTestResult, InteractiveTests, TestStep, VisualAnalysis,
+        analyze_test_step, compare_visuals,
+    },
+    visual_quality::{VisualCheck, VisualCheckType, VisualQualityTest, VisualQualityTests},
 };
-pub use html_assertions::HtmlAssertions;
 use thirtyfour::WebDriver;
 use tracing::{error, info};
 
@@ -25,7 +27,8 @@ pub async fn run_all_tests(driver: &WebDriver) -> anyhow::Result<Vec<TestResult>
     let mut results = vec![];
 
     // Layer 1: Basic Components (3 tests)
-    match tests::Test::run_with_driver(&tests::basic_components::BasicComponentsTests, driver).await {
+    match tests::Test::run_with_driver(&tests::basic_components::BasicComponentsTests, driver).await
+    {
         Ok(result) => results.push(result),
         Err(e) => {
             eprintln!("Basic components test suite failed: {}", e);
@@ -52,7 +55,9 @@ pub async fn run_all_tests(driver: &WebDriver) -> anyhow::Result<Vec<TestResult>
     }
 
     // Layer 3: Advanced Components (6 tests)
-    match tests::Test::run_with_driver(&tests::advanced_components::AdvancedComponentsTests, driver).await {
+    match tests::Test::run_with_driver(&tests::advanced_components::AdvancedComponentsTests, driver)
+        .await
+    {
         Ok(result) => results.push(result),
         Err(e) => {
             eprintln!("Advanced components test suite failed: {}", e);
@@ -66,7 +71,9 @@ pub async fn run_all_tests(driver: &WebDriver) -> anyhow::Result<Vec<TestResult>
         match &result.status {
             tests::basic_components::TestStatus::Success => info!("  Status: ✅ PASSED"),
             tests::basic_components::TestStatus::Failure => info!("  Status: ❌ FAILED"),
-            tests::basic_components::TestStatus::Error(msg) => error!("  Status: ⚠️  ERROR - {}", msg),
+            tests::basic_components::TestStatus::Error(msg) => {
+                error!("  Status: ⚠️  ERROR - {}", msg)
+            }
         }
     }
     info!("=== End of Test Results ===\n");
@@ -75,7 +82,9 @@ pub async fn run_all_tests(driver: &WebDriver) -> anyhow::Result<Vec<TestResult>
     info!("Layer 1 (Basic): Button, Input, Card, Divider (4 components)");
     info!("Layer 2 (Form): Form, Select, Checkbox, Radio, Switch, Stepper (6 components)");
     info!("Layer 2 (Data): Table, Tree, Pagination, Dropdown (4 components)");
-    info!("Layer 3 (Advanced): VideoPlayer, AudioWaveform, RichTextEditor, DragLayer, Collapsible, ZoomControls, UserGuide, Timeline (10 components)");
+    info!(
+        "Layer 3 (Advanced): VideoPlayer, AudioWaveform, RichTextEditor, DragLayer, Collapsible, ZoomControls, UserGuide, Timeline (10 components)"
+    );
     info!("====================");
     info!("Total: 24 components tested");
 
@@ -83,10 +92,14 @@ pub async fn run_all_tests(driver: &WebDriver) -> anyhow::Result<Vec<TestResult>
 }
 
 /// Run interactive tests with multi-step operations and screenshots
-pub async fn run_interactive_tests(driver: &WebDriver) -> anyhow::Result<Vec<InteractiveTestResult>> {
+pub async fn run_interactive_tests(
+    driver: &WebDriver,
+) -> anyhow::Result<Vec<InteractiveTestResult>> {
     println!("Running Hikari Interactive E2E tests...\n");
 
-    let results = tests::interactive_test::InteractiveTests.run_all(driver).await?;
+    let results = tests::interactive_test::InteractiveTests
+        .run_all(driver)
+        .await?;
 
     println!("\n=== Interactive Test Results ===");
     for result in &results {
@@ -94,7 +107,12 @@ pub async fn run_interactive_tests(driver: &WebDriver) -> anyhow::Result<Vec<Int
         if result.status == "success" {
             info!("  Status: ✅ PASSED ({} steps)", result.steps.len());
             for (i, step) in result.steps.iter().enumerate() {
-                info!("    Step {}: {} - {:?}", i + 1, step.step.as_str(), step.description);
+                info!(
+                    "    Step {}: {} - {:?}",
+                    i + 1,
+                    step.step.as_str(),
+                    step.description
+                );
             }
         } else {
             info!("  Status: ❌ FAILED");
@@ -108,7 +126,9 @@ pub async fn run_interactive_tests(driver: &WebDriver) -> anyhow::Result<Vec<Int
     info!("Layer 2 (Navigation): Tabs, Menu, Breadcrumb, Steps (4 components)");
     info!("Layer 2 (Data): Table, Tree, Pagination (3 components)");
     info!("Layer 2 (Feedback): Modal, Dropdown, Drawer (3 components)");
-    info!("Layer 3 (Extra): Timeline, UserGuide, ZoomControls, Collapsible, VideoPlayer, RichTextEditor, CodeHighlighter, DragLayer (8 components)");
+    info!(
+        "Layer 3 (Extra): Timeline, UserGuide, ZoomControls, Collapsible, VideoPlayer, RichTextEditor, CodeHighlighter, DragLayer (8 components)"
+    );
     info!("======================");
     info!("Total: 22 components with multi-step interactive tests");
 

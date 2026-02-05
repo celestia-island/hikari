@@ -5,9 +5,7 @@ use dioxus::prelude::*;
 
 use crate::components::Layout;
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{
-    ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor,
-};
+use _palette::classes::{ ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor, };
 
 /// Layer 1 Switch Component Index
 #[allow(non_snake_case)]

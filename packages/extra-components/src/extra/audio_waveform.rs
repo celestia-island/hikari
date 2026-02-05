@@ -20,8 +20,7 @@ pub enum WaveformColor {
     Danger,
 }
 
-#[derive(Clone, PartialEq, Props)]
-#[derive(Default)]
+#[derive(Clone, PartialEq, Props, Default)]
 pub struct AudioWaveformProps {
     /// Audio source URL
     pub src: String,
@@ -50,7 +49,6 @@ pub struct AudioWaveformProps {
     #[props(default)]
     pub on_waveform_ready: Option<EventHandler<Vec<f32>>>,
 }
-
 
 /// AudioWaveform component with real waveform visualization
 ///
@@ -213,10 +211,7 @@ pub fn AudioWaveform(props: AudioWaveformProps) -> Element {
                     // 2. Implementing FFT analysis on CPU
                     // 3. Or disabling waveform visualization on non-WASM
                     let fake_data: Vec<f32> = (0..40)
-                        .map(|i| {
-                            
-                            0.2 + (i as f32 * 0.8).sin().abs() * 0.8
-                        })
+                        .map(|i| 0.2 + (i as f32 * 0.8).sin().abs() * 0.8)
                         .collect();
 
                     handler.call(fake_data.clone());

@@ -3,13 +3,8 @@
 
 use dioxus::prelude::*;
 
-use _components::{
-    Badge, Button, ButtonVariant, Card, Checkbox, Divider, DividerOrientation, DividerTextPosition,
-    Input, RadioButton, RadioDirection, RadioGroup, Select, SelectOption,
-};
-use _palette::classes::{
-    AlignItems, FlexWrap, {ClassesBuilder, Display, FlexDirection, Gap, Margin, Padding},
-};
+use _components::{Badge, Button, ButtonVariant, Card, Checkbox, Divider, DividerOrientation, DividerTextPosition, Input, RadioButton, RadioDirection, RadioGroup, Select, SelectOption};
+use _palette::classes::{ AlignItems, FlexWrap, {ClassesBuilder, Display, FlexDirection, Gap, Margin, Padding}, };
 
 /// Button component demonstration
 #[allow(non_snake_case)]

@@ -1,8 +1,9 @@
 // node_graph/plugins/processor.rs
 // Processor node plugin - performs data transformations
 
-use dioxus::prelude::*;
 use serde_json::Value;
+
+use dioxus::prelude::*;
 
 use crate::node_graph::node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition};
 

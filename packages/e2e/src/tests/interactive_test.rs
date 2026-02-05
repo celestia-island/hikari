@@ -2,14 +2,14 @@
 // Interactive E2E tests with multi-step operations and visual analysis
 
 use anyhow::Result;
-use std::path::PathBuf;
-use std::time::{Duration, Instant};
 use serde_json;
+use std::{
+    path::PathBuf,
+    time::{Duration, Instant},
+};
 
 use thirtyfour::{By, WebDriver};
 use tracing::{info, warn};
-
-
 
 /// Visual analysis result from MCP
 #[derive(Debug, Clone)]
@@ -98,8 +98,8 @@ impl InteractiveTests {
         step: InteractionStep,
         index: usize,
     ) -> Result<String> {
-        let screenshots_dir = std::env::var("E2E_SCREENSHOTS_DIR")
-            .unwrap_or_else(|_| "./screenshots".to_string());
+        let screenshots_dir =
+            std::env::var("E2E_SCREENSHOTS_DIR").unwrap_or_else(|_| "./screenshots".to_string());
 
         std::fs::create_dir_all(&screenshots_dir)
             .map_err(|e| anyhow::anyhow!("Failed to create screenshots directory: {}", e))?;
@@ -108,9 +108,10 @@ impl InteractiveTests {
         let filename = format!("{}_{}_step{}.png", component_name, step_name, index);
         let filepath = PathBuf::from(&screenshots_dir).join(&filename);
 
-        let screenshot_data = driver.screenshot_as_png().await.map_err(|e| {
-            anyhow::anyhow!("Failed to take screenshot: {}", e)
-        })?;
+        let screenshot_data = driver
+            .screenshot_as_png()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to take screenshot: {}", e))?;
 
         std::fs::write(&filepath, screenshot_data)
             .map_err(|e| anyhow::anyhow!("Failed to save screenshot: {}", e))?;
@@ -120,7 +121,11 @@ impl InteractiveTests {
     }
 
     /// Perform interactive button test (simplified)
-    async fn test_button_interactive(&self, driver: &WebDriver, button_selector: &str) -> Result<InteractiveTestResult> {
+    async fn test_button_interactive(
+        &self,
+        driver: &WebDriver,
+        button_selector: &str,
+    ) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
 
@@ -131,12 +136,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer1/basic", base_url);
 
         // Step 1: Navigate to page
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Button", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Button", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to basic components page".to_string(),
@@ -147,7 +154,8 @@ impl InteractiveTests {
 
         // Step 2: Initial screenshot
         tokio::time::sleep(Duration::from_millis(1000)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Button", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Button", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Take initial screenshot before interaction".to_string(),
@@ -163,12 +171,14 @@ impl InteractiveTests {
         })?;
 
         // Step 4: Click button
-        button.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click button: {}", e)
-        })?;
+        button
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click button: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "Button", InteractionStep::Click, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "Button", InteractionStep::Click, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::Click,
             description: "Click on button (click state)".to_string(),
@@ -178,9 +188,10 @@ impl InteractiveTests {
         });
 
         // Verify button class attribute
-        let class_attr = button.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get button attributes: {}", e)
-        })?;
+        let class_attr = button
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get button attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-button") {
@@ -202,7 +213,11 @@ impl InteractiveTests {
     }
 
     /// Perform interactive input test
-    async fn test_input_interactive(&self, driver: &WebDriver, input_selector: &str) -> Result<InteractiveTestResult> {
+    async fn test_input_interactive(
+        &self,
+        driver: &WebDriver,
+        input_selector: &str,
+    ) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
 
@@ -213,12 +228,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer1/basic", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Input", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Input", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to basic components page".to_string(),
@@ -235,7 +252,8 @@ impl InteractiveTests {
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Input", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Input", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (idle state)".to_string(),
@@ -245,12 +263,14 @@ impl InteractiveTests {
         });
 
         // Type input
-        input.send_keys("Hello Hikari").await.map_err(|e| {
-            anyhow::anyhow!("Failed to type in input: {}", e)
-        })?;
+        input
+            .send_keys("Hello Hikari")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to type in input: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "Input", InteractionStep::TypeInput, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "Input", InteractionStep::TypeInput, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::TypeInput,
             description: "Type text in input".to_string(),
@@ -260,9 +280,10 @@ impl InteractiveTests {
         });
 
         // Verify input class
-        let class_attr = input.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get input attributes: {}", e)
-        })?;
+        let class_attr = input
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get input attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-input") {
@@ -295,12 +316,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer2/data", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Scroll", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Scroll", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to data components page".to_string(),
@@ -310,14 +333,18 @@ impl InteractiveTests {
         });
 
         // Find scroll container
-        let _scroll_container = driver.find(By::Css(".custom-scrollbar-content")).await.map_err(|e| {
-            warn!("Scroll container not found: {}", e);
-            anyhow::anyhow!("Scroll container not found: {}", e)
-        })?;
+        let _scroll_container = driver
+            .find(By::Css(".custom-scrollbar-content"))
+            .await
+            .map_err(|e| {
+                warn!("Scroll container not found: {}", e);
+                anyhow::anyhow!("Scroll container not found: {}", e)
+            })?;
 
         // Initial screenshot (scroll at top)
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Scroll", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Scroll", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (scroll at top)".to_string(),
@@ -327,12 +354,14 @@ impl InteractiveTests {
         });
 
         // Scroll down using script
-        driver.execute("window.scrollBy(0, 200);", vec![]).await.map_err(|e| {
-            anyhow::anyhow!("Failed to scroll: {}", e)
-        })?;
+        driver
+            .execute("window.scrollBy(0, 200);", vec![])
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to scroll: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "Scroll", InteractionStep::Scroll, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "Scroll", InteractionStep::Scroll, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::Scroll,
             description: "Scroll down 200px".to_string(),
@@ -345,12 +374,14 @@ impl InteractiveTests {
         let script = r#"
             window.scrollTo(0, 0);
         "#;
-        driver.execute(script, vec![]).await.map_err(|e| {
-            anyhow::anyhow!("Failed to scroll back: {}", e)
-        })?;
+        driver
+            .execute(script, vec![])
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to scroll back: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_4 = Self::take_screenshot(driver, "Scroll", InteractionStep::Scroll, 4).await?;
+        let screenshot_4 =
+            Self::take_screenshot(driver, "Scroll", InteractionStep::Scroll, 4).await?;
         steps.push(TestStep {
             step: InteractionStep::Scroll,
             description: "Scroll back to top".to_string(),
@@ -594,7 +625,10 @@ impl InteractiveTests {
             }
             Err(e) => {
                 warn!("ZoomControls test failed: {}", e);
-                results.push(InteractiveTestResult::failure("ZoomControls", &e.to_string()));
+                results.push(InteractiveTestResult::failure(
+                    "ZoomControls",
+                    &e.to_string(),
+                ));
             }
         }
 
@@ -606,7 +640,10 @@ impl InteractiveTests {
             }
             Err(e) => {
                 warn!("Collapsible test failed: {}", e);
-                results.push(InteractiveTestResult::failure("Collapsible", &e.to_string()));
+                results.push(InteractiveTestResult::failure(
+                    "Collapsible",
+                    &e.to_string(),
+                ));
             }
         }
 
@@ -618,7 +655,10 @@ impl InteractiveTests {
             }
             Err(e) => {
                 warn!("VideoPlayer test failed: {}", e);
-                results.push(InteractiveTestResult::failure("VideoPlayer", &e.to_string()));
+                results.push(InteractiveTestResult::failure(
+                    "VideoPlayer",
+                    &e.to_string(),
+                ));
             }
         }
 
@@ -630,7 +670,10 @@ impl InteractiveTests {
             }
             Err(e) => {
                 warn!("RichTextEditor test failed: {}", e);
-                results.push(InteractiveTestResult::failure("RichTextEditor", &e.to_string()));
+                results.push(InteractiveTestResult::failure(
+                    "RichTextEditor",
+                    &e.to_string(),
+                ));
             }
         }
 
@@ -642,7 +685,10 @@ impl InteractiveTests {
             }
             Err(e) => {
                 warn!("CodeHighlighter test failed: {}", e);
-                results.push(InteractiveTestResult::failure("CodeHighlighter", &e.to_string()));
+                results.push(InteractiveTestResult::failure(
+                    "CodeHighlighter",
+                    &e.to_string(),
+                ));
             }
         }
 
@@ -662,7 +708,11 @@ impl InteractiveTests {
     }
 
     /// Perform interactive alert test
-    async fn test_alert_interactive(&self, driver: &WebDriver, alert_selector: &str) -> Result<InteractiveTestResult> {
+    async fn test_alert_interactive(
+        &self,
+        driver: &WebDriver,
+        alert_selector: &str,
+    ) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
 
@@ -673,12 +723,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer1/feedback", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Alert", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Alert", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to feedback components page".to_string(),
@@ -689,7 +741,8 @@ impl InteractiveTests {
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Alert", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Alert", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (alert visible)".to_string(),
@@ -705,12 +758,17 @@ impl InteractiveTests {
         })?;
 
         // Hover over alert using JavaScript
-        driver.execute("arguments[0].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));", vec![serde_json::to_value(&alert).unwrap()]).await.map_err(|e| {
-            anyhow::anyhow!("Failed to hover over alert: {}", e)
-        })?;
+        driver
+            .execute(
+                "arguments[0].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));",
+                vec![serde_json::to_value(&alert).unwrap()],
+            )
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to hover over alert: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "Alert", InteractionStep::MouseHover, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "Alert", InteractionStep::MouseHover, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::MouseHover,
             description: "Hover over alert element".to_string(),
@@ -720,9 +778,10 @@ impl InteractiveTests {
         });
 
         // Verify alert class
-        let class_attr = alert.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get alert attributes: {}", e)
-        })?;
+        let class_attr = alert
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get alert attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-alert") {
@@ -744,7 +803,11 @@ impl InteractiveTests {
     }
 
     /// Perform interactive tabs test
-    async fn test_tabs_interactive(&self, driver: &WebDriver, tabs_selector: &str) -> Result<InteractiveTestResult> {
+    async fn test_tabs_interactive(
+        &self,
+        driver: &WebDriver,
+        tabs_selector: &str,
+    ) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
 
@@ -755,12 +818,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer2/navigation", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Tabs", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Tabs", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to navigation components page".to_string(),
@@ -771,7 +836,8 @@ impl InteractiveTests {
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Tabs", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Tabs", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (first tab active)".to_string(),
@@ -787,13 +853,15 @@ impl InteractiveTests {
         })?;
 
         // Find and click second tab
-        let second_tab = tabs.find(By::Css(".hi-tab:nth-child(2)")).await.map_err(|e| {
-            anyhow::anyhow!("Failed to find second tab: {}", e)
-        })?;
+        let second_tab = tabs
+            .find(By::Css(".hi-tab:nth-child(2)"))
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to find second tab: {}", e))?;
 
-        second_tab.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click second tab: {}", e)
-        })?;
+        second_tab
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click second tab: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 = Self::take_screenshot(driver, "Tabs", InteractionStep::Click, 3).await?;
@@ -806,9 +874,10 @@ impl InteractiveTests {
         });
 
         // Verify tabs class
-        let class_attr = tabs.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get tabs attributes: {}", e)
-        })?;
+        let class_attr = tabs
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get tabs attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-tabs") {
@@ -830,7 +899,11 @@ impl InteractiveTests {
     }
 
     /// Perform interactive card test
-    async fn test_card_interactive(&self, driver: &WebDriver, card_selector: &str) -> Result<InteractiveTestResult> {
+    async fn test_card_interactive(
+        &self,
+        driver: &WebDriver,
+        card_selector: &str,
+    ) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
 
@@ -841,12 +914,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer1/basic", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Card", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Card", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to basic components page".to_string(),
@@ -857,7 +932,8 @@ impl InteractiveTests {
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Card", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Card", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (card visible)".to_string(),
@@ -873,12 +949,17 @@ impl InteractiveTests {
         })?;
 
         // Hover over card using JavaScript
-        driver.execute("arguments[0].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));", vec![serde_json::to_value(&card).unwrap()]).await.map_err(|e| {
-            anyhow::anyhow!("Failed to hover over card: {}", e)
-        })?;
+        driver
+            .execute(
+                "arguments[0].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));",
+                vec![serde_json::to_value(&card).unwrap()],
+            )
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to hover over card: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "Card", InteractionStep::MouseHover, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "Card", InteractionStep::MouseHover, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::MouseHover,
             description: "Hover over card element".to_string(),
@@ -888,9 +969,10 @@ impl InteractiveTests {
         });
 
         // Verify card class
-        let class_attr = card.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get card attributes: {}", e)
-        })?;
+        let class_attr = card
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get card attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-card") {
@@ -923,12 +1005,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer2/data", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Table", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Table", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to data components page".to_string(),
@@ -945,7 +1029,8 @@ impl InteractiveTests {
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Table", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Table", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (table visible)".to_string(),
@@ -955,16 +1040,19 @@ impl InteractiveTests {
         });
 
         // Find and click table header for sorting
-        let header = table.find(By::Css(".hi-table-header")).await.map_err(|e| {
-            anyhow::anyhow!("Failed to find table header: {}", e)
-        })?;
+        let header = table
+            .find(By::Css(".hi-table-header"))
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to find table header: {}", e))?;
 
-        header.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click table header: {}", e)
-        })?;
+        header
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click table header: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "Table", InteractionStep::Click, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "Table", InteractionStep::Click, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::Click,
             description: "Click table header for sorting".to_string(),
@@ -974,9 +1062,10 @@ impl InteractiveTests {
         });
 
         // Verify table class
-        let class_attr = table.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get table attributes: {}", e)
-        })?;
+        let class_attr = table
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get table attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-table") {
@@ -1009,12 +1098,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer2/data", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Tree", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Tree", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to data components page".to_string(),
@@ -1031,7 +1122,8 @@ impl InteractiveTests {
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Tree", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Tree", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (tree visible)".to_string(),
@@ -1041,13 +1133,14 @@ impl InteractiveTests {
         });
 
         // Find and click tree node to expand
-        let node = tree.find(By::Css(".hi-tree-node")).await.map_err(|e| {
-            anyhow::anyhow!("Failed to find tree node: {}", e)
-        })?;
+        let node = tree
+            .find(By::Css(".hi-tree-node"))
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to find tree node: {}", e))?;
 
-        node.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click tree node: {}", e)
-        })?;
+        node.click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click tree node: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 = Self::take_screenshot(driver, "Tree", InteractionStep::Click, 3).await?;
@@ -1060,9 +1153,10 @@ impl InteractiveTests {
         });
 
         // Verify tree class
-        let class_attr = tree.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get tree attributes: {}", e)
-        })?;
+        let class_attr = tree
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get tree attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-tree") {
@@ -1095,12 +1189,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer2/navigation", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Menu", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Menu", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to navigation components page".to_string(),
@@ -1117,7 +1213,8 @@ impl InteractiveTests {
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Menu", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Menu", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (menu visible)".to_string(),
@@ -1127,13 +1224,15 @@ impl InteractiveTests {
         });
 
         // Find and click menu item
-        let menu_item = menu.find(By::Css(".hi-menu-item")).await.map_err(|e| {
-            anyhow::anyhow!("Failed to find menu item: {}", e)
-        })?;
+        let menu_item = menu
+            .find(By::Css(".hi-menu-item"))
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to find menu item: {}", e))?;
 
-        menu_item.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click menu item: {}", e)
-        })?;
+        menu_item
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click menu item: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 = Self::take_screenshot(driver, "Menu", InteractionStep::Click, 3).await?;
@@ -1146,9 +1245,10 @@ impl InteractiveTests {
         });
 
         // Verify menu class
-        let class_attr = menu.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get menu attributes: {}", e)
-        })?;
+        let class_attr = menu
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get menu attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-menu") {
@@ -1170,7 +1270,10 @@ impl InteractiveTests {
     }
 
     /// Perform interactive pagination test
-    async fn test_pagination_interactive(&self, driver: &WebDriver) -> Result<InteractiveTestResult> {
+    async fn test_pagination_interactive(
+        &self,
+        driver: &WebDriver,
+    ) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
 
@@ -1181,12 +1284,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer2/data", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Pagination", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Pagination", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to data components page".to_string(),
@@ -1203,7 +1308,8 @@ impl InteractiveTests {
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Pagination", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Pagination", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (pagination visible)".to_string(),
@@ -1213,16 +1319,19 @@ impl InteractiveTests {
         });
 
         // Find and click next page button
-        let next_btn = pagination.find(By::Css(".hi-pagination-next")).await.map_err(|e| {
-            anyhow::anyhow!("Failed to find next page button: {}", e)
-        })?;
+        let next_btn = pagination
+            .find(By::Css(".hi-pagination-next"))
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to find next page button: {}", e))?;
 
-        next_btn.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click next page button: {}", e)
-        })?;
+        next_btn
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click next page button: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "Pagination", InteractionStep::Click, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "Pagination", InteractionStep::Click, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::Click,
             description: "Click next page button".to_string(),
@@ -1232,9 +1341,10 @@ impl InteractiveTests {
         });
 
         // Verify pagination class
-        let class_attr = pagination.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get pagination attributes: {}", e)
-        })?;
+        let class_attr = pagination
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get pagination attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-pagination") {
@@ -1267,12 +1377,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer2/feedback", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Modal", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Modal", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to feedback components page".to_string(),
@@ -1282,14 +1394,18 @@ impl InteractiveTests {
         });
 
         // Find modal trigger button
-        let trigger_btn = driver.find(By::Css("[data-testid=\"open-modal-btn\"]")).await.map_err(|e| {
-            warn!("Modal trigger button not found: {}", e);
-            anyhow::anyhow!("Modal trigger button not found: {}", e)
-        })?;
+        let trigger_btn = driver
+            .find(By::Css("[data-testid=\"open-modal-btn\"]"))
+            .await
+            .map_err(|e| {
+                warn!("Modal trigger button not found: {}", e);
+                anyhow::anyhow!("Modal trigger button not found: {}", e)
+            })?;
 
         // Initial screenshot (modal closed)
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Modal", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Modal", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (modal closed)".to_string(),
@@ -1299,12 +1415,14 @@ impl InteractiveTests {
         });
 
         // Click to open modal
-        trigger_btn.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click modal trigger: {}", e)
-        })?;
+        trigger_btn
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click modal trigger: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "Modal", InteractionStep::Click, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "Modal", InteractionStep::Click, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::Click,
             description: "Click to open modal".to_string(),
@@ -1320,9 +1438,10 @@ impl InteractiveTests {
         })?;
 
         // Verify modal class
-        let class_attr = modal.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get modal attributes: {}", e)
-        })?;
+        let class_attr = modal
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get modal attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-modal") {
@@ -1355,12 +1474,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer2/feedback", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Dropdown", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Dropdown", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to feedback components page".to_string(),
@@ -1377,7 +1498,8 @@ impl InteractiveTests {
 
         // Initial screenshot (dropdown closed)
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Dropdown", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Dropdown", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (dropdown closed)".to_string(),
@@ -1387,12 +1509,14 @@ impl InteractiveTests {
         });
 
         // Click to open dropdown
-        dropdown.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click dropdown: {}", e)
-        })?;
+        dropdown
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click dropdown: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "Dropdown", InteractionStep::Click, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "Dropdown", InteractionStep::Click, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::Click,
             description: "Click to open dropdown".to_string(),
@@ -1402,9 +1526,10 @@ impl InteractiveTests {
         });
 
         // Verify dropdown class
-        let class_attr = dropdown.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get dropdown attributes: {}", e)
-        })?;
+        let class_attr = dropdown
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get dropdown attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-dropdown") {
@@ -1437,12 +1562,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer2/feedback", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Drawer", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Drawer", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to feedback components page".to_string(),
@@ -1452,14 +1579,18 @@ impl InteractiveTests {
         });
 
         // Find drawer trigger button
-        let trigger_btn = driver.find(By::Css("[data-testid=\"open-drawer-btn\"]")).await.map_err(|e| {
-            warn!("Drawer trigger button not found: {}", e);
-            anyhow::anyhow!("Drawer trigger button not found: {}", e)
-        })?;
+        let trigger_btn = driver
+            .find(By::Css("[data-testid=\"open-drawer-btn\"]"))
+            .await
+            .map_err(|e| {
+                warn!("Drawer trigger button not found: {}", e);
+                anyhow::anyhow!("Drawer trigger button not found: {}", e)
+            })?;
 
         // Initial screenshot (drawer closed)
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Drawer", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Drawer", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (drawer closed)".to_string(),
@@ -1469,12 +1600,14 @@ impl InteractiveTests {
         });
 
         // Click to open drawer
-        trigger_btn.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click drawer trigger: {}", e)
-        })?;
+        trigger_btn
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click drawer trigger: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "Drawer", InteractionStep::Click, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "Drawer", InteractionStep::Click, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::Click,
             description: "Click to open drawer".to_string(),
@@ -1490,9 +1623,10 @@ impl InteractiveTests {
         })?;
 
         // Verify drawer class
-        let class_attr = drawer.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get drawer attributes: {}", e)
-        })?;
+        let class_attr = drawer
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get drawer attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-drawer") {
@@ -1514,7 +1648,10 @@ impl InteractiveTests {
     }
 
     /// Perform interactive breadcrumb test
-    async fn test_breadcrumb_interactive(&self, driver: &WebDriver) -> Result<InteractiveTestResult> {
+    async fn test_breadcrumb_interactive(
+        &self,
+        driver: &WebDriver,
+    ) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
 
@@ -1525,12 +1662,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer2/navigation", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Breadcrumb", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Breadcrumb", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to navigation components page".to_string(),
@@ -1547,7 +1686,8 @@ impl InteractiveTests {
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Breadcrumb", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Breadcrumb", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (breadcrumb visible)".to_string(),
@@ -1557,16 +1697,19 @@ impl InteractiveTests {
         });
 
         // Find and click breadcrumb item
-        let breadcrumb_item = breadcrumb.find(By::Css(".hi-breadcrumb-item")).await.map_err(|e| {
-            anyhow::anyhow!("Failed to find breadcrumb item: {}", e)
-        })?;
+        let breadcrumb_item = breadcrumb
+            .find(By::Css(".hi-breadcrumb-item"))
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to find breadcrumb item: {}", e))?;
 
-        breadcrumb_item.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click breadcrumb item: {}", e)
-        })?;
+        breadcrumb_item
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click breadcrumb item: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "Breadcrumb", InteractionStep::Click, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "Breadcrumb", InteractionStep::Click, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::Click,
             description: "Click breadcrumb item".to_string(),
@@ -1576,9 +1719,10 @@ impl InteractiveTests {
         });
 
         // Verify breadcrumb class
-        let class_attr = breadcrumb.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get breadcrumb attributes: {}", e)
-        })?;
+        let class_attr = breadcrumb
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get breadcrumb attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-breadcrumb") {
@@ -1611,12 +1755,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer2/navigation", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Steps", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Steps", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to navigation components page".to_string(),
@@ -1633,7 +1779,8 @@ impl InteractiveTests {
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Steps", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Steps", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (steps visible)".to_string(),
@@ -1643,16 +1790,19 @@ impl InteractiveTests {
         });
 
         // Find and click step to activate
-        let step_item = steps_el.find(By::Css(".hi-step")).await.map_err(|e| {
-            anyhow::anyhow!("Failed to find step item: {}", e)
-        })?;
+        let step_item = steps_el
+            .find(By::Css(".hi-step"))
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to find step item: {}", e))?;
 
-        step_item.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click step: {}", e)
-        })?;
+        step_item
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click step: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "Steps", InteractionStep::Click, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "Steps", InteractionStep::Click, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::Click,
             description: "Click step item".to_string(),
@@ -1662,9 +1812,10 @@ impl InteractiveTests {
         });
 
         // Verify steps class
-        let class_attr = steps_el.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get steps attributes: {}", e)
-        })?;
+        let class_attr = steps_el
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get steps attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-steps") {
@@ -1697,12 +1848,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/extra/timeline", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Timeline", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Timeline", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to extra components page".to_string(),
@@ -1719,7 +1872,8 @@ impl InteractiveTests {
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Timeline", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Timeline", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (timeline visible)".to_string(),
@@ -1729,16 +1883,19 @@ impl InteractiveTests {
         });
 
         // Find and click timeline item
-        let timeline_item = timeline.find(By::Css(".hi-timeline-item")).await.map_err(|e| {
-            anyhow::anyhow!("Failed to find timeline item: {}", e)
-        })?;
+        let timeline_item = timeline
+            .find(By::Css(".hi-timeline-item"))
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to find timeline item: {}", e))?;
 
-        timeline_item.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click timeline item: {}", e)
-        })?;
+        timeline_item
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click timeline item: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "Timeline", InteractionStep::Click, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "Timeline", InteractionStep::Click, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::Click,
             description: "Click timeline item".to_string(),
@@ -1748,9 +1905,10 @@ impl InteractiveTests {
         });
 
         // Verify timeline class
-        let class_attr = timeline.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get timeline attributes: {}", e)
-        })?;
+        let class_attr = timeline
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get timeline attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-timeline") {
@@ -1772,7 +1930,10 @@ impl InteractiveTests {
     }
 
     /// Perform interactive user_guide test
-    async fn test_user_guide_interactive(&self, driver: &WebDriver) -> Result<InteractiveTestResult> {
+    async fn test_user_guide_interactive(
+        &self,
+        driver: &WebDriver,
+    ) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
 
@@ -1783,12 +1944,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/extra/user_guide", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "UserGuide", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "UserGuide", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to extra components page".to_string(),
@@ -1805,7 +1968,8 @@ impl InteractiveTests {
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "UserGuide", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "UserGuide", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (user guide visible)".to_string(),
@@ -1815,16 +1979,19 @@ impl InteractiveTests {
         });
 
         // Find and click next button
-        let next_btn = user_guide.find(By::Css("[data-testid=\"user-guide-next\"]")).await.map_err(|e| {
-            anyhow::anyhow!("Failed to find next button: {}", e)
-        })?;
+        let next_btn = user_guide
+            .find(By::Css("[data-testid=\"user-guide-next\"]"))
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to find next button: {}", e))?;
 
-        next_btn.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click next button: {}", e)
-        })?;
+        next_btn
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click next button: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "UserGuide", InteractionStep::Click, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "UserGuide", InteractionStep::Click, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::Click,
             description: "Click next step button".to_string(),
@@ -1834,9 +2001,10 @@ impl InteractiveTests {
         });
 
         // Verify user guide class
-        let class_attr = user_guide.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get user guide attributes: {}", e)
-        })?;
+        let class_attr = user_guide
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get user guide attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-user-guide") {
@@ -1858,7 +2026,10 @@ impl InteractiveTests {
     }
 
     /// Perform interactive zoom_controls test
-    async fn test_zoom_controls_interactive(&self, driver: &WebDriver) -> Result<InteractiveTestResult> {
+    async fn test_zoom_controls_interactive(
+        &self,
+        driver: &WebDriver,
+    ) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
 
@@ -1869,12 +2040,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/extra/zoom_controls", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "ZoomControls", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "ZoomControls", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to extra components page".to_string(),
@@ -1884,14 +2057,18 @@ impl InteractiveTests {
         });
 
         // Find zoom controls element
-        let zoom_controls = driver.find(By::Css(".hi-zoom-controls")).await.map_err(|e| {
-            warn!("ZoomControls element not found: {}", e);
-            anyhow::anyhow!("ZoomControls element not found: {}", e)
-        })?;
+        let zoom_controls = driver
+            .find(By::Css(".hi-zoom-controls"))
+            .await
+            .map_err(|e| {
+                warn!("ZoomControls element not found: {}", e);
+                anyhow::anyhow!("ZoomControls element not found: {}", e)
+            })?;
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "ZoomControls", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "ZoomControls", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (zoom controls visible)".to_string(),
@@ -1901,16 +2078,19 @@ impl InteractiveTests {
         });
 
         // Find and click zoom in button
-        let zoom_in = zoom_controls.find(By::Css("[data-testid=\"zoom-in\"]")).await.map_err(|e| {
-            anyhow::anyhow!("Failed to find zoom in button: {}", e)
-        })?;
+        let zoom_in = zoom_controls
+            .find(By::Css("[data-testid=\"zoom-in\"]"))
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to find zoom in button: {}", e))?;
 
-        zoom_in.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click zoom in button: {}", e)
-        })?;
+        zoom_in
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click zoom in button: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "ZoomControls", InteractionStep::Click, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "ZoomControls", InteractionStep::Click, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::Click,
             description: "Click zoom in button".to_string(),
@@ -1920,9 +2100,10 @@ impl InteractiveTests {
         });
 
         // Verify zoom controls class
-        let class_attr = zoom_controls.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get zoom controls attributes: {}", e)
-        })?;
+        let class_attr = zoom_controls
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get zoom controls attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-zoom-controls") {
@@ -1944,7 +2125,10 @@ impl InteractiveTests {
     }
 
     /// Perform interactive collapsible test
-    async fn test_collapsible_interactive(&self, driver: &WebDriver) -> Result<InteractiveTestResult> {
+    async fn test_collapsible_interactive(
+        &self,
+        driver: &WebDriver,
+    ) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
 
@@ -1955,12 +2139,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/extra/collapsible", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "Collapsible", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "Collapsible", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to extra components page".to_string(),
@@ -1977,7 +2163,8 @@ impl InteractiveTests {
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "Collapsible", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "Collapsible", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (collapsible visible)".to_string(),
@@ -1987,16 +2174,19 @@ impl InteractiveTests {
         });
 
         // Find and click collapsible trigger
-        let trigger = collapsible.find(By::Css("[data-testid=\"collapsible-trigger\"]")).await.map_err(|e| {
-            anyhow::anyhow!("Failed to find collapsible trigger: {}", e)
-        })?;
+        let trigger = collapsible
+            .find(By::Css("[data-testid=\"collapsible-trigger\"]"))
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to find collapsible trigger: {}", e))?;
 
-        trigger.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click collapsible trigger: {}", e)
-        })?;
+        trigger
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click collapsible trigger: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "Collapsible", InteractionStep::Click, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "Collapsible", InteractionStep::Click, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::Click,
             description: "Click collapsible trigger".to_string(),
@@ -2006,9 +2196,10 @@ impl InteractiveTests {
         });
 
         // Verify collapsible class
-        let class_attr = collapsible.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get collapsible attributes: {}", e)
-        })?;
+        let class_attr = collapsible
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get collapsible attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-collapsible") {
@@ -2030,7 +2221,10 @@ impl InteractiveTests {
     }
 
     /// Perform interactive video_player test
-    async fn test_video_player_interactive(&self, driver: &WebDriver) -> Result<InteractiveTestResult> {
+    async fn test_video_player_interactive(
+        &self,
+        driver: &WebDriver,
+    ) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
 
@@ -2041,12 +2235,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer3/media", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "VideoPlayer", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "VideoPlayer", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to media components page".to_string(),
@@ -2056,14 +2252,18 @@ impl InteractiveTests {
         });
 
         // Find video player element
-        let video_player = driver.find(By::Css(".hi-video-player")).await.map_err(|e| {
-            warn!("VideoPlayer element not found: {}", e);
-            anyhow::anyhow!("VideoPlayer element not found: {}", e)
-        })?;
+        let video_player = driver
+            .find(By::Css(".hi-video-player"))
+            .await
+            .map_err(|e| {
+                warn!("VideoPlayer element not found: {}", e);
+                anyhow::anyhow!("VideoPlayer element not found: {}", e)
+            })?;
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "VideoPlayer", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "VideoPlayer", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (video player visible)".to_string(),
@@ -2073,16 +2273,19 @@ impl InteractiveTests {
         });
 
         // Find and click play button
-        let play_btn = video_player.find(By::Css("[data-testid=\"video-play\"]")).await.map_err(|e| {
-            anyhow::anyhow!("Failed to find play button: {}", e)
-        })?;
+        let play_btn = video_player
+            .find(By::Css("[data-testid=\"video-play\"]"))
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to find play button: {}", e))?;
 
-        play_btn.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click play button: {}", e)
-        })?;
+        play_btn
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click play button: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "VideoPlayer", InteractionStep::Click, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "VideoPlayer", InteractionStep::Click, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::Click,
             description: "Click play button".to_string(),
@@ -2092,9 +2295,10 @@ impl InteractiveTests {
         });
 
         // Verify video player class
-        let class_attr = video_player.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get video player attributes: {}", e)
-        })?;
+        let class_attr = video_player
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get video player attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-video-player") {
@@ -2116,7 +2320,10 @@ impl InteractiveTests {
     }
 
     /// Perform interactive rich_text_editor test
-    async fn test_rich_text_editor_interactive(&self, driver: &WebDriver) -> Result<InteractiveTestResult> {
+    async fn test_rich_text_editor_interactive(
+        &self,
+        driver: &WebDriver,
+    ) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
 
@@ -2127,12 +2334,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer3/rich_text", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "RichTextEditor", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "RichTextEditor", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to rich text editor page".to_string(),
@@ -2149,7 +2358,8 @@ impl InteractiveTests {
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "RichTextEditor", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "RichTextEditor", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (editor visible)".to_string(),
@@ -2159,22 +2369,26 @@ impl InteractiveTests {
         });
 
         // Find and click in editor
-        let editor_body = editor.find(By::Css(".hi-editor-body")).await.map_err(|e| {
-            anyhow::anyhow!("Failed to find editor body: {}", e)
-        })?;
+        let editor_body = editor
+            .find(By::Css(".hi-editor-body"))
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to find editor body: {}", e))?;
 
-        editor_body.click().await.map_err(|e| {
-            anyhow::anyhow!("Failed to click in editor: {}", e)
-        })?;
+        editor_body
+            .click()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to click in editor: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         // Type in editor
-        editor_body.send_keys("Hello Hikari!").await.map_err(|e| {
-            anyhow::anyhow!("Failed to type in editor: {}", e)
-        })?;
+        editor_body
+            .send_keys("Hello Hikari!")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to type in editor: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "RichTextEditor", InteractionStep::TypeInput, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "RichTextEditor", InteractionStep::TypeInput, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::TypeInput,
             description: "Type text in editor".to_string(),
@@ -2184,9 +2398,10 @@ impl InteractiveTests {
         });
 
         // Verify editor class
-        let class_attr = editor.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get editor attributes: {}", e)
-        })?;
+        let class_attr = editor
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get editor attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-editor") {
@@ -2208,7 +2423,10 @@ impl InteractiveTests {
     }
 
     /// Perform interactive code_highlighter test
-    async fn test_code_highlighter_interactive(&self, driver: &WebDriver) -> Result<InteractiveTestResult> {
+    async fn test_code_highlighter_interactive(
+        &self,
+        driver: &WebDriver,
+    ) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
 
@@ -2219,12 +2437,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer3/code", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "CodeHighlighter", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "CodeHighlighter", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to code highlighter page".to_string(),
@@ -2234,14 +2454,18 @@ impl InteractiveTests {
         });
 
         // Find code highlighter element
-        let code_highlighter = driver.find(By::Css(".hi-code-highlighter")).await.map_err(|e| {
-            warn!("CodeHighlighter element not found: {}", e);
-            anyhow::anyhow!("CodeHighlighter element not found: {}", e)
-        })?;
+        let code_highlighter = driver
+            .find(By::Css(".hi-code-highlighter"))
+            .await
+            .map_err(|e| {
+                warn!("CodeHighlighter element not found: {}", e);
+                anyhow::anyhow!("CodeHighlighter element not found: {}", e)
+            })?;
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "CodeHighlighter", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "CodeHighlighter", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (code highlighter visible)".to_string(),
@@ -2251,16 +2475,23 @@ impl InteractiveTests {
         });
 
         // Find and hover over code
-        let code_block = code_highlighter.find(By::Css(".hi-code-block")).await.map_err(|e| {
-            anyhow::anyhow!("Failed to find code block: {}", e)
-        })?;
+        let code_block = code_highlighter
+            .find(By::Css(".hi-code-block"))
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to find code block: {}", e))?;
 
-        driver.execute("arguments[0].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));", vec![serde_json::to_value(&code_block).unwrap()]).await.map_err(|e| {
-            anyhow::anyhow!("Failed to hover over code: {}", e)
-        })?;
+        driver
+            .execute(
+                "arguments[0].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));",
+                vec![serde_json::to_value(&code_block).unwrap()],
+            )
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to hover over code: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "CodeHighlighter", InteractionStep::MouseHover, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "CodeHighlighter", InteractionStep::MouseHover, 3)
+                .await?;
         steps.push(TestStep {
             step: InteractionStep::MouseHover,
             description: "Hover over code block".to_string(),
@@ -2270,9 +2501,10 @@ impl InteractiveTests {
         });
 
         // Verify code highlighter class
-        let class_attr = code_highlighter.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get code highlighter attributes: {}", e)
-        })?;
+        let class_attr = code_highlighter
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get code highlighter attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-code-highlighter") {
@@ -2294,7 +2526,10 @@ impl InteractiveTests {
     }
 
     /// Perform interactive drag_layer test
-    async fn test_drag_layer_interactive(&self, driver: &WebDriver) -> Result<InteractiveTestResult> {
+    async fn test_drag_layer_interactive(
+        &self,
+        driver: &WebDriver,
+    ) -> Result<InteractiveTestResult> {
         let start = Instant::now();
         let mut steps = vec![];
 
@@ -2305,12 +2540,14 @@ impl InteractiveTests {
         let test_url = format!("{}/components/layer3/drag", base_url);
 
         // Navigate
-        driver.goto(&test_url).await.map_err(|e| {
-            anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e)
-        })?;
+        driver
+            .goto(&test_url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_1 = Self::take_screenshot(driver, "DragLayer", InteractionStep::Navigate, 1).await?;
+        let screenshot_1 =
+            Self::take_screenshot(driver, "DragLayer", InteractionStep::Navigate, 1).await?;
         steps.push(TestStep {
             step: InteractionStep::Navigate,
             description: "Navigate to drag layer page".to_string(),
@@ -2327,7 +2564,8 @@ impl InteractiveTests {
 
         // Initial screenshot
         tokio::time::sleep(Duration::from_millis(500)).await;
-        let screenshot_2 = Self::take_screenshot(driver, "DragLayer", InteractionStep::Initial, 2).await?;
+        let screenshot_2 =
+            Self::take_screenshot(driver, "DragLayer", InteractionStep::Initial, 2).await?;
         steps.push(TestStep {
             step: InteractionStep::Initial,
             description: "Initial screenshot (drag layer visible)".to_string(),
@@ -2337,17 +2575,23 @@ impl InteractiveTests {
         });
 
         // Find draggable element
-        let draggable = drag_layer.find(By::Css("[data-testid=\"draggable\"]")).await.map_err(|e| {
-            anyhow::anyhow!("Failed to find draggable element: {}", e)
-        })?;
+        let draggable = drag_layer
+            .find(By::Css("[data-testid=\"draggable\"]"))
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to find draggable element: {}", e))?;
 
         // Mouse down to start drag
-        driver.execute("arguments[0].dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));", vec![serde_json::to_value(&draggable).unwrap()]).await.map_err(|e| {
-            anyhow::anyhow!("Failed to trigger mousedown: {}", e)
-        })?;
+        driver
+            .execute(
+                "arguments[0].dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));",
+                vec![serde_json::to_value(&draggable).unwrap()],
+            )
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to trigger mousedown: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_3 = Self::take_screenshot(driver, "DragLayer", InteractionStep::MouseDown, 3).await?;
+        let screenshot_3 =
+            Self::take_screenshot(driver, "DragLayer", InteractionStep::MouseDown, 3).await?;
         steps.push(TestStep {
             step: InteractionStep::MouseDown,
             description: "Mouse down on draggable element".to_string(),
@@ -2357,12 +2601,17 @@ impl InteractiveTests {
         });
 
         // Mouse up to end drag
-        driver.execute("arguments[0].dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));", vec![serde_json::to_value(&draggable).unwrap()]).await.map_err(|e| {
-            anyhow::anyhow!("Failed to trigger mouseup: {}", e)
-        })?;
+        driver
+            .execute(
+                "arguments[0].dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));",
+                vec![serde_json::to_value(&draggable).unwrap()],
+            )
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to trigger mouseup: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let screenshot_4 = Self::take_screenshot(driver, "DragLayer", InteractionStep::MouseUp, 4).await?;
+        let screenshot_4 =
+            Self::take_screenshot(driver, "DragLayer", InteractionStep::MouseUp, 4).await?;
         steps.push(TestStep {
             step: InteractionStep::MouseUp,
             description: "Mouse up on draggable element".to_string(),
@@ -2372,9 +2621,10 @@ impl InteractiveTests {
         });
 
         // Verify drag layer class
-        let class_attr = drag_layer.attr("class").await.map_err(|e| {
-            anyhow::anyhow!("Failed to get drag layer attributes: {}", e)
-        })?;
+        let class_attr = drag_layer
+            .attr("class")
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get drag layer attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-drag-layer") {
@@ -2403,11 +2653,14 @@ pub async fn compare_visuals(
     component_name: &str,
     step_name: &str,
 ) -> Result<VisualAnalysis> {
-    info!("Performing visual analysis for {} - {}", component_name, step_name);
+    info!(
+        "Performing visual analysis for {} - {}",
+        component_name, step_name
+    );
 
     // In a real implementation, this would call MCP visual analysis tools
     // For now, we provide a placeholder that can be integrated later
-    
+
     let analysis = VisualAnalysis {
         screenshot_before: before_path.to_string(),
         screenshot_after: after_path.to_string(),
@@ -2433,8 +2686,8 @@ pub async fn analyze_test_step(
     step: InteractionStep,
     index: usize,
 ) -> Result<(String, VisualAnalysis)> {
-    let screenshots_dir = std::env::var("E2E_SCREENSHOTS_DIR")
-        .unwrap_or_else(|_| "./screenshots".to_string());
+    let screenshots_dir =
+        std::env::var("E2E_SCREENSHOTS_DIR").unwrap_or_else(|_| "./screenshots".to_string());
 
     std::fs::create_dir_all(&screenshots_dir)
         .map_err(|e| anyhow::anyhow!("Failed to create screenshots directory: {}", e))?;
@@ -2443,9 +2696,10 @@ pub async fn analyze_test_step(
     let filename = format!("{}_{}_step{}.png", component_name, step_name, index);
     let filepath = PathBuf::from(&screenshots_dir).join(&filename);
 
-    let screenshot_data = driver.screenshot_as_png().await.map_err(|e| {
-        anyhow::anyhow!("Failed to take screenshot: {}", e)
-    })?;
+    let screenshot_data = driver
+        .screenshot_as_png()
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to take screenshot: {}", e))?;
 
     std::fs::write(&filepath, screenshot_data)
         .map_err(|e| anyhow::anyhow!("Failed to save screenshot: {}", e))?;
@@ -2456,10 +2710,7 @@ pub async fn analyze_test_step(
     let analysis = VisualAnalysis {
         screenshot_before: String::new(),
         screenshot_after: filepath.to_string_lossy().to_string(),
-        analysis_result: format!(
-            "Screenshot captured for {} - {}",
-            component_name, step_name
-        ),
+        analysis_result: format!("Screenshot captured for {} - {}", component_name, step_name),
         before_after_match: true,
         details: "Visual feedback captured".to_string(),
     };

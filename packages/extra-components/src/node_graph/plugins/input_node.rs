@@ -1,8 +1,9 @@
 // node_graph/plugins/input_node.rs
 // Input node plugin - accepts user input or external data
 
-use dioxus::prelude::*;
 use serde_json::Value;
+
+use dioxus::prelude::*;
 
 use crate::node_graph::node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition};
 

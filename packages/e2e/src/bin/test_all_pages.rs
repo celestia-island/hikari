@@ -2,7 +2,7 @@
 // Binary to test all 34 pages for basic quality
 
 use hikari_e2e::tests::visual_quality::VisualQualityTests;
-use thirtyfour::{prelude::*, WebDriver};
+use thirtyfour::{WebDriver, prelude::*};
 use tracing::{error, info};
 use tracing_subscriber;
 
@@ -14,8 +14,8 @@ async fn main() -> anyhow::Result<()> {
 
     info!("Starting All Pages Quality Tests...\n");
 
-    let base_url = std::env::var("WEBSITE_BASE_URL")
-        .unwrap_or_else(|_| "http://localhost:3000".to_string());
+    let base_url =
+        std::env::var("WEBSITE_BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
 
     info!("Testing website at: {}", base_url);
 
@@ -47,10 +47,9 @@ async fn main() -> anyhow::Result<()> {
                 for test in &results {
                     for check in &test.tests {
                         if !check.passed {
-                            error!("  {} - {}: {}",
-                                test.component_name,
-                                check.check_name,
-                                check.details
+                            error!(
+                                "  {} - {}: {}",
+                                test.component_name, check.check_name, check.details
                             );
                         }
                     }

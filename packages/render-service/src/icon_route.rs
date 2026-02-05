@@ -62,7 +62,10 @@ pub async fn get_icon_data(Query(query): Query<IconQuery>) -> Response {
         Ok(guard) => guard.get(&icon_name).cloned(),
         Err(_) => {
             // Lock is poisoned - log and treat as cache miss
-            eprintln!("Icon cache lock is poisoned, fetching from disk: {}", icon_name);
+            eprintln!(
+                "Icon cache lock is poisoned, fetching from disk: {}",
+                icon_name
+            );
             None
         }
     };
@@ -87,7 +90,6 @@ async fn fetch_and_cache_icon(
     cache: &std::sync::RwLock<HashMap<String, String>>,
     svg_path: std::path::PathBuf,
 ) -> Response {
-
     if !svg_path.exists() {
         return (
             StatusCode::NOT_FOUND,
@@ -140,7 +142,10 @@ async fn fetch_and_cache_icon(
             }
             Err(_) => {
                 // Lock is poisoned - log but don't fail the request
-                eprintln!("Icon cache lock is poisoned, skipping cache write for: {}", icon_name);
+                eprintln!(
+                    "Icon cache lock is poisoned, skipping cache write for: {}",
+                    icon_name
+                );
             }
         }
     }
@@ -317,10 +322,9 @@ fn parse_svg_safe(svg: &str) -> Result<IconData, String> {
             Ok(Event::End(ref e)) => {
                 if e.name().as_ref() == b"svg" {
                     in_svg = false;
-                } else if e.name().as_ref() == b"path" && in_svg
-                    && current_path.d.is_some() {
-                        icon_data.paths.push(current_path.clone());
-                    }
+                } else if e.name().as_ref() == b"path" && in_svg && current_path.d.is_some() {
+                    icon_data.paths.push(current_path.clone());
+                }
             }
             Ok(Event::Eof) => break,
             Err(e) => {
@@ -347,9 +351,10 @@ fn find_workspace_root() -> std::path::PathBuf {
         let cargo_toml = current.join("Cargo.toml");
         if cargo_toml.exists()
             && let Ok(content) = std::fs::read_to_string(&cargo_toml)
-                && content.contains("[workspace]") {
-                    return current;
-                }
+            && content.contains("[workspace]")
+        {
+            return current;
+        }
 
         match current.parent() {
             Some(parent) if parent != current => {

@@ -1,8 +1,9 @@
 // node_graph/plugins/output_node.rs
 // Output node plugin - displays output data
 
-use dioxus::prelude::*;
 use serde_json::Value;
+
+use dioxus::prelude::*;
 
 use crate::node_graph::node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition};
 

@@ -204,7 +204,9 @@ pub fn serve_static_files(
                             builder = builder.header(header::CACHE_CONTROL, cache_header);
                         }
 
-                        builder.body(body).expect("OK response with body should always succeed")
+                        builder
+                            .body(body)
+                            .expect("OK response with body should always succeed")
                     }
                     Err(_) => not_found_response(),
                 }
@@ -264,7 +266,9 @@ pub async fn serve_file(file_path: PathBuf, config: StaticFileConfig) -> anyhow:
         builder = builder.header(header::CACHE_CONTROL, cache_header);
     }
 
-    builder.body(body).map_err(|e| anyhow::anyhow!("Failed to build response: {}", e))
+    builder
+        .body(body)
+        .map_err(|e| anyhow::anyhow!("Failed to build response: {}", e))
 }
 
 #[cfg(test)]

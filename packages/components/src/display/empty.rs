@@ -31,8 +31,7 @@ pub struct EmptyComponent;
 ///     }
 /// }
 /// ```
-#[derive(Clone, PartialEq, Props)]
-#[derive(Default)]
+#[derive(Clone, PartialEq, Props, Default)]
 pub struct EmptyProps {
     #[props(default)]
     pub image: Option<String>,
@@ -52,7 +51,6 @@ pub struct EmptyProps {
     #[props(default)]
     pub style: String,
 }
-
 
 #[component]
 pub fn Empty(props: EmptyProps) -> Element {

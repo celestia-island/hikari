@@ -37,10 +37,13 @@ impl AdvancedComponentsTests {
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let video_player = driver.find(By::Css(".hi-video-player")).await.map_err(|e| {
-            warn!("VideoPlayer element not found: {}", e);
-            anyhow::anyhow!("VideoPlayer element not found: {}", e)
-        })?;
+        let video_player = driver
+            .find(By::Css(".hi-video-player"))
+            .await
+            .map_err(|e| {
+                warn!("VideoPlayer element not found: {}", e);
+                anyhow::anyhow!("VideoPlayer element not found: {}", e)
+            })?;
 
         info!("VideoPlayer element found");
 
@@ -48,7 +51,8 @@ impl AdvancedComponentsTests {
             .attr("class")
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get video player attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for video player"))?;
+        let class_attr = class_attr
+            .ok_or_else(|| anyhow::anyhow!("No class attribute found for video player"))?;
 
         if !class_attr.contains("hi-video-player") {
             return Ok(TestResult::failure(
@@ -83,10 +87,13 @@ impl AdvancedComponentsTests {
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let audio_waveform = driver.find(By::Css(".hi-audio-waveform")).await.map_err(|e| {
-            warn!("AudioWaveform element not found: {}", e);
-            anyhow::anyhow!("AudioWaveform element not found: {}", e)
-        })?;
+        let audio_waveform = driver
+            .find(By::Css(".hi-audio-waveform"))
+            .await
+            .map_err(|e| {
+                warn!("AudioWaveform element not found: {}", e);
+                anyhow::anyhow!("AudioWaveform element not found: {}", e)
+            })?;
 
         info!("AudioWaveform element found");
 
@@ -94,8 +101,8 @@ impl AdvancedComponentsTests {
             .attr("class")
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get audio waveform attributes: {}", e))?;
-        let class_attr =
-            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for audio waveform"))?;
+        let class_attr = class_attr
+            .ok_or_else(|| anyhow::anyhow!("No class attribute found for audio waveform"))?;
 
         if !class_attr.contains("hi-audio-waveform") {
             return Ok(TestResult::failure(
@@ -130,10 +137,13 @@ impl AdvancedComponentsTests {
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let rich_text_editor = driver.find(By::Css(".hi-rich-text-editor")).await.map_err(|e| {
-            warn!("RichTextEditor element not found: {}", e);
-            anyhow::anyhow!("RichTextEditor element not found: {}", e)
-        })?;
+        let rich_text_editor = driver
+            .find(By::Css(".hi-rich-text-editor"))
+            .await
+            .map_err(|e| {
+                warn!("RichTextEditor element not found: {}", e);
+                anyhow::anyhow!("RichTextEditor element not found: {}", e)
+            })?;
 
         info!("RichTextEditor element found");
 
@@ -141,8 +151,8 @@ impl AdvancedComponentsTests {
             .attr("class")
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get rich text editor attributes: {}", e))?;
-        let class_attr =
-            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for rich text editor"))?;
+        let class_attr = class_attr
+            .ok_or_else(|| anyhow::anyhow!("No class attribute found for rich text editor"))?;
 
         if !class_attr.contains("hi-rich-text-editor") {
             return Ok(TestResult::failure(
@@ -194,7 +204,8 @@ impl AdvancedComponentsTests {
             .attr("class")
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get drag layer attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for drag layer"))?;
+        let class_attr =
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for drag layer"))?;
 
         if !class_attr.contains("hi-drag-layer") {
             return Ok(TestResult::failure(
@@ -248,7 +259,8 @@ impl AdvancedComponentsTests {
             .attr("class")
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get collapsible attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for collapsible"))?;
+        let class_attr = class_attr
+            .ok_or_else(|| anyhow::anyhow!("No class attribute found for collapsible"))?;
 
         if !class_attr.contains("hi-collapsible") {
             return Ok(TestResult::failure(
@@ -283,10 +295,13 @@ impl AdvancedComponentsTests {
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let zoom_controls = driver.find(By::Css(".hi-zoom-controls")).await.map_err(|e| {
-            warn!("ZoomControls element not found: {}", e);
-            anyhow::anyhow!("ZoomControls element not found: {}", e)
-        })?;
+        let zoom_controls = driver
+            .find(By::Css(".hi-zoom-controls"))
+            .await
+            .map_err(|e| {
+                warn!("ZoomControls element not found: {}", e);
+                anyhow::anyhow!("ZoomControls element not found: {}", e)
+            })?;
 
         info!("ZoomControls element found");
 
@@ -294,8 +309,8 @@ impl AdvancedComponentsTests {
             .attr("class")
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get zoom controls attributes: {}", e))?;
-        let class_attr =
-            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for zoom controls"))?;
+        let class_attr = class_attr
+            .ok_or_else(|| anyhow::anyhow!("No class attribute found for zoom controls"))?;
 
         if !class_attr.contains("hi-zoom-controls") {
             return Ok(TestResult::failure(
@@ -371,21 +386,21 @@ impl AdvancedComponentsTests {
         }
 
         // Check for guide content elements
-        let _guide_content = driver.find(By::Css(".hi-user-guide-content")).await.map_err(|e| {
-            warn!("UserGuide content not found: {}", e);
-            anyhow::anyhow!("UserGuide content not found: {}", e)
-        })?;
+        let _guide_content = driver
+            .find(By::Css(".hi-user-guide-content"))
+            .await
+            .map_err(|e| {
+                warn!("UserGuide content not found: {}", e);
+                anyhow::anyhow!("UserGuide content not found: {}", e)
+            })?;
 
         info!("UserGuide content found");
 
         // Verify progress badge exists
-        let _progress_badge = driver
-            .find(By::Css(".hi-badge"))
-            .await
-            .map_err(|e| {
-                warn!("Progress badge not found: {}", e);
-                anyhow::anyhow!("Progress badge not found: {}", e)
-            })?;
+        let _progress_badge = driver.find(By::Css(".hi-badge")).await.map_err(|e| {
+            warn!("Progress badge not found: {}", e);
+            anyhow::anyhow!("Progress badge not found: {}", e)
+        })?;
 
         info!("Progress badge found");
 
@@ -427,7 +442,8 @@ impl AdvancedComponentsTests {
         Ok(TestResult {
             component: "UserGuide".to_string(),
             status: super::TestStatus::Success,
-            message: "UserGuide component renders correctly and responds to interactions".to_string(),
+            message: "UserGuide component renders correctly and responds to interactions"
+                .to_string(),
             duration_ms: duration,
             screenshot_path: None,
         })
@@ -472,42 +488,56 @@ impl AdvancedComponentsTests {
         }
 
         // Verify timeline items exist
-        let timeline_items = driver.find_all(By::Css(".hi-timeline-item")).await.map_err(|e| {
-            warn!("Timeline items not found: {}", e);
-            anyhow::anyhow!("Timeline items not found: {}", e)
-        })?;
+        let timeline_items = driver
+            .find_all(By::Css(".hi-timeline-item"))
+            .await
+            .map_err(|e| {
+                warn!("Timeline items not found: {}", e);
+                anyhow::anyhow!("Timeline items not found: {}", e)
+            })?;
 
         info!("Found {} timeline items", timeline_items.len());
 
         if timeline_items.len() < 2 {
             return Ok(TestResult::failure(
                 "Timeline",
-                &format!("Expected at least 2 timeline items, found {}", timeline_items.len()),
+                &format!(
+                    "Expected at least 2 timeline items, found {}",
+                    timeline_items.len()
+                ),
             ));
         }
 
         // Verify timeline dots exist
-        let timeline_dots = driver.find_all(By::Css(".hi-timeline-dot")).await.map_err(|e| {
-            warn!("Timeline dots not found: {}", e);
-            anyhow::anyhow!("Timeline dots not found: {}", e)
-        })?;
+        let timeline_dots = driver
+            .find_all(By::Css(".hi-timeline-dot"))
+            .await
+            .map_err(|e| {
+                warn!("Timeline dots not found: {}", e);
+                anyhow::anyhow!("Timeline dots not found: {}", e)
+            })?;
 
         info!("Found {} timeline dots", timeline_dots.len());
 
         if timeline_dots.len() != timeline_items.len() {
             return Ok(TestResult::failure(
                 "Timeline",
-                &format!("Timeline items ({}) and dots ({}) count mismatch",
-                         timeline_items.len(),
-                         timeline_dots.len()),
+                &format!(
+                    "Timeline items ({}) and dots ({}) count mismatch",
+                    timeline_items.len(),
+                    timeline_dots.len()
+                ),
             ));
         }
 
         // Click on a timeline header to test expand/collapse
-        let timeline_header = driver.find(By::Css(".hi-timeline-header")).await.map_err(|e| {
-            warn!("Timeline header not found: {}", e);
-            anyhow::anyhow!("Timeline header not found: {}", e)
-        })?;
+        let timeline_header = driver
+            .find(By::Css(".hi-timeline-header"))
+            .await
+            .map_err(|e| {
+                warn!("Timeline header not found: {}", e);
+                anyhow::anyhow!("Timeline header not found: {}", e)
+            })?;
 
         timeline_header
             .click()
@@ -526,7 +556,11 @@ impl AdvancedComponentsTests {
 
         let mut found_statuses = Vec::new();
         for status_class in &status_classes {
-            if driver.find(By::Css(format!(".{}", status_class))).await.is_ok() {
+            if driver
+                .find(By::Css(format!(".{}", status_class)))
+                .await
+                .is_ok()
+            {
                 found_statuses.push(status_class);
                 info!("Found timeline item with status: {}", status_class);
             }
@@ -535,7 +569,10 @@ impl AdvancedComponentsTests {
         if found_statuses.len() < 2 {
             return Ok(TestResult::failure(
                 "Timeline",
-                &format!("Expected at least 2 different status types, found {}", found_statuses.len()),
+                &format!(
+                    "Expected at least 2 different status types, found {}",
+                    found_statuses.len()
+                ),
             ));
         }
 

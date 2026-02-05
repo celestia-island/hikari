@@ -410,7 +410,13 @@ mod tests {
     #[tokio::test]
     async fn test_build_router_with_static_assets() {
         let static_mounts = vec![StaticMountConfig::new("./dist", "/static")];
-        let router = build_router(vec![], static_mounts, HashMap::new(), None, Some("public".to_string()));
+        let router = build_router(
+            vec![],
+            static_mounts,
+            HashMap::new(),
+            None,
+            Some("public".to_string()),
+        );
 
         assert!(router.is_ok());
     }

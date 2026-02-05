@@ -51,7 +51,8 @@ impl DataComponentsTests {
             .attr("class")
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get table attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for table"))?;
+        let class_attr =
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for table"))?;
 
         if !class_attr.contains("hi-table") {
             return Ok(TestResult::failure(
@@ -110,7 +111,8 @@ impl DataComponentsTests {
             .attr("class")
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get tree attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for tree"))?;
+        let class_attr =
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for tree"))?;
 
         if !class_attr.contains("hi-tree") {
             return Ok(TestResult::failure(
@@ -229,7 +231,8 @@ impl DataComponentsTests {
             .attr("class")
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get dropdown attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for dropdown"))?;
+        let class_attr =
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for dropdown"))?;
 
         if !class_attr.contains("hi-dropdown") {
             return Ok(TestResult::failure(

@@ -4,9 +4,9 @@
 #[cfg(test)]
 mod tests {
 
-    use dioxus::prelude::*;
     use std::collections::HashMap;
 
+    use dioxus::prelude::*;
     use hikari_extra_components::{
         connection::Connection,
         history::{HistoryAction, HistoryState, SerializedNodeState},

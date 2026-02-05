@@ -2,7 +2,6 @@
 // Timeline component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-
 use hikari_palette::classes::{ClassesBuilder, TextColor};
 
 /// Timeline position
@@ -29,8 +28,7 @@ impl Default for TimelineStatus {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
-#[derive(Default)]
+#[derive(Clone, PartialEq, Props, Default)]
 pub struct TimelineItemProps {
     /// Item title
     #[props(into)]
@@ -60,7 +58,6 @@ pub struct TimelineItemProps {
     #[props(default)]
     pub extra: Option<Element>,
 }
-
 
 /// Timeline item component
 ///

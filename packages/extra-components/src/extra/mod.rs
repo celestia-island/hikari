@@ -17,8 +17,8 @@
 //! - [`Timeline`] - Event timeline with milestones
 //!
 pub mod audio_waveform;
-pub mod collapsible;
 pub mod code_highlighter;
+pub mod collapsible;
 pub mod drag_layer;
 pub mod rich_text_editor;
 pub mod timeline;
@@ -27,8 +27,8 @@ pub mod video_player;
 pub mod zoom_controls;
 
 pub use audio_waveform::*;
-pub use collapsible::*;
 pub use code_highlighter::*;
+pub use collapsible::*;
 pub use drag_layer::*;
 pub use rich_text_editor::*;
 pub use timeline::*;

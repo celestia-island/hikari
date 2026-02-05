@@ -194,9 +194,10 @@ pub fn init(container_selector: &str) {
     // Process each container
     for i in 0..containers.length() {
         if let Some(element) = containers.get(i)
-            && let Ok(container) = element.dyn_into::<web_sys::Element>() {
-                setup_custom_scrollbar(&container, 0);
-            }
+            && let Ok(container) = element.dyn_into::<web_sys::Element>()
+        {
+            setup_custom_scrollbar(&container, 0);
+        }
     }
 }
 
@@ -229,9 +230,10 @@ fn cleanup_broken_scrollbar_and_save_scroll(container: &web_sys::Element) -> i32
 
     // Try to save scroll position from the existing content layer
     if let Ok(Some(content)) = container.query_selector(".custom-scrollbar-content")
-        && let Some(html_el) = content.dyn_ref::<web_sys::HtmlElement>() {
-            scroll_top = html_el.scroll_top();
-        }
+        && let Some(html_el) = content.dyn_ref::<web_sys::HtmlElement>()
+    {
+        scroll_top = html_el.scroll_top();
+    }
 
     let _ = container
         .class_list()
@@ -463,9 +465,10 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
 
     // Restore scroll position if this is a re-initialization
     if initial_scroll_top > 0
-        && let Some(content_html) = content_layer.dyn_ref::<web_sys::HtmlElement>() {
-            content_html.set_scroll_top(initial_scroll_top);
-        }
+        && let Some(content_html) = content_layer.dyn_ref::<web_sys::HtmlElement>()
+    {
+        content_html.set_scroll_top(initial_scroll_top);
+    }
 
     // Clone for closures
     let _wrapper_clone = wrapper.clone();
@@ -962,20 +965,22 @@ fn setup_mutation_observer() {
             let selectors = selectors.to_vec();
             let callback = Closure::wrap(Box::new(move || {
                 if let Some(window) = web_sys::window()
-                    && let Some(document) = window.document() {
-                        // Rescan all selectors
-                        for selector in &selectors {
-                            if let Ok(elements) = document.query_selector_all(selector) {
-                                for i in 0..elements.length() {
-                                    if let Some(node) = elements.get(i)
-                                        && let Ok(element) = node.dyn_into::<web_sys::Element>()
-                                            && !has_class(&element, "custom-scrollbar-container") {
-                                                init_single(&element);
-                                            }
+                    && let Some(document) = window.document()
+                {
+                    // Rescan all selectors
+                    for selector in &selectors {
+                        if let Ok(elements) = document.query_selector_all(selector) {
+                            for i in 0..elements.length() {
+                                if let Some(node) = elements.get(i)
+                                    && let Ok(element) = node.dyn_into::<web_sys::Element>()
+                                    && !has_class(&element, "custom-scrollbar-container")
+                                {
+                                    init_single(&element);
                                 }
                             }
                         }
                     }
+                }
             }) as Box<dyn FnMut()>);
 
             // Use requestAnimationFrame to run before next paint

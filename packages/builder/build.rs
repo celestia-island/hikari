@@ -91,9 +91,10 @@ fn find_workspace_root(start: &Path) -> PathBuf {
         let cargo_toml = current.join("Cargo.toml");
         if cargo_toml.exists()
             && let Ok(content) = fs::read_to_string(&cargo_toml)
-                && content.contains("[workspace]") {
-                    return current.to_path_buf();
-                }
+            && content.contains("[workspace]")
+        {
+            return current.to_path_buf();
+        }
 
         match current.parent() {
             Some(parent) if parent != current => {
@@ -117,10 +118,11 @@ fn scan_scss_files(workspace_root: &Path) -> anyhow::Result<Vec<String>> {
             let entry = entry?;
             let path = entry.path();
             if path.extension().and_then(|s| s.to_str()) == Some("scss")
-                && let Some(file_name) = path.file_stem().and_then(|s| s.to_str()) {
-                    scss_files.push(file_name.to_string());
-                    println!("   ✓ {}.scss", file_name);
-                }
+                && let Some(file_name) = path.file_stem().and_then(|s| s.to_str())
+            {
+                scss_files.push(file_name.to_string());
+                println!("   ✓ {}.scss", file_name);
+            }
         }
     }
 
@@ -133,11 +135,12 @@ fn scan_scss_files(workspace_root: &Path) -> anyhow::Result<Vec<String>> {
             let entry = entry?;
             let path = entry.path();
             if path.extension().and_then(|s| s.to_str()) == Some("scss")
-                && let Some(file_name) = path.file_stem().and_then(|s| s.to_str()) {
-                    // Add with theme- prefix
-                    scss_files.push(format!("theme-{}", file_name));
-                    println!("   ✓ theme-{}.scss", file_name);
-                }
+                && let Some(file_name) = path.file_stem().and_then(|s| s.to_str())
+            {
+                // Add with theme- prefix
+                scss_files.push(format!("theme-{}", file_name));
+                println!("   ✓ theme-{}.scss", file_name);
+            }
         }
     }
 

@@ -32,9 +32,7 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
         let cache = match cache.read() {
             Ok(guard) => guard,
             Err(e) => {
-                web_sys::console::error_1(
-                    &format!("❌ Icon cache poisoned: {}", e).into(),
-                );
+                web_sys::console::error_1(&format!("❌ Icon cache poisoned: {}", e).into());
                 return None;
             }
         };

@@ -144,18 +144,45 @@ where
 
 ---
 
-### 优先级 2: 重新生成 System 首页截图 ⚠️ 部分完成
+### 优先级 2: 重新生成 System 首页截图 ✅ 已完成
 
 **问题**: `system.png` 路由索引定位不准确，无法通过 E2E 测试生成
 
-**原因**: 
-- ROUTES 数组定义包含 28 个路由（索引 0-27）
-- system 首页的实际路由索引需要重新确认
-- 由于时间和复杂度限制，未能准确定位路由索引
+**根本原因**: 
+- ROUTES 数组中多行格式的路由定义导致解析错误
+- 只有 28 个路由被正确识别（实际有 34 个）
+- system 首页的索引从 23 变为 29
 
-**当前状态**: 
-- system_icons.png 和 system_animations.png 已更新 ✅
-- system.png 仍为旧版本 (10:15) ⚠️
+**解决方案**:
+1. 将所有多行格式的路由转换为单行格式
+2. 重新编译和构建 Docker 镜像
+3. 使用正确的路由索引（29）生成 system.png
+
+**修复详情**:
+```rust
+// 修改前（多行格式）
+(
+    "/components/entry/number_input",
+    "components_entry_number_input",
+),
+
+// 修改后（单行格式）
+("/components/entry/number_input", "components_entry_number_input"),
+```
+
+**执行时间**: 2026-02-05 19:29
+
+**结果**: 
+- system.png 已成功更新 ✅
+- 所有 34 个路由现在都可以被正确识别
+- system.css, system_palette, system_animations 也已更新 ✅
+
+**System Screenshots (5/5) ✅**:
+- system.png (19:29) ✅
+- system_css.png (19:29) ✅
+- system_icons.png (18:27) ✅
+- system_palette.png (19:29) ✅
+- system_animations.png (18:26) ✅
 
 **待处理**: 
 - 需要重新确认 ROUTES 数组的定义和路由索引

@@ -436,7 +436,7 @@ impl VisualQualityTests {
         info!("Testing entry components quality...");
 
         driver.goto(&format!("{}/components/entry/cascader", base_url)).await?;
-        tokio::time::sleep(Duration::from_millis(8000)).await;
+        tokio::time::sleep(Duration::from_millis(12000)).await;
 
         match driver.find(By::Css("h1, .page-title")).await {
             Ok(_) => {
@@ -527,7 +527,7 @@ impl VisualQualityTests {
         info!("Testing extra components quality...");
 
         driver.goto(&format!("{}/components/extra/collapsible", base_url)).await?;
-        tokio::time::sleep(Duration::from_millis(8000)).await;
+        tokio::time::sleep(Duration::from_millis(12000)).await;
 
         match driver.find(By::Css("h1, .page-title")).await {
             Ok(_) => {

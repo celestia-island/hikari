@@ -46,6 +46,8 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 use web_sys::HtmlElement;
 
+use crate::global_manager::global_animation_manager;
+
 use super::{
     context::AnimationContext,
     state::AnimationState as StructAnimationState,

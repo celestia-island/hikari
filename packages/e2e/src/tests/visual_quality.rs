@@ -104,7 +104,7 @@ impl VisualQualityTests {
 
         test.page_load_time_ms = load_start.elapsed().as_millis() as u64;
 
-        let screenshot_before = Self::capture_screenshot(driver, "button", "initial", "before")
+        let _screenshot_before = Self::capture_screenshot(driver, "button", "initial", "before")
             .await
             .unwrap_or_else(|e| {
                 warn!("Failed to capture before screenshot: {}", e);

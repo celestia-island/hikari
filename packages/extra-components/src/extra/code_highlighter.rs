@@ -4,6 +4,11 @@
 use dioxus::prelude::*;
 use hikari_palette::classes::ClassesBuilder;
 
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::{JsCast, JsValue};
+#[cfg(target_arch = "wasm32")]
+use web_sys::Clipboard;
+
 /// CodeHighlighter component type wrapper (for implementing StyledComponent)
 pub struct CodeHighlighterComponent;
 
@@ -148,8 +153,20 @@ pub fn CodeHighlighter(props: CodeHighlighterProps) -> Element {
         #[cfg(target_arch = "wasm32")]
         {
             if let Some(window) = web_sys::window() {
-                if let Some(clipboard) = window.navigator().clipboard() {
-                    let _ = clipboard.write_text(&code_to_copy);
+                let js_window: &JsValue = window.as_ref();
+                let navigator_opt = js_sys::Reflect::get(js_window, &"navigator".into()).ok();
+                if let Some(navigator_js) = navigator_opt {
+                    let clipboard_opt =
+                        js_sys::Reflect::get(&navigator_js, &"clipboard".into()).ok();
+                    if let Some(clipboard_js) = clipboard_opt {
+                        let write_text_fn =
+                            js_sys::Reflect::get(&clipboard_js, &"writeText".into());
+                        if let Ok(func) = write_text_fn {
+                            let text = JsValue::from(code_to_copy.clone());
+                            let promise = js_sys::Function::from(func).call1(&clipboard_js, &text);
+                            let _ = promise;
+                        }
+                    }
                 }
             }
         }
@@ -163,7 +180,7 @@ pub fn CodeHighlighter(props: CodeHighlighterProps) -> Element {
 
         #[cfg(target_arch = "wasm32")]
         {
-            let copied_clone = copied.clone();
+            let mut copied_clone = copied.clone();
             let _ = web_sys::window().and_then(|w| {
                 w.set_timeout_with_callback_and_timeout_and_arguments_0(
                     wasm_bindgen::closure::Closure::once_into_js(move || {
@@ -173,6 +190,7 @@ pub fn CodeHighlighter(props: CodeHighlighterProps) -> Element {
                     .unchecked_ref(),
                     2000,
                 )
+                .ok()
             });
         }
 

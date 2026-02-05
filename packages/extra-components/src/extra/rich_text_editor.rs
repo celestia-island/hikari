@@ -6,7 +6,9 @@ use hikari_components::basic::IconButton;
 use hikari_icons::MdiIcon;
 use hikari_palette::classes::ClassesBuilder;
 #[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{JsCast, JsValue};
+#[cfg(target_arch = "wasm32")]
+use web_sys::HtmlElement;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum EditorMode {
@@ -104,9 +106,14 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
         {
             if let Some(window) = web_sys::window() {
                 if let Some(document) = window.document() {
-                    let result = document.exec_command(command, false, value);
-                    if !result.unwrap_or(false) {
-                        web_sys::console::log_1(&format!("execCommand failed: {}", command).into());
+                    let doc_js: &JsValue = document.as_ref();
+                    let exec_command_fn = js_sys::Reflect::get(doc_js, &"execCommand".into());
+                    if let Ok(func) = exec_command_fn {
+                        let this = JsValue::from(document.clone());
+                        let cmd = JsValue::from(command);
+                        let val = value.map(JsValue::from).unwrap_or(JsValue::NULL);
+                        let _ =
+                            js_sys::Function::from(func).call3(&this, &cmd, &JsValue::FALSE, &val);
                     }
                 }
             }
@@ -150,19 +157,16 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
         format_text("insertOrderedList", None);
     };
 
-    let on_content_change = move |event: Event<FormData>| {
+    let on_content_change = move |_event: Event<FormData>| {
         if let Some(on_change) = props.on_change.as_ref() {
             #[cfg(target_arch = "wasm32")]
             {
                 if let Some(window) = web_sys::window() {
                     if let Some(document) = window.document() {
-                        if let Some(element) = document
-                            .get_elements_by_class_name("hi-editor-content")
-                            .get(0)
-                        {
-                            if let Some(element) = element.dyn_ref::<web_sys::HtmlElement>() {
-                                if let Ok(inner_html) = element.inner_html() {
-                                    on_change.call(inner_html);
+                        if let Ok(element) = document.query_selector(".hi-editor-content") {
+                            if let Some(element) = element {
+                                if let Some(element) = element.dyn_ref::<web_sys::HtmlElement>() {
+                                    on_change.call(element.inner_html());
                                 }
                             }
                         }

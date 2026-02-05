@@ -9,7 +9,7 @@ use wasm_bindgen::JsCast;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
-use web_sys::window;
+use web_sys::{window, AudioNode};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum WaveformColor {
@@ -147,8 +147,8 @@ pub fn AudioWaveform(props: AudioWaveformProps) -> Element {
                                 .unwrap();
                             let analyser = audio_context.create_analyser().unwrap();
 
-                            track.connect(&analyser);
-                            analyser.connect(&audio_context.destination().unwrap());
+                            let _ = track.connect_with_audio_node(&analyser);
+                            let _ = analyser.connect_with_audio_node(&audio_context.destination());
 
                             analyser.set_fft_size(512);
 

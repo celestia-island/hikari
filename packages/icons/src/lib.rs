@@ -253,9 +253,9 @@ fn log_icon_warning_once(icon_name: String) {
             WARNED_ICONS.get_or_init(|| std::sync::RwLock::new(std::collections::HashSet::new()));
         let mut warned = match warned.write() {
             Ok(guard) => guard,
-            Err(_) => {
-                // Lock is poisoned, create a new set
-                std::collections::HashSet::new()
+            Err(e) => {
+                // Lock is poisoned, try to recover
+                e.into_inner()
             }
         };
 

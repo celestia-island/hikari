@@ -3,6 +3,7 @@
 
 use anyhow::Result;
 use chrono::Utc;
+use serde_json::Value as JsonValue;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use thirtyfour::{By, WebDriver};
@@ -854,6 +855,48 @@ impl VisualQualityTests {
         Ok(results)
     }
 
+    /// Check z-index layering of elements
+    async fn check_z_index_layering(driver: &WebDriver, component_name: &str) -> Result<(bool, String)> {
+        let script = r#"
+            (function() {
+                const elements = document.querySelectorAll('div, button, a, nav, header, footer, .dropdown, .modal, .drawer');
+                let count = 0;
+                
+                elements.forEach(el => {
+                    const style = window.getComputedStyle(el);
+                    const zIndex = parseInt(style.zIndex) || 0;
+                    const position = style.position;
+                    
+                    if (zIndex > 0 && position !== 'static') {
+                        count++;
+                    }
+                });
+                
+                return count;
+            })();
+        "#;
+
+        match driver.execute(script, vec![]).await {
+            Ok(result) => {
+                let count: i64 = match result.convert() {
+                    Ok(c) => c,
+                    Err(_) => 0,
+                };
+                
+                if count > 0 {
+                    info!("Found {} elements with z-index for {}", count, component_name);
+                    return Ok((true, format!("{} elements have z-index layering", count)));
+                }
+            }
+            Err(e) => {
+                warn!("Failed to check z-index for {}: {}", component_name, e);
+                return Ok((false, format!("Error: {}", e)));
+            }
+        }
+
+        Ok((false, "No z-index elements found".to_string()))
+    }
+
     /// Capture screenshot and save to file
     async fn capture_screenshot(driver: &WebDriver, component_name: &str, check_name: &str, suffix: &str) -> Result<String> {
         let output_dir = PathBuf::from("target/e2e_screenshots/visual_quality");
@@ -966,6 +1009,31 @@ impl VisualQualityTests {
                         description: "Page content is visible".to_string(),
                         passed: false,
                         details: format!("Failed to find DOM elements: {}", e),
+                        screenshot_before: None,
+                        screenshot_after: None,
+                    });
+                }
+            }
+
+            match Self::check_z_index_layering(driver, page_name).await {
+                Ok((passed, details)) => {
+                    test.add_check(VisualCheck {
+                        check_name: "Z-Index Layering".to_string(),
+                        check_type: VisualCheckType::Alignment,
+                        description: "Z-index layering is correct".to_string(),
+                        passed,
+                        details,
+                        screenshot_before: None,
+                        screenshot_after: None,
+                    });
+                }
+                Err(e) => {
+                    test.add_check(VisualCheck {
+                        check_name: "Z-Index Layering".to_string(),
+                        check_type: VisualCheckType::Alignment,
+                        description: "Z-index layering check".to_string(),
+                        passed: false,
+                        details: format!("Failed: {}", e),
                         screenshot_before: None,
                         screenshot_after: None,
                     });

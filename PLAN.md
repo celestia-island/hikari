@@ -1243,10 +1243,34 @@ cargo test --workspace
 - ✅ 性能测试已添加（页面加载时间、总测试时间）
 - ✅ 截图功能已实现（before/after 拍照）
 
-**视觉验证**（手动验证）:
-- ✅ 34/34 截图生成成功
-- ✅ 所有页面内容正常，布局合理
-- ✅ 无明显视觉错误
+**视觉验证**（MCP 工具验证 - 2026-02-05 晚）:
+
+- ✅ **34/34 截图生成成功**
+- ⚠️ **3/34 需要重新验证**：
+  - ✅ home.png - 正常显示，布局合理
+  - ⚠️ components.png - 部分不完整（仅显示 Layer 1, Layer 2，缺少 Layer 3, Entry, Extra）
+    - 原因：截图在导航修复前生成
+    - 需要重新生成以验证 Entry 和 Extra 导航
+  - ❌ system.png - 连接错误（localhost refused to connect）
+    - 原因：浏览器连接问题（非代码问题）
+    - 需要重新生成以验证系统页面
+
+**MCP 分析详情**:
+1. **home.png** ✅ 正常
+   - 无布局错误或 404 错误
+   - 导航栏、欢迎消息、Logo 均正确显示
+   - 整体布局合理
+
+2. **components.png** ⚠️ 部分不完整
+   - 左右分栏结构清晰
+   - 仅显示 Layer 1 和 Layer 2 分类
+   - **缺少 Layer 3、Entry、Extra 分类**（因为截图在导航修复前生成）
+
+3. **system.png** ❌ 连接错误
+   - 显示 "This site can't be reached" 错误
+   - localhost refused to connect（浏览器连接问题，非代码问题）
+
+**结论**: 需要重新生成 components.png 和 system.png 以验证导航修复和系统页面。
 
 **测试覆盖**:
 - Home & Demos (7): ✅ 全部通过

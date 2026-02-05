@@ -2,8 +2,6 @@
 // Visual quality and interactive behavior testing
 
 use anyhow::Result;
-use chrono::Utc;
-use serde_json::Value as JsonValue;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use thirtyfour::{By, WebDriver};

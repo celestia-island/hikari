@@ -120,6 +120,11 @@ pub enum MdiIcon {
     // Other
     TrophyAward,
     Marker,
+    SwapHorizontal,
+    ArrowExpandHorizontal,
+    ChartTimeline,
+    BookOpen,
+    MagnifyPlus,
 
     // Theme
     MoonWaningCrescent,
@@ -212,6 +217,11 @@ impl std::fmt::Display for MdiIcon {
             MdiIcon::Music => write!(f, "music"),
             MdiIcon::TrophyAward => write!(f, "trophy-award"),
             MdiIcon::Marker => write!(f, "marker"),
+            MdiIcon::SwapHorizontal => write!(f, "swap-horizontal"),
+            MdiIcon::ArrowExpandHorizontal => write!(f, "arrow-expand-horizontal"),
+            MdiIcon::ChartTimeline => write!(f, "chart-timeline"),
+            MdiIcon::BookOpen => write!(f, "book-open"),
+            MdiIcon::MagnifyPlus => write!(f, "magnify-plus"),
             MdiIcon::MoonWaningCrescent => write!(f, "moon-waning-crescent"),
             MdiIcon::WhiteBalanceSunny => write!(f, "white-balance-sunny"),
         }
@@ -304,6 +314,11 @@ impl std::convert::From<&str> for MdiIcon {
             "music" => MdiIcon::Music,
             "trophy-award" => MdiIcon::TrophyAward,
             "marker" => MdiIcon::Marker,
+            "swap-horizontal" => MdiIcon::SwapHorizontal,
+            "arrow-expand-horizontal" => MdiIcon::ArrowExpandHorizontal,
+            "chart-timeline" => MdiIcon::ChartTimeline,
+            "book-open" => MdiIcon::BookOpen,
+            "magnify-plus" => MdiIcon::MagnifyPlus,
             "moon-waning-crescent" => MdiIcon::MoonWaningCrescent,
             "white-balance-sunny" => MdiIcon::WhiteBalanceSunny,
             _ => MdiIcon::Alert, // Default fallback

@@ -3,56 +3,25 @@
 
 use dioxus::prelude::*;
 
-use crate::{app::Route, components::Layout};
-use _palette::classes::{BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor};
+use crate::{
+    app::Route,
+    components::{CodeBlock, Layout},
+};
 use _icons::{Icon, MdiIcon};
+use _palette::classes::{
+    BgColor as Bg, BorderRadius as Radius, ClassesBuilder as Classes, Display as Disp,
+    FlexDirection as Flex, FontSize as FontSz, FontWeight as FWeight, Gap as Gp,
+    MarginBottom as MBot, Padding as Pdg, TextColor as TColor,
+};
+use _palette::classes::{
+    BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap,
+    MarginBottom, Padding, TextColor,
+};
 
 /// Icons showcase page
 #[allow(non_snake_case)]
 #[component]
 pub fn SystemIcons() -> Element {
-    let icon_categories = vec![
-        ("Navigation", "导航图标", vec![
-            MdiIcon::Home,
-            MdiIcon::Menu,
-            MdiIcon::Search,
-            MdiIcon::ChevronDown,
-            MdiIcon::ChevronLeft,
-            MdiIcon::ChevronRight,
-        ]),
-        ("Actions", "操作图标", vec![
-            MdiIcon::Plus,
-            MdiIcon::Minus,
-            MdiIcon::Check,
-            MdiIcon::X,
-            MdiIcon::Pencil,
-            MdiIcon::Trash,
-            MdiIcon::Refresh,
-        ]),
-        ("Status", "状态图标", vec![
-            MdiIcon::AlertCircle,
-            MdiIcon::CheckCircle,
-            MdiIcon::Circle,
-            MdiIcon::Loader,
-            MdiIcon::Star,
-            MdiIcon::Heart,
-        ]),
-        ("Files", "文件图标", vec![
-            MdiIcon::File,
-            MdiIcon::Folder,
-            MdiIcon::Image,
-            MdiIcon::Music,
-            MdiIcon::Video,
-        ]),
-        ("Communication", "通讯图标", vec![
-            MdiIcon::Message,
-            MdiIcon::Mail,
-            MdiIcon::Phone,
-            MdiIcon::Bell,
-            MdiIcon::Wifi,
-        ]),
-    ];
-
     rsx! {
         Layout {
             current_route: Route::SystemIcons {},
@@ -76,65 +45,143 @@ pub fn SystemIcons() -> Element {
                             "Icons"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Powered by Lucide - 1000+ beautifully crafted icons"
+                            "Powered by Lucide - 1000+ beautifully crafted icons for modern web apps"
                         }
                     }
 
                     // Icon categories
-                    div {
-                        class: ClassesBuilder::new()
-                            .add_raw("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6")
-                            .add(MarginBottom::Mb8)
-                            .build(),
+                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
+                        h2 {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::X2xl)
+                                .add(FontWeight::Semibold)
+                                .add(TextColor::Primary)
+                                .add(MarginBottom::Mb4)
+                                .build(),
+                            "Icon Categories"
+                        }
+                        p { class: ClassesBuilder::new().add(TextColor::Muted).add(FontSize::Lg).add(MarginBottom::Mb4).build(),
+                            "Browse icons by category"
+                        }
+                    }
 
-                        for (category_name, category_desc, icons) in icon_categories {
-                            div {
+                    // Categories
+                    div { class: ClassesBuilder::new()
+                        .add_raw("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6")
+                        .build(),
+
+                        // Navigation Icons
+                        div { class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Rounded).add(Padding::P6).build(),
+                            h3 {
                                 class: ClassesBuilder::new()
-                                    .add(BgColor::Surface)
-                                    .add(BorderRadius::Lg)
-                                    .add(Padding::P6)
+                                    .add(FontSize::Lg)
+                                    .add(FontWeight::Semibold)
+                                    .add(TextColor::Primary)
+                                    .add(MarginBottom::Mb2)
                                     .build(),
+                                "Navigation"
+                            }
+                            p { class: ClassesBuilder::new().add(TextColor::Muted).add(FontSize::Sm).add(MarginBottom::Mb4).build(),
+                                "Home, menu items, breadcrumbs"
+                            }
+                            div { class: ClassesBuilder::new().add(Display::Grid).add(Gap::Gap4).build(),
+                                Icon { icon: MdiIcon::Home, size: 32 }
+                                Icon { icon: MdiIcon::Menu, size: 32 }
+                                Icon { icon: MdiIcon::ChevronLeft, size: 32 }
+                                Icon { icon: MdiIcon::ChevronRight, size: 32 }
+                                Icon { icon: MdiIcon::ChevronUp, size: 32 }
+                                Icon { icon: MdiIcon::ChevronDown, size: 32 }
+                            }
+                        }
 
-                                h3 {
-                                    class: ClassesBuilder::new()
-                                        .add(FontSize::Xl)
-                                        .add(FontWeight::Semibold)
-                                        .add(TextColor::Primary)
-                                        .add(MarginBottom::Mb4)
-                                        .build(),
-                                    "{category_name}"
-                                }
-                                p {
-                                    class: ClassesBuilder::new()
-                                        .add(TextColor::Muted)
-                                        .add(FontSize::Sm)
-                                        .add(MarginBottom::Mb2)
-                                        .build(),
-                                    "{category_desc}"
-                                }
+                        // Actions Icons
+                        div { class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Rounded).add(Padding::P6).build(),
+                            h3 {
+                                class: ClassesBuilder::new()
+                                    .add(FontSize::Lg)
+                                    .add(FontWeight::Semibold)
+                                    .add(TextColor::Primary)
+                                    .add(MarginBottom::Mb2)
+                                    .build(),
+                                "Actions"
+                            }
+                            p { class: ClassesBuilder::new().add(TextColor::Muted).add(FontSize::Sm).add(MarginBottom::Mb4).build(),
+                                "Search, settings, user actions"
+                            }
+                            div { class: ClassesBuilder::new().add(Display::Grid).add(Gap::Gap4).build(),
+                                Icon { icon: MdiIcon::Search, size: 32 }
+                                Icon { icon: MdiIcon::Cog, size: 32 }
+                                Icon { icon: MdiIcon::Bell, size: 32 }
+                                Icon { icon: MdiIcon::Check, size: 32 }
+                                Icon { icon: MdiIcon::X, size: 32 }
+                            }
+                        }
 
-                                div {
-                                    class: ClassesBuilder::new()
-                                        .add_raw("flex flex-wrap gap-3")
-                                        .build(),
+                        // Status Icons
+                        div { class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Rounded).add(Padding::P6).build(),
+                            h3 {
+                                class: ClassesBuilder::new()
+                                    .add(FontSize::Lg)
+                                    .add(FontWeight::Semibold)
+                                    .add(TextColor::Primary)
+                                    .add(MarginBottom::Mb2)
+                                    .build(),
+                                "Status"
+                            }
+                            p { class: ClassesBuilder::new().add(TextColor::Muted).add(FontSize::Sm).add(MarginBottom::Mb4).build(),
+                                "Success, warning, error indicators"
+                            }
+                            div { class: ClassesBuilder::new().add(Display::Grid).add(Gap::Gap4).build(),
+                                Icon { icon: MdiIcon::CheckCircle, size: 32, class: "text-green-500" }
+                                Icon { icon: MdiIcon::AlertTriangle, size: 32, class: "text-yellow-500" }
+                                Icon { icon: MdiIcon::AlertCircle, size: 32, class: "text-red-500" }
+                                Icon { icon: MdiIcon::Info, size: 32, class: "text-blue-500" }
+                            }
+                        }
 
-                                    for icon in icons {
-                                        div {
-                                            class: ClassesBuilder::new()
-                                                .add_raw("icon-box")
-                                                .add(BgColor::White)
-                                                .add(BorderRadius::Md)
-                                                .add(Padding::P3)
-                                                .build(),
+                        // Media Icons
+                        div { class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Rounded).add(Padding::P6).build(),
+                            h3 {
+                                class: ClassesBuilder::new()
+                                    .add(FontSize::Lg)
+                                    .add(FontWeight::Semibold)
+                                    .add(TextColor::Primary)
+                                    .add(MarginBottom::Mb2)
+                                    .build(),
+                                "Media"
+                            }
+                            p { class: ClassesBuilder::new().add(TextColor::Muted).add(FontSize::Sm).add(MarginBottom::Mb4).build(),
+                                "Image, audio, video controls"
+                            }
+                            div { class: ClassesBuilder::new().add(Display::Grid).add(Gap::Gap4).build(),
+                                Icon { icon: MdiIcon::Play, size: 32 }
+                                Icon { icon: MdiIcon::Pause, size: 32 }
+                                Icon { icon: MdiIcon::VolumeHigh, size: 32 }
+                                Icon { icon: MdiIcon::VolumeMute, size: 32 }
+                                Icon { icon: MdiIcon::Maximize, size: 32 }
+                            }
+                        }
 
-                                            Icon {
-                                                icon,
-                                                size: 32,
-                                                class: "icon-item"
-                                            }
-                                        }
-                                    }
-                                }
+                        // Data Icons
+                        div { class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Rounded).add(Padding::P6).build(),
+                            h3 {
+                                class: ClassesBuilder::new()
+                                    .add(FontSize::Lg)
+                                    .add(FontWeight::Semibold)
+                                    .add(TextColor::Primary)
+                                    .add(MarginBottom::Mb2)
+                                    .build(),
+                                "Data"
+                            }
+                            p { class: ClassesBuilder::new().add(TextColor::Muted).add(FontSize::Sm).add(MarginBottom::Mb4).build(),
+                                "Table, chart, database items"
+                            }
+                            div { class: ClassesBuilder::new().add(Display::Grid).add(Gap::Gap4).build(),
+                                Icon { icon: MdiIcon::Table, size: 32 }
+                                Icon { icon: MdiIcon::Graph, size: 32 }
+                                Icon { icon: MdiIcon::Database, size: 32 }
+                                Icon { icon: MdiIcon::SortAscending, size: 32 }
+                                Icon { Icon { icon: MdiIcon::Filter, size: 32 } }
                             }
                         }
                     }
@@ -148,56 +195,25 @@ pub fn SystemIcons() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb4)
                                 .build(),
-                            "Basic Usage"
+                            "Usage Example"
                         }
                         div {
                             class: ClassesBuilder::new()
                                 .add(BgColor::Surface)
-                                .add(BorderRadius::Lg)
+                                .add(BorderRadius::Rounded)
                                 .add(Padding::P6)
                                 .build(),
-
-                            p {
-                                class: ClassesBuilder::new().add(TextColor::Secondary).add(MarginBottom::Mb4).build(),
-                                "Use icons from the Icon component:"
+                            p { class: ClassesBuilder::new().add(TextColor::Muted).add(MarginBottom::Mb4).build(),
+                                "Use icons directly in your components:"
                             }
                             CodeBlock {
                                 language: "rust".to_string(),
-                                code: r#"use dioxus::prelude::*;
-use hikari_icons::{Icon, LucideIcon};
-
-rsx! {
-    Icon {
-        icon: LucideIcon::Search,
-        size: 24,
-        color: "var(--hi-color-primary)"
-    }
-}"#
+                                code: "use hikari_icons::{Icon, MdiIcon};\n\nrsx! {\n    Icon { icon: MdiIcon::Home, size: 24 }\n    Icon { icon: MdiIcon::Search, size: 24, class: \"text-primary\" }\n}"
                             }
                         }
                     }
                 }
             }
-        }
-    }
-}
-                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Powered by Lucide - 1000+ beautifully crafted icons"
-                        }
-                    }
-
-                    div {
-                        class: ClassesBuilder::new()
-                            .add(BgColor::Surface)
-                            .add(BorderRadius::Lg)
-                            .add(Padding::P6)
-                            .build(),
-                        p { class: ClassesBuilder::new().add(TextColor::Primary).add(MarginBottom::Mb0).build(),
-                            "This page is under construction. Check back soon for detailed documentation and examples!"
-                        }
-                    }
-                }
-            },
         }
     }
 }

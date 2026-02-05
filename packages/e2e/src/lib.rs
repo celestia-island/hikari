@@ -10,6 +10,9 @@ pub use tests::{
     advanced_components::AdvancedComponentsTests,
     data_components::DataComponentsTests,
     form_components::FormComponentsTests,
+    interactive_test::{InteractiveTests, InteractiveTestResult, TestStep, InteractionStep, VisualAnalysis},
+    interactive_test::{compare_visuals, analyze_test_step},
+    visual_quality::{VisualQualityTests, VisualQualityTest, VisualCheck, VisualCheckType},
 };
 pub use html_assertions::HtmlAssertions;
 use thirtyfour::WebDriver;
@@ -61,9 +64,9 @@ pub async fn run_all_tests(driver: &WebDriver) -> anyhow::Result<Vec<TestResult>
     for result in &results {
         info!("{}: {}", result.component, result.message);
         match &result.status {
-            TestStatus::Success => info!("  Status: ✅ PASSED"),
-            TestStatus::Failure => info!("  Status: ❌ FAILED"),
-            TestStatus::Error(msg) => error!("  Status: ⚠️ ERROR - {}", msg),
+            tests::basic_components::TestStatus::Success => info!("  Status: ✅ PASSED"),
+            tests::basic_components::TestStatus::Failure => info!("  Status: ❌ FAILED"),
+            tests::basic_components::TestStatus::Error(msg) => error!("  Status: ⚠️  ERROR - {}", msg),
         }
     }
     info!("=== End of Test Results ===\n");
@@ -75,6 +78,39 @@ pub async fn run_all_tests(driver: &WebDriver) -> anyhow::Result<Vec<TestResult>
     info!("Layer 3 (Advanced): VideoPlayer, AudioWaveform, RichTextEditor, DragLayer, Collapsible, ZoomControls, UserGuide, Timeline (10 components)");
     info!("====================");
     info!("Total: 24 components tested");
+
+    Ok(results)
+}
+
+/// Run interactive tests with multi-step operations and screenshots
+pub async fn run_interactive_tests(driver: &WebDriver) -> anyhow::Result<Vec<InteractiveTestResult>> {
+    println!("Running Hikari Interactive E2E tests...\n");
+
+    let results = tests::interactive_test::InteractiveTests.run_all(driver).await?;
+
+    println!("\n=== Interactive Test Results ===");
+    for result in &results {
+        info!("{}: {}", result.component, result.message);
+        if result.status == "success" {
+            info!("  Status: ✅ PASSED ({} steps)", result.steps.len());
+            for (i, step) in result.steps.iter().enumerate() {
+                info!("    Step {}: {} - {:?}", i + 1, step.step.as_str(), step.description);
+            }
+        } else {
+            info!("  Status: ❌ FAILED");
+            info!("  Message: {}", result.message);
+        }
+    }
+    info!("=== End of Interactive Test Results ===\n");
+
+    println!("\n=== Interactive Test Coverage ===");
+    info!("Layer 1 (Basic): Button, Input, Card, Alert (4 components)");
+    info!("Layer 2 (Navigation): Tabs, Menu, Breadcrumb, Steps (4 components)");
+    info!("Layer 2 (Data): Table, Tree, Pagination (3 components)");
+    info!("Layer 2 (Feedback): Modal, Dropdown, Drawer (3 components)");
+    info!("Layer 3 (Extra): Timeline, UserGuide, ZoomControls, Collapsible, VideoPlayer, RichTextEditor, CodeHighlighter, DragLayer (8 components)");
+    info!("======================");
+    info!("Total: 22 components with multi-step interactive tests");
 
     Ok(results)
 }

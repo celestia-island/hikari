@@ -301,18 +301,21 @@ impl HikariRenderServicePlugin {
     ///
     /// * `key` - State key identifier
     /// * `value` - State value (must be serializable)
-    pub fn state<K, V>(mut self, key: K, value: V) -> Self
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the value cannot be serialized.
+    pub fn state<K, V>(mut self, key: K, value: V) -> Result<Self, anyhow::Error>
     where
         K: Into<String>,
         V: serde::Serialize,
     {
         let key_str = key.into();
         let json_value = serde_json::to_value(value)
-            .map_err(|e| anyhow::anyhow!("Failed to serialize state value: {}", e))
-            .unwrap_or_else(|_| serde_json::json!({}));
+            .map_err(|e| anyhow::anyhow!("Failed to serialize state value: {}", e))?;
 
         self.state.insert(key_str, json_value);
-        self
+        Ok(self)
     }
 
     /// Builds the Axum Router with all configured routes and middleware.

@@ -54,9 +54,9 @@ run_container() {
         -v "$(pwd)/examples/website/public:/public:ro" \
         "$IMAGE_NAME" \
         /usr/local/bin/hikari-screenshot \
-        --start "${start_idx}" \
-        --end "${end_idx}" \
-        > "logs/screenshot-${container_id}.log" 2>&1
+         --start "${start_idx}" \
+         --end "${end_idx}" \
+         > "target/e2e_screenshots/screenshot-${container_id}.log" 2>&1
 
     local exit_code=$?
     if [ $exit_code -eq 0 ]; then
@@ -67,10 +67,7 @@ run_container() {
     return $exit_code
 }
 
-# Create logs directory
-mkdir -p logs
-
-# Launch containers in parallel
+# Run all containers
 echo -e "${YELLOW}Launching ${NUM_CONTAINERS} containers in parallel...${NC}"
 echo ""
 

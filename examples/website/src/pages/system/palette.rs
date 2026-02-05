@@ -3,11 +3,17 @@
 
 use dioxus::prelude::*;
 
-use crate::{app::Route, components::Layout};
+use crate::{
+    app::Route,
+    components::{CodeBlock, Layout},
+};
 use _palette::{
-    classes::{BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor},
+    classes::{
+        BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap,
+        MarginBottom, Padding, TextColor,
+    },
     colors::*,
-    palettes::*,
+    themes::*,
 };
 
 /// Palette showcase page
@@ -232,39 +238,12 @@ pub fn SystemPalette() -> Element {
                             }
                             CodeBlock {
                                 language: "rust".to_string(),
-                                code: r#"use hikari_palette::{朱砂, 石青, 藤黄};
-
-let primary_color = 朱砂;
-let secondary_color = 石青;
-let accent_color = 藤黄;
-
-println!("Primary: {}", primary_color.hex);
-println!("Secondary: {}", secondary_color.hex);"#
+                                code: "use hikari_palette::{朱砂, 石青, 藤黄};\n\nlet primary_color = 朱砂;\nlet secondary_color = 石青;\nlet accent_color = 藤黄;\n\nprintln!(\"Primary: {}\", primary_color.hex);\nprintln!(\"Secondary: {}\", secondary_color.hex);".to_string()
                             }
                         }
                     }
                 }
             }
-        }
-    }
-}
-                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "500+ traditional colors from Chinese culture and history"
-                        }
-                    }
-
-                    div {
-                        class: ClassesBuilder::new()
-                            .add(BgColor::Surface)
-                            .add(BorderRadius::Lg)
-                            .add(Padding::P6)
-                            .build(),
-                        p { class: ClassesBuilder::new().add(TextColor::Primary).add(MarginBottom::Mb0).build(),
-                            "This page is under construction. Check back soon for detailed documentation and examples!"
-                        }
-                    }
-                }
-            },
         }
     }
 }

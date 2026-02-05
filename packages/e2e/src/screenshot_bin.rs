@@ -28,7 +28,9 @@ struct Args {
 }
 
 /// Base URL for website
-const BASE_URL: &str = "http://localhost:3000";
+fn get_base_url() -> String {
+    std::env::var("WEBSITE_BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string())
+}
 
 /// Output directory for screenshots
 const SCREENSHOT_DIR: &str = "/tmp/e2e_screenshots";
@@ -43,39 +45,33 @@ const ROUTES: &[(&str, &str)] = &[
     ("/demos/layer1/form", "demos_layer1_form"),
     ("/demos/layer2/dashboard", "demos_layer2_dashboard"),
     ("/demos/layer3/video", "demos_layer3_video"),
-
     // Layer 1 Basic
     ("/components/layer1/basic", "components_layer1_basic"),
     ("/components/layer1/form", "components_layer1_form"),
     ("/components/layer1/switch", "components_layer1_switch"),
     ("/components/layer1/feedback", "components_layer1_feedback"),
     ("/components/layer1/display", "components_layer1_display"),
-
     // Entry components
     ("/components/entry/cascader", "components_entry_cascader"),
     ("/components/entry/transfer", "components_entry_transfer"),
     ("/components/entry/number_input", "components_entry_number_input"),
     ("/components/entry/search", "components_entry_search"),
-
     // Layer 2
     ("/components/layer2", "components_layer2"),
     ("/components/layer2/navigation", "components_layer2_navigation"),
     ("/components/layer2/data", "components_layer2_data"),
     ("/components/layer2/form", "components_layer2_form"),
     ("/components/layer2/feedback", "components_layer2_feedback"),
-
     // Layer 3
     ("/components/layer3/overview", "components_layer3_overview"),
     ("/components/layer3/media", "components_layer3_media"),
     ("/components/layer3/editor", "components_layer3_editor"),
     ("/components/layer3/visualization", "components_layer3_visualization"),
-
     // Extra components
     ("/components/extra/collapsible", "components_extra_collapsible"),
     ("/components/extra/timeline", "components_extra_timeline"),
     ("/components/extra/user_guide", "components_extra_user_guide"),
     ("/components/extra/zoom_controls", "components_extra_zoom_controls"),
-
     // System
     ("/system", "system"),
     ("/system/css", "system_css"),
@@ -95,8 +91,7 @@ impl ScreenshotGenerator {
         info!("Initializing headless Chromium browser...");
 
         // Get Chrome binary path from environment or use default
-        let chrome_bin = std::env::var("CHROME_BIN")
-            .unwrap_or_else(|_| "chromium".to_string());
+        let chrome_bin = std::env::var("CHROME_BIN").unwrap_or_else(|_| "chromium".to_string());
 
         // Configure browser with Chrome binary path and additional args
         let config = BrowserConfig::builder()
@@ -132,7 +127,7 @@ impl ScreenshotGenerator {
 
     /// Capture screenshot for a single page
     pub async fn capture_page(&mut self, route: &str, name: &str) -> Result<()> {
-        let url = format!("{}{}", BASE_URL, route);
+        let url = format!("{}{}", get_base_url(), route);
         info!("[{}] Navigating to {}", name, url);
 
         // Create new page and navigate
@@ -164,14 +159,16 @@ impl ScreenshotGenerator {
         // Check if #main element exists and is not loading
         info!("[{}] Checking if page is fully loaded...", name);
         let is_loaded_result = page
-            .evaluate(r#"
+            .evaluate(
+                r#"
                 // Check if loading indicator is gone
                 const loadingElement = document.getElementById('loading');
                 const mainElement = document.getElementById('main');
                 const isLoaded = !loadingElement || loadingElement.style.display === 'none' ||
                                 (mainElement && mainElement.children.length > 0);
                 isLoaded
-            "#)
+            "#,
+            )
             .await;
 
         let is_loaded = is_loaded_result
@@ -181,7 +178,10 @@ impl ScreenshotGenerator {
 
         if !is_loaded {
             // Additional wait time for WASM initialization
-            info!("[{}] Page still loading, waiting additional 4 seconds...", name);
+            info!(
+                "[{}] Page still loading, waiting additional 4 seconds...",
+                name
+            );
             tokio::time::sleep(Duration::from_secs(4)).await;
 
             // Final check
@@ -198,7 +198,11 @@ impl ScreenshotGenerator {
 
         let screenshot_path = screenshot_dir.join(format!("{}.png", name));
 
-        info!("[{}] Capturing screenshot to {}...", name, screenshot_path.display());
+        info!(
+            "[{}] Capturing screenshot to {}...",
+            name,
+            screenshot_path.display()
+        );
 
         // Capture screenshot directly to file
         page.save_screenshot(
@@ -208,9 +212,18 @@ impl ScreenshotGenerator {
             &screenshot_path,
         )
         .await
-        .with_context(|| format!("Failed to capture screenshot to {}", screenshot_path.display()))?;
+        .with_context(|| {
+            format!(
+                "Failed to capture screenshot to {}",
+                screenshot_path.display()
+            )
+        })?;
 
-        info!("[{}] ✓ Screenshot saved to {}", name, screenshot_path.display());
+        info!(
+            "[{}] ✓ Screenshot saved to {}",
+            name,
+            screenshot_path.display()
+        );
 
         // Close page
         page.close().await.context("Failed to close page")?;
@@ -239,7 +252,12 @@ impl ScreenshotGenerator {
     /// Capture screenshots for a range of routes
     pub async fn capture_range(&mut self, start: usize, end: usize) -> Result<()> {
         let routes = &ROUTES[start..end];
-        info!("Starting screenshot capture for routes [{}..{}], total: {} routes", start, end, routes.len());
+        info!(
+            "Starting screenshot capture for routes [{}..{}], total: {} routes",
+            start,
+            end,
+            routes.len()
+        );
 
         let mut success_count = 0;
         let mut failure_count = 0;
@@ -248,7 +266,10 @@ impl ScreenshotGenerator {
             match self.capture_page(route, name).await {
                 Ok(_) => success_count += 1,
                 Err(e) => {
-                    let source_str = e.source().map(|s| s.to_string()).unwrap_or_else(|| "None".to_string());
+                    let source_str = e
+                        .source()
+                        .map(|s| s.to_string())
+                        .unwrap_or_else(|| "None".to_string());
                     error!("Failed to capture {}: {}", name, e);
                     error!("  - Source: {}", source_str);
                     failure_count += 1;
@@ -279,9 +300,12 @@ async fn main() -> Result<()> {
         .init();
 
     info!("=== Hikari E2E Screenshot Generator (chromiumoxide) ===");
-    info!("Base URL: {}", BASE_URL);
+    info!("Base URL: {}", get_base_url());
     info!("Output directory: {}", SCREENSHOT_DIR);
-    info!("Chrome binary: {}", std::env::var("CHROME_BIN").unwrap_or_else(|_| "chromium".to_string()));
+    info!(
+        "Chrome binary: {}",
+        std::env::var("CHROME_BIN").unwrap_or_else(|_| "chromium".to_string())
+    );
     info!("Route range: [{}..{:?}]", args.start, args.end);
     info!("Concurrency: {}", args.concurrency);
     info!("===============================================================\n");
@@ -294,7 +318,10 @@ async fn main() -> Result<()> {
     }
 
     if args.start >= end {
-        error!("Start index {} must be less than end index {}", args.start, end);
+        error!(
+            "Start index {} must be less than end index {}",
+            args.start, end
+        );
         anyhow::bail!("Invalid route range");
     }
 

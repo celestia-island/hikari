@@ -1,0 +1,839 @@
+   Compiling hikari-theme v0.1.0 (/mnt/sdb1/hikari/packages/theme)
+warning: constant `PUBLIC_DIR` is never used
+  --> build.rs:21:7
+   |
+21 | const PUBLIC_DIR: &str = "public";
+   |       ^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `website` (build script) generated 1 warning
+   Compiling website v0.1.0 (/mnt/sdb1/hikari/examples/website)
+warning: hikari-icons@0.1.0: 🎨 hikari-icons: Building selected MDI icons...
+warning: hikari-icons@0.1.0: 🌐 Dynamic icon fetching enabled
+warning: hikari-icons@0.1.0:    Icon route: /api/icons
+warning: hikari-icons@0.1.0:    Render-service should serve icons at: /api/icons
+warning: hikari-icons@0.1.0: 🔍 Auto-discovered 87 icons from workspace
+warning: hikari-icons@0.1.0: ✅ MDI icons built successfully
+warning: hikari-icons@0.1.0:    Generated 811 lines
+warning: function `log_dynamic_fetch_success` is never used
+   --> /mnt/sdb1/hikari/packages/icons/src/lib.rs:325:4
+    |
+325 | fn log_dynamic_fetch_success(icon_name: String) {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: `hikari-icons` (lib) generated 1 warning
+warning: website@0.1.0: 🏗️  website build starting...
+warning: website@0.1.0: 📦 Generating bulk imports...
+warning: website@0.1.0: ⚠️  generate_bulk_imports.py not found at "/mnt/sdb1/hikari/examples/website/../../scripts/generate_bulk_imports.py"
+warning: website@0.1.0: 📂 Current dir: "/mnt/sdb1/hikari/examples/website"
+warning: website@0.1.0: 📂 CARGO_MANIFEST_DIR: "/mnt/sdb1/hikari/examples/website"
+warning: website@0.1.0: 📂 Workspace root (relative): "/mnt/sdb1/hikari/examples/website/../.."
+warning: website@0.1.0: 📂 Workspace root (resolved): "/mnt/sdb1/hikari/examples/website/../.."
+warning: website@0.1.0: 📂 Root public dir: "/mnt/sdb1/hikari/examples/website/../../public"
+warning: website@0.1.0: 📄 Copying: "/mnt/sdb1/hikari/examples/website/index.html" -> "/mnt/sdb1/hikari/examples/website/../../public/index.html"
+warning: website@0.1.0: 📄 Copied index.html to public/ (1948 bytes)
+warning: website@0.1.0: ✅ Verification: index.html exists at "/mnt/sdb1/hikari/examples/website/../../public/index.html"
+warning: website@0.1.0: 🖼️  Copying: "/mnt/sdb1/hikari/examples/website/../../docs/logo.png" -> "/mnt/sdb1/hikari/examples/website/../../public/images/logo.png"
+warning: website@0.1.0: 🖼️  Copied logo.png to public/images/ (22422 bytes)
+warning: website@0.1.0: ✅ Verification: logo.png exists at "/mnt/sdb1/hikari/examples/website/../../public/images/logo.png"
+warning: website@0.1.0: 🎨 Checking CSS bundle at "/mnt/sdb1/hikari/examples/website/../../public/styles/bundle.css"
+warning: website@0.1.0: 🎨 CSS bundle found: 287786 bytes
+warning: website@0.1.0: ✅ website build completed!
+   Compiling hikari-components v0.1.0 (/mnt/sdb1/hikari/packages/components)
+   Compiling hikari-extra-components v0.1.0 (/mnt/sdb1/hikari/packages/extra-components)
+   Compiling hikari-render-service v0.1.0 (/mnt/sdb1/hikari/packages/render-service)
+error[E0432]: unresolved import `_palette::palettes`
+  --> src/pages/system/palette.rs:13:5
+   |
+13 |     palettes::*,
+   |     ^^^^^^^^ could not find `palettes` in `_palette`
+
+warning: unused import: `scripts::scrollbar_container`
+ --> src/app.rs:6:19
+  |
+6 | use _components::{scripts::scrollbar_container, PortalProvider, ThemeProvider};
+  |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `ExampleCard`, `PropsRow`, `PropsTable`, and `Section`
+  --> src/components/mod.rs:25:26
+   |
+25 | pub use doc_components::{ExampleCard, PropsRow, PropsTable, Section};
+   |                          ^^^^^^^^^^^  ^^^^^^^^  ^^^^^^^^^^  ^^^^^^^
+
+warning: unused import: `render_markdown`
+  --> src/components/mod.rs:27:29
+   |
+27 | pub use markdown_renderer::{render_markdown, MarkdownRenderer};
+   |                             ^^^^^^^^^^^^^^^
+
+warning: unused import: `DividerOrientation`
+ --> src/pages/components/layer1/basic_components.rs:7:60
+  |
+7 |     Badge, Button, ButtonVariant, Card, Checkbox, Divider, DividerOrientation, DividerTextPosition,
+  |                                                            ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Margin`
+  --> src/pages/components/layer1/basic_components.rs:11:73
+   |
+11 |     AlignItems, FlexWrap, {ClassesBuilder, Display, FlexDirection, Gap, Margin, Padding},
+   |                                                                         ^^^^^^
+
+warning: unused import: `Gap`
+ --> src/pages/components/layer1/display.rs:8:60
+  |
+8 | use _palette::classes::{ClassesBuilder, Display, FontSize, Gap, MarginBottom, Padding, TextColor};
+  |                                                            ^^^
+
+warning: unused import: `Gap`
+ --> src/pages/components/layer1/feedback.rs:8:60
+  |
+8 | use _palette::classes::{ClassesBuilder, Display, FontSize, Gap, MarginBottom, Padding, TextColor};
+  |                                                            ^^^
+
+warning: unused import: `Gap`
+ --> src/pages/components/layer1/form.rs:8:60
+  |
+8 | use _palette::classes::{ClassesBuilder, Display, FontSize, Gap, MarginBottom, Padding, TextColor};
+  |                                                            ^^^
+
+warning: unused imports: `Flex` and `Gap`
+ --> src/pages/components/layer1/switch.rs:9:30
+  |
+9 |     ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor,
+  |                              ^^^^            ^^^
+
+warning: unused import: `basic_components::*`
+  --> src/pages/components/layer1/mod.rs:13:9
+   |
+13 | pub use basic_components::*;
+   |         ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Gap`
+ --> src/pages/components/layer2/data.rs:8:60
+  |
+8 | use _palette::classes::{ClassesBuilder, Display, FontSize, Gap, MarginBottom, Padding, TextColor};
+  |                                                            ^^^
+
+warning: unused import: `Gap`
+ --> src/pages/components/layer2/feedback.rs:8:60
+  |
+8 | use _palette::classes::{ClassesBuilder, Display, FontSize, Gap, MarginBottom, Padding, TextColor};
+  |                                                            ^^^
+
+warning: unused import: `Gap`
+ --> src/pages/components/layer2/form.rs:8:60
+  |
+8 | use _palette::classes::{ClassesBuilder, Display, FontSize, Gap, MarginBottom, Padding, TextColor};
+  |                                                            ^^^
+
+warning: unused import: `Gap`
+ --> src/pages/components/layer2/navigation.rs:8:60
+  |
+8 | use _palette::classes::{ClassesBuilder, Display, FontSize, Gap, MarginBottom, Padding, TextColor};
+  |                                                            ^^^
+
+warning: unused imports: `Icon` and `MdiIcon`
+ --> src/pages/components/layer2/overview.rs:7:14
+  |
+7 | use _icons::{Icon, MdiIcon};
+  |              ^^^^  ^^^^^^^
+
+warning: unused imports: `Display`, `MarginBottom`, and `Padding`
+ --> src/pages/components/layer2/overview.rs:8:41
+  |
+8 | use _palette::classes::{ClassesBuilder, Display, FontSize, MarginBottom, Padding, TextColor};
+  |                                         ^^^^^^^            ^^^^^^^^^^^^  ^^^^^^^
+
+warning: unused import: `Gap`
+  --> src/pages/components/layer3/editor.rs:11:60
+   |
+11 | use _palette::classes::{ClassesBuilder, Display, FontSize, Gap, MarginBottom, Padding, TextColor};
+   |                                                            ^^^
+
+warning: unused import: `Gap`
+ --> src/pages/components/layer3/media.rs:8:60
+  |
+8 | use _palette::classes::{ClassesBuilder, Display, FontSize, Gap, MarginBottom, Padding, TextColor};
+  |                                                            ^^^
+
+warning: unused imports: `Display` and `Padding`
+ --> src/pages/components/layer3/overview.rs:7:41
+  |
+7 | use _palette::classes::{ClassesBuilder, Display, FontSize, Padding, TextColor};
+  |                                         ^^^^^^^            ^^^^^^^
+
+warning: unused import: `Gap`
+ --> src/pages/components/layer3/visualization.rs:8:60
+  |
+8 | use _palette::classes::{ClassesBuilder, Display, FontSize, Gap, MarginBottom, Padding, TextColor};
+  |                                                            ^^^
+
+warning: unused import: `overview::ComponentsOverview`
+  --> src/pages/components/mod.rs:13:9
+   |
+13 | pub use overview::ComponentsOverview;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `layer1::Layer1Basic`
+  --> src/pages/components/mod.rs:15:9
+   |
+15 | pub use layer1::Layer1Basic;
+   |         ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `layer1::Layer1Display`
+  --> src/pages/components/mod.rs:16:9
+   |
+16 | pub use layer1::Layer1Display;
+   |         ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `layer1::Layer1Feedback`
+  --> src/pages/components/mod.rs:17:9
+   |
+17 | pub use layer1::Layer1Feedback;
+   |         ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `layer1::Layer1Form`
+  --> src/pages/components/mod.rs:18:9
+   |
+18 | pub use layer1::Layer1Form;
+   |         ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `layer1::Layer1Switch`
+  --> src/pages/components/mod.rs:19:9
+   |
+19 | pub use layer1::Layer1Switch;
+   |         ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `layer2::Layer2Data`
+  --> src/pages/components/mod.rs:21:9
+   |
+21 | pub use layer2::Layer2Data;
+   |         ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `layer2::Layer2Feedback`
+  --> src/pages/components/mod.rs:22:9
+   |
+22 | pub use layer2::Layer2Feedback;
+   |         ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `layer2::Layer2Form`
+  --> src/pages/components/mod.rs:23:9
+   |
+23 | pub use layer2::Layer2Form;
+   |         ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `layer2::Layer2Navigation`
+  --> src/pages/components/mod.rs:24:9
+   |
+24 | pub use layer2::Layer2Navigation;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `layer2::Layer2Overview`
+  --> src/pages/components/mod.rs:25:9
+   |
+25 | pub use layer2::Layer2Overview;
+   |         ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `layer3::Layer3Editor`
+  --> src/pages/components/mod.rs:27:9
+   |
+27 | pub use layer3::Layer3Editor;
+   |         ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `layer3::Layer3Media`
+  --> src/pages/components/mod.rs:28:9
+   |
+28 | pub use layer3::Layer3Media;
+   |         ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `layer3::Layer3Visualization`
+  --> src/pages/components/mod.rs:29:9
+   |
+29 | pub use layer3::Layer3Visualization;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `entry::CascaderDoc`
+  --> src/pages/components/mod.rs:31:9
+   |
+31 | pub use entry::CascaderDoc;
+   |         ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `entry::NumberInputDoc`
+  --> src/pages/components/mod.rs:32:9
+   |
+32 | pub use entry::NumberInputDoc;
+   |         ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `entry::SearchDoc`
+  --> src/pages/components/mod.rs:33:9
+   |
+33 | pub use entry::SearchDoc;
+   |         ^^^^^^^^^^^^^^^^
+
+warning: unused import: `entry::TransferDoc`
+  --> src/pages/components/mod.rs:34:9
+   |
+34 | pub use entry::TransferDoc;
+   |         ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `extra::CollapsibleDoc`
+  --> src/pages/components/mod.rs:36:9
+   |
+36 | pub use extra::CollapsibleDoc;
+   |         ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `extra::TimelineDoc`
+  --> src/pages/components/mod.rs:37:9
+   |
+37 | pub use extra::TimelineDoc;
+   |         ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `extra::UserGuideDoc`
+  --> src/pages/components/mod.rs:38:9
+   |
+38 | pub use extra::UserGuideDoc;
+   |         ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `extra::ZoomControlsDoc`
+  --> src/pages/components/mod.rs:39:9
+   |
+39 | pub use extra::ZoomControlsDoc;
+   |         ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `colors::*`
+  --> src/pages/system/palette.rs:12:5
+   |
+12 |     colors::*,
+   |     ^^^^^^^^^
+
+warning: unused import: `registry::ComponentRegistry`
+  --> src/pages/system/mod.rs:17:9
+   |
+17 | pub use registry::ComponentRegistry;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `Flex` and `Gap`
+ --> src/pages/demos/layer1/form_demo.rs:8:51
+  |
+8 | use _palette::classes::{ ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor, };
+  |                                                   ^^^^            ^^^
+
+warning: unused imports: `Flex`, `Gap`, and `Padding`
+ --> src/pages/demos/layer2/dashboard_demo.rs:8:51
+  |
+8 | use _palette::classes::{ ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor, };
+  |                                                   ^^^^            ^^^                ^^^^^^^
+
+warning: unused import: `dashboard_demo::DashboardDemo`
+ --> src/pages/demos/layer2/mod.rs:7:9
+  |
+7 | pub use dashboard_demo::DashboardDemo;
+  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Button`
+ --> src/pages/demos/layer3/video_demo.rs:7:19
+  |
+7 | use _components::{Button, Card};
+  |                   ^^^^^^
+
+warning: unused imports: `Display`, `Flex`, `Gap`, and `Padding`
+  --> src/pages/demos/layer3/video_demo.rs:10:21
+   |
+10 |     ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor,
+   |                     ^^^^^^^  ^^^^            ^^^                ^^^^^^^
+
+warning: unused import: `video_demo::VideoDemo`
+ --> src/pages/demos/layer3/mod.rs:7:9
+  |
+7 | pub use video_demo::VideoDemo;
+  |         ^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no variant or associated item named `Px2` found for enum `hikari_palette::Padding` in the current scope
+   --> src/pages/system/animations.rs:115:101
+    |
+115 | ...                   class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px2).build(),
+    |                                                                                       ^^^ variant or associated item not found in `hikari_palette::Padding`
+    |
+help: there is a variant with a similar name
+    |
+115 -                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px2).build(),
+115 +                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P2).build(),
+    |
+
+error[E0599]: no variant or associated item named `Px2` found for enum `hikari_palette::Padding` in the current scope
+   --> src/pages/system/animations.rs:119:101
+    |
+119 | ...                   class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px2).build(),
+    |                                                                                       ^^^ variant or associated item not found in `hikari_palette::Padding`
+    |
+help: there is a variant with a similar name
+    |
+119 -                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px2).build(),
+119 +                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P2).build(),
+    |
+
+error[E0599]: no variant or associated item named `Px2` found for enum `hikari_palette::Padding` in the current scope
+   --> src/pages/system/animations.rs:123:101
+    |
+123 | ...                   class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px2).build(),
+    |                                                                                       ^^^ variant or associated item not found in `hikari_palette::Padding`
+    |
+help: there is a variant with a similar name
+    |
+123 -                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px2).build(),
+123 +                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P2).build(),
+    |
+
+error[E0599]: no variant or associated item named `Px2` found for enum `hikari_palette::Padding` in the current scope
+   --> src/pages/system/animations.rs:127:101
+    |
+127 | ...                   class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px2).build(),
+    |                                                                                       ^^^ variant or associated item not found in `hikari_palette::Padding`
+    |
+help: there is a variant with a similar name
+    |
+127 -                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px2).build(),
+127 +                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P2).build(),
+    |
+
+error[E0599]: no variant or associated item named `Px4` found for enum `hikari_palette::Padding` in the current scope
+   --> src/pages/system/animations.rs:153:101
+    |
+153 | ...                   class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px4).add(BorderRadius::Lg).build(),
+    |                                                                                       ^^^ variant or associated item not found in `hikari_palette::Padding`
+    |
+help: there is a variant with a similar name
+    |
+153 -                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px4).add(BorderRadius::Lg).build(),
+153 +                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P4).add(BorderRadius::Lg).build(),
+    |
+
+error[E0599]: no variant or associated item named `Px4` found for enum `hikari_palette::Padding` in the current scope
+   --> src/pages/system/animations.rs:157:101
+    |
+157 | ...                   class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px4).add(BorderRadius::Lg).build(),
+    |                                                                                       ^^^ variant or associated item not found in `hikari_palette::Padding`
+    |
+help: there is a variant with a similar name
+    |
+157 -                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px4).add(BorderRadius::Lg).build(),
+157 +                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P4).add(BorderRadius::Lg).build(),
+    |
+
+error[E0599]: no variant or associated item named `Px4` found for enum `hikari_palette::Padding` in the current scope
+   --> src/pages/system/animations.rs:161:101
+    |
+161 | ...                   class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px4).add(BorderRadius::Lg).build(),
+    |                                                                                       ^^^ variant or associated item not found in `hikari_palette::Padding`
+    |
+help: there is a variant with a similar name
+    |
+161 -                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px4).add(BorderRadius::Lg).build(),
+161 +                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P4).add(BorderRadius::Lg).build(),
+    |
+
+error[E0599]: no variant or associated item named `Px4` found for enum `hikari_palette::Padding` in the current scope
+   --> src/pages/system/animations.rs:165:101
+    |
+165 | ...                   class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px4).add(BorderRadius::Lg).build(),
+    |                                                                                       ^^^ variant or associated item not found in `hikari_palette::Padding`
+    |
+help: there is a variant with a similar name
+    |
+165 -                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px4).add(BorderRadius::Lg).build(),
+165 +                                     class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P4).add(BorderRadius::Lg).build(),
+    |
+
+error[E0599]: no variant or associated item named `Md` found for enum `hikari_palette::BorderRadius` in the current scope
+  --> src/pages/system/css.rs:63:100
+   |
+63 | ...                   class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Md).add(Padding::P4).build(),
+   |                                                                                          ^^ variant or associated item not found in `hikari_palette::BorderRadius`
+
+error[E0599]: no variant or associated item named `Inline` found for enum `hikari_palette::Display` in the current scope
+  --> src/pages/system/css.rs:65:81
+   |
+65 | ...                   div { class: ClassesBuilder::new().add(Display::Inline).add(MarginBottom::Mb2).build(), "Inline" }
+   |                                                                       ^^^^^^ variant or associated item not found in `hikari_palette::Display`
+
+error[E0599]: no variant or associated item named `Inline` found for enum `hikari_palette::Display` in the current scope
+  --> src/pages/system/css.rs:66:81
+   |
+66 | ...   div { class: ClassesBuilder::new().add(Display::Inline).add(Display::Hidden).add(MarginBottom::Mb2).build(), "Inline + Hidden" }
+   |                                                       ^^^^^^ variant or associated item not found in `hikari_palette::Display`
+
+error[E0599]: no variant or associated item named `Md` found for enum `hikari_palette::BorderRadius` in the current scope
+  --> src/pages/system/css.rs:69:100
+   |
+69 | ...                   class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Md).add(Padding::P4).build(),
+   |                                                                                          ^^ variant or associated item not found in `hikari_palette::BorderRadius`
+
+error[E0599]: no variant or associated item named `Md` found for enum `hikari_palette::BorderRadius` in the current scope
+  --> src/pages/system/css.rs:74:100
+   |
+74 | ...                   class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Md).add(Padding::P4).build(),
+   |                                                                                          ^^ variant or associated item not found in `hikari_palette::BorderRadius`
+
+error[E0599]: no variant or associated item named `None` found for enum `hikari_palette::Display` in the current scope
+   --> src/pages/system/css.rs:75:81
+    |
+ 75 | ...                   div { class: ClassesBuilder::new().add(Display::None).add(MarginBottom::Mb2).build(), "None" }
+    |                                                                       ^^^^ variant or associated item not found in `hikari_palette::Display`
+    |
+help: there is a method `ne` with a similar name
+   --> /home/lab/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/cmp.rs:265:5
+    |
+265 |     fn ne(&self, other: &Rhs) -> bool {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no variant or associated item named `Md` found for enum `hikari_palette::BorderRadius` in the current scope
+   --> src/pages/system/css.rs:100:100
+    |
+100 | ...                   class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Md).add(Padding::P4).build(),
+    |                                                                                          ^^ variant or associated item not found in `hikari_palette::BorderRadius`
+
+error[E0599]: no variant or associated item named `Px3` found for enum `hikari_palette::Padding` in the current scope
+   --> src/pages/system/css.rs:103:107
+    |
+103 | ...                   div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px3).add(MarginBottom::Mb2).build(), "Item 1" }
+    |                                                                                             ^^^ variant or associated item not found in `hikari_palette::Padding`
+    |
+help: there is a variant with a similar name
+    |
+103 -                                     div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px3).add(MarginBottom::Mb2).build(), "Item 1" }
+103 +                                     div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P3).add(MarginBottom::Mb2).build(), "Item 1" }
+    |
+
+error[E0599]: no variant or associated item named `Px3` found for enum `hikari_palette::Padding` in the current scope
+   --> src/pages/system/css.rs:104:107
+    |
+104 | ...                   div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px3).add(MarginBottom::Mb2).build(), "Item 2" }
+    |                                                                                             ^^^ variant or associated item not found in `hikari_palette::Padding`
+    |
+help: there is a variant with a similar name
+    |
+104 -                                     div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px3).add(MarginBottom::Mb2).build(), "Item 2" }
+104 +                                     div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P3).add(MarginBottom::Mb2).build(), "Item 2" }
+    |
+
+error[E0599]: no variant or associated item named `Md` found for enum `hikari_palette::BorderRadius` in the current scope
+   --> src/pages/system/css.rs:108:100
+    |
+108 | ...                   class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Md).add(Padding::P4).build(),
+    |                                                                                          ^^ variant or associated item not found in `hikari_palette::BorderRadius`
+
+error[E0599]: no variant or associated item named `Px3` found for enum `hikari_palette::Padding` in the current scope
+   --> src/pages/system/css.rs:111:107
+    |
+111 | ...                   div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px3).add(MarginBottom::Mb2).build(), "Item 1" }
+    |                                                                                             ^^^ variant or associated item not found in `hikari_palette::Padding`
+    |
+help: there is a variant with a similar name
+    |
+111 -                                     div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px3).add(MarginBottom::Mb2).build(), "Item 1" }
+111 +                                     div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P3).add(MarginBottom::Mb2).build(), "Item 1" }
+    |
+
+error[E0599]: no variant or associated item named `Px3` found for enum `hikari_palette::Padding` in the current scope
+   --> src/pages/system/css.rs:112:107
+    |
+112 | ...                   div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px3).add(MarginBottom::Mb2).build(), "Item 2" }
+    |                                                                                             ^^^ variant or associated item not found in `hikari_palette::Padding`
+    |
+help: there is a variant with a similar name
+    |
+112 -                                     div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px3).add(MarginBottom::Mb2).build(), "Item 2" }
+112 +                                     div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P3).add(MarginBottom::Mb2).build(), "Item 2" }
+    |
+
+error[E0599]: no variant or associated item named `Md` found for enum `hikari_palette::BorderRadius` in the current scope
+   --> src/pages/system/css.rs:138:100
+    |
+138 | ...                   class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Md).add(Padding::P4).build(),
+    |                                                                                          ^^ variant or associated item not found in `hikari_palette::BorderRadius`
+
+error[E0599]: no variant or associated item named `Md` found for enum `hikari_palette::BorderRadius` in the current scope
+   --> src/pages/system/css.rs:147:100
+    |
+147 | ...                   class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Md).add(Padding::P4).build(),
+    |                                                                                          ^^ variant or associated item not found in `hikari_palette::BorderRadius`
+
+error[E0599]: no variant or associated item named `Px3` found for enum `hikari_palette::Padding` in the current scope
+   --> src/pages/system/css.rs:150:107
+    |
+150 | ...                   div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px3).build(), "M0" }
+    |                                                                                             ^^^ variant or associated item not found in `hikari_palette::Padding`
+    |
+help: there is a variant with a similar name
+    |
+150 -                                     div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px3).build(), "M0" }
+150 +                                     div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P3).build(), "M0" }
+    |
+
+error[E0599]: no variant or associated item named `Px3` found for enum `hikari_palette::Padding` in the current scope
+   --> src/pages/system/css.rs:151:107
+    |
+151 | ...                   div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px3).build(), "M2" }
+    |                                                                                             ^^^ variant or associated item not found in `hikari_palette::Padding`
+    |
+help: there is a variant with a similar name
+    |
+151 -                                     div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px3).build(), "M2" }
+151 +                                     div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P3).build(), "M2" }
+    |
+
+error[E0599]: no variant or associated item named `Px3` found for enum `hikari_palette::Padding` in the current scope
+   --> src/pages/system/css.rs:152:107
+    |
+152 | ...                   div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px3).build(), "M4" }
+    |                                                                                             ^^^ variant or associated item not found in `hikari_palette::Padding`
+    |
+help: there is a variant with a similar name
+    |
+152 -                                     div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::Px3).build(), "M4" }
+152 +                                     div { class: ClassesBuilder::new().add(BgColor::Surface).add(Padding::P3).build(), "M4" }
+    |
+
+error[E0599]: no variant or associated item named `Md` found for enum `hikari_palette::BorderRadius` in the current scope
+   --> src/pages/system/css.rs:178:100
+    |
+178 | ...                   class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Md).add(Padding::P4).build(),
+    |                                                                                          ^^ variant or associated item not found in `hikari_palette::BorderRadius`
+
+error[E0599]: no variant or associated item named `Md` found for enum `hikari_palette::BorderRadius` in the current scope
+   --> src/pages/system/css.rs:187:100
+    |
+187 | ...                   class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Md).add(Padding::P4).build(),
+    |                                                                                          ^^ variant or associated item not found in `hikari_palette::BorderRadius`
+
+error[E0599]: no variant or associated item named `Md` found for enum `hikari_palette::BorderRadius` in the current scope
+   --> src/pages/system/css.rs:215:100
+    |
+215 | ...                   class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Md).add(Padding::P4).build(),
+    |                                                                                          ^^ variant or associated item not found in `hikari_palette::BorderRadius`
+
+error[E0599]: no variant or associated item named `Md` found for enum `hikari_palette::BorderRadius` in the current scope
+   --> src/pages/system/css.rs:223:100
+    |
+223 | ...                   class: ClassesBuilder::new().add(BgColor::White).add(BorderRadius::Md).add(Padding::P4).build(),
+    |                                                                                          ^^ variant or associated item not found in `hikari_palette::BorderRadius`
+
+error[E0599]: no variant or associated item named `Search` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/system/icons.rs:24:26
+   |
+24 |                 MdiIcon::Search,
+   |                          ^^^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant or associated item named `Plus` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/system/icons.rs:34:26
+   |
+34 |                 MdiIcon::Plus,
+   |                          ^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant or associated item named `X` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/system/icons.rs:37:26
+   |
+37 |                 MdiIcon::X,
+   |                          ^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant or associated item named `Trash` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/system/icons.rs:39:26
+   |
+39 |                 MdiIcon::Trash,
+   |                          ^^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant or associated item named `Refresh` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/system/icons.rs:40:26
+   |
+40 |                 MdiIcon::Refresh,
+   |                          ^^^^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant or associated item named `AlertCircle` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/system/icons.rs:47:26
+   |
+47 |                 MdiIcon::AlertCircle,
+   |                          ^^^^^^^^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant or associated item named `CheckCircle` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/system/icons.rs:48:26
+   |
+48 |                 MdiIcon::CheckCircle,
+   |                          ^^^^^^^^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant or associated item named `Loader` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/system/icons.rs:50:26
+   |
+50 |                 MdiIcon::Loader,
+   |                          ^^^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant or associated item named `File` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/system/icons.rs:59:26
+   |
+59 |                 MdiIcon::File,
+   |                          ^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant or associated item named `Folder` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/system/icons.rs:60:26
+   |
+60 |                 MdiIcon::Folder,
+   |                          ^^^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant or associated item named `Video` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/system/icons.rs:63:26
+   |
+63 |                 MdiIcon::Video,
+   |                          ^^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant or associated item named `Message` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/system/icons.rs:70:26
+   |
+70 |                 MdiIcon::Message,
+   |                          ^^^^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant or associated item named `Phone` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/system/icons.rs:72:26
+   |
+72 |                 MdiIcon::Phone,
+   |                          ^^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant or associated item named `Wifi` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/system/icons.rs:74:26
+   |
+74 |                 MdiIcon::Wifi,
+   |                          ^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant or associated item named `Md` found for enum `hikari_palette::BorderRadius` in the current scope
+   --> src/pages/system/icons.rs:149:72
+    |
+149 | ...                   .add(BorderRadius::Md)
+    |                                          ^^ variant or associated item not found in `hikari_palette::BorderRadius`
+
+error[E0599]: no variant named `DemosAnimation` found for enum `Route`
+  --> src/pages/demos/showcase.rs:22:20
+   |
+22 |             Route::DemosAnimation {},
+   |                    ^^^^^^^^^^^^^^ variant not found in `Route`
+   |
+  ::: src/app.rs:22:1
+   |
+22 | pub enum Route {
+   | -------------- variant `DemosAnimation` not found here
+
+error[E0599]: no variant or associated item named `Form` found for enum `hikari_components::MdiIcon` in the current scope
+   --> src/pages/demos/showcase.rs:28:22
+    |
+ 28 |             MdiIcon::Form,
+    |                      ^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+    |
+help: there is a method `or` with a similar name
+   --> /home/lab/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tower-http-0.6.8/src/follow_redirect/policy/mod.rs:165:5
+    |
+165 | /     fn or<P, B, E>(self, other: P) -> Or<Self, P>
+166 | |     where
+167 | |         Self: Policy<B, E> + Sized,
+168 | |         P: Policy<B, E>;
+    | |________________________^
+
+error[E0599]: no variant named `DemosLayer1Form` found for enum `Route`
+  --> src/pages/demos/showcase.rs:29:20
+   |
+29 |             Route::DemosLayer1Form {},
+   |                    ^^^^^^^^^^^^^^^
+   |
+  ::: src/app.rs:22:1
+   |
+22 | pub enum Route {
+   | -------------- variant `DemosLayer1Form` not found here
+   |
+help: there is a variant with a similar name
+   |
+29 -             Route::DemosLayer1Form {},
+29 +             Route::Layer1Form {},
+   |
+
+error[E0599]: no variant or associated item named `Monitor` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/demos/showcase.rs:35:22
+   |
+35 |             MdiIcon::Monitor,
+   |                      ^^^^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant named `DemosLayer2Dashboard` found for enum `Route`
+  --> src/pages/demos/showcase.rs:36:20
+   |
+36 |             Route::DemosLayer2Dashboard {},
+   |                    ^^^^^^^^^^^^^^^^^^^^ variant not found in `Route`
+   |
+  ::: src/app.rs:22:1
+   |
+22 | pub enum Route {
+   | -------------- variant `DemosLayer2Dashboard` not found here
+
+error[E0599]: no variant or associated item named `Video` found for enum `hikari_components::MdiIcon` in the current scope
+  --> src/pages/demos/showcase.rs:42:22
+   |
+42 |             MdiIcon::Video,
+   |                      ^^^^^ variant or associated item not found in `hikari_components::MdiIcon`
+
+error[E0599]: no variant named `DemosLayer3Video` found for enum `Route`
+  --> src/pages/demos/showcase.rs:43:20
+   |
+43 |             Route::DemosLayer3Video {},
+   |                    ^^^^^^^^^^^^^^^^ variant not found in `Route`
+   |
+  ::: src/app.rs:22:1
+   |
+22 | pub enum Route {
+   | -------------- variant `DemosLayer3Video` not found here
+
+warning: variable does not need to be mutable
+  --> src/pages/components/entry/search_doc.rs:64:9
+   |
+64 |     let mut search1 = use_signal(|| String::new());
+   |         ----^^^^^^^
+   |         |
+   |         help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` on by default
+
+warning: variable does not need to be mutable
+  --> src/pages/components/entry/search_doc.rs:68:9
+   |
+68 |     let mut search4 = use_signal(|| "Search query".to_string());
+   |         ----^^^^^^^
+   |         |
+   |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> src/pages/components/extra/collapsible_doc.rs:47:9
+   |
+47 |     let mut expanded4 = use_signal(|| true);
+   |         ----^^^^^^^^^
+   |         |
+   |         help: remove this `mut`
+
+Some errors have detailed explanations: E0432, E0599.
+For more information about an error, try `rustc --explain E0432`.
+warning: `website` (lib) generated 53 warnings
+warning: website@0.1.0: 🏗️  website build starting...
+warning: website@0.1.0: 📦 Generating bulk imports...
+warning: website@0.1.0: ⚠️  generate_bulk_imports.py not found at "/mnt/sdb1/hikari/examples/website/../../scripts/generate_bulk_imports.py"
+warning: website@0.1.0: 📂 Current dir: "/mnt/sdb1/hikari/examples/website"
+warning: website@0.1.0: 📂 CARGO_MANIFEST_DIR: "/mnt/sdb1/hikari/examples/website"
+warning: website@0.1.0: 📂 Workspace root (relative): "/mnt/sdb1/hikari/examples/website/../.."
+warning: website@0.1.0: 📂 Workspace root (resolved): "/mnt/sdb1/hikari/examples/website/../.."
+warning: website@0.1.0: 📂 Root public dir: "/mnt/sdb1/hikari/examples/website/../../public"
+warning: website@0.1.0: 📄 Copying: "/mnt/sdb1/hikari/examples/website/index.html" -> "/mnt/sdb1/hikari/examples/website/../../public/index.html"
+warning: website@0.1.0: 📄 Copied index.html to public/ (1948 bytes)
+warning: website@0.1.0: ✅ Verification: index.html exists at "/mnt/sdb1/hikari/examples/website/../../public/index.html"
+warning: website@0.1.0: 🖼️  Copying: "/mnt/sdb1/hikari/examples/website/../../docs/logo.png" -> "/mnt/sdb1/hikari/examples/website/../../public/images/logo.png"
+warning: website@0.1.0: 🖼️  Copied logo.png to public/images/ (22422 bytes)
+warning: website@0.1.0: ✅ Verification: logo.png exists at "/mnt/sdb1/hikari/examples/website/../../public/images/logo.png"
+warning: website@0.1.0: 🎨 Checking CSS bundle at "/mnt/sdb1/hikari/examples/website/../../public/styles/bundle.css"
+warning: website@0.1.0: 🎨 CSS bundle found: 287786 bytes
+warning: website@0.1.0: ✅ website build completed!
+error: could not compile `website` (lib) due to 52 previous errors; 53 warnings emitted

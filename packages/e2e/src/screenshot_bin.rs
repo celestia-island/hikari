@@ -28,7 +28,9 @@ struct Args {
 }
 
 /// Base URL for website
-const BASE_URL: &str = "http://localhost:3000";
+fn get_base_url() -> String {
+    std::env::var("WEBSITE_BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string())
+}
 
 /// Output directory for screenshots
 const SCREENSHOT_DIR: &str = "/tmp/e2e_screenshots";
@@ -143,7 +145,7 @@ impl ScreenshotGenerator {
 
     /// Capture screenshot for a single page
     pub async fn capture_page(&mut self, route: &str, name: &str) -> Result<()> {
-        let url = format!("{}{}", BASE_URL, route);
+        let url = format!("{}{}", get_base_url(), route);
         info!("[{}] Navigating to {}", name, url);
 
         // Create new page and navigate
@@ -316,7 +318,7 @@ async fn main() -> Result<()> {
         .init();
 
     info!("=== Hikari E2E Screenshot Generator (chromiumoxide) ===");
-    info!("Base URL: {}", BASE_URL);
+    info!("Base URL: {}", get_base_url());
     info!("Output directory: {}", SCREENSHOT_DIR);
     info!(
         "Chrome binary: {}",

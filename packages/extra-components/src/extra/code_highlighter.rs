@@ -6,8 +6,6 @@ use hikari_palette::classes::ClassesBuilder;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::{JsCast, JsValue};
-#[cfg(target_arch = "wasm32")]
-use web_sys::Clipboard;
 
 /// CodeHighlighter component type wrapper (for implementing StyledComponent)
 pub struct CodeHighlighterComponent;

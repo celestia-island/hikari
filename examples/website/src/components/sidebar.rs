@@ -292,6 +292,60 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                     },
                 ],
             },
+            NavSubcategory {
+                label_en: "Entry",
+                label_zh: "入口组件",
+                route: Some(Route::CascaderDoc {}),
+                items: &[
+                    NavItem {
+                        label: "Cascader",
+                        icon: MdiIcon::ChevronDown,
+                        route: Route::CascaderDoc {},
+                    },
+                    NavItem {
+                        label: "Transfer",
+                        icon: MdiIcon::SwapHorizontal,
+                        route: Route::TransferDoc {},
+                    },
+                    NavItem {
+                        label: "Number Input",
+                        icon: MdiIcon::FormatListNumbered,
+                        route: Route::NumberInputDoc {},
+                    },
+                    NavItem {
+                        label: "Search",
+                        icon: MdiIcon::Magnify,
+                        route: Route::SearchDoc {},
+                    },
+                ],
+            },
+            NavSubcategory {
+                label_en: "Extra",
+                label_zh: "扩展组件",
+                route: Some(Route::CollapsibleDoc {}),
+                items: &[
+                    NavItem {
+                        label: "Collapsible",
+                        icon: MdiIcon::ArrowExpandHorizontal,
+                        route: Route::CollapsibleDoc {},
+                    },
+                    NavItem {
+                        label: "Timeline",
+                        icon: MdiIcon::ChartTimeline,
+                        route: Route::TimelineDoc {},
+                    },
+                    NavItem {
+                        label: "User Guide",
+                        icon: MdiIcon::BookOpen,
+                        route: Route::UserGuideDoc {},
+                    },
+                    NavItem {
+                        label: "Zoom Controls",
+                        icon: MdiIcon::MagnifyPlus,
+                        route: Route::ZoomControlsDoc {},
+                    },
+                ],
+            },
         ],
     },
     NavCategory {

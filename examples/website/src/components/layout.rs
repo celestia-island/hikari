@@ -4,9 +4,12 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use super::{AsideFooter, sidebar::Sidebar};
+use super::{sidebar::Sidebar, AsideFooter};
 use crate::app::Route;
-use _components::{basic::Logo, layout::{Aside, Header, Layout as HikariLayout}};
+use _components::{
+    basic::Logo,
+    layout::{Aside, Header, Layout as HikariLayout},
+};
 use _palette::classes::{AlignItems, ClassesBuilder, Display, FontWeight, Gap, Padding};
 
 /// Layout component that wraps all pages with modern design
@@ -164,6 +167,94 @@ fn get_breadcrumb_items(route: &Route) -> Vec<BreadcrumbItem> {
             },
             BreadcrumbItem {
                 label: "Layer 1".to_string(),
+                route: None,
+            },
+        ],
+
+        Route::CascaderDoc {} => vec![
+            BreadcrumbItem {
+                label: "Components".to_string(),
+                route: Some(Route::ComponentsOverview {}),
+            },
+            BreadcrumbItem {
+                label: "Entry".to_string(),
+                route: None,
+            },
+        ],
+
+        Route::TransferDoc {} => vec![
+            BreadcrumbItem {
+                label: "Components".to_string(),
+                route: Some(Route::ComponentsOverview {}),
+            },
+            BreadcrumbItem {
+                label: "Entry".to_string(),
+                route: None,
+            },
+        ],
+
+        Route::NumberInputDoc {} => vec![
+            BreadcrumbItem {
+                label: "Components".to_string(),
+                route: Some(Route::ComponentsOverview {}),
+            },
+            BreadcrumbItem {
+                label: "Entry".to_string(),
+                route: None,
+            },
+        ],
+
+        Route::SearchDoc {} => vec![
+            BreadcrumbItem {
+                label: "Components".to_string(),
+                route: Some(Route::ComponentsOverview {}),
+            },
+            BreadcrumbItem {
+                label: "Entry".to_string(),
+                route: None,
+            },
+        ],
+
+        Route::CollapsibleDoc {} => vec![
+            BreadcrumbItem {
+                label: "Components".to_string(),
+                route: Some(Route::ComponentsOverview {}),
+            },
+            BreadcrumbItem {
+                label: "Extra".to_string(),
+                route: None,
+            },
+        ],
+
+        Route::TimelineDoc {} => vec![
+            BreadcrumbItem {
+                label: "Components".to_string(),
+                route: Some(Route::ComponentsOverview {}),
+            },
+            BreadcrumbItem {
+                label: "Extra".to_string(),
+                route: None,
+            },
+        ],
+
+        Route::UserGuideDoc {} => vec![
+            BreadcrumbItem {
+                label: "Components".to_string(),
+                route: Some(Route::ComponentsOverview {}),
+            },
+            BreadcrumbItem {
+                label: "Extra".to_string(),
+                route: None,
+            },
+        ],
+
+        Route::ZoomControlsDoc {} => vec![
+            BreadcrumbItem {
+                label: "Components".to_string(),
+                route: Some(Route::ComponentsOverview {}),
+            },
+            BreadcrumbItem {
+                label: "Extra".to_string(),
                 route: None,
             },
         ],

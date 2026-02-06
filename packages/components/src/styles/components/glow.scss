@@ -26,11 +26,11 @@
     background: radial-gradient(
       circle at var(--glow-x, 50%) var(--glow-y, 50%),
       var(--hi-glow-color) 0%,
-      transparent calc(150% * var(--glow-intensity, 1.0))
+      transparent calc(150% * var(--glow-intensity, 0.3))
     );
   }
 
-  // Show glow on hover (softer)
+  // Show glow on hover based on intensity level
   &:hover::before {
     opacity: 0.2;
   }
@@ -40,6 +40,31 @@
     pointer-events: auto;
     position: relative;
     z-index: 1;
+  }
+}
+
+// ============================================
+// Glow Intensity Levels (Shadow Strength)
+// ============================================
+
+// 30% intensity (subtle, default for cards)
+.hi-glow-thirty {
+  &::before {
+    --glow-intensity: 0.3;
+  }
+}
+
+// 70% intensity (standard)
+.hi-glow-seventy {
+  &::before {
+    --glow-intensity: 0.7;
+  }
+}
+
+// 100% intensity (intense)
+.hi-glow-hundred {
+  &::before {
+    --glow-intensity: 1.0;
   }
 }
 

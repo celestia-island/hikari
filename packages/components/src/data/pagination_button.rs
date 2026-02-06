@@ -43,7 +43,7 @@ pub struct PaginationButtonProps {
     pub glow_color: GlowColor,
 
     /// Glow intensity (default: Subtle)
-    #[props(default = GlowIntensity::Subtle)]
+    #[props(default = GlowIntensity::Thirty)]
     pub glow_intensity: GlowIntensity,
 }
 

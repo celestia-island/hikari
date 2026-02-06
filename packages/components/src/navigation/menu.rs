@@ -321,7 +321,7 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
                 Glow {
                     blur: GlowBlur::Medium,
                     color: GlowColor::Ghost,
-                    intensity: GlowIntensity::Subtle,
+                    intensity: GlowIntensity::Thirty,
                     children: item_content
                 }
             }
@@ -395,7 +395,7 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
             Glow {
                 blur: GlowBlur::Medium,
                 color: GlowColor::Ghost,
-                intensity: GlowIntensity::Subtle,
+                intensity: GlowIntensity::Thirty,
                 children: title_content
             }
         }

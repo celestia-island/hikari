@@ -44,16 +44,16 @@ pub enum GlowColor {
     Info,
 }
 
-/// Glow intensity
+/// Glow intensity (shadow strength)
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowIntensity {
-    /// Subtle glow
+    /// 30% glow intensity (subtle, default for cards)
     #[default]
-    Subtle,
-    /// Standard glow
-    Standard,
-    /// Intense glow
-    Intense,
+    Thirty,
+    /// 70% glow intensity (standard)
+    Seventy,
+    /// 100% glow intensity (intense)
+    Hundred,
 }
 
 #[derive(Clone, PartialEq, Props)]
@@ -103,9 +103,9 @@ pub fn Glow(props: GlowProps) -> Element {
     };
 
     let intensity_class = match props.intensity {
-        GlowIntensity::Subtle => GlowClass::GlowSubtle,
-        GlowIntensity::Standard => GlowClass::GlowStandard,
-        GlowIntensity::Intense => GlowClass::GlowIntense,
+        GlowIntensity::Thirty => GlowClass::GlowThirty,
+        GlowIntensity::Seventy => GlowClass::GlowSeventy,
+        GlowIntensity::Hundred => GlowClass::GlowHundred,
     };
 
     let glow_classes = ClassesBuilder::new()
@@ -118,9 +118,9 @@ pub fn Glow(props: GlowProps) -> Element {
 
     #[cfg(target_arch = "wasm32")]
     let glow_intensity = match props.intensity {
-        GlowIntensity::Subtle => "0.8",
-        GlowIntensity::Standard => "1.0",
-        GlowIntensity::Intense => "1.5",
+        GlowIntensity::Thirty => "0.3",
+        GlowIntensity::Seventy => "0.7",
+        GlowIntensity::Hundred => "1.0",
     };
 
     #[cfg(target_arch = "wasm32")]

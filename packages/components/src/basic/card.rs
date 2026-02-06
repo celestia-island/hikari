@@ -7,7 +7,7 @@ use palette::classes::{CardClass, ClassesBuilder, UtilityClass};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 
-use crate::styled::StyledComponent;
+use crate::{feedback::GlowIntensity, styled::StyledComponent};
 
 /// Card 组件的类型包装器（用于实现 StyledComponent）
 pub struct CardComponent;
@@ -37,6 +37,10 @@ pub struct CardProps {
     /// Enable glow effect (mouse-following spotlight)
     #[props(default = true)]
     pub glow: bool,
+
+    /// Glow intensity (shadow strength)
+    #[props(default)]
+    pub glow_intensity: GlowIntensity,
 }
 
 impl Default for CardProps {
@@ -50,6 +54,7 @@ impl Default for CardProps {
             children: VNode::empty(),
             onclick: None,
             glow: true,
+            glow_intensity: Default::default(),
         }
     }
 }

@@ -1038,12 +1038,12 @@ pub enum GlowClass {
     GlowDanger,
     /// `hi-glow-success` - Success color
     GlowSuccess,
-    /// `hi-glow-subtle` - Subtle intensity
-    GlowSubtle,
-    /// `hi-glow-standard` - Standard intensity
-    GlowStandard,
-    /// `hi-glow-intense` - Intense intensity
-    GlowIntense,
+    /// `hi-glow-thirty` - 30% glow intensity (subtle)
+    GlowThirty,
+    /// `hi-glow-seventy` - 70% glow intensity (standard)
+    GlowSeventy,
+    /// `hi-glow-hundred` - 100% glow intensity (intense)
+    GlowHundred,
 }
 
 impl UtilityClass for GlowClass {
@@ -1060,9 +1060,9 @@ impl UtilityClass for GlowClass {
             GlowClass::GlowSecondary => "glow-secondary",
             GlowClass::GlowDanger => "glow-danger",
             GlowClass::GlowSuccess => "glow-success",
-            GlowClass::GlowSubtle => "glow-subtle",
-            GlowClass::GlowStandard => "glow-standard",
-            GlowClass::GlowIntense => "glow-intense",
+            GlowClass::GlowThirty => "glow-thirty",
+            GlowClass::GlowSeventy => "glow-seventy",
+            GlowClass::GlowHundred => "glow-hundred",
         }
     }
 }

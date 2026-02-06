@@ -7,20 +7,9 @@
 // ============================================
 
 // Base glow wrapper styles
-.hi-glow-wrapper {
+.hi-glow-wrapper,
+.hi-glow-wrapper-block {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-
-  // IMPORTANT: When wrapping square buttons (like IconButton), preserve square aspect ratio
-  // Do not add width/height constraints here - let to child element determine size
-
-  // Use standard radius to match Button/Input
-  border-radius: vars.$hikari-radius-fui-sm;
-  
-  // FIX: Prevent button overflow: hidden from clipping glow overlay
-  // The glow overlay extends beyond button boundaries, so we need to allow overflow
-  overflow: visible;
 
   // Create dynamic glow overlay using CSS variables (spotlight effect)
   &::before {
@@ -28,7 +17,7 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    z-index: 2;  // Place glow above children so it's visible on solid buttons
+    z-index: 2;
     border-radius: inherit;
     opacity: 0;
     transition: opacity 0.3s ease-in-out;
@@ -52,6 +41,30 @@
     position: relative;
     z-index: 1;
   }
+}
+
+.hi-glow-wrapper {
+  display: inline-flex;
+  align-items: center;
+
+  // IMPORTANT: When wrapping square buttons (like IconButton), preserve square aspect ratio
+  // Do not add width/height constraints here - let to child element determine size
+
+  // Use standard radius to match Button/Input
+  border-radius: vars.$hikari-radius-fui-sm;
+
+  // FIX: Prevent button overflow: hidden from clipping glow overlay
+  // The glow overlay extends beyond button boundaries, so we need to allow overflow
+  overflow: visible;
+}
+
+// Block variant for wrapping block-level elements (like Card)
+.hi-glow-wrapper-block {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border-radius: vars.$hikari-radius-fui-md;
+  overflow: visible;
 }
 
 // ============================================

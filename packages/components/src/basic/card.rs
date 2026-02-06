@@ -4,7 +4,10 @@
 use dioxus::prelude::*;
 use palette::classes::{CardClass, ClassesBuilder, UtilityClass};
 
-use crate::styled::StyledComponent;
+use crate::{
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    styled::StyledComponent,
+};
 
 /// Card 组件的类型包装器（用于实现 StyledComponent）
 pub struct CardComponent;
@@ -33,6 +36,22 @@ pub struct CardProps {
 
     #[props(default)]
     pub spotlight: bool,
+
+    /// Enable glow effect (Win10-style blur and mouse-following highlight)
+    #[props(default = true)]
+    pub glow: bool,
+
+    /// Glow blur intensity (requires glow: true)
+    #[props(default)]
+    pub glow_blur: GlowBlur,
+
+    /// Glow intensity (requires glow: true)
+    #[props(default)]
+    pub glow_intensity: GlowIntensity,
+
+    /// Glow color mode (requires glow: true)
+    #[props(default)]
+    pub glow_color: Option<GlowColor>,
 }
 
 impl Default for CardProps {
@@ -46,6 +65,10 @@ impl Default for CardProps {
             children: VNode::empty(),
             onclick: None,
             spotlight: false,
+            glow: true,
+            glow_blur: Default::default(),
+            glow_intensity: Default::default(),
+            glow_color: None,
         }
     }
 }
@@ -77,8 +100,6 @@ pub fn Card(props: CardProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let _clickable = props.onclick.is_some();
-
     let card_content = rsx! {
         div {
             class: "{card_classes}",
@@ -107,12 +128,16 @@ pub fn Card(props: CardProps) -> Element {
         }
     };
 
-    // Wrap with spotlight if enabled
-    if props.spotlight {
+    // Wrap with glow wrapper if enabled
+    if props.glow {
+        let glow_color = props.glow_color.unwrap_or(GlowColor::Primary);
+
         rsx! {
-            div {
-                class: "{CardClass::CardSpotlightWrapper.as_class()}",
-                "data-spotlight": "true",
+            Glow {
+                blur: props.glow_blur,
+                color: glow_color,
+                intensity: props.glow_intensity,
+                block: true,
                 { card_content }
             }
         }

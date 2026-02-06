@@ -76,6 +76,10 @@ pub struct GlowProps {
     /// Additional CSS classes
     #[props(default)]
     class: String,
+
+    /// Display mode: inline (default) or block
+    #[props(default)]
+    block: bool,
 }
 
 /// Unified glow component with mouse-following effect
@@ -106,6 +110,7 @@ pub fn Glow(props: GlowProps) -> Element {
 
     let glow_classes = ClassesBuilder::new()
         .add(GlowClass::GlowWrapper)
+        .add_if_raw("hi-glow-wrapper-block", || props.block)
         .add(blur_class)
         .add(intensity_class)
         .add_raw(&props.class)

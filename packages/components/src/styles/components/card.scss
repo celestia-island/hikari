@@ -58,6 +58,8 @@
 // ============================================
 
 .hi-card-header {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -97,6 +99,8 @@
 // ============================================
 
 .hi-card-body {
+  position: relative;
+  z-index: 1;
   flex: 1;
   padding: 1.25rem;
   color: var(--hi-color-text-primary);
@@ -109,6 +113,8 @@
 // ============================================
 
 .hi-card-footer {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -333,18 +339,28 @@
 }
 
 // ============================================
-// Spotlight Effect (Mouse-following glow)
+// Glow Effect (Mouse-following spotlight)
 // ============================================
 
-// Spotlight wrapper for card
-// Note: glow effect is now handled by Glow component
-.hi-card-spotlight-wrapper {
-  position: relative;
-  display: flex;
-  flex-direction: column;
+// Glow overlay for card (internal background layer)
+.hi-card-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
 
-  .hi-card {
-    position: relative;
-    z-index: 1;
-  }
+  // Use radial-gradient for spotlight effect
+  background: radial-gradient(
+    circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    var(--hi-glow-color) 0%,
+    transparent calc(150% * var(--glow-intensity, 1.0))
+  );
+}
+
+// Show glow on hover
+.hi-card:hover .hi-card-glow {
+  opacity: 0.2;
 }

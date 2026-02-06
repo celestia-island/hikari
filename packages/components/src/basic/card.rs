@@ -4,10 +4,7 @@
 use dioxus::prelude::*;
 use palette::classes::{CardClass, ClassesBuilder, UtilityClass};
 
-use crate::{
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
-    styled::StyledComponent,
-};
+use crate::styled::StyledComponent;
 
 /// Card 组件的类型包装器（用于实现 StyledComponent）
 pub struct CardComponent;
@@ -34,24 +31,9 @@ pub struct CardProps {
 
     pub onclick: Option<EventHandler<MouseEvent>>,
 
-    #[props(default)]
-    pub spotlight: bool,
-
-    /// Enable glow effect (Win10-style blur and mouse-following highlight)
+    /// Enable glow effect (mouse-following spotlight)
     #[props(default = true)]
     pub glow: bool,
-
-    /// Glow blur intensity (requires glow: true)
-    #[props(default)]
-    pub glow_blur: GlowBlur,
-
-    /// Glow intensity (requires glow: true)
-    #[props(default)]
-    pub glow_intensity: GlowIntensity,
-
-    /// Glow color mode (requires glow: true)
-    #[props(default)]
-    pub glow_color: Option<GlowColor>,
 }
 
 impl Default for CardProps {
@@ -64,11 +46,7 @@ impl Default for CardProps {
             extra: None,
             children: VNode::empty(),
             onclick: None,
-            spotlight: false,
             glow: true,
-            glow_blur: Default::default(),
-            glow_intensity: Default::default(),
-            glow_color: None,
         }
     }
 }
@@ -100,49 +78,95 @@ pub fn Card(props: CardProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let card_content = rsx! {
-        div {
-            class: "{card_classes}",
-            onclick: move |e| {
-                if let Some(handler) = props.onclick.as_ref() {
-                    handler.call(e);
+    let content = rsx! {
+        // Glow overlay (background layer)
+        if props.glow {
+            div {
+                class: "hi-card-glow",
+                style: "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: var(--hi-glow-button-primary);",
+            }
+        }
+
+        if props.title.is_some() || props.extra.is_some() {
+            div { class: "{CardClass::CardHeader.as_class()}",
+
+                if let Some(title) = props.title {
+                    div { class: "{CardClass::CardTitle.as_class()}", "{title}" }
                 }
-            },
 
-            if props.title.is_some() || props.extra.is_some() {
-                div { class: "{CardClass::CardHeader.as_class()}",
-
-                    if let Some(title) = props.title {
-                        div { class: "{CardClass::CardTitle.as_class()}", "{title}" }
-                    }
-
-                    if let Some(extra) = props.extra {
-                        div { class: "{CardClass::CardExtra.as_class()}", { extra } }
-                    }
+                if let Some(extra) = props.extra {
+                    div { class: "{CardClass::CardExtra.as_class()}", { extra } }
                 }
             }
+        }
 
-            div { class: "{CardClass::CardBody.as_class()}",
-                { props.children }
-            }
+        div { class: "{CardClass::CardBody.as_class()}",
+            { props.children }
         }
     };
 
-    // Wrap with glow wrapper if enabled
-    if props.glow {
-        let glow_color = props.glow_color.unwrap_or(GlowColor::Primary);
-
+    #[cfg(target_arch = "wasm32")]
+    {
         rsx! {
-            Glow {
-                blur: props.glow_blur,
-                color: glow_color,
-                intensity: props.glow_intensity,
-                block: true,
-                { card_content }
+            div {
+                class: "{card_classes}",
+                onclick: move |e| {
+                    if let Some(handler) = props.onclick.as_ref() {
+                        handler.call(e);
+                    }
+                },
+                onmousemove: move |event: Event<MouseData>| {
+                    if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+                        let client_x = web_event.client_x() as f64;
+                        let client_y = web_event.client_y() as f64;
+
+                        if let Some(card_el) = event.current_target().and_then(|t| t.dyn_into::<web_sys::HtmlElement>().ok()) {
+                            let rect = card_el.get_bounding_client_rect();
+                            let relative_x = client_x - rect.left();
+                            let relative_y = client_y - rect.top();
+                            let width = rect.width();
+                            let height = rect.height();
+
+                            if width > 0.0 && height > 0.0 {
+                                let percent_x = ((relative_x / width) * 100.0).clamp(0.0, 100.0);
+                                let percent_y = ((relative_y / height) * 100.0).clamp(0.0, 100.0);
+
+                                let glow_el = card_el.query_selector(".hi-card-glow").ok().flatten();
+                                if let Some(glow_el) = glow_el {
+                                    let style = glow_el.dyn_ref::<web_sys::HtmlElement>();
+                                    if let Some(style_el) = style {
+                                        style_el
+                                            .style()
+                                            .set_property("--glow-x", &format!("{:.1}%", percent_x))
+                                            .ok();
+                                        style_el
+                                            .style()
+                                            .set_property("--glow-y", &format!("{:.1}%", percent_y))
+                                            .ok();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                { content }
             }
         }
-    } else {
-        card_content
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        rsx! {
+            div {
+                class: "{card_classes}",
+                onclick: move |e| {
+                    if let Some(handler) = props.onclick.as_ref() {
+                        handler.call(e);
+                    }
+                },
+                { content }
+            }
+        }
     }
 }
 

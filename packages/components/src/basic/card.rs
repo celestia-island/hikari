@@ -86,12 +86,18 @@ pub fn Card(props: CardProps) -> Element {
         .add_raw(&props.class)
         .build();
 
+    let glow_intensity_value = match props.glow_intensity {
+        GlowIntensity::Thirty => "0.3",
+        GlowIntensity::Seventy => "0.7",
+        GlowIntensity::Hundred => "1.0",
+    };
+
     let content = rsx! {
         // Glow overlay (background layer)
         if props.glow {
             div {
                 class: "hi-card-glow",
-                style: "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: var(--hi-glow-button-primary);",
+                style: "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: var(--hi-glow-button-primary); --glow-intensity: {glow_intensity_value};",
             }
         }
 
@@ -128,7 +134,7 @@ pub fn Card(props: CardProps) -> Element {
                         let client_x = web_event.client_x() as f64;
                         let client_y = web_event.client_y() as f64;
 
-                        // Find the card by traversing up from the target
+                        // Find the card by traversing up from target
                         let mut target: Option<web_sys::EventTarget> = web_event.target();
 
                         while let Some(current) = target {

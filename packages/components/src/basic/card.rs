@@ -78,6 +78,9 @@ pub fn Card(props: CardProps) -> Element {
         .add_raw(&props.class)
         .build();
 
+    #[cfg(target_arch = "wasm32")]
+    let card_ref = use_node_ref();
+
     let content = rsx! {
         // Glow overlay (background layer)
         if props.glow {
@@ -110,6 +113,7 @@ pub fn Card(props: CardProps) -> Element {
         rsx! {
             div {
                 class: "{card_classes}",
+                r#ref: card_ref,
                 onclick: move |e| {
                     if let Some(handler) = props.onclick.as_ref() {
                         handler.call(e);
@@ -117,10 +121,9 @@ pub fn Card(props: CardProps) -> Element {
                 },
                 onmousemove: move |event: Event<MouseData>| {
                     if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
-                        let client_x = web_event.client_x() as f64;
-                        let client_y = web_event.client_y() as f64;
-
-                        if let Some(card_el) = event.current_target().and_then(|t| t.dyn_into::<web_sys::HtmlElement>().ok()) {
+                        if let Some(card_el) = card_ref.get().and_then(|el| el.dyn_into::<web_sys::HtmlElement>().ok()) {
+                            let client_x = web_event.client_x() as f64;
+                            let client_y = web_event.client_y() as f64;
                             let rect = card_el.get_bounding_client_rect();
                             let relative_x = client_x - rect.left();
                             let relative_y = client_y - rect.top();

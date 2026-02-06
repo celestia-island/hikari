@@ -4,6 +4,9 @@
 use dioxus::prelude::*;
 use palette::classes::{CardClass, ClassesBuilder, UtilityClass};
 
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsCast;
+
 use crate::styled::StyledComponent;
 
 /// Card 组件的类型包装器（用于实现 StyledComponent）

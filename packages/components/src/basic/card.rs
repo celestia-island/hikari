@@ -86,18 +86,18 @@ pub fn Card(props: CardProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let glow_intensity_value = match props.glow_intensity {
-        GlowIntensity::Thirty => "0.3",
-        GlowIntensity::Seventy => "0.7",
-        GlowIntensity::Hundred => "1.0",
+    let glow_class = match props.glow_intensity {
+        GlowIntensity::Thirty => "hi-card-glow hi-glow-thirty",
+        GlowIntensity::Seventy => "hi-card-glow hi-glow-seventy",
+        GlowIntensity::Hundred => "hi-card-glow hi-glow-hundred",
     };
 
     let content = rsx! {
         // Glow overlay (background layer)
         if props.glow {
             div {
-                class: "hi-card-glow",
-                style: "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: var(--hi-glow-button-primary); --glow-intensity: {glow_intensity_value};",
+                class: "{glow_class}",
+                style: "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: var(--hi-glow-button-primary);",
             }
         }
 

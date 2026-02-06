@@ -22,17 +22,17 @@
     opacity: 0;
     transition: opacity 0.3s ease-in-out;
 
-    // Use radial-gradient for acrylic spotlight effect (lower opacity for softer glow)
+    // Use radial-gradient for acrylic spotlight effect
     background: radial-gradient(
       circle at var(--glow-x, 50%) var(--glow-y, 50%),
       var(--hi-glow-color) 0%,
-      transparent calc(150% * var(--glow-intensity, 0.3))
+      transparent calc(var(--glow-spread, 1.5) * 100%)
     );
   }
 
-  // Show glow on hover based on intensity level
+  // Show glow on hover with intensity-based opacity
   &:hover::before {
-    opacity: 0.2;
+    opacity: var(--glow-opacity, 0.15);
   }
 
   // Ensure children (links, buttons) are always clickable
@@ -44,27 +44,31 @@
 }
 
 // ============================================
-// Glow Intensity Levels (Shadow Strength)
+// Glow Intensity Levels (Opacity & Spread)
 // ============================================
 
 // 30% intensity (subtle, default for cards)
+// Low opacity, wide spread for subtle effect
 .hi-glow-thirty {
   &::before {
-    --glow-intensity: 0.3;
+    --glow-opacity: 0.08;
+    --glow-spread: 2.0;
   }
 }
 
 // 70% intensity (standard)
 .hi-glow-seventy {
   &::before {
-    --glow-intensity: 0.7;
+    --glow-opacity: 0.15;
+    --glow-spread: 1.5;
   }
 }
 
 // 100% intensity (intense)
 .hi-glow-hundred {
   &::before {
-    --glow-intensity: 1.0;
+    --glow-opacity: 0.25;
+    --glow-spread: 1.2;
   }
 }
 

@@ -117,13 +117,6 @@ pub fn Glow(props: GlowProps) -> Element {
         .build();
 
     #[cfg(target_arch = "wasm32")]
-    let glow_intensity = match props.intensity {
-        GlowIntensity::Thirty => "0.3",
-        GlowIntensity::Seventy => "0.7",
-        GlowIntensity::Hundred => "1.0",
-    };
-
-    #[cfg(target_arch = "wasm32")]
     let glow_color = match props.color {
         GlowColor::Ghost => "var(--hi-ghost-glow, rgba(128, 128, 128, 0.5))",
         GlowColor::Primary => "var(--hi-glow-button-primary)",
@@ -137,8 +130,8 @@ pub fn Glow(props: GlowProps) -> Element {
     #[cfg(target_arch = "wasm32")]
     {
         let initial_style = format!(
-            "--glow-x: 50%; --glow-y: 50%; --glow-intensity: {}; --hi-glow-color: {};",
-            glow_intensity, glow_color
+            "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: {};",
+            glow_color
         );
 
         let onmousemove_handler = move |event: Event<MouseData>| {
@@ -173,7 +166,6 @@ pub fn Glow(props: GlowProps) -> Element {
                                     StyleBuilder::new(wrapper)
                                         .add_custom("--glow-x", &format!("{:.1}%", percent_x))
                                         .add_custom("--glow-y", &format!("{:.1}%", percent_y))
-                                        .add_custom("--glow-intensity", &glow_intensity.to_string())
                                         .apply();
                                 }
                             }

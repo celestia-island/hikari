@@ -78,9 +78,6 @@ pub fn Card(props: CardProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    #[cfg(target_arch = "wasm32")]
-    let card_ref = use_node_ref();
-
     let content = rsx! {
         // Glow overlay (background layer)
         if props.glow {
@@ -113,7 +110,6 @@ pub fn Card(props: CardProps) -> Element {
         rsx! {
             div {
                 class: "{card_classes}",
-                r#ref: card_ref,
                 onclick: move |e| {
                     if let Some(handler) = props.onclick.as_ref() {
                         handler.call(e);
@@ -121,34 +117,54 @@ pub fn Card(props: CardProps) -> Element {
                 },
                 onmousemove: move |event: Event<MouseData>| {
                     if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
-                        if let Some(card_el) = card_ref.get().and_then(|el| el.dyn_into::<web_sys::HtmlElement>().ok()) {
-                            let client_x = web_event.client_x() as f64;
-                            let client_y = web_event.client_y() as f64;
-                            let rect = card_el.get_bounding_client_rect();
-                            let relative_x = client_x - rect.left();
-                            let relative_y = client_y - rect.top();
-                            let width = rect.width();
-                            let height = rect.height();
+                        let client_x = web_event.client_x() as f64;
+                        let client_y = web_event.client_y() as f64;
 
-                            if width > 0.0 && height > 0.0 {
-                                let percent_x = ((relative_x / width) * 100.0).clamp(0.0, 100.0);
-                                let percent_y = ((relative_y / height) * 100.0).clamp(0.0, 100.0);
+                        // Find the card by traversing up from the target
+                        let mut target: Option<web_sys::EventTarget> = web_event.target();
 
-                                let glow_el = card_el.query_selector(".hi-card-glow").ok().flatten();
-                                if let Some(glow_el) = glow_el {
-                                    let style = glow_el.dyn_ref::<web_sys::HtmlElement>();
-                                    if let Some(style_el) = style {
-                                        style_el
-                                            .style()
-                                            .set_property("--glow-x", &format!("{:.1}%", percent_x))
-                                            .ok();
-                                        style_el
-                                            .style()
-                                            .set_property("--glow-y", &format!("{:.1}%", percent_y))
-                                            .ok();
+                        while let Some(current) = target {
+                            let current_el = current.dyn_ref::<web_sys::Element>();
+
+                            if let Some(el) = current_el {
+                                if el.class_list().contains("hi-card") {
+                                    // Found the card
+                                    if let Some(card_el) = el.dyn_into::<web_sys::HtmlElement>().ok() {
+                                        let rect = card_el.get_bounding_client_rect();
+                                        let relative_x = client_x - rect.left();
+                                        let relative_y = client_y - rect.top();
+                                        let width = rect.width();
+                                        let height = rect.height();
+
+                                        if width > 0.0 && height > 0.0 {
+                                            let percent_x = ((relative_x / width) * 100.0).clamp(0.0, 100.0);
+                                            let percent_y = ((relative_y / height) * 100.0).clamp(0.0, 100.0);
+
+                                            let glow_el = card_el.query_selector(".hi-card-glow").ok().flatten();
+                                            if let Some(glow_el) = glow_el {
+                                                let style = glow_el.dyn_ref::<web_sys::HtmlElement>();
+                                                if let Some(style_el) = style {
+                                                    style_el
+                                                        .style()
+                                                        .set_property("--glow-x", &format!("{:.1}%", percent_x))
+                                                        .ok();
+                                                    style_el
+                                                        .style()
+                                                        .set_property("--glow-y", &format!("{:.1}%", percent_y))
+                                                        .ok();
+                                                }
+                                            }
+                                        }
                                     }
+                                    break;
                                 }
                             }
+
+                            // Move up to parent
+                            let node = current.dyn_ref::<web_sys::Node>();
+                            target = node
+                                .and_then(|n| n.parent_node())
+                                .and_then(|n| n.dyn_into::<web_sys::EventTarget>().ok());
                         }
                     }
                 },

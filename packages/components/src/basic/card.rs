@@ -132,7 +132,7 @@ pub fn Card(props: CardProps) -> Element {
                             if let Some(el) = current_el {
                                 if el.class_list().contains("hi-card") {
                                     // Found the card
-                                    if let Some(card_el) = el.dyn_into::<web_sys::HtmlElement>().ok() {
+                                    if let Some(card_el) = el.dyn_ref::<web_sys::HtmlElement>() {
                                         let rect = card_el.get_bounding_client_rect();
                                         let relative_x = client_x - rect.left();
                                         let relative_y = client_y - rect.top();
@@ -145,17 +145,22 @@ pub fn Card(props: CardProps) -> Element {
 
                                             let glow_el = card_el.query_selector(".hi-card-glow").ok().flatten();
                                             if let Some(glow_el) = glow_el {
-                                                let style = glow_el.dyn_ref::<web_sys::HtmlElement>();
-                                                if let Some(style_el) = style {
-                                                    style_el
-                                                        .style()
-                                                        .set_property("--glow-x", &format!("{:.1}%", percent_x))
-                                                        .ok();
-                                                    style_el
-                                                        .style()
-                                                        .set_property("--glow-y", &format!("{:.1}%", percent_y))
-                                                        .ok();
-                                                }
+                                                glow_el
+                                                    .dyn_ref::<web_sys::HtmlElement>()
+                                                    .and_then(|style_el| {
+                                                        style_el
+                                                            .style()
+                                                            .set_property("--glow-x", &format!("{:.1}%", percent_x))
+                                                            .ok()
+                                                    });
+                                                glow_el
+                                                    .dyn_ref::<web_sys::HtmlElement>()
+                                                    .and_then(|style_el| {
+                                                        style_el
+                                                            .style()
+                                                            .set_property("--glow-y", &format!("{:.1}%", percent_y))
+                                                            .ok()
+                                                    });
                                             }
                                         }
                                     }

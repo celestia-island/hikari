@@ -69,7 +69,7 @@ pub fn AsideFooter() -> Element {
                 glow: true,
                 glow_blur: GlowBlur::Medium,
                 glow_color: GlowColor::Ghost,
-                glow_intensity: GlowIntensity::Subtle,
+                glow_intensity: GlowIntensity::Thirty,
                 onclick: move |_| {
                     // Get current theme and toggle
                     let current = &*theme.palette.read();
@@ -96,7 +96,7 @@ pub fn AsideFooter() -> Element {
                         glow: true,
                         glow_blur: GlowBlur::Medium,
                         glow_color: GlowColor::Ghost,
-                        glow_intensity: GlowIntensity::Subtle,
+                        glow_intensity: GlowIntensity::Thirty,
                         onclick: move |_| {},
                     }
                 },

@@ -59,14 +59,6 @@
     box-shadow: none;
   }
 
-  // Fix font size/family change on hover when autofill dropdown is shown
-  // Browser changes font to system font on hover, override with ::first-line
-  &:-webkit-autofill::first-line {
-    font-family: vars.$hikari-font-family-sans;
-    font-size: vars.$hikari-font-size-sm;
-    color: var(--hi-color-text-primary);
-  }
-
   // Focus state with sharp border (no blur, only offset)
   &:focus {
     border-color: var(--hi-color-primary);
@@ -189,14 +181,6 @@
       caret-color: var(--hi-color-text-primary);
       // Remove any box-shadow that might be added by browser
       box-shadow: none;
-    }
-
-    // Fix font size/family change on hover when autofill dropdown is shown
-    // Browser changes font to system font on hover, override with ::first-line
-    &:-webkit-autofill::first-line {
-      font-family: vars.$hikari-font-family-sans;
-      font-size: vars.$hikari-font-size-sm;
-      color: var(--hi-color-text-primary);
     }
 
     &:focus {

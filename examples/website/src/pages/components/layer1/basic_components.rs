@@ -126,17 +126,23 @@ pub fn BasicCard() -> Element {
                 .add(Padding::P4)
                 .build(),
 
-            // Basic card
+            // Basic card (legacy pattern - still works)
             Card {
                 title: Some("基础卡片".to_string()),
                 "这是一个基础的卡片组件"
             }
 
-            // Card with actions
+            // Card with actions (new composition pattern)
             Card {
-                title: Some("带操作的卡片".to_string()),
-                div {
-                    class: "hi-card-footer",
+                CardHeader {
+                    title: Some("带操作的卡片".to_string()),
+                }
+
+                CardContent {
+                    div { "卡片内容区域" }
+                }
+
+                CardActions {
                     Button {
                         variant: ButtonVariant::Ghost,
                         "取消"
@@ -144,6 +150,35 @@ pub fn BasicCard() -> Element {
                     Button {
                         variant: ButtonVariant::Primary,
                         "确认"
+                    }
+                }
+            }
+
+            // Full card with all sub-components
+            Card {
+                CardHeader {
+                    title: Some("完整卡片".to_string()),
+                    subtitle: Some("带有副标题".to_string()),
+                    action: Some(rsx! {
+                        _components::IconButton {
+                            icon: _icons::LucideIcon::MoreVertical,
+                            size: 16,
+                        }
+                    })
+                }
+
+                CardContent {
+                    div { "这是一个完整卡片，包含头部、内容和操作区域" }
+                }
+
+                CardActions {
+                    Button {
+                        variant: ButtonVariant::Ghost,
+                        "关闭"
+                    }
+                    Button {
+                        variant: ButtonVariant::Secondary,
+                        "保存"
                     }
                 }
             }

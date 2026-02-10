@@ -39,13 +39,13 @@
     opacity: 0.6;
   }
 
-  // Override browser autofill styles to completely remove background color
+  // Override browser autofill styles to use transparent background
   &:-webkit-autofill,
   &:-webkit-autofill:hover,
   &:-webkit-autofill:focus,
   &:-webkit-autofill:active {
-    // Remove background color with very long transition delay
-    transition: background-color 5000s ease-in-out 0s;
+    // Set background to transparent
+    background-color: transparent !important;
     // Preserve text color in autofilled state (WebKit-specific property)
     -webkit-text-fill-color: var(--hi-color-text-primary);
     // Ensure caret color matches theme
@@ -163,8 +163,8 @@
     &:-webkit-autofill:hover,
     &:-webkit-autofill:focus,
     &:-webkit-autofill:active {
-      // Remove background color with very long transition delay
-      transition: background-color 5000s ease-in-out 0s;
+      // Set background to transparent
+      background-color: transparent !important;
       // Preserve text color in autofilled state (WebKit-specific property)
       -webkit-text-fill-color: var(--hi-color-text-primary);
       // Ensure caret color matches theme

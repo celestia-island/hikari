@@ -1,176 +1,314 @@
-# Card Component Redesign - COMPLETED
+# Hikari Development Plan
 
-> **Date**: 2026-02-10
-> **Status**: ✅ COMPLETED
-> **Priority**: High
+> **Last Updated**: 2026-02-10
+> **Status**: Active
 
-## Summary
+## Overview
 
-Successfully refactored the Card component to use **modular sub-components** following Material UI's composable architecture pattern.
-
-## What Was Done
-
-### Phase 1: ✅ Fixed Header/Footer Background
-- Removed solid background (`rgba(214, 236, 240, 0.5)`) from card header
-- Removed solid background from card footer
-- Changed to `background: transparent`
-- **File**: `packages/components/src/styles/components/card.scss`
-
-### Phase 2: ✅ Created Modular Sub-Components
-Added four new sub-components to `packages/components/src/basic/card.rs`:
-- `CardHeader` - Optional header with title, subtitle, avatar, action
-- `CardContent` - Main content area
-- `CardActions` - Footer with action buttons
-- `CardMedia` - Media container (images/videos)
-
-### Phase 3: ✅ Updated CardClass Enum
-Added new variants to `packages/palette/src/classes/components.rs`:
-- `CardSubtitle` - Card subtitle
-- `CardMedia` - Card media
-- `CardActions` - Card actions
-- `CardActionsNoSpacing` - Card actions without spacing
-
-### Phase 4: ✅ Added SCSS Styling
-Added comprehensive styling in `packages/components/src/styles/components/card.scss`:
-- `.hi-card-header-left` - Left section layout
-- `.hi-card-header-avatar` - Avatar container
-- `.hi-card-header-action` - Right section with transparent buttons
-- `.hi-card-media` - Media display
-- `.hi-card-actions` - Footer with flex layout
-
-### Phase 5: ✅ Exported Components
-All sub-components automatically exported via:
-- `packages/components/src/basic/mod.rs` → `pub use card::*;`
-- `packages/components/src/lib.rs` → `pub use basic::*;`
-
-### Phase 6: ✅ Updated Examples
-Updated `examples/website/src/pages/components/layer1/basic_components.rs` to demonstrate:
-- Legacy pattern (still works)
-- New composition pattern with CardHeader + CardContent + CardActions
-- Full card with all sub-components including action buttons
-
-## Architecture: Composition over Flat Enums
-
-### Why Composition?
-
-Instead of adding variants to a flat `CardClass` enum (e.g., `CardDraggable`, `CardCollapsible`), we use **composition** with independent sub-components.
-
-```
-Card (container)
-├── Optional: CardHeader (title, subtitle, avatar, action)
-├── Optional: CardMedia (images/videos)
-├── Required: CardContent (main content)
-└── Optional: CardActions (footer buttons)
-```
-
-### Benefits
-
-1. **Selective Mounting**: Users choose which parts they need
-2. **Flexible Ordering**: Components can be arranged in any order
-3. **No Prop Drilling**: Each component manages its own props
-4. **Type Safety**: Each component has strongly-typed props
-5. **Better Separation of Concerns**: Clear boundaries between parts
-
-## Usage Examples
-
-### Pattern 1: Full Card with All Components
-```rust
-Card {
-    CardHeader {
-        title: Some("Card Title".to_string()),
-        subtitle: Some("Optional subtitle".to_string()),
-        action: Some(rsx! {
-            IconButton {
-                icon: LucideIcon::MoreVertical,
-                size: 16,
-            }
-        })
-    }
-
-    CardContent {
-        div { "Card content goes here..." }
-    }
-
-    CardActions {
-        Button { variant: ButtonVariant::Ghost, "Cancel" }
-        Button { variant: ButtonVariant::Primary, "Confirm" }
-    }
-}
-```
-
-### Pattern 2: Minimal Card
-```rust
-Card {
-    CardContent {
-        div { "Simple content" }
-    }
-
-    CardActions {
-        Button { variant: ButtonVariant::Primary, "OK" }
-    }
-}
-```
-
-### Pattern 3: Legacy Style (Still Works)
-```rust
-Card {
-    title: Some("Legacy Card".to_string()),
-    extra: Some(rsx! {
-        Icon { icon: LucideIcon::Settings, size: 16 }
-    }),
-    div { "Old pattern still works" }
-}
-```
-
-## Backward Compatibility
-
-✅ **Fully backward compatible** - All existing code continues to work:
-- Existing `Card` with `title` and `extra` props unchanged
-- Manual footer divs still work
-- Only adds new optional functionality
-
-## Success Criteria - ALL MET
-
-- ✅ Header actions have **transparent** background (no solid color)
-- ✅ CardActions component exists and is exported
-- ✅ CardContent takes remaining space (flex: 1)
-- ✅ `disable_spacing` prop works correctly
-- ✅ Documentation updated with composition pattern
-- ✅ Examples demonstrate multiple usage patterns
-- ✅ No breaking changes to existing API
-- ✅ Build passes without errors
-
-## Testing
-
-- ✅ Built successfully with `just build`
-- ✅ No compilation errors
-- ✅ Examples updated to demonstrate new patterns
-- ✅ All sub-components properly exported
-
-## Files Changed
-
-1. `packages/components/src/basic/card.rs` - Added 4 new components (380+ lines)
-2. `packages/components/src/styles/components/card.scss` - Updated styling
-3. `packages/palette/src/classes/components.rs` - Added 4 new CardClass variants
-4. `examples/website/src/pages/components/layer1/basic_components.rs` - Updated examples
-5. `PLAN.md` - This file
-
-## Next Steps (Optional Future Enhancements)
-
-These are NOT part of this PR, but potential future improvements:
-- Add `Draggable` wrapper component
-- Add `Collapsible` wrapper component
-- Add `CardMedia` video support
-- Add more Card variants (outlined, elevated, filled)
-
-## References
-
-- Material UI Card: https://mui.com/material-ui/react-card/
-- Material UI CardActions API: https://mui.com/material-ui/api/card-actions/
-- Material Design 3 Cards: https://m3.material.io/components/cards
+This plan tracks critical issues, missing features, and improvements needed for the Hikari project.
 
 ---
 
-**Completed by**: Claude Sonnet 4.5
-**Date**: 2026-02-10
-**Commit**: `8d160a1`
+## Priority 1: Critical Fixes
+
+### 1.1 Node Graph Input Node Output Bug [CRITICAL]
+
+**File**: `packages/extra-components/src/node_graph/plugins/input_node.rs:84-88`
+
+**Issue**: `get_output()` returns `None` - Input nodes don't provide their actual value as output.
+
+**Problem**: This breaks the entire node graph data flow. Input nodes should capture and return their current DOM value.
+
+**Fix**:
+```rust
+// Current (broken):
+fn get_output(&self) -> Option<serde_json::Value> {
+    None  // ❌ Always returns None
+}
+
+// Should be:
+fn get_output(&self) -> Option<serde_json::Value> {
+    self.get_current_value()  // ✅ Return actual input value
+}
+```
+
+**Action**: Implement DOM value capture and return as `serde_json::Value`.
+
+---
+
+### 1.2 Transfer Component Sorting Bug [HIGH]
+
+**File**: `packages/components/src/entry/transfer.rs:145-151`
+
+**Issue**: Sorting algorithm uses original data position instead of sorted order.
+
+**Problem**: When items are sorted (e.g., alphabetically), the transfer operation doesn't preserve the visual order.
+
+**Fix**: Track original positions separately or use stable sort.
+
+---
+
+### 1.3 Table Component Missing CSS Class [MEDIUM]
+
+**File**: `packages/components/src/data/table.rs:146`
+
+**Issue**: Missing `.as_class()` call on `TableClass::TableWrapper`.
+
+**Current**:
+```rust
+div { class: "table-wrapper", ... }  // ❌ String literal
+```
+
+**Should be**:
+```rust
+div { class: "{TableClass::TableWrapper.as_class()}", ... }  // ✅ Proper class
+```
+
+---
+
+## Priority 2: Missing Features
+
+### 2.1 Table Sorting Implementation [HIGH]
+
+**File**: `packages/components/src/data/table.rs`
+
+**Issue**: Table has sortable column classes but no actual sorting logic.
+
+**Requirements**:
+- Sort by column on header click
+- Show sort indicator icon
+- Toggle between ascending/descending
+- Preserve sort state
+
+**Implementation**:
+```rust
+pub struct TableProps {
+    // ... existing props
+
+    /// Current sort column
+    #[props(default)]
+    pub sort_column: Option<String>,
+
+    /// Current sort direction
+    #[props(default)]
+    pub sort_direction: SortDirection,
+}
+
+pub enum SortDirection {
+    Ascending,
+    Descending,
+}
+```
+
+---
+
+### 2.2 Table Filter Integration [MEDIUM]
+
+**File**: `packages/components/src/data/filter.rs` + `table.rs`
+
+**Issue**: Filter module exists but not integrated with main table component.
+
+**Action**: Wire up filter dropdown to table data display.
+
+---
+
+### 2.3 Draggable and Collapsible Wrappers for Card [MEDIUM]
+
+**Context**: `DragLayer` and `Collapsible` components exist in `extra-components`.
+
+**Action**: Create wrapper components that integrate with `Card`:
+
+```rust
+// Example usage:
+DraggableCard {
+    Card {
+        CardHeader { title: Some("Draggable Card".to_string()) }
+        CardContent { ... }
+    }
+}
+
+CollapsibleCard {
+    Card {
+        CardHeader { title: Some("Collapsible Card".to_string()) }
+        CardContent { ... }
+    }
+}
+```
+
+**Files to create**:
+- `packages/extra-components/src/extra/draggable_card.rs`
+- `packages/extra-components/src/extra/collapsible_card.rs`
+
+---
+
+## Priority 3: Performance Optimizations
+
+### 3.1 Background Animation DOM Queries [HIGH]
+
+**File**: `packages/components/src/basic/background.rs:120-195`
+
+**Issue**: DOM queries in every animation frame (60fps).
+
+**Problem**: `document().get_element_by_id()` called repeatedly causes performance bottleneck.
+
+**Fix**: Cache DOM elements and only update when theme changes:
+
+```rust
+// Cache element reference
+let element_ref = use_signal(|| None);
+let cached_element = use_coroutine(|_, rx| async move {
+    // Query once and cache
+});
+
+// Only re-query on theme change
+use_effect(move |theme| {
+    // Update cache when theme changes
+});
+```
+
+---
+
+### 3.2 Transfer Component Clone Optimization [MEDIUM]
+
+**File**: `packages/components/src/entry/transfer.rs:319-327`
+
+**Issue**: Complex cloning in render loop.
+
+**Fix**: Use memoization or move semantics instead of clones.
+
+---
+
+## Priority 4: Type Safety Improvements
+
+### 4.1 Replace Dynamic Types in Node Graph [MEDIUM]
+
+**Files**: Multiple node graph plugin files
+
+**Issue**: Heavy use of `serde_json::Value` loses type safety.
+
+**Problem**: Runtime type errors possible, no compile-time checking.
+
+**Action**: Define strongly-typed interfaces for node data exchange:
+
+```rust
+// Instead of:
+fn process(&self, input: serde_json::Value) -> serde_json::Value
+
+// Use:
+fn process(&self, input: &NodeData) -> NodeData
+
+trait NodeData: Clone + PartialEq + Debug {
+    fn as_value(&self) -> serde_json::Value;
+    fn from_value(value: serde_json::Value) -> Result<Self, Error>;
+}
+```
+
+---
+
+## Priority 5: Code Quality
+
+### 5.1 Rich Text Editor Non-WASM Implementation [HIGH]
+
+**File**: `packages/extra-components/src/extra/rich_text_editor.rs:121-126`
+
+**Issue**: Formatting functions are no-ops on non-WASM targets.
+
+**Current**:
+```rust
+#[cfg(not(target_arch = "wasm32"))]
+fn format_command(&self, _command: &str, _value: Option<&str>) {
+    // Does nothing silently  // ❌
+}
+```
+
+**Should be**:
+```rust
+#[cfg(not(target_arch = "wasm32"))]
+fn format_command(&self, _command: &str, _value: Option<&str>) {
+    panic!("Rich text editor only works on WASM target. Enable target_arch = \"wasm32\" in build configuration.");
+}
+```
+
+---
+
+### 5.2 Duplicate Class Building Pattern [MEDIUM]
+
+**Issue**: Repetitive `ClassesBuilder` patterns across components.
+
+**Action**: Create reusable utility functions:
+
+```rust
+// packages/components/src/utils/class_helpers.rs
+pub fn flex_row() -> String {
+    ClassesBuilder::new()
+        .add(Display::Flex)
+        .add(FlexDirection::Row)
+        .build()
+}
+```
+
+---
+
+## Priority 6: Documentation & Examples
+
+### 6.1 Update Theme Name in Lib Docs [LOW]
+
+**File**: `packages/components/src/lib.rs:69`
+
+**Issue**: Docstring shows `"arknights"` theme but code uses `"hikari"`.
+
+**Fix**: Update documentation to use correct theme names.
+
+---
+
+### 6.2 Missing Component Examples
+
+**Issue**: Some components lack usage examples in demo site.
+
+**Action**: Add examples for:
+- `DragLayer` + `Card` integration
+- `Collapsible` + `Card` integration
+- `Table` with sorting
+- `Table` with filtering
+
+---
+
+## Implementation Order
+
+1. **Week 1**: Critical fixes (1.1, 1.2, 1.3)
+2. **Week 2**: Missing features (2.1, 2.2, 2.3)
+3. **Week 3**: Performance (3.1, 3.2)
+4. **Week 4**: Type safety (4.1)
+5. **Week 5**: Code quality (5.1, 5.2)
+6. **Week 6**: Documentation (6.1, 6.2)
+
+---
+
+## Success Criteria
+
+Each task must meet:
+- ✅ No compilation errors
+- ✅ No TODO/unimplemented! markers
+- ✅ No mock/fake implementations
+- ✅ Type-safe (no serde_json::Value where avoidable)
+- ✅ Tested with example/demo code
+- ✅ Documented with doc comments
+
+---
+
+## Completed Tasks
+
+### ✅ Card Component Modular Redesign (2026-02-10)
+
+- Added `CardHeader`, `CardContent`, `CardActions`, `CardMedia` sub-components
+- Fixed transparent background on header/footer
+- Updated examples to show composition pattern
+- Commit: `8d160a1`
+
+---
+
+## References
+
+- Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- Contributing: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)
+- Design Principles: [CLAUDE.md](CLAUDE.md)

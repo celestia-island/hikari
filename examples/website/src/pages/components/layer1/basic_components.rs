@@ -163,6 +163,7 @@ pub fn BasicCard() -> Element {
                         _components::IconButton {
                             icon: _icons::LucideIcon::MoreVertical,
                             size: 16,
+                            onclick: move |_| {},
                         }
                     })
                 }

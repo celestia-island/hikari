@@ -966,10 +966,18 @@ pub enum CardClass {
     CardHeader,
     /// `hi-card-title` - Card title
     CardTitle,
+    /// `hi-card-subtitle` - Card subtitle
+    CardSubtitle,
     /// `hi-card-extra` - Extra content
     CardExtra,
     /// `hi-card-body` - Card body
     CardBody,
+    /// `hi-card-media` - Card media (images/videos)
+    CardMedia,
+    /// `hi-card-actions` - Card actions (footer)
+    CardActions,
+    /// `hi-card-actions-no-spacing` - Card actions without spacing
+    CardActionsNoSpacing,
     /// `hi-card-spotlight-wrapper` - Spotlight wrapper
     CardSpotlightWrapper,
 }
@@ -982,8 +990,12 @@ impl UtilityClass for CardClass {
             CardClass::CardBordered => "card-bordered",
             CardClass::CardHeader => "card-header",
             CardClass::CardTitle => "card-title",
+            CardClass::CardSubtitle => "card-subtitle",
             CardClass::CardExtra => "card-extra",
             CardClass::CardBody => "card-body",
+            CardClass::CardMedia => "card-media",
+            CardClass::CardActions => "card-actions",
+            CardClass::CardActionsNoSpacing => "card-actions-no-spacing",
             CardClass::CardSpotlightWrapper => "card-spotlight-wrapper",
         }
     }

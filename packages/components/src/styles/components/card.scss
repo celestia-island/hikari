@@ -65,33 +65,60 @@
   justify-content: space-between;
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--hi-color-border);
-  background: rgba(214, 236, 240, 0.5);
+  background: transparent;
+}
 
-  // Title
-  .hi-card-title {
-    margin: 0;
-    font-family: vars.$hikari-font-family-sans;
-    font-size: vars.$hikari-font-size-lg;
-    font-weight: 600;
-    color: var(--hi-color-text-primary);
-    letter-spacing: 0.02em;
+// Left section (avatar + title/subtitle)
+.hi-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+// Avatar container
+.hi-card-header-avatar {
+  flex-shrink: 0;
+}
+
+// Right section (action buttons)
+.hi-card-header-action {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  flex-shrink: 0;
+
+  // Ensure action buttons are transparent
+  button,
+  .hi-icon-button {
+    background: transparent;
   }
 
-  // Subtitle
-  .hi-card-subtitle {
-    margin: 0.25rem 0 0 0;
-    font-family: vars.$hikari-font-family-sans;
-    font-size: vars.$hikari-font-size-sm;
-    font-weight: 400;
-    color: var(--hi-color-text-secondary);
-  }
-
-  // Extra actions
+  // Extra actions (legacy)
   .hi-card-extra {
     display: flex;
     align-items: center;
     gap: 0.5rem;
   }
+}
+
+// Title
+.hi-card-title {
+  margin: 0;
+  font-family: vars.$hikari-font-family-sans;
+  font-size: vars.$hikari-font-size-lg;
+  font-weight: 600;
+  color: var(--hi-color-text-primary);
+  letter-spacing: 0.02em;
+}
+
+// Subtitle
+.hi-card-subtitle {
+  margin: 0.25rem 0 0 0;
+  font-family: vars.$hikari-font-family-sans;
+  font-size: vars.$hikari-font-size-sm;
+  font-weight: 400;
+  color: var(--hi-color-text-secondary);
 }
 
 // ============================================
@@ -120,12 +147,40 @@
   justify-content: space-between;
   padding: 1rem 1.25rem;
   border-top: 1px solid var(--hi-color-border);
-  background: rgba(214, 236, 240, 0.5);
+  background: transparent;
 
   // Actions
   .hi-card-actions {
     display: flex;
     gap: 0.5rem;
+  }
+}
+
+// ============================================
+// Card Media (images/videos)
+// ============================================
+
+.hi-card-media {
+  width: 100%;
+  object-fit: cover;
+  border-bottom: 1px solid var(--hi-color-border);
+  display: block;
+}
+
+// ============================================
+// Card Actions (MUI-style footer)
+// ============================================
+
+.hi-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;  // Actions aligned to right by default
+  padding: 0.5rem 1rem;
+  gap: 0.5rem;
+
+  // No spacing variant
+  &.hi-card-actions-no-spacing {
+    gap: 0;
   }
 }
 

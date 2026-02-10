@@ -200,7 +200,7 @@ fn store_node_value(node_id: String, port_id: String, value: Value) -> Result<()
 
     // Get or create the global node values object
     let storage_key = "hikariNodeValues";
-    let node_values = if let Some(obj) = js_sys::Reflect::get(&win.into(), &storage_key.into()).ok() {
+    let node_values = if let Some(obj) = js_sys::Reflect::get(&win.clone().into(), &storage_key.into()).ok() {
         if obj.is_object() {
             obj.dyn_into::<Object>().map_err(|e| format!("Failed to cast to Object: {:?}", e))?
         } else {

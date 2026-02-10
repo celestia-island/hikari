@@ -39,6 +39,21 @@
     opacity: 0.6;
   }
 
+  // Override browser autofill styles to prevent ugly background color
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus,
+  &:-webkit-autofill:active {
+    // Use inset box-shadow to override browser's default autofill background
+    box-shadow: 0 0 0 1000px var(--hi-color-surface) inset;
+    // Preserve text color in autofilled state (WebKit-specific property)
+    -webkit-text-fill-color: var(--hi-color-text-primary);
+    // Delay background color transition to prevent flash
+    transition: background-color 5000s ease-in-out 0s;
+    // Ensure caret color matches theme
+    caret-color: var(--hi-color-text-primary);
+  }
+
   // Focus state with sharp border (no blur, only offset)
   &:focus {
     border-color: var(--hi-color-primary);
@@ -142,6 +157,21 @@
     background: transparent;
     box-shadow: none;
     max-width: none;
+
+    // Override browser autofill styles for input within wrapper
+    &:-webkit-autofill,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:focus,
+    &:-webkit-autofill:active {
+      // Use inset box-shadow to override browser's default autofill background
+      box-shadow: 0 0 0 1000px var(--hi-color-surface) inset;
+      // Preserve text color in autofilled state (WebKit-specific property)
+      -webkit-text-fill-color: var(--hi-color-text-primary);
+      // Delay background color transition to prevent flash
+      transition: background-color 5000s ease-in-out 0s;
+      // Ensure caret color matches theme
+      caret-color: var(--hi-color-text-primary);
+    }
 
     &:focus {
       box-shadow: none;

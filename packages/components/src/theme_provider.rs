@@ -818,28 +818,48 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
         set_theme,
     });
 
-    // Get the base palette from theme registry for initial CSS variables
-    let base_palette = get_registered_theme(&props.palette)
-        .unwrap_or_else(|| get_registered_theme(get_default_theme()).unwrap());
+    // Clone color overrides for use in memo
+    let primary_override = props.primary.clone();
+    let secondary_override = props.secondary.clone();
+    let accent_override = props.accent.clone();
+    let success_override = props.success.clone();
+    let warning_override = props.warning.clone();
+    let danger_override = props.danger.clone();
+    let background_override = props.background.clone();
+    let surface_override = props.surface.clone();
+    let border_override = props.border.clone();
+    let text_primary_override = props.text_primary.clone();
+    let text_secondary_override = props.text_secondary.clone();
 
-    // Create theme palette and apply custom overrides
-    let overrides = PaletteOverrides {
-        primary: props.primary,
-        secondary: props.secondary,
-        accent: props.accent,
-        success: props.success,
-        warning: props.warning,
-        danger: props.danger,
-        background: props.background,
-        surface: props.surface,
-        border: props.border,
-        text_primary: props.text_primary,
-        text_secondary: props.text_secondary,
-    };
-    let theme_palette =
-        Rc::new(ThemePalette::from_palette(&base_palette).with_overrides(overrides));
+    // Dynamically compute CSS variables based on current theme
+    let css_vars = use_memo(move || {
+        let theme_name = current_theme_name.read();
 
-    let css_vars = theme_palette.css_variables();
+        // Get the theme palette, falling back to default if not found
+        let base_palette = match get_registered_theme(&theme_name) {
+            Some(palette) => palette,
+            None => {
+                let default_name = get_default_theme();
+                get_registered_theme(default_name).unwrap_or_else(|| Hikari::palette())
+            }
+        };
+
+        let overrides = PaletteOverrides {
+            primary: primary_override.clone(),
+            secondary: secondary_override.clone(),
+            accent: accent_override.clone(),
+            success: success_override.clone(),
+            warning: warning_override.clone(),
+            danger: danger_override.clone(),
+            background: background_override.clone(),
+            surface: surface_override.clone(),
+            border: border_override.clone(),
+            text_primary: text_primary_override.clone(),
+            text_secondary: text_secondary_override.clone(),
+        };
+        let theme_palette = ThemePalette::from_palette(&base_palette).with_overrides(overrides);
+        theme_palette.css_variables()
+    });
 
     rsx! {
         div {

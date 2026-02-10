@@ -211,8 +211,8 @@ fn store_node_value(node_id: String, port_id: String, value: Value) -> Result<()
     };
 
     // Get or create the node's value object
-    let node_obj = if js_sys::Reflect::has(&node_values, &node_id.into()).unwrap_or(false) {
-        js_sys::Reflect::get(&node_values, &node_id.into())
+    let node_obj = if js_sys::Reflect::has(&node_values, &node_id.clone().into()).unwrap_or(false) {
+        js_sys::Reflect::get(&node_values, &node_id.clone().into())
             .map_err(|e| format!("Failed to get node object: {:?}", e))?
             .dyn_into::<Object>()
             .map_err(|e| format!("Failed to cast node object to Object: {:?}", e))?
@@ -249,7 +249,7 @@ fn store_node_value(node_id: String, port_id: String, value: Value) -> Result<()
         .map_err(|e| format!("Failed to set node object: {:?}", e))?;
 
     // Store the updated object back to global scope
-    js_sys::Reflect::set(&win.into(), &storage_key.into(), &node_values.into())
+    js_sys::Reflect::set(&win.clone().into(), &storage_key.into(), &node_values.into())
         .map_err(|e| format!("Failed to store global object: {:?}", e))?;
 
     Ok(())

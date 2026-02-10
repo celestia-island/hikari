@@ -192,14 +192,20 @@ impl NodePlugin for InputNode {
 /// state management system.
 #[cfg(target_arch = "wasm32")]
 fn store_node_value(node_id: String, port_id: String, value: Value) -> Result<(), String> {
-    use wasm_bindgen::JsCast;
-    use web_sys::{window, Object};
+    use wasm_bindgen::{JsCast, JsValue};
+    use js_sys::Object;
+    use web_sys::window;
 
-    let win = window().map_err(|e| format!("Failed to get window: {:?}", e))?;
+    let win = window().ok_or_else(|| "Failed to get window".to_string())?;
 
     // Get or create the global node values object
-    let node_values = if let Some(obj) = win.get("hikariNodeValues") {
-        obj.dyn_into::<Object>().map_err(|e| format!("Failed to cast to Object: {:?}", e))?
+    let storage_key = "hikariNodeValues";
+    let node_values = if let Some(obj) = js_sys::Reflect::get(&win.into(), &storage_key.into()).ok() {
+        if obj.is_object() {
+            obj.dyn_into::<Object>().map_err(|e| format!("Failed to cast to Object: {:?}", e))?
+        } else {
+            Object::new()
+        }
     } else {
         Object::new()
     };
@@ -215,24 +221,24 @@ fn store_node_value(node_id: String, port_id: String, value: Value) -> Result<()
     };
 
     // Convert serde_json::Value to JS value
-    let value_js = match value {
-        Value::Null => js_sys::JsValue::null(),
-        Value::Bool(b) => js_sys::JsValue::from_bool(b),
+    let value_js: JsValue = match value {
+        Value::Null => JsValue::null(),
+        Value::Bool(b) => JsValue::from_bool(b),
         Value::Number(n) => {
             if let Some(u) = n.as_u64() {
-                js_sys::JsValue::from_f64(u as f64)
+                JsValue::from_f64(u as f64)
             } else if let Some(i) = n.as_i64() {
-                js_sys::JsValue::from_f64(i as f64)
+                JsValue::from_f64(i as f64)
             } else {
-                js_sys::JsValue::from_f64(n.as_f64().unwrap_or(0.0))
+                JsValue::from_f64(n.as_f64().unwrap_or(0.0))
             }
         }
-        Value::String(s) => js_sys::JsValue::from_str(&s),
+        Value::String(s) => JsValue::from_str(&s),
         Value::Array(_) | Value::Object(_) => {
             // For complex types, serialize to JSON string then parse
             let json_str = serde_json::to_string(&value)
                 .map_err(|e| format!("Failed to serialize value: {:?}", e))?;
-            js_sys::JsValue::from_str(&json_str)
+            JsValue::from_str(&json_str)
         }
     };
 
@@ -243,7 +249,7 @@ fn store_node_value(node_id: String, port_id: String, value: Value) -> Result<()
         .map_err(|e| format!("Failed to set node object: {:?}", e))?;
 
     // Store the updated object back to global scope
-    js_sys::Reflect::set(&win.into(), &"hikariNodeValues".into(), &node_values.into())
+    js_sys::Reflect::set(&win.into(), &storage_key.into(), &node_values.into())
         .map_err(|e| format!("Failed to store global object: {:?}", e))?;
 
     Ok(())

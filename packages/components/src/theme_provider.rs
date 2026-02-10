@@ -853,14 +853,13 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 
 /// Hook to access the current theme
 ///
-/// Reads the current theme from the DOM by finding the nearest ancestor
-/// `.hi-theme-provider[data-theme]` element and reading its `data-theme` attribute.
-/// Supports nested ThemeProviders with proper proximity - always returns the theme
-/// from the closest (most nested) provider.
+/// Returns the ThemeContext provided by the nearest ancestor `ThemeProvider`.
+/// The context includes the current theme palette, theme name, and a
+/// functional `set_theme` callback for switching themes.
 ///
 /// # Platform Support
 ///
-/// - **WASM**: Reads theme from DOM elements
+/// - **WASM**: Reads theme from Dioxus context
 /// - **Non-WASM**: Returns default Hikari theme
 ///
 /// # Hierarchical Behavior
@@ -876,7 +875,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 ///
 /// fn MyComponent() -> Element {
 ///     let theme = use_theme();
-///     let primary_color = &theme.palette.primary;
+///     let primary_color = &theme.palette.read();
 ///
 ///     rsx! {
 ///         div {
@@ -909,40 +908,12 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 ///
 /// # Note
 ///
-/// This implementation reads theme directly from DOM rather than using Dioxus
-/// context, ensuring real-time updates even in animation loops.
+/// This hook uses `use_context()` to retrieve the ThemeContext with a
+/// functional `set_theme` callback. This enables theme switching functionality
+/// in child components. Components should always be wrapped in a `ThemeProvider`
+/// to ensure proper theme functionality.
 pub fn use_theme() -> ThemeContext {
-    #[cfg(target_arch = "wasm32")]
-    {
-        let window = match web_sys::window() {
-            Some(w) => w,
-            None => return default_theme_context(),
-        };
-
-        let document = match window.document() {
-            Some(doc) => doc,
-            None => return default_theme_context(),
-        };
-
-        let theme_name = match document
-            .query_selector(".hi-theme-provider[data-theme]")
-            .ok()
-            .flatten()
-            .and_then(|el| el.get_attribute("data-theme"))
-        {
-            Some(theme) => theme,
-            None => return default_theme_context(),
-        };
-
-        ThemeContext {
-            palette: Signal::new(theme_name.clone()),
-            theme_name: Signal::new(theme_name),
-            set_theme: Callback::new(|_| {}),
-        }
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    default_theme_context()
+    use_context()
 }
 
 fn default_theme_context() -> ThemeContext {

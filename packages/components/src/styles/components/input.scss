@@ -39,13 +39,17 @@
     opacity: 0.6;
   }
 
-  // Override browser autofill styles to use transparent background
+  // Override browser autofill styles to remove background color
+  // NOTE: Using background-color: transparent does NOT work - browsers ignore it
+  // The workaround is to use a very long transition delay to effectively
+  // prevent the autofill background from ever showing
   &:-webkit-autofill,
   &:-webkit-autofill:hover,
   &:-webkit-autofill:focus,
   &:-webkit-autofill:active {
-    // Set background to transparent
-    background-color: transparent !important;
+    // Use extremely long transition delay to prevent autofill background from showing
+    // This is a workaround because browsers override background-color !important
+    transition: background-color 5000s ease-in-out 0s;
     // Preserve text color in autofilled state (WebKit-specific property)
     -webkit-text-fill-color: var(--hi-color-text-primary);
     // Ensure caret color matches theme
@@ -159,12 +163,16 @@
     max-width: none;
 
     // Override browser autofill styles for input within wrapper
+    // NOTE: Using background-color: transparent does NOT work - browsers ignore it
+    // The workaround is to use a very long transition delay to effectively
+    // prevent the autofill background from ever showing
     &:-webkit-autofill,
     &:-webkit-autofill:hover,
     &:-webkit-autofill:focus,
     &:-webkit-autofill:active {
-      // Set background to transparent
-      background-color: transparent !important;
+      // Use extremely long transition delay to prevent autofill background from showing
+      // This is a workaround because browsers override background-color !important
+      transition: background-color 5000s ease-in-out 0s;
       // Preserve text color in autofilled state (WebKit-specific property)
       -webkit-text-fill-color: var(--hi-color-text-primary);
       // Ensure caret color matches theme

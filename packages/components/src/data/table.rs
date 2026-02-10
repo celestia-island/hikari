@@ -2,7 +2,7 @@
 // Table component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, TableClass};
+use palette::classes::{ClassesBuilder, TableClass, UtilityClass};
 
 pub use super::column::{ColumnAlign, ColumnDef};
 use crate::styled::StyledComponent;
@@ -143,7 +143,7 @@ pub fn Table(props: TableProps) -> Element {
     let colspan_count = if has_columns { props.columns.len() } else { 1 };
 
     rsx! {
-        div { class: "TableClass::TableWrapper.as_class()",
+        div { class: "{TableClass::TableWrapper.as_class()}",
             table {
                 class: "{table_classes}",
 

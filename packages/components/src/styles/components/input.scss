@@ -47,15 +47,24 @@
   &:-webkit-autofill:hover,
   &:-webkit-autofill:focus,
   &:-webkit-autofill:active {
-    // Use extremely long transition delay to prevent autofill background from showing
+    // Use maximum possible transition duration (2147483647s = ~68 years)
+    // to prevent autofill background from ever showing
     // This is a workaround because browsers override background-color !important
-    transition: background-color 5000s ease-in-out 0s;
+    transition: background-color 2147483647s ease-in-out 0s;
     // Preserve text color in autofilled state (WebKit-specific property)
     -webkit-text-fill-color: var(--hi-color-text-primary);
     // Ensure caret color matches theme
     caret-color: var(--hi-color-text-primary);
     // Remove any box-shadow that might be added by browser
     box-shadow: none;
+  }
+
+  // Fix font size/family change on hover when autofill dropdown is shown
+  // Browser changes font to system font on hover, override with ::first-line
+  &:-webkit-autofill::first-line {
+    font-family: vars.$hikari-font-family-sans;
+    font-size: vars.$hikari-font-size-sm;
+    color: var(--hi-color-text-primary);
   }
 
   // Focus state with sharp border (no blur, only offset)
@@ -170,15 +179,24 @@
     &:-webkit-autofill:hover,
     &:-webkit-autofill:focus,
     &:-webkit-autofill:active {
-      // Use extremely long transition delay to prevent autofill background from showing
+      // Use maximum possible transition duration (2147483647s = ~68 years)
+      // to prevent autofill background from ever showing
       // This is a workaround because browsers override background-color !important
-      transition: background-color 5000s ease-in-out 0s;
+      transition: background-color 2147483647s ease-in-out 0s;
       // Preserve text color in autofilled state (WebKit-specific property)
       -webkit-text-fill-color: var(--hi-color-text-primary);
       // Ensure caret color matches theme
       caret-color: var(--hi-color-text-primary);
       // Remove any box-shadow that might be added by browser
       box-shadow: none;
+    }
+
+    // Fix font size/family change on hover when autofill dropdown is shown
+    // Browser changes font to system font on hover, override with ::first-line
+    &:-webkit-autofill::first-line {
+      font-family: vars.$hikari-font-family-sans;
+      font-size: vars.$hikari-font-size-sm;
+      color: var(--hi-color-text-primary);
     }
 
     &:focus {

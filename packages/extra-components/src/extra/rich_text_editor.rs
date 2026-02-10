@@ -120,8 +120,12 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let _ = command;
-            let _ = value;
+            // Rich text editor only works on WASM target
+            panic!(
+                "RichTextEditor formatting commands require WASM target (target_arch = \"wasm32\"). \
+                Command '{}', value: {:?}. Please enable WASM in your build configuration.",
+                command, value
+            );
         }
     };
 

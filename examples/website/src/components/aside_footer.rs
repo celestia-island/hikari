@@ -3,7 +3,14 @@
 
 use dioxus::prelude::*;
 
-use _components::{basic::{IconButton, IconButtonSize}, feedback::{Dropdown, DropdownPosition, DropdownPositioning, GlowBlur, GlowColor, GlowIntensity}, navigation::{Menu, MenuItem}, use_theme};
+use _components::{
+    basic::{IconButton, IconButtonSize},
+    feedback::{
+        Dropdown, DropdownPosition, DropdownPositioning, GlowBlur, GlowColor, GlowIntensity,
+    },
+    navigation::{Menu, MenuItem},
+    use_theme,
+};
 use _icons::MdiIcon;
 use _palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, JustifyContent, Shadow};
 
@@ -36,7 +43,7 @@ pub fn AsideFooter() -> Element {
 
     // Compute current theme icon
     let current_icon = use_memo(move || {
-        let theme_name = &*theme.palette.read();
+        let theme_name = theme.palette.cloned();
         if theme_name == "hikari" {
             MdiIcon::WhiteBalanceSunny
         } else {
@@ -71,9 +78,9 @@ pub fn AsideFooter() -> Element {
                 glow_color: GlowColor::Ghost,
                 glow_intensity: GlowIntensity::Thirty,
                 onclick: move |_| {
-                    // Get current theme and toggle
-                    let current = &*theme.palette.read();
-                    let new_theme = if current == "hikari" {
+                    // Toggle theme based on current icon
+                    let icon = *current_icon.read();
+                    let new_theme = if icon == MdiIcon::WhiteBalanceSunny {
                         "tairitsu".to_string()
                     } else {
                         "hikari".to_string()

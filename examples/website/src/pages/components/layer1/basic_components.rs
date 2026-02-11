@@ -161,7 +161,7 @@ pub fn BasicCard() -> Element {
                     subtitle: Some("带有副标题".to_string()),
                     action: Some(rsx! {
                         _components::IconButton {
-                            icon: _icons::MdiIcon::DotsVertical,
+                            icon: _icons::MdiIcon::DotsHorizontal,
                             size: _components::IconButtonSize::Small,
                             onclick: move |_| {},
                         }

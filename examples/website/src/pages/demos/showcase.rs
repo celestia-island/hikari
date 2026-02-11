@@ -73,7 +73,7 @@ pub fn DemosOverview() -> Element {
                             .add_raw("grid grid-cols-1 md:grid-cols-2 gap-6")
                             .build(),
 
-                        for (name, cn_name, description, icon, route) in demos {
+                        for (name, _cn_name, description, icon, route) in demos {
                             div {
                                 class: ClassesBuilder::new()
                                     .add_raw("demo-card")

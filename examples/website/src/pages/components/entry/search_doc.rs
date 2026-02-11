@@ -58,11 +58,11 @@ const CODE_DISABLED: &str = r#"Search {
 
 #[allow(non_snake_case)]
 pub fn SearchDoc() -> Element {
-    let mut search1 = use_signal(|| String::new());
+    let search1 = use_signal(|| String::new());
     let mut search2 = use_signal(|| String::new());
     let mut loading1 = use_signal(|| false);
     let mut search3 = use_signal(|| String::new());
-    let mut search4 = use_signal(|| "Search query".to_string());
+    let search4 = use_signal(|| "Search query".to_string());
 
     rsx! {
         Layout {

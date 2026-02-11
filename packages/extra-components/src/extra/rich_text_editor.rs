@@ -7,8 +7,6 @@ use hikari_icons::MdiIcon;
 use hikari_palette::classes::ClassesBuilder;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::{JsCast, JsValue};
-#[cfg(target_arch = "wasm32")]
-use web_sys::HtmlElement;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum EditorMode {

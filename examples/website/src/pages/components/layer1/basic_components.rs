@@ -3,8 +3,8 @@
 
 use dioxus::prelude::*;
 
-use _components::{Badge, Button, ButtonVariant, Card, Checkbox, Divider, DividerOrientation, DividerTextPosition, Input, RadioButton, RadioDirection, RadioGroup, Select, SelectOption};
-use _palette::classes::{ AlignItems, FlexWrap, {ClassesBuilder, Display, FlexDirection, Gap, Margin, Padding}, };
+use _components::{Badge, Button, ButtonVariant, Card, CardHeader, CardContent, CardActions, Checkbox, Divider, DividerOrientation, DividerTextPosition, Input, RadioButton, RadioDirection, RadioGroup, Select, SelectOption};
+use _palette::classes::{AlignItems, FlexWrap, ClassesBuilder, Display, FlexDirection, Gap, Padding};
 
 /// Button component demonstration
 #[allow(non_snake_case)]
@@ -161,7 +161,7 @@ pub fn BasicCard() -> Element {
                     subtitle: Some("带有副标题".to_string()),
                     action: Some(rsx! {
                         _components::IconButton {
-                            icon: _icons::LucideIcon::MoreVertical,
+                            icon: _icons::MdiIcon::DotsVertical,
                             size: _components::IconButtonSize::Small,
                             onclick: move |_| {},
                         }

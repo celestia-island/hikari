@@ -48,10 +48,10 @@
 // ============================================
 
 // 30% intensity (subtle, default for cards)
-// Very low opacity, moderate spread for subtle effect
+// Low opacity, moderate spread for subtle effect
 .hi-glow-thirty {
   &::before {
-    --glow-opacity: 0.06;
+    --glow-opacity: 0.15;
     --glow-spread: 1.8;
   }
 }
@@ -59,7 +59,7 @@
 // 70% intensity (standard)
 .hi-glow-seventy {
   &::before {
-    --glow-opacity: 0.12;
+    --glow-opacity: 0.25;
     --glow-spread: 1.5;
   }
 }
@@ -67,7 +67,7 @@
 // 100% intensity (intense)
 .hi-glow-hundred {
   &::before {
-    --glow-opacity: 0.2;
+    --glow-opacity: 0.35;
     --glow-spread: 1.3;
   }
 }

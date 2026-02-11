@@ -5,6 +5,7 @@ use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, TableClass, UtilityClass};
 
 pub use super::column::{ColumnAlign, ColumnDef};
+pub use super::sort::{SortConfig, SortDirection};
 use crate::styled::StyledComponent;
 
 /// Table component wrapper (for StyledComponent)
@@ -72,6 +73,18 @@ pub struct TableProps {
     /// Empty state message
     #[props(default)]
     pub empty_text: String,
+
+    /// Current sort column key
+    #[props(default)]
+    pub sort_column: String,
+
+    /// Current sort direction
+    #[props(default)]
+    pub sort_direction: SortDirection,
+
+    /// Sort change callback
+    #[props(default)]
+    pub on_sort_change: Option<EventHandler<SortConfig>>,
 }
 
 impl Default for TableProps {
@@ -85,6 +98,9 @@ impl Default for TableProps {
             size: Default::default(),
             class: String::default(),
             empty_text: String::from("No data available"),
+            sort_column: String::default(),
+            sort_direction: SortDirection::default(),
+            on_sort_change: None,
         }
     }
 }
@@ -124,6 +140,14 @@ impl Default for TableProps {
 /// ```
 #[component]
 pub fn Table(props: TableProps) -> Element {
+    // Compute sorted data
+    let sorted_data = use_sortable_data(
+        &props.data,
+        &props.columns,
+        &props.sort_column,
+        props.sort_direction,
+    );
+
     let table_classes = ClassesBuilder::new()
         .add(TableClass::Table)
         .add(match props.size {
@@ -137,8 +161,13 @@ pub fn Table(props: TableProps) -> Element {
         .add_raw(&props.class)
         .build();
 
+    // Clone values for use in closures
+    let sort_column = props.sort_column.clone();
+    let sort_direction = props.sort_direction;
+    let on_sort_handler = props.on_sort_change;
+
     // Determine if we should show the table or empty state
-    let has_data = !props.data.is_empty();
+    let has_data = !sorted_data.is_empty();
     let has_columns = !props.columns.is_empty();
     let colspan_count = if has_columns { props.columns.len() } else { 1 };
 
@@ -151,7 +180,7 @@ pub fn Table(props: TableProps) -> Element {
                 if has_columns {
                     thead {
                         tr {
-                            class: "TableClass::TableHeaderRow.as_class()",
+                            class: "{TableClass::TableHeaderRow.as_class()}",
                             {props.columns.iter().map(|column| {
                                 let align_class = match column.align {
                                     ColumnAlign::Left => TableClass::TextLeft,
@@ -162,22 +191,60 @@ pub fn Table(props: TableProps) -> Element {
                                 let width_style = column.width.as_ref()
                                     .map_or(String::new(), |w| format!("width: {w};"));
 
+                                let is_sorted = sort_column == column.column_key
+                                    && sort_direction != SortDirection::None;
+
+                                let sort_icon = if is_sorted {
+                                    sort_direction.icon()
+                                } else if column.sortable {
+                                    "⇅"
+                                } else {
+                                    ""
+                                };
+
                                 let cell_classes = ClassesBuilder::new()
                                     .add(TableClass::TableHeaderCell)
                                     .add(align_class)
                                     .add_if(TableClass::TableSortable, || column.sortable)
+                                    .add_if(TableClass::TableSortActive, || is_sorted)
                                     .add_raw(&column.class)
                                     .build();
+
+                                // Clone for closure
+                                let col_key = column.column_key.clone();
+                                let current_sort_col = sort_column.clone();
+                                let current_sort_dir = sort_direction;
+                                let sort_handler = on_sort_handler;
+                                let is_sortable = column.sortable;
 
                                 rsx! {
                                     th {
                                         class: "{cell_classes}",
                                         style: "{width_style}",
+                                        onclick: move |_| {
+                                            if !is_sortable {
+                                                return;
+                                            }
+                                            let new_direction = if current_sort_col == col_key {
+                                                current_sort_dir.toggle()
+                                            } else {
+                                                SortDirection::Ascending
+                                            };
+
+                                            if let Some(handler) = sort_handler.as_ref() {
+                                                handler.call(SortConfig {
+                                                    column: col_key.clone(),
+                                                    direction: new_direction,
+                                                });
+                                            }
+                                        },
 
                                         {column.title.clone()}
 
-                                        if column.sortable {
-                                            span { class: "TableClass::TableSortIcon.as_class()", "" }
+                                        if !sort_icon.is_empty() {
+                                            span { class: "{TableClass::TableSortIcon.as_class()}",
+                                                "{sort_icon}"
+                                            }
                                         }
                                     }
                                 }
@@ -186,15 +253,15 @@ pub fn Table(props: TableProps) -> Element {
                     }
                 }
 
-                // Render table body
+                // Render table body with sorted data
                 tbody {
-                    class: "TableClass::TableBody.as_class()",
+                    class: "{TableClass::TableBody.as_class()}",
 
                     if has_data {
-                        {props.data.iter().enumerate().map(|(row_index, row)| {
+                        {sorted_data.iter().enumerate().map(|(row_index, row)| {
                             rsx! {
                                 tr {
-                                    class: "TableClass::TableRow.as_class()",
+                                    class: "{TableClass::TableRow.as_class()}",
                                     key: "{row_index}",
 
                                     {row.iter().enumerate().map(|(col_index, cell)| {
@@ -228,11 +295,11 @@ pub fn Table(props: TableProps) -> Element {
                     } else {
                         // Empty state
                         tr {
-                            class: "TableClass::TableRow.as_class()",
+                            class: "{TableClass::TableRow.as_class()}",
                             td {
-                                class: "TableClass::TableEmpty.as_class()",
+                                class: "{TableClass::TableEmpty.as_class()}",
                                 colspan: "{colspan_count}",
-                                div { class: "TableClass::TableEmptyContent.as_class()",
+                                div { class: "{TableClass::TableEmptyContent.as_class()}",
                                     {props.empty_text.clone()}
                                 }
                             }
@@ -252,4 +319,59 @@ impl StyledComponent for TableComponent {
     fn name() -> &'static str {
         "table"
     }
+}
+
+/// Sort table data based on column and direction
+fn sort_data(
+    data: &[Vec<String>],
+    columns: &[ColumnDef],
+    sort_column: &str,
+    sort_direction: SortDirection,
+) -> Vec<Vec<String>> {
+    // Find the column index for the sort key
+    let column_index = columns.iter().position(|col| col.column_key == sort_column);
+
+    if sort_direction == SortDirection::None || column_index.is_none() {
+        return data.to_vec();
+    }
+
+    let col_idx = column_index.unwrap();
+
+    let mut sorted_data = data.to_vec();
+    sorted_data.sort_by(|a, b| {
+        let a_val = a.get(col_idx).map(String::as_str).unwrap_or("");
+        let b_val = b.get(col_idx).map(String::as_str).unwrap_or("");
+
+        // Try numeric comparison first
+        let a_num = a_val.parse::<f64>();
+        let b_num = b_val.parse::<f64>();
+
+        match (a_num, b_num) {
+            (Ok(a_n), Ok(b_n)) => {
+                // Both are numbers
+                a_n.partial_cmp(&b_n).unwrap_or(std::cmp::Ordering::Equal)
+            }
+            _ => {
+                // String comparison
+                a_val.cmp(b_val)
+            }
+        }
+    });
+
+    // Reverse for descending
+    if sort_direction == SortDirection::Descending {
+        sorted_data.reverse();
+    }
+
+    sorted_data
+}
+
+/// Get sorted data (memoized hook-like behavior)
+fn use_sortable_data(
+    data: &[Vec<String>],
+    columns: &[ColumnDef],
+    sort_column: &str,
+    sort_direction: SortDirection,
+) -> Vec<Vec<String>> {
+    sort_data(data, columns, sort_column, sort_direction)
 }

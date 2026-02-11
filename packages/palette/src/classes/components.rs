@@ -723,6 +723,8 @@ pub enum TableClass {
     TableSortable,
     /// `hi-table-sort-icon` - Sort icon
     TableSortIcon,
+    /// `hi-table-sort-active` - Active sort column
+    TableSortActive,
     /// `hi-text-left` - Left aligned
     TextLeft,
     /// `hi-text-center` - Center aligned
@@ -751,6 +753,7 @@ impl UtilityClass for TableClass {
             TableClass::TableEmptyContent => "table-empty-content",
             TableClass::TableSortable => "table-sortable",
             TableClass::TableSortIcon => "table-sort-icon",
+            TableClass::TableSortActive => "table-sort-active",
             TableClass::TextLeft => "text-left",
             TableClass::TextCenter => "text-center",
             TableClass::TextRight => "text-right",

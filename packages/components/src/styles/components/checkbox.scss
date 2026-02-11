@@ -85,7 +85,7 @@
   height: 70%;
   opacity: 0;
   transform: scale(0.3);
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // Note: transition removed - we control animation via StyleStringBuilder
   pointer-events: none;
   display: block;
   flex-shrink: 0;
@@ -101,11 +101,7 @@
   box-shadow:
     0 0 6px var(--hi-glow-button-primary),
     inset 0 0 3px rgba(255, 255, 255, 0.15);
-
-  .hi-checkbox-icon {
-    opacity: 1;
-    transform: scale(1);
-  }
+  // Note: icon animation controlled via StyleStringBuilder in component
 }
 
 // ============================================

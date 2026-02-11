@@ -3,6 +3,7 @@
 
 use dioxus::prelude::*;
 use palette::classes::ClassesBuilder;
+use animation::style::{CssProperty, StyleStringBuilder};
 
 use crate::styled::StyledComponent;
 
@@ -91,6 +92,23 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
         .add_raw(&props.class)
         .build();
 
+    // Icon animation state using StyleStringBuilder
+    let icon_style = if props.checked {
+        // Checked state: scale from 0.3 to 1 with opacity 1
+        StyleStringBuilder::new()
+            .add(CssProperty::Opacity, "1")
+            .add(CssProperty::Transform, "scale(1)")
+            .add_custom("transition", "opacity 0.2s ease-out, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)")
+            .build_clean()
+    } else {
+        // Unchecked state: scale to 0.3 with opacity 0
+        StyleStringBuilder::new()
+            .add(CssProperty::Opacity, "0")
+            .add(CssProperty::Transform, "scale(0.3)")
+            .add_custom("transition", "opacity 0.2s ease-in, transform 0.2s ease-in")
+            .build_clean()
+    };
+
     let handle_click = move |e: MouseEvent| {
         if !props.disabled {
             e.stop_propagation();
@@ -109,6 +127,7 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
             div { class: "{checkbox_classes}", onclick: handle_click,
                 svg {
                     class: "hi-checkbox-icon",
+                    style: "{icon_style}",
                     view_box: "0 0 24 24",
                     fill: "none",
                     stroke: "currentColor",

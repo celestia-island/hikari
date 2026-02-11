@@ -74,18 +74,16 @@
   box-sizing: border-box;
 }
 
-// Inner dot (hidden by default)
-.hi-radio-indicator::after {
-  content: '';
+// Inner dot (controlled via StyleStringBuilder)
+.hi-radio-dot {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) scale(0);
   width: 8px;
   height: 8px;
   background: linear-gradient(135deg, var(--hi-color-primary), var(--hi-button-primary-dark, #E89A8D));
   border-radius: 50%;
-  transition: transform vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // Note: transition removed - we control animation via StyleStringBuilder
 }
 
 // ============================================
@@ -97,10 +95,7 @@
   box-shadow:
     0 0 6px var(--hi-glow-button-primary),
     inset 0 0 3px rgba(255, 255, 255, 0.1);
-}
-
-.hi-radio-label input[type="radio"]:checked + .hi-radio-indicator::after {
-  transform: translate(-50%, -50%) scale(1);
+  // Note: dot animation controlled via StyleStringBuilder in component
 }
 
 // ============================================

@@ -5,7 +5,7 @@ use dioxus::prelude::*;
 
 use _components::{
     Badge, Button, ButtonVariant, Card, CardActions, CardContent, CardHeader, Checkbox, Divider,
-    DividerOrientation, DividerTextPosition, Input, RadioButton, RadioDirection, RadioGroup,
+    DividerOrientation, DividerTextPosition, Input, RadioButtonInternal, RadioDirection, RadioGroup,
     Select, SelectOption,
 };
 use _palette::classes::{
@@ -343,6 +343,10 @@ pub fn BasicSelect() -> Element {
 /// Checkbox component demonstration
 #[allow(non_snake_case)]
 pub fn BasicCheckbox() -> Element {
+    let mut checked1 = use_signal(|| false);
+    let mut checked2 = use_signal(|| true);
+    let mut checked3 = use_signal(|| false);
+
     rsx! {
         div {
             class: ClassesBuilder::new()
@@ -360,7 +364,11 @@ pub fn BasicCheckbox() -> Element {
                     .add(Gap::Gap2)
                     .build(),
 
-                Checkbox { on_change: move |_| {}, "选项 1" }
+                Checkbox {
+                    checked: checked1(),
+                    on_change: move |v| checked1.set(v),
+                    "选项 1"
+                }
             }
 
             div {
@@ -371,7 +379,11 @@ pub fn BasicCheckbox() -> Element {
                     .add(Gap::Gap2)
                     .build(),
 
-                Checkbox { checked: true, on_change: move |_| {}, "选项 2（已选中）" }
+                Checkbox {
+                    checked: checked2(),
+                    on_change: move |v| checked2.set(v),
+                    "选项 2（默认选中）"
+                }
             }
 
             div {
@@ -382,7 +394,12 @@ pub fn BasicCheckbox() -> Element {
                     .add(Gap::Gap2)
                     .build(),
 
-                Checkbox { disabled: true, on_change: move |_| {}, "选项 3（禁用）" }
+                Checkbox {
+                    checked: checked3(),
+                    disabled: true,
+                    on_change: move |v| checked3.set(v),
+                    "选项 3（禁用）"
+                }
             }
         }
     }
@@ -391,6 +408,8 @@ pub fn BasicCheckbox() -> Element {
 /// Radio component demonstration
 #[allow(non_snake_case)]
 pub fn BasicRadio() -> Element {
+    let mut selected_value = use_signal(|| "option1".to_string());
+
     rsx! {
         div {
             class: ClassesBuilder::new()
@@ -402,15 +421,42 @@ pub fn BasicRadio() -> Element {
 
             RadioGroup {
                 name: "group1".to_string(),
-                value: "option1".to_string(),
-                on_change: move |_| {},
+                value: selected_value.clone(),
+                on_change: move |v| selected_value.set(v),
                 direction: RadioDirection::Vertical,
 
-                RadioButton { value: "option1".to_string(), "选项 1" }
+                RadioButtonInternal {
+                    value: "option1".to_string(),
+                    group_name: "group1".to_string(),
+                    selected_value: selected_value.clone(),
+                    on_select: move |v| selected_value.set(v),
+                    "选项 1"
+                }
 
-                RadioButton { value: "option2".to_string(), "选项 2" }
+                RadioButtonInternal {
+                    value: "option2".to_string(),
+                    group_name: "group1".to_string(),
+                    selected_value: selected_value.clone(),
+                    on_select: move |v| selected_value.set(v),
+                    "选项 2"
+                }
 
-                RadioButton { value: "option3".to_string(), disabled: true, "选项 3（禁用）" }
+                RadioButtonInternal {
+                    value: "option3".to_string(),
+                    group_name: "group1".to_string(),
+                    selected_value: selected_value.clone(),
+                    on_select: move |v| selected_value.set(v),
+                    "选项 3"
+                }
+
+                RadioButtonInternal {
+                    value: "option4".to_string(),
+                    group_name: "group1".to_string(),
+                    selected_value: selected_value.clone(),
+                    on_select: move |v| selected_value.set(v),
+                    disabled: true,
+                    "选项 4（禁用）"
+                }
             }
         }
     }

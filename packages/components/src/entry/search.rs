@@ -2,7 +2,7 @@
 // Search component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, SearchClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -69,9 +69,13 @@ pub struct SearchProps {
 
 #[component]
 pub fn Search(props: SearchProps) -> Element {
-    let input_classes = ClassesBuilder::new().add_raw("hi-search-input").build();
+    let input_classes = ClassesBuilder::new()
+        .add(SearchClass::Input)
+        .build();
 
-    let wrapper_classes = ClassesBuilder::new().add_raw("hi-search-wrapper").build();
+    let wrapper_classes = ClassesBuilder::new()
+        .add(SearchClass::Wrapper)
+        .build();
 
     rsx! {
         div {
@@ -91,14 +95,14 @@ pub fn Search(props: SearchProps) -> Element {
 
             if props.loading {
                 div {
-                    class: "hi-search-loading",
+                    class: "{SearchClass::Loading.as_class()}",
                     "⌛"
                 }
             }
 
             if props.allow_clear && !props.value.is_empty() && !props.disabled {
                 button {
-                    class: "hi-search-clear",
+                    class: "{SearchClass::Clear.as_class()}",
                     onclick: move |_| {
                         props.on_clear.call(());
                     },

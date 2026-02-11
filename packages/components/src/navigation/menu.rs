@@ -236,20 +236,17 @@ pub fn Menu(props: MenuProps) -> Element {
     let mut _open_submenus = use_signal(Vec::<String>::new);
 
     let mode_class = match props.mode {
-        MenuMode::Vertical => "hi-menu-vertical",
-        MenuMode::Horizontal => "hi-menu-horizontal",
+        MenuMode::Vertical => MenuClass::Vertical,
+        MenuMode::Horizontal => MenuClass::Horizontal,
     };
 
     let menu_classes = {
-        let mut builder = ClassesBuilder::new()
+        let builder = ClassesBuilder::new()
             .add(MenuClass::Menu)
             .add_if(MenuClass::Inline, || props.inline)
-            .add_raw(mode_class)
+            .add(mode_class)
+            .add_if(MenuClass::Compact, || props.compact)
             .add_raw(&props.class);
-
-        if props.compact {
-            builder = builder.add_raw("hi-menu-compact");
-        }
 
         builder.build()
     };
@@ -281,7 +278,7 @@ impl StyledComponent for MenuComponent {
 #[component]
 pub fn MenuItem(props: MenuItemProps) -> Element {
     let item_classes = ClassesBuilder::new()
-        .add_raw("hi-menu-item")
+        .add(MenuClass::MenuItem)
         .add_raw(props.height.as_str())
         .add_raw(&props.class)
         .build();
@@ -343,7 +340,7 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
         .build();
 
     let list_classes = ClassesBuilder::new()
-        .add_raw("hi-menu-submenu-list")
+        .add(MenuClass::SubmenuList)
         .build();
 
     let list_style = use_memo(move || {

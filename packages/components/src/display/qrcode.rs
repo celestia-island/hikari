@@ -2,7 +2,7 @@
 // QRCode component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{AlignItems, ClassesBuilder, Display, FlexDirection, Padding};
+use palette::classes::{AlignItems, ClassesBuilder, Display, FlexDirection, Padding, QRCodeClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -77,7 +77,7 @@ pub fn QRCode(props: QRCodeProps) -> Element {
         .add(FlexDirection::Column)
         .add(AlignItems::Center)
         .add(Padding::P4)
-        .add_raw("hi-qrcode-container")
+        .add(QRCodeClass::Container)
         .add_raw(&props.class)
         .build();
 
@@ -95,17 +95,17 @@ pub fn QRCode(props: QRCodeProps) -> Element {
 
             if let Some(ref title) = props.title {
                 h4 {
-                    class: "hi-qrcode-title",
+                    class: "{QRCodeClass::Title.as_class()}",
                     "{title}"
                 }
             }
 
             div {
-                class: "hi-qrcode-wrapper",
+                class: "{QRCodeClass::Wrapper.as_class()}",
                 style: "width: {size_px}; height: {size_px};",
 
                 img {
-                    class: "hi-qrcode-image",
+                    class: "{QRCodeClass::Image.as_class()}",
                     src: "https://api.qrserver.com/v1/create-qr-code/?size={size_str}x{size_str}&data={data}&color={color}&bgcolor={bg}",
                     alt: "QR Code",
                     style: "width: 100%; height: 100%; object-fit: contain;",

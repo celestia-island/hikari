@@ -2,7 +2,7 @@
 // Tag component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{AlignItems, ClassesBuilder, Display, Flex, Gap};
+use palette::classes::{AlignItems, ClassesBuilder, Display, Flex, Gap, TagClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -81,25 +81,22 @@ impl Default for TagProps {
 
 #[component]
 pub fn Tag(props: TagProps) -> Element {
-    let variant_class = format!(
-        "hi-tag-{}",
-        match props.variant {
-            TagVariant::Default => "default",
-            TagVariant::Primary => "primary",
-            TagVariant::Success => "success",
-            TagVariant::Warning => "warning",
-            TagVariant::Danger => "danger",
-            TagVariant::Info => "info",
-        }
-    );
+    let variant_class = match props.variant {
+        TagVariant::Default => TagClass::Default,
+        TagVariant::Primary => TagClass::Primary,
+        TagVariant::Success => TagClass::Success,
+        TagVariant::Warning => TagClass::Warning,
+        TagVariant::Danger => TagClass::Danger,
+        TagVariant::Info => TagClass::Info,
+    };
 
     let tag_classes = ClassesBuilder::new()
         .add(Display::InlineFlex)
         .add(Flex::Flex1)
         .add(AlignItems::Center)
         .add(Gap::Gap2)
-        .add_raw("hi-tag")
-        .add_raw(&variant_class)
+        .add(TagClass::Tag)
+        .add(variant_class)
         .add_raw(&props.class)
         .build();
 
@@ -112,7 +109,7 @@ pub fn Tag(props: TagProps) -> Element {
 
             if props.closable {
                 button {
-                    class: "hi-tag-close",
+                    class: "{TagClass::Close.as_class()}",
                     onclick: move |e| {
                         if let Some(ref on_close) = props.on_close {
                             on_close.call(e);

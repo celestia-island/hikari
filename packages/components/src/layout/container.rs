@@ -2,7 +2,7 @@
 // Container component for responsive content wrapping
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, ContainerClass};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum ContainerSize {
@@ -66,19 +66,17 @@ impl ContainerSize {
 /// ```
 #[component]
 pub fn Container(props: ContainerProps) -> Element {
+    let size_class = match props.size {
+        ContainerSize::Small => ContainerClass::Sm,
+        ContainerSize::Medium => ContainerClass::Md,
+        ContainerSize::Large => ContainerClass::Lg,
+        ContainerSize::Xl => ContainerClass::Xl,
+    };
+
     let container_classes = ClassesBuilder::new()
-        .add_raw("hi-container")
-        .add_raw(match props.size {
-            ContainerSize::Small => "hi-container-sm",
-            ContainerSize::Medium => "hi-container-md",
-            ContainerSize::Large => "hi-container-lg",
-            ContainerSize::Xl => "hi-container-xl",
-        })
-        .add_raw(if props.center {
-            "hi-container-centered"
-        } else {
-            ""
-        })
+        .add(ContainerClass::Container)
+        .add(size_class)
+        .add_if(ContainerClass::Centered, || props.center)
         .add_raw(&props.class)
         .build();
 

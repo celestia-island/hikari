@@ -92,23 +92,26 @@ pub fn Badge(props: BadgeProps) -> Element {
         None
     };
 
-    // Map variant to CSS class name
+    // Map variant to CSS class
     let variant_class = match props.variant {
-        BadgeVariant::Default => "",
-        BadgeVariant::Primary => "hi-badge-primary",
-        BadgeVariant::Success => "hi-badge-success",
-        BadgeVariant::Warning => "hi-badge-warning",
-        BadgeVariant::Danger => "hi-badge-danger",
+        BadgeVariant::Default => None,
+        BadgeVariant::Primary => Some(BadgeClass::Primary),
+        BadgeVariant::Success => Some(BadgeClass::Success),
+        BadgeVariant::Warning => Some(BadgeClass::Warning),
+        BadgeVariant::Danger => Some(BadgeClass::Danger),
     };
 
     // Pre-compute badge classes outside rsx
     let badge_classes = if props.dot || display_count.is_some() {
-        let base = ClassesBuilder::new()
+        let mut builder = ClassesBuilder::new()
             .add(BadgeClass::Badge)
-            .add_if(BadgeClass::Dot, || props.dot)
-            .add_raw(variant_class)
-            .build();
-        base
+            .add_if(BadgeClass::Dot, || props.dot);
+
+        if let Some(vc) = variant_class {
+            builder = builder.add(vc);
+        }
+
+        builder.build()
     } else {
         String::new()
     };

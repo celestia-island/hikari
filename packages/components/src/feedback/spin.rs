@@ -2,7 +2,7 @@
 // Spin component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, SpinClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -83,19 +83,15 @@ pub struct SpinProps {
 #[component]
 pub fn Spin(props: SpinProps) -> Element {
     let size_class = match props.size {
-        SpinSize::Small => "hi-spin-sm",
-        SpinSize::Medium => "hi-spin-md",
-        SpinSize::Large => "hi-spin-lg",
+        SpinSize::Small => SpinClass::Sm,
+        SpinSize::Medium => SpinClass::Md,
+        SpinSize::Large => SpinClass::Lg,
     };
 
     let spin_classes = ClassesBuilder::new()
-        .add_raw("hi-spin")
-        .add_raw(size_class)
-        .add_raw(if props.spinning {
-            ""
-        } else {
-            "hi-spin-stopped"
-        })
+        .add(SpinClass::Spin)
+        .add(size_class)
+        .add_if(SpinClass::Stopped, || !props.spinning)
         .add_raw(&props.class)
         .build();
 
@@ -113,9 +109,9 @@ pub fn Spin(props: SpinProps) -> Element {
 
     rsx! {
         div { class: "{spin_classes}",
-            div { class: "hi-spin-spinner" }
+            div { class: "{SpinClass::Spinner.as_class()}" }
             if !tip_text.is_empty() {
-                div { class: "hi-spin-tip",
+                div { class: "{SpinClass::Tip.as_class()}",
                     "{tip_text}"
                 }
             }

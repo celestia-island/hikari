@@ -2,7 +2,7 @@
 // NumberInput component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, Display};
+use palette::classes::{ClassesBuilder, Display, NumberInputClass};
 
 use crate::styled::StyledComponent;
 
@@ -67,16 +67,16 @@ pub struct NumberInputProps {
 pub fn NumberInput(props: NumberInputProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
         .add(Display::Flex)
-        .add_raw("hi-number-input-wrapper")
+        .add(NumberInputClass::Wrapper)
         .add_raw(&props.class)
         .build();
 
     let button_classes = ClassesBuilder::new()
-        .add_raw("hi-number-input-button")
+        .add(NumberInputClass::Button)
         .build();
 
     let input_classes = ClassesBuilder::new()
-        .add_raw("hi-number-input-input")
+        .add(NumberInputClass::Input)
         .build();
 
     let decrement_disabled = props.min.is_some_and(|min| props.value <= min);

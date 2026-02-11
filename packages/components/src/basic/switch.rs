@@ -2,7 +2,7 @@
 // Switch component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, SwitchClass};
 
 use crate::styled::StyledComponent;
 
@@ -65,24 +65,16 @@ pub enum SwitchSize {
 #[component]
 pub fn Switch(props: SwitchProps) -> Element {
     let size_class = match props.size {
-        SwitchSize::Small => "hi-switch-sm",
-        SwitchSize::Medium => "hi-switch-md",
-        SwitchSize::Large => "hi-switch-lg",
+        SwitchSize::Small => SwitchClass::Sm,
+        SwitchSize::Medium => SwitchClass::Md,
+        SwitchSize::Large => SwitchClass::Lg,
     };
 
     let switch_classes = ClassesBuilder::new()
-        .add_raw("hi-switch")
-        .add_raw(size_class)
-        .add_raw(if props.checked {
-            "hi-switch-checked"
-        } else {
-            ""
-        })
-        .add_raw(if props.disabled {
-            "hi-switch-disabled"
-        } else {
-            ""
-        })
+        .add(SwitchClass::Switch)
+        .add(size_class)
+        .add_if(SwitchClass::Checked, || props.checked)
+        .add_if(SwitchClass::Disabled, || props.disabled)
         .add_raw(&props.class)
         .build();
 

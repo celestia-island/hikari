@@ -2,7 +2,10 @@
 // RadioGroup component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, RadioClass};
+use animation::AnimationBuilder;
+use animation::style::CssProperty;
+use std::collections::HashMap;
 
 use crate::styled::StyledComponent;
 
@@ -112,13 +115,13 @@ pub enum RadioDirection {
 #[component]
 pub fn RadioGroup(props: RadioGroupProps) -> Element {
     let direction_class = match props.direction {
-        RadioDirection::Vertical => "hi-radio-group-vertical",
-        RadioDirection::Horizontal => "hi-radio-group-horizontal",
+        RadioDirection::Vertical => RadioClass::RadioGroupVertical,
+        RadioDirection::Horizontal => RadioClass::RadioGroupHorizontal,
     };
 
     let group_classes = ClassesBuilder::new()
-        .add_raw("hi-radio-group")
-        .add_raw(direction_class)
+        .add(RadioClass::RadioGroup)
+        .add(direction_class)
         .add_raw(&props.class)
         .build();
 
@@ -129,7 +132,7 @@ pub fn RadioGroup(props: RadioGroupProps) -> Element {
 
 /// RadioButton component (internal, used with RadioGroup)
 ///
-/// This version uses StyleStringBuilder for dot animation.
+/// This version uses AnimationBuilder for dot animation.
 /// The parent component should pass the group name, selected value, and on_select handler.
 #[component]
 pub fn RadioButtonInternal(props: RadioButtonInternalProps) -> Element {
@@ -137,26 +140,43 @@ pub fn RadioButtonInternal(props: RadioButtonInternalProps) -> Element {
     let radio_name = if props.group_name.is_empty() { "radio-group".to_string() } else { props.group_name.clone() };
 
     let radio_classes = ClassesBuilder::new()
-        .add_raw("hi-radio-label")
+        .add(RadioClass::Label)
         .add_raw(&props.class)
         .build();
 
-    // Inner dot animation using StyleStringBuilder
-    let dot_style = if is_checked {
-        // Checked state: scale from 0 to 1
-        animation::style::StyleStringBuilder::new()
-            .add(animation::style::CssProperty::Transform, "translate(-50%, -50%) scale(1)")
-            .add(animation::style::CssProperty::Opacity, "1")
-            .add_custom("transition", "transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease-out")
-            .build_clean()
-    } else {
-        // Unchecked state: scale to 0
-        animation::style::StyleStringBuilder::new()
-            .add(animation::style::CssProperty::Transform, "translate(-50%, -50%) scale(0)")
-            .add(animation::style::CssProperty::Opacity, "0")
-            .add_custom("transition", "transform 0.2s ease-in, opacity 0.2s ease-in")
-            .build_clean()
-    };
+    // Track previous checked state to detect changes
+    let mut prev_checked = use_signal(|| is_checked);
+    let mut dot_ref: Signal<Option<web_sys::HtmlElement>> = use_signal(|| None);
+
+    // Run animation when checked state changes
+    let checked = is_checked;
+    use_effect(move || {
+        // Only animate if state actually changed
+        if *prev_checked.read() != checked {
+            prev_checked.set(checked);
+
+            // Get the dot element and animate it
+            if let Some(dot_element) = dot_ref.read().clone() {
+                let mut elements = HashMap::new();
+                elements.insert("dot".to_string(), dot_element.into());
+
+                if checked {
+                    // Animate to checked state
+                    AnimationBuilder::new(&elements)
+                        .add_style("dot", CssProperty::Transform, "translate(-50%, -50%) scale(1)")
+                        .apply_with_transition("200ms", "cubic-bezier(0.34, 1.56, 0.64, 1)");
+                } else {
+                    // Animate to unchecked state
+                    AnimationBuilder::new(&elements)
+                        .add_style("dot", CssProperty::Transform, "translate(-50%, -50%) scale(0)")
+                        .apply_with_transition("200ms", "ease-in");
+                }
+            }
+        }
+    });
+
+    // Initial transform based on current state
+    let initial_transform = if is_checked { "translate(-50%, -50%) scale(1)" } else { "translate(-50%, -50%) scale(0)" };
 
     let handle_change = {
         let value = props.value.clone();
@@ -178,7 +198,12 @@ pub fn RadioButtonInternal(props: RadioButtonInternalProps) -> Element {
             div { class: "hi-radio-indicator",
                 div {
                     class: "hi-radio-dot",
-                    style: "{dot_style}",
+                    transform: "{initial_transform}",
+                    onmounted: move |evt| {
+                        if let Some(elem) = evt.data().downcast::<web_sys::HtmlElement>() {
+                            dot_ref.set(Some(elem.clone()));
+                        }
+                    },
                 }
             }
             span { class: "hi-radio-text", {props.children} }

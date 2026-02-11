@@ -2,7 +2,7 @@
 // FormField component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, FormFieldClass};
 
 use crate::styled::StyledComponent;
 
@@ -58,7 +58,7 @@ pub struct FormFieldProps {
 #[component]
 pub fn FormField(props: FormFieldProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
-        .add_raw("hi-form-field")
+        .add(FormFieldClass::FormField)
         .add_raw(&props.class)
         .build();
 

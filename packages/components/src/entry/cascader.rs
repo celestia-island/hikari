@@ -3,7 +3,7 @@
 
 use dioxus::prelude::*;
 use icons::{Icon, MdiIcon};
-use palette::classes::ClassesBuilder;
+use palette::classes::{CascaderClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -107,9 +107,9 @@ pub fn Cascader(props: CascaderProps) -> Element {
     let mut focused_index = use_signal(|| 0);
 
     let size_class = match props.size {
-        CascaderSize::Sm => "hi-cascader-sm",
-        CascaderSize::Md => "hi-cascader-md",
-        CascaderSize::Lg => "hi-cascader-lg",
+        CascaderSize::Sm => CascaderClass::Sm,
+        CascaderSize::Md => CascaderClass::Md,
+        CascaderSize::Lg => CascaderClass::Lg,
     };
 
     let handle_keydown = move |e: KeyboardEvent| {
@@ -203,13 +203,13 @@ pub fn Cascader(props: CascaderProps) -> Element {
     };
 
     rsx! {
-        div { class: "hi-cascader-wrapper",
+        div { class: "{CascaderClass::Wrapper.as_class()}",
             div {
                 class: ClassesBuilder::new()
-                    .add_raw("hi-cascader")
-                    .add_raw(size_class)
-                    .add_raw(if props.disabled { "hi-cascader-disabled" } else { "" })
-                    .add_raw(if is_open() { "hi-cascader-open" } else { "" })
+                    .add(CascaderClass::Cascader)
+                    .add(size_class)
+                    .add_if(CascaderClass::Disabled, || props.disabled)
+                    .add_if(CascaderClass::Open, || is_open())
                     .add_raw(&props.class)
                     .build(),
 
@@ -217,14 +217,14 @@ pub fn Cascader(props: CascaderProps) -> Element {
                 onkeydown: handle_keydown,
                 tabindex: 0,
 
-                div { class: "hi-cascader-display",
-                    div { class: "hi-cascader-text",
+                div { class: "{CascaderClass::Display.as_class()}",
+                    div { class: "{CascaderClass::Text.as_class()}",
                         "{display_text}"
                     }
 
                     if props.allow_clear && !selected_values().is_empty() && !props.disabled {
                         div {
-                            class: "hi-cascader-clear",
+                            class: "{CascaderClass::Clear.as_class()}",
                             onclick: handle_clear,
                             Icon {
                                 icon: MdiIcon::Close,
@@ -236,14 +236,14 @@ pub fn Cascader(props: CascaderProps) -> Element {
                     Icon {
                         icon: MdiIcon::ChevronDown,
                         size: 16,
-                        class: "hi-cascader-arrow",
+                        class: "{CascaderClass::Arrow.as_class()}",
                     }
                 }
             }
 
             if is_open() {
                 div {
-                    class: "hi-cascader-dropdown",
+                    class: "{CascaderClass::Dropdown.as_class()}",
                     onclick: |e| e.stop_propagation(),
 
                     CascaderMenus {
@@ -275,8 +275,8 @@ fn CascaderMenus(
         let selected_at_level = selected_values.get(level).cloned();
 
         menus.push(rsx! {
-            div { class: "hi-cascader-menu",
-                ul { class: "hi-cascader-menu-list",
+            div { class: "{CascaderClass::Menu.as_class()}",
+                ul { class: "{CascaderClass::MenuList.as_class()}",
                     {opts_clone.iter().map(|opt| {
                          let opt_value = opt.value.clone();
                         let _opt_label = opt.label.clone();
@@ -288,9 +288,9 @@ fn CascaderMenus(
                         rsx! {
                             li {
                                 class: ClassesBuilder::new()
-                                    .add_raw("hi-cascader-menu-item")
-                                    .add_raw(if is_selected { "hi-cascader-menu-item-selected" } else { "" })
-                                    .add_raw(if opt_disabled { "hi-cascader-menu-item-disabled" } else { "" })
+                                    .add(CascaderClass::MenuItem)
+                                    .add_if(CascaderClass::MenuItemSelected, || is_selected)
+                                    .add_if(CascaderClass::MenuItemDisabled, || opt_disabled)
                                     .build(),
 
                                 onclick: move |_| {
@@ -305,7 +305,7 @@ fn CascaderMenus(
                                     Icon {
                                         icon: MdiIcon::ChevronRight,
                                         size: 14,
-                                        class: "hi-cascader-menu-item-arrow",
+                                        class: "{CascaderClass::MenuItemArrow.as_class()}",
                                     }
                                 }
                             }

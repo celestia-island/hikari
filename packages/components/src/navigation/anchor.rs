@@ -23,7 +23,7 @@
 //! ```
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 #[cfg(target_arch = "wasm32")]
@@ -78,7 +78,10 @@ pub fn Anchor(
 
         rsx! {
             button {
-                class: format!("hi-anchor-link {}", if is_active { "hi-anchor-active" } else { "" }),
+                class: ClassesBuilder::new()
+                    .add(AnchorClass::Link)
+                    .add_if(AnchorClass::Active, || is_active)
+                    .build(),
                 onclick: move |_| {
                     active_anchor.set(href.clone());
 
@@ -108,21 +111,21 @@ pub fn Anchor(
 
     // Position class
     let position_class = match position.as_str() {
-        "left" => "hi-anchor-left",
-        _ => "hi-anchor-right",
+        "left" => AnchorClass::Left,
+        _ => AnchorClass::Right,
     };
 
     let anchor_classes = ClassesBuilder::new()
-        .add_raw("hi-flex")
-        .add_raw("hi-flex-col")
-        .add_raw("hi-gap-2")
-        .add_raw("hi-p-3")
-        .add_raw(position_class)
+        .add(Display::Flex)
+        .add(FlexDirection::Column)
+        .add(Gap::Gap2)
+        .add(Padding::P3)
+        .add(position_class)
         .add_raw(&class)
         .build();
 
     rsx! {
-        div { class: "hi-anchor-wrapper",
+        div { class: "{AnchorClass::Wrapper.as_class()}",
             div { class: "{anchor_classes}",
                 {anchor_links}
             }

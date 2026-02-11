@@ -2,7 +2,7 @@
 // Custom Select component with Portal-based dropdown and FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, Display, Position};
+use palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 
@@ -125,20 +125,16 @@ pub fn Select(props: SelectProps) -> Element {
         .map(|o| o.label.clone());
 
     let size_class = match props.size {
-        SelectSize::Sm => "hi-select-sm",
-        SelectSize::Md => "hi-select-md",
-        SelectSize::Lg => "hi-select-lg",
+        SelectSize::Sm => SelectClass::Sm,
+        SelectSize::Md => SelectClass::Md,
+        SelectSize::Lg => SelectClass::Lg,
     };
 
     let trigger_classes = ClassesBuilder::new()
-        .add_raw("hi-select-trigger")
-        .add_raw(size_class)
-        .add_raw(if props.disabled {
-            "hi-select-disabled"
-        } else {
-            ""
-        })
-        .add_raw(if open() { "hi-select-open" } else { "" })
+        .add(SelectClass::SelectTrigger)
+        .add(size_class)
+        .add_if(SelectClass::Disabled, || props.disabled)
+        .add_if(SelectClass::Open, || open())
         .add_raw(&props.class)
         .build();
 

@@ -3,7 +3,8 @@
 
 use dioxus::prelude::*;
 use palette::classes::{
-    AlignItems, ClassesBuilder, Display, FlexDirection, Gap, JustifyContent, Padding, TextAlign,
+    AlignItems, ClassesBuilder, Display, EmptyClass, FlexDirection, Gap, JustifyContent, Padding,
+    TextAlign, UtilityClass,
 };
 
 use crate::styled::StyledComponent;
@@ -62,7 +63,7 @@ pub fn Empty(props: EmptyProps) -> Element {
         .add(Gap::Gap4)
         .add(Padding::P8)
         .add(TextAlign::Center)
-        .add_raw("hi-empty-container")
+        .add(EmptyClass::Container)
         .add_raw(&props.class)
         .build();
 
@@ -73,30 +74,30 @@ pub fn Empty(props: EmptyProps) -> Element {
 
             if let Some(ref image) = props.image {
                 div {
-                    class: "hi-empty-image",
+                    class: "{EmptyClass::Image.as_class()}",
                     img {
                         src: "{image}",
                         alt: "Empty state",
-                        class: "hi-empty-img"
+                        class: "{EmptyClass::Img.as_class()}"
                     }
                 }
             }
 
             if let Some(ref title) = props.title {
                 h3 {
-                    class: "hi-empty-title",
+                    class: "{EmptyClass::Title.as_class()}",
                     "{title}"
                 }
             }
 
             p {
-                class: "hi-empty-description",
+                class: "{EmptyClass::Description.as_class()}",
                 "{props.description}"
             }
 
             if let Some(action) = props.action {
                 div {
-                    class: "hi-empty-action",
+                    class: "{EmptyClass::Action.as_class()}",
                     { action }
                 }
             }

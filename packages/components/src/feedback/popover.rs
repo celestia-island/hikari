@@ -3,7 +3,7 @@
 
 use animation::style::{CssProperty, StyleStringBuilder};
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, Display, Position};
+use palette::classes::{ClassesBuilder, Display, PopoverClass, Position, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -193,7 +193,7 @@ pub fn Popover(props: PopoverProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let popover_classes = ClassesBuilder::new().add_raw("hi-popover").build();
+    let popover_classes = ClassesBuilder::new().add(PopoverClass::Popover).build();
 
     rsx! {
         div {
@@ -213,10 +213,10 @@ pub fn Popover(props: PopoverProps) -> Element {
                     },
 
                     if let Some(title) = props.title {
-                        div { class: "hi-popover-title", "{title}" }
+                        div { class: "{PopoverClass::Title.as_class()}", "{title}" }
                     }
 
-                    div { class: "hi-popover-content",
+                    div { class: "{PopoverClass::Content.as_class()}",
                         { props.children }
                     }
                 }

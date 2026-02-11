@@ -3,7 +3,7 @@
 
 use animation::style::{CssProperty, StyleStringBuilder};
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, DrawerClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -120,18 +120,18 @@ pub fn Drawer(props: DrawerProps) -> Element {
     };
 
     let (placement_class, _size_width, _size_height) = match (props.placement, props.size) {
-        (DrawerPlacement::Right, DrawerSize::Small) => ("hi-drawer-right", "300px", "100%"),
-        (DrawerPlacement::Right, DrawerSize::Medium) => ("hi-drawer-right", "500px", "100%"),
-        (DrawerPlacement::Right, DrawerSize::Large) => ("hi-drawer-right", "700px", "100%"),
-        (DrawerPlacement::Left, DrawerSize::Small) => ("hi-drawer-left", "300px", "100%"),
-        (DrawerPlacement::Left, DrawerSize::Medium) => ("hi-drawer-left", "500px", "100%"),
-        (DrawerPlacement::Left, DrawerSize::Large) => ("hi-drawer-left", "700px", "100%"),
-        (DrawerPlacement::Top, DrawerSize::Small) => ("hi-drawer-top", "100%", "300px"),
-        (DrawerPlacement::Top, DrawerSize::Medium) => ("hi-drawer-top", "100%", "500px"),
-        (DrawerPlacement::Top, DrawerSize::Large) => ("hi-drawer-top", "100%", "700px"),
-        (DrawerPlacement::Bottom, DrawerSize::Small) => ("hi-drawer-bottom", "100%", "300px"),
-        (DrawerPlacement::Bottom, DrawerSize::Medium) => ("hi-drawer-bottom", "100%", "500px"),
-        (DrawerPlacement::Bottom, DrawerSize::Large) => ("hi-drawer-bottom", "100%", "700px"),
+        (DrawerPlacement::Right, DrawerSize::Small) => (DrawerClass::Right, "300px", "100%"),
+        (DrawerPlacement::Right, DrawerSize::Medium) => (DrawerClass::Right, "500px", "100%"),
+        (DrawerPlacement::Right, DrawerSize::Large) => (DrawerClass::Right, "700px", "100%"),
+        (DrawerPlacement::Left, DrawerSize::Small) => (DrawerClass::Left, "300px", "100%"),
+        (DrawerPlacement::Left, DrawerSize::Medium) => (DrawerClass::Left, "500px", "100%"),
+        (DrawerPlacement::Left, DrawerSize::Large) => (DrawerClass::Left, "700px", "100%"),
+        (DrawerPlacement::Top, DrawerSize::Small) => (DrawerClass::Top, "100%", "300px"),
+        (DrawerPlacement::Top, DrawerSize::Medium) => (DrawerClass::Top, "100%", "500px"),
+        (DrawerPlacement::Top, DrawerSize::Large) => (DrawerClass::Top, "100%", "700px"),
+        (DrawerPlacement::Bottom, DrawerSize::Small) => (DrawerClass::Bottom, "100%", "300px"),
+        (DrawerPlacement::Bottom, DrawerSize::Medium) => (DrawerClass::Bottom, "100%", "500px"),
+        (DrawerPlacement::Bottom, DrawerSize::Large) => (DrawerClass::Bottom, "100%", "700px"),
     };
 
     let drawer_style = use_memo(move || {
@@ -161,8 +161,8 @@ pub fn Drawer(props: DrawerProps) -> Element {
     });
 
     let drawer_classes = ClassesBuilder::new()
-        .add_raw("hi-drawer")
-        .add_raw(placement_class)
+        .add(DrawerClass::Drawer)
+        .add(placement_class)
         .add_raw(&props.class)
         .build();
 
@@ -170,7 +170,7 @@ pub fn Drawer(props: DrawerProps) -> Element {
         if props.open {
             // Mask overlay
             div {
-                class: "hi-drawer-mask",
+                class: "{DrawerClass::Mask.as_class()}",
                 style: "{mask_style}",
                 onclick: handle_mask_click,
             }
@@ -182,10 +182,10 @@ pub fn Drawer(props: DrawerProps) -> Element {
 
                 // Header
                 if let Some(title) = props.title {
-                    div { class: "hi-drawer-header",
-                        div { class: "hi-drawer-title", "{title}" }
+                    div { class: "{DrawerClass::Header.as_class()}",
+                        div { class: "{DrawerClass::Title.as_class()}", "{title}" }
                         button {
-                            class: "hi-drawer-close",
+                            class: "{DrawerClass::Close.as_class()}",
                             onclick: move |e| {
                                 if let Some(handler) = on_close.as_ref() {
                                     handler.call(e);
@@ -204,13 +204,13 @@ pub fn Drawer(props: DrawerProps) -> Element {
                 }
 
                 // Body
-                div { class: "hi-drawer-body",
+                div { class: "{DrawerClass::Body.as_class()}",
                     { props.children }
                 }
 
                 // Footer
                 if let Some(footer) = props.footer {
-                    div { class: "hi-drawer-footer",
+                    div { class: "{DrawerClass::Footer.as_class()}",
                         { footer }
                     }
                 }

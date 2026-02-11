@@ -2,8 +2,10 @@
 // Checkbox component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
-use animation::style::{CssProperty, StyleStringBuilder};
+use palette::classes::{ClassesBuilder, CheckboxClass};
+use animation::AnimationBuilder;
+use animation::style::CssProperty;
+use std::collections::HashMap;
 
 use crate::styled::StyledComponent;
 
@@ -71,43 +73,55 @@ pub enum CheckboxSize {
 #[component]
 pub fn Checkbox(props: CheckboxProps) -> Element {
     let size_class = match props.size {
-        CheckboxSize::Small => "hi-checkbox-sm",
-        CheckboxSize::Medium => "hi-checkbox-md",
-        CheckboxSize::Large => "hi-checkbox-lg",
+        CheckboxSize::Small => CheckboxClass::Sm,
+        CheckboxSize::Medium => CheckboxClass::Md,
+        CheckboxSize::Large => CheckboxClass::Lg,
     };
 
     let checkbox_classes = ClassesBuilder::new()
-        .add_raw("hi-checkbox")
-        .add_raw(size_class)
-        .add_raw(if props.checked {
-            "hi-checkbox-checked"
-        } else {
-            ""
-        })
-        .add_raw(if props.disabled {
-            "hi-checkbox-disabled"
-        } else {
-            ""
-        })
+        .add(CheckboxClass::Checkbox)
+        .add(size_class)
+        .add_if(CheckboxClass::Checked, || props.checked)
+        .add_if(CheckboxClass::Disabled, || props.disabled)
         .add_raw(&props.class)
         .build();
 
-    // Icon animation state using StyleStringBuilder
-    let icon_style = if props.checked {
-        // Checked state: scale from 0.3 to 1 with opacity 1
-        StyleStringBuilder::new()
-            .add(CssProperty::Opacity, "1")
-            .add(CssProperty::Transform, "scale(1)")
-            .add_custom("transition", "opacity 0.2s ease-out, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)")
-            .build_clean()
-    } else {
-        // Unchecked state: scale to 0.3 with opacity 0
-        StyleStringBuilder::new()
-            .add(CssProperty::Opacity, "0")
-            .add(CssProperty::Transform, "scale(0.3)")
-            .add_custom("transition", "opacity 0.2s ease-in, transform 0.2s ease-in")
-            .build_clean()
-    };
+    // Track previous checked state to detect changes
+    let mut prev_checked = use_signal(|| props.checked);
+    let mut icon_ref: Signal<Option<web_sys::HtmlElement>> = use_signal(|| None);
+
+    // Run animation when checked state changes
+    let checked = props.checked;
+    use_effect(move || {
+        // Only animate if state actually changed
+        if *prev_checked.read() != checked {
+            prev_checked.set(checked);
+
+            // Get the icon element and animate it
+            if let Some(icon_element) = icon_ref.read().clone() {
+                let mut elements = HashMap::new();
+                elements.insert("icon".to_string(), icon_element.into());
+
+                if checked {
+                    // Animate to checked state
+                    AnimationBuilder::new(&elements)
+                        .add_style("icon", CssProperty::Opacity, "1")
+                        .add_style("icon", CssProperty::Transform, "scale(1)")
+                        .apply_with_transition("200ms", "cubic-bezier(0.34, 1.56, 0.64, 1)");
+                } else {
+                    // Animate to unchecked state
+                    AnimationBuilder::new(&elements)
+                        .add_style("icon", CssProperty::Opacity, "0")
+                        .add_style("icon", CssProperty::Transform, "scale(0.3)")
+                        .apply_with_transition("200ms", "ease-in");
+                }
+            }
+        }
+    });
+
+    // Initial style based on current state
+    let initial_opacity = if props.checked { "1" } else { "0" };
+    let initial_transform = if props.checked { "scale(1)" } else { "scale(0.3)" };
 
     let handle_click = move |e: MouseEvent| {
         if !props.disabled {
@@ -127,13 +141,19 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
             div { class: "{checkbox_classes}", onclick: handle_click,
                 svg {
                     class: "hi-checkbox-icon",
-                    style: "{icon_style}",
+                    opacity: "{initial_opacity}",
+                    transform: "{initial_transform}",
                     view_box: "0 0 24 24",
                     fill: "none",
                     stroke: "currentColor",
                     stroke_width: "3",
                     stroke_linecap: "round",
                     stroke_linejoin: "round",
+                    onmounted: move |evt| {
+                        if let Some(elem) = evt.data().downcast::<web_sys::HtmlElement>() {
+                            icon_ref.set(Some(elem.clone()));
+                        }
+                    },
                     polyline { points: "20 6 9 17 4 12" }
                 }
             }

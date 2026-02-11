@@ -114,7 +114,7 @@ pub fn Glow(props: GlowProps) -> Element {
 
     let glow_classes = ClassesBuilder::new()
         .add(GlowClass::GlowWrapper)
-        .add_if_raw("hi-glow-wrapper-block", || props.block)
+        .add_if(GlowClass::GlowWrapperBlock, || props.block)
         .add(blur_class)
         .add(intensity_class)
         .add_raw(&props.class)

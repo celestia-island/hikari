@@ -35,7 +35,7 @@
 //! ```
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, components::Layout as LayoutClass};
+use palette::classes::{AppLayoutClass, ClassesBuilder, UtilityClass, components::Layout as LayoutClass};
 
 use crate::basic::Background;
 
@@ -108,7 +108,7 @@ pub fn Layout(
             }
 
             // Body container with Aside and Main
-            div { class: "hi-layout-body",
+            div { class: "{AppLayoutClass::Body.as_class()}",
 
                 // Mobile overlay (backdrop) with blur effect
                 if aside.is_some() {
@@ -124,10 +124,10 @@ pub fn Layout(
                 }
 
                 // Main content area
-                div { class: "hi-layout-main",
+                div { class: "{AppLayoutClass::Main.as_class()}",
 
                     // Main content with refined scroll
-                    main { class: "hi-layout-content", {children} }
+                    main { class: "{AppLayoutClass::Content.as_class()}", {children} }
                 }
             }
 

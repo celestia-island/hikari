@@ -121,17 +121,20 @@ pub fn build_router(
         router = router.route(&route.path, route.method_router);
     }
 
-    // Note: Style service routes are DISABLED to allow static file serving
-    // The /styles/bundle.css is served from public/styles/ directory
-    // This ensures the complete CSS bundle (including all components) is served
-    // if app_state.style_registry.is_some() {
-    //     router = router.route("/styles/bundle.css", axum::routing::get(css_bundle_handler));
-    //     router = router.route(
-    //         "/styles/components/<name>.css",
-    //         axum::routing::get(component_css_handler),
-    //     );
-    //     router = router.route("/styles/info", axum::routing::get(style_info_handler));
-    // }
+    // Style service routes: serve dynamic CSS from StyleRegistry
+    // These routes complement the static bundle.css, providing per-component CSS
+    // and style registry metadata via API endpoints
+    if app_state.style_registry.is_some() {
+        router = router.route(
+            "/styles/registry/bundle.css",
+            axum::routing::get(css_bundle_handler),
+        );
+        router = router.route(
+            "/styles/components/<name>.css",
+            axum::routing::get(component_css_handler),
+        );
+        router = router.route("/styles/info", axum::routing::get(style_info_handler));
+    }
 
     // Add dynamic icon data endpoint
     router = router.route("/api/icons", axum::routing::get(get_icon_data));
@@ -354,6 +357,161 @@ pub async fn internal_error(err: String) -> impl IntoResponse {
             r#"{{"error":"Internal Server Error","message":"{}"}}"#,
             err
         )))
+        .unwrap()
+}
+
+/// CSS bundle handler - serves all registered component styles as a single CSS bundle.
+///
+/// This provides the dynamically-registered component CSS from StyleRegistry,
+/// complementing the static bundle.css served from public/styles/.
+async fn css_bundle_handler(State(state): State<AppState>) -> impl IntoResponse {
+    match &state.style_registry {
+        Some(registry) => {
+            let css = registry.css_bundle();
+            Response::builder()
+                .status(StatusCode::OK)
+                .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
+                .header(header::CACHE_CONTROL, "public, max-age=3600")
+                .body(Body::from(css))
+                .unwrap()
+        }
+        None => {
+            let empty = "/* No style registry configured */";
+            Response::builder()
+                .status(StatusCode::NOT_FOUND)
+                .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
+                .body(Body::from(empty))
+                .unwrap()
+        }
+    }
+}
+
+/// Component CSS handler - serves CSS for a single named component.
+///
+/// Endpoint: `/styles/components/<name>.css`
+async fn component_css_handler(
+    State(state): State<AppState>,
+    Path(name): Path<String>,
+) -> impl IntoResponse {
+    // Strip .css extension if present
+    let component_name = name.strip_suffix(".css").unwrap_or(&name);
+
+    match &state.style_registry {
+        Some(registry) => match registry.get(component_name) {
+            Some(css) => Response::builder()
+                .status(StatusCode::OK)
+                .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
+                .header(header::CACHE_CONTROL, "public, max-age=3600")
+                .body(Body::from(css.to_string()))
+                .unwrap(),
+            None => {
+                let not_found = format!("/* Component '{}' not found */", component_name);
+                Response::builder()
+                    .status(StatusCode::NOT_FOUND)
+                    .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
+                    .body(Body::from(not_found))
+                    .unwrap()
+            }
+        },
+        None => {
+            let empty = "/* No style registry configured */";
+            Response::builder()
+                .status(StatusCode::NOT_FOUND)
+                .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
+                .body(Body::from(empty))
+                .unwrap()
+        }
+    }
+}
+
+/// Style info handler - returns JSON metadata about registered component styles.
+///
+/// Endpoint: `/styles/info`
+async fn style_info_handler(State(state): State<AppState>) -> impl IntoResponse {
+    use crate::models::{
+        BasicComponents, ComponentCategories, DataComponents, DisplayComponents, EntryComponents,
+        FeedbackComponents, NavigationComponents, StyleInfo,
+    };
+
+    let info = match &state.style_registry {
+        Some(registry) => StyleInfo {
+            total_components: registry.len(),
+            components: ComponentCategories {
+                basic: BasicComponents {
+                    arrow: registry.has("arrow"),
+                    background: registry.has("background"),
+                    button: registry.has("button"),
+                    input: registry.has("input"),
+                    card: registry.has("card"),
+                    badge: registry.has("badge"),
+                    checkbox: registry.has("checkbox"),
+                    radio_group: registry.has("radio_group"),
+                    select: registry.has("select"),
+                    switch: registry.has("switch"),
+                    slider: registry.has("slider"),
+                    textarea: registry.has("textarea"),
+                    icon_button: registry.has("icon_button"),
+                    divider: registry.has("divider"),
+                    file_upload: registry.has("file_upload"),
+                    form_field: registry.has("form_field"),
+                    date_picker: registry.has("date_picker"),
+                },
+                data: DataComponents {
+                    table: registry.has("table"),
+                    tree: registry.has("tree"),
+                    pagination: registry.has("pagination"),
+                    pagination_button: registry.has("pagination_button"),
+                    virtual_scroll: registry.has("virtual-scroll"),
+                    collapse: registry.has("collapse"),
+                    drag: registry.has("drag"),
+                    sort: registry.has("sort"),
+                    filter: registry.has("filter"),
+                    selection: registry.has("selection"),
+                },
+                feedback: FeedbackComponents {
+                    alert: registry.has("alert"),
+                    toast: registry.has("toast"),
+                    tooltip: registry.has("tooltip"),
+                    modal: registry.has("modal"),
+                    drawer: registry.has("drawer"),
+                    dropdown: registry.has("dropdown"),
+                    popover: registry.has("popover"),
+                    progress: registry.has("progress"),
+                    skeleton: registry.has("skeleton"),
+                    spin: registry.has("spin"),
+                },
+                navigation: NavigationComponents {
+                    menu: registry.has("menu"),
+                    tabs: registry.has("tabs"),
+                    breadcrumb: registry.has("breadcrumb"),
+                    sidebar: registry.has("sidebar"),
+                    steps: registry.has("steps"),
+                },
+                display: DisplayComponents {
+                    tag: registry.has("tag"),
+                    empty: registry.has("empty"),
+                    comment: registry.has("comment"),
+                    description_list: registry.has("description_list"),
+                    qrcode: registry.has("qrcode"),
+                },
+                entry: EntryComponents {
+                    number_input: registry.has("number_input"),
+                    search: registry.has("search"),
+                    auto_complete: registry.has("auto_complete"),
+                    cascader: registry.has("cascader"),
+                    transfer: registry.has("transfer"),
+                },
+            },
+        },
+        None => StyleInfo::empty(),
+    };
+
+    let json = serde_json::to_string_pretty(&info).unwrap_or_default();
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "application/json; charset=utf-8")
+        .body(Body::from(json))
         .unwrap()
 }
 

@@ -45,14 +45,18 @@ pub enum GlowColor {
 }
 
 /// Glow intensity (shadow strength)
+///
+/// Use `Thirty` for large surface containers (cards, panels) — barely perceptible ambient glow.
+/// Use `Seventy` (default) for interactive elements (buttons, inputs) — clear but balanced feedback.
+/// Use `Hundred` for emphasis and active states — intense spotlight effect.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowIntensity {
-    /// 30% glow intensity (subtle, default for cards)
-    #[default]
+    /// 30% glow intensity (subtle, for cards / containers)
     Thirty,
-    /// 70% glow intensity (standard)
+    /// 70% glow intensity (medium, default for buttons / interactive)
+    #[default]
     Seventy,
-    /// 100% glow intensity (intense)
+    /// 100% glow intensity (intense, for emphasis)
     Hundred,
 }
 
@@ -188,7 +192,7 @@ pub fn Glow(props: GlowProps) -> Element {
                 "data-glow": "true",
                 style: "{initial_style}",
                 onmousemove: onmousemove_handler,
-                { props.children }
+                {props.children}
             }
         }
     }
@@ -196,11 +200,7 @@ pub fn Glow(props: GlowProps) -> Element {
     #[cfg(not(target_arch = "wasm32"))]
     {
         rsx! {
-            div {
-                class: "{glow_classes}",
-                "data-glow": "true",
-                { props.children }
-            }
+            div { class: "{glow_classes}", "data-glow": "true", {props.children} }
         }
     }
 }

@@ -27,6 +27,8 @@ pub struct ComponentCategories {
     pub data: DataComponents,
     pub feedback: FeedbackComponents,
     pub navigation: NavigationComponents,
+    pub display: DisplayComponents,
+    pub entry: EntryComponents,
 }
 
 impl ComponentCategories {
@@ -37,6 +39,8 @@ impl ComponentCategories {
             data: DataComponents::empty(),
             feedback: FeedbackComponents::empty(),
             navigation: NavigationComponents::empty(),
+            display: DisplayComponents::empty(),
+            entry: EntryComponents::empty(),
         }
     }
 }
@@ -44,20 +48,46 @@ impl ComponentCategories {
 /// Basic components
 #[derive(Debug, Serialize)]
 pub struct BasicComponents {
+    pub arrow: bool,
+    pub background: bool,
     pub button: bool,
     pub input: bool,
     pub card: bool,
     pub badge: bool,
+    pub checkbox: bool,
+    pub radio_group: bool,
+    pub select: bool,
+    pub switch: bool,
+    pub slider: bool,
+    pub textarea: bool,
+    pub icon_button: bool,
+    pub divider: bool,
+    pub file_upload: bool,
+    pub form_field: bool,
+    pub date_picker: bool,
 }
 
 impl BasicComponents {
     /// Create empty basic components
     pub fn empty() -> Self {
         Self {
+            arrow: false,
+            background: false,
             button: false,
             input: false,
             card: false,
             badge: false,
+            checkbox: false,
+            radio_group: false,
+            select: false,
+            switch: false,
+            slider: false,
+            textarea: false,
+            icon_button: false,
+            divider: false,
+            file_upload: false,
+            form_field: false,
+            date_picker: false,
         }
     }
 }
@@ -68,6 +98,7 @@ pub struct DataComponents {
     pub table: bool,
     pub tree: bool,
     pub pagination: bool,
+    pub pagination_button: bool,
     pub virtual_scroll: bool,
     pub collapse: bool,
     pub drag: bool,
@@ -83,6 +114,7 @@ impl DataComponents {
             table: false,
             tree: false,
             pagination: false,
+            pagination_button: false,
             virtual_scroll: false,
             collapse: false,
             drag: false,
@@ -99,6 +131,13 @@ pub struct FeedbackComponents {
     pub alert: bool,
     pub toast: bool,
     pub tooltip: bool,
+    pub modal: bool,
+    pub drawer: bool,
+    pub dropdown: bool,
+    pub popover: bool,
+    pub progress: bool,
+    pub skeleton: bool,
+    pub spin: bool,
 }
 
 impl FeedbackComponents {
@@ -108,6 +147,13 @@ impl FeedbackComponents {
             alert: false,
             toast: false,
             tooltip: false,
+            modal: false,
+            drawer: false,
+            dropdown: false,
+            popover: false,
+            progress: false,
+            skeleton: false,
+            spin: false,
         }
     }
 }
@@ -118,6 +164,8 @@ pub struct NavigationComponents {
     pub menu: bool,
     pub tabs: bool,
     pub breadcrumb: bool,
+    pub sidebar: bool,
+    pub steps: bool,
 }
 
 impl NavigationComponents {
@@ -127,6 +175,54 @@ impl NavigationComponents {
             menu: false,
             tabs: false,
             breadcrumb: false,
+            sidebar: false,
+            steps: false,
+        }
+    }
+}
+
+/// Display components
+#[derive(Debug, Serialize)]
+pub struct DisplayComponents {
+    pub tag: bool,
+    pub empty: bool,
+    pub comment: bool,
+    pub description_list: bool,
+    pub qrcode: bool,
+}
+
+impl DisplayComponents {
+    /// Create empty display components
+    pub fn empty() -> Self {
+        Self {
+            tag: false,
+            empty: false,
+            comment: false,
+            description_list: false,
+            qrcode: false,
+        }
+    }
+}
+
+/// Entry components
+#[derive(Debug, Serialize)]
+pub struct EntryComponents {
+    pub number_input: bool,
+    pub search: bool,
+    pub auto_complete: bool,
+    pub cascader: bool,
+    pub transfer: bool,
+}
+
+impl EntryComponents {
+    /// Create empty entry components
+    pub fn empty() -> Self {
+        Self {
+            number_input: false,
+            search: false,
+            auto_complete: false,
+            cascader: false,
+            transfer: false,
         }
     }
 }
@@ -149,6 +245,20 @@ mod tests {
         assert!(!basic.input);
         assert!(!basic.card);
         assert!(!basic.badge);
+        assert!(!basic.checkbox);
+        assert!(!basic.select);
+        assert!(!basic.divider);
+    }
+
+    #[test]
+    fn test_all_categories_empty() {
+        let categories = ComponentCategories::empty();
+        assert!(!categories.basic.button);
+        assert!(!categories.data.table);
+        assert!(!categories.feedback.alert);
+        assert!(!categories.navigation.menu);
+        assert!(!categories.display.tag);
+        assert!(!categories.entry.search);
     }
 
     #[test]
@@ -158,13 +268,13 @@ mod tests {
             components: ComponentCategories {
                 basic: BasicComponents {
                     button: true,
-                    input: false,
-                    card: false,
-                    badge: false,
+                    ..BasicComponents::empty()
                 },
                 data: DataComponents::empty(),
                 feedback: FeedbackComponents::empty(),
                 navigation: NavigationComponents::empty(),
+                display: DisplayComponents::empty(),
+                entry: EntryComponents::empty(),
             },
         };
 

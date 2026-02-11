@@ -3,10 +3,14 @@
 
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, TableClass, UtilityClass};
+use std::collections::HashMap;
 
 pub use super::column::{ColumnAlign, ColumnDef};
 pub use super::sort::{SortConfig, SortDirection};
 use crate::styled::StyledComponent;
+
+/// Filter state for a column: map of column key to selected values
+pub type TableFilters = HashMap<String, Vec<String>>;
 
 /// Table component wrapper (for StyledComponent)
 pub struct TableComponent;
@@ -85,6 +89,14 @@ pub struct TableProps {
     /// Sort change callback
     #[props(default)]
     pub on_sort_change: Option<EventHandler<SortConfig>>,
+
+    /// Active filters (column key -> selected values)
+    #[props(default)]
+    pub filters: TableFilters,
+
+    /// Filter change callback
+    #[props(default)]
+    pub on_filter_change: Option<EventHandler<TableFilters>>,
 }
 
 impl Default for TableProps {
@@ -101,6 +113,8 @@ impl Default for TableProps {
             sort_column: String::default(),
             sort_direction: SortDirection::default(),
             on_sort_change: None,
+            filters: TableFilters::default(),
+            on_filter_change: None,
         }
     }
 }
@@ -140,9 +154,10 @@ impl Default for TableProps {
 /// ```
 #[component]
 pub fn Table(props: TableProps) -> Element {
-    // Compute sorted data
+    // First filter data, then sort it
+    let filtered_data = filter_data(&props.data, &props.columns, &props.filters);
     let sorted_data = use_sortable_data(
-        &props.data,
+        &filtered_data,
         &props.columns,
         &props.sort_column,
         props.sort_direction,
@@ -374,4 +389,37 @@ fn use_sortable_data(
     sort_direction: SortDirection,
 ) -> Vec<Vec<String>> {
     sort_data(data, columns, sort_column, sort_direction)
+}
+
+/// Filter table data based on active filters
+fn filter_data(
+    data: &[Vec<String>],
+    columns: &[ColumnDef],
+    filters: &TableFilters,
+) -> Vec<Vec<String>> {
+    if filters.is_empty() {
+        return data.to_vec();
+    }
+
+    data.iter()
+        .filter(|row| {
+            // Row must match ALL active filters
+            filters.iter().all(|(col_key, selected_values)| {
+                if selected_values.is_empty() {
+                    return true; // Empty filter means no restriction
+                }
+
+                // Find column index
+                if let Some(col_idx) = columns.iter().position(|c| &c.column_key == col_key) {
+                    // Check if row value matches any selected filter value
+                    if let Some(cell_value) = row.get(col_idx) {
+                        return selected_values.iter().any(|v| v == cell_value);
+                    }
+                }
+
+                false // Column not found or cell value missing
+            })
+        })
+        .cloned()
+        .collect()
 }

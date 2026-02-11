@@ -28,6 +28,7 @@ _icons = { path = "../../packages/icons", package = "hikari-icons", features = [
 _palette = { path = "../../packages/palette", package = "hikari-palette" }
 _animation = { path = "../../packages/animation", package = "hikari-animation" }
 _extra_components = { path = "../../packages/extra-components", package = "hikari-extra-components" }
+_i18n = { path = "../../packages/i18n", package = "hikari-i18n" }
 _render_service = { path = "../../packages/render-service", package = "hikari-render-service", optional = true }
 
 # Dioxus frontend framework

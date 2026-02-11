@@ -182,6 +182,55 @@ pub fn build_classes(classes: &[impl UtilityClass]) -> String {
     ClassesBuilder::new().add_all(classes).build()
 }
 
+/// Helper: Create flex center classes (flex + justify-center + items-center)
+///
+/// Common pattern for centering content
+pub fn flex_center() -> String {
+    use crate::classes::{Display, JustifyContent, AlignItems};
+    ClassesBuilder::new()
+        .add(Display::Flex)
+        .add(JustifyContent::Center)
+        .add(AlignItems::Center)
+        .build()
+}
+
+/// Helper: Create flex column center classes
+///
+/// Common pattern for vertical centering
+pub fn flex_col_center() -> String {
+    use crate::classes::{Display, FlexDirection, JustifyContent, AlignItems};
+    ClassesBuilder::new()
+        .add(Display::Flex)
+        .add(FlexDirection::Column)
+        .add(JustifyContent::Center)
+        .add(AlignItems::Center)
+        .build()
+}
+
+/// Helper: Create card base classes
+///
+/// Common pattern for card styling
+pub fn card_base() -> String {
+    use crate::classes::{BgColor, BorderRadius, Padding};
+    ClassesBuilder::new()
+        .add(BgColor::Surface)
+        .add(BorderRadius::Rounded)
+        .add(Padding::P4)
+        .build()
+}
+
+/// Helper: Create button base classes
+///
+/// Common pattern for button styling
+pub fn button_base() -> String {
+    use crate::classes::{BorderRadius, PaddingX, Cursor};
+    ClassesBuilder::new()
+        .add(BorderRadius::Sm)
+        .add(PaddingX::Px2)
+        .add(Cursor::Pointer)
+        .build()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

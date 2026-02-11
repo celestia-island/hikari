@@ -15,23 +15,13 @@
   // Default: inherit text color from theme
   color: var(--hi-color-text-primary);
 
-  // Ensure SVG elements inherit  color
+  // SVG inherits color; fill/stroke controlled by each icon's inline attributes
   svg {
     width: 100%;
     height: 100%;
-    fill: currentColor;
-
-    // Also apply color to paths, circles, rects, etc.
-    path,
-    circle,
-    rect,
-    ellipse,
-    polygon,
-    polyline,
-    line {
-      fill: currentColor;
-      stroke: currentColor;
-    }
+    // MDI fill-based icons set fill="currentColor" in their SVG data
+    // Lucide/Feather stroke-based icons set stroke="currentColor" + fill="none"
+    // We must NOT override these here
   }
 }
 

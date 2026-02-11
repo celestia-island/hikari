@@ -244,17 +244,19 @@ pub fn BasicSelect() -> Element {
                 .add(Padding::P4)
                 .build(),
 
+            // Row: city select
             div {
                 class: ClassesBuilder::new()
                     .add(Display::Flex)
                     .add(FlexDirection::Row)
                     .add(AlignItems::Center)
-                    .add(Gap::Gap2)
+                    .add(Gap::Gap3)
                     .build(),
 
                 label { "城市:" }
 
                 Select {
+                    placeholder: "请选择城市".to_string(),
                     options: vec![
                         SelectOption {
                             label: "北京".to_string(),
@@ -276,18 +278,20 @@ pub fn BasicSelect() -> Element {
                 }
             }
 
+            // Row: category select (large size)
             div {
                 class: ClassesBuilder::new()
                     .add(Display::Flex)
                     .add(FlexDirection::Row)
                     .add(AlignItems::Center)
-                    .add(Gap::Gap2)
+                    .add(Gap::Gap3)
                     .build(),
 
                 label { "分类:" }
 
                 Select {
                     size: _components::SelectSize::Lg,
+                    placeholder: "请选择分类".to_string(),
                     options: vec![
                         SelectOption {
                             label: "科技".to_string(),
@@ -300,6 +304,34 @@ pub fn BasicSelect() -> Element {
                         SelectOption {
                             label: "体育".to_string(),
                             value: "sports".to_string(),
+                        },
+                    ],
+                }
+            }
+
+            // Row: small disabled select
+            div {
+                class: ClassesBuilder::new()
+                    .add(Display::Flex)
+                    .add(FlexDirection::Row)
+                    .add(AlignItems::Center)
+                    .add(Gap::Gap3)
+                    .build(),
+
+                label { "状态:" }
+
+                Select {
+                    size: _components::SelectSize::Sm,
+                    disabled: true,
+                    placeholder: "不可选择".to_string(),
+                    options: vec![
+                        SelectOption {
+                            label: "启用".to_string(),
+                            value: "on".to_string(),
+                        },
+                        SelectOption {
+                            label: "禁用".to_string(),
+                            value: "off".to_string(),
                         },
                     ],
                 }

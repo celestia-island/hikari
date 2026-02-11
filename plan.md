@@ -38,7 +38,7 @@ This plan tracks ongoing development, maintenance, and technical debt for the Hi
 
 | File | Status | Action |
 |------|--------|--------|
-| `packages/components/src/data/header.rs` | Empty (1 byte) | Remove or implement |
+| `packages/components/src/data/header.rs` | Empty (1 byte) | ✅ Removed (commit a7cc059) |
 
 ### 1.2 Hardcoded Configuration Values
 
@@ -126,7 +126,15 @@ flowchart TD
         C3[Rich Text Editor]
     end
 
-    A1 --> A2 --> B1 --> B2 --> C1 --> C2 --> C3
+    A1 --> A2
+    A2 --> B1
+    B1 --> B2
+    B2 --> C1
+    C1 --> C2
+    C2 --> C3
+
+    classDef done fill:#90EE90,stroke:#006400,stroke-width:2px
+    class A1 done
 ```
 
 ---

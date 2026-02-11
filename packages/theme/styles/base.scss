@@ -561,10 +561,11 @@ hr {
     color: var(--hi-color-danger);
 }
 
-// SVG 图标默认颜色
+// SVG 图标默认颜色继承
+// Note: 不强制设置 fill/stroke，避免覆盖 stroke-only 图标（如 Lucide/Feather）
+// 各组件/图标应自行声明 fill 或 stroke
 svg {
-    fill: currentColor;
-    stroke: currentColor;
+    color: inherit;
 }
 
 .hi-mt-1 { margin-top: $hikari-spacing-xs; }

@@ -10,10 +10,10 @@
 .hi-card-header,
 .hi-card-body,
 .hi-card-footer {
-  // Ensure SVG icons inherit theme colors
+  // SVG icons inherit theme color via CSS color property
+  // Do NOT force fill/stroke — let each icon's inline attributes decide
   svg {
-    fill: currentColor;
-    stroke: currentColor;
+    color: inherit;
   }
 }
 

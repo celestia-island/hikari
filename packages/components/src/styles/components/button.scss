@@ -407,8 +407,7 @@ button .hikari-icon svg ellipse,
 button .hikari-icon svg polygon,
 button .hikari-icon svg polyline,
 button .hikari-icon svg line {
-  fill: currentColor;
-  stroke: currentColor;
+  color: inherit;
 }
 
 // Hover state opacity

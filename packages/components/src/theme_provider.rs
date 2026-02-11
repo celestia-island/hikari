@@ -936,6 +936,7 @@ pub fn use_theme() -> ThemeContext {
     use_context()
 }
 
+#[allow(dead_code)]
 fn default_theme_context() -> ThemeContext {
     #[cfg(target_arch = "wasm32")]
     {

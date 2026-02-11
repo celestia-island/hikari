@@ -3,7 +3,7 @@
 
 use dioxus::prelude::*;
 
-use _components::{PortalProvider, ThemeProvider, scripts::scrollbar_container};
+use _components::{PortalProvider, ThemeProvider};
 
 /// Main application component (root)
 #[component]

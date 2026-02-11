@@ -1,99 +1,161 @@
-# Refactor Plan: Replace `add_raw` with Type-Safe UtilityClass Enums
+# Hikari Development & Maintenance Plan
 
 ## Overview
 
-This plan tracks the refactoring of all components in `hikari-components` to use type-safe `UtilityClass` enums instead of raw string literals with `add_raw()`.
-
-## Status: ✅ COMPLETED
-
-All phases have been successfully completed. The codebase now uses type-safe enums for CSS class management.
+This plan tracks ongoing development, maintenance, and technical debt for the Hikari component library.
 
 ---
 
-## Summary of Changes
+## Current Status
 
-### New Enums Added
+### Completed
+- Type-safe CSS class refactoring (all components now use `UtilityClass` enums)
+- Layer 1 & Layer 2 components implementation
+- Chinese traditional color palette system
+- Animation infrastructure (`AnimationBuilder`)
 
-| Phase | Enum | Component |
-|-------|------|-----------|
-| 1 | `SwitchClass` | Switch |
-| 1 | `SliderClass` | Slider |
-| 1 | `SelectClass` | Select |
-| 1 | `DatePickerClass` | DatePicker |
-| 1 | `FileUploadClass` | FileUpload |
-| 1 | `FormFieldClass` | FormField |
-| 1 | `DividerClass` | Divider |
-| 2 | `AutoCompleteClass` | AutoComplete |
-| 2 | `CascaderClass` | Cascader |
-| 2 | `NumberInputClass` | NumberInput |
-| 2 | `SearchClass` | Search |
-| 2 | `TransferClass` | Transfer |
-| 3 | `SpaceClass` | Space |
-| 4 | `TagClass` | Tag |
-| 4 | `DescriptionListClass` | DescriptionList |
-| 4 | `EmptyClass` | Empty |
-| 4 | `QRCodeClass` | QRCode |
-| 5 | `AppLayoutClass` | Layout |
-| 6 | `DrawerClass` | Drawer |
-| 6 | `PopoverClass` | Popover |
-| 6 | `ProgressClass` | Progress |
-| 6 | `SkeletonClass` | Skeleton |
-| 6 | `SpinClass` | Spin |
-| 7 | `AnchorClass` | Anchor |
-| 7 | `StepsClass` | Steps |
-
-### Extended Existing Enums
-
-| Enum | New Members Added |
-|------|-------------------|
-| `BadgeClass` | Primary, Success, Warning, Danger |
-| `ContainerClass` | Md, Centered |
-| `GlowClass` | GlowWrapperBlock |
-| `MenuClass` | Vertical, Horizontal, Compact, MenuItem, SubmenuList |
+### Architecture
+```
++------------------------------------------------------------------+
+|                      Layer 3: Production Components               |
+|  (Video Player, Rich Text Editor, Code Highlighting, Timeline)   |
+|                            | depends on                           |
++------------------------------------------------------------------+
+|                      Layer 2: Composite Components                |
+|       (Menu, Tabs, Table, Tree, Form, Dropdown, Modal)           |
+|                            | depends on                           |
++------------------------------------------------------------------+
+|                       Layer 1: Basic Components                   |
+|        (Button, Input, Card, Badge, Alert, Toast, etc.)          |
++------------------------------------------------------------------+
+```
 
 ---
 
-## Completed Phases
+## Phase 1: Technical Debt & Maintenance
 
-### Phase 1: Basic Form Components ✅
-- Switch, Slider, Select, DatePicker, FileUpload, FormField, Divider
+### 1.1 Empty/Stub Files
 
-### Phase 2: Entry Components ✅
-- AutoComplete, Cascader, NumberInput, Search, Transfer
+| File | Status | Action |
+|------|--------|--------|
+| `packages/components/src/data/header.rs` | Empty (1 byte) | Remove or implement |
 
-### Phase 3: Use Existing Enums ✅
-- Badge, Button, Card, Input, Aside, Container, Footer, Grid, Header, Section, Space
-- Cell, Filter, Node, Pagination, Sort, Table
-- Alert, Dropdown, Glow, Toast, Tooltip
-- Breadcrumb, Menu
+### 1.2 Hardcoded Configuration Values
 
-### Phase 4: Display Components ✅
-- Tag, DescriptionList, Empty, QRCode
+Consider extracting these to configurable constants or theme variables:
 
-### Phase 5: Layout Components ✅
-- AppLayout (Layout)
+| Location | Value | Description |
+|----------|-------|-------------|
+| Responsive breakpoints | Mobile: 0, Tablet: 641, Desktop: 1024 | Could be theme-configurable |
+| Animation timings | Various `duration` values | Consider centralized timing constants |
+| Drawer sizes | Small: 300px, Medium: 500px, Large: 700px | Could be theme tokens |
 
-### Phase 6: Feedback Components ✅
-- Drawer, Popover, Progress, Skeleton, Spin
+### 1.3 Dynamic Typing Patterns (Acceptable)
 
-### Phase 7: Navigation Components ✅
-- Anchor, Steps
+The following `Box<dyn FnMut>` patterns are **intentional and correct** for WASM/JavaScript interop:
+
+| File | Usage | Status |
+|------|-------|--------|
+| `scrollbar_container.rs` | JS event closures | Acceptable |
+| `animation/builder.rs` | Animation callbacks | Acceptable |
+| `hooks.rs` | Event listeners | Acceptable |
+
+These are necessary for WASM bindings and don't represent technical debt.
 
 ---
 
-## Benefits Achieved
+## Phase 2: Layer 2 Component Completion
 
-1. **Type Safety**: All CSS class strings are now compile-time checked
-2. **IDE Autocompletion**: Full autocomplete support for all class names
-3. **No Typos**: Impossible to misspell class names
-4. **Consistent Pattern**: All components follow the same `ClassesBuilder` + enum pattern
-5. **Maintainability**: Easier to find and update class references
+### Missing Components (per layer-component-plan.md)
+
+| Component | Priority | Dependencies | Status |
+|-----------|----------|--------------|--------|
+| Calendar | Medium | Button, Input, Card | Not started |
+| Carousel | Low | Button, Card | Exists in `display/` |
+| Collapse | Medium | Button, Card | Exists in `data/` |
+| Stepper | Low | Button, Badge | Exists in `navigation/` |
+| Timeline | Low | Card, Badge | Not started |
+| Upload | Medium | Button, Progress | Exists as FileUpload in `basic/` |
+
+---
+
+## Phase 3: Layer 3 Production Components
+
+### High Priority
+
+| Component | Description | Complexity | Dependencies |
+|-----------|-------------|------------|--------------|
+| **Code Highlighting** | Syntax highlighting, line numbers, themes | Medium | Card, Tabs, Form |
+| **Video Player** | Playback controls, subtitles, playlist | High | Card, Button, Form, Menu |
+| **Rich Text Editor** | WYSIWYG/Markdown, plugins | High | Form, Dropdown, Modal, Toolbar |
+
+### Medium Priority
+
+| Component | Description | Complexity | Dependencies |
+|-----------|-------------|------------|--------------|
+| **Timeline** | Event timeline, milestones | Medium | Card, Badge, Collapse |
+| **User Guide** | Onboarding tours, feature hints | Medium | Modal, Button, Badge |
+
+### Low Priority
+
+| Component | Description | Complexity | Dependencies |
+|-----------|-------------|------------|--------------|
+| **Data Visualization** | Charts, dashboards | High | Card, Tabs, Form |
+| **Code Editor** | Full IDE-like editing | High | Card, Tabs, Form, Menu |
+| **Instant Messaging** | Chat UI, messages | High | Card, Form, Menu, Badge |
+
+---
+
+## Implementation Sequence
+
+```mermaid
+flowchart TD
+    subgraph Phase1["Phase 1: Technical Debt"]
+        A1[Remove empty header.rs]
+        A2[Extract config constants]
+    end
+
+    subgraph Phase2["Phase 2: Layer 2 Completion"]
+        B1[Calendar component]
+        B2[Timeline component]
+    end
+
+    subgraph Phase3["Phase 3: Layer 3 Production"]
+        C1[Code Highlighting]
+        C2[Video Player]
+        C3[Rich Text Editor]
+    end
+
+    A1 --> A2 --> B1 --> B2 --> C1 --> C2 --> C3
+```
 
 ---
 
 ## Notes
 
-- `.add_raw(&props.class)` is still used for user-provided custom classes (correct pattern)
-- All hardcoded `"hi-xxx"` strings have been replaced with type-safe enums
-- Each enum follows the naming convention: `{ComponentName}Class`
-- All enums derive `Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize`
+### Design Principles
+1. **Progressive Enhancement** - Build from simple to complex
+2. **Composition over Inheritance** - Compose Layer 3 from Layer 2, Layer 2 from Layer 1
+3. **Single Responsibility** - Each component does one thing well
+4. **Type Safety** - All CSS classes use `UtilityClass` enums
+
+### Conventions
+- Component class enums: `{ComponentName}Class` derives `Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize`
+- Use `ClassesBuilder` pattern for composing classes
+- Keep `.add_raw()` only for user-provided custom classes
+
+---
+
+## Historical: Type-Safe Refactoring (Completed)
+
+The following enums were added during the refactoring to replace raw string literals:
+
+| Phase | Enums Added |
+|-------|-------------|
+| 1 | `SwitchClass`, `SliderClass`, `SelectClass`, `DatePickerClass`, `FileUploadClass`, `FormFieldClass`, `DividerClass` |
+| 2 | `AutoCompleteClass`, `CascaderClass`, `NumberInputClass`, `SearchClass`, `TransferClass` |
+| 3 | `SpaceClass` (extended: `BadgeClass`, `ContainerClass`, `GlowClass`, `MenuClass`) |
+| 4 | `TagClass`, `DescriptionListClass`, `EmptyClass`, `QRCodeClass` |
+| 5 | `AppLayoutClass` |
+| 6 | `DrawerClass`, `PopoverClass`, `ProgressClass`, `SkeletonClass`, `SpinClass` |
+| 7 | `AnchorClass`, `StepsClass` |

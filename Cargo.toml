@@ -8,6 +8,7 @@ members = [
     "packages/icons",
     "packages/builder",
     "packages/e2e",
+    "packages/i18n",
     "packages/render-service",
     "examples/node-graph-demo",
 ]

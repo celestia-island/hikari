@@ -57,7 +57,7 @@ pub struct I18nProviderProps {
 #[component]
 pub fn I18nProvider(props: I18nProviderProps) -> Element {
     let keys = load_toml(props.toml_content).expect("Failed to load TOML");
-    let _i18n_context = use_signal(|| I18nContext::new(props.language, keys));
+    let _i18n_context = use_context_provider(|| I18nContext::new(props.language, keys));
 
     rsx! {
         div {
@@ -65,6 +65,11 @@ pub fn I18nProvider(props: I18nProviderProps) -> Element {
             {props.children}
         }
     }
+}
+
+/// Hook to access i18n context
+pub fn use_i18n() -> I18nContext {
+    use_context::<I18nContext>()
 }
 
 /// Language switcher component

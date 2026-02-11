@@ -114,6 +114,8 @@ pub enum Route {
     SystemPalette {},
     #[route("/system/animations")]
     SystemAnimations {},
+    #[route("/system/i18n")]
+    SystemI18n {},
 }
 
 // ============================================================
@@ -387,5 +389,12 @@ fn UserGuideDoc() -> Element {
 fn ZoomControlsDoc() -> Element {
     rsx! {
         crate::pages::components::extra::ZoomControlsDoc {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn SystemI18n() -> Element {
+    rsx! {
+        crate::components::I18nDemo {}
     }
 }

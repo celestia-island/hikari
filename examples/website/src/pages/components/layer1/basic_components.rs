@@ -162,7 +162,7 @@ pub fn BasicCard() -> Element {
                     action: Some(rsx! {
                         _components::IconButton {
                             icon: _icons::LucideIcon::MoreVertical,
-                            size: 16,
+                            size: _components::IconButtonSize::Small,
                             onclick: move |_| {},
                         }
                     })

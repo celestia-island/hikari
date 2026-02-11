@@ -3,8 +3,14 @@
 
 use dioxus::prelude::*;
 
-use _components::{Badge, Button, ButtonVariant, Card, CardHeader, CardContent, CardActions, Checkbox, Divider, DividerOrientation, DividerTextPosition, Input, RadioButton, RadioDirection, RadioGroup, Select, SelectOption};
-use _palette::classes::{AlignItems, FlexWrap, ClassesBuilder, Display, FlexDirection, Gap, Padding};
+use _components::{
+    Badge, Button, ButtonVariant, Card, CardActions, CardContent, CardHeader, Checkbox, Divider,
+    DividerOrientation, DividerTextPosition, Input, RadioButton, RadioDirection, RadioGroup,
+    Select, SelectOption,
+};
+use _palette::classes::{
+    AlignItems, ClassesBuilder, Display, FlexDirection, FlexWrap, Gap, Padding,
+};
 
 /// Button component demonstration
 #[allow(non_snake_case)]
@@ -20,28 +26,16 @@ pub fn BasicButton() -> Element {
                 .build(),
 
             // Primary button
-            Button {
-                variant: ButtonVariant::Primary,
-                "Primary Button"
-            }
+            Button { variant: ButtonVariant::Primary, "Primary Button" }
 
             // Secondary button
-            Button {
-                variant: ButtonVariant::Secondary,
-                "Secondary Button"
-            }
+            Button { variant: ButtonVariant::Secondary, "Secondary Button" }
 
             // Ghost button
-            Button {
-                variant: ButtonVariant::Ghost,
-                "Ghost Button"
-            }
+            Button { variant: ButtonVariant::Ghost, "Ghost Button" }
 
             // Danger button
-            Button {
-                variant: ButtonVariant::Danger,
-                "Danger Button"
-            }
+            Button { variant: ButtonVariant::Danger, "Danger Button" }
         }
     }
 }
@@ -66,13 +60,9 @@ pub fn BasicInput() -> Element {
                     .add(Gap::Gap2)
                     .build(),
 
-                label {
-                    "用户名:"
-                }
+                label { "用户名:" }
 
-                Input {
-                    placeholder: Some("请输入用户名".to_string())
-                }
+                Input { placeholder: Some("请输入用户名".to_string()) }
             }
 
             div {
@@ -83,13 +73,11 @@ pub fn BasicInput() -> Element {
                     .add(Gap::Gap2)
                     .build(),
 
-                label {
-                    "密码:"
-                }
+                label { "密码:" }
 
                 Input {
                     input_type: Some("password".to_string()),
-                    placeholder: Some("请输入密码".to_string())
+                    placeholder: Some("请输入密码".to_string()),
                 }
             }
 
@@ -101,13 +89,9 @@ pub fn BasicInput() -> Element {
                     .add(Gap::Gap2)
                     .build(),
 
-                label {
-                    "搜索:"
-                }
+                label { "搜索:" }
 
-                Input {
-                    placeholder: Some("搜索内容...".to_string())
-                }
+                Input { placeholder: Some("搜索内容...".to_string()) }
             }
         }
     }
@@ -127,30 +111,19 @@ pub fn BasicCard() -> Element {
                 .build(),
 
             // Basic card (legacy pattern - still works)
-            Card {
-                title: Some("基础卡片".to_string()),
-                "这是一个基础的卡片组件"
-            }
+            Card { title: Some("基础卡片".to_string()), "这是一个基础的卡片组件" }
 
             // Card with actions (new composition pattern)
             Card {
-                CardHeader {
-                    title: Some("带操作的卡片".to_string()),
-                }
+                CardHeader { title: Some("带操作的卡片".to_string()) }
 
                 CardContent {
                     div { "卡片内容区域" }
                 }
 
                 CardActions {
-                    Button {
-                        variant: ButtonVariant::Ghost,
-                        "取消"
-                    }
-                    Button {
-                        variant: ButtonVariant::Primary,
-                        "确认"
-                    }
+                    Button { variant: ButtonVariant::Ghost, "取消" }
+                    Button { variant: ButtonVariant::Primary, "确认" }
                 }
             }
 
@@ -165,7 +138,7 @@ pub fn BasicCard() -> Element {
                             size: _components::IconButtonSize::Small,
                             onclick: move |_| {},
                         }
-                    })
+                    }),
                 }
 
                 CardContent {
@@ -173,14 +146,8 @@ pub fn BasicCard() -> Element {
                 }
 
                 CardActions {
-                    Button {
-                        variant: ButtonVariant::Ghost,
-                        "关闭"
-                    }
-                    Button {
-                        variant: ButtonVariant::Secondary,
-                        "保存"
-                    }
+                    Button { variant: ButtonVariant::Ghost, "关闭" }
+                    Button { variant: ButtonVariant::Secondary, "保存" }
                 }
             }
         }
@@ -209,23 +176,11 @@ pub fn BasicBadge() -> Element {
                     .add(Gap::Gap2)
                     .build(),
 
-                "消息",
-
-                Badge { count: Some(5) }
-            }
-
-            div {
-                class: ClassesBuilder::new()
-                    .add(Display::Flex)
-                    .add(FlexDirection::Row)
-                    .add(AlignItems::Center)
-                    .add(Gap::Gap2)
-                    .build(),
-
-                "状态",
+                "消息"
 
                 Badge {
-                    "在线"
+                    variant: _components::BadgeVariant::Primary,
+                    count: Some(5),
                 }
             }
 
@@ -237,9 +192,9 @@ pub fn BasicBadge() -> Element {
                     .add(Gap::Gap2)
                     .build(),
 
-                "警告",
+                "状态"
 
-                Badge { count: Some(3) }
+                Badge { variant: _components::BadgeVariant::Success, "在线" }
             }
 
             div {
@@ -250,9 +205,28 @@ pub fn BasicBadge() -> Element {
                     .add(Gap::Gap2)
                     .build(),
 
-                "错误",
+                "警告"
 
-                Badge { count: Some(2) }
+                Badge {
+                    variant: _components::BadgeVariant::Warning,
+                    count: Some(3),
+                }
+            }
+
+            div {
+                class: ClassesBuilder::new()
+                    .add(Display::Flex)
+                    .add(FlexDirection::Row)
+                    .add(AlignItems::Center)
+                    .add(Gap::Gap2)
+                    .build(),
+
+                "错误"
+
+                Badge {
+                    variant: _components::BadgeVariant::Danger,
+                    count: Some(2),
+                }
             }
         }
     }
@@ -278,16 +252,26 @@ pub fn BasicSelect() -> Element {
                     .add(Gap::Gap2)
                     .build(),
 
-                label {
-                    "城市:"
-                }
+                label { "城市:" }
 
                 Select {
                     options: vec![
-                        SelectOption { label: "北京".to_string(), value: "bj".to_string() },
-                        SelectOption { label: "上海".to_string(), value: "sh".to_string() },
-                        SelectOption { label: "广州".to_string(), value: "gz".to_string() },
-                        SelectOption { label: "深圳".to_string(), value: "sz".to_string() },
+                        SelectOption {
+                            label: "北京".to_string(),
+                            value: "bj".to_string(),
+                        },
+                        SelectOption {
+                            label: "上海".to_string(),
+                            value: "sh".to_string(),
+                        },
+                        SelectOption {
+                            label: "广州".to_string(),
+                            value: "gz".to_string(),
+                        },
+                        SelectOption {
+                            label: "深圳".to_string(),
+                            value: "sz".to_string(),
+                        },
                     ],
                 }
             }
@@ -300,16 +284,23 @@ pub fn BasicSelect() -> Element {
                     .add(Gap::Gap2)
                     .build(),
 
-                label {
-                    "分类:"
-                }
+                label { "分类:" }
 
                 Select {
                     size: _components::SelectSize::Lg,
                     options: vec![
-                        SelectOption { label: "科技".to_string(), value: "tech".to_string() },
-                        SelectOption { label: "艺术".to_string(), value: "art".to_string() },
-                        SelectOption { label: "体育".to_string(), value: "sports".to_string() },
+                        SelectOption {
+                            label: "科技".to_string(),
+                            value: "tech".to_string(),
+                        },
+                        SelectOption {
+                            label: "艺术".to_string(),
+                            value: "art".to_string(),
+                        },
+                        SelectOption {
+                            label: "体育".to_string(),
+                            value: "sports".to_string(),
+                        },
                     ],
                 }
             }
@@ -337,10 +328,7 @@ pub fn BasicCheckbox() -> Element {
                     .add(Gap::Gap2)
                     .build(),
 
-                Checkbox {
-                    on_change: move |_| {},
-                    "选项 1"
-                }
+                Checkbox { on_change: move |_| {}, "选项 1" }
             }
 
             div {
@@ -351,11 +339,7 @@ pub fn BasicCheckbox() -> Element {
                     .add(Gap::Gap2)
                     .build(),
 
-                Checkbox {
-                    checked: true,
-                    on_change: move |_| {},
-                    "选项 2（已选中）"
-                }
+                Checkbox { checked: true, on_change: move |_| {}, "选项 2（已选中）" }
             }
 
             div {
@@ -366,11 +350,7 @@ pub fn BasicCheckbox() -> Element {
                     .add(Gap::Gap2)
                     .build(),
 
-                Checkbox {
-                    disabled: true,
-                    on_change: move |_| {},
-                    "选项 3（禁用）"
-                }
+                Checkbox { disabled: true, on_change: move |_| {}, "选项 3（禁用）" }
             }
         }
     }
@@ -394,21 +374,11 @@ pub fn BasicRadio() -> Element {
                 on_change: move |_| {},
                 direction: RadioDirection::Vertical,
 
-                RadioButton {
-                    value: "option1".to_string(),
-                    "选项 1"
-                }
+                RadioButton { value: "option1".to_string(), "选项 1" }
 
-                RadioButton {
-                    value: "option2".to_string(),
-                    "选项 2"
-                }
+                RadioButton { value: "option2".to_string(), "选项 2" }
 
-                RadioButton {
-                    value: "option3".to_string(),
-                    disabled: true,
-                    "选项 3（禁用）"
-                }
+                RadioButton { value: "option3".to_string(), disabled: true, "选项 3（禁用）" }
             }
         }
     }

@@ -151,7 +151,7 @@ impl Default for ButtonProps {
             animation: Default::default(),
             glow: true,
             glow_blur: Default::default(),
-            glow_intensity: Default::default(),
+            glow_intensity: crate::feedback::GlowIntensity::Seventy,
             glow_color: None,
             onclick: None,
         }

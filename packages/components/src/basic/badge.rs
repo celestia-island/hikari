@@ -92,12 +92,23 @@ pub fn Badge(props: BadgeProps) -> Element {
         None
     };
 
+    // Map variant to CSS class name
+    let variant_class = match props.variant {
+        BadgeVariant::Default => "",
+        BadgeVariant::Primary => "hi-badge-primary",
+        BadgeVariant::Success => "hi-badge-success",
+        BadgeVariant::Warning => "hi-badge-warning",
+        BadgeVariant::Danger => "hi-badge-danger",
+    };
+
     // Pre-compute badge classes outside rsx
     let badge_classes = if props.dot || display_count.is_some() {
-        ClassesBuilder::new()
+        let base = ClassesBuilder::new()
             .add(BadgeClass::Badge)
             .add_if(BadgeClass::Dot, || props.dot)
-            .build()
+            .add_raw(variant_class)
+            .build();
+        base
     } else {
         String::new()
     };
@@ -105,11 +116,10 @@ pub fn Badge(props: BadgeProps) -> Element {
     rsx! {
         div { class: format!("hi-badge-wrapper {}", props.class),
 
-            { props.children }
+            {props.children}
 
             if !badge_classes.is_empty() {
-                span {
-                    class: "{badge_classes}",
+                span { class: "{badge_classes}",
 
                     if props.dot {
                         span { class: "hi-badge-dot" }

@@ -96,7 +96,8 @@ impl StyleRegistry {
     pub fn register_basic_components(&mut self) {
         use crate::basic::{
             ArrowComponent, BackgroundComponent, BadgeComponent, ButtonComponent, CardComponent,
-            DividerComponent, InputComponent,
+            CheckboxComponent, DividerComponent, InputComponent, RadioGroupComponent,
+            SelectComponent,
         };
         ArrowComponent::register(self);
         BackgroundComponent::register(self);
@@ -105,6 +106,9 @@ impl StyleRegistry {
         CardComponent::register(self);
         BadgeComponent::register(self);
         DividerComponent::register(self);
+        CheckboxComponent::register(self);
+        RadioGroupComponent::register(self);
+        SelectComponent::register(self);
     }
 
     /// No-op if basic feature is disabled

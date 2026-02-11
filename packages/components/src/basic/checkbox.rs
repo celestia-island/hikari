@@ -99,17 +99,14 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
     };
 
     rsx! {
-        label {
-            class: "hi-checkbox-label",
+        label { class: "hi-checkbox-label",
             input {
                 class: "hi-checkbox-input",
                 r#type: "checkbox",
                 checked: props.checked,
                 disabled: props.disabled,
             }
-            div {
-                class: "{checkbox_classes}",
-                onclick: handle_click,
+            div { class: "{checkbox_classes}", onclick: handle_click,
                 svg {
                     class: "hi-checkbox-icon",
                     view_box: "0 0 24 24",
@@ -121,9 +118,7 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
                     polyline { points: "20 6 9 17 4 12" }
                 }
             }
-            span { class: "hi-checkbox-text",
-                { props.children }
-            }
+            span { class: "hi-checkbox-text", {props.children} }
         }
     }
 }
@@ -133,97 +128,7 @@ pub struct CheckboxComponent;
 
 impl StyledComponent for CheckboxComponent {
     fn styles() -> &'static str {
-        r#"
-.hi-checkbox-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.hi-checkbox-input {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  width: 0;
-  height: 0;
-}
-
-.hi-checkbox {
-  position: relative;
-  border: 2px solid var(--hi-border);
-  background: var(--hi-background);
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.hi-checkbox-sm {
-  width: 16px;
-  height: 16px;
-}
-
-.hi-checkbox-md {
-  width: 20px;
-  height: 20px;
-}
-
-.hi-checkbox-lg {
-  width: 24px;
-  height: 24px;
-}
-
-.hi-checkbox:hover:not(.hi-checkbox-disabled) {
-  border-color: var(--hi-color-primary);
-}
-
-.hi-checkbox-checked {
-  background: var(--hi-color-primary);
-  border-color: var(--hi-color-primary);
-}
-
-.hi-checkbox-icon {
-  color: white;
-  width: 70%;
-  height: 70%;
-  opacity: 0;
-  transform: scale(0.5);
-  transition: all 0.2s ease;
-}
-
-.hi-checkbox-checked .hi-checkbox-icon {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.hi-checkbox-disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.hi-checkbox-text {
-  font-size: 14px;
-  color: var(--hi-text-primary);
-  line-height: 1.5;
-}
-
-[data-theme="dark"] .hi-checkbox {
-  background: var(--hi-surface);
-  border-color: var(--hi-border);
-}
-
-[data-theme="dark"] .hi-checkbox-checked {
-  background: var(--hi-color-primary);
-  border-color: var(--hi-color-primary);
-}
-
-[data-theme="dark"] .hi-checkbox-text {
-  color: var(--hi-text-primary);
-}
-"#
+        include_str!(concat!(env!("OUT_DIR"), "/styles/checkbox.css"))
     }
 
     fn name() -> &'static str {

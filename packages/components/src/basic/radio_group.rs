@@ -110,9 +110,7 @@ pub fn RadioGroup(props: RadioGroupProps) -> Element {
         .build();
 
     rsx! {
-        div { class: "{group_classes}",
-            { props.children }
-        }
+        div { class: "{group_classes}", {props.children} }
     }
 }
 
@@ -125,8 +123,7 @@ pub fn RadioButton(props: RadioButtonProps) -> Element {
         .build();
 
     rsx! {
-        label {
-            class: "{radio_classes}",
+        label { class: "{radio_classes}",
             input {
                 r#type: "radio",
                 name: "radio",
@@ -134,9 +131,7 @@ pub fn RadioButton(props: RadioButtonProps) -> Element {
                 disabled: props.disabled,
             }
             div { class: "hi-radio-indicator" }
-            span { class: "hi-radio-text",
-                { props.children }
-            }
+            span { class: "hi-radio-text", {props.children} }
         }
     }
 }
@@ -146,96 +141,7 @@ pub struct RadioGroupComponent;
 
 impl StyledComponent for RadioGroupComponent {
     fn styles() -> &'static str {
-        r#"
-.hi-radio-group {
-  display: flex;
-  gap: 12px;
-}
-
-.hi-radio-group-vertical {
-  flex-direction: column;
-}
-
-.hi-radio-group-horizontal {
-  flex-direction: row;
-  align-items: center;
-}
-
-.hi-radio-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.hi-radio-label input[type="radio"] {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  width: 0;
-  height: 0;
-}
-
-.hi-radio-indicator {
-  position: relative;
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--hi-border);
-  border-radius: 50%;
-  background: var(--hi-background);
-  transition: all 0.2s ease;
-}
-
-.hi-radio-indicator::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  width: 8px;
-  height: 8px;
-  background: var(--hi-color-primary);
-  border-radius: 50%;
-  transition: transform 0.2s ease;
-}
-
-.hi-radio-label input[type="radio"]:checked + .hi-radio-indicator {
-  border-color: var(--hi-color-primary);
-}
-
-.hi-radio-label input[type="radio"]:checked + .hi-radio-indicator::after {
-  transform: translate(-50%, -50%) scale(1);
-}
-
-.hi-radio-label:hover .hi-radio-indicator:not(:disabled) {
-  border-color: var(--hi-color-primary);
-}
-
-.hi-radio-label input[type="radio"]:disabled + .hi-radio-indicator {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.hi-radio-text {
-  font-size: 14px;
-  color: var(--hi-text-primary);
-  line-height: 1.5;
-}
-
-[data-theme="dark"] .hi-radio-indicator {
-  background: var(--hi-surface);
-  border-color: var(--hi-border);
-}
-
-[data-theme="dark"] .hi-radio-indicator::after {
-  background: var(--hi-color-primary);
-}
-
-[data-theme="dark"] .hi-radio-text {
-  color: var(--hi-text-primary);
-}
-"#
+        include_str!(concat!(env!("OUT_DIR"), "/styles/radio.css"))
     }
 
     fn name() -> &'static str {

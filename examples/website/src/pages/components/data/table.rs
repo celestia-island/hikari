@@ -2,10 +2,77 @@
 // Table component showcase page with real rendered examples
 
 use dioxus::prelude::*;
+use std::collections::HashMap;
 
 use crate::{app::Route, components::Layout};
-use _components::{data::{ColumnAlign, ColumnDef, Table, TableSize}, layout::{Container, Section}};
+use _components::{
+    data::{ColumnAlign, ColumnDef, SortConfig, SortDirection, Table, TableSize},
+    layout::{Container, Section},
+};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, TextColor};
+
+/// Interactive sortable table component with state management
+#[component]
+fn InteractiveSortableTable() -> Element {
+    let mut sort_column = use_signal(|| String::new());
+    let mut sort_direction = use_signal(|| SortDirection::default());
+
+    let sample_data = vec![
+        vec!["Amiya".to_string(), "Guard".to_string(), "6".to_string(), "5".to_string()],
+        vec!["SilverAsh".to_string(), "Guard".to_string(), "6".to_string(), "6".to_string()],
+        vec!["Exusiai".to_string(), "Sniper".to_string(), "6".to_string(), "6".to_string()],
+        vec!["Siege".to_string(), "Vanguard".to_string(), "3".to_string(), "5".to_string()],
+        vec!["Texas".to_string(), "Vanguard".to_string(), "1".to_string(), "4".to_string()],
+        vec!["Myrtle".to_string(), "Supporter".to_string(), "5".to_string(), "4".to_string()],
+        vec!["Angelina".to_string(), "Specialist".to_string(), "6".to_string(), "5".to_string()],
+        vec!["Laplum".to_string(), "Supporter".to_string(), "5".to_string(), "4".to_string()],
+        vec!["Vodfox".to_string(), "Caster".to_string(), "5".to_string(), "5".to_string()],
+        vec!["Ceobe".to_string(), "Vanguard".to_string(), "1".to_string(), "3".to_string()],
+    ];
+
+    let on_sort_change = move |config: SortConfig| {
+        sort_column.set(config.column.clone());
+        sort_direction.set(config.direction);
+    };
+
+    // Show current sort state
+    let sort_status = if !sort_column().is_empty() {
+        format!(
+            "Sorting by: {} ({})",
+            sort_column(),
+            match sort_direction() {
+                SortDirection::Ascending => "↑",
+                SortDirection::Descending => "↓",
+                SortDirection::None => "-",
+            }
+        )
+    } else {
+        "Not sorted".to_string()
+    };
+
+    rsx! {
+        div {
+            div { class: ClassesBuilder::new().add(MarginBottom::Mb4).build(),
+                span { class: "text-sm text-gray-500", "{sort_status}" }
+            }
+            Table {
+                columns: vec![
+                    ColumnDef::new("name", "Name").sortable(true),
+                    ColumnDef::new("class", "Class").sortable(true),
+                    ColumnDef::new("level", "Level").align(ColumnAlign::Center).sortable(true),
+                    ColumnDef::new("rarity", "Rarity").align(ColumnAlign::Center).sortable(true),
+                ],
+                data: sample_data,
+                sort_column: sort_column(),
+                sort_direction: sort_direction(),
+                on_sort_change: move |c| on_sort_change(c),
+                bordered: true,
+                striped: true,
+                hoverable: true,
+            }
+        }
+    }
+}
 
 #[allow(non_snake_case)]
 pub fn ComponentsTable() -> Element {
@@ -315,6 +382,59 @@ pub fn ComponentsTable() -> Element {
                                 ],
                                 bordered: true,
                             }
+                        }
+                    }
+
+                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
+                        h3 {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::Lg)
+                                .add(FontWeight::Semibold)
+                                .add(TextColor::Primary)
+                                .add(MarginBottom::Mb3)
+                                .build(),
+                            "Interactive Sorting"
+                        }
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "Click column headers to sort. Current state is managed by parent component."
+                        }
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            Table {
+                                columns: vec![
+                                    ColumnDef::new("name", "Name").sortable(true),
+                                    ColumnDef::new("role", "Role").sortable(true),
+                                    ColumnDef::new("level", "Level").align(ColumnAlign::Center).sortable(true),
+                                    ColumnDef::new("rarity", "Rarity").align(ColumnAlign::Center).sortable(true),
+                                ],
+                                data: vec![
+                                    vec!["Texas".to_string(), "Vanguard".to_string(), "1".to_string(), "4".to_string()],
+                                    vec!["Siege".to_string(), "Vanguard".to_string(), "3".to_string(), "5".to_string()],
+                                    vec!["Amiya".to_string(), "Guard".to_string(), "6".to_string(), "5".to_string()],
+                                    vec!["SilverAsh".to_string(), "Guard".to_string(), "6".to_string(), "6".to_string()],
+                                    vec!["Exusiai".to_string(), "Sniper".to_string(), "6".to_string(), "6".to_string()],
+                                ],
+                                bordered: true,
+                                striped: true,
+                            }
+                        }
+                    }
+
+                    // Interactive Sortable Table Example
+                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
+                        h3 {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::Lg)
+                                .add(FontWeight::Semibold)
+                                .add(TextColor::Primary)
+                                .add(MarginBottom::Mb3)
+                                .build(),
+                            "Sortable Table with State"
+                        }
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "Fully interactive sortable table with state management. Click headers to sort."
+                        }
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            InteractiveSortableTable {}
                         }
                     }
                 }

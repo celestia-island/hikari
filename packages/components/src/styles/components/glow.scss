@@ -47,27 +47,37 @@
 // Glow Intensity Levels (Opacity & Spread)
 // ============================================
 
-// 30% intensity (subtle, default for cards)
-// Low opacity, moderate spread for subtle effect
+// 30% intensity (subtle, for large surfaces: cards, panels, containers)
+// Very low opacity + wide spread for an almost imperceptible ambient glow
 .hi-glow-thirty {
+  --glow-opacity: 0.07;
+  --glow-spread: 2.4;
+
+  &::before {
+    --glow-opacity: 0.07;
+    --glow-spread: 2.4;
+  }
+}
+
+// 70% intensity (medium, default for interactive elements: buttons, inputs)
+// Balanced opacity + moderate spread for clear but non-distracting feedback
+.hi-glow-seventy {
+  --glow-opacity: 0.15;
+  --glow-spread: 1.6;
+
   &::before {
     --glow-opacity: 0.15;
-    --glow-spread: 1.8;
+    --glow-spread: 1.6;
   }
 }
 
-// 70% intensity (standard)
-.hi-glow-seventy {
-  &::before {
-    --glow-opacity: 0.25;
-    --glow-spread: 1.5;
-  }
-}
-
-// 100% intensity (intense)
+// 100% intensity (intense, for emphasis: active states, focus rings)
 .hi-glow-hundred {
+  --glow-opacity: 0.30;
+  --glow-spread: 1.3;
+
   &::before {
-    --glow-opacity: 0.35;
+    --glow-opacity: 0.30;
     --glow-spread: 1.3;
   }
 }

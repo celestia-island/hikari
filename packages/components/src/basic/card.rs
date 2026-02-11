@@ -35,7 +35,8 @@ pub struct CardProps {
     pub onclick: Option<EventHandler<MouseEvent>>,
 
     /// Enable glow effect (mouse-following spotlight)
-    /// Cards always use the subtle (Thirty) intensity for a soft, elegant look
+    /// Cards use the subtle Thirty intensity — barely perceptible ambient glow
+    /// suited for large surfaces (vs Seventy for interactive elements like buttons)
     #[props(default = true)]
     pub glow: bool,
 }
@@ -100,14 +101,12 @@ pub fn Card(props: CardProps) -> Element {
                 }
 
                 if let Some(extra) = props.extra {
-                    div { class: "{CardClass::CardExtra.as_class()}", { extra } }
+                    div { class: "{CardClass::CardExtra.as_class()}", {extra} }
                 }
             }
         }
 
-        div { class: "{CardClass::CardBody.as_class()}",
-            { props.children }
-        }
+        div { class: "{CardClass::CardBody.as_class()}", {props.children} }
     };
 
     #[cfg(target_arch = "wasm32")]
@@ -142,10 +141,14 @@ pub fn Card(props: CardProps) -> Element {
                                         let height = rect.height();
 
                                         if width > 0.0 && height > 0.0 {
-                                            let percent_x = ((relative_x / width) * 100.0).clamp(0.0, 100.0);
-                                            let percent_y = ((relative_y / height) * 100.0).clamp(0.0, 100.0);
-
-                                            let glow_el = card_el.query_selector(".hi-card-glow").ok().flatten();
+                                            let percent_x = ((relative_x / width) * 100.0)
+                                                .clamp(0.0, 100.0);
+                                            let percent_y = ((relative_y / height) * 100.0)
+                                                .clamp(0.0, 100.0);
+                                            let glow_el = card_el
+                                                .query_selector(".hi-card-glow")
+                                                .ok()
+                                                .flatten();
                                             if let Some(glow_el) = glow_el {
                                                 glow_el
                                                     .dyn_ref::<web_sys::HtmlElement>()
@@ -169,8 +172,6 @@ pub fn Card(props: CardProps) -> Element {
                                     break;
                                 }
                             }
-
-                            // Move up to parent
                             let node = current.dyn_ref::<web_sys::Node>();
                             target = node
                                 .and_then(|n| n.parent_node())
@@ -178,7 +179,7 @@ pub fn Card(props: CardProps) -> Element {
                         }
                     }
                 },
-                { content }
+                {content}
             }
         }
     }
@@ -193,7 +194,7 @@ pub fn Card(props: CardProps) -> Element {
                         handler.call(e);
                     }
                 },
-                { content }
+                {content}
             }
         }
     }
@@ -261,10 +262,9 @@ pub fn CardHeader(props: CardHeaderProps) -> Element {
     rsx! {
         div { class: "{classes}",
             // Left section: avatar + title/subtitle
-            div {
-                class: "hi-card-header-left",
+            div { class: "hi-card-header-left",
                 if let Some(avatar) = props.avatar {
-                    div { class: "hi-card-header-avatar", { avatar } }
+                    div { class: "hi-card-header-avatar", {avatar} }
                 }
                 div {
                     if let Some(title) = props.title {
@@ -277,7 +277,7 @@ pub fn CardHeader(props: CardHeaderProps) -> Element {
             }
             // Right section: action buttons
             if let Some(action) = props.action {
-                div { class: "hi-card-header-action", { action } }
+                div { class: "hi-card-header-action", {action} }
             }
         }
     }
@@ -320,7 +320,7 @@ pub fn CardContent(props: CardContentProps) -> Element {
         .build();
 
     rsx! {
-        div { class: "{classes}", { props.children } }
+        div { class: "{classes}", {props.children} }
     }
 }
 
@@ -367,7 +367,7 @@ pub fn CardActions(props: CardActionsProps) -> Element {
         .build();
 
     rsx! {
-        div { class: "{classes}", { props.children } }
+        div { class: "{classes}", {props.children} }
     }
 }
 
@@ -425,8 +425,7 @@ pub fn CardMedia(props: CardMediaProps) -> Element {
             class: "{classes}",
             src: "{props.src}",
             alt: "{props.alt}",
-            style: "{style}"
+            style: "{style}",
         }
     }
 }
-

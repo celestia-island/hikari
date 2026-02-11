@@ -326,8 +326,8 @@ pub mod styles_service;
 pub use html::HtmlService;
 pub use icon_route::get_icon_data;
 pub use models::{
-    BasicComponents, ComponentCategories, DataComponents, FeedbackComponents, NavigationComponents,
-    StyleInfo,
+    BasicComponents, ComponentCategories, DataComponents, DisplayComponents, EntryComponents,
+    FeedbackComponents, NavigationComponents, StyleInfo,
 };
 pub use plugin::{HikariRenderServicePlugin, StaticMountConfig, StyleRegistry};
 pub use router::build_router;

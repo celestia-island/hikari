@@ -10,9 +10,9 @@
 //! - [`Comment`] - Comment/feedback display
 //! - [`DescriptionList`] - Key-value display
 //! - [`QRCode`] - QR code display
-
 //! - [`Calendar`] - Date picker with calendar grid
-a     pub use calendar::*
+
+pub mod calendar;
 pub mod comment;
 pub mod description_list;
 pub mod empty;

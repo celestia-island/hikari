@@ -446,16 +446,8 @@ pub fn BasicRadio() -> Element {
                     group_name: "group1".to_string(),
                     selected_value: selected_value.clone(),
                     on_select: move |v| selected_value.set(v),
-                    "选项 3"
-                }
-
-                RadioButtonInternal {
-                    value: "option4".to_string(),
-                    group_name: "group1".to_string(),
-                    selected_value: selected_value.clone(),
-                    on_select: move |v| selected_value.set(v),
                     disabled: true,
-                    "选项 4（禁用）"
+                    "选项 3（禁用）"
                 }
             }
         }

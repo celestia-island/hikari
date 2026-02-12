@@ -1,3 +1,4 @@
+// Hikari Radio Component Styles
 // Use theme variables with namespace to avoid conflicts
 @use '../../../../theme/styles/variables.scss' as vars;
 @use '../../../../theme/styles/mixins.scss' as mix;
@@ -74,7 +75,10 @@
   box-sizing: border-box;
 }
 
-// Inner dot (controlled via StyleStringBuilder)
+// ============================================
+// Inner dot (the checkmark)
+// ============================================
+
 .hi-radio-dot {
   position: absolute;
   top: 50%;
@@ -83,11 +87,13 @@
   height: 8px;
   background: linear-gradient(135deg, var(--hi-color-primary), var(--hi-button-primary-dark, #E89A8D));
   border-radius: 50%;
-  // Note: transition removed - we control animation via StyleStringBuilder
+  // Default: unchecked state - dot is hidden (scaled to 0)
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 // ============================================
-// Checked state
+// Checked state - dot becomes visible
 // ============================================
 
 .hi-radio-label input[type="radio"]:checked + .hi-radio-indicator {
@@ -95,7 +101,11 @@
   box-shadow:
     0 0 6px var(--hi-glow-button-primary),
     inset 0 0 3px rgba(255, 255, 255, 0.1);
-  // Note: dot animation controlled via StyleStringBuilder in component
+}
+
+.hi-radio-label input[type="radio"]:checked + .hi-radio-indicator .hi-radio-dot {
+  // Checked: dot is visible (scaled to 1)
+  transform: translate(-50%, -50%) scale(1);
 }
 
 // ============================================
@@ -105,8 +115,7 @@
 .hi-radio-label:hover input[type="radio"]:checked + .hi-radio-indicator {
   box-shadow:
     0 0 10px var(--hi-glow-button-primary),
-    inset 0 0 4px rgba(255, 255, 255, 0.15);
-  transform: scale(1.05);
+    inset 0 0 4px rgba(255, 255, 255, 0.2);
 }
 
 // ============================================
@@ -146,7 +155,7 @@
     border-color: rgba(255, 255, 255, 0.15);
   }
 
-  .hi-radio-indicator::after {
+  .hi-radio-dot {
     background: linear-gradient(135deg, var(--hi-color-primary), var(--hi-button-primary-dark));
   }
 

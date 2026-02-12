@@ -64,37 +64,37 @@ These are necessary for WASM bindings and don't represent technical debt.
 
 ---
 
-## Phase 2: Layer 2 Component Completion
+## Phase 2: Layer 2 Component Completion ✅
 
 ### Missing Components (per layer-component-plan.md)
 
 | Component | Priority | Dependencies | Status |
 |-----------|----------|--------------|--------|
-| Calendar | Medium | Button, Input, Card | Not started |
+| Calendar | Medium | Button, Input, Card | ✅ Completed (2026-02-12) |
 | Carousel | Low | Button, Card | Exists in `display/` |
 | Collapse | Medium | Button, Card | Exists in `data/` |
 | Stepper | Low | Button, Badge | Exists in `navigation/` |
-| Timeline | Low | Card, Badge | Not started |
+| Timeline | Low | Card, Badge | ✅ Completed (2026-02-12) |
 | Upload | Medium | Button, Progress | Exists as FileUpload in `basic/` |
 
 ---
 
-## Phase 3: Layer 3 Production Components
+## Phase 3: Layer 3 Production Components ✅
 
 ### High Priority
 
-| Component | Description | Complexity | Dependencies |
-|-----------|-------------|------------|--------------|
-| **Code Highlighting** | Syntax highlighting, line numbers, themes | Medium | Card, Tabs, Form |
-| **Video Player** | Playback controls, subtitles, playlist | High | Card, Button, Form, Menu |
-| **Rich Text Editor** | WYSIWYG/Markdown, plugins | High | Form, Dropdown, Modal, Toolbar |
+| Component | Description | Complexity | Dependencies | Status |
+|-----------|-------------|------------|--------------|--------|
+| **Code Highlighting** | Syntax highlighting, line numbers, themes | Medium | Card, Tabs, Form | ✅ Completed (2026-02-12) |
+| **Video Player** | Playback controls, subtitles, playlist | High | Card, Button, Form, Menu | ✅ Completed (2026-02-12) |
+| **Rich Text Editor** | WYSIWYG/Markdown, plugins | High | Form, Dropdown, Modal, Toolbar | ✅ Completed (2026-02-12) |
 
 ### Medium Priority
 
-| Component | Description | Complexity | Dependencies |
-|-----------|-------------|------------|--------------|
-| **Timeline** | Event timeline, milestones | Medium | Card, Badge, Collapse |
-| **User Guide** | Onboarding tours, feature hints | Medium | Modal, Button, Badge |
+| Component | Description | Complexity | Dependencies | Status |
+|-----------|-------------|------------|--------------|--------|
+| **Timeline** | Event timeline, milestones | Medium | Card, Badge, Collapse | ✅ Completed (2026-02-12) |
+| **User Guide** | Onboarding tours, feature hints | Medium | Modal, Button, Badge | Not started |
 
 ### Low Priority
 

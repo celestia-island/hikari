@@ -111,6 +111,19 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
 
     let code_for_copy = props.code.clone();
 
+    // Computed button class with copied state
+    let button_class = {
+        let base = copy_classes.clone();
+        let copied_state = *copied.read();
+        if copied_state {
+            format!("{} copied", base)
+        } else {
+            base
+        }
+    };
+
+    let button_text = if *copied.read() { "已复制" } else { "复制" };
+
     rsx! {
         div {
             class: "{container_classes}",
@@ -125,11 +138,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
 
                 if props.copyable {
                     button {
-                        class: if copied() {
-                            format!("{} copied", copy_classes)
-                        } else {
-                            copy_classes.clone()
-                        },
+                        class: "{button_class}",
                         onclick: move |_| {
                             if copy_to_clipboard(&code_for_copy) {
                                 copied.set(true);
@@ -140,7 +149,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                             }
                         },
                         {
-                            if copied() { "已复制" } else { "复制" }
+                            "{button_text}"
                         }
                     }
                 }

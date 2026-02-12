@@ -1103,6 +1103,51 @@ impl UtilityClass for CalendarClass {
     }
 }
 
+/// Timeline component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TimelineClass {
+    /// `hi-timeline` - Main timeline class
+    Timeline,
+    /// `hi-timeline-alternate` - Alternate item positions
+    Alternate,
+    /// `hi-timeline-left` - Left aligned items
+    Left,
+    /// `hi-timeline-right` - Right aligned items
+    Right,
+    /// `hi-timeline-no-line` - Hide center line
+    NoLine,
+    /// `hi-timeline-item` - Timeline item wrapper
+    Item,
+    /// `hi-timeline-dot` - Timeline dot
+    Dot,
+    /// `hi-timeline-content` - Content wrapper
+    Content,
+    /// `hi-timeline-time` - Time label
+    Time,
+    /// `hi-timeline-title` - Title text
+    Title,
+    /// `hi-timeline-last` - Last item marker
+    Last,
+}
+
+impl UtilityClass for TimelineClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            TimelineClass::Timeline => "timeline",
+            TimelineClass::Alternate => "timeline-alternate",
+            TimelineClass::Left => "timeline-left",
+            TimelineClass::Right => "timeline-right",
+            TimelineClass::NoLine => "timeline-no-line",
+            TimelineClass::Item => "timeline-item",
+            TimelineClass::Dot => "timeline-dot",
+            TimelineClass::Content => "timeline-content",
+            TimelineClass::Time => "timeline-time",
+            TimelineClass::Title => "timeline-title",
+            TimelineClass::Last => "timeline-last",
+        }
+    }
+}
+
 /// Glow component classes
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GlowClass {

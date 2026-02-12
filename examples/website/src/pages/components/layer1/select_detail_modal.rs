@@ -61,8 +61,8 @@ pub fn SelectDetailModal(props: SelectDetailModalProps) -> Element {
 
                             Select {
                                 placeholder: "请选择城市".to_string(),
-                                value: city_value.clone(),
-                                on_change: move |v| city_value.set(v),
+                                value: "{city_value}",
+                                on_change: move |v: city_value.set(v),
                                 options: vec![
                                     SelectOption {
                                         label: "北京".to_string(),
@@ -93,7 +93,7 @@ pub fn SelectDetailModal(props: SelectDetailModalProps) -> Element {
                             Select {
                                 size: _components::SelectSize::Lg,
                                 placeholder: "请选择分类".to_string(),
-                                value: category_value.clone(),
+                                value: "{category_value}",
                                 on_change: move |v| category_value.set(v),
                                 options: vec![
                                     SelectOption {
@@ -120,7 +120,7 @@ pub fn SelectDetailModal(props: SelectDetailModalProps) -> Element {
 
                             Select {
                                 placeholder: "请选择状态".to_string(),
-                                value: status_value.clone(),
+                                value: "{status_value}",
                                 on_change: move |v| status_value.set(v),
                                 disabled: true,
                                 options: vec![

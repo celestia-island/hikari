@@ -1148,6 +1148,84 @@ impl UtilityClass for TimelineClass {
     }
 }
 
+/// CodeHighlight component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CodeHighlightClass {
+    /// `hi-code-highlight` - Main container
+    Container,
+    /// `hi-code-highlight-header` - Header with language
+    Header,
+    /// `hi-code-highlight-language` - Language label
+    Language,
+    /// `hi-code-highlight-copy` - Copy button
+    CopyButton,
+    /// `hi-code-highlight-content` - Content wrapper
+    Content,
+    /// `hi-code-highlight-line-numbers` - Line numbers column
+    LineNumbers,
+    /// `hi-code-highlight-line-number` - Single line number
+    LineNumber,
+    /// `hi-code-highlight-code` - Code block
+    Code,
+}
+
+impl UtilityClass for CodeHighlightClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            CodeHighlightClass::Container => "code-highlight",
+            CodeHighlightClass::Header => "code-highlight-header",
+            CodeHighlightClass::Language => "code-highlight-language",
+            CodeHighlightClass::CopyButton => "code-highlight-copy",
+            CodeHighlightClass::Content => "code-highlight-content",
+            CodeHighlightClass::LineNumbers => "code-highlight-line-numbers",
+            CodeHighlightClass::LineNumber => "code-highlight-line-number",
+            CodeHighlightClass::Code => "code-highlight-code",
+        }
+    }
+}
+
+/// VideoPlayer component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum VideoPlayerClass {
+    /// `hi-video-player` - Main container
+    Container,
+    /// `hi-video-player-video` - Video element
+    Video,
+}
+
+impl UtilityClass for VideoPlayerClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            VideoPlayerClass::Container => "video-player",
+            VideoPlayerClass::Video => "video-player-video",
+        }
+    }
+}
+
+/// RichTextEditor component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum RichTextEditorClass {
+    /// `hi-rich-text-editor` - Main container
+    Container,
+    /// `hi-rich-text-editor-toolbar` - Toolbar
+    Toolbar,
+    /// `hi-rich-text-editor-toolbar-button` - Toolbar button
+    ToolbarButton,
+    /// `hi-rich-text-editor-editor` - Editor area
+    Editor,
+}
+
+impl UtilityClass for RichTextEditorClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            RichTextEditorClass::Container => "rich-text-editor",
+            RichTextEditorClass::Toolbar => "rich-text-editor-toolbar",
+            RichTextEditorClass::ToolbarButton => "rich-text-editor-toolbar-button",
+            RichTextEditorClass::Editor => "rich-text-editor-editor",
+        }
+    }
+}
+
 /// Glow component classes
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GlowClass {

@@ -1,163 +1,27 @@
-// Use theme variables with namespace to avoid conflicts
-@use '../../../../theme/styles/variables.scss' as vars;
-@use '../../../../theme/styles/mixins.scss' as mix;
-
-// ============================================
-// Hikari Checkbox Component
-// Features: FUI styling, smooth transitions, glow effects
-// ============================================
-
-// ============================================
-// Label wrapper
-// ============================================
-
-.hi-checkbox-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  user-select: none;
-  padding: 4px 0;
-
-  &:hover .hi-checkbox:not(.hi-checkbox-disabled) {
-    border-color: var(--hi-color-primary);
-    box-shadow: 0 0 8px var(--hi-glow-button-primary);
-  }
-}
-
-// ============================================
-// Hidden native input
-// ============================================
-
-.hi-checkbox-input {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  width: 0;
-  height: 0;
-  margin: 0;
-  padding: 0;
-}
-
-// ============================================
-// Custom checkbox box
-// ============================================
-
-.hi-checkbox {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border: 1.5px solid var(--hi-color-border, rgba(0, 0, 0, 0.2));
-  background: var(--hi-color-surface, #F0F4F8);
-  border-radius: vars.$hikari-radius-fui-sm;
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
-  box-sizing: border-box;
-}
-
-// ============================================
-// Size Variants
-// ============================================
-
-.hi-checkbox-sm {
-  width: 16px;
-  height: 16px;
-}
-
-.hi-checkbox-md {
-  width: 20px;
-  height: 20px;
-}
-
-.hi-checkbox-lg {
-  width: 24px;
-  height: 24px;
-}
-
 // ============================================
 // Checkmark icon (SVG)
 // ============================================
 
 .hi-checkbox-icon {
-  color: white;
-  width: 70%;
-  height: 70%;
-  opacity: 0;
-  transform: scale(0.3);
-  // Note: transition removed - we control animation via StyleStringBuilder
-  pointer-events: none;
-  display: block;
-  flex-shrink: 0;
+    color: white;
+    width: 70%;
+    height: 70%;
+    // Always visible - opacity controlled by .hi-checkbox state
+    opacity: 1;
+    transform: scale(0.3);
+    // Note: transition removed - we control animation via StyleStringBuilder
+    pointer-events: none;
+    display: block;
+    flex-shrink: 0;
 }
 
-// ============================================
-// Checked state
-// ============================================
-
-.hi-checkbox-checked {
-  background: linear-gradient(135deg, var(--hi-color-primary), var(--hi-button-primary-dark, #E89A8D));
-  border-color: var(--hi-color-primary);
-  box-shadow:
-    0 0 6px var(--hi-glow-button-primary),
-    inset 0 0 3px rgba(255, 255, 255, 0.15);
-  // Note: icon animation controlled via StyleStringBuilder in component
+// Unchecked state - icon visible but not checked
+.hi-checkbox:not(.hi-checkbox-checked) .hi-checkbox-icon {
+    opacity: 0.3;
 }
 
-// ============================================
-// Hover effect on checked
-// ============================================
-
-.hi-checkbox-label:hover .hi-checkbox-checked:not(.hi-checkbox-disabled) {
-  box-shadow:
-    0 0 10px var(--hi-glow-button-primary),
-    inset 0 0 4px rgba(255, 255, 255, 0.2);
-  transform: scale(1.05);
-}
-
-// ============================================
-// Disabled state
-// ============================================
-
-.hi-checkbox-disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.hi-checkbox-label:has(.hi-checkbox-disabled) {
-  cursor: not-allowed;
-}
-
-// ============================================
-// Label text
-// ============================================
-
-.hi-checkbox-text {
-  font-family: vars.$hikari-font-family-sans;
-  font-size: vars.$hikari-font-size-base;
-  font-weight: 400;
-  color: var(--hi-color-text-primary, rgba(0, 0, 0, 0.9));
-  line-height: 1.5;
-  white-space: nowrap;
-}
-
-// ============================================
-// Dark theme (tairitsu)
-// ============================================
-
-[data-theme="tairitsu"] {
-  .hi-checkbox {
-    background: rgba(30, 30, 40, 0.6);
-    border-color: rgba(255, 255, 255, 0.15);
-  }
-
-  .hi-checkbox-checked {
-    background: linear-gradient(135deg, var(--hi-color-primary), var(--hi-button-primary-dark));
-    border-color: var(--hi-color-primary);
-  }
-
-  .hi-checkbox-text {
-    color: var(--hi-color-text-primary, rgba(255, 255, 255, 0.9));
-  }
+// Checked state - icon fully visible and scaled
+.hi-checkbox-checked .hi-checkbox-icon {
+    opacity: 1;
+    transform: scale(1);
 }

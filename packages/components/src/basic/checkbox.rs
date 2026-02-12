@@ -119,9 +119,8 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
         }
     });
 
-    // Initial style based on current state
-    let initial_opacity = if props.checked { "1" } else { "0" };
-    let initial_transform = if props.checked { "scale(1)" } else { "scale(0.3)" };
+    // Use CSS class for icon visibility - no inline styles needed
+    // The CSS .hi-checkbox-icon already handles opacity properly via classes
 
     let handle_click = move |e: MouseEvent| {
         if !props.disabled {
@@ -141,8 +140,7 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
             div { class: "{checkbox_classes}", onclick: handle_click,
                 svg {
                     class: "hi-checkbox-icon",
-                    opacity: "{initial_opacity}",
-                    transform: "{initial_transform}",
+                    // No inline opacity/transform - let CSS handle it
                     view_box: "0 0 24 24",
                     fill: "none",
                     stroke: "currentColor",

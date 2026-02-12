@@ -2,7 +2,7 @@
 // Video player component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, VideoPlayerClass, UtilityClass};
+use palette::classes::{ClassesBuilder, VideoPlayerClass};
 
 use crate::styled::StyledComponent;
 

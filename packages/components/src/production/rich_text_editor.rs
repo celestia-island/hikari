@@ -2,7 +2,7 @@
 // Rich text editor component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, RichTextEditorClass, UtilityClass};
+use palette::classes::{ClassesBuilder, RichTextEditorClass};
 
 use crate::styled::StyledComponent;
 
@@ -33,7 +33,7 @@ pub struct RichTextEditorProps {
 
 #[component]
 pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
-    let mut content = use_signal(|| props.content.clone());
+    let content = use_signal(|| props.content.clone());
 
     let container_classes = ClassesBuilder::new()
         .add(RichTextEditorClass::Container)
@@ -64,17 +64,17 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
                     class: "{toolbar_classes}",
 
                     button {
-                        class: "{RichTextEditorClass::ToolbarButton.as_class()}",
+                        class: "hi-rich-text-editor-toolbar-button",
                         "B"
                     }
 
                     button {
-                        class: "{RichTextEditorClass::ToolbarButton.as_class()}",
+                        class: "hi-rich-text-editor-toolbar-button",
                         "I"
                     }
 
                     button {
-                        class: "{RichTextEditorClass::ToolbarButton.as_class()}",
+                        class: "hi-rich-text-editor-toolbar-button",
                         "U"
                     }
                 }
@@ -82,9 +82,7 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
 
             div {
                 class: "{editor_classes}",
-                {
-                    "{content}"
-                }
+                "{content}"
             }
         }
     }

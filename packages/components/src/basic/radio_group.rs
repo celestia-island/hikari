@@ -3,9 +3,6 @@
 
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, RadioClass};
-use animation::AnimationBuilder;
-use animation::style::CssProperty;
-use std::collections::HashMap;
 
 use crate::styled::StyledComponent;
 
@@ -31,7 +28,7 @@ pub struct RadioButtonInternalProps {
     #[props(default)]
     pub group_name: String,
 
-    /// Currently selected value in the group
+    /// Currently selected value in group
     #[props(default)]
     pub selected_value: String,
 
@@ -52,7 +49,7 @@ pub struct RadioGroupProps {
     /// Callback when selection changes
     pub on_change: EventHandler<String>,
 
-    /// Whether the group is disabled
+    /// Whether radio group is disabled
     #[props(default)]
     pub disabled: bool,
 
@@ -76,7 +73,7 @@ pub enum RadioDirection {
     Horizontal,
 }
 
-/// RadioGroup component with smooth animations
+/// RadioGroup component with FUI styling
 ///
 /// A group of radio buttons where only one can be selected.
 ///
@@ -132,8 +129,8 @@ pub fn RadioGroup(props: RadioGroupProps) -> Element {
 
 /// RadioButton component (internal, used with RadioGroup)
 ///
-/// This version uses AnimationBuilder for dot animation.
-/// The parent component should pass the group name, selected value, and on_select handler.
+/// Uses CSS for all styling - no animation code needed.
+/// The parent component should pass group name, selected value, and on_select handler.
 #[component]
 pub fn RadioButtonInternal(props: RadioButtonInternalProps) -> Element {
     let is_checked = props.selected_value == props.value;
@@ -143,40 +140,6 @@ pub fn RadioButtonInternal(props: RadioButtonInternalProps) -> Element {
         .add(RadioClass::Label)
         .add_raw(&props.class)
         .build();
-
-    // Track previous checked state to detect changes
-    let mut prev_checked = use_signal(|| is_checked);
-    let mut dot_ref: Signal<Option<web_sys::HtmlElement>> = use_signal(|| None);
-
-    // Run animation when checked state changes
-    let checked = is_checked;
-    use_effect(move || {
-        // Only animate if state actually changed
-        if *prev_checked.read() != checked {
-            prev_checked.set(checked);
-
-            // Get the dot element and animate it
-            if let Some(dot_element) = dot_ref.read().clone() {
-                let mut elements = HashMap::new();
-                elements.insert("dot".to_string(), dot_element.into());
-
-                if checked {
-                    // Animate to checked state
-                    AnimationBuilder::new(&elements)
-                        .add_style("dot", CssProperty::Transform, "translate(-50%, -50%) scale(1)")
-                        .apply_with_transition("200ms", "cubic-bezier(0.34, 1.56, 0.64, 1)");
-                } else {
-                    // Animate to unchecked state
-                    AnimationBuilder::new(&elements)
-                        .add_style("dot", CssProperty::Transform, "translate(-50%, -50%) scale(0)")
-                        .apply_with_transition("200ms", "ease-in");
-                }
-            }
-        }
-    });
-
-    // Initial transform based on current state
-    let initial_transform = if is_checked { "translate(-50%, -50%) scale(1)" } else { "translate(-50%, -50%) scale(0)" };
 
     let handle_change = {
         let value = props.value.clone();
@@ -198,12 +161,6 @@ pub fn RadioButtonInternal(props: RadioButtonInternalProps) -> Element {
             div { class: "hi-radio-indicator",
                 div {
                     class: "hi-radio-dot",
-                    transform: "{initial_transform}",
-                    onmounted: move |evt| {
-                        if let Some(elem) = evt.data().downcast::<web_sys::HtmlElement>() {
-                            dot_ref.set(Some(elem.clone()));
-                        }
-                    },
                 }
             }
             span { class: "hi-radio-text", {props.children} }

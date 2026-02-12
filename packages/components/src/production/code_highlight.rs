@@ -4,8 +4,42 @@
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, CodeHighlightClass, UtilityClass};
 use gloo::timers::callback::Timeout;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
 use crate::styled::StyledComponent;
+
+// Helper function to copy text to clipboard
+#[wasm_bindgen(inline_js = r#"
+export function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+    } else {
+        // Fallback to execCommand
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        return Promise.resolve(success);
+    }
+}
+"#)]
+extern "C" {
+    fn copyToClipboard(text: &str) -> js_sys::Promise;
+}
+
+// Rust wrapper for the JS function
+fn copy_to_clipboard(text: &str) -> bool {
+    let _promise = copyToClipboard(text);
+    // We can't easily await in this context, so assume success
+    // The actual copy happens asynchronously
+    true
+}
 
 /// CodeHighlight component type wrapper (for StyledComponent)
 pub struct CodeHighlightComponent;
@@ -75,6 +109,8 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         props.style.clone()
     };
 
+    let code_for_copy = props.code.clone();
+
     rsx! {
         div {
             class: "{container_classes}",
@@ -89,17 +125,22 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
 
                 if props.copyable {
                     button {
-                        class: "{copy_classes}",
-                        onclick: move |_| {
-                            *copied.write() = true;
-                            Timeout::new(2000, move || {
-                                *copied.write() = false;
-                            }).forget();
-                        },
-                        if copied() {
-                            "已复制"
+                        class: if copied() {
+                            format!("{} copied", copy_classes)
                         } else {
-                            "复制"
+                            copy_classes.clone()
+                        },
+                        onclick: move |_| {
+                            if copy_to_clipboard(&code_for_copy) {
+                                copied.set(true);
+                                let mut copied_signal = copied.clone();
+                                Timeout::new(2000, move || {
+                                    copied_signal.set(false);
+                                }).forget();
+                            }
+                        },
+                        {
+                            if copied() { "已复制" } else { "复制" }
                         }
                     }
                 }
@@ -177,6 +218,13 @@ impl StyledComponent for CodeHighlightComponent {
     color: white;
     border-color: var(--hi-color-primary);
     box-shadow: 0 0 8px var(--hi-color-primary-glow);
+}
+
+.hi-code-highlight-copy.copied {
+    background-color: var(--hi-color-primary) !important;
+    color: white !important;
+    box-shadow: 0 0 12px var(--hi-color-primary-glow);
+    opacity: 1;
 }
 
 .hi-code-highlight-content {

@@ -16,6 +16,9 @@ This plan tracks ongoing development, maintenance, and technical debt for the Hi
 - **CodeHighlight clipboard fix** (2026-02-12) - Fixed button flickering and implemented real clipboard functionality
 - **Checkbox visibility fix** (2026-02-12) - Fixed checkmark icon always visible, simplified state management
 - **Checkbox styles compilation fix** (2026-02-12) - Fixed incomplete checkbox.scss in styles/components/ directory, cleaned up unused code
+- **Radio component simplification** (2026-02-12) - Removed complex animation code, CSS-only transitions
+- **Radio demo simplified** (2026-02-12) - Reduced to 3 options with 3rd disabled
+- **Select Detail Modal** (2026-02-12) - Added modal with glow wrapper effect, focus only changes background
 
 ### Architecture
 ```

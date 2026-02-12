@@ -14,6 +14,7 @@ This plan tracks ongoing development, maintenance, and technical debt for the Hi
 - Chinese traditional color palette system
 - Animation infrastructure (`AnimationBuilder`)
 - **CodeHighlight clipboard fix** (2026-02-12) - Fixed button flickering and implemented real clipboard functionality
+- **Checkbox visibility fix** (2026-02-12) - Fixed checkmark icon always visible, simplified state management
 
 ### Architecture
 ```

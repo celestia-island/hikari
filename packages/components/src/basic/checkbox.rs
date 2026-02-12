@@ -103,15 +103,13 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
                 elements.insert("icon".to_string(), icon_element.into());
 
                 if checked {
-                    // Animate to checked state
+                    // Animate to checked state - scale up
                     AnimationBuilder::new(&elements)
-                        .add_style("icon", CssProperty::Opacity, "1")
                         .add_style("icon", CssProperty::Transform, "scale(1)")
                         .apply_with_transition("200ms", "cubic-bezier(0.34, 1.56, 0.64, 1)");
                 } else {
-                    // Animate to unchecked state
+                    // Animate to unchecked state - scale down
                     AnimationBuilder::new(&elements)
-                        .add_style("icon", CssProperty::Opacity, "0")
                         .add_style("icon", CssProperty::Transform, "scale(0.3)")
                         .apply_with_transition("200ms", "ease-in");
                 }

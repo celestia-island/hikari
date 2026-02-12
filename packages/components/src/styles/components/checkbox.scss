@@ -6,8 +6,8 @@
     color: white;
     width: 70%;
     height: 70%;
-    // Always visible - opacity controlled by .hi-checkbox state
-    opacity: 1;
+    // Default visible - important! override inline styles
+    opacity: 1 !important;
     transform: scale(0.3);
     // Note: transition removed - we control animation via StyleStringBuilder
     pointer-events: none;
@@ -15,13 +15,13 @@
     flex-shrink: 0;
 }
 
-// Unchecked state - icon visible but not checked
+// Unchecked state - icon visible but semi-transparent
 .hi-checkbox:not(.hi-checkbox-checked) .hi-checkbox-icon {
-    opacity: 0.3;
+    opacity: 0.3 !important;
 }
 
 // Checked state - icon fully visible and scaled
 .hi-checkbox-checked .hi-checkbox-icon {
-    opacity: 1;
-    transform: scale(1);
+    opacity: 1 !important;
+    transform: scale(1) !important;
 }

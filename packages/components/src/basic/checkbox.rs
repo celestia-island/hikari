@@ -88,7 +88,6 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
 
     // Track previous checked state to detect changes
     let mut prev_checked = use_signal(|| props.checked);
-    let mut icon_ref: Signal<Option<web_sys::HtmlElement>> = use_signal(|| None);
 
     // Run animation when checked state changes
     let checked = props.checked;
@@ -96,24 +95,6 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
         // Only animate if state actually changed
         if *prev_checked.read() != checked {
             prev_checked.set(checked);
-
-            // Get the icon element and animate it
-            if let Some(icon_element) = icon_ref.read().clone() {
-                let mut elements = HashMap::new();
-                elements.insert("icon".to_string(), icon_element.into());
-
-                if checked {
-                    // Animate to checked state - scale up
-                    AnimationBuilder::new(&elements)
-                        .add_style("icon", CssProperty::Transform, "scale(1)")
-                        .apply_with_transition("200ms", "cubic-bezier(0.34, 1.56, 0.64, 1)");
-                } else {
-                    // Animate to unchecked state - scale down
-                    AnimationBuilder::new(&elements)
-                        .add_style("icon", CssProperty::Transform, "scale(0.3)")
-                        .apply_with_transition("200ms", "ease-in");
-                }
-            }
         }
     });
 
@@ -145,11 +126,6 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
                     stroke_width: "3",
                     stroke_linecap: "round",
                     stroke_linejoin: "round",
-                    onmounted: move |evt| {
-                        if let Some(elem) = evt.data().downcast::<web_sys::HtmlElement>() {
-                            icon_ref.set(Some(elem.clone()));
-                        }
-                    },
                     polyline { points: "20 6 9 17 4 12" }
                 }
             }

@@ -12,7 +12,7 @@
 //! - [`QRCode`] - QR code display
 
 //! - [`Calendar`] - Date picker with calendar grid
-pub mod calendar;
+a     pub use calendar::*
 pub mod comment;
 pub mod description_list;
 pub mod empty;

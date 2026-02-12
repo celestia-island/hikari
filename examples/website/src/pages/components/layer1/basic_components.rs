@@ -235,6 +235,8 @@ pub fn BasicBadge() -> Element {
 /// Select component demonstration
 #[allow(non_snake_case)]
 pub fn BasicSelect() -> Element {
+    let mut modal_open = use_signal(|| false);
+
     rsx! {
         div {
             class: ClassesBuilder::new()
@@ -335,6 +337,12 @@ pub fn BasicSelect() -> Element {
                         },
                     ],
                 }
+            }
+
+            // Select detail modal
+            _layer1::SelectDetailModal {
+                open: modal_open(),
+                on_close: move |_| modal_open.set(false),
             }
         }
     }

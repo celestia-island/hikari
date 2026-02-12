@@ -1049,6 +1049,60 @@ impl UtilityClass for SpotlightClass {
     }
 }
 
+/// Calendar component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CalendarClass {
+    /// `hi-calendar` - Main calendar class
+    Calendar,
+    /// `hi-calendar-header` - Header with navigation
+    CalendarHeader,
+    /// `hi-calendar-nav` - Navigation buttons container
+    CalendarNav,
+    /// `hi-calendar-nav-button` - Month/year navigation button
+    CalendarNavButton,
+    /// `hi-calendar-title` - Year/month title
+    CalendarTitle,
+    /// `hi-calendar-month-title` - Month-only title
+    CalendarMonthTitle,
+    /// `hi-calendar-weekdays` - Week day headers
+    CalendarWeekdays,
+    /// `hi-calendar-weekday` - Single week day header
+    CalendarWeekday,
+    /// `hi-calendar-grid` - Calendar days grid
+    CalendarGrid,
+    /// `hi-calendar-day-cell` - Single day cell
+    CalendarDayCell,
+    /// `hi-calendar-day` - Day number
+    CalendarDay,
+    /// `hi-calendar-day-selected` - Selected day state
+    CalendarDaySelected,
+    /// `hi-calendar-day-today` - Today marker
+    CalendarDayToday,
+    /// `hi-calendar-day-disabled` - Disabled day state
+    CalendarDayDisabled,
+}
+
+impl UtilityClass for CalendarClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            CalendarClass::Calendar => "calendar",
+            CalendarClass::CalendarHeader => "calendar-header",
+            CalendarClass::CalendarNav => "calendar-nav",
+            CalendarClass::CalendarNavButton => "calendar-nav-button",
+            CalendarClass::CalendarTitle => "calendar-title",
+            CalendarClass::CalendarMonthTitle => "calendar-month-title",
+            CalendarClass::CalendarWeekdays => "calendar-weekdays",
+            CalendarClass::CalendarWeekday => "calendar-weekday",
+            CalendarClass::CalendarGrid => "calendar-grid",
+            CalendarClass::CalendarDayCell => "calendar-day-cell",
+            CalendarClass::CalendarDay => "calendar-day",
+            CalendarClass::CalendarDaySelected => "calendar-day-selected",
+            CalendarClass::CalendarDayToday => "calendar-day-today",
+            CalendarClass::CalendarDayDisabled => "calendar-day-disabled",
+        }
+    }
+}
+
 /// Glow component classes
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GlowClass {

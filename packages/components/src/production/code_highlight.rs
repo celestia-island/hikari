@@ -2,10 +2,9 @@
 // Code highlighting component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, CodeHighlightClass, UtilityClass};
+use palette::classes::{ClassesBuilder, CodeHighlightClass};
 use gloo::timers::callback::Timeout;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
 
 use crate::styled::StyledComponent;
 
@@ -148,9 +147,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                                 }).forget();
                             }
                         },
-                        {
-                            "{button_text}"
-                        }
+                        "{button_text}"
                     }
                 }
             }
@@ -164,7 +161,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                         class: "{line_classes}",
                         for i in 1..=line_count {
                             div {
-                                class: "{CodeHighlightClass::LineNumber.as_class()}",
+                                class: "hi-code-highlight-line-number",
                                 "{i}"
                             }
                         }

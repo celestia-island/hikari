@@ -3,9 +3,6 @@
 
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, CheckboxClass};
-use animation::AnimationBuilder;
-use animation::style::CssProperty;
-use std::collections::HashMap;
 
 use crate::styled::StyledComponent;
 

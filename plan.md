@@ -13,6 +13,7 @@ This plan tracks ongoing development, maintenance, and technical debt for the Hi
 - Layer 1 & Layer 2 components implementation
 - Chinese traditional color palette system
 - Animation infrastructure (`AnimationBuilder`)
+- **CodeHighlight clipboard fix** (2026-02-12) - Fixed button flickering and implemented real clipboard functionality
 
 ### Architecture
 ```
@@ -85,7 +86,7 @@ These are necessary for WASM bindings and don't represent technical debt.
 
 | Component | Description | Complexity | Dependencies | Status |
 |-----------|-------------|------------|--------------|--------|
-| **Code Highlighting** | Syntax highlighting, line numbers, themes | Medium | Card, Tabs, Form | ✅ Completed (2026-02-12) |
+| **Code Highlighting** | Syntax highlighting, line numbers, themes | Medium | Card, Tabs, Form | ✅ Completed (2026-02-12), Fixed clipboard (2026-02-12) |
 | **Video Player** | Playback controls, subtitles, playlist | High | Card, Button, Form, Menu | ✅ Completed (2026-02-12) |
 | **Rich Text Editor** | WYSIWYG/Markdown, plugins | High | Form, Dropdown, Modal, Toolbar | ✅ Completed (2026-02-12) |
 

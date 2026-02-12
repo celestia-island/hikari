@@ -10,39 +10,23 @@ use crate::styled::StyledComponent;
 pub struct RichTextEditorComponent;
 
 /// Rich text editor component with Arknights + FUI styling
-///
-/// A WYSIWYG text editor with formatting toolbar.
 #[derive(Clone, PartialEq, Props)]
 pub struct RichTextEditorProps {
-    /// Initial content
     #[props(default)]
     pub content: String,
 
-    /// Placeholder text
     #[props(default)]
     pub placeholder: String,
 
-    /// Enable toolbar
     #[props(default = true)]
     pub toolbar: bool,
 
-    /// Editor height
     #[props(default)]
     pub height: Option<String>,
 
-    /// Read-only mode
-    #[props(default)]
-    pub readonly: bool,
-
-    /// Callback when content changes
-    #[props(default)]
-    pub on_change: Option<EventHandler<String>>,
-
-    /// Additional CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Additional CSS styles
     #[props(default)]
     pub style: String,
 }
@@ -50,7 +34,7 @@ pub struct RichTextEditorProps {
 #[component]
 pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
     let mut content = use_signal(|| props.content.clone());
-    
+
     let container_classes = ClassesBuilder::new()
         .add(RichTextEditorClass::Container)
         .add_raw(&props.class)
@@ -81,25 +65,16 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
 
                     button {
                         class: "{RichTextEditorClass::ToolbarButton.as_class()}",
-                        onclick: move |_| {
-                            // Bold command
-                        },
                         "B"
                     }
 
                     button {
                         class: "{RichTextEditorClass::ToolbarButton.as_class()}",
-                        onclick: move |_| {
-                            // Italic command
-                        },
                         "I"
                     }
 
                     button {
                         class: "{RichTextEditorClass::ToolbarButton.as_class()}",
-                        onclick: move |_| {
-                            // Underline command
-                        },
                         "U"
                     }
                 }
@@ -107,9 +82,9 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
 
             div {
                 class: "{editor_classes}",
-                contenteditable: !props.readonly,
-                "data-placeholder": "{props.placeholder}",
-                "{content}"
+                {
+                    "{content}"
+                }
             }
         }
     }
@@ -127,7 +102,7 @@ impl StyledComponent for RichTextEditorComponent {
 
 .hi-rich-text-editor:focus-within {
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 0 2px var(--hi-color-primary-glow);
+    box-shadow: 0 0 2px var(--hi-color-primary-glow);
 }
 
 .hi-rich-text-editor-toolbar {
@@ -157,11 +132,6 @@ impl StyledComponent for RichTextEditorComponent {
 .hi-rich-text-editor-toolbar-button:hover {
     background-color: var(--hi-color-primary-bg);
     color: var(--hi-color-primary);
-}
-
-.hi-rich-text-editor-toolbar-button.active {
-    background-color: var(--hi-color-primary);
-    color: white;
 }
 
 .hi-rich-text-editor-editor {

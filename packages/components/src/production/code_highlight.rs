@@ -3,6 +3,7 @@
 
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, CodeHighlightClass, UtilityClass};
+use gloo::timers::callback::Timeout;
 
 use crate::styled::StyledComponent;
 
@@ -10,54 +11,25 @@ use crate::styled::StyledComponent;
 pub struct CodeHighlightComponent;
 
 /// Code highlighting component with Arknights + FUI styling
-///
-/// Displays code with syntax highlighting, line numbers, and copy functionality.
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::CodeHighlight;
-///
-/// fn app() -> Element {
-///     rsx! {
-///         CodeHighlight {
-///             language: "rust",
-///             code: r#"fn main() {
-///     println!("Hello, Hikari!");
-/// }"#.to_string(),
-///             line_numbers: true,
-///             copyable: true,
-///         }
-///     }
-/// }
-/// ```
 #[derive(Clone, PartialEq, Props)]
 pub struct CodeHighlightProps {
-    /// Programming language for syntax highlighting
     #[props(default)]
     pub language: String,
 
-    /// Code content to display
     pub code: String,
 
-    /// Show line numbers
     #[props(default = true)]
     pub line_numbers: bool,
 
-    /// Enable copy button
     #[props(default = true)]
     pub copyable: bool,
 
-    /// Maximum height (scrollable if exceeded)
     #[props(default)]
     pub max_height: Option<String>,
 
-    /// Additional CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Additional CSS styles
     #[props(default)]
     pub style: String,
 }
@@ -107,7 +79,6 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         div {
             class: "{container_classes}",
 
-            // Header with language and copy button
             div {
                 class: "{header_classes}",
 
@@ -120,10 +91,10 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                     button {
                         class: "{copy_classes}",
                         onclick: move |_| {
-                            // Copy to clipboard would go here
                             *copied.write() = true;
-                            // Note: Timeout reset would require async context
-                            // For now, just showing the "copied" state
+                            Timeout::new(2000, move || {
+                                *copied.write() = false;
+                            }).forget();
                         },
                         if copied() {
                             "已复制"
@@ -134,12 +105,10 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                 }
             }
 
-            // Code content
             div {
                 class: "{content_classes}",
                 style: "{max_height_style}",
 
-                // Line numbers
                 if props.line_numbers {
                     div {
                         class: "{line_classes}",
@@ -152,7 +121,6 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                     }
                 }
 
-                // Code
                 pre {
                     class: "{code_classes}",
                     code {
@@ -234,7 +202,6 @@ impl StyledComponent for CodeHighlightComponent {
 .hi-code-highlight-code {
     flex: 1;
     padding: 1rem;
-    margin: 0;
     overflow-x: auto;
     background-color: transparent;
     border: none;
@@ -286,18 +253,18 @@ impl StyledComponent for CodeHighlightComponent {
     color: #f1fa8c;
 }
 
-.token.atrule,
+.token-atrule,
 .token.attr-value,
 .token.keyword {
     color: #d4a5ff;
 }
 
-.token.function,
+.token-function,
 .token.class-name {
     color: #6ee7b7;
 }
 
-.token.regex,
+.token-regex,
 .token.important,
 .token.variable {
     color: #fca5a5;

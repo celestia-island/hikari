@@ -340,7 +340,7 @@ pub fn BasicSelect() -> Element {
             }
 
             // Select detail modal
-            _layer1::SelectDetailModal {
+            SelectDetailModal {
                 open: modal_open(),
                 on_close: move |_| modal_open.set(false),
             }

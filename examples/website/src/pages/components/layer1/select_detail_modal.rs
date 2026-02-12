@@ -2,8 +2,8 @@
 // Select detail modal with enhanced styling
 
 use dioxus::prelude::*;
-use _components::{Button, Select, SelectOption, Card, CardContent, CardHeader};
-use _palette::classes::{ClassesBuilder, FontSize, Padding, Gap};
+use _components::{Button, Select, SelectOption};
+use _palette::classes::{ClassesBuilder, FontSize, Padding};
 use _icons::MdiIcon;
 
 #[derive(Clone, PartialEq, Props)]
@@ -182,7 +182,7 @@ impl _components::styled::StyledComponent for SelectDetailModalComponent {
 @keyframes modal-fade-in {
     from {
         opacity: 0;
-    transform: scale(0.95);
+        transform: scale(0.95);
     }
     to {
         opacity: 1;
@@ -301,7 +301,7 @@ impl _components::styled::StyledComponent for SelectDetailModalComponent {
 /* When Select inside glow wrapper is focused */
 .glow-wrapper:focus-within {
     background: var(--hi-color-bg-elevated, rgba(255, 255, 255, 0.98));
-    box-shadow: 0 0 0 4px rgba(123, 97, 255, 0.3);
+    box-shadow: 0 0 4px rgba(123, 97, 255, 0.3);
 }
 
 /* Focus state - only background changes, text color stays same */
@@ -313,7 +313,8 @@ impl _components::styled::StyledComponent for SelectDetailModalComponent {
 }
 
 /* Ensure label text doesn't change on focus */
-.glow-wrapper label {
+.glow-wrapper label,
+.glow-wrapper:focus-within label {
     color: var(--hi-color-text-secondary, #6B7280) !important;
 }
 

@@ -10,6 +10,7 @@ use dioxus::prelude::*;
 use wasm_bindgen::JsCast;
 
 use crate::core::{AnimationEngine, AnimationOptions, Tween, TweenId};
+use crate::provider::try_use_animation_config;
 
 /// Tween hook for Dioxus
 ///
@@ -41,6 +42,30 @@ impl UseTween {
         let id = self.engine.create_tween(options.clone());
         *self.tween_id.borrow_mut() = Some(id);
         Tween::new(id, options)
+    }
+
+    /// Create a new tween with global animation config applied
+    ///
+    /// Applies duration scaling from AnimationProvider if available.
+    /// If animations are disabled or reduced motion is active, duration is set to 0.
+    ///
+    /// # Arguments
+    /// * `options` - Animation configuration
+    ///
+    /// # Returns
+    /// The created tween with scaled duration
+    pub fn tween_with_config(&self, mut options: AnimationOptions) -> Tween {
+        if let Some(ctx) = try_use_animation_config() {
+            let cfg = ctx.config.read();
+            if cfg.duration_scale != 1.0 {
+                options.duration =
+                    Duration::from_millis(cfg.scale_duration(options.duration.as_millis() as u64));
+            }
+            if !cfg.enabled || cfg.reduced_motion {
+                options.duration = Duration::ZERO;
+            }
+        }
+        self.tween(options)
     }
 
     /// Start playing the current tween
@@ -181,6 +206,41 @@ pub fn use_animated_value<T: Clone + 'static>(initial: T) -> Signal<T> {
 /// ```
 pub fn use_transition(duration_ms: u64) -> UseTransition {
     use_hook(move || UseTransition::new(duration_ms))
+}
+
+/// Hook for managing transition animations with global config
+///
+/// Applies duration scaling from AnimationProvider if available.
+/// If animations are disabled or reduced motion is active, duration is set to 0.
+///
+/// # Arguments
+/// * `duration_ms` - Base duration of transition in milliseconds
+///
+/// # Example
+/// ```ignore
+/// #[component]
+/// fn MyComponent() -> Element {
+///     // Duration will be scaled by AnimationProvider's duration_scale
+///     let mut transition = use_transition_with_config(300);
+///
+///     rsx! {
+///         div {
+///             class: if transition.is_visible() { "visible" } else { "hidden" },
+///             onmounted: move |_| transition.enter(),
+///             "Content"
+///         }
+///     }
+/// }
+/// ```
+pub fn use_transition_with_config(duration_ms: u64) -> UseTransition {
+    use_hook(move || {
+        let scaled_duration = if let Some(ctx) = try_use_animation_config() {
+            ctx.config.read().scale_duration(duration_ms)
+        } else {
+            duration_ms
+        };
+        UseTransition::new(scaled_duration)
+    })
 }
 
 /// Transition hook for Dioxus

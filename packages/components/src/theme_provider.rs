@@ -214,6 +214,117 @@ pub struct PaletteOverrides {
     pub text_secondary: Option<String>,
 }
 
+/// Component color override configuration (Layer 2)
+/// Users can override only the fields they need, others remain auto-calculated
+#[derive(Clone, Default, PartialEq)]
+pub struct ComponentOverrides {
+    pub selection_icon_color: Option<String>,
+    pub selection_background: Option<String>,
+    pub selection_border: Option<String>,
+    pub selection_surface: Option<String>,
+    pub selection_glow: Option<String>,
+    pub input_border: Option<String>,
+    pub input_focus_border: Option<String>,
+    pub input_background: Option<String>,
+}
+
+/// Component-level color palette (Layer 2)
+/// All colors are auto-calculated from Palette, user can override via ComponentOverrides
+#[derive(Clone, PartialEq)]
+pub struct ComponentPalette {
+    pub selection_icon_color: String,
+    pub selection_background: String,
+    pub selection_border: String,
+    pub selection_surface: String,
+    pub selection_glow: String,
+    pub input_border: String,
+    pub input_focus_border: String,
+    pub input_background: String,
+}
+
+impl ComponentPalette {
+    pub fn from_palette(palette: &Palette) -> Self {
+        Self::from_palette_with_overrides(palette, ComponentOverrides::default())
+    }
+
+    pub fn from_palette_with_overrides(palette: &Palette, overrides: ComponentOverrides) -> Self {
+        let auto = Self::compute_defaults(palette);
+        Self {
+            selection_icon_color: overrides
+                .selection_icon_color
+                .unwrap_or(auto.selection_icon_color),
+            selection_background: overrides
+                .selection_background
+                .unwrap_or(auto.selection_background),
+            selection_border: overrides.selection_border.unwrap_or(auto.selection_border),
+            selection_surface: overrides
+                .selection_surface
+                .unwrap_or(auto.selection_surface),
+            selection_glow: overrides.selection_glow.unwrap_or(auto.selection_glow),
+            input_border: overrides.input_border.unwrap_or(auto.input_border),
+            input_focus_border: overrides
+                .input_focus_border
+                .unwrap_or(auto.input_focus_border),
+            input_background: overrides.input_background.unwrap_or(auto.input_background),
+        }
+    }
+
+    fn compute_defaults(palette: &Palette) -> Self {
+        Self {
+            selection_icon_color: "#ffffff".to_string(),
+            selection_background: format!(
+                "linear-gradient(135deg, {}, {})",
+                palette.primary.rgba(0.9),
+                palette.primary.rgba(0.75)
+            ),
+            selection_border: match palette.mode {
+                ThemeMode::Light => "rgba(0, 0, 0, 0.2)".to_string(),
+                ThemeMode::Dark => "rgba(255, 255, 255, 0.15)".to_string(),
+            },
+            selection_surface: match palette.mode {
+                ThemeMode::Light => palette.surface.rgba(0.7),
+                ThemeMode::Dark => "rgba(30, 30, 40, 0.6)".to_string(),
+            },
+            selection_glow: palette.button_glow_color(&palette.primary),
+            input_border: match palette.mode {
+                ThemeMode::Light => "rgba(0, 0, 0, 0.15)".to_string(),
+                ThemeMode::Dark => "rgba(255, 255, 255, 0.1)".to_string(),
+            },
+            input_focus_border: palette.primary.hex(),
+            input_background: palette.surface.rgba(0.7),
+        }
+    }
+
+    pub fn css_variables(&self) -> String {
+        [
+            format!(
+                "--hi-component-selection-icon: {};",
+                self.selection_icon_color
+            ),
+            format!(
+                "--hi-component-selection-bg: {};",
+                self.selection_background
+            ),
+            format!(
+                "--hi-component-selection-border: {};",
+                self.selection_border
+            ),
+            format!(
+                "--hi-component-selection-surface: {};",
+                self.selection_surface
+            ),
+            format!("--hi-component-selection-glow: {};", self.selection_glow),
+            format!("--hi-component-input-border: {};", self.input_border),
+            format!(
+                "--hi-component-input-focus-border: {};",
+                self.input_focus_border
+            ),
+            format!("--hi-component-input-bg: {};", self.input_background),
+        ]
+        .join(" ")
+    }
+}
+
 /// Theme palette with CSS variable values
 #[derive(Clone, PartialEq)]
 pub struct ThemePalette {
@@ -667,36 +778,10 @@ pub struct ThemeContext {
 #[derive(Clone, Props, PartialEq)]
 pub struct ThemeProviderProps {
     /// Theme identifier: "hikari" (light) or "tairitsu" (dark)
-    ///
-    /// # Type Safety with IntoThemeName
-    ///
-    /// For better type safety, use a custom enum implementing IntoThemeName:
-    ///
-    /// ```rust
-    /// use hikari_components::IntoThemeName;
-    ///
-    /// enum MyTheme {
-    ///     Light,
-    ///     Dark,
-    /// }
-    ///
-    /// impl IntoThemeName for MyTheme {
-    ///     fn as_theme_name(&self) -> String {
-    ///         match self {
-    ///             MyTheme::Light => "hikari".to_string(),
-    ///             MyTheme::Dark => "tairitsu".to_string(),
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// // Usage
-    /// ThemeProvider { palette: MyTheme::Light.as_theme_name() } { }
-    /// ```
     #[props(default = "hikari".to_string())]
     pub palette: String,
 
     /// Custom color overrides (optional)
-    /// When provided, these colors will override the theme's default colors
     #[props(default)]
     pub primary: Option<String>,
 
@@ -729,6 +814,10 @@ pub struct ThemeProviderProps {
 
     #[props(default)]
     pub text_secondary: Option<String>,
+
+    /// Layer 2: Component color overrides (optional)
+    #[props(default)]
+    pub component_overrides: ComponentOverrides,
 
     children: Element,
 }
@@ -799,11 +888,9 @@ pub struct ThemeProviderProps {
 /// ```
 #[component]
 pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
-    // Internal state for current theme
     let current_palette = use_signal(|| props.palette.clone());
     let current_theme_name = use_signal(|| props.palette.clone());
 
-    // Callback to change theme
     let mut palette_for_callback = current_palette;
     let mut theme_name_for_callback = current_theme_name;
     let set_theme = Callback::new(move |new_theme: String| {
@@ -811,14 +898,12 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
         theme_name_for_callback.set(new_theme);
     });
 
-    // Provide theme context
     use_context_provider(move || ThemeContext {
         palette: current_palette,
         theme_name: current_theme_name,
         set_theme,
     });
 
-    // Clone color overrides for use in memo
     let primary_override = props.primary.clone();
     let secondary_override = props.secondary.clone();
     let accent_override = props.accent.clone();
@@ -830,12 +915,11 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
     let border_override = props.border.clone();
     let text_primary_override = props.text_primary.clone();
     let text_secondary_override = props.text_secondary.clone();
+    let component_overrides = props.component_overrides.clone();
 
-    // Dynamically compute CSS variables based on current theme
     let css_vars = use_memo(move || {
         let theme_name = current_theme_name.read();
 
-        // Get the theme palette, falling back to default if not found
         let base_palette = match get_registered_theme(&theme_name) {
             Some(palette) => palette,
             None => {
@@ -858,7 +942,17 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
             text_secondary: text_secondary_override.clone(),
         };
         let theme_palette = ThemePalette::from_palette(&base_palette).with_overrides(overrides);
-        theme_palette.css_variables()
+
+        let component_palette = ComponentPalette::from_palette_with_overrides(
+            &base_palette,
+            component_overrides.clone(),
+        );
+
+        format!(
+            "{} {}",
+            theme_palette.css_variables(),
+            component_palette.css_variables()
+        )
     });
 
     rsx! {

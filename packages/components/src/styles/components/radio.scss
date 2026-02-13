@@ -6,6 +6,7 @@
 // ============================================
 // Hikari Radio Component
 // Features: FUI styling, smooth transitions, glow effects
+// Uses Layer 2 CSS variables (--hi-component-selection-*)
 // ============================================
 
 // ============================================
@@ -39,8 +40,8 @@
   padding: 4px 0;
 
   &:hover .hi-radio-indicator:not([disabled]) {
-    border-color: var(--hi-color-primary);
-    box-shadow: 0 0 8px var(--hi-glow-button-primary);
+    border-color: var(--hi-primary);
+    box-shadow: 0 0 8px var(--hi-component-selection-glow);
   }
 }
 
@@ -60,6 +61,7 @@
 
 // ============================================
 // Custom radio indicator (circle)
+// Uses Layer 2 variables
 // ============================================
 
 .hi-radio-indicator {
@@ -68,15 +70,15 @@
   flex-shrink: 0;
   width: 18px;
   height: 18px;
-  border: 1.5px solid var(--hi-color-border, rgba(0, 0, 0, 0.2));
+  border: 1.5px solid var(--hi-component-selection-border);
   border-radius: 50%;
-  background: var(--hi-color-surface, #F0F4F8);
+  background: var(--hi-component-selection-surface);
   transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
   box-sizing: border-box;
 }
 
 // ============================================
-// Inner dot (the checkmark)
+// Inner dot (uses Layer 2 gradient)
 // ============================================
 
 .hi-radio-dot {
@@ -85,9 +87,8 @@
   left: 50%;
   width: 8px;
   height: 8px;
-  background: linear-gradient(135deg, var(--hi-color-primary), var(--hi-button-primary-dark, #E89A8D));
+  background: var(--hi-component-selection-bg);
   border-radius: 50%;
-  // Default: unchecked state - dot is hidden (scaled to 0)
   transform: translate(-50%, -50%) scale(0);
   transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -97,14 +98,13 @@
 // ============================================
 
 .hi-radio-label input[type="radio"]:checked + .hi-radio-indicator {
-  border-color: var(--hi-color-primary);
+  border-color: var(--hi-primary);
   box-shadow:
-    0 0 6px var(--hi-glow-button-primary),
+    0 0 6px var(--hi-component-selection-glow),
     inset 0 0 3px rgba(255, 255, 255, 0.1);
 }
 
 .hi-radio-label input[type="radio"]:checked + .hi-radio-indicator .hi-radio-dot {
-  // Checked: dot is visible (scaled to 1)
   transform: translate(-50%, -50%) scale(1);
 }
 
@@ -114,7 +114,7 @@
 
 .hi-radio-label:hover input[type="radio"]:checked + .hi-radio-indicator {
   box-shadow:
-    0 0 10px var(--hi-glow-button-primary),
+    0 0 10px var(--hi-component-selection-glow),
     inset 0 0 4px rgba(255, 255, 255, 0.2);
 }
 
@@ -140,26 +140,7 @@
   font-family: vars.$hikari-font-family-sans;
   font-size: vars.$hikari-font-size-base;
   font-weight: 400;
-  color: var(--hi-color-text-primary, rgba(0, 0, 0, 0.9));
+  color: var(--hi-text-primary);
   line-height: 1.5;
   white-space: nowrap;
-}
-
-// ============================================
-// Dark theme (tairitsu)
-// ============================================
-
-[data-theme="tairitsu"] {
-  .hi-radio-indicator {
-    background: rgba(30, 30, 40, 0.6);
-    border-color: rgba(255, 255, 255, 0.15);
-  }
-
-  .hi-radio-dot {
-    background: linear-gradient(135deg, var(--hi-color-primary), var(--hi-button-primary-dark));
-  }
-
-  .hi-radio-text {
-    color: var(--hi-color-text-primary, rgba(255, 255, 255, 0.9));
-  }
 }

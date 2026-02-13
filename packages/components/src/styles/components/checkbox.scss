@@ -6,6 +6,7 @@
 // ============================================
 // Hikari Checkbox Component
 // Features: FUI styling, smooth transitions, glow effects
+// Uses Layer 2 CSS variables (--hi-component-selection-*)
 // ============================================
 
 // Label wrapper
@@ -19,8 +20,8 @@
     padding: 4px 0;
 
     &:hover .hi-checkbox:not(.hi-checkbox-disabled) {
-        border-color: var(--hi-color-primary);
-        box-shadow: 0 0 8px var(--hi-glow-button-primary);
+        border-color: var(--hi-primary);
+        box-shadow: 0 0 8px var(--hi-component-selection-glow);
     }
 }
 
@@ -40,6 +41,7 @@
 
 // ============================================
 // Custom checkbox box
+// Uses Layer 2 variables
 // ============================================
 
 .hi-checkbox {
@@ -48,8 +50,8 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    border: 1.5px solid var(--hi-color-border, rgba(0, 0, 0, 0.2));
-    background: var(--hi-color-surface, #F0F4F8);
+    border: 1.5px solid var(--hi-component-selection-border);
+    background: var(--hi-component-selection-surface);
     border-radius: vars.$hikari-radius-fui-sm;
     transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
     box-sizing: border-box;
@@ -76,16 +78,15 @@
 
 // ============================================
 // Checkmark icon (SVG)
+// Uses Layer 2 icon color
 // ============================================
 
 .hi-checkbox-icon {
-    color: white;
+    color: var(--hi-component-selection-icon);
     width: 70%;
     height: 70%;
-    // Always visible - important! override inline styles
     opacity: 1 !important;
     transform: scale(0.3);
-    // Note: transition removed - we control animation via StyleStringBuilder
     pointer-events: none;
     display: block;
     flex-shrink: 0;
@@ -104,13 +105,14 @@
 
 // ============================================
 // Checked state
+// Uses Layer 2 gradient background
 // ============================================
 
 .hi-checkbox-checked {
-    background: linear-gradient(135deg, var(--hi-color-primary), var(--hi-button-primary-dark, #E89A8D));
-    border-color: var(--hi-color-primary);
+    background: var(--hi-component-selection-bg);
+    border-color: var(--hi-primary);
     box-shadow:
-        0 0 6px var(--hi-glow-button-primary),
+        0 0 6px var(--hi-component-selection-glow),
         inset 0 0 3px rgba(255, 255, 255, 0.15);
 }
 
@@ -120,7 +122,7 @@
 
 .hi-checkbox-label:hover .hi-checkbox-checked:not(.hi-checkbox-disabled) {
     box-shadow:
-        0 0 10px var(--hi-glow-button-primary),
+        0 0 10px var(--hi-component-selection-glow),
         inset 0 0 4px rgba(255, 255, 255, 0.2);
     transform: scale(1.05);
 }
@@ -133,8 +135,8 @@
     opacity: 0.4;
     cursor: not-allowed;
     pointer-events: none;
-    background: rgba(0, 0, 0, 0.06);
-    border-color: rgba(0, 0, 0, 0.15);
+    background: var(--hi-component-selection-surface);
+    border-color: var(--hi-component-selection-border);
 }
 
 // ============================================
@@ -145,7 +147,7 @@
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-base;
     font-weight: 400;
-    color: var(--hi-color-text-primary, rgba(0, 0, 0, 0.9));
+    color: var(--hi-text-primary);
     line-height: 1.5;
     white-space: nowrap;
 }

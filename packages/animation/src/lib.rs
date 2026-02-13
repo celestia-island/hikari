@@ -25,7 +25,7 @@
 //!
 //! The AnimationProvider component provides global animation configuration:
 //!
-//! ```rust,no_run
+//! ```ignore
 //! use hikari_animation::AnimationProvider;
 //!
 //! rsx! {

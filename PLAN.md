@@ -114,6 +114,22 @@ pub fn use_component_class(component_name: &str, base_class: &str) -> String { /
 
 现在使用 Layer 2 CSS 变量，移除了硬编码的暗黑模式样式。
 
+### CSS 变量别名修复 ✅
+
+**问题**: 组件使用 `--hi-color-text-primary`，但 ThemeProvider 只生成 `--hi-text-primary`
+
+**修复**: ThemeProvider 现在同时生成：
+```css
+--hi-text-primary: #F2F2F2;
+--hi-color-text-primary: #F2F2F2;  /* 别名 */
+--hi-color-text-secondary: ...;
+--hi-color-primary: ...;
+--hi-color-secondary: ...;
+--hi-color-background: ...;
+--hi-color-surface: ...;
+--hi-color-border: ...;
+```
+
 ---
 
 ## 使用示例

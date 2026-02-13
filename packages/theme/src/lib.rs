@@ -204,6 +204,11 @@
 pub mod assets;
 pub mod context;
 pub mod provider;
+pub mod style_provider;
 
 pub use context::*;
 pub use provider::*;
+pub use style_provider::{
+    try_use_style, use_component_class, use_style, StyleConfig, StyleContext, StyleProvider,
+    StyleProviderProps,
+};

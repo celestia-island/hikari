@@ -1,16 +1,12 @@
-// website/src/pages/components/layer1/basic_components.rs
-// Individual component renderers for basic components
-
-use dioxus::prelude::*;
-
 use _components::{
     Badge, Button, ButtonVariant, Card, CardActions, CardContent, CardHeader, Checkbox, Divider,
-    DividerOrientation, DividerTextPosition, Input, RadioButtonInternal, RadioDirection, RadioGroup,
-    Select, SelectOption,
+    DividerOrientation, DividerTextPosition, Input, RadioButtonInternal, RadioDirection,
+    RadioGroup, Select, SelectOption,
 };
 use _palette::classes::{
     AlignItems, ClassesBuilder, Display, FlexDirection, FlexWrap, Gap, Padding,
 };
+use dioxus::prelude::*;
 
 /// Button component demonstration
 #[allow(non_snake_case)]
@@ -194,7 +190,9 @@ pub fn BasicBadge() -> Element {
 
                 "状态"
 
-                Badge { variant: _components::BadgeVariant::Success, "在线" }
+                Badge {
+                    variant: _components::BadgeVariant::Success,
+                }
             }
 
             div {
@@ -235,8 +233,6 @@ pub fn BasicBadge() -> Element {
 /// Select component demonstration
 #[allow(non_snake_case)]
 pub fn BasicSelect() -> Element {
-    let mut modal_open = use_signal(|| false);
-
     rsx! {
         div {
             class: ClassesBuilder::new()
@@ -338,12 +334,6 @@ pub fn BasicSelect() -> Element {
                     ],
                 }
             }
-
-            // Select detail modal
-            SelectDetailModal {
-                open: modal_open(),
-                on_close: move |_| modal_open.set(false),
-            }
         }
     }
 }
@@ -375,8 +365,9 @@ pub fn BasicCheckbox() -> Element {
                 Checkbox {
                     checked: checked1(),
                     on_change: move |v| checked1.set(v),
-                    "选项 1"
                 }
+
+                label { "记住密码" }
             }
 
             div {
@@ -390,8 +381,9 @@ pub fn BasicCheckbox() -> Element {
                 Checkbox {
                     checked: checked2(),
                     on_change: move |v| checked2.set(v),
-                    "选项 2（默认选中）"
                 }
+
+                label { "同意服务条款" }
             }
 
             div {
@@ -404,10 +396,10 @@ pub fn BasicCheckbox() -> Element {
 
                 Checkbox {
                     checked: checked3(),
-                    disabled: true,
                     on_change: move |v| checked3.set(v),
-                    "选项 3（禁用）"
                 }
+
+                label { "订阅新闻通讯" }
             }
         }
     }
@@ -416,7 +408,8 @@ pub fn BasicCheckbox() -> Element {
 /// Radio component demonstration
 #[allow(non_snake_case)]
 pub fn BasicRadio() -> Element {
-    let mut selected_value = use_signal(|| "option1".to_string());
+    let mut selected1 = use_signal(|| "option1".to_string());
+    let mut selected2 = use_signal(|| "red".to_string());
 
     rsx! {
         div {
@@ -427,35 +420,79 @@ pub fn BasicRadio() -> Element {
                 .add(Padding::P4)
                 .build(),
 
-            RadioGroup {
-                name: "group1".to_string(),
-                value: selected_value.clone(),
-                on_change: move |v| selected_value.set(v),
-                direction: RadioDirection::Vertical,
+            div {
+                class: ClassesBuilder::new()
+                    .add(Display::Flex)
+                    .add(FlexDirection::Column)
+                    .add(Gap::Gap2)
+                    .build(),
 
-                RadioButtonInternal {
-                    value: "option1".to_string(),
-                    group_name: "group1".to_string(),
-                    selected_value: selected_value.clone(),
-                    on_select: move |v| selected_value.set(v),
-                    "选项 1"
+                label { "性别:" }
+
+                RadioGroup {
+                    name: "gender".to_string(),
+                    value: selected1(),
+                    on_change: move |v| selected1.set(v),
+                    direction: RadioDirection::Horizontal,
+
+                    RadioButtonInternal {
+                        value: "option1".to_string(),
+                        selected_value: selected1(),
+                        on_select: move |v| selected1.set(v),
+                        "男"
+                    }
+
+                    RadioButtonInternal {
+                        value: "option2".to_string(),
+                        selected_value: selected1(),
+                        on_select: move |v| selected1.set(v),
+                        "女"
+                    }
+
+                    RadioButtonInternal {
+                        value: "option3".to_string(),
+                        selected_value: selected1(),
+                        on_select: move |v| selected1.set(v),
+                        "其他"
+                    }
                 }
+            }
 
-                RadioButtonInternal {
-                    value: "option2".to_string(),
-                    group_name: "group1".to_string(),
-                    selected_value: selected_value.clone(),
-                    on_select: move |v| selected_value.set(v),
-                    "选项 2"
-                }
+            div {
+                class: ClassesBuilder::new()
+                    .add(Display::Flex)
+                    .add(FlexDirection::Column)
+                    .add(Gap::Gap2)
+                    .build(),
 
-                RadioButtonInternal {
-                    value: "option3".to_string(),
-                    group_name: "group1".to_string(),
-                    selected_value: selected_value.clone(),
-                    on_select: move |v| selected_value.set(v),
-                    disabled: true,
-                    "选项 3（禁用）"
+                label { "颜色:" }
+
+                RadioGroup {
+                    name: "color".to_string(),
+                    value: selected2(),
+                    on_change: move |v| selected2.set(v),
+                    direction: RadioDirection::Horizontal,
+
+                    RadioButtonInternal {
+                        value: "red".to_string(),
+                        selected_value: selected2(),
+                        on_select: move |v| selected2.set(v),
+                        "红色"
+                    }
+
+                    RadioButtonInternal {
+                        value: "green".to_string(),
+                        selected_value: selected2(),
+                        on_select: move |v| selected2.set(v),
+                        "绿色"
+                    }
+
+                    RadioButtonInternal {
+                        value: "blue".to_string(),
+                        selected_value: selected2(),
+                        on_select: move |v| selected2.set(v),
+                        "蓝色"
+                    }
                 }
             }
         }
@@ -474,32 +511,38 @@ pub fn BasicDivider() -> Element {
                 .add(Padding::P4)
                 .build(),
 
-            div { "内容区域 1" }
+            div {
+                class: ClassesBuilder::new()
+                    .add(Padding::P4)
+                    .build(),
+
+                "上方内容"
+            }
 
             Divider {}
 
-            div { "内容区域 2" }
+            div {
+                class: ClassesBuilder::new()
+                    .add(Padding::P4)
+                    .build(),
+
+                "下方内容"
+            }
 
             Divider {
-                text: "分割线标题",
+                orientation: DividerOrientation::Vertical,
+            }
+
+            Divider {
                 text_position: DividerTextPosition::Center,
+                text: "分隔文本".to_string(),
             }
-
-            div { "内容区域 3" }
 
             Divider {
-                text: "左侧标题",
-                text_position: DividerTextPosition::Left,
+                orientation: DividerOrientation::Vertical,
+                text_position: DividerTextPosition::Center,
+                text: "或".to_string(),
             }
-
-            div { "内容区域 4" }
-
-            Divider {
-                text: "右侧标题",
-                text_position: DividerTextPosition::Right,
-            }
-
-            div { "内容区域 5" }
         }
     }
 }

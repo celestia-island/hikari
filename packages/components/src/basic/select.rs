@@ -7,6 +7,9 @@ use palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 use wasm_bindgen::JsCast;
 
 use crate::{
+    glow::Glow,
+    glow::GlowBlur,
+    glow::GlowIntensity,
     portal::{
         PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
         use_portal,
@@ -202,36 +205,46 @@ pub fn Select(props: SelectProps) -> Element {
             let on_change_inner = on_change.clone();
             let portal_inner = portal.clone();
             let id_inner = id.clone();
+            let internal_value_clone2 = internal_value.clone();
 
             let menu_content = rsx! {
                 div {
                     class: "hi-select-dropdown",
                     // Match trigger width via inline style if we have the rect
-                    style: if let Some((_, _, w, _)) = trigger_rect_opt { format!("min-width: {w}px;") } else { String::new() },
+                    style: if let Some((_, _, w, _)) = trigger_rect_opt { format!("width: {w}px;") } else { String::new() },
 
                     for opt in opts.iter() {
                         {
                             let value = opt.value.clone();
                             let label = opt.label.clone();
-                            let is_selected = value == *internal_value.read();
+                            let is_selected = value == *internal_value_clone2.read();
                             let value_for_click = value.clone();
                             let on_change_item = on_change_inner.clone();
                             let portal_close = portal_inner.clone();
                             let id_close = id_inner.clone();
 
+                            // Create click handler for this option
+                            let mut internal_value_clone3 = internal_value.clone();
+                            let click_handler = EventHandler::new(move |e: MouseEvent| {
+                                e.stop_propagation();
+                                internal_value_clone3.set(value_for_click.clone());
+                                if let Some(handler) = on_change_item.as_ref() {
+                                    handler.call(value_for_click.clone());
+                                }
+                                portal_close.remove_entry.call(id_close.clone());
+                            });
+
                             rsx! {
-                                div {
-                                    class: if is_selected { "hi-select-option hi-select-option-selected" } else { "hi-select-option" },
-                                    onclick: move |e: MouseEvent| {
-                                        e.stop_propagation();
-                                        internal_value.set(value_for_click.clone());
-                                        if let Some(handler) = on_change_item.as_ref() {
-                                            handler.call(value_for_click.clone());
-                                        }
-                                        // Close dropdown
-                                        portal_close.remove_entry.call(id_close.clone());
-                                    },
-                                    "{label}"
+                                Glow {
+                                    blur: crate::GlowBlur::Light,
+                                    intensity: crate::GlowIntensity::Seventy,
+                                    class: "hi-select-option-glow-wrapper",
+
+                                    div {
+                                        class: if is_selected { "hi-select-option hi-select-option-selected" } else { "hi-select-option" },
+                                        onclick: click_handler,
+                                        "{label}"
+                                    }
                                 }
                             }
                         }

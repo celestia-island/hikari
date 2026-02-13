@@ -162,6 +162,7 @@
     0 1px 4px rgba(0, 0, 0, 0.06);
   backdrop-filter: blur(12px);
   overflow: hidden;
+  width: 100%;
 
   // Subtle FUI top accent line
   &::before {
@@ -185,44 +186,23 @@
 // Option Items
 // ============================================
 
+// Override glow wrapper default inline-flex to flex for proper stacking
+.hi-select-option-glow-wrapper {
+  display: flex !important;
+  width: 100% !important;
+}
+
 .hi-select-option {
   display: flex;
   align-items: center;
+  width: 100%;
   padding: 0.5rem 0.875rem;
   font-family: vars.$hikari-font-family-sans;
   font-size: vars.$hikari-font-size-base;
   color: var(--hi-color-text-primary);
   cursor: pointer;
-  transition:
-    background vars.$hikari-duration-fast vars.$hikari-ease-smooth,
-    color vars.$hikari-duration-fast vars.$hikari-ease-smooth;
-  position: relative;
   user-select: none;
   white-space: nowrap;
-
-  &:hover {
-    background: rgba(var(--hi-color-primary-rgb, 139, 92, 246), 0.08);
-    color: var(--hi-color-primary);
-  }
-
-  // Selected item
-  &.hi-select-option-selected {
-    font-weight: 600;
-    color: var(--hi-color-primary);
-    background: rgba(var(--hi-color-primary-rgb, 139, 92, 246), 0.06);
-
-    // Left accent bar
-    &::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 25%;
-      bottom: 25%;
-      width: 2px;
-      background: var(--hi-color-primary);
-      border-radius: 1px;
-    }
-  }
 }
 
 // ============================================

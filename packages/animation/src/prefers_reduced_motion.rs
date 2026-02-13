@@ -37,9 +37,10 @@ pub fn watch_prefers_reduced_motion(callback: impl Fn(bool) + 'static) {
         .and_then(|w| w.match_media("(prefers-reduced-motion: reduce)").ok())
         .flatten()
     {
-        let closure = wasm_bindgen::closure::Closure::new(move || {
-            callback(prefers_reduced_motion());
-        });
+        let closure: wasm_bindgen::closure::Closure<dyn FnMut()> =
+            wasm_bindgen::closure::Closure::new(move || {
+                callback(prefers_reduced_motion());
+            });
 
         mql.set_onchange(Some(closure.as_ref().unchecked_ref()));
         closure.forget();

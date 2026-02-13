@@ -1205,4 +1205,50 @@ mod tests {
         assert!(theme_palette.background.len() == 7);
         assert!(theme_palette.text_primary.len() == 7);
     }
+
+    #[test]
+    fn test_component_palette_css_variables() {
+        let palette = Hikari::palette();
+        let component_palette = ComponentPalette::from_palette(&palette);
+        let css_vars = component_palette.css_variables();
+
+        assert!(css_vars.contains("--hi-component-selection-icon:"));
+        assert!(css_vars.contains("--hi-component-selection-bg:"));
+        assert!(css_vars.contains("#ffffff"));
+    }
+
+    #[test]
+    fn test_component_palette_dark_mode() {
+        let palette = Tairitsu::palette();
+        let component_palette = ComponentPalette::from_palette(&palette);
+
+        // 在暗黑模式下，selection_icon_color 应该是白色
+        assert_eq!(component_palette.selection_icon_color, "#ffffff");
+
+        // 暗黑模式下边框应该使用白色系
+        assert!(component_palette.selection_border.contains("255, 255, 255"));
+
+        // CSS 变量应该包含白色
+        let css_vars = component_palette.css_variables();
+        assert!(css_vars.contains("--hi-component-selection-icon: #ffffff"));
+    }
+
+    #[test]
+    fn test_theme_palette_color_text_aliases() {
+        let palette = Tairitsu::palette();
+        let theme_palette = ThemePalette::from_palette(&palette);
+        let css_vars = theme_palette.css_variables();
+
+        // 验证 color- 前缀的别名存在
+        assert!(css_vars.contains("--hi-color-text-primary:"));
+        assert!(css_vars.contains("--hi-color-text-secondary:"));
+        assert!(css_vars.contains("--hi-color-primary:"));
+        assert!(css_vars.contains("--hi-color-background:"));
+
+        // Tairitsu 的 text_primary 应该是浅色（接近白色）
+        // from_rgb_float(0.95, 0.95, 0.95) -> #F2F2F2
+        assert!(
+            theme_palette.text_primary == "#F2F2F2" || theme_palette.text_primary.starts_with("#F")
+        );
+    }
 }

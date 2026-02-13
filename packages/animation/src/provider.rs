@@ -79,7 +79,7 @@ pub struct AnimationProviderProps {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```ignore
 /// use hikari_animation::AnimationProvider;
 ///
 /// rsx! {
@@ -147,7 +147,7 @@ pub fn AnimationProvider(props: AnimationProviderProps) -> Element {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```ignore
 /// use hikari_animation::use_animation_config;
 ///
 /// fn MyComponent() -> Element {

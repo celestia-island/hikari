@@ -43,10 +43,9 @@ pub fn watch_prefers_reduced_motion(callback: impl Fn(bool) + 'static) {
         .flatten();
 
     if let Some(mql) = media_query {
-        let closure =
-            wasm_bindgen::closure::Closure::new(move |_event: web_sys::MediaQueryListEvent| {
-                callback(prefers_reduced_motion());
-            });
+        let closure = wasm_bindgen::closure::Closure::new(move || {
+            callback(prefers_reduced_motion());
+        });
 
         mql.set_onchange(Some(closure.as_ref().unchecked_ref()));
         closure.forget();

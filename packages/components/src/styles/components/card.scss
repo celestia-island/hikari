@@ -10,10 +10,10 @@
 .hi-card-header,
 .hi-card-body,
 .hi-card-footer {
-  // Ensure SVG icons inherit theme colors
+  // SVG icons inherit theme color via CSS color property
+  // Do NOT force fill/stroke — let each icon's inline attributes decide
   svg {
-    fill: currentColor;
-    stroke: currentColor;
+    color: inherit;
   }
 }
 
@@ -48,54 +48,9 @@
     0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.08)),
     0 0 0 1px rgba(241, 245, 249, 0.5) inset;
 
-  // Transitions - smooth GSAP-style easing
-  // DISABLED - migrated to JS animation
-
-  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
-
-  // Position for accent bar
+  // Position
   position: relative;
-
-  // Accent bar (3px wide, left side)
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: vars.$hikari-accent-bar-width;
-    height: 100%;
-    background: linear-gradient(
-      180deg,
-      var(--hi-color-primary) 0%,
-      var(--hi-primary) 50%,
-      var(--hi-color-primary) 100%
-    );
-    opacity: 0;
-    // DISABLED - migrated to JS animation
-
-    // transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
-  }
-
-  // Hover state with accent bar
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow:
-      0 4px 12px var(--hi-black-10, rgba(0, 0, 0, 0.1)),
-      0 0 0 1px rgba(226, 232, 240, 0.8) inset;
-    border-color: rgba(59, 130, 246, 0.3);
-
-    &::before {
-      opacity: 1;
-    }
-  }
-
-  // Active/clickable state
-  &:active {
-    transform: translateY(0);
-    // DISABLED - migrated to JS animation
-
-    // transition: transform vars.$hikari-duration-instant ease-out;
-  }
+  overflow: visible;
 }
 
 // ============================================
@@ -103,36 +58,43 @@
 // ============================================
 
 .hi-card-header {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--hi-color-border);
-  background: rgba(214, 236, 240, 0.5);
+  background: transparent;
+}
 
-  // Title
-  .hi-card-title {
-    margin: 0;
-    font-family: vars.$hikari-font-family-sans;
-    font-size: vars.$hikari-font-size-lg;
-    font-weight: 600;
-    color: var(--hi-color-text-primary);
-    letter-spacing: 0.02em;
+// Left section (avatar + title/subtitle)
+.hi-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
 
-    // Subtle text shadow
-    text-shadow: 0 0 8px var(--hi-primary);
+// Avatar container
+.hi-card-header-avatar {
+  flex-shrink: 0;
+}
+
+// Right section (action buttons)
+.hi-card-header-action {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  flex-shrink: 0;
+
+  // Ensure action buttons are transparent
+  button,
+  .hi-icon-button {
+    background: transparent;
   }
 
-  // Subtitle
-  .hi-card-subtitle {
-    margin: 0.25rem 0 0 0;
-    font-family: vars.$hikari-font-family-sans;
-    font-size: vars.$hikari-font-size-sm;
-    font-weight: 400;
-    color: var(--hi-color-text-secondary);
-  }
-
-  // Extra actions
+  // Extra actions (legacy)
   .hi-card-extra {
     display: flex;
     align-items: center;
@@ -140,11 +102,32 @@
   }
 }
 
+// Title
+.hi-card-title {
+  margin: 0;
+  font-family: vars.$hikari-font-family-sans;
+  font-size: vars.$hikari-font-size-lg;
+  font-weight: 600;
+  color: var(--hi-color-text-primary);
+  letter-spacing: 0.02em;
+}
+
+// Subtitle
+.hi-card-subtitle {
+  margin: 0.25rem 0 0 0;
+  font-family: vars.$hikari-font-family-sans;
+  font-size: vars.$hikari-font-size-sm;
+  font-weight: 400;
+  color: var(--hi-color-text-secondary);
+}
+
 // ============================================
 // Card Body
 // ============================================
 
 .hi-card-body {
+  position: relative;
+  z-index: 1;
   flex: 1;
   padding: 1.25rem;
   color: var(--hi-color-text-primary);
@@ -157,17 +140,47 @@
 // ============================================
 
 .hi-card-footer {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
   border-top: 1px solid var(--hi-color-border);
-  background: rgba(214, 236, 240, 0.5);
+  background: transparent;
 
   // Actions
   .hi-card-actions {
     display: flex;
     gap: 0.5rem;
+  }
+}
+
+// ============================================
+// Card Media (images/videos)
+// ============================================
+
+.hi-card-media {
+  width: 100%;
+  object-fit: cover;
+  border-bottom: 1px solid var(--hi-color-border);
+  display: block;
+}
+
+// ============================================
+// Card Actions (MUI-style footer)
+// ============================================
+
+.hi-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;  // Actions aligned to right by default
+  padding: 0.5rem 1rem;
+  gap: 0.5rem;
+
+  // No spacing variant
+  &.hi-card-actions-no-spacing {
+    gap: 0;
   }
 }
 
@@ -190,19 +203,7 @@
   cursor: pointer;
 
   &:hover {
-    transform: translateY(-4px);
-    --hi-glow-transparent: false;
-    --hi-glow-bg-color: var(--hi-color-surface);
-    box-shadow:
-      0 12px 24px rgba(23, 89, 168, 0.2),
-      0 0 30px var(--hi-glow-color),
-      0 0 0 1px var(--hi-primary) inset;
-    border-color: var(--hi-color-primary);
-
-    &::before {
-      opacity: 1;
-      box-shadow: 0 0 12px var(--hi-glow-color);
-    }
+    border-color: rgba(59, 130, 246, 0.3);
   }
 }
 
@@ -393,39 +394,28 @@
 }
 
 // ============================================
-// Spotlight Effect (Mouse-following glow)
+// Glow Effect (Mouse-following spotlight)
 // ============================================
 
-// Spotlight wrapper for card
-.hi-card-spotlight-wrapper {
-  position: relative;
-  display: flex;
-  flex-direction: column;
+// Glow overlay for card (internal background layer)
+.hi-card-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
 
-  // Create spotlight overlay using ::before pseudo-element
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 1;
-    border-radius: inherit;
-    opacity: var(--spotlight-opacity, 0);
+  // Use radial-gradient for spotlight effect
+  background: radial-gradient(
+    circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    var(--hi-glow-color) 0%,
+    transparent calc(var(--glow-spread, 1.5) * 100%)
+  );
+}
 
-    // Blue radial gradient spotlight positioned by CSS variables
-    background-image: radial-gradient(
-      circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
-      rgba(59, 130, 246, 0.4) 0%,
-      transparent 70%
-    );
-
-    // Smooth opacity transition (only for opacity, position updates are instant)
-    transition: opacity 0.1s ease-out;
-  }
-
-  // Ensure card content is above the spotlight overlay
-  .hi-card {
-    position: relative;
-    z-index: 2;
-  }
+// Show glow on hover with intensity-based opacity
+.hi-card:hover .hi-card-glow {
+  opacity: var(--glow-opacity, 0.15);
 }

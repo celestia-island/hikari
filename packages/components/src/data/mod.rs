@@ -13,7 +13,6 @@
 //!
 //! - [`Cell`] - Table cell rendering
 //! - [`Column`] - Table column definitions
-//! - [`Header`] - Table header component
 //! - [`TreeNode`] - Tree node representation
 //! - [`TreeNodeArrow`] - Tree node expand/collapse arrow
 //! - [`TreeNodeContent`] - Tree node content wrapper
@@ -30,7 +29,6 @@ pub mod collapse;
 pub mod column;
 pub mod drag;
 pub mod filter;
-pub mod header;
 pub mod node;
 pub mod node_arrow;
 pub mod node_content;

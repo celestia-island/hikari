@@ -3,9 +3,7 @@
 
 use dioxus::prelude::*;
 #[cfg(target_arch = "wasm32")]
-use web_sys::Event as WebEvent;
-#[cfg(target_arch = "wasm32")]
-use web_sys::{MouseEvent as WebMouseEvent, window};
+use web_sys::MouseEvent as WebMouseEvent;
 
 /// Constraints for drag boundaries
 #[derive(Clone, PartialEq, Debug, Default)]
@@ -145,9 +143,11 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
 
     // Track mouse start position
     #[cfg_attr(not(target_arch = "wasm32"), allow(unused_variables))]
-    let mouse_start_x = use_signal(|| 0.0f64);
+    #[cfg_attr(not(target_arch = "wasm32"), allow(unused_mut))]
+    let mut mouse_start_x = use_signal(|| 0.0f64);
     #[cfg_attr(not(target_arch = "wasm32"), allow(unused_variables))]
-    let mouse_start_y = use_signal(|| 0.0f64);
+    #[cfg_attr(not(target_arch = "wasm32"), allow(unused_mut))]
+    let mut mouse_start_y = use_signal(|| 0.0f64);
 
     rsx! {
         div {

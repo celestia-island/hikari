@@ -2,7 +2,7 @@
 // Progress component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, ProgressClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -83,22 +83,26 @@ pub fn Progress(props: ProgressProps) -> Element {
     let percentage = (props.value / props.max * 100.0).clamp(0.0, 100.0);
 
     let wrapper_classes = ClassesBuilder::new()
-        .add_raw("hi-progress-wrapper")
+        .add(ProgressClass::Wrapper)
         .add_raw(&props.class)
         .build();
 
+    let type_class = match props.progress_type {
+        ProgressType::Linear => ProgressClass::Linear,
+        ProgressType::Circular => ProgressClass::Circular,
+    };
+
+    let status_class = match props.status {
+        ProgressStatus::Normal => ProgressClass::Normal,
+        ProgressStatus::Active => ProgressClass::Active,
+        ProgressStatus::Exception => ProgressClass::Exception,
+        ProgressStatus::Success => ProgressClass::Success,
+    };
+
     let progress_classes = ClassesBuilder::new()
-        .add_raw("hi-progress")
-        .add_raw(match props.progress_type {
-            ProgressType::Linear => "hi-progress-linear",
-            ProgressType::Circular => "hi-progress-circular",
-        })
-        .add_raw(match props.status {
-            ProgressStatus::Normal => "hi-progress-normal",
-            ProgressStatus::Active => "hi-progress-active",
-            ProgressStatus::Exception => "hi-progress-exception",
-            ProgressStatus::Success => "hi-progress-success",
-        })
+        .add(ProgressClass::Progress)
+        .add(type_class)
+        .add(status_class)
         .build();
 
     let bar_style = if props.progress_type == ProgressType::Linear {
@@ -124,7 +128,7 @@ pub fn Progress(props: ProgressProps) -> Element {
 
                     if props.show_info {
                         span {
-                            class: "hi-progress-info",
+                            class: "{ProgressClass::Info.as_class()}",
                             "{percentage:.0}%"
                         }
                     }
@@ -136,7 +140,7 @@ pub fn Progress(props: ProgressProps) -> Element {
 
                     if props.show_info {
                         span {
-                            class: "hi-progress-info",
+                            class: "{ProgressClass::Info.as_class()}",
                             "{percentage:.0}%"
                         }
                     }
@@ -145,7 +149,7 @@ pub fn Progress(props: ProgressProps) -> Element {
                         width: "64px",
                         height: "64px",
                         view_box: "0 0 36 36",
-                        class: "hi-progress-circle",
+                        class: "{ProgressClass::Circle.as_class()}",
 
                         circle {
                             cx: "18",

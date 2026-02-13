@@ -3,122 +3,213 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari // Hikari // Hikari // Hikari // Hikari Select Component - FUI Styling Component Component Component Component
-
-// ============================================
-// Base Select Styles
+// Hikari Select Component — Custom FUI Dropdown
+// Portal-based: trigger + overlay dropdown
 // ============================================
 
-.hi-select {
+// ============================================
+// Trigger (the always-visible "button")
+// ============================================
+
+.hi-select-trigger {
   // Layout
-  display: block;
-  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 180px;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
 
-  // Appearance
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-color: var(--hi-input-bg);
-  border: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
-  border-radius: vars.$hikari-radius-fui-md;
+  // Appearance — FUI translucent panel feel
+  background: var(--hi-color-surface);
+  border: 1px solid var(--hi-color-border);
+  border-radius: vars.$hikari-radius-fui-sm;
 
   // Typography
   font-family: vars.$hikari-font-family-sans;
   font-size: vars.$hikari-font-size-base;
   font-weight: 400;
-  color: var(--hi-input-text, #F8FAFC);
+  color: var(--hi-color-text-primary);
   line-height: 1.5;
 
-  // Spacing
-  padding: 0.5rem 2.5rem 0.5rem 0.75rem;
-
-  // Custom arrow icon using background-image
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 0.5rem center;
-  background-size: 1.25rem 1.25rem;
-
-  // Transitions
-  transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
-
-  // Elevated shadow
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-
-  // Focus state
-  &:focus {
-    outline: none;
-    border-color: var(--hi-input-border-focus, rgba(139, 92, 246, 0.7));
-    background-color: var(--hi-input-bg-focus, rgba(55, 55, 55, 0.9));
-    box-shadow:
-      0 0 0 3px rgba(139, 92, 246, 0.2),
-      0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-
-  // Disabled state
-  &:disabled,
-  &.hi-select-disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background-color: var(--hi-card-bg);
-  }
-
-  // Placeholder
-  option:disabled {
-    color: var(--hi-input-placeholder, #94A3B8);
-  }
-
-  // ============================================
-  // Size Variants
-  // ============================================
-
-  &.hi-select-sm {
-    padding: 0.375rem 2rem 0.375rem 0.625rem;
-    font-size: 0.875rem;
-    border-radius: vars.$hikari-radius-fui-sm;
-    background-size: 1rem 1rem;
-    background-position: right 0.4375rem center;
-  }
-
-  &.hi-select-md {
-    padding: 0.5rem 2.5rem 0.5rem 0.75rem;
-    font-size: vars.$hikari-font-size-base;
-    background-size: 1.25rem 1.25rem;
-    background-position: right 0.5rem center;
-  }
-
-  &.hi-select-lg {
-    padding: 0.625rem 3rem 0.625rem 1rem;
-    font-size: 1.125rem;
-    border-radius: vars.$hikari-radius-fui-lg;
-    background-size: 1.5rem 1.5rem;
-    background-position: right 0.75rem center;
-  }
-}
-
-// ============================================
-// Dropdown Options
-// ============================================
-
-.hi-select option {
-  background-color: var(--hi-card-bg);
-  color: var(--hi-input-text, #F8FAFC);
+  // Spacing (md default)
   padding: 0.5rem 0.75rem;
 
-  &:hover {
-    background-color: rgba(139, 92, 246, 0.2);
+  // Subtle elevated shadow
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 0 0 1px var(--hi-color-border) inset;
+
+  // Transitions
+  transition:
+    border-color vars.$hikari-duration-fast vars.$hikari-ease-smooth,
+    box-shadow vars.$hikari-duration-fast vars.$hikari-ease-smooth,
+    background vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+  &:hover:not(.hi-select-disabled) {
+    border-color: var(--hi-color-primary);
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.08),
+      0 0 0 1px var(--hi-color-primary) inset;
   }
 
-  &:checked {
-    background-color: rgba(139, 92, 246, 0.3);
-    font-weight: 600;
+  // Open state — accent border + lifted shadow
+  &.hi-select-open {
+    border-color: var(--hi-color-primary);
+    box-shadow:
+      0 0 0 2px rgba(var(--hi-color-primary-rgb, 139, 92, 246), 0.15),
+      0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  // Disabled
+  &.hi-select-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
   }
 }
 
 // ============================================
-// Focus Styles
+// Value & Placeholder text
 // ============================================
 
-.hi-select:focus-visible {
+.hi-select-value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--hi-color-text-primary);
+}
+
+.hi-select-placeholder {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--hi-color-text-tertiary);
+  font-style: normal;
+}
+
+// ============================================
+// Arrow icon
+// ============================================
+
+.hi-select-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--hi-color-text-secondary);
+  transition: transform vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.hi-select-open .hi-select-arrow {
+  transform: rotate(180deg);
+}
+
+// ============================================
+// Size Variants
+// ============================================
+
+.hi-select-sm {
+  padding: 0.3rem 0.625rem;
+  font-size: 0.8125rem;
+  min-width: 140px;
+  border-radius: vars.$hikari-radius-fui-sm;
+
+  .hi-select-arrow svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.hi-select-md {
+  padding: 0.5rem 0.75rem;
+  font-size: vars.$hikari-font-size-base;
+  min-width: 180px;
+}
+
+.hi-select-lg {
+  padding: 0.625rem 1rem;
+  font-size: 1.0625rem;
+  min-width: 220px;
+  border-radius: vars.$hikari-radius-fui-md;
+
+  .hi-select-arrow svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// ============================================
+// Dropdown Panel (rendered in Portal overlay)
+// ============================================
+
+.hi-select-dropdown {
+  background: var(--hi-color-surface);
+  border: 1px solid var(--hi-color-border);
+  border-radius: vars.$hikari-radius-fui-sm;
+  padding: 4px 0;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.10),
+    0 1px 4px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  width: 100%;
+
+  // Subtle FUI top accent line
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 8px;
+    right: 8px;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--hi-color-primary),
+      transparent
+    );
+    opacity: 0.35;
+  }
+}
+
+// ============================================
+// Option Items
+// ============================================
+
+// Override glow wrapper default inline-flex to flex for proper stacking
+.hi-select-option-glow-wrapper {
+  display: flex !important;
+  width: 100% !important;
+}
+
+.hi-select-option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem 0.875rem;
+  font-family: vars.$hikari-font-family-sans;
+  font-size: vars.$hikari-font-size-base;
+  color: var(--hi-color-text-primary);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+// ============================================
+// Focus visible (keyboard navigation)
+// ============================================
+
+.hi-select-trigger:focus-visible {
   outline: 2px solid var(--hi-color-primary);
   outline-offset: 2px;
 }

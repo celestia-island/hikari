@@ -2,7 +2,7 @@
 // VideoPlayer component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use hikari_components::{MdiIcon, basic::IconButton};
+use hikari_components::{basic::IconButton, MdiIcon};
 use hikari_palette::classes::ClassesBuilder;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
@@ -75,12 +75,11 @@ pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
         {
             if let Some(window) = web_sys::window() {
                 if let Some(document) = window.document() {
-                    if let Some(video_element) = document
-                        .get_elements_by_class_name("hi-video-element")
-                        .get(0)
-                    {
-                        if let Ok(element) = video_element.dyn_into::<web_sys::Element>() {
-                            let _ = element.request_fullscreen();
+                    if let Ok(video_element) = document.query_selector(".hi-video-element") {
+                        if let Some(video_element) = video_element {
+                            if let Ok(element) = video_element.dyn_into::<web_sys::Element>() {
+                                let _ = element.request_fullscreen();
+                            }
                         }
                     }
                 }

@@ -279,12 +279,16 @@ pub enum ContainerClass {
     Container,
     /// `hi-container-sm` - Small max-width (640px)
     Sm,
-    /// `hi-container-lg` - Large max-width (1024px, default)
+    /// `hi-container-md` - Medium max-width (960px)
+    Md,
+    /// `hi-container-lg` - Large max-width (1024px)
     Lg,
     /// `hi-container-xl` - Extra large max-width (1280px)
     Xl,
     /// `hi-container-xxl` - Extra extra large max-width (1536px)
     Xxl,
+    /// `hi-container-centered` - Centered container
+    Centered,
 }
 
 impl UtilityClass for ContainerClass {
@@ -292,9 +296,11 @@ impl UtilityClass for ContainerClass {
         match self {
             ContainerClass::Container => "container",
             ContainerClass::Sm => "container-sm",
+            ContainerClass::Md => "container-md",
             ContainerClass::Lg => "container-lg",
             ContainerClass::Xl => "container-xl",
             ContainerClass::Xxl => "container-xxl",
+            ContainerClass::Centered => "container-centered",
         }
     }
 }
@@ -342,6 +348,16 @@ pub enum MenuClass {
     SubmenuArrowOpen,
     /// `hi-menu-submenu-list-open` - List open state
     SubmenuListOpen,
+    /// `hi-menu-vertical` - Vertical mode
+    Vertical,
+    /// `hi-menu-horizontal` - Horizontal mode
+    Horizontal,
+    /// `hi-menu-compact` - Compact mode
+    Compact,
+    /// `hi-menu-item` - Menu item
+    MenuItem,
+    /// `hi-menu-submenu-list` - Submenu list
+    SubmenuList,
 }
 
 impl UtilityClass for MenuClass {
@@ -352,6 +368,11 @@ impl UtilityClass for MenuClass {
             MenuClass::Submenu => "menu-submenu",
             MenuClass::SubmenuArrowOpen => "menu-submenu-arrow-open",
             MenuClass::SubmenuListOpen => "menu-submenu-list-open",
+            MenuClass::Vertical => "menu-vertical",
+            MenuClass::Horizontal => "menu-horizontal",
+            MenuClass::Compact => "menu-compact",
+            MenuClass::MenuItem => "menu-item",
+            MenuClass::SubmenuList => "menu-submenu-list",
         }
     }
 }
@@ -723,6 +744,8 @@ pub enum TableClass {
     TableSortable,
     /// `hi-table-sort-icon` - Sort icon
     TableSortIcon,
+    /// `hi-table-sort-active` - Active sort column
+    TableSortActive,
     /// `hi-text-left` - Left aligned
     TextLeft,
     /// `hi-text-center` - Center aligned
@@ -751,6 +774,7 @@ impl UtilityClass for TableClass {
             TableClass::TableEmptyContent => "table-empty-content",
             TableClass::TableSortable => "table-sortable",
             TableClass::TableSortIcon => "table-sort-icon",
+            TableClass::TableSortActive => "table-sort-active",
             TableClass::TextLeft => "text-left",
             TableClass::TextCenter => "text-center",
             TableClass::TextRight => "text-right",
@@ -966,10 +990,18 @@ pub enum CardClass {
     CardHeader,
     /// `hi-card-title` - Card title
     CardTitle,
+    /// `hi-card-subtitle` - Card subtitle
+    CardSubtitle,
     /// `hi-card-extra` - Extra content
     CardExtra,
     /// `hi-card-body` - Card body
     CardBody,
+    /// `hi-card-media` - Card media (images/videos)
+    CardMedia,
+    /// `hi-card-actions` - Card actions (footer)
+    CardActions,
+    /// `hi-card-actions-no-spacing` - Card actions without spacing
+    CardActionsNoSpacing,
     /// `hi-card-spotlight-wrapper` - Spotlight wrapper
     CardSpotlightWrapper,
 }
@@ -982,8 +1014,12 @@ impl UtilityClass for CardClass {
             CardClass::CardBordered => "card-bordered",
             CardClass::CardHeader => "card-header",
             CardClass::CardTitle => "card-title",
+            CardClass::CardSubtitle => "card-subtitle",
             CardClass::CardExtra => "card-extra",
             CardClass::CardBody => "card-body",
+            CardClass::CardMedia => "card-media",
+            CardClass::CardActions => "card-actions",
+            CardClass::CardActionsNoSpacing => "card-actions-no-spacing",
             CardClass::CardSpotlightWrapper => "card-spotlight-wrapper",
         }
     }
@@ -1013,6 +1049,183 @@ impl UtilityClass for SpotlightClass {
     }
 }
 
+/// Calendar component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CalendarClass {
+    /// `hi-calendar` - Main calendar class
+    Calendar,
+    /// `hi-calendar-header` - Header with navigation
+    CalendarHeader,
+    /// `hi-calendar-nav` - Navigation buttons container
+    CalendarNav,
+    /// `hi-calendar-nav-button` - Month/year navigation button
+    CalendarNavButton,
+    /// `hi-calendar-title` - Year/month title
+    CalendarTitle,
+    /// `hi-calendar-month-title` - Month-only title
+    CalendarMonthTitle,
+    /// `hi-calendar-weekdays` - Week day headers
+    CalendarWeekdays,
+    /// `hi-calendar-weekday` - Single week day header
+    CalendarWeekday,
+    /// `hi-calendar-grid` - Calendar days grid
+    CalendarGrid,
+    /// `hi-calendar-day-cell` - Single day cell
+    CalendarDayCell,
+    /// `hi-calendar-day` - Day number
+    CalendarDay,
+    /// `hi-calendar-day-selected` - Selected day state
+    CalendarDaySelected,
+    /// `hi-calendar-day-today` - Today marker
+    CalendarDayToday,
+    /// `hi-calendar-day-disabled` - Disabled day state
+    CalendarDayDisabled,
+}
+
+impl UtilityClass for CalendarClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            CalendarClass::Calendar => "calendar",
+            CalendarClass::CalendarHeader => "calendar-header",
+            CalendarClass::CalendarNav => "calendar-nav",
+            CalendarClass::CalendarNavButton => "calendar-nav-button",
+            CalendarClass::CalendarTitle => "calendar-title",
+            CalendarClass::CalendarMonthTitle => "calendar-month-title",
+            CalendarClass::CalendarWeekdays => "calendar-weekdays",
+            CalendarClass::CalendarWeekday => "calendar-weekday",
+            CalendarClass::CalendarGrid => "calendar-grid",
+            CalendarClass::CalendarDayCell => "calendar-day-cell",
+            CalendarClass::CalendarDay => "calendar-day",
+            CalendarClass::CalendarDaySelected => "calendar-day-selected",
+            CalendarClass::CalendarDayToday => "calendar-day-today",
+            CalendarClass::CalendarDayDisabled => "calendar-day-disabled",
+        }
+    }
+}
+
+/// Timeline component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TimelineClass {
+    /// `hi-timeline` - Main timeline class
+    Timeline,
+    /// `hi-timeline-alternate` - Alternate item positions
+    Alternate,
+    /// `hi-timeline-left` - Left aligned items
+    Left,
+    /// `hi-timeline-right` - Right aligned items
+    Right,
+    /// `hi-timeline-no-line` - Hide center line
+    NoLine,
+    /// `hi-timeline-item` - Timeline item wrapper
+    Item,
+    /// `hi-timeline-dot` - Timeline dot
+    Dot,
+    /// `hi-timeline-content` - Content wrapper
+    Content,
+    /// `hi-timeline-time` - Time label
+    Time,
+    /// `hi-timeline-title` - Title text
+    Title,
+    /// `hi-timeline-last` - Last item marker
+    Last,
+}
+
+impl UtilityClass for TimelineClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            TimelineClass::Timeline => "timeline",
+            TimelineClass::Alternate => "timeline-alternate",
+            TimelineClass::Left => "timeline-left",
+            TimelineClass::Right => "timeline-right",
+            TimelineClass::NoLine => "timeline-no-line",
+            TimelineClass::Item => "timeline-item",
+            TimelineClass::Dot => "timeline-dot",
+            TimelineClass::Content => "timeline-content",
+            TimelineClass::Time => "timeline-time",
+            TimelineClass::Title => "timeline-title",
+            TimelineClass::Last => "timeline-last",
+        }
+    }
+}
+
+/// CodeHighlight component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CodeHighlightClass {
+    /// `hi-code-highlight` - Main container
+    Container,
+    /// `hi-code-highlight-header` - Header with language
+    Header,
+    /// `hi-code-highlight-language` - Language label
+    Language,
+    /// `hi-code-highlight-copy` - Copy button
+    CopyButton,
+    /// `hi-code-highlight-content` - Content wrapper
+    Content,
+    /// `hi-code-highlight-line-numbers` - Line numbers column
+    LineNumbers,
+    /// `hi-code-highlight-line-number` - Single line number
+    LineNumber,
+    /// `hi-code-highlight-code` - Code block
+    Code,
+}
+
+impl UtilityClass for CodeHighlightClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            CodeHighlightClass::Container => "code-highlight",
+            CodeHighlightClass::Header => "code-highlight-header",
+            CodeHighlightClass::Language => "code-highlight-language",
+            CodeHighlightClass::CopyButton => "code-highlight-copy",
+            CodeHighlightClass::Content => "code-highlight-content",
+            CodeHighlightClass::LineNumbers => "code-highlight-line-numbers",
+            CodeHighlightClass::LineNumber => "code-highlight-line-number",
+            CodeHighlightClass::Code => "code-highlight-code",
+        }
+    }
+}
+
+/// VideoPlayer component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum VideoPlayerClass {
+    /// `hi-video-player` - Main container
+    Container,
+    /// `hi-video-player-video` - Video element
+    Video,
+}
+
+impl UtilityClass for VideoPlayerClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            VideoPlayerClass::Container => "video-player",
+            VideoPlayerClass::Video => "video-player-video",
+        }
+    }
+}
+
+/// RichTextEditor component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum RichTextEditorClass {
+    /// `hi-rich-text-editor` - Main container
+    Container,
+    /// `hi-rich-text-editor-toolbar` - Toolbar
+    Toolbar,
+    /// `hi-rich-text-editor-toolbar-button` - Toolbar button
+    ToolbarButton,
+    /// `hi-rich-text-editor-editor` - Editor area
+    Editor,
+}
+
+impl UtilityClass for RichTextEditorClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            RichTextEditorClass::Container => "rich-text-editor",
+            RichTextEditorClass::Toolbar => "rich-text-editor-toolbar",
+            RichTextEditorClass::ToolbarButton => "rich-text-editor-toolbar-button",
+            RichTextEditorClass::Editor => "rich-text-editor-editor",
+        }
+    }
+}
+
 /// Glow component classes
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GlowClass {
@@ -1020,6 +1233,8 @@ pub enum GlowClass {
     Glow,
     /// `hi-glow-wrapper` - Glow wrapper
     GlowWrapper,
+    /// `hi-glow-wrapper-block` - Block display mode
+    GlowWrapperBlock,
     /// `hi-glow-blur-none` - No blur
     GlowBlurNone,
     /// `hi-glow-blur-light` - Light blur
@@ -1038,12 +1253,12 @@ pub enum GlowClass {
     GlowDanger,
     /// `hi-glow-success` - Success color
     GlowSuccess,
-    /// `hi-glow-subtle` - Subtle intensity
-    GlowSubtle,
-    /// `hi-glow-standard` - Standard intensity
-    GlowStandard,
-    /// `hi-glow-intense` - Intense intensity
-    GlowIntense,
+    /// `hi-glow-thirty` - 30% glow intensity (subtle)
+    GlowThirty,
+    /// `hi-glow-seventy` - 70% glow intensity (standard)
+    GlowSeventy,
+    /// `hi-glow-hundred` - 100% glow intensity (intense)
+    GlowHundred,
 }
 
 impl UtilityClass for GlowClass {
@@ -1051,6 +1266,7 @@ impl UtilityClass for GlowClass {
         match self {
             GlowClass::Glow => "glow",
             GlowClass::GlowWrapper => "glow-wrapper",
+            GlowClass::GlowWrapperBlock => "glow-wrapper-block",
             GlowClass::GlowBlurNone => "glow-blur-none",
             GlowClass::GlowBlurLight => "glow-blur-light",
             GlowClass::GlowBlurMedium => "glow-blur-medium",
@@ -1060,9 +1276,9 @@ impl UtilityClass for GlowClass {
             GlowClass::GlowSecondary => "glow-secondary",
             GlowClass::GlowDanger => "glow-danger",
             GlowClass::GlowSuccess => "glow-success",
-            GlowClass::GlowSubtle => "glow-subtle",
-            GlowClass::GlowStandard => "glow-standard",
-            GlowClass::GlowIntense => "glow-intense",
+            GlowClass::GlowThirty => "glow-thirty",
+            GlowClass::GlowSeventy => "glow-seventy",
+            GlowClass::GlowHundred => "glow-hundred",
         }
     }
 }
@@ -1074,6 +1290,14 @@ pub enum BadgeClass {
     Badge,
     /// `hi-badge-dot` - Dot badge
     Dot,
+    /// `hi-badge-primary` - Primary variant
+    Primary,
+    /// `hi-badge-success` - Success variant
+    Success,
+    /// `hi-badge-warning` - Warning variant
+    Warning,
+    /// `hi-badge-danger` - Danger variant
+    Danger,
 }
 
 impl UtilityClass for BadgeClass {
@@ -1081,6 +1305,10 @@ impl UtilityClass for BadgeClass {
         match self {
             BadgeClass::Badge => "badge",
             BadgeClass::Dot => "badge-dot",
+            BadgeClass::Primary => "badge-primary",
+            BadgeClass::Success => "badge-success",
+            BadgeClass::Warning => "badge-warning",
+            BadgeClass::Danger => "badge-danger",
         }
     }
 }
@@ -1372,6 +1600,904 @@ impl UtilityClass for ArrowClass {
             ArrowClass::Size14 => "arrow-14",
             ArrowClass::Size16 => "arrow-16",
             ArrowClass::Size20 => "arrow-20",
+        }
+    }
+}
+
+/// Checkbox component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CheckboxClass {
+    /// `hi-checkbox` - Main checkbox class
+    Checkbox,
+    /// `hi-checkbox-sm` - Small size (16px)
+    Sm,
+    /// `hi-checkbox-md` - Medium size (20px, default)
+    Md,
+    /// `hi-checkbox-lg` - Large size (24px)
+    Lg,
+    /// `hi-checkbox-checked` - Checked state
+    Checked,
+    /// `hi-checkbox-disabled` - Disabled state
+    Disabled,
+    /// `hi-checkbox-label` - Label wrapper
+    Label,
+    /// `hi-checkbox-input` - Native input
+    Input,
+    /// `hi-checkbox-icon` - Checkmark icon
+    Icon,
+    /// `hi-checkbox-text` - Label text
+    Text,
+}
+
+impl UtilityClass for CheckboxClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            CheckboxClass::Checkbox => "checkbox",
+            CheckboxClass::Sm => "checkbox-sm",
+            CheckboxClass::Md => "checkbox-md",
+            CheckboxClass::Lg => "checkbox-lg",
+            CheckboxClass::Checked => "checkbox-checked",
+            CheckboxClass::Disabled => "checkbox-disabled",
+            CheckboxClass::Label => "checkbox-label",
+            CheckboxClass::Input => "checkbox-input",
+            CheckboxClass::Icon => "checkbox-icon",
+            CheckboxClass::Text => "checkbox-text",
+        }
+    }
+}
+
+/// Radio component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum RadioClass {
+    /// `hi-radio-group` - Radio group container
+    RadioGroup,
+    /// `hi-radio-group-vertical` - Vertical layout
+    RadioGroupVertical,
+    /// `hi-radio-group-horizontal` - Horizontal layout
+    RadioGroupHorizontal,
+    /// `hi-radio-label` - Label wrapper
+    Label,
+    /// `hi-radio-indicator` - Custom radio indicator
+    Indicator,
+    /// `hi-radio-dot` - Inner dot
+    Dot,
+    /// `hi-radio-text` - Label text
+    Text,
+}
+
+impl UtilityClass for RadioClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            RadioClass::RadioGroup => "radio-group",
+            RadioClass::RadioGroupVertical => "radio-group-vertical",
+            RadioClass::RadioGroupHorizontal => "radio-group-horizontal",
+            RadioClass::Label => "radio-label",
+            RadioClass::Indicator => "radio-indicator",
+            RadioClass::Dot => "radio-dot",
+            RadioClass::Text => "radio-text",
+        }
+    }
+}
+
+/// Switch component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SwitchClass {
+    /// `hi-switch` - Main switch class
+    Switch,
+    /// `hi-switch-sm` - Small size
+    Sm,
+    /// `hi-switch-md` - Medium size (default)
+    Md,
+    /// `hi-switch-lg` - Large size
+    Lg,
+    /// `hi-switch-checked` - Checked state
+    Checked,
+    /// `hi-switch-disabled` - Disabled state
+    Disabled,
+}
+
+impl UtilityClass for SwitchClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            SwitchClass::Switch => "switch",
+            SwitchClass::Sm => "switch-sm",
+            SwitchClass::Md => "switch-md",
+            SwitchClass::Lg => "switch-lg",
+            SwitchClass::Checked => "switch-checked",
+            SwitchClass::Disabled => "switch-disabled",
+        }
+    }
+}
+
+/// Slider component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SliderClass {
+    /// `hi-slider` - Main slider class
+    Slider,
+    /// `hi-slider-sm` - Small size
+    Sm,
+    /// `hi-slider-md` - Medium size (default)
+    Md,
+    /// `hi-slider-lg` - Large size
+    Lg,
+    /// `hi-slider-disabled` - Disabled state
+    Disabled,
+}
+
+impl UtilityClass for SliderClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            SliderClass::Slider => "slider",
+            SliderClass::Sm => "slider-sm",
+            SliderClass::Md => "slider-md",
+            SliderClass::Lg => "slider-lg",
+            SliderClass::Disabled => "slider-disabled",
+        }
+    }
+}
+
+/// Select component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SelectClass {
+    /// `hi-select-trigger` - Select trigger
+    SelectTrigger,
+    /// `hi-select-sm` - Small size
+    Sm,
+    /// `hi-select-md` - Medium size (default)
+    Md,
+    /// `hi-select-lg` - Large size
+    Lg,
+    /// `hi-select-disabled` - Disabled state
+    Disabled,
+    /// `hi-select-open` - Open state
+    Open,
+}
+
+impl UtilityClass for SelectClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            SelectClass::SelectTrigger => "select-trigger",
+            SelectClass::Sm => "select-sm",
+            SelectClass::Md => "select-md",
+            SelectClass::Lg => "select-lg",
+            SelectClass::Disabled => "select-disabled",
+            SelectClass::Open => "select-open",
+        }
+    }
+}
+
+/// DatePicker component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DatePickerClass {
+    /// `hi-date-picker-wrapper` - DatePicker wrapper
+    DatePickerWrapper,
+    /// `hi-date-picker` - DatePicker input
+    DatePicker,
+}
+
+impl UtilityClass for DatePickerClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            DatePickerClass::DatePickerWrapper => "date-picker-wrapper",
+            DatePickerClass::DatePicker => "date-picker",
+        }
+    }
+}
+
+/// FileUpload component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum FileUploadClass {
+    /// `hi-file-upload-wrapper` - FileUpload wrapper
+    FileUploadWrapper,
+    /// `hi-file-upload` - FileUpload container
+    FileUpload,
+    /// `hi-file-upload-idle` - Idle state
+    Idle,
+    /// `hi-file-upload-dragging` - Dragging state
+    Dragging,
+    /// `hi-file-upload-uploading` - Uploading state
+    Uploading,
+    /// `hi-file-upload-success` - Success state
+    Success,
+    /// `hi-file-upload-error` - Error state
+    Error,
+}
+
+impl UtilityClass for FileUploadClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            FileUploadClass::FileUploadWrapper => "file-upload-wrapper",
+            FileUploadClass::FileUpload => "file-upload",
+            FileUploadClass::Idle => "file-upload-idle",
+            FileUploadClass::Dragging => "file-upload-dragging",
+            FileUploadClass::Uploading => "file-upload-uploading",
+            FileUploadClass::Success => "file-upload-success",
+            FileUploadClass::Error => "file-upload-error",
+        }
+    }
+}
+
+/// FormField component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum FormFieldClass {
+    /// `hi-form-field` - Form field wrapper
+    FormField,
+}
+
+impl UtilityClass for FormFieldClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            FormFieldClass::FormField => "form-field",
+        }
+    }
+}
+
+/// Divider component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DividerClass {
+    /// `hi-divider` - Main divider class
+    Divider,
+    /// `hi-divider-horizontal` - Horizontal orientation
+    Horizontal,
+    /// `hi-divider-vertical` - Vertical orientation
+    Vertical,
+    /// `hi-divider-solid` - Solid type
+    Solid,
+    /// `hi-divider-dashed` - Dashed type
+    Dashed,
+    /// `hi-divider-dotted` - Dotted type
+    Dotted,
+    /// `hi-divider-with-text` - Has text
+    WithText,
+}
+
+impl UtilityClass for DividerClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            DividerClass::Divider => "divider",
+            DividerClass::Horizontal => "divider-horizontal",
+            DividerClass::Vertical => "divider-vertical",
+            DividerClass::Solid => "divider-solid",
+            DividerClass::Dashed => "divider-dashed",
+            DividerClass::Dotted => "divider-dotted",
+            DividerClass::WithText => "divider-with-text",
+        }
+    }
+}
+
+/// Space component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SpaceClass {
+    /// `hi-space` - Main space class
+    Space,
+    /// `hi-space-horizontal` - Horizontal direction
+    Horizontal,
+    /// `hi-space-vertical` - Vertical direction
+    Vertical,
+    /// `hi-space-wrap` - Wrap enabled
+    Wrap,
+}
+
+impl UtilityClass for SpaceClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            SpaceClass::Space => "space",
+            SpaceClass::Horizontal => "space-horizontal",
+            SpaceClass::Vertical => "space-vertical",
+            SpaceClass::Wrap => "space-wrap",
+        }
+    }
+}
+
+/// AutoComplete component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AutoCompleteClass {
+    /// `hi-autocomplete-wrapper` - AutoComplete wrapper
+    Wrapper,
+    /// `hi-autocomplete-input` - AutoComplete input
+    Input,
+    /// `hi-autocomplete-clear` - Clear button
+    Clear,
+    /// `hi-autocomplete-dropdown` - Dropdown container
+    Dropdown,
+    /// `hi-autocomplete-show` - Show state
+    Show,
+    /// `hi-autocomplete-option` - Option item
+    Option,
+    /// `hi-autocomplete-option-focused` - Focused option
+    OptionFocused,
+}
+
+impl UtilityClass for AutoCompleteClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            AutoCompleteClass::Wrapper => "autocomplete-wrapper",
+            AutoCompleteClass::Input => "autocomplete-input",
+            AutoCompleteClass::Clear => "autocomplete-clear",
+            AutoCompleteClass::Dropdown => "autocomplete-dropdown",
+            AutoCompleteClass::Show => "autocomplete-show",
+            AutoCompleteClass::Option => "autocomplete-option",
+            AutoCompleteClass::OptionFocused => "autocomplete-option-focused",
+        }
+    }
+}
+
+/// Cascader component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CascaderClass {
+    /// `hi-cascader-wrapper` - Cascader wrapper
+    Wrapper,
+    /// `hi-cascader` - Main cascader class
+    Cascader,
+    /// `hi-cascader-sm` - Small size
+    Sm,
+    /// `hi-cascader-md` - Medium size
+    Md,
+    /// `hi-cascader-lg` - Large size
+    Lg,
+    /// `hi-cascader-disabled` - Disabled state
+    Disabled,
+    /// `hi-cascader-open` - Open state
+    Open,
+    /// `hi-cascader-display` - Display area
+    Display,
+    /// `hi-cascader-text` - Text display
+    Text,
+    /// `hi-cascader-clear` - Clear button
+    Clear,
+    /// `hi-cascader-arrow` - Arrow icon
+    Arrow,
+    /// `hi-cascader-dropdown` - Dropdown container
+    Dropdown,
+    /// `hi-cascader-menu` - Menu container
+    Menu,
+    /// `hi-cascader-menu-list` - Menu list
+    MenuList,
+    /// `hi-cascader-menu-item` - Menu item
+    MenuItem,
+    /// `hi-cascader-menu-item-selected` - Selected menu item
+    MenuItemSelected,
+    /// `hi-cascader-menu-item-disabled` - Disabled menu item
+    MenuItemDisabled,
+    /// `hi-cascader-menu-item-arrow` - Menu item arrow
+    MenuItemArrow,
+}
+
+impl UtilityClass for CascaderClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            CascaderClass::Wrapper => "cascader-wrapper",
+            CascaderClass::Cascader => "cascader",
+            CascaderClass::Sm => "cascader-sm",
+            CascaderClass::Md => "cascader-md",
+            CascaderClass::Lg => "cascader-lg",
+            CascaderClass::Disabled => "cascader-disabled",
+            CascaderClass::Open => "cascader-open",
+            CascaderClass::Display => "cascader-display",
+            CascaderClass::Text => "cascader-text",
+            CascaderClass::Clear => "cascader-clear",
+            CascaderClass::Arrow => "cascader-arrow",
+            CascaderClass::Dropdown => "cascader-dropdown",
+            CascaderClass::Menu => "cascader-menu",
+            CascaderClass::MenuList => "cascader-menu-list",
+            CascaderClass::MenuItem => "cascader-menu-item",
+            CascaderClass::MenuItemSelected => "cascader-menu-item-selected",
+            CascaderClass::MenuItemDisabled => "cascader-menu-item-disabled",
+            CascaderClass::MenuItemArrow => "cascader-menu-item-arrow",
+        }
+    }
+}
+
+/// NumberInput component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum NumberInputClass {
+    /// `hi-number-input-wrapper` - NumberInput wrapper
+    Wrapper,
+    /// `hi-number-input-button` - Increment/decrement button
+    Button,
+    /// `hi-number-input-input` - Number input field
+    Input,
+}
+
+impl UtilityClass for NumberInputClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            NumberInputClass::Wrapper => "number-input-wrapper",
+            NumberInputClass::Button => "number-input-button",
+            NumberInputClass::Input => "number-input-input",
+        }
+    }
+}
+
+/// Search component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SearchClass {
+    /// `hi-search-wrapper` - Search wrapper
+    Wrapper,
+    /// `hi-search-input` - Search input
+    Input,
+    /// `hi-search-clear` - Clear button
+    Clear,
+    /// `hi-search-loading` - Loading indicator
+    Loading,
+}
+
+impl UtilityClass for SearchClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            SearchClass::Wrapper => "search-wrapper",
+            SearchClass::Input => "search-input",
+            SearchClass::Clear => "search-clear",
+            SearchClass::Loading => "search-loading",
+        }
+    }
+}
+
+/// Transfer component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TransferClass {
+    /// `hi-transfer` - Main transfer class
+    Transfer,
+    /// `hi-transfer-operations` - Operations container
+    Operations,
+    /// `hi-transfer-operation` - Single operation button
+    Operation,
+    /// `hi-transfer-panel` - Transfer panel
+    Panel,
+    /// `hi-transfer-panel-header` - Panel header
+    PanelHeader,
+    /// `hi-transfer-panel-checkbox` - Panel checkbox
+    PanelCheckbox,
+    /// `hi-transfer-panel-title` - Panel title
+    PanelTitle,
+    /// `hi-transfer-panel-count` - Panel count
+    PanelCount,
+    /// `hi-transfer-panel-search` - Panel search
+    PanelSearch,
+    /// `hi-transfer-panel-input` - Panel input
+    PanelInput,
+    /// `hi-transfer-panel-list` - Panel list
+    PanelList,
+    /// `hi-transfer-panel-item` - Panel item
+    PanelItem,
+    /// `hi-transfer-panel-item-selected` - Selected item
+    PanelItemSelected,
+    /// `hi-transfer-panel-item-disabled` - Disabled item
+    PanelItemDisabled,
+    /// `hi-transfer-panel-empty` - Empty state
+    PanelEmpty,
+    /// `hi-transfer-item-checkbox` - Item checkbox
+    ItemCheckbox,
+    /// `hi-transfer-item-label` - Item label
+    ItemLabel,
+}
+
+impl UtilityClass for TransferClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            TransferClass::Transfer => "transfer",
+            TransferClass::Operations => "transfer-operations",
+            TransferClass::Operation => "transfer-operation",
+            TransferClass::Panel => "transfer-panel",
+            TransferClass::PanelHeader => "transfer-panel-header",
+            TransferClass::PanelCheckbox => "transfer-panel-checkbox",
+            TransferClass::PanelTitle => "transfer-panel-title",
+            TransferClass::PanelCount => "transfer-panel-count",
+            TransferClass::PanelSearch => "transfer-panel-search",
+            TransferClass::PanelInput => "transfer-panel-input",
+            TransferClass::PanelList => "transfer-panel-list",
+            TransferClass::PanelItem => "transfer-panel-item",
+            TransferClass::PanelItemSelected => "transfer-panel-item-selected",
+            TransferClass::PanelItemDisabled => "transfer-panel-item-disabled",
+            TransferClass::PanelEmpty => "transfer-panel-empty",
+            TransferClass::ItemCheckbox => "transfer-item-checkbox",
+            TransferClass::ItemLabel => "transfer-item-label",
+        }
+    }
+}
+
+// ============================================================================
+// Display Component Classes (Phase 4)
+// ============================================================================
+
+/// Tag component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TagClass {
+    /// `hi-tag` - Main tag class
+    Tag,
+    /// `hi-tag-default` - Default variant
+    Default,
+    /// `hi-tag-primary` - Primary variant
+    Primary,
+    /// `hi-tag-success` - Success variant
+    Success,
+    /// `hi-tag-warning` - Warning variant
+    Warning,
+    /// `hi-tag-danger` - Danger variant
+    Danger,
+    /// `hi-tag-info` - Info variant
+    Info,
+    /// `hi-tag-close` - Close button
+    Close,
+}
+
+impl UtilityClass for TagClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            TagClass::Tag => "tag",
+            TagClass::Default => "tag-default",
+            TagClass::Primary => "tag-primary",
+            TagClass::Success => "tag-success",
+            TagClass::Warning => "tag-warning",
+            TagClass::Danger => "tag-danger",
+            TagClass::Info => "tag-info",
+            TagClass::Close => "tag-close",
+        }
+    }
+}
+
+/// DescriptionList component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DescriptionListClass {
+    /// `hi-description-list` - Main container
+    List,
+    /// `hi-description-list-term` - Term/label
+    Term,
+    /// `hi-description-list-detail` - Detail/value
+    Detail,
+}
+
+impl UtilityClass for DescriptionListClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            DescriptionListClass::List => "description-list",
+            DescriptionListClass::Term => "description-list-term",
+            DescriptionListClass::Detail => "description-list-detail",
+        }
+    }
+}
+
+/// Empty component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum EmptyClass {
+    /// `hi-empty-container` - Main container
+    Container,
+    /// `hi-empty-image` - Image wrapper
+    Image,
+    /// `hi-empty-img` - Image element
+    Img,
+    /// `hi-empty-title` - Title text
+    Title,
+    /// `hi-empty-description` - Description text
+    Description,
+    /// `hi-empty-action` - Action area
+    Action,
+}
+
+impl UtilityClass for EmptyClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            EmptyClass::Container => "empty-container",
+            EmptyClass::Image => "empty-image",
+            EmptyClass::Img => "empty-img",
+            EmptyClass::Title => "empty-title",
+            EmptyClass::Description => "empty-description",
+            EmptyClass::Action => "empty-action",
+        }
+    }
+}
+
+/// QRCode component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum QRCodeClass {
+    /// `hi-qrcode-container` - Main container
+    Container,
+    /// `hi-qrcode-title` - Title text
+    Title,
+    /// `hi-qrcode-wrapper` - QR code wrapper
+    Wrapper,
+    /// `hi-qrcode-image` - QR code image
+    Image,
+}
+
+impl UtilityClass for QRCodeClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            QRCodeClass::Container => "qrcode-container",
+            QRCodeClass::Title => "qrcode-title",
+            QRCodeClass::Wrapper => "qrcode-wrapper",
+            QRCodeClass::Image => "qrcode-image",
+        }
+    }
+}
+
+// ============================================================================
+// Layout Component Classes (Phase 5)
+// ============================================================================
+
+/// AppLayout component classes (extends Layout)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AppLayoutClass {
+    /// `hi-layout-body` - Body container
+    Body,
+    /// `hi-layout-main` - Main content area
+    Main,
+    /// `hi-layout-content` - Content wrapper
+    Content,
+}
+
+impl UtilityClass for AppLayoutClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            AppLayoutClass::Body => "layout-body",
+            AppLayoutClass::Main => "layout-main",
+            AppLayoutClass::Content => "layout-content",
+        }
+    }
+}
+
+// ============================================================================
+// Feedback Component Classes (Phase 6)
+// ============================================================================
+
+/// Drawer component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DrawerClass {
+    /// `hi-drawer` - Main drawer class
+    Drawer,
+    /// `hi-drawer-mask` - Mask overlay
+    Mask,
+    /// `hi-drawer-right` - Right placement
+    Right,
+    /// `hi-drawer-left` - Left placement
+    Left,
+    /// `hi-drawer-top` - Top placement
+    Top,
+    /// `hi-drawer-bottom` - Bottom placement
+    Bottom,
+    /// `hi-drawer-header` - Header section
+    Header,
+    /// `hi-drawer-title` - Title text
+    Title,
+    /// `hi-drawer-close` - Close button
+    Close,
+    /// `hi-drawer-body` - Body content
+    Body,
+    /// `hi-drawer-footer` - Footer section
+    Footer,
+}
+
+impl UtilityClass for DrawerClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            DrawerClass::Drawer => "drawer",
+            DrawerClass::Mask => "drawer-mask",
+            DrawerClass::Right => "drawer-right",
+            DrawerClass::Left => "drawer-left",
+            DrawerClass::Top => "drawer-top",
+            DrawerClass::Bottom => "drawer-bottom",
+            DrawerClass::Header => "drawer-header",
+            DrawerClass::Title => "drawer-title",
+            DrawerClass::Close => "drawer-close",
+            DrawerClass::Body => "drawer-body",
+            DrawerClass::Footer => "drawer-footer",
+        }
+    }
+}
+
+/// Popover component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum PopoverClass {
+    /// `hi-popover` - Main popover class
+    Popover,
+    /// `hi-popover-title` - Title text
+    Title,
+    /// `hi-popover-content` - Content area
+    Content,
+}
+
+impl UtilityClass for PopoverClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            PopoverClass::Popover => "popover",
+            PopoverClass::Title => "popover-title",
+            PopoverClass::Content => "popover-content",
+        }
+    }
+}
+
+/// Progress component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ProgressClass {
+    /// `hi-progress-wrapper` - Progress wrapper
+    Wrapper,
+    /// `hi-progress` - Main progress class
+    Progress,
+    /// `hi-progress-linear` - Linear type
+    Linear,
+    /// `hi-progress-circular` - Circular type
+    Circular,
+    /// `hi-progress-normal` - Normal status
+    Normal,
+    /// `hi-progress-active` - Active status
+    Active,
+    /// `hi-progress-exception` - Exception status
+    Exception,
+    /// `hi-progress-success` - Success status
+    Success,
+    /// `hi-progress-info` - Info text
+    Info,
+    /// `hi-progress-circle` - Circle SVG
+    Circle,
+}
+
+impl UtilityClass for ProgressClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            ProgressClass::Wrapper => "progress-wrapper",
+            ProgressClass::Progress => "progress",
+            ProgressClass::Linear => "progress-linear",
+            ProgressClass::Circular => "progress-circular",
+            ProgressClass::Normal => "progress-normal",
+            ProgressClass::Active => "progress-active",
+            ProgressClass::Exception => "progress-exception",
+            ProgressClass::Success => "progress-success",
+            ProgressClass::Info => "progress-info",
+            ProgressClass::Circle => "progress-circle",
+        }
+    }
+}
+
+/// Skeleton component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SkeletonClass {
+    /// `hi-skeleton-wrapper` - Skeleton wrapper
+    Wrapper,
+    /// `hi-skeleton` - Base skeleton class
+    Skeleton,
+    /// `hi-skeleton-active` - Animation active
+    Active,
+    /// `hi-skeleton-text` - Text shape
+    Text,
+    /// `hi-skeleton-avatar` - Avatar shape
+    Avatar,
+    /// `hi-skeleton-image` - Image shape
+    Image,
+    /// `hi-skeleton-button` - Button shape
+    Button,
+    /// `hi-skeleton-input` - Input shape
+    Input,
+    /// `hi-skeleton-rect` - Rect shape
+    Rect,
+}
+
+impl UtilityClass for SkeletonClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            SkeletonClass::Wrapper => "skeleton-wrapper",
+            SkeletonClass::Skeleton => "skeleton",
+            SkeletonClass::Active => "skeleton-active",
+            SkeletonClass::Text => "skeleton-text",
+            SkeletonClass::Avatar => "skeleton-avatar",
+            SkeletonClass::Image => "skeleton-image",
+            SkeletonClass::Button => "skeleton-button",
+            SkeletonClass::Input => "skeleton-input",
+            SkeletonClass::Rect => "skeleton-rect",
+        }
+    }
+}
+
+/// Spin component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SpinClass {
+    /// `hi-spin` - Main spin class
+    Spin,
+    /// `hi-spin-sm` - Small size
+    Sm,
+    /// `hi-spin-md` - Medium size
+    Md,
+    /// `hi-spin-lg` - Large size
+    Lg,
+    /// `hi-spin-stopped` - Stopped state
+    Stopped,
+    /// `hi-spin-spinner` - Spinner element
+    Spinner,
+    /// `hi-spin-tip` - Tip text
+    Tip,
+}
+
+impl UtilityClass for SpinClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            SpinClass::Spin => "spin",
+            SpinClass::Sm => "spin-sm",
+            SpinClass::Md => "spin-md",
+            SpinClass::Lg => "spin-lg",
+            SpinClass::Stopped => "spin-stopped",
+            SpinClass::Spinner => "spin-spinner",
+            SpinClass::Tip => "spin-tip",
+        }
+    }
+}
+
+// ============================================================================
+// Navigation Component Classes (Phase 7)
+// ============================================================================
+
+/// Anchor component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AnchorClass {
+    /// `hi-anchor-wrapper` - Anchor wrapper
+    Wrapper,
+    /// `hi-anchor-link` - Anchor link
+    Link,
+    /// `hi-anchor-active` - Active state
+    Active,
+    /// `hi-anchor-left` - Left position
+    Left,
+    /// `hi-anchor-right` - Right position
+    Right,
+}
+
+impl UtilityClass for AnchorClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            AnchorClass::Wrapper => "anchor-wrapper",
+            AnchorClass::Link => "anchor-link",
+            AnchorClass::Active => "anchor-active",
+            AnchorClass::Left => "anchor-left",
+            AnchorClass::Right => "anchor-right",
+        }
+    }
+}
+
+/// Steps component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum StepsClass {
+    /// `hi-steps-wrapper` - Steps wrapper
+    Wrapper,
+    /// `hi-steps-horizontal` - Horizontal direction
+    Horizontal,
+    /// `hi-steps-vertical` - Vertical direction
+    Vertical,
+    /// `hi-step-item` - Step item
+    Item,
+    /// `hi-step-wait` - Wait status
+    Wait,
+    /// `hi-step-process` - Process status
+    Process,
+    /// `hi-step-finish` - Finish status
+    Finish,
+    /// `hi-step-error` - Error status
+    Error,
+    /// `hi-step-icon` - Icon container
+    Icon,
+    /// `hi-step-number` - Number indicator
+    Number,
+    /// `hi-step-content` - Content area
+    Content,
+    /// `hi-step-title` - Title text
+    Title,
+    /// `hi-step-description` - Description text
+    Description,
+}
+
+impl UtilityClass for StepsClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            StepsClass::Wrapper => "steps-wrapper",
+            StepsClass::Horizontal => "steps-horizontal",
+            StepsClass::Vertical => "steps-vertical",
+            StepsClass::Item => "step-item",
+            StepsClass::Wait => "step-wait",
+            StepsClass::Process => "step-process",
+            StepsClass::Finish => "step-finish",
+            StepsClass::Error => "step-error",
+            StepsClass::Icon => "step-icon",
+            StepsClass::Number => "step-number",
+            StepsClass::Content => "step-content",
+            StepsClass::Title => "step-title",
+            StepsClass::Description => "step-description",
         }
     }
 }

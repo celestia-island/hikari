@@ -132,11 +132,11 @@ pub fn AudioWaveform(props: AudioWaveformProps) -> Element {
 
             let source_url = src.clone();
 
-            let mut waveform_data_clone2 = waveform_data_clone1.clone();
-            let mut is_loaded_clone2 = is_loaded_clone1.clone();
+            let waveform_data_clone2 = waveform_data_clone1.clone();
+            let is_loaded_clone2 = is_loaded_clone1.clone();
 
             wasm_bindgen_futures::spawn_local(async move {
-                if let Some(win) = window() {
+                if let Some(_win) = window() {
                     if let Ok(audio_element) = HtmlAudioElement::new() {
                         audio_element.set_cross_origin(Some("anonymous"));
                         audio_element.set_src(&source_url);
@@ -147,13 +147,13 @@ pub fn AudioWaveform(props: AudioWaveformProps) -> Element {
                                 .unwrap();
                             let analyser = audio_context.create_analyser().unwrap();
 
-                            track.connect(&analyser);
-                            analyser.connect(&audio_context.destination().unwrap());
+                            let _ = track.connect_with_audio_node(&analyser);
+                            let _ = analyser.connect_with_audio_node(&audio_context.destination());
 
                             analyser.set_fft_size(512);
 
                             let buffer_length = analyser.frequency_bin_count();
-                            let mut data_array = vec![0.0f32; buffer_length as usize];
+                            let data_array = vec![0.0f32; buffer_length as usize];
 
                             let mut waveform_data_clone3 = waveform_data_clone2.clone();
                             let mut is_loaded_clone3 = is_loaded_clone2.clone();

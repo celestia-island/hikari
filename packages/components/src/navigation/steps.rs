@@ -2,7 +2,7 @@
 // Steps component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, StepsClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -101,15 +101,16 @@ pub struct StepsProps {
 /// ```
 #[component]
 pub fn Steps(props: StepsProps) -> Element {
+    let direction_class = match props.direction {
+        StepsDirection::Horizontal => StepsClass::Horizontal,
+        StepsDirection::Vertical => StepsClass::Vertical,
+    };
+
     let wrapper_classes = ClassesBuilder::new()
-        .add_raw("hi-steps-wrapper")
+        .add(StepsClass::Wrapper)
+        .add(direction_class)
         .add_raw(&props.class)
         .build();
-
-    let direction_class = match props.direction {
-        StepsDirection::Horizontal => "hi-steps-horizontal",
-        StepsDirection::Vertical => "hi-steps-vertical",
-    };
 
     let step_items: Vec<_> = props
         .steps
@@ -125,15 +126,15 @@ pub fn Steps(props: StepsProps) -> Element {
             };
 
             let status_class = match step_status {
-                StepStatus::Wait => "hi-step-wait",
-                StepStatus::Process => "hi-step-process",
-                StepStatus::Finish => "hi-step-finish",
-                StepStatus::Error => "hi-step-error",
+                StepStatus::Wait => StepsClass::Wait,
+                StepStatus::Process => StepsClass::Process,
+                StepStatus::Finish => StepsClass::Finish,
+                StepStatus::Error => StepsClass::Error,
             };
 
             let step_classes = ClassesBuilder::new()
-                .add_raw("hi-step-item")
-                .add_raw(status_class)
+                .add(StepsClass::Item)
+                .add(status_class)
                 .add_raw(&step.class)
                 .build();
 
@@ -147,7 +148,6 @@ pub fn Steps(props: StepsProps) -> Element {
         div {
             class: "{wrapper_classes}",
             style: "{props.style}",
-            class: "{direction_class}",
 
             for (index, step, step_classes, is_clickable, step_status) in step_items {
                 div {
@@ -161,15 +161,15 @@ pub fn Steps(props: StepsProps) -> Element {
 
                     // Step indicator
                     div {
-                        class: "hi-step-icon",
+                        class: "{StepsClass::Icon.as_class()}",
 
                         if step_status == StepStatus::Wait {
-                            span { class: "hi-step-number", "{index + 1}" }
+                            span { class: "{StepsClass::Number.as_class()}", "{index + 1}" }
                         } else if step_status == StepStatus::Process {
-                            span { class: "hi-step-number hi-step-number-process", "{index + 1}" }
+                            span { class: "{StepsClass::Number.as_class()}", "{index + 1}" }
                         } else if step_status == StepStatus::Finish {
                             svg {
-                                class: "hi-step-number hi-step-number-finish",
+                                class: "{StepsClass::Number.as_class()}",
                                 view_box: "0 0 24 24",
                                 fill: "none",
                                 stroke: "currentColor",
@@ -178,7 +178,7 @@ pub fn Steps(props: StepsProps) -> Element {
                             }
                         } else {
                             svg {
-                                class: "hi-step-number hi-step-number-error",
+                                class: "{StepsClass::Number.as_class()}",
                                 view_box: "0 0 24 24",
                                 fill: "none",
                                 stroke: "currentColor",
@@ -192,10 +192,10 @@ pub fn Steps(props: StepsProps) -> Element {
 
                     // Step content
                     div {
-                        class: "hi-step-content",
-                        div { class: "hi-step-title", "{step.title}" }
+                        class: "{StepsClass::Content.as_class()}",
+                        div { class: "{StepsClass::Title.as_class()}", "{step.title}" }
                         if let Some(ref desc) = step.description {
-                            div { class: "hi-step-description", "{desc}" }
+                            div { class: "{StepsClass::Description.as_class()}", "{desc}" }
                         }
                     }
                 }

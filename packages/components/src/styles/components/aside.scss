@@ -10,10 +10,9 @@
 .hi-sidebar,
 .hi-sidebar-item,
 .hi-sidebar-link {
-  // Ensure SVG icons inherit theme colors
+  // SVG icons inherit theme color via CSS color property
   svg {
-    fill: currentColor;
-    stroke: currentColor;
+    color: inherit;
   }
 }
 
@@ -393,12 +392,11 @@
     height: 1.125rem;
     color: var(--hi-color-text-secondary);
 
-    // Ensure SVG fill follows theme
+    // Ensure SVG follows theme color
     svg {
       width: 100%;
       height: 100%;
-      fill: currentColor;
-      stroke: currentColor;
+      color: inherit;
     }
   }
 

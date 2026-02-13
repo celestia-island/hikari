@@ -96,7 +96,9 @@ impl StyleRegistry {
     pub fn register_basic_components(&mut self) {
         use crate::basic::{
             ArrowComponent, BackgroundComponent, BadgeComponent, ButtonComponent, CardComponent,
-            DividerComponent, InputComponent,
+            CheckboxComponent, DatePickerComponent, DividerComponent, FileUploadComponent,
+            FormFieldComponent, IconButtonComponent, InputComponent, RadioGroupComponent,
+            SelectComponent, SliderComponent, SwitchComponent, TextareaComponent,
         };
         ArrowComponent::register(self);
         BackgroundComponent::register(self);
@@ -105,6 +107,16 @@ impl StyleRegistry {
         CardComponent::register(self);
         BadgeComponent::register(self);
         DividerComponent::register(self);
+        CheckboxComponent::register(self);
+        RadioGroupComponent::register(self);
+        SelectComponent::register(self);
+        SwitchComponent::register(self);
+        SliderComponent::register(self);
+        TextareaComponent::register(self);
+        IconButtonComponent::register(self);
+        FileUploadComponent::register(self);
+        FormFieldComponent::register(self);
+        DatePickerComponent::register(self);
     }
 
     /// No-op if basic feature is disabled
@@ -119,13 +131,14 @@ impl StyleRegistry {
     #[cfg(feature = "data")]
     pub fn register_data_components(&mut self) {
         use crate::data::{
-            CollapseComponent, DragComponent, FilterComponent, PaginationComponent,
-            SelectionComponent, SortComponent, TableComponent, TreeComponent,
+            CollapseComponent, DragComponent, FilterComponent, PaginationButtonComponent,
+            PaginationComponent, SelectionComponent, SortComponent, TableComponent, TreeComponent,
             VirtualScrollComponent,
         };
         TableComponent::register(self);
         TreeComponent::register(self);
         PaginationComponent::register(self);
+        PaginationButtonComponent::register(self);
         VirtualScrollComponent::register(self);
         CollapseComponent::register(self);
         DragComponent::register(self);
@@ -146,11 +159,21 @@ impl StyleRegistry {
     #[cfg(feature = "feedback")]
     pub fn register_feedback_components(&mut self) {
         use crate::feedback::{
-            alert::AlertComponent, toast::ToastComponent, tooltip::TooltipComponent,
+            alert::AlertComponent, drawer::DrawerComponent, dropdown::DropdownComponent,
+            modal::ModalComponent, popover::PopoverComponent, progress::ProgressComponent,
+            skeleton::SkeletonComponent, spin::SpinComponent, toast::ToastComponent,
+            tooltip::TooltipComponent,
         };
         AlertComponent::register(self);
         ToastComponent::register(self);
         TooltipComponent::register(self);
+        ModalComponent::register(self);
+        DrawerComponent::register(self);
+        DropdownComponent::register(self);
+        PopoverComponent::register(self);
+        ProgressComponent::register(self);
+        SkeletonComponent::register(self);
+        SpinComponent::register(self);
     }
 
     /// No-op if feedback feature is disabled
@@ -165,17 +188,62 @@ impl StyleRegistry {
     #[cfg(feature = "navigation")]
     pub fn register_navigation_components(&mut self) {
         use crate::navigation::{
-            BreadcrumbComponent, MenuComponent, SidebarComponent, TabsComponent,
+            BreadcrumbComponent, MenuComponent, SidebarComponent, StepsComponent, TabsComponent,
         };
         MenuComponent::register(self);
         TabsComponent::register(self);
         BreadcrumbComponent::register(self);
         SidebarComponent::register(self);
+        StepsComponent::register(self);
     }
 
     /// No-op if navigation feature is disabled
     #[cfg(not(feature = "navigation"))]
     pub fn register_navigation_components(&mut self) {
+        // No-op
+    }
+
+    /// Batch register: display components
+    ///
+    /// Registers all display components.
+    #[cfg(feature = "display")]
+    pub fn register_display_components(&mut self) {
+        use crate::display::{
+            CommentComponent, DescriptionListComponent, EmptyComponent, QRCodeComponent,
+            TagComponent,
+        };
+        TagComponent::register(self);
+        EmptyComponent::register(self);
+        CommentComponent::register(self);
+        DescriptionListComponent::register(self);
+        QRCodeComponent::register(self);
+    }
+
+    /// No-op if display feature is disabled
+    #[cfg(not(feature = "display"))]
+    pub fn register_display_components(&mut self) {
+        // No-op
+    }
+
+    /// Batch register: entry components
+    ///
+    /// Registers all advanced entry components.
+    #[cfg(feature = "entry")]
+    pub fn register_entry_components(&mut self) {
+        use crate::entry::{
+            AutoCompleteComponent, CascaderComponent, NumberInputComponent, SearchComponent,
+            TransferComponent,
+        };
+        NumberInputComponent::register(self);
+        SearchComponent::register(self);
+        AutoCompleteComponent::register(self);
+        CascaderComponent::register(self);
+        TransferComponent::register(self);
+    }
+
+    /// No-op if entry feature is disabled
+    #[cfg(not(feature = "entry"))]
+    pub fn register_entry_components(&mut self) {
         // No-op
     }
 
@@ -194,6 +262,12 @@ impl StyleRegistry {
 
         #[cfg(feature = "navigation")]
         self.register_navigation_components();
+
+        #[cfg(feature = "display")]
+        self.register_display_components();
+
+        #[cfg(feature = "entry")]
+        self.register_entry_components();
     }
 
     /// Batch register: all components
@@ -204,6 +278,8 @@ impl StyleRegistry {
         self.register_data_components();
         self.register_feedback_components();
         self.register_navigation_components();
+        self.register_display_components();
+        self.register_entry_components();
     }
 }
 

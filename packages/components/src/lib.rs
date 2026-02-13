@@ -204,6 +204,14 @@ pub use data::*;
 ))]
 pub mod entry;
 
+#[cfg(any(
+    feature = "production",
+    feature = "code_highlight",
+    feature = "video_player",
+    feature = "rich_text_editor"
+))]
+pub mod production;
+
 // Re-export entry components when entry feature is enabled
 #[cfg(any(
     feature = "entry",
@@ -229,6 +237,11 @@ pub use feedback::*;
 #[cfg(feature = "display")]
 #[allow(unused_imports)]
 pub use display::*;
+
+// Re-export production components when production feature is enabled
+#[cfg(feature = "production")]
+#[allow(unused_imports)]
+pub use production::*;
 
 pub use icons::{Icon, MdiIcon};
 pub use styled::{StyleRegistry, StyledComponent};

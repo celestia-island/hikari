@@ -2,7 +2,7 @@
 // Space component for adding spacing
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, SpaceClass};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum SpaceDirection {
@@ -75,14 +75,16 @@ impl Default for SpaceProps {
 /// ```
 #[component]
 pub fn Space(props: SpaceProps) -> Element {
+    let direction_class = match props.direction {
+        SpaceDirection::Horizontal => SpaceClass::Horizontal,
+        SpaceDirection::Vertical => SpaceClass::Vertical,
+        SpaceDirection::Both => SpaceClass::Vertical, // Both uses vertical styling
+    };
+
     let space_classes = ClassesBuilder::new()
-        .add_raw("hi-space")
-        .add_raw(match props.direction {
-            SpaceDirection::Horizontal => "hi-space-horizontal",
-            SpaceDirection::Vertical => "hi-space-vertical",
-            SpaceDirection::Both => "hi-space-both",
-        })
-        .add_raw(if props.wrap { "hi-space-wrap" } else { "" })
+        .add(SpaceClass::Space)
+        .add(direction_class)
+        .add_if(SpaceClass::Wrap, || props.wrap)
         .add_raw(&props.class)
         .build();
 

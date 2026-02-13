@@ -170,7 +170,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         glow: true,
                         glow_blur: GlowBlur::Medium,
                         glow_color: GlowColor::Ghost,
-                        glow_intensity: GlowIntensity::Subtle,
+                        glow_intensity: GlowIntensity::Thirty,
                     }
 
                     IconButton {
@@ -304,7 +304,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 Glow {
                     blur: GlowBlur::Medium,
                     color: GlowColor::Primary,
-                    intensity: GlowIntensity::Subtle,
+                    intensity: GlowIntensity::Thirty,
                     button {
                         class: "{prev_classes}",
                         disabled: current_page() <= 1,
@@ -322,7 +322,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                             Glow {
                                 blur: GlowBlur::Medium,
                                 color: GlowColor::Primary,
-                                intensity: GlowIntensity::Subtle,
+                                intensity: GlowIntensity::Thirty,
                                 button {
                                     class: ClassesBuilder::new()
                                         .add(PaginationClass::PaginationItem)
@@ -338,7 +338,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                     Glow {
                         blur: GlowBlur::Medium,
                         color: GlowColor::Primary,
-                        intensity: GlowIntensity::Subtle,
+                        intensity: GlowIntensity::Thirty,
                         button {
                             class: ClassesBuilder::new()
                                 .add(PaginationClass::PaginationItem)
@@ -362,7 +362,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                 Glow {
                                     blur: GlowBlur::Medium,
                                     color: GlowColor::Primary,
-                                    intensity: GlowIntensity::Subtle,
+                                    intensity: GlowIntensity::Thirty,
                                     button {
                                         class: ClassesBuilder::new()
                                             .add(PaginationClass::PaginationItem)
@@ -391,7 +391,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         Glow {
                             blur: GlowBlur::Medium,
                             color: GlowColor::Primary,
-                            intensity: GlowIntensity::Subtle,
+                            intensity: GlowIntensity::Thirty,
                             button {
                                 class: ClassesBuilder::new()
                                     .add(PaginationClass::PaginationItem)
@@ -416,7 +416,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                 Glow {
                                     blur: GlowBlur::Medium,
                                     color: GlowColor::Primary,
-                                    intensity: GlowIntensity::Subtle,
+                                    intensity: GlowIntensity::Thirty,
                                     button {
                                         class: ClassesBuilder::new()
                                             .add(PaginationClass::PaginationItem)
@@ -438,7 +438,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         Glow {
                             blur: GlowBlur::Medium,
                             color: GlowColor::Primary,
-                            intensity: GlowIntensity::Subtle,
+                            intensity: GlowIntensity::Thirty,
                         button {
                             class: ClassesBuilder::new()
                                 .add(PaginationClass::PaginationItem)
@@ -455,7 +455,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 Glow {
                     blur: GlowBlur::Medium,
                     color: GlowColor::Primary,
-                    intensity: GlowIntensity::Subtle,
+                    intensity: GlowIntensity::Thirty,
                     button {
                         class: "{next_classes}",
                         disabled: current_page() >= total_pages,

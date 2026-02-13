@@ -288,8 +288,10 @@ fn use_animated_portal_entry(
     Callback<MouseEvent>,
     Memo<(String, String)>,
 ) {
-    let _context = use_context::<PortalContext>();
-    let _id_for_close = id.clone();
+    #[cfg_attr(not(target_arch = "wasm32"), allow(unused_variables))]
+    let context = use_context::<PortalContext>();
+    #[cfg_attr(not(target_arch = "wasm32"), allow(unused_variables))]
+    let id_for_close = id.clone();
     let internal_animation_state = use_signal(|| initial_state);
 
     let close_callback = {

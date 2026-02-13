@@ -2,7 +2,7 @@
 // Skeleton component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, SkeletonClass};
 
 use crate::styled::StyledComponent;
 
@@ -79,15 +79,9 @@ pub enum SkeletonShape {
 #[component]
 pub fn Skeleton(props: SkeletonProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
-        .add_raw("hi-skeleton-wrapper")
+        .add(SkeletonClass::Wrapper)
         .add_raw(&props.class)
         .build();
-
-    let animation_class = if props.active {
-        "hi-skeleton-active"
-    } else {
-        ""
-    };
 
     let avatar_style = if props.shape == SkeletonShape::Avatar {
         let size = props.avatar_size.unwrap_or(40);
@@ -103,6 +97,15 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
         String::new()
     };
 
+    let shape_class = match props.shape {
+        SkeletonShape::Text => SkeletonClass::Text,
+        SkeletonShape::Avatar => SkeletonClass::Avatar,
+        SkeletonShape::Image => SkeletonClass::Image,
+        SkeletonShape::Button => SkeletonClass::Button,
+        SkeletonShape::Input => SkeletonClass::Input,
+        SkeletonShape::Rect => SkeletonClass::Rect,
+    };
+
     rsx! {
         div {
             class: "{wrapper_classes}",
@@ -112,36 +115,54 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
                 if props.shape == SkeletonShape::Text {
                     for _ in 0..props.rows {
                         div {
-                            class: "hi-skeleton hi-skeleton-text",
-                            class: "{animation_class}",
+                            class: ClassesBuilder::new()
+                                .add(SkeletonClass::Skeleton)
+                                .add(shape_class)
+                                .add_if(SkeletonClass::Active, || props.active)
+                                .build(),
                         }
                     }
                 } else if props.shape == SkeletonShape::Avatar {
                     div {
-                        class: "hi-skeleton hi-skeleton-avatar",
-                        class: "{animation_class}",
+                        class: ClassesBuilder::new()
+                            .add(SkeletonClass::Skeleton)
+                            .add(shape_class)
+                            .add_if(SkeletonClass::Active, || props.active)
+                            .build(),
                         style: "{avatar_style}",
                     }
                 } else if props.shape == SkeletonShape::Image {
                     div {
-                        class: "hi-skeleton hi-skeleton-image",
-                        class: "{animation_class}",
+                        class: ClassesBuilder::new()
+                            .add(SkeletonClass::Skeleton)
+                            .add(shape_class)
+                            .add_if(SkeletonClass::Active, || props.active)
+                            .build(),
                         style: "{image_style}",
                     }
                 } else if props.shape == SkeletonShape::Button {
                     div {
-                        class: "hi-skeleton hi-skeleton-button",
-                        class: "{animation_class}",
+                        class: ClassesBuilder::new()
+                            .add(SkeletonClass::Skeleton)
+                            .add(shape_class)
+                            .add_if(SkeletonClass::Active, || props.active)
+                            .build(),
                     }
                 } else if props.shape == SkeletonShape::Input {
                     div {
-                        class: "hi-skeleton hi-skeleton-input",
-                        class: "{animation_class}",
+                        class: ClassesBuilder::new()
+                            .add(SkeletonClass::Skeleton)
+                            .add(shape_class)
+                            .add_if(SkeletonClass::Active, || props.active)
+                            .build(),
                     }
                 } else if props.shape == SkeletonShape::Rect {
                     div {
-                        class: "hi-skeleton hi-skeleton-rect",
-                        class: "{animation_class}",
+                        class: ClassesBuilder::new()
+                            .add(SkeletonClass::Skeleton)
+                            .add(shape_class)
+                            .add_if(SkeletonClass::Active, || props.active)
+                            .build(),
                     }
                 }
             }

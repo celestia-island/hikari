@@ -2,7 +2,7 @@
 // Slider component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, SliderClass};
 
 use crate::styled::StyledComponent;
 
@@ -74,19 +74,15 @@ pub struct SliderProps {
 #[component]
 pub fn Slider(props: SliderProps) -> Element {
     let size_class = match props.size {
-        SliderSize::Small => "hi-slider-sm",
-        SliderSize::Medium => "hi-slider-md",
-        SliderSize::Large => "hi-slider-lg",
+        SliderSize::Small => SliderClass::Sm,
+        SliderSize::Medium => SliderClass::Md,
+        SliderSize::Large => SliderClass::Lg,
     };
 
     let slider_classes = ClassesBuilder::new()
-        .add_raw("hi-slider")
-        .add_raw(size_class)
-        .add_raw(if props.disabled {
-            "hi-slider-disabled"
-        } else {
-            ""
-        })
+        .add(SliderClass::Slider)
+        .add(size_class)
+        .add_if(SliderClass::Disabled, || props.disabled)
         .add_raw(&props.class)
         .build();
 

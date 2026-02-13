@@ -189,7 +189,7 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
             Glow {
                 blur: GlowBlur::Light,
                 color: GlowColor::Primary,
-                intensity: GlowIntensity::Subtle,
+                intensity: GlowIntensity::Thirty,
                 div {
                     class: "hi-sidebar-section-header",
                     onclick: move |_| { is_expanded.toggle(); },
@@ -284,7 +284,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
             Glow {
                 blur: GlowBlur::Light,
                 color: GlowColor::Primary,
-                intensity: GlowIntensity::Subtle,
+                intensity: GlowIntensity::Thirty,
                 div {
                     class: "hi-sidebar-item-header",
                     "data-has-children": "{has_items}",

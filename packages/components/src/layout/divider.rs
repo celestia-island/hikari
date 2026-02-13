@@ -2,7 +2,7 @@
 // Divider component for visual separation
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, DividerClass};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DividerOrientation {
@@ -61,22 +61,22 @@ pub struct DividerProps {
 /// ```
 #[component]
 pub fn Divider(props: DividerProps) -> Element {
+    let orientation_class = match props.orientation {
+        DividerOrientation::Horizontal => DividerClass::Horizontal,
+        DividerOrientation::Vertical => DividerClass::Vertical,
+    };
+
+    let type_class = match props.divider_type {
+        DividerType::Solid => DividerClass::Solid,
+        DividerType::Dashed => DividerClass::Dashed,
+        DividerType::Dotted => DividerClass::Dotted,
+    };
+
     let divider_classes = ClassesBuilder::new()
-        .add_raw("hi-divider")
-        .add_raw(match props.orientation {
-            DividerOrientation::Horizontal => "hi-divider-horizontal",
-            DividerOrientation::Vertical => "hi-divider-vertical",
-        })
-        .add_raw(match props.divider_type {
-            DividerType::Solid => "hi-divider-solid",
-            DividerType::Dashed => "hi-divider-dashed",
-            DividerType::Dotted => "hi-divider-dotted",
-        })
-        .add_raw(if props.text.is_some() {
-            "hi-divider-with-text"
-        } else {
-            ""
-        })
+        .add(DividerClass::Divider)
+        .add(orientation_class)
+        .add(type_class)
+        .add_if(DividerClass::WithText, || props.text.is_some())
         .add_raw(&props.class)
         .build();
 

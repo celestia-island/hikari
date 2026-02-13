@@ -28,73 +28,115 @@ pub fn render_component(component_type: ComponentType) -> Element {
             match (layer.as_str(), name.as_str(), component_id.as_deref()) {
                 // Layer 1 Basic components with sub-components
                 ("layer1", "basic", Some("button")) => {
-                    rsx! { crate::pages::components::layer1::basic_components::BasicButton {} }
+                    rsx! {
+                        crate::pages::components::layer1::basic_components::BasicButton {}
+                    }
                 }
                 ("layer1", "basic", Some("input")) => {
-                    rsx! { crate::pages::components::layer1::basic_components::BasicInput {} }
+                    rsx! {
+                        crate::pages::components::layer1::basic_components::BasicInput {}
+                    }
                 }
                 ("layer1", "basic", Some("card")) => {
-                    rsx! { crate::pages::components::layer1::basic_components::BasicCard {} }
+                    rsx! {
+                        crate::pages::components::layer1::basic_components::BasicCard {}
+                    }
                 }
                 ("layer1", "basic", Some("badge")) => {
-                    rsx! { crate::pages::components::layer1::basic_components::BasicBadge {} }
+                    rsx! {
+                        crate::pages::components::layer1::basic_components::BasicBadge {}
+                    }
                 }
                 ("layer1", "basic", Some("select")) => {
-                    rsx! { crate::pages::components::layer1::basic_components::BasicSelect {} }
+                    rsx! {
+                        crate::pages::components::layer1::basic_components::BasicSelect {}
+                    }
                 }
                 ("layer1", "basic", Some("checkbox")) => {
-                    rsx! { crate::pages::components::layer1::basic_components::BasicCheckbox {} }
+                    rsx! {
+                        crate::pages::components::layer1::basic_components::BasicCheckbox {}
+                    }
                 }
                 ("layer1", "basic", Some("radio")) => {
-                    rsx! { crate::pages::components::layer1::basic_components::BasicRadio {} }
+                    rsx! {
+                        crate::pages::components::layer1::basic_components::BasicRadio {}
+                    }
+                }
+                ("layer1", "basic", Some("divider")) => {
+                    rsx! {
+                        crate::pages::components::layer1::basic_components::BasicDivider {}
+                    }
                 }
 
                 // Layer 1 components without sub-components (fallback to index pages)
                 ("layer1", "basic", None) => {
-                    rsx! { crate::pages::components::layer1::Layer1Basic {} }
+                    rsx! {
+                        crate::pages::components::layer1::Layer1Basic {}
+                    }
                 }
                 ("layer1", "display", _) => {
-                    rsx! { crate::pages::components::layer1::Layer1Display {} }
+                    rsx! {
+                        crate::pages::components::layer1::Layer1Display {}
+                    }
                 }
                 ("layer1", "feedback", _) => {
-                    rsx! { crate::pages::components::layer1::Layer1Feedback {} }
+                    rsx! {
+                        crate::pages::components::layer1::Layer1Feedback {}
+                    }
                 }
                 ("layer1", "form", _) => {
-                    rsx! { crate::pages::components::layer1::Layer1Form {} }
+                    rsx! {
+                        crate::pages::components::layer1::Layer1Form {}
+                    }
                 }
                 ("layer1", "switch", _) => {
-                    rsx! { crate::pages::components::layer1::Layer1Switch {} }
+                    rsx! {
+                        crate::pages::components::layer1::Layer1Switch {}
+                    }
                 }
 
                 // Layer 2 Components
                 ("layer2", "navigation", _) => {
-                    rsx! { crate::pages::components::layer2::Layer2Navigation {} }
+                    rsx! {
+                        crate::pages::components::layer2::Layer2Navigation {}
+                    }
                 }
                 ("layer2", "data", _) => {
-                    rsx! { crate::pages::components::layer2::Layer2Data {} }
+                    rsx! {
+                        crate::pages::components::layer2::Layer2Data {}
+                    }
                 }
                 ("layer2", "form", _) => {
-                    rsx! { crate::pages::components::layer2::Layer2Form {} }
+                    rsx! {
+                        crate::pages::components::layer2::Layer2Form {}
+                    }
                 }
                 ("layer2", "feedback", _) => {
-                    rsx! { crate::pages::components::layer2::Layer2Feedback {} }
+                    rsx! {
+                        crate::pages::components::layer2::Layer2Feedback {}
+                    }
                 }
 
                 // Layer 3 Components
                 ("layer3", "media", _) => {
-                    rsx! { crate::pages::components::layer3::Layer3Media {} }
+                    rsx! {
+                        crate::pages::components::layer3::Layer3Media {}
+                    }
                 }
                 ("layer3", "editor", _) => {
-                    rsx! { crate::pages::components::layer3::Layer3Editor {} }
+                    rsx! {
+                        crate::pages::components::layer3::Layer3Editor {}
+                    }
                 }
                 ("layer3", "visualization", _) => {
-                    rsx! { crate::pages::components::layer3::Layer3Visualization {} }
+                    rsx! {
+                        crate::pages::components::layer3::Layer3Visualization {}
+                    }
                 }
 
                 _ => {
                     rsx! {
-                        div {
-                            class: "component-error",
+                        div { class: "component-error",
                             h3 { "Component Not Found" }
                             p { "Unknown component: {component_type:?}" }
                         }
@@ -107,19 +149,24 @@ pub fn render_component(component_type: ComponentType) -> Element {
         ComponentType::Demo(ref category, ref name, _) => {
             match (category.as_str(), name.as_str()) {
                 ("layer1", "form_demo") => {
-                    rsx! { crate::pages::demos::layer1::FormDemo {} }
+                    rsx! {
+                        crate::pages::demos::layer1::FormDemo {}
+                    }
                 }
                 ("layer1", "auth_demo") => {
-                    rsx! { div { class: "demo-placeholder", "Auth Demo - Coming Soon" } }
+                    rsx! {
+                        div { class: "demo-placeholder", "Auth Demo - Coming Soon" }
+                    }
                 }
                 ("layer1", "gallery_demo") => {
-                    rsx! { div { class: "demo-placeholder", "Gallery Demo - Coming Soon" } }
+                    rsx! {
+                        div { class: "demo-placeholder", "Gallery Demo - Coming Soon" }
+                    }
                 }
 
                 _ => {
                     rsx! {
-                        div {
-                            class: "component-error",
+                        div { class: "component-error",
                             h3 { "Component Not Found" }
                             p { "Unknown component: {component_type:?}" }
                         }
@@ -131,12 +178,8 @@ pub fn render_component(component_type: ComponentType) -> Element {
         // Plain code blocks (not component references)
         ComponentType::Code(content) => {
             rsx! {
-                pre {
-                    class: "hi-code-block",
-                    code {
-                        class: "hi-code-content",
-                        "{content}"
-                    }
+                pre { class: "hi-code-block",
+                    code { class: "hi-code-content", "{content}" }
                 }
             }
         }

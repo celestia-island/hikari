@@ -2,7 +2,7 @@
 // DatePicker component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, DatePickerClass};
 
 use crate::styled::StyledComponent;
 
@@ -62,11 +62,11 @@ pub struct DatePickerProps {
 #[component]
 pub fn DatePicker(props: DatePickerProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
-        .add_raw("hi-date-picker-wrapper")
+        .add(DatePickerClass::DatePickerWrapper)
         .add_raw(&props.class)
         .build();
 
-    let input_classes = ClassesBuilder::new().add_raw("hi-date-picker").build();
+    let input_classes = ClassesBuilder::new().add(DatePickerClass::DatePicker).build();
 
     let disabled_class = if props.disabled {
         "hi-date-picker-disabled"

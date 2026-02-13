@@ -2,7 +2,7 @@
 // AutoComplete component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{AutoCompleteClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -193,16 +193,18 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
     };
 
     let input_classes = ClassesBuilder::new()
-        .add_raw("hi-autocomplete-input")
+        .add(AutoCompleteClass::Input)
         .build();
 
     let is_open_value = *is_open.read();
     let focused_index_value = *focused_index.read();
-    let options_vec = filtered_options.read().clone();
+    let options_arr = filtered_options.read().clone();
+
+    let wrapper_class = AutoCompleteClass::Wrapper.as_class();
 
     rsx! {
         div {
-            class: "hi-autocomplete-wrapper",
+            class: "{wrapper_class}",
             style: "position: relative; {props.style}",
 
             input {
@@ -219,31 +221,34 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
 
             if props.allow_clear && !props.value.is_empty() && !props.disabled {
                 button {
-                    class: "hi-autocomplete-clear",
+                    class: "{AutoCompleteClass::Clear.as_class()}",
                     onclick: handle_clear,
                     type: "button",
                     "×"
                 }
             }
 
-            if is_open_value && !options_vec.is_empty() {
+            if is_open_value && !options_arr.is_empty() {
                 div {
-                    class: "hi-autocomplete-dropdown hi-autocomplete-show {props.class}",
+                    class: ClassesBuilder::new()
+                        .add(AutoCompleteClass::Dropdown)
+                        .add(AutoCompleteClass::Show)
+                        .add_raw(&props.class)
+                        .build(),
 
-                    for index in 0..options_vec.len() {
+                    for index in 0..options_arr.len() {
                         div {
-                            class: if index == focused_index_value {
-                                "hi-autocomplete-option hi-autocomplete-option-focused"
-                            } else {
-                                "hi-autocomplete-option"
-                            },
+                            class: ClassesBuilder::new()
+                                .add(AutoCompleteClass::Option)
+                                .add_if(AutoCompleteClass::OptionFocused, || index == focused_index_value)
+                                .build(),
                             onclick: move |_| {
                                 let options = filtered_options.read();
                                 if index < options.len() {
                                     handle_option_click(options[index].clone())
                                 }
                             },
-                            "{options_vec[index]}"
+                            "{options_arr[index]}"
                         }
                     }
                 }

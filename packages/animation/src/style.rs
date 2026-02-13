@@ -636,19 +636,14 @@ impl StyleStringBuilder {
 
     /// Add a CSS property
     pub fn add(mut self, property: CssProperty, value: &str) -> Self {
-        self.0.push(StyleEntry::Known(
-            property,
-            format!("{}:{}", property.as_str(), value),
-        ));
+        self.0.push(StyleEntry::Known(property, value.to_string()));
         self
     }
 
     /// Add a CSS property with pixel value
     pub fn add_px(mut self, property: CssProperty, pixels: u32) -> Self {
-        self.0.push(StyleEntry::Known(
-            property,
-            format!("{}:{}px", property.as_str(), pixels),
-        ));
+        self.0
+            .push(StyleEntry::Known(property, format!("{}px", pixels)));
         self
     }
 
@@ -669,10 +664,8 @@ impl StyleStringBuilder {
     /// // Returns: "--glow-x:100px;--glow-y:200px"
     /// ```
     pub fn add_custom(mut self, property: &str, value: &str) -> Self {
-        self.0.push(StyleEntry::Custom(
-            property.to_string(),
-            format!("{}:{}", property, value),
-        ));
+        self.0
+            .push(StyleEntry::Custom(property.to_string(), value.to_string()));
         self
     }
 

@@ -143,6 +143,19 @@ impl ClassesBuilder {
         self
     }
 
+    /// Conditionally add a raw class string based on a boolean condition
+    ///
+    /// # Arguments
+    ///
+    /// * `class` - The class to add (raw string without hi- prefix)
+    /// * `condition` - A closure that returns true if the class should be added
+    pub fn add_if_raw(mut self, class: &str, condition: impl Fn() -> bool) -> Self {
+        if condition() {
+            self.classes.push(class.to_string());
+        }
+        self
+    }
+
     /// Build the final class string
     pub fn build(self) -> String {
         self.classes.join(" ")
@@ -167,6 +180,55 @@ impl ClassesBuilder {
 /// ```
 pub fn build_classes(classes: &[impl UtilityClass]) -> String {
     ClassesBuilder::new().add_all(classes).build()
+}
+
+/// Helper: Create flex center classes (flex + justify-center + items-center)
+///
+/// Common pattern for centering content
+pub fn flex_center() -> String {
+    use crate::classes::{Display, JustifyContent, AlignItems};
+    ClassesBuilder::new()
+        .add(Display::Flex)
+        .add(JustifyContent::Center)
+        .add(AlignItems::Center)
+        .build()
+}
+
+/// Helper: Create flex column center classes
+///
+/// Common pattern for vertical centering
+pub fn flex_col_center() -> String {
+    use crate::classes::{Display, FlexDirection, JustifyContent, AlignItems};
+    ClassesBuilder::new()
+        .add(Display::Flex)
+        .add(FlexDirection::Column)
+        .add(JustifyContent::Center)
+        .add(AlignItems::Center)
+        .build()
+}
+
+/// Helper: Create card base classes
+///
+/// Common pattern for card styling
+pub fn card_base() -> String {
+    use crate::classes::{BgColor, BorderRadius, Padding};
+    ClassesBuilder::new()
+        .add(BgColor::Surface)
+        .add(BorderRadius::Rounded)
+        .add(Padding::P4)
+        .build()
+}
+
+/// Helper: Create button base classes
+///
+/// Common pattern for button styling
+pub fn button_base() -> String {
+    use crate::classes::{BorderRadius, PaddingX, Cursor};
+    ClassesBuilder::new()
+        .add(BorderRadius::Sm)
+        .add(PaddingX::Px2)
+        .add(Cursor::Pointer)
+        .build()
 }
 
 #[cfg(test)]

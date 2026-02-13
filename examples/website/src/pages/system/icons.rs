@@ -3,9 +3,22 @@
 
 use dioxus::prelude::*;
 
-use crate::{app::Route, components::{CodeBlock, Layout}};
+use crate::{
+    app::Route,
+    components::{CodeBlock, Layout},
+};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{{ BgColor as Bg, BorderRadius as Radius, ClassesBuilder as Classes, Display as Disp, FlexDirection as Flex, FontSize as FontSz, FontWeight as FWeight, Gap as Gp, MarginBottom as MBot, Padding as Pdg, TextColor as TColor, }, { BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor, }};
+use _palette::classes::{
+    {
+        BgColor as Bg, BorderRadius as Radius, ClassesBuilder as Classes, Display as Disp,
+        FlexDirection as Flex, FontSize as FontSz, FontWeight as FWeight, Gap as Gp,
+        MarginBottom as MBot, Padding as Pdg, TextColor as TColor,
+    },
+    {
+        BgColor, BorderRadius, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap,
+        MarginBottom, Padding, TextColor,
+    },
+};
 
 /// Icons showcase page
 #[allow(non_snake_case)]
@@ -98,11 +111,11 @@ pub fn SystemIcons() -> Element {
                                 "Search, settings, user actions"
                             }
                             div { class: ClassesBuilder::new().add(Display::Grid).add(Gap::Gap4).build(),
-                                Icon { icon: MdiIcon::Search, size: 32 }
+                                Icon { icon: MdiIcon::Magnify, size: 32 }
                                 Icon { icon: MdiIcon::Cog, size: 32 }
                                 Icon { icon: MdiIcon::Bell, size: 32 }
                                 Icon { icon: MdiIcon::Check, size: 32 }
-                                Icon { icon: MdiIcon::X, size: 32 }
+                                Icon { icon: MdiIcon::Close, size: 32 }
                             }
                         }
 
@@ -121,10 +134,10 @@ pub fn SystemIcons() -> Element {
                                 "Success, warning, error indicators"
                             }
                             div { class: ClassesBuilder::new().add(Display::Grid).add(Gap::Gap4).build(),
-                                Icon { icon: MdiIcon::CheckCircle, size: 32, class: "text-green-500" }
+                                Icon { icon: MdiIcon::Check, size: 32, class: "text-green-500" }
                                 Icon { icon: MdiIcon::AlertTriangle, size: 32, class: "text-yellow-500" }
-                                Icon { icon: MdiIcon::AlertCircle, size: 32, class: "text-red-500" }
-                                Icon { icon: MdiIcon::Info, size: 32, class: "text-blue-500" }
+                                Icon { icon: MdiIcon::Alert, size: 32, class: "text-red-500" }
+                                Icon { icon: MdiIcon::Information, size: 32, class: "text-blue-500" }
                             }
                         }
 
@@ -147,7 +160,7 @@ pub fn SystemIcons() -> Element {
                                 Icon { icon: MdiIcon::Pause, size: 32 }
                                 Icon { icon: MdiIcon::VolumeHigh, size: 32 }
                                 Icon { icon: MdiIcon::VolumeMute, size: 32 }
-                                Icon { icon: MdiIcon::Maximize, size: 32 }
+                                Icon { icon: MdiIcon::Fullscreen, size: 32 }
                             }
                         }
 
@@ -168,9 +181,9 @@ pub fn SystemIcons() -> Element {
                             div { class: ClassesBuilder::new().add(Display::Grid).add(Gap::Gap4).build(),
                                 Icon { icon: MdiIcon::Table, size: 32 }
                                 Icon { icon: MdiIcon::Graph, size: 32 }
-                                Icon { icon: MdiIcon::Database, size: 32 }
-                                Icon { icon: MdiIcon::SortAscending, size: 32 }
-                                Icon { Icon { icon: MdiIcon::Filter, size: 32 } }
+                                Icon { icon: MdiIcon::Table, size: 32 }
+                                Icon { icon: MdiIcon::ArrowUp, size: 32 }
+                                Icon { icon: MdiIcon::Menu, size: 32 }
                             }
                         }
                     }
@@ -197,7 +210,12 @@ pub fn SystemIcons() -> Element {
                             }
                             CodeBlock {
                                 language: "rust".to_string(),
-                                code: "use hikari_icons::{Icon, MdiIcon};\n\nrsx! {\n    Icon { icon: MdiIcon::Home, size: 24 }\n    Icon { icon: MdiIcon::Search, size: 24, class: \"text-primary\" }\n}"
+                                code: r#"use hikari_icons::{Icon, MdiIcon};
+
+rsx! {
+    Icon { icon: MdiIcon::Home, size: 24 }
+    Icon { icon: MdiIcon::Magnify, size: 24, class: "text-primary" }
+}"#.to_string()
                             }
                         }
                     }

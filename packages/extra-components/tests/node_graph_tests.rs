@@ -296,7 +296,7 @@ mod tests {
         let node_type = plugin.node_type();
         assert_eq!(node_type.id(), "constant/number");
 
-        plugin.render_node(
+        let _ = plugin.render_node(
             "const1".to_string(),
             "Constant".to_string(),
             NodeState::new("const1".to_string()),
@@ -311,7 +311,7 @@ mod tests {
         let node_type = plugin.node_type();
         assert_eq!(node_type.id(), "input/number");
 
-        plugin.render_node(
+        let _ = plugin.render_node(
             "input1".to_string(),
             "Input".to_string(),
             NodeState::new("input1".to_string()),
@@ -327,7 +327,7 @@ mod tests {
         assert_eq!(node_type.id(), "output/number");
         assert_eq!(plugin.output_type(), "number");
 
-        plugin.render_node(
+        let _ = plugin.render_node(
             "output1".to_string(),
             "Output".to_string(),
             NodeState::new("output1".to_string()),
@@ -342,7 +342,7 @@ mod tests {
         let node_type = plugin.node_type();
         assert_eq!(node_type.id(), "processor/add");
 
-        plugin.render_node(
+        let _ = plugin.render_node(
             "proc1".to_string(),
             "Add".to_string(),
             NodeState::new("proc1".to_string()),

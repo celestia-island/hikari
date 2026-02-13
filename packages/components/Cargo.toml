@@ -9,7 +9,7 @@ license.workspace = true
 doctest = false
 
 [features]
-default = ["basic", "feedback", "navigation", "layout", "data", "display", "entry"]
+default = ["basic", "feedback", "navigation", "layout", "data", "display", "entry", "production"]
 
 # Component groups (shortcuts) - enable multiple components at once
 basic = ["button", "input", "card", "badge", "image", "avatar", "checkbox", "switch", "radio_group", "select", "slider", "textarea", "icon_button", "arrow"]
@@ -17,8 +17,9 @@ feedback = ["alert", "toast", "tooltip", "modal"]
 navigation = ["menu", "tabs", "breadcrumb"]
 layout = ["layout-component", "header", "aside", "content", "footer"]
 data = ["table", "tree", "pagination"]
-display = ["tag", "empty", "comment", "description_list", "qrcode", "carousel"]
+display = ["tag", "empty", "comment", "description_list", "qrcode", "carousel", "calendar", "timeline"]
  entry = ["number_input", "search", "cascader", "transfer", "auto_complete"]
+production = ["code_highlight", "video_player", "rich_text_editor"]
 
 # Individual component features (fine-grained control)
 button = []
@@ -68,6 +69,11 @@ comment = []
 description_list = []
 qrcode = []
 carousel = []
+calendar = []
+timeline = []
+code_highlight = []
+video_player = []
+rich_text_editor = []
 number_input = []
 search = []
  cascader = []
@@ -99,6 +105,16 @@ web-sys = { version = "0.3", features = [
     "MutationObserver",
     "MutationObserverInit",
     "MutationRecord",
+    "Document",
+    "HtmlTextAreaElement",
+    "Navigator",
+    "Clipboard",
+    "Node",
+    "HtmlInputElement",
+    "FocusEvent",
+    "KeyboardEvent",
+    "MouseEvent",
+    "EventTarget",
 ] }
 wasm-bindgen = "^0.2"
 js-sys = "^0.3"

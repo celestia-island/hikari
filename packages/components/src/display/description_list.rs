@@ -2,7 +2,7 @@
 // DescriptionList component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, DescriptionListClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -65,7 +65,7 @@ pub fn DescriptionList(props: DescriptionListProps) -> Element {
     );
 
     let container_classes = ClassesBuilder::new()
-        .add_raw("hi-description-list")
+        .add(DescriptionListClass::List)
         .add_raw(&props.class)
         .build();
 
@@ -76,11 +76,11 @@ pub fn DescriptionList(props: DescriptionListProps) -> Element {
 
             for (label, value) in props.items.iter() {
                 dt {
-                    class: "hi-description-list-term",
+                    class: "{DescriptionListClass::Term.as_class()}",
                     "{label}"
                 }
                 dd {
-                    class: "hi-description-list-detail",
+                    class: "{DescriptionListClass::Detail.as_class()}",
                     "{value}"
                 }
             }

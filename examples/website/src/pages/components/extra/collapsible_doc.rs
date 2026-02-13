@@ -44,7 +44,7 @@ pub fn CollapsibleDoc() -> Element {
     let mut expanded1 = use_signal(|| true);
     let mut expanded2 = use_signal(|| false);
     let mut expanded3 = use_signal(|| true);
-    let mut expanded4 = use_signal(|| true);
+    let expanded4 = use_signal(|| true);
 
     rsx! {
         Layout {

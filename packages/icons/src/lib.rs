@@ -253,9 +253,9 @@ fn log_icon_warning_once(icon_name: String) {
             WARNED_ICONS.get_or_init(|| std::sync::RwLock::new(std::collections::HashSet::new()));
         let mut warned = match warned.write() {
             Ok(guard) => guard,
-            Err(_) => {
-                // Lock is poisoned, create a new set
-                std::collections::HashSet::new()
+            Err(e) => {
+                // Lock is poisoned, try to recover
+                e.into_inner()
             }
         };
 
@@ -322,6 +322,7 @@ fn log_icon_warning_once(icon_name: String) {
 
 /// Log success message for dynamic fetch (only once per icon)
 #[cfg(feature = "dynamic-fetch")]
+#[allow(dead_code)]
 fn log_dynamic_fetch_success(icon_name: String) {
     // Check if dynamic fetch warnings are disabled
     #[cfg(not(feature = "dynamic-fetch-warnings"))]

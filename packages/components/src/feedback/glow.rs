@@ -44,16 +44,20 @@ pub enum GlowColor {
     Info,
 }
 
-/// Glow intensity
+/// Glow intensity (shadow strength)
+///
+/// Use `Thirty` for large surface containers (cards, panels) — barely perceptible ambient glow.
+/// Use `Seventy` (default) for interactive elements (buttons, inputs) — clear but balanced feedback.
+/// Use `Hundred` for emphasis and active states — intense spotlight effect.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowIntensity {
-    /// Subtle glow
+    /// 30% glow intensity (subtle, for cards / containers)
+    Thirty,
+    /// 70% glow intensity (medium, default for buttons / interactive)
     #[default]
-    Subtle,
-    /// Standard glow
-    Standard,
-    /// Intense glow
-    Intense,
+    Seventy,
+    /// 100% glow intensity (intense, for emphasis)
+    Hundred,
 }
 
 #[derive(Clone, PartialEq, Props)]
@@ -76,6 +80,10 @@ pub struct GlowProps {
     /// Additional CSS classes
     #[props(default)]
     class: String,
+
+    /// Display mode: inline (default) or block
+    #[props(default)]
+    block: bool,
 }
 
 /// Unified glow component with mouse-following effect
@@ -99,24 +107,18 @@ pub fn Glow(props: GlowProps) -> Element {
     };
 
     let intensity_class = match props.intensity {
-        GlowIntensity::Subtle => GlowClass::GlowSubtle,
-        GlowIntensity::Standard => GlowClass::GlowStandard,
-        GlowIntensity::Intense => GlowClass::GlowIntense,
+        GlowIntensity::Thirty => GlowClass::GlowThirty,
+        GlowIntensity::Seventy => GlowClass::GlowSeventy,
+        GlowIntensity::Hundred => GlowClass::GlowHundred,
     };
 
     let glow_classes = ClassesBuilder::new()
         .add(GlowClass::GlowWrapper)
+        .add_if(GlowClass::GlowWrapperBlock, || props.block)
         .add(blur_class)
         .add(intensity_class)
         .add_raw(&props.class)
         .build();
-
-    #[cfg(target_arch = "wasm32")]
-    let glow_intensity = match props.intensity {
-        GlowIntensity::Subtle => "0.8",
-        GlowIntensity::Standard => "1.0",
-        GlowIntensity::Intense => "1.5",
-    };
 
     #[cfg(target_arch = "wasm32")]
     let glow_color = match props.color {
@@ -132,8 +134,8 @@ pub fn Glow(props: GlowProps) -> Element {
     #[cfg(target_arch = "wasm32")]
     {
         let initial_style = format!(
-            "--glow-x: 50%; --glow-y: 50%; --glow-intensity: {}; --hi-glow-color: {};",
-            glow_intensity, glow_color
+            "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: {};",
+            glow_color
         );
 
         let onmousemove_handler = move |event: Event<MouseData>| {
@@ -168,7 +170,6 @@ pub fn Glow(props: GlowProps) -> Element {
                                     StyleBuilder::new(wrapper)
                                         .add_custom("--glow-x", &format!("{:.1}%", percent_x))
                                         .add_custom("--glow-y", &format!("{:.1}%", percent_y))
-                                        .add_custom("--glow-intensity", &glow_intensity.to_string())
                                         .apply();
                                 }
                             }
@@ -191,7 +192,7 @@ pub fn Glow(props: GlowProps) -> Element {
                 "data-glow": "true",
                 style: "{initial_style}",
                 onmousemove: onmousemove_handler,
-                { props.children }
+                {props.children}
             }
         }
     }
@@ -199,11 +200,7 @@ pub fn Glow(props: GlowProps) -> Element {
     #[cfg(not(target_arch = "wasm32"))]
     {
         rsx! {
-            div {
-                class: "{glow_classes}",
-                "data-glow": "true",
-                { props.children }
-            }
+            div { class: "{glow_classes}", "data-glow": "true", {props.children} }
         }
     }
 }

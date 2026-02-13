@@ -2,9 +2,40 @@
 // RadioGroup component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, RadioClass};
 
 use crate::styled::StyledComponent;
+
+/// Radio button internal props (used with context)
+#[derive(Clone, PartialEq, Props)]
+pub struct RadioButtonInternalProps {
+    /// Value for this radio button
+    pub value: String,
+
+    /// Label text
+    #[props(default)]
+    pub children: Element,
+
+    /// Whether this radio is disabled
+    #[props(default)]
+    pub disabled: bool,
+
+    /// Additional CSS class
+    #[props(default)]
+    pub class: String,
+
+    /// Group name (for radio grouping)
+    #[props(default)]
+    pub group_name: String,
+
+    /// Currently selected value in group
+    #[props(default)]
+    pub selected_value: String,
+
+    /// Callback when this radio is selected
+    #[props(default)]
+    pub on_select: EventHandler<String>,
+}
 
 #[derive(Clone, PartialEq, Props)]
 pub struct RadioGroupProps {
@@ -18,11 +49,11 @@ pub struct RadioGroupProps {
     /// Callback when selection changes
     pub on_change: EventHandler<String>,
 
-    /// Whether the group is disabled
+    /// Whether radio group is disabled
     #[props(default)]
     pub disabled: bool,
 
-    /// Radio button options
+    /// Radio button options (use RadioButtonInternal)
     #[props(default)]
     pub children: Element,
 
@@ -42,6 +73,103 @@ pub enum RadioDirection {
     Horizontal,
 }
 
+/// RadioGroup component with FUI styling
+///
+/// A group of radio buttons where only one can be selected.
+///
+/// # Examples
+///
+/// ## Basic Usage
+/// ```rust
+/// use dioxus::prelude::*;
+/// use hikari_components::{RadioGroup, RadioButtonInternal};
+///
+/// fn app() -> Element {
+///     let mut value = use_signal(|| "option1".to_string());
+///
+///     rsx! {
+///         RadioGroup {
+///             name: "options".to_string(),
+///             value: value().clone(),
+///             on_change: move |v| value.set(v),
+///             direction: RadioDirection::Vertical,
+///             RadioButtonInternal {
+///                 value: "option1".to_string(),
+///                 "Option 1"
+///             }
+///             RadioButtonInternal {
+///                 value: "option2".to_string(),
+///                 "Option 2"
+///             }
+///             RadioButtonInternal {
+///                 value: "option3".to_string(),
+///                 "Option 3"
+///             }
+///         }
+///     }
+/// }
+/// ```
+#[component]
+pub fn RadioGroup(props: RadioGroupProps) -> Element {
+    let direction_class = match props.direction {
+        RadioDirection::Vertical => RadioClass::RadioGroupVertical,
+        RadioDirection::Horizontal => RadioClass::RadioGroupHorizontal,
+    };
+
+    let group_classes = ClassesBuilder::new()
+        .add(RadioClass::RadioGroup)
+        .add(direction_class)
+        .add_raw(&props.class)
+        .build();
+
+    rsx! {
+        div { class: "{group_classes}", {props.children} }
+    }
+}
+
+/// RadioButton component (internal, used with RadioGroup)
+///
+/// Uses CSS for all styling - no animation code needed.
+/// The parent component should pass group name, selected value, and on_select handler.
+#[component]
+pub fn RadioButtonInternal(props: RadioButtonInternalProps) -> Element {
+    let is_checked = props.selected_value == props.value;
+    let radio_name = if props.group_name.is_empty() { "radio-group".to_string() } else { props.group_name.clone() };
+
+    let radio_classes = ClassesBuilder::new()
+        .add(RadioClass::Label)
+        .add_raw(&props.class)
+        .build();
+
+    let handle_change = {
+        let value = props.value.clone();
+        move |_| {
+            props.on_select.call(value.clone());
+        }
+    };
+
+    rsx! {
+        label { class: "{radio_classes}",
+            input {
+                r#type: "radio",
+                name: "{radio_name}",
+                value: "{props.value}",
+                checked: is_checked,
+                disabled: props.disabled,
+                onchange: handle_change,
+            }
+            div { class: "hi-radio-indicator",
+                div {
+                    class: "hi-radio-dot",
+                }
+            }
+            span { class: "hi-radio-text", {props.children} }
+        }
+    }
+}
+
+// Legacy RadioButton for backward compatibility (deprecated)
+#[deprecated(note = "Use RadioButtonInternal instead with RadioGroup")]
 #[derive(Clone, PartialEq, Props)]
 pub struct RadioButtonProps {
     /// Value for this radio button
@@ -60,83 +188,15 @@ pub struct RadioButtonProps {
     pub class: String,
 }
 
-/// RadioGroup component with smooth animations
-///
-/// A group of radio buttons where only one can be selected.
-///
-/// # Examples
-///
-/// ## Basic Usage
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{RadioGroup, RadioButton};
-///
-/// fn app() -> Element {
-///     let mut value = use_signal(|| "option1".to_string());
-///
-///     rsx! {
-///         RadioGroup {
-///             name: "options".to_string(),
-///             value: value().clone(),
-///             on_change: move |v| value.set(v),
-///             direction: RadioDirection::Vertical,
-///             RadioButton {
-///                 value: "option1".to_string(),
-///                 "Option 1"
-///             }
-///             RadioButton {
-///                 value: "option2".to_string(),
-///                 "Option 2"
-///             }
-///             RadioButton {
-///                 value: "option3".to_string(),
-///                 "Option 3"
-///             }
-///         }
-///     }
-/// }
-/// ```
-#[component]
-pub fn RadioGroup(props: RadioGroupProps) -> Element {
-    let direction_class = match props.direction {
-        RadioDirection::Vertical => "hi-radio-group-vertical",
-        RadioDirection::Horizontal => "hi-radio-group-horizontal",
-    };
-
-    let group_classes = ClassesBuilder::new()
-        .add_raw("hi-radio-group")
-        .add_raw(direction_class)
-        .add_raw(&props.class)
-        .build();
-
-    rsx! {
-        div { class: "{group_classes}",
-            { props.children }
-        }
-    }
-}
-
-/// RadioButton component
+#[deprecated(note = "Use RadioButtonInternal instead")]
 #[component]
 pub fn RadioButton(props: RadioButtonProps) -> Element {
-    let radio_classes = ClassesBuilder::new()
-        .add_raw("hi-radio-label")
-        .add_raw(&props.class)
-        .build();
-
     rsx! {
-        label {
-            class: "{radio_classes}",
-            input {
-                r#type: "radio",
-                name: "radio",
-                value: "{props.value}",
-                disabled: props.disabled,
-            }
-            div { class: "hi-radio-indicator" }
-            span { class: "hi-radio-text",
-                { props.children }
-            }
+        RadioButtonInternal {
+            value: props.value,
+            disabled: props.disabled,
+            class: props.class,
+            {props.children}
         }
     }
 }
@@ -146,96 +206,7 @@ pub struct RadioGroupComponent;
 
 impl StyledComponent for RadioGroupComponent {
     fn styles() -> &'static str {
-        r#"
-.hi-radio-group {
-  display: flex;
-  gap: 12px;
-}
-
-.hi-radio-group-vertical {
-  flex-direction: column;
-}
-
-.hi-radio-group-horizontal {
-  flex-direction: row;
-  align-items: center;
-}
-
-.hi-radio-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.hi-radio-label input[type="radio"] {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  width: 0;
-  height: 0;
-}
-
-.hi-radio-indicator {
-  position: relative;
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--hi-border);
-  border-radius: 50%;
-  background: var(--hi-background);
-  transition: all 0.2s ease;
-}
-
-.hi-radio-indicator::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  width: 8px;
-  height: 8px;
-  background: var(--hi-color-primary);
-  border-radius: 50%;
-  transition: transform 0.2s ease;
-}
-
-.hi-radio-label input[type="radio"]:checked + .hi-radio-indicator {
-  border-color: var(--hi-color-primary);
-}
-
-.hi-radio-label input[type="radio"]:checked + .hi-radio-indicator::after {
-  transform: translate(-50%, -50%) scale(1);
-}
-
-.hi-radio-label:hover .hi-radio-indicator:not(:disabled) {
-  border-color: var(--hi-color-primary);
-}
-
-.hi-radio-label input[type="radio"]:disabled + .hi-radio-indicator {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.hi-radio-text {
-  font-size: 14px;
-  color: var(--hi-text-primary);
-  line-height: 1.5;
-}
-
-[data-theme="dark"] .hi-radio-indicator {
-  background: var(--hi-surface);
-  border-color: var(--hi-border);
-}
-
-[data-theme="dark"] .hi-radio-indicator::after {
-  background: var(--hi-color-primary);
-}
-
-[data-theme="dark"] .hi-radio-text {
-  color: var(--hi-text-primary);
-}
-"#
+        include_str!(concat!(env!("OUT_DIR"), "/styles/radio.css"))
     }
 
     fn name() -> &'static str {

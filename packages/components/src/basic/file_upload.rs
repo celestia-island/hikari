@@ -2,7 +2,7 @@
 // FileUpload component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::ClassesBuilder;
+use palette::classes::{ClassesBuilder, FileUploadClass};
 
 use crate::styled::StyledComponent;
 
@@ -70,20 +70,23 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
     let files = use_signal(Vec::<String>::new);
 
     let wrapper_classes = ClassesBuilder::new()
-        .add_raw("hi-file-upload-wrapper")
+        .add(FileUploadClass::FileUploadWrapper)
         .add_raw(&props.class)
         .build();
 
-    let drag_classes = ClassesBuilder::new()
-        .add_raw("hi-file-upload")
-        .add_raw(match upload_status() {
-            FileUploadStatus::Dragging => "hi-file-upload-dragging",
-            FileUploadStatus::Uploading => "hi-file-upload-uploading",
-            FileUploadStatus::Success => "hi-file-upload-success",
-            FileUploadStatus::Error => "hi-file-upload-error",
-            _ => "",
-        })
-        .build();
+    let status_class = match upload_status() {
+        FileUploadStatus::Dragging => Some(FileUploadClass::Dragging),
+        FileUploadStatus::Uploading => Some(FileUploadClass::Uploading),
+        FileUploadStatus::Success => Some(FileUploadClass::Success),
+        FileUploadStatus::Error => Some(FileUploadClass::Error),
+        _ => None,
+    };
+
+    let mut drag_builder = ClassesBuilder::new().add(FileUploadClass::FileUpload);
+    if let Some(class) = status_class {
+        drag_builder = drag_builder.add(class);
+    }
+    let drag_classes = drag_builder.build();
 
     let on_drag_over = move |e: DragEvent| {
         e.prevent_default();

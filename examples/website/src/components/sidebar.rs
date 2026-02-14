@@ -7,16 +7,38 @@ use crate::app::Route;
 use _components::navigation::{Menu, MenuItem, MenuItemHeight, MenuMode, SubMenu};
 use _icons::{Icon, MdiIcon};
 
+/// Global scroll position storage for sidebar
+/// Uses the actual aside content container's scroll position
+static SIDEBAR_SCROLL_POSITION: GlobalSignal<f64> = Signal::global(|| 0.0);
+
 /// Sidebar navigation with 3-level hierarchy using Menu component
 #[component]
 pub fn Sidebar(current_route: Route) -> Element {
+    // Effect to restore scroll position after route change
+    use_effect(move || {
+        let scroll_pos = *SIDEBAR_SCROLL_POSITION.read();
+        if scroll_pos > 0.0 {
+            if let Some(window) = web_sys::window() {
+                if let Some(document) = window.document() {
+                    // Try to find the scrollable aside content container
+                    if let Some(container) = document
+                        .query_selector(".hi-layout-aside-content")
+                        .ok()
+                        .flatten()
+                    {
+                        container.set_scroll_top(scroll_pos as i32);
+                    }
+                }
+            }
+        }
+    });
+
     rsx! {
         Menu {
             mode: MenuMode::Vertical,
             compact: true,
             on_select: move |_key| {},
 
-            // Render each top-level category
             for category in NAVIGATION_CATEGORIES {
                 SidebarCategorySection {
                     category,
@@ -38,7 +60,6 @@ fn SidebarCategorySection(category: &'static NavCategory, current_route: Route) 
             level: 1,
             height: MenuItemHeight::Compact,
 
-            // Render subcategories
             for subcategory in category.subcategories {
                 SidebarSubcategoryItem {
                     subcategory,
@@ -78,9 +99,9 @@ fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: R
             .map(|r| std::mem::discriminant(r) == std::mem::discriminant(&current_route))
             .unwrap_or(false);
 
-        let navigator = use_navigator();
-        let route_to_navigate = subcategory.route.clone();
         let label = subcategory.label_en;
+        let route_to_navigate = subcategory.route.clone();
+        let navigator = use_navigator();
 
         rsx! {
             MenuItem {
@@ -91,8 +112,8 @@ fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: R
                 glow: true,
                 onclick: {
                     let navigator = navigator.clone();
-                    let route_to_navigate = route_to_navigate.clone();
                     move |_| {
+                        save_sidebar_scroll_position();
                         if let Some(route) = route_to_navigate.as_ref() {
                             navigator.push(route.clone());
                         }
@@ -109,8 +130,8 @@ fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: R
 #[component]
 fn SidebarNestedItem(item: &'static NavItem, current_route: Route) -> Element {
     let is_active = std::mem::discriminant(&item.route) == std::mem::discriminant(&current_route);
-    let navigator = use_navigator();
     let route_to_navigate = item.route.clone();
+    let navigator = use_navigator();
 
     rsx! {
         MenuItem {
@@ -123,11 +144,24 @@ fn SidebarNestedItem(item: &'static NavItem, current_route: Route) -> Element {
             onclick: {
                 let navigator = navigator.clone();
                 move |_| {
+                    save_sidebar_scroll_position();
                     navigator.push(route_to_navigate.clone());
                 }
             },
 
             "{item.label}"
+        }
+    }
+}
+
+/// Save the current scroll position of the sidebar's aside content container
+fn save_sidebar_scroll_position() {
+    if let Some(window) = web_sys::window() {
+        if let Some(document) = window.document() {
+            if let Ok(Some(container)) = document.query_selector(".hi-layout-aside-content") {
+                let scroll_top = container.scroll_top() as f64;
+                *SIDEBAR_SCROLL_POSITION.write() = scroll_top;
+            }
         }
     }
 }
@@ -203,7 +237,6 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
         title_en: "Components",
         title_zh: "组件",
         subcategories: &[
-            // Layer 1 - Basic Components
             NavSubcategory {
                 label_en: "Layer 1",
                 label_zh: "基础组件",
@@ -276,7 +309,6 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                     },
                 ],
             },
-            // Layer 2 - Composite Components
             NavSubcategory {
                 label_en: "Layer 2",
                 label_zh: "复合组件",
@@ -344,7 +376,6 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                     },
                 ],
             },
-            // Layer 3 - Production Components
             NavSubcategory {
                 label_en: "Layer 3",
                 label_zh: "生产级组件",

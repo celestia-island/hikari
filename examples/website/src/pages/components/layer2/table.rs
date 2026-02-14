@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 use crate::{app::Route, components::Layout};
 use _components::{
-    data::{ColumnAlign, ColumnDef, SortConfig, SortDirection, Table, TableSize},
+    data::{ColumnAlign, ColumnDef, SortConfig, SortDirection, Table as TableComponent, TableSize},
     layout::{Container, Section},
 };
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, TextColor};
@@ -18,19 +18,69 @@ fn InteractiveSortableTable() -> Element {
     let mut sort_direction = use_signal(|| SortDirection::default());
 
     let sample_data = vec![
-        vec!["Amiya".to_string(), "Guard".to_string(), "6".to_string(), "5".to_string()],
-        vec!["SilverAsh".to_string(), "Guard".to_string(), "6".to_string(), "6".to_string()],
-        vec!["Exusiai".to_string(), "Sniper".to_string(), "6".to_string(), "6".to_string()],
-        vec!["Siege".to_string(), "Vanguard".to_string(), "3".to_string(), "5".to_string()],
-        vec!["Texas".to_string(), "Vanguard".to_string(), "1".to_string(), "4".to_string()],
-        vec!["Myrtle".to_string(), "Supporter".to_string(), "5".to_string(), "4".to_string()],
-        vec!["Angelina".to_string(), "Specialist".to_string(), "6".to_string(), "5".to_string()],
-        vec!["Laplum".to_string(), "Supporter".to_string(), "5".to_string(), "4".to_string()],
-        vec!["Vodfox".to_string(), "Caster".to_string(), "5".to_string(), "5".to_string()],
-        vec!["Ceobe".to_string(), "Vanguard".to_string(), "1".to_string(), "3".to_string()],
+        vec![
+            "Amiya".to_string(),
+            "Guard".to_string(),
+            "6".to_string(),
+            "5".to_string(),
+        ],
+        vec![
+            "SilverAsh".to_string(),
+            "Guard".to_string(),
+            "6".to_string(),
+            "6".to_string(),
+        ],
+        vec![
+            "Exusiai".to_string(),
+            "Sniper".to_string(),
+            "6".to_string(),
+            "6".to_string(),
+        ],
+        vec![
+            "Siege".to_string(),
+            "Vanguard".to_string(),
+            "3".to_string(),
+            "5".to_string(),
+        ],
+        vec![
+            "Texas".to_string(),
+            "Vanguard".to_string(),
+            "1".to_string(),
+            "4".to_string(),
+        ],
+        vec![
+            "Myrtle".to_string(),
+            "Supporter".to_string(),
+            "5".to_string(),
+            "4".to_string(),
+        ],
+        vec![
+            "Angelina".to_string(),
+            "Specialist".to_string(),
+            "6".to_string(),
+            "5".to_string(),
+        ],
+        vec![
+            "Laplum".to_string(),
+            "Supporter".to_string(),
+            "5".to_string(),
+            "4".to_string(),
+        ],
+        vec![
+            "Vodfox".to_string(),
+            "Caster".to_string(),
+            "5".to_string(),
+            "5".to_string(),
+        ],
+        vec![
+            "Ceobe".to_string(),
+            "Vanguard".to_string(),
+            "1".to_string(),
+            "3".to_string(),
+        ],
     ];
 
-    let on_sort_change = move |config: SortConfig| {
+    let mut on_sort_change = move |config: SortConfig| {
         sort_column.set(config.column.clone());
         sort_direction.set(config.direction);
     };
@@ -55,7 +105,7 @@ fn InteractiveSortableTable() -> Element {
             div { class: ClassesBuilder::new().add(MarginBottom::Mb4).build(),
                 span { class: "text-sm text-gray-500", "{sort_status}" }
             }
-            Table {
+            TableComponent {
                 columns: vec![
                     ColumnDef::new("name", "Name").sortable(true),
                     ColumnDef::new("class", "Class").sortable(true),
@@ -75,10 +125,10 @@ fn InteractiveSortableTable() -> Element {
 }
 
 #[allow(non_snake_case)]
-pub fn ComponentsTable() -> Element {
+pub fn Table() -> Element {
     rsx! {
         Layout {
-            current_route: Route::DataTable {},
+            current_route: Route::Table {},
 
             Container {
                 // Page header
@@ -146,7 +196,7 @@ pub fn ComponentsTable() -> Element {
                             "Basic table with column definitions and data"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Table {
+                            TableComponent {
                                 columns: vec![
                                     ColumnDef::new("name", "Name"),
                                     ColumnDef::new("role", "Role"),
@@ -177,7 +227,7 @@ pub fn ComponentsTable() -> Element {
                             "Table with bordered option"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Table {
+                            TableComponent {
                                 columns: vec![
                                     ColumnDef::new("name", "Name"),
                                     ColumnDef::new("role", "Role"),
@@ -207,7 +257,7 @@ pub fn ComponentsTable() -> Element {
                             "Table with striped rows for better readability"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Table {
+                            TableComponent {
                                 columns: vec![
                                     ColumnDef::new("name", "Name"),
                                     ColumnDef::new("role", "Role"),
@@ -239,7 +289,7 @@ pub fn ComponentsTable() -> Element {
                             "Table with hover effect on rows"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Table {
+                            TableComponent {
                                 columns: vec![
                                     ColumnDef::new("name", "Name"),
                                     ColumnDef::new("role", "Role"),
@@ -276,7 +326,7 @@ pub fn ComponentsTable() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(MarginBottom::Mb6).build(),
                             h4 { "Small" }
-                            Table {
+                            TableComponent {
                                 size: TableSize::Small,
                                 columns: vec![
                                     ColumnDef::new("name", "Name"),
@@ -290,7 +340,7 @@ pub fn ComponentsTable() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(MarginBottom::Mb6).build(),
                             h4 { "Medium (Default)" }
-                            Table {
+                            TableComponent {
                                 size: TableSize::Medium,
                                 columns: vec![
                                     ColumnDef::new("name", "Name"),
@@ -304,7 +354,7 @@ pub fn ComponentsTable() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(MarginBottom::Mb0).build(),
                             h4 { "Large" }
-                            Table {
+                            TableComponent {
                                 size: TableSize::Large,
                                 columns: vec![
                                     ColumnDef::new("name", "Name"),
@@ -338,7 +388,7 @@ pub fn ComponentsTable() -> Element {
                             "Columns with sortable option show sort icon"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Table {
+                            TableComponent {
                                 columns: vec![
                                     ColumnDef::new("name", "Name").sortable(true),
                                     ColumnDef::new("role", "Role").sortable(true),
@@ -368,7 +418,7 @@ pub fn ComponentsTable() -> Element {
                             "Columns with custom width and text alignment"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Table {
+                            TableComponent {
                                 columns: vec![
                                     ColumnDef::new("name", "Name").width("200px"),
                                     ColumnDef::new("role", "Role").width("150px"),
@@ -399,7 +449,7 @@ pub fn ComponentsTable() -> Element {
                             "Click column headers to sort. Current state is managed by parent component."
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Table {
+                            TableComponent {
                                 columns: vec![
                                     ColumnDef::new("name", "Name").sortable(true),
                                     ColumnDef::new("role", "Role").sortable(true),
@@ -458,7 +508,7 @@ pub fn ComponentsTable() -> Element {
                             "Table with no data shows empty state"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Table {
+                            TableComponent {
                                 columns: vec![
                                     ColumnDef::new("name", "Name"),
                                     ColumnDef::new("role", "Role"),
@@ -488,7 +538,7 @@ pub fn ComponentsTable() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"Table {{
+                                r#"TableComponent {{
     columns: vec![
         ColumnDef::new("name", "Name"),
         ColumnDef::new("role", "Role"),
@@ -514,7 +564,7 @@ pub fn ComponentsTable() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"Table {{
+                                r#"TableComponent {{
     columns: vec![
         ColumnDef::new("name", "Name"),
         ColumnDef::new("role", "Role"),
@@ -540,7 +590,7 @@ pub fn ComponentsTable() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"Table {{
+                                r#"TableComponent {{
     columns: vec![
         ColumnDef::new("name", "Name").width("200px"),
         ColumnDef::new("role", "Role").align(ColumnAlign::Center),

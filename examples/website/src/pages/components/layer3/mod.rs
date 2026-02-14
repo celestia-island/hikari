@@ -11,6 +11,10 @@ pub mod overview;
 // pub mod video_player_doc;
 pub mod visualization;
 
+// New components from extra
+pub mod user_guide;
+pub mod zoom_controls;
+
 // Re-exports
 // Temporarily disabled doc components due to compilation issues
 // pub use audio_waveform_doc::AudioWaveformDoc;
@@ -21,3 +25,7 @@ pub use overview::Layer3Overview;
 // pub use rich_text_editor_doc::RichTextEditorDoc;
 // pub use video_player_doc::VideoPlayerDoc;
 pub use visualization::Layer3Visualization;
+
+// Re-export new components
+pub use user_guide::UserGuide;
+pub use zoom_controls::ZoomControls;

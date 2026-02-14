@@ -4,20 +4,23 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{entry::NumberInput, layout::{Container, Section}};
+use _components::{
+    entry::NumberInput as NumberInputComponent,
+    layout::{Container, Section},
+};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextColor};
 
 // Code examples as constants
 const CODE_BASIC: &str = r#"let mut value = use_signal(|| 0);
 
-NumberInput {
+NumberInputComponent {
     value: value(),
     on_change: move |v| value.set(v),
 }"#;
 
 const CODE_MIN_MAX_STEP: &str = r#"let mut value = use_signal(|| 50);
 
-NumberInput {
+NumberInputComponent {
     value: value(),
     on_change: move |v| value.set(v),
     min: 0,
@@ -25,20 +28,20 @@ NumberInput {
     step: 5,
 }"#;
 
-const CODE_DISABLED: &str = r#"NumberInput {
+const CODE_DISABLED: &str = r#"NumberInputComponent {
     value: 0,
     on_change: |_| {},
     disabled: true,
 }"#;
 
-const CODE_MIN_ONLY: &str = r#"NumberInput {
+const CODE_MIN_ONLY: &str = r#"NumberInputComponent {
     value: 10,
     on_change: |_| {},
     min: 10,
 }"#;
 
 #[allow(non_snake_case)]
-pub fn NumberInputDoc() -> Element {
+pub fn NumberInput() -> Element {
     let mut value1 = use_signal(|| 0);
     let mut value2 = use_signal(|| 50);
     let mut value3 = use_signal(|| 10);
@@ -47,7 +50,7 @@ pub fn NumberInputDoc() -> Element {
 
     rsx! {
         Layout {
-            current_route: Route::NumberInputDoc {},
+            current_route: Route::NumberInput {},
 
             Container {
                 // Page header
@@ -103,7 +106,7 @@ pub fn NumberInputDoc() -> Element {
                             "Basic number input with default settings"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            NumberInput {
+                            NumberInputComponent {
                                 value: value1(),
                                 on_change: move |v| value1.set(v),
                             }
@@ -127,7 +130,7 @@ pub fn NumberInputDoc() -> Element {
                             "Number input with minimum and maximum values"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            NumberInput {
+                            NumberInputComponent {
                                 value: value2(),
                                 on_change: move |v| value2.set(v),
                                 min: 0,
@@ -153,7 +156,7 @@ pub fn NumberInputDoc() -> Element {
                             "Number input with custom step size"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            NumberInput {
+                            NumberInputComponent {
                                 value: value3(),
                                 on_change: move |v| value3.set(v),
                                 min: 0,
@@ -186,7 +189,7 @@ pub fn NumberInputDoc() -> Element {
                             "Disabled number input cannot be interacted with"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            NumberInput {
+                            NumberInputComponent {
                                 value: value4(),
                                 on_change: move |v| value4.set(v),
                                 disabled: true,
@@ -214,7 +217,7 @@ pub fn NumberInputDoc() -> Element {
                             "Number input with only minimum value constraint"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            NumberInput {
+                            NumberInputComponent {
                                 value: 10,
                                 on_change: |_| {},
                                 min: 10,
@@ -236,7 +239,7 @@ pub fn NumberInputDoc() -> Element {
                             "Number input with only maximum value constraint"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            NumberInput {
+                            NumberInputComponent {
                                 value: 100,
                                 on_change: |_| {},
                                 max: 100,
@@ -258,7 +261,7 @@ pub fn NumberInputDoc() -> Element {
                             "Number input with large step size"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            NumberInput {
+                            NumberInputComponent {
                                 value: value5(),
                                 on_change: move |v| value5.set(v),
                                 step: 10,

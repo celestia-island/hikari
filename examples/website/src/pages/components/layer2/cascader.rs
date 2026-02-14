@@ -4,11 +4,14 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{entry::{Cascader, CascaderOption, CascaderSize}, layout::{Container, Section}};
+use _components::{
+    entry::{Cascader as CascaderComponent, CascaderOption, CascaderSize},
+    layout::{Container, Section},
+};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextColor};
 
 // Code examples as constants
-const CODE_BASIC: &str = r#"Cascader {
+const CODE_BASIC: &str = r#"CascaderComponent {
     placeholder: "Select location".to_string(),
     size: CascaderSize::Md,
     options: vec![
@@ -28,7 +31,7 @@ const CODE_BASIC: &str = r#"Cascader {
     on_change: move |values| println!("{:?}", values),
 }"#;
 
-const CODE_CLEAR_SIZE: &str = r#"Cascader {
+const CODE_CLEAR_SIZE: &str = r#"CascaderComponent {
     placeholder: "Select product".to_string(),
     size: CascaderSize::Lg,
     allow_clear: true,
@@ -39,7 +42,7 @@ const CODE_CLEAR_SIZE: &str = r#"Cascader {
 
 const CODE_CONTROLLED: &str = r#"let mut selected = use_signal(|| Option::<Vec<String>>::None);
 
-Cascader {
+CascaderComponent {
     placeholder: "Select location".to_string(),
     value: selected(),
     options: vec![...],
@@ -47,13 +50,13 @@ Cascader {
 }"#;
 
 #[allow(non_snake_case)]
-pub fn CascaderDoc() -> Element {
+pub fn Cascader() -> Element {
     let mut selected_cascader = use_signal(|| Option::<Vec<String>>::None);
     let mut cascader2_value = use_signal(|| Option::<Vec<String>>::None);
 
     rsx! {
         Layout {
-            current_route: Route::CascaderDoc {},
+            current_route: Route::Cascader {},
 
             Container {
                 // Page header
@@ -110,7 +113,7 @@ pub fn CascaderDoc() -> Element {
                             "Basic cascader with hierarchical options"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            Cascader {
+                            CascaderComponent {
                                 placeholder: "Select location".to_string(),
                                 size: CascaderSize::Md,
                                 options: vec![
@@ -185,7 +188,7 @@ pub fn CascaderDoc() -> Element {
                             "Cascader with clear button to reset selection"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            Cascader {
+                            CascaderComponent {
                                 placeholder: "Select product".to_string(),
                                 size: CascaderSize::Md,
                                 allow_clear: true,
@@ -252,7 +255,7 @@ pub fn CascaderDoc() -> Element {
                         }
                         div { class: ClassesBuilder::new().add_raw("space-y-4").build(),
                             div { class: ClassesBuilder::new().add_raw("flex items-center gap-4").build(),
-                                Cascader {
+                                CascaderComponent {
                                     placeholder: "Small".to_string(),
                                     size: CascaderSize::Sm,
                                     options: vec![
@@ -266,7 +269,7 @@ pub fn CascaderDoc() -> Element {
                                 }
                             }
                             div { class: ClassesBuilder::new().add_raw("flex items-center gap-4").build(),
-                                Cascader {
+                                CascaderComponent {
                                     placeholder: "Medium".to_string(),
                                     size: CascaderSize::Md,
                                     options: vec![
@@ -280,7 +283,7 @@ pub fn CascaderDoc() -> Element {
                                 }
                             }
                             div { class: ClassesBuilder::new().add_raw("flex items-center gap-4").build(),
-                                Cascader {
+                                CascaderComponent {
                                     placeholder: "Large".to_string(),
                                     size: CascaderSize::Lg,
                                     options: vec![
@@ -316,7 +319,7 @@ pub fn CascaderDoc() -> Element {
                             "Disabled cascader cannot be interacted with"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            Cascader {
+                            CascaderComponent {
                                 placeholder: "Disabled".to_string(),
                                 size: CascaderSize::Md,
                                 disabled: true,
@@ -352,7 +355,7 @@ pub fn CascaderDoc() -> Element {
                             "Options can be individually disabled"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            Cascader {
+                            CascaderComponent {
                                 placeholder: "Select region".to_string(),
                                 size: CascaderSize::Md,
                                 options: vec![

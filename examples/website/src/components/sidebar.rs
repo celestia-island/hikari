@@ -8,11 +8,6 @@ use _components::navigation::{Menu, MenuItem, MenuItemHeight, MenuMode, SubMenu}
 use _icons::{Icon, MdiIcon};
 
 /// Sidebar navigation with 3-level hierarchy using Menu component
-///
-/// Structure:
-/// - Level 1: Overview, Components, System, Demos (SubMenu)
-/// - Level 2: Categories (Layout, Basic, Feedback, etc.) (SubMenu)
-/// - Level 3: Individual components (Button, Input, Card, etc.) (MenuItem)
 #[component]
 pub fn Sidebar(current_route: Route) -> Element {
     rsx! {
@@ -60,7 +55,6 @@ fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: R
     let has_children = !subcategory.items.is_empty();
 
     if has_children {
-        // Has nested items - render as SubMenu
         rsx! {
             SubMenu {
                 item_key: subcategory.label_en.to_string(),
@@ -69,7 +63,6 @@ fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: R
                 level: 2,
                 height: MenuItemHeight::Compact,
 
-                // Render nested items
                 for item in subcategory.items {
                     SidebarNestedItem {
                         item,
@@ -79,7 +72,6 @@ fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: R
             }
         }
     } else {
-        // No children - render as MenuItem with onclick navigation
         let is_active = subcategory
             .route
             .as_ref()
@@ -211,6 +203,7 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
         title_en: "Components",
         title_zh: "组件",
         subcategories: &[
+            // Layer 1 - Basic Components
             NavSubcategory {
                 label_en: "Layer 1",
                 label_zh: "基础组件",
@@ -227,6 +220,16 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                         route: Route::Layer1Form {},
                     },
                     NavItem {
+                        label: "NumberInput",
+                        icon: MdiIcon::FormatListNumbered,
+                        route: Route::NumberInput {},
+                    },
+                    NavItem {
+                        label: "Search",
+                        icon: MdiIcon::Magnify,
+                        route: Route::Search {},
+                    },
+                    NavItem {
                         label: "Switch",
                         icon: MdiIcon::ToggleSwitch,
                         route: Route::Layer1Switch {},
@@ -241,8 +244,44 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                         icon: MdiIcon::Image,
                         route: Route::Layer1Display {},
                     },
+                    NavItem {
+                        label: "Avatar",
+                        icon: MdiIcon::Account,
+                        route: Route::Avatar {},
+                    },
+                    NavItem {
+                        label: "Image",
+                        icon: MdiIcon::Image,
+                        route: Route::Image {},
+                    },
+                    NavItem {
+                        label: "Tag",
+                        icon: MdiIcon::Star,
+                        route: Route::Tag {},
+                    },
+                    NavItem {
+                        label: "Empty",
+                        icon: MdiIcon::ViewDashboard,
+                        route: Route::Empty {},
+                    },
+                    NavItem {
+                        label: "QRCode",
+                        icon: MdiIcon::ViewDashboard,
+                        route: Route::QRCode {},
+                    },
+                    NavItem {
+                        label: "Comment",
+                        icon: MdiIcon::Chat,
+                        route: Route::Comment {},
+                    },
+                    NavItem {
+                        label: "DescriptionList",
+                        icon: MdiIcon::FormatListBulleted,
+                        route: Route::DescriptionList {},
+                    },
                 ],
             },
+            // Layer 2 - Composite Components
             NavSubcategory {
                 label_en: "Layer 2",
                 label_zh: "复合组件",
@@ -254,14 +293,49 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                         route: Route::Layer2Navigation {},
                     },
                     NavItem {
+                        label: "Collapsible",
+                        icon: MdiIcon::ArrowExpandHorizontal,
+                        route: Route::Collapsible {},
+                    },
+                    NavItem {
                         label: "Data",
                         icon: MdiIcon::Graph,
                         route: Route::Layer2Data {},
                     },
                     NavItem {
+                        label: "Table",
+                        icon: MdiIcon::Table,
+                        route: Route::Table {},
+                    },
+                    NavItem {
+                        label: "Tree",
+                        icon: MdiIcon::SourceBranch,
+                        route: Route::Tree {},
+                    },
+                    NavItem {
+                        label: "Pagination",
+                        icon: MdiIcon::ChevronLeft,
+                        route: Route::Pagination {},
+                    },
+                    NavItem {
+                        label: "Timeline",
+                        icon: MdiIcon::ChartTimeline,
+                        route: Route::Timeline {},
+                    },
+                    NavItem {
                         label: "Form",
                         icon: MdiIcon::TextBoxEdit,
                         route: Route::Layer2Form {},
+                    },
+                    NavItem {
+                        label: "Cascader",
+                        icon: MdiIcon::ChevronDown,
+                        route: Route::Cascader {},
+                    },
+                    NavItem {
+                        label: "Transfer",
+                        icon: MdiIcon::SwapHorizontal,
+                        route: Route::Transfer {},
                     },
                     NavItem {
                         label: "Feedback",
@@ -270,6 +344,7 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                     },
                 ],
             },
+            // Layer 3 - Production Components
             NavSubcategory {
                 label_en: "Layer 3",
                 label_zh: "生产级组件",
@@ -290,59 +365,15 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                         icon: MdiIcon::CubeOutline,
                         route: Route::Layer3Visualization {},
                     },
-                ],
-            },
-            NavSubcategory {
-                label_en: "Entry",
-                label_zh: "入口组件",
-                route: Some(Route::CascaderDoc {}),
-                items: &[
                     NavItem {
-                        label: "Cascader",
-                        icon: MdiIcon::ChevronDown,
-                        route: Route::CascaderDoc {},
-                    },
-                    NavItem {
-                        label: "Transfer",
-                        icon: MdiIcon::SwapHorizontal,
-                        route: Route::TransferDoc {},
-                    },
-                    NavItem {
-                        label: "Number Input",
-                        icon: MdiIcon::FormatListNumbered,
-                        route: Route::NumberInputDoc {},
-                    },
-                    NavItem {
-                        label: "Search",
-                        icon: MdiIcon::Magnify,
-                        route: Route::SearchDoc {},
-                    },
-                ],
-            },
-            NavSubcategory {
-                label_en: "Extra",
-                label_zh: "扩展组件",
-                route: Some(Route::CollapsibleDoc {}),
-                items: &[
-                    NavItem {
-                        label: "Collapsible",
-                        icon: MdiIcon::ArrowExpandHorizontal,
-                        route: Route::CollapsibleDoc {},
-                    },
-                    NavItem {
-                        label: "Timeline",
-                        icon: MdiIcon::ChartTimeline,
-                        route: Route::TimelineDoc {},
-                    },
-                    NavItem {
-                        label: "User Guide",
+                        label: "UserGuide",
                         icon: MdiIcon::BookOpen,
-                        route: Route::UserGuideDoc {},
+                        route: Route::UserGuide {},
                     },
                     NavItem {
-                        label: "Zoom Controls",
+                        label: "ZoomControls",
                         icon: MdiIcon::MagnifyPlus,
-                        route: Route::ZoomControlsDoc {},
+                        route: Route::ZoomControls {},
                     },
                 ],
             },

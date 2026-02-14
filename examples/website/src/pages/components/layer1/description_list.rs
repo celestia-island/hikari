@@ -4,14 +4,17 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{display::DescriptionList, layout::{Container, Section}};
+use _components::{
+    display::DescriptionList as DescriptionListComponent,
+    layout::{Container, Section},
+};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, TextColor};
 
 #[allow(non_snake_case)]
-pub fn ComponentsDescriptionList() -> Element {
+pub fn DescriptionList() -> Element {
     rsx! {
         Layout {
-            current_route: Route::DisplayDescriptionList {},
+            current_route: Route::DescriptionList {},
 
             Container {
                 // Page header
@@ -79,7 +82,7 @@ pub fn ComponentsDescriptionList() -> Element {
                             "Basic key-value list in single column layout"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            DescriptionList {
+                            DescriptionListComponent {
                                 items: vec![
                                     ("Name".to_string(), "Hikari".to_string()),
                                     ("Version".to_string(), "0.1.0".to_string()),
@@ -105,7 +108,7 @@ pub fn ComponentsDescriptionList() -> Element {
                             "Grid layout with two columns of key-value pairs"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            DescriptionList {
+                            DescriptionListComponent {
                                 items: vec![
                                     ("Name".to_string(), "Hikari".to_string()),
                                     ("Version".to_string(), "0.1.0".to_string()),
@@ -139,7 +142,7 @@ pub fn ComponentsDescriptionList() -> Element {
                             "Display user information"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            DescriptionList {
+                            DescriptionListComponent {
                                 items: vec![
                                     ("Username".to_string(), "alice_j".to_string()),
                                     ("Email".to_string(), "alice@example.com".to_string()),
@@ -167,7 +170,7 @@ pub fn ComponentsDescriptionList() -> Element {
                             "Display project metadata"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            DescriptionList {
+                            DescriptionListComponent {
                                 items: vec![
                                     ("Project".to_string(), "Hikari UI Framework".to_string()),
                                     ("Repository".to_string(), "github.com/hikari/ui".to_string()),
@@ -195,7 +198,7 @@ pub fn ComponentsDescriptionList() -> Element {
                             "Display system specifications"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            DescriptionList {
+                            DescriptionListComponent {
                                 items: vec![
                                     ("OS".to_string(), "Linux".to_string()),
                                     ("Kernel".to_string(), "6.1.0".to_string()),
@@ -223,7 +226,7 @@ pub fn ComponentsDescriptionList() -> Element {
                             "Display API settings"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            DescriptionList {
+                            DescriptionListComponent {
                                 items: vec![
                                     ("Base URL".to_string(), "https://api.hikari.com".to_string()),
                                     ("Timeout".to_string(), "30s".to_string()),
@@ -254,7 +257,7 @@ pub fn ComponentsDescriptionList() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"DescriptionList {{
+                                r#"DescriptionListComponent {{
     items: vec![
         ("Name".to_string(), "Hikari".to_string()),
         ("Version".to_string(), "0.1.0".to_string()),
@@ -277,7 +280,7 @@ pub fn ComponentsDescriptionList() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"DescriptionList {{
+                                r#"DescriptionListComponent {{
     items: vec![
         ("Name".to_string(), "Hikari".to_string()),
         ("Version".to_string(), "0.1.0".to_string()),

@@ -1,17 +1,20 @@
-// website/src/pages/components/display/tag.rs
-// Tag component showcase page with real rendered examples
+// website/src/pages/components/data/pagination.rs
+// Pagination component showcase page with real rendered examples
 
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{display::{Tag, TagVariant}, layout::{Container, Section}};
-use _palette::classes::{ ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor, };
+use _components::{
+    data::Pagination as PaginationComponent,
+    layout::{Container, Section},
+};
+use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, TextColor};
 
 #[allow(non_snake_case)]
-pub fn ComponentsTag() -> Element {
+pub fn Pagination() -> Element {
     rsx! {
         Layout {
-            current_route: Route::DisplayTag {},
+            current_route: Route::Pagination {},
 
             Container {
                 // Page header
@@ -23,10 +26,10 @@ pub fn ComponentsTag() -> Element {
                             .add(MarginBottom::Mb0)
                             .add(MarginBottom::Mb2)
                             .build(),
-                        "Tag"
+                        "Pagination"
                     }
                     p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Secondary).build(),
-                        "Tag labels with optional close button for keywords and status"
+                        "Pagination component for page navigation with size changer"
                     }
                 }
 
@@ -37,32 +40,32 @@ pub fn ComponentsTag() -> Element {
 
                     div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         p {
-                            "Tags are used to categorize and label content. They support:"
+                            "Pagination is used to navigate through large datasets. It supports:"
                         }
                         ul { class: ClassesBuilder::new().add_raw("pl-6").add(MarginBottom::Mb0).build(),
                             li {
-                                strong { "Multiple variants" }
-                                " - Default, Primary, Success, Warning, Danger, Info"
+                                strong { "Page navigation" }
+                                " - Previous, next, and page numbers"
                             }
                             li {
-                                strong { "Closable" }
-                                " - Optional close button for removing tags"
+                                strong { "Jump to page" }
+                                " - Direct input to jump to a specific page"
                             }
                             li {
-                                strong { "Event handlers" }
-                                " - Close event callbacks"
+                                strong { "Page size changer" }
+                                " - Select items per page"
                             }
                             li {
-                                strong { "Hover effects" }
-                                " - Subtle background and glow transitions"
+                                strong { "Total items info" }
+                                " - Show range and total count"
                             }
                         }
                     }
                 }
 
-                // Tag Variants
+                // Basic Pagination
                 Section {
-                    title: Some("Tag Variants".to_string()),
+                    title: Some("Basic Pagination".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
                     div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
@@ -73,15 +76,17 @@ pub fn ComponentsTag() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Default Tag"
+                            "Small Dataset"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Neutral gray tag for general use"
+                            "Pagination for small dataset (fewer than 7 pages)"
                         }
-                        div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P6).build(),
-                            Tag { variant: TagVariant::Default, "JavaScript" }
-                            Tag { variant: TagVariant::Default, "TypeScript" }
-                            Tag { variant: TagVariant::Default, "CSS" }
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            PaginationComponent {
+                                current: 1,
+                                total: 50,
+                                page_size: 10,
+                            }
                         }
                     }
 
@@ -93,102 +98,24 @@ pub fn ComponentsTag() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Primary Tag"
+                            "Large Dataset"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Blue tag for primary categories"
+                            "Pagination for large dataset (more than 7 pages)"
                         }
-                        div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P6).build(),
-                            Tag { variant: TagVariant::Primary, "Frontend" }
-                            Tag { variant: TagVariant::Primary, "Backend" }
-                            Tag { variant: TagVariant::Primary, "DevOps" }
-                        }
-                    }
-
-                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
-                        h3 {
-                            class: ClassesBuilder::new()
-                                .add(FontSize::Lg)
-                                .add(FontWeight::Semibold)
-                                .add(TextColor::Primary)
-                                .add(MarginBottom::Mb3)
-                                .build(),
-                            "Success Tag"
-                        }
-                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Green tag for positive status"
-                        }
-                        div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P6).build(),
-                            Tag { variant: TagVariant::Success, "Completed" }
-                            Tag { variant: TagVariant::Success, "Active" }
-                            Tag { variant: TagVariant::Success, "Passed" }
-                        }
-                    }
-
-                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
-                        h3 {
-                            class: ClassesBuilder::new()
-                                .add(FontSize::Lg)
-                                .add(FontWeight::Semibold)
-                                .add(TextColor::Primary)
-                                .add(MarginBottom::Mb3)
-                                .build(),
-                            "Warning Tag"
-                        }
-                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Yellow/orange tag for warnings"
-                        }
-                        div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P6).build(),
-                            Tag { variant: TagVariant::Warning, "Pending" }
-                            Tag { variant: TagVariant::Warning, "Review" }
-                            Tag { variant: TagVariant::Warning, "Beta" }
-                        }
-                    }
-
-                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
-                        h3 {
-                            class: ClassesBuilder::new()
-                                .add(FontSize::Lg)
-                                .add(FontWeight::Semibold)
-                                .add(TextColor::Primary)
-                                .add(MarginBottom::Mb3)
-                                .build(),
-                            "Danger Tag"
-                        }
-                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Red tag for dangerous or critical items"
-                        }
-                        div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P6).build(),
-                            Tag { variant: TagVariant::Danger, "Error" }
-                            Tag { variant: TagVariant::Danger, "Failed" }
-                            Tag { variant: TagVariant::Danger, "Deleted" }
-                        }
-                    }
-
-                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
-                        h3 {
-                            class: ClassesBuilder::new()
-                                .add(FontSize::Lg)
-                                .add(FontWeight::Semibold)
-                                .add(TextColor::Primary)
-                                .add(MarginBottom::Mb3)
-                                .build(),
-                            "Info Tag"
-                        }
-                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Cyan tag for informational content"
-                        }
-                        div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P6).build(),
-                            Tag { variant: TagVariant::Info, "Info" }
-                            Tag { variant: TagVariant::Info, "Note" }
-                            Tag { variant: TagVariant::Info, "Documentation" }
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            PaginationComponent {
+                                current: 5,
+                                total: 500,
+                                page_size: 10,
+                            }
                         }
                     }
                 }
 
-                // Closable Tags
+                // With Features
                 Section {
-                    title: Some("Closable Tags".to_string()),
+                    title: Some("Advanced Features".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
                     div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
@@ -199,39 +126,72 @@ pub fn ComponentsTag() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Removable Tags"
+                            "With Total Info"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Tags with close button that trigger on_close callback"
+                            "Pagination with total items count and range"
                         }
-                        div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P6).build(),
-                            Tag {
-                                variant: TagVariant::Primary,
-                                closable: true,
-                                "React"
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            PaginationComponent {
+                                current: 3,
+                                total: 150,
+                                page_size: 10,
+                                show_total: true,
                             }
-                            Tag {
-                                variant: TagVariant::Primary,
-                                closable: true,
-                                "Vue"
+                        }
+                    }
+
+                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
+                        h3 {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::Lg)
+                                .add(FontWeight::Semibold)
+                                .add(TextColor::Primary)
+                                .add(MarginBottom::Mb3)
+                                .build(),
+                            "With Page Size Changer"
+                        }
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "Pagination with selector to change items per page"
+                        }
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            PaginationComponent {
+                                current: 1,
+                                total: 200,
+                                page_size: 10,
+                                show_size_changer: true,
                             }
-                            Tag {
-                                variant: TagVariant::Primary,
-                                closable: true,
-                                "Angular"
-                            }
-                            Tag {
-                                variant: TagVariant::Success,
-                                closable: true,
-                                "Svelte"
+                        }
+                    }
+
+                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
+                        h3 {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::Lg)
+                                .add(FontWeight::Semibold)
+                                .add(TextColor::Primary)
+                                .add(MarginBottom::Mb3)
+                                .build(),
+                            "Full Features"
+                        }
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "Pagination with all features enabled"
+                        }
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            PaginationComponent {
+                                current: 2,
+                                total: 300,
+                                page_size: 10,
+                                show_size_changer: true,
+                                show_total: true,
                             }
                         }
                     }
                 }
 
-                // Tag Combinations
+                // Different Page Sizes
                 Section {
-                    title: Some("Tag Combinations".to_string()),
+                    title: Some("Different Page Sizes".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
                     div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
@@ -242,17 +202,17 @@ pub fn ComponentsTag() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Multiple Variants Together"
+                            "Small Page Size"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Combining different tag variants for categorization"
+                            "5 items per page"
                         }
-                        div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P6).build(),
-                            Tag { variant: TagVariant::Default, "JavaScript" }
-                            Tag { variant: TagVariant::Primary, "Frontend" }
-                            Tag { variant: TagVariant::Success, "Active" }
-                            Tag { variant: TagVariant::Warning, "Beta" }
-                            Tag { variant: TagVariant::Info, "v2.0" }
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            PaginationComponent {
+                                current: 1,
+                                total: 50,
+                                page_size: 5,
+                            }
                         }
                     }
 
@@ -264,23 +224,113 @@ pub fn ComponentsTag() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Closable Mix"
+                            "Medium Page Size"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Mix of closable and non-closable tags"
+                            "20 items per page"
                         }
-                        div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P6).build(),
-                            Tag { variant: TagVariant::Default, "Rust" }
-                            Tag {
-                                variant: TagVariant::Primary,
-                                closable: true,
-                                "WebAssembly"
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            PaginationComponent {
+                                current: 1,
+                                total: 200,
+                                page_size: 20,
                             }
-                            Tag { variant: TagVariant::Success, "Stable" }
-                            Tag {
-                                variant: TagVariant::Warning,
-                                closable: true,
-                                "Experimental"
+                        }
+                    }
+
+                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
+                        h3 {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::Lg)
+                                .add(FontWeight::Semibold)
+                                .add(TextColor::Primary)
+                                .add(MarginBottom::Mb3)
+                                .build(),
+                            "Large Page Size"
+                        }
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "50 items per page"
+                        }
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            PaginationComponent {
+                                current: 1,
+                                total: 500,
+                                page_size: 50,
+                            }
+                        }
+                    }
+                }
+
+                // Edge Cases
+                Section {
+                    title: Some("Edge Cases".to_string()),
+                    class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
+
+                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
+                        h3 {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::Lg)
+                                .add(FontWeight::Semibold)
+                                .add(TextColor::Primary)
+                                .add(MarginBottom::Mb3)
+                                .build(),
+                            "First Page"
+                        }
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "Pagination on first page (previous button disabled)"
+                        }
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            PaginationComponent {
+                                current: 1,
+                                total: 100,
+                                page_size: 10,
+                                show_total: true,
+                            }
+                        }
+                    }
+
+                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
+                        h3 {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::Lg)
+                                .add(FontWeight::Semibold)
+                                .add(TextColor::Primary)
+                                .add(MarginBottom::Mb3)
+                                .build(),
+                            "Last Page"
+                        }
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "Pagination on last page (next button disabled)"
+                        }
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            PaginationComponent {
+                                current: 10,
+                                total: 100,
+                                page_size: 10,
+                                show_total: true,
+                            }
+                        }
+                    }
+
+                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
+                        h3 {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::Lg)
+                                .add(FontWeight::Semibold)
+                                .add(TextColor::Primary)
+                                .add(MarginBottom::Mb3)
+                                .build(),
+                            "No Data"
+                        }
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "Pagination with no data (shows page 1 of 1)"
+                        }
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            PaginationComponent {
+                                current: 1,
+                                total: 0,
+                                page_size: 10,
+                                show_total: true,
                             }
                         }
                     }
@@ -299,10 +349,10 @@ pub fn ComponentsTag() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Basic Tag"
+                            "Basic Pagination"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            code { r#"Tag {{ "Label" }}"# }
+                            code { r#"PaginationComponent {{ current: 1, total: 100, page_size: 10 }}"# }
                         }
                     }
 
@@ -314,30 +364,40 @@ pub fn ComponentsTag() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Primary Tag"
-                        }
-                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            code { r#"Tag {{ variant: TagVariant::Primary, "Category" }}"# }
-                        }
-                    }
-
-                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
-                        h3 {
-                            class: ClassesBuilder::new()
-                                .add(FontSize::Lg)
-                                .add(FontWeight::Semibold)
-                                .add(TextColor::Primary)
-                                .add(MarginBottom::Mb3)
-                                .build(),
-                            "Closable Tag"
+                            "With Total and Size Changer"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"Tag {{
-    variant: TagVariant::Success,
-    closable: true,
-    on_close: move |_| println!("Tag closed"),
-    "Label"
+                                r#"PaginationComponent {{
+    current: 1,
+    total: 200,
+    page_size: 10,
+    show_total: true,
+    show_size_changer: true,
+}}"#
+                            }
+                        }
+                    }
+
+                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
+                        h3 {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::Lg)
+                                .add(FontWeight::Semibold)
+                                .add(TextColor::Primary)
+                                .add(MarginBottom::Mb3)
+                                .build(),
+                            "With Page Change Handler"
+                        }
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            code {
+                                r#"PaginationComponent {{
+    current: 1,
+    total: 100,
+    page_size: 10,
+    on_change: Some(EventHandler::new(move |page| {{
+        println!("Page changed to: {{page}}");
+    }})),
 }}"#
                             }
                         }

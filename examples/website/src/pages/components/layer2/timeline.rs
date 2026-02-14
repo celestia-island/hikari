@@ -5,11 +5,11 @@ use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
 use _components::layout::{Container, Section};
-use _extra_components::extra::{Timeline, TimelineItem, TimelinePosition, TimelineStatus};
+use _extra_components::extra::{Timeline as TimelineComponent, TimelineItem, TimelinePosition, TimelineStatus};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextColor};
 
 // Code examples as constants
-const CODE_BASIC: &str = r#"Timeline {
+const CODE_BASIC: &str = r#"TimelineComponent {
     position: TimelinePosition::Left,
     TimelineItem {
         title: "Project Started",
@@ -27,7 +27,7 @@ const CODE_BASIC: &str = r#"Timeline {
     }
 }"#;
 
-const CODE_CENTER: &str = r#"Timeline {
+const CODE_CENTER: &str = r#"TimelineComponent {
     position: TimelinePosition::Center,
     TimelineItem {
         title: "Phase 1",
@@ -47,10 +47,10 @@ const CODE_STATUS: &str = r#"TimelineItem {
 }"#;
 
 #[allow(non_snake_case)]
-pub fn TimelineDoc() -> Element {
+pub fn Timeline() -> Element {
     rsx! {
         Layout {
-            current_route: Route::TimelineDoc {},
+            current_route: Route::Timeline {},
 
             Container {
                 // Page header
@@ -107,7 +107,7 @@ pub fn TimelineDoc() -> Element {
                             "Timeline positioned on the left side"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").add_raw("border").add_raw("rounded-lg").build(),
-                            Timeline {
+                            TimelineComponent {
                                 position: TimelinePosition::Left,
                                 TimelineItem {
                                     title: "Project Kickoff".to_string(),
@@ -161,7 +161,7 @@ pub fn TimelineDoc() -> Element {
                             "Timeline centered with icons in the middle"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").add_raw("border").add_raw("rounded-lg").build(),
-                            Timeline {
+                            TimelineComponent {
                                 position: TimelinePosition::Center,
                                 TimelineItem {
                                     title: "Phase 1".to_string(),
@@ -208,7 +208,7 @@ pub fn TimelineDoc() -> Element {
                             "Display items with different statuses"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").add_raw("border").add_raw("rounded-lg").build(),
-                            Timeline {
+                            TimelineComponent {
                                 position: TimelinePosition::Left,
                                 TimelineItem {
                                     title: "Completed Task".to_string(),

@@ -4,14 +4,17 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{data::{Tree, TreeNodeData}, layout::{Container, Section}};
+use _components::{
+    data::{Tree as TreeComponent, TreeNodeData},
+    layout::{Container, Section},
+};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, TextColor};
 
 #[allow(non_snake_case)]
-pub fn ComponentsTree() -> Element {
+pub fn Tree() -> Element {
     rsx! {
         Layout {
-            current_route: Route::DataTree {},
+            current_route: Route::Tree {},
 
             Container {
                 // Page header
@@ -79,7 +82,7 @@ pub fn ComponentsTree() -> Element {
                             "Basic tree with nested children"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Tree {
+                            TreeComponent {
                                 data: vec![
                                     TreeNodeData {
                                         key: "1".to_string(),
@@ -133,7 +136,7 @@ pub fn ComponentsTree() -> Element {
                             "Tree with visual connecting lines between nodes"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Tree {
+                            TreeComponent {
                                 data: vec![
                                     TreeNodeData {
                                         key: "1".to_string(),
@@ -194,7 +197,7 @@ pub fn ComponentsTree() -> Element {
                             "Tree with multiple levels of nesting"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Tree {
+                            TreeComponent {
                                 data: vec![
                                     TreeNodeData {
                                         key: "1".to_string(),
@@ -269,7 +272,7 @@ pub fn ComponentsTree() -> Element {
                             "File and folder structure"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Tree {
+                            TreeComponent {
                                 data: vec![
                                     TreeNodeData {
                                         key: "root".to_string(),
@@ -343,7 +346,7 @@ pub fn ComponentsTree() -> Element {
                             "Company or team hierarchy"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Tree {
+                            TreeComponent {
                                 data: vec![
                                     TreeNodeData {
                                         key: "ceo".to_string(),
@@ -416,7 +419,7 @@ pub fn ComponentsTree() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"Tree {{
+                                r#"TreeComponent {{
     data: vec![
         TreeNodeData {{
             key: "1".to_string(),
@@ -449,7 +452,7 @@ pub fn ComponentsTree() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"Tree {{
+                                r#"TreeComponent {{
     data: vec![...],
     default_expanded_keys: vec!["1".to_string()],
     show_line: true,

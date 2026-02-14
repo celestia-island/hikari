@@ -4,14 +4,19 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{basic::{Image, ImageFit}, layout::{Container, Section}};
-use _palette::classes::{ ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor, };
+use _components::{
+    basic::{Image as ImageComponent, ImageFit},
+    layout::{Container, Section},
+};
+use _palette::classes::{
+    ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor,
+};
 
 #[allow(non_snake_case)]
-pub fn ComponentsImage() -> Element {
+pub fn Image() -> Element {
     rsx! {
         Layout {
-            current_route: Route::DisplayImage {},
+            current_route: Route::Image {},
 
             Container {
                 // Page header
@@ -80,7 +85,7 @@ pub fn ComponentsImage() -> Element {
                         }
                         div {
                             style: "width: 400px; height: 250px; overflow: hidden; border: 1px solid var(--hi-color-border);",
-                            Image {
+                            ImageComponent {
                                 src: "https://picsum.photos/800/600?random=1".to_string(),
                                 alt: "Landscape".to_string(),
                                 fit: ImageFit::Cover,
@@ -105,7 +110,7 @@ pub fn ComponentsImage() -> Element {
                         }
                         div {
                             style: "width: 400px; height: 250px; overflow: hidden; border: 1px solid var(--hi-color-border);",
-                            Image {
+                            ImageComponent {
                                 src: "https://picsum.photos/800/600?random=2".to_string(),
                                 alt: "Landscape".to_string(),
                                 fit: ImageFit::Contain,
@@ -130,7 +135,7 @@ pub fn ComponentsImage() -> Element {
                         }
                         div {
                             style: "width: 400px; height: 250px; overflow: hidden; border: 1px solid var(--hi-color-border);",
-                            Image {
+                            ImageComponent {
                                 src: "https://picsum.photos/600/400?random=3".to_string(),
                                 alt: "Portrait".to_string(),
                                 fit: ImageFit::Fill,
@@ -161,7 +166,7 @@ pub fn ComponentsImage() -> Element {
                         }
                         div {
                             style: "width: 100%; max-width: 600px;",
-                            Image {
+                            ImageComponent {
                                 src: "https://picsum.photos/1200/600?random=4".to_string(),
                                 alt: "Responsive image".to_string(),
                                 fit: ImageFit::Cover,
@@ -185,7 +190,7 @@ pub fn ComponentsImage() -> Element {
                         }
                         div {
                             style: "width: 100%;",
-                            Image {
+                            ImageComponent {
                                 src: "https://picsum.photos/1200/600?random=5".to_string(),
                                 alt: "Responsive image".to_string(),
                                 fit: ImageFit::Cover,
@@ -215,21 +220,21 @@ pub fn ComponentsImage() -> Element {
                             "Images with explicit dimensions"
                         }
                         div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap6).add(Padding::P6).build(),
-                            Image {
+                            ImageComponent {
                                 src: "https://picsum.photos/200/200?random=6".to_string(),
                                 alt: "Square".to_string(),
                                 fit: ImageFit::Cover,
                                 width: Some(150),
                                 height: Some(150),
                             }
-                            Image {
+                            ImageComponent {
                                 src: "https://picsum.photos/300/200?random=7".to_string(),
                                 alt: "Landscape".to_string(),
                                 fit: ImageFit::Cover,
                                 width: Some(200),
                                 height: Some(150),
                             }
-                            Image {
+                            ImageComponent {
                                 src: "https://picsum.photos/200/300?random=8".to_string(),
                                 alt: "Portrait".to_string(),
                                 fit: ImageFit::Cover,
@@ -288,7 +293,7 @@ pub fn ComponentsImage() -> Element {
                             "Basic Image"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            code { r#"Image {{ src: "/photo.jpg".to_string(), alt: "Description".to_string() }}"# }
+                            code { r#"ImageComponent {{ src: "/photo.jpg".to_string(), alt: "Description".to_string() }}"# }
                         }
                     }
 
@@ -304,7 +309,7 @@ pub fn ComponentsImage() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"Image {{
+                                r#"ImageComponent {{
     src: "/photo.jpg".to_string(),
     alt: "Description".to_string(),
     fit: ImageFit::Cover,
@@ -327,7 +332,7 @@ pub fn ComponentsImage() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"Image {{
+                                r#"ImageComponent {{
     src: "/photo.jpg".to_string(),
     alt: "Description".to_string(),
     fit: ImageFit::Cover,

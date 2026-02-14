@@ -4,15 +4,20 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{basic::{Avatar, AvatarSize, AvatarVariant}, layout::{Container, Section}};
+use _components::{
+    basic::{Avatar as AvatarComponent, AvatarSize, AvatarVariant},
+    layout::{Container, Section},
+};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{ ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor, };
+use _palette::classes::{
+    ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor,
+};
 
 #[allow(non_snake_case)]
-pub fn ComponentsAvatar() -> Element {
+pub fn Avatar() -> Element {
     rsx! {
         Layout {
-            current_route: Route::DisplayAvatar {},
+            current_route: Route::Avatar {},
 
             Container {
                 // Page header
@@ -80,38 +85,38 @@ pub fn ComponentsAvatar() -> Element {
                             "Avatars come in five predefined sizes for different contexts"
                         }
                         div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap6).add(Padding::P6).build(),
-                            Avatar {
+                            AvatarComponent {
                                 src: Some("https://i.pravatar.cc/100?img=1".to_string()),
                                 alt: "User".to_string(),
                                 size: AvatarSize::Xs,
                                 variant: AvatarVariant::Circular,
                             }
-                            Avatar {
+                            AvatarComponent {
                                 src: Some("https://i.pravatar.cc/100?img=2".to_string()),
                                 alt: "User".to_string(),
                                 size: AvatarSize::Sm,
                                 variant: AvatarVariant::Circular,
                             }
-                            Avatar {
+                            AvatarComponent {
                                 src: Some("https://i.pravatar.cc/100?img=3".to_string()),
                                 alt: "User".to_string(),
                                 size: AvatarSize::Md,
                                 variant: AvatarVariant::Circular,
                             }
-                            Avatar {
+                            AvatarComponent {
                                 src: Some("https://i.pravatar.cc/100?img=4".to_string()),
                                 alt: "User".to_string(),
                                 size: AvatarSize::Lg,
                                 variant: AvatarVariant::Circular,
                             }
-                            Avatar {
+                            AvatarComponent {
                                 src: Some("https://i.pravatar.cc/100?img=5".to_string()),
                                 alt: "User".to_string(),
                                 size: AvatarSize::Xl,
                                 variant: AvatarVariant::Circular,
                             }
                         }
-                        div { class: ClassesBuilder::new().add(Padding::Px6).add(TextColor::Secondary).build(),
+                        div { class: ClassesBuilder::new().add(Padding::P6).add(TextColor::Secondary).build(),
                             code { "Xs (24px) - Sm (32px) - Md (40px) - Lg (48px) - Xl (64px)" }
                         }
                     }
@@ -136,26 +141,26 @@ pub fn ComponentsAvatar() -> Element {
                             "Three shape options for different design contexts"
                         }
                         div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap6).add(Padding::P6).build(),
-                            Avatar {
+                            AvatarComponent {
                                 src: Some("https://i.pravatar.cc/100?img=10".to_string()),
                                 alt: "User".to_string(),
                                 size: AvatarSize::Lg,
                                 variant: AvatarVariant::Circular,
                             }
-                            Avatar {
+                            AvatarComponent {
                                 src: Some("https://i.pravatar.cc/100?img=11".to_string()),
                                 alt: "User".to_string(),
                                 size: AvatarSize::Lg,
                                 variant: AvatarVariant::Rounded,
                             }
-                            Avatar {
+                            AvatarComponent {
                                 src: Some("https://i.pravatar.cc/100?img=12".to_string()),
                                 alt: "User".to_string(),
                                 size: AvatarSize::Lg,
                                 variant: AvatarVariant::Square,
                             }
                         }
-                        div { class: ClassesBuilder::new().add(Padding::Px6).add(TextColor::Secondary).build(),
+                        div { class: ClassesBuilder::new().add(Padding::P6).add(TextColor::Secondary).build(),
                             code { "Circular (50%) - Rounded (8px) - Square (0px)" }
                         }
                     }
@@ -180,27 +185,27 @@ pub fn ComponentsAvatar() -> Element {
                             "When no image source is provided, the avatar displays the first letter of the alt text or custom fallback"
                         }
                         div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap6).add(Padding::P6).build(),
-                            Avatar {
+                            AvatarComponent {
                                 alt: "Alice Smith".to_string(),
                                 size: AvatarSize::Lg,
                                 variant: AvatarVariant::Circular,
                             }
-                            Avatar {
+                            AvatarComponent {
                                 alt: "Bob Johnson".to_string(),
                                 size: AvatarSize::Lg,
                                 variant: AvatarVariant::Circular,
                             }
-                            Avatar {
+                            AvatarComponent {
                                 alt: "Charlie Brown".to_string(),
                                 size: AvatarSize::Lg,
                                 variant: AvatarVariant::Rounded,
                             }
-                            Avatar {
+                            AvatarComponent {
                                 alt: "David Wilson".to_string(),
                                 size: AvatarSize::Lg,
                                 variant: AvatarVariant::Rounded,
                             }
-                            Avatar {
+                            AvatarComponent {
                                 fallback: Some("123".to_string()),
                                 alt: "No Name".to_string(),
                                 size: AvatarSize::Lg,
@@ -230,31 +235,31 @@ pub fn ComponentsAvatar() -> Element {
                         }
                         div {
                             style: "display: flex; gap: -8px;",
-                            Avatar {
+                            AvatarComponent {
                                 src: Some("https://i.pravatar.cc/100?img=20".to_string()),
                                 alt: "User 1".to_string(),
                                 size: AvatarSize::Md,
                                 variant: AvatarVariant::Circular,
                             }
-                            Avatar {
+                            AvatarComponent {
                                 src: Some("https://i.pravatar.cc/100?img=21".to_string()),
                                 alt: "User 2".to_string(),
                                 size: AvatarSize::Md,
                                 variant: AvatarVariant::Circular,
                             }
-                            Avatar {
+                            AvatarComponent {
                                 src: Some("https://i.pravatar.cc/100?img=22".to_string()),
                                 alt: "User 3".to_string(),
                                 size: AvatarSize::Md,
                                 variant: AvatarVariant::Circular,
                             }
-                            Avatar {
+                            AvatarComponent {
                                 src: Some("https://i.pravatar.cc/100?img=23".to_string()),
                                 alt: "User 4".to_string(),
                                 size: AvatarSize::Md,
                                 variant: AvatarVariant::Circular,
                             }
-                            Avatar {
+                            AvatarComponent {
                                 fallback: Some("+5".to_string()),
                                 alt: "More".to_string(),
                                 size: AvatarSize::Md,
@@ -280,7 +285,7 @@ pub fn ComponentsAvatar() -> Element {
                             "Basic Avatar"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            code { r#"Avatar {{ src: "/avatar.jpg".to_string(), alt: "User".to_string() }}"# }
+                            code { r#"AvatarComponent {{ src: "/avatar.jpg".to_string(), alt: "User".to_string() }}"# }
                         }
                     }
 
@@ -296,7 +301,7 @@ pub fn ComponentsAvatar() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"Avatar {{
+                                r#"AvatarComponent {{
     src: "/avatar.jpg".to_string(),
     alt: "User".to_string(),
     size: AvatarSize::Lg,
@@ -318,7 +323,7 @@ pub fn ComponentsAvatar() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"Avatar {{
+                                r#"AvatarComponent {{
     alt: "John Doe".to_string(),
     size: AvatarSize::Md,
     variant: AvatarVariant::Circular,

@@ -1,238 +1,269 @@
-# ThemeProvider 三层分级设计
-
-## 实施状态：✅ 已完成
-
----
+# Website Demo 组件重构计划
 
 ## 问题分析
 
-### 原始问题
-1. **单选框/复选框暗黑模式图标颜色错误**：图标使用 `color: white` 硬编码，但背景是 `primary` 色渐变，在暗黑模式下 `primary` 色较深，导致图标不可见
-2. **ThemeProvider 职责过重**：所有颜色变量（基础色 + 组件色 + 动画相关）都混在一个层级
-3. **缺乏组件级颜色定制**：每个组件需要自己计算适合的颜色
+### 1. 目录结构问题
+当前存在多个平级的组件目录，不符合 layer1/2/3 三层架构：
+- `entry/` - 入口组件 (Cascader, Transfer, NumberInput, Search)
+- `extra/` - 扩展组件 (Collapsible, Timeline, UserGuide, ZoomControls)
+- `data/` - 数据组件 (Table, Tree, Pagination) - **已有完整 demo**
+- `display/` - 展示组件 (Avatar, Comment, Image, QRCode, Tag, Empty, DescriptionList) - **已有完整 demo**
 
-### 解决方案
-实现三层分级主题系统，将职责分离到不同层级。
+### 2. 页面内容问题
+- `layer1/form.rs`、`layer1/switch.rs` 等页面**只是图标展示**，没有实际组件 demo
+- `entry/` 和 `extra/` 下的页面有**完整的交互 demo**
+- `data/` 和 `display/` 下也有**完整的 demo**，但没有被使用
 
----
-
-## 架构概览
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Layer 3: 高级功能                        │
-│  AnimationProvider, StyleProvider (全局 Context, 可嵌套)         │
-├─────────────────────────────────────────────────────────────────┤
-│                         Layer 2: 组件颜色                        │
-│  ComponentPalette (由 Layer1 自动派生)                           │
-│  - Radio/Checkbox 图标色、背景色                                  │
-│  - Input 边框、焦点色                                             │
-├─────────────────────────────────────────────────────────────────┤
-│                         Layer 1: 基础配色                        │
-│  Palette (primary, secondary, semantic, surface, text)           │
-└─────────────────────────────────────────────────────────────────┘
-```
+### 3. 侧边栏问题
+- 存在单独的 "Entry" 和 "Extra" 类别
+- 应该只保留 "Layer 1/2/3" 三个类别
 
 ---
 
-## 已完成的实施
+## Layer 定义
 
-### Layer 2: 组件颜色层 ✅
-
-**文件**: `packages/components/src/theme_provider.rs`
-
-```rust
-// ComponentOverrides - 用户可部分覆盖
-pub struct ComponentOverrides {
-    pub selection_icon_color: Option<String>,
-    pub selection_background: Option<String>,
-    pub selection_border: Option<String>,
-    pub selection_surface: Option<String>,
-    pub selection_glow: Option<String>,
-    pub input_border: Option<String>,
-    pub input_focus_border: Option<String>,
-    pub input_background: Option<String>,
-}
-
-// ComponentPalette - 自动从 Palette 派生
-pub struct ComponentPalette { /* ... */ }
-```
-
-**CSS 变量输出**:
-```css
-/* 白天模式 (Light mode) */
---hi-component-selection-icon: #D6ECF0; /* palette.background 月白 */
---hi-component-selection-bg: linear-gradient(135deg, rgba(primary, 0.9), rgba(primary, 0.75));
-
-/* 暗黑模式 (Dark mode) */
---hi-component-selection-icon: #144A74; /* palette.primary 鷃蓝 */
---hi-component-selection-bg: linear-gradient(135deg, rgba(text_primary, 0.95), rgba(text_primary, 0.8)); /* 白色渐变 */
-
-/* 其他变量 */
---hi-component-selection-border: rgba(...);
---hi-component-selection-surface: rgba(...);
---hi-component-selection-glow: rgba(...);
-```
-
-### Layer 3: AnimationProvider ✅
-
-**文件**: `packages/animation/src/provider.rs`
-
-```rust
-pub struct AnimationConfig {
-    pub enabled: bool,
-    pub duration_scale: f32,
-    pub reduced_motion: bool,
-}
-
-pub fn AnimationProvider(props: AnimationProviderProps) -> Element { /* ... */ }
-pub fn use_animation_config() -> AnimationContext { /* ... */ }
-```
-
-**CSS 变量输出**:
-```css
---hi-animation-enabled: 1;
---hi-animation-duration-scale: 0.8;
---hi-animation-reduced-motion: 0;
-```
-
-**prefers-reduced-motion 检测**: `packages/animation/src/prefers_reduced_motion.rs`
-
-### Layer 3: StyleProvider ✅
-
-**文件**: `packages/theme/src/style_provider.rs`
-
-```rust
-pub struct StyleConfig {
-    pub class_prefix: String,
-    pub extra_classes: Vec<String>,
-    pub component_overrides: HashMap<String, String>,
-}
-
-pub fn StyleProvider(props: StyleProviderProps) -> Element { /* ... */ }
-pub fn use_component_class(component_name: &str, base_class: &str) -> String { /* ... */ }
-```
-
-### Radio/Checkbox 样式更新 ✅
-
-**文件**: 
-- `packages/components/src/styles/components/radio.scss`
-- `packages/components/src/styles/components/checkbox.scss`
-
-现在使用 Layer 2 CSS 变量，移除了硬编码的暗黑模式样式。
-
-### CSS 变量别名修复 ✅
-
-**问题**: 组件使用 `--hi-color-text-primary`，但 ThemeProvider 只生成 `--hi-text-primary`
-
-**修复**: ThemeProvider 现在同时生成：
-```css
---hi-text-primary: #F2F2F2;
---hi-color-text-primary: #F2F2F2;  /* 别名 */
---hi-color-text-secondary: ...;
---hi-color-primary: ...;
---hi-color-secondary: ...;
---hi-color-background: ...;
---hi-color-surface: ...;
---hi-color-border: ...;
-```
-
-### 图标颜色继承修复 ✅
-
-**问题**: 暗黑模式下图标显示为黑色而不是浅色，因为 SVG path 没有 `fill="currentColor"`
-
-**根因**: `build_svg!` 宏生成的 SVG path 元素没有添加 `fill="currentColor"`，导致无法通过 CSS `color` 属性控制图标颜色
-
-**修复**: 更新 `packages/icons/src/svg_macro.rs`，为所有 SVG path 添加 `fill="currentColor"`：
-```rust
-// 修复前
-svg.push_str("\" />");
-
-// 修复后
-svg.push_str("\" fill=\"currentColor\" />");
-```
-
-现在图标会自动继承父元素的 CSS `color` 属性，在暗黑模式下正确显示浅色。
+| Layer | 名称 | 特点 | 示例 |
+|-------|------|------|------|
+| Layer 1 | 基础组件 | 最基础的 UI 原子组件 | Button, Input, Switch, Badge |
+| Layer 2 | 复合组件 | 由基础组件组合的复杂组件 | Table, Tree, Form, Modal, Menu |
+| Layer 3 | 生产级组件 | 完整的生产级功能模块 | VideoPlayer, RichTextEditor, Charts |
 
 ---
 
-## 使用示例
+## 组件归类方案
 
-### 完整三层使用
+### Entry 组件归类
 
-```rust
-use hikari_components::{ThemeProvider, ComponentOverrides, StyleProvider};
-use hikari_animation::AnimationProvider;
+| 组件 | 当前位置 | 归类到 | 理由 |
+|------|----------|--------|------|
+| NumberInput | entry | **Layer 1 Form** | 基础表单输入组件 |
+| Search | entry | **Layer 1 Form** | 基础搜索输入组件 |
+| Cascader | entry | **Layer 2 Form** | 复杂的级联选择器 |
+| Transfer | entry | **Layer 2 Form** | 复杂的穿梭框组件 |
 
-rsx! {
-    ThemeProvider { 
-        palette: "tairitsu",
-        component_overrides: ComponentOverrides {
-            selection_icon_color: Some("#FFD700".to_string()),
-            ..Default::default()
-        },
-        
-        AnimationProvider {
-            duration_scale: 0.8,
-            respect_reduced_motion: true,
-            
-            StyleProvider {
-                extra_classes: vec!["custom-theme".to_string()],
-                
-                App { }
-            }
-        }
-    }
-}
+### Extra 组件归类
+
+| 组件 | 当前位置 | 归类到 | 理由 |
+|------|----------|--------|------|
+| Collapsible | extra | **Layer 2 Navigation** | 折叠导航面板 |
+| Timeline | extra | **Layer 2 Data** | 数据时间线展示 |
+| UserGuide | extra | **Layer 3** | 完整的用户引导功能模块 |
+| ZoomControls | extra | **Layer 3** | 辅助功能组件 |
+
+### Data 组件归类 (已有 demo)
+
+| 组件 | 当前位置 | 归类到 | 说明 |
+|------|----------|--------|------|
+| Table | data | **Layer 2 Data** | 已有完整 demo |
+| Tree | data | **Layer 2 Data** | 已有完整 demo |
+| Pagination | data | **Layer 2 Data** | 已有完整 demo |
+
+### Display 组件归类 (已有 demo)
+
+| 组件 | 当前位置 | 归类到 | 说明 |
+|------|----------|--------|------|
+| Avatar | display | **Layer 1 Display** | 已有完整 demo |
+| Image | display | **Layer 1 Display** | 已有完整 demo |
+| Tag | display | **Layer 1 Display** | 已有完整 demo |
+| Empty | display | **Layer 1 Display** | 已有完整 demo |
+| QRCode | display | **Layer 1 Display** | 已有完整 demo |
+| Comment | display | **Layer 1 Display** | 已有完整 demo |
+| DescriptionList | display | **Layer 1 Display** | 已有完整 demo |
+
+---
+
+## 重构后目录结构
+
+```
+src/pages/components/
+├── layer1/
+│   ├── mod.rs
+│   ├── basic.rs          # Button, Input, Select, Checkbox, Radio, Divider
+│   ├── form.rs           # Field, Label, Validation + NumberInput, Search
+│   ├── switch.rs         # Switch, Progress, Slider
+│   ├── feedback.rs       # Alert, Message, Toast
+│   └── display.rs        # Avatar, Image, Tag, Empty, QRCode, Comment, DescriptionList
+│
+├── layer2/
+│   ├── mod.rs
+│   ├── overview.rs
+│   ├── navigation.rs     # Menu, Tabs, Breadcrumb + Collapsible
+│   ├── data.rs           # Table, Tree, Pagination + Timeline
+│   ├── form.rs           # Form, Dropdown, Modal, Collapse + Cascader, Transfer
+│   └── feedback.rs       # Modal, Drawer, Popconfirm
+│
+├── layer3/
+│   ├── mod.rs
+│   ├── overview.rs
+│   ├── media.rs          # VideoPlayer, AudioPlayer
+│   ├── editor.rs         # RichTextEditor, CodeEditor
+│   ├── visualization.rs  # Charts, Graphs
+│   ├── user_guide.rs     # UserGuide (从 extra 移入)
+│   └── zoom_controls.rs  # ZoomControls (从 extra 移入)
+│
+└── mod.rs
 ```
 
-### 组件中使用
+---
 
-```rust
-use hikari_animation::{use_animation_config, use_transition_with_config};
+## 执行步骤
 
-fn MyComponent() -> Element {
-    // 获取动画配置
-    let animation = use_animation_config();
-    
-    // 使用带配置的 transition
-    let mut transition = use_transition_with_config(300);
-    
-    rsx! { /* ... */ }
-}
-```
+### Phase 1: 文件移动和重命名
+
+1. **移动 entry 组件**
+   - `entry/number_input_doc.rs` → `layer1/number_input.rs`
+   - `entry/search_doc.rs` → `layer1/search.rs`
+   - `entry/cascader_doc.rs` → `layer2/cascader.rs`
+   - `entry/transfer_doc.rs` → `layer2/transfer.rs`
+
+2. **移动 extra 组件**
+   - `extra/collapsible_doc.rs` → `layer2/collapsible.rs`
+   - `extra/timeline_doc.rs` → `layer2/timeline.rs`
+   - `extra/user_guide_doc.rs` → `layer3/user_guide.rs`
+   - `extra/zoom_controls_doc.rs` → `layer3/zoom_controls.rs`
+
+3. **移动 data 组件**
+   - `data/table.rs` → `layer2/table.rs`
+   - `data/tree.rs` → `layer2/tree.rs`
+   - `data/pagination.rs` → `layer2/pagination.rs`
+
+4. **移动 display 组件**
+   - `display/avatar.rs` → `layer1/avatar.rs`
+   - `display/image.rs` → `layer1/image.rs`
+   - `display/tag.rs` → `layer1/tag.rs`
+   - `display/empty.rs` → `layer1/empty.rs`
+   - `display/qrcode.rs` → `layer1/qrcode.rs`
+   - `display/comment.rs` → `layer1/comment.rs`
+   - `display/description_list.rs` → `layer1/description_list.rs`
+
+5. **删除空目录**
+   - 删除 `entry/`
+   - 删除 `extra/`
+   - 删除 `data/`
+   - 删除 `display/`
+
+### Phase 2: 更新模块导出
+
+更新以下文件的 mod.rs：
+- `layer1/mod.rs` - 添加新组件导出
+- `layer2/mod.rs` - 添加新组件导出
+- `layer3/mod.rs` - 添加新组件导出
+- `components/mod.rs` - 移除 entry, extra 导出
+
+### Phase 3: 更新路由
+
+更新 `app.rs`:
+- 移除 `/components/entry/*` 路由
+- 移除 `/components/extra/*` 路由
+- 添加新的 `/components/layer1/*` 路由
+- 添加新的 `/components/layer2/*` 路由
+- 添加新的 `/components/layer3/*` 路由
+
+### Phase 4: 更新侧边栏
+
+更新 `sidebar.rs`:
+- 移除 "Entry" 类别
+- 移除 "Extra" 类别
+- 在 Layer 1/2/3 下添加新的组件链接
+
+### Phase 5: 整合页面内容 (可选)
+
+将现有的 "图标展示" 页面替换为实际 demo 页面：
+- `layer1/display.rs` 应包含 Avatar, Image, Tag 等 demo
+- `layer1/form.rs` 应包含 NumberInput, Search 等 demo
+- `layer2/data.rs` 应包含 Table, Tree, Pagination, Timeline demo
+- `layer2/form.rs` 应包含 Cascader, Transfer demo
+- `layer2/navigation.rs` 应包含 Collapsible demo
+
+---
+
+## 确认结果 ✅
+
+- **Search 归类**: Layer 1 Form (基础输入组件)
+- **UserGuide/ZoomControls**: 独立页面，作为 Layer 3 功能模块
+- **命名风格**: 去掉 Doc 后缀 (如 `Cascader` 而不是 `CascaderDoc`)
+- **执行范围**: 同时整合页面内容
+
+---
+
+## 执行状态：✅ 已完成
 
 ---
 
 ## 文件变更清单
 
-### 新增文件
-| 文件路径 | 说明 |
-|---------|------|
-| `packages/animation/src/config.rs` | AnimationConfig 结构 |
-| `packages/animation/src/prefers_reduced_motion.rs` | prefers-reduced-motion 检测 |
-| `packages/animation/src/provider.rs` | AnimationProvider 组件 |
-| `packages/theme/src/style_provider.rs` | StyleProvider 组件 |
+### 移动文件 (19)
+| 源路径 | 目标路径 |
+|--------|----------|
+| entry/number_input_doc.rs | layer1/number_input.rs |
+| entry/search_doc.rs | layer1/search.rs |
+| entry/cascader_doc.rs | layer2/cascader.rs |
+| entry/transfer_doc.rs | layer2/transfer.rs |
+| extra/collapsible_doc.rs | layer2/collapsible.rs |
+| extra/timeline_doc.rs | layer2/timeline.rs |
+| extra/user_guide_doc.rs | layer3/user_guide.rs |
+| extra/zoom_controls_doc.rs | layer3/zoom_controls.rs |
+| data/table.rs | layer2/table.rs |
+| data/tree.rs | layer2/tree.rs |
+| data/pagination.rs | layer2/pagination.rs |
+| display/avatar.rs | layer1/avatar.rs |
+| display/image.rs | layer1/image.rs |
+| display/tag.rs | layer1/tag.rs |
+| display/empty.rs | layer1/empty.rs |
+| display/qrcode.rs | layer1/qrcode.rs |
+| display/comment.rs | layer1/comment.rs |
+| display/description_list.rs | layer1/description_list.rs |
 
-### 修改文件
-| 文件路径 | 变更内容 |
-|---------|----------|
-| `packages/components/src/theme_provider.rs` | 添加 ComponentPalette、ComponentOverrides |
-| `packages/components/src/styles/components/radio.scss` | 使用 Layer 2 变量 |
-| `packages/components/src/styles/components/checkbox.scss` | 使用 Layer 2 变量 |
-| `packages/animation/src/lib.rs` | 导出新模块 |
-| `packages/animation/src/hooks.rs` | 添加 tween_with_config、use_transition_with_config |
-| `packages/theme/src/lib.rs` | 导出 StyleProvider |
-| `packages/components/src/lib.rs` | 导出 ComponentOverrides、ComponentPalette |
-| `packages/icons/src/svg_macro.rs` | 添加 fill="currentColor" 修复图标颜色继承 |
+### 修改文件 (6)
+- `layer1/mod.rs`
+- `layer2/mod.rs`
+- `layer3/mod.rs`
+- `components/mod.rs`
+- `app.rs`
+- `sidebar.rs`
+
+### 删除目录 (4)
+- `entry/`
+- `extra/`
+- `data/`
+- `display/`
 
 ---
 
-## 决策记录
+## 预计影响
 
-| 问题 | 决策 | 说明 |
-|-----|------|------|
-| Layer2 颜色生成方式 | 自动计算 | 由 Palette 派生，用户可部分覆盖 |
-| Layer3 组织方式 | 全局 Context | AnimationProvider + StyleProvider |
-| ComponentPalette 覆盖 | 支持 | 通过 ComponentOverrides 部分覆盖 |
-| AnimationProvider 位置 | hikari-animation | 复用现有动画能力，职责清晰 |
+- **路由变更**: 所有 entry/extra 页面 URL 会变化
+- **侧边栏**: 减少两个顶级类别 (Entry, Extra)
+- **代码组织**: 更加清晰的三层架构
+
+---
+
+## 旧计划归档
+
+> 以下为之前已完成的 ThemeProvider 三层分级设计计划，保留供参考。
+
+<details>
+<summary>点击展开旧计划</summary>
+
+### ThemeProvider 三层分级设计 - 已完成 ✅
+
+#### 问题
+1. 单选框/复选框暗黑模式图标颜色错误
+2. ThemeProvider 职责过重
+3. 缺乏组件级颜色定制
+
+#### 解决方案
+实现三层分级主题系统：
+- Layer 1: 基础配色 (Palette)
+- Layer 2: 组件颜色 (ComponentPalette)
+- Layer 3: 高级功能 (AnimationProvider, StyleProvider)
+
+#### 完成内容
+- ComponentPalette 自动从 Palette 派生
+- AnimationProvider 支持动画配置
+- StyleProvider 支持样式定制
+- Radio/Checkbox 样式使用 Layer 2 变量
+- CSS 变量别名修复
+- 图标颜色继承修复
+
+</details>

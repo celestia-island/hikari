@@ -1,6 +1,8 @@
 //! Macro for building SVG from IconData
 
 /// Build SVG string from IconData
+///
+/// Adds `fill="currentColor"` by default so that CSS `color` property affects icon color.
 #[macro_export]
 macro_rules! build_svg {
     ($data:expr) => {{
@@ -32,11 +34,11 @@ macro_rules! build_svg {
 
         svg.push_str(">");
 
-        // Add main path
+        // Add main path with fill="currentColor" for CSS color inheritance
         if let Some(path_d) = data.path {
             svg.push_str("<path d=\"");
             svg.push_str(path_d);
-            svg.push_str("\" />");
+            svg.push_str("\" fill=\"currentColor\" />");
         }
 
         // Add additional paths
@@ -47,10 +49,13 @@ macro_rules! build_svg {
                 svg.push_str(d);
                 svg.push_str("\"");
             }
+            // Use explicit fill if provided, otherwise use currentColor
             if let Some(fill) = path.fill {
                 svg.push_str(" fill=\"");
                 svg.push_str(fill);
                 svg.push_str("\"");
+            } else {
+                svg.push_str(" fill=\"currentColor\"");
             }
             if let Some(stroke) = path.stroke {
                 svg.push_str(" stroke=\"");
@@ -143,11 +148,11 @@ macro_rules! build_svg_with_attrs {
 
         svg.push_str(">");
 
-        // Add main path
+        // Add main path with fill="currentColor" for CSS color inheritance
         if let Some(path_d) = data.path {
             svg.push_str("<path d=\"");
             svg.push_str(path_d);
-            svg.push_str("\" />");
+            svg.push_str("\" fill=\"currentColor\" />");
         }
 
         // Add additional paths
@@ -158,10 +163,13 @@ macro_rules! build_svg_with_attrs {
                 svg.push_str(d);
                 svg.push_str("\"");
             }
+            // Use explicit fill if provided, otherwise use currentColor
             if let Some(fill) = path.fill {
                 svg.push_str(" fill=\"");
                 svg.push_str(fill);
                 svg.push_str("\"");
+            } else {
+                svg.push_str(" fill=\"currentColor\"");
             }
             if let Some(stroke) = path.stroke {
                 svg.push_str(" stroke=\"");

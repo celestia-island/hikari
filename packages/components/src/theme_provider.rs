@@ -270,13 +270,24 @@ impl ComponentPalette {
     }
 
     fn compute_defaults(palette: &Palette) -> Self {
-        Self {
-            selection_icon_color: "#ffffff".to_string(),
-            selection_background: format!(
+        let selection_background = match palette.mode {
+            ThemeMode::Light => format!(
                 "linear-gradient(135deg, {}, {})",
                 palette.primary.rgba(0.9),
                 palette.primary.rgba(0.75)
             ),
+            ThemeMode::Dark => format!(
+                "linear-gradient(135deg, {}, {})",
+                palette.text_primary.rgba(0.95),
+                palette.text_primary.rgba(0.8)
+            ),
+        };
+        Self {
+            selection_icon_color: match palette.mode {
+                ThemeMode::Light => "#ffffff".to_string(),
+                ThemeMode::Dark => palette.primary.hex(),
+            },
+            selection_background,
             selection_border: match palette.mode {
                 ThemeMode::Light => "rgba(0, 0, 0, 0.2)".to_string(),
                 ThemeMode::Dark => "rgba(255, 255, 255, 0.15)".to_string(),
@@ -1214,7 +1225,14 @@ mod tests {
 
         assert!(css_vars.contains("--hi-component-selection-icon:"));
         assert!(css_vars.contains("--hi-component-selection-bg:"));
-        assert!(css_vars.contains("#ffffff"));
+
+        // 白天模式下，selection_icon_color 应该是白色
+        assert_eq!(component_palette.selection_icon_color, "#ffffff");
+
+        // 白天模式下，selection_background 应该使用 primary 渐变
+        assert!(component_palette
+            .selection_background
+            .contains("linear-gradient"));
     }
 
     #[test]
@@ -1222,15 +1240,24 @@ mod tests {
         let palette = Tairitsu::palette();
         let component_palette = ComponentPalette::from_palette(&palette);
 
-        // 在暗黑模式下，selection_icon_color 应该是白色
-        assert_eq!(component_palette.selection_icon_color, "#ffffff");
+        // 暗黑模式下，selection_icon_color 应该是 primary 色（因为背景是白色渐变）
+        assert_eq!(
+            component_palette.selection_icon_color,
+            palette.primary.hex()
+        );
 
         // 暗黑模式下边框应该使用白色系
         assert!(component_palette.selection_border.contains("255, 255, 255"));
 
-        // CSS 变量应该包含白色
+        // 暗黑模式下，selection_background 应该使用 text_primary 的渐变（接近白色）
+        assert!(component_palette.selection_background.contains("rgba"));
+        assert!(component_palette
+            .selection_background
+            .contains("linear-gradient"));
+
+        // CSS 变量应该包含 primary 色
         let css_vars = component_palette.css_variables();
-        assert!(css_vars.contains("--hi-component-selection-icon: #ffffff"));
+        assert!(css_vars.contains("--hi-component-selection-icon:"));
     }
 
     #[test]

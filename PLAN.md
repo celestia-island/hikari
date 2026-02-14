@@ -60,8 +60,15 @@ pub struct ComponentPalette { /* ... */ }
 
 **CSS 变量输出**:
 ```css
+/* 白天模式 (Light mode) */
 --hi-component-selection-icon: #ffffff;
---hi-component-selection-bg: linear-gradient(135deg, rgba(...), rgba(...));
+--hi-component-selection-bg: linear-gradient(135deg, rgba(primary, 0.9), rgba(primary, 0.75));
+
+/* 暗黑模式 (Dark mode) */
+--hi-component-selection-icon: #144A74; /* primary color */
+--hi-component-selection-bg: linear-gradient(135deg, rgba(242, 242, 242, 0.95), rgba(242, 242, 242, 0.8)); /* white gradient */
+
+/* 其他变量 */
 --hi-component-selection-border: rgba(...);
 --hi-component-selection-surface: rgba(...);
 --hi-component-selection-glow: rgba(...);

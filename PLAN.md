@@ -27,6 +27,10 @@
 - 新增 Layer 1 基础 Canvas 组件
 - 支持 requestAnimationFrame 集成
 
+### 5. 侧边栏滚动位置保持 ✅
+- 使用 `GlobalSignal` 存储滚动位置
+- 导航前保存，路由切换后恢复
+
 ---
 
 ## 最终目录结构
@@ -83,8 +87,10 @@ src/pages/components/
 
 | 提交 | 描述 |
 |------|------|
-| `c2e98e8` | refactor(website): consolidate demo components into layer1/2/3 structure |
+| `61f1b10` | feat(website): preserve sidebar scroll position across route navigations |
+| `65592f7` | docs: update PLAN.md with completed status summary |
 | `6258332` | feat(components): add Canvas component and rewrite QRCode with canvas rendering |
+| `c2e98e8` | refactor(website): consolidate demo components into layer1/2/3 structure |
 
 ---
 

@@ -149,7 +149,6 @@ fn get_breadcrumb_items(route: &Route) -> Vec<BreadcrumbItem> {
         | Route::Image {}
         | Route::Tag {}
         | Route::Empty {}
-        | Route::QRCode {}
         | Route::Comment {}
         | Route::DescriptionList {} => vec![
             BreadcrumbItem {
@@ -174,7 +173,8 @@ fn get_breadcrumb_items(route: &Route) -> Vec<BreadcrumbItem> {
         | Route::Timeline {}
         | Route::Table {}
         | Route::Tree {}
-        | Route::Pagination {} => vec![
+        | Route::Pagination {}
+        | Route::QRCode {} => vec![
             BreadcrumbItem {
                 label: "Components".to_string(),
                 route: Some(Route::ComponentsOverview {}),

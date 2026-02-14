@@ -95,14 +95,16 @@ impl StyleRegistry {
     #[cfg(feature = "basic")]
     pub fn register_basic_components(&mut self) {
         use crate::basic::{
-            ArrowComponent, BackgroundComponent, BadgeComponent, ButtonComponent, CardComponent,
-            CheckboxComponent, DatePickerComponent, DividerComponent, FileUploadComponent,
-            FormFieldComponent, IconButtonComponent, InputComponent, RadioGroupComponent,
-            SelectComponent, SliderComponent, SwitchComponent, TextareaComponent,
+            ArrowComponent, BackgroundComponent, BadgeComponent, ButtonComponent, CanvasComponent,
+            CardComponent, CheckboxComponent, DatePickerComponent, DividerComponent,
+            FileUploadComponent, FormFieldComponent, IconButtonComponent, InputComponent,
+            RadioGroupComponent, SelectComponent, SliderComponent, SwitchComponent,
+            TextareaComponent,
         };
         ArrowComponent::register(self);
         BackgroundComponent::register(self);
         ButtonComponent::register(self);
+        CanvasComponent::register(self);
         InputComponent::register(self);
         CardComponent::register(self);
         BadgeComponent::register(self);

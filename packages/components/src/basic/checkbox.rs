@@ -2,7 +2,7 @@
 // Checkbox component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, CheckboxClass};
+use palette::classes::{CheckboxClass, ClassesBuilder};
 
 use crate::styled::StyledComponent;
 

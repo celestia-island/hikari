@@ -265,11 +265,6 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                         route: Route::Empty {},
                     },
                     NavItem {
-                        label: "QRCode",
-                        icon: MdiIcon::ViewDashboard,
-                        route: Route::QRCode {},
-                    },
-                    NavItem {
                         label: "Comment",
                         icon: MdiIcon::Chat,
                         route: Route::Comment {},
@@ -316,6 +311,11 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
                         label: "Pagination",
                         icon: MdiIcon::ChevronLeft,
                         route: Route::Pagination {},
+                    },
+                    NavItem {
+                        label: "QRCode",
+                        icon: MdiIcon::ViewDashboard,
+                        route: Route::QRCode {},
                     },
                     NavItem {
                         label: "Timeline",

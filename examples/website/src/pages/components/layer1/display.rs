@@ -11,7 +11,7 @@ use _palette::classes::{ClassesBuilder, Display, FontSize, Gap, MarginBottom, Pa
 #[allow(non_snake_case)]
 pub fn Layer1Display() -> Element {
     let components = vec![
-        ("Avatar", "头像", "头像组件", MdiIcon::User),
+        ("Avatar", "头像", "头像组件", MdiIcon::Account),
         ("Progress", "进度条", "进度条组件", MdiIcon::Pulse),
         ("Spinner", "加载", "加载指示器", MdiIcon::Loading),
         ("Image", "图片", "图片组件", MdiIcon::Image),

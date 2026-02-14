@@ -3,7 +3,7 @@
 
 use dioxus::prelude::*;
 use icons::{Icon, MdiIcon};
-use palette::classes::{ClassesBuilder, components::ArrowClass};
+use palette::classes::{components::ArrowClass, ClassesBuilder};
 
 use crate::StyledComponent;
 

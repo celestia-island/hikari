@@ -66,7 +66,9 @@ pub fn DatePicker(props: DatePickerProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let input_classes = ClassesBuilder::new().add(DatePickerClass::DatePicker).build();
+    let input_classes = ClassesBuilder::new()
+        .add(DatePickerClass::DatePicker)
+        .build();
 
     let disabled_class = if props.disabled {
         "hi-date-picker-disabled"

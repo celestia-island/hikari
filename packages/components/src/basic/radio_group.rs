@@ -134,7 +134,11 @@ pub fn RadioGroup(props: RadioGroupProps) -> Element {
 #[component]
 pub fn RadioButtonInternal(props: RadioButtonInternalProps) -> Element {
     let is_checked = props.selected_value == props.value;
-    let radio_name = if props.group_name.is_empty() { "radio-group".to_string() } else { props.group_name.clone() };
+    let radio_name = if props.group_name.is_empty() {
+        "radio-group".to_string()
+    } else {
+        props.group_name.clone()
+    };
 
     let radio_classes = ClassesBuilder::new()
         .add(RadioClass::Label)

@@ -23,7 +23,6 @@ pub use layer1::DescriptionList;
 pub use layer1::Empty;
 pub use layer1::Image;
 pub use layer1::NumberInput;
-pub use layer1::QRCode;
 pub use layer1::Search;
 pub use layer1::Tag;
 
@@ -38,6 +37,7 @@ pub use layer2::Layer2Overview;
 pub use layer2::Cascader;
 pub use layer2::Collapsible;
 pub use layer2::Pagination;
+pub use layer2::QRCode;
 pub use layer2::Table;
 pub use layer2::Timeline;
 pub use layer2::Transfer;

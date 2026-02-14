@@ -15,7 +15,6 @@ pub mod description_list;
 pub mod empty;
 pub mod image;
 pub mod number_input;
-pub mod qrcode;
 pub mod search;
 pub mod tag;
 
@@ -34,6 +33,5 @@ pub use description_list::DescriptionList;
 pub use empty::Empty;
 pub use image::Image;
 pub use number_input::NumberInput;
-pub use qrcode::QRCode;
 pub use search::Search;
 pub use tag::Tag;

@@ -66,8 +66,6 @@ pub enum Route {
     Tag {},
     #[route("/components/layer1/empty")]
     Empty {},
-    #[route("/components/layer1/qrcode")]
-    QRCode {},
     #[route("/components/layer1/comment")]
     Comment {},
     #[route("/components/layer1/description_list")]
@@ -99,6 +97,8 @@ pub enum Route {
     Tree {},
     #[route("/components/layer2/pagination")]
     Pagination {},
+    #[route("/components/layer2/qrcode")]
+    QRCode {},
 
     // Layer 3 Routes
     #[route("/components/layer3/overview")]
@@ -299,7 +299,7 @@ fn Empty() -> Element {
 #[allow(non_snake_case)]
 fn QRCode() -> Element {
     rsx! {
-        crate::pages::components::layer1::QRCode {}
+        crate::pages::components::layer2::QRCode {}
     }
 }
 

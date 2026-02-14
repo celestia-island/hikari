@@ -10,6 +10,7 @@
 //! - [`Arrow`] - Arrow indicator with rotation support
 //! - [`Badge`] - Small status indicators and labels
 //! - [`Button`] - Interactive button with multiple variants
+//! - [`Canvas`] - 2D canvas with requestAnimationFrame integration
 //! - [`Card`] - Content container with optional header
 //! - [`Image`] - Image with configurable fit modes
 //! - [`Input`] - Text input with styling support
@@ -30,6 +31,7 @@ pub mod avatar;
 pub mod background;
 pub mod badge;
 pub mod button;
+pub mod canvas;
 pub mod card;
 pub mod checkbox;
 pub mod date_picker;
@@ -50,6 +52,7 @@ pub use avatar::*;
 pub use background::*;
 pub use badge::*;
 pub use button::*;
+pub use canvas::*;
 pub use card::*;
 pub use checkbox::*;
 pub use date_picker::*;

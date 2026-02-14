@@ -11,8 +11,8 @@ use crate::{
     glow::GlowBlur,
     glow::GlowIntensity,
     portal::{
-        PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
-        use_portal,
+        generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy,
+        TriggerPlacement,
     },
     styled::StyledComponent,
 };

@@ -1,14 +1,9 @@
-// website/src/pages/components/layer1/mod.rs
-// Layer 1 components index
-
-pub mod basic;
-pub mod basic_components;
+pub mod button;
 pub mod display;
 pub mod feedback;
 pub mod form;
 pub mod switch;
 
-// New components from entry/display
 pub mod avatar;
 pub mod comment;
 pub mod description_list;
@@ -18,15 +13,12 @@ pub mod number_input;
 pub mod search;
 pub mod tag;
 
-// Re-exports
-pub use basic::Layer1Basic;
-pub use basic_components::*;
+pub use button::ButtonPage;
 pub use display::Layer1Display;
 pub use feedback::Layer1Feedback;
 pub use form::Layer1Form;
 pub use switch::Layer1Switch;
 
-// Re-export new components
 pub use avatar::Avatar;
 pub use comment::Comment;
 pub use description_list::DescriptionList;

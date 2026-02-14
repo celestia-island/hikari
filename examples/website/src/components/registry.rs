@@ -1,77 +1,25 @@
-// website/src/components/registry.rs
-// Dynamic component registry system
-// Similar to MDX code blocks - allows documentation to reference and render components dynamically
-
 use dioxus::prelude::*;
 
-/// Dynamic component type
 #[derive(Debug, Clone, PartialEq)]
 pub enum ComponentType {
-    /// Layer component (basic, display, form, feedback, switch, etc.)
-    /// With optional component_id for specific sub-components (e.g., "button", "input")
-    Layer(String, String, Option<String>), // (layer, name, component_id)
-
-    /// Demo component (form_demo, dashboard_demo, video_demo, etc.)
-    Demo(String, String, Option<String>), // (demo_category, name, component_id)
-
-    /// Plain code block (not a component reference)
-    Code(String), // code content
+    Layer(String, String, Option<String>),
+    Demo(String, String, Option<String>),
+    Code(String),
 }
 
-/// Dynamic component render function
-/// Maps a component identifier to its render function
 #[allow(non_snake_case)]
 pub fn render_component(component_type: ComponentType) -> Element {
     match component_type {
-        // Layer 1 Components
         ComponentType::Layer(ref layer, ref name, ref component_id) => {
             match (layer.as_str(), name.as_str(), component_id.as_deref()) {
-                // Layer 1 Basic components with sub-components
-                ("layer1", "basic", Some("button")) => {
+                ("layer1", "button", _) => {
                     rsx! {
-                        crate::pages::components::layer1::basic_components::BasicButton {}
+                        crate::pages::components::layer1::ButtonPage {}
                     }
                 }
-                ("layer1", "basic", Some("input")) => {
+                ("layer1", "form", _) => {
                     rsx! {
-                        crate::pages::components::layer1::basic_components::BasicInput {}
-                    }
-                }
-                ("layer1", "basic", Some("card")) => {
-                    rsx! {
-                        crate::pages::components::layer1::basic_components::BasicCard {}
-                    }
-                }
-                ("layer1", "basic", Some("badge")) => {
-                    rsx! {
-                        crate::pages::components::layer1::basic_components::BasicBadge {}
-                    }
-                }
-                ("layer1", "basic", Some("select")) => {
-                    rsx! {
-                        crate::pages::components::layer1::basic_components::BasicSelect {}
-                    }
-                }
-                ("layer1", "basic", Some("checkbox")) => {
-                    rsx! {
-                        crate::pages::components::layer1::basic_components::BasicCheckbox {}
-                    }
-                }
-                ("layer1", "basic", Some("radio")) => {
-                    rsx! {
-                        crate::pages::components::layer1::basic_components::BasicRadio {}
-                    }
-                }
-                ("layer1", "basic", Some("divider")) => {
-                    rsx! {
-                        crate::pages::components::layer1::basic_components::BasicDivider {}
-                    }
-                }
-
-                // Layer 1 components without sub-components (fallback to index pages)
-                ("layer1", "basic", None) => {
-                    rsx! {
-                        crate::pages::components::layer1::Layer1Basic {}
+                        crate::pages::components::layer1::Layer1Form {}
                     }
                 }
                 ("layer1", "display", _) => {
@@ -84,18 +32,12 @@ pub fn render_component(component_type: ComponentType) -> Element {
                         crate::pages::components::layer1::Layer1Feedback {}
                     }
                 }
-                ("layer1", "form", _) => {
-                    rsx! {
-                        crate::pages::components::layer1::Layer1Form {}
-                    }
-                }
                 ("layer1", "switch", _) => {
                     rsx! {
                         crate::pages::components::layer1::Layer1Switch {}
                     }
                 }
 
-                // Layer 2 Components
                 ("layer2", "navigation", _) => {
                     rsx! {
                         crate::pages::components::layer2::Layer2Navigation {}
@@ -117,7 +59,6 @@ pub fn render_component(component_type: ComponentType) -> Element {
                     }
                 }
 
-                // Layer 3 Components
                 ("layer3", "media", _) => {
                     rsx! {
                         crate::pages::components::layer3::Layer3Media {}
@@ -145,7 +86,6 @@ pub fn render_component(component_type: ComponentType) -> Element {
             }
         }
 
-        // Demo Components
         ComponentType::Demo(ref category, ref name, _) => {
             match (category.as_str(), name.as_str()) {
                 ("layer1", "form_demo") => {
@@ -175,7 +115,6 @@ pub fn render_component(component_type: ComponentType) -> Element {
             }
         }
 
-        // Plain code blocks (not component references)
         ComponentType::Code(content) => {
             rsx! {
                 pre { class: "hi-code-block",
@@ -186,16 +125,9 @@ pub fn render_component(component_type: ComponentType) -> Element {
     }
 }
 
-/// Parse component path from documentation format
-/// Format: ```_inner_hikari
-/// pages/components/layer1/basic
-/// pages/components/layer1/basic#button
-/// pages/components/layer1/basic#input
-/// ```
 pub fn parse_component_path(path: &str) -> Option<ComponentType> {
     let path = path.trim().strip_prefix("pages/components/")?;
 
-    // Check for component_id using # syntax
     let (base_path, component_id) = if let Some(idx) = path.find('#') {
         let base = &path[..idx];
         let id = path[idx + 1..].trim();
@@ -204,7 +136,6 @@ pub fn parse_component_path(path: &str) -> Option<ComponentType> {
         (path, None)
     };
 
-    // Split into segments
     let parts: Vec<&str> = base_path.split('/').collect();
 
     if parts.len() != 2 {
@@ -214,12 +145,10 @@ pub fn parse_component_path(path: &str) -> Option<ComponentType> {
     let category = parts[0].to_string();
     let name = parts[1].to_string();
 
-    // Check if it's a demo component
     if category.starts_with("demos/") {
         let demo_category = category.strip_prefix("demos/")?.to_string();
         return Some(ComponentType::Demo(demo_category, name, component_id));
     }
 
-    // Layer component
     Some(ComponentType::Layer(category, name, component_id))
 }

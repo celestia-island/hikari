@@ -138,7 +138,7 @@ fn get_breadcrumb_items(route: &Route) -> Vec<BreadcrumbItem> {
         ],
 
         // Layer 1 Routes
-        Route::Layer1Basic {}
+        Route::Button {}
         | Route::Layer1Form {}
         | Route::Layer1Switch {}
         | Route::Layer1Feedback {}

@@ -10,7 +10,7 @@ pub mod overview;
 pub use overview::ComponentsOverview;
 
 // Layer 1
-pub use layer1::Layer1Basic;
+pub use layer1::ButtonPage;
 pub use layer1::Layer1Display;
 pub use layer1::Layer1Feedback;
 pub use layer1::Layer1Form;

@@ -240,12 +240,12 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
             NavSubcategory {
                 label_en: "Layer 1",
                 label_zh: "基础组件",
-                route: Some(Route::Layer1Basic {}),
+                route: Some(Route::Button {}),
                 items: &[
                     NavItem {
-                        label: "Basic",
-                        icon: MdiIcon::GestureTap,
-                        route: Route::Layer1Basic {},
+                        label: "Button",
+                        icon: MdiIcon::Cursor,
+                        route: Route::Button {},
                     },
                     NavItem {
                         label: "Form",

@@ -31,6 +31,12 @@
 - 使用 `GlobalSignal` 存储滚动位置
 - 导航前保存，路由切换后恢复
 
+### 6. Layer 1 Basic 页面拆分 ✅
+- 删除 `basic.rs` 和 `basic_components.rs`
+- 创建独立 `button.rs` 页面
+- `form.rs` 整合 Input, Select, Checkbox, Radio 演示
+- `display.rs` 整合 Card, Badge, Divider 演示
+
 ---
 
 ## 最终目录结构

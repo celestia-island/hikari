@@ -43,8 +43,8 @@ pub enum Route {
     VideoDemo {},
 
     // Layer 1 Routes
-    #[route("/components/layer1/basic")]
-    Layer1Basic {},
+    #[route("/components/layer1/button")]
+    Button {},
     #[route("/components/layer1/form")]
     Layer1Form {},
     #[route("/components/layer1/switch")]
@@ -220,9 +220,9 @@ fn VideoDemo() -> Element {
 
 // Layer 1 handlers
 #[allow(non_snake_case)]
-fn Layer1Basic() -> Element {
+fn Button() -> Element {
     rsx! {
-        crate::pages::components::layer1::Layer1Basic {}
+        crate::pages::components::layer1::ButtonPage {}
     }
 }
 

@@ -61,12 +61,12 @@ pub struct ComponentPalette { /* ... */ }
 **CSS 变量输出**:
 ```css
 /* 白天模式 (Light mode) */
---hi-component-selection-icon: #ffffff;
+--hi-component-selection-icon: #D6ECF0; /* palette.background 月白 */
 --hi-component-selection-bg: linear-gradient(135deg, rgba(primary, 0.9), rgba(primary, 0.75));
 
 /* 暗黑模式 (Dark mode) */
---hi-component-selection-icon: #144A74; /* primary color */
---hi-component-selection-bg: linear-gradient(135deg, rgba(242, 242, 242, 0.95), rgba(242, 242, 242, 0.8)); /* white gradient */
+--hi-component-selection-icon: #144A74; /* palette.primary 鷃蓝 */
+--hi-component-selection-bg: linear-gradient(135deg, rgba(text_primary, 0.95), rgba(text_primary, 0.8)); /* 白色渐变 */
 
 /* 其他变量 */
 --hi-component-selection-border: rgba(...);

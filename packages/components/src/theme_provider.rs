@@ -284,7 +284,7 @@ impl ComponentPalette {
         };
         Self {
             selection_icon_color: match palette.mode {
-                ThemeMode::Light => "#ffffff".to_string(),
+                ThemeMode::Light => palette.background.hex(),
                 ThemeMode::Dark => palette.primary.hex(),
             },
             selection_background,
@@ -1226,8 +1226,11 @@ mod tests {
         assert!(css_vars.contains("--hi-component-selection-icon:"));
         assert!(css_vars.contains("--hi-component-selection-bg:"));
 
-        // 白天模式下，selection_icon_color 应该是白色
-        assert_eq!(component_palette.selection_icon_color, "#ffffff");
+        // 白天模式下，selection_icon_color 应该是 background 色（月白）
+        assert_eq!(
+            component_palette.selection_icon_color,
+            palette.background.hex()
+        );
 
         // 白天模式下，selection_background 应该使用 primary 渐变
         assert!(component_palette

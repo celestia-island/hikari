@@ -5,20 +5,20 @@ use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
 use _components::layout::{Container, Section};
-use _extra_components::extra::{ZoomControls, ZoomPosition};
+use _extra_components::extra::{ZoomControls as ZoomControlsComponent, ZoomPosition};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextColor};
 
 // Code examples as constants
 const CODE_BASIC: &str = r#"let mut zoom = use_signal(|| 1.0);
 
-ZoomControls {
+ZoomControlsComponent {
     zoom: zoom(),
     on_zoom_change: move |z| zoom.set(z),
 }"#;
 
 const CODE_MIN_MAX: &str = r#"let mut zoom = use_signal(|| 1.0);
 
-ZoomControls {
+ZoomControlsComponent {
     zoom: zoom(),
     min_zoom: 0.5,
     max_zoom: 3.0,
@@ -26,20 +26,20 @@ ZoomControls {
     on_zoom_change: move |z| zoom.set(z),
 }"#;
 
-const CODE_POSITIONS: &str = r#"ZoomControls {
+const CODE_POSITIONS: &str = r#"ZoomControlsComponent {
     zoom: 1.0,
     position: ZoomPosition::TopLeft,
     on_zoom_change: move |z| println!("Zoom: {}", z),
 }"#;
 
-const CODE_NO_FIT: &str = r#"ZoomControls {
+const CODE_NO_FIT: &str = r#"ZoomControlsComponent {
     zoom: 1.0,
     show_fit: false,
     on_zoom_change: move |z| println!("Zoom: {}", z),
 }"#;
 
 #[allow(non_snake_case)]
-pub fn ZoomControlsDoc() -> Element {
+pub fn ZoomControls() -> Element {
     let mut zoom1 = use_signal(|| 1.0);
     let mut zoom2 = use_signal(|| 0.5);
     let mut zoom3 = use_signal(|| 1.0);
@@ -47,7 +47,7 @@ pub fn ZoomControlsDoc() -> Element {
 
     rsx! {
         Layout {
-            current_route: Route::ZoomControlsDoc {},
+            current_route: Route::ZoomControls {},
 
             Container {
                 // Page header
@@ -103,7 +103,7 @@ pub fn ZoomControlsDoc() -> Element {
                             "Basic zoom controls with default settings"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").add_raw("border").add_raw("rounded-lg").add_raw("relative").build(),
-                            ZoomControls {
+                            ZoomControlsComponent {
                                 zoom: zoom1(),
                                 on_zoom_change: move |z| zoom1.set(z),
                             }
@@ -127,7 +127,7 @@ pub fn ZoomControlsDoc() -> Element {
                             "Zoom controls with custom zoom range and step"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").add_raw("border").add_raw("rounded-lg").add_raw("relative").build(),
-                            ZoomControls {
+                            ZoomControlsComponent {
                                 zoom: zoom2(),
                                 min_zoom: 0.5,
                                 max_zoom: 2.0,
@@ -160,7 +160,7 @@ pub fn ZoomControlsDoc() -> Element {
                             "Zoom controls positioned at top left"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").add_raw("border").add_raw("rounded-lg").add_raw("relative").add_raw("h-48").build(),
-                            ZoomControls {
+                            ZoomControlsComponent {
                                 zoom: zoom3(),
                                 position: ZoomPosition::TopLeft,
                                 on_zoom_change: move |z| zoom3.set(z),
@@ -182,7 +182,7 @@ pub fn ZoomControlsDoc() -> Element {
                             "Zoom controls positioned at bottom right"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").add_raw("border").add_raw("rounded-lg").add_raw("relative").add_raw("h-48").build(),
-                            ZoomControls {
+                            ZoomControlsComponent {
                                 zoom: zoom4(),
                                 position: ZoomPosition::BottomRight,
                                 on_zoom_change: move |z| zoom4.set(z),
@@ -210,7 +210,7 @@ pub fn ZoomControlsDoc() -> Element {
                             "Zoom controls without fit to screen button"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").add_raw("border").add_raw("rounded-lg").add_raw("relative").build(),
-                            ZoomControls {
+                            ZoomControlsComponent {
                                 zoom: 1.0,
                                 show_fit: false,
                                 on_zoom_change: |_| {},

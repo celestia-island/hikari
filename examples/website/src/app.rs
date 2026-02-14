@@ -53,15 +53,25 @@ pub enum Route {
     Layer1Feedback {},
     #[route("/components/layer1/display")]
     Layer1Display {},
-    // Entry components
-    #[route("/components/entry/cascader")]
-    CascaderDoc {},
-    #[route("/components/entry/transfer")]
-    TransferDoc {},
-    #[route("/components/entry/number_input")]
-    NumberInputDoc {},
-    #[route("/components/entry/search")]
-    SearchDoc {},
+    // Layer 1 - New component routes
+    #[route("/components/layer1/number_input")]
+    NumberInput {},
+    #[route("/components/layer1/search")]
+    Search {},
+    #[route("/components/layer1/avatar")]
+    Avatar {},
+    #[route("/components/layer1/image")]
+    Image {},
+    #[route("/components/layer1/tag")]
+    Tag {},
+    #[route("/components/layer1/empty")]
+    Empty {},
+    #[route("/components/layer1/qrcode")]
+    QRCode {},
+    #[route("/components/layer1/comment")]
+    Comment {},
+    #[route("/components/layer1/description_list")]
+    DescriptionList {},
 
     // Layer 2 Routes
     #[route("/components/layer2")]
@@ -74,6 +84,21 @@ pub enum Route {
     Layer2Form {},
     #[route("/components/layer2/feedback")]
     Layer2Feedback {},
+    // Layer 2 - New component routes
+    #[route("/components/layer2/cascader")]
+    Cascader {},
+    #[route("/components/layer2/transfer")]
+    Transfer {},
+    #[route("/components/layer2/collapsible")]
+    Collapsible {},
+    #[route("/components/layer2/timeline")]
+    Timeline {},
+    #[route("/components/layer2/table")]
+    Table {},
+    #[route("/components/layer2/tree")]
+    Tree {},
+    #[route("/components/layer2/pagination")]
+    Pagination {},
 
     // Layer 3 Routes
     #[route("/components/layer3/overview")]
@@ -84,24 +109,11 @@ pub enum Route {
     Layer3Editor {},
     #[route("/components/layer3/visualization")]
     Layer3Visualization {},
-    // Extra components
-    #[route("/components/extra/collapsible")]
-    CollapsibleDoc {},
-    #[route("/components/extra/timeline")]
-    TimelineDoc {},
-    #[route("/components/extra/user_guide")]
-    UserGuideDoc {},
-    #[route("/components/extra/zoom_controls")]
-    ZoomControlsDoc {},
-    // Layer 3 Doc routes (temporarily disabled due to compilation issues)
-    // #[route("/components/layer3/video_player")]
-    // VideoPlayerDoc {},
-    // #[route("/components/layer3/audio_waveform")]
-    // AudioWaveformDoc {},
-    // #[route("/components/layer3/rich_text_editor")]
-    // RichTextEditorDoc {},
-    // #[route("/components/layer3/drag_layer")]
-    // DragLayerDoc {},
+    // Layer 3 - New component routes
+    #[route("/components/layer3/user_guide")]
+    UserGuide {},
+    #[route("/components/layer3/zoom_controls")]
+    ZoomControls {},
 
     // System Routes
     #[route("/system")]
@@ -121,7 +133,6 @@ pub enum Route {
 // ============================================================
 // Route Handler Functions
 // ============================================================
-// NOTE: Page components already include Layout, so we just call them directly
 
 #[allow(non_snake_case)]
 fn Home() -> Element {
@@ -207,6 +218,7 @@ fn VideoDemo() -> Element {
     }
 }
 
+// Layer 1 handlers
 #[allow(non_snake_case)]
 fn Layer1Basic() -> Element {
     rsx! {
@@ -243,6 +255,70 @@ fn Layer1Display() -> Element {
 }
 
 #[allow(non_snake_case)]
+fn NumberInput() -> Element {
+    rsx! {
+        crate::pages::components::layer1::NumberInput {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn Search() -> Element {
+    rsx! {
+        crate::pages::components::layer1::Search {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn Avatar() -> Element {
+    rsx! {
+        crate::pages::components::layer1::Avatar {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn Image() -> Element {
+    rsx! {
+        crate::pages::components::layer1::Image {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn Tag() -> Element {
+    rsx! {
+        crate::pages::components::layer1::Tag {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn Empty() -> Element {
+    rsx! {
+        crate::pages::components::layer1::Empty {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn QRCode() -> Element {
+    rsx! {
+        crate::pages::components::layer1::QRCode {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn Comment() -> Element {
+    rsx! {
+        crate::pages::components::layer1::Comment {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn DescriptionList() -> Element {
+    rsx! {
+        crate::pages::components::layer1::DescriptionList {}
+    }
+}
+
+// Layer 2 handlers
+#[allow(non_snake_case)]
 fn Layer2Overview() -> Element {
     rsx! {
         crate::pages::components::layer2::Layer2Overview {}
@@ -278,6 +354,56 @@ fn Layer2Feedback() -> Element {
 }
 
 #[allow(non_snake_case)]
+fn Cascader() -> Element {
+    rsx! {
+        crate::pages::components::layer2::Cascader {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn Transfer() -> Element {
+    rsx! {
+        crate::pages::components::layer2::Transfer {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn Collapsible() -> Element {
+    rsx! {
+        crate::pages::components::layer2::Collapsible {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn Timeline() -> Element {
+    rsx! {
+        crate::pages::components::layer2::Timeline {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn Table() -> Element {
+    rsx! {
+        crate::pages::components::layer2::Table {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn Tree() -> Element {
+    rsx! {
+        crate::pages::components::layer2::Tree {}
+    }
+}
+
+#[allow(non_snake_case)]
+fn Pagination() -> Element {
+    rsx! {
+        crate::pages::components::layer2::Pagination {}
+    }
+}
+
+// Layer 3 handlers
+#[allow(non_snake_case)]
 fn Layer3Overview() -> Element {
     rsx! {
         crate::pages::components::layer3::Layer3Overview {}
@@ -305,90 +431,17 @@ fn Layer3Visualization() -> Element {
     }
 }
 
-// Layer 3 Doc routes (temporarily disabled)
-// #[allow(non_snake_case)]
-// fn VideoPlayerDoc() -> Element {
-//     rsx! {
-//         crate::pages::components::layer3::VideoPlayerDoc {}
-//     }
-// }
-//
-// #[allow(non_snake_case)]
-// fn AudioWaveformDoc() -> Element {
-//     rsx! {
-//         crate::pages::components::layer3::AudioWaveformDoc {}
-//     }
-// }
-//
-// #[allow(non_snake_case)]
-// fn RichTextEditorDoc() -> Element {
-//     rsx! {
-//         crate::pages::components::layer3::RichTextEditorDoc {}
-//     }
-// }
-//
-// #[allow(non_snake_case)]
-// fn DragLayerDoc() -> Element {
-//     rsx! {
-//         crate::pages::components::layer3::DragLayerDoc {}
-//     }
-// }
-
-// Entry components
 #[allow(non_snake_case)]
-fn CascaderDoc() -> Element {
+fn UserGuide() -> Element {
     rsx! {
-        crate::pages::components::entry::CascaderDoc {}
+        crate::pages::components::layer3::UserGuide {}
     }
 }
 
 #[allow(non_snake_case)]
-fn TransferDoc() -> Element {
+fn ZoomControls() -> Element {
     rsx! {
-        crate::pages::components::entry::TransferDoc {}
-    }
-}
-
-#[allow(non_snake_case)]
-fn NumberInputDoc() -> Element {
-    rsx! {
-        crate::pages::components::entry::NumberInputDoc {}
-    }
-}
-
-#[allow(non_snake_case)]
-fn SearchDoc() -> Element {
-    rsx! {
-        crate::pages::components::entry::SearchDoc {}
-    }
-}
-
-// Extra components
-#[allow(non_snake_case)]
-fn CollapsibleDoc() -> Element {
-    rsx! {
-        crate::pages::components::extra::CollapsibleDoc {}
-    }
-}
-
-#[allow(non_snake_case)]
-fn TimelineDoc() -> Element {
-    rsx! {
-        crate::pages::components::extra::TimelineDoc {}
-    }
-}
-
-#[allow(non_snake_case)]
-fn UserGuideDoc() -> Element {
-    rsx! {
-        crate::pages::components::extra::UserGuideDoc {}
-    }
-}
-
-#[allow(non_snake_case)]
-fn ZoomControlsDoc() -> Element {
-    rsx! {
-        crate::pages::components::extra::ZoomControlsDoc {}
+        crate::pages::components::layer3::ZoomControls {}
     }
 }
 

@@ -1,17 +1,21 @@
-// website/src/pages/components/display/qrcode.rs
-// QRCode component showcase page with real rendered examples
+// website/src/pages/components/display/empty.rs
+// Empty component showcase page with real rendered examples
 
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{display::QRCode, layout::{Container, Section}};
-use _palette::classes::{ ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor, };
+use _components::{
+    display::Empty as EmptyComponent,
+    layout::{Container, Section},
+    Button, ButtonVariant,
+};
+use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, TextColor};
 
 #[allow(non_snake_case)]
-pub fn ComponentsQRCode() -> Element {
+pub fn Empty() -> Element {
     rsx! {
         Layout {
-            current_route: Route::DisplayQRCode {},
+            current_route: Route::Empty {},
 
             Container {
                 // Page header
@@ -23,10 +27,10 @@ pub fn ComponentsQRCode() -> Element {
                             .add(MarginBottom::Mb0)
                             .add(MarginBottom::Mb2)
                             .build(),
-                        "QRCode"
+                        "Empty"
                     }
                     p { class: ClassesBuilder::new().add(MarginBottom::Mb0).add(TextColor::Secondary).build(),
-                        "QR code display component for scanning with mobile devices"
+                        "Empty state placeholders for lists, tables, and data displays"
                     }
                 }
 
@@ -37,32 +41,32 @@ pub fn ComponentsQRCode() -> Element {
 
                     div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         p {
-                            "QRCode components display scannable QR codes. They support:"
+                            "Empty components provide visual feedback when no data is available. They support:"
                         }
                         ul { class: ClassesBuilder::new().add_raw("pl-6").add(MarginBottom::Mb0).build(),
                             li {
-                                strong { "Custom content" }
-                                " - Encode any text or URL"
+                                strong { "Custom images" }
+                                " - Optional illustration or icon"
                             }
                             li {
-                                strong { "Flexible sizing" }
-                                " - Custom size in pixels"
+                                strong { "Title and description" }
+                                " - Clear messaging about empty state"
                             }
                             li {
-                                strong { "Custom colors" }
-                                " - Foreground and background colors"
+                                strong { "Action buttons" }
+                                " - Call-to-action to guide users"
                             }
                             li {
-                                strong { "Optional title" }
-                                " - Label above QR code"
+                                strong { "Flexible styling" }
+                                " - Custom classes and inline styles"
                             }
                         }
                     }
                 }
 
-                // Basic QR Codes
+                // Basic Empty
                 Section {
-                    title: Some("Basic QR Codes".to_string()),
+                    title: Some("Basic Empty States".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
                     div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
@@ -73,14 +77,14 @@ pub fn ComponentsQRCode() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Default QR Code"
+                            "Description Only"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Standard QR code with default settings (200px, black on white)"
+                            "Simple empty state with just a description"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            QRCode {
-                                value: "https://hikari.example.com".to_string(),
+                            EmptyComponent {
+                                description: "No data available".to_string(),
                             }
                         }
                     }
@@ -96,20 +100,42 @@ pub fn ComponentsQRCode() -> Element {
                             "With Title"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "QR code with descriptive title"
+                            "Empty state with title and description"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            QRCode {
-                                value: "https://hikari.example.com".to_string(),
-                                title: Some("Scan to Visit".to_string()),
+                            EmptyComponent {
+                                title: Some("No Results Found".to_string()),
+                                description: "Try adjusting your search or filters".to_string(),
+                            }
+                        }
+                    }
+
+                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
+                        h3 {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::Lg)
+                                .add(FontWeight::Semibold)
+                                .add(TextColor::Primary)
+                                .add(MarginBottom::Mb3)
+                                .build(),
+                            "With Image"
+                        }
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "Empty state with illustration image"
+                        }
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            EmptyComponent {
+                                image: Some("https://cdn-icons-png.flaticon.com/512/7486/7486747.png".to_string()),
+                                title: Some("No Files".to_string()),
+                                description: "Upload files to get started".to_string(),
                             }
                         }
                     }
                 }
 
-                // QR Code Sizes
+                // Empty with Actions
                 Section {
-                    title: Some("QR Code Sizes".to_string()),
+                    title: Some("Empty with Actions".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
                     div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
@@ -120,40 +146,24 @@ pub fn ComponentsQRCode() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Size Variants"
+                            "Single Action"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "QR codes in different sizes"
+                            "Empty state with a primary action button"
                         }
-                        div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap6).add(Padding::P6).build(),
-                            QRCode {
-                                value: "https://hikari.example.com/small".to_string(),
-                                size: 100,
-                                title: Some("100px".to_string()),
-                            }
-                            QRCode {
-                                value: "https://hikari.example.com/medium".to_string(),
-                                size: 150,
-                                title: Some("150px".to_string()),
-                            }
-                            QRCode {
-                                value: "https://hikari.example.com/large".to_string(),
-                                size: 200,
-                                title: Some("200px".to_string()),
-                            }
-                            QRCode {
-                                value: "https://hikari.example.com/xlarge".to_string(),
-                                size: 250,
-                                title: Some("250px".to_string()),
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            EmptyComponent {
+                                title: Some("No Notifications".to_string()),
+                                description: "You're all caught up!".to_string(),
+                                action: rsx! {
+                                    Button {
+                                        variant: ButtonVariant::Primary,
+                                        "Refresh"
+                                    }
+                                },
                             }
                         }
                     }
-                }
-
-                // Custom Colors
-                Section {
-                    title: Some("Custom Colors".to_string()),
-                    class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
                     div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
                         h3 {
@@ -163,39 +173,27 @@ pub fn ComponentsQRCode() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Color Variants"
+                            "Multiple Actions"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "QR codes with custom foreground and background colors"
+                            "Empty state with multiple action options"
                         }
-                        div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap6).add(Padding::P6).build(),
-                            QRCode {
-                                value: "https://hikari.example.com/blue".to_string(),
-                                size: 150,
-                                color: "#00A0E9".to_string(),
-                                background: "#ffffff".to_string(),
-                                title: Some("Blue".to_string()),
-                            }
-                            QRCode {
-                                value: "https://hikari.example.com/red".to_string(),
-                                size: 150,
-                                color: "#E94B35".to_string(),
-                                background: "#ffffff".to_string(),
-                                title: Some("Red".to_string()),
-                            }
-                            QRCode {
-                                value: "https://hikari.example.com/green".to_string(),
-                                size: 150,
-                                color: "#22c55e".to_string(),
-                                background: "#ffffff".to_string(),
-                                title: Some("Green".to_string()),
-                            }
-                            QRCode {
-                                value: "https://hikari.example.com/dark".to_string(),
-                                size: 150,
-                                color: "#ffffff".to_string(),
-                                background: "#1a1a1a".to_string(),
-                                title: Some("Dark Mode".to_string()),
+                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
+                            EmptyComponent {
+                                title: Some("No Projects Yet".to_string()),
+                                description: "Create your first project to get started".to_string(),
+                                action: rsx! {
+                                    div { style: "display: flex; gap: 0.5rem;",
+                                        Button {
+                                            variant: ButtonVariant::Primary,
+                                            "Create Project"
+                                        }
+                                        Button {
+                                            variant: ButtonVariant::Secondary,
+                                            "Learn More"
+                                        }
+                                    }
+                                },
                             }
                         }
                     }
@@ -214,16 +212,22 @@ pub fn ComponentsQRCode() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Website URL"
+                            "Search No Results"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "QR code for sharing website URL"
+                            "When search returns no results"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            QRCode {
-                                value: "https://hikari.example.com".to_string(),
-                                size: 200,
-                                title: Some("Scan to Visit".to_string()),
+                            EmptyComponent {
+                                image: Some("https://cdn-icons-png.flaticon.com/512/7486/7486747.png".to_string()),
+                                title: Some("No Results Found".to_string()),
+                                description: "We couldn't find anything matching your search".to_string(),
+                                action: rsx! {
+                                    Button {
+                                        variant: ButtonVariant::Secondary,
+                                        "Clear Filters"
+                                    }
+                                },
                             }
                         }
                     }
@@ -236,16 +240,14 @@ pub fn ComponentsQRCode() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "WiFi Credentials"
+                            "Empty List"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "QR code for easy WiFi connection"
+                            "When a list is empty"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            QRCode {
-                                value: "WIFI:T:WPA;S:MyNetwork;P:password;;".to_string(),
-                                size: 200,
-                                title: Some("Scan to Connect WiFi".to_string()),
+                            EmptyComponent {
+                                description: "List is empty".to_string(),
                             }
                         }
                     }
@@ -258,38 +260,22 @@ pub fn ComponentsQRCode() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Contact Info (vCard)"
+                            "No Internet Connection"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "QR code for sharing contact information"
+                            "Offline state"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            QRCode {
-                                value: "BEGIN:VCARD\\nVERSION:3.0\\nN:Doe;John\\nFN:John Doe\\nORG:Company\\nTITLE:Developer\\nTEL;TYPE=WORK,VOICE:+1234567890\\nEMAIL:john@example.com\\nEND:VCARD".to_string(),
-                                size: 200,
-                                title: Some("Scan to Add Contact".to_string()),
-                            }
-                        }
-                    }
-
-                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
-                        h3 {
-                            class: ClassesBuilder::new()
-                                .add(FontSize::Lg)
-                                .add(FontWeight::Semibold)
-                                .add(TextColor::Primary)
-                                .add(MarginBottom::Mb3)
-                                .build(),
-                            "Payment Request"
-                        }
-                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "QR code for payment (UPI/BTC/etc)"
-                        }
-                        div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            QRCode {
-                                value: "upi://pay?pa=example@upi&pn=John Doe&am=10.00".to_string(),
-                                size: 200,
-                                title: Some("Scan to Pay ₹10.00".to_string()),
+                            EmptyComponent {
+                                image: Some("https://cdn-icons-png.flaticon.com/512/564/564619.png".to_string()),
+                                title: Some("No Internet Connection".to_string()),
+                                description: "Please check your internet connection and try again".to_string(),
+                                action: rsx! {
+                                    Button {
+                                        variant: ButtonVariant::Primary,
+                                        "Retry"
+                                    }
+                                },
                             }
                         }
                     }
@@ -308,10 +294,10 @@ pub fn ComponentsQRCode() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Basic QR Code"
+                            "Basic Empty"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            code { r#"QRCode {{ value: "https://example.com".to_string() }}"# }
+                            code { r#"EmptyComponent {{ description: "No data available".to_string() }}"# }
                         }
                     }
 
@@ -323,17 +309,18 @@ pub fn ComponentsQRCode() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Custom Size and Colors"
+                            "Empty with Image and Action"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"QRCode {{
-    value: "https://example.com".to_string(),
-    size: 250,
-    color: "#00A0E9".to_string(),
-    background: "#ffffff".to_string(),
-    title: Some("Scan Me".to_string()),
-}}"##
+                                r#"EmptyComponent {{
+    image: Some("icon.png".to_string()),
+    title: Some("No Results".to_string()),
+    description: "Try adjusting your search".to_string(),
+    action: rsx! {{
+        Button {{ variant: ButtonVariant::Primary, "Search Again" }}
+    }},
+}}"#
                             }
                         }
                     }

@@ -1,54 +1,75 @@
-// website/src/pages/components/extra/collapsible_doc.rs
-// Collapsible component documentation page
+// website/src/pages/components/entry/search_doc.rs
+// Search component documentation page
 
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::layout::{Container, Section};
-use _extra_components::extra::{Collapsible, CollapsiblePosition};
+use _components::{
+    entry::Search as SearchComponent,
+    layout::{Container, Section},
+};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextColor};
 
 // Code examples as constants
-const CODE_BASIC: &str = r#"Collapsible {
-    title: "Settings Panel".to_string(),
-    position: CollapsiblePosition::Right,
-    expanded: true,
-    "Settings content goes here"
+const CODE_BASIC: &str = r#"let mut search = use_signal(|| String::new());
+
+SearchComponent {
+    value: search(),
+    placeholder: "Search...".to_string(),
+    on_search: move |v| {
+        println!("Searching for: {}", v);
+    },
+    on_clear: |_| {},
 }"#;
 
-const CODE_LEFT: &str = r#"Collapsible {
-    title: "Left Panel".to_string(),
-    position: CollapsiblePosition::Left,
-    expanded: true,
-    "Left panel content"
+const CODE_CLEAR: &str = r#"let mut search = use_signal(|| String::new);
+
+SearchComponent {
+    value: search(),
+    placeholder: "Search...".to_string(),
+    allow_clear: true,
+    on_search: move |v| search.set(v),
+    on_clear: |_| search.set(String::new()),
 }"#;
 
-const CODE_CUSTOM_WIDTH: &str = r#"Collapsible {
-    title: "Wide Panel".to_string(),
-    position: CollapsiblePosition::Right,
-    expanded: true,
-    width: "500".to_string(),
-    "Wide panel content"
+const CODE_LOADING: &str = r#"let mut search = use_signal(|| String::new);
+let mut loading = use_signal(|| false);
+
+SearchComponent {
+    value: search(),
+    placeholder: "Search...".to_string(),
+    loading: loading(),
+    allow_clear: true,
+    on_search: move |v| {
+        search.set(v);
+        loading.set(true);
+        spawn(async move {
+            // search logic
+            loading.set(false);
+        });
+    },
+    on_clear: |_| search.set(String::new()),
 }"#;
 
-const CODE_NOT_COLLAPSIBLE: &str = r#"Collapsible {
-    title: "Fixed Panel".to_string(),
-    position: CollapsiblePosition::Right,
-    expanded: true,
-    collapsible: false,
-    "This panel cannot be collapsed"
+const CODE_DISABLED: &str = r#"SearchComponent {
+    value: "Search query".to_string(),
+    placeholder: "Search...".to_string(),
+    disabled: true,
+    on_search: |_| {},
+    on_clear: |_| {},
 }"#;
 
 #[allow(non_snake_case)]
-pub fn CollapsibleDoc() -> Element {
-    let mut expanded1 = use_signal(|| true);
-    let mut expanded2 = use_signal(|| false);
-    let mut expanded3 = use_signal(|| true);
-    let expanded4 = use_signal(|| true);
+pub fn Search() -> Element {
+    let search1 = use_signal(|| String::new());
+    let mut search2 = use_signal(|| String::new());
+    let mut loading1 = use_signal(|| false);
+    let mut search3 = use_signal(|| String::new());
+    let search4 = use_signal(|| "Search query".to_string());
 
     rsx! {
         Layout {
-            current_route: Route::CollapsibleDoc {},
+            current_route: Route::Search {},
 
             Container {
                 // Page header
@@ -59,10 +80,10 @@ pub fn CollapsibleDoc() -> Element {
                             .add(FontWeight::Bold)
                             .add(MarginBottom::Mb2)
                             .build(),
-                        "Collapsible"
+                        "Search"
                     }
                     p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                        "Collapsible panel component with slide-in/out animation"
+                        "Search input component with optional clear button and loading state"
                     }
                 }
 
@@ -73,19 +94,19 @@ pub fn CollapsibleDoc() -> Element {
 
                     div { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
                         p {
-                            "Collapsible is a panel component that supports:"
+                            "Search is a dedicated search input component that supports:"
                         }
                         ul { class: ClassesBuilder::new().add_raw("pl-6").build(),
-                            li { "Left and right positioning" }
-                            li { "Slide-in/out animation" }
-                            li { "Customizable width" }
-                            li { "Optional collapse/expand" }
-                            li { "Keyboard accessible" }
+                            li { "Loading state indicator" }
+                            li { "Clear button" }
+                            li { "Disabled state" }
+                            li { "Custom placeholder" }
+                            li { "Real-time search callbacks" }
                         }
                     }
                 }
 
-                // Basic Collapsible
+                // Basic Search
                 Section {
                     title: Some("Basic Usage".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
@@ -98,24 +119,51 @@ pub fn CollapsibleDoc() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Right Panel"
+                            "Simple Search"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Collapsible panel on the right side"
+                            "Basic search input with default placeholder"
                         }
-                        div { class: ClassesBuilder::new().add_raw("p-6").add_raw("border").add_raw("rounded-lg").build(),
-                            Collapsible {
-                                title: "Settings Panel".to_string(),
-                                position: CollapsiblePosition::Right,
-                                expanded: expanded1(),
-                                on_change: move |state| expanded1.set(state),
-                                div { class: ClassesBuilder::new().add_raw("p-4").build(),
-                                    "Settings content goes here"
-                                    ul { class: ClassesBuilder::new().add_raw("pl-6").build(),
-                                        li { "Option 1" }
-                                        li { "Option 2" }
-                                        li { "Option 3" }
-                                    }
+                        div { class: ClassesBuilder::new().add_raw("p-6").build(),
+                            SearchComponent {
+                                value: search1(),
+                                placeholder: "Search...".to_string(),
+                                on_search: move |v| {
+                                    println!("Searching for: {}", v);
+                                },
+                                on_clear: |_| {},
+                            }
+                        }
+                    }
+
+                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
+                        h3 {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::Lg)
+                                .add(FontWeight::Semibold)
+                                .add(TextColor::Primary)
+                                .add(MarginBottom::Mb3)
+                                .build(),
+                            "With Clear Button"
+                        }
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "Search with clear button to reset input"
+                        }
+                        div { class: ClassesBuilder::new().add_raw("p-6").build(),
+                            SearchComponent {
+                                value: search2(),
+                                placeholder: "Search...".to_string(),
+                                allow_clear: true,
+                                on_search: move |v| {
+                                    search2.set(v);
+                                },
+                                on_clear: move |_| {
+                                    search2.set(String::new());
+                                },
+                            }
+                            if !search2().is_empty() {
+                                div { class: ClassesBuilder::new().add_raw("mt-4").add(TextColor::Secondary).build(),
+                                    "Searching: {search2()}"
                                 }
                             }
                         }
@@ -129,33 +177,34 @@ pub fn CollapsibleDoc() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Left Panel"
+                            "With Loading State"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Collapsible panel on the left side"
+                            "Search with loading indicator"
                         }
-                        div { class: ClassesBuilder::new().add_raw("p-6").add_raw("border").add_raw("rounded-lg").build(),
-                            Collapsible {
-                                title: "Navigation".to_string(),
-                                position: CollapsiblePosition::Left,
-                                expanded: expanded2(),
-                                on_change: move |state| expanded2.set(state),
-                                div { class: ClassesBuilder::new().add_raw("p-4").build(),
-                                    "Navigation menu"
-                                    ul { class: ClassesBuilder::new().add_raw("pl-6").build(),
-                                        li { "Home" }
-                                        li { "About" }
-                                        li { "Contact" }
-                                    }
-                                }
+                        div { class: ClassesBuilder::new().add_raw("p-6").build(),
+                            SearchComponent {
+                                value: search3(),
+                                placeholder: "Search...".to_string(),
+                                loading: loading1(),
+                                allow_clear: true,
+                                on_search: move |v| {
+                                    search3.set(v);
+                                    loading1.set(true);
+                                    // In real usage, you would spawn an async task here
+                                    loading1.set(false);
+                                },
+                                on_clear: move |_| {
+                                    search3.set(String::new());
+                                },
                             }
                         }
                     }
                 }
 
-                // Custom Width
+                // Disabled State
                 Section {
-                    title: Some("Custom Width".to_string()),
+                    title: Some("Disabled State".to_string()),
                     class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
 
                     div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
@@ -166,55 +215,18 @@ pub fn CollapsibleDoc() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Wide Panel"
+                            "Disabled Search"
                         }
                         p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Collapsible panel with custom width"
+                            "Disabled search cannot be interacted with"
                         }
-                        div { class: ClassesBuilder::new().add_raw("p-6").add_raw("border").add_raw("rounded-lg").build(),
-                            Collapsible {
-                                title: "Details Panel".to_string(),
-                                position: CollapsiblePosition::Right,
-                                expanded: expanded3(),
-                                width: "500".to_string(),
-                                on_change: move |state| expanded3.set(state),
-                                div { class: ClassesBuilder::new().add_raw("p-4").build(),
-                                    "Wide panel content with more space"
-                                    p { "This panel has a width of 500px instead of the default 300px." }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Not Collapsible
-                Section {
-                    title: Some("Not Collapsible".to_string()),
-                    class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
-
-                    div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
-                        h3 {
-                            class: ClassesBuilder::new()
-                                .add(FontSize::Lg)
-                                .add(FontWeight::Semibold)
-                                .add(TextColor::Primary)
-                                .add(MarginBottom::Mb3)
-                                .build(),
-                            "Fixed Panel"
-                        }
-                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Panel that cannot be collapsed"
-                        }
-                        div { class: ClassesBuilder::new().add_raw("p-6").add_raw("border").add_raw("rounded-lg").build(),
-                            Collapsible {
-                                title: "Information Panel".to_string(),
-                                position: CollapsiblePosition::Right,
-                                expanded: expanded4(),
-                                collapsible: false,
-                                div { class: ClassesBuilder::new().add_raw("p-4").build(),
-                                    "This panel cannot be collapsed"
-                                    p { "Use collapsible: false to prevent the user from collapsing the panel." }
-                                }
+                        div { class: ClassesBuilder::new().add_raw("p-6").build(),
+                            SearchComponent {
+                                value: search4(),
+                                placeholder: "Search...".to_string(),
+                                disabled: true,
+                                on_search: |_| {},
+                                on_clear: |_| {},
                             }
                         }
                     }
@@ -233,7 +245,7 @@ pub fn CollapsibleDoc() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Basic Collapsible"
+                            "Basic Search"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
                             code { "{CODE_BASIC}" }
@@ -248,10 +260,10 @@ pub fn CollapsibleDoc() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Left Position"
+                            "With Clear Button"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            code { "{CODE_LEFT}" }
+                            code { "{CODE_CLEAR}" }
                         }
                     }
 
@@ -263,10 +275,10 @@ pub fn CollapsibleDoc() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Custom Width"
+                            "With Loading State"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            code { "{CODE_CUSTOM_WIDTH}" }
+                            code { "{CODE_LOADING}" }
                         }
                     }
 
@@ -278,10 +290,10 @@ pub fn CollapsibleDoc() -> Element {
                                 .add(TextColor::Primary)
                                 .add(MarginBottom::Mb3)
                                 .build(),
-                            "Not Collapsible"
+                            "Disabled"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            code { "{CODE_NOT_COLLAPSIBLE}" }
+                            code { "{CODE_DISABLED}" }
                         }
                     }
                 }

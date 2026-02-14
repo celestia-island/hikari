@@ -4,14 +4,21 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{Button, ButtonVariant, basic::{Avatar, AvatarSize, AvatarVariant}, display::Comment, layout::{Container, Section}};
-use _palette::classes::{ ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor, };
+use _components::{
+    basic::{Avatar, AvatarSize, AvatarVariant},
+    display::Comment as CommentComponent,
+    layout::{Container, Section},
+    Button, ButtonVariant,
+};
+use _palette::classes::{
+    ClassesBuilder, Display, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor,
+};
 
 #[allow(non_snake_case)]
-pub fn ComponentsComment() -> Element {
+pub fn Comment() -> Element {
     rsx! {
         Layout {
-            current_route: Route::DisplayComment {},
+            current_route: Route::Comment {},
 
             Container {
                 // Page header
@@ -79,7 +86,7 @@ pub fn ComponentsComment() -> Element {
                             "Comment with author and content"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Comment {
+                            CommentComponent {
                                 author: Some("Alice Johnson".to_string()),
                                 avatar: Some("https://i.pravatar.cc/100?img=1".to_string()),
                                 content: "This is a great feature! Really love the design and functionality.".to_string(),
@@ -102,7 +109,7 @@ pub fn ComponentsComment() -> Element {
                             "Comment with just author and content"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Comment {
+                            CommentComponent {
                                 author: Some("Bob Smith".to_string()),
                                 content: "I agree with the previous comment. The implementation is solid.".to_string(),
                                 datetime: Some("2024-01-22 11:15".to_string()),
@@ -124,7 +131,7 @@ pub fn ComponentsComment() -> Element {
                             "Comment with only content"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Comment {
+                            CommentComponent {
                                 content: "Anonymous feedback: Keep up the good work!".to_string(),
                             }
                         }
@@ -150,7 +157,7 @@ pub fn ComponentsComment() -> Element {
                             "Comment with reply, like, and delete actions"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Comment {
+                            CommentComponent {
                                 author: Some("Carol Davis".to_string()),
                                 avatar: Some("https://i.pravatar.cc/100?img=5".to_string()),
                                 content: "Would love to see this feature expanded with more options.".to_string(),
@@ -191,7 +198,7 @@ pub fn ComponentsComment() -> Element {
                             "Comments with nested replies"
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
-                            Comment {
+                            CommentComponent {
                                 author: Some("David Wilson".to_string()),
                                 avatar: Some("https://i.pravatar.cc/100?img=8".to_string()),
                                 content: "What do you think about the new API design?".to_string(),
@@ -203,13 +210,13 @@ pub fn ComponentsComment() -> Element {
                                     }
                                 },
                                 nested: rsx! {
-                                    Comment {
+                                    CommentComponent {
                                         author: Some("Emma Lee".to_string()),
                                         avatar: Some("https://i.pravatar.cc/100?img=9".to_string()),
                                         content: "I think it's much cleaner than the previous version!".to_string(),
                                         datetime: Some("2024-01-22 09:15".to_string()),
                                     }
-                                    Comment {
+                                    CommentComponent {
                                         author: Some("Frank Brown".to_string()),
                                         avatar: Some("https://i.pravatar.cc/100?img=10".to_string()),
                                         content: "Agreed. The REST endpoints are much more intuitive now.".to_string(),
@@ -241,19 +248,19 @@ pub fn ComponentsComment() -> Element {
                         }
                         div {
                             style: "display: flex; flex-direction: column; gap: 1rem;",
-                            Comment {
+                            CommentComponent {
                                 author: Some("Grace Kim".to_string()),
                                 avatar: Some("https://i.pravatar.cc/100?img=12".to_string()),
                                 content: "This component is exactly what I needed for my project!".to_string(),
                                 datetime: Some("2024-01-22 15:00".to_string()),
                             }
-                            Comment {
+                            CommentComponent {
                                 author: Some("Henry Zhang".to_string()),
                                 avatar: Some("https://i.pravatar.cc/100?img=13".to_string()),
                                 content: "Great work! Looking forward to future updates.".to_string(),
                                 datetime: Some("2024-01-22 15:30".to_string()),
                             }
-                            Comment {
+                            CommentComponent {
                                 author: Some("Ivy Chen".to_string()),
                                 avatar: Some("https://i.pravatar.cc/100?img=14".to_string()),
                                 content: "The documentation is very clear and helpful. Thanks!".to_string(),
@@ -280,7 +287,7 @@ pub fn ComponentsComment() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"Comment {{
+                                r#"CommentComponent {{
     author: Some("Alice".to_string()),
     avatar: Some("alice.jpg".to_string()),
     content: "Great work!".to_string(),
@@ -302,7 +309,7 @@ pub fn ComponentsComment() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"Comment {{
+                                r#"CommentComponent {{
     author: Some("Bob".to_string()),
     avatar: Some("bob.jpg".to_string()),
     content: "Nice comment".to_string(),
@@ -328,11 +335,11 @@ pub fn ComponentsComment() -> Element {
                         }
                         div { class: ClassesBuilder::new().add(Padding::P6).build(),
                             code {
-                                r#"Comment {{
+                                r#"CommentComponent {{
     author: Some("Carol".to_string()),
     content: "Main comment".to_string(),
     nested: rsx! {{
-        Comment {{
+        CommentComponent {{
             author: Some("Dave".to_string()),
             content: "Reply".to_string(),
         }}

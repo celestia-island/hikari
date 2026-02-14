@@ -5,11 +5,11 @@ use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
 use _components::layout::{Container, Section};
-use _extra_components::extra::{GuidePosition, GuideStep, UserGuide};
+use _extra_components::extra::{GuidePosition, GuideStep, UserGuide as UserGuideComponent};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextColor};
 
 // Code examples as constants
-const CODE_BASIC: &str = r#"UserGuide {
+const CODE_BASIC: &str = r#"UserGuideComponent {
     title: "Welcome to Hikari!".to_string(),
     description: "Let's get you started with a quick tour.".to_string(),
     steps: vec![
@@ -24,7 +24,7 @@ const CODE_BASIC: &str = r#"UserGuide {
     visible: true,
 }"#;
 
-const CODE_POSITION: &str = r#"UserGuide {
+const CODE_POSITION: &str = r#"UserGuideComponent {
     title: "Quick Tour".to_string(),
     description: "A 3-step tour of the interface.".to_string(),
     steps: vec![...],
@@ -32,7 +32,7 @@ const CODE_POSITION: &str = r#"UserGuide {
     position: GuidePosition::TopRight,
 }"#;
 
-const CODE_SKIP: &str = r#"UserGuide {
+const CODE_SKIP: &str = r#"UserGuideComponent {
     title: "Onboarding".to_string(),
     description: "Welcome aboard!".to_string(),
     steps: vec![...],
@@ -42,14 +42,14 @@ const CODE_SKIP: &str = r#"UserGuide {
 }"#;
 
 #[allow(non_snake_case)]
-pub fn UserGuideDoc() -> Element {
+pub fn UserGuide() -> Element {
     let mut show_guide1 = use_signal(|| false);
     let mut show_guide2 = use_signal(|| false);
     let mut show_guide3 = use_signal(|| false);
 
     rsx! {
         Layout {
-            current_route: Route::UserGuideDoc {},
+            current_route: Route::UserGuide {},
 
             Container {
                 // Page header
@@ -111,7 +111,7 @@ pub fn UserGuideDoc() -> Element {
                                 onclick: move |_| show_guide1.set(true),
                                 "Start Guide"
                             }
-                            UserGuide {
+                            UserGuideComponent {
                                 title: "Welcome to Hikari!".to_string(),
                                 description: "Let's get you started with a quick tour.".to_string(),
                                 steps: vec![
@@ -167,7 +167,7 @@ pub fn UserGuideDoc() -> Element {
                                 onclick: move |_| show_guide2.set(true),
                                 "Show Top Right Guide"
                             }
-                            UserGuide {
+                            UserGuideComponent {
                                 title: "Quick Tour".to_string(),
                                 description: "A 2-step tour of the interface.".to_string(),
                                 steps: vec![
@@ -217,7 +217,7 @@ pub fn UserGuideDoc() -> Element {
                                 onclick: move |_| show_guide3.set(true),
                                 "Show Guide with Skip"
                             }
-                            UserGuide {
+                            UserGuideComponent {
                                 title: "Onboarding".to_string(),
                                 description: "Welcome aboard! Let's show you around.".to_string(),
                                 steps: vec![

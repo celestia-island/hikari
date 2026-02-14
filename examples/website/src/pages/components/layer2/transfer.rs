@@ -4,7 +4,10 @@
 use dioxus::prelude::*;
 
 use crate::{app::Route, components::Layout};
-use _components::{entry::{SelectChangeEvent, Transfer, TransferItem}, layout::{Container, Section}};
+use _components::{
+    entry::{SelectChangeEvent, Transfer as TransferComponent, TransferItem},
+    layout::{Container, Section},
+};
 use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, TextColor};
 
 // Code examples as constants
@@ -12,7 +15,7 @@ const CODE_BASIC: &str = r#"let mut target_keys = use_signal(|| vec!["3".to_stri
 let mut source_selected = use_signal(Vec::new);
 let mut target_selected = use_signal(Vec::new);
 
-Transfer {
+TransferComponent {
     data: vec![
         TransferItem { item_key: "1".to_string(), label: "Item 1".to_string(), ..Default::default() },
         TransferItem { item_key: "2".to_string(), label: "Item 2".to_string(), ..Default::default() },
@@ -31,7 +34,7 @@ Transfer {
     on_change: move |keys| target_keys.set(keys),
 }"#;
 
-const CODE_SEARCH: &str = r#"Transfer {
+const CODE_SEARCH: &str = r#"TransferComponent {
     data: vec![...],
     target_keys: target_keys(),
     source_selected_keys: source_selected(),
@@ -42,7 +45,7 @@ const CODE_SEARCH: &str = r#"Transfer {
     on_change: move |keys| target_keys.set(keys),
 }"#;
 
-const CODE_ONE_WAY: &str = r#"Transfer {
+const CODE_ONE_WAY: &str = r#"TransferComponent {
     data: vec![...],
     target_keys: target_keys(),
     source_selected_keys: source_selected(),
@@ -54,7 +57,7 @@ const CODE_ONE_WAY: &str = r#"Transfer {
 }"#;
 
 #[allow(non_snake_case)]
-pub fn TransferDoc() -> Element {
+pub fn Transfer() -> Element {
     let mut target_keys = use_signal(|| vec!["3".to_string(), "4".to_string()]);
     let mut source_selected = use_signal(Vec::new);
     let mut target_selected = use_signal(Vec::new);
@@ -69,7 +72,7 @@ pub fn TransferDoc() -> Element {
 
     rsx! {
         Layout {
-            current_route: Route::TransferDoc {},
+            current_route: Route::Transfer {},
 
             Container {
                 // Page header
@@ -125,7 +128,7 @@ pub fn TransferDoc() -> Element {
                             "Basic transfer with default settings"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            Transfer {
+                            TransferComponent {
                                 data: vec![
                                     TransferItem { item_key: "1".to_string(), label: "Item 1".to_string(), ..Default::default() },
                                     TransferItem { item_key: "2".to_string(), label: "Item 2".to_string(), ..Default::default() },
@@ -163,7 +166,7 @@ pub fn TransferDoc() -> Element {
                             "Transfer with search inputs enabled"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            Transfer {
+                            TransferComponent {
                                 data: vec![
                                     TransferItem { item_key: "1".to_string(), label: "Item 1".to_string(), ..Default::default() },
                                     TransferItem { item_key: "2".to_string(), label: "Item 2".to_string(), ..Default::default() },
@@ -202,7 +205,7 @@ pub fn TransferDoc() -> Element {
                             "Transfer with only one-way operation (to target)"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            Transfer {
+                            TransferComponent {
                                 data: vec![
                                     TransferItem { item_key: "1".to_string(), label: "Item 1".to_string(), ..Default::default() },
                                     TransferItem { item_key: "2".to_string(), label: "Item 2".to_string(), ..Default::default() },
@@ -246,7 +249,7 @@ pub fn TransferDoc() -> Element {
                             "Items can be individually disabled"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            Transfer {
+                            TransferComponent {
                                 data: vec![
                                     TransferItem { item_key: "1".to_string(), label: "Item 1".to_string(), disabled: false, ..Default::default() },
                                     TransferItem { item_key: "2".to_string(), label: "Item 2".to_string(), disabled: true, ..Default::default() },
@@ -283,7 +286,7 @@ pub fn TransferDoc() -> Element {
                             "Disabled transfer cannot be interacted with"
                         }
                         div { class: ClassesBuilder::new().add_raw("p-6").build(),
-                            Transfer {
+                            TransferComponent {
                                 data: vec![
                                     TransferItem { item_key: "1".to_string(), label: "Item 1".to_string(), ..Default::default() },
                                     TransferItem { item_key: "2".to_string(), label: "Item 2".to_string(), ..Default::default() },

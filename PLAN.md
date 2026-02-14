@@ -130,6 +130,23 @@ pub fn use_component_class(component_name: &str, base_class: &str) -> String { /
 --hi-color-border: ...;
 ```
 
+### 图标颜色继承修复 ✅
+
+**问题**: 暗黑模式下图标显示为黑色而不是浅色，因为 SVG path 没有 `fill="currentColor"`
+
+**根因**: `build_svg!` 宏生成的 SVG path 元素没有添加 `fill="currentColor"`，导致无法通过 CSS `color` 属性控制图标颜色
+
+**修复**: 更新 `packages/icons/src/svg_macro.rs`，为所有 SVG path 添加 `fill="currentColor"`：
+```rust
+// 修复前
+svg.push_str("\" />");
+
+// 修复后
+svg.push_str("\" fill=\"currentColor\" />");
+```
+
+现在图标会自动继承父元素的 CSS `color` 属性，在暗黑模式下正确显示浅色。
+
 ---
 
 ## 使用示例
@@ -200,6 +217,7 @@ fn MyComponent() -> Element {
 | `packages/animation/src/hooks.rs` | 添加 tween_with_config、use_transition_with_config |
 | `packages/theme/src/lib.rs` | 导出 StyleProvider |
 | `packages/components/src/lib.rs` | 导出 ComponentOverrides、ComponentPalette |
+| `packages/icons/src/svg_macro.rs` | 添加 fill="currentColor" 修复图标颜色继承 |
 
 ---
 

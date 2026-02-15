@@ -322,7 +322,7 @@ pub fn Popover(props: PopoverProps) -> Element {
                         let trigger_element = button.as_ref().map(|b| b as &web_sys::Element).unwrap_or(element);
                         if let Some(html_el) = trigger_element.dyn_ref::<web_sys::HtmlElement>() {
                             let rect = html_el.get_bounding_client_rect();
-                            trigger_ref.set(Some(html_el.clone()));
+                            trigger_ref.set(Some(html_el.clone().into()));
 
                             if let PopoverPositioning::Relative { .. } = &positioning {
                                 let style = format!("top: {}px; left: {}px;", rect.bottom() + props.offset, rect.left() + rect.width() / 2.0);

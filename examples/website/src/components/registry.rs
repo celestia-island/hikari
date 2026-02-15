@@ -12,9 +12,11 @@ pub fn render_component(component_type: ComponentType) -> Element {
     match component_type {
         ComponentType::Layer(ref layer, ref name, ref component_id) => {
             match (layer.as_str(), name.as_str(), component_id.as_deref()) {
-                ("layer1", "button", _) => {
+                ("layer1", "button", id) => {
                     rsx! {
-                        crate::pages::components::layer1::ButtonPage {}
+                        crate::pages::components::layer1::ButtonDemos {
+                            demo_id: id.map(|s| s.to_string()),
+                        }
                     }
                 }
                 ("layer1", "form", _) => {

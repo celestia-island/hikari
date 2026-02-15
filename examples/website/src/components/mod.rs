@@ -3,6 +3,7 @@
 
 // Layout components
 pub mod aside_footer;
+pub mod doc_page;
 pub mod layout;
 pub mod page_layout;
 
@@ -26,7 +27,8 @@ pub mod i18n_demo;
 // Re-export commonly used components
 pub use aside_footer::AsideFooter;
 pub use code_block::CodeBlock;
+pub use doc_page::DynamicDocPage;
 pub use i18n_demo::I18nDemo;
 pub use layout::Layout;
-pub use markdown_renderer::MarkdownRenderer;
+pub use markdown_renderer::{MarkdownRenderer, render_markdown};
 pub use page_layout::{DemoSection, PageContainer};

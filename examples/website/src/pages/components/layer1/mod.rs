@@ -13,6 +13,8 @@ pub mod number_input;
 pub mod search;
 pub mod tag;
 
+pub mod demos;
+
 pub use button::ButtonPage;
 pub use display::Layer1Display;
 pub use feedback::Layer1Feedback;
@@ -27,3 +29,5 @@ pub use image::Image;
 pub use number_input::NumberInput;
 pub use search::Search;
 pub use tag::Tag;
+
+pub use demos::ButtonDemos;

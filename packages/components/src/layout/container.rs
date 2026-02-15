@@ -106,9 +106,9 @@ impl crate::styled::StyledComponent for ContainerComponent {
     fn styles() -> &'static str {
         r#"
 .hi-container {
-  width: 100%;
-  padding-left: 16px;
-  padding-right: 16px;
+  width: 80%;
+  margin-left: 10%;
+  margin-right: 10%;
   box-sizing: border-box;
 }
 

@@ -268,9 +268,9 @@ fn find_best_placement(
 #[component]
 pub fn Popover(props: PopoverProps) -> Element {
     let mut open = use_signal(|| props.open);
-    let trigger_ref: Signal<Option<web_sys::Element>> = use_signal(|| None);
+    let mut trigger_ref: Signal<Option<web_sys::Element>> = use_signal(|| None);
     let popover_ref: Signal<Option<web_sys::Element>> = use_signal(|| None);
-    let placement_state = use_signal(|| (PopoverPlacement::Bottom, String::new()));
+    let mut placement_state = use_signal(|| (PopoverPlacement::Bottom, String::new()));
 
     let positioning = props.positioning.clone();
 
@@ -279,6 +279,7 @@ pub fn Popover(props: PopoverProps) -> Element {
         let open_for_effect = open;
         let positioning_for_effect = positioning.clone();
         let offset_for_effect = props.offset;
+        let mut placement_state_clone = placement_state;
 
         use_effect(move || {
             if open_for_effect() {
@@ -303,13 +304,14 @@ pub fn Popover(props: PopoverProps) -> Element {
                             preferred,
                             offset_for_effect,
                         );
-                        placement_state.set((placement, style));
+                        placement_state_clone.set((placement, style));
                     }
                 }
             }
         });
     }
 
+    let positioning_for_memo = positioning.clone();
     let handle_trigger_click = move |e: MouseEvent| {
         e.stop_propagation();
 
@@ -324,7 +326,7 @@ pub fn Popover(props: PopoverProps) -> Element {
                             let rect = html_el.get_bounding_client_rect();
                             trigger_ref.set(Some(html_el.clone().into()));
 
-                            if let PopoverPositioning::Relative { .. } = &positioning {
+                            if let PopoverPositioning::Relative { .. } = &positioning_for_memo {
                                 let style = format!("top: {}px; left: {}px;", rect.bottom() + props.offset, rect.left() + rect.width() / 2.0);
                                 placement_state.set((PopoverPlacement::Bottom, style));
                             }
@@ -387,7 +389,7 @@ pub fn Popover(props: PopoverProps) -> Element {
 
     #[cfg(target_arch = "wasm32")]
     let popover_mounted = {
-        let popover_ref_clone = popover_ref;
+        let mut popover_ref_clone = popover_ref;
         use_effect(move || {
             if open() {
                 spawn(async move {

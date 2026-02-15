@@ -391,7 +391,7 @@ pub fn Popover(props: PopoverProps) -> Element {
         use_effect(move || {
             if open() {
                 spawn(async move {
-                    async_std::task::sleep(std::time::Duration::from_millis(10)).await;
+                    gloo::timers::future::TimeoutFuture::new(10).await;
                     if let Some(window) = web_sys::window() {
                         if let Some(document) = window.document() {
                             if let Ok(Some(el)) = document.query_selector(".hi-popover[data-open='true']") {

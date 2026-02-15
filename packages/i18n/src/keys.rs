@@ -10,6 +10,7 @@ pub struct I18nKeys {
     pub theme: ThemeKeys,
     pub page: PageKeys,
     pub language: LanguageKeys,
+    pub sidebar: SidebarKeys,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -98,4 +99,64 @@ pub struct LanguageKeys {
     pub english: String,
     pub chinese_simplified: String,
     pub chinese_traditional: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SidebarKeys {
+    pub overview: SidebarCategoryKeys,
+    pub components: SidebarCategoryKeys,
+    pub system: SidebarCategoryKeys,
+    pub demos: SidebarCategoryKeys,
+    pub items: SidebarItemKeys,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SidebarCategoryKeys {
+    pub title: String,
+    pub home: Option<String>,
+    pub layer1: Option<String>,
+    pub layer2: Option<String>,
+    pub layer3: Option<String>,
+    pub overview: Option<String>,
+    pub css_utilities: Option<String>,
+    pub icons: Option<String>,
+    pub palette: Option<String>,
+    pub animations: Option<String>,
+    pub animation_demo: Option<String>,
+    pub all_demos: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SidebarItemKeys {
+    pub button: String,
+    pub form: String,
+    pub number_input: String,
+    pub search: String,
+    pub switch: String,
+    pub feedback: String,
+    pub display: String,
+    pub avatar: String,
+    pub image: String,
+    pub tag: String,
+    pub empty: String,
+    pub comment: String,
+    pub description_list: String,
+    pub navigation: String,
+    pub collapsible: String,
+    pub data: String,
+    pub table: String,
+    pub tree: String,
+    pub pagination: String,
+    pub qrcode: String,
+    pub timeline: String,
+    pub cascader: String,
+    pub transfer: String,
+    pub media: String,
+    pub editor: String,
+    pub visualization: String,
+    pub user_guide: String,
+    pub zoom_controls: String,
+    pub form_demo: String,
+    pub dashboard_demo: String,
+    pub video_demo: String,
 }

@@ -11,6 +11,154 @@ use _icons::{Icon, MdiIcon};
 /// Uses the actual aside content container's scroll position
 static SIDEBAR_SCROLL_POSITION: GlobalSignal<f64> = Signal::global(|| 0.0);
 
+/// Get localized text for sidebar category by id
+fn get_category_title(id: &str) -> String {
+    let i18n = match crate::hooks::use_i18n() {
+        Some(ctx) => ctx,
+        None => return id.to_string(),
+    };
+
+    match id {
+        "overview" => i18n.keys.sidebar.overview.title.clone(),
+        "components" => i18n.keys.sidebar.components.title.clone(),
+        "system" => i18n.keys.sidebar.system.title.clone(),
+        "demos" => i18n.keys.sidebar.demos.title.clone(),
+        _ => id.to_string(),
+    }
+}
+
+/// Get localized text for sidebar subcategory by parent id and label key
+fn get_subcategory_label(category_id: &str, label_key: &str) -> String {
+    let i18n = match crate::hooks::use_i18n() {
+        Some(ctx) => ctx,
+        None => return label_key.to_string(),
+    };
+
+    match (category_id, label_key) {
+        ("overview", "home") => i18n
+            .keys
+            .sidebar
+            .overview
+            .home
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("components", "layer1") => i18n
+            .keys
+            .sidebar
+            .components
+            .layer1
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("components", "layer2") => i18n
+            .keys
+            .sidebar
+            .components
+            .layer2
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("components", "layer3") => i18n
+            .keys
+            .sidebar
+            .components
+            .layer3
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("system", "overview") => i18n
+            .keys
+            .sidebar
+            .system
+            .overview
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("system", "css_utilities") => i18n
+            .keys
+            .sidebar
+            .system
+            .css_utilities
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("system", "icons") => i18n
+            .keys
+            .sidebar
+            .system
+            .icons
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("system", "palette") => i18n
+            .keys
+            .sidebar
+            .system
+            .palette
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("system", "animations") => i18n
+            .keys
+            .sidebar
+            .system
+            .animations
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("system", "animation_demo") => i18n
+            .keys
+            .sidebar
+            .system
+            .animation_demo
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("demos", "all_demos") => i18n
+            .keys
+            .sidebar
+            .demos
+            .all_demos
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        _ => label_key.to_string(),
+    }
+}
+
+/// Get localized text for sidebar item by label key
+fn get_item_label(label_key: &str) -> String {
+    let i18n = match crate::hooks::use_i18n() {
+        Some(ctx) => ctx,
+        None => return label_key.to_string(),
+    };
+
+    match label_key {
+        "button" => i18n.keys.sidebar.items.button.clone(),
+        "form" => i18n.keys.sidebar.items.form.clone(),
+        "number_input" => i18n.keys.sidebar.items.number_input.clone(),
+        "search" => i18n.keys.sidebar.items.search.clone(),
+        "switch" => i18n.keys.sidebar.items.switch.clone(),
+        "feedback" => i18n.keys.sidebar.items.feedback.clone(),
+        "display" => i18n.keys.sidebar.items.display.clone(),
+        "avatar" => i18n.keys.sidebar.items.avatar.clone(),
+        "image" => i18n.keys.sidebar.items.image.clone(),
+        "tag" => i18n.keys.sidebar.items.tag.clone(),
+        "empty" => i18n.keys.sidebar.items.empty.clone(),
+        "comment" => i18n.keys.sidebar.items.comment.clone(),
+        "description_list" => i18n.keys.sidebar.items.description_list.clone(),
+        "navigation" => i18n.keys.sidebar.items.navigation.clone(),
+        "collapsible" => i18n.keys.sidebar.items.collapsible.clone(),
+        "data" => i18n.keys.sidebar.items.data.clone(),
+        "table" => i18n.keys.sidebar.items.table.clone(),
+        "tree" => i18n.keys.sidebar.items.tree.clone(),
+        "pagination" => i18n.keys.sidebar.items.pagination.clone(),
+        "qrcode" => i18n.keys.sidebar.items.qrcode.clone(),
+        "timeline" => i18n.keys.sidebar.items.timeline.clone(),
+        "cascader" => i18n.keys.sidebar.items.cascader.clone(),
+        "transfer" => i18n.keys.sidebar.items.transfer.clone(),
+        "media" => i18n.keys.sidebar.items.media.clone(),
+        "editor" => i18n.keys.sidebar.items.editor.clone(),
+        "visualization" => i18n.keys.sidebar.items.visualization.clone(),
+        "user_guide" => i18n.keys.sidebar.items.user_guide.clone(),
+        "zoom_controls" => i18n.keys.sidebar.items.zoom_controls.clone(),
+        "form_demo" => i18n.keys.sidebar.items.form_demo.clone(),
+        "dashboard_demo" => i18n.keys.sidebar.items.dashboard_demo.clone(),
+        "video_demo" => i18n.keys.sidebar.items.video_demo.clone(),
+        _ => label_key.to_string(),
+    }
+}
+
 /// Sidebar navigation with 3-level hierarchy using Menu component
 #[component]
 pub fn Sidebar(current_route: Route) -> Element {
@@ -52,10 +200,12 @@ pub fn Sidebar(current_route: Route) -> Element {
 /// Render a category section (Level 1) with its subcategories
 #[component]
 fn SidebarCategorySection(category: &'static NavCategory, current_route: Route) -> Element {
+    let title = get_category_title(category.id);
+
     rsx! {
         SubMenu {
             item_key: category.id.to_string(),
-            title: category.title_en.to_string(),
+            title,
             default_expanded: category.id == "components",
             level: 1,
             height: MenuItemHeight::Compact,
@@ -63,6 +213,7 @@ fn SidebarCategorySection(category: &'static NavCategory, current_route: Route) 
             for subcategory in category.subcategories {
                 SidebarSubcategoryItem {
                     subcategory,
+                    category_id: category.id,
                     current_route: current_route.clone(),
                 }
             }
@@ -72,14 +223,19 @@ fn SidebarCategorySection(category: &'static NavCategory, current_route: Route) 
 
 /// Render a subcategory (Level 2) with optional nested items
 #[component]
-fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: Route) -> Element {
+fn SidebarSubcategoryItem(
+    subcategory: &'static NavSubcategory,
+    category_id: &'static str,
+    current_route: Route,
+) -> Element {
     let has_children = !subcategory.items.is_empty();
+    let label = get_subcategory_label(category_id, subcategory.label_key);
 
     if has_children {
         rsx! {
             SubMenu {
-                item_key: subcategory.label_en.to_string(),
-                title: subcategory.label_en.to_string(),
+                item_key: subcategory.label_key.to_string(),
+                title: label.clone(),
                 default_expanded: true,
                 level: 2,
                 height: MenuItemHeight::Compact,
@@ -99,13 +255,12 @@ fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: R
             .map(|r| std::mem::discriminant(r) == std::mem::discriminant(&current_route))
             .unwrap_or(false);
 
-        let label = subcategory.label_en;
         let route_to_navigate = subcategory.route.clone();
         let navigator = use_navigator();
 
         rsx! {
             MenuItem {
-                item_key: label.to_string(),
+                item_key: subcategory.label_key.to_string(),
                 class: if is_active { "hi-menu-item-active" } else { "" },
                 level: 2,
                 height: MenuItemHeight::Compact,
@@ -132,6 +287,7 @@ fn SidebarNestedItem(item: &'static NavItem, current_route: Route) -> Element {
     let is_active = std::mem::discriminant(&item.route) == std::mem::discriminant(&current_route);
     let route_to_navigate = item.route.clone();
     let navigator = use_navigator();
+    let label = get_item_label(item.label_key);
 
     rsx! {
         MenuItem {
@@ -149,7 +305,7 @@ fn SidebarNestedItem(item: &'static NavItem, current_route: Route) -> Element {
                 }
             },
 
-            "{item.label}"
+            "{label}"
         }
     }
 }
@@ -173,8 +329,6 @@ fn save_sidebar_scroll_position() {
 #[derive(Clone, Debug)]
 pub struct NavCategory {
     pub id: &'static str,
-    pub title_en: &'static str,
-    pub title_zh: &'static str,
     pub subcategories: &'static [NavSubcategory],
 }
 
@@ -188,15 +342,14 @@ impl Eq for NavCategory {}
 
 #[derive(Clone, Debug)]
 pub struct NavSubcategory {
-    pub label_en: &'static str,
-    pub label_zh: &'static str,
+    pub label_key: &'static str,
     pub route: Option<Route>,
     pub items: &'static [NavItem],
 }
 
 impl PartialEq for NavSubcategory {
     fn eq(&self, other: &Self) -> bool {
-        self.label_en == other.label_en
+        self.label_key == other.label_key
             && self.route.as_ref().map(|r| std::mem::discriminant(r))
                 == other.route.as_ref().map(|r| std::mem::discriminant(r))
     }
@@ -204,14 +357,14 @@ impl PartialEq for NavSubcategory {
 
 #[derive(Clone, Debug)]
 pub struct NavItem {
-    pub label: &'static str,
+    pub label_key: &'static str,
     pub icon: MdiIcon,
     pub route: Route,
 }
 
 impl PartialEq for NavItem {
     fn eq(&self, other: &Self) -> bool {
-        self.label == other.label
+        self.label_key == other.label_key
             && std::mem::discriminant(&self.route) == std::mem::discriminant(&other.route)
     }
 }
@@ -223,186 +376,178 @@ impl PartialEq for NavItem {
 pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
     NavCategory {
         id: "overview",
-        title_en: "Overview",
-        title_zh: "概览",
         subcategories: &[NavSubcategory {
-            label_en: "Home",
-            label_zh: "首页",
+            label_key: "home",
             route: Some(Route::Home {}),
             items: &[],
         }],
     },
     NavCategory {
         id: "components",
-        title_en: "Components",
-        title_zh: "组件",
         subcategories: &[
             NavSubcategory {
-                label_en: "Layer 1",
-                label_zh: "基础组件",
+                label_key: "layer1",
                 route: Some(Route::Button {}),
                 items: &[
                     NavItem {
-                        label: "Button",
+                        label_key: "button",
                         icon: MdiIcon::Cursor,
                         route: Route::Button {},
                     },
                     NavItem {
-                        label: "Form",
+                        label_key: "form",
                         icon: MdiIcon::TextBoxEdit,
                         route: Route::Layer1Form {},
                     },
                     NavItem {
-                        label: "NumberInput",
+                        label_key: "number_input",
                         icon: MdiIcon::FormatListNumbered,
                         route: Route::NumberInput {},
                     },
                     NavItem {
-                        label: "Search",
+                        label_key: "search",
                         icon: MdiIcon::Magnify,
                         route: Route::Search {},
                     },
                     NavItem {
-                        label: "Switch",
+                        label_key: "switch",
                         icon: MdiIcon::ToggleSwitch,
                         route: Route::Layer1Switch {},
                     },
                     NavItem {
-                        label: "Feedback",
+                        label_key: "feedback",
                         icon: MdiIcon::Alert,
                         route: Route::Layer1Feedback {},
                     },
                     NavItem {
-                        label: "Display",
+                        label_key: "display",
                         icon: MdiIcon::Image,
                         route: Route::Layer1Display {},
                     },
                     NavItem {
-                        label: "Avatar",
+                        label_key: "avatar",
                         icon: MdiIcon::Account,
                         route: Route::Avatar {},
                     },
                     NavItem {
-                        label: "Image",
+                        label_key: "image",
                         icon: MdiIcon::Image,
                         route: Route::Image {},
                     },
                     NavItem {
-                        label: "Tag",
+                        label_key: "tag",
                         icon: MdiIcon::Star,
                         route: Route::Tag {},
                     },
                     NavItem {
-                        label: "Empty",
+                        label_key: "empty",
                         icon: MdiIcon::ViewDashboard,
                         route: Route::Empty {},
                     },
                     NavItem {
-                        label: "Comment",
+                        label_key: "comment",
                         icon: MdiIcon::Chat,
                         route: Route::Comment {},
                     },
                     NavItem {
-                        label: "DescriptionList",
+                        label_key: "description_list",
                         icon: MdiIcon::FormatListBulleted,
                         route: Route::DescriptionList {},
                     },
                 ],
             },
             NavSubcategory {
-                label_en: "Layer 2",
-                label_zh: "复合组件",
+                label_key: "layer2",
                 route: Some(Route::Layer2Overview {}),
                 items: &[
                     NavItem {
-                        label: "Navigation",
+                        label_key: "navigation",
                         icon: MdiIcon::FormatListBulleted,
                         route: Route::Layer2Navigation {},
                     },
                     NavItem {
-                        label: "Collapsible",
+                        label_key: "collapsible",
                         icon: MdiIcon::ArrowExpandHorizontal,
                         route: Route::Collapsible {},
                     },
                     NavItem {
-                        label: "Data",
+                        label_key: "data",
                         icon: MdiIcon::Graph,
                         route: Route::Layer2Data {},
                     },
                     NavItem {
-                        label: "Table",
+                        label_key: "table",
                         icon: MdiIcon::Table,
                         route: Route::Table {},
                     },
                     NavItem {
-                        label: "Tree",
+                        label_key: "tree",
                         icon: MdiIcon::SourceBranch,
                         route: Route::Tree {},
                     },
                     NavItem {
-                        label: "Pagination",
+                        label_key: "pagination",
                         icon: MdiIcon::ChevronLeft,
                         route: Route::Pagination {},
                     },
                     NavItem {
-                        label: "QRCode",
+                        label_key: "qrcode",
                         icon: MdiIcon::ViewDashboard,
                         route: Route::QRCode {},
                     },
                     NavItem {
-                        label: "Timeline",
+                        label_key: "timeline",
                         icon: MdiIcon::ChartTimeline,
                         route: Route::Timeline {},
                     },
                     NavItem {
-                        label: "Form",
+                        label_key: "form",
                         icon: MdiIcon::TextBoxEdit,
                         route: Route::Layer2Form {},
                     },
                     NavItem {
-                        label: "Cascader",
+                        label_key: "cascader",
                         icon: MdiIcon::ChevronDown,
                         route: Route::Cascader {},
                     },
                     NavItem {
-                        label: "Transfer",
+                        label_key: "transfer",
                         icon: MdiIcon::SwapHorizontal,
                         route: Route::Transfer {},
                     },
                     NavItem {
-                        label: "Feedback",
+                        label_key: "feedback",
                         icon: MdiIcon::Bell,
                         route: Route::Layer2Feedback {},
                     },
                 ],
             },
             NavSubcategory {
-                label_en: "Layer 3",
-                label_zh: "生产级组件",
+                label_key: "layer3",
                 route: Some(Route::Layer3Overview {}),
                 items: &[
                     NavItem {
-                        label: "Media",
+                        label_key: "media",
                         icon: MdiIcon::Play,
                         route: Route::Layer3Media {},
                     },
                     NavItem {
-                        label: "Editor",
+                        label_key: "editor",
                         icon: MdiIcon::FormatBold,
                         route: Route::Layer3Editor {},
                     },
                     NavItem {
-                        label: "Visualization",
+                        label_key: "visualization",
                         icon: MdiIcon::CubeOutline,
                         route: Route::Layer3Visualization {},
                     },
                     NavItem {
-                        label: "UserGuide",
+                        label_key: "user_guide",
                         icon: MdiIcon::BookOpen,
                         route: Route::UserGuide {},
                     },
                     NavItem {
-                        label: "ZoomControls",
+                        label_key: "zoom_controls",
                         icon: MdiIcon::MagnifyPlus,
                         route: Route::ZoomControls {},
                     },
@@ -412,42 +557,34 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
     },
     NavCategory {
         id: "system",
-        title_en: "System",
-        title_zh: "系统",
         subcategories: &[
             NavSubcategory {
-                label_en: "Overview",
-                label_zh: "概览",
+                label_key: "overview",
                 route: Some(Route::SystemOverview {}),
                 items: &[],
             },
             NavSubcategory {
-                label_en: "CSS Utilities",
-                label_zh: "CSS 工具",
+                label_key: "css_utilities",
                 route: Some(Route::SystemCSS {}),
                 items: &[],
             },
             NavSubcategory {
-                label_en: "Icons",
-                label_zh: "图标",
+                label_key: "icons",
                 route: Some(Route::SystemIcons {}),
                 items: &[],
             },
             NavSubcategory {
-                label_en: "Palette",
-                label_zh: "调色板",
+                label_key: "palette",
                 route: Some(Route::SystemPalette {}),
                 items: &[],
             },
             NavSubcategory {
-                label_en: "Animations",
-                label_zh: "动画",
+                label_key: "animations",
                 route: Some(Route::SystemAnimations {}),
                 items: &[],
             },
             NavSubcategory {
-                label_en: "Animation Demo",
-                label_zh: "动画演示",
+                label_key: "animation_demo",
                 route: Some(Route::AnimationDemo {}),
                 items: &[],
             },
@@ -455,25 +592,22 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
     },
     NavCategory {
         id: "demos",
-        title_en: "Demos",
-        title_zh: "演示",
         subcategories: &[NavSubcategory {
-            label_en: "All Demos",
-            label_zh: "全部演示",
+            label_key: "all_demos",
             route: Some(Route::DemosOverview {}),
             items: &[
                 NavItem {
-                    label: "Form Demo",
+                    label_key: "form_demo",
                     icon: MdiIcon::TextBoxEdit,
                     route: Route::FormDemo {},
                 },
                 NavItem {
-                    label: "Dashboard Demo",
+                    label_key: "dashboard_demo",
                     icon: MdiIcon::ViewColumn,
                     route: Route::DashboardDemo {},
                 },
                 NavItem {
-                    label: "Video Demo",
+                    label_key: "video_demo",
                     icon: MdiIcon::Play,
                     route: Route::VideoDemo {},
                 },

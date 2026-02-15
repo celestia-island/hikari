@@ -6,7 +6,9 @@ use dioxus::prelude::*;
 use crate::components::Layout;
 use _components::{Button, Card};
 use _extra_components::extra::{AudioWaveform, VideoPlayer};
-use _palette::classes::{ ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor, };
+use _palette::classes::{
+    ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor,
+};
 
 /// Video player and audio waveform demo
 #[component]

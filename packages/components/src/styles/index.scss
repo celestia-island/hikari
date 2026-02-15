@@ -585,7 +585,6 @@
 @import './components/markdown_renderer.scss';
 
 // ============================================
-// Demo App Specific Styles
+// Demo App / Website Styles
 // ============================================
-// Demo app styles are no longer included in the main bundle
-// They should be imported separately in each demo app
+@import '../../../../examples/website/src/styles/pages.scss';

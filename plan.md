@@ -21,6 +21,7 @@ This plan tracks ongoing development, maintenance, and technical debt for the Hi
 - **Select Detail Modal** (2026-02-12) - Added modal with glow wrapper effect, focus only changes background
 - **Popover 组件重构** (2026-02-15) - 智能定位、碰撞检测、统一菜单光效
 - **Dropdown 组件移除** (2026-02-15) - 使用 Popover + Menu 替代
+- **Website 页面布局优化** (2026-02-15) - 统一页面布局、添加 CSS 类、i18n 翻译支持
 
 ### Architecture
 ```
@@ -267,3 +268,72 @@ sequenceDiagram
 #### Commit
 
 - `35b08a5` feat(components): 重构 Popover 组件，移除 Dropdown 组件
+
+---
+
+## Phase 5: Website 页面布局优化 ✅ 已完成
+
+### 问题
+
+页面存在两种不一致的排版情况：
+1. **有 i18n 但排版混乱**：左右无留白、标题样式不统一、组件隔断不清晰
+2. **排版规整但无翻译**：样式正确但内容未国际化
+
+### 实现方案
+
+#### 1. 添加通用 CSS 类 (`pages.scss`)
+
+```scss
+.page-container { max-width: 1200px; margin: 0 auto; padding: 1.5rem 2rem; }
+.page-title { font-size: 2rem; font-weight: 700; ... }
+.page-description { color: var(--hi-color-text-secondary); ... }
+.demo-section { margin-bottom: 2rem; padding: 1.5rem; border-radius: 0.75rem; ... }
+.section-title { font-size: 1.125rem; font-weight: 600; ... }
+```
+
+#### 2. 创建统一布局组件 (`page_layout.rs`)
+
+- `PageContainer`: 页面容器，包含标题和描述
+- `DemoSection`: 演示区块，包含标题和描述
+- `PageHeader`: 页面头部组件
+
+#### 3. 更新页面使用 i18n
+
+- `home.rs`: 使用 `use_i18n()` 获取翻译
+- `overview.rs`: 使用 `PageContainer` + `DemoSection` 组件
+
+#### 时序图
+
+```mermaid
+sequenceDiagram
+    participant User as 用户
+    participant Page as 页面组件
+    participant I18n as use_i18n()
+    participant PageContainer as PageContainer
+    participant CSS as pages.scss
+
+    User->>Page: 访问页面
+    Page->>I18n: 获取翻译上下文
+    I18n-->>Page: I18nContext (含翻译 keys)
+    
+    Page->>PageContainer: 渲染页面内容
+    PageContainer->>CSS: 应用 .page-container 样式
+    PageContainer->>CSS: 应用 .page-title 样式
+    PageContainer->>CSS: 应用 .demo-section 样式
+    
+    Note over PageContainer, CSS: 统一的留白、标题样式、组件隔断
+```
+
+#### 变更文件
+
+| 文件 | 变更 |
+|------|------|
+| `examples/website/src/styles/pages.scss` | 新增页面布局 CSS 类 |
+| `examples/website/src/components/page_layout.rs` | 新增布局组件 |
+| `examples/website/src/components/mod.rs` | 导出新组件 |
+| `examples/website/src/pages/home.rs` | 使用 i18n 翻译 |
+| `examples/website/src/pages/components/overview.rs` | 使用新布局和 i18n |
+
+#### Commit
+
+- `f9bbd71` feat(website): 统一页面布局和添加 i18n 翻译支持

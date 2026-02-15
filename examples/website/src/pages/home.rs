@@ -4,7 +4,7 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use crate::{app::Route, components::Layout};
+use crate::{app::Route, components::Layout, hooks::use_i18n};
 use _components::{
     basic::Logo as HikariLogo,
     layout::{Container, Row, Section, Spacer},
@@ -14,6 +14,31 @@ use _palette::classes::{ClassesBuilder, FontSize, MarginBottom, TextAlign, TextC
 
 #[component]
 pub fn Home() -> Element {
+    let i18n = use_i18n();
+
+    let (title, subtitle, description, tagline, explore_text, docs_text) = match i18n {
+        Some(ctx) => {
+            let keys = &ctx.keys;
+            (
+                keys.page.home.hero.title.clone(),
+                keys.page.home.hero.subtitle.clone(),
+                keys.page.home.hero.description.clone(),
+                "There is no shame in wanting to feel happy.".to_string(),
+                "Explore Components →".to_string(),
+                keys.page.documentation.quick_start.clone(),
+            )
+        }
+        None => (
+            "Hikari".to_string(),
+            "A modern Rust UI component library for Dioxus.".to_string(),
+            "Based on Dioxus + Grass + Axum, designed with Arknights aesthetics and FUI styling."
+                .to_string(),
+            "There is no shame in wanting to feel happy.".to_string(),
+            "Explore Components →".to_string(),
+            "View Documentation".to_string(),
+        ),
+    };
+
     rsx! {
         Layout { current_route: Route::Home {},
 
@@ -37,17 +62,21 @@ pub fn Home() -> Element {
                                 .add(TextColor::Secondary)
                                 .add(MarginBottom::Mb6)
                                 .build(),
-                            "Hikari"
+                            "{title}"
                         }
 
                         Spacer { size: "md".to_string() }
 
                         p { class: ClassesBuilder::new().add(FontSize::Lg).add(TextColor::Primary).build(),
-                            "A modern Rust UI component library for Dioxus."
+                            "{subtitle}"
                         }
 
                         p { class: ClassesBuilder::new().add(FontSize::Sm).add(TextColor::Primary).build(),
-                            "There is no shame in wanting to feel happy."
+                            "{description}"
+                        }
+
+                        p { class: ClassesBuilder::new().add(FontSize::Sm).add(TextColor::Secondary).build(),
+                            "{tagline}"
                         }
                     }
                 }
@@ -64,7 +93,7 @@ pub fn Home() -> Element {
                         Button {
                             variant: ButtonVariant::Primary,
                             size: ButtonSize::Large,
-                            "Explore Components →"
+                            "{explore_text}"
                         }
                     }
 
@@ -72,7 +101,7 @@ pub fn Home() -> Element {
                         Button {
                             variant: ButtonVariant::Secondary,
                             size: ButtonSize::Large,
-                            "View Documentation"
+                            "{docs_text}"
                         }
                     }
                 }

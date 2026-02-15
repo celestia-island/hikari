@@ -302,9 +302,14 @@ impl StyledComponent for MenuComponent {
 /// Menu item component
 #[component]
 pub fn MenuItem(props: MenuItemProps) -> Element {
-    let menu_context = use_context::<Signal<MenuContext>>();
-    let context = menu_context.read();
-    let should_glow = props.glow || (context.in_popover && context.glow_enabled);
+    let menu_context = try_consume_context::<Signal<MenuContext>>();
+    let should_glow = match menu_context {
+        Some(ctx) => {
+            let context = ctx.read();
+            props.glow || (context.in_popover && context.glow_enabled)
+        }
+        None => props.glow,
+    };
 
     let item_classes = ClassesBuilder::new()
         .add(MenuClass::MenuItem)

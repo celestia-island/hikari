@@ -1,8 +1,8 @@
 // website/src/components/i18n_demo.rs
 // i18n demonstration component
 
+use _i18n::{context::Language, use_i18n, I18nProvider, LanguageSwitcher};
 use dioxus::prelude::*;
-use _i18n::{context::Language, I18nProvider, LanguageSwitcher, use_i18n};
 
 /// Sample TOML content for English
 const EN_US_TOML: &str = r#"

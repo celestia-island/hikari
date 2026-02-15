@@ -5,7 +5,10 @@ use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
 use crate::{app::Route, components::Layout};
-use _palette::classes::{ BgColor, BorderRadius, ClassesBuilder, Display, Duration, FlexDirection, FontSize, FontWeight, Gap, GridCols, MarginBottom, Padding, Shadow, TextColor, Transition, };
+use _palette::classes::{
+    BgColor, BorderRadius, ClassesBuilder, Display, Duration, FlexDirection, FontSize, FontWeight,
+    Gap, GridCols, MarginBottom, Padding, Shadow, TextColor, Transition,
+};
 
 /// System overview page
 #[allow(non_snake_case)]

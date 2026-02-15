@@ -100,6 +100,44 @@ src/pages/components/
 
 ---
 
+---
+
+## Sidebar 国际化重构计划
+
+### 执行状态：✅ 全部完成
+
+---
+
+### 完成总结
+
+1. **扩展 i18n keys 结构** ✅
+   - `packages/i18n/src/keys.rs` 添加 `SidebarKeys`、`SidebarCategoryKeys`、`SidebarItemKeys`
+
+2. **更新翻译文件** ✅
+   - 三个语言版本均添加了完整的 sidebar 翻译
+   - 包含所有分类标题和 **31 个组件名称** 的翻译
+
+3. **重构 sidebar.rs** ✅
+   - 移除 `title_en`/`title_zh`/`label_en`/`label_zh` 字段
+   - 改用 `label_key` + `use_i18n()` 动态获取翻译
+   - 添加 `get_category_title()`、`get_subcategory_label()`、`get_item_label()` 函数
+
+4. **添加全局 I18nProvider** ✅
+   - 创建 `src/hooks.rs` 提供 `use_i18n()` 和 `I18nProviderWrapper`
+   - `src/app.rs` 包裹 `I18nProviderWrapper`
+
+### 翻译覆盖
+
+| 分类 | 英文 | 简体中文 | 繁體中文 |
+|------|------|----------|----------|
+| Overview | Overview/Home | 概览/首页 | 概覽/首頁 |
+| Components | Components/Layer 1-3 | 组件/基础组件/复合组件/生产级组件 | 元件/基礎元件/複合元件/生產級元件 |
+| System | System/Overview/CSS Utilities/Icons/Palette/Animations | 系统/概览/CSS 工具/图标/调色板/动画 | 系統/概覽/CSS 工具/圖標/調色盤/動畫 |
+| Demos | Demos/All Demos | 演示/全部演示 | 演示/全部演示 |
+| Items (31个) | Button, Form, Table, ... | 按钮, 表单, 表格, ... | 按鈕, 表單, 表格, ... |
+
+---
+
 ## 旧计划归档
 
 <details>

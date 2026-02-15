@@ -229,7 +229,10 @@ fn VideoDemo() -> Element {
 #[allow(non_snake_case)]
 fn Button() -> Element {
     rsx! {
-        crate::pages::components::layer1::ButtonPage {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Button {},
+            doc_path: "components/layer1/button",
+        }
     }
 }
 

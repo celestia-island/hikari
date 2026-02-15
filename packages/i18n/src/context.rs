@@ -16,16 +16,16 @@ impl Language {
     pub fn code(&self) -> &'static str {
         match self {
             Language::English => "en-US",
-            Language::ChineseSimplified => "zh-CN",
-            Language::ChineseTraditional => "zh-TW",
+            Language::ChineseSimplified => "zh-CHS",
+            Language::ChineseTraditional => "zh-CHT",
         }
     }
 
     pub fn from_code(code: &str) -> Option<Self> {
         match code {
             "en-US" => Some(Language::English),
-            "zh-CN" => Some(Language::ChineseSimplified),
-            "zh-TW" => Some(Language::ChineseTraditional),
+            "zh-CHS" => Some(Language::ChineseSimplified),
+            "zh-CHT" => Some(Language::ChineseTraditional),
             _ => None,
         }
     }

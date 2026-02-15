@@ -40,7 +40,7 @@ pub struct ThemeProviderProps {
 /// # Props
 ///
 /// - `initial_palette` - Initial theme identifier ("hikari" or "tairitsu")
-/// - `language` - Language code ("en-US", "zh-CN", or "zh-TW")
+/// - `language` - Language code ("en-US", "zh-CHS", or "zh-CHT")
 /// - `children` - Child elements that receive theme context
 ///
 /// # Example
@@ -51,7 +51,7 @@ pub struct ThemeProviderProps {
 /// rsx! {
 ///     ThemeProvider {
 ///         initial_palette: "tairitsu",
-///         language: "zh-CN",
+///         language: "zh-CHS",
 ///     } {
 ///         // Children here
 ///     }

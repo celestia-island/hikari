@@ -460,7 +460,7 @@ pub struct BuildConfig {
     /// Whether to include i18n support (default: false)
     pub enable_i18n: bool,
 
-    /// Supported languages (default: ["en-US", "zh-CN", "zh-TW"])
+    /// Supported languages (default: ["en-US", "zh-CHS", "zh-CHT"])
     pub languages: Vec<String>,
 
     /// i18n locales directory (default: "packages/i18n/locales")
@@ -486,8 +486,8 @@ impl Default for BuildConfig {
             enable_i18n: false,
             languages: vec![
                 "en-US".to_string(),
-                "zh-CN".to_string(),
-                "zh-TW".to_string(),
+                "zh-CHS".to_string(),
+                "zh-CHT".to_string(),
             ],
             i18n_dir: "packages/i18n/locales".into(),
         }

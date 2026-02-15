@@ -3,93 +3,94 @@
 
 use dioxus::prelude::*;
 
-use crate::components::Layout;
+use crate::components::PageContainer;
+use crate::hooks::use_i18n;
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{ClassesBuilder, Display, FontSize, Gap, MarginBottom, Padding, TextColor};
+use _palette::classes::{
+    ClassesBuilder, Display, FlexDirection, FontSize, Gap, GridCols, MarginBottom, Padding,
+    TextColor,
+};
 
 /// Layer 1 Feedback Components Index
 #[allow(non_snake_case)]
 pub fn Layer1Feedback() -> Element {
+    let i18n = use_i18n();
+
+    let (page_title, page_desc) = match i18n {
+        Some(ctx) => {
+            let keys = &ctx.keys;
+            (
+                format!(
+                    "{}: {}",
+                    keys.sidebar.components.title, keys.sidebar.items.feedback
+                ),
+                "Basic user feedback components.".to_string(),
+            )
+        }
+        None => (
+            "Layer 1: 反馈组件".to_string(),
+            "用户反馈相关的基础组件。".to_string(),
+        ),
+    };
+
     let components = vec![
-        ("Alert", "提示", "提示组件", MdiIcon::AlertTriangle),
-        ("Toast", "轻提示", "轻提示组件", MdiIcon::MessageSquare),
-        ("Tooltip", "工具提示", "工具提示组件", MdiIcon::Help),
+        (
+            "Alert",
+            "Alert notification component",
+            MdiIcon::AlertTriangle,
+        ),
+        (
+            "Toast",
+            "Light notification component",
+            MdiIcon::MessageSquare,
+        ),
+        ("Tooltip", "Tooltip component", MdiIcon::Help),
     ];
 
     rsx! {
-        Layout {
+        PageContainer {
             current_route: crate::app::Route::Layer1Feedback {},
+            title: page_title,
+            description: page_desc,
+
             div {
                 class: ClassesBuilder::new()
-                    .add_raw("page-container")
+                    .add(Display::Grid)
+                    .add(GridCols::Col3)
+                    .add(Gap::Gap6)
                     .build(),
 
-                div {
-                    class: ClassesBuilder::new()
-                        .add_raw("page-header")
-                        .build(),
-
-                    h1 {
+                for (name, description, icon) in components {
+                    div {
                         class: ClassesBuilder::new()
-                            .add_raw("page-title")
-                            .add(FontSize::X4xl)
+                            .add(Padding::P6)
+                            .add(Display::Flex)
+                            .add(FlexDirection::Column)
+                            .add(Gap::Gap2)
                             .build(),
-                        "Layer 1: 反馈组件"
-                    }
 
-                    p {
-                        class: ClassesBuilder::new()
-                            .add_raw("page-description")
-                            .add(TextColor::Muted)
-                            .add(FontSize::Xl)
-                            .build(),
-                        "用户反馈相关的基础组件。"
-                    }
-                }
-
-                div {
-                    class: ClassesBuilder::new()
-                        .add(Display::Grid)
-                        .add_raw("grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6")
-                        .build(),
-
-                        for (name, cn_name, description, icon) in components {
-                            div {
-                                class: ClassesBuilder::new()
-                                    .add_raw("component-card")
-                                    .add(Padding::P6)
-                                    .build(),
-
-                                Icon {
-                                    icon,
-                                    size: 32,
-                                    class: "component-icon"
-                                }
-
-                                h3 {
-                                    class: ClassesBuilder::new()
-                                        .add(FontSize::Lg)
-                                        .add(MarginBottom::Mb1)
-                                        .build(),
-                                    "{name}"
-                                }
-
-                                p {
-                                    class: ClassesBuilder::new()
-                                        .add(TextColor::Muted)
-                                        .add(MarginBottom::Mb2)
-                                        .build(),
-                                    "{cn_name}"
-                                }
-
-                                p {
-                                    class: ClassesBuilder::new()
-                                        .add(TextColor::Muted)
-                                        .build(),
-                                    "{description}"
-                                }
-                            }
+                        Icon {
+                            icon,
+                            size: 32,
                         }
+
+                        h3 {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::Lg)
+                                .add(MarginBottom::Mb1)
+                                .add(TextColor::Primary)
+                                .build(),
+                            "{name}"
+                        }
+
+                        p {
+                            class: ClassesBuilder::new()
+                                .add(TextColor::Secondary)
+                                .add(FontSize::Sm)
+                                .build(),
+                            "{description}"
+                        }
+                    }
                 }
             }
         }

@@ -358,6 +358,8 @@ pub enum MenuClass {
     MenuItem,
     /// `hi-menu-submenu-list` - Submenu list
     SubmenuList,
+    /// `hi-menu-popover` - Menu inside Popover
+    PopoverMenu,
 }
 
 impl UtilityClass for MenuClass {
@@ -373,6 +375,7 @@ impl UtilityClass for MenuClass {
             MenuClass::Compact => "menu-compact",
             MenuClass::MenuItem => "menu-item",
             MenuClass::SubmenuList => "menu-submenu-list",
+            MenuClass::PopoverMenu => "menu-popover",
         }
     }
 }

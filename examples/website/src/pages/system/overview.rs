@@ -4,7 +4,7 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use crate::{app::Route, components::Layout};
+use crate::{app::Route, components::PageContainer, hooks::use_i18n};
 use _palette::classes::{
     BgColor, BorderRadius, ClassesBuilder, Display, Duration, FlexDirection, FontSize, FontWeight,
     Gap, GridCols, MarginBottom, Padding, Shadow, TextColor, Transition,
@@ -14,63 +14,96 @@ use _palette::classes::{
 #[allow(non_snake_case)]
 #[component]
 pub fn SystemOverview() -> Element {
+    let i18n = use_i18n();
+
+    let (
+        page_title,
+        page_desc,
+        css_title,
+        css_desc,
+        icons_title,
+        icons_desc,
+        palette_title,
+        palette_desc,
+        anim_title,
+        anim_desc,
+    ) = match i18n {
+        Some(ctx) => {
+            let keys = &ctx.keys;
+            (
+                keys.sidebar.system.title.clone(),
+                "Explore Hikari's foundational systems and utilities".to_string(),
+                keys.sidebar
+                    .system
+                    .css_utilities
+                    .clone()
+                    .unwrap_or_else(|| "CSS Utilities".to_string()),
+                "Tailwind-compatible utility classes for rapid styling".to_string(),
+                keys.sidebar
+                    .system
+                    .icons
+                    .clone()
+                    .unwrap_or_else(|| "Icons".to_string()),
+                "Comprehensive icon library powered by MDI".to_string(),
+                keys.sidebar
+                    .system
+                    .palette
+                    .clone()
+                    .unwrap_or_else(|| "Palette".to_string()),
+                "Chinese traditional color system with 500+ colors".to_string(),
+                keys.sidebar
+                    .system
+                    .animations
+                    .clone()
+                    .unwrap_or_else(|| "Animations".to_string()),
+                "GSAP-inspired animation system for smooth transitions".to_string(),
+            )
+        }
+        None => (
+            "System".to_string(),
+            "Explore Hikari's foundational systems and utilities".to_string(),
+            "CSS Utilities".to_string(),
+            "Tailwind-compatible utility classes for rapid styling".to_string(),
+            "Icons".to_string(),
+            "Comprehensive icon library powered by MDI".to_string(),
+            "Palette".to_string(),
+            "Chinese traditional color system with 500+ colors".to_string(),
+            "Animations".to_string(),
+            "GSAP-inspired animation system for smooth transitions".to_string(),
+        ),
+    };
+
     rsx! {
-        Layout {
+        PageContainer {
             current_route: Route::SystemOverview {},
-            children: rsx! {
-                div {
-                    class: ClassesBuilder::new()
-                        .add(Display::Flex)
-                        .add(FlexDirection::Column)
-                        .add(Gap::Gap6)
-                        .build(),
+            title: page_title,
+            description: page_desc,
 
-                // System categories grid
-
-
-
-                    div { class: ClassesBuilder::new().add(MarginBottom::Mb0).build(),
-                        h1 {
-                            class: ClassesBuilder::new()
-                                .add(FontSize::X4xl)
-                                .add(FontWeight::Bold)
-                                .add(TextColor::Primary)
-                                .add(MarginBottom::Mb0)
-                                .build(),
-                            "System"
-                        }
-                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
-                            "Explore Hikari's foundational systems and utilities"
-                        }
-                    }
-
-                    div { class: ClassesBuilder::new().add(Display::Grid).add(GridCols::Col3).add(Gap::Gap6).build(),
-                        SystemCard {
-                            title: "CSS Utilities".to_string(),
-                            description: "Tailwind-compatible utility classes for rapid styling".to_string(),
-                            route: Route::SystemCSS {},
-                        }
-
-                        SystemCard {
-                            title: "Icons".to_string(),
-                            description: "Comprehensive icon library powered by Lucide".to_string(),
-                            route: Route::SystemIcons {},
-                        }
-
-                        SystemCard {
-                            title: "Palette".to_string(),
-                            description: "Chinese traditional color system with 500+ colors".to_string(),
-                            route: Route::SystemPalette {},
-                        }
-
-                        SystemCard {
-                            title: "Animations".to_string(),
-                            description: "GSAP-inspired animation system for smooth transitions".to_string(),
-                            route: Route::SystemAnimations {},
-                        }
-                    }
+            div { class: ClassesBuilder::new().add(Display::Grid).add(GridCols::Col3).add(Gap::Gap6).build(),
+                SystemCard {
+                    title: css_title,
+                    description: css_desc,
+                    route: Route::SystemCSS {},
                 }
-            },
+
+                SystemCard {
+                    title: icons_title,
+                    description: icons_desc,
+                    route: Route::SystemIcons {},
+                }
+
+                SystemCard {
+                    title: palette_title,
+                    description: palette_desc,
+                    route: Route::SystemPalette {},
+                }
+
+                SystemCard {
+                    title: anim_title,
+                    description: anim_desc,
+                    route: Route::SystemAnimations {},
+                }
+            }
         }
     }
 }

@@ -3,38 +3,40 @@
 
 use dioxus::prelude::*;
 
-use crate::components::Layout;
-use _palette::classes::{ClassesBuilder, Display, FontSize, Padding, TextColor};
+use crate::components::PageContainer;
+use crate::hooks::use_i18n;
+use _palette::classes::{ClassesBuilder, FontSize, TextColor};
 
 pub fn Layer3Overview() -> Element {
+    let i18n = use_i18n();
+
+    let (page_title, page_desc) = match i18n {
+        Some(ctx) => {
+            let keys = &ctx.keys;
+            (
+                format!(
+                    "{}: {}",
+                    keys.sidebar.components.title,
+                    keys.sidebar
+                        .components
+                        .layer3
+                        .clone()
+                        .unwrap_or_else(|| "Layer 3".to_string())
+                ),
+                "Complete business components built on Layer 2.".to_string(),
+            )
+        }
+        None => (
+            "Layer 3: 生产级组件".to_string(),
+            "完整的业务功能组件，基于 Layer 2 构建。".to_string(),
+        ),
+    };
+
     rsx! {
-        Layout {
+        PageContainer {
             current_route: crate::app::Route::Layer3Overview {},
-            div {
-                class: ClassesBuilder::new()
-                    .add_raw("page-container")
-                    .build(),
-                div {
-                    class: ClassesBuilder::new()
-                        .add_raw("page-header")
-                        .build(),
-                    h1 {
-                        class: ClassesBuilder::new()
-                            .add_raw("page-title")
-                            .add(FontSize::X4xl)
-                            .build(),
-                        "Layer 3: 生产级组件"
-                    }
-                    p {
-                        class: ClassesBuilder::new()
-                            .add_raw("page-description")
-                            .add(TextColor::Muted)
-                            .add(FontSize::Xl)
-                            .build(),
-                        "完整的业务功能组件，基于 Layer 2 构建。"
-                    }
-                }
-            }
+            title: page_title,
+            description: page_desc,
         }
     }
 }

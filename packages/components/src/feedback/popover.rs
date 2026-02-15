@@ -268,18 +268,17 @@ fn find_best_placement(
 #[component]
 pub fn Popover(props: PopoverProps) -> Element {
     let mut open = use_signal(|| props.open);
-    let mut trigger_ref: Signal<Option<web_sys::Element>> = use_signal(|| None);
-    let mut popover_ref: Signal<Option<web_sys::Element>> = use_signal(|| None);
+    let trigger_ref: Signal<Option<web_sys::Element>> = use_signal(|| None);
+    let popover_ref: Signal<Option<web_sys::Element>> = use_signal(|| None);
     let placement_state = use_signal(|| (PopoverPlacement::Bottom, String::new()));
 
     let positioning = props.positioning.clone();
-    let offset = props.offset;
 
     #[cfg(target_arch = "wasm32")]
     {
         let open_for_effect = open;
         let positioning_for_effect = positioning.clone();
-        let offset_for_effect = offset;
+        let offset_for_effect = props.offset;
 
         use_effect(move || {
             if open_for_effect() {
@@ -326,7 +325,7 @@ pub fn Popover(props: PopoverProps) -> Element {
                             trigger_ref.set(Some(html_el.clone()));
 
                             if let PopoverPositioning::Relative { .. } = &positioning {
-                                let style = format!("top: {}px; left: {}px;", rect.bottom() + offset, rect.left() + rect.width() / 2.0);
+                                let style = format!("top: {}px; left: {}px;", rect.bottom() + props.offset, rect.left() + rect.width() / 2.0);
                                 placement_state.set((PopoverPlacement::Bottom, style));
                             }
                         }
@@ -406,7 +405,7 @@ pub fn Popover(props: PopoverProps) -> Element {
     };
 
     #[cfg(not(target_arch = "wasm32"))]
-    let _ = popover_ref;
+    let _ = (popover_ref, trigger_ref);
 
     rsx! {
         div {

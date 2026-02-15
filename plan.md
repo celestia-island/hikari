@@ -19,6 +19,8 @@ This plan tracks ongoing development, maintenance, and technical debt for the Hi
 - **Radio component simplification** (2026-02-12) - Removed complex animation code, CSS-only transitions
 - **Radio demo simplified** (2026-02-12) - Reduced to 3 options with 3rd disabled
 - **Select Detail Modal** (2026-02-12) - Added modal with glow wrapper effect, focus only changes background
+- **Popover 组件重构** (2026-02-15) - 智能定位、碰撞检测、统一菜单光效
+- **Dropdown 组件移除** (2026-02-15) - 使用 Popover + Menu 替代
 
 ### Architecture
 ```
@@ -28,7 +30,7 @@ This plan tracks ongoing development, maintenance, and technical debt for the Hi
 |                            | depends on                           |
 +------------------------------------------------------------------+
 |                      Layer 2: Composite Components                |
-|       (Menu, Tabs, Table, Tree, Form, Dropdown, Modal)           |
+|        (Menu, Tabs, Table, Tree, Form, Popover, Modal)           |
 |                            | depends on                           |
 +------------------------------------------------------------------+
 |                       Layer 1: Basic Components                   |
@@ -100,7 +102,7 @@ These are necessary for WASM bindings and don't represent technical debt.
 | Component | Description | Complexity | Dependencies | Status |
 |-----------|-------------|------------|--------------|--------|
 | **Timeline** | Event timeline, milestones | Medium | Card, Badge, Collapse | ✅ Completed (2026-02-12) |
-| **User Guide** | Onboarding tours, feature hints | Medium | Modal, Button, Badge | Not started |
+| **User Guide** | Onboarding tours, feature hints | Medium | Modal, Button, Badge | ✅ Completed (in extra-components) |
 
 ### Low Priority
 

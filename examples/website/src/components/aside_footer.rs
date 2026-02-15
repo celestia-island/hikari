@@ -1,14 +1,12 @@
 // website/src/components/aside_footer.rs
-// Aside footer with theme toggle and language switcher using Dropdown + Menu
+// Aside footer with theme toggle and language switcher using Popover + Menu
 
 use dioxus::prelude::*;
 
 use _components::{
     basic::{IconButton, IconButtonSize},
-    feedback::{
-        Dropdown, DropdownPosition, DropdownPositioning, GlowBlur, GlowColor, GlowIntensity,
-    },
-    navigation::{Menu, MenuItem},
+    feedback::{GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning},
+    navigation::{Menu, MenuItem, MenuItemHeight},
     use_theme,
 };
 use _icons::MdiIcon;
@@ -39,7 +37,7 @@ impl Language {
 pub fn AsideFooter() -> Element {
     let theme = use_theme();
     let mut selected_language = use_signal(|| Language::English);
-    let mut is_dropdown_open = use_signal(|| false);
+    let mut is_popover_open = use_signal(|| false);
 
     // Compute current theme icon
     let current_icon = use_memo(move || {
@@ -78,7 +76,6 @@ pub fn AsideFooter() -> Element {
                 glow_color: GlowColor::Ghost,
                 glow_intensity: GlowIntensity::Thirty,
                 onclick: move |_| {
-                    // Toggle theme based on current icon
                     let icon = *current_icon.read();
                     let new_theme = if icon == MdiIcon::WhiteBalanceSunny {
                         "tairitsu".to_string()
@@ -89,13 +86,13 @@ pub fn AsideFooter() -> Element {
                 }
             }
 
-            // Language switcher using Dropdown + Menu - Square IconButton
-            Dropdown {
-                positioning: DropdownPositioning::TriggerBased,
-                position: DropdownPosition::Top,
+            // Language switcher using Popover + Menu
+            Popover {
+                positioning: PopoverPositioning::Relative {
+                    preferred: vec![PopoverPlacement::Top, PopoverPlacement::Bottom],
+                },
                 close_on_click_outside: true,
-                close_on_select: true,
-                on_open_change: move |open| is_dropdown_open.set(open),
+                on_open_change: move |open| is_popover_open.set(open),
                 trigger: rsx! {
                     IconButton {
                         icon: MdiIcon::Translate,
@@ -108,8 +105,10 @@ pub fn AsideFooter() -> Element {
                     }
                 },
                 Menu {
+                    in_popover: true,
                     MenuItem {
                         item_key: "en".to_string(),
+                        height: MenuItemHeight::Compact,
                         onclick: move |_| {
                             selected_language.set(Language::English);
                         },
@@ -117,6 +116,7 @@ pub fn AsideFooter() -> Element {
                     }
                     MenuItem {
                         item_key: "zh".to_string(),
+                        height: MenuItemHeight::Compact,
                         onclick: move |_| {
                             selected_language.set(Language::SimplifiedChinese);
                         },
@@ -124,6 +124,7 @@ pub fn AsideFooter() -> Element {
                     }
                     MenuItem {
                         item_key: "tw".to_string(),
+                        height: MenuItemHeight::Compact,
                         onclick: move |_| {
                             selected_language.set(Language::TraditionalChinese);
                         },

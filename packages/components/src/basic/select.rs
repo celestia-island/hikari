@@ -8,8 +8,6 @@ use wasm_bindgen::JsCast;
 
 use crate::{
     glow::Glow,
-    glow::GlowBlur,
-    glow::GlowIntensity,
     portal::{
         generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy,
         TriggerPlacement,

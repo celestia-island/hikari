@@ -8,8 +8,7 @@ use palette::classes::{ClassesBuilder, PaginationClass};
 use crate::{
     basic::{Arrow, ArrowDirection, IconButton, IconButtonSize, Input, InputSize},
     feedback::{
-        Dropdown, DropdownMask, DropdownPosition, DropdownPositioning, Glow, GlowBlur, GlowColor,
-        GlowIntensity,
+        Glow, GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning,
     },
     styled::StyledComponent,
 };
@@ -351,12 +350,11 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
                     // Ellipsis if needed - clickable with icon
                     if current_page() > 4 {
-                        Dropdown {
-                            positioning: DropdownPositioning::TriggerBased,
-                            position: DropdownPosition::Top,
-                            mask: DropdownMask::Transparent,
+                        Popover {
+                            positioning: PopoverPositioning::Relative {
+                                preferred: vec![PopoverPlacement::Top, PopoverPlacement::Bottom],
+                            },
                             close_on_click_outside: true,
-                            close_on_select: false,
                             on_open_change: handle_modal_close,
                             trigger: rsx! {
                                 Glow {
@@ -405,12 +403,11 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
                     // Ellipsis if needed - clickable with icon
                     if current_page() < total_pages - 3 {
-                        Dropdown {
-                            positioning: DropdownPositioning::TriggerBased,
-                            position: DropdownPosition::Top,
-                            mask: DropdownMask::Transparent,
+                        Popover {
+                            positioning: PopoverPositioning::Relative {
+                                preferred: vec![PopoverPlacement::Top, PopoverPlacement::Bottom],
+                            },
                             close_on_click_outside: true,
-                            close_on_select: false,
                             on_open_change: handle_modal_close,
                             trigger: rsx! {
                                 Glow {

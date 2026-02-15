@@ -3,95 +3,86 @@
 
 use dioxus::prelude::*;
 
-use crate::components::Layout;
+use crate::components::PageContainer;
+use crate::hooks::use_i18n;
 use _icons::{Icon, MdiIcon};
 use _palette::classes::{
-    ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor,
+    ClassesBuilder, Display, FlexDirection, FontSize, Gap, GridCols, MarginBottom, Padding,
+    TextColor,
 };
 
 /// Layer 1 Switch Component Index
 #[allow(non_snake_case)]
 pub fn Layer1Switch() -> Element {
+    let i18n = use_i18n();
+
+    let (page_title, page_desc) = match i18n {
+        Some(ctx) => {
+            let keys = &ctx.keys;
+            (
+                format!(
+                    "{}: {}",
+                    keys.sidebar.components.title, keys.sidebar.items.switch
+                ),
+                "Basic switch control components.".to_string(),
+            )
+        }
+        None => (
+            "Layer 1: 开关组件".to_string(),
+            "开关控件相关的基础组件。".to_string(),
+        ),
+    };
+
     let components = vec![
-        ("Switch", "开关", "切换开关组件", MdiIcon::ToggleSwitch),
-        ("Progress", "进度条", "进度条组件", MdiIcon::Pulse),
-        ("Slider", "滑块", "范围滑块组件", MdiIcon::Tune),
+        ("Switch", "Toggle switch component", MdiIcon::ToggleSwitch),
+        ("Progress", "Progress bar component", MdiIcon::Graph),
+        ("Slider", "Range slider component", MdiIcon::Tune),
     ];
 
     rsx! {
-        Layout {
+        PageContainer {
             current_route: crate::app::Route::Layer1Switch {},
+            title: page_title,
+            description: page_desc,
+
             div {
                 class: ClassesBuilder::new()
-                    .add_raw("page-container")
+                    .add(Display::Grid)
+                    .add(GridCols::Col3)
+                    .add(Gap::Gap6)
                     .build(),
 
-                div {
-                    class: ClassesBuilder::new()
-                        .add_raw("page-header")
-                        .build(),
-
-                    h1 {
+                for (name, description, icon) in components {
+                    div {
                         class: ClassesBuilder::new()
-                            .add_raw("page-title")
-                            .add(FontSize::X4xl)
+                            .add(Padding::P6)
+                            .add(Display::Flex)
+                            .add(FlexDirection::Column)
+                            .add(Gap::Gap2)
                             .build(),
-                        "Layer 1: 开关组件"
-                    }
 
-                    p {
-                        class: ClassesBuilder::new()
-                            .add_raw("page-description")
-                            .add(TextColor::Muted)
-                            .add(FontSize::Xl)
-                            .build(),
-                        "开关控件相关的基础组件。"
-                    }
-                }
-
-                div {
-                    class: ClassesBuilder::new()
-                        .add(Display::Grid)
-                        .add_raw("grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6")
-                        .build(),
-
-                        for (name, cn_name, description, icon) in components {
-                            div {
-                                class: ClassesBuilder::new()
-                                    .add_raw("component-card")
-                                    .add(Padding::P6)
-                                    .build(),
-
-                                Icon {
-                                    icon,
-                                    size: 32,
-                                    class: "component-icon"
-                                }
-
-                                h3 {
-                                    class: ClassesBuilder::new()
-                                        .add(FontSize::Lg)
-                                        .add(MarginBottom::Mb1)
-                                        .build(),
-                                    "{name}"
-                                }
-
-                                p {
-                                    class: ClassesBuilder::new()
-                                        .add(TextColor::Muted)
-                                        .add(MarginBottom::Mb2)
-                                        .build(),
-                                    "{cn_name}"
-                                }
-
-                                p {
-                                    class: ClassesBuilder::new()
-                                        .add(TextColor::Muted)
-                                        .build(),
-                                    "{description}"
-                                }
-                            }
+                        Icon {
+                            icon,
+                            size: 32,
                         }
+
+                        h3 {
+                            class: ClassesBuilder::new()
+                                .add(FontSize::Lg)
+                                .add(MarginBottom::Mb1)
+                                .add(TextColor::Primary)
+                                .build(),
+                            "{name}"
+                        }
+
+                        p {
+                            class: ClassesBuilder::new()
+                                .add(TextColor::Secondary)
+                                .add(FontSize::Sm)
+                                .build(),
+                            "{description}"
+                        }
+                    }
                 }
             }
         }

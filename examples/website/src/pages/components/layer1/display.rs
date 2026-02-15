@@ -8,95 +8,106 @@ use _palette::classes::{
 };
 use dioxus::prelude::*;
 
-use crate::components::Layout;
+use crate::components::{DemoSection, PageContainer};
+use crate::hooks::use_i18n;
 
 #[allow(non_snake_case)]
 pub fn Layer1Display() -> Element {
+    let i18n = use_i18n();
+
+    let (page_title, page_desc, card_title, badge_title, divider_title) = match i18n {
+        Some(ctx) => {
+            let keys = &ctx.keys;
+            (
+                format!(
+                    "{}: {}",
+                    keys.sidebar.components.title, keys.sidebar.items.display
+                ),
+                "Basic display components including Card, Badge, and Divider.".to_string(),
+                "Card".to_string(),
+                "Badge".to_string(),
+                "Divider".to_string(),
+            )
+        }
+        None => (
+            "Display 展示组件".to_string(),
+            "内容展示相关的基础组件，包括卡片、徽章和分割线。".to_string(),
+            "Card 卡片".to_string(),
+            "Badge 徽章".to_string(),
+            "Divider 分割线".to_string(),
+        ),
+    };
+
     rsx! {
-        Layout {
+        PageContainer {
             current_route: crate::app::Route::Layer1Display {},
-            div {
-                class: ClassesBuilder::new()
-                    .add_raw("page-container")
-                    .build(),
+            title: page_title,
+            description: page_desc,
 
-                h1 {
+            DemoSection {
+                title: card_title,
+                div {
                     class: ClassesBuilder::new()
-                        .add_raw("page-title")
-                        .build(),
-                    "Display 展示组件"
-                }
-
-                p {
-                    class: ClassesBuilder::new()
-                        .add_raw("page-description")
-                        .build(),
-                    "内容展示相关的基础组件，包括卡片、徽章和分割线。"
-                }
-
-                section {
-                    class: ClassesBuilder::new()
-                        .add_raw("demo-section")
+                        .add(Display::Flex)
+                        .add(FlexDirection::Row)
+                        .add(Gap::Gap4)
+                        .add(FlexWrap::Wrap)
+                        .add(Padding::P4)
                         .build(),
 
-                    h2 {
-                        class: ClassesBuilder::new()
-                            .add_raw("section-title")
-                            .build(),
-                        "Card 卡片"
+                    Card { title: Some("Basic Card".to_string()), "This is a basic card component" }
+
+                    Card {
+                        CardHeader { title: Some("Card with Actions".to_string()) }
+                        CardContent { div { "Card content area" } }
+                        CardActions {
+                            Button { variant: ButtonVariant::Ghost, "Cancel" }
+                            Button { variant: ButtonVariant::Primary, "Confirm" }
+                        }
                     }
+
+                    Card {
+                        CardHeader {
+                            title: Some("Full Card".to_string()),
+                            subtitle: Some("With subtitle".to_string()),
+                            action: Some(rsx! {
+                                IconButton {
+                                    icon: MdiIcon::DotsHorizontal,
+                                    size: IconButtonSize::Small,
+                                    onclick: move |_| {},
+                                }
+                            }),
+                        }
+                        CardContent { div { "A complete card with header, content and actions" } }
+                        CardActions {
+                            Button { variant: ButtonVariant::Ghost, "Close" }
+                            Button { variant: ButtonVariant::Secondary, "Save" }
+                        }
+                    }
+                }
+            }
+
+            DemoSection {
+                title: badge_title,
+                div {
+                    class: ClassesBuilder::new()
+                        .add(Display::Flex)
+                        .add(FlexDirection::Row)
+                        .add(AlignItems::Center)
+                        .add(Gap::Gap4)
+                        .add(FlexWrap::Wrap)
+                        .add(Padding::P4)
+                        .build(),
 
                     div {
                         class: ClassesBuilder::new()
                             .add(Display::Flex)
                             .add(FlexDirection::Row)
-                            .add(Gap::Gap4)
-                            .add(FlexWrap::Wrap)
-                            .add(Padding::P4)
+                            .add(AlignItems::Center)
+                            .add(Gap::Gap2)
                             .build(),
-
-                        Card { title: Some("基础卡片".to_string()), "这是一个基础的卡片组件" }
-
-                        Card {
-                            CardHeader { title: Some("带操作的卡片".to_string()) }
-                            CardContent { div { "卡片内容区域" } }
-                            CardActions {
-                                Button { variant: ButtonVariant::Ghost, "取消" }
-                                Button { variant: ButtonVariant::Primary, "确认" }
-                            }
-                        }
-
-                        Card {
-                            CardHeader {
-                                title: Some("完整卡片".to_string()),
-                                subtitle: Some("带有副标题".to_string()),
-                                action: Some(rsx! {
-                                    IconButton {
-                                        icon: MdiIcon::DotsHorizontal,
-                                        size: IconButtonSize::Small,
-                                        onclick: move |_| {},
-                                    }
-                                }),
-                            }
-                            CardContent { div { "这是一个完整卡片，包含头部、内容和操作区域" } }
-                            CardActions {
-                                Button { variant: ButtonVariant::Ghost, "关闭" }
-                                Button { variant: ButtonVariant::Secondary, "保存" }
-                            }
-                        }
-                    }
-                }
-
-                section {
-                    class: ClassesBuilder::new()
-                        .add_raw("demo-section")
-                        .build(),
-
-                    h2 {
-                        class: ClassesBuilder::new()
-                            .add_raw("section-title")
-                            .build(),
-                        "Badge 徽章"
+                        "Messages"
+                        Badge { variant: BadgeVariant::Primary, count: Some(5) }
                     }
 
                     div {
@@ -104,84 +115,52 @@ pub fn Layer1Display() -> Element {
                             .add(Display::Flex)
                             .add(FlexDirection::Row)
                             .add(AlignItems::Center)
-                            .add(Gap::Gap4)
-                            .add(FlexWrap::Wrap)
-                            .add(Padding::P4)
+                            .add(Gap::Gap2)
                             .build(),
-
-                        div {
-                            class: ClassesBuilder::new()
-                                .add(Display::Flex)
-                                .add(FlexDirection::Row)
-                                .add(AlignItems::Center)
-                                .add(Gap::Gap2)
-                                .build(),
-                            "消息"
-                            Badge { variant: BadgeVariant::Primary, count: Some(5) }
-                        }
-
-                        div {
-                            class: ClassesBuilder::new()
-                                .add(Display::Flex)
-                                .add(FlexDirection::Row)
-                                .add(AlignItems::Center)
-                                .add(Gap::Gap2)
-                                .build(),
-                            "状态"
-                            Badge { variant: BadgeVariant::Success }
-                        }
-
-                        div {
-                            class: ClassesBuilder::new()
-                                .add(Display::Flex)
-                                .add(FlexDirection::Row)
-                                .add(AlignItems::Center)
-                                .add(Gap::Gap2)
-                                .build(),
-                            "警告"
-                            Badge { variant: BadgeVariant::Warning, count: Some(3) }
-                        }
-
-                        div {
-                            class: ClassesBuilder::new()
-                                .add(Display::Flex)
-                                .add(FlexDirection::Row)
-                                .add(AlignItems::Center)
-                                .add(Gap::Gap2)
-                                .build(),
-                            "错误"
-                            Badge { variant: BadgeVariant::Danger, count: Some(2) }
-                        }
-                    }
-                }
-
-                section {
-                    class: ClassesBuilder::new()
-                        .add_raw("demo-section")
-                        .build(),
-
-                    h2 {
-                        class: ClassesBuilder::new()
-                            .add_raw("section-title")
-                            .build(),
-                        "Divider 分割线"
+                        "Status"
+                        Badge { variant: BadgeVariant::Success }
                     }
 
                     div {
                         class: ClassesBuilder::new()
                             .add(Display::Flex)
-                            .add(FlexDirection::Column)
-                            .add(Gap::Gap4)
-                            .add(Padding::P4)
+                            .add(FlexDirection::Row)
+                            .add(AlignItems::Center)
+                            .add(Gap::Gap2)
                             .build(),
+                        "Warning"
+                        Badge { variant: BadgeVariant::Warning, count: Some(3) }
+                    }
 
-                        div { class: ClassesBuilder::new().add(Padding::P4).build(), "上方内容" }
-                        Divider {}
-                        div { class: ClassesBuilder::new().add(Padding::P4).build(), "下方内容" }
-                        Divider {
-                            text_position: DividerTextPosition::Center,
-                            text: "分隔文本".to_string(),
-                        }
+                    div {
+                        class: ClassesBuilder::new()
+                            .add(Display::Flex)
+                            .add(FlexDirection::Row)
+                            .add(AlignItems::Center)
+                            .add(Gap::Gap2)
+                            .build(),
+                        "Error"
+                        Badge { variant: BadgeVariant::Danger, count: Some(2) }
+                    }
+                }
+            }
+
+            DemoSection {
+                title: divider_title,
+                div {
+                    class: ClassesBuilder::new()
+                        .add(Display::Flex)
+                        .add(FlexDirection::Column)
+                        .add(Gap::Gap4)
+                        .add(Padding::P4)
+                        .build(),
+
+                    div { class: ClassesBuilder::new().add(Padding::P4).build(), "Content above" }
+                    Divider {}
+                    div { class: ClassesBuilder::new().add(Padding::P4).build(), "Content below" }
+                    Divider {
+                        text_position: DividerTextPosition::Center,
+                        text: "Separator".to_string(),
                     }
                 }
             }

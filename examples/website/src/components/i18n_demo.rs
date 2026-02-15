@@ -58,7 +58,7 @@ chinese_traditional = "繁體中文"
 "#;
 
 /// Sample TOML content for Simplified Chinese
-const ZH_CN_TOML: &str = r#"
+const ZH_CHS_TOML: &str = r#"
 [common.button]
 submit = "提交"
 cancel = "取消"
@@ -111,7 +111,7 @@ chinese_traditional = "繁體中文"
 "#;
 
 /// Sample TOML content for Traditional Chinese
-const ZH_TW_TOML: &str = r#"
+const ZH_CHT_TOML: &str = r#"
 [common.button]
 submit = "提交"
 cancel = "取消"
@@ -170,8 +170,8 @@ pub fn I18nDemo() -> Element {
 
     let toml_content = match language() {
         Language::English => EN_US_TOML,
-        Language::ChineseSimplified => ZH_CN_TOML,
-        Language::ChineseTraditional => ZH_TW_TOML,
+        Language::ChineseSimplified => ZH_CHS_TOML,
+        Language::ChineseTraditional => ZH_CHT_TOML,
     };
 
     rsx! {

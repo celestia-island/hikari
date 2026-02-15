@@ -9,15 +9,15 @@ use dioxus::prelude::*;
 
 mod i18n_toml {
     pub const EN_US: &str = include_str!("../../../packages/i18n/locales/en-US/strings.toml");
-    pub const ZH_CN: &str = include_str!("../../../packages/i18n/locales/zh-CN/strings.toml");
-    pub const ZH_TW: &str = include_str!("../../../packages/i18n/locales/zh-TW/strings.toml");
+    pub const ZH_CHS: &str = include_str!("../../../packages/i18n/locales/zh-CHS/strings.toml");
+    pub const ZH_CHT: &str = include_str!("../../../packages/i18n/locales/zh-CHT/strings.toml");
 }
 
 pub fn get_toml_content(lang: Language) -> &'static str {
     match lang {
         Language::English => i18n_toml::EN_US,
-        Language::ChineseSimplified => i18n_toml::ZH_CN,
-        Language::ChineseTraditional => i18n_toml::ZH_TW,
+        Language::ChineseSimplified => i18n_toml::ZH_CHS,
+        Language::ChineseTraditional => i18n_toml::ZH_CHT,
     }
 }
 

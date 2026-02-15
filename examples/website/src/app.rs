@@ -239,70 +239,100 @@ fn Button() -> Element {
 #[allow(non_snake_case)]
 fn Layer1Form() -> Element {
     rsx! {
-        crate::pages::components::layer1::Layer1Form {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer1Form {},
+            doc_path: "components/layer1/form",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer1Switch() -> Element {
     rsx! {
-        crate::pages::components::layer1::Layer1Switch {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer1Switch {},
+            doc_path: "components/layer1/switch",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer1Feedback() -> Element {
     rsx! {
-        crate::pages::components::layer1::Layer1Feedback {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer1Feedback {},
+            doc_path: "components/layer1/feedback",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer1Display() -> Element {
     rsx! {
-        crate::pages::components::layer1::Layer1Display {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer1Display {},
+            doc_path: "components/layer1/display",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn NumberInput() -> Element {
     rsx! {
-        crate::pages::components::layer1::NumberInput {}
+        crate::components::DynamicDocPage {
+            current_route: Route::NumberInput {},
+            doc_path: "components/layer1/number_input",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Search() -> Element {
     rsx! {
-        crate::pages::components::layer1::Search {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Search {},
+            doc_path: "components/layer1/search",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Avatar() -> Element {
     rsx! {
-        crate::pages::components::layer1::Avatar {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Avatar {},
+            doc_path: "components/layer1/avatar",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Image() -> Element {
     rsx! {
-        crate::pages::components::layer1::Image {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Image {},
+            doc_path: "components/layer1/image",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Tag() -> Element {
     rsx! {
-        crate::pages::components::layer1::Tag {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Tag {},
+            doc_path: "components/layer1/tag",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Empty() -> Element {
     rsx! {
-        crate::pages::components::layer1::Empty {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Empty {},
+            doc_path: "components/layer1/empty",
+        }
     }
 }
 
@@ -316,14 +346,20 @@ fn QRCode() -> Element {
 #[allow(non_snake_case)]
 fn Comment() -> Element {
     rsx! {
-        crate::pages::components::layer1::Comment {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Comment {},
+            doc_path: "components/layer1/comment",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn DescriptionList() -> Element {
     rsx! {
-        crate::pages::components::layer1::DescriptionList {}
+        crate::components::DynamicDocPage {
+            current_route: Route::DescriptionList {},
+            doc_path: "components/layer1/description_list",
+        }
     }
 }
 
@@ -338,28 +374,40 @@ fn Layer2Overview() -> Element {
 #[allow(non_snake_case)]
 fn Layer2Navigation() -> Element {
     rsx! {
-        crate::pages::components::layer2::Layer2Navigation {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer2Navigation {},
+            doc_path: "components/layer2/navigation",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer2Data() -> Element {
     rsx! {
-        crate::pages::components::layer2::Layer2Data {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer2Data {},
+            doc_path: "components/layer2/data",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer2Form() -> Element {
     rsx! {
-        crate::pages::components::layer2::Layer2Form {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer2Form {},
+            doc_path: "components/layer2/form",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer2Feedback() -> Element {
     rsx! {
-        crate::pages::components::layer2::Layer2Feedback {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer2Feedback {},
+            doc_path: "components/layer2/feedback",
+        }
     }
 }
 
@@ -423,21 +471,30 @@ fn Layer3Overview() -> Element {
 #[allow(non_snake_case)]
 fn Layer3Media() -> Element {
     rsx! {
-        crate::pages::components::layer3::Layer3Media {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer3Media {},
+            doc_path: "components/layer3/media",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer3Editor() -> Element {
     rsx! {
-        crate::pages::components::layer3::Layer3Editor {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer3Editor {},
+            doc_path: "components/layer3/editor",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer3Visualization() -> Element {
     rsx! {
-        crate::pages::components::layer3::Layer3Visualization {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer3Visualization {},
+            doc_path: "components/layer3/visualization",
+        }
     }
 }
 

@@ -1,3 +1,7 @@
+use _components::basic::button::Button;
+use _components::{ButtonVariant, IconButton, IconButtonSize};
+use _icons::MdiIcon;
+use _palette::classes::{ClassesBuilder, Display, FlexDirection, FlexWrap, Gap, Padding};
 use dioxus::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -12,10 +16,86 @@ pub fn render_component(component_type: ComponentType) -> Element {
     match component_type {
         ComponentType::Layer(ref layer, ref name, ref component_id) => {
             match (layer.as_str(), name.as_str(), component_id.as_deref()) {
-                ("layer1", "button", id) => {
+                ("layer1", "button", Some("variants")) => {
                     rsx! {
-                        crate::pages::components::layer1::ButtonDemos {
-                            demo_id: id.map(|s| s.to_string()),
+                        div {
+                            class: ClassesBuilder::new()
+                                .add(Display::Flex)
+                                .add(FlexDirection::Row)
+                                .add(Gap::Gap4)
+                                .add(FlexWrap::Wrap)
+                                .add(Padding::P4)
+                                .build(),
+
+                            Button { variant: ButtonVariant::Primary, "Primary" }
+                            Button { variant: ButtonVariant::Secondary, "Secondary" }
+                            Button { variant: ButtonVariant::Ghost, "Ghost" }
+                            Button { variant: ButtonVariant::Danger, "Danger" }
+                        }
+                    }
+                }
+                ("layer1", "button", Some("disabled")) => {
+                    rsx! {
+                        div {
+                            class: ClassesBuilder::new()
+                                .add(Display::Flex)
+                                .add(FlexDirection::Row)
+                                .add(Gap::Gap4)
+                                .add(FlexWrap::Wrap)
+                                .add(Padding::P4)
+                                .build(),
+
+                            Button { variant: ButtonVariant::Primary, disabled: true, "Primary" }
+                            Button { variant: ButtonVariant::Secondary, disabled: true, "Secondary" }
+                            Button { variant: ButtonVariant::Ghost, disabled: true, "Ghost" }
+                            Button { variant: ButtonVariant::Danger, disabled: true, "Danger" }
+                        }
+                    }
+                }
+                ("layer1", "button", Some("icon")) => {
+                    rsx! {
+                        div {
+                            class: ClassesBuilder::new()
+                                .add(Display::Flex)
+                                .add(FlexDirection::Row)
+                                .add(Gap::Gap4)
+                                .add(FlexWrap::Wrap)
+                                .add(Padding::P4)
+                                .build(),
+
+                            IconButton {
+                                icon: MdiIcon::Check,
+                                size: IconButtonSize::Small,
+                                onclick: move |_| {},
+                            }
+                            IconButton {
+                                icon: MdiIcon::Pencil,
+                                size: IconButtonSize::Medium,
+                                onclick: move |_| {},
+                            }
+                            IconButton {
+                                icon: MdiIcon::Close,
+                                size: IconButtonSize::Large,
+                                onclick: move |_| {},
+                            }
+                        }
+                    }
+                }
+                ("layer1", "button", _) => {
+                    rsx! {
+                        div {
+                            class: ClassesBuilder::new()
+                                .add(Display::Flex)
+                                .add(FlexDirection::Row)
+                                .add(Gap::Gap4)
+                                .add(FlexWrap::Wrap)
+                                .add(Padding::P4)
+                                .build(),
+
+                            Button { variant: ButtonVariant::Primary, "Primary" }
+                            Button { variant: ButtonVariant::Secondary, "Secondary" }
+                            Button { variant: ButtonVariant::Ghost, "Ghost" }
+                            Button { variant: ButtonVariant::Danger, "Danger" }
                         }
                     }
                 }

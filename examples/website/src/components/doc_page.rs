@@ -1,7 +1,9 @@
 use dioxus::prelude::*;
 
 use crate::components::{Layout, render_markdown};
+use crate::hooks::use_i18n;
 use _components::layout::Container;
+use _i18n::context::Language;
 
 #[derive(Clone, PartialEq, Props)]
 pub struct DynamicDocPageProps {
@@ -9,10 +11,26 @@ pub struct DynamicDocPageProps {
     pub doc_path: String,
 }
 
+fn lang_to_path_prefix(lang: Language) -> &'static str {
+    match lang {
+        Language::English => "en-US",
+        Language::ChineseSimplified => "zh-CHS",
+        Language::ChineseTraditional => "zh-CHT",
+    }
+}
+
 #[component]
 pub fn DynamicDocPage(props: DynamicDocPageProps) -> Element {
+    let i18n = use_i18n();
+    let lang_prefix = match i18n {
+        Some(ctx) => lang_to_path_prefix(ctx.language),
+        None => "en-US",
+    };
+    
+    let full_path = format!("{}/{}", lang_prefix, props.doc_path);
+    
     let doc_content = use_resource(move || {
-        let path = props.doc_path.clone();
+        let path = full_path.clone();
         async move {
             load_markdown_content(&path).await
         }
@@ -39,8 +57,8 @@ pub fn DynamicDocPage(props: DynamicDocPageProps) -> Element {
                             div {
                                 class: "markdown-error",
                                 style: "padding: 2rem; text-align: center;",
-                                h3 { "加载失败" }
-                                p { "错误: {e}" }
+                                h3 { "Failed to load" }
+                                p { "Error: {e}" }
                             }
                         }
                     }
@@ -49,7 +67,7 @@ pub fn DynamicDocPage(props: DynamicDocPageProps) -> Element {
                             div {
                                 class: "markdown-loading",
                                 style: "padding: 2rem; text-align: center; color: var(--hi-color-text-secondary);",
-                                "加载中..."
+                                "Loading..."
                             }
                         }
                     }
@@ -83,7 +101,7 @@ async fn load_markdown_content(path: &str) -> Result<String, String> {
     let resp: Response = resp_value.into();
 
     if resp.status() == 404 {
-        return Err(format!("文档未找到: {}", path));
+        return Err(format!("Document not found: {}", path));
     }
 
     if !resp.ok() {

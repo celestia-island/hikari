@@ -1,12 +1,8 @@
-// website/src/components/page_layout.rs
-// Reusable page layout component with i18n support
-
 use dioxus::prelude::*;
 
 use crate::components::Layout;
-use _palette::classes::ClassesBuilder;
+use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, TextColor};
 
-/// Demo section component with title
 #[derive(Clone, PartialEq, Props)]
 pub struct DemoSectionProps {
     pub title: String,
@@ -19,50 +15,42 @@ pub struct DemoSectionProps {
 pub fn DemoSection(props: DemoSectionProps) -> Element {
     rsx! {
         section {
-            class: "demo-section",
+            class: ClassesBuilder::new()
+                .add(MarginBottom::Mb8)
+                .add(Padding::P6)
+                .build(),
+            style: "
+                border-radius: 0.75rem;
+                border: 1px solid var(--hi-color-border);
+                background: var(--hi-color-surface);
+            ",
+
             h2 {
-                class: "section-title",
+                class: ClassesBuilder::new()
+                    .add(FontSize::Lg)
+                    .add(FontWeight::Semibold)
+                    .add(TextColor::Primary)
+                    .add(MarginBottom::Mb4)
+                    .build(),
+                style: "padding-bottom: 0.75rem; border-bottom: 1px solid var(--hi-color-border);",
                 "{props.title}"
             }
+
             if let Some(desc) = &props.description {
                 p {
-                    class: "section-description",
+                    class: ClassesBuilder::new()
+                        .add(TextColor::Secondary)
+                        .add(MarginBottom::Mb4)
+                        .build(),
                     "{desc}"
                 }
             }
+
             {props.children}
         }
     }
 }
 
-/// Page header component
-#[derive(Clone, PartialEq, Props)]
-pub struct PageHeaderProps {
-    pub title: String,
-    #[props(default)]
-    pub description: Option<String>,
-}
-
-#[component]
-pub fn PageHeader(props: PageHeaderProps) -> Element {
-    rsx! {
-        div {
-            class: "page-header",
-            h1 {
-                class: "page-title",
-                "{props.title}"
-            }
-            if let Some(desc) = &props.description {
-                p {
-                    class: "page-description",
-                    "{desc}"
-                }
-            }
-        }
-    }
-}
-
-/// Page container component that wraps content with standard layout
 #[derive(Clone, PartialEq, Props)]
 pub struct PageContainerProps {
     #[props(default)]
@@ -78,20 +66,36 @@ pub fn PageContainer(props: PageContainerProps) -> Element {
     rsx! {
         Layout {
             current_route: props.current_route,
+
             div {
-                class: "page-container",
+                class: ClassesBuilder::new()
+                    .add(Padding::P6)
+                    .build(),
+                style: "max-width: 1200px; margin: 0 auto; padding-left: 2rem; padding-right: 2rem;",
+
                 if let Some(title) = &props.title {
                     h1 {
-                        class: "page-title",
+                        class: ClassesBuilder::new()
+                            .add(FontSize::X4xl)
+                            .add(FontWeight::Bold)
+                            .add(TextColor::Primary)
+                            .add(MarginBottom::Mb2)
+                            .build(),
                         "{title}"
                     }
                 }
+
                 if let Some(desc) = &props.description {
                     p {
-                        class: "page-description",
+                        class: ClassesBuilder::new()
+                            .add(TextColor::Secondary)
+                            .add(MarginBottom::Mb8)
+                            .build(),
+                        style: "max-width: 800px; line-height: 1.6;",
                         "{desc}"
                     }
                 }
+
                 {props.children}
             }
         }

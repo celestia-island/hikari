@@ -29,4 +29,4 @@ pub use code_block::CodeBlock;
 pub use i18n_demo::I18nDemo;
 pub use layout::Layout;
 pub use markdown_renderer::MarkdownRenderer;
-pub use page_layout::{DemoSection, PageContainer, PageHeader};
+pub use page_layout::{DemoSection, PageContainer};

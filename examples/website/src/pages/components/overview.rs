@@ -3,76 +3,100 @@
 
 use dioxus::prelude::*;
 
-use crate::components::Layout;
+use crate::components::{DemoSection, PageContainer};
+use crate::hooks::use_i18n;
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{ClassesBuilder, Display, Gap, MarginBottom, Padding};
+use _palette::classes::{ClassesBuilder, Display, Gap, Padding};
 
 /// Components Overview
 #[allow(non_snake_case)]
 pub fn ComponentsOverview() -> Element {
-    rsx! {
-        Layout {
-            current_route: crate::app::Route::ComponentsOverview {
-            },
-            h1 { "组件总览" }
-            p { "Components Overview - Hikari UI 组件库" }
+    let i18n = use_i18n();
 
-            div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
-                h2 { "布局组件 Layout" }
+    let (page_title, page_desc, layout_title, basic_title) = match i18n {
+        Some(ctx) => {
+            let keys = &ctx.keys;
+            (
+                keys.page.components.title.clone(),
+                keys.page.components.description.clone(),
+                "Layout Components".to_string(),
+                keys.sidebar
+                    .components
+                    .layer1
+                    .clone()
+                    .unwrap_or_else(|| "Basic Components".to_string()),
+            )
+        }
+        None => (
+            "Components Overview".to_string(),
+            "A rich collection of reusable UI components.".to_string(),
+            "Layout Components".to_string(),
+            "Basic Components".to_string(),
+        ),
+    };
+
+    rsx! {
+        PageContainer {
+            current_route: crate::app::Route::ComponentsOverview {},
+            title: page_title,
+            description: page_desc,
+
+            DemoSection {
+                title: layout_title,
                 div { class: ClassesBuilder::new().add(Display::Grid).add(Gap::Gap6).build(),
                     div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P4).build(),
-                        Icon { icon: MdiIcon::Alert, size: 24 }
+                        Icon { icon: MdiIcon::ViewDashboard, size: 24 }
                         div {
-                            h3 { "Container 容器" }
-                            p { "内容容器组件" }
+                            h3 { "Container" }
+                            p { "Content container component" }
                         }
                     }
                     div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P4).build(),
-                        Icon { icon: MdiIcon::Alert, size: 24 }
+                        Icon { icon: MdiIcon::ViewColumn, size: 24 }
                         div {
-                            h3 { "Grid 网格" }
-                            p { "网格布局系统" }
+                            h3 { "Grid" }
+                            p { "Grid layout system" }
                         }
                     }
                     div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P4).build(),
-                        Icon { icon: MdiIcon::Alert, size: 24 }
+                        Icon { icon: MdiIcon::Panel, size: 24 }
                         div {
-                            h3 { "Section 分区" }
-                            p { "内容分区组件" }
+                            h3 { "Section" }
+                            p { "Content section component" }
                         }
                     }
                 }
             }
 
-            div { class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
-                h2 { "基础组件 Basic" }
+            DemoSection {
+                title: basic_title,
                 div { class: ClassesBuilder::new().add(Display::Grid).add(Gap::Gap6).build(),
                     div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P4).build(),
-                        Icon { icon: MdiIcon::Alert, size: 24 }
+                        Icon { icon: MdiIcon::GestureTap, size: 24 }
                         div {
-                            h3 { "Button 按钮" }
-                            p { "操作按钮组件" }
+                            h3 { "Button" }
+                            p { "Action button component" }
                         }
                     }
                     div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P4).build(),
-                        Icon { icon: MdiIcon::Alert, size: 24 }
+                        Icon { icon: MdiIcon::TextBox, size: 24 }
                         div {
-                            h3 { "Input 输入框" }
-                            p { "文本输入组件" }
+                            h3 { "Input" }
+                            p { "Text input component" }
                         }
                     }
                     div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P4).build(),
-                        Icon { icon: MdiIcon::Alert, size: 24 }
+                        Icon { icon: MdiIcon::CubeOutline, size: 24 }
                         div {
-                            h3 { "Card 卡片" }
-                            p { "内容卡片组件" }
+                            h3 { "Card" }
+                            p { "Content card component" }
                         }
                     }
                     div { class: ClassesBuilder::new().add(Display::Flex).add(Gap::Gap4).add(Padding::P4).build(),
-                        Icon { icon: MdiIcon::Alert, size: 24 }
+                        Icon { icon: MdiIcon::Tag, size: 24 }
                         div {
-                            h3 { "Badge 徽章" }
-                            p { "状态徽章组件" }
+                            h3 { "Badge" }
+                            p { "Status badge component" }
                         }
                     }
                 }

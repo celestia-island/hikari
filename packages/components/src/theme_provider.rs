@@ -70,7 +70,10 @@ use std::{collections::HashMap, sync::RwLock};
 use dioxus::prelude::*;
 use palette::*;
 
-use crate::scripts::scrollbar_container::init_all;
+use crate::scripts::scrollbar_container::init_all as init_scrollbars;
+
+#[cfg(target_arch = "wasm32")]
+use animation::global_manager::init_global_animation_manager;
 
 /// Trait for converting theme identifiers to string
 ///
@@ -924,11 +927,17 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
         set_theme,
     });
 
-    // Initialize custom scrollbars once when ThemeProvider mounts
+    // One-time global initialization when ThemeProvider mounts
     use_effect(|| {
         spawn(async move {
             gloo::timers::future::TimeoutFuture::new(50).await;
-            init_all();
+
+            // Initialize global animation manager (WASM only)
+            #[cfg(target_arch = "wasm32")]
+            init_global_animation_manager();
+
+            // Initialize custom scrollbars with MutationObserver for auto-detection
+            init_scrollbars();
         });
     });
 

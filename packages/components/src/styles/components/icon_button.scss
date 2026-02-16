@@ -226,6 +226,9 @@
   // Icon Styles
   // ============================================
 
+  // .hi-icon-button-icon and .hikari-icon are on the SAME element (a div inside button)
+  // Use .hi-icon-button-icon as it's more specific to this component
+
   .hi-icon-button-icon {
     width: vars.$hikari-icon-size-sm;
     height: vars.$hikari-icon-size-sm;
@@ -234,20 +237,43 @@
     justify-content: center;
     line-height: 0;
 
-    .hikari-icon {
+    svg {
       width: vars.$hikari-icon-size-sm;
       height: vars.$hikari-icon-size-sm;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 0;
-
-      svg {
-        width: vars.$hikari-icon-size-sm;
-        height: vars.$hikari-icon-size-sm;
-        display: block;
-      }
+      display: block;
+      fill: currentColor;
     }
+  }
+
+  // Ghost variant icon color
+  &.hi-icon-button-ghost .hi-icon-button-icon,
+  &.hi-icon-button-borderless .hi-icon-button-icon {
+    color: var(--hi-color-text-primary);
+  }
+
+  // Solid variants - use appropriate text color
+  &.hi-icon-button-primary .hi-icon-button-icon {
+    color: var(--hi-color-text-on-primary, #ffffff);
+  }
+
+  &.hi-icon-button-secondary .hi-icon-button-icon {
+    color: var(--hi-color-text-on-secondary, #ffffff);
+  }
+
+  &.hi-icon-button-danger .hi-icon-button-icon {
+    color: var(--hi-color-text-on-danger, #ffffff);
+  }
+
+  &.hi-icon-button-success .hi-icon-button-icon {
+    color: var(--hi-color-text-on-success, #ffffff);
+  }
+
+  // Hover opacity for solid variants
+  &.hi-icon-button-primary:hover:not(:disabled) .hi-icon-button-icon,
+  &.hi-icon-button-secondary:hover:not(:disabled) .hi-icon-button-icon,
+  &.hi-icon-button-danger:hover:not(:disabled) .hi-icon-button-icon,
+  &.hi-icon-button-success:hover:not(:disabled) .hi-icon-button-icon {
+    opacity: 0.9;
   }
 
   .hi-icon-button-disabled {

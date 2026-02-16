@@ -51,26 +51,20 @@ pub fn render_component(component_type: ComponentType) -> Element {
                         Button { variant: ButtonVariant::Danger, disabled: true, "Danger" }
                     }
                 },
-                ("layer1", "button", Some("icon")) => rsx! {
-                    div { class: flex_row_wrap(),
-                        IconButton { icon: MdiIcon::Check, size: IconButtonSize::Small, variant: IconButtonVariant::Ghost, onclick: move |_| {} }
-                        IconButton { icon: MdiIcon::Pencil, size: IconButtonSize::Medium, variant: IconButtonVariant::Ghost, onclick: move |_| {} }
-                        IconButton { icon: MdiIcon::Close, size: IconButtonSize::Large, variant: IconButtonVariant::Ghost, onclick: move |_| {} }
-                    }
-                },
-                ("layer1", "button", Some("icon-variants")) => rsx! {
-                    div { class: flex_row_wrap(),
-                        IconButton { icon: MdiIcon::Heart, size: IconButtonSize::Medium, variant: IconButtonVariant::Primary, onclick: move |_| {} }
-                        IconButton { icon: MdiIcon::Star, size: IconButtonSize::Medium, variant: IconButtonVariant::Secondary, onclick: move |_| {} }
-                        IconButton { icon: MdiIcon::Alert, size: IconButtonSize::Medium, variant: IconButtonVariant::Danger, onclick: move |_| {} }
-                        IconButton { icon: MdiIcon::Check, size: IconButtonSize::Medium, variant: IconButtonVariant::Success, onclick: move |_| {} }
-                    }
-                },
                 ("layer1", "button", Some("icon-sizes")) => rsx! {
                     div { class: flex_row_wrap(),
                         IconButton { icon: MdiIcon::Cog, size: IconButtonSize::Small, variant: IconButtonVariant::Primary, onclick: move |_| {} }
                         IconButton { icon: MdiIcon::Cog, size: IconButtonSize::Medium, variant: IconButtonVariant::Primary, onclick: move |_| {} }
                         IconButton { icon: MdiIcon::Cog, size: IconButtonSize::Large, variant: IconButtonVariant::Primary, onclick: move |_| {} }
+                    }
+                },
+                ("layer1", "button", Some("icon-variants")) => rsx! {
+                    div { class: flex_row_wrap(),
+                        IconButton { icon: MdiIcon::Cog, size: IconButtonSize::Medium, variant: IconButtonVariant::Ghost, onclick: move |_| {} }
+                        IconButton { icon: MdiIcon::Heart, size: IconButtonSize::Medium, variant: IconButtonVariant::Primary, onclick: move |_| {} }
+                        IconButton { icon: MdiIcon::Star, size: IconButtonSize::Medium, variant: IconButtonVariant::Secondary, onclick: move |_| {} }
+                        IconButton { icon: MdiIcon::Alert, size: IconButtonSize::Medium, variant: IconButtonVariant::Danger, onclick: move |_| {} }
+                        IconButton { icon: MdiIcon::Check, size: IconButtonSize::Medium, variant: IconButtonVariant::Success, onclick: move |_| {} }
                     }
                 },
                 ("layer1", "button", _) => rsx! {

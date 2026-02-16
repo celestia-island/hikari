@@ -25,7 +25,7 @@ pages/components/layer1/button#disabled
 图标按钮支持小(24px)、中(32px)、大(40px)三种尺寸。
 
 ```_hikari_component
-pages/components/layer1/button#icon
+pages/components/layer1/button#icon-sizes
 ```
 
 ## 图标按钮变体
@@ -34,14 +34,6 @@ pages/components/layer1/button#icon
 
 ```_hikari_component
 pages/components/layer1/button#icon-variants
-```
-
-## 图标按钮尺寸对比
-
-展示 Primary 变体在不同尺寸下的效果。
-
-```_hikari_component
-pages/components/layer1/button#icon-sizes
 ```
 
 ## API

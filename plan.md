@@ -28,45 +28,77 @@
 10. `bb48a88` docs: 更新 plan.md
 11. `31c76ba` refactor(website): 删除已迁移的旧页面文件 (第一轮)
 12. `550bc40` feat(website): 完成剩余组件迁移 (第二轮)
+13. `09b8147` docs: 更新 plan.md - 全部迁移完成
+14. `7a7bf01` feat(website): 迁移 system 页面到 Markdown
 
 ## Summary
 
 | Metric | Value |
 |--------|-------|
-| Markdown 文档 | 60 个 (中英文) |
-| 删除的 .rs 文件 | 30 个 |
-| 删除的代码行数 | ~8,200 行 |
+| Markdown 文档 | 85 个 (中英文) |
+| 删除的 .rs 文件 | 36 个 |
+| 删除的代码行数 | ~10,000 行 |
+
+## Migrated Pages (Markdown-driven)
+
+**Layer 1 (13):** avatar, button, comment, description_list, display, empty, feedback, form, image, number_input, search, switch, tag
+
+**Layer 2 (12):** cascader, collapsible, data, feedback, form, navigation, pagination, qrcode, table, timeline, transfer, tree
+
+**Layer 3 (5):** editor, media, user_guide, visualization, zoom_controls
+
+**System (6):** overview, css, icons, palette, animation, i18n
+
+## Retained Pages (Complex Interactions)
+
+| Page | Reason |
+|------|--------|
+| `home.rs` | 首页，特殊布局 |
+| `animation_demo.rs` | 动画演示，复杂交互 |
+| `demos/showcase.rs` | Demo 概览页 |
+| `demos/layer1/form_demo.rs` | 表单演示，交互表单 |
+| `demos/layer2/dashboard_demo.rs` | 仪表盘演示，图表 |
+| `demos/layer3/video_demo.rs` | 视频演示，播放器 |
+| `components/overview.rs` | 组件概览 |
+| `components/layer2/overview.rs` | Layer 2 概览 |
+| `components/layer3/overview.rs` | Layer 3 概览 |
 
 ## File Structure
 
 ```
 docs/
-├── en-US/components/
-│   ├── layer1/ (13 files)
-│   ├── layer2/ (12 files)
-│   └── layer3/ (5 files)
-└── zh-CHS/components/
-    ├── layer1/ (13 files)
-    ├── layer2/ (12 files)
-    └── layer3/ (5 files)
+├── en-US/
+│   ├── components/
+│   │   ├── layer1/ (13 files)
+│   │   ├── layer2/ (12 files)
+│   │   └── layer3/ (5 files)
+│   └── system/ (6 files)
+└── zh-CHS/
+    ├── components/
+    │   ├── layer1/ (13 files)
+    │   ├── layer2/ (12 files)
+    │   └── layer3/ (5 files)
+    └── system/ (6 files)
 
-examples/website/src/pages/components/
+examples/website/src/pages/
+├── home.rs
+├── animation_demo.rs
 ├── mod.rs
-├── overview.rs
-├── layer1/mod.rs (empty)
-├── layer2/mod.rs + overview.rs
-└── layer3/mod.rs + overview.rs
+├── components/
+│   ├── mod.rs
+│   ├── overview.rs
+│   └── layer{2,3}/mod.rs + overview.rs
+├── demos/
+│   ├── mod.rs
+│   ├── showcase.rs
+│   └── layer{1,2,3}/mod.rs + *_demo.rs
+└── system/
+    └── mod.rs
 ```
-
-## Remaining .rs Files (Overview pages only)
-
-- `pages/components/overview.rs` - Components overview
-- `pages/components/layer2/overview.rs` - Layer 2 overview
-- `pages/components/layer3/overview.rs` - Layer 3 overview
 
 ## Key Benefits
 
-1. **8,200+ lines of code removed** - Less code to maintain
+1. **10,000+ lines of code removed** - Less code to maintain
 2. **i18n Ready** - Documentation in multiple languages
 3. **Easy Maintenance** - Content in Markdown, not Rust
 4. **Separation of Concerns** - Registry handles demos, Markdown handles docs

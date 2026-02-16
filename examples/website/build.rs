@@ -204,9 +204,10 @@ fn main() {
         println!("cargo:warning=⚠️  Run 'just build-dev' to generate it");
     }
 
-    // Copy docs directory to public/docs/
+    // Copy docs directory to public/docs/ (both workspace root and local)
     let docs_src = workspace_root.join("docs");
     let docs_dst = root_public_dir.join("docs");
+    let local_docs_dst = manifest_path.join("public/docs");
 
     println!(
         "cargo:warning=📄 Copying docs: {:?} -> {:?}",
@@ -214,18 +215,32 @@ fn main() {
     );
 
     if docs_src.exists() {
-        // Remove old docs directory
+        // Copy to workspace root public/docs/
         if docs_dst.exists() {
             if let Err(e) = std::fs::remove_dir_all(&docs_dst) {
                 println!("cargo:warning=⚠️  Failed to remove old docs: {}", e);
             }
         }
-
-        // Copy docs directory
         if let Err(e) = copy_dir_all(&docs_src, &docs_dst) {
             println!("cargo:warning=⚠️  Failed to copy docs: {}", e);
         } else {
             println!("cargo:warning=✅ Copied docs to public/docs/");
+        }
+
+        // Also copy to local public/docs/ for server running from examples/website
+        println!(
+            "cargo:warning=📄 Copying docs to local: {:?}",
+            local_docs_dst
+        );
+        if local_docs_dst.exists() {
+            if let Err(e) = std::fs::remove_dir_all(&local_docs_dst) {
+                println!("cargo:warning=⚠️  Failed to remove old local docs: {}", e);
+            }
+        }
+        if let Err(e) = copy_dir_all(&docs_src, &local_docs_dst) {
+            println!("cargo:warning=⚠️  Failed to copy docs to local: {}", e);
+        } else {
+            println!("cargo:warning=✅ Copied docs to local public/docs/");
         }
     } else {
         println!(

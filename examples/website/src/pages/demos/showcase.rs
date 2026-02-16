@@ -2,125 +2,117 @@
 // Demo showcase pages
 
 use dioxus::prelude::*;
+use dioxus_router::components::Link;
 
-use crate::{app::Route, components::Layout};
+use crate::{app::Route, components::PageContainer, hooks::use_i18n};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{ BgColor, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor, };
+use _palette::classes::{
+    BgColor, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, GridCols, Padding,
+    TextColor,
+};
 
 /// Demo overview page
 #[component]
 pub fn DemosOverview() -> Element {
+    let i18n = use_i18n();
+
+    let (page_title, page_desc, view_demo) = match i18n {
+        Some(ctx) => {
+            let keys = &ctx.keys;
+            (
+                keys.sidebar.demos.title.clone(),
+                "Complete application examples showcasing Hikari components in real scenarios."
+                    .to_string(),
+                "View Demo →".to_string(),
+            )
+        }
+        None => (
+            "Demos".to_string(),
+            "完整的应用示例，展示 Hikari 组件在实际场景中的使用".to_string(),
+            "查看演示 →".to_string(),
+        ),
+    };
+
     let demos = vec![
         (
             "Animation",
-            "动画演示",
-            "展示 Hikari 动画系统",
+            "Animation system demonstration",
             MdiIcon::Play,
             Route::AnimationDemo {},
         ),
         (
             "Layer 1 Form",
-            "Layer 1 表单",
-            "基础表单组件示例",
+            "Basic form components example",
             MdiIcon::TextBoxEdit,
             Route::FormDemo {},
         ),
         (
             "Layer 2 Dashboard",
-            "Layer 2 仪表板",
-            "数据可视化仪表板",
+            "Data visualization dashboard",
             MdiIcon::ViewDashboard,
             Route::DashboardDemo {},
         ),
         (
             "Layer 3 Video",
-            "Layer 3 视频",
-            "视频播放器示例",
-            MdiIcon::Music,
+            "Video player example",
+            MdiIcon::Play,
             Route::VideoDemo {},
         ),
     ];
 
     rsx! {
-        Layout {
+        PageContainer {
             current_route: Route::DemosOverview {},
-            children: rsx! {
-                div {
-                    class: ClassesBuilder::new().add_raw("page-container").build(),
+            title: page_title,
+            description: page_desc,
 
-                    div {
-                        class: ClassesBuilder::new().add(MarginBottom::Mb8).build(),
-                        h1 {
+            div {
+                class: ClassesBuilder::new()
+                    .add(Display::Grid)
+                    .add(GridCols::Col2)
+                    .add(Gap::Gap6)
+                    .build(),
+
+                for (name, description, icon, route) in demos {
+                    Link {
+                        to: route.clone(),
+                        div {
                             class: ClassesBuilder::new()
-                                .add(FontSize::X4xl)
-                                .add(FontWeight::Bold)
-                                .add(TextColor::Primary)
-                                .add(MarginBottom::Mb0)
+                                .add(BgColor::Surface)
+                                .add(Padding::P6)
+                                .add(Display::Flex)
+                                .add(FlexDirection::Column)
+                                .add(Gap::Gap2)
                                 .build(),
-                            "Demos"
-                        }
-                        p {
-                            class: ClassesBuilder::new()
-                                .add(TextColor::Secondary)
-                                .add(FontSize::Xl)
-                                .build(),
-                            "完整的应用示例，展示 Hikari 组件在实际场景中的使用"
-                        }
-                    }
 
-                    div {
-                        class: ClassesBuilder::new()
-                            .add_raw("grid grid-cols-1 md:grid-cols-2 gap-6")
-                            .build(),
+                            Icon {
+                                icon,
+                                size: 32,
+                            }
 
-                        for (name, _cn_name, description, icon, route) in demos {
-                            div {
+                            h3 {
                                 class: ClassesBuilder::new()
-                                    .add_raw("demo-card")
-                                    .add(BgColor::Surface)
-                                    .add(Padding::P6)
+                                    .add(FontSize::Lg)
+                                    .add(FontWeight::Semibold)
+                                    .add(TextColor::Primary)
                                     .build(),
+                                "{name}"
+                            }
 
-                                div {
-                                    class: ClassesBuilder::new()
-                                        .add(Display::Flex)
-                                        .add(FlexDirection::Row)
-                                        .add(Gap::Gap4)
-                                        .build(),
+                            p {
+                                class: ClassesBuilder::new()
+                                    .add(TextColor::Secondary)
+                                    .add(FontSize::Sm)
+                                    .build(),
+                                "{description}"
+                            }
 
-                                    Icon {
-                                        icon,
-                                        size: 48,
-                                        class: "demo-icon"
-                                    }
-                                }
-
-                                h3 {
-                                    class: ClassesBuilder::new()
-                                        .add(FontSize::Lg)
-                                        .add(FontWeight::Semibold)
-                                        .add(TextColor::Primary)
-                                        .add(MarginBottom::Mb2)
-                                        .build(),
-                                    "{name}"
-                                }
-
-                                p {
-                                    class: ClassesBuilder::new()
-                                        .add(TextColor::Secondary)
-                                        .add(FontSize::Sm)
-                                        .add(MarginBottom::Mb4)
-                                        .build(),
-                                    "{description}"
-                                }
-
-                                a {
-                                    class: ClassesBuilder::new()
-                                        .add_raw("demo-link")
-                                        .build(),
-                                    href: "{route}",
-                                    "查看演示 →"
-                                }
+                            span {
+                                class: ClassesBuilder::new()
+                                    .add(TextColor::Primary)
+                                    .add(FontSize::Sm)
+                                    .build(),
+                                "{view_demo}"
                             }
                         }
                     }

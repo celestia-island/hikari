@@ -18,6 +18,7 @@ pub use app::App;
 
 mod app;
 mod components;
+mod hooks;
 mod pages;
 
 // Shared configuration (used by main.rs)

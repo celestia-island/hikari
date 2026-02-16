@@ -35,7 +35,9 @@
 //! ```
 
 use dioxus::prelude::*;
-use palette::classes::{AppLayoutClass, ClassesBuilder, UtilityClass, components::Layout as LayoutClass};
+use palette::classes::{
+    components::Layout as LayoutClass, AppLayoutClass, ClassesBuilder, UtilityClass,
+};
 
 use crate::basic::Background;
 

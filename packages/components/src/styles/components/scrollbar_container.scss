@@ -72,15 +72,15 @@
     scrollbar-width: none;
 }
 
-// Scrollbar track (the rail) - absolutely positioned on right edge
+// Scrollbar track (the rail) - absolutely positioned inside wrapper's right edge
 .custom-scrollbar-track {
-    position: absolute;  // Absolute positioning on right edge of wrapper
+    position: absolute;  // Absolute positioning inside wrapper
     top: 0;
-    right: 0;
+    right: 0;  // 贴着容器边缘
     bottom: 0;
     // width is set dynamically via JavaScript (4px → 8px)
     width: 4px; // Initial width
-    border-radius: 3px;
+    border-radius: 4px;
     pointer-events: none;  // Don't capture clicks - let them pass through to content
     z-index: 100;
 
@@ -113,7 +113,7 @@
     width: 100%;
     min-height: 20px;
     background: var(--hi-scrollbar-thumb);
-    border-radius: 3px;
+    border-radius: 4px;
     cursor: pointer;
     pointer-events: auto;  // Re-enable clicks for thumb (overrides track's none)
 
@@ -126,7 +126,7 @@
 // Hover state: thumb glows
 .custom-scrollbar-thumb:hover {
     background: var(--hi-scrollbar-thumb-hover);
-    box-shadow: 0 0 12px var(--hi-scrollbar-thumb-hover);
+    box-shadow: 0 0 14px var(--hi-scrollbar-thumb-hover);
 }
 
 // Active state: thumb being dragged (theme-aware filter)

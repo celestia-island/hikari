@@ -15,7 +15,10 @@
 //! - `/assets/*` → assets_mount
 //! - `/styles/*` → styles_mount
 
-use std::{path::{Path, absolute as path_absolute}, process::Command};
+use std::{
+    path::{absolute as path_absolute, Path},
+    process::Command,
+};
 
 /// Filesystem paths (MUST match src/paths.rs::STATIC_PATHS)
 const PUBLIC_DIR: &str = "public";
@@ -201,6 +204,51 @@ fn main() {
         println!("cargo:warning=⚠️  Run 'just build-dev' to generate it");
     }
 
+    // Copy docs directory to public/docs/ (both workspace root and local)
+    let docs_src = workspace_root.join("docs");
+    let docs_dst = root_public_dir.join("docs");
+    let local_docs_dst = manifest_path.join("public/docs");
+
+    println!(
+        "cargo:warning=📄 Copying docs: {:?} -> {:?}",
+        docs_src, docs_dst
+    );
+
+    if docs_src.exists() {
+        // Copy to workspace root public/docs/
+        if docs_dst.exists() {
+            if let Err(e) = std::fs::remove_dir_all(&docs_dst) {
+                println!("cargo:warning=⚠️  Failed to remove old docs: {}", e);
+            }
+        }
+        if let Err(e) = copy_dir_all(&docs_src, &docs_dst) {
+            println!("cargo:warning=⚠️  Failed to copy docs: {}", e);
+        } else {
+            println!("cargo:warning=✅ Copied docs to public/docs/");
+        }
+
+        // Also copy to local public/docs/ for server running from examples/website
+        println!(
+            "cargo:warning=📄 Copying docs to local: {:?}",
+            local_docs_dst
+        );
+        if local_docs_dst.exists() {
+            if let Err(e) = std::fs::remove_dir_all(&local_docs_dst) {
+                println!("cargo:warning=⚠️  Failed to remove old local docs: {}", e);
+            }
+        }
+        if let Err(e) = copy_dir_all(&docs_src, &local_docs_dst) {
+            println!("cargo:warning=⚠️  Failed to copy docs to local: {}", e);
+        } else {
+            println!("cargo:warning=✅ Copied docs to local public/docs/");
+        }
+    } else {
+        println!(
+            "cargo:warning=⚠️  docs directory not found at {:?}",
+            docs_src
+        );
+    }
+
     println!("cargo:warning=✅ website build completed!");
 
     // Tell cargo to rerun build.rs if these files change
@@ -209,6 +257,7 @@ fn main() {
     println!("cargo:rerun-if-changed=../../scripts/generate_bulk_imports.py");
     println!("cargo:rerun-if-changed=src/components");
     println!("cargo:rerun-if-changed=src/pages");
+    println!("cargo:rerun-if-changed=../../docs");
 }
 
 /// Get workspace root directory
@@ -224,4 +273,24 @@ fn get_workspace_root() -> std::path::PathBuf {
     } else {
         workspace_root
     }
+}
+
+/// Recursively copy a directory
+fn copy_dir_all(src: &Path, dst: &Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(dst)?;
+
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        let src_path = entry.path();
+        let dst_path = dst.join(entry.file_name());
+
+        if ty.is_dir() {
+            copy_dir_all(&src_path, &dst_path)?;
+        } else {
+            std::fs::copy(&src_path, &dst_path)?;
+        }
+    }
+
+    Ok(())
 }

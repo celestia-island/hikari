@@ -6,11 +6,18 @@ use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, MenuClass};
 
 use crate::{
-    GlowBlur, GlowColor, GlowIntensity,
     basic::{Arrow, ArrowDirection},
     feedback::Glow,
     styled::StyledComponent,
+    GlowBlur, GlowColor, GlowIntensity,
 };
+
+/// Context for Menu to communicate with MenuItem
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub struct MenuContext {
+    pub in_popover: bool,
+    pub glow_enabled: bool,
+}
 
 /// Menu 组件的类型包装器（用于实现 StyledComponent）
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -151,6 +158,14 @@ pub struct MenuProps {
     pub children: Element,
 
     pub on_select: Option<EventHandler<String>>,
+
+    /// Whether this menu is inside a Popover (enables auto-glow on items)
+    #[props(default)]
+    pub in_popover: bool,
+
+    /// Default glow setting for all items (overridden by in_popover)
+    #[props(default)]
+    pub glow: bool,
 }
 
 impl Default for MenuProps {
@@ -163,6 +178,8 @@ impl Default for MenuProps {
             class: String::default(),
             children: VNode::empty(),
             on_select: None,
+            in_popover: false,
+            glow: false,
         }
     }
 }
@@ -240,16 +257,24 @@ pub fn Menu(props: MenuProps) -> Element {
         MenuMode::Horizontal => MenuClass::Horizontal,
     };
 
+    let glow_enabled = props.in_popover || props.glow;
+
     let menu_classes = {
         let builder = ClassesBuilder::new()
             .add(MenuClass::Menu)
             .add_if(MenuClass::Inline, || props.inline)
             .add(mode_class)
             .add_if(MenuClass::Compact, || props.compact)
+            .add_if(MenuClass::PopoverMenu, || props.in_popover)
             .add_raw(&props.class);
 
         builder.build()
     };
+
+    use_context_provider(|| MenuContext {
+        in_popover: props.in_popover,
+        glow_enabled,
+    });
 
     rsx! {
         ul {
@@ -277,6 +302,15 @@ impl StyledComponent for MenuComponent {
 /// Menu item component
 #[component]
 pub fn MenuItem(props: MenuItemProps) -> Element {
+    let menu_context = try_consume_context::<Signal<MenuContext>>();
+    let should_glow = match menu_context {
+        Some(ctx) => {
+            let context = ctx.read();
+            props.glow || (context.in_popover && context.glow_enabled)
+        }
+        None => props.glow,
+    };
+
     let item_classes = ClassesBuilder::new()
         .add(MenuClass::MenuItem)
         .add_raw(props.height.as_str())
@@ -291,8 +325,6 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
             aria_disabled: props.disabled.to_string(),
             onclick: move |e| {
                 if !props.disabled {
-                    // Only handle clicks on the li element itself, not on child links/buttons
-                    // This allows clicking on the entire padded area
                     if let Some(handler) = props.onclick.as_ref() {
                         handler.call(e);
                     }
@@ -309,16 +341,16 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
         }
     };
 
-    if props.glow {
+    if should_glow {
         let wrapper_class = format!("hi-menu-item-wrapper {}", props.height.as_str());
         rsx! {
             div {
                 class: "{wrapper_class}",
                 style: "width: 100%; position: relative;",
                 Glow {
-                    blur: GlowBlur::Medium,
+                    blur: GlowBlur::Light,
                     color: GlowColor::Ghost,
-                    intensity: GlowIntensity::Thirty,
+                    intensity: GlowIntensity::Seventy,
                     children: item_content
                 }
             }
@@ -339,9 +371,7 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let list_classes = ClassesBuilder::new()
-        .add(MenuClass::SubmenuList)
-        .build();
+    let list_classes = ClassesBuilder::new().add(MenuClass::SubmenuList).build();
 
     let list_style = use_memo(move || {
         let (display, opacity, transform) = if is_open() {

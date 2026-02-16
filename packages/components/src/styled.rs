@@ -95,14 +95,16 @@ impl StyleRegistry {
     #[cfg(feature = "basic")]
     pub fn register_basic_components(&mut self) {
         use crate::basic::{
-            ArrowComponent, BackgroundComponent, BadgeComponent, ButtonComponent, CardComponent,
-            CheckboxComponent, DatePickerComponent, DividerComponent, FileUploadComponent,
-            FormFieldComponent, IconButtonComponent, InputComponent, RadioGroupComponent,
-            SelectComponent, SliderComponent, SwitchComponent, TextareaComponent,
+            ArrowComponent, BackgroundComponent, BadgeComponent, ButtonComponent, CanvasComponent,
+            CardComponent, CheckboxComponent, DatePickerComponent, DividerComponent,
+            FileUploadComponent, FormFieldComponent, IconButtonComponent, InputComponent,
+            RadioGroupComponent, SelectComponent, SliderComponent, SwitchComponent,
+            TextareaComponent,
         };
         ArrowComponent::register(self);
         BackgroundComponent::register(self);
         ButtonComponent::register(self);
+        CanvasComponent::register(self);
         InputComponent::register(self);
         CardComponent::register(self);
         BadgeComponent::register(self);
@@ -159,17 +161,15 @@ impl StyleRegistry {
     #[cfg(feature = "feedback")]
     pub fn register_feedback_components(&mut self) {
         use crate::feedback::{
-            alert::AlertComponent, drawer::DrawerComponent, dropdown::DropdownComponent,
-            modal::ModalComponent, popover::PopoverComponent, progress::ProgressComponent,
-            skeleton::SkeletonComponent, spin::SpinComponent, toast::ToastComponent,
-            tooltip::TooltipComponent,
+            alert::AlertComponent, drawer::DrawerComponent, modal::ModalComponent,
+            popover::PopoverComponent, progress::ProgressComponent, skeleton::SkeletonComponent,
+            spin::SpinComponent, toast::ToastComponent, tooltip::TooltipComponent,
         };
         AlertComponent::register(self);
         ToastComponent::register(self);
         TooltipComponent::register(self);
         ModalComponent::register(self);
         DrawerComponent::register(self);
-        DropdownComponent::register(self);
         PopoverComponent::register(self);
         ProgressComponent::register(self);
         SkeletonComponent::register(self);

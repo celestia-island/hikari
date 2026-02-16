@@ -12,7 +12,7 @@ doctest = false
 default = ["basic", "feedback", "navigation", "layout", "data", "display", "entry", "production"]
 
 # Component groups (shortcuts) - enable multiple components at once
-basic = ["button", "input", "card", "badge", "image", "avatar", "checkbox", "switch", "radio_group", "select", "slider", "textarea", "icon_button", "arrow"]
+basic = ["button", "input", "card", "badge", "image", "avatar", "checkbox", "switch", "radio_group", "select", "slider", "textarea", "icon_button", "arrow", "canvas"]
 feedback = ["alert", "toast", "tooltip", "modal"]
 navigation = ["menu", "tabs", "breadcrumb"]
 layout = ["layout-component", "header", "aside", "content", "footer"]
@@ -29,6 +29,7 @@ badge = []
 image = []
 avatar = []
 arrow = []
+canvas = []
 checkbox = []
 switch = []
 radio_group = []
@@ -115,15 +116,20 @@ web-sys = { version = "0.3", features = [
     "KeyboardEvent",
     "MouseEvent",
     "EventTarget",
+    "HtmlCanvasElement",
+    "CanvasRenderingContext2d",
 ] }
 wasm-bindgen = "^0.2"
 js-sys = "^0.3"
 
 # Browser utilities library (higher-level than web-sys)
-gloo = { version = "^0.11", features = ["utils"] }
+gloo = { version = "^0.11", features = ["utils", "futures"] }
 
 # Global static variables
 once_cell = "1.19"
+
+# QR code generation
+qrcode = "0.14"
 
 [build-dependencies]
 grass = "^0.13"

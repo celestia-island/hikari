@@ -22,7 +22,7 @@ impl HtmlService {
             title: "Hikari App".to_string(),
             styles: None,
             custom_head: None,
-            lang: "zh-CN".to_string(),
+            lang: "zh-CHS".to_string(),
             charset: "utf-8".to_string(),
         }
     }

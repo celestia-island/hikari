@@ -22,13 +22,13 @@
     --hi-color-text-primary: rgba(0, 0, 0, 0.9);
     --hi-color-text-secondary: rgba(0, 0, 0, 0.6);
 
-    // 主题色
-    --hi-color-primary: #FFB3A7;  // 粉红 (浅色)
-    --hi-color-secondary: #065279;  // 靛蓝 (深色)
+    // 主题色（与调色板一致）
+    --hi-color-primary: #EEA2A4;  // 牡丹粉红 (brightness 0.725 → 黑色文字)
+    --hi-color-secondary: #519A73;  // 苍翠 (brightness 0.501 → 黑色文字)
     --hi-color-accent: #F7B500;  // 姜黄
-    --hi-color-success: #5CBF91;  // 葱倩 (浅色)
-    --hi-color-warning: #EED677;  // 鹅黄
-    --hi-color-danger: #E85A4F;  // 朱红 (中等)
+    --hi-color-success: #0EB840;  // 葱倩 (brightness 0.469 → 白色文字)
+    --hi-color-warning: #EED677;  // 鹅黄 (brightness 0.825 → 黑色文字)
+    --hi-color-danger: #FF4C00;  // 朱红 (brightness 0.474 → 白色文字)
     --hi-color-info: #6ABED6;  // 魁卵青
 
     // 黑色透明度变体
@@ -40,19 +40,7 @@
     --hi-color-black-5: rgba(0, 0, 0, 0.05);
 
     // ============================================
-    // 1. 基础主题色（用于文字、背景、边框、按钮）
-    // ============================================
-
-    --hi-color-primary: #FFB3A7;
-    --hi-color-secondary: #065279;
-    --hi-color-accent: #F7B500;
-    --hi-color-success: #5CBF91;
-    --hi-color-warning: #EED677;
-    --hi-color-danger: #E85A4F;
-    --hi-color-info: #6ABED6;
-
-    // ============================================
-    //2. 透明度变体（用于叠加、发光、阴影）
+    // 2. 透明度变体（用于叠加、发光、阴影）
     // ============================================
 
     // 白色透明度（用于暗黑模式发光）
@@ -109,10 +97,15 @@
     --hi-color-text-primary: rgba(0, 0, 0, 0.9);
     --hi-color-text-secondary: rgba(0, 0, 0, 0.6);
 
-    // 主题色上的文字颜色（反色原则）
+    // 主题色上的文字颜色（根据亮度动态计算，反色原则）
+    // primary: 牡丹粉红 (0.725) → 黑色
+    // secondary: 苍翠 (0.501) → 黑色
+    // success: 葱倩 (0.469) → 白色
+    // warning: 鹅黄 (0.825) → 黑色
+    // danger: 朱红 (0.474) → 白色
     --hi-color-text-on-primary: rgba(0, 0, 0, 0.9);
-    --hi-color-text-on-secondary: var(--hi-color-white-100);
-    --hi-color-text-on-success: rgba(0, 0, 0, 0.9);
+    --hi-color-text-on-secondary: rgba(0, 0, 0, 0.9);
+    --hi-color-text-on-success: var(--hi-color-white-100);
     --hi-color-text-on-warning: rgba(0, 0, 0, 0.9);
     --hi-color-text-on-danger: var(--hi-color-white-100);
     --hi-color-text-on-info: rgba(0, 0, 0, 0.9);
@@ -121,29 +114,29 @@
     // 4. 按钮颜色（基于基础色）
     // ============================================
 
-    // Primary 按钮渐变（基于 --hi-color-primary）
+    // Primary 按钮渐变（基于 --hi-color-primary 牡丹粉红）
     --hi-button-primary: var(--hi-color-primary);
-    --hi-button-primary-hover: rgba(255, 179, 167, 0.8);
-    --hi-button-primary-light: #FFD6D1;
-    --hi-button-primary-dark: #E89A8D;
+    --hi-button-primary-hover: rgba(238, 162, 164, 0.8);
+    --hi-button-primary-light: #F4C4C5;
+    --hi-button-primary-dark: #D88B8E;
 
-    // Secondary 按钮渐变（基于 --hi-color-secondary）
+    // Secondary 按钮渐变（基于 --hi-color-secondary 苍翠）
     --hi-button-secondary: var(--hi-color-secondary);
-    --hi-button-secondary-hover: rgba(6, 82, 121, 0.8);
-    --hi-button-secondary-light: #0A7BAF;
-    --hi-button-secondary-dark: #043A58;
+    --hi-button-secondary-hover: rgba(81, 154, 115, 0.8);
+    --hi-button-secondary-light: #6BB38C;
+    --hi-button-secondary-dark: #3D7657;
 
-    // Success 按钮渐变（基于 --hi-color-success）
+    // Success 按钮渐变（基于 --hi-color-success 葱倩）
     --hi-button-success: var(--hi-color-success);
-    --hi-button-success-hover: rgba(92, 191, 145, 0.8);
-    --hi-button-success-light: #8FD7B5;
-    --hi-button-success-dark: #459C72;
+    --hi-button-success-hover: rgba(14, 184, 64, 0.8);
+    --hi-button-success-light: #3DC86E;
+    --hi-button-success-dark: #0A8F33;
 
-    // Danger 按钮渐变（基于 --hi-color-danger）
+    // Danger 按钮渐变（基于 --hi-color-danger 朱红）
     --hi-button-danger: var(--hi-color-danger);
-    --hi-button-danger-hover: rgba(232, 90, 79, 0.8);
-    --hi-button-danger-light: #F0837B;
-    --hi-button-danger-dark: #C94038;
+    --hi-button-danger-hover: rgba(255, 76, 0, 0.8);
+    --hi-button-danger-light: #FF7A33;
+    --hi-button-danger-dark: #CC3D00;
 
     // Warning 按钮渐变（基于 --hi-color-warning）
     --hi-button-warning: var(--hi-color-warning);

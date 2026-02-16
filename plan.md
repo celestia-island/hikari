@@ -1,175 +1,105 @@
-# Hikari Development & Maintenance Plan
+# Hikari Website Refactoring Plan
 
-## Overview
+## Status: COMPLETED ✅
 
-This plan tracks ongoing development, maintenance, and technical debt for the Hikari component library.
+## Architecture
 
----
-
-## Current Status
-
-### Completed
-- Type-safe CSS class refactoring (all components now use `UtilityClass` enums)
-- Layer 1 & Layer 2 components implementation
-- Chinese traditional color palette system
-- Animation infrastructure (`AnimationBuilder`)
-- **CodeHighlight clipboard fix** (2026-02-12) - Fixed button flickering and implemented real clipboard functionality
-- **Checkbox visibility fix** (2026-02-12) - Fixed checkmark icon always visible, simplified state management
-- **Checkbox styles compilation fix** (2026-02-12) - Fixed incomplete checkbox.scss in styles/components/ directory, cleaned up unused code
-- **Radio component simplification** (2026-02-12) - Removed complex animation code, CSS-only transitions
-- **Radio demo simplified** (2026-02-12) - Reduced to 3 options with 3rd disabled
-- **Select Detail Modal** (2026-02-12) - Added modal with glow wrapper effect, focus only changes background
-
-### Architecture
 ```
-+------------------------------------------------------------------+
-|                      Layer 3: Production Components               |
-|  (Video Player, Rich Text Editor, Code Highlighting, Timeline)   |
-|                            | depends on                           |
-+------------------------------------------------------------------+
-|                      Layer 2: Composite Components                |
-|       (Menu, Tabs, Table, Tree, Form, Dropdown, Modal)           |
-|                            | depends on                           |
-+------------------------------------------------------------------+
-|                       Layer 1: Basic Components                   |
-|        (Button, Input, Card, Badge, Alert, Toast, etc.)          |
-+------------------------------------------------------------------+
+路由 → DynamicDocPage(lang) → Layout + Container(10%边距) + MarkdownRenderer
+                                                          ↓
+                                              读取 /docs/{lang}/{path}.md
+                                                          ↓
+                                              解析 _hikari_component
+                                                          ↓
+                                              Registry → 直接渲染组件
 ```
 
----
+## Commits Made
 
-## Phase 1: Technical Debt & Maintenance
+1. `5e826da` fix(layout): 恢复主内容区域滚动条可见性
+2. `44f63af` fix(website): 导入 pages.scss 到 index.scss
+3. `8c1b918` feat(website): 更新更多页面使用 PageContainer 和 i18n
+4. `4094973` feat(website): 更新 demos/showcase.rs
+5. `e37a6ae` feat(website): 更新剩余10个页面使用 PageContainer 和 i18n
+6. `bdc27c5` fix(website): PageContainer 和 DemoSection 改用内联样式
+7. `8912118` feat(website): 重构页面架构为 Markdown 驱动
+8. `e32cc58` fix(website): 修正 Markdown 驱动架构
+9. `468cdfc` feat(website): 迁移组件文档到 Markdown
+10. `bb48a88` docs: 更新 plan.md
+11. `31c76ba` refactor(website): 删除已迁移的旧页面文件 (第一轮)
+12. `550bc40` feat(website): 完成剩余组件迁移 (第二轮)
+13. `09b8147` docs: 更新 plan.md - 全部迁移完成
+14. `7a7bf01` feat(website): 迁移 system 页面到 Markdown
 
-### 1.1 Empty/Stub Files
+## Summary
 
-| File | Status | Action |
-|------|--------|--------|
-| `packages/components/src/data/header.rs` | Empty (1 byte) | ✅ Removed (commit a7cc059) |
+| Metric | Value |
+|--------|-------|
+| Markdown 文档 | 85 个 (中英文) |
+| 删除的 .rs 文件 | 36 个 |
+| 删除的代码行数 | ~10,000 行 |
 
-### 1.2 Hardcoded Configuration Values ✅
+## Migrated Pages (Markdown-driven)
 
-Evaluated - All values are properly encapsulated:
+**Layer 1 (13):** avatar, button, comment, description_list, display, empty, feedback, form, image, number_input, search, switch, tag
 
-| Location | Value | Status |
-|----------|-------|--------|
-| Responsive breakpoints | `Breakpoint` enum in `hooks.rs` with proper methods | ✅ Well-designed |
-| Animation timings | User-configurable via props | ✅ Acceptable |
-| Drawer sizes | Internal component constants | ✅ Acceptable |
+**Layer 2 (12):** cascader, collapsible, data, feedback, form, navigation, pagination, qrcode, table, timeline, transfer, tree
 
-### 1.3 Dynamic Typing Patterns (Acceptable)
+**Layer 3 (5):** editor, media, user_guide, visualization, zoom_controls
 
-The following `Box<dyn FnMut>` patterns are **intentional and correct** for WASM/JavaScript interop:
+**System (6):** overview, css, icons, palette, animation, i18n
 
-| File | Usage | Status |
-|------|-------|--------|
-| `scrollbar_container.rs` | JS event closures | Acceptable |
-| `animation/builder.rs` | Animation callbacks | Acceptable |
-| `hooks.rs` | Event listeners | Acceptable |
+## Retained Pages (Complex Interactions)
 
-These are necessary for WASM bindings and don't represent technical debt.
+| Page | Reason |
+|------|--------|
+| `home.rs` | 首页，特殊布局 |
+| `animation_demo.rs` | 动画演示，复杂交互 |
+| `demos/showcase.rs` | Demo 概览页 |
+| `demos/layer1/form_demo.rs` | 表单演示，交互表单 |
+| `demos/layer2/dashboard_demo.rs` | 仪表盘演示，图表 |
+| `demos/layer3/video_demo.rs` | 视频演示，播放器 |
+| `components/overview.rs` | 组件概览 |
+| `components/layer2/overview.rs` | Layer 2 概览 |
+| `components/layer3/overview.rs` | Layer 3 概览 |
 
----
+## File Structure
 
-## Phase 2: Layer 2 Component Completion ✅
+```
+docs/
+├── en-US/
+│   ├── components/
+│   │   ├── layer1/ (13 files)
+│   │   ├── layer2/ (12 files)
+│   │   └── layer3/ (5 files)
+│   └── system/ (6 files)
+└── zh-CHS/
+    ├── components/
+    │   ├── layer1/ (13 files)
+    │   ├── layer2/ (12 files)
+    │   └── layer3/ (5 files)
+    └── system/ (6 files)
 
-### Missing Components (per layer-component-plan.md)
-
-| Component | Priority | Dependencies | Status |
-|-----------|----------|--------------|--------|
-| Calendar | Medium | Button, Input, Card | ✅ Completed (2026-02-12) |
-| Carousel | Low | Button, Card | Exists in `display/` |
-| Collapse | Medium | Button, Card | Exists in `data/` |
-| Stepper | Low | Button, Badge | Exists in `navigation/` |
-| Timeline | Low | Card, Badge | ✅ Completed (2026-02-12) |
-| Upload | Medium | Button, Progress | Exists as FileUpload in `basic/` |
-
----
-
-## Phase 3: Layer 3 Production Components ✅
-
-### High Priority
-
-| Component | Description | Complexity | Dependencies | Status |
-|-----------|-------------|------------|--------------|--------|
-| **Code Highlighting** | Syntax highlighting, line numbers, themes | Medium | Card, Tabs, Form | ✅ Completed (2026-02-12), Fixed clipboard (2026-02-12) |
-| **Video Player** | Playback controls, subtitles, playlist | High | Card, Button, Form, Menu | ✅ Completed (2026-02-12) |
-| **Rich Text Editor** | WYSIWYG/Markdown, plugins | High | Form, Dropdown, Modal, Toolbar | ✅ Completed (2026-02-12) |
-
-### Medium Priority
-
-| Component | Description | Complexity | Dependencies | Status |
-|-----------|-------------|------------|--------------|--------|
-| **Timeline** | Event timeline, milestones | Medium | Card, Badge, Collapse | ✅ Completed (2026-02-12) |
-| **User Guide** | Onboarding tours, feature hints | Medium | Modal, Button, Badge | Not started |
-
-### Low Priority
-
-| Component | Description | Complexity | Dependencies |
-|-----------|-------------|------------|--------------|
-| **Data Visualization** | Charts, dashboards | High | Card, Tabs, Form |
-| **Code Editor** | Full IDE-like editing | High | Card, Tabs, Form, Menu |
-| **Instant Messaging** | Chat UI, messages | High | Card, Form, Menu, Badge |
-
----
-
-## Implementation Sequence
-
-```mermaid
-flowchart TD
-    subgraph Phase1["Phase 1: Technical Debt"]
-        A1[Remove empty header.rs]
-        A2[Extract config constants]
-    end
-
-    subgraph Phase2["Phase 2: Layer 2 Completion"]
-        B1[Calendar component]
-        B2[Timeline component]
-    end
-
-    subgraph Phase3["Phase 3: Layer 3 Production"]
-        C1[Code Highlighting]
-        C2[Video Player]
-        C3[Rich Text Editor]
-    end
-
-    A1 --> A2
-    A2 --> B1
-    B1 --> B2
-    B2 --> C1
-    C1 --> C2
-    C2 --> C3
-
-    classDef done fill:#90EE90,stroke:#006400,stroke-width:2px
-    class A1,A2 done
+examples/website/src/pages/
+├── home.rs
+├── animation_demo.rs
+├── mod.rs
+├── components/
+│   ├── mod.rs
+│   ├── overview.rs
+│   └── layer{2,3}/mod.rs + overview.rs
+├── demos/
+│   ├── mod.rs
+│   ├── showcase.rs
+│   └── layer{1,2,3}/mod.rs + *_demo.rs
+└── system/
+    └── mod.rs
 ```
 
----
+## Key Benefits
 
-## Notes
-
-### Design Principles
-1. **Progressive Enhancement** - Build from simple to complex
-2. **Composition over Inheritance** - Compose Layer 3 from Layer 2, Layer 2 from Layer 1
-3. **Single Responsibility** - Each component does one thing well
-4. **Type Safety** - All CSS classes use `UtilityClass` enums
-
-### Conventions
-- Component class enums: `{ComponentName}Class` derives `Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize`
-- Use `ClassesBuilder` pattern for composing classes
-- Keep `.add_raw()` only for user-provided custom classes
-
----
-
-## Historical: Type-Safe Refactoring (Completed)
-
-The following enums were added during the refactoring to replace raw string literals:
-
-| Phase | Enums Added |
-|-------|-------------|
-| 1 | `SwitchClass`, `SliderClass`, `SelectClass`, `DatePickerClass`, `FileUploadClass`, `FormFieldClass`, `DividerClass` |
-| 2 | `AutoCompleteClass`, `CascaderClass`, `NumberInputClass`, `SearchClass`, `TransferClass` |
-| 3 | `SpaceClass` (extended: `BadgeClass`, `ContainerClass`, `GlowClass`, `MenuClass`) |
-| 4 | `TagClass`, `DescriptionListClass`, `EmptyClass`, `QRCodeClass` |
-| 5 | `AppLayoutClass` |
-| 6 | `DrawerClass`, `PopoverClass`, `ProgressClass`, `SkeletonClass`, `SpinClass` |
-| 7 | `AnchorClass`, `StepsClass` |
+1. **10,000+ lines of code removed** - Less code to maintain
+2. **i18n Ready** - Documentation in multiple languages
+3. **Easy Maintenance** - Content in Markdown, not Rust
+4. **Separation of Concerns** - Registry handles demos, Markdown handles docs
+5. **Consistent Layout** - All pages use same Container (10% margin)

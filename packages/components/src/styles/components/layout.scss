@@ -119,15 +119,6 @@
   }
 }
 
-// Hide native scrollbar for layout content (using custom scrollbar component)
-.hi-layout-content {
-  &::-webkit-scrollbar {
-    display: none;
-  }
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
 // ============================================
 // Layout with Sidebar
 // ============================================

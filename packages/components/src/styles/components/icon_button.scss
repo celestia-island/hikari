@@ -3,9 +3,7 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari // Hikari // Hikari // Hikari IconButton Component - FUI Styling Component Component Component
-// ============================================
-// Base Button Styles - Overrides .hi-button styles
+// Hikari IconButton Component - FUI Styling
 // ============================================
 
 .hi-icon-button {
@@ -20,7 +18,7 @@
   justify-content: center;
   flex-shrink: 0;
 
-  // Default square size (28x28px) - IMPORTANT: Force square aspect ratio
+  // Default square size (28x28px)
   width: 28px;
   height: 28px;
   min-width: 28px;
@@ -28,7 +26,7 @@
   min-height: 28px;
   max-height: 28px;
 
-  // IMPORTANT: Override overflow: hidden from .hi-button to allow glow effect
+  // Allow glow effect to show
   overflow: visible;
 
   // Remove default button styling
@@ -45,41 +43,11 @@
   font-weight: 400;
   color: var(--hi-color-text-primary);
 
-  // Transitions - smooth GSAP-style easing
+  // Transitions
   transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
   // Cursor
   cursor: pointer;
-
-  // Hover state - DISABLED: Let glow wrapper handle all visual feedback
-  // &:hover:not(:disabled) {
-  //   background-color: var(--hi-color-gray-15, rgba(128, 128, 128, 0.15));
-  //   color: var(--hi-color-text-primary);
-  // }
-
-  // Active state
-  &:active:not(:disabled) {
-    background-color: var(--hi-color-gray-20, rgba(128, 128, 128, 0.2));
-    transform: scale(0.95);
-  }
-
-  // Focus state
-  &:focus-visible {
-    outline:2px solid var(--hi-color-primary);
-    outline-offset:2px;
-  }
-
-  // Disabled state
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  // Active state
-  &:active:not(:disabled) {
-    background-color: var(--hi-color-gray-20, rgba(128, 128, 128, 0.2));
-    transform: scale(0.95);
-  }
 
   // Focus state
   &:focus-visible {
@@ -93,9 +61,41 @@
     cursor: not-allowed;
   }
 
+  // Active state
+  &:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+
   // ============================================
-  // Size Variants - Force square aspect ratio using CSS variables
+  // Size Variants
   // ============================================
+
+  &.hi-icon-button-16 {
+    width: vars.$hikari-icon-button-size-16;
+    height: vars.$hikari-icon-button-size-16;
+    min-width: vars.$hikari-icon-button-size-16;
+    max-width: vars.$hikari-icon-button-size-16;
+    min-height: vars.$hikari-icon-button-size-16;
+    max-height: vars.$hikari-icon-button-size-16;
+  }
+
+  &.hi-icon-button-24 {
+    width: vars.$hikari-icon-button-size-24;
+    height: vars.$hikari-icon-button-size-24;
+    min-width: vars.$hikari-icon-button-size-24;
+    max-width: vars.$hikari-icon-button-size-24;
+    min-height: vars.$hikari-icon-button-size-24;
+    max-height: vars.$hikari-icon-button-size-24;
+  }
+
+  &.hi-icon-button-32 {
+    width: vars.$hikari-icon-button-size-32;
+    height: vars.$hikari-icon-button-size-32;
+    min-width: vars.$hikari-icon-button-size-32;
+    max-width: vars.$hikari-icon-button-size-32;
+    min-height: vars.$hikari-icon-button-size-32;
+    max-height: vars.$hikari-icon-button-size-32;
+  }
 
   &.hi-icon-button-36 {
     width: vars.$hikari-icon-button-size-36;
@@ -115,40 +115,121 @@
     max-height: 40px;
   }
 
-  &.hi-icon-button-32 {
-    width: vars.$hikari-icon-button-size-32;
-    height: vars.$hikari-icon-button-size-32;
-    min-width: vars.$hikari-icon-button-size-32;
-    max-width: vars.$hikari-icon-button-size-32;
-    min-height: vars.$hikari-icon-button-size-32;
-    max-height: vars.$hikari-icon-button-size-32;
-  }
+  // ============================================
+  // Variant: Ghost (default - transparent)
+  // ============================================
 
-  &.hi-icon-button-24 {
-    width: vars.$hikari-icon-button-size-24;
-    height: vars.$hikari-icon-button-size-24;
-    min-width: vars.$hikari-icon-button-size-24;
-    max-width: vars.$hikari-icon-button-size-24;
-    min-height: vars.$hikari-icon-button-size-24;
-    max-height: vars.$hikari-icon-button-size-24;
-  }
+  &.hi-icon-button-ghost,
+  &.hi-icon-button-borderless {
+    background-color: transparent;
+    color: var(--hi-color-text-primary);
+    border: none;
 
-  &.hi-icon-button-16 {
-    width: vars.$hikari-icon-button-size-16;
-    height: vars.$hikari-icon-button-size-16;
-    min-width: vars.$hikari-icon-button-size-16;
-    max-width: vars.$hikari-icon-button-size-16;
-    min-height: vars.$hikari-icon-button-size-16;
-    max-height: vars.$hikari-icon-button-size-16;
+    &:hover:not(:disabled) {
+      background-color: var(--hi-color-gray-10, rgba(128, 128, 128, 0.1));
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--hi-color-gray-20, rgba(128, 128, 128, 0.2));
+    }
   }
 
   // ============================================
+  // Variant: Primary (solid primary color)
+  // ============================================
+
+  &.hi-icon-button-primary {
+    background: var(--hi-button-primary);
+    color: var(--hi-color-text-on-primary, #ffffff);
+    border: none;
+
+    &:hover:not(:disabled) {
+      background: var(--hi-button-primary-dark);
+    }
+
+    &:focus-visible {
+      outline-color: var(--hi-button-primary);
+    }
+
+    &:active:not(:disabled) {
+      background: var(--hi-button-primary-dark);
+    }
+  }
+
+  // ============================================
+  // Variant: Secondary (solid secondary color)
+  // ============================================
+
+  &.hi-icon-button-secondary {
+    background: var(--hi-button-secondary);
+    color: var(--hi-color-text-on-secondary, #ffffff);
+    border: none;
+
+    &:hover:not(:disabled) {
+      background: var(--hi-button-secondary-dark);
+    }
+
+    &:focus-visible {
+      outline-color: var(--hi-button-secondary);
+    }
+
+    &:active:not(:disabled) {
+      background: var(--hi-button-secondary-dark);
+    }
+  }
+
+  // ============================================
+  // Variant: Danger (solid danger color)
+  // ============================================
+
+  &.hi-icon-button-danger {
+    background: var(--hi-button-danger);
+    color: var(--hi-color-text-on-danger, #ffffff);
+    border: none;
+
+    &:hover:not(:disabled) {
+      background: var(--hi-button-danger-dark);
+    }
+
+    &:focus-visible {
+      outline-color: var(--hi-button-danger);
+    }
+
+    &:active:not(:disabled) {
+      background: var(--hi-button-danger-dark);
+    }
+  }
+
+  // ============================================
+  // Variant: Success (solid success color)
+  // ============================================
+
+  &.hi-icon-button-success {
+    background: var(--hi-button-success);
+    color: var(--hi-color-text-on-success, #ffffff);
+    border: none;
+
+    &:hover:not(:disabled) {
+      background: var(--hi-button-success-dark);
+    }
+
+    &:focus-visible {
+      outline-color: var(--hi-button-success);
+    }
+
+    &:active:not(:disabled) {
+      background: var(--hi-button-success-dark);
+    }
+  }
+
   // ============================================
   // Icon Styles
   // ============================================
 
+  // .hi-icon-button-icon and .hikari-icon are on the SAME element (a div inside button)
+  // Use .hi-icon-button-icon as it's more specific to this component
+
   .hi-icon-button-icon {
-    // Fixed icon size (14px as specified in IconButton component)
     width: vars.$hikari-icon-size-sm;
     height: vars.$hikari-icon-size-sm;
     display: inline-flex;
@@ -156,21 +237,43 @@
     justify-content: center;
     line-height: 0;
 
-    // Constrain inner .hikari-icon div
-    .hikari-icon {
+    svg {
       width: vars.$hikari-icon-size-sm;
       height: vars.$hikari-icon-size-sm;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 0;
-
-      svg {
-        width: vars.$hikari-icon-size-sm;
-        height: vars.$hikari-icon-size-sm;
-        display: block;
-      }
+      display: block;
+      fill: currentColor;
     }
+  }
+
+  // Ghost variant icon color
+  &.hi-icon-button-ghost .hi-icon-button-icon,
+  &.hi-icon-button-borderless .hi-icon-button-icon {
+    color: var(--hi-color-text-primary);
+  }
+
+  // Solid variants - use appropriate text color
+  &.hi-icon-button-primary .hi-icon-button-icon {
+    color: var(--hi-color-text-on-primary, #ffffff);
+  }
+
+  &.hi-icon-button-secondary .hi-icon-button-icon {
+    color: var(--hi-color-text-on-secondary, #ffffff);
+  }
+
+  &.hi-icon-button-danger .hi-icon-button-icon {
+    color: var(--hi-color-text-on-danger, #ffffff);
+  }
+
+  &.hi-icon-button-success .hi-icon-button-icon {
+    color: var(--hi-color-text-on-success, #ffffff);
+  }
+
+  // Hover opacity for solid variants
+  &.hi-icon-button-primary:hover:not(:disabled) .hi-icon-button-icon,
+  &.hi-icon-button-secondary:hover:not(:disabled) .hi-icon-button-icon,
+  &.hi-icon-button-danger:hover:not(:disabled) .hi-icon-button-icon,
+  &.hi-icon-button-success:hover:not(:disabled) .hi-icon-button-icon {
+    opacity: 0.9;
   }
 
   .hi-icon-button-disabled {

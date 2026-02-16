@@ -6,7 +6,7 @@
 //! # Features
 //! - Absolute positioned on right side
 //! - No layout shift (doesn't affect content width)
-//! - Smooth animations (4px → 8px) managed by hikari-animation
+//! - Smooth animations (2px → 4px) managed by hikari-animation
 //! - Auto-hide when content doesn't need scrolling
 //! - Drag to scroll functionality
 //! - Smart width expansion on drag and scroll events
@@ -423,7 +423,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
         .add_data("custom-scrollbar", "track")
         .apply();
 
-    // Set track to absolute positioning, attached to container's right edge
+    // Set track to absolute positioning, inside wrapper's right edge
     let track_html = match track.dyn_ref::<web_sys::HtmlElement>() {
         Some(el) => el,
         None => return,
@@ -431,9 +431,9 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
     StyleBuilder::new(track_html)
         .add(CssProperty::Position, "absolute")
         .add(CssProperty::Top, "0")
-        .add(CssProperty::Right, "0")
+        .add(CssProperty::Right, "0")  // 贴着容器边缘
         .add(CssProperty::Bottom, "0")
-        .add(CssProperty::Width, "4px") // Initial width (animated by state machine)
+        .add(CssProperty::Width, "4px") // Initial width (animated by state machine: 4px -> 8px)
         .apply();
 
     // Create animation controller for this track
@@ -638,7 +638,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
         let max_scroll = (scroll_height - client_height).max(0.0);
 
         // Center thumb at click position
-        let thumb_center_offset = thumb_height / 2.0;
+        let thumb_center_offset = thumb_height / 8.0;
         let click_ratio = ((click_y - thumb_center_offset) / track_height)
             .max(0.0)
             .min(1.0);

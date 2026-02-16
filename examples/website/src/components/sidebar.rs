@@ -7,21 +7,186 @@ use crate::app::Route;
 use _components::navigation::{Menu, MenuItem, MenuItemHeight, MenuMode, SubMenu};
 use _icons::{Icon, MdiIcon};
 
+/// Global scroll position storage for sidebar
+/// Uses the actual aside content container's scroll position
+static SIDEBAR_SCROLL_POSITION: GlobalSignal<f64> = Signal::global(|| 0.0);
+
+/// Get localized text for sidebar category by id
+fn get_category_title(id: &str) -> String {
+    let i18n = match crate::hooks::use_i18n() {
+        Some(ctx) => ctx,
+        None => return id.to_string(),
+    };
+
+    match id {
+        "overview" => i18n.keys.sidebar.overview.title.clone(),
+        "components" => i18n.keys.sidebar.components.title.clone(),
+        "system" => i18n.keys.sidebar.system.title.clone(),
+        "demos" => i18n.keys.sidebar.demos.title.clone(),
+        _ => id.to_string(),
+    }
+}
+
+/// Get localized text for sidebar subcategory by parent id and label key
+fn get_subcategory_label(category_id: &str, label_key: &str) -> String {
+    let i18n = match crate::hooks::use_i18n() {
+        Some(ctx) => ctx,
+        None => return label_key.to_string(),
+    };
+
+    match (category_id, label_key) {
+        ("overview", "home") => i18n
+            .keys
+            .sidebar
+            .overview
+            .home
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("components", "layer1") => i18n
+            .keys
+            .sidebar
+            .components
+            .layer1
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("components", "layer2") => i18n
+            .keys
+            .sidebar
+            .components
+            .layer2
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("components", "layer3") => i18n
+            .keys
+            .sidebar
+            .components
+            .layer3
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("system", "overview") => i18n
+            .keys
+            .sidebar
+            .system
+            .overview
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("system", "css_utilities") => i18n
+            .keys
+            .sidebar
+            .system
+            .css_utilities
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("system", "icons") => i18n
+            .keys
+            .sidebar
+            .system
+            .icons
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("system", "palette") => i18n
+            .keys
+            .sidebar
+            .system
+            .palette
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("system", "animations") => i18n
+            .keys
+            .sidebar
+            .system
+            .animations
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("system", "animation_demo") => i18n
+            .keys
+            .sidebar
+            .system
+            .animation_demo
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        ("demos", "all_demos") => i18n
+            .keys
+            .sidebar
+            .demos
+            .all_demos
+            .clone()
+            .unwrap_or_else(|| label_key.to_string()),
+        _ => label_key.to_string(),
+    }
+}
+
+/// Get localized text for sidebar item by label key
+fn get_item_label(label_key: &str) -> String {
+    let i18n = match crate::hooks::use_i18n() {
+        Some(ctx) => ctx,
+        None => return label_key.to_string(),
+    };
+
+    match label_key {
+        "button" => i18n.keys.sidebar.items.button.clone(),
+        "form" => i18n.keys.sidebar.items.form.clone(),
+        "number_input" => i18n.keys.sidebar.items.number_input.clone(),
+        "search" => i18n.keys.sidebar.items.search.clone(),
+        "switch" => i18n.keys.sidebar.items.switch.clone(),
+        "feedback" => i18n.keys.sidebar.items.feedback.clone(),
+        "display" => i18n.keys.sidebar.items.display.clone(),
+        "avatar" => i18n.keys.sidebar.items.avatar.clone(),
+        "image" => i18n.keys.sidebar.items.image.clone(),
+        "tag" => i18n.keys.sidebar.items.tag.clone(),
+        "empty" => i18n.keys.sidebar.items.empty.clone(),
+        "comment" => i18n.keys.sidebar.items.comment.clone(),
+        "description_list" => i18n.keys.sidebar.items.description_list.clone(),
+        "navigation" => i18n.keys.sidebar.items.navigation.clone(),
+        "collapsible" => i18n.keys.sidebar.items.collapsible.clone(),
+        "data" => i18n.keys.sidebar.items.data.clone(),
+        "table" => i18n.keys.sidebar.items.table.clone(),
+        "tree" => i18n.keys.sidebar.items.tree.clone(),
+        "pagination" => i18n.keys.sidebar.items.pagination.clone(),
+        "qrcode" => i18n.keys.sidebar.items.qrcode.clone(),
+        "timeline" => i18n.keys.sidebar.items.timeline.clone(),
+        "cascader" => i18n.keys.sidebar.items.cascader.clone(),
+        "transfer" => i18n.keys.sidebar.items.transfer.clone(),
+        "media" => i18n.keys.sidebar.items.media.clone(),
+        "editor" => i18n.keys.sidebar.items.editor.clone(),
+        "visualization" => i18n.keys.sidebar.items.visualization.clone(),
+        "user_guide" => i18n.keys.sidebar.items.user_guide.clone(),
+        "zoom_controls" => i18n.keys.sidebar.items.zoom_controls.clone(),
+        "form_demo" => i18n.keys.sidebar.items.form_demo.clone(),
+        "dashboard_demo" => i18n.keys.sidebar.items.dashboard_demo.clone(),
+        "video_demo" => i18n.keys.sidebar.items.video_demo.clone(),
+        _ => label_key.to_string(),
+    }
+}
+
 /// Sidebar navigation with 3-level hierarchy using Menu component
-///
-/// Structure:
-/// - Level 1: Overview, Components, System, Demos (SubMenu)
-/// - Level 2: Categories (Layout, Basic, Feedback, etc.) (SubMenu)
-/// - Level 3: Individual components (Button, Input, Card, etc.) (MenuItem)
 #[component]
 pub fn Sidebar(current_route: Route) -> Element {
+    // Effect to restore scroll position after route change
+    use_effect(move || {
+        let scroll_pos = *SIDEBAR_SCROLL_POSITION.read();
+        if scroll_pos > 0.0 {
+            if let Some(window) = web_sys::window() {
+                if let Some(document) = window.document() {
+                    // Try to find the scrollable aside content container
+                    if let Some(container) = document
+                        .query_selector(".hi-layout-aside-content")
+                        .ok()
+                        .flatten()
+                    {
+                        container.set_scroll_top(scroll_pos as i32);
+                    }
+                }
+            }
+        }
+    });
+
     rsx! {
         Menu {
             mode: MenuMode::Vertical,
             compact: true,
             on_select: move |_key| {},
 
-            // Render each top-level category
             for category in NAVIGATION_CATEGORIES {
                 SidebarCategorySection {
                     category,
@@ -35,18 +200,20 @@ pub fn Sidebar(current_route: Route) -> Element {
 /// Render a category section (Level 1) with its subcategories
 #[component]
 fn SidebarCategorySection(category: &'static NavCategory, current_route: Route) -> Element {
+    let title = get_category_title(category.id);
+
     rsx! {
         SubMenu {
             item_key: category.id.to_string(),
-            title: category.title_en.to_string(),
+            title,
             default_expanded: category.id == "components",
             level: 1,
             height: MenuItemHeight::Compact,
 
-            // Render subcategories
             for subcategory in category.subcategories {
                 SidebarSubcategoryItem {
                     subcategory,
+                    category_id: category.id,
                     current_route: current_route.clone(),
                 }
             }
@@ -56,20 +223,23 @@ fn SidebarCategorySection(category: &'static NavCategory, current_route: Route) 
 
 /// Render a subcategory (Level 2) with optional nested items
 #[component]
-fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: Route) -> Element {
+fn SidebarSubcategoryItem(
+    subcategory: &'static NavSubcategory,
+    category_id: &'static str,
+    current_route: Route,
+) -> Element {
     let has_children = !subcategory.items.is_empty();
+    let label = get_subcategory_label(category_id, subcategory.label_key);
 
     if has_children {
-        // Has nested items - render as SubMenu
         rsx! {
             SubMenu {
-                item_key: subcategory.label_en.to_string(),
-                title: subcategory.label_en.to_string(),
+                item_key: subcategory.label_key.to_string(),
+                title: label.clone(),
                 default_expanded: true,
                 level: 2,
                 height: MenuItemHeight::Compact,
 
-                // Render nested items
                 for item in subcategory.items {
                     SidebarNestedItem {
                         item,
@@ -79,28 +249,26 @@ fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: R
             }
         }
     } else {
-        // No children - render as MenuItem with onclick navigation
         let is_active = subcategory
             .route
             .as_ref()
             .map(|r| std::mem::discriminant(r) == std::mem::discriminant(&current_route))
             .unwrap_or(false);
 
-        let navigator = use_navigator();
         let route_to_navigate = subcategory.route.clone();
-        let label = subcategory.label_en;
+        let navigator = use_navigator();
 
         rsx! {
             MenuItem {
-                item_key: label.to_string(),
+                item_key: subcategory.label_key.to_string(),
                 class: if is_active { "hi-menu-item-active" } else { "" },
                 level: 2,
                 height: MenuItemHeight::Compact,
                 glow: true,
                 onclick: {
                     let navigator = navigator.clone();
-                    let route_to_navigate = route_to_navigate.clone();
                     move |_| {
+                        save_sidebar_scroll_position();
                         if let Some(route) = route_to_navigate.as_ref() {
                             navigator.push(route.clone());
                         }
@@ -117,8 +285,9 @@ fn SidebarSubcategoryItem(subcategory: &'static NavSubcategory, current_route: R
 #[component]
 fn SidebarNestedItem(item: &'static NavItem, current_route: Route) -> Element {
     let is_active = std::mem::discriminant(&item.route) == std::mem::discriminant(&current_route);
-    let navigator = use_navigator();
     let route_to_navigate = item.route.clone();
+    let navigator = use_navigator();
+    let label = get_item_label(item.label_key);
 
     rsx! {
         MenuItem {
@@ -131,11 +300,24 @@ fn SidebarNestedItem(item: &'static NavItem, current_route: Route) -> Element {
             onclick: {
                 let navigator = navigator.clone();
                 move |_| {
+                    save_sidebar_scroll_position();
                     navigator.push(route_to_navigate.clone());
                 }
             },
 
-            "{item.label}"
+            "{label}"
+        }
+    }
+}
+
+/// Save the current scroll position of the sidebar's aside content container
+fn save_sidebar_scroll_position() {
+    if let Some(window) = web_sys::window() {
+        if let Some(document) = window.document() {
+            if let Ok(Some(container)) = document.query_selector(".hi-layout-aside-content") {
+                let scroll_top = container.scroll_top() as f64;
+                *SIDEBAR_SCROLL_POSITION.write() = scroll_top;
+            }
         }
     }
 }
@@ -147,8 +329,6 @@ fn SidebarNestedItem(item: &'static NavItem, current_route: Route) -> Element {
 #[derive(Clone, Debug)]
 pub struct NavCategory {
     pub id: &'static str,
-    pub title_en: &'static str,
-    pub title_zh: &'static str,
     pub subcategories: &'static [NavSubcategory],
 }
 
@@ -162,15 +342,14 @@ impl Eq for NavCategory {}
 
 #[derive(Clone, Debug)]
 pub struct NavSubcategory {
-    pub label_en: &'static str,
-    pub label_zh: &'static str,
+    pub label_key: &'static str,
     pub route: Option<Route>,
     pub items: &'static [NavItem],
 }
 
 impl PartialEq for NavSubcategory {
     fn eq(&self, other: &Self) -> bool {
-        self.label_en == other.label_en
+        self.label_key == other.label_key
             && self.route.as_ref().map(|r| std::mem::discriminant(r))
                 == other.route.as_ref().map(|r| std::mem::discriminant(r))
     }
@@ -178,14 +357,14 @@ impl PartialEq for NavSubcategory {
 
 #[derive(Clone, Debug)]
 pub struct NavItem {
-    pub label: &'static str,
+    pub label_key: &'static str,
     pub icon: MdiIcon,
     pub route: Route,
 }
 
 impl PartialEq for NavItem {
     fn eq(&self, other: &Self) -> bool {
-        self.label == other.label
+        self.label_key == other.label_key
             && std::mem::discriminant(&self.route) == std::mem::discriminant(&other.route)
     }
 }
@@ -197,152 +376,180 @@ impl PartialEq for NavItem {
 pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
     NavCategory {
         id: "overview",
-        title_en: "Overview",
-        title_zh: "概览",
         subcategories: &[NavSubcategory {
-            label_en: "Home",
-            label_zh: "首页",
+            label_key: "home",
             route: Some(Route::Home {}),
             items: &[],
         }],
     },
     NavCategory {
         id: "components",
-        title_en: "Components",
-        title_zh: "组件",
         subcategories: &[
             NavSubcategory {
-                label_en: "Layer 1",
-                label_zh: "基础组件",
-                route: Some(Route::Layer1Basic {}),
+                label_key: "layer1",
+                route: Some(Route::Button {}),
                 items: &[
                     NavItem {
-                        label: "Basic",
-                        icon: MdiIcon::GestureTap,
-                        route: Route::Layer1Basic {},
+                        label_key: "button",
+                        icon: MdiIcon::Cursor,
+                        route: Route::Button {},
                     },
                     NavItem {
-                        label: "Form",
+                        label_key: "form",
                         icon: MdiIcon::TextBoxEdit,
                         route: Route::Layer1Form {},
                     },
                     NavItem {
-                        label: "Switch",
+                        label_key: "number_input",
+                        icon: MdiIcon::FormatListNumbered,
+                        route: Route::NumberInput {},
+                    },
+                    NavItem {
+                        label_key: "search",
+                        icon: MdiIcon::Magnify,
+                        route: Route::Search {},
+                    },
+                    NavItem {
+                        label_key: "switch",
                         icon: MdiIcon::ToggleSwitch,
                         route: Route::Layer1Switch {},
                     },
                     NavItem {
-                        label: "Feedback",
+                        label_key: "feedback",
                         icon: MdiIcon::Alert,
                         route: Route::Layer1Feedback {},
                     },
                     NavItem {
-                        label: "Display",
+                        label_key: "display",
                         icon: MdiIcon::Image,
                         route: Route::Layer1Display {},
+                    },
+                    NavItem {
+                        label_key: "avatar",
+                        icon: MdiIcon::Account,
+                        route: Route::Avatar {},
+                    },
+                    NavItem {
+                        label_key: "image",
+                        icon: MdiIcon::Image,
+                        route: Route::Image {},
+                    },
+                    NavItem {
+                        label_key: "tag",
+                        icon: MdiIcon::Star,
+                        route: Route::Tag {},
+                    },
+                    NavItem {
+                        label_key: "empty",
+                        icon: MdiIcon::ViewDashboard,
+                        route: Route::Empty {},
+                    },
+                    NavItem {
+                        label_key: "comment",
+                        icon: MdiIcon::Chat,
+                        route: Route::Comment {},
+                    },
+                    NavItem {
+                        label_key: "description_list",
+                        icon: MdiIcon::FormatListBulleted,
+                        route: Route::DescriptionList {},
                     },
                 ],
             },
             NavSubcategory {
-                label_en: "Layer 2",
-                label_zh: "复合组件",
+                label_key: "layer2",
                 route: Some(Route::Layer2Overview {}),
                 items: &[
                     NavItem {
-                        label: "Navigation",
+                        label_key: "navigation",
                         icon: MdiIcon::FormatListBulleted,
                         route: Route::Layer2Navigation {},
                     },
                     NavItem {
-                        label: "Data",
+                        label_key: "collapsible",
+                        icon: MdiIcon::ArrowExpandHorizontal,
+                        route: Route::Collapsible {},
+                    },
+                    NavItem {
+                        label_key: "data",
                         icon: MdiIcon::Graph,
                         route: Route::Layer2Data {},
                     },
                     NavItem {
-                        label: "Form",
+                        label_key: "table",
+                        icon: MdiIcon::Table,
+                        route: Route::Table {},
+                    },
+                    NavItem {
+                        label_key: "tree",
+                        icon: MdiIcon::SourceBranch,
+                        route: Route::Tree {},
+                    },
+                    NavItem {
+                        label_key: "pagination",
+                        icon: MdiIcon::ChevronLeft,
+                        route: Route::Pagination {},
+                    },
+                    NavItem {
+                        label_key: "qrcode",
+                        icon: MdiIcon::ViewDashboard,
+                        route: Route::QRCode {},
+                    },
+                    NavItem {
+                        label_key: "timeline",
+                        icon: MdiIcon::ChartTimeline,
+                        route: Route::Timeline {},
+                    },
+                    NavItem {
+                        label_key: "form",
                         icon: MdiIcon::TextBoxEdit,
                         route: Route::Layer2Form {},
                     },
                     NavItem {
-                        label: "Feedback",
+                        label_key: "cascader",
+                        icon: MdiIcon::ChevronDown,
+                        route: Route::Cascader {},
+                    },
+                    NavItem {
+                        label_key: "transfer",
+                        icon: MdiIcon::SwapHorizontal,
+                        route: Route::Transfer {},
+                    },
+                    NavItem {
+                        label_key: "feedback",
                         icon: MdiIcon::Bell,
                         route: Route::Layer2Feedback {},
                     },
                 ],
             },
             NavSubcategory {
-                label_en: "Layer 3",
-                label_zh: "生产级组件",
+                label_key: "layer3",
                 route: Some(Route::Layer3Overview {}),
                 items: &[
                     NavItem {
-                        label: "Media",
+                        label_key: "media",
                         icon: MdiIcon::Play,
                         route: Route::Layer3Media {},
                     },
                     NavItem {
-                        label: "Editor",
+                        label_key: "editor",
                         icon: MdiIcon::FormatBold,
                         route: Route::Layer3Editor {},
                     },
                     NavItem {
-                        label: "Visualization",
+                        label_key: "visualization",
                         icon: MdiIcon::CubeOutline,
                         route: Route::Layer3Visualization {},
                     },
-                ],
-            },
-            NavSubcategory {
-                label_en: "Entry",
-                label_zh: "入口组件",
-                route: Some(Route::CascaderDoc {}),
-                items: &[
                     NavItem {
-                        label: "Cascader",
-                        icon: MdiIcon::ChevronDown,
-                        route: Route::CascaderDoc {},
-                    },
-                    NavItem {
-                        label: "Transfer",
-                        icon: MdiIcon::SwapHorizontal,
-                        route: Route::TransferDoc {},
-                    },
-                    NavItem {
-                        label: "Number Input",
-                        icon: MdiIcon::FormatListNumbered,
-                        route: Route::NumberInputDoc {},
-                    },
-                    NavItem {
-                        label: "Search",
-                        icon: MdiIcon::Magnify,
-                        route: Route::SearchDoc {},
-                    },
-                ],
-            },
-            NavSubcategory {
-                label_en: "Extra",
-                label_zh: "扩展组件",
-                route: Some(Route::CollapsibleDoc {}),
-                items: &[
-                    NavItem {
-                        label: "Collapsible",
-                        icon: MdiIcon::ArrowExpandHorizontal,
-                        route: Route::CollapsibleDoc {},
-                    },
-                    NavItem {
-                        label: "Timeline",
-                        icon: MdiIcon::ChartTimeline,
-                        route: Route::TimelineDoc {},
-                    },
-                    NavItem {
-                        label: "User Guide",
+                        label_key: "user_guide",
                         icon: MdiIcon::BookOpen,
-                        route: Route::UserGuideDoc {},
+                        route: Route::UserGuide {},
                     },
                     NavItem {
-                        label: "Zoom Controls",
+                        label_key: "zoom_controls",
                         icon: MdiIcon::MagnifyPlus,
-                        route: Route::ZoomControlsDoc {},
+                        route: Route::ZoomControls {},
                     },
                 ],
             },
@@ -350,42 +557,34 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
     },
     NavCategory {
         id: "system",
-        title_en: "System",
-        title_zh: "系统",
         subcategories: &[
             NavSubcategory {
-                label_en: "Overview",
-                label_zh: "概览",
+                label_key: "overview",
                 route: Some(Route::SystemOverview {}),
                 items: &[],
             },
             NavSubcategory {
-                label_en: "CSS Utilities",
-                label_zh: "CSS 工具",
+                label_key: "css_utilities",
                 route: Some(Route::SystemCSS {}),
                 items: &[],
             },
             NavSubcategory {
-                label_en: "Icons",
-                label_zh: "图标",
+                label_key: "icons",
                 route: Some(Route::SystemIcons {}),
                 items: &[],
             },
             NavSubcategory {
-                label_en: "Palette",
-                label_zh: "调色板",
+                label_key: "palette",
                 route: Some(Route::SystemPalette {}),
                 items: &[],
             },
             NavSubcategory {
-                label_en: "Animations",
-                label_zh: "动画",
+                label_key: "animations",
                 route: Some(Route::SystemAnimations {}),
                 items: &[],
             },
             NavSubcategory {
-                label_en: "Animation Demo",
-                label_zh: "动画演示",
+                label_key: "animation_demo",
                 route: Some(Route::AnimationDemo {}),
                 items: &[],
             },
@@ -393,25 +592,22 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
     },
     NavCategory {
         id: "demos",
-        title_en: "Demos",
-        title_zh: "演示",
         subcategories: &[NavSubcategory {
-            label_en: "All Demos",
-            label_zh: "全部演示",
+            label_key: "all_demos",
             route: Some(Route::DemosOverview {}),
             items: &[
                 NavItem {
-                    label: "Form Demo",
+                    label_key: "form_demo",
                     icon: MdiIcon::TextBoxEdit,
                     route: Route::FormDemo {},
                 },
                 NavItem {
-                    label: "Dashboard Demo",
+                    label_key: "dashboard_demo",
                     icon: MdiIcon::ViewColumn,
                     route: Route::DashboardDemo {},
                 },
                 NavItem {
-                    label: "Video Demo",
+                    label_key: "video_demo",
                     icon: MdiIcon::Play,
                     route: Route::VideoDemo {},
                 },

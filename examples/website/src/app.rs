@@ -3,15 +3,22 @@
 
 use dioxus::prelude::*;
 
+use crate::hooks::I18nProviderWrapper;
 use _components::{PortalProvider, ThemeProvider};
+use _i18n::context::Language;
 
 /// Main application component (root)
 #[component]
 pub fn App() -> Element {
+    let mut language = use_signal(|| Language::English);
+
     rsx! {
-        ThemeProvider { palette: "hikari".to_string(),
-            PortalProvider {
-                Router::<Route> {}
+        I18nProviderWrapper {
+            language,
+            ThemeProvider { palette: "hikari".to_string(),
+                PortalProvider {
+                    Router::<Route> {}
+                }
             }
         }
     }
@@ -43,8 +50,8 @@ pub enum Route {
     VideoDemo {},
 
     // Layer 1 Routes
-    #[route("/components/layer1/basic")]
-    Layer1Basic {},
+    #[route("/components/layer1/button")]
+    Button {},
     #[route("/components/layer1/form")]
     Layer1Form {},
     #[route("/components/layer1/switch")]
@@ -53,15 +60,23 @@ pub enum Route {
     Layer1Feedback {},
     #[route("/components/layer1/display")]
     Layer1Display {},
-    // Entry components
-    #[route("/components/entry/cascader")]
-    CascaderDoc {},
-    #[route("/components/entry/transfer")]
-    TransferDoc {},
-    #[route("/components/entry/number_input")]
-    NumberInputDoc {},
-    #[route("/components/entry/search")]
-    SearchDoc {},
+    // Layer 1 - New component routes
+    #[route("/components/layer1/number_input")]
+    NumberInput {},
+    #[route("/components/layer1/search")]
+    Search {},
+    #[route("/components/layer1/avatar")]
+    Avatar {},
+    #[route("/components/layer1/image")]
+    Image {},
+    #[route("/components/layer1/tag")]
+    Tag {},
+    #[route("/components/layer1/empty")]
+    Empty {},
+    #[route("/components/layer1/comment")]
+    Comment {},
+    #[route("/components/layer1/description_list")]
+    DescriptionList {},
 
     // Layer 2 Routes
     #[route("/components/layer2")]
@@ -74,6 +89,23 @@ pub enum Route {
     Layer2Form {},
     #[route("/components/layer2/feedback")]
     Layer2Feedback {},
+    // Layer 2 - New component routes
+    #[route("/components/layer2/cascader")]
+    Cascader {},
+    #[route("/components/layer2/transfer")]
+    Transfer {},
+    #[route("/components/layer2/collapsible")]
+    Collapsible {},
+    #[route("/components/layer2/timeline")]
+    Timeline {},
+    #[route("/components/layer2/table")]
+    Table {},
+    #[route("/components/layer2/tree")]
+    Tree {},
+    #[route("/components/layer2/pagination")]
+    Pagination {},
+    #[route("/components/layer2/qrcode")]
+    QRCode {},
 
     // Layer 3 Routes
     #[route("/components/layer3/overview")]
@@ -84,24 +116,11 @@ pub enum Route {
     Layer3Editor {},
     #[route("/components/layer3/visualization")]
     Layer3Visualization {},
-    // Extra components
-    #[route("/components/extra/collapsible")]
-    CollapsibleDoc {},
-    #[route("/components/extra/timeline")]
-    TimelineDoc {},
-    #[route("/components/extra/user_guide")]
-    UserGuideDoc {},
-    #[route("/components/extra/zoom_controls")]
-    ZoomControlsDoc {},
-    // Layer 3 Doc routes (temporarily disabled due to compilation issues)
-    // #[route("/components/layer3/video_player")]
-    // VideoPlayerDoc {},
-    // #[route("/components/layer3/audio_waveform")]
-    // AudioWaveformDoc {},
-    // #[route("/components/layer3/rich_text_editor")]
-    // RichTextEditorDoc {},
-    // #[route("/components/layer3/drag_layer")]
-    // DragLayerDoc {},
+    // Layer 3 - New component routes
+    #[route("/components/layer3/user_guide")]
+    UserGuide {},
+    #[route("/components/layer3/zoom_controls")]
+    ZoomControls {},
 
     // System Routes
     #[route("/system")]
@@ -121,7 +140,6 @@ pub enum Route {
 // ============================================================
 // Route Handler Functions
 // ============================================================
-// NOTE: Page components already include Layout, so we just call them directly
 
 #[allow(non_snake_case)]
 fn Home() -> Element {
@@ -154,35 +172,50 @@ fn DemosOverview() -> Element {
 #[allow(non_snake_case)]
 fn SystemOverview() -> Element {
     rsx! {
-        crate::pages::system::SystemOverview {}
+        crate::components::DynamicDocPage {
+            current_route: Route::SystemOverview {},
+            doc_path: "system/overview",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn SystemCSS() -> Element {
     rsx! {
-        crate::pages::system::SystemCSS {}
+        crate::components::DynamicDocPage {
+            current_route: Route::SystemCSS {},
+            doc_path: "system/css",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn SystemIcons() -> Element {
     rsx! {
-        crate::pages::system::SystemIcons {}
+        crate::components::DynamicDocPage {
+            current_route: Route::SystemIcons {},
+            doc_path: "system/icons",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn SystemPalette() -> Element {
     rsx! {
-        crate::pages::system::SystemPalette {}
+        crate::components::DynamicDocPage {
+            current_route: Route::SystemPalette {},
+            doc_path: "system/palette",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn SystemAnimations() -> Element {
     rsx! {
-        crate::pages::system::SystemAnimations {}
+        crate::components::DynamicDocPage {
+            current_route: Route::SystemAnimations {},
+            doc_path: "system/animation",
+        }
     }
 }
 
@@ -207,41 +240,148 @@ fn VideoDemo() -> Element {
     }
 }
 
+// Layer 1 handlers
 #[allow(non_snake_case)]
-fn Layer1Basic() -> Element {
+fn Button() -> Element {
     rsx! {
-        crate::pages::components::layer1::Layer1Basic {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Button {},
+            doc_path: "components/layer1/button",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer1Form() -> Element {
     rsx! {
-        crate::pages::components::layer1::Layer1Form {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer1Form {},
+            doc_path: "components/layer1/form",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer1Switch() -> Element {
     rsx! {
-        crate::pages::components::layer1::Layer1Switch {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer1Switch {},
+            doc_path: "components/layer1/switch",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer1Feedback() -> Element {
     rsx! {
-        crate::pages::components::layer1::Layer1Feedback {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer1Feedback {},
+            doc_path: "components/layer1/feedback",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer1Display() -> Element {
     rsx! {
-        crate::pages::components::layer1::Layer1Display {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer1Display {},
+            doc_path: "components/layer1/display",
+        }
     }
 }
 
+#[allow(non_snake_case)]
+fn NumberInput() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::NumberInput {},
+            doc_path: "components/layer1/number_input",
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+fn Search() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::Search {},
+            doc_path: "components/layer1/search",
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+fn Avatar() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::Avatar {},
+            doc_path: "components/layer1/avatar",
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+fn Image() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::Image {},
+            doc_path: "components/layer1/image",
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+fn Tag() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::Tag {},
+            doc_path: "components/layer1/tag",
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+fn Empty() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::Empty {},
+            doc_path: "components/layer1/empty",
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+fn QRCode() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::QRCode {},
+            doc_path: "components/layer2/qrcode",
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+fn Comment() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::Comment {},
+            doc_path: "components/layer1/comment",
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+fn DescriptionList() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::DescriptionList {},
+            doc_path: "components/layer1/description_list",
+        }
+    }
+}
+
+// Layer 2 handlers
 #[allow(non_snake_case)]
 fn Layer2Overview() -> Element {
     rsx! {
@@ -252,31 +392,114 @@ fn Layer2Overview() -> Element {
 #[allow(non_snake_case)]
 fn Layer2Navigation() -> Element {
     rsx! {
-        crate::pages::components::layer2::Layer2Navigation {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer2Navigation {},
+            doc_path: "components/layer2/navigation",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer2Data() -> Element {
     rsx! {
-        crate::pages::components::layer2::Layer2Data {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer2Data {},
+            doc_path: "components/layer2/data",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer2Form() -> Element {
     rsx! {
-        crate::pages::components::layer2::Layer2Form {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer2Form {},
+            doc_path: "components/layer2/form",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer2Feedback() -> Element {
     rsx! {
-        crate::pages::components::layer2::Layer2Feedback {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer2Feedback {},
+            doc_path: "components/layer2/feedback",
+        }
     }
 }
 
+#[allow(non_snake_case)]
+fn Cascader() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::Cascader {},
+            doc_path: "components/layer2/cascader",
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+fn Transfer() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::Transfer {},
+            doc_path: "components/layer2/transfer",
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+fn Collapsible() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::Collapsible {},
+            doc_path: "components/layer2/collapsible",
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+fn Timeline() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::Timeline {},
+            doc_path: "components/layer2/timeline",
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+fn Table() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::Table {},
+            doc_path: "components/layer2/table",
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+fn Tree() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::Tree {},
+            doc_path: "components/layer2/tree",
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+fn Pagination() -> Element {
+    rsx! {
+        crate::components::DynamicDocPage {
+            current_route: Route::Pagination {},
+            doc_path: "components/layer2/pagination",
+        }
+    }
+}
+
+// Layer 3 handlers
 #[allow(non_snake_case)]
 fn Layer3Overview() -> Element {
     rsx! {
@@ -287,114 +510,59 @@ fn Layer3Overview() -> Element {
 #[allow(non_snake_case)]
 fn Layer3Media() -> Element {
     rsx! {
-        crate::pages::components::layer3::Layer3Media {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer3Media {},
+            doc_path: "components/layer3/media",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer3Editor() -> Element {
     rsx! {
-        crate::pages::components::layer3::Layer3Editor {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer3Editor {},
+            doc_path: "components/layer3/editor",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Layer3Visualization() -> Element {
     rsx! {
-        crate::pages::components::layer3::Layer3Visualization {}
-    }
-}
-
-// Layer 3 Doc routes (temporarily disabled)
-// #[allow(non_snake_case)]
-// fn VideoPlayerDoc() -> Element {
-//     rsx! {
-//         crate::pages::components::layer3::VideoPlayerDoc {}
-//     }
-// }
-//
-// #[allow(non_snake_case)]
-// fn AudioWaveformDoc() -> Element {
-//     rsx! {
-//         crate::pages::components::layer3::AudioWaveformDoc {}
-//     }
-// }
-//
-// #[allow(non_snake_case)]
-// fn RichTextEditorDoc() -> Element {
-//     rsx! {
-//         crate::pages::components::layer3::RichTextEditorDoc {}
-//     }
-// }
-//
-// #[allow(non_snake_case)]
-// fn DragLayerDoc() -> Element {
-//     rsx! {
-//         crate::pages::components::layer3::DragLayerDoc {}
-//     }
-// }
-
-// Entry components
-#[allow(non_snake_case)]
-fn CascaderDoc() -> Element {
-    rsx! {
-        crate::pages::components::entry::CascaderDoc {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Layer3Visualization {},
+            doc_path: "components/layer3/visualization",
+        }
     }
 }
 
 #[allow(non_snake_case)]
-fn TransferDoc() -> Element {
+fn UserGuide() -> Element {
     rsx! {
-        crate::pages::components::entry::TransferDoc {}
+        crate::components::DynamicDocPage {
+            current_route: Route::UserGuide {},
+            doc_path: "components/layer3/user_guide",
+        }
     }
 }
 
 #[allow(non_snake_case)]
-fn NumberInputDoc() -> Element {
+fn ZoomControls() -> Element {
     rsx! {
-        crate::pages::components::entry::NumberInputDoc {}
-    }
-}
-
-#[allow(non_snake_case)]
-fn SearchDoc() -> Element {
-    rsx! {
-        crate::pages::components::entry::SearchDoc {}
-    }
-}
-
-// Extra components
-#[allow(non_snake_case)]
-fn CollapsibleDoc() -> Element {
-    rsx! {
-        crate::pages::components::extra::CollapsibleDoc {}
-    }
-}
-
-#[allow(non_snake_case)]
-fn TimelineDoc() -> Element {
-    rsx! {
-        crate::pages::components::extra::TimelineDoc {}
-    }
-}
-
-#[allow(non_snake_case)]
-fn UserGuideDoc() -> Element {
-    rsx! {
-        crate::pages::components::extra::UserGuideDoc {}
-    }
-}
-
-#[allow(non_snake_case)]
-fn ZoomControlsDoc() -> Element {
-    rsx! {
-        crate::pages::components::extra::ZoomControlsDoc {}
+        crate::components::DynamicDocPage {
+            current_route: Route::ZoomControls {},
+            doc_path: "components/layer3/zoom_controls",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn SystemI18n() -> Element {
     rsx! {
-        crate::components::I18nDemo {}
+        crate::components::DynamicDocPage {
+            current_route: Route::SystemI18n {},
+            doc_path: "system/i18n",
+        }
     }
 }

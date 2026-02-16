@@ -9,7 +9,6 @@
 
 pub mod alert;
 pub mod drawer;
-pub mod dropdown;
 pub mod glow;
 pub mod modal;
 pub mod popover;
@@ -21,7 +20,6 @@ pub mod tooltip;
 
 pub use alert::*;
 pub use drawer::*;
-pub use dropdown::*;
 pub use glow::*;
 pub use modal::*;
 pub use popover::*;
@@ -36,7 +34,3 @@ pub use glow::{Glow as Acrylic, GlowBlur as AcrylicBlur, GlowColor as AcrylicMod
 
 // Modal re-exports for external components
 pub use modal::{ModalConfig, ModalContent, ModalController, ModalPosition, use_modal};
-
-// Dropdown re-exports for external components
-pub use dropdown::Dropdown as DropdownComponent;
-pub use dropdown::{Dropdown, DropdownMask, DropdownPosition, DropdownPositioning};

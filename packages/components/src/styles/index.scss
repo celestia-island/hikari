@@ -552,7 +552,6 @@
 
 @import './components/glow.scss';
 @import './components/alert.scss';
-@import './components/dropdown.scss';
 @import './components/toast.scss';
 @import './components/tooltip.scss';
 
@@ -584,9 +583,3 @@
 @import './components/carousel.scss';
 @import './components/code_block.scss';
 @import './components/markdown_renderer.scss';
-
-// ============================================
-// Demo App Specific Styles
-// ============================================
-// Demo app styles are no longer included in the main bundle
-// They should be imported separately in each demo app

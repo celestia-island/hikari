@@ -13,14 +13,9 @@ use _components::{
 use _palette::classes::{AlignItems, ClassesBuilder, Display, FontWeight, Gap, Padding};
 
 /// Layout component that wraps all pages with modern design
-///
-/// This is a website specific wrapper around hikari-components Layout
-/// that adds custom navigation, breadcrumbs, and routing logic.
 #[component]
 pub fn Layout(children: Element, #[allow(unused_variables)] current_route: Route) -> Element {
     let mut is_drawer_open = use_signal(|| false);
-
-    // Get current route from router (ignore passed prop)
     let current_route = use_route::<Route>();
 
     rsx! {
@@ -54,7 +49,6 @@ pub fn Layout(children: Element, #[allow(unused_variables)] current_route: Route
                 }
             },
 
-            // Breadcrumb navigation (before content)
             div { class: ClassesBuilder::new().add(Padding::P4).build(),
                 BreadcrumbNav { current_route }
             }
@@ -64,7 +58,7 @@ pub fn Layout(children: Element, #[allow(unused_variables)] current_route: Route
     }
 }
 
-/// Breadcrumb navigation component with refined styling
+/// Breadcrumb navigation component
 #[component]
 fn BreadcrumbNav(current_route: Route) -> Element {
     let breadcrumb_items = get_breadcrumb_items(&current_route);
@@ -77,7 +71,6 @@ fn BreadcrumbNav(current_route: Route) -> Element {
                 .add(Gap::Gap2)
                 .build(),
 
-            // Home link
             Link {
                 to: Route::Home {},
                 class: ClassesBuilder::new()
@@ -90,21 +83,16 @@ fn BreadcrumbNav(current_route: Route) -> Element {
                 div { "Home" }
             }
 
-            // Breadcrumb items with separators
             for (i, item) in breadcrumb_items.iter().enumerate() {
-                // Separator
                 div { class: ClassesBuilder::new().add_raw("hi-text-muted").build(),
                     "/"
                 }
 
-                // Item
                 if i == breadcrumb_items.len() - 1 {
-                    // Current page (not a link)
                     span { class: ClassesBuilder::new().add_raw("hi-text-primary").add(FontWeight::Medium).build(),
                         "{item.label}"
                     }
                 } else if let Some(route) = &item.route {
-                    // Clickable link
                     Link {
                         to: route.clone(),
                         class: ClassesBuilder::new()
@@ -149,7 +137,20 @@ fn get_breadcrumb_items(route: &Route) -> Vec<BreadcrumbItem> {
             },
         ],
 
-        Route::Layer1Basic {} => vec![
+        // Layer 1 Routes
+        Route::Button {}
+        | Route::Layer1Form {}
+        | Route::Layer1Switch {}
+        | Route::Layer1Feedback {}
+        | Route::Layer1Display {}
+        | Route::NumberInput {}
+        | Route::Search {}
+        | Route::Avatar {}
+        | Route::Image {}
+        | Route::Tag {}
+        | Route::Empty {}
+        | Route::Comment {}
+        | Route::DescriptionList {} => vec![
             BreadcrumbItem {
                 label: "Components".to_string(),
                 route: Some(Route::ComponentsOverview {}),
@@ -160,106 +161,20 @@ fn get_breadcrumb_items(route: &Route) -> Vec<BreadcrumbItem> {
             },
         ],
 
-        Route::Layer1Feedback {} => vec![
-            BreadcrumbItem {
-                label: "Components".to_string(),
-                route: Some(Route::ComponentsOverview {}),
-            },
-            BreadcrumbItem {
-                label: "Layer 1".to_string(),
-                route: None,
-            },
-        ],
-
-        Route::CascaderDoc {} => vec![
-            BreadcrumbItem {
-                label: "Components".to_string(),
-                route: Some(Route::ComponentsOverview {}),
-            },
-            BreadcrumbItem {
-                label: "Entry".to_string(),
-                route: None,
-            },
-        ],
-
-        Route::TransferDoc {} => vec![
-            BreadcrumbItem {
-                label: "Components".to_string(),
-                route: Some(Route::ComponentsOverview {}),
-            },
-            BreadcrumbItem {
-                label: "Entry".to_string(),
-                route: None,
-            },
-        ],
-
-        Route::NumberInputDoc {} => vec![
-            BreadcrumbItem {
-                label: "Components".to_string(),
-                route: Some(Route::ComponentsOverview {}),
-            },
-            BreadcrumbItem {
-                label: "Entry".to_string(),
-                route: None,
-            },
-        ],
-
-        Route::SearchDoc {} => vec![
-            BreadcrumbItem {
-                label: "Components".to_string(),
-                route: Some(Route::ComponentsOverview {}),
-            },
-            BreadcrumbItem {
-                label: "Entry".to_string(),
-                route: None,
-            },
-        ],
-
-        Route::CollapsibleDoc {} => vec![
-            BreadcrumbItem {
-                label: "Components".to_string(),
-                route: Some(Route::ComponentsOverview {}),
-            },
-            BreadcrumbItem {
-                label: "Extra".to_string(),
-                route: None,
-            },
-        ],
-
-        Route::TimelineDoc {} => vec![
-            BreadcrumbItem {
-                label: "Components".to_string(),
-                route: Some(Route::ComponentsOverview {}),
-            },
-            BreadcrumbItem {
-                label: "Extra".to_string(),
-                route: None,
-            },
-        ],
-
-        Route::UserGuideDoc {} => vec![
-            BreadcrumbItem {
-                label: "Components".to_string(),
-                route: Some(Route::ComponentsOverview {}),
-            },
-            BreadcrumbItem {
-                label: "Extra".to_string(),
-                route: None,
-            },
-        ],
-
-        Route::ZoomControlsDoc {} => vec![
-            BreadcrumbItem {
-                label: "Components".to_string(),
-                route: Some(Route::ComponentsOverview {}),
-            },
-            BreadcrumbItem {
-                label: "Extra".to_string(),
-                route: None,
-            },
-        ],
-
-        Route::Layer2Navigation {} => vec![
+        // Layer 2 Routes
+        Route::Layer2Overview {}
+        | Route::Layer2Navigation {}
+        | Route::Layer2Data {}
+        | Route::Layer2Form {}
+        | Route::Layer2Feedback {}
+        | Route::Cascader {}
+        | Route::Transfer {}
+        | Route::Collapsible {}
+        | Route::Timeline {}
+        | Route::Table {}
+        | Route::Tree {}
+        | Route::Pagination {}
+        | Route::QRCode {} => vec![
             BreadcrumbItem {
                 label: "Components".to_string(),
                 route: Some(Route::ComponentsOverview {}),
@@ -270,17 +185,24 @@ fn get_breadcrumb_items(route: &Route) -> Vec<BreadcrumbItem> {
             },
         ],
 
-        Route::Layer2Data {} => vec![
+        // Layer 3 Routes
+        Route::Layer3Overview {}
+        | Route::Layer3Media {}
+        | Route::Layer3Editor {}
+        | Route::Layer3Visualization {}
+        | Route::UserGuide {}
+        | Route::ZoomControls {} => vec![
             BreadcrumbItem {
                 label: "Components".to_string(),
                 route: Some(Route::ComponentsOverview {}),
             },
             BreadcrumbItem {
-                label: "Layer 2".to_string(),
+                label: "Layer 3".to_string(),
                 route: None,
             },
         ],
 
+        // System Routes
         Route::SystemOverview {} => vec![
             BreadcrumbItem {
                 label: "System".to_string(),
@@ -336,6 +258,29 @@ fn get_breadcrumb_items(route: &Route) -> Vec<BreadcrumbItem> {
             },
         ],
 
+        Route::AnimationDemo {} => vec![
+            BreadcrumbItem {
+                label: "System".to_string(),
+                route: Some(Route::SystemOverview {}),
+            },
+            BreadcrumbItem {
+                label: "Animation Demo".to_string(),
+                route: None,
+            },
+        ],
+
+        Route::SystemI18n {} => vec![
+            BreadcrumbItem {
+                label: "System".to_string(),
+                route: Some(Route::SystemOverview {}),
+            },
+            BreadcrumbItem {
+                label: "I18n".to_string(),
+                route: None,
+            },
+        ],
+
+        // Demos Routes
         Route::DemosOverview {} => vec![
             BreadcrumbItem {
                 label: "Demos".to_string(),
@@ -343,6 +288,39 @@ fn get_breadcrumb_items(route: &Route) -> Vec<BreadcrumbItem> {
             },
             BreadcrumbItem {
                 label: "Overview".to_string(),
+                route: None,
+            },
+        ],
+
+        Route::FormDemo {} => vec![
+            BreadcrumbItem {
+                label: "Demos".to_string(),
+                route: Some(Route::DemosOverview {}),
+            },
+            BreadcrumbItem {
+                label: "Form Demo".to_string(),
+                route: None,
+            },
+        ],
+
+        Route::DashboardDemo {} => vec![
+            BreadcrumbItem {
+                label: "Demos".to_string(),
+                route: Some(Route::DemosOverview {}),
+            },
+            BreadcrumbItem {
+                label: "Dashboard Demo".to_string(),
+                route: None,
+            },
+        ],
+
+        Route::VideoDemo {} => vec![
+            BreadcrumbItem {
+                label: "Demos".to_string(),
+                route: Some(Route::DemosOverview {}),
+            },
+            BreadcrumbItem {
+                label: "Video Demo".to_string(),
                 route: None,
             },
         ],

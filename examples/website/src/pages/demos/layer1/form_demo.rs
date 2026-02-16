@@ -1,50 +1,42 @@
-// website/src/pages/demos/layer1/form_demo.rs
-// Layer 1: Form demo example
-
 use dioxus::prelude::*;
 
-use crate::components::Layout;
+use crate::components::{DemoSection, PageContainer};
+use crate::hooks::use_i18n;
 use _components::{Button, Card, Input};
-use _palette::classes::{ ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor, };
+use _palette::classes::{
+    ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor,
+};
 
-/// Form demo
 #[component]
 pub fn FormDemo() -> Element {
     let email = use_signal(|| String::new());
     let password = use_signal(|| String::new());
 
+    let i18n = use_i18n();
+
+    let (page_title, page_desc) = match i18n {
+        Some(_) => (
+            "Form Demo".to_string(),
+            "Demonstrates how to build a complete login form using Layer 1 basic components."
+                .to_string(),
+        ),
+        None => (
+            "表单示例".to_string(),
+            "展示如何使用 Layer 1 基础组件构建完整的登录表单".to_string(),
+        ),
+    };
+
     rsx! {
-        Layout {
+        PageContainer {
             current_route: crate::app::Route::FormDemo {},
-            div {
-                class: ClassesBuilder::new()
-                    .add_raw("page-container")
-                    .build(),
+            title: page_title,
+            description: page_desc,
 
-                div {
-                    class: ClassesBuilder::new()
-                        .add_raw("page-header")
-                        .build(),
-
-                    h1 {
-                        class: ClassesBuilder::new()
-                            .add_raw("page-title")
-                            .add(FontSize::X4xl)
-                            .build(),
-                        "表单示例"
-                    }
-
-                    p {
-                        class: ClassesBuilder::new()
-                            .add_raw("page-description")
-                            .add(TextColor::Muted)
-                            .add(FontSize::Xl)
-                            .build(),
-                        "展示如何使用 Layer 1 基础组件构建完整的登录表单"
-                    }
-                }
-
-                // Demo Content
+            DemoSection {
+                title: match i18n {
+                    Some(_) => "Login Form".to_string(),
+                    None => "登录表单".to_string(),
+                },
                 div {
                     class: ClassesBuilder::new()
                         .add(Display::Flex)
@@ -66,7 +58,6 @@ pub fn FormDemo() -> Element {
                                 .add(MarginBottom::Mb6)
                                 .build(),
 
-                            // Email Field
                             div {
                                 class: ClassesBuilder::new()
                                     .add_raw("form-field")
@@ -80,7 +71,6 @@ pub fn FormDemo() -> Element {
                                 }
                             }
 
-                            // Password Field
                             div {
                                 class: ClassesBuilder::new()
                                     .add_raw("form-field")
@@ -95,7 +85,6 @@ pub fn FormDemo() -> Element {
                                 }
                             }
 
-                            // Actions
                             div {
                                 class: ClassesBuilder::new()
                                     .add(Display::Flex)
@@ -113,7 +102,6 @@ pub fn FormDemo() -> Element {
                                 a { class: "form-link", "忘记密码？" }
                             }
 
-                            // Submit Button
                             Button {
                                 class: "form-submit",
                                 "登录 Login"

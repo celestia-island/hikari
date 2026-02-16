@@ -1,17 +1,5 @@
-// website/src/pages/components/layer1/mod.rs
-// Layer 1 components index
+// Layer 1 components - migrated to Markdown-driven architecture
+// Pages are now rendered via DynamicDocPage + Markdown docs
+// Component demos are rendered via Registry
 
-pub mod basic;
-pub mod basic_components;
-pub mod display;
-pub mod feedback;
-pub mod form;
-pub mod switch;
-
-// Re-exports
-pub use basic::Layer1Basic;
-pub use basic_components::*;
-pub use display::Layer1Display;
-pub use feedback::Layer1Feedback;
-pub use form::Layer1Form;
-pub use switch::Layer1Switch;
+// Empty module - all pages migrated to /docs/{lang}/components/layer1/*.md

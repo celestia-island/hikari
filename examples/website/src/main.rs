@@ -47,6 +47,8 @@ async fn main() -> anyhow::Result<()> {
         // Mount icons at /icons (not /static/icons) to match Icon component path
         // This ensures icon requests don't fall through to SPA fallback
         .icon_assets(STATIC_PATHS.icons_fs, "/icons")
+        // Mount docs directory for Markdown files
+        .static_assets(STATIC_PATHS.docs_fs, STATIC_PATHS.docs_mount)
         .build()?
         .layer(cors);
 

@@ -78,9 +78,9 @@
     top: 0;
     right: 0;
     bottom: 0;
-    // width is set dynamically via JavaScript (4px → 8px)
-    width: 4px; // Initial width
-    border-radius: 3px;
+    // width is set dynamically via JavaScript (2px → 4px)
+    width: 2px; // Initial width
+    border-radius: 2px;
     pointer-events: none;  // Don't capture clicks - let them pass through to content
     z-index: 100;
 
@@ -113,7 +113,7 @@
     width: 100%;
     min-height: 20px;
     background: var(--hi-scrollbar-thumb);
-    border-radius: 3px;
+    border-radius: 2px;
     cursor: pointer;
     pointer-events: auto;  // Re-enable clicks for thumb (overrides track's none)
 

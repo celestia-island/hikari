@@ -45,6 +45,8 @@ pub fn DynamicDocPage(props: DynamicDocPageProps) -> Element {
 
                 match &*doc_content.read() {
                     Some(Ok(content)) => {
+                        // Debug: log the first 200 chars
+                        web_sys::console::log_1(&format!("Loaded markdown (first 200 chars): {}", &content[..content.len().min(200)]).into());
                         rsx! {
                             div {
                                 class: "hi-markdown",
@@ -84,6 +86,9 @@ async fn load_markdown_content(path: &str) -> Result<String, String> {
     use web_sys::Response;
 
     let url = format!("/docs/{}.md", path);
+    
+    // Debug: log the URL
+    web_sys::console::log_1(&format!("Loading markdown from: {}", url).into());
     
     let mut opts = web_sys::RequestInit::new();
     opts.method("GET");

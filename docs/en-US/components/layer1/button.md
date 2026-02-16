@@ -20,17 +20,33 @@ Buttons can be disabled, in which case they are not clickable.
 pages/components/layer1/button#disabled
 ```
 
-## Icon Buttons
+## Icon Button Sizes
 
-Supports three sizes of icon buttons: small, medium, and large.
+Icon buttons support three sizes: small (24px), medium (32px), and large (40px).
 
 ```_hikari_component
 pages/components/layer1/button#icon
 ```
 
+## Icon Button Variants
+
+Icon buttons support five color variants: Ghost, Primary, Secondary, Danger, and Success.
+
+```_hikari_component
+pages/components/layer1/button#icon-variants
+```
+
+## Icon Button Size Comparison
+
+Shows the Primary variant in different sizes.
+
+```_hikari_component
+pages/components/layer1/button#icon-sizes
+```
+
 ## API
 
-### Props
+### Button Props
 
 | Property | Description | Type | Default |
 |----------|-------------|------|---------|
@@ -38,3 +54,14 @@ pages/components/layer1/button#icon
 | size | Button size | ButtonSize | Medium |
 | disabled | Whether disabled | bool | false |
 | children | Button content | Element | - |
+
+### IconButton Props
+
+| Property | Description | Type | Default |
+|----------|-------------|------|---------|
+| icon | Icon to display | MdiIcon | - |
+| size | Button size | IconButtonSize | Large |
+| variant | Color variant | IconButtonVariant | Ghost |
+| glow | Enable glow effect | bool | true |
+| disabled | Whether disabled | bool | false |
+| onclick | Click handler | EventHandler\<MouseEvent\> | - |

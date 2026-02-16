@@ -13,11 +13,12 @@ use _components::basic::switch::Switch;
 use _components::layout::Section;
 use _components::{
     AvatarSize, AvatarVariant, BadgeVariant, ButtonVariant, IconButton, IconButtonSize,
+    IconButtonVariant,
 };
 use _icons::MdiIcon;
 use _palette::classes::{
-    ClassesBuilder, Display, FlexDirection, FlexWrap, FontSize, FontWeight, Gap, MarginBottom,
-    Padding, TextColor,
+    AlignItems, ClassesBuilder, Display, FlexDirection, FlexWrap, FontSize, FontWeight, Gap,
+    MarginBottom, Padding, TextColor,
 };
 use dioxus::prelude::*;
 
@@ -52,9 +53,24 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 },
                 ("layer1", "button", Some("icon")) => rsx! {
                     div { class: flex_row_wrap(),
-                        IconButton { icon: MdiIcon::Check, size: IconButtonSize::Small, onclick: move |_| {} }
-                        IconButton { icon: MdiIcon::Pencil, size: IconButtonSize::Medium, onclick: move |_| {} }
-                        IconButton { icon: MdiIcon::Close, size: IconButtonSize::Large, onclick: move |_| {} }
+                        IconButton { icon: MdiIcon::Check, size: IconButtonSize::Small, variant: IconButtonVariant::Ghost, onclick: move |_| {} }
+                        IconButton { icon: MdiIcon::Pencil, size: IconButtonSize::Medium, variant: IconButtonVariant::Ghost, onclick: move |_| {} }
+                        IconButton { icon: MdiIcon::Close, size: IconButtonSize::Large, variant: IconButtonVariant::Ghost, onclick: move |_| {} }
+                    }
+                },
+                ("layer1", "button", Some("icon-variants")) => rsx! {
+                    div { class: flex_row_wrap(),
+                        IconButton { icon: MdiIcon::Heart, size: IconButtonSize::Medium, variant: IconButtonVariant::Primary, onclick: move |_| {} }
+                        IconButton { icon: MdiIcon::Star, size: IconButtonSize::Medium, variant: IconButtonVariant::Secondary, onclick: move |_| {} }
+                        IconButton { icon: MdiIcon::Alert, size: IconButtonSize::Medium, variant: IconButtonVariant::Danger, onclick: move |_| {} }
+                        IconButton { icon: MdiIcon::Check, size: IconButtonSize::Medium, variant: IconButtonVariant::Success, onclick: move |_| {} }
+                    }
+                },
+                ("layer1", "button", Some("icon-sizes")) => rsx! {
+                    div { class: flex_row_wrap(),
+                        IconButton { icon: MdiIcon::Cog, size: IconButtonSize::Small, variant: IconButtonVariant::Primary, onclick: move |_| {} }
+                        IconButton { icon: MdiIcon::Cog, size: IconButtonSize::Medium, variant: IconButtonVariant::Primary, onclick: move |_| {} }
+                        IconButton { icon: MdiIcon::Cog, size: IconButtonSize::Large, variant: IconButtonVariant::Primary, onclick: move |_| {} }
                     }
                 },
                 ("layer1", "button", _) => rsx! {
@@ -494,6 +510,7 @@ fn flex_row_wrap() -> String {
     ClassesBuilder::new()
         .add(Display::Flex)
         .add(FlexDirection::Row)
+        .add(AlignItems::Center)
         .add(Gap::Gap4)
         .add(FlexWrap::Wrap)
         .add(Padding::P4)

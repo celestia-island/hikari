@@ -10,6 +10,7 @@ use crate::{
     styled::StyledComponent,
 };
 
+/// IconButton size variants
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum IconButtonSize {
     Small,
@@ -18,86 +19,113 @@ pub enum IconButtonSize {
     Large,
 }
 
+/// IconButton color variants
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum IconButtonVariant {
+    /// Ghost/Borderless - transparent background
+    #[default]
+    Ghost,
+    /// Primary - solid primary color
+    Primary,
+    /// Secondary - solid secondary color
+    Secondary,
+    /// Danger - solid danger color
+    Danger,
+    /// Success - solid success color
+    Success,
+}
+
 /// IconButton component
 ///
 /// A square button containing only an icon, with optional glow effects.
-/// Based on Ghost button variant but with square aspect ratio.
 #[derive(Clone, PartialEq, Props)]
 pub struct IconButtonProps {
     /// Icon to display
-    icon: MdiIcon,
+    pub icon: MdiIcon,
 
-    /// Button size (default: Large = 36px)
+    /// Button size (default: Large = 40px)
     #[props(default)]
-    size: IconButtonSize,
+    pub size: IconButtonSize,
+
+    /// Button variant/color (default: Ghost)
+    #[props(default)]
+    pub variant: IconButtonVariant,
 
     /// Whether to enable glow effect (default: true)
     #[props(default = true)]
-    glow: bool,
+    pub glow: bool,
 
     /// Glow blur amount (default: Medium)
     #[props(default = GlowBlur::Medium)]
-    glow_blur: GlowBlur,
+    pub glow_blur: GlowBlur,
 
     /// Glow color (default: Primary)
     #[props(default = GlowColor::Primary)]
-    glow_color: GlowColor,
+    pub glow_color: GlowColor,
 
     /// Glow intensity (default: Standard)
     #[props(default = GlowIntensity::Seventy)]
-    glow_intensity: GlowIntensity,
+    pub glow_intensity: GlowIntensity,
 
     /// Whether to button is disabled (default: false)
     #[props(default = false)]
-    disabled: bool,
+    pub disabled: bool,
 
     /// Custom CSS classes
     #[props(default)]
-    class: String,
+    pub class: String,
 
     /// Click handler
-    onclick: EventHandler<MouseEvent>,
+    pub onclick: EventHandler<MouseEvent>,
 }
 
 /// IconButton component - Square button with icon and glow effects
 #[component]
 pub fn IconButton(props: IconButtonProps) -> Element {
-    // Icon size is always 14px, independent of button size
     let icon_size = 14;
 
-    // Determine size class based on button size
     let size_class = match props.size {
         IconButtonSize::Small => Some(ButtonClass::IconButtonSize24),
         IconButtonSize::Medium => Some(ButtonClass::IconButtonSize32),
         IconButtonSize::Large => Some(ButtonClass::IconButtonSize40),
     };
 
-    // Build button classes
+    let variant_class = match props.variant {
+        IconButtonVariant::Ghost => ButtonClass::IconButtonGhost,
+        IconButtonVariant::Primary => ButtonClass::IconButtonPrimary,
+        IconButtonVariant::Secondary => ButtonClass::IconButtonSecondary,
+        IconButtonVariant::Danger => ButtonClass::IconButtonDanger,
+        IconButtonVariant::Success => ButtonClass::IconButtonSuccess,
+    };
+
     let mut builder = ClassesBuilder::new()
         .add(ButtonClass::Button)
-        .add(ButtonClass::Borderless)
-        .add(ButtonClass::IconButton);
+        .add(ButtonClass::IconButton)
+        .add(variant_class);
 
-    // Add size class if valid
     if let Some(size) = size_class {
         builder = builder.add(size);
     }
 
-    // Add disabled class
     if props.disabled {
         builder = builder.add(ButtonClass::Disabled);
     }
 
-    let button_classes = builder.build();
+    let button_classes = builder.add_raw(&props.class).build();
 
-    // Build icon classes using enums
-    let mut icon_builder = ClassesBuilder::new().add(ButtonClass::IconButtonIcon);
+    let icon_classes = ClassesBuilder::new()
+        .add(ButtonClass::IconButtonIcon)
+        .add_if(ButtonClass::IconButtonDisabled, || props.disabled)
+        .build();
 
-    if props.disabled {
-        icon_builder = icon_builder.add(ButtonClass::IconButtonDisabled);
-    }
-
-    let icon_classes = icon_builder.build();
+    // Determine glow color based on variant
+    let glow_color = match props.variant {
+        IconButtonVariant::Ghost => props.glow_color,
+        IconButtonVariant::Primary => GlowColor::Primary,
+        IconButtonVariant::Secondary => GlowColor::Secondary,
+        IconButtonVariant::Danger => GlowColor::Danger,
+        IconButtonVariant::Success => GlowColor::Success,
+    };
 
     let button_content = rsx! {
         button {
@@ -113,12 +141,11 @@ pub fn IconButton(props: IconButtonProps) -> Element {
         }
     };
 
-    // Wrap with glow container if enabled
     if props.glow {
         rsx! {
             Glow {
                 blur: props.glow_blur,
-                color: props.glow_color,
+                color: glow_color,
                 intensity: props.glow_intensity,
                 { button_content }
             }

@@ -36,7 +36,5 @@ pub fn init_panic_hook() {
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn hydrate() {
-    // Initialize custom scrollbars
-    _components::scripts::init_all_scrollbar_containers();
     launch(App);
 }

@@ -20,17 +20,33 @@ pages/components/layer1/button#variants
 pages/components/layer1/button#disabled
 ```
 
-## 图标按钮
+## 图标按钮尺寸
 
-支持小、中、大三种尺寸的图标按钮。
+图标按钮支持小(24px)、中(32px)、大(40px)三种尺寸。
 
 ```_hikari_component
 pages/components/layer1/button#icon
 ```
 
+## 图标按钮变体
+
+图标按钮支持 Ghost、Primary、Secondary、Danger、Success 五种颜色变体。
+
+```_hikari_component
+pages/components/layer1/button#icon-variants
+```
+
+## 图标按钮尺寸对比
+
+展示 Primary 变体在不同尺寸下的效果。
+
+```_hikari_component
+pages/components/layer1/button#icon-sizes
+```
+
 ## API
 
-### Props
+### Button Props
 
 | 属性 | 说明 | 类型 | 默认值 |
 |------|------|------|--------|
@@ -38,3 +54,14 @@ pages/components/layer1/button#icon
 | size | 按钮尺寸 | ButtonSize | Medium |
 | disabled | 是否禁用 | bool | false |
 | children | 按钮内容 | Element | - |
+
+### IconButton Props
+
+| 属性 | 说明 | 类型 | 默认值 |
+|------|------|------|--------|
+| icon | 图标 | MdiIcon | - |
+| size | 按钮尺寸 | IconButtonSize | Large |
+| variant | 颜色变体 | IconButtonVariant | Ghost |
+| glow | 是否启用发光效果 | bool | true |
+| disabled | 是否禁用 | bool | false |
+| onclick | 点击回调 | EventHandler\<MouseEvent\> | - |

@@ -2,6 +2,7 @@
 // Markdown to HTML component using pulldown-cmark
 // Supports custom code blocks like ```_hikari_component
 
+use _components::{ColumnDef, Table};
 use dioxus::prelude::*;
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 
@@ -31,6 +32,16 @@ fn parse_markdown(markdown: &str) -> Vec<Element> {
     let mut list_items = Vec::new();
     let mut heading_level: Option<u32> = None;
     let mut heading_text = String::new();
+
+    // Table parsing state
+    let mut in_table = false;
+    let mut in_table_head = false;
+    let mut in_table_row = false;
+    let mut in_table_cell = false;
+    let mut table_headers: Vec<String> = Vec::new();
+    let mut table_rows: Vec<Vec<String>> = Vec::new();
+    let mut current_row: Vec<String> = Vec::new();
+    let mut current_cell = String::new();
 
     let parser = Parser::new_ext(markdown, Options::all());
 
@@ -74,10 +85,23 @@ fn parse_markdown(markdown: &str) -> Vec<Element> {
                 Tag::Emphasis => {}
                 Tag::Strong => {}
                 Tag::Strikethrough => {}
-                Tag::Table(_alignment) => {}
-                Tag::TableHead => {}
-                Tag::TableRow => {}
-                Tag::TableCell => {}
+                Tag::Table(_alignment) => {
+                    in_table = true;
+                    table_headers.clear();
+                    table_rows.clear();
+                }
+                Tag::TableHead => {
+                    in_table_head = true;
+                    current_row.clear();
+                }
+                Tag::TableRow => {
+                    in_table_row = true;
+                    current_row.clear();
+                }
+                Tag::TableCell => {
+                    in_table_cell = true;
+                    current_cell.clear();
+                }
                 _ => {}
             },
 
@@ -111,16 +135,39 @@ fn parse_markdown(markdown: &str) -> Vec<Element> {
                 TagEnd::Emphasis => {}
                 TagEnd::Strong => {}
                 TagEnd::Strikethrough => {}
-                TagEnd::Table => {}
-                TagEnd::TableHead => {}
-                TagEnd::TableRow => {}
-                TagEnd::TableCell => {}
+                TagEnd::Table => {
+                    if in_table {
+                        in_table = false;
+                        elements.push(render_table(table_headers.clone(), table_rows.clone()));
+                        table_headers.clear();
+                        table_rows.clear();
+                    }
+                }
+                TagEnd::TableHead => {
+                    in_table_head = false;
+                    table_headers = current_row.clone();
+                    current_row.clear();
+                }
+                TagEnd::TableRow => {
+                    in_table_row = false;
+                    if !current_row.is_empty() {
+                        table_rows.push(current_row.clone());
+                    }
+                    current_row.clear();
+                }
+                TagEnd::TableCell => {
+                    in_table_cell = false;
+                    current_row.push(current_cell.trim().to_string());
+                    current_cell.clear();
+                }
                 _ => {}
             },
 
             Event::Text(text) => {
                 if in_code_block {
                     code_content.push_str(&text);
+                } else if in_table_cell {
+                    current_cell.push_str(&text);
                 } else if in_list {
                     list_items.push(text.to_string());
                 } else if heading_level.is_some() {
@@ -131,7 +178,11 @@ fn parse_markdown(markdown: &str) -> Vec<Element> {
             }
 
             Event::Code(text) => {
-                elements.push(render_inline_code(&text));
+                if in_table_cell {
+                    current_cell.push_str(&format!("`{}`", text));
+                } else {
+                    elements.push(render_inline_code(&text));
+                }
             }
 
             Event::SoftBreak => {}
@@ -288,6 +339,28 @@ pub fn MarkdownRenderer(
         div {
             class: format!("hi-markdown {}", class),
             {render_markdown(&markdown_content)}
+        }
+    }
+}
+
+/// Render a table using the component library's Table component
+fn render_table(headers: Vec<String>, rows: Vec<Vec<String>>) -> Element {
+    let columns: Vec<ColumnDef> = headers
+        .iter()
+        .enumerate()
+        .map(|(i, header)| ColumnDef::new(format!("col_{}", i), header.clone()))
+        .collect();
+
+    rsx! {
+        div {
+            class: "hi-markdown-table",
+            Table {
+                columns: columns,
+                data: rows,
+                bordered: true,
+                striped: true,
+                hoverable: true,
+            }
         }
     }
 }

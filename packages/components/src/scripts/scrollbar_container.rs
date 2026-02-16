@@ -431,7 +431,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
     StyleBuilder::new(track_html)
         .add(CssProperty::Position, "absolute")
         .add(CssProperty::Top, "0")
-        .add(CssProperty::Right, "4px")  // Inside wrapper to avoid being clipped by parent overflow:hidden
+        .add(CssProperty::Right, "0")  // 贴着容器边缘
         .add(CssProperty::Bottom, "0")
         .add(CssProperty::Width, "4px") // Initial width (animated by state machine: 4px -> 8px)
         .apply();

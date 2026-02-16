@@ -243,6 +243,58 @@ pub fn render_component(component_type: ComponentType) -> Element {
                         p { "Visualization components: DragLayer, Timeline, UserGuide" }
                     }
                 },
+                ("layer3", "user_guide", _) => rsx! {
+                    div { class: ClassesBuilder::new().add(Padding::P4).add(TextColor::Secondary).build(),
+                        p { "UserGuide: Step-by-step user onboarding and feature tours" }
+                    }
+                },
+                ("layer3", "zoom_controls", _) => rsx! {
+                    div { class: ClassesBuilder::new().add(Padding::P4).add(TextColor::Secondary).build(),
+                        p { "ZoomControls: Zoom in/out controls with keyboard shortcuts" }
+                    }
+                },
+
+                // ========== Layer 2 - New ==========
+                ("layer2", "cascader", _) => rsx! {
+                    div { class: ClassesBuilder::new().add(Padding::P4).add(TextColor::Secondary).build(),
+                        p { "Cascader: Multi-level cascading selection" }
+                    }
+                },
+                ("layer2", "collapsible", _) => rsx! {
+                    div { class: ClassesBuilder::new().add(Padding::P4).add(TextColor::Secondary).build(),
+                        p { "Collapsible: Expandable/collapsible panel" }
+                    }
+                },
+                ("layer2", "pagination", _) => rsx! {
+                    div { class: ClassesBuilder::new().add(Padding::P4).add(TextColor::Secondary).build(),
+                        p { "Pagination: Page navigation for data lists" }
+                    }
+                },
+                ("layer2", "qrcode", _) => rsx! {
+                    div { class: ClassesBuilder::new().add(Padding::P4).add(TextColor::Secondary).build(),
+                        p { "QRCode: QR code generation" }
+                    }
+                },
+                ("layer2", "table", _) => rsx! {
+                    div { class: ClassesBuilder::new().add(Padding::P4).add(TextColor::Secondary).build(),
+                        p { "Table: Data table with sorting and pagination" }
+                    }
+                },
+                ("layer2", "timeline", _) => rsx! {
+                    div { class: ClassesBuilder::new().add(Padding::P4).add(TextColor::Secondary).build(),
+                        p { "Timeline: Event timeline display" }
+                    }
+                },
+                ("layer2", "transfer", _) => rsx! {
+                    div { class: ClassesBuilder::new().add(Padding::P4).add(TextColor::Secondary).build(),
+                        p { "Transfer: Dual-column transfer selection" }
+                    }
+                },
+                ("layer2", "tree", _) => rsx! {
+                    div { class: ClassesBuilder::new().add(Padding::P4).add(TextColor::Secondary).build(),
+                        p { "Tree: Hierarchical tree structure" }
+                    }
+                },
 
                 _ => rsx! {
                     div { class: "component-error",

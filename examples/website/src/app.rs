@@ -339,7 +339,10 @@ fn Empty() -> Element {
 #[allow(non_snake_case)]
 fn QRCode() -> Element {
     rsx! {
-        crate::pages::components::layer2::QRCode {}
+        crate::components::DynamicDocPage {
+            current_route: Route::QRCode {},
+            doc_path: "components/layer2/qrcode",
+        }
     }
 }
 
@@ -414,49 +417,70 @@ fn Layer2Feedback() -> Element {
 #[allow(non_snake_case)]
 fn Cascader() -> Element {
     rsx! {
-        crate::pages::components::layer2::Cascader {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Cascader {},
+            doc_path: "components/layer2/cascader",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Transfer() -> Element {
     rsx! {
-        crate::pages::components::layer2::Transfer {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Transfer {},
+            doc_path: "components/layer2/transfer",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Collapsible() -> Element {
     rsx! {
-        crate::pages::components::layer2::Collapsible {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Collapsible {},
+            doc_path: "components/layer2/collapsible",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Timeline() -> Element {
     rsx! {
-        crate::pages::components::layer2::Timeline {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Timeline {},
+            doc_path: "components/layer2/timeline",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Table() -> Element {
     rsx! {
-        crate::pages::components::layer2::Table {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Table {},
+            doc_path: "components/layer2/table",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Tree() -> Element {
     rsx! {
-        crate::pages::components::layer2::Tree {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Tree {},
+            doc_path: "components/layer2/tree",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn Pagination() -> Element {
     rsx! {
-        crate::pages::components::layer2::Pagination {}
+        crate::components::DynamicDocPage {
+            current_route: Route::Pagination {},
+            doc_path: "components/layer2/pagination",
+        }
     }
 }
 
@@ -501,14 +525,20 @@ fn Layer3Visualization() -> Element {
 #[allow(non_snake_case)]
 fn UserGuide() -> Element {
     rsx! {
-        crate::pages::components::layer3::UserGuide {}
+        crate::components::DynamicDocPage {
+            current_route: Route::UserGuide {},
+            doc_path: "components/layer3/user_guide",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn ZoomControls() -> Element {
     rsx! {
-        crate::pages::components::layer3::ZoomControls {}
+        crate::components::DynamicDocPage {
+            current_route: Route::ZoomControls {},
+            doc_path: "components/layer3/zoom_controls",
+        }
     }
 }
 

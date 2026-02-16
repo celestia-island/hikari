@@ -78,9 +78,9 @@
     top: 0;
     right: 4px;  // Inside wrapper to avoid being clipped by parent overflow:hidden
     bottom: 0;
-    // width is set dynamically via JavaScript (2px → 4px)
-    width: 2px; // Initial width
-    border-radius: 2px;
+    // width is set dynamically via JavaScript (4px → 8px)
+    width: 4px; // Initial width
+    border-radius: 4px;
     pointer-events: none;  // Don't capture clicks - let them pass through to content
     z-index: 100;
 
@@ -113,7 +113,7 @@
     width: 100%;
     min-height: 20px;
     background: var(--hi-scrollbar-thumb);
-    border-radius: 2px;
+    border-radius: 4px;
     cursor: pointer;
     pointer-events: auto;  // Re-enable clicks for thumb (overrides track's none)
 
@@ -126,7 +126,7 @@
 // Hover state: thumb glows
 .custom-scrollbar-thumb:hover {
     background: var(--hi-scrollbar-thumb-hover);
-    box-shadow: 0 0 12px var(--hi-scrollbar-thumb-hover);
+    box-shadow: 0 0 14px var(--hi-scrollbar-thumb-hover);
 }
 
 // Active state: thumb being dragged (theme-aware filter)

@@ -32,13 +32,13 @@ use web_sys::{MutationObserver, MutationObserverInit, ResizeObserver};
 /// Animation state for scrollbar width transition
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ScrollbarAnimationState {
-    /// Scrollbar at normal width (2px)
+    /// Scrollbar at normal width (4px)
     Idle,
-    /// Scrollbar at expanded width (4px) - mouse hover
+    /// Scrollbar at expanded width (8px) - mouse hover
     Active,
-    /// Scrollbar at expanded width (4px) - currently dragging
+    /// Scrollbar at expanded width (8px) - currently dragging
     Dragging,
-    /// Scrollbar at expanded width (4px) - temporarily expanded after scroll
+    /// Scrollbar at expanded width (8px) - temporarily expanded after scroll
     ScrollHover,
 }
 
@@ -82,7 +82,7 @@ impl ScrollbarAnimator {
             // For Idle and ScrollHover, transition to Active
             ScrollbarAnimationState::Idle | ScrollbarAnimationState::ScrollHover => {
                 *self.state.borrow_mut() = ScrollbarAnimationState::Active;
-                animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
+                animation::update_scrollbar_width(self.scrollbar_id.clone(), 8.0);
             }
             // Already active, nothing to do
             ScrollbarAnimationState::Active => {}
@@ -100,7 +100,7 @@ impl ScrollbarAnimator {
             // Active -> Idle
             ScrollbarAnimationState::Active => {
                 *self.state.borrow_mut() = ScrollbarAnimationState::Idle;
-                animation::update_scrollbar_width(self.scrollbar_id.clone(), 2.0);
+                animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
             }
             // Already idle, nothing to do
             ScrollbarAnimationState::Idle => {}
@@ -110,13 +110,13 @@ impl ScrollbarAnimator {
     /// Transition to dragging state
     fn start_drag(&self) {
         *self.state.borrow_mut() = ScrollbarAnimationState::Dragging;
-        animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
+        animation::update_scrollbar_width(self.scrollbar_id.clone(), 8.0);
     }
 
     /// End dragging - always return to idle state
     fn end_drag(&self) {
         *self.state.borrow_mut() = ScrollbarAnimationState::Idle;
-        animation::update_scrollbar_width(self.scrollbar_id.clone(), 2.0);
+        animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
     }
 
     /// Trigger scroll hover state (expands for 500ms then returns to previous state)
@@ -130,7 +130,7 @@ impl ScrollbarAnimator {
 
         // Transition to ScrollHover
         *self.state.borrow_mut() = ScrollbarAnimationState::ScrollHover;
-        animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
+        animation::update_scrollbar_width(self.scrollbar_id.clone(), 8.0);
 
         // Cancel existing scroll hover timer
         if let Some(timer_id) = self.scroll_hover_timer.borrow_mut().take() {
@@ -156,7 +156,7 @@ impl ScrollbarAnimator {
             *self.state.borrow_mut() = ScrollbarAnimationState::Active;
         } else {
             *self.state.borrow_mut() = ScrollbarAnimationState::Idle;
-            animation::update_scrollbar_width(self.scrollbar_id.clone(), 2.0);
+            animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
         }
     }
 }
@@ -433,7 +433,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
         .add(CssProperty::Top, "0")
         .add(CssProperty::Right, "4px")  // Inside wrapper to avoid being clipped by parent overflow:hidden
         .add(CssProperty::Bottom, "0")
-        .add(CssProperty::Width, "2px") // Initial width (animated by state machine)
+        .add(CssProperty::Width, "4px") // Initial width (animated by state machine: 4px -> 8px)
         .apply();
 
     // Create animation controller for this track
@@ -638,7 +638,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
         let max_scroll = (scroll_height - client_height).max(0.0);
 
         // Center thumb at click position
-        let thumb_center_offset = thumb_height / 2.0;
+        let thumb_center_offset = thumb_height / 8.0;
         let click_ratio = ((click_y - thumb_center_offset) / track_height)
             .max(0.0)
             .min(1.0);

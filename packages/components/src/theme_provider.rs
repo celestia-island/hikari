@@ -70,6 +70,8 @@ use std::{collections::HashMap, sync::RwLock};
 use dioxus::prelude::*;
 use palette::*;
 
+use crate::scripts::scrollbar_container::init_all;
+
 /// Trait for converting theme identifiers to string
 ///
 /// Components can define their own enums that implement this trait,
@@ -920,6 +922,14 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
         palette: current_palette,
         theme_name: current_theme_name,
         set_theme,
+    });
+
+    // Initialize custom scrollbars once when ThemeProvider mounts
+    use_effect(|| {
+        spawn(async move {
+            gloo::timers::future::TimeoutFuture::new(50).await;
+            init_all();
+        });
     });
 
     let primary_override = props.primary.clone();

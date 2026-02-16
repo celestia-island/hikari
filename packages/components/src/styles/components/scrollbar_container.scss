@@ -76,7 +76,7 @@
 .custom-scrollbar-track {
     position: absolute;  // Absolute positioning inside wrapper
     top: 0;
-    right: 4px;  // Inside wrapper to avoid being clipped by parent overflow:hidden
+    right: 0;  // 贴着容器边缘
     bottom: 0;
     // width is set dynamically via JavaScript (4px → 8px)
     width: 4px; // Initial width

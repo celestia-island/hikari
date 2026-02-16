@@ -40,7 +40,6 @@ use palette::classes::{
 };
 
 use crate::basic::Background;
-use crate::scripts::init;
 
 /// Layout component - Modern application layout wrapper
 ///
@@ -86,16 +85,6 @@ pub fn Layout(
     class: String,
 ) -> Element {
     let mut is_drawer_open = use_signal(|| false);
-
-    // Initialize custom scrollbars when component mounts
-    use_effect(move || {
-        // Small delay to ensure DOM is ready
-        spawn(async move {
-            gloo::timers::future::TimeoutFuture::new(100).await;
-            init(".hi-layout-content");
-            init(".hi-layout-aside-content");
-        });
-    });
 
     let layout_classes = ClassesBuilder::new()
         .add(LayoutClass::Layout)

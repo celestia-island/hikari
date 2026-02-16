@@ -172,35 +172,50 @@ fn DemosOverview() -> Element {
 #[allow(non_snake_case)]
 fn SystemOverview() -> Element {
     rsx! {
-        crate::pages::system::SystemOverview {}
+        crate::components::DynamicDocPage {
+            current_route: Route::SystemOverview {},
+            doc_path: "system/overview",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn SystemCSS() -> Element {
     rsx! {
-        crate::pages::system::SystemCSS {}
+        crate::components::DynamicDocPage {
+            current_route: Route::SystemCSS {},
+            doc_path: "system/css",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn SystemIcons() -> Element {
     rsx! {
-        crate::pages::system::SystemIcons {}
+        crate::components::DynamicDocPage {
+            current_route: Route::SystemIcons {},
+            doc_path: "system/icons",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn SystemPalette() -> Element {
     rsx! {
-        crate::pages::system::SystemPalette {}
+        crate::components::DynamicDocPage {
+            current_route: Route::SystemPalette {},
+            doc_path: "system/palette",
+        }
     }
 }
 
 #[allow(non_snake_case)]
 fn SystemAnimations() -> Element {
     rsx! {
-        crate::pages::system::SystemAnimations {}
+        crate::components::DynamicDocPage {
+            current_route: Route::SystemAnimations {},
+            doc_path: "system/animation",
+        }
     }
 }
 
@@ -545,6 +560,9 @@ fn ZoomControls() -> Element {
 #[allow(non_snake_case)]
 fn SystemI18n() -> Element {
     rsx! {
-        crate::components::I18nDemo {}
+        crate::components::DynamicDocPage {
+            current_route: Route::SystemI18n {},
+            doc_path: "system/i18n",
+        }
     }
 }

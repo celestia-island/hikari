@@ -296,6 +296,13 @@ pub fn render_component(component_type: ComponentType) -> Element {
                     }
                 },
 
+                // ========== System ==========
+                ("system", "css", _) => rsx! {
+                    div { class: ClassesBuilder::new().add(Padding::P4).add(TextColor::Secondary).build(),
+                        p { "CSS Utilities: Tailwind-compatible utility classes" }
+                    }
+                },
+
                 _ => rsx! {
                     div { class: "component-error",
                         h3 { "Component Not Found" }

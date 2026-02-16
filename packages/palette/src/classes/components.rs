@@ -160,6 +160,16 @@ pub enum ButtonClass {
     IconButtonSize36,
     /// `hi-icon-button-40` - IconButton size 40px
     IconButtonSize40,
+    /// `hi-icon-button-ghost` - IconButton ghost variant (transparent)
+    IconButtonGhost,
+    /// `hi-icon-button-primary` - IconButton primary variant
+    IconButtonPrimary,
+    /// `hi-icon-button-secondary` - IconButton secondary variant
+    IconButtonSecondary,
+    /// `hi-icon-button-danger` - IconButton danger variant
+    IconButtonDanger,
+    /// `hi-icon-button-success` - IconButton success variant
+    IconButtonSuccess,
     /// `hi-button-disabled` - Disabled state
     Disabled,
     /// `hi-icon-button-icon` - IconButton icon wrapper
@@ -196,6 +206,11 @@ impl UtilityClass for ButtonClass {
             ButtonClass::IconButtonSize32 => "icon-button-32",
             ButtonClass::IconButtonSize36 => "icon-button-36",
             ButtonClass::IconButtonSize40 => "icon-button-40",
+            ButtonClass::IconButtonGhost => "icon-button-ghost",
+            ButtonClass::IconButtonPrimary => "icon-button-primary",
+            ButtonClass::IconButtonSecondary => "icon-button-secondary",
+            ButtonClass::IconButtonDanger => "icon-button-danger",
+            ButtonClass::IconButtonSuccess => "icon-button-success",
             ButtonClass::Disabled => "button-disabled",
             ButtonClass::IconButtonIcon => "icon-button-icon",
             ButtonClass::IconButtonDisabled => "icon-button-disabled",

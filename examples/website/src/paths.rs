@@ -42,6 +42,9 @@ pub struct StaticPaths {
     /// Server mount point for icons directory
     pub icons_mount: &'static str,
 
+    /// Server mount point for docs directory
+    pub docs_mount: &'static str,
+
     /// Filesystem path to assets directory (relative to project root)
     pub assets_fs: &'static str,
 
@@ -53,6 +56,9 @@ pub struct StaticPaths {
 
     /// Filesystem path to icons directory (relative to project root)
     pub icons_fs: &'static str,
+
+    /// Filesystem path to docs directory (relative to project root)
+    pub docs_fs: &'static str,
 }
 
 /// Global static paths configuration
@@ -68,12 +74,14 @@ pub const STATIC_PATHS: StaticPaths = StaticPaths {
     styles_mount: "/styles",
     images_mount: "/images",
     icons_mount: "/icons",
+    docs_mount: "/docs",
 
     // Filesystem paths (relative to project root)
     assets_fs: "public/assets",
     styles_fs: "public/styles",
     images_fs: "public/images",
     icons_fs: "public/icons",
+    docs_fs: "public/docs",
 };
 
 #[cfg(test)]

@@ -25,7 +25,7 @@ pages/components/layer1/button#disabled
 Icon buttons support three sizes: small (24px), medium (32px), and large (40px).
 
 ```_hikari_component
-pages/components/layer1/button#icon
+pages/components/layer1/button#icon-sizes
 ```
 
 ## Icon Button Variants
@@ -34,14 +34,6 @@ Icon buttons support five color variants: Ghost, Primary, Secondary, Danger, and
 
 ```_hikari_component
 pages/components/layer1/button#icon-variants
-```
-
-## Icon Button Size Comparison
-
-Shows the Primary variant in different sizes.
-
-```_hikari_component
-pages/components/layer1/button#icon-sizes
 ```
 
 ## API

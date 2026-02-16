@@ -6,7 +6,7 @@
 //! # Features
 //! - Absolute positioned on right side
 //! - No layout shift (doesn't affect content width)
-//! - Smooth animations (4px → 8px) managed by hikari-animation
+//! - Smooth animations (2px → 4px) managed by hikari-animation
 //! - Auto-hide when content doesn't need scrolling
 //! - Drag to scroll functionality
 //! - Smart width expansion on drag and scroll events
@@ -32,13 +32,13 @@ use web_sys::{MutationObserver, MutationObserverInit, ResizeObserver};
 /// Animation state for scrollbar width transition
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ScrollbarAnimationState {
-    /// Scrollbar at normal width (4px)
+    /// Scrollbar at normal width (2px)
     Idle,
-    /// Scrollbar at expanded width (8px) - mouse hover
+    /// Scrollbar at expanded width (4px) - mouse hover
     Active,
-    /// Scrollbar at expanded width (8px) - currently dragging
+    /// Scrollbar at expanded width (4px) - currently dragging
     Dragging,
-    /// Scrollbar at expanded width (8px) - temporarily expanded after scroll
+    /// Scrollbar at expanded width (4px) - temporarily expanded after scroll
     ScrollHover,
 }
 
@@ -82,7 +82,7 @@ impl ScrollbarAnimator {
             // For Idle and ScrollHover, transition to Active
             ScrollbarAnimationState::Idle | ScrollbarAnimationState::ScrollHover => {
                 *self.state.borrow_mut() = ScrollbarAnimationState::Active;
-                animation::update_scrollbar_width(self.scrollbar_id.clone(), 8.0);
+                animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
             }
             // Already active, nothing to do
             ScrollbarAnimationState::Active => {}
@@ -100,7 +100,7 @@ impl ScrollbarAnimator {
             // Active -> Idle
             ScrollbarAnimationState::Active => {
                 *self.state.borrow_mut() = ScrollbarAnimationState::Idle;
-                animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
+                animation::update_scrollbar_width(self.scrollbar_id.clone(), 2.0);
             }
             // Already idle, nothing to do
             ScrollbarAnimationState::Idle => {}
@@ -110,13 +110,13 @@ impl ScrollbarAnimator {
     /// Transition to dragging state
     fn start_drag(&self) {
         *self.state.borrow_mut() = ScrollbarAnimationState::Dragging;
-        animation::update_scrollbar_width(self.scrollbar_id.clone(), 8.0);
+        animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
     }
 
     /// End dragging - always return to idle state
     fn end_drag(&self) {
         *self.state.borrow_mut() = ScrollbarAnimationState::Idle;
-        animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
+        animation::update_scrollbar_width(self.scrollbar_id.clone(), 2.0);
     }
 
     /// Trigger scroll hover state (expands for 500ms then returns to previous state)
@@ -130,7 +130,7 @@ impl ScrollbarAnimator {
 
         // Transition to ScrollHover
         *self.state.borrow_mut() = ScrollbarAnimationState::ScrollHover;
-        animation::update_scrollbar_width(self.scrollbar_id.clone(), 8.0);
+        animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
 
         // Cancel existing scroll hover timer
         if let Some(timer_id) = self.scroll_hover_timer.borrow_mut().take() {
@@ -156,7 +156,7 @@ impl ScrollbarAnimator {
             *self.state.borrow_mut() = ScrollbarAnimationState::Active;
         } else {
             *self.state.borrow_mut() = ScrollbarAnimationState::Idle;
-            animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
+            animation::update_scrollbar_width(self.scrollbar_id.clone(), 2.0);
         }
     }
 }
@@ -433,7 +433,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
         .add(CssProperty::Top, "0")
         .add(CssProperty::Right, "0")
         .add(CssProperty::Bottom, "0")
-        .add(CssProperty::Width, "4px") // Initial width (animated by state machine)
+        .add(CssProperty::Width, "2px") // Initial width (animated by state machine)
         .apply();
 
     // Create animation controller for this track

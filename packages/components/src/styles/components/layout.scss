@@ -119,27 +119,6 @@
   }
 }
 
-// Custom scrollbar for layout content
-.hi-layout-content {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 165, 233, 0.5) transparent;
-  
-  &::-webkit-scrollbar {
-    width: 10px;
-  }
-  &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 5px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: rgba(0, 165, 233, 0.5);
-    border-radius: 5px;
-    &:hover {
-      background: rgba(0, 165, 233, 0.8);
-    }
-  }
-}
-
 // ============================================
 // Layout with Sidebar
 // ============================================

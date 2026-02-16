@@ -72,11 +72,11 @@
     scrollbar-width: none;
 }
 
-// Scrollbar track (the rail) - absolutely positioned on right edge
+// Scrollbar track (the rail) - absolutely positioned inside wrapper's right edge
 .custom-scrollbar-track {
-    position: absolute;  // Absolute positioning on right edge of wrapper
+    position: absolute;  // Absolute positioning inside wrapper
     top: 0;
-    right: 0;
+    right: 4px;  // Inside wrapper to avoid being clipped by parent overflow:hidden
     bottom: 0;
     // width is set dynamically via JavaScript (2px → 4px)
     width: 2px; // Initial width

@@ -423,7 +423,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
         .add_data("custom-scrollbar", "track")
         .apply();
 
-    // Set track to absolute positioning, attached to container's right edge
+    // Set track to absolute positioning, inside wrapper's right edge
     let track_html = match track.dyn_ref::<web_sys::HtmlElement>() {
         Some(el) => el,
         None => return,
@@ -431,7 +431,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
     StyleBuilder::new(track_html)
         .add(CssProperty::Position, "absolute")
         .add(CssProperty::Top, "0")
-        .add(CssProperty::Right, "0")
+        .add(CssProperty::Right, "4px")  // Inside wrapper to avoid being clipped by parent overflow:hidden
         .add(CssProperty::Bottom, "0")
         .add(CssProperty::Width, "2px") // Initial width (animated by state machine)
         .apply();

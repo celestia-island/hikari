@@ -264,6 +264,7 @@ pub enum PortalEntry {
         title: Option<String>,
         close_on_click_outside: bool,
         on_close: Option<Callback<()>>,
+        close_requested: Signal<bool>,
         children: Element,
     },
 }
@@ -903,6 +904,7 @@ fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                 title,
                                 close_on_click_outside,
                                 on_close,
+                                close_requested,
                                 children,
                             } => rsx! {
                                 PopoverPortalEntry {
@@ -916,6 +918,7 @@ fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                     title: title.clone(),
                                     close_on_click_outside: *close_on_click_outside,
                                     on_close: on_close.clone(),
+                                    close_requested: *close_requested,
                                     children: children.clone(),
                                 }
                             },
@@ -1629,7 +1632,7 @@ fn ToastPortalEntry(
 #[component]
 fn PopoverPortalEntry(
     z_index: usize,
-    #[allow(unused_variables)] id: String,
+    id: String,
     trigger_rect: Option<(f64, f64, f64, f64)>,
     preferred_placements: Vec<PopoverPlacement>,
     offset: f64,
@@ -1637,111 +1640,27 @@ fn PopoverPortalEntry(
     title: Option<String>,
     close_on_click_outside: bool,
     on_close: Option<Callback<()>>,
+    close_requested: Signal<bool>,
     children: Element,
 ) -> Element {
-    fn check_placement(
-        placement: PopoverPlacement,
-        tx: f64, ty: f64, tw: f64, th: f64,
-        popover_w: f64, popover_h: f64,
-        vw: f64, vh: f64,
-        offset: f64,
-        padding: f64,
-    ) -> Option<(PopoverPlacement, f64, f64)> {
-        let x = tx + tw / 2.0;
-        let y = ty + th / 2.0;
+    let (mut animation_state, close_popover, computed_opacity_scale) =
+        use_animated_portal_entry(id.clone(), ModalAnimationState::Appearing, "Popover");
 
-        match placement {
-            PopoverPlacement::Bottom => {
-                let pos_y = ty + th + offset;
-                if pos_y + popover_h <= vh - padding {
-                    Some((PopoverPlacement::Bottom, x, pos_y))
-                } else {
-                    None
-                }
-            }
-            PopoverPlacement::Top => {
-                let pos_y = ty - offset;
-                if pos_y - popover_h >= padding {
-                    Some((PopoverPlacement::Top, x, pos_y))
-                } else {
-                    None
-                }
-            }
-            PopoverPlacement::Left => {
-                let pos_x = tx - offset;
-                if pos_x - popover_w >= padding {
-                    Some((PopoverPlacement::Left, pos_x, y))
-                } else {
-                    None
-                }
-            }
-            PopoverPlacement::Right => {
-                let pos_x = tx + tw + offset;
-                if pos_x + popover_w <= vw - padding {
-                    Some((PopoverPlacement::Right, pos_x, y))
-                } else {
-                    None
-                }
-            }
-        }
-    }
-
-    fn find_best_position(
-        trigger_rect: Option<(f64, f64, f64, f64)>,
-        preferred: &[PopoverPlacement],
-        popover_w: f64,
-        popover_h: f64,
-        vw: f64,
-        vh: f64,
-        offset: f64,
-    ) -> (PopoverPlacement, f64, f64) {
-        const PADDING: f64 = 16.0;
-
-        if let Some((tx, ty, tw, th)) = trigger_rect {
-            let trigger_center_x = tx + tw / 2.0;
-
-            // 先按 prefer 顺序尝试
-            for placement in preferred {
-                if let Some(result) = check_placement(*placement, tx, ty, tw, th, popover_w, popover_h, vw, vh, offset, PADDING) {
-                    return result;
-                }
-            }
-
-            // 再按默认顺序尝试剩余方向
-            let default_order = [
-                PopoverPlacement::Bottom,
-                PopoverPlacement::Top,
-                PopoverPlacement::Left,
-                PopoverPlacement::Right,
-            ];
-            for placement in default_order {
-                if !preferred.contains(&placement) {
-                    if let Some(result) = check_placement(placement, tx, ty, tw, th, popover_w, popover_h, vw, vh, offset, PADDING) {
-                        return result;
+    // Listen for close_requested signal changes
+    {
+        let on_close_clone = on_close.clone();
+        use_effect(move || {
+            if close_requested() {
+                let current_state = *animation_state.read();
+                if current_state == ModalAnimationState::Visible {
+                    animation_state.set(ModalAnimationState::Disappearing);
+                    if let Some(handler) = on_close_clone.as_ref() {
+                        handler.call(());
                     }
                 }
             }
-
-            // 兜底：返回 Bottom
-            (PopoverPlacement::Bottom, trigger_center_x, ty + th + offset)
-        } else {
-            (PopoverPlacement::Bottom, 0.0, 0.0)
-        }
+        });
     }
-
-    let viewport_width = use_signal(|| {
-        #[cfg(target_arch = "wasm32")]
-        {
-            web_sys::window()
-                .and_then(|w| w.inner_width().ok())
-                .and_then(|v| v.as_f64())
-                .unwrap_or(1920.0)
-        }
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            1920.0
-        }
-    });
 
     let viewport_height = use_signal(|| {
         #[cfg(target_arch = "wasm32")]
@@ -1757,88 +1676,143 @@ fn PopoverPortalEntry(
         }
     });
 
-    let mut position_state = use_signal(|| {
-        find_best_position(
-            trigger_rect,
-            &preferred_placements,
-            160.0,
-            120.0,
-            viewport_width(),
-            viewport_height(),
-            offset,
-        )
-    });
+    let position_state = use_signal(|| {
+        fn check_placement(
+            placement: PopoverPlacement,
+            tx: f64, ty: f64, tw: f64, th: f64,
+            popover_w: f64, popover_h: f64,
+            vw: f64, vh: f64,
+            offset: f64,
+            padding: f64,
+        ) -> Option<(PopoverPlacement, f64, f64)> {
+            let x = tx + tw / 2.0;
+            let y = ty + th / 2.0;
 
-    #[cfg(target_arch = "wasm32")]
-    {
-        let preferred = preferred_placements.clone();
+            match placement {
+                PopoverPlacement::Bottom => {
+                    let pos_y = ty + th + offset;
+                    if pos_y + popover_h <= vh - padding {
+                        Some((PopoverPlacement::Bottom, x, pos_y))
+                    } else {
+                        None
+                    }
+                }
+                PopoverPlacement::Top => {
+                    let pos_y = ty - offset;
+                    if pos_y - popover_h >= padding {
+                        Some((PopoverPlacement::Top, x, pos_y))
+                    } else {
+                        None
+                    }
+                }
+                PopoverPlacement::Left => {
+                    let pos_x = tx - offset;
+                    if pos_x - popover_w >= padding {
+                        Some((PopoverPlacement::Left, pos_x, y))
+                    } else {
+                        None
+                    }
+                }
+                PopoverPlacement::Right => {
+                    let pos_x = tx + tw + offset;
+                    if pos_x + popover_w <= vw - padding {
+                        Some((PopoverPlacement::Right, pos_x, y))
+                    } else {
+                        None
+                    }
+                }
+            }
+        }
 
-        use_effect(move || {
-            let result = find_best_position(
-                trigger_rect,
-                &preferred,
-                160.0,
-                120.0,
-                viewport_width(),
-                viewport_height(),
-                offset,
-            );
-            position_state.set(result);
-        });
-    }
+        const PADDING: f64 = 16.0;
+        const POPOVER_W: f64 = 160.0;
+        const POPOVER_H: f64 = 120.0;
 
-    let position_style = use_memo(move || {
-        let (placement, x, y) = position_state();
-        match placement {
-            PopoverPlacement::Bottom => format!("position: fixed; left: {}px; top: {}px;", x, y),
-            PopoverPlacement::Top => format!("position: fixed; left: {}px; bottom: {}px;", x, viewport_height() - y),
-            PopoverPlacement::Left => format!("position: fixed; left: {}px; top: {}px;", x, y),
-            PopoverPlacement::Right => format!("position: fixed; left: {}px; top: {}px;", x, y),
+        if let Some((tx, ty, tw, th)) = trigger_rect {
+            let trigger_center_x = tx + tw / 2.0;
+
+            for placement in &preferred_placements {
+                if let Some(result) = check_placement(*placement, tx, ty, tw, th, POPOVER_W, POPOVER_H, 
+                    web_sys::window().and_then(|w| w.inner_width().ok()).and_then(|v| v.as_f64()).unwrap_or(1920.0),
+                    viewport_height(), offset, PADDING) {
+                    return result;
+                }
+            }
+
+            let default_order = [
+                PopoverPlacement::Bottom,
+                PopoverPlacement::Top,
+                PopoverPlacement::Left,
+                PopoverPlacement::Right,
+            ];
+            for placement in default_order {
+                if !preferred_placements.contains(&placement) {
+                    if let Some(result) = check_placement(placement, tx, ty, tw, th, POPOVER_W, POPOVER_H,
+                        web_sys::window().and_then(|w| w.inner_width().ok()).and_then(|v| v.as_f64()).unwrap_or(1920.0),
+                        viewport_height(), offset, PADDING) {
+                        return result;
+                    }
+                }
+            }
+
+            (PopoverPlacement::Bottom, trigger_center_x, ty + th + offset)
+        } else {
+            (PopoverPlacement::Bottom, 0.0, 0.0)
         }
     });
 
-    let transform_origin = use_memo(move || {
-        let (placement, _, _) = position_state();
-        match placement {
-            PopoverPlacement::Bottom => "top center",
-            PopoverPlacement::Top => "bottom center",
-            PopoverPlacement::Left => "right center",
-            PopoverPlacement::Right => "left center",
-        }
-    });
+    let (placement, x, y) = position_state();
 
-    let translate_transform = use_memo(move || {
-        let (placement, _, _) = position_state();
-        match placement {
-            PopoverPlacement::Bottom | PopoverPlacement::Top => "translateX(-50%)",
-            PopoverPlacement::Left => "translateX(-100%) translateY(-50%)",
-            PopoverPlacement::Right => "translateY(-50%)",
-        }
-    });
+    let (position_style, transform_origin, translate_transform) = match placement {
+        PopoverPlacement::Bottom => (
+            format!("position: fixed; left: {}px; top: {}px;", x, y),
+            "top center",
+            "translateX(-50%)",
+        ),
+        PopoverPlacement::Top => (
+            format!("position: fixed; left: {}px; bottom: {}px;", x, viewport_height() - y),
+            "bottom center",
+            "translateX(-50%)",
+        ),
+        PopoverPlacement::Left => (
+            format!("position: fixed; left: {}px; top: {}px;", x, y),
+            "right center",
+            "translateX(-100%) translateY(-50%)",
+        ),
+        PopoverPlacement::Right => (
+            format!("position: fixed; left: {}px; top: {}px;", x, y),
+            "left center",
+            "translateY(-50%)",
+        ),
+    };
 
+    let (opacity, scale) = computed_opacity_scale.read().clone();
     let width_style = width.as_deref().unwrap_or("auto");
     let popover_classes = ClassesBuilder::new().add(PopoverClass::Popover).build();
 
+    let popover_style = format!(
+        "{} z-index: {}; width: {}; transform: {} scaleY({}); transform-origin: {}; opacity: {}; transition: opacity 0.15s ease-out, transform 0.15s ease-out;",
+        position_style, z_index, width_style, translate_transform, scale, transform_origin, opacity
+    );
+
     let backdrop_z_index = z_index.saturating_sub(1);
 
-    let popover_style = format!(
-        "{} z-index: {}; width: {}; transform-origin: {}; animation: hi-popover-enter 0.15s ease-out forwards;",
-        position_style(),
-        z_index,
-        width_style,
-        transform_origin()
-    );
+    let handle_close = {
+        let on_close = on_close.clone();
+        move |e: MouseEvent| {
+            close_popover.call(e);
+            if let Some(handler) = on_close.as_ref() {
+                handler.call(());
+            }
+        }
+    };
 
     rsx! {
         if close_on_click_outside {
             div {
                 class: "hi-popover-backdrop",
                 style: "position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: {backdrop_z_index}; background: transparent; pointer-events: auto;",
-                onclick: move |_| {
-                    if let Some(handler) = on_close.as_ref() {
-                        handler.call(());
-                    }
-                },
+                onclick: handle_close.clone(),
             }
         }
 
@@ -1846,6 +1820,9 @@ fn PopoverPortalEntry(
             class: "{popover_classes}",
             style: "{popover_style}",
             "data-open": "true",
+            onclick: |e: MouseEvent| {
+                e.stop_propagation();
+            },
 
             if let Some(title) = title {
                 div { class: "hi-popover-title", "{title}" }

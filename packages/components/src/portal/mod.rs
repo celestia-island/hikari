@@ -263,6 +263,7 @@ pub enum PortalEntry {
         width: Option<String>,
         title: Option<String>,
         close_on_click_outside: bool,
+        close_on_select: bool,
         on_close: Option<Callback<()>>,
         close_requested: Signal<bool>,
         children: Element,
@@ -903,6 +904,7 @@ fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                 width,
                                 title,
                                 close_on_click_outside,
+                                close_on_select,
                                 on_close,
                                 close_requested,
                                 children,
@@ -917,6 +919,7 @@ fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                     width: width.clone(),
                                     title: title.clone(),
                                     close_on_click_outside: *close_on_click_outside,
+                                    close_on_select: *close_on_select,
                                     on_close: on_close.clone(),
                                     close_requested: *close_requested,
                                     children: children.clone(),
@@ -1639,6 +1642,7 @@ fn PopoverPortalEntry(
     width: Option<String>,
     title: Option<String>,
     close_on_click_outside: bool,
+    close_on_select: bool,
     on_close: Option<Callback<()>>,
     close_requested: Signal<bool>,
     children: Element,
@@ -1791,7 +1795,7 @@ fn PopoverPortalEntry(
     let popover_classes = ClassesBuilder::new().add(PopoverClass::Popover).build();
 
     let popover_style = format!(
-        "{} z-index: {}; width: {}; transform: {} scaleY({}); transform-origin: {}; opacity: {}; transition: opacity 0.15s ease-out, transform 0.15s ease-out;",
+        "{} z-index: {}; width: {}; transform: {} scaleY({}); transform-origin: {}; opacity: {}; transition: opacity 0.15s ease-out, transform 0.15s ease-out; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10); backdrop-filter: blur(12px); padding: 4px 0;",
         position_style, z_index, width_style, translate_transform, scale, transform_origin, opacity
     );
 
@@ -1820,15 +1824,43 @@ fn PopoverPortalEntry(
             class: "{popover_classes}",
             style: "{popover_style}",
             "data-open": "true",
-            onclick: |e: MouseEvent| {
-                e.stop_propagation();
-            },
 
             if let Some(title) = title {
                 div { class: "hi-popover-title", "{title}" }
             }
 
-            div { class: "hi-popover-content",
+            div {
+                class: "hi-popover-content",
+                onclick: move |e: MouseEvent| {
+                    e.stop_propagation();
+                    
+                    // Close on select if enabled - check if click is on a menu item
+                    if close_on_select {
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            if let Some(web_event) = e.downcast::<web_sys::MouseEvent>() {
+                                if let Some(target) = web_event.target() {
+                                    if let Some(elem) = target.dyn_ref::<web_sys::Element>() {
+                                        let is_menu_item = elem.closest(".hi-menu-item").ok();
+                                        if is_menu_item.is_some() {
+                                            close_popover.call(e);
+                                            if let Some(handler) = on_close.as_ref() {
+                                                handler.call(());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            close_popover.call(e);
+                            if let Some(handler) = on_close.as_ref() {
+                                handler.call(());
+                            }
+                        }
+                    }
+                },
                 {children}
             }
         }

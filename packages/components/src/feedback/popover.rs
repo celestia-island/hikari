@@ -72,6 +72,8 @@ pub struct PopoverProps {
     pub positioning: PopoverPositioning,
     #[props(default = true)]
     pub close_on_click_outside: bool,
+    #[props(default = true)]
+    pub close_on_select: bool,
     #[props(default)]
     pub title: Option<String>,
     #[props(default)]
@@ -91,6 +93,7 @@ impl Default for PopoverProps {
             on_open_change: None,
             positioning: PopoverPositioning::default_relative(),
             close_on_click_outside: true,
+            close_on_select: true,
             title: None,
             width: None,
             class: String::default(),
@@ -168,6 +171,7 @@ pub fn Popover(props: PopoverProps) -> Element {
                 width: props.width.clone(),
                 title: props.title.clone(),
                 close_on_click_outside: props.close_on_click_outside,
+                close_on_select: props.close_on_select,
                 on_close: Some(on_close.clone()),
                 close_requested,
                 children: props.children.clone(),

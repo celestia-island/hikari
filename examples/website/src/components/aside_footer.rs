@@ -3,6 +3,7 @@
 
 use dioxus::prelude::*;
 
+use crate::hooks::use_language;
 use _components::{
     basic::{IconButton, IconButtonSize},
     feedback::{GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning},
@@ -10,47 +11,32 @@ use _components::{
     navigation::{Menu, MenuItem, MenuItemHeight},
     use_theme,
 };
+use _i18n::context::Language;
 use _icons::MdiIcon;
 use _palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, JustifyContent, Shadow};
 
-/// Language type
-#[derive(Clone, Copy, Debug, PartialEq, Default)]
-pub enum Language {
-    #[default]
-    English,
-    SimplifiedChinese,
-    TraditionalChinese,
+fn language_name_in(lang: Language, display_lang: Language) -> String {
+    match (lang, display_lang) {
+        (Language::English, Language::English) => "English",
+        (Language::ChineseSimplified, Language::English) => "Simplified Chinese",
+        (Language::ChineseTraditional, Language::English) => "Traditional Chinese",
+        (Language::English, Language::ChineseSimplified) => "英语",
+        (Language::ChineseSimplified, Language::ChineseSimplified) => "简体中文",
+        (Language::ChineseTraditional, Language::ChineseSimplified) => "繁体中文",
+        (Language::English, Language::ChineseTraditional) => "英語",
+        (Language::ChineseSimplified, Language::ChineseTraditional) => "簡體中文",
+        (Language::ChineseTraditional, Language::ChineseTraditional) => "繁體中文",
+    }
+    .to_string()
 }
 
-impl Language {
-    /// Get language name in the specified language
-    pub fn name_in(&self, lang: Language) -> String {
-        match (self, lang) {
-            // English names
-            (Language::English, Language::English) => "English",
-            (Language::SimplifiedChinese, Language::English) => "Simplified Chinese",
-            (Language::TraditionalChinese, Language::English) => "Traditional Chinese",
-            // Simplified Chinese names
-            (Language::English, Language::SimplifiedChinese) => "英语",
-            (Language::SimplifiedChinese, Language::SimplifiedChinese) => "简体中文",
-            (Language::TraditionalChinese, Language::SimplifiedChinese) => "繁体中文",
-            // Traditional Chinese names
-            (Language::English, Language::TraditionalChinese) => "英語",
-            (Language::SimplifiedChinese, Language::TraditionalChinese) => "簡體中文",
-            (Language::TraditionalChinese, Language::TraditionalChinese) => "繁體中文",
-        }
-        .to_string()
-    }
-
-    /// Get bilingual display: "Native Name - Current Language Name"
-    pub fn bilingual_display(&self, current_lang: Language) -> String {
-        let native = self.name_in(*self);
-        if *self == current_lang {
-            native
-        } else {
-            let in_current = self.name_in(current_lang);
-            format!("{} - {}", in_current, native)
-        }
+fn language_bilingual_display(lang: Language, current_lang: Language) -> String {
+    let native = language_name_in(lang, lang);
+    if lang == current_lang {
+        native
+    } else {
+        let in_current = language_name_in(lang, current_lang);
+        format!("{} - {}", in_current, native)
     }
 }
 
@@ -58,7 +44,8 @@ impl Language {
 #[component]
 pub fn AsideFooter() -> Element {
     let theme = use_theme();
-    let mut selected_language = use_signal(|| Language::English);
+    let lang_ctx = use_language();
+    let mut language = lang_ctx.language;
     let mut is_popover_open = use_signal(|| false);
 
     // Compute current theme icon
@@ -87,13 +74,12 @@ pub fn AsideFooter() -> Element {
         is_popover_open.set(false);
     });
 
-    let current_lang = *selected_language.read();
+    let current_lang = *language.read();
 
     rsx! {
         div {
             class: "hi-aside-footer {container_classes}",
 
-            // Theme toggle button
             IconButton {
                 key: "{icon_key}",
                 icon: *current_icon.read(),
@@ -113,7 +99,6 @@ pub fn AsideFooter() -> Element {
                 }
             }
 
-            // Language switcher using Popover + Menu
             Popover {
                 open: *is_popover_open.read(),
                 positioning: PopoverPositioning::Relative {
@@ -143,25 +128,25 @@ pub fn AsideFooter() -> Element {
                             item_key: "en".to_string(),
                             height: MenuItemHeight::Compact,
                             onclick: move |_| {
-                                selected_language.set(Language::English);
+                                language.set(Language::English);
                             },
-                            "{Language::English.bilingual_display(current_lang)}"
+                            "{language_bilingual_display(Language::English, current_lang)}"
                         }
                         MenuItem {
                             item_key: "zh".to_string(),
                             height: MenuItemHeight::Compact,
                             onclick: move |_| {
-                                selected_language.set(Language::SimplifiedChinese);
+                                language.set(Language::ChineseSimplified);
                             },
-                            "{Language::SimplifiedChinese.bilingual_display(current_lang)}"
+                            "{language_bilingual_display(Language::ChineseSimplified, current_lang)}"
                         }
                         MenuItem {
                             item_key: "tw".to_string(),
                             height: MenuItemHeight::Compact,
                             onclick: move |_| {
-                                selected_language.set(Language::TraditionalChinese);
+                                language.set(Language::ChineseTraditional);
                             },
-                            "{Language::TraditionalChinese.bilingual_display(current_lang)}"
+                            "{language_bilingual_display(Language::ChineseTraditional, current_lang)}"
                         }
                     }
                 }

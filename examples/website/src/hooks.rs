@@ -21,6 +21,15 @@ pub fn get_toml_content(lang: Language) -> &'static str {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct LanguageContext {
+    pub language: Signal<Language>,
+}
+
+pub fn use_language() -> LanguageContext {
+    use_context::<LanguageContext>()
+}
+
 pub fn use_i18n() -> Option<I18nContext> {
     try_consume_context::<I18nContext>()
 }

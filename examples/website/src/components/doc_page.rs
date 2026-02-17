@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 
 use crate::components::{Layout, render_markdown};
-use crate::hooks::use_i18n;
+use crate::hooks::use_language;
 use _components::layout::Container;
 use _i18n::context::Language;
 
@@ -21,16 +21,12 @@ fn lang_to_path_prefix(lang: Language) -> &'static str {
 
 #[component]
 pub fn DynamicDocPage(props: DynamicDocPageProps) -> Element {
-    let i18n = use_i18n();
-    let lang_prefix = match i18n {
-        Some(ctx) => lang_to_path_prefix(ctx.language),
-        None => "en-US",
-    };
-    
-    let full_path = format!("{}/{}", lang_prefix, props.doc_path);
+    let lang_ctx = use_language();
     
     let doc_content = use_resource(move || {
-        let path = full_path.clone();
+        let current_lang = *lang_ctx.language.read();
+        let lang_prefix = lang_to_path_prefix(current_lang);
+        let path = format!("{}/{}", lang_prefix, props.doc_path);
         async move {
             load_markdown_content(&path).await
         }

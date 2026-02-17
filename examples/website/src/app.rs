@@ -3,7 +3,7 @@
 
 use dioxus::prelude::*;
 
-use crate::hooks::I18nProviderWrapper;
+use crate::hooks::{I18nProviderWrapper, LanguageContext};
 use _components::{PortalProvider, ThemeProvider};
 use _i18n::context::Language;
 
@@ -11,10 +11,11 @@ use _i18n::context::Language;
 #[component]
 pub fn App() -> Element {
     let mut language = use_signal(|| Language::English);
+    let lang_ctx = use_context_provider(|| LanguageContext { language });
 
     rsx! {
         I18nProviderWrapper {
-            language,
+            language: lang_ctx.language,
             ThemeProvider { palette: "hikari".to_string(),
                 PortalProvider {
                     Router::<Route> {}

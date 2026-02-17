@@ -6,6 +6,7 @@ use dioxus::prelude::*;
 use _components::{
     basic::{IconButton, IconButtonSize},
     feedback::{GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning},
+    layout::{Direction, FlexBox, FlexGap},
     navigation::{Menu, MenuItem, MenuItemHeight},
     use_theme,
 };
@@ -131,32 +132,37 @@ pub fn AsideFooter() -> Element {
                         onclick: move |_| {},
                     }
                 },
-                Menu {
-                    in_popover: true,
-                    request_close: Some(request_close),
-                    MenuItem {
-                        item_key: "en".to_string(),
-                        height: MenuItemHeight::Compact,
-                        onclick: move |_| {
-                            selected_language.set(Language::English);
-                        },
-                        "{Language::English.bilingual_display(current_lang)}"
-                    }
-                    MenuItem {
-                        item_key: "zh".to_string(),
-                        height: MenuItemHeight::Compact,
-                        onclick: move |_| {
-                            selected_language.set(Language::SimplifiedChinese);
-                        },
-                        "{Language::SimplifiedChinese.bilingual_display(current_lang)}"
-                    }
-                    MenuItem {
-                        item_key: "tw".to_string(),
-                        height: MenuItemHeight::Compact,
-                        onclick: move |_| {
-                            selected_language.set(Language::TraditionalChinese);
-                        },
-                        "{Language::TraditionalChinese.bilingual_display(current_lang)}"
+                FlexBox {
+                    min_width: Some("140px".to_string()),
+                    direction: Direction::Column,
+                    gap: FlexGap::Gap1,
+                    Menu {
+                        in_popover: true,
+                        request_close: Some(request_close),
+                        MenuItem {
+                            item_key: "en".to_string(),
+                            height: MenuItemHeight::Compact,
+                            onclick: move |_| {
+                                selected_language.set(Language::English);
+                            },
+                            "{Language::English.bilingual_display(current_lang)}"
+                        }
+                        MenuItem {
+                            item_key: "zh".to_string(),
+                            height: MenuItemHeight::Compact,
+                            onclick: move |_| {
+                                selected_language.set(Language::SimplifiedChinese);
+                            },
+                            "{Language::SimplifiedChinese.bilingual_display(current_lang)}"
+                        }
+                        MenuItem {
+                            item_key: "tw".to_string(),
+                            height: MenuItemHeight::Compact,
+                            onclick: move |_| {
+                                selected_language.set(Language::TraditionalChinese);
+                            },
+                            "{Language::TraditionalChinese.bilingual_display(current_lang)}"
+                        }
                     }
                 }
             }

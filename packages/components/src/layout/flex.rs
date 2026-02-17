@@ -88,6 +88,18 @@ pub struct FlexBoxProps {
     #[props(default)]
     pub min_width: Option<String>,
 
+    /// Minimum height (CSS value like "100px", "5rem")
+    #[props(default)]
+    pub min_height: Option<String>,
+
+    /// Maximum width (CSS value like "300px", "20rem")
+    #[props(default)]
+    pub max_width: Option<String>,
+
+    /// Maximum height (CSS value like "400px", "25rem")
+    #[props(default)]
+    pub max_height: Option<String>,
+
     /// Inline flex mode
     #[props(default)]
     pub inline: bool,
@@ -112,6 +124,9 @@ impl Default for FlexBoxProps {
             gap: FlexGap::None,
             flex: true,
             min_width: None,
+            min_height: None,
+            max_width: None,
+            max_height: None,
             inline: false,
             class: String::default(),
             style: String::default(),
@@ -184,6 +199,15 @@ pub fn FlexBox(props: FlexBoxProps) -> Element {
     let mut style = props.style.clone();
     if let Some(min_w) = &props.min_width {
         style = format!("{} min-width: {};", style, min_w);
+    }
+    if let Some(min_h) = &props.min_height {
+        style = format!("{} min-height: {};", style, min_h);
+    }
+    if let Some(max_w) = &props.max_width {
+        style = format!("{} max-width: {};", style, max_w);
+    }
+    if let Some(max_h) = &props.max_height {
+        style = format!("{} max-height: {};", style, max_h);
     }
 
     rsx! {

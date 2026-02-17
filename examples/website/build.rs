@@ -4,6 +4,7 @@
 //! 1. Generates bulk import mod.rs files using include! macros
 //! 2. Copies index.html to public/
 //! 3. Sets up development environment
+//! 4. Creates language-specific document directories (en, zh-chs, zh-cht)
 //!
 //! # IMPORTANT: Path Configuration
 //!
@@ -22,6 +23,9 @@ use std::{
 
 /// Filesystem paths (MUST match src/paths.rs::STATIC_PATHS)
 const PUBLIC_DIR: &str = "public";
+
+/// Language directory mappings: (source_dir, target_dir)
+const LANG_DIRS: &[(&str, &str)] = &[("en-US", "en"), ("zh-CHS", "zh-chs"), ("zh-CHT", "zh-cht")];
 
 fn main() {
     println!("cargo:warning=🏗️  website build starting...");
@@ -225,6 +229,42 @@ fn main() {
             println!("cargo:warning=⚠️  Failed to copy docs: {}", e);
         } else {
             println!("cargo:warning=✅ Copied docs to public/docs/");
+
+            // Create language-specific directories (en, zh-chs, zh-cht) from original dirs (en-US, zh-CHS, zh-CHT)
+            for (src_dir, target_dir) in LANG_DIRS {
+                let src_path = docs_dst.join(src_dir);
+                let target_path = docs_dst.join(target_dir);
+
+                if src_path.exists() {
+                    // Remove existing target if exists
+                    if target_path.exists() {
+                        if let Err(e) = std::fs::remove_dir_all(&target_path) {
+                            println!(
+                                "cargo:warning=⚠️  Failed to remove old {}: {}",
+                                target_dir, e
+                            );
+                        }
+                    }
+
+                    // Copy source to target
+                    if let Err(e) = copy_dir_all(&src_path, &target_path) {
+                        println!(
+                            "cargo:warning=⚠️  Failed to create {} directory: {}",
+                            target_dir, e
+                        );
+                    } else {
+                        println!(
+                            "cargo:warning=✅ Created language directory: {}",
+                            target_dir
+                        );
+                    }
+                } else {
+                    println!(
+                        "cargo:warning=⚠️  Source language directory not found: {}",
+                        src_dir
+                    );
+                }
+            }
         }
 
         // Also copy to local public/docs/ for server running from examples/website
@@ -241,6 +281,35 @@ fn main() {
             println!("cargo:warning=⚠️  Failed to copy docs to local: {}", e);
         } else {
             println!("cargo:warning=✅ Copied docs to local public/docs/");
+
+            // Also create language-specific directories in local
+            for (src_dir, target_dir) in LANG_DIRS {
+                let src_path = local_docs_dst.join(src_dir);
+                let target_path = local_docs_dst.join(target_dir);
+
+                if src_path.exists() {
+                    if target_path.exists() {
+                        if let Err(e) = std::fs::remove_dir_all(&target_path) {
+                            println!(
+                                "cargo:warning=⚠️  Failed to remove old local {}: {}",
+                                target_dir, e
+                            );
+                        }
+                    }
+
+                    if let Err(e) = copy_dir_all(&src_path, &target_path) {
+                        println!(
+                            "cargo:warning=⚠️  Failed to create local {} directory: {}",
+                            target_dir, e
+                        );
+                    } else {
+                        println!(
+                            "cargo:warning=✅ Created local language directory: {}",
+                            target_dir
+                        );
+                    }
+                }
+            }
         }
     } else {
         println!(

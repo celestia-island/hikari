@@ -21,7 +21,6 @@ use super::{
     registry::StyleRegistry,
 };
 
-// Re-export icon route handler
 pub use super::icon_route::get_icon_data;
 
 /// Application state shared across all handlers.
@@ -71,32 +70,6 @@ pub enum RouterBuildError {
 }
 
 /// Builds an Axum Router with Dioxus SSR and style service integration.
-///
-/// # Arguments
-///
-/// * `routes` - Custom routes to add to the router
-/// * `static_mounts` - Static asset mount configurations
-/// * `state` - Application state to share across handlers
-/// * `style_registry` - Optional style registry for CSS serving
-///
-/// # Example
-///
-/// ```rust,no_run
-/// use render_service::router::build_router;
-/// use render_service::StyleRegistry;
-/// use std::collections::HashMap;
-///
-/// # async fn example() -> anyhow::Result<()> {
-/// let registry = StyleRegistry::default();
-/// let router = build_router(
-///     vec![],
-///     vec![],
-///     HashMap::new(),
-///     Some(registry),
-/// )?;
-/// # Ok(())
-/// # }
-/// ```
 pub fn build_router(
     routes: Vec<RouterRoute>,
     static_mounts: Vec<StaticMountConfig>,
@@ -104,26 +77,19 @@ pub fn build_router(
     style_registry: Option<StyleRegistry>,
     public_dir: Option<String>,
 ) -> anyhow::Result<Router> {
-    // Create the application state
     let public_dir = public_dir.unwrap_or_else(|| "public".to_string());
     let mut app_state = AppState::new(state, public_dir);
 
-    // Add style registry to state if provided
     if let Some(registry) = style_registry {
         app_state = app_state.with_style_registry(registry);
     }
 
-    // Start building the router WITHOUT state first
     let mut router = Router::new();
 
-    // Add custom routes first (before any typed nesting)
     for route in routes {
         router = router.route(&route.path, route.method_router);
     }
 
-    // Style service routes: serve dynamic CSS from StyleRegistry
-    // These routes complement the static bundle.css, providing per-component CSS
-    // and style registry metadata via API endpoints
     if app_state.style_registry.is_some() {
         router = router.route(
             "/styles/registry/bundle.css",
@@ -136,58 +102,46 @@ pub fn build_router(
         router = router.route("/styles/info", axum::routing::get(style_info_handler));
     }
 
-    // Add dynamic icon data endpoint
     router = router.route("/api/icons", axum::routing::get(get_icon_data));
 
-    // Add Tailwind CSS route (always available if built)
     router = router.route(
         "/styles/tailwind.css",
         axum::routing::get(tailwind_css_handler),
     );
 
-    // CRITICAL: Add root path handler BEFORE static mounts
-    // This ensures the SPA index.html is served for the root path
     router = router.route("/", axum::routing::get(index_handler));
     router = router.route("/index.html", axum::routing::get(index_handler));
 
-    // Add Dioxus SSR catch-all route
     router = router.route("/ssr/<*path>", any(ssr_handler));
-
-    // Add icon fallback route for /icons/<path>
-    // This ensures icon requests don't fall through to SPA fallback
     router = router.route("/icons/<*path>", any(icon_fallback_handler));
 
-    // CRITICAL: Add static asset mounts with SPA fallback
-    // Static files are served, but 404s fall through to index.html for SPA routing
+    // Legacy route redirects - redirect old routes without language prefix to default language
+    // These routes handle paths like /components, /system, /demos without language prefix
+    router = router.route("/components", axum::routing::get(legacy_redirect_handler));
+    router = router.route("/components/<*path>", axum::routing::get(legacy_redirect_handler));
+    router = router.route("/system", axum::routing::get(legacy_redirect_handler));
+    router = router.route("/system/<*path>", axum::routing::get(legacy_redirect_handler));
+    router = router.route("/demos", axum::routing::get(legacy_redirect_handler));
+    router = router.route("/demos/<*path>", axum::routing::get(legacy_redirect_handler));
+
     for mount_config in static_mounts {
         let serve_dir = ServeDir::new(&mount_config.local_path);
         router = router.nest_service(&mount_config.url_path, serve_dir);
     }
 
-    // Add global fallback for any unmatched routes
-    // This catches frontend routes like /components/basic, /system, etc.
     router = router.fallback(axum::routing::get(spa_fallback_handler));
 
-    // NOW add state - this must be done last in Axum 0.8
     let router = router.with_state(app_state);
-
-    // Note: Don't add TraceLayer here as it can cause issues with router serving
-    // Users can add their own middleware layers after building the router
 
     Ok(router)
 }
 
 /// Index handler - serves the SPA's index.html
-///
-/// This is the entry point for the application. For Dioxus WASM apps,
-/// the index.html contains everything needed to bootstrap the app.
 async fn index_handler(State(state): State<AppState>) -> impl IntoResponse {
-    // Try to read index.html from public directory
     let index_path = format!("{}/index.html", state.public_dir);
     let html = match tokio::fs::read_to_string(&index_path).await {
         Ok(content) => content,
         Err(e) => {
-            // Fallback HTML if index.html not found
             eprintln!("❌ Failed to read public/index.html: {}", e);
             r#"<!DOCTYPE html>
 <html lang="en">
@@ -218,13 +172,28 @@ async fn index_handler(State(state): State<AppState>) -> impl IntoResponse {
         .unwrap()
 }
 
+/// Legacy redirect handler - redirects old routes to language-prefixed routes
+/// 
+/// Converts:
+/// - /components -> /zh-chs/components
+/// - /components/layer1/button -> /zh-chs/components/layer1/button
+/// - /system -> /zh-chs/system
+/// - /demos -> /zh-chs/demos
+async fn legacy_redirect_handler(uri: Uri) -> impl IntoResponse {
+    let path = uri.path();
+    let default_lang = "zh-chs";
+    let new_path = format!("/{}{}", default_lang, path);
+    
+    Response::builder()
+        .status(StatusCode::FOUND)
+        .header(header::LOCATION, new_path)
+        .header(header::CACHE_CONTROL, "no-cache")
+        .body(Body::from(""))
+        .unwrap()
+}
+
 /// Icon fallback handler - returns 404 for missing icon files
-///
-/// This prevents icon requests from falling through to SPA fallback.
-/// Icon files should be served from the mounted /icons directory.
-/// If an icon is not found, return a clear 404 SVG instead of HTML.
 async fn icon_fallback_handler(Path(path): Path<String>) -> impl IntoResponse {
-    // Return a clear 404 SVG instead of HTML
     let svg_404 = r#"<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
     <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/>
@@ -246,18 +215,11 @@ async fn icon_fallback_handler(Path(path): Path<String>) -> impl IntoResponse {
 }
 
 /// SPA fallback handler - returns index.html for all unmatched routes
-///
-/// This enables client-side routing by returning the same index.html
-/// for all paths. The frontend router (Dioxus Router) will handle
-/// displaying the correct page based on the URL.
 async fn spa_fallback_handler(_uri: Uri, State(state): State<AppState>) -> impl IntoResponse {
-    // For SPAs, all routes should return index.html
-    // The frontend router handles showing the right page
     let index_path = format!("{}/index.html", state.public_dir);
     let html = match tokio::fs::read_to_string(&index_path).await {
         Ok(content) => content,
         Err(_) => {
-            // Fallback HTML if index.html not found
             r#"<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -284,15 +246,11 @@ async fn spa_fallback_handler(_uri: Uri, State(state): State<AppState>) -> impl 
 }
 
 /// Dioxus SSR handler for server-side rendering.
-///
-/// This handler serves the Dioxus application with server-side rendering.
 async fn ssr_handler(uri: Uri, State(state): State<AppState>) -> impl IntoResponse {
-    // Try to read index.html from public directory
     let index_path = format!("{}/index.html", state.public_dir);
     let html = match tokio::fs::read_to_string(&index_path).await {
         Ok(content) => content,
         Err(_) => {
-            // Fallback to default HTML if index.html not found
             let path = uri.path();
             format!(
                 r#"<!DOCTYPE html>
@@ -323,8 +281,6 @@ async fn ssr_handler(uri: Uri, State(state): State<AppState>) -> impl IntoRespon
 }
 
 /// Health check handler for monitoring and load balancers.
-///
-/// Returns a 200 OK response with basic health information.
 pub async fn health_check() -> impl IntoResponse {
     Response::builder()
         .status(StatusCode::OK)
@@ -336,8 +292,6 @@ pub async fn health_check() -> impl IntoResponse {
 }
 
 /// 404 Not Found handler.
-///
-/// Returns a JSON response for unmatched routes.
 pub async fn not_found() -> impl IntoResponse {
     Response::builder()
         .status(StatusCode::NOT_FOUND)
@@ -361,9 +315,6 @@ pub async fn internal_error(err: String) -> impl IntoResponse {
 }
 
 /// CSS bundle handler - serves all registered component styles as a single CSS bundle.
-///
-/// This provides the dynamically-registered component CSS from StyleRegistry,
-/// complementing the static bundle.css served from public/styles/.
 async fn css_bundle_handler(State(state): State<AppState>) -> impl IntoResponse {
     match &state.style_registry {
         Some(registry) => {
@@ -387,13 +338,10 @@ async fn css_bundle_handler(State(state): State<AppState>) -> impl IntoResponse 
 }
 
 /// Component CSS handler - serves CSS for a single named component.
-///
-/// Endpoint: `/styles/components/<name>.css`
 async fn component_css_handler(
     State(state): State<AppState>,
     Path(name): Path<String>,
 ) -> impl IntoResponse {
-    // Strip .css extension if present
     let component_name = name.strip_suffix(".css").unwrap_or(&name);
 
     match &state.style_registry {
@@ -425,8 +373,6 @@ async fn component_css_handler(
 }
 
 /// Style info handler - returns JSON metadata about registered component styles.
-///
-/// Endpoint: `/styles/info`
 async fn style_info_handler(State(state): State<AppState>) -> impl IntoResponse {
     use crate::models::{
         BasicComponents, ComponentCategories, DataComponents, DisplayComponents, EntryComponents,

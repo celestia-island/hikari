@@ -21,13 +21,37 @@ impl Language {
         }
     }
 
+    pub fn url_prefix(&self) -> &'static str {
+        match self {
+            Language::English => "en",
+            Language::ChineseSimplified => "zh-chs",
+            Language::ChineseTraditional => "zh-cht",
+        }
+    }
+
     pub fn from_code(code: &str) -> Option<Self> {
         match code {
-            "en-US" => Some(Language::English),
-            "zh-CHS" => Some(Language::ChineseSimplified),
-            "zh-CHT" => Some(Language::ChineseTraditional),
+            "en-US" | "en" => Some(Language::English),
+            "zh-CHS" | "zh-chs" | "zh-Hans" => Some(Language::ChineseSimplified),
+            "zh-CHT" | "zh-cht" | "zh-Hant" => Some(Language::ChineseTraditional),
             _ => None,
         }
+    }
+
+    pub fn from_url_prefix(prefix: &str) -> Option<Self> {
+        Self::from_code(prefix)
+    }
+
+    pub fn all() -> &'static [Language] {
+        &[
+            Language::English,
+            Language::ChineseSimplified,
+            Language::ChineseTraditional,
+        ]
+    }
+
+    pub fn default_lang() -> Self {
+        Language::ChineseSimplified
     }
 }
 

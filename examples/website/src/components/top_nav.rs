@@ -4,46 +4,46 @@
 use dioxus::prelude::*;
 
 use crate::app::Route;
+use crate::hooks::use_language;
 use _palette::classes::{
     AlignItems, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, JustifyContent,
     MarginBottom,
 };
 
-/// Top navigation bar with FUI styling
-///
-/// Provides navigation between main sections (组件/系统/案例)
-/// using Hikari Tabs component with acrylic background and glow effects
 #[component]
 pub fn TopNav(current_route: Route) -> Element {
-    // Determine active tab based on current route
+    let lang_ctx = use_language();
+    let lang = (*lang_ctx.language.read()).url_prefix().to_string();
+
     let mut active_tab = use_signal(|| match current_route {
-        Route::Home {}
-        | Route::ComponentsOverview {}
-        | Route::Button {}
-        | Route::Layer1Form {}
-        | Route::Layer1Switch {}
-        | Route::Layer1Feedback {}
-        | Route::Layer1Display {}
-        | Route::Layer2Overview {}
-        | Route::Layer2Navigation {}
-        | Route::Layer2Data {}
-        | Route::Layer2Form {}
-        | Route::Layer2Feedback {}
-        | Route::Layer3Overview {}
-        | Route::Layer3Media {}
-        | Route::Layer3Editor {}
-        | Route::Layer3Visualization {} => "0",
+        Route::LangHome { .. }
+        | Route::ComponentsOverview { .. }
+        | Route::Button { .. }
+        | Route::Layer1Form { .. }
+        | Route::Layer1Switch { .. }
+        | Route::Layer1Feedback { .. }
+        | Route::Layer1Display { .. }
+        | Route::Layer2Overview { .. }
+        | Route::Layer2Navigation { .. }
+        | Route::Layer2Data { .. }
+        | Route::Layer2Form { .. }
+        | Route::Layer2Feedback { .. }
+        | Route::Layer3Overview { .. }
+        | Route::Layer3Media { .. }
+        | Route::Layer3Editor { .. }
+        | Route::Layer3Visualization { .. } => "0",
 
-        Route::SystemOverview {}
-        | Route::SystemCSS {}
-        | Route::SystemIcons {}
-        | Route::SystemPalette {}
-        | Route::SystemAnimations {} => "1",
+        Route::SystemOverview { .. }
+        | Route::SystemCSS { .. }
+        | Route::SystemIcons { .. }
+        | Route::SystemPalette { .. }
+        | Route::SystemAnimations { .. } => "1",
 
-        Route::DemosOverview {}
-        | Route::FormDemo {}
-        | Route::DashboardDemo {}
-        | Route::VideoDemo {} => "2",
+        Route::DemosOverview { .. }
+        | Route::FormDemo { .. }
+        | Route::DashboardDemo { .. }
+        | Route::VideoDemo { .. } => "2",
+
         _ => "0",
     });
 
@@ -51,7 +51,6 @@ pub fn TopNav(current_route: Route) -> Element {
         div {
             class: ClassesBuilder::new().add_raw("top-nav").build(),
 
-            // Logo and title
             div {
                 class: ClassesBuilder::new().add_raw("top-nav-header").add(Display::Flex).add(FlexDirection::Row).add(JustifyContent::Between).add(AlignItems::Center).add(MarginBottom::Mb3).build(),
 
@@ -80,12 +79,11 @@ pub fn TopNav(current_route: Route) -> Element {
                 }
             }
 
-            // Navigation tabs (inline implementation)
             div {
                 class: ClassesBuilder::new().add_raw("top-nav-tabs").add(Display::InlineFlex).build(),
 
                 dioxus_router::components::Link {
-                    to: Route::ComponentsOverview {},
+                    to: Route::ComponentsOverview { lang: lang.clone() },
                     class: ClassesBuilder::new()
                         .add_raw(if *active_tab.read() == "0" { "top-nav-tab-active" } else { "top-nav-tab" })
                         .build(),
@@ -94,7 +92,7 @@ pub fn TopNav(current_route: Route) -> Element {
                 }
 
                 dioxus_router::components::Link {
-                    to: Route::SystemOverview {},
+                    to: Route::SystemOverview { lang: lang.clone() },
                     class: ClassesBuilder::new()
                         .add_raw(if *active_tab.read() == "1" { "top-nav-tab-active" } else { "top-nav-tab" })
                         .build(),
@@ -103,7 +101,7 @@ pub fn TopNav(current_route: Route) -> Element {
                 }
 
                 dioxus_router::components::Link {
-                    to: Route::DemosOverview {},
+                    to: Route::DemosOverview { lang: lang.clone() },
                     class: ClassesBuilder::new()
                         .add_raw(if *active_tab.read() == "2" { "top-nav-tab-active" } else { "top-nav-tab" })
                         .build(),

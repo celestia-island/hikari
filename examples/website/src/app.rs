@@ -2,16 +2,17 @@
 // Main application component with new routing structure
 
 use dioxus::prelude::*;
+use dioxus_router::{Routable, Router};
 
 use crate::hooks::{I18nProviderWrapper, LanguageContext};
 use _components::{PortalProvider, ThemeProvider};
 use _i18n::context::Language;
 
-/// Main application component (root)
 #[component]
 pub fn App() -> Element {
-    let mut language = use_signal(|| Language::English);
-    let lang_ctx = use_context_provider(|| LanguageContext { language });
+    let lang_ctx = use_context_provider(|| LanguageContext {
+        language: use_signal(|| Language::default_lang()),
+    });
 
     rsx! {
         I18nProviderWrapper {
@@ -25,545 +26,609 @@ pub fn App() -> Element {
     }
 }
 
-/// Main application routes
 #[derive(Clone, Debug, PartialEq, Routable)]
 pub enum Route {
-    // Home
-    #[route("/")]
-    Home {},
+    #[route("/:lang")]
+    LangHome { lang: String },
 
-    // Components Routes - Overview
-    #[route("/components")]
-    ComponentsOverview {},
+    #[route("/:lang/components")]
+    ComponentsOverview { lang: String },
 
-    // Animation Demo
-    #[route("/demos/animation")]
-    AnimationDemo {},
+    #[route("/:lang/demos/animation")]
+    AnimationDemo { lang: String },
 
-    // Demos Routes
-    #[route("/demos")]
-    DemosOverview {},
-    #[route("/demos/layer1/form")]
-    FormDemo {},
-    #[route("/demos/layer2/dashboard")]
-    DashboardDemo {},
-    #[route("/demos/layer3/video")]
-    VideoDemo {},
+    #[route("/:lang/demos")]
+    DemosOverview { lang: String },
+    #[route("/:lang/demos/layer1/form")]
+    FormDemo { lang: String },
+    #[route("/:lang/demos/layer2/dashboard")]
+    DashboardDemo { lang: String },
+    #[route("/:lang/demos/layer3/video")]
+    VideoDemo { lang: String },
 
-    // Layer 1 Routes
-    #[route("/components/layer1/button")]
-    Button {},
-    #[route("/components/layer1/form")]
-    Layer1Form {},
-    #[route("/components/layer1/switch")]
-    Layer1Switch {},
-    #[route("/components/layer1/feedback")]
-    Layer1Feedback {},
-    #[route("/components/layer1/display")]
-    Layer1Display {},
-    // Layer 1 - New component routes
-    #[route("/components/layer1/number_input")]
-    NumberInput {},
-    #[route("/components/layer1/search")]
-    Search {},
-    #[route("/components/layer1/avatar")]
-    Avatar {},
-    #[route("/components/layer1/image")]
-    Image {},
-    #[route("/components/layer1/tag")]
-    Tag {},
-    #[route("/components/layer1/empty")]
-    Empty {},
-    #[route("/components/layer1/comment")]
-    Comment {},
-    #[route("/components/layer1/description_list")]
-    DescriptionList {},
+    #[route("/:lang/components/layer1/button")]
+    Button { lang: String },
+    #[route("/:lang/components/layer1/form")]
+    Layer1Form { lang: String },
+    #[route("/:lang/components/layer1/switch")]
+    Layer1Switch { lang: String },
+    #[route("/:lang/components/layer1/feedback")]
+    Layer1Feedback { lang: String },
+    #[route("/:lang/components/layer1/display")]
+    Layer1Display { lang: String },
+    #[route("/:lang/components/layer1/number_input")]
+    NumberInput { lang: String },
+    #[route("/:lang/components/layer1/search")]
+    Search { lang: String },
+    #[route("/:lang/components/layer1/avatar")]
+    Avatar { lang: String },
+    #[route("/:lang/components/layer1/image")]
+    Image { lang: String },
+    #[route("/:lang/components/layer1/tag")]
+    Tag { lang: String },
+    #[route("/:lang/components/layer1/empty")]
+    Empty { lang: String },
+    #[route("/:lang/components/layer1/comment")]
+    Comment { lang: String },
+    #[route("/:lang/components/layer1/description_list")]
+    DescriptionList { lang: String },
 
-    // Layer 2 Routes
-    #[route("/components/layer2")]
-    Layer2Overview {},
-    #[route("/components/layer2/navigation")]
-    Layer2Navigation {},
-    #[route("/components/layer2/data")]
-    Layer2Data {},
-    #[route("/components/layer2/form")]
-    Layer2Form {},
-    #[route("/components/layer2/feedback")]
-    Layer2Feedback {},
-    // Layer 2 - New component routes
-    #[route("/components/layer2/cascader")]
-    Cascader {},
-    #[route("/components/layer2/transfer")]
-    Transfer {},
-    #[route("/components/layer2/collapsible")]
-    Collapsible {},
-    #[route("/components/layer2/timeline")]
-    Timeline {},
-    #[route("/components/layer2/table")]
-    Table {},
-    #[route("/components/layer2/tree")]
-    Tree {},
-    #[route("/components/layer2/pagination")]
-    Pagination {},
-    #[route("/components/layer2/qrcode")]
-    QRCode {},
+    #[route("/:lang/components/layer2")]
+    Layer2Overview { lang: String },
+    #[route("/:lang/components/layer2/navigation")]
+    Layer2Navigation { lang: String },
+    #[route("/:lang/components/layer2/data")]
+    Layer2Data { lang: String },
+    #[route("/:lang/components/layer2/form")]
+    Layer2Form { lang: String },
+    #[route("/:lang/components/layer2/feedback")]
+    Layer2Feedback { lang: String },
+    #[route("/:lang/components/layer2/cascader")]
+    Cascader { lang: String },
+    #[route("/:lang/components/layer2/transfer")]
+    Transfer { lang: String },
+    #[route("/:lang/components/layer2/collapsible")]
+    Collapsible { lang: String },
+    #[route("/:lang/components/layer2/timeline")]
+    Timeline { lang: String },
+    #[route("/:lang/components/layer2/table")]
+    Table { lang: String },
+    #[route("/:lang/components/layer2/tree")]
+    Tree { lang: String },
+    #[route("/:lang/components/layer2/pagination")]
+    Pagination { lang: String },
+    #[route("/:lang/components/layer2/qrcode")]
+    QRCode { lang: String },
 
-    // Layer 3 Routes
-    #[route("/components/layer3/overview")]
-    Layer3Overview {},
-    #[route("/components/layer3/media")]
-    Layer3Media {},
-    #[route("/components/layer3/editor")]
-    Layer3Editor {},
-    #[route("/components/layer3/visualization")]
-    Layer3Visualization {},
-    // Layer 3 - New component routes
-    #[route("/components/layer3/user_guide")]
-    UserGuide {},
-    #[route("/components/layer3/zoom_controls")]
-    ZoomControls {},
+    #[route("/:lang/components/layer3/overview")]
+    Layer3Overview { lang: String },
+    #[route("/:lang/components/layer3/media")]
+    Layer3Media { lang: String },
+    #[route("/:lang/components/layer3/editor")]
+    Layer3Editor { lang: String },
+    #[route("/:lang/components/layer3/visualization")]
+    Layer3Visualization { lang: String },
+    #[route("/:lang/components/layer3/user_guide")]
+    UserGuide { lang: String },
+    #[route("/:lang/components/layer3/zoom_controls")]
+    ZoomControls { lang: String },
 
-    // System Routes
-    #[route("/system")]
-    SystemOverview {},
-    #[route("/system/css")]
-    SystemCSS {},
-    #[route("/system/icons")]
-    SystemIcons {},
-    #[route("/system/palette")]
-    SystemPalette {},
-    #[route("/system/animations")]
-    SystemAnimations {},
-    #[route("/system/i18n")]
-    SystemI18n {},
+    #[route("/:lang/system")]
+    SystemOverview { lang: String },
+    #[route("/:lang/system/css")]
+    SystemCSS { lang: String },
+    #[route("/:lang/system/icons")]
+    SystemIcons { lang: String },
+    #[route("/:lang/system/palette")]
+    SystemPalette { lang: String },
+    #[route("/:lang/system/animations")]
+    SystemAnimations { lang: String },
+    #[route("/:lang/system/i18n")]
+    SystemI18n { lang: String },
+
+    #[route("/:lang/..")]
+    NotFound { lang: String },
 }
 
 // ============================================================
 // Route Handler Functions
 // ============================================================
 
-#[allow(non_snake_case)]
-fn Home() -> Element {
+fn parse_lang(lang: &str) -> Language {
+    Language::from_url_prefix(lang).unwrap_or_else(Language::default_lang)
+}
+
+fn update_language_from_route(lang: &str) {
+    let parsed = parse_lang(lang);
+    if let Some(mut ctx) = try_consume_context::<LanguageContext>() {
+        if *ctx.language.read() != parsed {
+            ctx.language.set(parsed);
+        }
+    }
+}
+
+#[component]
+fn LangHome(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::pages::home::Home {}
     }
 }
 
-#[allow(non_snake_case)]
-fn ComponentsOverview() -> Element {
+#[component]
+fn ComponentsOverview(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::pages::components::overview::ComponentsOverview {}
     }
 }
 
-#[allow(non_snake_case)]
-fn AnimationDemo() -> Element {
+#[component]
+fn AnimationDemo(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::pages::animation_demo::AnimationDemo {}
     }
 }
 
-#[allow(non_snake_case)]
-fn DemosOverview() -> Element {
+#[component]
+fn DemosOverview(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::pages::demos::DemosOverview {}
     }
 }
 
-#[allow(non_snake_case)]
-fn SystemOverview() -> Element {
+#[component]
+fn SystemOverview(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::SystemOverview {},
+            current_route: Route::SystemOverview { lang: lang.clone() },
             doc_path: "system/overview",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn SystemCSS() -> Element {
+#[component]
+fn SystemCSS(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::SystemCSS {},
+            current_route: Route::SystemCSS { lang: lang.clone() },
             doc_path: "system/css",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn SystemIcons() -> Element {
+#[component]
+fn SystemIcons(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::SystemIcons {},
+            current_route: Route::SystemIcons { lang: lang.clone() },
             doc_path: "system/icons",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn SystemPalette() -> Element {
+#[component]
+fn SystemPalette(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::SystemPalette {},
+            current_route: Route::SystemPalette { lang: lang.clone() },
             doc_path: "system/palette",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn SystemAnimations() -> Element {
+#[component]
+fn SystemAnimations(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::SystemAnimations {},
+            current_route: Route::SystemAnimations { lang: lang.clone() },
             doc_path: "system/animation",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn FormDemo() -> Element {
+#[component]
+fn FormDemo(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::pages::demos::layer1::form_demo::FormDemo {}
     }
 }
 
-#[allow(non_snake_case)]
-fn DashboardDemo() -> Element {
+#[component]
+fn DashboardDemo(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::pages::demos::layer2::dashboard_demo::DashboardDemo {}
     }
 }
 
-#[allow(non_snake_case)]
-fn VideoDemo() -> Element {
+#[component]
+fn VideoDemo(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::pages::demos::layer3::video_demo::VideoDemo {}
     }
 }
 
 // Layer 1 handlers
-#[allow(non_snake_case)]
-fn Button() -> Element {
+#[component]
+fn Button(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Button {},
+            current_route: Route::Button { lang: lang.clone() },
             doc_path: "components/layer1/button",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Layer1Form() -> Element {
+#[component]
+fn Layer1Form(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Layer1Form {},
+            current_route: Route::Layer1Form { lang: lang.clone() },
             doc_path: "components/layer1/form",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Layer1Switch() -> Element {
+#[component]
+fn Layer1Switch(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Layer1Switch {},
+            current_route: Route::Layer1Switch { lang: lang.clone() },
             doc_path: "components/layer1/switch",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Layer1Feedback() -> Element {
+#[component]
+fn Layer1Feedback(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Layer1Feedback {},
+            current_route: Route::Layer1Feedback { lang: lang.clone() },
             doc_path: "components/layer1/feedback",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Layer1Display() -> Element {
+#[component]
+fn Layer1Display(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Layer1Display {},
+            current_route: Route::Layer1Display { lang: lang.clone() },
             doc_path: "components/layer1/display",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn NumberInput() -> Element {
+#[component]
+fn NumberInput(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::NumberInput {},
+            current_route: Route::NumberInput { lang: lang.clone() },
             doc_path: "components/layer1/number_input",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Search() -> Element {
+#[component]
+fn Search(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Search {},
+            current_route: Route::Search { lang: lang.clone() },
             doc_path: "components/layer1/search",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Avatar() -> Element {
+#[component]
+fn Avatar(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Avatar {},
+            current_route: Route::Avatar { lang: lang.clone() },
             doc_path: "components/layer1/avatar",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Image() -> Element {
+#[component]
+fn Image(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Image {},
+            current_route: Route::Image { lang: lang.clone() },
             doc_path: "components/layer1/image",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Tag() -> Element {
+#[component]
+fn Tag(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Tag {},
+            current_route: Route::Tag { lang: lang.clone() },
             doc_path: "components/layer1/tag",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Empty() -> Element {
+#[component]
+fn Empty(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Empty {},
+            current_route: Route::Empty { lang: lang.clone() },
             doc_path: "components/layer1/empty",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn QRCode() -> Element {
+#[component]
+fn QRCode(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::QRCode {},
+            current_route: Route::QRCode { lang: lang.clone() },
             doc_path: "components/layer2/qrcode",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Comment() -> Element {
+#[component]
+fn Comment(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Comment {},
+            current_route: Route::Comment { lang: lang.clone() },
             doc_path: "components/layer1/comment",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn DescriptionList() -> Element {
+#[component]
+fn DescriptionList(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::DescriptionList {},
+            current_route: Route::DescriptionList { lang: lang.clone() },
             doc_path: "components/layer1/description_list",
         }
     }
 }
 
 // Layer 2 handlers
-#[allow(non_snake_case)]
-fn Layer2Overview() -> Element {
+#[component]
+fn Layer2Overview(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::pages::components::layer2::Layer2Overview {}
     }
 }
 
-#[allow(non_snake_case)]
-fn Layer2Navigation() -> Element {
+#[component]
+fn Layer2Navigation(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Layer2Navigation {},
+            current_route: Route::Layer2Navigation { lang: lang.clone() },
             doc_path: "components/layer2/navigation",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Layer2Data() -> Element {
+#[component]
+fn Layer2Data(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Layer2Data {},
+            current_route: Route::Layer2Data { lang: lang.clone() },
             doc_path: "components/layer2/data",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Layer2Form() -> Element {
+#[component]
+fn Layer2Form(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Layer2Form {},
+            current_route: Route::Layer2Form { lang: lang.clone() },
             doc_path: "components/layer2/form",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Layer2Feedback() -> Element {
+#[component]
+fn Layer2Feedback(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Layer2Feedback {},
+            current_route: Route::Layer2Feedback { lang: lang.clone() },
             doc_path: "components/layer2/feedback",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Cascader() -> Element {
+#[component]
+fn Cascader(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Cascader {},
+            current_route: Route::Cascader { lang: lang.clone() },
             doc_path: "components/layer2/cascader",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Transfer() -> Element {
+#[component]
+fn Transfer(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Transfer {},
+            current_route: Route::Transfer { lang: lang.clone() },
             doc_path: "components/layer2/transfer",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Collapsible() -> Element {
+#[component]
+fn Collapsible(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Collapsible {},
+            current_route: Route::Collapsible { lang: lang.clone() },
             doc_path: "components/layer2/collapsible",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Timeline() -> Element {
+#[component]
+fn Timeline(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Timeline {},
+            current_route: Route::Timeline { lang: lang.clone() },
             doc_path: "components/layer2/timeline",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Table() -> Element {
+#[component]
+fn Table(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Table {},
+            current_route: Route::Table { lang: lang.clone() },
             doc_path: "components/layer2/table",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Tree() -> Element {
+#[component]
+fn Tree(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Tree {},
+            current_route: Route::Tree { lang: lang.clone() },
             doc_path: "components/layer2/tree",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Pagination() -> Element {
+#[component]
+fn Pagination(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Pagination {},
+            current_route: Route::Pagination { lang: lang.clone() },
             doc_path: "components/layer2/pagination",
         }
     }
 }
 
 // Layer 3 handlers
-#[allow(non_snake_case)]
-fn Layer3Overview() -> Element {
+#[component]
+fn Layer3Overview(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::pages::components::layer3::Layer3Overview {}
     }
 }
 
-#[allow(non_snake_case)]
-fn Layer3Media() -> Element {
+#[component]
+fn Layer3Media(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Layer3Media {},
+            current_route: Route::Layer3Media { lang: lang.clone() },
             doc_path: "components/layer3/media",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Layer3Editor() -> Element {
+#[component]
+fn Layer3Editor(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Layer3Editor {},
+            current_route: Route::Layer3Editor { lang: lang.clone() },
             doc_path: "components/layer3/editor",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn Layer3Visualization() -> Element {
+#[component]
+fn Layer3Visualization(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::Layer3Visualization {},
+            current_route: Route::Layer3Visualization { lang: lang.clone() },
             doc_path: "components/layer3/visualization",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn UserGuide() -> Element {
+#[component]
+fn UserGuide(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::UserGuide {},
+            current_route: Route::UserGuide { lang: lang.clone() },
             doc_path: "components/layer3/user_guide",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn ZoomControls() -> Element {
+#[component]
+fn ZoomControls(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::ZoomControls {},
+            current_route: Route::ZoomControls { lang: lang.clone() },
             doc_path: "components/layer3/zoom_controls",
         }
     }
 }
 
-#[allow(non_snake_case)]
-fn SystemI18n() -> Element {
+#[component]
+fn SystemI18n(lang: String) -> Element {
+    update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
-            current_route: Route::SystemI18n {},
+            current_route: Route::SystemI18n { lang: lang.clone() },
             doc_path: "system/i18n",
+        }
+    }
+}
+
+#[component]
+fn NotFound(lang: String) -> Element {
+    update_language_from_route(&lang);
+    rsx! {
+        crate::components::Layout {
+            current_route: Route::NotFound { lang: lang.clone() },
+            div {
+                style: "padding: 2rem; text-align: center;",
+                h2 { "404 - Page Not Found" }
+                p { "The page you are looking for does not exist." }
+            }
         }
     }
 }

@@ -2,16 +2,16 @@
 // Sidebar navigation with 3-level hierarchy using Menu component
 
 use dioxus::prelude::*;
+use dioxus_router::{use_navigator, use_route};
 
 use crate::app::Route;
+use crate::hooks::use_language;
 use _components::navigation::{Menu, MenuItem, MenuItemHeight, MenuMode, SubMenu};
+use _i18n::context::Language;
 use _icons::{Icon, MdiIcon};
 
-/// Global scroll position storage for sidebar
-/// Uses the actual aside content container's scroll position
 static SIDEBAR_SCROLL_POSITION: GlobalSignal<f64> = Signal::global(|| 0.0);
 
-/// Get localized text for sidebar category by id
 fn get_category_title(id: &str) -> String {
     let i18n = match crate::hooks::use_i18n() {
         Some(ctx) => ctx,
@@ -27,7 +27,6 @@ fn get_category_title(id: &str) -> String {
     }
 }
 
-/// Get localized text for sidebar subcategory by parent id and label key
 fn get_subcategory_label(category_id: &str, label_key: &str) -> String {
     let i18n = match crate::hooks::use_i18n() {
         Some(ctx) => ctx,
@@ -116,7 +115,6 @@ fn get_subcategory_label(category_id: &str, label_key: &str) -> String {
     }
 }
 
-/// Get localized text for sidebar item by label key
 fn get_item_label(label_key: &str) -> String {
     let i18n = match crate::hooks::use_i18n() {
         Some(ctx) => ctx,
@@ -159,16 +157,156 @@ fn get_item_label(label_key: &str) -> String {
     }
 }
 
-/// Sidebar navigation with 3-level hierarchy using Menu component
+fn route_key_to_route(key: &str, lang: &str) -> Route {
+    match key {
+        "home" => Route::LangHome {
+            lang: lang.to_string(),
+        },
+        "components" => Route::ComponentsOverview {
+            lang: lang.to_string(),
+        },
+        "animation_demo" => Route::AnimationDemo {
+            lang: lang.to_string(),
+        },
+        "demos" => Route::DemosOverview {
+            lang: lang.to_string(),
+        },
+        "form_demo" => Route::FormDemo {
+            lang: lang.to_string(),
+        },
+        "dashboard_demo" => Route::DashboardDemo {
+            lang: lang.to_string(),
+        },
+        "video_demo" => Route::VideoDemo {
+            lang: lang.to_string(),
+        },
+        "button" => Route::Button {
+            lang: lang.to_string(),
+        },
+        "layer1_form" => Route::Layer1Form {
+            lang: lang.to_string(),
+        },
+        "layer1_switch" => Route::Layer1Switch {
+            lang: lang.to_string(),
+        },
+        "layer1_feedback" => Route::Layer1Feedback {
+            lang: lang.to_string(),
+        },
+        "layer1_display" => Route::Layer1Display {
+            lang: lang.to_string(),
+        },
+        "number_input" => Route::NumberInput {
+            lang: lang.to_string(),
+        },
+        "search" => Route::Search {
+            lang: lang.to_string(),
+        },
+        "avatar" => Route::Avatar {
+            lang: lang.to_string(),
+        },
+        "image" => Route::Image {
+            lang: lang.to_string(),
+        },
+        "tag" => Route::Tag {
+            lang: lang.to_string(),
+        },
+        "empty" => Route::Empty {
+            lang: lang.to_string(),
+        },
+        "comment" => Route::Comment {
+            lang: lang.to_string(),
+        },
+        "description_list" => Route::DescriptionList {
+            lang: lang.to_string(),
+        },
+        "layer2" => Route::Layer2Overview {
+            lang: lang.to_string(),
+        },
+        "layer2_navigation" => Route::Layer2Navigation {
+            lang: lang.to_string(),
+        },
+        "layer2_data" => Route::Layer2Data {
+            lang: lang.to_string(),
+        },
+        "layer2_form" => Route::Layer2Form {
+            lang: lang.to_string(),
+        },
+        "layer2_feedback" => Route::Layer2Feedback {
+            lang: lang.to_string(),
+        },
+        "cascader" => Route::Cascader {
+            lang: lang.to_string(),
+        },
+        "transfer" => Route::Transfer {
+            lang: lang.to_string(),
+        },
+        "collapsible" => Route::Collapsible {
+            lang: lang.to_string(),
+        },
+        "timeline" => Route::Timeline {
+            lang: lang.to_string(),
+        },
+        "table" => Route::Table {
+            lang: lang.to_string(),
+        },
+        "tree" => Route::Tree {
+            lang: lang.to_string(),
+        },
+        "pagination" => Route::Pagination {
+            lang: lang.to_string(),
+        },
+        "qrcode" => Route::QRCode {
+            lang: lang.to_string(),
+        },
+        "layer3" => Route::Layer3Overview {
+            lang: lang.to_string(),
+        },
+        "layer3_media" => Route::Layer3Media {
+            lang: lang.to_string(),
+        },
+        "layer3_editor" => Route::Layer3Editor {
+            lang: lang.to_string(),
+        },
+        "layer3_visualization" => Route::Layer3Visualization {
+            lang: lang.to_string(),
+        },
+        "user_guide" => Route::UserGuide {
+            lang: lang.to_string(),
+        },
+        "zoom_controls" => Route::ZoomControls {
+            lang: lang.to_string(),
+        },
+        "system" => Route::SystemOverview {
+            lang: lang.to_string(),
+        },
+        "system_css" => Route::SystemCSS {
+            lang: lang.to_string(),
+        },
+        "system_icons" => Route::SystemIcons {
+            lang: lang.to_string(),
+        },
+        "system_palette" => Route::SystemPalette {
+            lang: lang.to_string(),
+        },
+        "system_animations" => Route::SystemAnimations {
+            lang: lang.to_string(),
+        },
+        "system_i18n" => Route::SystemI18n {
+            lang: lang.to_string(),
+        },
+        _ => Route::LangHome {
+            lang: lang.to_string(),
+        },
+    }
+}
+
 #[component]
 pub fn Sidebar(current_route: Route) -> Element {
-    // Effect to restore scroll position after route change
     use_effect(move || {
         let scroll_pos = *SIDEBAR_SCROLL_POSITION.read();
         if scroll_pos > 0.0 {
             if let Some(window) = web_sys::window() {
                 if let Some(document) = window.document() {
-                    // Try to find the scrollable aside content container
                     if let Some(container) = document
                         .query_selector(".hi-layout-aside-content")
                         .ok()
@@ -181,6 +319,9 @@ pub fn Sidebar(current_route: Route) -> Element {
         }
     });
 
+    let lang_ctx = use_language();
+    let lang = (*lang_ctx.language.read()).url_prefix().to_string();
+
     rsx! {
         Menu {
             mode: MenuMode::Vertical,
@@ -191,15 +332,19 @@ pub fn Sidebar(current_route: Route) -> Element {
                 SidebarCategorySection {
                     category,
                     current_route: current_route.clone(),
+                    lang: lang.clone(),
                 }
             }
         }
     }
 }
 
-/// Render a category section (Level 1) with its subcategories
 #[component]
-fn SidebarCategorySection(category: &'static NavCategory, current_route: Route) -> Element {
+fn SidebarCategorySection(
+    category: &'static NavCategory,
+    current_route: Route,
+    lang: String,
+) -> Element {
     let title = get_category_title(category.id);
 
     rsx! {
@@ -215,18 +360,19 @@ fn SidebarCategorySection(category: &'static NavCategory, current_route: Route) 
                     subcategory,
                     category_id: category.id,
                     current_route: current_route.clone(),
+                    lang: lang.clone(),
                 }
             }
         }
     }
 }
 
-/// Render a subcategory (Level 2) with optional nested items
 #[component]
 fn SidebarSubcategoryItem(
     subcategory: &'static NavSubcategory,
     category_id: &'static str,
     current_route: Route,
+    lang: String,
 ) -> Element {
     let has_children = !subcategory.items.is_empty();
     let label = get_subcategory_label(category_id, subcategory.label_key);
@@ -244,18 +390,14 @@ fn SidebarSubcategoryItem(
                     SidebarNestedItem {
                         item,
                         current_route: current_route.clone(),
+                        lang: lang.clone(),
                     }
                 }
             }
         }
     } else {
-        let is_active = subcategory
-            .route
-            .as_ref()
-            .map(|r| std::mem::discriminant(r) == std::mem::discriminant(&current_route))
-            .unwrap_or(false);
-
-        let route_to_navigate = subcategory.route.clone();
+        let route_to_navigate = route_key_to_route(subcategory.route_key, &lang);
+        let is_active = routes_equal(&current_route, &route_to_navigate);
         let navigator = use_navigator();
 
         rsx! {
@@ -269,9 +411,7 @@ fn SidebarSubcategoryItem(
                     let navigator = navigator.clone();
                     move |_| {
                         save_sidebar_scroll_position();
-                        if let Some(route) = route_to_navigate.as_ref() {
-                            navigator.push(route.clone());
-                        }
+                        navigator.push(route_to_navigate.clone());
                     }
                 },
 
@@ -281,17 +421,16 @@ fn SidebarSubcategoryItem(
     }
 }
 
-/// Render a nested item (Level 3) as MenuItem
 #[component]
-fn SidebarNestedItem(item: &'static NavItem, current_route: Route) -> Element {
-    let is_active = std::mem::discriminant(&item.route) == std::mem::discriminant(&current_route);
-    let route_to_navigate = item.route.clone();
+fn SidebarNestedItem(item: &'static NavItem, current_route: Route, lang: String) -> Element {
+    let route_to_navigate = route_key_to_route(item.route_key, &lang);
+    let is_active = routes_equal(&current_route, &route_to_navigate);
     let navigator = use_navigator();
     let label = get_item_label(item.label_key);
 
     rsx! {
         MenuItem {
-            item_key: format!("{:?}", std::mem::discriminant(&item.route)),
+            item_key: format!("{:?}", std::mem::discriminant(&route_to_navigate)),
             class: if is_active { "hi-menu-item-active" } else { "" },
             level: 3,
             height: MenuItemHeight::Compact,
@@ -310,7 +449,10 @@ fn SidebarNestedItem(item: &'static NavItem, current_route: Route) -> Element {
     }
 }
 
-/// Save the current scroll position of the sidebar's aside content container
+fn routes_equal(a: &Route, b: &Route) -> bool {
+    std::mem::discriminant(a) == std::mem::discriminant(b)
+}
+
 fn save_sidebar_scroll_position() {
     if let Some(window) = web_sys::window() {
         if let Some(document) = window.document() {
@@ -343,15 +485,13 @@ impl Eq for NavCategory {}
 #[derive(Clone, Debug)]
 pub struct NavSubcategory {
     pub label_key: &'static str,
-    pub route: Option<Route>,
+    pub route_key: &'static str,
     pub items: &'static [NavItem],
 }
 
 impl PartialEq for NavSubcategory {
     fn eq(&self, other: &Self) -> bool {
         self.label_key == other.label_key
-            && self.route.as_ref().map(|r| std::mem::discriminant(r))
-                == other.route.as_ref().map(|r| std::mem::discriminant(r))
     }
 }
 
@@ -359,13 +499,12 @@ impl PartialEq for NavSubcategory {
 pub struct NavItem {
     pub label_key: &'static str,
     pub icon: MdiIcon,
-    pub route: Route,
+    pub route_key: &'static str,
 }
 
 impl PartialEq for NavItem {
     fn eq(&self, other: &Self) -> bool {
         self.label_key == other.label_key
-            && std::mem::discriminant(&self.route) == std::mem::discriminant(&other.route)
     }
 }
 
@@ -378,7 +517,7 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
         id: "overview",
         subcategories: &[NavSubcategory {
             label_key: "home",
-            route: Some(Route::Home {}),
+            route_key: "home",
             items: &[],
         }],
     },
@@ -387,169 +526,169 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
         subcategories: &[
             NavSubcategory {
                 label_key: "layer1",
-                route: Some(Route::Button {}),
+                route_key: "button",
                 items: &[
                     NavItem {
                         label_key: "button",
                         icon: MdiIcon::Cursor,
-                        route: Route::Button {},
+                        route_key: "button",
                     },
                     NavItem {
                         label_key: "form",
                         icon: MdiIcon::TextBoxEdit,
-                        route: Route::Layer1Form {},
+                        route_key: "layer1_form",
                     },
                     NavItem {
                         label_key: "number_input",
                         icon: MdiIcon::FormatListNumbered,
-                        route: Route::NumberInput {},
+                        route_key: "number_input",
                     },
                     NavItem {
                         label_key: "search",
                         icon: MdiIcon::Magnify,
-                        route: Route::Search {},
+                        route_key: "search",
                     },
                     NavItem {
                         label_key: "switch",
                         icon: MdiIcon::ToggleSwitch,
-                        route: Route::Layer1Switch {},
+                        route_key: "layer1_switch",
                     },
                     NavItem {
                         label_key: "feedback",
                         icon: MdiIcon::Alert,
-                        route: Route::Layer1Feedback {},
+                        route_key: "layer1_feedback",
                     },
                     NavItem {
                         label_key: "display",
                         icon: MdiIcon::Image,
-                        route: Route::Layer1Display {},
+                        route_key: "layer1_display",
                     },
                     NavItem {
                         label_key: "avatar",
                         icon: MdiIcon::Account,
-                        route: Route::Avatar {},
+                        route_key: "avatar",
                     },
                     NavItem {
                         label_key: "image",
                         icon: MdiIcon::Image,
-                        route: Route::Image {},
+                        route_key: "image",
                     },
                     NavItem {
                         label_key: "tag",
                         icon: MdiIcon::Star,
-                        route: Route::Tag {},
+                        route_key: "tag",
                     },
                     NavItem {
                         label_key: "empty",
                         icon: MdiIcon::ViewDashboard,
-                        route: Route::Empty {},
+                        route_key: "empty",
                     },
                     NavItem {
                         label_key: "comment",
                         icon: MdiIcon::Chat,
-                        route: Route::Comment {},
+                        route_key: "comment",
                     },
                     NavItem {
                         label_key: "description_list",
                         icon: MdiIcon::FormatListBulleted,
-                        route: Route::DescriptionList {},
+                        route_key: "description_list",
                     },
                 ],
             },
             NavSubcategory {
                 label_key: "layer2",
-                route: Some(Route::Layer2Overview {}),
+                route_key: "layer2",
                 items: &[
                     NavItem {
                         label_key: "navigation",
                         icon: MdiIcon::FormatListBulleted,
-                        route: Route::Layer2Navigation {},
+                        route_key: "layer2_navigation",
                     },
                     NavItem {
                         label_key: "collapsible",
                         icon: MdiIcon::ArrowExpandHorizontal,
-                        route: Route::Collapsible {},
+                        route_key: "collapsible",
                     },
                     NavItem {
                         label_key: "data",
                         icon: MdiIcon::Graph,
-                        route: Route::Layer2Data {},
+                        route_key: "layer2_data",
                     },
                     NavItem {
                         label_key: "table",
                         icon: MdiIcon::Table,
-                        route: Route::Table {},
+                        route_key: "table",
                     },
                     NavItem {
                         label_key: "tree",
                         icon: MdiIcon::SourceBranch,
-                        route: Route::Tree {},
+                        route_key: "tree",
                     },
                     NavItem {
                         label_key: "pagination",
                         icon: MdiIcon::ChevronLeft,
-                        route: Route::Pagination {},
+                        route_key: "pagination",
                     },
                     NavItem {
                         label_key: "qrcode",
                         icon: MdiIcon::ViewDashboard,
-                        route: Route::QRCode {},
+                        route_key: "qrcode",
                     },
                     NavItem {
                         label_key: "timeline",
                         icon: MdiIcon::ChartTimeline,
-                        route: Route::Timeline {},
+                        route_key: "timeline",
                     },
                     NavItem {
                         label_key: "form",
                         icon: MdiIcon::TextBoxEdit,
-                        route: Route::Layer2Form {},
+                        route_key: "layer2_form",
                     },
                     NavItem {
                         label_key: "cascader",
                         icon: MdiIcon::ChevronDown,
-                        route: Route::Cascader {},
+                        route_key: "cascader",
                     },
                     NavItem {
                         label_key: "transfer",
                         icon: MdiIcon::SwapHorizontal,
-                        route: Route::Transfer {},
+                        route_key: "transfer",
                     },
                     NavItem {
                         label_key: "feedback",
                         icon: MdiIcon::Bell,
-                        route: Route::Layer2Feedback {},
+                        route_key: "layer2_feedback",
                     },
                 ],
             },
             NavSubcategory {
                 label_key: "layer3",
-                route: Some(Route::Layer3Overview {}),
+                route_key: "layer3",
                 items: &[
                     NavItem {
                         label_key: "media",
                         icon: MdiIcon::Play,
-                        route: Route::Layer3Media {},
+                        route_key: "layer3_media",
                     },
                     NavItem {
                         label_key: "editor",
                         icon: MdiIcon::FormatBold,
-                        route: Route::Layer3Editor {},
+                        route_key: "layer3_editor",
                     },
                     NavItem {
                         label_key: "visualization",
                         icon: MdiIcon::CubeOutline,
-                        route: Route::Layer3Visualization {},
+                        route_key: "layer3_visualization",
                     },
                     NavItem {
                         label_key: "user_guide",
                         icon: MdiIcon::BookOpen,
-                        route: Route::UserGuide {},
+                        route_key: "user_guide",
                     },
                     NavItem {
                         label_key: "zoom_controls",
                         icon: MdiIcon::MagnifyPlus,
-                        route: Route::ZoomControls {},
+                        route_key: "zoom_controls",
                     },
                 ],
             },
@@ -560,32 +699,32 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
         subcategories: &[
             NavSubcategory {
                 label_key: "overview",
-                route: Some(Route::SystemOverview {}),
+                route_key: "system",
                 items: &[],
             },
             NavSubcategory {
                 label_key: "css_utilities",
-                route: Some(Route::SystemCSS {}),
+                route_key: "system_css",
                 items: &[],
             },
             NavSubcategory {
                 label_key: "icons",
-                route: Some(Route::SystemIcons {}),
+                route_key: "system_icons",
                 items: &[],
             },
             NavSubcategory {
                 label_key: "palette",
-                route: Some(Route::SystemPalette {}),
+                route_key: "system_palette",
                 items: &[],
             },
             NavSubcategory {
                 label_key: "animations",
-                route: Some(Route::SystemAnimations {}),
+                route_key: "system_animations",
                 items: &[],
             },
             NavSubcategory {
                 label_key: "animation_demo",
-                route: Some(Route::AnimationDemo {}),
+                route_key: "animation_demo",
                 items: &[],
             },
         ],
@@ -594,22 +733,22 @@ pub static NAVIGATION_CATEGORIES: &[NavCategory] = &[
         id: "demos",
         subcategories: &[NavSubcategory {
             label_key: "all_demos",
-            route: Some(Route::DemosOverview {}),
+            route_key: "demos",
             items: &[
                 NavItem {
                     label_key: "form_demo",
                     icon: MdiIcon::TextBoxEdit,
-                    route: Route::FormDemo {},
+                    route_key: "form_demo",
                 },
                 NavItem {
                     label_key: "dashboard_demo",
                     icon: MdiIcon::ViewColumn,
-                    route: Route::DashboardDemo {},
+                    route_key: "dashboard_demo",
                 },
                 NavItem {
                     label_key: "video_demo",
                     icon: MdiIcon::Play,
-                    route: Route::VideoDemo {},
+                    route_key: "video_demo",
                 },
             ],
         }],

@@ -182,8 +182,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass};
-
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{closure::Closure, JsCast};
 
 use super::modal::{MaskMode, ModalPosition};
 use crate::feedback::PopoverPlacement;

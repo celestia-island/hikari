@@ -192,9 +192,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
         }
     };
 
-    let input_classes = ClassesBuilder::new()
-        .add(AutoCompleteClass::Input)
-        .build();
+    let input_classes = ClassesBuilder::new().add(AutoCompleteClass::Input).build();
 
     let is_open_value = *is_open.read();
     let focused_index_value = *focused_index.read();
@@ -353,7 +351,7 @@ impl StyledComponent for AutoCompleteComponent {
 .hi-autocomplete-option:hover,
 .hi-autocomplete-option.hi-autocomplete-option-focused {
     background-color: var(--hi-color-primary);
-    color: #ffffff;
+    color: var(--hi-color-text-on-primary, #ffffff);
 }
 "#
     }

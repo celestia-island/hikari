@@ -347,7 +347,7 @@ pub fn Popover(props: PopoverProps) -> Element {
         match &positioning {
             PopoverPositioning::Relative { .. } => {
                 let (_, style) = placement_state();
-                format!("position: absolute; {}; transform: translateX(-50%);", style)
+                format!("position: fixed; {}; transform: translateX(-50%);", style)
             }
             PopoverPositioning::Absolute(abs_pos) => {
                 match abs_pos {
@@ -458,7 +458,7 @@ impl StyledComponent for PopoverComponent {
     fn styles() -> &'static str {
         r#"
 .hi-popover {
-  position: absolute;
+  position: fixed;
   z-index: 1050;
   background: var(--hi-color-surface);
   border: 1px solid var(--hi-color-border);

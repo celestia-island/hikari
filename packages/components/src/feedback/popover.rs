@@ -122,8 +122,22 @@ pub fn Popover(props: PopoverProps) -> Element {
 
     let on_close = Callback::new(move |_| {
         open.set(false);
+        close_requested.set(true);
         if let Some(handler) = on_open_change_for_close.as_ref() {
             handler.call(false);
+        }
+    });
+
+    // Sync external open prop with internal state
+    let props_open = props.open;
+    use_effect(move || {
+        if props_open != open() {
+            open.set(props_open);
+            if props_open {
+                close_requested.set(false);
+            } else {
+                close_requested.set(true);
+            }
         }
     });
 

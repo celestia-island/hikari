@@ -22,12 +22,33 @@ pub enum Language {
 }
 
 impl Language {
-    /// Get full language name
-    pub fn full_name(&self) -> &'static str {
-        match self {
-            Language::English => "English",
-            Language::SimplifiedChinese => "简体中文",
-            Language::TraditionalChinese => "繁體中文",
+    /// Get language name in the specified language
+    pub fn name_in(&self, lang: Language) -> String {
+        match (self, lang) {
+            // English names
+            (Language::English, Language::English) => "English",
+            (Language::SimplifiedChinese, Language::English) => "Simplified Chinese",
+            (Language::TraditionalChinese, Language::English) => "Traditional Chinese",
+            // Simplified Chinese names
+            (Language::English, Language::SimplifiedChinese) => "英语",
+            (Language::SimplifiedChinese, Language::SimplifiedChinese) => "简体中文",
+            (Language::TraditionalChinese, Language::SimplifiedChinese) => "繁体中文",
+            // Traditional Chinese names
+            (Language::English, Language::TraditionalChinese) => "英語",
+            (Language::SimplifiedChinese, Language::TraditionalChinese) => "簡體中文",
+            (Language::TraditionalChinese, Language::TraditionalChinese) => "繁體中文",
+        }
+        .to_string()
+    }
+
+    /// Get bilingual display: "Native Name - Current Language Name"
+    pub fn bilingual_display(&self, current_lang: Language) -> String {
+        let native = self.name_in(*self);
+        if *self == current_lang {
+            native
+        } else {
+            let in_current = self.name_in(current_lang);
+            format!("{} - {}", in_current, native)
         }
     }
 }
@@ -51,8 +72,6 @@ pub fn AsideFooter() -> Element {
 
     let icon_key = use_memo(move || format!("{:?}", current_icon.read()));
 
-    let _lang = *selected_language.read();
-
     // Container styles - centered layout
     let container_classes = ClassesBuilder::new()
         .add(Display::Flex)
@@ -61,6 +80,13 @@ pub fn AsideFooter() -> Element {
         .add(Gap::Gap2)
         .add(Shadow::Md)
         .build();
+
+    // Close callback for menu items
+    let request_close = Callback::new(move |_| {
+        is_popover_open.set(false);
+    });
+
+    let current_lang = *selected_language.read();
 
     rsx! {
         div {
@@ -88,6 +114,7 @@ pub fn AsideFooter() -> Element {
 
             // Language switcher using Popover + Menu
             Popover {
+                open: *is_popover_open.read(),
                 positioning: PopoverPositioning::Relative {
                     preferred: vec![PopoverPlacement::Top, PopoverPlacement::Bottom],
                 },
@@ -106,13 +133,14 @@ pub fn AsideFooter() -> Element {
                 },
                 Menu {
                     in_popover: true,
+                    request_close: Some(request_close),
                     MenuItem {
                         item_key: "en".to_string(),
                         height: MenuItemHeight::Compact,
                         onclick: move |_| {
                             selected_language.set(Language::English);
                         },
-                        "English"
+                        "{Language::English.bilingual_display(current_lang)}"
                     }
                     MenuItem {
                         item_key: "zh".to_string(),
@@ -120,7 +148,7 @@ pub fn AsideFooter() -> Element {
                         onclick: move |_| {
                             selected_language.set(Language::SimplifiedChinese);
                         },
-                        "简体中文"
+                        "{Language::SimplifiedChinese.bilingual_display(current_lang)}"
                     }
                     MenuItem {
                         item_key: "tw".to_string(),
@@ -128,7 +156,7 @@ pub fn AsideFooter() -> Element {
                         onclick: move |_| {
                             selected_language.set(Language::TraditionalChinese);
                         },
-                        "繁體中文"
+                        "{Language::TraditionalChinese.bilingual_display(current_lang)}"
                     }
                 }
             }

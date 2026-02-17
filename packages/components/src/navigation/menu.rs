@@ -19,6 +19,16 @@ pub struct MenuContext {
     pub glow_enabled: bool,
 }
 
+impl MenuContext {
+    pub fn in_popover(&self) -> bool {
+        self.in_popover
+    }
+
+    pub fn glow_enabled(&self) -> bool {
+        self.glow_enabled
+    }
+}
+
 /// Menu 组件的类型包装器（用于实现 StyledComponent）
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum MenuMode {
@@ -302,12 +312,9 @@ impl StyledComponent for MenuComponent {
 /// Menu item component
 #[component]
 pub fn MenuItem(props: MenuItemProps) -> Element {
-    let menu_context = try_consume_context::<Signal<MenuContext>>();
+    let menu_context = try_consume_context::<MenuContext>();
     let should_glow = match menu_context {
-        Some(ctx) => {
-            let context = ctx.read();
-            props.glow || (context.in_popover && context.glow_enabled)
-        }
+        Some(ctx) => props.glow || (ctx.in_popover && ctx.glow_enabled),
         None => props.glow,
     };
 

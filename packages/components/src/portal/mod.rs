@@ -262,6 +262,8 @@ pub enum PortalEntry {
         offset: f64,
         width: Option<String>,
         title: Option<String>,
+        close_on_click_outside: bool,
+        on_close: Option<Callback<()>>,
         children: Element,
     },
 }
@@ -899,6 +901,8 @@ fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                 offset,
                                 width,
                                 title,
+                                close_on_click_outside,
+                                on_close,
                                 children,
                             } => rsx! {
                                 PopoverPortalEntry {
@@ -910,6 +914,8 @@ fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                     offset: *offset,
                                     width: width.clone(),
                                     title: title.clone(),
+                                    close_on_click_outside: *close_on_click_outside,
+                                    on_close: on_close.clone(),
                                     children: children.clone(),
                                 }
                             },
@@ -1629,6 +1635,8 @@ fn PopoverPortalEntry(
     offset: f64,
     width: Option<String>,
     title: Option<String>,
+    close_on_click_outside: bool,
+    on_close: Option<Callback<()>>,
     children: Element,
 ) -> Element {
     fn check_placement(
@@ -1782,20 +1790,61 @@ fn PopoverPortalEntry(
     let position_style = use_memo(move || {
         let (placement, x, y) = position_state();
         match placement {
-            PopoverPlacement::Bottom => format!("position: fixed; left: {}px; top: {}px; transform: translateX(-50%);", x, y),
-            PopoverPlacement::Top => format!("position: fixed; left: {}px; bottom: {}px; transform: translateX(-50%);", x, viewport_height() - y),
-            PopoverPlacement::Left => format!("position: fixed; left: {}px; top: {}px; transform: translateX(-100%) translateY(-50%);", x, y),
-            PopoverPlacement::Right => format!("position: fixed; left: {}px; top: {}px; transform: translateY(-50%);", x, y),
+            PopoverPlacement::Bottom => format!("position: fixed; left: {}px; top: {}px;", x, y),
+            PopoverPlacement::Top => format!("position: fixed; left: {}px; bottom: {}px;", x, viewport_height() - y),
+            PopoverPlacement::Left => format!("position: fixed; left: {}px; top: {}px;", x, y),
+            PopoverPlacement::Right => format!("position: fixed; left: {}px; top: {}px;", x, y),
+        }
+    });
+
+    let transform_origin = use_memo(move || {
+        let (placement, _, _) = position_state();
+        match placement {
+            PopoverPlacement::Bottom => "top center",
+            PopoverPlacement::Top => "bottom center",
+            PopoverPlacement::Left => "right center",
+            PopoverPlacement::Right => "left center",
+        }
+    });
+
+    let translate_transform = use_memo(move || {
+        let (placement, _, _) = position_state();
+        match placement {
+            PopoverPlacement::Bottom | PopoverPlacement::Top => "translateX(-50%)",
+            PopoverPlacement::Left => "translateX(-100%) translateY(-50%)",
+            PopoverPlacement::Right => "translateY(-50%)",
         }
     });
 
     let width_style = width.as_deref().unwrap_or("auto");
     let popover_classes = ClassesBuilder::new().add(PopoverClass::Popover).build();
 
+    let backdrop_z_index = z_index.saturating_sub(1);
+
+    let popover_style = format!(
+        "{} z-index: {}; width: {}; transform-origin: {}; animation: hi-popover-enter 0.15s ease-out forwards;",
+        position_style(),
+        z_index,
+        width_style,
+        transform_origin()
+    );
+
     rsx! {
+        if close_on_click_outside {
+            div {
+                class: "hi-popover-backdrop",
+                style: "position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: {backdrop_z_index}; background: transparent; pointer-events: auto;",
+                onclick: move |_| {
+                    if let Some(handler) = on_close.as_ref() {
+                        handler.call(());
+                    }
+                },
+            }
+        }
+
         div {
             class: "{popover_classes}",
-            style: "{position_style} width: {width_style}; z-index: {z_index}; pointer-events: auto;",
+            style: "{popover_style}",
             "data-open": "true",
 
             if let Some(title) = title {

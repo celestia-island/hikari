@@ -114,6 +114,18 @@ pub fn Popover(props: PopoverProps) -> Element {
     };
 
     let on_open_change = props.on_open_change.clone();
+    let on_open_change_for_close = props.on_open_change.clone();
+    let portal_for_close = portal.clone();
+
+    let on_close = Callback::new(move |_| {
+        open.set(false);
+        let id = popover_id();
+        portal_for_close.remove_entry.call(id);
+        if let Some(handler) = on_open_change_for_close.as_ref() {
+            handler.call(false);
+        }
+    });
+
     let handle_trigger_click = move |e: MouseEvent| {
         e.stop_propagation();
 
@@ -156,6 +168,8 @@ pub fn Popover(props: PopoverProps) -> Element {
                 offset: props.offset,
                 width: props.width.clone(),
                 title: props.title.clone(),
+                close_on_click_outside: props.close_on_click_outside,
+                on_close: Some(on_close.clone()),
                 children: props.children.clone(),
             });
         } else {
@@ -174,33 +188,11 @@ pub fn Popover(props: PopoverProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let portal_for_close = portal.clone();
-    let on_open_change_for_close = props.on_open_change.clone();
-    let handle_backdrop_click = move |_| {
-        open.set(false);
-        let id = popover_id();
-        portal_for_close.remove_entry.call(id);
-        if let Some(handler) = on_open_change_for_close.as_ref() {
-            handler.call(false);
-        }
-    };
-
     rsx! {
         div {
             class: "{container_classes}",
-
-            div {
-                onclick: handle_trigger_click,
-                { props.trigger }
-            }
-        }
-
-        if open() && props.close_on_click_outside {
-            div {
-                class: "hi-popover-backdrop",
-                style: "position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1049; background: transparent;",
-                onclick: handle_backdrop_click,
-            }
+            onclick: handle_trigger_click,
+            { props.trigger }
         }
     }
 }
@@ -222,7 +214,7 @@ impl StyledComponent for PopoverComponent {
   min-width: 160px;
   max-width: 320px;
   overflow: visible;
-  animation: hi-popover-fade-in 0.15s ease-out;
+  pointer-events: auto;
 }
 
 .hi-popover::before {
@@ -236,14 +228,14 @@ impl StyledComponent for PopoverComponent {
   opacity: 0.35;
 }
 
-@keyframes hi-popover-fade-in {
+@keyframes hi-popover-enter {
   from {
     opacity: 0;
-    transform: translateY(-4px) translateX(-50%);
+    transform: scaleY(0.95) translateX(-50%);
   }
   to {
     opacity: 1;
-    transform: translateY(0) translateX(-50%);
+    transform: scaleY(1) translateX(-50%);
   }
 }
 

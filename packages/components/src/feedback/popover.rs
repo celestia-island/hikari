@@ -210,10 +210,11 @@ impl StyledComponent for PopoverComponent {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10), 0 1px 4px rgba(0, 0, 0, 0.06);
   backdrop-filter: blur(12px);
   padding: 4px 0;
-  min-width: 160px;
-  max-width: 320px;
+  min-width: 120px;
   overflow: visible;
   pointer-events: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .hi-popover::before {
@@ -258,19 +259,8 @@ impl StyledComponent for PopoverComponent {
   color: var(--hi-color-text-primary);
   line-height: 1.6;
   overflow: visible;
-}
-
-.hi-popover-content .hi-menu {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 0;
+  display: block;
   width: 100%;
-}
-
-.hi-popover-content .hi-menu-item {
-  width: 100%;
-  box-sizing: border-box;
 }
 
 .hi-popover-backdrop {

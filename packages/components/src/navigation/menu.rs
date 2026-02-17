@@ -355,6 +355,7 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
                 class: "{wrapper_class}",
                 style: "width: 100%; position: relative;",
                 Glow {
+                    block: true,
                     blur: GlowBlur::Light,
                     color: GlowColor::Ghost,
                     intensity: GlowIntensity::Seventy,
@@ -412,11 +413,11 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
 
                  span { class: "hi-menu-item-content", "{props.title}" }
 
-                 Arrow {
-                    direction: if *is_open.read() { ArrowDirection::Down } else { ArrowDirection::Right },
-                    size: 14,
-                    class: if *is_open.read() { "hi-menu-submenu-arrow-open" } else { "" },
-                 }
+                  Arrow {
+                     direction: if *is_open.read() { ArrowDirection::Down } else { ArrowDirection::Right },
+                     size: 14,
+                     class: if *is_open.read() { "hi-menu-item-arrow hi-menu-submenu-arrow-open" } else { "hi-menu-item-arrow" },
+                  }
              }
          }
     };

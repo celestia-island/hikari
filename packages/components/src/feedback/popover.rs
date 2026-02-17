@@ -103,7 +103,7 @@ impl Default for PopoverProps {
 pub fn Popover(props: PopoverProps) -> Element {
     let mut open = use_signal(|| props.open);
     let mut popover_id = use_signal(|| String::new());
-    let trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
+    let mut trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
 
     let portal = use_portal();
     let positioning = props.positioning.clone();

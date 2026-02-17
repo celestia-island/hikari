@@ -53,3 +53,18 @@ pub fn I18nProviderWrapper(props: I18nProviderWrapperProps) -> Element {
         }
     }
 }
+
+pub fn use_current_language() -> Language {
+    let lang_ctx = use_language();
+    let lang = *lang_ctx.language.read();
+    lang
+}
+
+pub fn update_language_from_route(lang: &str) {
+    let parsed = Language::from_url_prefix(lang).unwrap_or_else(Language::default_lang);
+    if let Some(mut ctx) = try_consume_context::<LanguageContext>() {
+        if *ctx.language.read() != parsed {
+            ctx.language.set(parsed);
+        }
+    }
+}

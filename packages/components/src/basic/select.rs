@@ -234,9 +234,9 @@ pub fn Select(props: SelectProps) -> Element {
 
                             rsx! {
                                 Glow {
+                                    block: true,
                                     blur: crate::GlowBlur::Light,
                                     intensity: crate::GlowIntensity::Seventy,
-                                    class: "hi-select-option-glow-wrapper",
 
                                     div {
                                         class: if is_selected { "hi-select-option hi-select-option-selected" } else { "hi-select-option" },

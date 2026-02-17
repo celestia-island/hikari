@@ -86,9 +86,9 @@ pub fn Arrow(
         builder = builder.add(sz);
     }
 
-    // Note: User custom class via &props.class is NOT added here
-    // If custom class is needed, use a separate class wrapper or
-    // extend ArrowClass with more variants
+    // Add user custom class
+    builder = builder.add_raw(&class);
+
     let classes = builder.build();
 
     rsx! {

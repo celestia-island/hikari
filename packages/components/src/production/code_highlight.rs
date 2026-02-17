@@ -2,8 +2,8 @@
 // Code highlighting component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, CodeHighlightClass};
 use gloo::timers::callback::Timeout;
+use palette::classes::{ClassesBuilder, CodeHighlightClass};
 use wasm_bindgen::prelude::*;
 
 use crate::styled::StyledComponent;
@@ -90,9 +90,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         .add(CodeHighlightClass::CopyButton)
         .build();
 
-    let code_classes = ClassesBuilder::new()
-        .add(CodeHighlightClass::Code)
-        .build();
+    let code_classes = ClassesBuilder::new().add(CodeHighlightClass::Code).build();
 
     let line_classes = ClassesBuilder::new()
         .add(CodeHighlightClass::LineNumbers)
@@ -115,13 +113,17 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         let base = copy_classes.clone();
         let copied_state = *copied.read();
         if copied_state {
-            format!("{} copied", base)
+            format!("{} copied hi-code-highlight-copy-copied", base)
         } else {
             base
         }
     };
 
-    let button_text = if *copied.read() { "已复制" } else { "复制" };
+    let button_text = if *copied.read() {
+        "已复制"
+    } else {
+        "复制"
+    };
 
     rsx! {
         div {
@@ -226,9 +228,10 @@ impl StyledComponent for CodeHighlightComponent {
     box-shadow: 0 0 8px var(--hi-color-primary-glow);
 }
 
+.hi-code-highlight-copy.hi-code-highlight-copy-copied,
 .hi-code-highlight-copy.copied {
-    background-color: var(--hi-color-primary) !important;
-    color: white !important;
+    background-color: var(--hi-color-primary);
+    color: white;
     box-shadow: 0 0 12px var(--hi-color-primary-glow);
     opacity: 1;
 }

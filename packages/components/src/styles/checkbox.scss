@@ -79,27 +79,25 @@
 // ============================================
 
 .hi-checkbox-icon {
-    color: white;
+    color: var(--hi-component-selection-icon);
     width: 70%;
     height: 70%;
-    // Always visible - important! override inline styles
-    opacity: 1 !important;
+    opacity: 1;
     transform: scale(0.3);
-    // Note: transition removed - we control animation via StyleStringBuilder
     pointer-events: none;
     display: block;
     flex-shrink: 0;
 }
 
 // Unchecked state - icon visible but semi-transparent
-.hi-checkbox:not(.hi-checkbox-checked) .hi-checkbox-icon {
-    opacity: 0.3 !important;
+.hi-checkbox:not(.hi-checkbox-checked) .hi-checkbox-icon.hi-checkbox-icon {
+    opacity: 0.3;
 }
 
 // Checked state - icon fully visible and scaled
-.hi-checkbox-checked .hi-checkbox-icon {
-    opacity: 1 !important;
-    transform: scale(1) !important;
+.hi-checkbox-checked .hi-checkbox-icon.hi-checkbox-icon {
+    opacity: 1;
+    transform: scale(1);
 }
 
 // ============================================

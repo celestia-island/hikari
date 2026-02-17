@@ -13,10 +13,11 @@ use crate::{
 };
 
 /// Context for Menu to communicate with MenuItem
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[derive(Clone, Default)]
 pub struct MenuContext {
     pub in_popover: bool,
     pub glow_enabled: bool,
+    pub request_close: Option<Callback<()>>,
 }
 
 impl MenuContext {
@@ -176,6 +177,10 @@ pub struct MenuProps {
     /// Default glow setting for all items (overridden by in_popover)
     #[props(default)]
     pub glow: bool,
+
+    /// Callback to request closing the parent popover (when menu item is clicked)
+    #[props(default)]
+    pub request_close: Option<Callback<()>>,
 }
 
 impl Default for MenuProps {
@@ -190,6 +195,7 @@ impl Default for MenuProps {
             on_select: None,
             in_popover: false,
             glow: false,
+            request_close: None,
         }
     }
 }
@@ -284,6 +290,7 @@ pub fn Menu(props: MenuProps) -> Element {
     use_context_provider(|| MenuContext {
         in_popover: props.in_popover,
         glow_enabled,
+        request_close: props.request_close.clone(),
     });
 
     rsx! {
@@ -313,7 +320,7 @@ impl StyledComponent for MenuComponent {
 #[component]
 pub fn MenuItem(props: MenuItemProps) -> Element {
     let menu_context = try_consume_context::<MenuContext>();
-    let should_glow = match menu_context {
+    let should_glow = match &menu_context {
         Some(ctx) => props.glow || (ctx.in_popover && ctx.glow_enabled),
         None => props.glow,
     };
@@ -334,6 +341,14 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
                 if !props.disabled {
                     if let Some(handler) = props.onclick.as_ref() {
                         handler.call(e);
+                    }
+                    // Request close if in popover mode
+                    if let Some(ctx) = &menu_context {
+                        if ctx.in_popover {
+                            if let Some(close_cb) = &ctx.request_close {
+                                close_cb.call(());
+                            }
+                        }
                     }
                 }
             },

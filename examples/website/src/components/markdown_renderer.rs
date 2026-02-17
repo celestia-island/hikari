@@ -322,7 +322,7 @@ fn render_html(html: &str) -> Element {
     rsx! {
         div {
             class: "hi-html-content",
-            dangerous_inner_html: "{html}"
+            dangerous_inner_html: html.to_string()
         }
     }
 }
@@ -358,7 +358,7 @@ fn render_table(headers: Vec<String>, rows: Vec<Vec<String>>) -> Element {
                 columns: columns,
                 data: rows,
                 bordered: true,
-                striped: true,
+                striped: false,
                 hoverable: true,
             }
         }

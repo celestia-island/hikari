@@ -104,6 +104,7 @@ pub fn Popover(props: PopoverProps) -> Element {
     let mut open = use_signal(|| props.open);
     let mut popover_id = use_signal(|| String::new());
     let mut trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
+    let mut close_requested = use_signal(|| false);
 
     let portal = use_portal();
     let positioning = props.positioning.clone();
@@ -115,12 +116,9 @@ pub fn Popover(props: PopoverProps) -> Element {
 
     let on_open_change = props.on_open_change.clone();
     let on_open_change_for_close = props.on_open_change.clone();
-    let portal_for_close = portal.clone();
 
     let on_close = Callback::new(move |_| {
         open.set(false);
-        let id = popover_id();
-        portal_for_close.remove_entry.call(id);
         if let Some(handler) = on_open_change_for_close.as_ref() {
             handler.call(false);
         }
@@ -135,6 +133,7 @@ pub fn Popover(props: PopoverProps) -> Element {
         if new_state {
             let id = generate_portal_id();
             popover_id.set(id.clone());
+            close_requested.set(false);
 
             #[cfg(target_arch = "wasm32")]
             {
@@ -170,11 +169,11 @@ pub fn Popover(props: PopoverProps) -> Element {
                 title: props.title.clone(),
                 close_on_click_outside: props.close_on_click_outside,
                 on_close: Some(on_close.clone()),
+                close_requested,
                 children: props.children.clone(),
             });
         } else {
-            let id = popover_id();
-            portal.remove_entry.call(id);
+            close_requested.set(true);
         }
 
         if let Some(handler) = on_open_change.as_ref() {
@@ -266,6 +265,12 @@ impl StyledComponent for PopoverComponent {
   border: none;
   box-shadow: none;
   padding: 0;
+  width: 100%;
+}
+
+.hi-popover-content .hi-menu-item {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .hi-popover-backdrop {

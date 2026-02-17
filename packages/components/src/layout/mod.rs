@@ -8,6 +8,7 @@
 //! - Footer - Footer content
 //! - Container - Responsive content container
 //! - Grid/Row/Col - Grid system components
+//! - FlexBox - Flexible box layout component
 //! - Section - Content section component
 //! - ScrollbarContainer - Custom scrollbar component
 //! - Divider - Visual divider line
@@ -19,6 +20,7 @@ mod aside;
 mod container;
 mod content;
 mod divider;
+mod flex;
 mod footer;
 mod grid;
 mod header;
@@ -31,6 +33,7 @@ pub use aside::*;
 pub use container::*;
 pub use content::*;
 pub use divider::*;
+pub use flex::*;
 pub use footer::*;
 pub use grid::*;
 pub use header::*;

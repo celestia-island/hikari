@@ -181,11 +181,12 @@ pub mod animation;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, DropdownClass, ModalClass, PortalClass};
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::{JsCast, closure::Closure};
+use palette::classes::{ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass};
+
+use wasm_bindgen::JsCast;
 
 use super::modal::{MaskMode, ModalPosition};
+use crate::feedback::PopoverPlacement;
 
 static PORTAL_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -253,6 +254,15 @@ pub enum PortalEntry {
     Toast {
         id: String,
         position: ToastPosition,
+        children: Element,
+    },
+    Popover {
+        id: String,
+        trigger_rect: Option<(f64, f64, f64, f64)>,
+        preferred_placements: Vec<PopoverPlacement>,
+        offset: f64,
+        width: Option<String>,
+        title: Option<String>,
         children: Element,
     },
 }
@@ -773,6 +783,7 @@ pub fn PortalProvider(children: Element) -> Element {
             PortalEntry::Modal { id: entry_id, .. } => entry_id != &id,
             PortalEntry::Dropdown { id: entry_id, .. } => entry_id != &id,
             PortalEntry::Toast { id: entry_id, .. } => entry_id != &id,
+            PortalEntry::Popover { id: entry_id, .. } => entry_id != &id,
         });
     });
 
@@ -879,6 +890,27 @@ fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                     z_index,
                                     id: id.clone(),
                                     position: *position,
+                                    children: children.clone(),
+                                }
+                            },
+                            PortalEntry::Popover {
+                                id,
+                                trigger_rect,
+                                preferred_placements,
+                                offset,
+                                width,
+                                title,
+                                children,
+                            } => rsx! {
+                                PopoverPortalEntry {
+                                    key: "{id}",
+                                    z_index,
+                                    id: id.clone(),
+                                    trigger_rect: *trigger_rect,
+                                    preferred_placements: preferred_placements.clone(),
+                                    offset: *offset,
+                                    width: width.clone(),
+                                    title: title.clone(),
                                     children: children.clone(),
                                 }
                             },
@@ -1585,6 +1617,175 @@ fn ToastPortalEntry(
             class: "hi-toast",
             style: "{position_style} z-index: {z_index}; pointer-events: auto;",
             {children}
+        }
+    }
+}
+
+#[component]
+fn PopoverPortalEntry(
+    z_index: usize,
+    id: String,
+    trigger_rect: Option<(f64, f64, f64, f64)>,
+    preferred_placements: Vec<PopoverPlacement>,
+    offset: f64,
+    width: Option<String>,
+    title: Option<String>,
+    children: Element,
+) -> Element {
+    let position_state = use_signal(|| (PopoverPlacement::Bottom, 0.0, 0.0));
+    let popover_ref: Signal<Option<web_sys::Element>> = use_signal(|| None);
+
+    let viewport_width = use_signal(|| {
+        #[cfg(target_arch = "wasm32")]
+        {
+            web_sys::window()
+                .and_then(|w| w.inner_width().ok())
+                .and_then(|v| v.as_f64())
+                .unwrap_or(1920.0)
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            1920.0
+        }
+    });
+
+    let viewport_height = use_signal(|| {
+        #[cfg(target_arch = "wasm32")]
+        {
+            web_sys::window()
+                .and_then(|w| w.inner_height().ok())
+                .and_then(|v| v.as_f64())
+                .unwrap_or(1080.0)
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            1080.0
+        }
+    });
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        let preferred = preferred_placements.clone();
+        let offset_for_calc = offset;
+        let mut pos_state = position_state;
+
+        use_effect(move || {
+            if let Some((tx, ty, tw, th)) = trigger_rect {
+                let popover_w = popover_ref.read().as_ref()
+                    .map(|el| el.get_bounding_client_rect().width())
+                    .unwrap_or(160.0);
+                let popover_h = popover_ref.read().as_ref()
+                    .map(|el| el.get_bounding_client_rect().height())
+                    .unwrap_or(100.0);
+
+                let vw = viewport_width();
+                let vh = viewport_height();
+
+                let trigger_center_x = tx + tw / 2.0;
+                let trigger_center_y = ty + th / 2.0;
+
+                fn check_placement(
+                    placement: PopoverPlacement,
+                    tx: f64, ty: f64, tw: f64, th: f64,
+                    popover_w: f64, popover_h: f64,
+                    vw: f64, vh: f64,
+                    offset: f64,
+                ) -> Option<(f64, f64)> {
+                    const PADDING: f64 = 16.0;
+                    match placement {
+                        PopoverPlacement::Bottom => {
+                            let x = tx + tw / 2.0;
+                            let y = ty + th + offset;
+                            if y + popover_h <= vh - PADDING && x - popover_w / 2.0 >= PADDING && x + popover_w / 2.0 <= vw - PADDING {
+                                Some((x, y))
+                            } else {
+                                None
+                            }
+                        }
+                        PopoverPlacement::Top => {
+                            let x = tx + tw / 2.0;
+                            let y = ty - offset;
+                            if y - popover_h >= PADDING && x - popover_w / 2.0 >= PADDING && x + popover_w / 2.0 <= vw - PADDING {
+                                Some((x, y))
+                            } else {
+                                None
+                            }
+                        }
+                        PopoverPlacement::Left => {
+                            let x = tx - offset;
+                            let y = ty + th / 2.0;
+                            if x - popover_w >= PADDING && y - popover_h / 2.0 >= PADDING && y + popover_h / 2.0 <= vh - PADDING {
+                                Some((x, y))
+                            } else {
+                                None
+                            }
+                        }
+                        PopoverPlacement::Right => {
+                            let x = tx + tw + offset;
+                            let y = ty + th / 2.0;
+                            if x + popover_w <= vw - PADDING && y - popover_h / 2.0 >= PADDING && y + popover_h / 2.0 <= vh - PADDING {
+                                Some((x, y))
+                            } else {
+                                None
+                            }
+                        }
+                    }
+                }
+
+                let mut found = None;
+                for placement in &preferred {
+                    if let Some(pos) = check_placement(*placement, tx, ty, tw, th, popover_w, popover_h, vw, vh, offset_for_calc) {
+                        found = Some((*placement, pos.0, pos.1));
+                        break;
+                    }
+                }
+
+                if found.is_none() {
+                    for placement in [PopoverPlacement::Bottom, PopoverPlacement::Top, PopoverPlacement::Right, PopoverPlacement::Left] {
+                        if !preferred.contains(&placement) {
+                            if let Some(pos) = check_placement(placement, tx, ty, tw, th, popover_w, popover_h, vw, vh, offset_for_calc) {
+                                found = Some((placement, pos.0, pos.1));
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                let (placement, x, y) = found.unwrap_or((PopoverPlacement::Bottom, trigger_center_x, ty + th + offset_for_calc));
+                pos_state.set((placement, x, y));
+            }
+        });
+    }
+
+    let position_style = use_memo(move || {
+        let (placement, x, y) = position_state();
+        match placement {
+            PopoverPlacement::Bottom => format!("position: fixed; left: {}px; top: {}px; transform: translateX(-50%);", x, y),
+            PopoverPlacement::Top => format!("position: fixed; left: {}px; bottom: {}px; transform: translateX(-50%);", x, viewport_height() - y),
+            PopoverPlacement::Left => format!("position: fixed; right: {}px; top: {}px; transform: translateY(-50%);", viewport_width() - x, y),
+            PopoverPlacement::Right => format!("position: fixed; left: {}px; top: {}px; transform: translateY(-50%);", x, y),
+        }
+    });
+
+    let width_style = width.as_deref().unwrap_or("auto");
+    let popover_classes = ClassesBuilder::new().add(PopoverClass::Popover).build();
+
+    #[cfg(not(target_arch = "wasm32"))]
+    let _ = popover_ref;
+
+    rsx! {
+        div {
+            class: "{popover_classes}",
+            style: "{position_style} width: {width_style}; z-index: {z_index}; pointer-events: auto;",
+            "data-open": "true",
+
+            if let Some(title) = title {
+                div { class: "hi-popover-title", "{title}" }
+            }
+
+            div { class: "hi-popover-content",
+                {children}
+            }
         }
     }
 }

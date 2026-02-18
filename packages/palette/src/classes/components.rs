@@ -1220,6 +1220,75 @@ impl UtilityClass for VideoPlayerClass {
     }
 }
 
+/// AudioPlayer component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AudioPlayerClass {
+    /// `hi-audio-player` - Main container
+    Container,
+    /// `hi-audio-player-sm` - Small size
+    Sm,
+    /// `hi-audio-player-md` - Medium size
+    Md,
+    /// `hi-audio-player-lg` - Large size
+    Lg,
+    /// `hi-audio-player-header` - Header section
+    Header,
+    /// `hi-audio-player-cover` - Cover image container
+    Cover,
+    /// `hi-audio-player-cover-image` - Cover image
+    CoverImage,
+    /// `hi-audio-player-info` - Info section
+    Info,
+    /// `hi-audio-player-title` - Audio title
+    Title,
+    /// `hi-audio-player-artist` - Artist name
+    Artist,
+    /// `hi-audio-player-audio` - Audio element
+    Audio,
+    /// `hi-audio-player-controls` - Controls section
+    Controls,
+    /// `hi-audio-player-play-button` - Play/pause button
+    PlayButton,
+    /// `hi-audio-player-progress-section` - Progress section
+    ProgressSection,
+    /// `hi-audio-player-progress-bar` - Progress bar
+    ProgressBar,
+    /// `hi-audio-player-progress-fill` - Progress fill
+    ProgressFill,
+    /// `hi-audio-player-time` - Time display
+    Time,
+    /// `hi-audio-player-volume-section` - Volume section
+    VolumeSection,
+    /// `hi-audio-player-volume-button` - Volume button
+    VolumeButton,
+}
+
+impl UtilityClass for AudioPlayerClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            AudioPlayerClass::Container => "audio-player",
+            AudioPlayerClass::Sm => "audio-player-sm",
+            AudioPlayerClass::Md => "audio-player-md",
+            AudioPlayerClass::Lg => "audio-player-lg",
+            AudioPlayerClass::Header => "audio-player-header",
+            AudioPlayerClass::Cover => "audio-player-cover",
+            AudioPlayerClass::CoverImage => "audio-player-cover-image",
+            AudioPlayerClass::Info => "audio-player-info",
+            AudioPlayerClass::Title => "audio-player-title",
+            AudioPlayerClass::Artist => "audio-player-artist",
+            AudioPlayerClass::Audio => "audio-player-audio",
+            AudioPlayerClass::Controls => "audio-player-controls",
+            AudioPlayerClass::PlayButton => "audio-player-play-button",
+            AudioPlayerClass::ProgressSection => "audio-player-progress-section",
+            AudioPlayerClass::ProgressBar => "audio-player-progress-bar",
+            AudioPlayerClass::ProgressFill => "audio-player-progress-fill",
+            AudioPlayerClass::Time => "audio-player-time",
+            AudioPlayerClass::VolumeSection => "audio-player-volume-section",
+            AudioPlayerClass::VolumeButton => "audio-player-volume-button",
+        }
+    }
+}
+
 /// RichTextEditor component classes
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RichTextEditorClass {
@@ -1240,6 +1309,78 @@ impl UtilityClass for RichTextEditorClass {
             RichTextEditorClass::Toolbar => "rich-text-editor-toolbar",
             RichTextEditorClass::ToolbarButton => "rich-text-editor-toolbar-button",
             RichTextEditorClass::Editor => "rich-text-editor-editor",
+        }
+    }
+}
+
+/// UserGuide component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum UserGuideClass {
+    /// `hi-user-guide-overlay` - Overlay mask
+    Overlay,
+    /// `hi-user-guide-container` - Main container
+    Container,
+    /// `hi-user-guide-arrow` - Arrow indicator
+    Arrow,
+    /// `hi-user-guide-content` - Content wrapper
+    Content,
+    /// `hi-user-guide-header` - Header section
+    Header,
+    /// `hi-user-guide-title` - Step title
+    Title,
+    /// `hi-user-guide-counter` - Step counter
+    Counter,
+    /// `hi-user-guide-description` - Step description
+    Description,
+    /// `hi-user-guide-footer` - Footer section
+    Footer,
+    /// `hi-user-guide-skip-button` - Skip button
+    SkipButton,
+    /// `hi-user-guide-navigation` - Navigation buttons
+    Navigation,
+    /// `hi-user-guide-nav-button` - Navigation button
+    NavButton,
+    /// `hi-user-guide-primary-button` - Primary button
+    PrimaryButton,
+    /// `hi-user-guide-progress` - Progress dots container
+    Progress,
+    /// `hi-user-guide-progress-dot` - Progress dot
+    ProgressDot,
+    /// `hi-user-guide-progress-dot-active` - Active progress dot
+    ProgressDotActive,
+    /// `hi-user-guide-placement-top` - Top placement
+    PlacementTop,
+    /// `hi-user-guide-placement-bottom` - Bottom placement
+    PlacementBottom,
+    /// `hi-user-guide-placement-left` - Left placement
+    PlacementLeft,
+    /// `hi-user-guide-placement-right` - Right placement
+    PlacementRight,
+}
+
+impl UtilityClass for UserGuideClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            UserGuideClass::Overlay => "user-guide-overlay",
+            UserGuideClass::Container => "user-guide-container",
+            UserGuideClass::Arrow => "user-guide-arrow",
+            UserGuideClass::Content => "user-guide-content",
+            UserGuideClass::Header => "user-guide-header",
+            UserGuideClass::Title => "user-guide-title",
+            UserGuideClass::Counter => "user-guide-counter",
+            UserGuideClass::Description => "user-guide-description",
+            UserGuideClass::Footer => "user-guide-footer",
+            UserGuideClass::SkipButton => "user-guide-skip-button",
+            UserGuideClass::Navigation => "user-guide-navigation",
+            UserGuideClass::NavButton => "user-guide-nav-button",
+            UserGuideClass::PrimaryButton => "user-guide-primary-button",
+            UserGuideClass::Progress => "user-guide-progress",
+            UserGuideClass::ProgressDot => "user-guide-progress-dot",
+            UserGuideClass::ProgressDotActive => "user-guide-progress-dot-active",
+            UserGuideClass::PlacementTop => "user-guide-placement-top",
+            UserGuideClass::PlacementBottom => "user-guide-placement-bottom",
+            UserGuideClass::PlacementLeft => "user-guide-placement-left",
+            UserGuideClass::PlacementRight => "user-guide-placement-right",
         }
     }
 }

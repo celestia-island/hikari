@@ -4,13 +4,35 @@ use _components::basic::button::Button;
 use _components::basic::card::Card;
 use _components::basic::checkbox::Checkbox;
 use _components::basic::divider::Divider;
+use _components::basic::file_upload::FileUpload;
 use _components::basic::image::Image as ImageComponent;
 use _components::basic::input::Input;
 use _components::basic::radio_group::{RadioButton, RadioDirection, RadioGroup};
 use _components::basic::select::{Select, SelectOption, SelectSize};
 use _components::basic::slider::Slider;
 use _components::basic::switch::Switch;
+use _components::data::collapse::Collapse;
+use _components::data::pagination::Pagination;
+use _components::data::table::{Align, ColumnAlign, ColumnDef, Table, TableSize};
+use _components::data::tree::{Tree, TreeNodeData};
+use _components::display::timeline::{Timeline, TimelineItem, TimelinePosition};
+use _components::display::user_guide::{GuidePlacement, GuideStep, UserGuide};
+use _components::entry::cascader::{Cascader, CascaderOption, CascaderSize};
+use _components::entry::transfer::{Transfer, TransferItem};
+use _components::feedback::alert::{Alert, AlertVariant};
+use _components::feedback::drawer::{Drawer, DrawerPlacement, DrawerSize};
+use _components::feedback::modal::{use_modal, ModalContent};
+use _components::feedback::popover::Popover;
+use _components::feedback::progress::{Progress, ProgressStatus, ProgressType};
+use _components::feedback::toast::{Toast, ToastPosition, ToastVariant};
+use _components::feedback::tooltip::{Tooltip, TooltipPlacement};
 use _components::layout::Section;
+use _components::navigation::breadcrumb::{Breadcrumb, BreadcrumbItem};
+use _components::navigation::menu::{Menu, MenuItem, MenuMode};
+use _components::navigation::tabs::{TabPane, TabPosition, Tabs};
+use _components::production::audio_player::{AudioPlayer, AudioPlayerSize};
+use _components::production::rich_text_editor::RichTextEditor;
+use _components::production::video_player::VideoPlayer;
 use _components::{
     AvatarSize, AvatarVariant, BadgeVariant, ButtonVariant, IconButton, IconButtonSize,
     IconButtonVariant,
@@ -185,23 +207,83 @@ pub fn render_component(component_type: ComponentType) -> Element {
 
                 // ========== Feedback ==========
                 ("layer1", "feedback", Some("alert")) => rsx! {
-                    div { class: placeholder_box(),
-                        p { "Alert component - coming soon" }
+                    div { class: flex_col_gap(),
+                        Alert {
+                            variant: AlertVariant::Info,
+                            title: "Information".to_string(),
+                            description: "This is an informational message.".to_string(),
+                        }
+                        Alert {
+                            variant: AlertVariant::Success,
+                            title: "Success".to_string(),
+                            description: "Operation completed successfully.".to_string(),
+                            closable: true,
+                        }
+                        Alert {
+                            variant: AlertVariant::Warning,
+                            title: "Warning".to_string(),
+                            description: "Please review before proceeding.".to_string(),
+                        }
+                        Alert {
+                            variant: AlertVariant::Error,
+                            title: "Error".to_string(),
+                            description: "Something went wrong.".to_string(),
+                            closable: true,
+                        }
                     }
                 },
                 ("layer1", "feedback", Some("toast")) => rsx! {
-                    div { class: placeholder_box(),
-                        p { "Toast component - coming soon" }
+                    div { class: flex_col_gap(),
+                        Toast {
+                            variant: ToastVariant::Info,
+                            message: "This is an info toast".to_string(),
+                            title: Some("Info".to_string()),
+                        }
+                        Toast {
+                            variant: ToastVariant::Success,
+                            message: "Operation successful!".to_string(),
+                        }
+                        Toast {
+                            variant: ToastVariant::Warning,
+                            message: "Please check your input".to_string(),
+                        }
+                        Toast {
+                            variant: ToastVariant::Error,
+                            message: "Failed to save changes".to_string(),
+                        }
                     }
                 },
                 ("layer1", "feedback", Some("tooltip")) => rsx! {
-                    div { class: placeholder_box(),
-                        p { "Tooltip component - coming soon" }
+                    div { class: flex_row_wrap(),
+                        Tooltip {
+                            content: "Tooltip on top".to_string(),
+                            placement: TooltipPlacement::Top,
+                            Button { variant: ButtonVariant::Primary, "Top" }
+                        }
+                        Tooltip {
+                            content: "Tooltip on bottom".to_string(),
+                            placement: TooltipPlacement::Bottom,
+                            Button { variant: ButtonVariant::Secondary, "Bottom" }
+                        }
+                        Tooltip {
+                            content: "Tooltip on left".to_string(),
+                            placement: TooltipPlacement::Left,
+                            Button { variant: ButtonVariant::Ghost, "Left" }
+                        }
+                        Tooltip {
+                            content: "Tooltip on right".to_string(),
+                            placement: TooltipPlacement::Right,
+                            Button { variant: ButtonVariant::Ghost, "Right" }
+                        }
                     }
                 },
                 ("layer1", "feedback", _) => rsx! {
-                    div { class: placeholder_box(),
-                        p { "Feedback components: Alert, Toast, Tooltip" }
+                    div { class: flex_col_gap(),
+                        Alert {
+                            variant: AlertVariant::Info,
+                            title: "Feedback Components".to_string(),
+                            description: "Alert, Toast, Tooltip components".to_string(),
+                        }
                     }
                 },
 
@@ -213,8 +295,26 @@ pub fn render_component(component_type: ComponentType) -> Element {
                     }
                 },
                 ("layer1", "switch", Some("progress")) => rsx! {
-                    div { class: placeholder_box(),
-                        p { "Progress component - coming soon" }
+                    div { class: flex_col_gap(),
+                        Progress {
+                            value: 30.0,
+                            show_info: true,
+                        }
+                        Progress {
+                            value: 70.0,
+                            status: ProgressStatus::Active,
+                            show_info: true,
+                        }
+                        Progress {
+                            value: 100.0,
+                            status: ProgressStatus::Success,
+                            show_info: true,
+                        }
+                        Progress {
+                            value: 50.0,
+                            status: ProgressStatus::Exception,
+                            show_info: true,
+                        }
                     }
                 },
                 ("layer1", "switch", Some("slider")) => rsx! {
@@ -315,95 +415,398 @@ pub fn render_component(component_type: ComponentType) -> Element {
 
                 // ========== Layer 2 ==========
                 ("layer2", "navigation", Some("menu")) => rsx! {
-                    div { class: placeholder_box(), p { "Menu component - coming soon" } }
+                    div { class: flex_col_gap(), style: "max-width: 240px;",
+                        Menu {
+                            mode: MenuMode::Vertical,
+                            MenuItem { item_key: "1", "Dashboard" }
+                            MenuItem { item_key: "2", "Settings" }
+                            MenuItem { item_key: "3", "Profile" }
+                            MenuItem { item_key: "4", disabled: true, "Disabled" }
+                        }
+                    }
                 },
                 ("layer2", "navigation", Some("tabs")) => rsx! {
-                    div { class: placeholder_box(), p { "Tabs component - coming soon" } }
+                    div { style: "width: 100%;",
+                        Tabs {
+                            default_active: "1".to_string(),
+                            TabPane {
+                                item_key: "1".to_string(),
+                                tab: "Tab 1".to_string(),
+                                div { class: flex_col_gap(), "Content of Tab 1" }
+                            }
+                            TabPane {
+                                item_key: "2".to_string(),
+                                tab: "Tab 2".to_string(),
+                                div { class: flex_col_gap(), "Content of Tab 2" }
+                            }
+                            TabPane {
+                                item_key: "3".to_string(),
+                                tab: "Tab 3".to_string(),
+                                div { class: flex_col_gap(), "Content of Tab 3" }
+                            }
+                        }
+                    }
                 },
                 ("layer2", "navigation", Some("breadcrumb")) => rsx! {
-                    div { class: placeholder_box(), p { "Breadcrumb component - coming soon" } }
+                    Breadcrumb {
+                        BreadcrumbItem { item_key: "1".to_string(), "Home" }
+                        BreadcrumbItem { item_key: "2".to_string(), "Library" }
+                        BreadcrumbItem { item_key: "3".to_string(), "Data" }
+                    }
                 },
                 ("layer2", "navigation", _) => rsx! {
-                    div { class: placeholder_box(), p { "Navigation components: Menu, Tabs, Breadcrumb" } }
+                    div { class: flex_col_gap(),
+                        Breadcrumb {
+                            BreadcrumbItem { item_key: "1".to_string(), "Home" }
+                            BreadcrumbItem { item_key: "2".to_string(), "Components" }
+                        }
+                    }
                 },
 
                 ("layer2", "data", Some("table")) => rsx! {
-                    div { class: placeholder_box(), p { "Table component - coming soon" } }
+                    div { style: "width: 100%;",
+                        Table {
+                            columns: vec![
+                                ColumnDef::new("name", "Name").sortable(true),
+                                ColumnDef::new("role", "Role"),
+                                ColumnDef::new("level", "Level").align(ColumnAlign::Center),
+                            ],
+                            data: vec![
+                                vec!["Amiya".to_string(), "Guard".to_string(), "6".to_string()],
+                                vec!["SilverAsh".to_string(), "Guard".to_string(), "6".to_string()],
+                                vec!["Exusiai".to_string(), "Sniper".to_string(), "6".to_string()],
+                                vec!["Eyjafjalla".to_string(), "Caster".to_string(), "6".to_string()],
+                            ],
+                            bordered: true,
+                            striped: true,
+                            hoverable: true,
+                        }
+                    }
                 },
                 ("layer2", "data", Some("tree")) => rsx! {
-                    div { class: placeholder_box(), p { "Tree component - coming soon" } }
+                    div { style: "width: 100%; max-width: 300px;",
+                        Tree {
+                            data: vec![
+                                TreeNodeData {
+                                    key: "1".to_string(),
+                                    label: "Parent 1".to_string(),
+                                    children: Some(vec![
+                                        TreeNodeData {
+                                            key: "1-1".to_string(),
+                                            label: "Child 1-1".to_string(),
+                                            children: None,
+                                            disabled: false,
+                                        },
+                                        TreeNodeData {
+                                            key: "1-2".to_string(),
+                                            label: "Child 1-2".to_string(),
+                                            children: None,
+                                            disabled: false,
+                                        },
+                                    ]),
+                                    disabled: false,
+                                },
+                                TreeNodeData {
+                                    key: "2".to_string(),
+                                    label: "Parent 2".to_string(),
+                                    children: Some(vec![
+                                        TreeNodeData {
+                                            key: "2-1".to_string(),
+                                            label: "Child 2-1".to_string(),
+                                            children: None,
+                                            disabled: false,
+                                        },
+                                    ]),
+                                    disabled: false,
+                                },
+                            ],
+                            default_expanded_keys: vec!["1".to_string()],
+                        }
+                    }
                 },
                 ("layer2", "data", Some("pagination")) => rsx! {
-                    div { class: placeholder_box(), p { "Pagination component - coming soon" } }
+                    Pagination {
+                        current: 3,
+                        total: 100,
+                        page_size: 10,
+                        show_total: true,
+                    }
                 },
                 ("layer2", "data", _) => rsx! {
-                    div { class: placeholder_box(), p { "Data components: Table, Tree, Pagination" } }
+                    div { class: flex_col_gap(),
+                        Pagination {
+                            current: 1,
+                            total: 50,
+                            page_size: 10,
+                            show_total: true,
+                        }
+                    }
                 },
 
                 ("layer2", "form", Some("form")) => rsx! {
-                    div { class: placeholder_box(), p { "Form component - coming soon" } }
+                    div { class: flex_col_gap(), style: "max-width: 320px;",
+                        Input { placeholder: Some("Username".to_string()) }
+                        Input { placeholder: Some("Password".to_string()), input_type: Some("password".to_string()) }
+                        Checkbox { checked: false, on_change: move |_| {}, "Remember me" }
+                        Button { variant: ButtonVariant::Primary, block: true, "Submit" }
+                    }
                 },
                 ("layer2", "form", Some("dropdown")) => rsx! {
-                    div { class: placeholder_box(), p { "Dropdown component - coming soon" } }
+                    div { class: flex_row_wrap(),
+                        Popover {
+                            trigger: rsx! {
+                                Button { variant: ButtonVariant::Primary, "Click me" }
+                            },
+                            div { style: "padding: 8px;", "Dropdown content here" }
+                        }
+                    }
                 },
                 ("layer2", "form", Some("modal")) => rsx! {
-                    div { class: placeholder_box(), p { "Modal component - coming soon" } }
+                    div { class: flex_row_wrap(),
+                        Popover {
+                            trigger: rsx! {
+                                Button { variant: ButtonVariant::Primary, "Open Modal" }
+                            },
+                            div { style: "padding: 16px; min-width: 200px;",
+                                h3 { style: "margin-bottom: 8px;", "Modal Title" }
+                                p { "Modal content goes here" }
+                            }
+                        }
+                    }
                 },
                 ("layer2", "form", Some("collapse")) => rsx! {
-                    div { class: placeholder_box(), p { "Collapse component - coming soon" } }
+                    div { style: "width: 100%; max-width: 400px;",
+                        Collapse {
+                            expanded: false,
+                            "Expandable content panel"
+                        }
+                    }
                 },
                 ("layer2", "form", _) => rsx! {
-                    div { class: placeholder_box(), p { "Form components: Form, Dropdown, Modal, Collapse" } }
+                    div { class: flex_col_gap(), style: "max-width: 320px;",
+                        Input { placeholder: Some("Form components".to_string()) }
+                    }
                 },
 
                 ("layer2", "feedback", Some("drawer")) => rsx! {
-                    div { class: placeholder_box(), p { "Drawer component - coming soon" } }
+                    div { class: flex_row_wrap(),
+                        Popover {
+                            trigger: rsx! {
+                                Button { variant: ButtonVariant::Primary, "Open Drawer" }
+                            },
+                            div { style: "padding: 16px; min-width: 250px;",
+                                h3 { style: "margin-bottom: 12px;", "Drawer Preview" }
+                                p { "This is a simplified drawer demonstration." }
+                                p { style: "margin-top: 8px;", "Full drawer slides in from edge." }
+                            }
+                        }
+                    }
                 },
                 ("layer2", "feedback", Some("popover")) => rsx! {
-                    div { class: placeholder_box(), p { "Popover component - coming soon" } }
+                    div { class: flex_row_wrap(),
+                        Popover {
+                            title: Some("Popover Title".to_string()),
+                            trigger: rsx! {
+                                Button { variant: ButtonVariant::Secondary, "Hover or Click" }
+                            },
+                            div { style: "padding: 8px;",
+                                p { "Popover content with title" }
+                            }
+                        }
+                    }
                 },
                 ("layer2", "feedback", Some("upload")) => rsx! {
-                    div { class: placeholder_box(), p { "Upload component - coming soon" } }
+                    div { style: "width: 100%; max-width: 400px;",
+                        FileUpload {
+                            upload_text: "Click or drag file to upload".to_string(),
+                            multiple: true,
+                        }
+                    }
                 },
                 ("layer2", "feedback", _) => rsx! {
-                    div { class: placeholder_box(), p { "Feedback components: Drawer, Popover, Upload" } }
+                    div { class: flex_col_gap(),
+                        Popover {
+                            trigger: rsx! {
+                                Button { variant: ButtonVariant::Primary, "Open Popover" }
+                            },
+                            div { style: "padding: 8px;", "Feedback: Drawer, Popover, Upload" }
+                        }
+                    }
                 },
 
                 // ========== Layer 2 - Specific ==========
                 ("layer2", "cascader", _) => rsx! {
-                    div { class: placeholder_box(), p { "Cascader: Multi-level cascading selection" } }
+                    div { style: "width: 100%; max-width: 300px;",
+                        Cascader {
+                            placeholder: "Select location".to_string(),
+                            size: CascaderSize::Md,
+                            options: vec![
+                                CascaderOption {
+                                    label: "Zhejiang".to_string(),
+                                    value: "zhejiang".to_string(),
+                                    children: Some(vec![
+                                        CascaderOption {
+                                            label: "Hangzhou".to_string(),
+                                            value: "hangzhou".to_string(),
+                                            ..Default::default()
+                                        },
+                                        CascaderOption {
+                                            label: "Ningbo".to_string(),
+                                            value: "ningbo".to_string(),
+                                            ..Default::default()
+                                        },
+                                    ]),
+                                    ..Default::default()
+                                },
+                                CascaderOption {
+                                    label: "Jiangsu".to_string(),
+                                    value: "jiangsu".to_string(),
+                                    children: Some(vec![
+                                        CascaderOption {
+                                            label: "Nanjing".to_string(),
+                                            value: "nanjing".to_string(),
+                                            ..Default::default()
+                                        },
+                                        CascaderOption {
+                                            label: "Suzhou".to_string(),
+                                            value: "suzhou".to_string(),
+                                            ..Default::default()
+                                        },
+                                    ]),
+                                    ..Default::default()
+                                },
+                            ],
+                        }
+                    }
                 },
                 ("layer2", "collapsible", _) => rsx! {
-                    div { class: placeholder_box(), p { "Collapsible: Expandable/collapsible panel" } }
+                    div { style: "width: 100%; max-width: 400px;",
+                        Collapse {
+                            expanded: true,
+                            animated: true,
+                            "This is collapsible content that can be expanded or collapsed"
+                        }
+                    }
                 },
                 ("layer2", "pagination", _) => rsx! {
-                    div { class: placeholder_box(), p { "Pagination: Page navigation for data lists" } }
+                    Pagination {
+                        current: 5,
+                        total: 500,
+                        page_size: 20,
+                        show_total: true,
+                        show_size_changer: true,
+                    }
                 },
                 ("layer2", "qrcode", _) => rsx! {
                     div { class: placeholder_box(), p { "QRCode: QR code generation" } }
                 },
                 ("layer2", "table", _) => rsx! {
-                    div { class: placeholder_box(), p { "Table: Data table with sorting and pagination" } }
+                    div { style: "width: 100%;",
+                        Table {
+                            columns: vec![
+                                ColumnDef::new("id", "ID").align(ColumnAlign::Center),
+                                ColumnDef::new("name", "Name").sortable(true),
+                                ColumnDef::new("status", "Status"),
+                            ],
+                            data: vec![
+                                vec!["001".to_string(), "Item A".to_string(), "Active".to_string()],
+                                vec!["002".to_string(), "Item B".to_string(), "Inactive".to_string()],
+                                vec!["003".to_string(), "Item C".to_string(), "Active".to_string()],
+                            ],
+                            hoverable: true,
+                        }
+                    }
                 },
                 ("layer2", "timeline", _) => rsx! {
-                    div { class: placeholder_box(), p { "Timeline: Event timeline display" } }
+                    Timeline {
+                        position: TimelinePosition::Left,
+                        TimelineItem {
+                            time: "2024-01-01".to_string(),
+                            title: "Project Started".to_string(),
+                            "Initial project setup"
+                        }
+                        TimelineItem {
+                            time: "2024-02-15".to_string(),
+                            title: "First Milestone".to_string(),
+                            "Completed core features"
+                        }
+                        TimelineItem {
+                            time: "2024-03-20".to_string(),
+                            title: "Beta Release".to_string(),
+                            last: true,
+                            "Public beta testing"
+                        }
+                    }
                 },
                 ("layer2", "transfer", _) => rsx! {
-                    div { class: placeholder_box(), p { "Transfer: Dual-column transfer selection" } }
+                    div { style: "width: 100%;",
+                        Transfer {
+                            data: vec![
+                                TransferItem { item_key: "1".to_string(), label: "Option 1".to_string(), ..Default::default() },
+                                TransferItem { item_key: "2".to_string(), label: "Option 2".to_string(), ..Default::default() },
+                                TransferItem { item_key: "3".to_string(), label: "Option 3".to_string(), ..Default::default() },
+                                TransferItem { item_key: "4".to_string(), label: "Option 4".to_string(), ..Default::default() },
+                            ],
+                            target_keys: vec!["3".to_string()],
+                            titles: Some(["Source".to_string(), "Target".to_string()]),
+                        }
+                    }
                 },
                 ("layer2", "tree", _) => rsx! {
-                    div { class: placeholder_box(), p { "Tree: Hierarchical tree structure" } }
+                    div { style: "width: 100%; max-width: 280px;",
+                        Tree {
+                            data: vec![
+                                TreeNodeData {
+                                    key: "root".to_string(),
+                                    label: "Root Node".to_string(),
+                                    children: Some(vec![
+                                        TreeNodeData {
+                                            key: "child1".to_string(),
+                                            label: "Child 1".to_string(),
+                                            children: None,
+                                            disabled: false,
+                                        },
+                                        TreeNodeData {
+                                            key: "child2".to_string(),
+                                            label: "Child 2".to_string(),
+                                            children: None,
+                                            disabled: false,
+                                        },
+                                    ]),
+                                    disabled: false,
+                                },
+                            ],
+                            show_line: true,
+                        }
+                    }
                 },
 
                 // ========== Layer 3 ==========
                 ("layer3", "media", Some("video")) => rsx! {
-                    div { class: placeholder_box(), p { "VideoPlayer component - coming soon" } }
+                    div { style: "width: 100%; max-width: 480px;",
+                        VideoPlayer {
+                            src: "https://www.w3schools.com/html/mov_bbb.mp4".to_string(),
+                            controls: true,
+                        }
+                    }
                 },
                 ("layer3", "media", Some("audio")) => rsx! {
-                    div { class: placeholder_box(), p { "AudioPlayer component - coming soon" } }
+                    div { style: "width: 100%; max-width: 400px;",
+                        AudioPlayer {
+                            src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3".to_string(),
+                            title: Some("Sample Track".to_string()),
+                            artist: Some("SoundHelix".to_string()),
+                            controls: true,
+                        }
+                    }
                 },
                 ("layer3", "media", _) => rsx! {
-                    div { class: placeholder_box(), p { "Media components: VideoPlayer, AudioPlayer" } }
+                    div { class: flex_col_gap(),
+                        VideoPlayer {
+                            src: "https://www.w3schools.com/html/mov_bbb.mp4".to_string(),
+                            controls: true,
+                        }
+                    }
                 },
 
                 ("layer3", "editor", Some("markdown")) => rsx! {
@@ -413,23 +816,94 @@ pub fn render_component(component_type: ComponentType) -> Element {
                     div { class: placeholder_box(), p { "CodeEditor component - coming soon" } }
                 },
                 ("layer3", "editor", Some("richtext")) => rsx! {
-                    div { class: placeholder_box(), p { "RichTextEditor component - coming soon" } }
+                    div { style: "width: 100%; max-width: 500px;",
+                        RichTextEditor {
+                            toolbar: true,
+                            placeholder: "Start typing...".to_string(),
+                        }
+                    }
                 },
                 ("layer3", "editor", _) => rsx! {
-                    div { class: placeholder_box(), p { "Editor components: Markdown, Code, RichText" } }
+                    div { class: flex_col_gap(),
+                        RichTextEditor {
+                            toolbar: true,
+                            placeholder: "Rich text editor".to_string(),
+                        }
+                    }
                 },
 
                 ("layer3", "visualization", Some("draglayer")) => rsx! {
                     div { class: placeholder_box(), p { "DragLayer component - coming soon" } }
                 },
                 ("layer3", "visualization", Some("timeline")) => rsx! {
-                    div { class: placeholder_box(), p { "Timeline component - coming soon" } }
+                    Timeline {
+                        position: TimelinePosition::Alternate,
+                        TimelineItem {
+                            position: TimelinePosition::Left,
+                            time: "Step 1".to_string(),
+                            title: "Design Phase".to_string(),
+                            "Initial design and planning"
+                        }
+                        TimelineItem {
+                            position: TimelinePosition::Right,
+                            time: "Step 2".to_string(),
+                            title: "Development".to_string(),
+                            "Core feature implementation"
+                        }
+                        TimelineItem {
+                            position: TimelinePosition::Left,
+                            time: "Step 3".to_string(),
+                            title: "Testing".to_string(),
+                            last: true,
+                            "Quality assurance and testing"
+                        }
+                    }
                 },
                 ("layer3", "visualization", Some("userguide")) => rsx! {
-                    div { class: placeholder_box(), p { "UserGuide component - coming soon" } }
+                    div { style: "width: 100%; max-width: 400px; position: relative; min-height: 200px;",
+                        UserGuide {
+                            steps: vec![
+                                GuideStep {
+                                    target: String::new(),
+                                    title: "Welcome to Hikari".to_string(),
+                                    description: "This is a step-by-step guide to introduce new features.".to_string(),
+                                    placement: GuidePlacement::Bottom,
+                                },
+                                GuideStep {
+                                    target: String::new(),
+                                    title: "Explore Components".to_string(),
+                                    description: "Browse our comprehensive component library.".to_string(),
+                                    placement: GuidePlacement::Bottom,
+                                },
+                                GuideStep {
+                                    target: String::new(),
+                                    title: "Get Started".to_string(),
+                                    description: "Start building your application with Hikari!".to_string(),
+                                    placement: GuidePlacement::Bottom,
+                                },
+                            ],
+                            current: 0,
+                            visible: true,
+                        }
+                    }
                 },
                 ("layer3", "visualization", _) => rsx! {
-                    div { class: placeholder_box(), p { "Visualization components: DragLayer, Timeline, UserGuide" } }
+                    div { class: flex_col_gap(),
+                        Timeline {
+                            position: TimelinePosition::Left,
+                            TimelineItem {
+                                time: "1".to_string(),
+                                title: "Step 1".to_string(),
+                                "First step"
+                            }
+                            TimelineItem {
+                                time: "2".to_string(),
+                                title: "Step 2".to_string(),
+                                last: true,
+                                "Final step"
+                            }
+                        }
+                    }
                 },
 
                 ("layer3", "user_guide", _) => rsx! {
@@ -460,13 +934,49 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 },
 
                 ("system", "i18n", Some("basic")) => rsx! {
-                    div { class: placeholder_box(), p { "i18n basic usage - coming soon" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(TextColor::Primary).build(),
+                            "i18n system provides internationalization support with:"
+                        }
+                        ul { style: "margin-left: 1.5rem;",
+                            li { "I18nProvider - Context provider for language data" }
+                            li { "use_i18n() - Hook to access translations" }
+                            li { "LanguageSwitcher - UI component for language selection" }
+                            li { "TOML-based translation files" }
+                        }
+                    }
                 },
                 ("system", "i18n", Some("switch")) => rsx! {
-                    div { class: placeholder_box(), p { "i18n language switching - coming soon" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "Language switcher component (demo):"
+                        }
+                        div {
+                            style: "display: flex; gap: 8px; padding: 8px; background: var(--hi-surface); border-radius: 8px; width: fit-content;",
+                            button {
+                                class: "hi-button hi-button-sm hi-button-primary",
+                                "EN"
+                            }
+                            button {
+                                class: "hi-button hi-button-sm hi-button-ghost",
+                                "简"
+                            }
+                            button {
+                                class: "hi-button hi-button-sm hi-button-ghost",
+                                "繁"
+                            }
+                        }
+                    }
                 },
                 ("system", "i18n", _) => rsx! {
-                    div { class: placeholder_box(), p { "i18n internationalization system" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(TextColor::Primary).build(),
+                            "i18n internationalization system"
+                        }
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "Supports: English, Chinese Simplified, Chinese Traditional"
+                        }
+                    }
                 },
 
                 _ => rsx! {

@@ -176,7 +176,10 @@ pub fn TimelineItem(props: TimelineItemProps) -> Element {
     let dot_style = if props.color.is_empty() {
         String::new()
     } else {
-        format!("background-color: {}; border-color: {};", props.color, props.color)
+        format!(
+            "background-color: {}; border-color: {};",
+            props.color, props.color
+        )
     };
 
     rsx! {

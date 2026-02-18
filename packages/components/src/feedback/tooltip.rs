@@ -71,6 +71,8 @@ impl Default for TooltipProps {
 /// ```
 #[component]
 pub fn Tooltip(props: TooltipProps) -> Element {
+    let mut is_visible = use_signal(|| false);
+
     let placement_class = match props.placement {
         TooltipPlacement::Top => TooltipClass::TooltipTop,
         TooltipPlacement::Bottom => TooltipClass::TooltipBottom,
@@ -93,6 +95,7 @@ pub fn Tooltip(props: TooltipProps) -> Element {
     let tooltip_classes = ClassesBuilder::new()
         .add(TooltipClass::Tooltip)
         .add(placement_class)
+        .add_if(TooltipClass::TooltipVisible, move || is_visible())
         .build();
 
     let arrow_classes = ClassesBuilder::new()
@@ -100,23 +103,35 @@ pub fn Tooltip(props: TooltipProps) -> Element {
         .add(arrow_class)
         .build();
 
+    let handle_mouse_enter = move |_| {
+        is_visible.set(true);
+    };
+
+    let handle_mouse_leave = move |_| {
+        is_visible.set(false);
+    };
+
     rsx! {
         div {
             class: "{wrapper_classes}",
 
             div {
                 class: "{TooltipClass::TooltipTrigger.as_class()}",
+                onmouseenter: handle_mouse_enter,
+                onmouseleave: handle_mouse_leave,
                 { props.children }
             }
 
-            div {
-                class: "{tooltip_classes}",
+            if is_visible() {
+                div {
+                    class: "{tooltip_classes}",
 
-                div { class: "{TooltipClass::TooltipContent.as_class()}",
-                    "{props.content}"
+                    div { class: "{TooltipClass::TooltipContent.as_class()}",
+                        "{props.content}"
 
-                    if props.arrow {
-                        div { class: "{arrow_classes}" }
+                        if props.arrow {
+                            div { class: "{arrow_classes}" }
+                        }
                     }
                 }
             }

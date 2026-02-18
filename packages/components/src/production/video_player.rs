@@ -1,5 +1,10 @@
 // packages/components/src/production/video_player.rs
 // Video player component with Arknights + FUI styling
+//
+// NOTE: This component wraps the native HTML5 video element with
+// Arknights-style container styling. It uses browser native controls.
+// For custom video controls, consider extending this component or
+// using libraries like Video.js or Plyr.
 
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, VideoPlayerClass};
@@ -11,7 +16,7 @@ pub struct VideoPlayerComponent;
 
 /// Video player component with Arknights + FUI styling
 ///
-/// A video player with custom controls, progress bar, and fullscreen support.
+/// A styled video container using native HTML5 video controls.
 #[derive(Clone, PartialEq, Props)]
 pub struct VideoPlayerProps {
     /// Video source URL

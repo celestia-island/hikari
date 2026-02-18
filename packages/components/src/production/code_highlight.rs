@@ -1,5 +1,11 @@
 // packages/components/src/production/code_highlight.rs
 // Code highlighting component with Arknights + FUI styling
+//
+// NOTE: This component provides a styled code display with line numbers
+// and copy functionality. The `language-{lang}` class is added to the code
+// element for integration with external syntax highlighters like Prism.js
+// or highlight.js. For built-in Rust-based highlighting, consider
+// integrating with syntect.
 
 use dioxus::prelude::*;
 use gloo::timers::callback::Timeout;

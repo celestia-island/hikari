@@ -182,6 +182,12 @@ fn get_route_with_lang(route: &Route, new_lang: &str) -> Option<Route> {
         Route::NotFound { .. } => Some(Route::LangHome {
             lang: new_lang.to_string(),
         }),
+        Route::RootRedirect { .. } => Some(Route::LangHome {
+            lang: new_lang.to_string(),
+        }),
+        Route::LegacyRedirect { .. } => Some(Route::LangHome {
+            lang: new_lang.to_string(),
+        }),
     }
 }
 

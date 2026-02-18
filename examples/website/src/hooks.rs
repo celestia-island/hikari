@@ -21,7 +21,7 @@ pub fn get_toml_content(lang: Language) -> &'static str {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct LanguageContext {
     pub language: Signal<Language>,
 }
@@ -42,14 +42,15 @@ pub struct I18nProviderWrapperProps {
 #[component]
 pub fn I18nProviderWrapper(props: I18nProviderWrapperProps) -> Element {
     let lang_ctx = use_language();
-    // 响应式读取语言 - 使用 read() 获取值
-    let lang = *lang_ctx.language.read();
-    let toml_content = get_toml_content(lang);
+
+    // 使用 memo 建立对 language signal 的响应式依赖
+    let lang = use_memo(move || *lang_ctx.language.read());
+    let toml_content = get_toml_content(*lang.read());
 
     rsx! {
         I18nProvider {
             key: "{lang:?}",
-            language: lang,
+            language: *lang.read(),
             toml_content,
             {props.children}
         }
@@ -62,12 +63,13 @@ pub fn use_current_language() -> Language {
     lang
 }
 
-pub fn update_language_from_route(lang: &str) {
+/// Hook to update language from route. Call this in route components.
+pub fn use_update_language_from_route(lang: &str) {
     let parsed = Language::from_url_prefix(lang).unwrap_or_else(Language::default_lang);
-    // 更新 LanguageContext
-    if let Some(mut ctx) = try_consume_context::<LanguageContext>() {
-        if *ctx.language.read() != parsed {
-            ctx.language.set(parsed);
-        }
+    let mut lang_ctx = use_language();
+    let current = *lang_ctx.language.read();
+
+    if current != parsed {
+        lang_ctx.language.set(parsed);
     }
 }

@@ -142,15 +142,6 @@ fn parse_lang(lang: &str) -> Language {
     Language::from_url_prefix(lang).unwrap_or_else(Language::default_lang)
 }
 
-fn update_language_from_route(lang: &str) {
-    let parsed = parse_lang(lang);
-    if let Some(mut ctx) = try_consume_context::<LanguageContext>() {
-        if *ctx.language.read() != parsed {
-            ctx.language.set(parsed);
-        }
-    }
-}
-
 #[component]
 fn RootRedirect() -> Element {
     let navigator = use_navigator();
@@ -180,7 +171,7 @@ fn LegacyRedirect(path: Vec<String>) -> Element {
 
 #[component]
 fn LangHome(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::pages::home::Home {}
     }
@@ -188,7 +179,7 @@ fn LangHome(lang: String) -> Element {
 
 #[component]
 fn ComponentsOverview(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::pages::components::overview::ComponentsOverview {}
     }
@@ -196,7 +187,7 @@ fn ComponentsOverview(lang: String) -> Element {
 
 #[component]
 fn AnimationDemo(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::pages::animation_demo::AnimationDemo {}
     }
@@ -204,7 +195,7 @@ fn AnimationDemo(lang: String) -> Element {
 
 #[component]
 fn DemosOverview(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::pages::demos::DemosOverview {}
     }
@@ -212,7 +203,7 @@ fn DemosOverview(lang: String) -> Element {
 
 #[component]
 fn SystemOverview(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::SystemOverview { lang: lang.clone() },
@@ -223,7 +214,7 @@ fn SystemOverview(lang: String) -> Element {
 
 #[component]
 fn SystemCSS(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::SystemCSS { lang: lang.clone() },
@@ -234,7 +225,7 @@ fn SystemCSS(lang: String) -> Element {
 
 #[component]
 fn SystemIcons(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::SystemIcons { lang: lang.clone() },
@@ -245,7 +236,7 @@ fn SystemIcons(lang: String) -> Element {
 
 #[component]
 fn SystemPalette(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::SystemPalette { lang: lang.clone() },
@@ -256,7 +247,7 @@ fn SystemPalette(lang: String) -> Element {
 
 #[component]
 fn SystemAnimations(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::SystemAnimations { lang: lang.clone() },
@@ -267,7 +258,7 @@ fn SystemAnimations(lang: String) -> Element {
 
 #[component]
 fn FormDemo(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::pages::demos::layer1::form_demo::FormDemo {}
     }
@@ -275,7 +266,7 @@ fn FormDemo(lang: String) -> Element {
 
 #[component]
 fn DashboardDemo(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::pages::demos::layer2::dashboard_demo::DashboardDemo {}
     }
@@ -283,7 +274,7 @@ fn DashboardDemo(lang: String) -> Element {
 
 #[component]
 fn VideoDemo(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::pages::demos::layer3::video_demo::VideoDemo {}
     }
@@ -292,7 +283,7 @@ fn VideoDemo(lang: String) -> Element {
 // Layer 1 handlers
 #[component]
 fn Button(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Button { lang: lang.clone() },
@@ -303,7 +294,7 @@ fn Button(lang: String) -> Element {
 
 #[component]
 fn Layer1Form(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Layer1Form { lang: lang.clone() },
@@ -314,7 +305,7 @@ fn Layer1Form(lang: String) -> Element {
 
 #[component]
 fn Layer1Switch(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Layer1Switch { lang: lang.clone() },
@@ -325,7 +316,7 @@ fn Layer1Switch(lang: String) -> Element {
 
 #[component]
 fn Layer1Feedback(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Layer1Feedback { lang: lang.clone() },
@@ -336,7 +327,7 @@ fn Layer1Feedback(lang: String) -> Element {
 
 #[component]
 fn Layer1Display(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Layer1Display { lang: lang.clone() },
@@ -347,7 +338,7 @@ fn Layer1Display(lang: String) -> Element {
 
 #[component]
 fn NumberInput(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::NumberInput { lang: lang.clone() },
@@ -358,7 +349,7 @@ fn NumberInput(lang: String) -> Element {
 
 #[component]
 fn Search(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Search { lang: lang.clone() },
@@ -369,7 +360,7 @@ fn Search(lang: String) -> Element {
 
 #[component]
 fn Avatar(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Avatar { lang: lang.clone() },
@@ -380,7 +371,7 @@ fn Avatar(lang: String) -> Element {
 
 #[component]
 fn Image(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Image { lang: lang.clone() },
@@ -391,7 +382,7 @@ fn Image(lang: String) -> Element {
 
 #[component]
 fn Tag(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Tag { lang: lang.clone() },
@@ -402,7 +393,7 @@ fn Tag(lang: String) -> Element {
 
 #[component]
 fn Empty(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Empty { lang: lang.clone() },
@@ -413,7 +404,7 @@ fn Empty(lang: String) -> Element {
 
 #[component]
 fn QRCode(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::QRCode { lang: lang.clone() },
@@ -424,7 +415,7 @@ fn QRCode(lang: String) -> Element {
 
 #[component]
 fn Comment(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Comment { lang: lang.clone() },
@@ -435,7 +426,7 @@ fn Comment(lang: String) -> Element {
 
 #[component]
 fn DescriptionList(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::DescriptionList { lang: lang.clone() },
@@ -447,7 +438,7 @@ fn DescriptionList(lang: String) -> Element {
 // Layer 2 handlers
 #[component]
 fn Layer2Overview(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::pages::components::layer2::Layer2Overview {}
     }
@@ -455,7 +446,7 @@ fn Layer2Overview(lang: String) -> Element {
 
 #[component]
 fn Layer2Navigation(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Layer2Navigation { lang: lang.clone() },
@@ -466,7 +457,7 @@ fn Layer2Navigation(lang: String) -> Element {
 
 #[component]
 fn Layer2Data(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Layer2Data { lang: lang.clone() },
@@ -477,7 +468,7 @@ fn Layer2Data(lang: String) -> Element {
 
 #[component]
 fn Layer2Form(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Layer2Form { lang: lang.clone() },
@@ -488,7 +479,7 @@ fn Layer2Form(lang: String) -> Element {
 
 #[component]
 fn Layer2Feedback(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Layer2Feedback { lang: lang.clone() },
@@ -499,7 +490,7 @@ fn Layer2Feedback(lang: String) -> Element {
 
 #[component]
 fn Cascader(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Cascader { lang: lang.clone() },
@@ -510,7 +501,7 @@ fn Cascader(lang: String) -> Element {
 
 #[component]
 fn Transfer(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Transfer { lang: lang.clone() },
@@ -521,7 +512,7 @@ fn Transfer(lang: String) -> Element {
 
 #[component]
 fn Collapsible(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Collapsible { lang: lang.clone() },
@@ -532,7 +523,7 @@ fn Collapsible(lang: String) -> Element {
 
 #[component]
 fn Timeline(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Timeline { lang: lang.clone() },
@@ -543,7 +534,7 @@ fn Timeline(lang: String) -> Element {
 
 #[component]
 fn Table(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Table { lang: lang.clone() },
@@ -554,7 +545,7 @@ fn Table(lang: String) -> Element {
 
 #[component]
 fn Tree(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Tree { lang: lang.clone() },
@@ -565,7 +556,7 @@ fn Tree(lang: String) -> Element {
 
 #[component]
 fn Pagination(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Pagination { lang: lang.clone() },
@@ -577,7 +568,7 @@ fn Pagination(lang: String) -> Element {
 // Layer 3 handlers
 #[component]
 fn Layer3Overview(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::pages::components::layer3::Layer3Overview {}
     }
@@ -585,7 +576,7 @@ fn Layer3Overview(lang: String) -> Element {
 
 #[component]
 fn Layer3Media(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Layer3Media { lang: lang.clone() },
@@ -596,7 +587,7 @@ fn Layer3Media(lang: String) -> Element {
 
 #[component]
 fn Layer3Editor(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Layer3Editor { lang: lang.clone() },
@@ -607,7 +598,7 @@ fn Layer3Editor(lang: String) -> Element {
 
 #[component]
 fn Layer3Visualization(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::Layer3Visualization { lang: lang.clone() },
@@ -618,7 +609,7 @@ fn Layer3Visualization(lang: String) -> Element {
 
 #[component]
 fn UserGuide(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::UserGuide { lang: lang.clone() },
@@ -629,7 +620,7 @@ fn UserGuide(lang: String) -> Element {
 
 #[component]
 fn ZoomControls(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::ZoomControls { lang: lang.clone() },
@@ -640,7 +631,7 @@ fn ZoomControls(lang: String) -> Element {
 
 #[component]
 fn SystemI18n(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::DynamicDocPage {
             current_route: Route::SystemI18n { lang: lang.clone() },
@@ -651,7 +642,7 @@ fn SystemI18n(lang: String) -> Element {
 
 #[component]
 fn NotFound(lang: String) -> Element {
-    update_language_from_route(&lang);
+    crate::hooks::use_update_language_from_route(&lang);
     rsx! {
         crate::components::Layout {
             current_route: Route::NotFound { lang: lang.clone() },

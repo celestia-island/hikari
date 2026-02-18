@@ -31,65 +31,35 @@
 - [x] Mutex/RwLock 锁的 expect 改进
 - [~] 配置系统类型化 - 推迟（需要更详细的设计，避免破坏兼容性）
 
----
-
-## 变更日志
-
-### 2026-02-18
-
-**Phase 1: 安全修复**
-- `extra-components/node_graph/plugins/input_node.rs`: 修复 `from_f64().unwrap()` → `from_f64().unwrap_or_else()`
-- `extra-components/node_graph/plugins/processor.rs`: 修复 `from_f64().unwrap()` → `NodeValue::from()`
-- `extra-components/node_graph/plugins/constant.rs`: 修复 `from_f64().unwrap()` → `NodeValue::from()`
-- `animation/style.rs`: 移除冗余的 `dyn_into/dyn_ref` 类型转换，直接使用 `HtmlElement` 方法
-
-**Phase 2: 类型严格化**
-- 新增 `extra-components/src/node_graph/value.rs` - `NodeValue` 枚举
-- 重构所有 Node Graph 插件使用 `NodeValue` 代替 `serde_json::Value`
-- 更新 `serialization.rs` 使用 `GraphMetadata` 结构体
-
-**Phase 3: 文件拆分**
-- `theme_provider.rs` → `theme/` (traits, registry, css, provider)
-- `animation/core.rs` → `core/` (types, easing, options, tween, engine)
-- `portal/mod.rs` → `portal/` (types, provider, positioning, render)
-- `utils/form.rs` → `form/` (error, validators, state, hooks, field)
-- `animation/style.rs` → `style/` (properties, builder, helpers)
-- `animation/builder.rs` → `builder/` (value, action, animation)
-- `animation/hooks.rs` → `hooks/` (tween, animated_value, animation_frame, continuous)
-- `colors.rs` → `colors/` (mod, impl_, chinese, tests)
-- `components.rs` → `components/` (header, layout, button, form, feedback, data, navigation, display, media, misc)
-
-**Phase 5: 低优先级清理**
-- 创建 HTTP 响应构建宏 (`render-service/src/router.rs`)
-- 改进 Mutex/RwLock 锁的 expect 错误信息 (`icons/src/lib.rs`, `components/src/theme/registry.rs`)
-
-**编译警告修复**
-- 修复 `animation/style/mod.rs` 中的 pub use 导出位置
-- 修复 `navigation/mod.rs` 中的 StepStatus 歧义重导出
-- 修复 `utils/form/mod.rs` 中的 pub use 导出位置
-- 移除未使用的 imports (`audio_player.rs`)
-- 修复不需要的 mut 声明 (`flex.rs`, `popover.rs`)
-- 添加 allow 属性消除无法修复的警告 (`chinese.rs`, `popover.rs`, `utils/mod.rs`)
-
-**测试修复**
-- 修复 `navigation_components_tests.rs` 中的 `StepStatus` 导入冲突
-- 修复 `node_graph_tests.rs` 中 `GraphMetadata.is_empty()` → `GraphMetadata.extra.is_empty()`
-- 标记需要 Dioxus 运行时的测试为 `#[ignore]`
+### Phase 6: #[allow] 属性清理 ✅ 完成
+- [x] 移除 `popover.rs` 的 `#[allow(unused_mut)]`，使用条件编译
+- [x] 移除 `utils/mod.rs` 的 `#[allow(unused_imports)]`，删除未使用的导入
+- [x] 移除 `chinese.rs` 的 `#[allow(non_upper_case_globals)]`，重命名常量为 `PURE_WHITE`/`PURE_BLACK`
+- [x] 移除 `anchor.rs` 的 `#[allow(unused_variables)]`，使用条件编译
+- [x] 移除 `file_upload.rs`, `positioning.rs` 的 `#[allow(unused_variables)]`
+- [x] 移除 `lib.rs` 的 `#[allow(unused_imports)]`，删除重复导入
+- [x] 修复 `qrcode.rs` 的弃用 API: `set_fill_style` → `set_fill_style_str`
+- [x] 移除 `provider.rs` 未使用的 `default_theme_context` 函数
+- [x] 移除 `icons/lib.rs` 未使用的 `log_dynamic_fetch_success` 函数
+- [x] 移除 `value.rs` 的 `#[allow(dead_code)]`
+- [x] 移除 `processor.rs` 的 `#[allow(dead_code)]`，将 `compute` 改为 `pub`
+- [x] 移除 `colors/mod.rs` 的 `#[allow(dead_code)]`
+- [x] 删除 `radio_group.rs` 中的弃用 API (`RadioButtonProps`, `RadioButton`)
 
 ---
 
-## 剩余警告（无法修复）
+## 剩余 #[allow] 属性（有意保留）
 
-| 警告类型 | 来源 | 原因 |
-|---------|------|------|
-| `deprecated RadioButtonProps` | `radio_group.rs` | 有意的弃用警告，引导用户使用新 API |
-| `deprecated set_fill_style` | `qrcode.rs` | 来自外部 crate `web_sys`，需等待上游更新 |
+| 属性 | 位置 | 原因 |
+|------|------|------|
+| `clippy::should_implement_trait` | `classes/mod.rs`, `tween.rs`, `validators.rs` | Builder 模式设计，方法名 `add` 不需要实现 `Add` trait |
+| `non_snake_case` | `form/hooks.rs`, `icons/lib.rs` | React 风格命名约定 (`useForm`, `mdi::Moon`) |
+| `async_fn_in_trait` | `e2e/tests/mod.rs` | Rust trait 限制，需要 async fn |
 
 ---
 
 ## 最终状态
 
-- ✅ 编译成功，无错误
+- ✅ 编译成功，无错误，无警告
 - ✅ 所有测试通过
-- ⚠️ 剩余 15 个警告（均为有意的弃用或外部 crate 问题）
-- ✅ 6 个 commits 已提交到 dev 分支
+- ✅ 7 个 commits 已提交到 dev 分支

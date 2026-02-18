@@ -40,7 +40,9 @@ static THEME_REGISTRY: once_cell::sync::Lazy<RwLock<ThemeRegistry>> =
 /// });
 /// ```
 pub fn register_theme(name: &str, palette: Palette) {
-    let mut registry = THEME_REGISTRY.write().unwrap();
+    let mut registry = THEME_REGISTRY
+        .write()
+        .expect("Failed to acquire write lock on theme registry - rwlock poisoned");
     registry.insert(name.to_string(), palette);
 }
 
@@ -52,7 +54,9 @@ pub fn register_theme(name: &str, palette: Palette) {
 ///
 /// * `name` - Theme name (e.g., "hikari", "tairitsu")
 pub fn get_registered_theme(name: &str) -> Option<Palette> {
-    let registry = THEME_REGISTRY.read().unwrap();
+    let registry = THEME_REGISTRY
+        .read()
+        .expect("Failed to acquire read lock on theme registry - rwlock poisoned");
     registry.get(name).cloned()
 }
 

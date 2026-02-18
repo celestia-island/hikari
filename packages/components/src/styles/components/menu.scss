@@ -946,8 +946,8 @@ aside .hi-menu {
 // Arrow rotation animation
 // ============================================
 
-.hi-menu-submenu-arrow-open {
-  transform: rotate(90deg) !important;
+.hi-menu-item-arrow.hi-menu-submenu-arrow-open {
+  transform: rotate(90deg);
 }
 
 // ============================================
@@ -1164,5 +1164,40 @@ aside .hi-menu {
   &:active::after {
     width: 300px;
     height: 300px;
+  }
+}
+
+// ============================================
+// Popover Menu (in_popover mode)
+// ============================================
+
+// High specificity to override base styles without !important
+.hi-menu.hi-menu-popover {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0.5rem;
+  margin: 0;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  .hi-menu-item-wrapper {
+    width: 100%;
+  }
+
+  .hi-glow-wrapper-block {
+    width: 100%;
+  }
+
+  .hi-menu-item {
+    width: 100%;
+  }
+
+  .hi-menu-item-inner {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 }

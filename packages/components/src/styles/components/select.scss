@@ -186,12 +186,6 @@
 // Option Items
 // ============================================
 
-// Override glow wrapper default inline-flex to flex for proper stacking
-.hi-select-option-glow-wrapper {
-  display: flex !important;
-  width: 100% !important;
-}
-
 .hi-select-option {
   display: flex;
   align-items: center;

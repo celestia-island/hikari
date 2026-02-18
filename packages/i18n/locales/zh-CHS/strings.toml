@@ -31,6 +31,8 @@ auto = "自动"
 title = "Hikari UI 框架"
 subtitle = "光 - 现代化 Rust UI 框架"
 description = "基于 Dioxus + Grass + Axum，融合了明日方舟美学和 FUI 风格设计。"
+tagline = "渴望快乐，无需羞愧。"
+explore = "探索组件 →"
 
 [page.home.features]
 title = "特性"
@@ -53,8 +55,8 @@ chinese_traditional = "繁體中文"
 
 [sidebar]
 [sidebar.overview]
-title = "概览"
-home = "首页"
+title = "欢迎"
+home = "欢迎"
 
 [sidebar.components]
 title = "组件"

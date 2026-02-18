@@ -72,6 +72,8 @@ pub struct HeroKeys {
     pub title: String,
     pub subtitle: String,
     pub description: String,
+    pub tagline: String,
+    pub explore: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

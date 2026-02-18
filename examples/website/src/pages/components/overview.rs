@@ -4,40 +4,31 @@
 use dioxus::prelude::*;
 
 use crate::components::{DemoSection, PageContainer};
-use crate::hooks::use_i18n;
+use crate::hooks::{use_i18n, use_language};
 use _icons::{Icon, MdiIcon};
 use _palette::classes::{ClassesBuilder, Display, Gap, Padding};
 
-/// Components Overview
 #[allow(non_snake_case)]
 pub fn ComponentsOverview() -> Element {
     let i18n = use_i18n();
+    let lang_ctx = use_language();
+    let lang = (*lang_ctx.language.read()).url_prefix().to_string();
 
-    let (page_title, page_desc, layout_title, basic_title) = match i18n {
-        Some(ctx) => {
-            let keys = &ctx.keys;
-            (
-                keys.page.components.title.clone(),
-                keys.page.components.description.clone(),
-                "Layout Components".to_string(),
-                keys.sidebar
-                    .components
-                    .layer1
-                    .clone()
-                    .unwrap_or_else(|| "Basic Components".to_string()),
-            )
-        }
-        None => (
-            "Components Overview".to_string(),
-            "A rich collection of reusable UI components.".to_string(),
-            "Layout Components".to_string(),
-            "Basic Components".to_string(),
-        ),
-    };
+    let keys = i18n.keys();
+    let page_title = keys.page.components.title.clone();
+    let page_desc = keys.page.components.description.clone();
+    let layout_title = "Layout Components".to_string();
+    let basic_title = keys
+        .sidebar
+        .components
+        .layer1
+        .clone()
+        .unwrap_or_else(|| "Basic Components".to_string());
+    drop(keys);
 
     rsx! {
         PageContainer {
-            current_route: crate::app::Route::ComponentsOverview {},
+            current_route: crate::app::Route::ComponentsOverview { lang },
             title: page_title,
             description: page_desc,
 

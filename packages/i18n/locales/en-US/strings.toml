@@ -29,8 +29,10 @@ auto = "Auto"
 [page.home]
 [page.home.hero]
 title = "Hikari UI Framework"
-subtitle = "光 - A Modern Rust UI Framework"
+subtitle = "Light - A Modern Rust UI Framework"
 description = "Based on Dioxus + Grass + Axum, designed with Arknights aesthetics and FUI styling."
+tagline = "There is no shame in wanting to feel happy."
+explore = "Explore Components →"
 
 [page.home.features]
 title = "Features"
@@ -53,8 +55,8 @@ chinese_traditional = "繁體中文"
 
 [sidebar]
 [sidebar.overview]
-title = "Overview"
-home = "Home"
+title = "Welcome"
+home = "Welcome"
 
 [sidebar.components]
 title = "Components"

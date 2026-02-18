@@ -1,5 +1,10 @@
 // packages/components/src/production/rich_text_editor.rs
 // Rich text editor component with Arknights + FUI styling
+//
+// NOTE: This is a basic implementation that provides a styled container
+// with toolbar UI. For full rich text editing functionality with
+// contenteditable, execCommand support, etc., consider integrating
+// with libraries like ProseMirror, Tiptap, or Quill.
 
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, RichTextEditorClass};

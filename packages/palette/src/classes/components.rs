@@ -908,6 +908,8 @@ pub enum TooltipClass {
     TooltipWrapper,
     /// `hi-tooltip-trigger` - Trigger element
     TooltipTrigger,
+    /// `hi-tooltip-visible` - Visible state
+    TooltipVisible,
     /// `hi-tooltip-top` - Top placement
     TooltipTop,
     /// `hi-tooltip-bottom` - Bottom placement
@@ -936,6 +938,7 @@ impl UtilityClass for TooltipClass {
             TooltipClass::Tooltip => "tooltip",
             TooltipClass::TooltipWrapper => "tooltip-wrapper",
             TooltipClass::TooltipTrigger => "tooltip-trigger",
+            TooltipClass::TooltipVisible => "tooltip-visible",
             TooltipClass::TooltipTop => "tooltip-top",
             TooltipClass::TooltipBottom => "tooltip-bottom",
             TooltipClass::TooltipLeft => "tooltip-left",

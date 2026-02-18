@@ -2,14 +2,14 @@ use dioxus::prelude::*;
 
 use _components::{
     basic::{
-        avatar::Avatar as AvatarComponent,
+        avatar::{Avatar as AvatarComponent, AvatarFallbackMode},
         badge::Badge,
         button::Button,
         card::Card,
         checkbox::Checkbox,
         divider::Divider,
         file_upload::FileUpload,
-        image::Image as ImageComponent,
+        image::{Image as ImageComponent, ImagePlaceholder},
         input::Input,
         radio_group::{RadioButton, RadioDirection, RadioGroup},
         select::{Select, SelectOption},
@@ -124,32 +124,32 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 // ========== Avatar ==========
                 ("layer1", "avatar", Some("sizes")) => rsx! {
                     div { class: flex_row_wrap(),
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=1".to_string()), alt: "Xs".to_string(), size: AvatarSize::Xs, variant: AvatarVariant::Circular }
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=2".to_string()), alt: "Sm".to_string(), size: AvatarSize::Sm, variant: AvatarVariant::Circular }
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=3".to_string()), alt: "Md".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Circular }
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=4".to_string()), alt: "Lg".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular }
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=5".to_string()), alt: "Xl".to_string(), size: AvatarSize::Xl, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Xs".to_string(), size: AvatarSize::Xs, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Sm".to_string(), size: AvatarSize::Sm, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Md".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Lg".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Xl".to_string(), size: AvatarSize::Xl, variant: AvatarVariant::Circular }
                     }
                 },
                 ("layer1", "avatar", Some("variants")) => rsx! {
                     div { class: flex_row_wrap(),
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=10".to_string()), alt: "Circular".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular }
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=11".to_string()), alt: "Rounded".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Rounded }
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=12".to_string()), alt: "Square".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Square }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Circular".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Rounded".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Rounded }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Square".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Square }
                     }
                 },
                 ("layer1", "avatar", Some("fallback")) => rsx! {
                     div { class: flex_row_wrap(),
-                        AvatarComponent { alt: "Alice Smith".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular }
-                        AvatarComponent { alt: "Bob Johnson".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular }
-                        AvatarComponent { fallback: Some("N/A".to_string()), alt: "Unknown".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular }
+                        AvatarComponent { alt: "Alice Smith".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular, fallback_mode: AvatarFallbackMode::Initial }
+                        AvatarComponent { alt: "Bob Johnson".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular, fallback_mode: AvatarFallbackMode::Initial }
+                        AvatarComponent { alt: "User".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular, fallback_mode: AvatarFallbackMode::Icon }
                     }
                 },
                 ("layer1", "avatar", _) => rsx! {
                     div { class: flex_row_wrap(),
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=1".to_string()), alt: "User".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Circular }
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=2".to_string()), alt: "User".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Rounded }
-                        AvatarComponent { alt: "John Doe".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "User".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "User".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Rounded }
+                        AvatarComponent { alt: "John Doe".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Circular, fallback_mode: AvatarFallbackMode::Icon }
                     }
                 },
 
@@ -376,17 +376,44 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 // ========== Image ==========
                 ("layer1", "image", Some("basic")) => rsx! {
                     div { class: flex_row_wrap(),
-                        ImageComponent { src: "https://via.placeholder.com/150".to_string(), alt: "Placeholder".to_string() }
+                        ImageComponent {
+                            src: "/images/logo.png".to_string(),
+                            alt: "Hikari Logo".to_string(),
+                            width: Some(150),
+                            height: Some(150),
+                        }
                     }
                 },
                 ("layer1", "image", Some("placeholder")) => rsx! {
                     div { class: flex_row_wrap(),
-                        ImageComponent { src: "https://via.placeholder.com/150".to_string(), alt: "Placeholder image".to_string() }
+                        ImageComponent {
+                            src: "/images/logo.png".to_string(),
+                            alt: "Hikari Logo".to_string(),
+                            width: Some(200),
+                            height: Some(150),
+                            placeholder: ImagePlaceholder::Skeleton,
+                        }
+                    }
+                },
+                ("layer1", "image", Some("icon-placeholder")) => rsx! {
+                    div { class: flex_row_wrap(),
+                        ImageComponent {
+                            src: "/images/logo.png".to_string(),
+                            alt: "Hikari Logo".to_string(),
+                            width: Some(200),
+                            height: Some(150),
+                            placeholder: ImagePlaceholder::Icon,
+                        }
                     }
                 },
                 ("layer1", "image", _) => rsx! {
                     div { class: flex_row_wrap(),
-                        ImageComponent { src: "https://via.placeholder.com/150".to_string(), alt: "Placeholder".to_string() }
+                        ImageComponent {
+                            src: "/images/logo.png".to_string(),
+                            alt: "Hikari Logo".to_string(),
+                            width: Some(100),
+                            height: Some(100),
+                        }
                     }
                 },
 

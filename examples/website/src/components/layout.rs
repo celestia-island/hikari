@@ -4,9 +4,12 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use super::{AsideFooter, sidebar::Sidebar};
+use super::{sidebar::Sidebar, AsideFooter};
 use crate::{app::Route, hooks::use_language};
-use _components::{basic::Logo, layout::{Aside, Header, Layout as HikariLayout}};
+use _components::{
+    basic::Logo,
+    layout::{Aside, Header, Layout as HikariLayout},
+};
 use _i18n::context::Language;
 use _palette::classes::{AlignItems, ClassesBuilder, Display, FontWeight, Gap, Padding};
 
@@ -146,8 +149,7 @@ fn get_breadcrumb_items(route: &Route, lang: &str) -> Vec<BreadcrumbItem> {
         | Route::Image { .. }
         | Route::Tag { .. }
         | Route::Empty { .. }
-        | Route::Comment { .. }
-        | Route::DescriptionList { .. } => vec![
+        | Route::Comment { .. } => vec![
             BreadcrumbItem {
                 label: "Components".to_string(),
                 route: Some(Route::ComponentsOverview {

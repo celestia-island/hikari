@@ -175,9 +175,6 @@ fn route_key_to_route(key: &str, lang: &str) -> Route {
         "comment" => Route::Comment {
             lang: lang.to_string(),
         },
-        "description_list" => Route::DescriptionList {
-            lang: lang.to_string(),
-        },
         "layer2" => Route::Layer2Overview {
             lang: lang.to_string(),
         },

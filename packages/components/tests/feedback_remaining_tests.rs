@@ -4,9 +4,11 @@
 #[cfg(test)]
 mod tests {
 
+    use hikari_components::display::{
+        SkeletonCardProps, SkeletonProps, SkeletonSize, SkeletonTableProps, SkeletonVariant,
+    };
     use hikari_components::feedback::{
-        {ProgressProps, ProgressStatus, ProgressType}, {SkeletonProps, SkeletonShape},
-        {SpinProps, SpinSize, SpinTip},
+        ProgressProps, ProgressStatus, ProgressType, SpinProps, SpinSize, SpinTip,
     };
 
     // ============= Skeleton Tests =============
@@ -14,116 +16,127 @@ mod tests {
     #[test]
     fn test_skeleton_props_default_values() {
         let props = SkeletonProps {
-            loading: true,
-            shape: SkeletonShape::Text,
-            rows: 3,
-            avatar_size: None,
-            image_dimensions: None,
-            active: true,
+            variant: SkeletonVariant::Text,
+            size: SkeletonSize::Medium,
+            width: None,
+            height: None,
+            animation: true,
+            rows: Some(3),
             class: String::new(),
             style: String::new(),
         };
 
-        assert_eq!(props.loading, true);
-        assert_eq!(props.rows, 3);
-        assert_eq!(props.shape, SkeletonShape::Text);
-        assert_eq!(props.active, true);
+        assert_eq!(props.variant, SkeletonVariant::Text);
+        assert_eq!(props.animation, true);
+        assert_eq!(props.rows, Some(3));
     }
 
     #[test]
-    fn test_skeleton_props_loading() {
+    fn test_skeleton_variant_text() {
         let props = SkeletonProps {
-            loading: false,
-            shape: SkeletonShape::Text,
-            rows: 3,
-            avatar_size: None,
-            image_dimensions: None,
-            active: true,
+            variant: SkeletonVariant::Text,
+            size: SkeletonSize::Medium,
+            width: None,
+            height: None,
+            animation: true,
+            rows: Some(3),
             class: String::new(),
             style: String::new(),
         };
 
-        assert!(!props.loading);
+        assert_eq!(props.variant, SkeletonVariant::Text);
     }
 
     #[test]
-    fn test_skeleton_props_with_rows() {
+    fn test_skeleton_variant_circular() {
         let props = SkeletonProps {
-            loading: true,
-            shape: SkeletonShape::Text,
-            rows: 5,
-            avatar_size: None,
-            image_dimensions: None,
-            active: true,
+            variant: SkeletonVariant::Circular,
+            size: SkeletonSize::Medium,
+            width: None,
+            height: None,
+            animation: true,
+            rows: None,
             class: String::new(),
             style: String::new(),
         };
 
-        assert_eq!(props.rows, 5);
+        assert_eq!(props.variant, SkeletonVariant::Circular);
     }
 
     #[test]
-    fn test_skeleton_shape_text() {
+    fn test_skeleton_size_small() {
         let props = SkeletonProps {
-            loading: true,
-            shape: SkeletonShape::Text,
-            rows: 3,
-            avatar_size: None,
-            image_dimensions: None,
-            active: true,
+            variant: SkeletonVariant::Text,
+            size: SkeletonSize::Small,
+            width: None,
+            height: None,
+            animation: true,
+            rows: Some(3),
             class: String::new(),
             style: String::new(),
         };
 
-        assert_eq!(props.shape, SkeletonShape::Text);
+        assert_eq!(props.size, SkeletonSize::Small);
     }
 
     #[test]
-    fn test_skeleton_shape_avatar() {
+    fn test_skeleton_size_large() {
         let props = SkeletonProps {
-            loading: true,
-            shape: SkeletonShape::Avatar,
-            rows: 3,
-            avatar_size: None,
-            image_dimensions: None,
-            active: true,
+            variant: SkeletonVariant::Text,
+            size: SkeletonSize::Large,
+            width: None,
+            height: None,
+            animation: true,
+            rows: Some(3),
             class: String::new(),
             style: String::new(),
         };
 
-        assert_eq!(props.shape, SkeletonShape::Avatar);
-    }
-
-    #[test]
-    fn test_skeleton_shape_image() {
-        let props = SkeletonProps {
-            loading: true,
-            shape: SkeletonShape::Image,
-            rows: 3,
-            avatar_size: None,
-            image_dimensions: None,
-            active: true,
-            class: String::new(),
-            style: String::new(),
-        };
-
-        assert_eq!(props.shape, SkeletonShape::Image);
+        assert_eq!(props.size, SkeletonSize::Large);
     }
 
     #[test]
     fn test_skeleton_props_with_custom_classes() {
         let props = SkeletonProps {
-            loading: true,
-            shape: SkeletonShape::Text,
-            rows: 3,
-            avatar_size: None,
-            image_dimensions: None,
-            active: true,
+            variant: SkeletonVariant::Text,
+            size: SkeletonSize::Medium,
+            width: None,
+            height: None,
+            animation: true,
+            rows: Some(3),
             class: "custom-skeleton".to_string(),
             style: String::new(),
         };
 
         assert_eq!(props.class, "custom-skeleton");
+    }
+
+    #[test]
+    fn test_skeleton_card_props() {
+        let props = SkeletonCardProps {
+            class: String::new(),
+            style: String::new(),
+            show_header: true,
+            show_avatar: true,
+            rows: 3,
+        };
+
+        assert_eq!(props.show_header, true);
+        assert_eq!(props.show_avatar, true);
+        assert_eq!(props.rows, 3);
+    }
+
+    #[test]
+    fn test_skeleton_table_props() {
+        let props = SkeletonTableProps {
+            class: String::new(),
+            style: String::new(),
+            columns: 3,
+            rows: 5,
+        };
+
+        assert_eq!(props.columns, 3);
+        assert_eq!(props.rows, 5);
     }
 
     // ============= Progress Tests =============

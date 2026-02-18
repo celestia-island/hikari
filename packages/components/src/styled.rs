@@ -162,8 +162,8 @@ impl StyleRegistry {
     pub fn register_feedback_components(&mut self) {
         use crate::feedback::{
             alert::AlertComponent, drawer::DrawerComponent, modal::ModalComponent,
-            popover::PopoverComponent, progress::ProgressComponent, skeleton::SkeletonComponent,
-            spin::SpinComponent, toast::ToastComponent, tooltip::TooltipComponent,
+            popover::PopoverComponent, progress::ProgressComponent, spin::SpinComponent,
+            toast::ToastComponent, tooltip::TooltipComponent,
         };
         AlertComponent::register(self);
         ToastComponent::register(self);
@@ -172,7 +172,6 @@ impl StyleRegistry {
         DrawerComponent::register(self);
         PopoverComponent::register(self);
         ProgressComponent::register(self);
-        SkeletonComponent::register(self);
         SpinComponent::register(self);
     }
 
@@ -209,13 +208,12 @@ impl StyleRegistry {
     #[cfg(feature = "display")]
     pub fn register_display_components(&mut self) {
         use crate::display::{
-            CommentComponent, DescriptionListComponent, EmptyComponent, QRCodeComponent,
-            TagComponent,
+            CommentComponent, EmptyComponent, QRCodeComponent, SkeletonComponent, TagComponent,
         };
         TagComponent::register(self);
         EmptyComponent::register(self);
+        SkeletonComponent::register(self);
         CommentComponent::register(self);
-        DescriptionListComponent::register(self);
         QRCodeComponent::register(self);
     }
 

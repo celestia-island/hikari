@@ -276,7 +276,7 @@ impl StyledComponent for TabsComponent {
 /// Tab pane component
 #[component]
 pub fn TabPane(props: TabPaneProps) -> Element {
-    use palette::classes::{ClassesBuilder, components::TabsClass};
+    use palette::classes::{components::TabsClass, ClassesBuilder};
 
     let active_key = use_context::<Signal<String>>();
     let is_active = active_key() == props.item_key;

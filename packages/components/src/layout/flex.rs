@@ -184,7 +184,7 @@ pub fn FlexBox(props: FlexBoxProps) -> Element {
         Display::Flex
     };
 
-    let mut builder = ClassesBuilder::new()
+    let builder = ClassesBuilder::new()
         .add(display_class)
         .add(direction_class)
         .add(align_class)

@@ -40,12 +40,13 @@
 mod builder;
 mod helpers;
 mod properties;
+
+pub use builder::{AttributeBuilder, StyleBuilder, StyleStringBuilder};
+pub use helpers::{get_style, remove_style, set_style, set_styles};
+pub use properties::{CssProperty, Property};
+
 #[cfg(test)]
 mod tests {
-
-    pub use builder::{AttributeBuilder, StyleBuilder, StyleStringBuilder};
-    pub use helpers::{get_style, remove_style, set_style, set_styles};
-    pub use properties::{CssProperty, Property};
 
     use super::*;
 

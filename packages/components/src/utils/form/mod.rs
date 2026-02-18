@@ -6,17 +6,17 @@ mod field;
 mod hooks;
 mod state;
 mod validators;
+
+pub use error::{FieldError, FormValidationResult, ValidationResult};
+pub use field::{Field, FieldProps};
+pub use hooks::useForm;
+pub use state::FormState;
+pub use validators::{
+    CustomValidator, Email, MaxLength, MinLength, Pattern, Required, ValidationSchema, Validators,
+};
+
 #[cfg(test)]
 mod tests {
-
-    pub use error::{FieldError, FormValidationResult, ValidationResult};
-    pub use field::{Field, FieldProps};
-    pub use hooks::useForm;
-    pub use state::FormState;
-    pub use validators::{
-        CustomValidator, Email, MaxLength, MinLength, Pattern, Required, ValidationSchema,
-        Validators,
-    };
 
     use super::*;
 
@@ -44,12 +44,10 @@ mod tests {
         let validator = MinLength(3);
         let result = validator.validate(&"ab".to_string());
         assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .message
-                .contains("at least 3 characters")
-        );
+        assert!(result
+            .unwrap_err()
+            .message
+            .contains("at least 3 characters"));
     }
 
     #[test]

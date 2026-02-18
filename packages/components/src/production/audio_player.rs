@@ -2,7 +2,6 @@
 // Audio player component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use icons::{Icon, MdiIcon};
 use palette::classes::{AudioPlayerClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;

@@ -6,8 +6,10 @@ use palette::classes::{ClassesBuilder, Display, Position};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 
-use crate::portal::{generate_portal_id, use_portal, PortalEntry};
-use crate::styled::StyledComponent;
+use crate::{
+    portal::{PortalEntry, generate_portal_id, use_portal},
+    styled::StyledComponent,
+};
 
 /// Popover placement direction
 #[derive(Clone, Copy, PartialEq, Debug, Default)]

@@ -183,8 +183,8 @@ pub mod render;
 pub mod types;
 
 pub use positioning::calculate_position;
-pub use provider::{generate_portal_id, use_portal, PortalContext, PortalProvider};
+pub use provider::{PortalContext, PortalProvider, generate_portal_id, use_portal};
 pub use types::{
-    ModalAnimationState, PortalEntry, PortalMaskMode, PortalPositionStrategy, ToastPosition,
-    TriggerPlacement, PORTAL_ID_COUNTER,
+    ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry, PortalMaskMode, PortalPositionStrategy,
+    ToastPosition, TriggerPlacement,
 };

@@ -186,7 +186,7 @@ pub fn build_classes(classes: &[impl UtilityClass]) -> String {
 ///
 /// Common pattern for centering content
 pub fn flex_center() -> String {
-    use crate::classes::{Display, JustifyContent, AlignItems};
+    use crate::classes::{AlignItems, Display, JustifyContent};
     ClassesBuilder::new()
         .add(Display::Flex)
         .add(JustifyContent::Center)
@@ -198,7 +198,7 @@ pub fn flex_center() -> String {
 ///
 /// Common pattern for vertical centering
 pub fn flex_col_center() -> String {
-    use crate::classes::{Display, FlexDirection, JustifyContent, AlignItems};
+    use crate::classes::{AlignItems, Display, FlexDirection, JustifyContent};
     ClassesBuilder::new()
         .add(Display::Flex)
         .add(FlexDirection::Column)
@@ -223,7 +223,7 @@ pub fn card_base() -> String {
 ///
 /// Common pattern for button styling
 pub fn button_base() -> String {
-    use crate::classes::{BorderRadius, PaddingX, Cursor};
+    use crate::classes::{BorderRadius, Cursor, PaddingX};
     ClassesBuilder::new()
         .add(BorderRadius::Sm)
         .add(PaddingX::Px2)

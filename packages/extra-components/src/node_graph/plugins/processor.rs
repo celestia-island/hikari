@@ -3,8 +3,10 @@
 
 use dioxus::prelude::*;
 
-use crate::node_graph::node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition};
-use crate::node_graph::value::NodeValue;
+use crate::node_graph::{
+    node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition},
+    value::NodeValue,
+};
 
 /// Processor operation types
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

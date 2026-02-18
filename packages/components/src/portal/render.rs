@@ -3,17 +3,20 @@
 
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass};
-
 #[cfg(target_arch = "wasm32")]
-use wasm_bindgen::{closure::Closure, JsCast};
+use wasm_bindgen::{JsCast, closure::Closure};
 
 use super::provider::PortalContext;
-use crate::feedback::PopoverPlacement;
-use crate::modal::{MaskMode, ModalPosition};
-use crate::portal::positioning::calculate_position;
-use crate::portal::types::{
-    ModalAnimationState, PortalEntry, PortalMaskMode, PortalPositionStrategy, ToastPosition,
-    TriggerPlacement,
+use crate::{
+    feedback::PopoverPlacement,
+    modal::{MaskMode, ModalPosition},
+    portal::{
+        positioning::calculate_position,
+        types::{
+            ModalAnimationState, PortalEntry, PortalMaskMode, PortalPositionStrategy,
+            ToastPosition, TriggerPlacement,
+        },
+    },
 };
 
 fn use_animated_portal_entry(

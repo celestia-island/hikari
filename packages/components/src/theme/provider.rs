@@ -65,15 +65,18 @@
 //! }
 //! ```
 
+#[cfg(target_arch = "wasm32")]
+use animation::global_manager::init_global_animation_manager;
 use dioxus::prelude::*;
 use palette::*;
 
-use crate::scripts::scrollbar_container::init_all as init_scrollbars;
-use crate::theme::css::{ComponentPalette, ComponentOverrides, PaletteOverrides, ThemePalette};
-use crate::theme::registry::{get_default_theme, get_registered_theme};
-
-#[cfg(target_arch = "wasm32")]
-use animation::global_manager::init_global_animation_manager;
+use crate::{
+    scripts::scrollbar_container::init_all as init_scrollbars,
+    theme::{
+        css::{ComponentOverrides, ComponentPalette, PaletteOverrides, ThemePalette},
+        registry::{get_default_theme, get_registered_theme},
+    },
+};
 
 /// Theme context for accessing current theme
 #[derive(Clone, PartialEq)]
@@ -364,12 +367,12 @@ fn default_theme_context() -> ThemeContext {
         eprintln!("use_theme() called outside of ThemeProvider. Using default Hikari theme.");
     }
 
-    let default_theme = if cfg!(target_arch = "wasm32") && crate::theme::registry::prefers_dark_mode()
-    {
-        "tairitsu".to_string()
-    } else {
-        "hikari".to_string()
-    };
+    let default_theme =
+        if cfg!(target_arch = "wasm32") && crate::theme::registry::prefers_dark_mode() {
+            "tairitsu".to_string()
+        } else {
+            "hikari".to_string()
+        };
 
     ThemeContext {
         palette: Signal::new(default_theme.clone()),
@@ -495,9 +498,11 @@ mod tests {
             palette.background.hex()
         );
 
-        assert!(component_palette
-            .selection_background
-            .contains("linear-gradient"));
+        assert!(
+            component_palette
+                .selection_background
+                .contains("linear-gradient")
+        );
     }
 
     #[test]
@@ -513,9 +518,11 @@ mod tests {
         assert!(component_palette.selection_border.contains("255, 255, 255"));
 
         assert!(component_palette.selection_background.contains("rgba"));
-        assert!(component_palette
-            .selection_background
-            .contains("linear-gradient"));
+        assert!(
+            component_palette
+                .selection_background
+                .contains("linear-gradient")
+        );
 
         let css_vars = component_palette.css_variables();
         assert!(css_vars.contains("--hi-component-selection-icon:"));

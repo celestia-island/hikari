@@ -542,14 +542,14 @@
 //!
 //! Data source: https://github.com/lanqy/chinese-colors
 
-use serde::Deserialize;
-#[allow(dead_code)]
-use serde::Serialize;
-
 mod chinese;
 mod impl_;
 #[cfg(test)]
 mod tests;
+
+use serde::Deserialize;
+#[allow(dead_code)]
+use serde::Serialize;
 
 pub use chinese::*;
 

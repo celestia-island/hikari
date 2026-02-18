@@ -1,9 +1,10 @@
 //! Continuous animation hooks (timeout, interval) for Dioxus
 
 #[cfg(target_arch = "wasm32")]
-use dioxus::prelude::*;
-#[cfg(target_arch = "wasm32")]
 use std::sync::{Arc, Mutex};
+
+#[cfg(target_arch = "wasm32")]
+use dioxus::prelude::*;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 

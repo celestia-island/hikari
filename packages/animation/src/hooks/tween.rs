@@ -1,13 +1,13 @@
 //! Tween hook for Dioxus
 
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::time::Duration;
+use std::{cell::RefCell, rc::Rc, time::Duration};
 
 use dioxus::prelude::*;
 
-use crate::core::{AnimationEngine, AnimationOptions, Tween, TweenId};
-use crate::provider::try_use_animation_config;
+use crate::{
+    core::{AnimationEngine, AnimationOptions, Tween, TweenId},
+    provider::try_use_animation_config,
+};
 
 #[derive(Clone)]
 pub struct UseTween {

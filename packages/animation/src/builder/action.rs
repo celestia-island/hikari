@@ -1,11 +1,13 @@
 //! Animation action types
 
-use super::super::style::{CssProperty, StyleBuilder};
-use super::value::DynamicValue;
-use crate::context::AnimationContext;
-use crate::state::AnimationState as StructAnimationState;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
+
+use super::{
+    super::style::{CssProperty, StyleBuilder},
+    value::DynamicValue,
+};
+use crate::{context::AnimationContext, state::AnimationState as StructAnimationState};
 
 /// Enhanced animation action that can be applied to an element
 ///

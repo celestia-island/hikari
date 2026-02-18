@@ -1,11 +1,14 @@
 // website/src/hooks.rs
 // Custom hooks for the website
 
-use _i18n::{context::Language, keys::I18nKeys, loader::load_toml};
-use dioxus::prelude::*;
+mod i18n_toml {
+
 use std::cell::RefCell;
 
-mod i18n_toml {
+use dioxus::prelude::*;
+
+use _i18n::{context::Language, keys::I18nKeys, loader::load_toml};
+
     pub const EN_US: &str = include_str!("../../../packages/i18n/locales/en-US/strings.toml");
     pub const ZH_CHS: &str = include_str!("../../../packages/i18n/locales/zh-CHS/strings.toml");
     pub const ZH_CHT: &str = include_str!("../../../packages/i18n/locales/zh-CHT/strings.toml");

@@ -5,8 +5,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use dioxus::prelude::*;
 
-use super::state::FormState;
-use super::validators::ValidationSchema;
+use super::{state::FormState, validators::ValidationSchema};
 
 /// Hook for managing form state with validation
 ///

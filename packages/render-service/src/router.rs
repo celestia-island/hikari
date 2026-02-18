@@ -16,12 +16,11 @@ use axum::{
 use thiserror::Error;
 use tower_http::services::ServeDir;
 
+pub use super::icon_route::get_icon_data;
 use super::{
     plugin::{RouterRoute, StaticMountConfig},
     registry::StyleRegistry,
 };
-
-pub use super::icon_route::get_icon_data;
 
 /// Macro for building HTTP responses with compile-time safety.
 ///
@@ -205,11 +204,20 @@ pub fn build_router(
     // Legacy route redirects - redirect old routes without language prefix to default language
     // These routes handle paths like /components, /system, /demos without language prefix
     router = router.route("/components", axum::routing::get(legacy_redirect_handler));
-    router = router.route("/components/<*path>", axum::routing::get(legacy_redirect_handler));
+    router = router.route(
+        "/components/<*path>",
+        axum::routing::get(legacy_redirect_handler),
+    );
     router = router.route("/system", axum::routing::get(legacy_redirect_handler));
-    router = router.route("/system/<*path>", axum::routing::get(legacy_redirect_handler));
+    router = router.route(
+        "/system/<*path>",
+        axum::routing::get(legacy_redirect_handler),
+    );
     router = router.route("/demos", axum::routing::get(legacy_redirect_handler));
-    router = router.route("/demos/<*path>", axum::routing::get(legacy_redirect_handler));
+    router = router.route(
+        "/demos/<*path>",
+        axum::routing::get(legacy_redirect_handler),
+    );
 
     for mount_config in static_mounts {
         let serve_dir = ServeDir::new(&mount_config.local_path);
@@ -256,7 +264,7 @@ async fn index_handler(State(state): State<AppState>) -> impl IntoResponse {
 }
 
 /// Legacy redirect handler - redirects old routes to language-prefixed routes
-/// 
+///
 /// Converts:
 /// - /components -> /zh-chs/components
 /// - /components/layer1/button -> /zh-chs/components/layer1/button
@@ -266,7 +274,7 @@ async fn legacy_redirect_handler(uri: Uri) -> impl IntoResponse {
     let path = uri.path();
     let default_lang = "zh-chs";
     let new_path = format!("/{}{}", default_lang, path);
-    
+
     redirect_response!(StatusCode::FOUND, new_path)
 }
 
@@ -292,8 +300,7 @@ async fn spa_fallback_handler(_uri: Uri, State(state): State<AppState>) -> impl 
     let index_path = format!("{}/index.html", state.public_dir);
     let html = match tokio::fs::read_to_string(&index_path).await {
         Ok(content) => content,
-        Err(_) => {
-            r#"<!DOCTYPE html>
+        Err(_) => r#"<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -307,8 +314,7 @@ async fn spa_fallback_handler(_uri: Uri, State(state): State<AppState>) -> impl 
     </div>
 </body>
 </html>"#
-                .to_string()
-        }
+            .to_string(),
     };
 
     html_response!(StatusCode::OK, html)
@@ -347,7 +353,10 @@ async fn ssr_handler(uri: Uri, State(state): State<AppState>) -> impl IntoRespon
 
 /// Health check handler for monitoring and load balancers.
 pub async fn health_check() -> impl IntoResponse {
-    json_response!(StatusCode::OK, r#"{"status":"ok","service":"hikari-render-service"}"#)
+    json_response!(
+        StatusCode::OK,
+        r#"{"status":"ok","service":"hikari-render-service"}"#
+    )
 }
 
 /// 404 Not Found handler.

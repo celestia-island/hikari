@@ -3,7 +3,7 @@
 
 use dioxus::prelude::*;
 
-use crate::drag_layer::{DragLayer, DragConstraints};
+use crate::drag_layer::{DragConstraints, DragLayer};
 
 /// Draggable card component that combines DragLayer with Card
 ///

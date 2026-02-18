@@ -1,54 +1,8 @@
-use _components::basic::avatar::Avatar as AvatarComponent;
-use _components::basic::badge::Badge;
-use _components::basic::button::Button;
-use _components::basic::card::Card;
-use _components::basic::checkbox::Checkbox;
-use _components::basic::divider::Divider;
-use _components::basic::file_upload::FileUpload;
-use _components::basic::image::Image as ImageComponent;
-use _components::basic::input::Input;
-use _components::basic::radio_group::{RadioButton, RadioDirection, RadioGroup};
-use _components::basic::select::{Select, SelectOption, SelectSize};
-use _components::basic::slider::Slider;
-use _components::basic::switch::Switch;
-use _components::data::collapse::Collapse;
-use _components::data::pagination::Pagination;
-use _components::data::table::{Align, ColumnAlign, ColumnDef, Table, TableSize};
-use _components::data::tree::{Tree, TreeNodeData};
-use _components::display::drag_layer::{DragItem, DragLayer};
-use _components::display::empty::Empty;
-use _components::display::qrcode::QRCode;
-use _components::display::timeline::{Timeline, TimelineItem, TimelinePosition};
-use _components::display::user_guide::{GuidePlacement, GuideStep, UserGuide};
-use _components::display::zoom_controls::ZoomControls;
-use _components::entry::cascader::{Cascader, CascaderOption, CascaderSize};
-use _components::entry::transfer::{Transfer, TransferItem};
-use _components::feedback::alert::{Alert, AlertVariant};
-use _components::feedback::drawer::{Drawer, DrawerPlacement, DrawerSize};
-use _components::feedback::modal::{use_modal, ModalContent};
-use _components::feedback::popover::Popover;
-use _components::feedback::progress::{Progress, ProgressStatus, ProgressType};
-use _components::feedback::toast::{Toast, ToastPosition, ToastVariant};
-use _components::feedback::tooltip::{Tooltip, TooltipPlacement};
-use _components::layout::Section;
-use _components::navigation::breadcrumb::{Breadcrumb, BreadcrumbItem};
-use _components::navigation::menu::{Menu, MenuItem, MenuMode};
-use _components::navigation::tabs::{TabPane, TabPosition, Tabs};
-use _components::production::audio_player::{AudioPlayer, AudioPlayerSize};
-use _components::production::code_highlight::CodeHighlight;
-use _components::production::markdown_editor::{MarkdownEditor, MarkdownEditorMode};
-use _components::production::rich_text_editor::RichTextEditor;
-use _components::production::video_player::VideoPlayer;
-use _components::{
-    AvatarSize, AvatarVariant, BadgeVariant, ButtonVariant, IconButton, IconButtonSize,
-    IconButtonVariant,
-};
-use _icons::MdiIcon;
-use _palette::classes::{
-    AlignItems, ClassesBuilder, Display, FlexDirection, FlexWrap, FontSize, FontWeight, Gap,
-    MarginBottom, Padding, TextColor,
-};
 use dioxus::prelude::*;
+
+use _components::{AvatarSize, AvatarVariant, BadgeVariant, ButtonVariant, IconButton, IconButtonSize, IconButtonVariant, basic::{avatar::Avatar as AvatarComponent, badge::Badge, button::Button, card::Card, checkbox::Checkbox, divider::Divider, file_upload::FileUpload, image::Image as ImageComponent, input::Input, radio_group::{RadioButton, RadioDirection, RadioGroup}, select::{Select, SelectOption, SelectSize}, slider::Slider, switch::Switch}, data::{collapse::Collapse, pagination::Pagination, table::{Align, ColumnAlign, ColumnDef, Table, TableSize}, tree::{Tree, TreeNodeData}}, display::{drag_layer::{DragItem, DragLayer}, empty::Empty, qrcode::QRCode, timeline::{Timeline, TimelineItem, TimelinePosition}, user_guide::{GuidePlacement, GuideStep, UserGuide}, zoom_controls::ZoomControls}, entry::{cascader::{Cascader, CascaderOption, CascaderSize}, transfer::{Transfer, TransferItem}}, feedback::{alert::{Alert, AlertVariant}, drawer::{Drawer, DrawerPlacement, DrawerSize}, modal::{ModalContent, use_modal}, popover::Popover, progress::{Progress, ProgressStatus, ProgressType}, toast::{Toast, ToastPosition, ToastVariant}, tooltip::{Tooltip, TooltipPlacement}}, layout::Section, navigation::{breadcrumb::{Breadcrumb, BreadcrumbItem}, menu::{Menu, MenuItem, MenuMode}, tabs::{TabPane, TabPosition, Tabs}}, production::{audio_player::{AudioPlayer, AudioPlayerSize}, code_highlight::CodeHighlight, markdown_editor::{MarkdownEditor, MarkdownEditorMode}, rich_text_editor::RichTextEditor, video_player::VideoPlayer}};
+use _icons::MdiIcon;
+use _palette::classes::{ AlignItems, ClassesBuilder, Display, FlexDirection, FlexWrap, FontSize, FontWeight, Gap, MarginBottom, Padding, TextColor, };
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ComponentType {

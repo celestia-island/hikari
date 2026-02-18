@@ -22,4 +22,3 @@ pub use code_highlight::*;
 pub use markdown_editor::*;
 pub use rich_text_editor::*;
 pub use video_player::*;
-pub use video_player::*;

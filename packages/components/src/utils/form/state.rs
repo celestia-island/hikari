@@ -5,8 +5,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use dioxus::prelude::*;
 
-use super::error::FieldError;
-use super::validators::ValidationSchema;
+use super::{error::FieldError, validators::ValidationSchema};
 
 /// Form state returned by useForm hook
 #[derive(Clone, PartialEq)]

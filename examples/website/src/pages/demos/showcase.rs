@@ -4,16 +4,9 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use crate::{
-    app::Route,
-    components::PageContainer,
-    hooks::{use_i18n, use_language},
-};
+use crate::{app::Route, components::PageContainer, hooks::{use_i18n, use_language}};
 use _icons::{Icon, MdiIcon};
-use _palette::classes::{
-    BgColor, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, GridCols, Padding,
-    TextColor,
-};
+use _palette::classes::{ BgColor, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, GridCols, Padding, TextColor, };
 
 #[component]
 pub fn DemosOverview() -> Element {

@@ -69,13 +69,9 @@ pub struct SearchProps {
 
 #[component]
 pub fn Search(props: SearchProps) -> Element {
-    let input_classes = ClassesBuilder::new()
-        .add(SearchClass::Input)
-        .build();
+    let input_classes = ClassesBuilder::new().add(SearchClass::Input).build();
 
-    let wrapper_classes = ClassesBuilder::new()
-        .add(SearchClass::Wrapper)
-        .build();
+    let wrapper_classes = ClassesBuilder::new().add(SearchClass::Wrapper).build();
 
     rsx! {
         div {

@@ -17,7 +17,7 @@
 //! - [`Select`] - Dropdown selection
 //! - [`Checkbox`] - Checkbox with animations
 //! - [`RadioGroup`] - Radio button group
-//! - [`RadioButtonInternal`] - Radio button for use with RadioGroup
+//! - [`RadioButton`] - Radio button for use with RadioGroup
 //! - [`Switch`] - Toggle switch
 //! - [`Slider`] - Range slider
 //! - [`Textarea`] - Multi-line text input

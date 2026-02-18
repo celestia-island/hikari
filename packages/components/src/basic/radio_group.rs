@@ -6,62 +6,77 @@ use palette::classes::{ClassesBuilder, RadioClass};
 
 use crate::styled::StyledComponent;
 
-/// Radio button internal props (used with context)
-#[derive(Clone, PartialEq, Props)]
-pub struct RadioButtonInternalProps {
-    /// Value for this radio button
-    pub value: String,
+#[derive(Clone, Copy)]
+pub struct RadioContext {
+    pub name: &'static str,
+    pub selected_value: Signal<String>,
+    pub on_change: EventHandler<String>,
+    pub disabled: bool,
+}
 
-    /// Label text
+#[derive(Clone, PartialEq, Props)]
+pub struct RadioButtonProps {
+    pub value: String,
     #[props(default)]
     pub children: Element,
-
-    /// Whether this radio is disabled
     #[props(default)]
     pub disabled: bool,
-
-    /// Additional CSS class
     #[props(default)]
     pub class: String,
+}
 
-    /// Group name (for radio grouping)
-    #[props(default)]
-    pub group_name: String,
+#[component]
+pub fn RadioButton(props: RadioButtonProps) -> Element {
+    let ctx = use_context::<RadioContext>();
+    let is_checked = *ctx.selected_value.read() == props.value;
+    let disabled = props.disabled || ctx.disabled;
 
-    /// Currently selected value in group
-    #[props(default)]
-    pub selected_value: String,
+    let radio_name = ctx.name.to_string();
 
-    /// Callback when this radio is selected
-    #[props(default)]
-    pub on_select: EventHandler<String>,
+    let radio_classes = ClassesBuilder::new()
+        .add(RadioClass::Label)
+        .add_raw(&props.class)
+        .build();
+
+    let handle_change = {
+        let value = props.value.clone();
+        move |_| {
+            (ctx.on_change)(value.clone());
+        }
+    };
+
+    rsx! {
+        label { class: "{radio_classes}",
+            input {
+                r#type: "radio",
+                name: "{radio_name}",
+                value: "{props.value}",
+                checked: is_checked,
+                disabled: disabled,
+                onchange: handle_change,
+            }
+            div { class: "hi-radio-indicator",
+                div {
+                    class: "hi-radio-dot",
+                }
+            }
+            span { class: "hi-radio-text", {props.children} }
+        }
+    }
 }
 
 #[derive(Clone, PartialEq, Props)]
 pub struct RadioGroupProps {
-    /// Name attribute for all radio buttons
     pub name: String,
-
-    /// Currently selected value
     #[props(default)]
     pub value: String,
-
-    /// Callback when selection changes
     pub on_change: EventHandler<String>,
-
-    /// Whether radio group is disabled
     #[props(default)]
     pub disabled: bool,
-
-    /// Radio button options (use RadioButtonInternal)
     #[props(default)]
     pub children: Element,
-
-    /// Additional CSS class
     #[props(default)]
     pub class: String,
-
-    /// Layout direction
     #[props(default)]
     pub direction: RadioDirection,
 }
@@ -73,44 +88,21 @@ pub enum RadioDirection {
     Horizontal,
 }
 
-/// RadioGroup component with FUI styling
-///
-/// A group of radio buttons where only one can be selected.
-///
-/// # Examples
-///
-/// ## Basic Usage
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{RadioGroup, RadioButtonInternal};
-///
-/// fn app() -> Element {
-///     let mut value = use_signal(|| "option1".to_string());
-///
-///     rsx! {
-///         RadioGroup {
-///             name: "options".to_string(),
-///             value: value().clone(),
-///             on_change: move |v| value.set(v),
-///             direction: RadioDirection::Vertical,
-///             RadioButtonInternal {
-///                 value: "option1".to_string(),
-///                 "Option 1"
-///             }
-///             RadioButtonInternal {
-///                 value: "option2".to_string(),
-///                 "Option 2"
-///             }
-///             RadioButtonInternal {
-///                 value: "option3".to_string(),
-///                 "Option 3"
-///             }
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn RadioGroup(props: RadioGroupProps) -> Element {
+    let selected_value = use_signal(|| props.value.clone());
+
+    let name: &'static str = Box::leak(props.name.clone().into_boxed_str());
+    let disabled = props.disabled;
+    let on_change = props.on_change.clone();
+
+    let _ctx = use_context_provider(|| RadioContext {
+        name,
+        selected_value,
+        on_change,
+        disabled,
+    });
+
     let direction_class = match props.direction {
         RadioDirection::Vertical => RadioClass::RadioGroupVertical,
         RadioDirection::Horizontal => RadioClass::RadioGroupHorizontal,
@@ -127,52 +119,6 @@ pub fn RadioGroup(props: RadioGroupProps) -> Element {
     }
 }
 
-/// RadioButton component (internal, used with RadioGroup)
-///
-/// Uses CSS for all styling - no animation code needed.
-/// The parent component should pass group name, selected value, and on_select handler.
-#[component]
-pub fn RadioButtonInternal(props: RadioButtonInternalProps) -> Element {
-    let is_checked = props.selected_value == props.value;
-    let radio_name = if props.group_name.is_empty() {
-        "radio-group".to_string()
-    } else {
-        props.group_name.clone()
-    };
-
-    let radio_classes = ClassesBuilder::new()
-        .add(RadioClass::Label)
-        .add_raw(&props.class)
-        .build();
-
-    let handle_change = {
-        let value = props.value.clone();
-        move |_| {
-            props.on_select.call(value.clone());
-        }
-    };
-
-    rsx! {
-        label { class: "{radio_classes}",
-            input {
-                r#type: "radio",
-                name: "{radio_name}",
-                value: "{props.value}",
-                checked: is_checked,
-                disabled: props.disabled,
-                onchange: handle_change,
-            }
-            div { class: "hi-radio-indicator",
-                div {
-                    class: "hi-radio-dot",
-                }
-            }
-            span { class: "hi-radio-text", {props.children} }
-        }
-    }
-}
-
-/// RadioGroup component's type wrapper for StyledComponent
 pub struct RadioGroupComponent;
 
 impl StyledComponent for RadioGroupComponent {

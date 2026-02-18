@@ -2,6 +2,7 @@
 // Comment component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use palette::classes::{ClassesBuilder, CommentClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -58,7 +59,10 @@ pub struct CommentProps {
 
 #[component]
 pub fn Comment(props: CommentProps) -> Element {
-    let container_classes = format!("hi-comment {}", props.class);
+    let container_classes = ClassesBuilder::new()
+        .add(CommentClass::Container)
+        .add_raw(&props.class)
+        .build();
 
     rsx! {
         div {
@@ -66,29 +70,29 @@ pub fn Comment(props: CommentProps) -> Element {
             style: "{props.style}",
 
             div {
-                class: "hi-comment-header",
+                class: "{CommentClass::Header.as_class()}",
 
                 if let Some(ref avatar) = props.avatar {
                     img {
-                        class: "hi-comment-avatar",
+                        class: "{CommentClass::Avatar.as_class()}",
                         src: "{avatar}",
                         alt: "Avatar"
                     }
                 }
 
                 div {
-                    class: "hi-comment-meta",
+                    class: "{CommentClass::Meta.as_class()}",
 
                     if let Some(ref author) = props.author {
                         span {
-                            class: "hi-comment-author",
+                            class: "{CommentClass::Author.as_class()}",
                             "{author}"
                         }
                     }
 
                     if let Some(ref datetime) = props.datetime {
                         span {
-                            class: "hi-comment-datetime",
+                            class: "{CommentClass::Datetime.as_class()}",
                             "{datetime}"
                         }
                     }
@@ -96,20 +100,20 @@ pub fn Comment(props: CommentProps) -> Element {
             }
 
             div {
-                class: "hi-comment-content",
+                class: "{CommentClass::Content.as_class()}",
                 "{props.content}"
             }
 
             if let Some(actions) = props.actions {
                 div {
-                    class: "hi-comment-actions",
+                    class: "{CommentClass::Actions.as_class()}",
                     { actions }
                 }
             }
 
             if let Some(nested) = props.nested {
                 div {
-                    class: "hi-comment-nested",
+                    class: "{CommentClass::Nested.as_class()}",
                     { nested }
                 }
             }

@@ -2,6 +2,7 @@
 // Carousel component - Image/content slider with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use palette::classes::{CarouselClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -120,30 +121,36 @@ pub fn Carousel(props: CarouselProps) -> Element {
         current_index() as f64 * 100.0
     );
 
-    let indicator_classes = match props.indicator_position {
-        CarouselIndicatorPosition::Bottom => "hi-carousel-indicators hi-carousel-indicators-dots",
-        CarouselIndicatorPosition::Top => "hi-carousel-indicators hi-carousel-indicators-dots",
-        CarouselIndicatorPosition::Left => "hi-carousel-indicators hi-carousel-indicators-hidden",
-        CarouselIndicatorPosition::Right => "hi-carousel-indicators hi-carousel-indicators-hidden",
-    };
+    let indicator_classes = ClassesBuilder::new()
+        .add(CarouselClass::Indicators)
+        .add(match props.indicator_position {
+            CarouselIndicatorPosition::Bottom | CarouselIndicatorPosition::Top => CarouselClass::IndicatorsDots,
+            CarouselIndicatorPosition::Left | CarouselIndicatorPosition::Right => CarouselClass::IndicatorsHidden,
+        })
+        .add(match props.indicator_type {
+            CarouselIndicatorType::Dots => CarouselClass::IndicatorsDots,
+            CarouselIndicatorType::Line => CarouselClass::IndicatorsLine,
+            CarouselIndicatorType::Hidden => CarouselClass::IndicatorsHidden,
+        })
+        .build();
 
-    let indicator_classes = format!(
-        "{} {}",
-        indicator_classes,
-        match props.indicator_type {
-            CarouselIndicatorType::Dots => "hi-carousel-indicators-dots",
-            CarouselIndicatorType::Line => "hi-carousel-indicators-line",
-            CarouselIndicatorType::Hidden => "hi-carousel-indicators-hidden",
-        }
-    );
+    let prev_arrow_classes = ClassesBuilder::new()
+        .add(CarouselClass::Arrow)
+        .add(CarouselClass::ArrowPrev)
+        .build();
+
+    let next_arrow_classes = ClassesBuilder::new()
+        .add(CarouselClass::Arrow)
+        .add(CarouselClass::ArrowNext)
+        .build();
 
     rsx! {
         div {
-            class: "hi-carousel",
+            class: "{CarouselClass::Container.as_class()}",
             
             // Track
             div {
-                class: "hi-carousel-track",
+                class: "{CarouselClass::Track.as_class()}",
                 style: "{track_transform}",
                 {props.children}
             }
@@ -151,14 +158,14 @@ pub fn Carousel(props: CarouselProps) -> Element {
             // Navigation arrows
             if props.show_arrows {
                 button {
-                    class: "hi-carousel-arrow hi-carousel-arrow-prev",
+                    class: "{prev_arrow_classes}",
                     onclick: handle_prev,
                     disabled: total <= 1,
                     "‹"
                 }
 
                 button {
-                    class: "hi-carousel-arrow hi-carousel-arrow-next",
+                    class: "{next_arrow_classes}",
                     onclick: handle_next,
                     disabled: total <= 1,
                     "›"
@@ -170,14 +177,20 @@ pub fn Carousel(props: CarouselProps) -> Element {
                 div {
                     class: "{indicator_classes}",
                     for i in 0..total {
-                        button {
-                            class: format!(
-                                "hi-carousel-dot{}",
-                                if i == current_index() { " hi-carousel-dot-active" } else { "" }
-                            ),
-                            onclick: move |_| handle_dot_click(i),
-                            aria_label: format!("Slide {}", i + 1),
-                            disabled: total <= 1,
+                        {
+                            let dot_classes = ClassesBuilder::new()
+                                .add(CarouselClass::Dot)
+                                .add_if(CarouselClass::DotActive, move || i == current_index())
+                                .build();
+
+                            rsx! {
+                                button {
+                                    class: "{dot_classes}",
+                                    onclick: move |_| handle_dot_click(i),
+                                    aria_label: format!("Slide {}", i + 1),
+                                    disabled: total <= 1,
+                                }
+                            }
                         }
                     }
                 }
@@ -186,7 +199,7 @@ pub fn Carousel(props: CarouselProps) -> Element {
             // Pause button
             if props.show_pause && props.autoplay > 0 && total > 1 {
                 button {
-                    class: "hi-carousel-pause",
+                    class: "{CarouselClass::Pause.as_class()}",
                     onclick: toggle_pause,
                     aria_label: if is_paused() { "Play" } else { "Pause" },
                     if is_paused() { "▶" } else { "⏸" }

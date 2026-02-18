@@ -3,16 +3,16 @@
 
 mod i18n_toml {
 
-use std::cell::RefCell;
-
-use dioxus::prelude::*;
-
-use _i18n::{context::Language, keys::I18nKeys, loader::load_toml};
-
     pub const EN_US: &str = include_str!("../../../packages/i18n/locales/en-US/strings.toml");
     pub const ZH_CHS: &str = include_str!("../../../packages/i18n/locales/zh-CHS/strings.toml");
     pub const ZH_CHT: &str = include_str!("../../../packages/i18n/locales/zh-CHT/strings.toml");
 }
+
+use std::cell::RefCell;
+
+use dioxus::prelude::*;
+
+use _i18n::{loader::load_toml, I18nKeys, Language};
 
 pub fn get_toml_content(lang: Language) -> &'static str {
     match lang {

@@ -2,6 +2,7 @@
 // Stepper component with Arknights + FUI styling
 
 use dioxus::prelude::*;
+use palette::classes::{ClassesBuilder, StepperClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -60,40 +61,55 @@ impl Default for StepperProps {
 #[component]
 pub fn Stepper(props: StepperProps) -> Element {
     let direction_class = match props.direction {
-        StepperDirection::Horizontal => "hi-stepper-horizontal",
-        StepperDirection::Vertical => "hi-stepper-vertical",
+        StepperDirection::Horizontal => StepperClass::Horizontal,
+        StepperDirection::Vertical => StepperClass::Vertical,
     };
+
+    let stepper_classes = ClassesBuilder::new()
+        .add(StepperClass::Stepper)
+        .add(direction_class)
+        .add_raw(&props.class)
+        .build();
 
     rsx! {
         div {
-            class: "hi-stepper {direction_class} {props.class}",
+            class: "{stepper_classes}",
             for index in 0..props.total {
-                div {
-                    class: if index < props.current {
-                        "hi-step hi-step-pending"
-                    } else if index == props.current {
-                        "hi-step hi-step-active"
-                    } else {
-                        "hi-step hi-step-finished"
-                    },
+                {
+                    let step_classes = ClassesBuilder::new()
+                        .add(StepperClass::Step)
+                        .add(if index < props.current {
+                            StepperClass::StepPending
+                        } else if index == props.current {
+                            StepperClass::StepActive
+                        } else {
+                            StepperClass::StepFinished
+                        })
+                        .build();
 
-                    // Step number
-                    div {
-                        class: "hi-step-number",
-                        "{index + 1}"
-                    }
-
-                    // Connector line (except for last step in horizontal mode)
-                    if index < props.total - 1 && props.direction == StepperDirection::Horizontal {
+                    rsx! {
                         div {
-                            class: "hi-step-connector",
-                        }
-                    }
+                            class: "{step_classes}",
 
-                    // Vertical connector line
-                    if props.direction == StepperDirection::Vertical && index < props.total - 1 {
-                        div {
-                            class: "hi-step-connector-vertical",
+                            // Step number
+                            div {
+                                class: "{StepperClass::StepNumber.as_class()}",
+                                "{index + 1}"
+                            }
+
+                            // Connector line (except for last step in horizontal mode)
+                            if index < props.total - 1 && props.direction == StepperDirection::Horizontal {
+                                div {
+                                    class: "{StepperClass::StepConnector.as_class()}",
+                                }
+                            }
+
+                            // Vertical connector line
+                            if props.direction == StepperDirection::Vertical && index < props.total - 1 {
+                                div {
+                                    class: "{StepperClass::StepConnectorVertical.as_class()}",
+                                }
+                            }
                         }
                     }
                 }

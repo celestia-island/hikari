@@ -23,11 +23,13 @@
 //! ```
 
 use dioxus::prelude::*;
-use palette::classes::{AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass};
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
+use palette::classes::{
+    AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass,
+};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::closure::Closure;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsCast;
 
 /// Anchor item configuration
 #[derive(Clone, Debug, PartialEq, Props)]

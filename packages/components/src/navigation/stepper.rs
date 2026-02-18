@@ -2,7 +2,6 @@
 // Stepper component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use hikari_palette::classes::{ClassesBuilder, Display, Flex, Gap, MarginBottom, Padding};
 
 /// Stepper component type wrapper
 pub struct StepperComponent;
@@ -47,7 +46,7 @@ impl Default for StepperProps {
         Self {
             current: 0,
             total: 5,
-            direction: Stepper::default(),
+            direction: StepperDirection::default(),
             class: String::default(),
         }
     }
@@ -56,53 +55,25 @@ impl Default for StepperProps {
 /// Stepper component
 ///
 /// A step wizard component showing progress through a multi-step process
-///
-/// # Features
-/// - **Visual Progress**: Clear visual indication of completed, active, and pending steps
-/// - **Direction Support**: Both horizontal and vertical layouts
-/// - **Customizable**: Configurable current step and total steps
-/// - **Status Indicators**: Support for wait, process, finish, and error states
-///
-/// # Examples
-///
-/// ```rust,ignore
-/// use hikari_components::Stepper;
-///
-/// rsx! {
-///     Stepper {
-///         current: 2,
-///         total: 5,
-///         direction: StepperDirection::Horizontal,
-///     }
-/// }
-/// ```
 #[component]
 pub fn Stepper(props: StepperProps) -> Element {
     let direction_class = match props.direction {
         StepperDirection::Horizontal => "hi-stepper-horizontal",
-        Stepper::Vertical => "hi-stepper-vertical",
+        StepperDirection::Vertical => "hi-stepper-vertical",
     };
 
     rsx! {
         div {
-            class: format!("hi-stepper {} {}", direction_class, props.class),
+            class: "hi-stepper {direction_class} {props.class}",
             for index in 0..props.total {
                 div {
-                    class: ClassesBuilder::new()
-                        .add("hi-step")
-                        .add(if index < props.current {
-                            "hi-step-pending"
-                        } else if index == props.current {
-                            "hi-step-active"
-                        } else {
-                            "hi-step-finished"
-                        })
-                        .add(if index == props.total - 1 {
-                            "hi-step-last"
-                        } else {
-                            ""
-                        })
-                        .build(),
+                    class: if index < props.current {
+                        "hi-step hi-step-pending"
+                    } else if index == props.current {
+                        "hi-step hi-step-active"
+                    } else {
+                        "hi-step hi-step-finished"
+                    },
 
                     // Step number
                     div {
@@ -118,7 +89,7 @@ pub fn Stepper(props: StepperProps) -> Element {
                     }
 
                     // Vertical connector line
-                    if props.direction == Stepper::Vertical && index < props.total - 1 {
+                    if props.direction == StepperDirection::Vertical && index < props.total - 1 {
                         div {
                             class: "hi-step-connector-vertical",
                         }
@@ -150,6 +121,6 @@ mod tests {
         let props = StepperProps::default();
         assert_eq!(props.current, 0);
         assert_eq!(props.total, 5);
-        assert_eq!(props.direction, Stepper::default());
+        assert_eq!(props.direction, StepperDirection::default());
     }
 }

@@ -3,6 +3,11 @@
 
 use dioxus::prelude::*;
 
+use crate::styled::StyledComponent;
+
+/// CarouselComponent type wrapper
+pub struct CarouselComponent;
+
 /// Carousel indicator position
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum CarouselIndicatorPosition {
@@ -294,5 +299,135 @@ mod tests {
         };
 
         assert_ne!(props1, props2);
+    }
+}
+
+impl StyledComponent for CarouselComponent {
+    fn styles() -> &'static str {
+        r#"
+.hi-carousel {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 8px;
+    background-color: var(--hi-color-bg-container);
+}
+
+[data-theme="dark"] .hi-carousel {
+    background-color: var(--hi-surface);
+}
+
+.hi-carousel-track {
+    display: flex;
+    transition: transform 0.3s ease-in-out;
+}
+
+.hi-carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.hi-carousel-arrow:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.hi-carousel-arrow:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.hi-carousel-arrow-prev {
+    left: 16px;
+}
+
+.hi-carousel-arrow-next {
+    right: 16px;
+}
+
+.hi-carousel-indicators {
+    position: absolute;
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+.hi-carousel-indicators-dots {
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.hi-carousel-indicators-line {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.hi-carousel-indicators-hidden {
+    display: none;
+}
+
+.hi-carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.5);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.hi-carousel-dot:hover {
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+.hi-carousel-dot-active {
+    background-color: var(--hi-color-primary);
+    transform: scale(1.2);
+}
+
+.hi-carousel-pause {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.hi-carousel-pause:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+"#
+    }
+
+    fn name() -> &'static str {
+        "carousel"
     }
 }

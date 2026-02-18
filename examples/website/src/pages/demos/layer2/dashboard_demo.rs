@@ -13,17 +13,10 @@ pub fn DashboardDemo() -> Element {
     let lang_ctx = use_language();
     let lang = (*lang_ctx.language.read()).url_prefix().to_string();
 
-    let (page_title, page_desc) = match i18n {
-        Some(_) => (
-            "Dashboard Demo".to_string(),
-            "Demonstrates how to build a data dashboard using Layer 2 composite components."
-                .to_string(),
-        ),
-        None => (
-            "仪表盘示例".to_string(),
-            "展示如何使用 Layer 2 复合组件构建数据仪表盘".to_string(),
-        ),
-    };
+    let page_title = "Dashboard Demo".to_string();
+    let page_desc =
+        "Demonstrates how to build a data dashboard using Layer 2 composite components."
+            .to_string();
 
     rsx! {
         PageContainer {
@@ -32,10 +25,7 @@ pub fn DashboardDemo() -> Element {
             description: page_desc,
 
             DemoSection {
-                title: match i18n {
-                    Some(_) => "Statistics".to_string(),
-                    None => "统计数据".to_string(),
-                },
+                title: "Statistics".to_string(),
                 div {
                     class: ClassesBuilder::new()
                         .add(Display::Grid)
@@ -70,10 +60,7 @@ pub fn DashboardDemo() -> Element {
             }
 
             DemoSection {
-                title: match i18n {
-                    Some(_) => "Charts".to_string(),
-                    None => "图表".to_string(),
-                },
+                title: "Charts".to_string(),
                 div {
                     class: ClassesBuilder::new()
                         .add_raw("grid-cols-1 md:grid-cols-2 gap-6")
@@ -101,10 +88,7 @@ pub fn DashboardDemo() -> Element {
             }
 
             DemoSection {
-                title: match i18n {
-                    Some(_) => "Recent Activity".to_string(),
-                    None => "最近活动".to_string(),
-                },
+                title: "Recent Activity".to_string(),
                 Card {
                     class: "table-card",
                     div { class: "card-header",

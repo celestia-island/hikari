@@ -22,28 +22,14 @@ pub fn Home() -> Element {
     let lang_ctx = use_language();
     let lang = (*lang_ctx.language.read()).url_prefix().to_string();
 
-    let (title, subtitle, description, tagline, explore_text, docs_text) = match i18n {
-        Some(ctx) => {
-            let keys = &ctx.keys;
-            (
-                keys.page.home.hero.title.clone(),
-                keys.page.home.hero.subtitle.clone(),
-                keys.page.home.hero.description.clone(),
-                keys.page.home.hero.tagline.clone(),
-                keys.page.home.hero.explore.clone(),
-                keys.page.documentation.quick_start.clone(),
-            )
-        }
-        None => (
-            "Hikari".to_string(),
-            "A modern Rust UI component library for Dioxus.".to_string(),
-            "Based on Dioxus + Grass + Axum, designed with Arknights aesthetics and FUI styling."
-                .to_string(),
-            "There is no shame in wanting to feel happy.".to_string(),
-            "Explore Components →".to_string(),
-            "View Documentation".to_string(),
-        ),
-    };
+    let keys = i18n.keys();
+    let title = keys.page.home.hero.title.clone();
+    let subtitle = keys.page.home.hero.subtitle.clone();
+    let description = keys.page.home.hero.description.clone();
+    let tagline = keys.page.home.hero.tagline.clone();
+    let explore_text = keys.page.home.hero.explore.clone();
+    let docs_text = keys.page.documentation.quick_start.clone();
+    drop(keys);
 
     rsx! {
         Layout { current_route: Route::LangHome { lang: lang.clone() },

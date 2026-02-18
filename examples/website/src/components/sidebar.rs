@@ -347,20 +347,47 @@ fn SidebarCategorySection(
 ) -> Element {
     let title = get_category_title(category.id);
 
-    rsx! {
-        SubMenu {
-            item_key: category.id.to_string(),
-            title,
-            default_expanded: category.id == "components",
-            level: 1,
-            height: MenuItemHeight::Compact,
+    // 如果只有一个子项且没有嵌套项，直接渲染为 MenuItem
+    if category.subcategories.len() == 1 && category.subcategories[0].items.is_empty() {
+        let sub = &category.subcategories[0];
+        let route_to_navigate = route_key_to_route(sub.route_key, &lang);
+        let is_active = routes_equal(&current_route, &route_to_navigate);
+        let navigator = use_navigator();
+        let label = get_subcategory_label(category.id, sub.label_key);
 
-            for subcategory in category.subcategories {
-                SidebarSubcategoryItem {
-                    subcategory,
-                    category_id: category.id,
-                    current_route: current_route.clone(),
-                    lang: lang.clone(),
+        rsx! {
+            MenuItem {
+                item_key: category.id.to_string(),
+                class: if is_active { "hi-menu-item-active" } else { "" },
+                level: 1,
+                height: MenuItemHeight::Compact,
+                glow: true,
+                onclick: {
+                    let navigator = navigator.clone();
+                    move |_| {
+                        save_sidebar_scroll_position();
+                        navigator.push(route_to_navigate.clone());
+                    }
+                },
+                "{label}"
+            }
+        }
+    } else {
+        rsx! {
+            SubMenu {
+                item_key: category.id.to_string(),
+                title,
+                default_expanded: category.id == "components",
+                level: 1,
+                height: MenuItemHeight::Compact,
+
+                for subcategory in category.subcategories {
+                    SidebarSubcategoryItem {
+                        subcategory,
+                        category_id: category.id,
+                        current_route: current_route.clone(),
+                        lang: lang.clone(),
+                    }
                 }
             }
         }

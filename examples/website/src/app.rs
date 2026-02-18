@@ -11,11 +11,10 @@ use _i18n::context::Language;
 #[component]
 pub fn App() -> Element {
     let language = use_signal(|| Language::default_lang());
-    let lang_ctx = use_context_provider(|| LanguageContext { language });
+    let _lang_ctx = use_context_provider(|| LanguageContext { language });
 
     rsx! {
         I18nProviderWrapper {
-            language: lang_ctx.language,
             ThemeProvider { palette: "hikari".to_string(),
                 PortalProvider {
                     Router::<Route> {}

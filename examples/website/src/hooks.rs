@@ -36,17 +36,19 @@ pub fn use_i18n() -> Option<I18nContext> {
 
 #[derive(Clone, Props, PartialEq)]
 pub struct I18nProviderWrapperProps {
-    pub language: Signal<Language>,
     pub children: Element,
 }
 
 #[component]
 pub fn I18nProviderWrapper(props: I18nProviderWrapperProps) -> Element {
-    let lang = (props.language)();
+    let lang_ctx = use_language();
+    // 响应式读取语言 - 使用 read() 获取值
+    let lang = *lang_ctx.language.read();
     let toml_content = get_toml_content(lang);
 
     rsx! {
         I18nProvider {
+            key: "{lang:?}",
             language: lang,
             toml_content,
             {props.children}
@@ -62,6 +64,7 @@ pub fn use_current_language() -> Language {
 
 pub fn update_language_from_route(lang: &str) {
     let parsed = Language::from_url_prefix(lang).unwrap_or_else(Language::default_lang);
+    // 更新 LanguageContext
     if let Some(mut ctx) = try_consume_context::<LanguageContext>() {
         if *ctx.language.read() != parsed {
             ctx.language.set(parsed);

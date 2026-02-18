@@ -3,7 +3,7 @@
 
 use dioxus::prelude::*;
 use icons::{Icon, MdiIcon};
-use palette::classes::{ClassesBuilder, components::ButtonClass};
+use palette::classes::{components::ButtonClass, ClassesBuilder};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},

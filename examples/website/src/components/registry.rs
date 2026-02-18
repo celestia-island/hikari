@@ -11,7 +11,7 @@ use _components::{
         file_upload::FileUpload,
         image::Image as ImageComponent,
         input::Input,
-        radio_group::{RadioButtonInternal, RadioDirection, RadioGroup},
+        radio_group::{RadioButton, RadioDirection, RadioGroup},
         select::{Select, SelectOption},
         slider::Slider,
         switch::Switch,
@@ -182,8 +182,8 @@ pub fn render_component(component_type: ComponentType) -> Element {
                             value: "male".to_string(),
                             on_change: move |_| {},
                             direction: RadioDirection::Horizontal,
-                            RadioButtonInternal { value: "male".to_string(), "Male" }
-                            RadioButtonInternal { value: "female".to_string(), "Female" }
+                            RadioButton { value: "male".to_string(), "Male" }
+                            RadioButton { value: "female".to_string(), "Female" }
                         }
                     }
                 },

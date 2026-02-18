@@ -83,8 +83,8 @@ pub fn Background(props: BackgroundProps) -> Element {
 fn start_gradient_animation() -> Box<dyn FnOnce()> {
     use std::cell::RefCell;
     use std::rc::Rc;
-    use wasm_bindgen::JsCast;
     use wasm_bindgen::closure::Closure;
+    use wasm_bindgen::JsCast;
 
     let window = match web_sys::window() {
         Some(w) => w,

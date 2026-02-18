@@ -67,10 +67,10 @@ pub trait NodePlugin: Send + Sync {
     ) -> Element;
 
     /// Handle input port data
-    fn handle_input(&self, port_id: PortId, data: serde_json::Value);
+    fn handle_input(&self, port_id: PortId, data: super::value::NodeValue);
 
     /// Get output port data
-    fn get_output(&self, port_id: PortId) -> Option<serde_json::Value>;
+    fn get_output(&self, port_id: PortId) -> Option<super::value::NodeValue>;
 }
 
 /// Node component

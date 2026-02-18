@@ -10,6 +10,7 @@ pub mod plugins;
 pub mod port;
 pub mod registry;
 pub mod serialization;
+pub mod value;
 pub mod viewport;
 
 pub use canvas::NodeGraphCanvas;
@@ -19,6 +20,7 @@ pub use minimap::NodeGraphMinimap;
 pub use node::{Node, NodeId, NodePlugin, NodeState, NodeType};
 pub use plugins::*;
 pub use port::{Port, PortId, PortType};
-pub use registry::{NodeRegistry, RegistryEntry, list_all_plugins};
+pub use registry::{list_all_plugins, NodeRegistry, RegistryEntry};
 pub use serialization::SerializedNodeGraph;
+pub use value::NodeValue;
 pub use viewport::Viewport;

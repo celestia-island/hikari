@@ -15,7 +15,7 @@ pub use processor::*;
 
 use crate::node_graph::{
     node::NodeType,
-    registry::{RegistryEntry, register_node_plugin},
+    registry::{register_node_plugin, RegistryEntry},
 };
 
 /// Register all default node plugins

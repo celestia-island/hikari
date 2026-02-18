@@ -391,12 +391,7 @@ impl CssProperty {
 /// set_style(&element, CssProperty::Display, "flex");
 /// ```
 pub fn set_style(element: &HtmlElement, property: CssProperty, value: &str) {
-    let elem = element.clone().dyn_into::<web_sys::Element>().unwrap();
-    let _ = elem
-        .dyn_ref::<web_sys::HtmlElement>()
-        .unwrap()
-        .style()
-        .set_property(property.as_str(), value);
+    let _ = element.style().set_property(property.as_str(), value);
 }
 
 /// Set multiple CSS properties on an element at once
@@ -419,8 +414,7 @@ pub fn set_style(element: &HtmlElement, property: CssProperty, value: &str) {
 /// ]);
 /// ```
 pub fn set_styles(element: &HtmlElement, properties: &[(CssProperty, &str)]) {
-    let elem = element.clone().dyn_into::<web_sys::Element>().unwrap();
-    let style = elem.dyn_ref::<web_sys::HtmlElement>().unwrap().style();
+    let style = element.style();
     for (property, value) in properties {
         let _ = style.set_property(property.as_str(), value);
     }
@@ -519,8 +513,7 @@ impl<'a> StyleBuilder<'a> {
             return;
         }
 
-        let elem = self.element.clone().dyn_into::<web_sys::Element>().unwrap();
-        let style = elem.dyn_ref::<web_sys::HtmlElement>().unwrap().style();
+        let style = self.element.style();
 
         // Batch update all properties to minimize DOM access
         for (property, value) in self.properties {
@@ -539,8 +532,7 @@ impl<'a> StyleBuilder<'a> {
             return 0;
         }
 
-        let elem = self.element.clone().dyn_into::<web_sys::Element>().unwrap();
-        let style = elem.dyn_ref::<web_sys::HtmlElement>().unwrap().style();
+        let style = self.element.style();
 
         let mut updated = 0;
         for (property, value) in self.properties {
@@ -710,12 +702,7 @@ impl StyleStringBuilder {
 /// remove_style(&element, CssProperty::Width);
 /// ```
 pub fn remove_style(element: &HtmlElement, property: CssProperty) {
-    let elem = element.clone().dyn_into::<web_sys::Element>().unwrap();
-    let _ = elem
-        .dyn_ref::<web_sys::HtmlElement>()
-        .unwrap()
-        .style()
-        .remove_property(property.as_str());
+    let _ = element.style().remove_property(property.as_str());
 }
 
 /// Get the computed value of a CSS property
@@ -735,9 +722,7 @@ pub fn remove_style(element: &HtmlElement, property: CssProperty) {
 /// let width = get_style(&element, CssProperty::Width);
 /// ```
 pub fn get_style(element: &HtmlElement, property: CssProperty) -> String {
-    let elem = element.clone().dyn_into::<web_sys::Element>().unwrap();
-    elem.dyn_ref::<web_sys::HtmlElement>()
-        .unwrap()
+    element
         .style()
         .get_property_value(property.as_str())
         .unwrap_or_default()
@@ -838,18 +823,16 @@ impl<'a> AttributeBuilder<'a> {
             return;
         }
 
-        let elem = self.element.clone().dyn_into::<web_sys::Element>().unwrap();
-
         for (name, value) in self.attributes {
             match value {
                 AttributeValue::String(v) => {
-                    let _ = elem.set_attribute(&name, &v);
+                    let _ = self.element.set_attribute(&name, &v);
                 }
                 AttributeValue::Bool(v) => {
                     if v {
-                        let _ = elem.set_attribute(&name, "");
+                        let _ = self.element.set_attribute(&name, "");
                     } else {
-                        let _ = elem.remove_attribute(&name);
+                        let _ = self.element.remove_attribute(&name);
                     }
                 }
             }

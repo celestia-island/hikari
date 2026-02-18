@@ -96,6 +96,7 @@ pub mod styled;
 pub mod layout;
 
 // Theme provider (always available)
+pub mod theme;
 pub mod theme_provider;
 
 // Responsive hooks (always available)
@@ -252,8 +253,8 @@ pub use utils::positioning::{
 };
 
 // Theme provider exports
-pub use theme_provider::{
-    ComponentOverrides, ComponentPalette, ThemeContext, ThemePalette, ThemeProvider,
+pub use theme::{
+    ComponentOverrides, ComponentPalette, IntoThemeName, ThemeContext, ThemePalette, ThemeProvider,
     get_default_theme, get_registered_theme, prefers_dark_mode, register_theme, use_theme,
 };
 

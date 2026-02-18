@@ -15,6 +15,7 @@ use _components::data::collapse::Collapse;
 use _components::data::pagination::Pagination;
 use _components::data::table::{Align, ColumnAlign, ColumnDef, Table, TableSize};
 use _components::data::tree::{Tree, TreeNodeData};
+use _components::display::drag_layer::{DragItem, DragLayer};
 use _components::display::timeline::{Timeline, TimelineItem, TimelinePosition};
 use _components::display::user_guide::{GuidePlacement, GuideStep, UserGuide};
 use _components::entry::cascader::{Cascader, CascaderOption, CascaderSize};
@@ -31,6 +32,8 @@ use _components::navigation::breadcrumb::{Breadcrumb, BreadcrumbItem};
 use _components::navigation::menu::{Menu, MenuItem, MenuMode};
 use _components::navigation::tabs::{TabPane, TabPosition, Tabs};
 use _components::production::audio_player::{AudioPlayer, AudioPlayerSize};
+use _components::production::code_highlight::CodeHighlight;
+use _components::production::markdown_editor::{MarkdownEditor, MarkdownEditorMode};
 use _components::production::rich_text_editor::RichTextEditor;
 use _components::production::video_player::VideoPlayer;
 use _components::{
@@ -810,10 +813,26 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 },
 
                 ("layer3", "editor", Some("markdown")) => rsx! {
-                    div { class: placeholder_box(), p { "MarkdownEditor component - coming soon" } }
+                    div { style: "width: 100%; height: 300px;",
+                        MarkdownEditor {
+                            value: "# Hello World\n\nThis is **markdown** content.".to_string(),
+                            placeholder: "Write your markdown here...".to_string(),
+                            mode: MarkdownEditorMode::Split,
+                            toolbar: true,
+                        }
+                    }
                 },
                 ("layer3", "editor", Some("code")) => rsx! {
-                    div { class: placeholder_box(), p { "CodeEditor component - coming soon" } }
+                    div { style: "width: 100%; max-width: 500px;",
+                        CodeHighlight {
+                            language: "rust".to_string(),
+                            code: r#"fn main() {
+    println!("Hello, World!");
+}"#.to_string(),
+                            line_numbers: true,
+                            copyable: true,
+                        }
+                    }
                 },
                 ("layer3", "editor", Some("richtext")) => rsx! {
                     div { style: "width: 100%; max-width: 500px;",
@@ -833,7 +852,18 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 },
 
                 ("layer3", "visualization", Some("draglayer")) => rsx! {
-                    div { class: placeholder_box(), p { "DragLayer component - coming soon" } }
+                    div { style: "width: 100%; height: 200px; position: relative; background: var(--hi-surface); border-radius: 8px;",
+                        DragLayer {
+                            is_dragging: true,
+                            drag_item: Some(DragItem {
+                                id: "item-1".to_string(),
+                                label: "Draggable Component".to_string(),
+                                item_type: "component".to_string(),
+                            }),
+                            position: (150, 100),
+                            show_drop_zones: true,
+                        }
+                    }
                 },
                 ("layer3", "visualization", Some("timeline")) => rsx! {
                     Timeline {

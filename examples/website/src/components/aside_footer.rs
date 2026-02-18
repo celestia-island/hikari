@@ -4,15 +4,8 @@
 use dioxus::prelude::*;
 use dioxus_router::{use_navigator, use_route};
 
-use crate::app::Route;
-use crate::hooks::use_language;
-use _components::{
-    basic::{IconButton, IconButtonSize},
-    feedback::{GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning},
-    layout::{Direction, FlexBox, FlexGap},
-    navigation::{Menu, MenuItem, MenuItemHeight},
-    use_theme,
-};
+use crate::{app::Route, hooks::use_language};
+use _components::{basic::{IconButton, IconButtonSize}, feedback::{GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning}, layout::{Direction, FlexBox, FlexGap}, navigation::{Menu, MenuItem, MenuItemHeight}, use_theme};
 use _i18n::context::Language;
 use _icons::MdiIcon;
 use _palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, JustifyContent, Shadow};

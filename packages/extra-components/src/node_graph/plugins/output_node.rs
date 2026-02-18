@@ -3,8 +3,10 @@
 
 use dioxus::prelude::*;
 
-use crate::node_graph::node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition};
-use crate::node_graph::value::NodeValue;
+use crate::node_graph::{
+    node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition},
+    value::NodeValue,
+};
 
 /// Output node plugin
 pub struct OutputNode {

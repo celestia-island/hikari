@@ -71,13 +71,9 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let button_classes = ClassesBuilder::new()
-        .add(NumberInputClass::Button)
-        .build();
+    let button_classes = ClassesBuilder::new().add(NumberInputClass::Button).build();
 
-    let input_classes = ClassesBuilder::new()
-        .add(NumberInputClass::Input)
-        .build();
+    let input_classes = ClassesBuilder::new().add(NumberInputClass::Input).build();
 
     let decrement_disabled = props.min.is_some_and(|min| props.value <= min);
     let increment_disabled = props.max.is_some_and(|max| props.value >= max);

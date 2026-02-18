@@ -1,7 +1,6 @@
 use dioxus::prelude::*;
 
-use crate::components::{Layout, render_markdown};
-use crate::hooks::use_language;
+use crate::{components::{Layout, render_markdown}, hooks::use_language};
 use _components::layout::Container;
 use _i18n::context::Language;
 

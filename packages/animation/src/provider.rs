@@ -4,8 +4,7 @@
 
 use dioxus::prelude::*;
 
-use crate::config::AnimationConfig;
-use crate::prefers_reduced_motion::prefers_reduced_motion;
+use crate::{config::AnimationConfig, prefers_reduced_motion::prefers_reduced_motion};
 
 /// Animation context for accessing configuration
 #[derive(Clone)]

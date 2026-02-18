@@ -209,6 +209,6 @@ pub mod style_provider;
 pub use context::*;
 pub use provider::*;
 pub use style_provider::{
-    try_use_style, use_component_class, use_style, StyleConfig, StyleContext, StyleProvider,
-    StyleProviderProps,
+    StyleConfig, StyleContext, StyleProvider, StyleProviderProps, try_use_style,
+    use_component_class, use_style,
 };

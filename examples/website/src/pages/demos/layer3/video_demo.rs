@@ -1,12 +1,9 @@
 use dioxus::prelude::*;
 
-use crate::components::{DemoSection, PageContainer};
-use crate::hooks::{use_i18n, use_language};
+use crate::{components::{DemoSection, PageContainer}, hooks::{use_i18n, use_language}};
 use _components::{Button, Card};
 use _extra_components::extra::{AudioWaveform, VideoPlayer};
-use _palette::classes::{
-    ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor,
-};
+use _palette::classes::{ ClassesBuilder, Display, Flex, FontSize, Gap, MarginBottom, Padding, TextColor, };
 
 #[component]
 pub fn VideoDemo() -> Element {

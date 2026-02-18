@@ -4,6 +4,7 @@
 use std::cell::RefCell;
 #[cfg(target_arch = "wasm32")]
 use std::rc::Rc;
+
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 

@@ -3,12 +3,8 @@
 
 use dioxus::prelude::*;
 
-use crate::app::Route;
-use crate::hooks::use_language;
-use _palette::classes::{
-    AlignItems, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, JustifyContent,
-    MarginBottom,
-};
+use crate::{app::Route, hooks::use_language};
+use _palette::classes::{ AlignItems, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, JustifyContent, MarginBottom, };
 
 #[component]
 pub fn TopNav(current_route: Route) -> Element {

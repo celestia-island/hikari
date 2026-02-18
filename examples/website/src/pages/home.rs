@@ -4,16 +4,8 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use crate::{
-    app::Route,
-    components::Layout,
-    hooks::{use_i18n, use_language},
-};
-use _components::{
-    basic::Logo as HikariLogo,
-    layout::{Container, Row, Section, Spacer},
-    Button, ButtonSize, ButtonVariant,
-};
+use crate::{app::Route, components::Layout, hooks::{use_i18n, use_language}};
+use _components::{Button, ButtonSize, ButtonVariant, basic::Logo as HikariLogo, layout::{Container, Row, Section, Spacer}};
 use _palette::classes::{ClassesBuilder, FontSize, MarginBottom, TextAlign, TextColor};
 
 #[component]

@@ -46,17 +46,17 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
 use web_sys::HtmlElement;
 
+use super::{
+    super::{
+        context::AnimationContext,
+        state::AnimationState as StructAnimationState,
+        style::{CssProperty, StyleBuilder},
+    },
+    action::AnimationAction,
+    value::DynamicValue,
+};
 #[cfg(target_arch = "wasm32")]
 use crate::global_manager::global_animation_manager;
-
-use super::super::{
-    context::AnimationContext,
-    state::AnimationState as StructAnimationState,
-    style::{CssProperty, StyleBuilder},
-};
-
-use super::action::AnimationAction;
-use super::value::DynamicValue;
 
 /// Enhanced builder for creating complex animations
 ///

@@ -6,7 +6,7 @@ use std::sync::atomic::Ordering;
 use dioxus::prelude::*;
 
 use super::render::PortalRender;
-use crate::portal::types::{ModalAnimationState, PortalEntry, PORTAL_ID_COUNTER};
+use crate::portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry};
 
 #[derive(Clone)]
 pub struct PortalContext {

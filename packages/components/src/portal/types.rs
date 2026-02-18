@@ -3,8 +3,10 @@
 
 use dioxus::prelude::*;
 
-use crate::feedback::PopoverPlacement;
-use crate::modal::{MaskMode, ModalPosition};
+use crate::{
+    feedback::PopoverPlacement,
+    modal::{MaskMode, ModalPosition},
+};
 
 pub static PORTAL_ID_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 

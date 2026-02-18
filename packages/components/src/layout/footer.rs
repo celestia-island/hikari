@@ -2,7 +2,7 @@
 // Footer component for application footer
 
 use dioxus::prelude::*;
-use palette::classes::{components::Footer as FooterClass, ClassesBuilder};
+use palette::classes::{ClassesBuilder, components::Footer as FooterClass};
 
 #[derive(Clone, PartialEq, Props)]
 pub struct FooterProps {

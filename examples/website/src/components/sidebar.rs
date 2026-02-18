@@ -4,8 +4,7 @@
 use dioxus::prelude::*;
 use dioxus_router::{use_navigator, use_route};
 
-use crate::app::Route;
-use crate::hooks::use_language;
+use crate::{app::Route, hooks::use_language};
 use _components::navigation::{Menu, MenuItem, MenuItemHeight, MenuMode, SubMenu};
 use _i18n::context::Language;
 use _icons::{Icon, MdiIcon};

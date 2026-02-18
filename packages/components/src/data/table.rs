@@ -1,12 +1,15 @@
 // hi-components/src/data/table.rs
 // Table component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, TableClass, UtilityClass};
 use std::collections::HashMap;
 
-pub use super::column::{ColumnAlign, ColumnDef};
-pub use super::sort::{SortConfig, SortDirection};
+use dioxus::prelude::*;
+use palette::classes::{ClassesBuilder, TableClass, UtilityClass};
+
+pub use super::{
+    column::{ColumnAlign, ColumnDef},
+    sort::{SortConfig, SortDirection},
+};
 use crate::styled::StyledComponent;
 
 /// Filter state for a column: map of column key to selected values

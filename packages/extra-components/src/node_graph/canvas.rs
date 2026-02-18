@@ -184,11 +184,7 @@ pub fn NodeGraphCanvas(
                 // Ctrl+Z for undo
                 let action = {
                     let mut hist = history.write();
-                    if hist.can_undo() {
-                        hist.undo()
-                    } else {
-                        None
-                    }
+                    if hist.can_undo() { hist.undo() } else { None }
                 };
 
                 if let Some(action) = action {
@@ -234,11 +230,7 @@ pub fn NodeGraphCanvas(
                 // Ctrl+Y for redo
                 let action = {
                     let mut hist = history.write();
-                    if hist.can_redo() {
-                        hist.redo()
-                    } else {
-                        None
-                    }
+                    if hist.can_redo() { hist.redo() } else { None }
                 };
 
                 if let Some(action) = action {
@@ -306,11 +298,7 @@ pub fn NodeGraphCanvas(
     let handle_undo = move |_| {
         let action = {
             let mut hist = history_undo.write();
-            if hist.can_undo() {
-                hist.undo()
-            } else {
-                None
-            }
+            if hist.can_undo() { hist.undo() } else { None }
         };
 
         if let Some(action) = action {
@@ -361,11 +349,7 @@ pub fn NodeGraphCanvas(
     let handle_redo = move |_| {
         let action = {
             let mut hist = history_redo.write();
-            if hist.can_redo() {
-                hist.redo()
-            } else {
-                None
-            }
+            if hist.can_redo() { hist.redo() } else { None }
         };
 
         if let Some(action) = action {

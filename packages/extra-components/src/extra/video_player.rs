@@ -2,7 +2,7 @@
 // VideoPlayer component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use hikari_components::{basic::IconButton, MdiIcon};
+use hikari_components::{MdiIcon, basic::IconButton};
 use hikari_palette::classes::ClassesBuilder;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;

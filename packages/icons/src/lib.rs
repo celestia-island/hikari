@@ -285,7 +285,9 @@ fn log_icon_warning_once(icon_name: String) {
     {
         let warned =
             WARNED_ICONS.get_or_init(|| std::sync::Mutex::new(std::collections::HashSet::new()));
-        let mut warned = warned.lock().unwrap();
+        let mut warned = warned
+            .lock()
+            .expect("Failed to acquire lock on warned icons set - mutex poisoned");
 
         if !warned.contains(&icon_name) {
             warned.insert(icon_name.clone());

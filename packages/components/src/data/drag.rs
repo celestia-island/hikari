@@ -91,7 +91,6 @@ pub fn DragDropTree(props: DragDropTreeProps) -> Element {
             if drop_target.read().is_some() {
                 div {
                     class: "hi-drop-indicator",
-                    style: "position: fixed; height: 2px; background: #4fd1c5; box-shadow: 0 0 8px rgba(79, 209, 197, 0.8); pointer-events: none; z-index: 1000; display: none;",
                     id: "drop-indicator",
                 }
             }
@@ -236,26 +235,22 @@ fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
 
             div {
                 class: "hi-drag-handle",
-                style: "display: flex; align-items: center; gap: 8px; padding: 8px; cursor: move;",
 
                 if props.draggable && !props.node.disabled {
                     span {
                         class: "hi-drag-handle-icon",
-                        style: "color: #a0aec0; font-size: 12px;",
                         "⋮⋮"
                     }
                 }
 
                 div {
                     class: "hi-node-content",
-                    style: "flex: 1;",
                     "{props.node.title}"
                 }
 
                 if is_dragging {
                     div {
                         class: "hi-drag-ghost",
-                        style: "position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(79, 209, 197, 0.1); border: 1px dashed #4fd1c5; pointer-events: none;",
                     }
                 }
             }
@@ -263,14 +258,12 @@ fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
             if is_drag_over && props.drop_allowed {
                 div {
                     class: "hi-drop-line",
-                    style: "height: 2px; background: #4fd1c5; box-shadow: 0 0 8px rgba(79, 209, 197, 0.8); margin: 4px 0;",
                 }
             }
 
             if !props.node.node_children.is_empty() {
                 div {
                     class: "hi-node-children",
-                    style: "margin-left: 24px;",
 
                     for child in &props.node.node_children {
                         RenderDragNode {

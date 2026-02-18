@@ -9,6 +9,7 @@
 
 use dioxus::prelude::*;
 use icons::{Icon, MdiIcon};
+use palette::classes::{ClassesBuilder, SidebarClass, UtilityClass};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
@@ -109,9 +110,14 @@ impl Default for SidebarProps {
 /// ```
 #[component]
 pub fn Sidebar(props: SidebarProps) -> Element {
+    let nav_classes = ClassesBuilder::new()
+        .add(SidebarClass::Sidebar)
+        .add_raw(&props.class)
+        .build();
+
     rsx! {
         nav {
-            class: format!("hi-sidebar {}", props.class),
+            class: "{nav_classes}",
             role: "navigation",
             "aria-label": "Sidebar navigation",
 
@@ -178,11 +184,20 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
     let mut is_expanded = use_signal(|| props.default_expanded);
 
     let expanded_attr = if is_expanded() { "true" } else { "false" };
-    let arrow_class = if is_expanded() { "rotated" } else { "" };
+
+    let section_classes = ClassesBuilder::new()
+        .add(SidebarClass::Section)
+        .add_raw(&props.class)
+        .build();
+
+    let arrow_classes = ClassesBuilder::new()
+        .add(SidebarClass::SectionArrow)
+        .add_if(SidebarClass::SectionArrowRotated, move || is_expanded())
+        .build();
 
     rsx! {
         div {
-            class: format!("hi-sidebar-section {}", props.class),
+            class: "{section_classes}",
             "data-id": "{props.id}",
 
             // Section header (clickable to toggle) - wrapped with Glow
@@ -191,28 +206,28 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
                 color: GlowColor::Primary,
                 intensity: GlowIntensity::Thirty,
                 div {
-                    class: "hi-sidebar-section-header",
+                    class: "{SidebarClass::SectionHeader.as_class()}",
                     onclick: move |_| { is_expanded.toggle(); },
                     aria_expanded: expanded_attr,
 
                     div {
-                        class: "hi-sidebar-section-title-group",
+                        class: "{SidebarClass::SectionTitleGroup.as_class()}",
 
                         span {
-                            class: "hi-sidebar-section-title-primary",
+                            class: "{SidebarClass::SectionTitlePrimary.as_class()}",
                             "{props.title}"
                         }
 
                         if let Some(secondary) = &props.secondary_title {
                             span {
-                                class: "hi-sidebar-section-title-secondary",
+                                class: "{SidebarClass::SectionTitleSecondary.as_class()}",
                                 "{secondary}"
                             }
                         }
                     }
 
                     div {
-                        class: format!("hi-sidebar-section-arrow {arrow_class}"),
+                        class: "{arrow_classes}",
                         Icon { icon: MdiIcon::ChevronDown }
                     }
                 }
@@ -220,7 +235,7 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
 
             // Children container (visible when expanded)
             div {
-                class: "hi-sidebar-section-children",
+                class: "{SidebarClass::SectionChildren.as_class()}",
                 "data-expanded": expanded_attr,
                 aria_hidden: "{!is_expanded()}",
 
@@ -272,11 +287,20 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
     let mut is_expanded = use_signal(|| props.default_expanded);
 
     let expanded_attr = if is_expanded() { "true" } else { "false" };
-    let arrow_class = if is_expanded() { "rotated" } else { "" };
+
+    let item_classes = ClassesBuilder::new()
+        .add(SidebarClass::Item)
+        .add_raw(&props.class)
+        .build();
+
+    let arrow_classes = ClassesBuilder::new()
+        .add(SidebarClass::ItemArrow)
+        .add_if(SidebarClass::ItemArrowRotated, move || is_expanded())
+        .build();
 
     rsx! {
         div {
-            class: format!("hi-sidebar-item {}", props.class),
+            class: "{item_classes}",
             "data-id": "{props.id}",
 
             // Item header (always visible)
@@ -286,7 +310,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
                 color: GlowColor::Primary,
                 intensity: GlowIntensity::Thirty,
                 div {
-                    class: "hi-sidebar-item-header",
+                    class: "{SidebarClass::ItemHeader.as_class()}",
                     "data-has-children": "{has_items}",
 
                     // Add onclick handler to entire header for expand/collapse
@@ -300,13 +324,13 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
                 // Custom content slot - user provides Link or other content
                 // If content is provided, use it; otherwise render labels
                 div {
-                    class: "hi-sidebar-item-content",
+                    class: "{SidebarClass::ItemContent.as_class()}",
                     if let Some(content) = &props.content {
                         { content }
                     } else {
                         { props.label }
                         if let Some(secondary) = &props.secondary_label {
-                            span { class: "hi-sidebar-item-zh", "{secondary}" }
+                            span { class: "{SidebarClass::ItemSecondary.as_class()}", "{secondary}" }
                         }
                     }
                 }
@@ -315,7 +339,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
                 // Visual indicator only - onclick is on the parent header
                 if has_items {
                     div {
-                        class: format!("hi-sidebar-item-arrow {arrow_class}"),
+                        class: "{arrow_classes}",
                         aria_expanded: expanded_attr,
                         Icon { icon: MdiIcon::ChevronRight }
                     }
@@ -324,7 +348,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
             }
             if let Some(items) = &props.items {
                 div {
-                    class: "hi-sidebar-item-children",
+                    class: "{SidebarClass::ItemChildren.as_class()}",
                     "data-expanded": expanded_attr,
                     aria_hidden: "{!is_expanded()}",
 
@@ -372,16 +396,21 @@ impl Default for SidebarLeafProps {
 /// Sidebar Leaf component
 #[component]
 pub fn SidebarLeaf(props: SidebarLeafProps) -> Element {
+    let leaf_classes = ClassesBuilder::new()
+        .add(SidebarClass::Leaf)
+        .add_raw(&props.class)
+        .build();
+
     rsx! {
         div {
-            class: format!("hi-sidebar-leaf {}", props.class),
+            class: "{leaf_classes}",
             "data-id": "{props.id}",
 
             div {
-                class: "hi-sidebar-leaf-content",
+                class: "{SidebarClass::LeafContent.as_class()}",
                 { props.children }
                 if let Some(secondary) = &props.secondary_label {
-                    span { class: "hi-sidebar-item-zh", "{secondary}" }
+                    span { class: "{SidebarClass::ItemSecondary.as_class()}", "{secondary}" }
                 }
             }
         }

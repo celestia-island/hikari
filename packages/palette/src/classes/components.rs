@@ -425,22 +425,42 @@ impl UtilityClass for TreeClass {
 /// Sidebar component classes
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SidebarClass {
-    /// `hi-sidebar` - Sidebar
+    /// `hi-sidebar` - Main sidebar container
     Sidebar,
-    /// `hi-sidebar-section` - Sidebar section
+    /// `hi-sidebar-section` - Section container
     Section,
-    /// `hi-sidebar-section-arrow-left` - Arrow left
-    SectionArrowLeft,
-    /// `hi-sidebar-section-arrow-right` - Arrow right
-    SectionArrowRight,
-    /// `hi-sidebar-item` - Sidebar item
+    /// `hi-sidebar-section-header` - Section header
+    SectionHeader,
+    /// `hi-sidebar-section-title-group` - Title group container
+    SectionTitleGroup,
+    /// `hi-sidebar-section-title-primary` - Primary title
+    SectionTitlePrimary,
+    /// `hi-sidebar-section-title-secondary` - Secondary title
+    SectionTitleSecondary,
+    /// `hi-sidebar-section-arrow` - Section arrow
+    SectionArrow,
+    /// `hi-sidebar-section-arrow-rotated` - Rotated arrow state
+    SectionArrowRotated,
+    /// `hi-sidebar-section-children` - Section children container
+    SectionChildren,
+    /// `hi-sidebar-item` - Item container
     Item,
-    /// `hi-sidebar-item-arrow-left` - Item arrow left
-    ItemArrowLeft,
-    /// `hi-sidebar-item-arrow-right` - Item arrow right
-    ItemArrowRight,
-    /// `hi-sidebar-leaf` - Sidebar leaf
+    /// `hi-sidebar-item-header` - Item header
+    ItemHeader,
+    /// `hi-sidebar-item-content` - Item content
+    ItemContent,
+    /// `hi-sidebar-item-arrow` - Item arrow
+    ItemArrow,
+    /// `hi-sidebar-item-arrow-rotated` - Rotated arrow state
+    ItemArrowRotated,
+    /// `hi-sidebar-item-children` - Item children container
+    ItemChildren,
+    /// `hi-sidebar-item-secondary` - Secondary label (Chinese)
+    ItemSecondary,
+    /// `hi-sidebar-leaf` - Leaf item container
     Leaf,
+    /// `hi-sidebar-leaf-content` - Leaf content
+    LeafContent,
 }
 
 impl UtilityClass for SidebarClass {
@@ -448,12 +468,22 @@ impl UtilityClass for SidebarClass {
         match self {
             SidebarClass::Sidebar => "sidebar",
             SidebarClass::Section => "sidebar-section",
-            SidebarClass::SectionArrowLeft => "sidebar-section-arrow-left",
-            SidebarClass::SectionArrowRight => "sidebar-section-arrow-right",
+            SidebarClass::SectionHeader => "sidebar-section-header",
+            SidebarClass::SectionTitleGroup => "sidebar-section-title-group",
+            SidebarClass::SectionTitlePrimary => "sidebar-section-title-primary",
+            SidebarClass::SectionTitleSecondary => "sidebar-section-title-secondary",
+            SidebarClass::SectionArrow => "sidebar-section-arrow",
+            SidebarClass::SectionArrowRotated => "sidebar-section-arrow-rotated",
+            SidebarClass::SectionChildren => "sidebar-section-children",
             SidebarClass::Item => "sidebar-item",
-            SidebarClass::ItemArrowLeft => "sidebar-item-arrow-left",
-            SidebarClass::ItemArrowRight => "sidebar-item-arrow-right",
+            SidebarClass::ItemHeader => "sidebar-item-header",
+            SidebarClass::ItemContent => "sidebar-item-content",
+            SidebarClass::ItemArrow => "sidebar-item-arrow",
+            SidebarClass::ItemArrowRotated => "sidebar-item-arrow-rotated",
+            SidebarClass::ItemChildren => "sidebar-item-children",
+            SidebarClass::ItemSecondary => "sidebar-item-secondary",
             SidebarClass::Leaf => "sidebar-leaf",
+            SidebarClass::LeafContent => "sidebar-leaf-content",
         }
     }
 }
@@ -1510,6 +1540,93 @@ impl UtilityClass for DragLayerClass {
             DragLayerClass::DragPreviewContent => "drag-layer-drag-preview-content",
             DragLayerClass::DragPreviewLabel => "drag-layer-drag-preview-label",
             DragLayerClass::DragPreviewType => "drag-layer-drag-preview-type",
+        }
+    }
+}
+
+/// Carousel component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CarouselClass {
+    /// `hi-carousel` - Main container
+    Container,
+    /// `hi-carousel-track` - Track container for slides
+    Track,
+    /// `hi-carousel-arrow` - Arrow button base
+    Arrow,
+    /// `hi-carousel-arrow-prev` - Previous arrow
+    ArrowPrev,
+    /// `hi-carousel-arrow-next` - Next arrow
+    ArrowNext,
+    /// `hi-carousel-indicators` - Indicators container
+    Indicators,
+    /// `hi-carousel-indicators-dots` - Dots indicator style
+    IndicatorsDots,
+    /// `hi-carousel-indicators-line` - Line indicator style
+    IndicatorsLine,
+    /// `hi-carousel-indicators-hidden` - Hidden indicators
+    IndicatorsHidden,
+    /// `hi-carousel-dot` - Single dot
+    Dot,
+    /// `hi-carousel-dot-active` - Active dot
+    DotActive,
+    /// `hi-carousel-pause` - Pause button
+    Pause,
+}
+
+impl UtilityClass for CarouselClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            CarouselClass::Container => "carousel",
+            CarouselClass::Track => "carousel-track",
+            CarouselClass::Arrow => "carousel-arrow",
+            CarouselClass::ArrowPrev => "carousel-arrow-prev",
+            CarouselClass::ArrowNext => "carousel-arrow-next",
+            CarouselClass::Indicators => "carousel-indicators",
+            CarouselClass::IndicatorsDots => "carousel-indicators-dots",
+            CarouselClass::IndicatorsLine => "carousel-indicators-line",
+            CarouselClass::IndicatorsHidden => "carousel-indicators-hidden",
+            CarouselClass::Dot => "carousel-dot",
+            CarouselClass::DotActive => "carousel-dot-active",
+            CarouselClass::Pause => "carousel-pause",
+        }
+    }
+}
+
+/// Comment component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CommentClass {
+    /// `hi-comment` - Main container
+    Container,
+    /// `hi-comment-header` - Header section
+    Header,
+    /// `hi-comment-avatar` - Avatar image
+    Avatar,
+    /// `hi-comment-meta` - Meta information
+    Meta,
+    /// `hi-comment-author` - Author name
+    Author,
+    /// `hi-comment-datetime` - Date/time
+    Datetime,
+    /// `hi-comment-content` - Content section
+    Content,
+    /// `hi-comment-actions` - Actions section
+    Actions,
+    /// `hi-comment-nested` - Nested comments
+    Nested,
+}
+
+impl UtilityClass for CommentClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            CommentClass::Container => "comment",
+            CommentClass::Header => "comment-header",
+            CommentClass::Avatar => "comment-avatar",
+            CommentClass::Meta => "comment-meta",
+            CommentClass::Author => "comment-author",
+            CommentClass::Datetime => "comment-datetime",
+            CommentClass::Content => "comment-content",
+            CommentClass::Actions => "comment-actions",
+            CommentClass::Nested => "comment-nested",
         }
     }
 }

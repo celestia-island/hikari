@@ -1,22 +1,21 @@
 // node_graph/plugins/constant.rs
 // Constant node plugin - provides static values
 
-use serde_json::Value;
-
 use dioxus::prelude::*;
 
 use crate::node_graph::node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition};
+use crate::node_graph::value::NodeValue;
 
 /// Constant node plugin
 pub struct ConstantNode {
     node_type: NodeType,
-    value: Value,
+    value: NodeValue,
     output_port_id: PortId,
 }
 
 impl ConstantNode {
     /// Create a new constant node
-    pub fn new(name: &str, value: Value) -> Self {
+    pub fn new(name: &str, value: NodeValue) -> Self {
         let output_port_id = format!("{}_output", name);
         Self {
             node_type: NodeType::new("constant", name),
@@ -27,20 +26,17 @@ impl ConstantNode {
 
     /// Create a numeric constant node
     pub fn numeric(name: &str, value: f64) -> Self {
-        Self::new(
-            name,
-            Value::Number(serde_json::Number::from_f64(value).unwrap()),
-        )
+        Self::new(name, NodeValue::from(value))
     }
 
     /// Create a string constant node
     pub fn string(name: &str, value: &str) -> Self {
-        Self::new(name, Value::String(value.to_string()))
+        Self::new(name, NodeValue::from(value))
     }
 
     /// Create a boolean constant node
     pub fn boolean(name: &str, value: bool) -> Self {
-        Self::new(name, Value::Bool(value))
+        Self::new(name, NodeValue::from(value))
     }
 
     /// Get default ports for this node type
@@ -66,14 +62,7 @@ impl NodePlugin for ConstantNode {
         _state: NodeState,
         _ports: Vec<NodePort>,
     ) -> Element {
-        let value_str = match &self.value {
-            Value::Number(n) => n.to_string(),
-            Value::String(s) => s.clone(),
-            Value::Bool(b) => b.to_string(),
-            Value::Null => "null".to_string(),
-            Value::Array(_) => "[...]".to_string(),
-            Value::Object(_) => "{...}".to_string(),
-        };
+        let value_str = self.value.to_display_string();
 
         rsx! {
             div {
@@ -86,11 +75,11 @@ impl NodePlugin for ConstantNode {
         }
     }
 
-    fn handle_input(&self, _port_id: PortId, _data: Value) {
+    fn handle_input(&self, _port_id: PortId, _data: NodeValue) {
         // Constant nodes don't accept input
     }
 
-    fn get_output(&self, port_id: PortId) -> Option<Value> {
+    fn get_output(&self, port_id: PortId) -> Option<NodeValue> {
         if port_id == self.output_port_id {
             Some(self.value.clone())
         } else {

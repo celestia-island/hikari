@@ -4,7 +4,18 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use super::{connection::Connection, node::NodeState};
+use super::{connection::Connection, node::NodeState, value::NodeValue};
+
+/// Graph metadata - extensible key-value storage
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct GraphMetadata {
+    pub author: Option<String>,
+    pub description: Option<String>,
+    #[serde(default)]
+    pub tags: Vec<String>,
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
+}
 
 /// Serialized node graph format
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -12,7 +23,8 @@ pub struct SerializedNodeGraph {
     pub version: String,
     pub nodes: Vec<SerializedNode>,
     pub connections: Vec<SerializedConnection>,
-    pub metadata: HashMap<String, serde_json::Value>,
+    #[serde(default)]
+    pub metadata: GraphMetadata,
 }
 
 /// Serialized node
@@ -24,7 +36,7 @@ pub struct SerializedNode {
     pub size: (f64, f64),
     pub selected: bool,
     pub minimized: bool,
-    pub data: Option<serde_json::Value>,
+    pub data: Option<NodeValue>,
 }
 
 /// Serialized connection
@@ -43,7 +55,7 @@ impl SerializedNodeGraph {
             version: "1.0".to_string(),
             nodes: Vec::new(),
             connections: Vec::new(),
-            metadata: HashMap::new(),
+            metadata: GraphMetadata::default(),
         }
     }
 

@@ -14,6 +14,7 @@
 //! - [`Timeline`] - Vertical timeline for events
 //! - [`UserGuide`] - Step-by-step user onboarding
 //! - [`DragLayer`] - Drag and drop visualization layer
+//! - [`ZoomControls`] - Zoom in/out controls
 
 pub mod calendar;
 pub mod comment;
@@ -24,6 +25,7 @@ pub mod qrcode;
 pub mod tag;
 pub mod timeline;
 pub mod user_guide;
+pub mod zoom_controls;
 
 pub use calendar::*;
 pub use comment::*;
@@ -34,3 +36,4 @@ pub use qrcode::*;
 pub use tag::*;
 pub use timeline::*;
 pub use user_guide::*;
+pub use zoom_controls::*;

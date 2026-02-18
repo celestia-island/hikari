@@ -1469,6 +1469,33 @@ impl UtilityClass for DragLayerClass {
     }
 }
 
+/// ZoomControls component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ZoomControlsClass {
+    /// `hi-zoom-controls` - Main container
+    Container,
+    /// `hi-zoom-controls-button` - Button
+    Button,
+    /// `hi-zoom-controls-button-disabled` - Disabled button
+    ButtonDisabled,
+    /// `hi-zoom-controls-percentage` - Percentage display
+    Percentage,
+    /// `hi-zoom-controls-slider` - Slider
+    Slider,
+}
+
+impl UtilityClass for ZoomControlsClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            ZoomControlsClass::Container => "zoom-controls",
+            ZoomControlsClass::Button => "zoom-controls-button",
+            ZoomControlsClass::ButtonDisabled => "zoom-controls-button-disabled",
+            ZoomControlsClass::Percentage => "zoom-controls-percentage",
+            ZoomControlsClass::Slider => "zoom-controls-slider",
+        }
+    }
+}
+
 /// Glow component classes
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GlowClass {

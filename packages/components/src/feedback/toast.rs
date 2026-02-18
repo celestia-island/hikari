@@ -4,9 +4,13 @@
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, ToastClass, UtilityClass};
 
-use crate::styled::StyledComponent;
+use crate::{
+    basic::{IconButton, IconButtonSize, IconButtonVariant},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    styled::StyledComponent,
+};
+use icons::MdiIcon;
 
-/// Toast 组件的类型包装器（用于实现 StyledComponent）
 pub struct ToastComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -46,7 +50,7 @@ pub struct ToastProps {
     #[props(default)]
     pub position: ToastPosition,
 
-    #[props(default)]
+    #[props(default = true)]
     pub closable: bool,
 
     #[props(default)]
@@ -71,25 +75,6 @@ impl Default for ToastProps {
     }
 }
 
-/// Toast component with Arknights + FUI styling
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Toast, ToastVariant, ToastPosition};
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Toast {
-///             variant: ToastVariant::Success,
-///             message: "Operation completed successfully!".to_string(),
-///             position: ToastPosition::TopRight,
-///             duration: Some(3000),
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Toast(props: ToastProps) -> Element {
     let variant_class = match props.variant {
@@ -99,19 +84,16 @@ pub fn Toast(props: ToastProps) -> Element {
         ToastVariant::Error => ToastClass::ToastError,
     };
 
-    let position_class = match props.position {
-        ToastPosition::TopRight => ToastClass::ToastTopRight,
-        ToastPosition::TopCenter => ToastClass::ToastTopCenter,
-        ToastPosition::TopLeft => ToastClass::ToastTopLeft,
-        ToastPosition::BottomRight => ToastClass::ToastBottomRight,
-        ToastPosition::BottomCenter => ToastClass::ToastBottomCenter,
-        ToastPosition::BottomLeft => ToastClass::ToastBottomLeft,
+    let glow_color = match props.variant {
+        ToastVariant::Info => GlowColor::Info,
+        ToastVariant::Success => GlowColor::Success,
+        ToastVariant::Warning => GlowColor::Warning,
+        ToastVariant::Error => GlowColor::Danger,
     };
 
     let toast_classes = ClassesBuilder::new()
         .add(ToastClass::Toast)
         .add(variant_class)
-        .add(position_class)
         .add_raw(&props.class)
         .build();
 
@@ -166,37 +148,38 @@ pub fn Toast(props: ToastProps) -> Element {
     };
 
     rsx! {
-        div {
-            class: "{toast_classes}",
+        Glow {
+            class: "hi-toast-glow-wrapper",
+            blur: GlowBlur::Light,
+            color: glow_color,
+            intensity: GlowIntensity::Seventy,
+            div {
+                class: "{toast_classes}",
 
-            div { class: "{ToastClass::ToastIconWrapper.as_class()}",
-                { default_icon }
-            }
-
-            div { class: "{ToastClass::ToastContent.as_class()}",
-
-                if let Some(title) = props.title {
-                    div { class: "{ToastClass::ToastTitle.as_class()}", "{title}" }
+                div { class: "{ToastClass::ToastIconWrapper.as_class()}",
+                    { default_icon }
                 }
 
-                div { class: "{ToastClass::ToastMessage.as_class()}", "{props.message}" }
-            }
+                div { class: "{ToastClass::ToastContent.as_class()}",
 
-            if props.closable {
-                button {
-                    class: "{ToastClass::ToastClose.as_class()}",
-                    onclick: move |e| {
-                        if let Some(handler) = props.on_close.as_ref() {
-                            handler.call(e);
-                        }
-                    },
-                    svg {
-                        view_box: "0 0 24 24",
-                        fill: "none",
-                        stroke: "currentColor",
-                        stroke_width: "2",
-                        line { x1: "18", y1: "6", x2: "6", y2: "18" }
-                        line { x1: "6", y1: "6", x2: "18", y2: "18" }
+                    if let Some(title) = props.title {
+                        div { class: "{ToastClass::ToastTitle.as_class()}", "{title}" }
+                    }
+
+                    div { class: "{ToastClass::ToastMessage.as_class()}", "{props.message}" }
+                }
+
+                if props.closable {
+                    IconButton {
+                        icon: MdiIcon::Close,
+                        size: IconButtonSize::Small,
+                        variant: IconButtonVariant::Ghost,
+                        class: "hi-toast-close".to_string(),
+                        onclick: move |e| {
+                            if let Some(handler) = props.on_close.as_ref() {
+                                handler.call(e);
+                            }
+                        },
                     }
                 }
             }

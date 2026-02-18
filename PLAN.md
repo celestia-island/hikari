@@ -1,65 +1,78 @@
-# Hikari 项目健康检查计划
+# UI 组件完善计划
 
-## 执行状态
+## 已完成任务 ✅
 
-### Phase 1: 高优先级安全修复 ✅ 完成
-- [x] 修复 `from_f64().unwrap()` 高危用法 (4处)
-- [x] 修复 DOM `dyn_into().unwrap()` (10处) - 改为直接使用 HtmlElement 方法
+### Layer1 组件改进
 
-### Phase 2: 类型严格化 ✅ 完成
-- [x] 创建 `NodeValue` 枚举类型 (`extra-components/src/node_graph/value.rs`)
-- [x] 重构 Node Graph 系统使用强类型
+1. **数字输入框 (NumberInput)** ✅
+   - 添加自定义增减按钮样式
+   - 使用 Glow wrapper 效果
+   - 添加 SVG 图标（+/-）替代纯文本
+   - 支持尺寸变体 (Small/Medium/Large)
 
-### Phase 3: 大文件解耦 ✅ 完成 (9/9)
-- [x] `theme_provider.rs` (1303行) → `theme/` 目录 (5文件)
-- [x] `animation/core.rs` (1008行) → `core/` 目录 (6文件)
-- [x] `portal/mod.rs` (1879行) → `portal/` 目录 (4文件)
-- [x] `utils/form.rs` (646行) → `form/` 目录 (6文件)
-- [x] `animation/style.rs` (939行) → `style/` 目录 (4文件)
-- [x] `animation/builder.rs` (659行) → `builder/` 目录 (4文件)
-- [x] `animation/hooks.rs` (549行) → `hooks/` 目录 (5文件)
-- [x] `colors.rs` (7450行) → `colors/` 目录 (4文件)
-- [x] `components.rs` (2935行) → `components/` 目录 (12文件)
+2. **搜索框 (Search)** ✅
+   - 添加候选输入 suggestion 弹出功能
+   - 添加搜索图标
+   - 使用 IconButton 作为关闭按钮
+   - 添加 Glow wrapper 效果
 
-### Phase 4: 文件夹分级 ⏸️ 推迟
-- 风险等级：高
-- 原因：需要大量重构，建议分批进行
-- 当前 animation/src 已有子目录结构（core/, builder/, hooks/, style/）
+3. **反馈组件 (Alert/Toast)** ✅
+   - 添加 Glow wrapper 鼠标跟随光效
+   - 使用 IconButton 替代原生关闭按钮
+   - 简化动画效果
 
-### Phase 5: 低优先级清理 ✅ 完成
-- [x] HTTP 响应宏创建 (`response!`, `html_response!`, `json_response!`, `css_response!`, etc.)
-- [x] Mutex/RwLock 锁的 expect 改进
-- [~] 配置系统类型化 - 推迟（需要更详细的设计，避免破坏兼容性）
+4. **Tooltip** ✅
+   - 简化实现，修复样式问题
 
-### Phase 6: #[allow] 属性清理 ✅ 完成
-- [x] 移除 `popover.rs` 的 `#[allow(unused_mut)]`，使用条件编译
-- [x] 移除 `utils/mod.rs` 的 `#[allow(unused_imports)]`，删除未使用的导入
-- [x] 移除 `chinese.rs` 的 `#[allow(non_upper_case_globals)]`，重命名常量为 `PURE_WHITE`/`PURE_BLACK`
-- [x] 移除 `anchor.rs` 的 `#[allow(unused_variables)]`，使用条件编译
-- [x] 移除 `file_upload.rs`, `positioning.rs` 的 `#[allow(unused_variables)]`
-- [x] 移除 `lib.rs` 的 `#[allow(unused_imports)]`，删除重复导入
-- [x] 修复 `qrcode.rs` 的弃用 API: `set_fill_style` → `set_fill_style_str`
-- [x] 移除 `provider.rs` 未使用的 `default_theme_context` 函数
-- [x] 移除 `icons/lib.rs` 未使用的 `log_dynamic_fetch_success` 函数
-- [x] 移除 `value.rs` 的 `#[allow(dead_code)]`
-- [x] 移除 `processor.rs` 的 `#[allow(dead_code)]`，将 `compute` 改为 `pub`
-- [x] 移除 `colors/mod.rs` 的 `#[allow(dead_code)]`
-- [x] 删除 `radio_group.rs` 中的弃用 API (`RadioButtonProps`, `RadioButton`)
+5. **Breadcrumb 面包屑** ✅
+   - 修复为横向布局
+   - 添加分隔符图标
+
+6. **Skeleton 骨架屏** ✅
+   - 创建新的 Skeleton 组件替代 Empty
+   - 支持 Text/Circular/Rectangular/Rounded 变体
+   - 添加 SkeletonCard 和 SkeletonTable 预设
+   - 添加 shimmer 动画
+
+7. **FlexBox 案例** ✅
+   - 添加 row/col/align 展示案例
+   - 展示 Direction/Align/Gap 配置
+
+8. **删除 DescriptionList** ✅
+   - 从 display 模块删除 description_list.rs
 
 ---
 
-## 剩余 #[allow] 属性（有意保留）
+## 原有组件状态
 
-| 属性 | 位置 | 原因 |
-|------|------|------|
-| `clippy::should_implement_trait` | `classes/mod.rs`, `tween.rs`, `validators.rs` | Builder 模式设计，方法名 `add` 不需要实现 `Add` trait |
-| `non_snake_case` | `form/hooks.rs`, `icons/lib.rs` | React 风格命名约定 (`useForm`, `mdi::Moon`) |
-| `async_fn_in_trait` | `e2e/tests/mod.rs` | Rust trait 限制，需要 async fn |
+### 已有自定义实现（无需修改）
+- Switch - 已有自定义实现
+- Progress - 已有自定义实现
+- Slider - 已有自定义实现
+- Badge - 已有自定义实现
+- Tag - 已有自定义实现
+- Tabs - 已有自定义实现
+
+### 仍需改进
+- Avatar - 建议使用本地图标替代 CDN
+- Image - 需要修复图片加载和 placeholder 样式
+- Menu - 每个 MenuItem 使用 Glow wrapper（已部分实现）
 
 ---
 
-## 最终状态
+## 实现笔记
 
-- ✅ 编译成功，无错误，无警告
-- ✅ 所有测试通过
-- ✅ 7 个 commits 已提交到 dev 分支
+### Glow Wrapper 使用模式
+```rust
+Glow {
+    blur: GlowBlur::Light,
+    color: GlowColor::Ghost, // 或根据状态使用 Primary/Success/Warning/Danger
+    intensity: GlowIntensity::Seventy,
+    children: content
+}
+```
+
+### 语言切换按钮参考
+- 文件: `examples/website/src/components/aside_footer.rs`
+- 使用 `Popover + Menu { in_popover: true }`
+- MenuItem 自动获得 glow wrapper 效果

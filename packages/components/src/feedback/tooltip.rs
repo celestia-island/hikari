@@ -6,7 +6,6 @@ use palette::classes::{ClassesBuilder, TooltipClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// Tooltip 组件的类型包装器（用于实现 StyledComponent）
 pub struct TooltipComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -29,7 +28,7 @@ pub struct TooltipProps {
     #[props(default)]
     pub delay: Option<u64>,
 
-    #[props(default)]
+    #[props(default = true)]
     pub arrow: bool,
 
     #[props(default)]
@@ -51,24 +50,6 @@ impl Default for TooltipProps {
     }
 }
 
-/// Tooltip component with Arknights + FUI styling
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Tooltip, TooltipPlacement};
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Tooltip {
-///             content: "This is a helpful tooltip".to_string(),
-///             placement: TooltipPlacement::Top,
-///             Button { "Hover me" }
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Tooltip(props: TooltipProps) -> Element {
     let mut is_visible = use_signal(|| false);
@@ -80,13 +61,6 @@ pub fn Tooltip(props: TooltipProps) -> Element {
         TooltipPlacement::Right => TooltipClass::TooltipRight,
     };
 
-    let arrow_class = match props.placement {
-        TooltipPlacement::Top => TooltipClass::TooltipArrowTop,
-        TooltipPlacement::Bottom => TooltipClass::TooltipArrowBottom,
-        TooltipPlacement::Left => TooltipClass::TooltipArrowLeft,
-        TooltipPlacement::Right => TooltipClass::TooltipArrowRight,
-    };
-
     let wrapper_classes = ClassesBuilder::new()
         .add(TooltipClass::TooltipWrapper)
         .add_raw(&props.class)
@@ -96,11 +70,6 @@ pub fn Tooltip(props: TooltipProps) -> Element {
         .add(TooltipClass::Tooltip)
         .add(placement_class)
         .add_if(TooltipClass::TooltipVisible, move || is_visible())
-        .build();
-
-    let arrow_classes = ClassesBuilder::new()
-        .add(TooltipClass::TooltipArrow)
-        .add(arrow_class)
         .build();
 
     let handle_mouse_enter = move |_| {
@@ -128,10 +97,10 @@ pub fn Tooltip(props: TooltipProps) -> Element {
 
                     div { class: "{TooltipClass::TooltipContent.as_class()}",
                         "{props.content}"
+                    }
 
-                        if props.arrow {
-                            div { class: "{arrow_classes}" }
-                        }
+                    if props.arrow {
+                        div { class: "hi-tooltip-arrow" }
                     }
                 }
             }

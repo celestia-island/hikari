@@ -4,9 +4,13 @@
 use dioxus::prelude::*;
 use palette::classes::{AlertClass, ClassesBuilder, UtilityClass};
 
-use crate::styled::StyledComponent;
+use crate::{
+    basic::{IconButton, IconButtonSize, IconButtonVariant},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    styled::StyledComponent,
+};
+use icons::MdiIcon;
 
-/// Alert 组件的类型包装器（用于实现 StyledComponent）
 pub struct AlertComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -42,24 +46,6 @@ pub struct AlertProps {
     pub on_close: Option<EventHandler<MouseEvent>>,
 }
 
-/// Alert component with Arknights + FUI styling
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Alert, AlertVariant};
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Alert {
-///             variant: AlertVariant::Info,
-///             title: "Information".to_string(),
-///             description: "This is an informational message.".to_string(),
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Alert(props: AlertProps) -> Element {
     let variant_class = match props.variant {
@@ -67,6 +53,13 @@ pub fn Alert(props: AlertProps) -> Element {
         AlertVariant::Success => AlertClass::AlertSuccess,
         AlertVariant::Warning => AlertClass::AlertWarning,
         AlertVariant::Error => AlertClass::AlertError,
+    };
+
+    let glow_color = match props.variant {
+        AlertVariant::Info => GlowColor::Info,
+        AlertVariant::Success => GlowColor::Success,
+        AlertVariant::Warning => GlowColor::Warning,
+        AlertVariant::Error => GlowColor::Danger,
     };
 
     let alert_classes = ClassesBuilder::new()
@@ -128,41 +121,42 @@ pub fn Alert(props: AlertProps) -> Element {
     let icon = props.icon.as_ref().or(default_icon.as_ref());
 
     rsx! {
-        div {
-            class: "{alert_classes}",
+        Glow {
+            class: "hi-alert-glow-wrapper",
+            blur: GlowBlur::Light,
+            color: glow_color,
+            intensity: GlowIntensity::Seventy,
+            div {
+                class: "{alert_classes}",
 
-            if let Some(icon_element) = icon {
-                div { class: "{AlertClass::AlertIconWrapper.as_class()}",
-                    { icon_element }
+                if let Some(icon_element) = icon {
+                    div { class: "{AlertClass::AlertIconWrapper.as_class()}",
+                        { icon_element }
+                    }
                 }
-            }
 
-            div { class: "{AlertClass::AlertContent.as_class()}",
+                div { class: "{AlertClass::AlertContent.as_class()}",
 
-                if let Some(title) = props.title {
-                    div { class: "{AlertClass::AlertTitle.as_class()}", "{title}" }
+                    if let Some(title) = props.title {
+                        div { class: "{AlertClass::AlertTitle.as_class()}", "{title}" }
+                    }
+
+                    if let Some(description) = props.description {
+                        div { class: "{AlertClass::AlertDescription.as_class()}", "{description}" }
+                    }
                 }
 
-                if let Some(description) = props.description {
-                    div { class: "{AlertClass::AlertDescription.as_class()}", "{description}" }
-                }
-            }
-
-            if props.closable {
-                button {
-                    class: "{AlertClass::AlertClose.as_class()}",
-                    onclick: move |e| {
-                        if let Some(handler) = props.on_close.as_ref() {
-                            handler.call(e);
-                        }
-                    },
-                    svg {
-                        view_box: "0 0 24 24",
-                        fill: "none",
-                        stroke: "currentColor",
-                        stroke_width: "2",
-                        line { x1: "18", y1: "6", x2: "6", y2: "18" }
-                        line { x1: "6", y1: "6", x2: "18", y2: "18" }
+                if props.closable {
+                    IconButton {
+                        icon: MdiIcon::Close,
+                        size: IconButtonSize::Small,
+                        variant: IconButtonVariant::Ghost,
+                        class: "hi-alert-close".to_string(),
+                        onclick: move |e| {
+                            if let Some(handler) = props.on_close.as_ref() {
+                                handler.call(e);
+                            }
+                        },
                     }
                 }
             }

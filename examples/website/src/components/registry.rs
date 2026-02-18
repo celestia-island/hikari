@@ -27,12 +27,15 @@ use _components::{
         drag_layer::{DragItem, DragLayer},
         empty::Empty,
         qrcode::QRCode,
+        skeleton::{Skeleton, SkeletonCard, SkeletonTable, SkeletonVariant},
         timeline::{Timeline, TimelineItem, TimelinePosition},
         user_guide::{GuidePlacement, GuideStep, UserGuide},
         zoom_controls::ZoomControls,
     },
     entry::{
         cascader::{Cascader, CascaderOption, CascaderSize},
+        number_input::{NumberInput, NumberInputSize},
+        search::Search,
         transfer::{Transfer, TransferItem},
     },
     feedback::{
@@ -42,6 +45,7 @@ use _components::{
         toast::{Toast, ToastVariant},
         tooltip::{Tooltip, TooltipPlacement},
     },
+    layout::{Direction, FlexBox, FlexGap},
     navigation::{
         breadcrumb::{Breadcrumb, BreadcrumbItem},
         menu::{Menu, MenuItem, MenuMode},
@@ -386,16 +390,6 @@ pub fn render_component(component_type: ComponentType) -> Element {
                     }
                 },
 
-                // ========== Empty ==========
-                ("layer1", "empty", _) => rsx! {
-                    div { style: "width: 100%; max-width: 300px;",
-                        Empty {
-                            title: Some("No Data".to_string()),
-                            description: "There is no data to display".to_string(),
-                        }
-                    }
-                },
-
                 // ========== Comment ==========
                 ("layer1", "comment", _) => rsx! {
                     div { class: flex_col_gap(),
@@ -409,30 +403,177 @@ pub fn render_component(component_type: ComponentType) -> Element {
                     }
                 },
 
-                // ========== Description List ==========
-                ("layer1", "description_list", _) => rsx! {
-                    div { class: flex_col_gap(),
-                        div { class: flex_row_wrap(),
-                            span { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "Key: " }
-                            span { "Value" }
-                        }
-                        div { class: flex_row_wrap(),
-                            span { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "Name: " }
-                            span { "John Doe" }
-                        }
-                    }
-                },
-
                 // ========== Number Input ==========
-                ("layer1", "number_input", _) => rsx! {
-                    div { class: flex_col_gap(),
-                        Input { placeholder: Some("0".to_string()), input_type: Some("number".to_string()) }
+                ("layer1", "number_input", Some("basic")) => {
+                    let mut value = use_signal(|| 0);
+                    rsx! {
+                        div { class: flex_col_gap(),
+                            NumberInput {
+                                value: value(),
+                                on_change: move |v| value.set(v),
+                                min: Some(0),
+                                max: Some(100),
+                            }
+                        }
                     }
-                },
+                }
+                ("layer1", "number_input", Some("sizes")) => {
+                    let mut v1 = use_signal(|| 10);
+                    let mut v2 = use_signal(|| 50);
+                    let mut v3 = use_signal(|| 100);
+                    rsx! {
+                        div { class: flex_col_gap(),
+                            div { style: "display: flex; align-items: center; gap: 0.5rem;",
+                                span { style: "width: 60px;", "Small:" }
+                                NumberInput {
+                                    value: v1(),
+                                    on_change: move |v| v1.set(v),
+                                    size: NumberInputSize::Small,
+                                }
+                            }
+                            div { style: "display: flex; align-items: center; gap: 0.5rem;",
+                                span { style: "width: 60px;", "Medium:" }
+                                NumberInput {
+                                    value: v2(),
+                                    on_change: move |v| v2.set(v),
+                                    size: NumberInputSize::Medium,
+                                }
+                            }
+                            div { style: "display: flex; align-items: center; gap: 0.5rem;",
+                                span { style: "width: 60px;", "Large:" }
+                                NumberInput {
+                                    value: v3(),
+                                    on_change: move |v| v3.set(v),
+                                    size: NumberInputSize::Large,
+                                }
+                            }
+                        }
+                    }
+                }
+                ("layer1", "number_input", _) => {
+                    let mut value = use_signal(|| 0);
+                    rsx! {
+                        div { class: flex_col_gap(),
+                            NumberInput {
+                                value: value(),
+                                on_change: move |v| value.set(v),
+                                min: Some(0),
+                                max: Some(100),
+                            }
+                        }
+                    }
+                }
 
                 // ========== Search ==========
-                ("layer1", "search", _) => rsx! {
-                    Input { placeholder: Some("Search...".to_string()) }
+                ("layer1", "search", Some("basic")) => {
+                    let mut value = use_signal(|| String::new());
+                    rsx! {
+                        Search {
+                            value: value(),
+                            placeholder: "Search...".to_string(),
+                            suggestions: vec![
+                                "Hikari Components".to_string(),
+                                "Rust Programming".to_string(),
+                                "Dioxus Framework".to_string(),
+                                "WebAssembly".to_string(),
+                            ],
+                            on_search: move |v| value.set(v),
+                            on_clear: Some(Callback::new(move |_| value.set(String::new()))),
+                        }
+                    }
+                }
+                ("layer1", "search", _) => {
+                    let mut value = use_signal(|| String::new());
+                    rsx! {
+                        Search {
+                            value: value(),
+                            placeholder: "Search...".to_string(),
+                            suggestions: vec![
+                                "Hikari Components".to_string(),
+                                "Rust Programming".to_string(),
+                                "Dioxus Framework".to_string(),
+                            ],
+                            on_search: move |v| value.set(v),
+                            on_clear: Some(Callback::new(move |_| value.set(String::new()))),
+                        }
+                    }
+                }
+
+                // ========== Skeleton ==========
+                ("layer1", "empty", Some("skeleton")) => rsx! {
+                    div { class: flex_col_gap(),
+                        Skeleton { variant: SkeletonVariant::Text, rows: Some(3) }
+                    }
+                },
+                ("layer1", "empty", Some("card")) => rsx! {
+                    div { style: "width: 100%; max-width: 400px;",
+                        SkeletonCard { show_avatar: true, rows: 3 }
+                    }
+                },
+                ("layer1", "empty", Some("table")) => rsx! {
+                    div { style: "width: 100%;",
+                        SkeletonTable { columns: 4, rows: 3 }
+                    }
+                },
+                ("layer1", "empty", _) => rsx! {
+                    div { class: flex_col_gap(),
+                        Skeleton { variant: SkeletonVariant::Text, rows: Some(3) }
+                        div { style: "height: 16px;" }
+                        SkeletonCard { show_avatar: true, rows: 2 }
+                    }
+                },
+
+                // ========== FlexBox / Layout ==========
+                ("layer1", "flexbox", Some("row")) => rsx! {
+                    FlexBox {
+                        direction: Direction::Row,
+                        gap: FlexGap::Gap4,
+                        class: "hi-flexbox-demo".to_string(),
+                        div { class: "hi-demo-box", "Box 1" }
+                        div { class: "hi-demo-box", "Box 2" }
+                        div { class: "hi-demo-box", "Box 3" }
+                    }
+                },
+                ("layer1", "flexbox", Some("col")) => rsx! {
+                    FlexBox {
+                        direction: Direction::Column,
+                        gap: FlexGap::Gap4,
+                        class: "hi-flexbox-demo".to_string(),
+                        div { class: "hi-demo-box", "Item 1" }
+                        div { class: "hi-demo-box", "Item 2" }
+                        div { class: "hi-demo-box", "Item 3" }
+                    }
+                },
+                ("layer1", "flexbox", Some("align")) => rsx! {
+                    div { style: "display: flex; flex-direction: column; gap: 1rem;",
+                        div { "Align: Start" }
+                        FlexBox {
+                            direction: Direction::Row,
+                            align: _components::layout::Align::Start,
+                            gap: FlexGap::Gap2,
+                            div { class: "hi-demo-box-sm hi-demo-box-tall", "1" }
+                            div { class: "hi-demo-box-sm", "2" }
+                            div { class: "hi-demo-box-sm hi-demo-box-tall", "3" }
+                        }
+                        div { "Align: Center" }
+                        FlexBox {
+                            direction: Direction::Row,
+                            align: _components::layout::Align::Center,
+                            gap: FlexGap::Gap2,
+                            div { class: "hi-demo-box-sm hi-demo-box-tall", "1" }
+                            div { class: "hi-demo-box-sm", "2" }
+                            div { class: "hi-demo-box-sm hi-demo-box-tall", "3" }
+                        }
+                    }
+                },
+                ("layer1", "flexbox", _) => rsx! {
+                    FlexBox {
+                        direction: Direction::Row,
+                        gap: FlexGap::Gap4,
+                        div { class: "hi-demo-box", "Box 1" }
+                        div { class: "hi-demo-box", "Box 2" }
+                        div { class: "hi-demo-box", "Box 3" }
+                    }
                 },
 
                 // ========== Layer 2 ==========

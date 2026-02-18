@@ -16,8 +16,11 @@ use _components::data::pagination::Pagination;
 use _components::data::table::{Align, ColumnAlign, ColumnDef, Table, TableSize};
 use _components::data::tree::{Tree, TreeNodeData};
 use _components::display::drag_layer::{DragItem, DragLayer};
+use _components::display::empty::Empty;
+use _components::display::qrcode::QRCode;
 use _components::display::timeline::{Timeline, TimelineItem, TimelinePosition};
 use _components::display::user_guide::{GuidePlacement, GuideStep, UserGuide};
+use _components::display::zoom_controls::ZoomControls;
 use _components::entry::cascader::{Cascader, CascaderOption, CascaderSize};
 use _components::entry::transfer::{Transfer, TransferItem};
 use _components::feedback::alert::{Alert, AlertVariant};
@@ -372,8 +375,11 @@ pub fn render_component(component_type: ComponentType) -> Element {
 
                 // ========== Empty ==========
                 ("layer1", "empty", _) => rsx! {
-                    div { class: placeholder_box(),
-                        p { "No data available" }
+                    div { style: "width: 100%; max-width: 300px;",
+                        Empty {
+                            title: Some("No Data".to_string()),
+                            description: Some("There is no data to display".to_string()),
+                        }
                     }
                 },
 
@@ -701,7 +707,13 @@ pub fn render_component(component_type: ComponentType) -> Element {
                     }
                 },
                 ("layer2", "qrcode", _) => rsx! {
-                    div { class: placeholder_box(), p { "QRCode: QR code generation" } }
+                    div { style: "width: 100%; display: flex; justify-content: center;",
+                        QRCode {
+                            value: "https://github.com/celestia-island/hikari".to_string(),
+                            size: 180,
+                            title: Some("Scan to visit Hikari".to_string()),
+                        }
+                    }
                 },
                 ("layer2", "table", _) => rsx! {
                     div { style: "width: 100%;",
@@ -937,30 +949,87 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 },
 
                 ("layer3", "user_guide", _) => rsx! {
-                    div { class: placeholder_box(), p { "UserGuide: Step-by-step user onboarding and feature tours" } }
+                    div { style: "width: 100%; max-width: 400px; position: relative; min-height: 200px;",
+                        UserGuide {
+                            steps: vec![
+                                GuideStep {
+                                    target: String::new(),
+                                    title: "Welcome".to_string(),
+                                    description: "This is a step-by-step guide".to_string(),
+                                    placement: GuidePlacement::Bottom,
+                                },
+                            ],
+                            current: 0,
+                            visible: true,
+                        }
+                    }
                 },
                 ("layer3", "zoom_controls", _) => rsx! {
-                    div { class: placeholder_box(), p { "ZoomControls: Zoom in/out controls with keyboard shortcuts" } }
+                    div { style: "width: 100%; display: flex; justify-content: center;",
+                        ZoomControls {
+                            zoom: 100,
+                            min_zoom: 25,
+                            max_zoom: 200,
+                            show_percentage: true,
+                        }
+                    }
                 },
 
                 // ========== System ==========
                 ("system", "css", Some("display")) => rsx! {
-                    div { class: placeholder_box(), p { "Display utilities: block, flex, grid, hidden" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(FontWeight::Semibold).build(), "Display Utilities" }
+                        div { class: flex_row_wrap(),
+                            div { class: "hi-flex hi-items-center hi-gap-2 hi-p-2", "flex items-center" }
+                            div { class: "hi-block hi-p-2", "block" }
+                            div { class: "hi-inline hi-p-2", "inline" }
+                        }
+                    }
                 },
                 ("system", "css", Some("flex")) => rsx! {
-                    div { class: placeholder_box(), p { "Flex utilities: flex-row, flex-col, items-center, justify-between" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(FontWeight::Semibold).build(), "Flex Utilities" }
+                        div { class: "hi-flex hi-flex-row hi-gap-4",
+                            div { class: "hi-p-2 hi-bg-gray-100", "Row" }
+                            div { class: "hi-p-2 hi-bg-gray-100", "Layout" }
+                        }
+                    }
                 },
                 ("system", "css", Some("spacing")) => rsx! {
-                    div { class: placeholder_box(), p { "Spacing utilities: p-4, m-2, gap-4" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(FontWeight::Semibold).build(), "Spacing Utilities" }
+                        div { class: "hi-flex hi-gap-2",
+                            div { class: "hi-p-2 hi-bg-gray-100", "p-2" }
+                            div { class: "hi-p-4 hi-bg-gray-100", "p-4" }
+                            div { class: "hi-p-6 hi-bg-gray-100", "p-6" }
+                        }
+                    }
                 },
                 ("system", "css", Some("typography")) => rsx! {
-                    div { class: placeholder_box(), p { "Typography utilities: text-sm, font-bold, text-center" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(FontWeight::Semibold).build(), "Typography Utilities" }
+                        p { class: "hi-text-sm", "Small text (text-sm)" }
+                        p { class: "hi-text-base", "Base text (text-base)" }
+                        p { class: "hi-text-lg", "Large text (text-lg)" }
+                    }
                 },
                 ("system", "css", Some("colors")) => rsx! {
-                    div { class: placeholder_box(), p { "Color utilities: bg-primary, text-secondary" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(FontWeight::Semibold).build(), "Color Utilities" }
+                        div { class: flex_row_wrap(),
+                            div { class: "hi-p-2 hi-bg-primary hi-text-white", "primary" }
+                            div { class: "hi-p-2 hi-bg-secondary hi-text-white", "secondary" }
+                            div { class: "hi-p-2 hi-bg-danger hi-text-white", "danger" }
+                        }
+                    }
                 },
                 ("system", "css", _) => rsx! {
-                    div { class: placeholder_box(), p { "CSS Utilities: Tailwind-compatible utility classes" } }
+                    div { class: flex_col_gap(),
+                        p { "CSS Utility System" }
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "Tailwind-compatible utility classes for rapid UI development"
+                        }
+                    }
                 },
 
                 ("system", "i18n", Some("basic")) => rsx! {

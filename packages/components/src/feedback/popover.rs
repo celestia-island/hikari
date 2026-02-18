@@ -108,9 +108,13 @@ impl Default for PopoverProps {
 pub fn Popover(props: PopoverProps) -> Element {
     let mut open = use_signal(|| props.open);
     let mut popover_id = use_signal(|| String::new());
-    #[allow(unused_mut)]
-    let mut trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
+
     let mut close_requested = use_signal(|| false);
+
+    #[cfg(target_arch = "wasm32")]
+    let mut trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
+    #[cfg(not(target_arch = "wasm32"))]
+    let trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
 
     let portal = use_portal();
     let positioning = props.positioning.clone();

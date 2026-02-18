@@ -234,14 +234,8 @@ pub use navigation::*;
 #[cfg(feature = "feedback")]
 pub use feedback::*;
 
-// Re-export display components when display feature is enabled
-#[cfg(feature = "display")]
-#[allow(unused_imports)]
-pub use display::*;
-
 // Re-export production components when production feature is enabled
 #[cfg(feature = "production")]
-#[allow(unused_imports)]
 pub use production::*;
 
 pub use icons::{Icon, MdiIcon};

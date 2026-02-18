@@ -548,7 +548,6 @@ mod impl_;
 mod tests;
 
 use serde::Deserialize;
-#[allow(dead_code)]
 use serde::Serialize;
 
 pub use chinese::*;

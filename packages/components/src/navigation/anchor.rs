@@ -49,7 +49,6 @@ pub struct AnchorItem {
 /// - Active section highlighting
 /// - Click to scroll
 /// - Customizable position
-#[allow(unused_variables)]
 #[component]
 pub fn Anchor(
     /// Anchor items (href + title pairs)
@@ -88,6 +87,7 @@ pub fn Anchor(
                     active_anchor.set(href.clone());
 
                     // Remove '#' from href
+                    #[cfg(target_arch = "wasm32")]
                     let target_id = href.trim_start_matches('#');
 
                     #[cfg(target_arch = "wasm32")]

@@ -13,7 +13,6 @@ pub type StatefulCallback =
 pub type VoidCallback = dyn Fn(&AnimationContext) + 'static;
 
 /// Mouse move holder type
-#[allow(dead_code)]
 pub type MousemoveHolder = std::rc::Rc<
     std::cell::RefCell<
         Option<wasm_bindgen::closure::Closure<dyn Fn(web_sys::MouseEvent) + 'static>>,

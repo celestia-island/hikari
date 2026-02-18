@@ -95,8 +95,7 @@ impl ProcessorNode {
     }
 
     /// Perform operation
-    #[allow(dead_code)]
-    fn compute(&self, a: NodeValue, b: NodeValue) -> Result<NodeValue, String> {
+    pub fn compute(&self, a: NodeValue, b: NodeValue) -> Result<NodeValue, String> {
         let a_num = a
             .as_f64()
             .ok_or_else(|| "First input is not a number".to_string())?;

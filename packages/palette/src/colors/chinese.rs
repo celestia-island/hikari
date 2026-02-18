@@ -1497,8 +1497,7 @@ pub const 铜绿: Color = Color {
 
 /// Pure White - 纯白 (#FFFFFF)
 /// The purest white, used as the base for all light theme backgrounds
-#[allow(non_upper_case_globals)]
-pub const PureWhite: Color = Color {
+pub const PURE_WHITE: Color = Color {
     #[cfg(feature = "chinese-names")]
     name: "纯白",
     #[cfg(not(feature = "chinese-names"))]
@@ -1509,8 +1508,7 @@ pub const PureWhite: Color = Color {
 
 /// Pure Black - 纯黑 (#000000)
 /// The purest black, used as the base for all dark theme backgrounds
-#[allow(non_upper_case_globals)]
-pub const PureBlack: Color = Color {
+pub const PURE_BLACK: Color = Color {
     #[cfg(feature = "chinese-names")]
     name: "纯黑",
     #[cfg(not(feature = "chinese-names"))]
@@ -1520,8 +1518,8 @@ pub const PureBlack: Color = Color {
 };
 
 // Aliases for common usage
-pub const WHITE: Color = PureWhite;
-pub const BLACK: Color = PureBlack;
+pub const WHITE: Color = PURE_WHITE;
+pub const BLACK: Color = PURE_BLACK;
 
 // ============================================================
 // Additional Chinese Colors from zhongguose.com

@@ -353,34 +353,6 @@ pub fn use_theme() -> ThemeContext {
     use_context()
 }
 
-#[allow(dead_code)]
-fn default_theme_context() -> ThemeContext {
-    #[cfg(target_arch = "wasm32")]
-    {
-        web_sys::console::warn_1(
-            &"use_theme() called outside of ThemeProvider. Using system default theme.".into(),
-        );
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        eprintln!("use_theme() called outside of ThemeProvider. Using default Hikari theme.");
-    }
-
-    let default_theme =
-        if cfg!(target_arch = "wasm32") && crate::theme::registry::prefers_dark_mode() {
-            "tairitsu".to_string()
-        } else {
-            "hikari".to_string()
-        };
-
-    ThemeContext {
-        palette: Signal::new(default_theme.clone()),
-        theme_name: Signal::new(default_theme),
-        set_theme: Callback::new(|_| {}),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

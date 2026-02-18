@@ -58,7 +58,6 @@ pub struct FileUploadProps {
     pub on_error: Option<EventHandler<String>>,
 }
 
-#[allow(unused_variables)]
 #[component]
 pub fn FileUpload(props: FileUploadProps) -> Element {
     let mut upload_status = use_signal(|| FileUploadStatus::Idle);

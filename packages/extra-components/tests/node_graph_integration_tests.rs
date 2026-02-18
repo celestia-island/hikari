@@ -237,7 +237,7 @@ mod tests {
         assert_eq!(graph.version, "1.0");
         assert!(graph.nodes.is_empty());
         assert!(graph.connections.is_empty());
-        assert!(graph.metadata.is_empty());
+        assert!(graph.metadata.extra.is_empty());
     }
 
     #[test]

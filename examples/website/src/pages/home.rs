@@ -29,8 +29,8 @@ pub fn Home() -> Element {
                 keys.page.home.hero.title.clone(),
                 keys.page.home.hero.subtitle.clone(),
                 keys.page.home.hero.description.clone(),
-                "There is no shame in wanting to feel happy.".to_string(),
-                "Explore Components ->".to_string(),
+                keys.page.home.hero.tagline.clone(),
+                keys.page.home.hero.explore.clone(),
                 keys.page.documentation.quick_start.clone(),
             )
         }
@@ -40,7 +40,7 @@ pub fn Home() -> Element {
             "Based on Dioxus + Grass + Axum, designed with Arknights aesthetics and FUI styling."
                 .to_string(),
             "There is no shame in wanting to feel happy.".to_string(),
-            "Explore Components ->".to_string(),
+            "Explore Components →".to_string(),
             "View Documentation".to_string(),
         ),
     };

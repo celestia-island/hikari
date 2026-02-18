@@ -68,15 +68,33 @@ pub struct I18nProviderWrapperProps {
     pub children: Element,
 }
 
+/// 从 URL 读取当前语言
+#[cfg(target_arch = "wasm32")]
+fn get_language_from_url() -> Language {
+    web_sys::window()
+        .and_then(|w| w.location().pathname().ok())
+        .and_then(|path| path.split('/').nth(1).map(|s| s.to_string()))
+        .and_then(|s| Language::from_url_prefix(&s))
+        .unwrap_or_else(Language::default_lang)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn get_language_from_url() -> Language {
+    Language::default_lang()
+}
+
 #[component]
 pub fn I18nProviderWrapper(props: I18nProviderWrapperProps) -> Element {
-    let lang_ctx = use_language();
-    let lang = *lang_ctx.language.read();
+    let mut lang_ctx = use_language();
 
-    // 提供响应式 context
-    let reactive_ctx = use_context_provider(|| ReactiveI18nContext {
-        language: lang_ctx.language,
-        keys: RefCell::new(load_keys(lang)),
+    // 提供响应式 context，初始值直接从 URL 读取
+    let reactive_ctx = use_context_provider(|| {
+        let url_lang = get_language_from_url();
+        lang_ctx.language.set(url_lang);
+        ReactiveI18nContext {
+            language: lang_ctx.language,
+            keys: RefCell::new(load_keys(url_lang)),
+        }
     });
 
     // 监听语言变化

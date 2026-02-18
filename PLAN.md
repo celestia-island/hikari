@@ -1,6 +1,6 @@
-# UI 组件完善计划
+# UI 组件完善计划 - 已完成 ✅
 
-## 已完成任务 ✅
+## 已完成任务
 
 ### Layer1 组件改进
 
@@ -41,11 +41,24 @@
 8. **删除 DescriptionList** ✅
    - 从 display 模块删除 description_list.rs
 
+### 组件增强
+
+9. **Avatar** ✅
+   - 添加 AvatarFallbackMode 枚举 (Initial/Icon/None)
+   - 使用本地 SVG 图标替代 CDN
+
+10. **Image** ✅
+    - 添加 ImagePlaceholder 枚举 (Skeleton/Icon/None)
+    - 支持 onload/onerror 处理器
+
+11. **Menu** ✅
+    - MenuItem 使用 Glow wrapper（已实现）
+    - SubMenu 标题使用 Glow wrapper（已实现）
+
 ---
 
-## 原有组件状态
+## 已有自定义实现（无需修改）
 
-### 已有自定义实现（无需修改）
 - Switch - 已有自定义实现
 - Progress - 已有自定义实现
 - Slider - 已有自定义实现
@@ -53,26 +66,10 @@
 - Tag - 已有自定义实现
 - Tabs - 已有自定义实现
 
-### 已完成改进
-- **Avatar** ✅ - 添加 AvatarFallbackMode 枚举 (Initial/Icon/None)，使用本地 SVG 图标替代 CDN
-- **Image** ✅ - 添加 ImagePlaceholder 枚举 (Skeleton/Icon/None)，支持 onload/onerror 处理器
-- Menu - 每个 MenuItem 使用 Glow wrapper（已部分实现）
-
 ---
 
-## 实现笔记
+## 验证状态
 
-### Glow Wrapper 使用模式
-```rust
-Glow {
-    blur: GlowBlur::Light,
-    color: GlowColor::Ghost, // 或根据状态使用 Primary/Success/Warning/Danger
-    intensity: GlowIntensity::Seventy,
-    children: content
-}
-```
-
-### 语言切换按钮参考
-- 文件: `examples/website/src/components/aside_footer.rs`
-- 使用 `Popover + Menu { in_popover: true }`
-- MenuItem 自动获得 glow wrapper 效果
+- ✅ 所有测试通过 (148+ tests)
+- ✅ 无编译错误
+- ✅ 无 TODO/Mock 实现

@@ -53,8 +53,8 @@ chinese_traditional = "繁體中文"
 
 [sidebar]
 [sidebar.overview]
-title = "Overview"
-home = "Home"
+title = "Welcome"
+home = "Welcome"
 
 [sidebar.components]
 title = "Components"

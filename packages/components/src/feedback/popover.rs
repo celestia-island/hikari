@@ -7,7 +7,7 @@ use palette::classes::{ClassesBuilder, Display, Position};
 use wasm_bindgen::JsCast;
 
 use crate::{
-    portal::{PortalEntry, generate_portal_id, use_portal},
+    portal::{generate_portal_id, use_portal, PortalEntry},
     styled::StyledComponent,
 };
 
@@ -108,6 +108,7 @@ impl Default for PopoverProps {
 pub fn Popover(props: PopoverProps) -> Element {
     let mut open = use_signal(|| props.open);
     let mut popover_id = use_signal(|| String::new());
+    #[allow(unused_mut)]
     let mut trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
     let mut close_requested = use_signal(|| false);
 

@@ -2,7 +2,7 @@
 // Breadcrumb component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, components::BreadcrumbClass};
+use palette::classes::{components::BreadcrumbClass, ClassesBuilder};
 
 use crate::styled::StyledComponent;
 

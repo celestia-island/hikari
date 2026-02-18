@@ -1497,6 +1497,7 @@ pub const 铜绿: Color = Color {
 
 /// Pure White - 纯白 (#FFFFFF)
 /// The purest white, used as the base for all light theme backgrounds
+#[allow(non_upper_case_globals)]
 pub const PureWhite: Color = Color {
     #[cfg(feature = "chinese-names")]
     name: "纯白",
@@ -1508,6 +1509,7 @@ pub const PureWhite: Color = Color {
 
 /// Pure Black - 纯黑 (#000000)
 /// The purest black, used as the base for all dark theme backgrounds
+#[allow(non_upper_case_globals)]
 pub const PureBlack: Color = Color {
     #[cfg(feature = "chinese-names")]
     name: "纯黑",

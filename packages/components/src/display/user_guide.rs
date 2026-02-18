@@ -113,7 +113,7 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     let handle_next = {
         let on_step_change = props.on_step_change.clone();
         let on_finish = props.on_finish.clone();
-        let total = total_steps;
+        let _total = total_steps;
         move |_| {
             if is_last_step {
                 if let Some(handler) = on_finish.as_ref() {

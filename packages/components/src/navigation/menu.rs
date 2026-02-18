@@ -6,10 +6,10 @@ use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, MenuClass};
 
 use crate::{
-    GlowBlur, GlowColor, GlowIntensity,
     basic::{Arrow, ArrowDirection},
     feedback::Glow,
     styled::StyledComponent,
+    GlowBlur, GlowColor, GlowIntensity,
 };
 
 /// Context for Menu to communicate with MenuItem

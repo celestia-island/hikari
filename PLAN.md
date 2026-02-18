@@ -1,94 +1,96 @@
 # Hikari 组件库实现计划
 
-> 完成时间: 2026-02-18
-> 状态: **全部完成** ✅
+> 更新时间: 2026-02-18 (第三轮扫描)
+> 状态: **问题整理中** 🔍
 
-## 执行摘要
+## 第三轮扫描发现的问题
 
-通过两次精细扫描所有组件文件，发现并修复了以下问题：
+### 高优先级（违反 ClassesBuilder 规范）
 
-### 已修复的 Bug
-
-| 文件 | 问题 | 状态 |
+| 文件 | 问题 | 数量 |
 |------|------|------|
-| tooltip.rs | 无 hover 显示/隐藏状态管理 | ✅ 已修复 |
-| stepper.rs | 未实现 StyledComponent | ✅ 已修复 |
-| calendar.rs | 硬编码日期 | ✅ 已修复 |
-| carousel.rs | 未实现 StyledComponent | ✅ 已修复 |
+| **stepper.rs** | 完全未使用 ClassesBuilder | 6 处硬编码 |
+| **sidebar.rs** | 完全未使用 ClassesBuilder | 17 处硬编码 |
+| **carousel.rs** | 未使用 ClassesBuilder | 7 处硬编码 |
+| **comment.rs** | 未使用 ClassesBuilder | 9 处硬编码 |
 
-### 文档更新
+### 高优先级（硬编码颜色值）
 
-| 文件 | 更新内容 |
-|------|---------|
-| rich_text_editor.rs | 添加说明：基础实现，需要集成专业库 |
-| video_player.rs | 更新说明：使用原生控件 |
-| audio_player.rs | 已有正确说明 |
-| code_highlight.rs | 添加说明：依赖外部高亮库 |
+| 文件 | 硬编码颜色 |
+|------|-----------|
+| **drag.rs** | #4fd1c5, #a0aec0, rgba(79, 209, 197, 0.8) |
+| **code_highlight.rs** | #a5d6ff, #f1fa8c, #d4a5ff, #6ee7b7, #fca5a5, #ff6b6b |
+| **video_player.rs** | #000 |
+| **tag.rs** | #0ea5e9 (应为 success 绿色) |
 
----
+### 中优先级（硬编码类名）
 
-## 架构图
+| 文件 | 数量 |
+|------|------|
+| divider.rs | 8 处 |
+| file_upload.rs | 6 处 |
+| form_field.rs | 8 处 |
+| select.rs | 5 处 |
+| checkbox.rs | 5 处 |
+| slider.rs | 4 处 |
+| switch.rs | 5 处 |
+| radio_group.rs | 3 处 |
+| badge.rs | 2 处 |
+| button.rs | 3 处 |
+| card.rs | 4 处 |
+| date_picker.rs | 2 处 |
+| avatar.rs | 3 处 |
+| breadcrumb.rs | 6 处 |
+| menu.rs | 10 处 |
+| tabs.rs | 8 处 |
 
-```mermaid
-sequenceDiagram
-    participant User as 用户
-    participant Website as Website Demo
-    participant Registry as registry.rs
-    participant Component as 组件实现
-    participant Palette as palette (CSS Classes)
-    participant StyleRegistry as StyleRegistry
+### 中优先级（硬编码 style）
 
-    User->>Website: 访问组件演示页面
-    Website->>Registry: 请求组件路由
-    Registry->>Component: 创建组件实例
-    Component->>Palette: 获取 CSS 类名
-    Palette-->>Component: 返回类型安全类名
-    Component->>StyleRegistry: 注册样式
-    StyleRegistry-->>Website: 返回 CSS bundle
-    Website-->>User: 渲染组件演示
-```
-
----
-
-## 已知限制（设计决策）
-
-以下限制是合理的设计决策：
-
-| 组件 | 限制说明 | 原因 |
-|------|---------|------|
-| video_player.rs | 使用原生控件 | 浏览器兼容性好，功能稳定 |
-| audio_player.rs | 使用原生控件 | 同上 |
-| code_highlight.rs | 无内置高亮 | CSS 类已添加，可集成 Prism.js |
-| rich_text_editor.rs | 基础实现 | 完整功能需要专业库支持 |
-| date_picker.rs | 原生 date input | 完整日历组件开发成本高 |
-| image.rs, avatar.rs | 内联样式 | 动态计算的样式更适合内联 |
-
----
-
-## 组件完成状态
-
-| 类别 | 数量 | 状态 |
-|------|------|------|
-| Basic | 14 | ✅ |
-| Feedback | 10 | ✅ |
-| Navigation | 7 | ✅ |
-| Data | 7 | ✅ |
-| Display | 11 | ✅ |
-| Entry | 5 | ✅ |
-| Production | 5 | ✅ |
-| **总计** | **59** | ✅ |
+| 文件 | 问题 |
+|------|------|
+| skeleton.rs | 2 处 |
+| progress.rs | 3 处 |
+| glow.rs | 1 处 |
+| drag.rs | 6 处 |
+| virtual_scroll.rs | 6 处 |
+| pagination_button.rs | 3 处重复 |
+| file_upload.rs | 2 处 |
+| card.rs | 1 处 |
+| slider.rs | 1 处 |
+| menu.rs | 2 处 |
+| tabs.rs | 1 处 |
+| auto_complete.rs | 1 处 |
 
 ---
 
-## 提交记录
+## 修复计划
 
-1. `feat: implement AudioPlayer and UserGuide components`
-2. `feat: implement MarkdownEditor, DragLayer components`
-3. `feat: complete all planned components - ZoomControls, QRCode, Empty`
-4. `fix: resolve critical bugs found in component scan`
-5. `fix: add hover state to Tooltip, StyledComponent to Stepper`
-6. `docs: update component documentation with known limitations`
+### 阶段 1：添加缺失的 Class 枚举
+- [ ] 添加 StepperClass 到 palette
+- [ ] 添加 SidebarClass 到 palette
+- [ ] 添加 CarouselClass 到 palette
+- [ ] 添加 CommentClass 到 palette
+- [ ] 添加 CollapseClass 到 palette
+- [ ] 添加 TreeClass 子类
+
+### 阶段 2：重构组件使用 ClassesBuilder
+- [ ] stepper.rs
+- [ ] sidebar.rs
+- [ ] carousel.rs
+- [ ] comment.rs
+
+### 阶段 3：替换硬编码颜色为 CSS 变量
+- [ ] drag.rs 颜色变量化
+- [ ] code_highlight.rs 语法高亮变量化
+- [ ] tag.rs 颜色修正
 
 ---
 
-**确认：所有组件已实现，所有严重 bug 已修复，文档已更新。**
+## 统计汇总
+
+| 问题类型 | 文件数 | 问题数 |
+|---------|--------|--------|
+| 完全未用 ClassesBuilder | 4 | 39 |
+| 部分硬编码类名 | 15+ | 70+ |
+| 硬编码 style | 12+ | 30+ |
+| 硬编码颜色 | 6+ | 25+ |

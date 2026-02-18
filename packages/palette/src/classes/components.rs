@@ -458,6 +458,48 @@ impl UtilityClass for SidebarClass {
     }
 }
 
+/// Stepper component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum StepperClass {
+    /// `hi-stepper` - Main container
+    Stepper,
+    /// `hi-stepper-horizontal` - Horizontal layout
+    Horizontal,
+    /// `hi-stepper-vertical` - Vertical layout
+    Vertical,
+    /// `hi-step` - Step item
+    Step,
+    /// `hi-step-pending` - Pending state
+    StepPending,
+    /// `hi-step-active` - Active state
+    StepActive,
+    /// `hi-step-finished` - Finished state
+    StepFinished,
+    /// `hi-step-number` - Step number
+    StepNumber,
+    /// `hi-step-connector` - Horizontal connector
+    StepConnector,
+    /// `hi-step-connector-vertical` - Vertical connector
+    StepConnectorVertical,
+}
+
+impl UtilityClass for StepperClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            StepperClass::Stepper => "stepper",
+            StepperClass::Horizontal => "stepper-horizontal",
+            StepperClass::Vertical => "stepper-vertical",
+            StepperClass::Step => "step",
+            StepperClass::StepPending => "step-pending",
+            StepperClass::StepActive => "step-active",
+            StepperClass::StepFinished => "step-finished",
+            StepperClass::StepNumber => "step-number",
+            StepperClass::StepConnector => "step-connector",
+            StepperClass::StepConnectorVertical => "step-connector-vertical",
+        }
+    }
+}
+
 /// Breadcrumb component classes
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BreadcrumbClass {

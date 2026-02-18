@@ -98,13 +98,6 @@ macro_rules! redirect_response {
     };
 }
 
-/// SVG response helper
-macro_rules! svg_response {
-    ($status:expr, $body:expr) => {
-        response!($status, "image/svg+xml; charset=utf-8", $body)
-    };
-}
-
 /// SVG response with no-cache
 macro_rules! svg_response_no_cache {
     ($status:expr, $body:expr) => {

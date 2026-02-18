@@ -27,6 +27,9 @@ pub fn App() -> Element {
 
 #[derive(Clone, Debug, PartialEq, Routable)]
 pub enum Route {
+    #[route("/")]
+    RootRedirect {},
+
     #[route("/:lang")]
     LangHome { lang: String },
 
@@ -127,6 +130,9 @@ pub enum Route {
 
     #[route("/:lang/..")]
     NotFound { lang: String },
+
+    #[route("/..")]
+    LegacyRedirect { path: Vec<String> },
 }
 
 // ============================================================
@@ -144,6 +150,33 @@ fn update_language_from_route(lang: &str) {
             ctx.language.set(parsed);
         }
     }
+}
+
+#[component]
+fn RootRedirect() -> Element {
+    let navigator = use_navigator();
+    let default_lang = Language::default_lang().url_prefix();
+    navigator.replace(Route::LangHome {
+        lang: default_lang.to_string(),
+    });
+    rsx! {}
+}
+
+#[component]
+fn LegacyRedirect(path: Vec<String>) -> Element {
+    let navigator = use_navigator();
+    let default_lang = Language::default_lang().url_prefix();
+    let new_path = format!("/{}", default_lang);
+    if path.is_empty() {
+        navigator.replace(Route::LangHome {
+            lang: default_lang.to_string(),
+        });
+    } else {
+        navigator.replace(Route::NotFound {
+            lang: default_lang.to_string(),
+        });
+    }
+    rsx! {}
 }
 
 #[component]

@@ -4,18 +4,12 @@
 use animation::style::{CssProperty, StyleStringBuilder};
 use dioxus::prelude::*;
 
-/// Avatar size preset
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum AvatarSize {
-    /// Extra small - 24px
     Xs,
-    /// Small - 32px
     Sm,
-    /// Medium - 40px (default)
     Md,
-    /// Large - 48px
     Lg,
-    /// Extra large - 64px
     Xl,
 }
 
@@ -29,16 +23,32 @@ impl AvatarSize {
             AvatarSize::Xl => 64,
         }
     }
+
+    pub fn icon_size(&self) -> u32 {
+        match self {
+            AvatarSize::Xs => 14,
+            AvatarSize::Sm => 18,
+            AvatarSize::Md => 22,
+            AvatarSize::Lg => 26,
+            AvatarSize::Xl => 34,
+        }
+    }
+
+    pub fn font_size(&self) -> &'static str {
+        match self {
+            AvatarSize::Xs => "0.625rem",
+            AvatarSize::Sm => "0.75rem",
+            AvatarSize::Md => "0.875rem",
+            AvatarSize::Lg => "1rem",
+            AvatarSize::Xl => "1.25rem",
+        }
+    }
 }
 
-/// Avatar variant - border radius style
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum AvatarVariant {
-    /// Fully circular (50% border-radius)
     Circular,
-    /// Rounded corners (8px border-radius)
     Rounded,
-    /// Square corners (0 border-radius)
     Square,
 }
 
@@ -52,56 +62,34 @@ impl AvatarVariant {
     }
 }
 
-/// Avatar component for displaying user profile images
-///
-/// Similar to Material UI's Avatar component - displays user avatars
-/// with fixed sizes and fallback text support. Uses inline styles
-/// to override global img styles from base.scss.
-///
-/// # Example
-///
-/// ```rust
-/// use hikari_components::basic::{Avatar, AvatarSize, AvatarVariant};
-/// use dioxus::prelude::*;
-///
-/// rsx! {
-///     Avatar {
-///         src: "/avatars/user.jpg".to_string(),
-///         alt: "User Name".to_string(),
-///         size: AvatarSize::Md,
-///         variant: AvatarVariant::Circular,
-///     }
-/// }
-/// ```
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
+pub enum AvatarFallbackMode {
+    #[default]
+    Initial,
+    Icon,
+    None,
+}
+
 #[component]
 pub fn Avatar(
-    /// Image source URL
-    #[props(default)]
-    src: Option<String>,
+    #[props(default)] src: Option<String>,
 
-    /// Alt text for accessibility
-    #[props(default = "Avatar".to_string())]
-    alt: String,
+    #[props(default = "Avatar".to_string())] alt: String,
 
-    /// Avatar size preset
-    #[props(default = AvatarSize::Md)]
-    size: AvatarSize,
+    #[props(default = AvatarSize::Md)] size: AvatarSize,
 
-    /// Border radius variant
-    #[props(default = AvatarVariant::Circular)]
-    variant: AvatarVariant,
+    #[props(default = AvatarVariant::Circular)] variant: AvatarVariant,
 
-    /// Fallback text (shown when no image provided or fails to load)
-    #[props(default)]
-    fallback: Option<String>,
+    #[props(default)] fallback: Option<String>,
 
-    /// Custom CSS classes
-    #[props(default)]
-    class: String,
+    #[props(default)] fallback_mode: AvatarFallbackMode,
+
+    #[props(default)] class: String,
 ) -> Element {
     let size_px = size.pixels();
+    let icon_size = size.icon_size();
+    let font_size = size.font_size();
 
-    // Build inline styles for avatar container
     let container_style = StyleStringBuilder::new()
         .add_px(CssProperty::Width, size_px)
         .add_px(CssProperty::Height, size_px)
@@ -112,21 +100,18 @@ pub fn Avatar(
         .add(CssProperty::Overflow, "hidden")
         .build_clean();
 
-    // Build inline styles for img (to override base.scss)
     let img_style = StyleStringBuilder::new()
         .add_px(CssProperty::Width, size_px)
         .add_px(CssProperty::Height, size_px)
         .add(CssProperty::ObjectFit, "cover")
         .build_clean();
 
-    // Build class name
     let base_class = if class.is_empty() {
         "hi-avatar".to_string()
     } else {
         format!("hi-avatar {}", class)
     };
 
-    // Get fallback text (first letter of alt or provided fallback)
     let fallback_text = fallback.clone().unwrap_or_else(|| {
         alt.chars()
             .find(|c| c.is_alphabetic() || c.is_numeric())
@@ -138,6 +123,7 @@ pub fn Avatar(
         div {
             class: "{base_class}",
             style: "{container_style}",
+
             if let Some(img_src) = src {
                 img {
                     class: "hi-avatar-img",
@@ -146,9 +132,33 @@ pub fn Avatar(
                     style: "{img_style}",
                 }
             } else {
-                span {
-                    class: "hi-avatar-fallback",
-                    "{fallback_text}"
+                match fallback_mode {
+                    AvatarFallbackMode::Icon => rsx! {
+                        svg {
+                            class: "hi-avatar-icon",
+                            width: "{icon_size}",
+                            height: "{icon_size}",
+                            view_box: "0 0 24 24",
+                            fill: "currentColor",
+                            path {
+                                d: "M12 4a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4z"
+                            }
+                        }
+                    },
+                    AvatarFallbackMode::Initial => rsx! {
+                        span {
+                            class: "hi-avatar-fallback",
+                            style: "font-size: {font_size};",
+                            "{fallback_text}"
+                        }
+                    },
+                    AvatarFallbackMode::None => rsx! {
+                        span {
+                            class: "hi-avatar-fallback",
+                            style: "font-size: {font_size};",
+                            "{fallback_text}"
+                        }
+                    },
                 }
             }
         }

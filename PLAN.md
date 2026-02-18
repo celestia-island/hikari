@@ -53,9 +53,9 @@
 - Tag - 已有自定义实现
 - Tabs - 已有自定义实现
 
-### 仍需改进
-- Avatar - 建议使用本地图标替代 CDN
-- Image - 需要修复图片加载和 placeholder 样式
+### 已完成改进
+- **Avatar** ✅ - 添加 AvatarFallbackMode 枚举 (Initial/Icon/None)，使用本地 SVG 图标替代 CDN
+- **Image** ✅ - 添加 ImagePlaceholder 枚举 (Skeleton/Icon/None)，支持 onload/onerror 处理器
 - Menu - 每个 MenuItem 使用 Glow wrapper（已部分实现）
 
 ---

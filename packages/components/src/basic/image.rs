@@ -4,18 +4,12 @@
 use animation::style::{CssProperty, StyleStringBuilder};
 use dioxus::prelude::*;
 
-/// Image fit mode - how the image scales to fit its container
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum ImageFit {
-    /// Image is scaled to maintain its aspect ratio while fitting within the container
     Contain,
-    /// Image is scaled to maintain its aspect ratio while filling the container
     Cover,
-    /// Image is stretched to fill the container (may distort)
     Fill,
-    /// Image is not scaled
     None,
-    /// Image is scaled as if none or contain were specified
     ScaleDown,
 }
 
@@ -31,59 +25,39 @@ impl ImageFit {
     }
 }
 
-/// Image component with configurable sizing and fit modes
-///
-/// Similar to Material UI's Image/Img component - displays images
-/// with various scaling options and responsive behavior.
-///
-/// # Example
-///
-/// ```rust
-/// use hikari_components::basic::{Image, ImageFit};
-/// use dioxus::prelude::*;
-///
-/// rsx! {
-///     Image {
-///         src: "/images/photo.jpg".to_string(),
-///         alt: "Description".to_string(),
-///         fit: ImageFit::Cover,
-///     }
-/// }
-/// ```
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
+pub enum ImagePlaceholder {
+    #[default]
+    Skeleton,
+    Icon,
+    None,
+}
+
 #[component]
 pub fn Image(
-    /// Image source URL
     src: String,
 
-    /// Alt text for accessibility
-    #[props(default = "Image".to_string())]
-    alt: String,
+    #[props(default = "Image".to_string())] alt: String,
 
-    /// How the image should fit its container
-    #[props(default = ImageFit::Cover)]
-    fit: ImageFit,
+    #[props(default = ImageFit::Cover)] fit: ImageFit,
 
-    /// Width in pixels (optional)
-    #[props(default)]
-    width: Option<u32>,
+    #[props(default)] width: Option<u32>,
 
-    /// Height in pixels (optional)
-    #[props(default)]
-    height: Option<u32>,
+    #[props(default)] height: Option<u32>,
 
-    /// Max width in pixels (optional)
-    #[props(default)]
-    max_width: Option<u32>,
+    #[props(default)] max_width: Option<u32>,
 
-    /// Whether to make image responsive (100% width)
-    #[props(default = false)]
-    responsive: bool,
+    #[props(default = false)] responsive: bool,
 
-    /// Custom CSS classes
-    #[props(default)]
-    class: String,
+    #[props(default)] placeholder: ImagePlaceholder,
+
+    #[props(default = true)] show_loading: bool,
+
+    #[props(default)] class: String,
 ) -> Element {
-    // Build inline styles using StyleStringBuilder
+    let mut loaded = use_signal(|| false);
+    let mut has_error = use_signal(|| false);
+
     let mut builder = StyleStringBuilder::new().add(CssProperty::ObjectFit, fit.as_str());
 
     if let Some(w) = width {
@@ -103,58 +77,100 @@ pub fn Image(
 
     let style = builder.build_clean();
 
-    // Build class name
     let classes = if class.is_empty() {
         "hi-image".to_string()
     } else {
         format!("hi-image {}", class)
     };
 
+    let container_style = if responsive {
+        "width: 100%; position: relative; display: inline-block;".to_string()
+    } else if let (Some(w), Some(h)) = (width, height) {
+        format!(
+            "width: {}px; height: {}px; position: relative; display: inline-block;",
+            w, h
+        )
+    } else {
+        "position: relative; display: inline-block;".to_string()
+    };
+
+    let show_placeholder = !*loaded.read() || *has_error.read();
+    let placeholder_type = placeholder;
+
+    let handle_load = move |_| {
+        loaded.set(true);
+    };
+
+    let handle_error = move |_| {
+        has_error.set(true);
+    };
+
     rsx! {
-        img {
-            class: "{classes}",
-            src: "{src}",
-            alt: "{alt}",
-            style: "{style}",
+        div {
+            class: "hi-image-container",
+            style: "{container_style}",
+
+            if show_placeholder && show_loading {
+                {
+                    match placeholder_type {
+                        ImagePlaceholder::Skeleton => rsx! {
+                            div {
+                                class: "hi-image-placeholder hi-image-skeleton",
+                                style: "width: 100%; height: 100%; min-height: 100px;",
+                            }
+                        },
+                        ImagePlaceholder::Icon => rsx! {
+                            div {
+                                class: "hi-image-placeholder hi-image-icon-placeholder",
+                                style: "width: 100%; height: 100%; min-height: 100px; display: flex; align-items: center; justify-content: center; background: var(--hi-color-surface);",
+                                svg {
+                                    width: "48",
+                                    height: "48",
+                                    view_box: "0 0 24 24",
+                                    fill: "none",
+                                    stroke: "var(--hi-color-text-secondary)",
+                                    stroke_width: "1.5",
+                                    rect {
+                                        x: "3",
+                                        y: "3",
+                                        width: "18",
+                                        height: "18",
+                                        rx: "2",
+                                        ry: "2"
+                                    }
+                                    circle { cx: "8.5", cy: "8.5", r: "1.5" }
+                                    polyline { points: "21 15 16 10 5 21" }
+                                }
+                            }
+                        },
+                        ImagePlaceholder::None => rsx! {},
+                    }
+                }
+            }
+
+            img {
+                class: "{classes}",
+                src: "{src}",
+                alt: "{alt}",
+                style: "{style}",
+                onload: handle_load,
+                onerror: handle_error,
+            }
         }
     }
 }
 
-/// Logo preset - convenient component for app logos
-///
-/// # Example
-///
-/// ```rust
-/// use hikari_components::basic::Logo;
-/// use dioxus::prelude::*;
-///
-/// rsx! {
-///     Logo {
-///         src: "/images/logo.png".to_string(),
-///         alt: "App Logo".to_string(),
-///     }
-/// }
-/// ```
 #[component]
 pub fn Logo(
-    /// Image source URL
     src: String,
 
-    /// Alt text for accessibility
-    #[props(default = "Logo".to_string())]
-    alt: String,
+    #[props(default = "Logo".to_string())] alt: String,
 
-    /// Logo height in pixels (width is auto)
-    #[props(default = 40)]
-    height: u32,
+    #[props(default = 40)] height: u32,
 
-    /// Max width in pixels
-    #[props(default = 160)]
-    max_width: u32,
+    #[props(default = 160)] max_width: u32,
 
-    /// Custom CSS classes
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     let style = StyleStringBuilder::new()
         .add_px(CssProperty::Height, height)

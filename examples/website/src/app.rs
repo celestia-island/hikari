@@ -10,9 +10,8 @@ use _i18n::context::Language;
 
 #[component]
 pub fn App() -> Element {
-    let lang_ctx = use_context_provider(|| LanguageContext {
-        language: use_signal(|| Language::default_lang()),
-    });
+    let language = use_signal(|| Language::default_lang());
+    let lang_ctx = use_context_provider(|| LanguageContext { language });
 
     rsx! {
         I18nProviderWrapper {

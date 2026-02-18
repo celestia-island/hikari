@@ -196,13 +196,16 @@ macro_rules! response {
 - [x] Phase 2: 类型严格化
   - [x] 创建 `NodeValue` 枚举类型 (`extra-components/src/node_graph/value.rs`)
   - [x] 重构 Node Graph 系统使用强类型
-- [x] Phase 3: 大文件解耦 (已完成 4/6)
+- [x] Phase 3: 大文件解耦 (已完成 9/9)
   - [x] `theme_provider.rs` (1303行) → `theme/` 目录 (5文件)
   - [x] `animation/core.rs` (1008行) → `core/` 目录 (6文件)
   - [x] `portal/mod.rs` (1879行) → `portal/` 目录 (4文件)
   - [x] `utils/form.rs` (646行) → `form/` 目录 (6文件)
-  - [ ] `colors.rs` (7450行) - 低优先级
-  - [ ] `components.rs` (2935行) - 低优先级
+  - [x] `animation/style.rs` (939行) → `style/` 目录 (4文件)
+  - [x] `animation/builder.rs` (659行) → `builder/` 目录 (4文件)
+  - [x] `animation/hooks.rs` (549行) → `hooks/` 目录 (5文件)
+  - [x] `colors.rs` (7450行) → `colors/` 目录 (4文件)
+  - [x] `components.rs` (2935行) → `components/` 目录 (12文件)
 - [ ] Phase 4: 文件夹分级 (待定)
 - [ ] Phase 5: 低优先级清理 (待定)
 
@@ -228,3 +231,13 @@ macro_rules! response {
 - `animation/core.rs` → `core/` (types, easing, options, tween, engine)
 - `portal/mod.rs` → `portal/` (types, provider, positioning, render)
 - `utils/form.rs` → `form/` (error, validators, state, hooks, field)
+- `animation/style.rs` → `style/` (properties, builder, helpers)
+- `animation/builder.rs` → `builder/` (value, action, animation)
+- `animation/hooks.rs` → `hooks/` (tween, animated_value, animation_frame, continuous)
+- `colors.rs` → `colors/` (mod, impl_, chinese, tests)
+- `components.rs` → `components/` (header, layout, button, form, feedback, data, navigation, display, media, misc)
+
+**测试修复:**
+- 修复 `navigation_components_tests.rs` 中的 `StepStatus` 导入冲突
+- 修复 `node_graph_tests.rs` 中 `GraphMetadata.is_empty()` → `GraphMetadata.extra.is_empty()`
+- 标记需要 Dioxus 运行时的测试为 `#[ignore]`

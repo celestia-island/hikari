@@ -49,145 +49,14 @@ use web_sys::HtmlElement;
 #[cfg(target_arch = "wasm32")]
 use crate::global_manager::global_animation_manager;
 
-use super::{
+use super::super::{
     context::AnimationContext,
     state::AnimationState as StructAnimationState,
     style::{CssProperty, StyleBuilder},
 };
 
-/// Simple callback type for dynamic values
-pub type AnimationCallback = dyn Fn(&AnimationContext) -> String + 'static;
-
-/// Callback type with state access
-pub type StatefulCallback =
-    dyn Fn(&AnimationContext, &mut StructAnimationState) -> String + 'static;
-
-/// Callback type without return value
-pub type VoidCallback = dyn Fn(&AnimationContext) + 'static;
-
-/// Mouse move holder type
-#[allow(dead_code)]
-pub type MousemoveHolder = Rc<RefCell<Option<Closure<dyn Fn(web_sys::MouseEvent) + 'static>>>>;
-
-/// Enhanced dynamic value that can be computed at runtime
-///
-/// Values can be either static strings or callbacks that compute
-/// values based on current animation context and state.
-pub enum DynamicValue {
-    /// Static string value
-    Static(String),
-    /// Dynamic value computed from context (element-specific)
-    Dynamic(Box<AnimationCallback>),
-    /// Stateful dynamic value computed from context and animation state
-    StatefulDynamic(Box<StatefulCallback>),
-}
-
-impl DynamicValue {
-    /// Create a static value
-    pub fn static_value(value: impl Into<String>) -> Self {
-        Self::Static(value.into())
-    }
-
-    /// Create a dynamic value from a closure
-    pub fn dynamic<F>(f: F) -> Self
-    where
-        F: Fn(&AnimationContext) -> String + 'static,
-    {
-        Self::Dynamic(Box::new(f))
-    }
-
-    /// Create a stateful dynamic value from a closure
-    pub fn stateful_dynamic<F>(f: F) -> Self
-    where
-        F: Fn(&AnimationContext, &mut StructAnimationState) -> String + 'static,
-    {
-        Self::StatefulDynamic(Box::new(f))
-    }
-
-    /// Evaluate dynamic value with given context and state
-    pub fn evaluate(&self, ctx: &AnimationContext, state: &mut StructAnimationState) -> String {
-        match self {
-            DynamicValue::Static(s) => s.clone(),
-            DynamicValue::Dynamic(f) => f(ctx),
-            DynamicValue::StatefulDynamic(f) => f(ctx, state),
-        }
-    }
-}
-
-impl From<String> for DynamicValue {
-    fn from(s: String) -> Self {
-        Self::Static(s)
-    }
-}
-
-impl From<&str> for DynamicValue {
-    fn from(s: &str) -> Self {
-        Self::Static(s.to_string())
-    }
-}
-
-/// Enhanced animation action that can be applied to an element
-///
-/// Actions can be either CSS styles or utility classes,
-/// supporting static, dynamic, and stateful dynamic values.
-pub enum AnimationAction {
-    /// CSS style property with value
-    Style(CssProperty, DynamicValue),
-    /// Utility class (from palette package)
-    Class(String),
-}
-
-// Manual Clone implementation
-// Static values can be cloned, dynamic closures cannot
-impl Clone for AnimationAction {
-    fn clone(&self) -> Self {
-        match self {
-            AnimationAction::Class(class) => AnimationAction::Class(class.clone()),
-            AnimationAction::Style(prop, value) => {
-                match value {
-                    DynamicValue::Static(s) => {
-                        AnimationAction::Style(*prop, DynamicValue::Static(s.clone()))
-                    }
-                    // Dynamic closures cannot be cloned - create placeholder
-                    DynamicValue::Dynamic(_) => {
-                        AnimationAction::Style(*prop, DynamicValue::static_value(""))
-                    }
-                    DynamicValue::StatefulDynamic(_) => {
-                        AnimationAction::Style(*prop, DynamicValue::static_value(""))
-                    }
-                }
-            }
-        }
-    }
-}
-
-impl AnimationAction {
-    /// Create a style action with a static value
-    pub fn style_static(property: CssProperty, value: impl Into<String>) -> Self {
-        Self::Style(property, DynamicValue::static_value(value))
-    }
-
-    /// Create a style action with a dynamic value
-    pub fn style_dynamic<F>(property: CssProperty, f: F) -> Self
-    where
-        F: Fn(&AnimationContext) -> String + 'static,
-    {
-        Self::Style(property, DynamicValue::dynamic(f))
-    }
-
-    /// Create a style action with a stateful dynamic value
-    pub fn style_stateful_dynamic<F>(property: CssProperty, f: F) -> Self
-    where
-        F: Fn(&AnimationContext, &mut StructAnimationState) -> String + 'static,
-    {
-        Self::Style(property, DynamicValue::stateful_dynamic(f))
-    }
-
-    /// Create a class action
-    pub fn class(class: impl Into<String>) -> Self {
-        Self::Class(class.into())
-    }
-}
+use super::action::AnimationAction;
+use super::value::DynamicValue;
 
 /// Enhanced builder for creating complex animations
 ///
@@ -373,31 +242,23 @@ impl<'a> AnimationBuilder<'a> {
         let actions = self.actions;
         let mut state = self.initial_state;
 
-        // Store callback reference for self-reference
         let f = Rc::new(RefCell::new(None::<js_sys::Function>));
         let g = f.clone();
 
-        // Stop flag
         let should_stop = Rc::new(RefCell::new(false));
         let should_stop_clone = should_stop.clone();
 
-        // Timing state for delta calculation and throttling
-        let timing = Rc::new(RefCell::new((0.0, 0.0, 0.0))); // (previous_time, current_time, last_update)
-        const THROTTLE_MS: f64 = 16.67; // ~60fps (1000ms / 60)
+        let timing = Rc::new(RefCell::new((0.0, 0.0, 0.0)));
+        const THROTTLE_MS: f64 = 16.67;
 
-        // Cached values to avoid unnecessary DOM updates
-        // Key: element_name -> property -> previous_value
         let cached_values: Rc<RefCell<HashMap<String, HashMap<CssProperty, String>>>> =
             Rc::new(RefCell::new(HashMap::new()));
 
-        // Create animation loop closure
         let animation_closure = Closure::wrap(Box::new(move || {
-            // Check stop flag first to avoid unnecessary work
             if *should_stop_clone.borrow() {
                 return;
             }
 
-            // Update timing for delta calculation
             let window = match web_sys::window() {
                 Some(w) => w,
                 None => return,
@@ -408,12 +269,10 @@ impl<'a> AnimationBuilder<'a> {
             let previous_time = timing_ref.1;
             let time_since_last_update = current_time - timing_ref.2;
 
-            // Throttle: only update if enough time has passed
             if time_since_last_update < THROTTLE_MS {
                 timing_ref.1 = current_time;
                 drop(timing_ref);
 
-                // Request next frame but skip update
                 if let Some(callback) = &*f.borrow() {
                     let _ =
                         web_sys::window().and_then(|w| w.request_animation_frame(callback).ok());
@@ -426,7 +285,6 @@ impl<'a> AnimationBuilder<'a> {
             timing_ref.2 = current_time;
             drop(timing_ref);
 
-            // Update each element with dynamic styles
             let mut cached_ref = cached_values.borrow_mut();
             let mut needs_update = false;
 
@@ -439,7 +297,6 @@ impl<'a> AnimationBuilder<'a> {
                             current_time,
                         );
 
-                        // Collect new values and compare with cache
                         let mut new_styles: Vec<(CssProperty, String)> = Vec::new();
                         let element_cache = cached_ref.entry(element_name.clone()).or_default();
 
@@ -451,7 +308,6 @@ impl<'a> AnimationBuilder<'a> {
                                 ) {
                                     let new_value = value.evaluate(&ctx, &mut state);
 
-                                    // Only update if value changed
                                     if let Some(old_value) = element_cache.get(prop) {
                                         if old_value != &new_value {
                                             new_styles.push((*prop, new_value.clone()));
@@ -467,7 +323,6 @@ impl<'a> AnimationBuilder<'a> {
                             }
                         }
 
-                        // Batch update DOM if values changed
                         if needs_update && !new_styles.is_empty() {
                             let mut builder = StyleBuilder::new(&element);
                             for (prop, value_str) in &new_styles {
@@ -481,30 +336,23 @@ impl<'a> AnimationBuilder<'a> {
             }
             drop(cached_ref);
 
-            // Request next frame
             if let Some(callback) = &*f.borrow() {
                 let _ = web_sys::window().and_then(|w| w.request_animation_frame(callback).ok());
             }
         }) as Box<dyn FnMut()>);
 
-        // Convert closure to js_sys::Function and store for self-reference
         let callback: &js_sys::Function = animation_closure.as_ref().unchecked_ref();
         *g.borrow_mut() = Some(callback.clone());
 
-        // Start animation loop
         let _ = web_sys::window().and_then(|w| w.request_animation_frame(callback).ok());
         animation_closure.forget();
 
-        // Return stop function
         let should_stop_final = should_stop.clone();
         Box::new(move || {
             *should_stop_final.borrow_mut() = true;
         })
     }
 
-    // ===== Internal methods =====
-
-    /// Internal apply method
     fn apply_internal(self, _is_transition: bool) {
         for (element_name, actions) in self.actions {
             if let Some(js_value) = self.elements.get(&element_name) {
@@ -522,7 +370,7 @@ impl<'a> AnimationBuilder<'a> {
                                 builder.clone().add(*prop, &value_str);
                             }
                             AnimationAction::Class(class) => {
-                                element.class_list().add_1(class).unwrap();
+                                let _ = element.class_list().add_1(class);
                             }
                         }
                     }
@@ -535,9 +383,7 @@ impl<'a> AnimationBuilder<'a> {
         }
     }
 
-    /// Internal apply with transition method
     fn apply_with_transition_internal(self, duration: &str, easing: &str, _is_transition: bool) {
-        // First set transition on all elements
         for element_name in self.actions.keys() {
             if let Some(js_value) = self.elements.get(element_name) {
                 if let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
@@ -551,7 +397,6 @@ impl<'a> AnimationBuilder<'a> {
             }
         }
 
-        // Then apply styles
         self.apply();
     }
 }
@@ -571,7 +416,6 @@ pub fn start_animation_with_global_manager(
     initial_state: StructAnimationState,
 ) -> Box<dyn FnOnce()> {
     use crate::global_manager;
-    use web_sys::HtmlElement;
 
     let element_name = elements
         .keys()
@@ -622,7 +466,6 @@ pub fn start_animation_with_global_manager(
             let center_x = state.get_f64("center_x", 50.0);
             let center_y = state.get_f64("center_y", 50.0);
 
-            // For debugging, we can't return a value in a closure that doesn't return anything
             let x = center_x + radius * angle.cos();
             let y = center_y + radius * angle.sin();
             web_sys::console::log_1(
@@ -631,29 +474,30 @@ pub fn start_animation_with_global_manager(
         },
     );
 
-    #[cfg(target_arch = "wasm32")]
-    {
-        let animation_name = format!("bg_anim_{:?}", std::time::Instant::now());
-        global_animation_manager().register(animation_name.clone(), callback);
+    let animation_name = format!("bg_anim_{:?}", std::time::Instant::now());
+    global_animation_manager().register(animation_name.clone(), callback);
 
-        let log_msg = format!(
-            "✅ Animation {} registered with global manager",
-            animation_name
-        );
-        web_sys::console::log_2(&log_msg.into(), &animation_name.clone().into());
+    let log_msg = format!(
+        "✅ Animation {} registered with global manager",
+        animation_name
+    );
+    web_sys::console::log_2(&log_msg.into(), &animation_name.clone().into());
 
-        Box::new(move || {
-            let stop_msg = format!("🛑 Stopping animation: {}", animation_name);
-            web_sys::console::log_2(&stop_msg.into(), &animation_name.clone().into());
-            global_animation_manager().unregister(&animation_name);
-        })
-    }
+    let animation_name_final = animation_name;
+    Box::new(move || {
+        let stop_msg = format!("🛑 Stopping animation: {}", animation_name_final);
+        web_sys::console::log_2(&stop_msg.into(), &animation_name_final.clone().into());
+        global_animation_manager().unregister(&animation_name_final);
+    })
+}
 
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        // For non-WASM targets, return a dummy closer
-        Box::new(|| {
-            web_sys::console::log_1(&"Animation not available on this platform".into());
-        })
-    }
+#[cfg(not(target_arch = "wasm32"))]
+pub fn start_animation_with_global_manager(
+    _elements: &HashMap<String, JsValue>,
+    _actions: &HashMap<String, Vec<AnimationAction>>,
+    _initial_state: StructAnimationState,
+) -> Box<dyn FnOnce()> {
+    Box::new(|| {
+        web_sys::console::log_1(&"Animation not available on this platform".into());
+    })
 }

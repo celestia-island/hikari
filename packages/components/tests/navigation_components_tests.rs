@@ -3,10 +3,10 @@
 #[cfg(test)]
 mod tests {
 
+    use hikari_components::navigation::steps::StepStatus;
     use hikari_components::navigation::{
         {MenuItemHeight, MenuItemProps, MenuMode, MenuProps, SubMenuProps},
-        {StepItemProps, StepStatus, StepsDirection, StepsProps},
-        {TabPaneProps, TabPosition, TabsProps},
+        {StepItemProps, StepsDirection, StepsProps}, {TabPaneProps, TabPosition, TabsProps},
     };
 
     // ==================== Menu Tests ====================

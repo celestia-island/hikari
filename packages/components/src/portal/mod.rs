@@ -181,11 +181,11 @@ pub mod animation;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, DropdownClass, ModalClass, PortalClass};
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::{JsCast, closure::Closure};
+use palette::classes::{ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass};
+use wasm_bindgen::{closure::Closure, JsCast};
 
 use super::modal::{MaskMode, ModalPosition};
+use crate::feedback::PopoverPlacement;
 
 static PORTAL_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -253,6 +253,19 @@ pub enum PortalEntry {
     Toast {
         id: String,
         position: ToastPosition,
+        children: Element,
+    },
+    Popover {
+        id: String,
+        trigger_rect: Option<(f64, f64, f64, f64)>,
+        preferred_placements: Vec<PopoverPlacement>,
+        offset: f64,
+        width: Option<String>,
+        title: Option<String>,
+        close_on_click_outside: bool,
+        close_on_select: bool,
+        on_close: Option<Callback<()>>,
+        close_requested: Signal<bool>,
         children: Element,
     },
 }
@@ -773,6 +786,7 @@ pub fn PortalProvider(children: Element) -> Element {
             PortalEntry::Modal { id: entry_id, .. } => entry_id != &id,
             PortalEntry::Dropdown { id: entry_id, .. } => entry_id != &id,
             PortalEntry::Toast { id: entry_id, .. } => entry_id != &id,
+            PortalEntry::Popover { id: entry_id, .. } => entry_id != &id,
         });
     });
 
@@ -879,6 +893,35 @@ fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                     z_index,
                                     id: id.clone(),
                                     position: *position,
+                                    children: children.clone(),
+                                }
+                            },
+                            PortalEntry::Popover {
+                                id,
+                                trigger_rect,
+                                preferred_placements,
+                                offset,
+                                width,
+                                title,
+                                close_on_click_outside,
+                                close_on_select,
+                                on_close,
+                                close_requested,
+                                children,
+                            } => rsx! {
+                                PopoverPortalEntry {
+                                    key: "{id}",
+                                    z_index,
+                                    id: id.clone(),
+                                    trigger_rect: *trigger_rect,
+                                    preferred_placements: preferred_placements.clone(),
+                                    offset: *offset,
+                                    width: width.clone(),
+                                    title: title.clone(),
+                                    close_on_click_outside: *close_on_click_outside,
+                                    close_on_select: *close_on_select,
+                                    on_close: on_close.clone(),
+                                    close_requested: *close_requested,
                                     children: children.clone(),
                                 }
                             },
@@ -1585,6 +1628,241 @@ fn ToastPortalEntry(
             class: "hi-toast",
             style: "{position_style} z-index: {z_index}; pointer-events: auto;",
             {children}
+        }
+    }
+}
+
+#[component]
+fn PopoverPortalEntry(
+    z_index: usize,
+    id: String,
+    trigger_rect: Option<(f64, f64, f64, f64)>,
+    preferred_placements: Vec<PopoverPlacement>,
+    offset: f64,
+    width: Option<String>,
+    title: Option<String>,
+    close_on_click_outside: bool,
+    close_on_select: bool,
+    on_close: Option<Callback<()>>,
+    close_requested: Signal<bool>,
+    children: Element,
+) -> Element {
+    let (mut animation_state, close_popover, computed_opacity_scale) =
+        use_animated_portal_entry(id.clone(), ModalAnimationState::Appearing, "Popover");
+
+    // Listen for close_requested signal changes
+    {
+        let on_close_clone = on_close.clone();
+        use_effect(move || {
+            if close_requested() {
+                let current_state = *animation_state.read();
+                if current_state == ModalAnimationState::Visible {
+                    animation_state.set(ModalAnimationState::Disappearing);
+                    if let Some(handler) = on_close_clone.as_ref() {
+                        handler.call(());
+                    }
+                }
+            }
+        });
+    }
+
+    let viewport_height = use_signal(|| {
+        #[cfg(target_arch = "wasm32")]
+        {
+            web_sys::window()
+                .and_then(|w| w.inner_height().ok())
+                .and_then(|v| v.as_f64())
+                .unwrap_or(1080.0)
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            1080.0
+        }
+    });
+
+    let position_state = use_signal(|| {
+        fn check_placement(
+            placement: PopoverPlacement,
+            tx: f64, ty: f64, tw: f64, th: f64,
+            popover_w: f64, popover_h: f64,
+            vw: f64, vh: f64,
+            offset: f64,
+            padding: f64,
+        ) -> Option<(PopoverPlacement, f64, f64)> {
+            let x = tx + tw / 2.0;
+            let y = ty + th / 2.0;
+
+            match placement {
+                PopoverPlacement::Bottom => {
+                    let pos_y = ty + th + offset;
+                    if pos_y + popover_h <= vh - padding {
+                        Some((PopoverPlacement::Bottom, x, pos_y))
+                    } else {
+                        None
+                    }
+                }
+                PopoverPlacement::Top => {
+                    let pos_y = ty - offset;
+                    if pos_y - popover_h >= padding {
+                        Some((PopoverPlacement::Top, x, pos_y))
+                    } else {
+                        None
+                    }
+                }
+                PopoverPlacement::Left => {
+                    let pos_x = tx - offset;
+                    if pos_x - popover_w >= padding {
+                        Some((PopoverPlacement::Left, pos_x, y))
+                    } else {
+                        None
+                    }
+                }
+                PopoverPlacement::Right => {
+                    let pos_x = tx + tw + offset;
+                    if pos_x + popover_w <= vw - padding {
+                        Some((PopoverPlacement::Right, pos_x, y))
+                    } else {
+                        None
+                    }
+                }
+            }
+        }
+
+        const PADDING: f64 = 16.0;
+        const POPOVER_W: f64 = 160.0;
+        const POPOVER_H: f64 = 120.0;
+
+        if let Some((tx, ty, tw, th)) = trigger_rect {
+            let trigger_center_x = tx + tw / 2.0;
+
+            for placement in &preferred_placements {
+                if let Some(result) = check_placement(*placement, tx, ty, tw, th, POPOVER_W, POPOVER_H, 
+                    web_sys::window().and_then(|w| w.inner_width().ok()).and_then(|v| v.as_f64()).unwrap_or(1920.0),
+                    viewport_height(), offset, PADDING) {
+                    return result;
+                }
+            }
+
+            let default_order = [
+                PopoverPlacement::Bottom,
+                PopoverPlacement::Top,
+                PopoverPlacement::Left,
+                PopoverPlacement::Right,
+            ];
+            for placement in default_order {
+                if !preferred_placements.contains(&placement) {
+                    if let Some(result) = check_placement(placement, tx, ty, tw, th, POPOVER_W, POPOVER_H,
+                        web_sys::window().and_then(|w| w.inner_width().ok()).and_then(|v| v.as_f64()).unwrap_or(1920.0),
+                        viewport_height(), offset, PADDING) {
+                        return result;
+                    }
+                }
+            }
+
+            (PopoverPlacement::Bottom, trigger_center_x, ty + th + offset)
+        } else {
+            (PopoverPlacement::Bottom, 0.0, 0.0)
+        }
+    });
+
+    let (placement, x, y) = position_state();
+
+    let (position_style, transform_origin, translate_transform) = match placement {
+        PopoverPlacement::Bottom => (
+            format!("position: fixed; left: {}px; top: {}px;", x, y),
+            "top center",
+            "translateX(-50%)",
+        ),
+        PopoverPlacement::Top => (
+            format!("position: fixed; left: {}px; bottom: {}px;", x, viewport_height() - y),
+            "bottom center",
+            "translateX(-50%)",
+        ),
+        PopoverPlacement::Left => (
+            format!("position: fixed; left: {}px; top: {}px;", x, y),
+            "right center",
+            "translateX(-100%) translateY(-50%)",
+        ),
+        PopoverPlacement::Right => (
+            format!("position: fixed; left: {}px; top: {}px;", x, y),
+            "left center",
+            "translateY(-50%)",
+        ),
+    };
+
+    let (opacity, scale) = computed_opacity_scale.read().clone();
+    let width_style = width.as_deref().unwrap_or("auto");
+    let popover_classes = ClassesBuilder::new().add(PopoverClass::Popover).build();
+
+    let popover_style = format!(
+        "{} z-index: {}; width: {}; transform: {} scaleY({}); transform-origin: {}; opacity: {}; transition: opacity 0.15s ease-out, transform 0.15s ease-out; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10); backdrop-filter: blur(12px); padding: 4px 0;",
+        position_style, z_index, width_style, translate_transform, scale, transform_origin, opacity
+    );
+
+    let backdrop_z_index = z_index.saturating_sub(1);
+
+    let handle_close = {
+        let on_close = on_close.clone();
+        move |e: MouseEvent| {
+            close_popover.call(e);
+            if let Some(handler) = on_close.as_ref() {
+                handler.call(());
+            }
+        }
+    };
+
+    rsx! {
+        if close_on_click_outside {
+            div {
+                class: "hi-popover-backdrop",
+                style: "position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: {backdrop_z_index}; background: transparent; pointer-events: auto;",
+                onclick: handle_close.clone(),
+            }
+        }
+
+        div {
+            class: "{popover_classes}",
+            style: "{popover_style}",
+            "data-open": "true",
+
+            if let Some(title) = title {
+                div { class: "hi-popover-title", "{title}" }
+            }
+
+            div {
+                class: "hi-popover-content",
+                onclick: move |e: MouseEvent| {
+                    e.stop_propagation();
+                    
+                    // Close on select if enabled - check if click is on a menu item
+                    if close_on_select {
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            if let Some(web_event) = e.downcast::<web_sys::MouseEvent>() {
+                                if let Some(target) = web_event.target() {
+                                    if let Some(elem) = target.dyn_ref::<web_sys::Element>() {
+                                        let is_menu_item = elem.closest(".hi-menu-item").ok();
+                                        if is_menu_item.is_some() {
+                                            close_popover.call(e);
+                                            if let Some(handler) = on_close.as_ref() {
+                                                handler.call(());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            close_popover.call(e);
+                            if let Some(handler) = on_close.as_ref() {
+                                handler.call(());
+                            }
+                        }
+                    }
+                },
+                {children}
+            }
         }
     }
 }

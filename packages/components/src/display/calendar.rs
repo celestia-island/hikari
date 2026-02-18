@@ -56,7 +56,13 @@ fn days_in_month(year: i32, month: u32) -> u32 {
     match month {
         1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
         4 | 6 | 9 | 11 => 30,
-        2 => if is_leap_year(year) { 29 } else { 28 },
+        2 => {
+            if is_leap_year(year) {
+                29
+            } else {
+                28
+            }
+        }
         _ => 30,
     }
 }
@@ -67,14 +73,24 @@ fn first_day_of_month(year: i32, month: u32) -> u32 {
     let k = y % 100;
     let j = year / 100;
     let adjusted_m = if m < 3 { m + 12 } else { m };
-    
+
     let h = (1i32 + (13 * (adjusted_m + 1)) / 5 + k + k / 4 + j / 4 + 5 * j) % 7;
     ((h + 1) % 7) as u32
 }
 
 const MONTH_NAMES: [&str; 12] = [
-    "一月", "二月", "三月", "四月", "五月", "六月",
-    "七月", "八月", "九月", "十月", "十一月", "十二月"
+    "一月",
+    "二月",
+    "三月",
+    "四月",
+    "五月",
+    "六月",
+    "七月",
+    "八月",
+    "九月",
+    "十月",
+    "十一月",
+    "十二月",
 ];
 
 const WEEKDAY_NAMES: [&str; 7] = ["日", "一", "二", "三", "四", "五", "六"];
@@ -369,9 +385,9 @@ impl StyledComponent for CalendarComponent {
     color: var(--hi-color-primary);
 }
 
-.hi-calendar-day-selected {
-    background-color: var(--hi-color-primary) !important;
-    color: white !important;
+.hi-calendar-day.hi-calendar-day-selected {
+    background-color: var(--hi-color-primary);
+    color: white;
     box-shadow: 0 0 12px var(--hi-color-primary-glow);
 }
 

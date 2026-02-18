@@ -1,0 +1,18 @@
+// hi-components/src/layout/flex.scss
+// FlexBox component styles
+
+@use '../../../../theme/styles/variables.scss' as vars;
+
+// ============================================
+// FlexBox Component
+// ============================================
+
+.hi-flex {
+  display: flex;
+  box-sizing: border-box;
+}
+
+.hi-flex-inline {
+  display: inline-flex;
+  box-sizing: border-box;
+}

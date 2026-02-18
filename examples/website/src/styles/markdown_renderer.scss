@@ -138,4 +138,9 @@
         color: var(--hi-color-text-secondary);
         font-style: italic;
     }
+
+    // Markdown tables wrapper
+    .hi-markdown-table {
+        margin: 1.5rem 0;
+    }
 }

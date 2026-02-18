@@ -13,10 +13,21 @@ use crate::{
 };
 
 /// Context for Menu to communicate with MenuItem
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[derive(Clone, Default)]
 pub struct MenuContext {
     pub in_popover: bool,
     pub glow_enabled: bool,
+    pub request_close: Option<Callback<()>>,
+}
+
+impl MenuContext {
+    pub fn in_popover(&self) -> bool {
+        self.in_popover
+    }
+
+    pub fn glow_enabled(&self) -> bool {
+        self.glow_enabled
+    }
 }
 
 /// Menu 组件的类型包装器（用于实现 StyledComponent）
@@ -166,6 +177,10 @@ pub struct MenuProps {
     /// Default glow setting for all items (overridden by in_popover)
     #[props(default)]
     pub glow: bool,
+
+    /// Callback to request closing the parent popover (when menu item is clicked)
+    #[props(default)]
+    pub request_close: Option<Callback<()>>,
 }
 
 impl Default for MenuProps {
@@ -180,6 +195,7 @@ impl Default for MenuProps {
             on_select: None,
             in_popover: false,
             glow: false,
+            request_close: None,
         }
     }
 }
@@ -274,6 +290,7 @@ pub fn Menu(props: MenuProps) -> Element {
     use_context_provider(|| MenuContext {
         in_popover: props.in_popover,
         glow_enabled,
+        request_close: props.request_close.clone(),
     });
 
     rsx! {
@@ -302,12 +319,9 @@ impl StyledComponent for MenuComponent {
 /// Menu item component
 #[component]
 pub fn MenuItem(props: MenuItemProps) -> Element {
-    let menu_context = try_consume_context::<Signal<MenuContext>>();
-    let should_glow = match menu_context {
-        Some(ctx) => {
-            let context = ctx.read();
-            props.glow || (context.in_popover && context.glow_enabled)
-        }
+    let menu_context = try_consume_context::<MenuContext>();
+    let should_glow = match &menu_context {
+        Some(ctx) => props.glow || (ctx.in_popover && ctx.glow_enabled),
         None => props.glow,
     };
 
@@ -327,6 +341,14 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
                 if !props.disabled {
                     if let Some(handler) = props.onclick.as_ref() {
                         handler.call(e);
+                    }
+                    // Request close if in popover mode
+                    if let Some(ctx) = &menu_context {
+                        if ctx.in_popover {
+                            if let Some(close_cb) = &ctx.request_close {
+                                close_cb.call(());
+                            }
+                        }
                     }
                 }
             },
@@ -348,6 +370,7 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
                 class: "{wrapper_class}",
                 style: "width: 100%; position: relative;",
                 Glow {
+                    block: true,
                     blur: GlowBlur::Light,
                     color: GlowColor::Ghost,
                     intensity: GlowIntensity::Seventy,
@@ -405,11 +428,11 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
 
                  span { class: "hi-menu-item-content", "{props.title}" }
 
-                 Arrow {
-                    direction: if *is_open.read() { ArrowDirection::Down } else { ArrowDirection::Right },
-                    size: 14,
-                    class: if *is_open.read() { "hi-menu-submenu-arrow-open" } else { "" },
-                 }
+                  Arrow {
+                     direction: if *is_open.read() { ArrowDirection::Down } else { ArrowDirection::Right },
+                     size: 14,
+                     class: if *is_open.read() { "hi-menu-item-arrow hi-menu-submenu-arrow-open" } else { "hi-menu-item-arrow" },
+                  }
              }
          }
     };

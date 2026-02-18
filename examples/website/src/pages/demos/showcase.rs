@@ -4,65 +4,60 @@
 use dioxus::prelude::*;
 use dioxus_router::components::Link;
 
-use crate::{app::Route, components::PageContainer, hooks::use_i18n};
+use crate::{
+    app::Route,
+    components::PageContainer,
+    hooks::{use_i18n, use_language},
+};
 use _icons::{Icon, MdiIcon};
 use _palette::classes::{
     BgColor, ClassesBuilder, Display, FlexDirection, FontSize, FontWeight, Gap, GridCols, Padding,
     TextColor,
 };
 
-/// Demo overview page
 #[component]
 pub fn DemosOverview() -> Element {
     let i18n = use_i18n();
+    let lang_ctx = use_language();
+    let lang = (*lang_ctx.language.read()).url_prefix().to_string();
 
-    let (page_title, page_desc, view_demo) = match i18n {
-        Some(ctx) => {
-            let keys = &ctx.keys;
-            (
-                keys.sidebar.demos.title.clone(),
-                "Complete application examples showcasing Hikari components in real scenarios."
-                    .to_string(),
-                "View Demo →".to_string(),
-            )
-        }
-        None => (
-            "Demos".to_string(),
-            "完整的应用示例，展示 Hikari 组件在实际场景中的使用".to_string(),
-            "查看演示 →".to_string(),
-        ),
-    };
+    let keys = i18n.keys();
+    let page_title = keys.sidebar.demos.title.clone();
+    let page_desc =
+        "Complete application examples showcasing Hikari components in real scenarios.".to_string();
+    let view_demo = "View Demo ->".to_string();
+    drop(keys);
 
     let demos = vec![
         (
             "Animation",
             "Animation system demonstration",
             MdiIcon::Play,
-            Route::AnimationDemo {},
+            Route::AnimationDemo { lang: lang.clone() },
         ),
         (
             "Layer 1 Form",
             "Basic form components example",
             MdiIcon::TextBoxEdit,
-            Route::FormDemo {},
+            Route::FormDemo { lang: lang.clone() },
         ),
         (
             "Layer 2 Dashboard",
             "Data visualization dashboard",
             MdiIcon::ViewDashboard,
-            Route::DashboardDemo {},
+            Route::DashboardDemo { lang: lang.clone() },
         ),
         (
             "Layer 3 Video",
             "Video player example",
             MdiIcon::Play,
-            Route::VideoDemo {},
+            Route::VideoDemo { lang: lang.clone() },
         ),
     ];
 
     rsx! {
         PageContainer {
-            current_route: Route::DemosOverview {},
+            current_route: Route::DemosOverview { lang },
             title: page_title,
             description: page_desc,
 

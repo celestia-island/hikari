@@ -1385,6 +1385,90 @@ impl UtilityClass for UserGuideClass {
     }
 }
 
+/// MarkdownEditor component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum MarkdownEditorClass {
+    /// `hi-markdown-editor` - Main container
+    Container,
+    /// `hi-markdown-editor-sm` - Small size
+    Sm,
+    /// `hi-markdown-editor-md` - Medium size
+    Md,
+    /// `hi-markdown-editor-lg` - Large size
+    Lg,
+    /// `hi-markdown-editor-toolbar` - Toolbar
+    Toolbar,
+    /// `hi-markdown-editor-toolbar-button` - Toolbar button
+    ToolbarButton,
+    /// `hi-markdown-editor-toolbar-button-active` - Active toolbar button
+    ToolbarButtonActive,
+    /// `hi-markdown-editor-toolbar-divider` - Toolbar divider
+    ToolbarDivider,
+    /// `hi-markdown-editor-content` - Content area
+    Content,
+    /// `hi-markdown-editor-textarea` - Textarea
+    Textarea,
+    /// `hi-markdown-editor-preview` - Preview area
+    Preview,
+    /// `hi-markdown-editor-split-container` - Split container
+    SplitContainer,
+    /// `hi-markdown-editor-split-pane` - Split pane
+    SplitPane,
+}
+
+impl UtilityClass for MarkdownEditorClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            MarkdownEditorClass::Container => "markdown-editor",
+            MarkdownEditorClass::Sm => "markdown-editor-sm",
+            MarkdownEditorClass::Md => "markdown-editor-md",
+            MarkdownEditorClass::Lg => "markdown-editor-lg",
+            MarkdownEditorClass::Toolbar => "markdown-editor-toolbar",
+            MarkdownEditorClass::ToolbarButton => "markdown-editor-toolbar-button",
+            MarkdownEditorClass::ToolbarButtonActive => "markdown-editor-toolbar-button-active",
+            MarkdownEditorClass::ToolbarDivider => "markdown-editor-toolbar-divider",
+            MarkdownEditorClass::Content => "markdown-editor-content",
+            MarkdownEditorClass::Textarea => "markdown-editor-textarea",
+            MarkdownEditorClass::Preview => "markdown-editor-preview",
+            MarkdownEditorClass::SplitContainer => "markdown-editor-split-container",
+            MarkdownEditorClass::SplitPane => "markdown-editor-split-pane",
+        }
+    }
+}
+
+/// DragLayer component classes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DragLayerClass {
+    /// `hi-drag-layer` - Main container
+    Container,
+    /// `hi-drag-layer-drop-zone-overlay` - Drop zone overlay
+    DropZoneOverlay,
+    /// `hi-drag-layer-drop-zone` - Individual drop zone
+    DropZone,
+    /// `hi-drag-layer-drag-preview` - Drag preview
+    DragPreview,
+    /// `hi-drag-layer-drag-preview-content` - Drag preview content
+    DragPreviewContent,
+    /// `hi-drag-layer-drag-preview-label` - Drag preview label
+    DragPreviewLabel,
+    /// `hi-drag-layer-drag-preview-type` - Drag preview type
+    DragPreviewType,
+}
+
+impl UtilityClass for DragLayerClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            DragLayerClass::Container => "drag-layer",
+            DragLayerClass::DropZoneOverlay => "drag-layer-drop-zone-overlay",
+            DragLayerClass::DropZone => "drag-layer-drop-zone",
+            DragLayerClass::DragPreview => "drag-layer-drag-preview",
+            DragLayerClass::DragPreviewContent => "drag-layer-drag-preview-content",
+            DragLayerClass::DragPreviewLabel => "drag-layer-drag-preview-label",
+            DragLayerClass::DragPreviewType => "drag-layer-drag-preview-type",
+        }
+    }
+}
+
 /// Glow component classes
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GlowClass {

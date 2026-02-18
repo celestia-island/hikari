@@ -13,10 +13,12 @@
 //! - [`Calendar`] - Date picker with calendar grid
 //! - [`Timeline`] - Vertical timeline for events
 //! - [`UserGuide`] - Step-by-step user onboarding
+//! - [`DragLayer`] - Drag and drop visualization layer
 
 pub mod calendar;
 pub mod comment;
 pub mod description_list;
+pub mod drag_layer;
 pub mod empty;
 pub mod qrcode;
 pub mod tag;
@@ -26,6 +28,7 @@ pub mod user_guide;
 pub use calendar::*;
 pub use comment::*;
 pub use description_list::*;
+pub use drag_layer::*;
 pub use empty::*;
 pub use qrcode::*;
 pub use tag::*;

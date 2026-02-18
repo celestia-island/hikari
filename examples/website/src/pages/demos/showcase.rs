@@ -21,22 +21,12 @@ pub fn DemosOverview() -> Element {
     let lang_ctx = use_language();
     let lang = (*lang_ctx.language.read()).url_prefix().to_string();
 
-    let (page_title, page_desc, view_demo) = match i18n {
-        Some(ctx) => {
-            let keys = &ctx.keys;
-            (
-                keys.sidebar.demos.title.clone(),
-                "Complete application examples showcasing Hikari components in real scenarios."
-                    .to_string(),
-                "View Demo ->".to_string(),
-            )
-        }
-        None => (
-            "Demos".to_string(),
-            "完整的应用示例，展示 Hikari 组件在实际场景中的使用".to_string(),
-            "查看演示 ->".to_string(),
-        ),
-    };
+    let keys = i18n.keys();
+    let page_title = keys.sidebar.demos.title.clone();
+    let page_desc =
+        "Complete application examples showcasing Hikari components in real scenarios.".to_string();
+    let view_demo = "View Demo ->".to_string();
+    drop(keys);
 
     let demos = vec![
         (

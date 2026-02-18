@@ -13,146 +13,106 @@ use _icons::{Icon, MdiIcon};
 static SIDEBAR_SCROLL_POSITION: GlobalSignal<f64> = Signal::global(|| 0.0);
 
 fn get_category_title(id: &str) -> String {
-    let i18n = match crate::hooks::use_i18n() {
-        Some(ctx) => ctx,
-        None => return id.to_string(),
-    };
+    let i18n = crate::hooks::use_i18n();
+    let keys = i18n.keys();
 
     match id {
-        "overview" => i18n.keys.sidebar.overview.title.clone(),
-        "components" => i18n.keys.sidebar.components.title.clone(),
-        "system" => i18n.keys.sidebar.system.title.clone(),
-        "demos" => i18n.keys.sidebar.demos.title.clone(),
+        "overview" => keys.sidebar.overview.title.clone(),
+        "components" => keys.sidebar.components.title.clone(),
+        "system" => keys.sidebar.system.title.clone(),
+        "demos" => keys.sidebar.demos.title.clone(),
         _ => id.to_string(),
     }
 }
 
 fn get_subcategory_label(category_id: &str, label_key: &str) -> String {
-    let i18n = match crate::hooks::use_i18n() {
-        Some(ctx) => ctx,
-        None => return label_key.to_string(),
-    };
+    let i18n = crate::hooks::use_i18n();
+    let keys = i18n.keys();
 
     match (category_id, label_key) {
-        ("overview", "home") => i18n
-            .keys
+        ("overview", "home") => keys
             .sidebar
             .overview
             .home
             .clone()
             .unwrap_or_else(|| label_key.to_string()),
-        ("components", "layer1") => i18n
-            .keys
-            .sidebar
-            .components
-            .layer1
-            .clone()
-            .unwrap_or_else(|| label_key.to_string()),
-        ("components", "layer2") => i18n
-            .keys
-            .sidebar
-            .components
-            .layer2
-            .clone()
-            .unwrap_or_else(|| label_key.to_string()),
-        ("components", "layer3") => i18n
-            .keys
-            .sidebar
-            .components
-            .layer3
-            .clone()
-            .unwrap_or_else(|| label_key.to_string()),
-        ("system", "overview") => i18n
-            .keys
+        ("system", "overview") => keys
             .sidebar
             .system
             .overview
             .clone()
             .unwrap_or_else(|| label_key.to_string()),
-        ("system", "css_utilities") => i18n
-            .keys
+        ("system", "css_utilities") => keys
             .sidebar
             .system
             .css_utilities
             .clone()
             .unwrap_or_else(|| label_key.to_string()),
-        ("system", "icons") => i18n
-            .keys
+        ("system", "icons") => keys
             .sidebar
             .system
             .icons
             .clone()
             .unwrap_or_else(|| label_key.to_string()),
-        ("system", "palette") => i18n
-            .keys
+        ("system", "palette") => keys
             .sidebar
             .system
             .palette
             .clone()
             .unwrap_or_else(|| label_key.to_string()),
-        ("system", "animations") => i18n
-            .keys
+        ("system", "animations") => keys
             .sidebar
             .system
             .animations
             .clone()
             .unwrap_or_else(|| label_key.to_string()),
-        ("system", "animation_demo") => i18n
-            .keys
+        ("system", "animation_demo") => keys
             .sidebar
             .system
             .animation_demo
             .clone()
             .unwrap_or_else(|| label_key.to_string()),
-        ("demos", "all_demos") => i18n
-            .keys
-            .sidebar
-            .demos
-            .all_demos
-            .clone()
-            .unwrap_or_else(|| label_key.to_string()),
+        ("components", _) | ("demos", _) => get_item_label(label_key),
         _ => label_key.to_string(),
     }
 }
 
 fn get_item_label(label_key: &str) -> String {
-    let i18n = match crate::hooks::use_i18n() {
-        Some(ctx) => ctx,
-        None => return label_key.to_string(),
-    };
+    let i18n = crate::hooks::use_i18n();
+    let keys = i18n.keys();
 
     match label_key {
-        "button" => i18n.keys.sidebar.items.button.clone(),
-        "form" => i18n.keys.sidebar.items.form.clone(),
-        "number_input" => i18n.keys.sidebar.items.number_input.clone(),
-        "search" => i18n.keys.sidebar.items.search.clone(),
-        "switch" => i18n.keys.sidebar.items.switch.clone(),
-        "feedback" => i18n.keys.sidebar.items.feedback.clone(),
-        "display" => i18n.keys.sidebar.items.display.clone(),
-        "avatar" => i18n.keys.sidebar.items.avatar.clone(),
-        "image" => i18n.keys.sidebar.items.image.clone(),
-        "tag" => i18n.keys.sidebar.items.tag.clone(),
-        "empty" => i18n.keys.sidebar.items.empty.clone(),
-        "comment" => i18n.keys.sidebar.items.comment.clone(),
-        "description_list" => i18n.keys.sidebar.items.description_list.clone(),
-        "navigation" => i18n.keys.sidebar.items.navigation.clone(),
-        "collapsible" => i18n.keys.sidebar.items.collapsible.clone(),
-        "data" => i18n.keys.sidebar.items.data.clone(),
-        "table" => i18n.keys.sidebar.items.table.clone(),
-        "tree" => i18n.keys.sidebar.items.tree.clone(),
-        "pagination" => i18n.keys.sidebar.items.pagination.clone(),
-        "qrcode" => i18n.keys.sidebar.items.qrcode.clone(),
-        "timeline" => i18n.keys.sidebar.items.timeline.clone(),
-        "cascader" => i18n.keys.sidebar.items.cascader.clone(),
-        "transfer" => i18n.keys.sidebar.items.transfer.clone(),
-        "media" => i18n.keys.sidebar.items.media.clone(),
-        "editor" => i18n.keys.sidebar.items.editor.clone(),
-        "visualization" => i18n.keys.sidebar.items.visualization.clone(),
-        "user_guide" => i18n.keys.sidebar.items.user_guide.clone(),
-        "zoom_controls" => i18n.keys.sidebar.items.zoom_controls.clone(),
-        "form_demo" => i18n.keys.sidebar.items.form_demo.clone(),
-        "dashboard_demo" => i18n.keys.sidebar.items.dashboard_demo.clone(),
-        "video_demo" => i18n.keys.sidebar.items.video_demo.clone(),
+        "button" => keys.sidebar.items.button.clone(),
+        "form" => keys.sidebar.items.form.clone(),
+        "number_input" => keys.sidebar.items.number_input.clone(),
+        "search" => keys.sidebar.items.search.clone(),
+        "switch" => keys.sidebar.items.switch.clone(),
+        "feedback" => keys.sidebar.items.feedback.clone(),
+        "display" => keys.sidebar.items.display.clone(),
+        "avatar" => keys.sidebar.items.avatar.clone(),
+        "image" => keys.sidebar.items.image.clone(),
+        "tag" => keys.sidebar.items.tag.clone(),
+        "empty" => keys.sidebar.items.empty.clone(),
+        "comment" => keys.sidebar.items.comment.clone(),
+        "description_list" => keys.sidebar.items.description_list.clone(),
+        "navigation" => keys.sidebar.items.navigation.clone(),
+        "collapsible" => keys.sidebar.items.collapsible.clone(),
+        "data" => keys.sidebar.items.data.clone(),
+        "table" => keys.sidebar.items.table.clone(),
+        "tree" => keys.sidebar.items.tree.clone(),
+        "pagination" => keys.sidebar.items.pagination.clone(),
+        "qrcode" => keys.sidebar.items.qrcode.clone(),
+        "timeline" => keys.sidebar.items.timeline.clone(),
+        "cascader" => keys.sidebar.items.cascader.clone(),
+        "transfer" => keys.sidebar.items.transfer.clone(),
+        "media" => keys.sidebar.items.media.clone(),
+        "editor" => keys.sidebar.items.editor.clone(),
+        "visualization" => keys.sidebar.items.visualization.clone(),
+        "user_guide" => keys.sidebar.items.user_guide.clone(),
+        "zoom_controls" => keys.sidebar.items.zoom_controls.clone(),
+        "form_demo" => keys.sidebar.items.form_demo.clone(),
+        "dashboard_demo" => keys.sidebar.items.dashboard_demo.clone(),
+        "video_demo" => keys.sidebar.items.video_demo.clone(),
         _ => label_key.to_string(),
     }
 }

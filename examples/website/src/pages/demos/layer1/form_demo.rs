@@ -16,17 +16,11 @@ pub fn FormDemo() -> Element {
     let lang_ctx = use_language();
     let lang = (*lang_ctx.language.read()).url_prefix().to_string();
 
-    let (page_title, page_desc) = match i18n {
-        Some(_) => (
-            "Form Demo".to_string(),
-            "Demonstrates how to build a complete login form using Layer 1 basic components."
-                .to_string(),
-        ),
-        None => (
-            "表单示例".to_string(),
-            "展示如何使用 Layer 1 基础组件构建完整的登录表单".to_string(),
-        ),
-    };
+    let page_title = "Form Demo".to_string();
+    let page_desc =
+        "Demonstrates how to build a complete login form using Layer 1 basic components."
+            .to_string();
+    let section_title = "Login Form".to_string();
 
     rsx! {
         PageContainer {
@@ -35,10 +29,7 @@ pub fn FormDemo() -> Element {
             description: page_desc,
 
             DemoSection {
-                title: match i18n {
-                    Some(_) => "Login Form".to_string(),
-                    None => "登录表单".to_string(),
-                },
+                title: section_title,
                 div {
                     class: ClassesBuilder::new()
                         .add(Display::Flex)

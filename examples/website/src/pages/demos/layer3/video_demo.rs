@@ -14,24 +14,13 @@ pub fn VideoDemo() -> Element {
     let lang_ctx = use_language();
     let lang = (*lang_ctx.language.read()).url_prefix().to_string();
 
-    let (page_title, page_desc, video_title, video_desc, audio_title, audio_desc) = match i18n {
-        Some(_) => (
-            "Video & Audio Demo".to_string(),
-            "Demonstrates the full functionality of Layer 3 video player and audio waveform components.".to_string(),
-            "VideoPlayer".to_string(),
-            "Full-featured video player with playback controls, volume adjustment, and fullscreen support.".to_string(),
-            "AudioWaveform".to_string(),
-            "Audio player with real-time waveform visualization (WASM platform).".to_string(),
-        ),
-        None => (
-            "视频和音频示例".to_string(),
-            "展示 Layer 3 视频播放器和音频波形组件的完整功能".to_string(),
-            "VideoPlayer 视频播放器".to_string(),
-            "完整的视频播放器，支持播放控制、音量调节和全屏功能。".to_string(),
-            "AudioWaveform 音频波形".to_string(),
-            "音频播放器，带有实时波形可视化（WASM 平台）。".to_string(),
-        ),
-    };
+    let page_title = "Video & Audio Demo".to_string();
+    let page_desc = "Demonstrates the full functionality of Layer 3 video player and audio waveform components.".to_string();
+    let video_title = "VideoPlayer".to_string();
+    let video_desc = "Full-featured video player with playback controls, volume adjustment, and fullscreen support.".to_string();
+    let audio_title = "AudioWaveform".to_string();
+    let audio_desc =
+        "Audio player with real-time waveform visualization (WASM platform).".to_string();
 
     rsx! {
         PageContainer {

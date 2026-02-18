@@ -123,7 +123,7 @@ pub fn QRCode(props: QRCodeProps) -> Element {
                                 if let Ok(ctx) = ctx.dyn_into::<CanvasRenderingContext2d>() {
                                     let canvas_size = size as f64;
 
-                                    ctx.set_fill_style(&wasm_bindgen::JsValue::from_str(&background));
+                                    ctx.set_fill_style_str(&background);
                                     ctx.fill_rect(0.0, 0.0, canvas_size, canvas_size);
 
                                     if let Some((matrix, modules)) = &qr_matrix {
@@ -131,7 +131,7 @@ pub fn QRCode(props: QRCodeProps) -> Element {
                                         let gap = cell_size * 0.02;
                                         let cell_with_gap = cell_size - gap;
 
-                                        ctx.set_fill_style(&wasm_bindgen::JsValue::from_str(&color));
+                                        ctx.set_fill_style_str(&color);
 
                                         for y in 0..*modules {
                                             for x in 0..*modules {

@@ -172,39 +172,6 @@ pub fn RadioButtonInternal(props: RadioButtonInternalProps) -> Element {
     }
 }
 
-// Legacy RadioButton for backward compatibility (deprecated)
-#[deprecated(note = "Use RadioButtonInternal instead with RadioGroup")]
-#[derive(Clone, PartialEq, Props)]
-pub struct RadioButtonProps {
-    /// Value for this radio button
-    pub value: String,
-
-    /// Label text
-    #[props(default)]
-    pub children: Element,
-
-    /// Whether this radio is disabled
-    #[props(default)]
-    pub disabled: bool,
-
-    /// Additional CSS class
-    #[props(default)]
-    pub class: String,
-}
-
-#[deprecated(note = "Use RadioButtonInternal instead")]
-#[component]
-pub fn RadioButton(props: RadioButtonProps) -> Element {
-    rsx! {
-        RadioButtonInternal {
-            value: props.value,
-            disabled: props.disabled,
-            class: props.class,
-            {props.children}
-        }
-    }
-}
-
 /// RadioGroup component's type wrapper for StyledComponent
 pub struct RadioGroupComponent;
 

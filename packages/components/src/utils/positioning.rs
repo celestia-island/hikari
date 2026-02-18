@@ -207,7 +207,6 @@ impl OverlayZIndex {
 }
 
 /// Hook for managing overlay position
-#[allow(unused_variables)]
 pub fn use_position() -> UsePositionReturn {
     // In a full implementation, this would:
     // 1. Track trigger element position

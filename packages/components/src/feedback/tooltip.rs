@@ -2,7 +2,7 @@
 // Tooltip component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, TooltipClass};
+use palette::classes::{ClassesBuilder, TooltipClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -105,14 +105,14 @@ pub fn Tooltip(props: TooltipProps) -> Element {
             class: "{wrapper_classes}",
 
             div {
-                class: "TooltipClass::TooltipTrigger.as_class()",
+                class: "{TooltipClass::TooltipTrigger.as_class()}",
                 { props.children }
             }
 
             div {
                 class: "{tooltip_classes}",
 
-                div { class: "TooltipClass::TooltipContent.as_class()",
+                div { class: "{TooltipClass::TooltipContent.as_class()}",
                     "{props.content}"
 
                     if props.arrow {

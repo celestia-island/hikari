@@ -6,6 +6,29 @@ use palette::classes::{CalendarClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;
 
+/// Get current year and month
+fn get_current_date() -> (i32, u32) {
+    #[cfg(target_arch = "wasm32")]
+    {
+        use js_sys::Date;
+        let date = Date::new_0();
+        let year = date.get_full_year() as i32;
+        let month = (date.get_month() + 1) as u32;
+        (year, month)
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default();
+        let days = now.as_secs() / 86400;
+        let years = days / 365;
+        let remaining_days = days % 365;
+        let month = (remaining_days / 30 + 1).min(12) as u32;
+        ((1970 + years as i32), month)
+    }
+}
+
 /// Calendar component type wrapper (for StyledComponent)
 pub struct CalendarComponent;
 
@@ -166,8 +189,11 @@ pub fn Calendar(props: CalendarProps) -> Element {
                         button {
                             class: "{nav_btn_class}",
                             onclick: move |_| {
-                                *current_year.write() = 2026;
-                                *current_month.write() = 2;
+                                let (today_year, today_month) = get_current_date();
+                                if today_year >= props.min_year && today_year <= props.max_year {
+                                    *current_year.write() = today_year;
+                                    *current_month.write() = today_month;
+                                }
                             },
                             "今天"
                         }

@@ -387,12 +387,22 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 },
 
                 // ========== Switch ==========
-                ("layer1", "switch", Some("switch")) => rsx! {
-                    div { class: flex_row_wrap(),
-                        Switch { checked: false, on_change: move |_| {} }
-                        Switch { checked: true, on_change: move |_| {} }
+                ("layer1", "switch", Some("switch")) => {
+                    let mut checked1 = use_signal(|| false);
+                    let mut checked2 = use_signal(|| true);
+                    rsx! {
+                        div { class: flex_row_wrap(),
+                            Switch {
+                                checked: checked1(),
+                                on_change: move |v| checked1.set(v),
+                            }
+                            Switch {
+                                checked: checked2(),
+                                on_change: move |v| checked2.set(v),
+                            }
+                        }
                     }
-                },
+                }
                 ("layer1", "switch", Some("progress")) => rsx! {
                     div { class: flex_col_gap(),
                         Progress {
@@ -416,17 +426,38 @@ pub fn render_component(component_type: ComponentType) -> Element {
                         }
                     }
                 },
-                ("layer1", "switch", Some("slider")) => rsx! {
-                    div { class: flex_col_gap(),
-                        Slider { value: 50, min: 0, max: 100, on_change: move |_| {} }
+                ("layer1", "switch", Some("slider")) => {
+                    let mut value = use_signal(|| 50);
+                    rsx! {
+                        div { class: flex_col_gap(),
+                            div { style: "display: flex; align-items: center; gap: 1rem;",
+                                Slider {
+                                    value: value(),
+                                    min: 0,
+                                    max: 100,
+                                    on_change: move |v| value.set(v),
+                                }
+                                span { style: "min-width: 40px; text-align: right;", "{value()}" }
+                            }
+                        }
                     }
-                },
-                ("layer1", "switch", _) => rsx! {
-                    div { class: flex_row_wrap(),
-                        Switch { checked: false, on_change: move |_| {} }
-                        Switch { checked: true, on_change: move |_| {} }
+                }
+                ("layer1", "switch", _) => {
+                    let mut checked1 = use_signal(|| false);
+                    let mut checked2 = use_signal(|| true);
+                    rsx! {
+                        div { class: flex_row_wrap(),
+                            Switch {
+                                checked: checked1(),
+                                on_change: move |v| checked1.set(v),
+                            }
+                            Switch {
+                                checked: checked2(),
+                                on_change: move |v| checked2.set(v),
+                            }
+                        }
                     }
-                },
+                }
 
                 // ========== Tag ==========
                 ("layer1", "tag", Some("basic")) => rsx! {

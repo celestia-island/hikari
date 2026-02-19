@@ -1,4 +1,5 @@
 // Switch Component Styles
+// Uses CSS variables for animation control via AnimationBuilder
 
 .hi-switch-label {
     display: inline-flex;
@@ -20,7 +21,7 @@
     display: inline-block;
     background-color: var(--hi-color-border, #bfbfbf);
     border-radius: 100px;
-    transition: all 0.2s ease;
+    transition: background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
     vertical-align: middle;
 }
 
@@ -43,7 +44,7 @@
     position: absolute;
     background-color: #fff;
     border-radius: 50%;
-    transition: all 0.2s ease;
+    transition: transform var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
@@ -85,7 +86,7 @@
 }
 
 .hi-switch:hover:not(.hi-switch-disabled) {
-    background-color: var(--hi-color-border-hover, #999);
+    background-color: color-mix(in srgb, var(--hi-color-border, #bfbfbf) 85%, black);
 }
 
 .hi-switch.hi-switch-checked:hover:not(.hi-switch-disabled) {
@@ -107,6 +108,7 @@
     line-height: 1.5;
 }
 
+// Dark theme
 [data-theme="dark"] .hi-switch,
 [data-theme="tairitsu"] .hi-switch {
     background-color: var(--hi-surface-hover, #333);

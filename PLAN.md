@@ -5,71 +5,73 @@
 ### Layer1 组件改进
 
 1. **数字输入框 (NumberInput)** ✅
-   - 添加自定义增减按钮样式
-   - 使用 Glow wrapper 效果
-   - 添加 SVG 图标（+/-）替代纯文本
-   - 支持尺寸变体 (Small/Medium/Large)
+   - 重构按钮样式，+- 按钮现在位于输入框内部
+   - 按钮与输入框有清晰的边界分隔
+   - 支持 Small/Medium/Large 尺寸变体
+   - 优化 hover/active/disabled 状态样式
+   - 支持深色模式
 
 2. **搜索框 (Search)** ✅
-   - 添加候选输入 suggestion 弹出功能
-   - 添加搜索图标
-   - 使用 IconButton 作为关闭按钮
-   - 添加 Glow wrapper 效果
+   - 搜索图标现在位于输入框内部左侧
+   - 使用 inline-flex 布局确保元素正确对齐
+   - 候选输入 suggestion 弹出功能
+   - 加载状态 spinner 动画
+   - 清除按钮使用 IconButton
+   - 支持深色模式
 
-3. **反馈组件 (Alert/Toast)** ✅
-   - 添加 Glow wrapper 鼠标跟随光效
-   - 使用 IconButton 替代原生关闭按钮
-   - 简化动画效果
+3. **Switch 开关** ✅
+   - 修复 CSS 选择器问题
+   - 优化尺寸 (Small/Medium/Large)
+   - 改进过渡动画
+   - 支持 checked/unchecked 状态
+   - 支持深色模式
 
-4. **Tooltip** ✅
-   - 简化实现，修复样式问题
+4. **Progress 进度条** ✅
+   - 重构为正确的线性进度条实现
+   - 添加轨道背景和进度填充
+   - 支持四种状态: Normal/Active/Success/Exception
+   - 环形进度条支持
+   - 支持深色模式
 
-5. **Breadcrumb 面包屑** ✅
-   - 修复为横向布局
-   - 添加分隔符图标
+5. **Slider 滑块** ✅
+   - 重构为正确的滑块实现
+   - 添加轨道和已滑动部分填充
+   - 圆形滑块手柄带阴影
+   - hover 状态放大效果
+   - 支持 Small/Medium/Large 尺寸
+   - 支持深色模式
 
-6. **Skeleton 骨架屏** ✅
-   - 创建新的 Skeleton 组件替代 Empty
-   - 支持 Text/Circular/Rectangular/Rounded 变体
-   - 添加 SkeletonCard 和 SkeletonTable 预设
-   - 添加 shimmer 动画
-
-7. **FlexBox 案例** ✅
-   - 添加 row/col/align 展示案例
-   - 展示 Direction/Align/Gap 配置
-
-8. **删除 DescriptionList** ✅
-   - 从 display 模块删除 description_list.rs
-
-### 组件增强
-
-9. **Avatar** ✅
-   - 添加 AvatarFallbackMode 枚举 (Initial/Icon/None)
-   - 使用本地 SVG 图标替代 CDN
-
-10. **Image** ✅
-    - 添加 ImagePlaceholder 枚举 (Skeleton/Icon/None)
-    - 支持 onload/onerror 处理器
-
-11. **Menu** ✅
-    - MenuItem 使用 Glow wrapper（已实现）
-    - SubMenu 标题使用 Glow wrapper（已实现）
+6. **Modal 对话框 (Website Demo)** ✅
+   - 使用 Portal 系统的全局上下文管理器
+   - 使用 `use_modal` hook 控制模态框
+   - 添加动画效果
+   - 正确的遮罩层和关闭行为
 
 ---
 
-## 已有自定义实现（无需修改）
+## 组件样式规范
 
-- Switch - 已有自定义实现
-- Progress - 已有自定义实现
-- Slider - 已有自定义实现
-- Badge - 已有自定义实现
-- Tag - 已有自定义实现
-- Tabs - 已有自定义实现
+### 设计原则
+- 所有组件遵循 Arknights + FUI 风格
+- 使用 CSS 变量支持主题切换
+- 提供 fallback 值确保在没有 CSS 变量时也能正常显示
+- 支持深色模式
+
+### CSS 变量使用
+```css
+/* 颜色变量示例 */
+--hi-color-primary: #1890ff;
+--hi-color-border: #d9d9d9;
+--hi-color-surface: #fff;
+--hi-color-text-primary: #333;
+--hi-color-text-secondary: #666;
+```
 
 ---
 
 ## 验证状态
 
-- ✅ 所有测试通过 (148+ tests)
-- ✅ 无编译错误
-- ✅ 无 TODO/Mock 实现
+- ✅ 所有组件编译通过
+- ✅ Website 编译通过
+- ✅ 样式正确应用
+- ✅ 深色模式支持

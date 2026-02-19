@@ -40,6 +40,7 @@ use _components::{
     },
     feedback::{
         alert::{Alert, AlertVariant},
+        modal::{use_modal, ModalContent},
         popover::Popover,
         progress::{Progress, ProgressStatus},
         toast::{Toast, ToastVariant},
@@ -826,19 +827,40 @@ pub fn render_component(component_type: ComponentType) -> Element {
                         }
                     }
                 },
-                ("layer2", "form", Some("modal")) => rsx! {
-                    div { class: flex_row_wrap(),
-                        Popover {
-                            trigger: rsx! {
-                                Button { variant: ButtonVariant::Primary, "Open Modal" }
-                            },
-                            div { style: "padding: 16px; min-width: 200px;",
-                                h3 { style: "margin-bottom: 8px;", "Modal Title" }
-                                p { "Modal content goes here" }
+                ("layer2", "form", Some("modal")) => {
+                    let modal = use_modal(Default::default());
+                    rsx! {
+                        div { class: flex_row_wrap(),
+                            Button {
+                                variant: ButtonVariant::Primary,
+                                onclick: move |_| {
+                                    modal.open.call(ModalContent {
+                                        title: Some("Modal Title".to_string()),
+                                        children: rsx! {
+                                            div { style: "padding: 16px;",
+                                                p { "This is a modal dialog using the Portal system." }
+                                                p { style: "margin-top: 12px;", "Modal content can include any components." }
+                                                div { style: "margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end;",
+                                                    Button {
+                                                        variant: ButtonVariant::Ghost,
+                                                        onclick: move |_| modal.close.call(()),
+                                                        "Cancel"
+                                                    }
+                                                    Button {
+                                                        variant: ButtonVariant::Primary,
+                                                        onclick: move |_| modal.close.call(()),
+                                                        "Confirm"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                    });
+                                },
+                                "Open Modal"
                             }
                         }
                     }
-                },
+                }
                 ("layer2", "form", Some("collapse")) => rsx! {
                     div { style: "width: 100%; max-width: 400px;",
                         Collapse {

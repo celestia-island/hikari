@@ -1,0 +1,174 @@
+// NumberInput Component Styles
+
+.hi-number-input-wrapper {
+    display: inline-flex;
+    align-items: stretch;
+    border-radius: 8px;
+    border: 1px solid var(--hi-color-border, #d9d9d9);
+    background-color: var(--hi-color-surface, #fff);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.hi-number-input-wrapper:focus-within {
+    border-color: var(--hi-color-primary, #1890ff);
+    box-shadow: 0 0 0 2px var(--hi-color-primary-glow, rgba(24, 144, 255, 0.2));
+}
+
+.hi-number-input-sm {
+    height: 24px;
+    font-size: 12px;
+}
+
+.hi-number-input-md {
+    height: 32px;
+    font-size: 14px;
+}
+
+.hi-number-input-lg {
+    height: 40px;
+    font-size: 16px;
+}
+
+.hi-number-input-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    padding: 0;
+    background-color: var(--hi-color-background, #fafafa);
+    border: none;
+    color: var(--hi-color-text-secondary, #666);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    outline: none;
+}
+
+.hi-number-input-btn-decrement {
+    border-right: 1px solid var(--hi-color-border, #d9d9d9);
+    border-radius: 7px 0 0 7px;
+}
+
+.hi-number-input-btn-increment {
+    border-left: 1px solid var(--hi-color-border, #d9d9d9);
+    border-radius: 0 7px 7px 0;
+}
+
+.hi-number-input-btn:hover:not(:disabled) {
+    color: var(--hi-color-primary, #1890ff);
+    background-color: var(--hi-color-primary-glow, rgba(24, 144, 255, 0.1));
+}
+
+.hi-number-input-btn:active:not(:disabled) {
+    transform: scale(0.9);
+    background-color: var(--hi-color-primary, #1890ff);
+    color: #fff;
+}
+
+.hi-number-input-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    color: var(--hi-color-text-disabled, #bfbfbf);
+    background-color: transparent;
+}
+
+.hi-number-input-btn:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--hi-color-primary, #1890ff);
+}
+
+.hi-number-input-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.hi-number-input-sm .hi-number-input-btn {
+    width: 24px;
+}
+
+.hi-number-input-sm .hi-number-input-btn svg {
+    width: 12px;
+    height: 12px;
+}
+
+.hi-number-input-lg .hi-number-input-btn {
+    width: 40px;
+}
+
+.hi-number-input-lg .hi-number-input-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.hi-number-input-input {
+    flex: 1;
+    min-width: 48px;
+    height: 100%;
+    padding: 0 8px;
+    border: none;
+    background-color: transparent;
+    color: var(--hi-color-text-primary, #333);
+    font-size: inherit;
+    text-align: center;
+    outline: none;
+    font-weight: 500;
+}
+
+.hi-number-input-input::-webkit-outer-spin-button,
+.hi-number-input-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.hi-number-input-input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.hi-number-input-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.hi-number-input-input::placeholder {
+    color: var(--hi-color-text-secondary, #999);
+}
+
+[data-theme="dark"] .hi-number-input-wrapper,
+[data-theme="tairitsu"] .hi-number-input-wrapper {
+    background-color: var(--hi-surface, #1a1a1a);
+    border-color: var(--hi-border, #333);
+}
+
+[data-theme="dark"] .hi-number-input-btn,
+[data-theme="tairitsu"] .hi-number-input-btn {
+    background-color: var(--hi-surface-hover, #252525);
+    color: var(--hi-text-secondary, #aaa);
+}
+
+[data-theme="dark"] .hi-number-input-btn:hover:not(:disabled),
+[data-theme="tairitsu"] .hi-number-input-btn:hover:not(:disabled) {
+    background-color: var(--hi-color-primary-glow, rgba(24, 144, 255, 0.15));
+    color: var(--hi-color-primary, #40a9ff);
+}
+
+[data-theme="dark"] .hi-number-input-btn:active:not(:disabled),
+[data-theme="tairitsu"] .hi-number-input-btn:active:not(:disabled) {
+    background-color: var(--hi-color-primary, #1890ff);
+    color: #fff;
+}
+
+[data-theme="dark"] .hi-number-input-btn-decrement,
+[data-theme="tairitsu"] .hi-number-input-btn-decrement {
+    border-right-color: var(--hi-border, #333);
+}
+
+[data-theme="dark"] .hi-number-input-btn-increment,
+[data-theme="tairitsu"] .hi-number-input-btn-increment {
+    border-left-color: var(--hi-border, #333);
+}
+
+[data-theme="dark"] .hi-number-input-input,
+[data-theme="tairitsu"] .hi-number-input-input {
+    color: var(--hi-text-primary, #e0e0e0);
+}

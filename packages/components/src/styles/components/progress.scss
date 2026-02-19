@@ -1,0 +1,129 @@
+// Progress Component Styles
+
+.hi-progress-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.hi-progress-outer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.hi-progress-inner {
+    flex: 1;
+    background-color: var(--hi-color-background, #f5f5f5);
+    border-radius: 100px;
+    overflow: hidden;
+    height: 8px;
+}
+
+.hi-progress-bg {
+    height: 100%;
+    border-radius: 100px;
+    background-color: var(--hi-color-primary, #1890ff);
+    transition: width 0.3s ease;
+}
+
+.hi-progress-text {
+    flex-shrink: 0;
+    font-size: 14px;
+    color: var(--hi-color-text-primary, #333);
+    min-width: 40px;
+    text-align: right;
+}
+
+// Status variants
+.hi-progress-active .hi-progress-bg {
+    background: linear-gradient(90deg, var(--hi-color-primary, #1890ff) 0%, #40a9ff 100%);
+    background-size: 200% 100%;
+    animation: hi-progress-active 2s linear infinite;
+}
+
+@keyframes hi-progress-active {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+
+.hi-progress-success .hi-progress-bg {
+    background-color: var(--hi-color-success, #52c41a);
+}
+
+.hi-progress-success .hi-progress-text {
+    color: var(--hi-color-success, #52c41a);
+}
+
+.hi-progress-exception .hi-progress-bg {
+    background-color: var(--hi-color-danger, #ff4d4f);
+}
+
+.hi-progress-exception .hi-progress-text {
+    color: var(--hi-color-danger, #ff4d4f);
+}
+
+// Circular progress
+.hi-progress-circle-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hi-progress-circle {
+    display: block;
+}
+
+.hi-progress-circle-trail {
+    stroke: var(--hi-color-background, #f5f5f5);
+}
+
+.hi-progress-circle-path {
+    stroke: var(--hi-color-primary, #1890ff);
+    transition: stroke-dashoffset 0.3s ease;
+}
+
+.hi-progress-active .hi-progress-circle-path {
+    stroke: var(--hi-color-primary, #1890ff);
+}
+
+.hi-progress-success .hi-progress-circle-path {
+    stroke: var(--hi-color-success, #52c41a);
+}
+
+.hi-progress-exception .hi-progress-circle-path {
+    stroke: var(--hi-color-danger, #ff4d4f);
+}
+
+.hi-progress-circle-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--hi-color-text-primary, #333);
+}
+
+[data-theme="dark"] .hi-progress-inner,
+[data-theme="tairitsu"] .hi-progress-inner {
+    background-color: var(--hi-surface-hover, #252525);
+}
+
+[data-theme="dark"] .hi-progress-circle-trail,
+[data-theme="tairitsu"] .hi-progress-circle-trail {
+    stroke: var(--hi-surface-hover, #252525);
+}
+
+[data-theme="dark"] .hi-progress-text,
+[data-theme="tairitsu"] .hi-progress-text {
+    color: var(--hi-text-primary, #e0e0e0);
+}
+
+[data-theme="dark"] .hi-progress-circle-text,
+[data-theme="tairitsu"] .hi-progress-circle-text {
+    color: var(--hi-text-primary, #e0e0e0);
+}

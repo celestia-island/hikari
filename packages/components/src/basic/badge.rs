@@ -2,7 +2,7 @@
 // Badge component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{BadgeClass, ClassesBuilder};
+use palette::classes::{BadgeClass, ClassesBuilder, Display};
 
 use crate::styled::StyledComponent;
 
@@ -14,9 +14,11 @@ pub enum BadgeVariant {
     #[default]
     Default,
     Primary,
+    Secondary,
     Success,
     Warning,
     Danger,
+    Info,
 }
 
 #[derive(Clone, PartialEq, Props)]
@@ -56,24 +58,6 @@ impl Default for BadgeProps {
     }
 }
 
-/// Badge component with Arknights + FUI styling
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Badge, BadgeVariant};
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Badge {
-///             variant: BadgeVariant::Primary,
-///             count: 5,
-///             Button { "Notifications" }
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Badge(props: BadgeProps) -> Element {
     let display_count = if let Some(count) = props.count {
@@ -92,40 +76,54 @@ pub fn Badge(props: BadgeProps) -> Element {
         None
     };
 
-    // Map variant to CSS class
     let variant_class = match props.variant {
         BadgeVariant::Default => None,
         BadgeVariant::Primary => Some(BadgeClass::Primary),
+        BadgeVariant::Secondary => Some(BadgeClass::Secondary),
         BadgeVariant::Success => Some(BadgeClass::Success),
         BadgeVariant::Warning => Some(BadgeClass::Warning),
         BadgeVariant::Danger => Some(BadgeClass::Danger),
+        BadgeVariant::Info => Some(BadgeClass::Info),
     };
 
-    // Pre-compute badge classes outside rsx
-    let badge_classes = if props.dot || display_count.is_some() {
+    let is_standalone = !props.dot && display_count.is_none();
+
+    if is_standalone {
         let mut builder = ClassesBuilder::new()
             .add(BadgeClass::Badge)
-            .add_if(BadgeClass::Dot, || props.dot);
+            .add(Display::InlineFlex);
 
         if let Some(vc) = variant_class {
             builder = builder.add(vc);
         }
 
-        builder.build()
+        let badge_classes = builder.add_raw(&props.class).build();
+
+        rsx! {
+            span { class: "{badge_classes}",
+                {props.children}
+            }
+        }
     } else {
-        String::new()
-    };
+        let mut builder = ClassesBuilder::new()
+            .add(BadgeClass::Badge)
+            .add(BadgeClass::Dot);
 
-    rsx! {
-        div { class: format!("hi-badge-wrapper {}", props.class),
+        if let Some(vc) = variant_class {
+            builder = builder.add(vc);
+        }
 
-            {props.children}
+        let badge_classes = builder.build();
 
-            if !badge_classes.is_empty() {
+        rsx! {
+            div { class: format!("hi-badge-wrapper {}", props.class),
+
+                {props.children}
+
                 span { class: "{badge_classes}",
 
                     if props.dot {
-                        span { class: "hi-badge-dot" }
+                        span { class: "hi-badge-dot-inner" }
                     } else if let Some(count) = display_count {
                         "{count}"
                     }

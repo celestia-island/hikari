@@ -8,350 +8,170 @@
 // ============================================
 
 // ============================================
-// Base Badge Styles
+// Base Badge Styles (Standalone labels)
 // ============================================
 
 .hi-badge {
-  // Layout
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
-  // Spacing
-  padding: 0.25rem 0.5rem;
-
-  // Typography
+  padding: 0.25rem 0.625rem;
   font-family: vars.$hikari-font-family-sans;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1;
   white-space: nowrap;
   color: var(--hi-color-text-inverted, #ffffff);
-
-  // Appearance - Subtle rounded corners
   border-radius: vars.$hikari-radius-fui-sm;
   border: 1px solid transparent;
-
-  // Transitions - smooth GSAP-style easing
-  // DISABLED - migrated to JS animation
-
-  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
-
-  // Default background
-  background: var(--hi-color-gray-100);
+  background: linear-gradient(135deg, var(--hi-color-gray-100), var(--hi-color-gray-50));
   box-shadow: 0 0 8px var(--hi-color-gray-30);
-
-  // Position context for dot variant
   position: relative;
   vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 // ============================================
-// Color Variants
+// Color Variants - 使用调色板上下文颜色
 // ============================================
 
-// Primary (Blue)
+// Primary (牡丹粉红)
 .hi-badge-primary {
   background: linear-gradient(135deg, var(--hi-button-primary), var(--hi-button-primary-dark));
   border-color: var(--hi-button-primary-hover);
   box-shadow:
     0 0 8px var(--hi-glow-button-primary),
-    inset 0 0 4px var(--hi-color-white-10, rgba(255, 255, 255, 0.1));
-
-  &:hover {
-    box-shadow:
-      0 0 12px var(--hi-glow-button-primary),
-      inset 0 0 6px var(--hi-color-white-15, rgba(255, 255, 255, 0.15));
-    transform: scale(1.05);
-  }
+    inset 0 0 4px var(--hi-color-white-10);
+  color: var(--hi-color-text-on-primary);
 }
 
-// Secondary (Gray)
+// Secondary (苍翠)
 .hi-badge-secondary {
-  background: linear-gradient(135deg, var(--hi-color-gray-100), var(--hi-color-gray-70));
-  border-color: var(--hi-color-gray-50);
+  background: linear-gradient(135deg, var(--hi-button-secondary), var(--hi-button-secondary-dark));
+  border-color: var(--hi-button-secondary-hover);
   box-shadow:
-    0 0 8px var(--hi-glow-gray-30),
-    inset 0 0 4px var(--hi-color-white-10, rgba(255, 255, 255, 0.1));
-
-  &:hover {
-    box-shadow:
-      0 0 12px var(--hi-glow-gray-50),
-      inset 0 0 6px var(--hi-color-white-15, rgba(255, 255, 255, 0.15));
-    transform: scale(1.05);
-  }
+    0 0 8px var(--hi-glow-button-secondary),
+    inset 0 0 4px var(--hi-color-white-10);
+  color: var(--hi-color-text-on-secondary);
 }
 
-// Success (Green)
+// Success (葱倩)
 .hi-badge-success {
   background: linear-gradient(135deg, var(--hi-button-success), var(--hi-button-success-dark));
   border-color: var(--hi-button-success-light);
   box-shadow:
     0 0 8px var(--hi-glow-button-success),
-    inset 0 0 4px var(--hi-color-white-10, rgba(255, 255, 255, 0.1));
-
-  &:hover {
-    box-shadow:
-      0 0 12px var(--hi-glow-button-success),
-      inset 0 0 6px var(--hi-color-white-15, rgba(255, 255, 255, 0.15));
-    transform: scale(1.05);
-  }
+    inset 0 0 4px var(--hi-color-white-10);
+  color: var(--hi-color-text-on-success);
 }
 
-// Warning (Yellow/Orange)
+// Warning (鹅黄)
 .hi-badge-warning {
   background: linear-gradient(135deg, var(--hi-button-warning), var(--hi-button-warning-dark));
   border-color: var(--hi-button-warning-light);
   box-shadow:
     0 0 8px var(--hi-glow-button-warning),
-    inset 0 0 4px var(--hi-color-white-10, rgba(255, 255, 255, 0.1));
-
-  &:hover {
-    box-shadow:
-      0 0 12px var(--hi-glow-button-warning),
-      inset 0 0 6px var(--hi-color-white-15, rgba(255, 255, 255, 0.15));
-    transform: scale(1.05);
-  }
+    inset 0 0 4px var(--hi-color-white-10);
+  color: var(--hi-color-text-on-warning);
 }
 
-// Danger (Red)
+// Danger (朱红)
 .hi-badge-danger {
   background: linear-gradient(135deg, var(--hi-button-danger), var(--hi-button-danger-dark));
   border-color: var(--hi-button-danger-light);
   box-shadow:
     0 0 8px var(--hi-glow-button-danger),
-    inset 0 0 4px var(--hi-color-white-10, rgba(255, 255, 255, 0.1));
-
-  &:hover {
-    box-shadow:
-      0 0 12px var(--hi-glow-button-danger),
-      inset 0 0 6px var(--hi-color-white-15, rgba(255, 255, 255, 0.15));
-    transform: scale(1.05);
-  }
+    inset 0 0 4px var(--hi-color-white-10);
+  color: var(--hi-color-text-on-danger);
 }
 
-// Info (Cyan)
+// Info (青色)
 .hi-badge-info {
   background: linear-gradient(135deg, var(--hi-button-info), var(--hi-button-info-dark));
   border-color: var(--hi-button-info-light);
   box-shadow:
     0 0 8px var(--hi-glow-button-info),
-    inset 0 0 4px var(--hi-color-white-10, rgba(255, 255, 255, 0.1));
-
-  &:hover {
-    box-shadow:
-      0 0 12px var(--hi-glow-button-info),
-      inset 0 0 6px var(--hi-color-white-15, rgba(255, 255, 255, 0.15));
-    transform: scale(1.05);
-  }
+    inset 0 0 4px var(--hi-color-white-10);
+  color: var(--hi-color-text-on-info);
 }
 
 // ============================================
-// Glowing Variant (Enhanced FUI effect)
+// Positioning (for count/dot badges on children)
 // ============================================
 
-.hi-badge-glow {
-  // DISABLED - migrated to JS animation
+.hi-badge-wrapper {
+  position: relative;
+  display: inline-block;
 
-  // animation: badge-glow-pulse 2s ease-in-out infinite;
-
-  &.hi-badge-primary {
-    // DISABLED - migrated to JS animation
-
-    // animation: badge-glow-primary 2s ease-in-out infinite;
-  }
-
-  &.hi-badge-success {
-    // DISABLED - migrated to JS animation
-
-    // animation: badge-glow-success 2s ease-in-out infinite;
-  }
-
-  &.hi-badge-warning {
-    // DISABLED - migrated to JS animation
-
-    // animation: badge-glow-warning 2s ease-in-out infinite;
-  }
-
-  &.hi-badge-danger {
-    // DISABLED - migrated to JS animation
-
-    // animation: badge-glow-danger 2s ease-in-out infinite;
-  }
-
-  &.hi-badge-info {
-    // DISABLED - migrated to JS animation
-
-    // animation: badge-glow-info 2s ease-in-out infinite;
+  .hi-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translate(50%, -50%);
+    z-index: 10;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 0.3rem;
+    font-size: 0.625rem;
+    border-radius: 9px;
   }
 }
-
-// DISABLED - migrated to JS animation
-// @keyframes badge-glow-primary {
-//   0%, 100% {
-//     box-shadow:
-//       0 0 8px rgba(59, 130, 246, 0.4),
-//       0 0 16px rgba(59, 130, 246, 0.2),
-//       inset 0 0 4px var(--hi-white-10, rgba(255, 255, 255, 0.1));
-//   }
-//   50% {
-//     box-shadow:
-//       0 0 12px rgba(59, 130, 246, 0.6),
-//       0 0 24px rgba(59, 130, 246, 0.4),
-//       inset 0 0 6px var(--hi-white-15, rgba(255, 255, 255, 0.15));
-//   }
-// }
-
-// DISABLED - migrated to JS animation
-// @keyframes badge-glow-success {
-//   0%, 100% {
-//     box-shadow:
-//       0 0 8px rgba(14, 184, 64, 0.4),
-//       0 0 16px rgba(14, 184, 64, 0.2),
-//       inset 0 0 4px var(--hi-white-10, rgba(255, 255, 255, 0.1));
-//   }
-//   50% {
-//     box-shadow:
-//       0 0 12px rgba(14, 184, 64, 0.6),
-//       0 0 24px rgba(14, 184, 64, 0.4),
-//       inset 0 0 6px var(--hi-white-15, rgba(255, 255, 255, 0.15));
-//   }
-// }
-
-// DISABLED - migrated to JS animation
-// @keyframes badge-glow-warning {
-//   0%, 100% {
-//     box-shadow:
-//       0 0 8px rgba(245, 158, 11, 0.4),
-//       0 0 16px rgba(245, 158, 11, 0.2),
-//       inset 0 0 4px var(--hi-white-10, rgba(255, 255, 255, 0.1));
-//   }
-//   50% {
-//     box-shadow:
-//       0 0 12px rgba(245, 158, 11, 0.6),
-//       0 0 24px rgba(245, 158, 11, 0.4),
-//       inset 0 0 6px var(--hi-white-15, rgba(255, 255, 255, 0.15));
-//   }
-// }
-
-// DISABLED - migrated to JS animation
-// @keyframes badge-glow-danger {
-//   0%, 100% {
-//     box-shadow:
-//       0 0 8px rgba(255, 76, 0, 0.4),
-//       0 0 16px rgba(255, 76, 0, 0.2),
-//       inset 0 0 4px var(--hi-white-10, rgba(255, 255, 255, 0.1));
-//   }
-//   50% {
-//     box-shadow:
-//       0 0 12px rgba(255, 76, 0, 0.6),
-//       0 0 24px rgba(255, 76, 0, 0.4),
-//       inset 0 0 6px var(--hi-white-15, rgba(255, 255, 255, 0.15));
-//   }
-// }
-
-// DISABLED - migrated to JS animation
-// @keyframes badge-glow-info {
-//   0%, 100% {
-//     box-shadow:
-//       0 0 8px rgba(6, 182, 212, 0.4),
-//       0 0 16px rgba(6, 182, 212, 0.2),
-//       inset 0 0 4px var(--hi-white-10, rgba(255, 255, 255, 0.1));
-//   }
-//   50% {
-//     box-shadow:
-//       0 0 12px rgba(6, 182, 212, 0.6),
-//       0 0 24px rgba(6, 182, 212, 0.4),
-//       inset 0 0 6px var(--hi-white-15, rgba(255, 255, 255, 0.15));
-//   }
-// }
-
-// ============================================
-// Pulse Animation Variant
-// ============================================
-
-.hi-badge-pulse {
-  // DISABLED - migrated to JS animation
-
-  // animation: badge-pulse 1.5s ease-in-out infinite;
-}
-
-// DISABLED - migrated to JS animation
-// @keyframes badge-pulse {
-//   0%, 100% {
-//     transform: scale(1);
-//     opacity: 1;
-//   }
-//   50% {
-//     transform: scale(1.1);
-//     opacity: 0.9;
-//   }
-// }
 
 // ============================================
 // Dot Variant (Small indicator)
 // ============================================
 
 .hi-badge-dot {
-  width: 8px;
-  height: 8px;
-  padding: 0;
-  border-radius: 50%;
+  width: 8px !important;
+  height: 8px !important;
+  min-width: 8px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  font-size: 0 !important;
 
-  &.hi-badge-primary {
-    background: radial-gradient(circle, var(--hi-button-primary-light), var(--hi-button-primary));
-    box-shadow: 0 0 8px var(--hi-glow-button-primary);
-  }
-
-  &.hi-badge-success {
-    background: radial-gradient(circle, var(--hi-button-success-light), var(--hi-button-success));
-    box-shadow: 0 0 8px var(--hi-glow-button-success);
-  }
-
-  &.hi-badge-warning {
-    background: radial-gradient(circle, var(--hi-button-warning-light), var(--hi-button-warning));
-    box-shadow: 0 0 8px var(--hi-glow-button-warning);
-  }
-
-  &.hi-badge-danger {
-    background: radial-gradient(circle, var(--hi-button-danger-light), var(--hi-button-danger));
-    box-shadow: 0 0 8px var(--hi-glow-button-danger);
-  }
-
-  &.hi-badge-pulse {
-    // DISABLED - migrated to JS animation
-
-    // animation: badge-dot-pulse 1.5s ease-in-out infinite;
+  .hi-badge-dot-inner {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
   }
 }
 
-// DISABLED - migrated to JS animation
-// @keyframes badge-dot-pulse {
-//   0%, 100% {
-//     transform: scale(1);
-//     box-shadow: 0 0 8px currentColor;
-//   }
-//   50% {
-//     transform: scale(1.2);
-//     box-shadow: 0 0 16px currentColor;
-//   }
-// }
-
-// ============================================
-// Positioning Variants (for parent elements)
-// ============================================
-
-.hi-badge-wrapper {
-  position: relative;
-  display: inline-block;
+// Dot variant colors
+.hi-badge-dot.hi-badge-primary .hi-badge-dot-inner {
+  background: radial-gradient(circle, var(--hi-button-primary-light), var(--hi-button-primary));
+  box-shadow: 0 0 6px var(--hi-glow-button-primary);
 }
 
-.hi-badge-absolute {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  transform: translate(50%, -50%);
-  z-index: 10;
+.hi-badge-dot.hi-badge-secondary .hi-badge-dot-inner {
+  background: radial-gradient(circle, var(--hi-button-secondary-light), var(--hi-button-secondary));
+  box-shadow: 0 0 6px var(--hi-glow-button-secondary);
+}
+
+.hi-badge-dot.hi-badge-success .hi-badge-dot-inner {
+  background: radial-gradient(circle, var(--hi-button-success-light), var(--hi-button-success));
+  box-shadow: 0 0 6px var(--hi-glow-button-success);
+}
+
+.hi-badge-dot.hi-badge-warning .hi-badge-dot-inner {
+  background: radial-gradient(circle, var(--hi-button-warning-light), var(--hi-button-warning));
+  box-shadow: 0 0 6px var(--hi-glow-button-warning);
+}
+
+.hi-badge-dot.hi-badge-danger .hi-badge-dot-inner {
+  background: radial-gradient(circle, var(--hi-button-danger-light), var(--hi-button-danger));
+  box-shadow: 0 0 6px var(--hi-glow-button-danger);
+}
+
+.hi-badge-dot.hi-badge-info .hi-badge-dot-inner {
+  background: radial-gradient(circle, var(--hi-button-info-light), var(--hi-button-info));
+  box-shadow: 0 0 6px var(--hi-glow-button-info);
+}
+
+.hi-badge-dot .hi-badge-dot-inner {
+  background: radial-gradient(circle, var(--hi-color-gray-100), var(--hi-color-gray-50));
+  box-shadow: 0 0 4px var(--hi-color-gray-30);
 }
 
 // ============================================
@@ -364,12 +184,6 @@
   border-radius: 3px;
 }
 
-.hi-badge-md {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  border-radius: vars.$hikari-radius-fui-sm;
-}
-
 .hi-badge-lg {
   padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
@@ -377,96 +191,34 @@
 }
 
 // ============================================
-// Count Badge (for numbers)
-// ============================================
-
-.hi-badge-count {
-  min-width: 20px;
-  height: 20px;
-  padding: 0 0.375rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 20px;
-  text-align: center;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--hi-button-danger), var(--hi-button-danger-dark));
-  box-shadow:
-    0 0 8px var(--hi-glow-button-danger),
-    inset 0 0 4px var(--hi-color-white-15, rgba(255, 255, 255, 0.15));
-
-  &.hi-badge-count-lg {
-    min-width: 24px;
-    height: 24px;
-    line-height: 24px;
-    font-size: 0.875rem;
-    padding: 0 0.5rem;
-  }
-}
-
-// ============================================
-// Status Badge (Online/Offline/Away)
+// Status Badge (for Avatar integration)
 // ============================================
 
 .hi-badge-status {
+  width: 10px !important;
+  height: 10px !important;
+  min-width: 10px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  border: 2px solid var(--hi-color-surface);
+
   &.hi-badge-online {
-    background: radial-gradient(circle, var(--hi-button-success-light), var(--hi-button-success));
-    box-shadow: 0 0 8px var(--hi-glow-button-success);
+    background: var(--hi-button-success);
+    box-shadow: 0 0 6px var(--hi-glow-button-success);
   }
 
   &.hi-badge-offline {
-    background: radial-gradient(circle, var(--hi-color-gray-100), var(--hi-color-gray-70));
-    box-shadow: 0 0 4px var(--hi-glow-gray-30);
+    background: var(--hi-color-gray-100);
+    box-shadow: 0 0 4px var(--hi-color-gray-30);
   }
 
   &.hi-badge-away {
-    background: radial-gradient(circle, var(--hi-button-warning-light), var(--hi-button-warning));
-    box-shadow: 0 0 8px var(--hi-glow-button-warning);
+    background: var(--hi-button-warning);
+    box-shadow: 0 0 6px var(--hi-glow-button-warning);
   }
 
   &.hi-badge-busy {
-    background: radial-gradient(circle, var(--hi-button-danger-light), var(--hi-button-danger));
-    box-shadow: 0 0 8px var(--hi-glow-button-danger);
+    background: var(--hi-button-danger);
+    box-shadow: 0 0 6px var(--hi-glow-button-danger);
   }
 }
-
-// ============================================
-// Animations
-// ============================================
-
-.hi-badge-animate-in {
-  // DISABLED - migrated to JS animation
-
-  // animation: badge-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
-}
-
-// DISABLED - migrated to JS animation
-// @keyframes badge-fade-in {
-//   from {
-//     opacity: 0;
-//     transform: scale(0.8);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: scale(1);
-//   }
-// }
-
-// Bounce animation for new badges
-.hi-badge-bounce {
-  // DISABLED - migrated to JS animation
-
-  // animation: badge-bounce 0.6s vars.$hikari-ease-bounce;
-}
-
-// DISABLED - migrated to JS animation
-// @keyframes badge-bounce {
-//   0% {
-//     transform: scale(0);
-//   }
-//   50% {
-//     transform: scale(1.2);
-//   }
-//   100% {
-//     transform: scale(1);
-//   }
-// }

@@ -14,7 +14,7 @@ use _components::{
         radio_group::{RadioButton, RadioDirection, RadioGroup},
         select::{Select, SelectOption},
         slider::Slider,
-        switch::Switch,
+        switch::{Switch, SwitchContent, SwitchIcon, SwitchSize, SwitchVariant},
     },
     data::{
         collapse::Collapse,
@@ -399,6 +399,94 @@ pub fn render_component(component_type: ComponentType) -> Element {
                             Switch {
                                 checked: checked2(),
                                 on_change: move |v| checked2.set(v),
+                            }
+                        }
+                    }
+                }
+                ("layer1", "switch", Some("icon")) => {
+                    let mut checked1 = use_signal(|| false);
+                    let mut checked2 = use_signal(|| true);
+                    let mut checked3 = use_signal(|| false);
+                    let mut checked4 = use_signal(|| true);
+                    rsx! {
+                        div { class: flex_col_gap(),
+                            div { class: flex_row_wrap(),
+                                Switch {
+                                    checked: checked1(),
+                                    on_change: move |v| checked1.set(v),
+                                    variant: SwitchVariant::Icon,
+                                    unchecked_content: Some(SwitchContent::Icon(SwitchIcon::Close)),
+                                    checked_content: Some(SwitchContent::Icon(SwitchIcon::Check)),
+                                }
+                                Switch {
+                                    checked: checked2(),
+                                    on_change: move |v| checked2.set(v),
+                                    variant: SwitchVariant::Icon,
+                                    unchecked_content: Some(SwitchContent::Icon(SwitchIcon::Close)),
+                                    checked_content: Some(SwitchContent::Icon(SwitchIcon::Check)),
+                                }
+                            }
+                            div { class: flex_row_wrap(),
+                                Switch {
+                                    checked: checked3(),
+                                    on_change: move |v| checked3.set(v),
+                                    variant: SwitchVariant::Icon,
+                                    unchecked_content: Some(SwitchContent::Icon(SwitchIcon::Minus)),
+                                    checked_content: Some(SwitchContent::Icon(SwitchIcon::Plus)),
+                                }
+                                Switch {
+                                    checked: checked4(),
+                                    on_change: move |v| checked4.set(v),
+                                    variant: SwitchVariant::Icon,
+                                    unchecked_content: Some(SwitchContent::Icon(SwitchIcon::Minus)),
+                                    checked_content: Some(SwitchContent::Icon(SwitchIcon::Plus)),
+                                }
+                            }
+                        }
+                    }
+                }
+                ("layer1", "switch", Some("text")) => {
+                    let mut checked1 = use_signal(|| false);
+                    let mut checked2 = use_signal(|| true);
+                    rsx! {
+                        div { class: flex_row_wrap(),
+                            Switch {
+                                checked: checked1(),
+                                on_change: move |v| checked1.set(v),
+                                variant: SwitchVariant::Text,
+                                unchecked_content: Some(SwitchContent::Text("OFF".to_string())),
+                                checked_content: Some(SwitchContent::Text("ON".to_string())),
+                            }
+                            Switch {
+                                checked: checked2(),
+                                on_change: move |v| checked2.set(v),
+                                variant: SwitchVariant::Text,
+                                unchecked_content: Some(SwitchContent::Text("OFF".to_string())),
+                                checked_content: Some(SwitchContent::Text("ON".to_string())),
+                            }
+                        }
+                    }
+                }
+                ("layer1", "switch", Some("sizes")) => {
+                    let mut s1 = use_signal(|| false);
+                    let mut s2 = use_signal(|| true);
+                    let mut m1 = use_signal(|| false);
+                    let mut m2 = use_signal(|| true);
+                    let mut l1 = use_signal(|| false);
+                    let mut l2 = use_signal(|| true);
+                    rsx! {
+                        div { class: flex_col_gap(),
+                            div { class: flex_row_wrap(),
+                                Switch { checked: s1(), on_change: move |v| s1.set(v), size: SwitchSize::Small }
+                                Switch { checked: s2(), on_change: move |v| s2.set(v), size: SwitchSize::Small }
+                            }
+                            div { class: flex_row_wrap(),
+                                Switch { checked: m1(), on_change: move |v| m1.set(v), size: SwitchSize::Medium }
+                                Switch { checked: m2(), on_change: move |v| m2.set(v), size: SwitchSize::Medium }
+                            }
+                            div { class: flex_row_wrap(),
+                                Switch { checked: l1(), on_change: move |v| l1.set(v), size: SwitchSize::Large }
+                                Switch { checked: l2(), on_change: move |v| l2.set(v), size: SwitchSize::Large }
                             }
                         }
                     }

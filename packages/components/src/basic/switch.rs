@@ -113,127 +113,134 @@ impl StyledComponent for SwitchComponent {
     fn styles() -> &'static str {
         r#"
 .hi-switch-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
 }
 
 .hi-switch-input {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  width: 0;
-  height: 0;
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
 }
 
 .hi-switch {
-  position: relative;
-  background: var(--hi-color-border);
-  border-radius: 100px;
-  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
+    display: inline-block;
+    background-color: var(--hi-color-border, #bfbfbf);
+    border-radius: 100px;
+    transition: all 0.2s ease;
+    vertical-align: middle;
 }
 
 .hi-switch-sm {
-  width: 32px;
-  height: 18px;
+    width: 28px;
+    height: 16px;
 }
 
 .hi-switch-md {
-  width: 44px;
-  height: 24px;
+    width: 40px;
+    height: 22px;
 }
 
 .hi-switch-lg {
-  width: 56px;
-  height: 30px;
+    width: 52px;
+    height: 28px;
 }
 
 .hi-switch-thumb {
-  position: absolute;
-  background: white;
-  border-radius: 50%;
-  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: absolute;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .hi-switch-sm .hi-switch-thumb {
-  width: 14px;
-  height: 14px;
-  top: 2px;
-  left: 2px;
+    width: 12px;
+    height: 12px;
+    top: 2px;
+    left: 2px;
 }
 
 .hi-switch-md .hi-switch-thumb {
-  width: 18px;
-  height: 18px;
-  top: 3px;
-  left: 3px;
+    width: 18px;
+    height: 18px;
+    top: 2px;
+    left: 2px;
 }
 
 .hi-switch-lg .hi-switch-thumb {
-  width: 22px;
-  height: 22px;
-  top: 4px;
-  left: 4px;
+    width: 24px;
+    height: 24px;
+    top: 2px;
+    left: 2px;
 }
 
 .hi-switch-checked {
-  background: var(--hi-color-primary);
+    background-color: var(--hi-color-primary, #1890ff);
 }
 
-.hi-switch-checked .hi-switch-thumb {
-  transform: translateX(100%);
+.hi-switch-sm.hi-switch-checked .hi-switch-thumb {
+    transform: translateX(12px);
 }
 
-.hi-switch-sm .hi-switch-checked .hi-switch-thumb {
-  transform: translateX(14px);
+.hi-switch-md.hi-switch-checked .hi-switch-thumb {
+    transform: translateX(18px);
 }
 
-.hi-switch-md .hi-switch-checked .hi-switch-thumb {
-  transform: translateX(20px);
-}
-
-.hi-switch-lg .hi-switch-checked .hi-switch-thumb {
-  transform: translateX(26px);
+.hi-switch-lg.hi-switch-checked .hi-switch-thumb {
+    transform: translateX(24px);
 }
 
 .hi-switch:hover:not(.hi-switch-disabled) {
-  background: var(--hi-color-border-hover);
+    background-color: var(--hi-color-border-hover, #999);
 }
 
-.hi-switch-checked:hover:not(.hi-switch-disabled) {
-  background: var(--hi-color-primary-hover);
+.hi-switch.hi-switch-checked:hover:not(.hi-switch-disabled) {
+    background-color: var(--hi-color-primary-hover, #40a9ff);
 }
 
 .hi-switch-disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.hi-switch-label:has(.hi-switch-disabled) {
+    cursor: not-allowed;
 }
 
 .hi-switch-text {
-  font-size: 14px;
-  color: var(--hi-text-primary);
-  line-height: 1.5;
+    font-size: 14px;
+    color: var(--hi-color-text-primary, #333);
+    line-height: 1.5;
 }
 
 [data-theme="dark"] .hi-switch {
-  background: var(--hi-surface);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+    background-color: var(--hi-surface-hover, #333);
 }
 
 [data-theme="dark"] .hi-switch-thumb {
-  background: var(--hi-text-primary);
+    background-color: #e0e0e0;
 }
 
 [data-theme="dark"] .hi-switch-checked {
-  background: var(--hi-color-primary);
+    background-color: var(--hi-color-primary, #1890ff);
+}
+
+[data-theme="dark"] .hi-switch:hover:not(.hi-switch-disabled) {
+    background-color: var(--hi-border, #444);
+}
+
+[data-theme="dark"] .hi-switch.hi-switch-checked:hover:not(.hi-switch-disabled) {
+    background-color: var(--hi-color-primary-hover, #40a9ff);
 }
 
 [data-theme="dark"] .hi-switch-text {
-  color: var(--hi-text-primary);
+    color: var(--hi-text-primary, #e0e0e0);
 }
 "#
     }

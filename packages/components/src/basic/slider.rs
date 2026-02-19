@@ -16,61 +16,30 @@ pub enum SliderSize {
 
 #[derive(Clone, PartialEq, Props)]
 pub struct SliderProps {
-    /// Current value
     #[props(default = 0)]
     pub value: i32,
 
-    /// Callback when value changes
     pub on_change: EventHandler<i32>,
 
-    /// Minimum value
     #[props(default = 0)]
     pub min: i32,
 
-    /// Maximum value
     #[props(default = 100)]
     pub max: i32,
 
-    /// Step value
     #[props(default = 1)]
     pub step: i32,
 
-    /// Whether slider is disabled
     #[props(default)]
     pub disabled: bool,
 
-    /// Slider size
     #[props(default)]
     pub size: SliderSize,
 
-    /// Additional CSS class
     #[props(default)]
     pub class: String,
 }
 
-/// Slider component with smooth interactions
-///
-/// A range slider with configurable min/max/step.
-///
-/// # Examples
-///
-/// ## Basic Usage
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::Slider;
-///
-/// fn app() -> Element {
-///     let mut value = use_signal(|| 50);
-///
-///     rsx! {
-///         Slider {
-///             value: value(),
-///             on_change: move |v| value.set(v),
-///         }
-///     }
-/// }
-/// }
-/// ```
 #[component]
 pub fn Slider(props: SliderProps) -> Element {
     let size_class = match props.size {
@@ -87,13 +56,23 @@ pub fn Slider(props: SliderProps) -> Element {
         .build();
 
     let percent = if props.max > props.min {
-        ((props.value - props.min) as f64 / (props.max - props.min) as f64 * 100.0) as i32
+        ((props.value - props.min) as f64 / (props.max - props.min) as f64 * 100.0)
+            .clamp(0.0, 100.0)
     } else {
-        0
+        0.0
     };
 
     rsx! {
         div { class: "{slider_classes}",
+            div { class: "hi-slider-rail" }
+            div {
+                class: "hi-slider-track",
+                style: "width: {percent}%;",
+            }
+            div {
+                class: "hi-slider-handle",
+                style: "left: {percent}%;",
+            }
             input {
                 r#type: "range",
                 class: "hi-slider-input",
@@ -103,100 +82,124 @@ pub fn Slider(props: SliderProps) -> Element {
                 step: "{props.step}",
                 disabled: props.disabled,
                 oninput: move |e| {
-                    props.on_change.call(e.value().parse::<i32>().unwrap_or(props.value));
-                }
-            }
-            div { class: "hi-slider-track",
-                div { class: "hi-slider-thumb",
-                    style: "left: {percent}%;"
+                    if let Ok(v) = e.value().parse::<i32>() {
+                        let constrained = v.clamp(props.min, props.max);
+                        props.on_change.call(constrained);
+                    }
                 }
             }
         }
     }
 }
 
-/// Slider component's type wrapper for StyledComponent
 pub struct SliderComponent;
 
 impl StyledComponent for SliderComponent {
     fn styles() -> &'static str {
         r#"
 .hi-slider {
-  position: relative;
-  width: 100%;
-  height: 24px;
-  display: flex;
-  align-items: center;
+    position: relative;
+    width: 100%;
+    height: 12px;
+    cursor: pointer;
+    padding: 4px 0;
 }
 
 .hi-slider-sm {
-  height: 20px;
+    height: 10px;
 }
 
 .hi-slider-lg {
-  height: 32px;
+    height: 16px;
 }
 
-.hi-slider-input {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
+.hi-slider-rail {
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--hi-color-border, #e8e8e8);
+    border-radius: 2px;
 }
 
 .hi-slider-track {
-  position: relative;
-  width: 100%;
-  height: 4px;
-  background: var(--hi-border);
-  border-radius: 2px;
+    position: absolute;
+    height: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--hi-color-primary, #1890ff);
+    border-radius: 2px;
+    transition: width 0.1s ease;
 }
 
-.hi-slider-thumb {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 20px;
-  height: 20px;
-  background: var(--hi-color-primary);
-  border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: left 0.1s linear;
+.hi-slider-handle {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--hi-color-primary, #1890ff);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    z-index: 1;
 }
 
-.hi-slider-thumb::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 12px;
-  height: 12px;
-  background: white;
-  border-radius: 50%;
+.hi-slider-handle:hover {
+    transform: translate(-50%, -50%) scale(1.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.hi-slider-input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    margin: 0;
+    z-index: 2;
 }
 
 .hi-slider-disabled {
-  opacity: 0.5;
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 
-.hi-slider-disabled .hi-slider-thumb {
-  background: var(--hi-border);
-  cursor: not-allowed;
+.hi-slider-disabled .hi-slider-track {
+    background-color: var(--hi-color-text-disabled, #bfbfbf);
+}
+
+.hi-slider-disabled .hi-slider-handle {
+    background-color: var(--hi-color-text-disabled, #bfbfbf);
+    cursor: not-allowed;
+}
+
+.hi-slider-disabled .hi-slider-handle:hover {
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .hi-slider-rail {
+    background-color: var(--hi-border, #333);
 }
 
 [data-theme="dark"] .hi-slider-track {
-  background: var(--hi-border);
+    background-color: var(--hi-color-primary, #1890ff);
 }
 
-[data-theme="dark"] .hi-slider-thumb {
-  background: var(--hi-color-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+[data-theme="dark"] .hi-slider-handle {
+    background-color: var(--hi-color-primary, #1890ff);
+    border-color: var(--hi-surface, #1a1a1a);
 }
 
-[data-theme="dark"] .hi-slider-disabled .hi-slider-thumb {
-  background: var(--hi-border);
+[data-theme="dark"] .hi-slider-disabled .hi-slider-track {
+    background-color: var(--hi-text-disabled, #555);
+}
+
+[data-theme="dark"] .hi-slider-disabled .hi-slider-handle {
+    background-color: var(--hi-text-disabled, #555);
 }
 "#
     }

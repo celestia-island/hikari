@@ -104,9 +104,11 @@ pub enum BadgeClass {
     Badge,
     Dot,
     Primary,
+    Secondary,
     Success,
     Warning,
     Danger,
+    Info,
 }
 
 impl UtilityClass for BadgeClass {
@@ -115,9 +117,11 @@ impl UtilityClass for BadgeClass {
             BadgeClass::Badge => "badge",
             BadgeClass::Dot => "badge-dot",
             BadgeClass::Primary => "badge-primary",
+            BadgeClass::Secondary => "badge-secondary",
             BadgeClass::Success => "badge-success",
             BadgeClass::Warning => "badge-warning",
             BadgeClass::Danger => "badge-danger",
+            BadgeClass::Info => "badge-info",
         }
     }
 }

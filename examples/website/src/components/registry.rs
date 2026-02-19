@@ -199,11 +199,85 @@ pub fn render_component(component_type: ComponentType) -> Element {
 
                 // ========== Display / Badge ==========
                 ("layer1", "display", Some("badge")) => rsx! {
-                    div { class: flex_row_wrap(),
-                        Badge { "Default" }
-                        Badge { variant: BadgeVariant::Success, "Success" }
-                        Badge { variant: BadgeVariant::Warning, "Warning" }
-                        Badge { variant: BadgeVariant::Danger, "Danger" }
+                    div { class: flex_col_gap(),
+                        // 所有颜色变体
+                        div { class: flex_row_wrap(),
+                            Badge { "Default" }
+                            Badge { variant: BadgeVariant::Primary, "Primary" }
+                            Badge { variant: BadgeVariant::Secondary, "Secondary" }
+                            Badge { variant: BadgeVariant::Success, "Success" }
+                            Badge { variant: BadgeVariant::Warning, "Warning" }
+                            Badge { variant: BadgeVariant::Danger, "Danger" }
+                            Badge { variant: BadgeVariant::Info, "Info" }
+                        }
+                        // 头像 + 徽章（数字）
+                        div { class: flex_row_wrap(),
+                            p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                                "Avatar + Count Badge:"
+                            }
+                            Badge {
+                                count: 5,
+                                AvatarComponent {
+                                    alt: "User".to_string(),
+                                    size: AvatarSize::Md,
+                                }
+                            }
+                            Badge {
+                                count: 99,
+                                max: 99,
+                                AvatarComponent {
+                                    alt: "Admin".to_string(),
+                                    size: AvatarSize::Md,
+                                    variant: AvatarVariant::Rounded,
+                                }
+                            }
+                            Badge {
+                                count: 100,
+                                max: 99,
+                                AvatarComponent {
+                                    src: "https://api.dicebear.com/7.x/avataaars/svg?seed=badge".to_string(),
+                                    alt: "Avatar".to_string(),
+                                    size: AvatarSize::Md,
+                                }
+                            }
+                        }
+                        // 头像 + 圆点
+                        div { class: flex_row_wrap(),
+                            p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                                "Avatar + Dot Badge:"
+                            }
+                            Badge {
+                                dot: true,
+                                variant: BadgeVariant::Success,
+                                AvatarComponent {
+                                    alt: "Online".to_string(),
+                                    size: AvatarSize::Md,
+                                }
+                            }
+                            Badge {
+                                dot: true,
+                                variant: BadgeVariant::Danger,
+                                AvatarComponent {
+                                    alt: "Busy".to_string(),
+                                    size: AvatarSize::Md,
+                                }
+                            }
+                            Badge {
+                                dot: true,
+                                variant: BadgeVariant::Warning,
+                                AvatarComponent {
+                                    alt: "Away".to_string(),
+                                    size: AvatarSize::Md,
+                                }
+                            }
+                            Badge {
+                                dot: true,
+                                AvatarComponent {
+                                    alt: "Offline".to_string(),
+                                    size: AvatarSize::Md,
+                                }
+                            }
+                        }
                     }
                 },
                 ("layer1", "display", Some("card")) => rsx! {
@@ -224,7 +298,8 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 ("layer1", "display", _) => rsx! {
                     div { class: flex_row_wrap(),
                         Badge { "Badge" }
-                        Badge { variant: BadgeVariant::Success, "Success" }
+                        Badge { variant: BadgeVariant::Primary, "Primary" }
+                        Badge { variant: BadgeVariant::Secondary, "Secondary" }
                     }
                 },
 

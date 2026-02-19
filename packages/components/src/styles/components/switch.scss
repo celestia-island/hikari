@@ -14,11 +14,17 @@
     cursor: not-allowed;
 }
 
-.hi-switch-glow {
-    border-radius: 100px;
+// Switch-specific glow wrapper - must override default glow radius
+.hi-switch-label .hi-switch-glow.hi-glow-wrapper {
+    border-radius: 100px !important;
     overflow: hidden;
     display: inline-block;
     line-height: 0;
+}
+
+// Ensure glow overlay also uses switch radius
+.hi-switch-label .hi-switch-glow::before {
+    border-radius: 100px;
 }
 
 .hi-switch {

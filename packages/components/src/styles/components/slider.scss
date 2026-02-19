@@ -1,4 +1,5 @@
 // Slider Component Styles
+// Uses CSS variables for animation control via AnimationBuilder
 
 .hi-slider {
     position: relative;
@@ -24,6 +25,7 @@
     transform: translateY(-50%);
     background-color: var(--hi-color-border, #e8e8e8);
     border-radius: 2px;
+    transition: background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
 }
 
 .hi-slider-track {
@@ -33,7 +35,8 @@
     transform: translateY(-50%);
     background-color: var(--hi-color-primary, #1890ff);
     border-radius: 2px;
-    transition: width 0.1s ease;
+    transition: width var(--hikari-duration-fast, 0.1s) linear,
+                background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
 }
 
 .hi-slider-handle {
@@ -46,13 +49,20 @@
     border: 2px solid #fff;
     border-radius: 50%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: transform var(--hikari-duration-fast, 0.15s) var(--hikari-ease-smooth, ease),
+                box-shadow var(--hikari-duration-fast, 0.15s) var(--hikari-ease-smooth, ease),
+                background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
     z-index: 1;
 }
 
 .hi-slider-handle:hover {
     transform: translate(-50%, -50%) scale(1.2);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.hi-slider-handle:active {
+    transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: var(--hi-glow-primary-sm, 0 0 8px rgba(59, 130, 246, 0.3));
 }
 
 .hi-slider-input {
@@ -84,6 +94,7 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+// Dark theme
 [data-theme="dark"] .hi-slider-rail,
 [data-theme="tairitsu"] .hi-slider-rail {
     background-color: var(--hi-border, #333);
@@ -108,4 +119,9 @@
 [data-theme="dark"] .hi-slider-disabled .hi-slider-handle,
 [data-theme="tairitsu"] .hi-slider-disabled .hi-slider-handle {
     background-color: var(--hi-text-disabled, #555);
+}
+
+// Focus state for accessibility
+.hi-slider:focus-within .hi-slider-handle {
+    box-shadow: 0 0 0 3px var(--hi-color-primary-glow, rgba(24, 144, 255, 0.2));
 }

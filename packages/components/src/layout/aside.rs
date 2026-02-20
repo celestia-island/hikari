@@ -25,9 +25,9 @@
 //! }
 //! ```
 
+use crate::theme::use_layout_direction;
 use dioxus::prelude::*;
 use palette::{classes::components::*, ClassesBuilder, UtilityClass};
-use theme::use_theme;
 
 /// Aside component - Modern sidebar navigation panel
 ///
@@ -82,8 +82,8 @@ pub fn Aside(
     class: String,
 ) -> Element {
     let is_open = use_signal(|| initial_open);
-    let theme = use_theme();
-    let is_rtl = rtl.unwrap_or_else(|| theme.direction.is_rtl());
+    let layout_direction = use_layout_direction();
+    let is_rtl = rtl.unwrap_or_else(|| layout_direction.is_rtl());
 
     let width_class = match width.as_str() {
         "sm" => AsideClass::Sm,

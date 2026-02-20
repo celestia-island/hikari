@@ -248,8 +248,8 @@ pub use utils::positioning::{
 
 // Theme provider exports
 pub use theme::{
-    ComponentOverrides, ComponentPalette, IntoThemeName, ThemeContext, ThemePalette, ThemeProvider,
-    get_default_theme, get_registered_theme, prefers_dark_mode, register_theme, use_theme,
+    ComponentOverrides, ComponentPalette, IntoThemeName, LayoutDirection, ThemeContext, ThemePalette, ThemeProvider,
+    get_default_theme, get_registered_theme, prefers_dark_mode, register_theme, use_layout_direction, use_theme,
 };
 
 // Portal exports

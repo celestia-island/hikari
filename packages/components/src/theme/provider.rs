@@ -78,11 +78,33 @@ use crate::{
     },
 };
 
+/// Layout direction for RTL/LTR support
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub enum LayoutDirection {
+    #[default]
+    Ltr,
+    Rtl,
+}
+
+impl LayoutDirection {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            LayoutDirection::Ltr => "ltr",
+            LayoutDirection::Rtl => "rtl",
+        }
+    }
+
+    pub fn is_rtl(&self) -> bool {
+        matches!(self, LayoutDirection::Rtl)
+    }
+}
+
 /// Theme context for accessing current theme
 #[derive(Clone, PartialEq)]
 pub struct ThemeContext {
     pub palette: Signal<String>,
     pub theme_name: Signal<String>,
+    pub direction: Signal<LayoutDirection>,
     pub set_theme: Callback<String>,
 }
 
@@ -92,6 +114,10 @@ pub struct ThemeProviderProps {
     /// Theme identifier: "hikari" (light) or "tairitsu" (dark)
     #[props(default = "hikari".to_string())]
     pub palette: String,
+
+    /// Layout direction: "ltr" or "rtl" (default: "ltr")
+    #[props(default = "ltr".to_string())]
+    pub direction: String,
 
     /// Custom color overrides (optional)
     #[props(default)]
@@ -202,6 +228,12 @@ pub struct ThemeProviderProps {
 pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
     let current_palette = use_signal(|| props.palette.clone());
     let current_theme_name = use_signal(|| props.palette.clone());
+    let current_direction = use_signal(|| {
+        match props.direction.as_str() {
+            "rtl" => LayoutDirection::Rtl,
+            _ => LayoutDirection::Ltr,
+        }
+    });
 
     let mut palette_for_callback = current_palette;
     let mut theme_name_for_callback = current_theme_name;
@@ -213,6 +245,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
     use_context_provider(move || ThemeContext {
         palette: current_palette,
         theme_name: current_theme_name,
+        direction: current_direction,
         set_theme,
     });
 
@@ -278,10 +311,13 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
         )
     });
 
+    let dir = current_direction.read().as_str();
+
     rsx! {
         div {
             class: "hi-theme-provider",
             "data-theme": "{current_theme_name.read()}",
+            dir: "{dir}",
             style: "{css_vars}",
             {props.children}
         }
@@ -351,6 +387,16 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 /// to ensure proper theme functionality.
 pub fn use_theme() -> ThemeContext {
     use_context()
+}
+
+/// Hook to get layout direction for RTL support
+///
+/// Returns the current layout direction (LTR or RTL).
+/// Defaults to LTR if no ThemeProvider is present.
+pub fn use_layout_direction() -> LayoutDirection {
+    try_consume_context::<ThemeContext>()
+        .map(|ctx| *ctx.direction.read())
+        .unwrap_or_default()
 }
 
 #[cfg(test)]

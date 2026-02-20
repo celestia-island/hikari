@@ -1,11 +1,11 @@
 // hi-components/src/layout/flex.rs
 // FlexBox component for flexible layouts
 
+use crate::theme::{use_layout_direction, LayoutDirection};
 use dioxus::prelude::*;
 use palette::classes::{
     AlignItems, ClassesBuilder, Display, Flex as FlexUtil, FlexDirection, FlexWrap, JustifyContent,
 };
-use theme::use_theme;
 
 use crate::styled::StyledComponent;
 
@@ -143,8 +143,8 @@ impl Default for FlexBoxProps {
 
 #[component]
 pub fn FlexBox(props: FlexBoxProps) -> Element {
-    let theme = use_theme();
-    let is_rtl = props.rtl.unwrap_or_else(|| theme.direction.is_rtl());
+    let layout_direction = use_layout_direction();
+    let is_rtl = props.rtl.unwrap_or_else(|| layout_direction.is_rtl());
 
     let direction_class = match props.direction {
         Direction::Column => FlexDirection::Column,

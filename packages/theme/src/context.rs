@@ -104,3 +104,10 @@ pub fn use_theme() -> ThemeContext {
 pub fn try_use_theme() -> Option<ThemeContext> {
     try_consume_context()
 }
+
+/// Hook to get layout direction, with fallback to LTR if no ThemeProvider
+pub fn use_layout_direction() -> LayoutDirection {
+    try_consume_context::<ThemeContext>()
+        .map(|ctx| ctx.direction)
+        .unwrap_or_default()
+}

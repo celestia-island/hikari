@@ -16,10 +16,10 @@
 //! }
 //! ```
 
+use crate::theme::use_layout_direction;
 use dioxus::prelude::*;
 use dioxus_core::VNode;
 use palette::{classes::*, ClassesBuilder};
-use theme::use_theme;
 
 /// Header component - Modern application header bar
 ///
@@ -60,8 +60,8 @@ pub fn Header(
     #[props(default = VNode::empty())]
     right_content: Element,
 ) -> Element {
-    let theme = use_theme();
-    let is_rtl = rtl.unwrap_or_else(|| theme.direction.is_rtl());
+    let layout_direction = use_layout_direction();
+    let is_rtl = rtl.unwrap_or_else(|| layout_direction.is_rtl());
 
     let content_classes = ClassesBuilder::new()
         .add(Display::Flex)

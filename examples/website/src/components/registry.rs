@@ -1,26 +1,72 @@
-use _components::basic::avatar::Avatar as AvatarComponent;
-use _components::basic::badge::Badge;
-use _components::basic::button::Button;
-use _components::basic::card::Card;
-use _components::basic::checkbox::Checkbox;
-use _components::basic::divider::Divider;
-use _components::basic::image::Image as ImageComponent;
-use _components::basic::input::Input;
-use _components::basic::radio_group::{RadioButton, RadioDirection, RadioGroup};
-use _components::basic::select::{Select, SelectOption, SelectSize};
-use _components::basic::slider::Slider;
-use _components::basic::switch::Switch;
-use _components::layout::Section;
+use dioxus::prelude::*;
+
 use _components::{
+    basic::{
+        avatar::{Avatar as AvatarComponent, AvatarFallbackMode},
+        badge::Badge,
+        button::Button,
+        card::Card,
+        checkbox::Checkbox,
+        divider::Divider,
+        file_upload::FileUpload,
+        image::{Image as ImageComponent, ImagePlaceholder},
+        input::Input,
+        radio_group::{RadioButton, RadioDirection, RadioGroup},
+        select::{Select, SelectOption},
+        slider::Slider,
+        switch::{Switch, SwitchColor, SwitchContent, SwitchIcon, SwitchSize, SwitchVariant},
+    },
+    data::{
+        collapse::Collapse,
+        pagination::Pagination,
+        table::{ColumnAlign, ColumnDef, Table},
+        tree::Tree,
+        TreeNodeData,
+    },
+    display::{
+        drag_layer::{DragItem, DragLayer},
+        empty::Empty,
+        qrcode::QRCode,
+        skeleton::{Skeleton, SkeletonCard, SkeletonTable, SkeletonVariant},
+        timeline::{Timeline, TimelineItem, TimelinePosition},
+        user_guide::{GuidePlacement, GuideStep, UserGuide},
+        zoom_controls::ZoomControls,
+    },
+    entry::{
+        cascader::{Cascader, CascaderOption, CascaderSize},
+        number_input::{NumberInput, NumberInputSize},
+        search::Search,
+        transfer::{Transfer, TransferItem},
+    },
+    feedback::{
+        alert::{Alert, AlertVariant},
+        modal::{use_modal, ModalContent},
+        popover::Popover,
+        progress::{Progress, ProgressStatus},
+        toast::{Toast, ToastVariant},
+        tooltip::{Tooltip, TooltipPlacement},
+    },
+    layout::{Direction, FlexBox, FlexGap},
+    navigation::{
+        breadcrumb::{Breadcrumb, BreadcrumbItem},
+        menu::{Menu, MenuItem, MenuMode},
+        tabs::{TabPane, Tabs},
+    },
+    production::{
+        audio_player::AudioPlayer,
+        code_highlight::CodeHighlight,
+        markdown_editor::{MarkdownEditor, MarkdownEditorMode},
+        rich_text_editor::RichTextEditor,
+        video_player::VideoPlayer,
+    },
     AvatarSize, AvatarVariant, BadgeVariant, ButtonVariant, IconButton, IconButtonSize,
     IconButtonVariant,
 };
 use _icons::MdiIcon;
 use _palette::classes::{
-    AlignItems, ClassesBuilder, Display, FlexDirection, FlexWrap, FontSize, FontWeight, Gap,
-    MarginBottom, Padding, TextColor,
+    AlignItems, ClassesBuilder, Display, FlexDirection, FlexWrap, FontWeight, Gap, Padding,
+    TextColor,
 };
-use dioxus::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ComponentType {
@@ -79,32 +125,32 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 // ========== Avatar ==========
                 ("layer1", "avatar", Some("sizes")) => rsx! {
                     div { class: flex_row_wrap(),
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=1".to_string()), alt: "Xs".to_string(), size: AvatarSize::Xs, variant: AvatarVariant::Circular }
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=2".to_string()), alt: "Sm".to_string(), size: AvatarSize::Sm, variant: AvatarVariant::Circular }
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=3".to_string()), alt: "Md".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Circular }
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=4".to_string()), alt: "Lg".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular }
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=5".to_string()), alt: "Xl".to_string(), size: AvatarSize::Xl, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Xs".to_string(), size: AvatarSize::Xs, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Sm".to_string(), size: AvatarSize::Sm, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Md".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Lg".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Xl".to_string(), size: AvatarSize::Xl, variant: AvatarVariant::Circular }
                     }
                 },
                 ("layer1", "avatar", Some("variants")) => rsx! {
                     div { class: flex_row_wrap(),
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=10".to_string()), alt: "Circular".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular }
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=11".to_string()), alt: "Rounded".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Rounded }
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=12".to_string()), alt: "Square".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Square }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Circular".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Rounded".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Rounded }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "Square".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Square }
                     }
                 },
                 ("layer1", "avatar", Some("fallback")) => rsx! {
                     div { class: flex_row_wrap(),
-                        AvatarComponent { alt: "Alice Smith".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular }
-                        AvatarComponent { alt: "Bob Johnson".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular }
-                        AvatarComponent { fallback: Some("N/A".to_string()), alt: "Unknown".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular }
+                        AvatarComponent { alt: "Alice Smith".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular, fallback_mode: AvatarFallbackMode::Initial }
+                        AvatarComponent { alt: "Bob Johnson".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular, fallback_mode: AvatarFallbackMode::Initial }
+                        AvatarComponent { alt: "User".to_string(), size: AvatarSize::Lg, variant: AvatarVariant::Circular, fallback_mode: AvatarFallbackMode::Icon }
                     }
                 },
                 ("layer1", "avatar", _) => rsx! {
                     div { class: flex_row_wrap(),
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=1".to_string()), alt: "User".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Circular }
-                        AvatarComponent { src: Some("https://i.pravatar.cc/100?img=2".to_string()), alt: "User".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Rounded }
-                        AvatarComponent { alt: "John Doe".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "User".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Circular }
+                        AvatarComponent { src: Some("/images/logo.png".to_string()), alt: "User".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Rounded }
+                        AvatarComponent { alt: "John Doe".to_string(), size: AvatarSize::Md, variant: AvatarVariant::Circular, fallback_mode: AvatarFallbackMode::Icon }
                     }
                 },
 
@@ -154,11 +200,85 @@ pub fn render_component(component_type: ComponentType) -> Element {
 
                 // ========== Display / Badge ==========
                 ("layer1", "display", Some("badge")) => rsx! {
-                    div { class: flex_row_wrap(),
-                        Badge { "Default" }
-                        Badge { variant: BadgeVariant::Success, "Success" }
-                        Badge { variant: BadgeVariant::Warning, "Warning" }
-                        Badge { variant: BadgeVariant::Danger, "Danger" }
+                    div { class: flex_col_gap(),
+                        // 所有颜色变体
+                        div { class: flex_row_wrap(),
+                            Badge { "Default" }
+                            Badge { variant: BadgeVariant::Primary, "Primary" }
+                            Badge { variant: BadgeVariant::Secondary, "Secondary" }
+                            Badge { variant: BadgeVariant::Success, "Success" }
+                            Badge { variant: BadgeVariant::Warning, "Warning" }
+                            Badge { variant: BadgeVariant::Danger, "Danger" }
+                            Badge { variant: BadgeVariant::Info, "Info" }
+                        }
+                        // 头像 + 徽章（数字）
+                        div { class: flex_row_wrap(),
+                            p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                                "Avatar + Count Badge:"
+                            }
+                            Badge {
+                                count: 5,
+                                AvatarComponent {
+                                    alt: "User".to_string(),
+                                    size: AvatarSize::Md,
+                                }
+                            }
+                            Badge {
+                                count: 99,
+                                max: 99,
+                                AvatarComponent {
+                                    alt: "Admin".to_string(),
+                                    size: AvatarSize::Md,
+                                    variant: AvatarVariant::Rounded,
+                                }
+                            }
+                            Badge {
+                                count: 100,
+                                max: 99,
+                                AvatarComponent {
+                                    src: "https://api.dicebear.com/7.x/avataaars/svg?seed=badge".to_string(),
+                                    alt: "Avatar".to_string(),
+                                    size: AvatarSize::Md,
+                                }
+                            }
+                        }
+                        // 头像 + 圆点
+                        div { class: flex_row_wrap(),
+                            p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                                "Avatar + Dot Badge:"
+                            }
+                            Badge {
+                                dot: true,
+                                variant: BadgeVariant::Success,
+                                AvatarComponent {
+                                    alt: "Online".to_string(),
+                                    size: AvatarSize::Md,
+                                }
+                            }
+                            Badge {
+                                dot: true,
+                                variant: BadgeVariant::Danger,
+                                AvatarComponent {
+                                    alt: "Busy".to_string(),
+                                    size: AvatarSize::Md,
+                                }
+                            }
+                            Badge {
+                                dot: true,
+                                variant: BadgeVariant::Warning,
+                                AvatarComponent {
+                                    alt: "Away".to_string(),
+                                    size: AvatarSize::Md,
+                                }
+                            }
+                            Badge {
+                                dot: true,
+                                AvatarComponent {
+                                    alt: "Offline".to_string(),
+                                    size: AvatarSize::Md,
+                                }
+                            }
+                        }
                     }
                 },
                 ("layer1", "display", Some("card")) => rsx! {
@@ -179,55 +299,259 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 ("layer1", "display", _) => rsx! {
                     div { class: flex_row_wrap(),
                         Badge { "Badge" }
-                        Badge { variant: BadgeVariant::Success, "Success" }
+                        Badge { variant: BadgeVariant::Primary, "Primary" }
+                        Badge { variant: BadgeVariant::Secondary, "Secondary" }
                     }
                 },
 
                 // ========== Feedback ==========
                 ("layer1", "feedback", Some("alert")) => rsx! {
-                    div { class: placeholder_box(),
-                        p { "Alert component - coming soon" }
+                    div { class: flex_col_gap(),
+                        Alert {
+                            variant: AlertVariant::Info,
+                            title: "Information".to_string(),
+                            description: "This is an informational message.".to_string(),
+                        }
+                        Alert {
+                            variant: AlertVariant::Success,
+                            title: "Success".to_string(),
+                            description: "Operation completed successfully.".to_string(),
+                            closable: true,
+                        }
+                        Alert {
+                            variant: AlertVariant::Warning,
+                            title: "Warning".to_string(),
+                            description: "Please review before proceeding.".to_string(),
+                        }
+                        Alert {
+                            variant: AlertVariant::Error,
+                            title: "Error".to_string(),
+                            description: "Something went wrong.".to_string(),
+                            closable: true,
+                        }
                     }
                 },
                 ("layer1", "feedback", Some("toast")) => rsx! {
-                    div { class: placeholder_box(),
-                        p { "Toast component - coming soon" }
+                    div { class: flex_col_gap(),
+                        Toast {
+                            variant: ToastVariant::Info,
+                            message: "This is an info toast".to_string(),
+                            title: Some("Info".to_string()),
+                        }
+                        Toast {
+                            variant: ToastVariant::Success,
+                            message: "Operation successful!".to_string(),
+                        }
+                        Toast {
+                            variant: ToastVariant::Warning,
+                            message: "Please check your input".to_string(),
+                        }
+                        Toast {
+                            variant: ToastVariant::Error,
+                            message: "Failed to save changes".to_string(),
+                        }
                     }
                 },
                 ("layer1", "feedback", Some("tooltip")) => rsx! {
-                    div { class: placeholder_box(),
-                        p { "Tooltip component - coming soon" }
+                    div { class: flex_row_wrap(),
+                        Tooltip {
+                            content: "Tooltip on top".to_string(),
+                            placement: TooltipPlacement::Top,
+                            Button { variant: ButtonVariant::Primary, "Top" }
+                        }
+                        Tooltip {
+                            content: "Tooltip on bottom".to_string(),
+                            placement: TooltipPlacement::Bottom,
+                            Button { variant: ButtonVariant::Secondary, "Bottom" }
+                        }
+                        Tooltip {
+                            content: "Tooltip on left".to_string(),
+                            placement: TooltipPlacement::Left,
+                            Button { variant: ButtonVariant::Ghost, "Left" }
+                        }
+                        Tooltip {
+                            content: "Tooltip on right".to_string(),
+                            placement: TooltipPlacement::Right,
+                            Button { variant: ButtonVariant::Ghost, "Right" }
+                        }
                     }
                 },
                 ("layer1", "feedback", _) => rsx! {
-                    div { class: placeholder_box(),
-                        p { "Feedback components: Alert, Toast, Tooltip" }
+                    div { class: flex_col_gap(),
+                        Alert {
+                            variant: AlertVariant::Info,
+                            title: "Feedback Components".to_string(),
+                            description: "Alert, Toast, Tooltip components".to_string(),
+                        }
                     }
                 },
 
                 // ========== Switch ==========
-                ("layer1", "switch", Some("switch")) => rsx! {
-                    div { class: flex_row_wrap(),
-                        Switch { checked: false, on_change: move |_| {} }
-                        Switch { checked: true, on_change: move |_| {} }
+                ("layer1", "switch", Some("switch")) => {
+                    let mut c1 = use_signal(|| false);
+                    let mut c2 = use_signal(|| true);
+                    let mut c3 = use_signal(|| false);
+                    let mut c4 = use_signal(|| true);
+                    let mut c5 = use_signal(|| false);
+                    let mut c6 = use_signal(|| true);
+                    let mut c7 = use_signal(|| false);
+                    let mut c8 = use_signal(|| true);
+                    let mut c9 = use_signal(|| false);
+                    let mut c10 = use_signal(|| true);
+                    let mut c11 = use_signal(|| false);
+                    let mut c12 = use_signal(|| true);
+                    rsx! {
+                        div { class: flex_col_gap(),
+                            div { style: "display: flex; align-items: center; gap: 0.75rem;",
+                                span { style: "min-width: 80px; font-size: 12px; color: var(--hi-color-text-secondary);", "Success" }
+                                Switch { checked: c1(), on_change: move |v| c1.set(v), color: SwitchColor::Success }
+                                Switch { checked: c2(), on_change: move |v| c2.set(v), color: SwitchColor::Success }
+                            }
+                            div { style: "display: flex; align-items: center; gap: 0.75rem;",
+                                span { style: "min-width: 80px; font-size: 12px; color: var(--hi-color-text-secondary);", "Primary" }
+                                Switch { checked: c3(), on_change: move |v| c3.set(v), color: SwitchColor::Primary }
+                                Switch { checked: c4(), on_change: move |v| c4.set(v), color: SwitchColor::Primary }
+                            }
+                            div { style: "display: flex; align-items: center; gap: 0.75rem;",
+                                span { style: "min-width: 80px; font-size: 12px; color: var(--hi-color-text-secondary);", "Secondary" }
+                                Switch { checked: c5(), on_change: move |v| c5.set(v), color: SwitchColor::Secondary }
+                                Switch { checked: c6(), on_change: move |v| c6.set(v), color: SwitchColor::Secondary }
+                            }
+                            div { style: "display: flex; align-items: center; gap: 0.75rem;",
+                                span { style: "min-width: 80px; font-size: 12px; color: var(--hi-color-text-secondary);", "Danger" }
+                                Switch { checked: c7(), on_change: move |v| c7.set(v), color: SwitchColor::Danger }
+                                Switch { checked: c8(), on_change: move |v| c8.set(v), color: SwitchColor::Danger }
+                            }
+                            div { style: "display: flex; align-items: center; gap: 0.75rem;",
+                                span { style: "min-width: 80px; font-size: 12px; color: var(--hi-color-text-secondary);", "Warning" }
+                                Switch { checked: c9(), on_change: move |v| c9.set(v), color: SwitchColor::Warning }
+                                Switch { checked: c10(), on_change: move |v| c10.set(v), color: SwitchColor::Warning }
+                            }
+                            div { style: "display: flex; align-items: center; gap: 0.75rem;",
+                                span { style: "min-width: 80px; font-size: 12px; color: var(--hi-color-text-secondary);", "Info" }
+                                Switch { checked: c11(), on_change: move |v| c11.set(v), color: SwitchColor::Info }
+                                Switch { checked: c12(), on_change: move |v| c12.set(v), color: SwitchColor::Info }
+                            }
+                        }
                     }
-                },
+                }
+                ("layer1", "switch", Some("icon")) => {
+                    let mut checked1 = use_signal(|| false);
+                    let mut checked2 = use_signal(|| true);
+                    rsx! {
+                        div { class: flex_row_wrap(),
+                            Switch {
+                                checked: checked1(),
+                                on_change: move |v| checked1.set(v),
+                                variant: SwitchVariant::Icon,
+                                unchecked_content: Some(SwitchContent::Icon(SwitchIcon::Close)),
+                                checked_content: Some(SwitchContent::Icon(SwitchIcon::Check)),
+                            }
+                            Switch {
+                                checked: checked2(),
+                                on_change: move |v| checked2.set(v),
+                                variant: SwitchVariant::Icon,
+                                unchecked_content: Some(SwitchContent::Icon(SwitchIcon::Close)),
+                                checked_content: Some(SwitchContent::Icon(SwitchIcon::Check)),
+                            }
+                        }
+                    }
+                }
+                ("layer1", "switch", Some("text")) => {
+                    let mut checked1 = use_signal(|| false);
+                    let mut checked2 = use_signal(|| true);
+                    rsx! {
+                        div { class: flex_row_wrap(),
+                            Switch {
+                                checked: checked1(),
+                                on_change: move |v| checked1.set(v),
+                                variant: SwitchVariant::Text,
+                                unchecked_content: Some(SwitchContent::Text("OFF".to_string())),
+                                checked_content: Some(SwitchContent::Text("ON".to_string())),
+                            }
+                            Switch {
+                                checked: checked2(),
+                                on_change: move |v| checked2.set(v),
+                                variant: SwitchVariant::Text,
+                                unchecked_content: Some(SwitchContent::Text("OFF".to_string())),
+                                checked_content: Some(SwitchContent::Text("ON".to_string())),
+                            }
+                        }
+                    }
+                }
+                ("layer1", "switch", Some("sizes")) => {
+                    let mut s1 = use_signal(|| false);
+                    let mut s2 = use_signal(|| true);
+                    let mut m1 = use_signal(|| false);
+                    let mut m2 = use_signal(|| true);
+                    let mut l1 = use_signal(|| false);
+                    let mut l2 = use_signal(|| true);
+                    rsx! {
+                        div { class: flex_col_gap(),
+                            div { class: flex_row_wrap(),
+                                Switch { checked: s1(), on_change: move |v| s1.set(v), size: SwitchSize::Small }
+                                Switch { checked: s2(), on_change: move |v| s2.set(v), size: SwitchSize::Small }
+                            }
+                            div { class: flex_row_wrap(),
+                                Switch { checked: m1(), on_change: move |v| m1.set(v), size: SwitchSize::Medium }
+                                Switch { checked: m2(), on_change: move |v| m2.set(v), size: SwitchSize::Medium }
+                            }
+                            div { class: flex_row_wrap(),
+                                Switch { checked: l1(), on_change: move |v| l1.set(v), size: SwitchSize::Large }
+                                Switch { checked: l2(), on_change: move |v| l2.set(v), size: SwitchSize::Large }
+                            }
+                        }
+                    }
+                }
                 ("layer1", "switch", Some("progress")) => rsx! {
-                    div { class: placeholder_box(),
-                        p { "Progress component - coming soon" }
-                    }
-                },
-                ("layer1", "switch", Some("slider")) => rsx! {
                     div { class: flex_col_gap(),
-                        Slider { value: 50, min: 0, max: 100, on_change: move |_| {} }
+                        Progress {
+                            value: 30.0,
+                            show_info: true,
+                        }
+                        Progress {
+                            value: 70.0,
+                            status: ProgressStatus::Active,
+                            show_info: true,
+                        }
+                        Progress {
+                            value: 100.0,
+                            status: ProgressStatus::Success,
+                            show_info: true,
+                        }
+                        Progress {
+                            value: 50.0,
+                            status: ProgressStatus::Exception,
+                            show_info: true,
+                        }
                     }
                 },
-                ("layer1", "switch", _) => rsx! {
-                    div { class: flex_row_wrap(),
-                        Switch { checked: false, on_change: move |_| {} }
-                        Switch { checked: true, on_change: move |_| {} }
+                ("layer1", "switch", Some("slider")) => {
+                    let mut value = use_signal(|| 50);
+                    rsx! {
+                        div { class: flex_col_gap(),
+                            div { style: "display: flex; align-items: center; gap: 1rem;",
+                                Slider {
+                                    value: value(),
+                                    min: 0,
+                                    max: 100,
+                                    on_change: move |v| value.set(v),
+                                }
+                                span { style: "min-width: 40px; text-align: right;", "{value()}" }
+                            }
+                        }
                     }
-                },
+                }
+                ("layer1", "switch", _) => {
+                    let mut c1 = use_signal(|| false);
+                    let mut c2 = use_signal(|| true);
+                    rsx! {
+                        div { class: flex_row_wrap(),
+                            Switch { checked: c1(), on_change: move |v| c1.set(v) }
+                            Switch { checked: c2(), on_change: move |v| c2.set(v) }
+                        }
+                    }
+                }
 
                 // ========== Tag ==========
                 ("layer1", "tag", Some("basic")) => rsx! {
@@ -253,24 +577,44 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 // ========== Image ==========
                 ("layer1", "image", Some("basic")) => rsx! {
                     div { class: flex_row_wrap(),
-                        ImageComponent { src: "https://via.placeholder.com/150".to_string(), alt: "Placeholder".to_string() }
+                        ImageComponent {
+                            src: "/images/logo.png".to_string(),
+                            alt: "Hikari Logo".to_string(),
+                            width: Some(150),
+                            height: Some(150),
+                        }
                     }
                 },
                 ("layer1", "image", Some("placeholder")) => rsx! {
                     div { class: flex_row_wrap(),
-                        ImageComponent { src: "https://via.placeholder.com/150".to_string(), alt: "Placeholder image".to_string() }
+                        ImageComponent {
+                            src: "/images/logo.png".to_string(),
+                            alt: "Hikari Logo".to_string(),
+                            width: Some(200),
+                            height: Some(150),
+                            placeholder: ImagePlaceholder::Skeleton,
+                        }
+                    }
+                },
+                ("layer1", "image", Some("icon-placeholder")) => rsx! {
+                    div { class: flex_row_wrap(),
+                        ImageComponent {
+                            src: "/images/logo.png".to_string(),
+                            alt: "Hikari Logo".to_string(),
+                            width: Some(200),
+                            height: Some(150),
+                            placeholder: ImagePlaceholder::Icon,
+                        }
                     }
                 },
                 ("layer1", "image", _) => rsx! {
                     div { class: flex_row_wrap(),
-                        ImageComponent { src: "https://via.placeholder.com/150".to_string(), alt: "Placeholder".to_string() }
-                    }
-                },
-
-                // ========== Empty ==========
-                ("layer1", "empty", _) => rsx! {
-                    div { class: placeholder_box(),
-                        p { "No data available" }
+                        ImageComponent {
+                            src: "/images/logo.png".to_string(),
+                            alt: "Hikari Logo".to_string(),
+                            width: Some(100),
+                            height: Some(100),
+                        }
                     }
                 },
 
@@ -287,186 +631,854 @@ pub fn render_component(component_type: ComponentType) -> Element {
                     }
                 },
 
-                // ========== Description List ==========
-                ("layer1", "description_list", _) => rsx! {
-                    div { class: flex_col_gap(),
-                        div { class: flex_row_wrap(),
-                            span { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "Key: " }
-                            span { "Value" }
-                        }
-                        div { class: flex_row_wrap(),
-                            span { class: ClassesBuilder::new().add(TextColor::Secondary).build(), "Name: " }
-                            span { "John Doe" }
-                        }
-                    }
-                },
-
                 // ========== Number Input ==========
-                ("layer1", "number_input", _) => rsx! {
-                    div { class: flex_col_gap(),
-                        Input { placeholder: Some("0".to_string()), input_type: Some("number".to_string()) }
+                ("layer1", "number_input", Some("basic")) => {
+                    let mut value = use_signal(|| 0);
+                    rsx! {
+                        div { class: flex_col_gap(),
+                            NumberInput {
+                                value: value(),
+                                on_change: move |v| value.set(v),
+                                min: Some(0),
+                                max: Some(100),
+                            }
+                        }
                     }
-                },
+                }
+                ("layer1", "number_input", Some("sizes")) => {
+                    let mut v1 = use_signal(|| 10);
+                    let mut v2 = use_signal(|| 50);
+                    let mut v3 = use_signal(|| 100);
+                    rsx! {
+                        div { class: flex_col_gap(),
+                            div { style: "display: flex; align-items: center; gap: 0.5rem;",
+                                span { style: "width: 60px;", "Small:" }
+                                NumberInput {
+                                    value: v1(),
+                                    on_change: move |v| v1.set(v),
+                                    size: NumberInputSize::Small,
+                                }
+                            }
+                            div { style: "display: flex; align-items: center; gap: 0.5rem;",
+                                span { style: "width: 60px;", "Medium:" }
+                                NumberInput {
+                                    value: v2(),
+                                    on_change: move |v| v2.set(v),
+                                    size: NumberInputSize::Medium,
+                                }
+                            }
+                            div { style: "display: flex; align-items: center; gap: 0.5rem;",
+                                span { style: "width: 60px;", "Large:" }
+                                NumberInput {
+                                    value: v3(),
+                                    on_change: move |v| v3.set(v),
+                                    size: NumberInputSize::Large,
+                                }
+                            }
+                        }
+                    }
+                }
+                ("layer1", "number_input", _) => {
+                    let mut value = use_signal(|| 0);
+                    rsx! {
+                        div { class: flex_col_gap(),
+                            NumberInput {
+                                value: value(),
+                                on_change: move |v| value.set(v),
+                                min: Some(0),
+                                max: Some(100),
+                            }
+                        }
+                    }
+                }
 
                 // ========== Search ==========
-                ("layer1", "search", _) => rsx! {
-                    Input { placeholder: Some("Search...".to_string()) }
+                ("layer1", "search", Some("basic")) => {
+                    let mut value = use_signal(|| String::new());
+                    rsx! {
+                        Search {
+                            value: value(),
+                            placeholder: "Search...".to_string(),
+                            suggestions: vec![
+                                "Hikari Components".to_string(),
+                                "Rust Programming".to_string(),
+                                "Dioxus Framework".to_string(),
+                                "WebAssembly".to_string(),
+                            ],
+                            on_search: move |v| value.set(v),
+                            on_clear: Some(Callback::new(move |_| value.set(String::new()))),
+                        }
+                    }
+                }
+                ("layer1", "search", _) => {
+                    let mut value = use_signal(|| String::new());
+                    rsx! {
+                        Search {
+                            value: value(),
+                            placeholder: "Search...".to_string(),
+                            suggestions: vec![
+                                "Hikari Components".to_string(),
+                                "Rust Programming".to_string(),
+                                "Dioxus Framework".to_string(),
+                            ],
+                            on_search: move |v| value.set(v),
+                            on_clear: Some(Callback::new(move |_| value.set(String::new()))),
+                        }
+                    }
+                }
+
+                // ========== Skeleton ==========
+                ("layer1", "empty", Some("skeleton")) => rsx! {
+                    div { class: flex_col_gap(),
+                        Skeleton { variant: SkeletonVariant::Text, rows: Some(3) }
+                    }
+                },
+                ("layer1", "empty", Some("card")) => rsx! {
+                    div { style: "width: 100%; max-width: 400px;",
+                        SkeletonCard { show_avatar: true, rows: 3 }
+                    }
+                },
+                ("layer1", "empty", Some("table")) => rsx! {
+                    div { style: "width: 100%;",
+                        SkeletonTable { columns: 4, rows: 3 }
+                    }
+                },
+                ("layer1", "empty", _) => rsx! {
+                    div { class: flex_col_gap(),
+                        Skeleton { variant: SkeletonVariant::Text, rows: Some(3) }
+                        div { style: "height: 16px;" }
+                        SkeletonCard { show_avatar: true, rows: 2 }
+                    }
+                },
+
+                // ========== FlexBox / Layout ==========
+                ("layer1", "flexbox", Some("row")) => rsx! {
+                    FlexBox {
+                        direction: Direction::Row,
+                        gap: FlexGap::Gap4,
+                        class: "hi-flexbox-demo".to_string(),
+                        div { class: "hi-demo-box", "Box 1" }
+                        div { class: "hi-demo-box", "Box 2" }
+                        div { class: "hi-demo-box", "Box 3" }
+                    }
+                },
+                ("layer1", "flexbox", Some("col")) => rsx! {
+                    FlexBox {
+                        direction: Direction::Column,
+                        gap: FlexGap::Gap4,
+                        class: "hi-flexbox-demo".to_string(),
+                        div { class: "hi-demo-box", "Item 1" }
+                        div { class: "hi-demo-box", "Item 2" }
+                        div { class: "hi-demo-box", "Item 3" }
+                    }
+                },
+                ("layer1", "flexbox", Some("align")) => rsx! {
+                    div { style: "display: flex; flex-direction: column; gap: 1rem;",
+                        div { "Align: Start" }
+                        FlexBox {
+                            direction: Direction::Row,
+                            align: _components::layout::Align::Start,
+                            gap: FlexGap::Gap2,
+                            div { class: "hi-demo-box-sm hi-demo-box-tall", "1" }
+                            div { class: "hi-demo-box-sm", "2" }
+                            div { class: "hi-demo-box-sm hi-demo-box-tall", "3" }
+                        }
+                        div { "Align: Center" }
+                        FlexBox {
+                            direction: Direction::Row,
+                            align: _components::layout::Align::Center,
+                            gap: FlexGap::Gap2,
+                            div { class: "hi-demo-box-sm hi-demo-box-tall", "1" }
+                            div { class: "hi-demo-box-sm", "2" }
+                            div { class: "hi-demo-box-sm hi-demo-box-tall", "3" }
+                        }
+                    }
+                },
+                ("layer1", "flexbox", _) => rsx! {
+                    FlexBox {
+                        direction: Direction::Row,
+                        gap: FlexGap::Gap4,
+                        div { class: "hi-demo-box", "Box 1" }
+                        div { class: "hi-demo-box", "Box 2" }
+                        div { class: "hi-demo-box", "Box 3" }
+                    }
                 },
 
                 // ========== Layer 2 ==========
                 ("layer2", "navigation", Some("menu")) => rsx! {
-                    div { class: placeholder_box(), p { "Menu component - coming soon" } }
+                    div { class: flex_col_gap(), style: "max-width: 240px;",
+                        Menu {
+                            mode: MenuMode::Vertical,
+                            MenuItem { item_key: "1", "Dashboard" }
+                            MenuItem { item_key: "2", "Settings" }
+                            MenuItem { item_key: "3", "Profile" }
+                            MenuItem { item_key: "4", disabled: true, "Disabled" }
+                        }
+                    }
                 },
                 ("layer2", "navigation", Some("tabs")) => rsx! {
-                    div { class: placeholder_box(), p { "Tabs component - coming soon" } }
+                    div { style: "width: 100%;",
+                        Tabs {
+                            default_active: "1".to_string(),
+                            TabPane {
+                                item_key: "1".to_string(),
+                                tab: "Tab 1".to_string(),
+                                div { class: flex_col_gap(), "Content of Tab 1" }
+                            }
+                            TabPane {
+                                item_key: "2".to_string(),
+                                tab: "Tab 2".to_string(),
+                                div { class: flex_col_gap(), "Content of Tab 2" }
+                            }
+                            TabPane {
+                                item_key: "3".to_string(),
+                                tab: "Tab 3".to_string(),
+                                div { class: flex_col_gap(), "Content of Tab 3" }
+                            }
+                        }
+                    }
                 },
                 ("layer2", "navigation", Some("breadcrumb")) => rsx! {
-                    div { class: placeholder_box(), p { "Breadcrumb component - coming soon" } }
+                    Breadcrumb {
+                        BreadcrumbItem { item_key: "1".to_string(), "Home" }
+                        BreadcrumbItem { item_key: "2".to_string(), "Library" }
+                        BreadcrumbItem { item_key: "3".to_string(), "Data" }
+                    }
                 },
                 ("layer2", "navigation", _) => rsx! {
-                    div { class: placeholder_box(), p { "Navigation components: Menu, Tabs, Breadcrumb" } }
+                    div { class: flex_col_gap(),
+                        Breadcrumb {
+                            BreadcrumbItem { item_key: "1".to_string(), "Home" }
+                            BreadcrumbItem { item_key: "2".to_string(), "Components" }
+                        }
+                    }
                 },
 
                 ("layer2", "data", Some("table")) => rsx! {
-                    div { class: placeholder_box(), p { "Table component - coming soon" } }
+                    div { style: "width: 100%;",
+                        Table {
+                            columns: vec![
+                                ColumnDef::new("name", "Name").sortable(true),
+                                ColumnDef::new("role", "Role"),
+                                ColumnDef::new("level", "Level").align(ColumnAlign::Center),
+                            ],
+                            data: vec![
+                                vec!["Amiya".to_string(), "Guard".to_string(), "6".to_string()],
+                                vec!["SilverAsh".to_string(), "Guard".to_string(), "6".to_string()],
+                                vec!["Exusiai".to_string(), "Sniper".to_string(), "6".to_string()],
+                                vec!["Eyjafjalla".to_string(), "Caster".to_string(), "6".to_string()],
+                            ],
+                            bordered: true,
+                            striped: true,
+                            hoverable: true,
+                        }
+                    }
                 },
                 ("layer2", "data", Some("tree")) => rsx! {
-                    div { class: placeholder_box(), p { "Tree component - coming soon" } }
+                    div { style: "width: 100%; max-width: 300px;",
+                        Tree {
+                            data: vec![
+                                TreeNodeData {
+                                    key: "1".to_string(),
+                                    label: "Parent 1".to_string(),
+                                    children: Some(vec![
+                                        TreeNodeData {
+                                            key: "1-1".to_string(),
+                                            label: "Child 1-1".to_string(),
+                                            children: None,
+                                            disabled: false,
+                                        },
+                                        TreeNodeData {
+                                            key: "1-2".to_string(),
+                                            label: "Child 1-2".to_string(),
+                                            children: None,
+                                            disabled: false,
+                                        },
+                                    ]),
+                                    disabled: false,
+                                },
+                                TreeNodeData {
+                                    key: "2".to_string(),
+                                    label: "Parent 2".to_string(),
+                                    children: Some(vec![
+                                        TreeNodeData {
+                                            key: "2-1".to_string(),
+                                            label: "Child 2-1".to_string(),
+                                            children: None,
+                                            disabled: false,
+                                        },
+                                    ]),
+                                    disabled: false,
+                                },
+                            ],
+                            default_expanded_keys: vec!["1".to_string()],
+                        }
+                    }
                 },
                 ("layer2", "data", Some("pagination")) => rsx! {
-                    div { class: placeholder_box(), p { "Pagination component - coming soon" } }
+                    Pagination {
+                        current: 3,
+                        total: 100,
+                        page_size: 10,
+                        show_total: true,
+                    }
                 },
                 ("layer2", "data", _) => rsx! {
-                    div { class: placeholder_box(), p { "Data components: Table, Tree, Pagination" } }
+                    div { class: flex_col_gap(),
+                        Pagination {
+                            current: 1,
+                            total: 50,
+                            page_size: 10,
+                            show_total: true,
+                        }
+                    }
                 },
 
                 ("layer2", "form", Some("form")) => rsx! {
-                    div { class: placeholder_box(), p { "Form component - coming soon" } }
+                    div { class: flex_col_gap(), style: "max-width: 320px;",
+                        Input { placeholder: Some("Username".to_string()) }
+                        Input { placeholder: Some("Password".to_string()), input_type: Some("password".to_string()) }
+                        Checkbox { checked: false, on_change: move |_| {}, "Remember me" }
+                        Button { variant: ButtonVariant::Primary, block: true, "Submit" }
+                    }
                 },
                 ("layer2", "form", Some("dropdown")) => rsx! {
-                    div { class: placeholder_box(), p { "Dropdown component - coming soon" } }
+                    div { class: flex_row_wrap(),
+                        Popover {
+                            trigger: rsx! {
+                                Button { variant: ButtonVariant::Primary, "Click me" }
+                            },
+                            div { style: "padding: 8px;", "Dropdown content here" }
+                        }
+                    }
                 },
-                ("layer2", "form", Some("modal")) => rsx! {
-                    div { class: placeholder_box(), p { "Modal component - coming soon" } }
-                },
+                ("layer2", "form", Some("modal")) => {
+                    let modal = use_modal(Default::default());
+                    rsx! {
+                        div { class: flex_row_wrap(),
+                            Button {
+                                variant: ButtonVariant::Primary,
+                                onclick: move |_| {
+                                    modal.open.call(ModalContent {
+                                        title: Some("Modal Title".to_string()),
+                                        children: rsx! {
+                                            div { style: "padding: 16px;",
+                                                p { "This is a modal dialog using the Portal system." }
+                                                p { style: "margin-top: 12px;", "Modal content can include any components." }
+                                                div { style: "margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end;",
+                                                    Button {
+                                                        variant: ButtonVariant::Ghost,
+                                                        onclick: move |_| modal.close.call(()),
+                                                        "Cancel"
+                                                    }
+                                                    Button {
+                                                        variant: ButtonVariant::Primary,
+                                                        onclick: move |_| modal.close.call(()),
+                                                        "Confirm"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                    });
+                                },
+                                "Open Modal"
+                            }
+                        }
+                    }
+                }
                 ("layer2", "form", Some("collapse")) => rsx! {
-                    div { class: placeholder_box(), p { "Collapse component - coming soon" } }
+                    div { style: "width: 100%; max-width: 400px;",
+                        Collapse {
+                            expanded: false,
+                            "Expandable content panel"
+                        }
+                    }
                 },
                 ("layer2", "form", _) => rsx! {
-                    div { class: placeholder_box(), p { "Form components: Form, Dropdown, Modal, Collapse" } }
+                    div { class: flex_col_gap(), style: "max-width: 320px;",
+                        Input { placeholder: Some("Form components".to_string()) }
+                    }
                 },
 
                 ("layer2", "feedback", Some("drawer")) => rsx! {
-                    div { class: placeholder_box(), p { "Drawer component - coming soon" } }
+                    div { class: flex_row_wrap(),
+                        Popover {
+                            trigger: rsx! {
+                                Button { variant: ButtonVariant::Primary, "Open Drawer" }
+                            },
+                            div { style: "padding: 16px; min-width: 250px;",
+                                h3 { style: "margin-bottom: 12px;", "Drawer Preview" }
+                                p { "This is a simplified drawer demonstration." }
+                                p { style: "margin-top: 8px;", "Full drawer slides in from edge." }
+                            }
+                        }
+                    }
                 },
                 ("layer2", "feedback", Some("popover")) => rsx! {
-                    div { class: placeholder_box(), p { "Popover component - coming soon" } }
+                    div { class: flex_row_wrap(),
+                        Popover {
+                            title: Some("Popover Title".to_string()),
+                            trigger: rsx! {
+                                Button { variant: ButtonVariant::Secondary, "Hover or Click" }
+                            },
+                            div { style: "padding: 8px;",
+                                p { "Popover content with title" }
+                            }
+                        }
+                    }
                 },
                 ("layer2", "feedback", Some("upload")) => rsx! {
-                    div { class: placeholder_box(), p { "Upload component - coming soon" } }
+                    div { style: "width: 100%; max-width: 400px;",
+                        FileUpload {
+                            upload_text: "Click or drag file to upload".to_string(),
+                            multiple: true,
+                        }
+                    }
                 },
                 ("layer2", "feedback", _) => rsx! {
-                    div { class: placeholder_box(), p { "Feedback components: Drawer, Popover, Upload" } }
+                    div { class: flex_col_gap(),
+                        Popover {
+                            trigger: rsx! {
+                                Button { variant: ButtonVariant::Primary, "Open Popover" }
+                            },
+                            div { style: "padding: 8px;", "Feedback: Drawer, Popover, Upload" }
+                        }
+                    }
                 },
 
                 // ========== Layer 2 - Specific ==========
                 ("layer2", "cascader", _) => rsx! {
-                    div { class: placeholder_box(), p { "Cascader: Multi-level cascading selection" } }
+                    div { style: "width: 100%; max-width: 300px;",
+                        Cascader {
+                            placeholder: "Select location".to_string(),
+                            size: CascaderSize::Md,
+                            options: vec![
+                                CascaderOption {
+                                    label: "Zhejiang".to_string(),
+                                    value: "zhejiang".to_string(),
+                                    children: Some(vec![
+                                        CascaderOption {
+                                            label: "Hangzhou".to_string(),
+                                            value: "hangzhou".to_string(),
+                                            ..Default::default()
+                                        },
+                                        CascaderOption {
+                                            label: "Ningbo".to_string(),
+                                            value: "ningbo".to_string(),
+                                            ..Default::default()
+                                        },
+                                    ]),
+                                    ..Default::default()
+                                },
+                                CascaderOption {
+                                    label: "Jiangsu".to_string(),
+                                    value: "jiangsu".to_string(),
+                                    children: Some(vec![
+                                        CascaderOption {
+                                            label: "Nanjing".to_string(),
+                                            value: "nanjing".to_string(),
+                                            ..Default::default()
+                                        },
+                                        CascaderOption {
+                                            label: "Suzhou".to_string(),
+                                            value: "suzhou".to_string(),
+                                            ..Default::default()
+                                        },
+                                    ]),
+                                    ..Default::default()
+                                },
+                            ],
+                        }
+                    }
                 },
                 ("layer2", "collapsible", _) => rsx! {
-                    div { class: placeholder_box(), p { "Collapsible: Expandable/collapsible panel" } }
+                    div { style: "width: 100%; max-width: 400px;",
+                        Collapse {
+                            expanded: true,
+                            animated: true,
+                            "This is collapsible content that can be expanded or collapsed"
+                        }
+                    }
                 },
                 ("layer2", "pagination", _) => rsx! {
-                    div { class: placeholder_box(), p { "Pagination: Page navigation for data lists" } }
+                    Pagination {
+                        current: 5,
+                        total: 500,
+                        page_size: 20,
+                        show_total: true,
+                        show_size_changer: true,
+                    }
                 },
                 ("layer2", "qrcode", _) => rsx! {
-                    div { class: placeholder_box(), p { "QRCode: QR code generation" } }
+                    div { style: "width: 100%; display: flex; justify-content: center;",
+                        QRCode {
+                            value: "https://github.com/celestia-island/hikari".to_string(),
+                            size: 180,
+                            title: Some("Scan to visit Hikari".to_string()),
+                        }
+                    }
                 },
                 ("layer2", "table", _) => rsx! {
-                    div { class: placeholder_box(), p { "Table: Data table with sorting and pagination" } }
+                    div { style: "width: 100%;",
+                        Table {
+                            columns: vec![
+                                ColumnDef::new("id", "ID").align(ColumnAlign::Center),
+                                ColumnDef::new("name", "Name").sortable(true),
+                                ColumnDef::new("status", "Status"),
+                            ],
+                            data: vec![
+                                vec!["001".to_string(), "Item A".to_string(), "Active".to_string()],
+                                vec!["002".to_string(), "Item B".to_string(), "Inactive".to_string()],
+                                vec!["003".to_string(), "Item C".to_string(), "Active".to_string()],
+                            ],
+                            hoverable: true,
+                        }
+                    }
                 },
                 ("layer2", "timeline", _) => rsx! {
-                    div { class: placeholder_box(), p { "Timeline: Event timeline display" } }
+                    Timeline {
+                        position: TimelinePosition::Left,
+                        TimelineItem {
+                            time: "2024-01-01".to_string(),
+                            title: "Project Started".to_string(),
+                            "Initial project setup"
+                        }
+                        TimelineItem {
+                            time: "2024-02-15".to_string(),
+                            title: "First Milestone".to_string(),
+                            "Completed core features"
+                        }
+                        TimelineItem {
+                            time: "2024-03-20".to_string(),
+                            title: "Beta Release".to_string(),
+                            last: true,
+                            "Public beta testing"
+                        }
+                    }
                 },
                 ("layer2", "transfer", _) => rsx! {
-                    div { class: placeholder_box(), p { "Transfer: Dual-column transfer selection" } }
+                    div { style: "width: 100%;",
+                        Transfer {
+                            data: vec![
+                                TransferItem { item_key: "1".to_string(), label: "Option 1".to_string(), ..Default::default() },
+                                TransferItem { item_key: "2".to_string(), label: "Option 2".to_string(), ..Default::default() },
+                                TransferItem { item_key: "3".to_string(), label: "Option 3".to_string(), ..Default::default() },
+                                TransferItem { item_key: "4".to_string(), label: "Option 4".to_string(), ..Default::default() },
+                            ],
+                            target_keys: vec!["3".to_string()],
+                            titles: Some(["Source".to_string(), "Target".to_string()]),
+                        }
+                    }
                 },
                 ("layer2", "tree", _) => rsx! {
-                    div { class: placeholder_box(), p { "Tree: Hierarchical tree structure" } }
+                    div { style: "width: 100%; max-width: 280px;",
+                        Tree {
+                            data: vec![
+                                TreeNodeData {
+                                    key: "root".to_string(),
+                                    label: "Root Node".to_string(),
+                                    children: Some(vec![
+                                        TreeNodeData {
+                                            key: "child1".to_string(),
+                                            label: "Child 1".to_string(),
+                                            children: None,
+                                            disabled: false,
+                                        },
+                                        TreeNodeData {
+                                            key: "child2".to_string(),
+                                            label: "Child 2".to_string(),
+                                            children: None,
+                                            disabled: false,
+                                        },
+                                    ]),
+                                    disabled: false,
+                                },
+                            ],
+                            show_line: true,
+                        }
+                    }
                 },
 
                 // ========== Layer 3 ==========
                 ("layer3", "media", Some("video")) => rsx! {
-                    div { class: placeholder_box(), p { "VideoPlayer component - coming soon" } }
+                    div { style: "width: 100%; max-width: 480px;",
+                        VideoPlayer {
+                            src: "https://www.w3schools.com/html/mov_bbb.mp4".to_string(),
+                            controls: true,
+                        }
+                    }
                 },
                 ("layer3", "media", Some("audio")) => rsx! {
-                    div { class: placeholder_box(), p { "AudioPlayer component - coming soon" } }
+                    div { style: "width: 100%; max-width: 400px;",
+                        AudioPlayer {
+                            src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3".to_string(),
+                            title: Some("Sample Track".to_string()),
+                            artist: Some("SoundHelix".to_string()),
+                            controls: true,
+                        }
+                    }
                 },
                 ("layer3", "media", _) => rsx! {
-                    div { class: placeholder_box(), p { "Media components: VideoPlayer, AudioPlayer" } }
+                    div { class: flex_col_gap(),
+                        VideoPlayer {
+                            src: "https://www.w3schools.com/html/mov_bbb.mp4".to_string(),
+                            controls: true,
+                        }
+                    }
                 },
 
                 ("layer3", "editor", Some("markdown")) => rsx! {
-                    div { class: placeholder_box(), p { "MarkdownEditor component - coming soon" } }
+                    div { style: "width: 100%; height: 300px;",
+                        MarkdownEditor {
+                            value: "# Hello World\n\nThis is **markdown** content.".to_string(),
+                            placeholder: "Write your markdown here...".to_string(),
+                            mode: MarkdownEditorMode::Split,
+                            toolbar: true,
+                        }
+                    }
                 },
                 ("layer3", "editor", Some("code")) => rsx! {
-                    div { class: placeholder_box(), p { "CodeEditor component - coming soon" } }
+                    div { style: "width: 100%; max-width: 500px;",
+                        CodeHighlight {
+                            language: "rust".to_string(),
+                            code: r#"fn main() {
+    println!("Hello, World!");
+}"#.to_string(),
+                            line_numbers: true,
+                            copyable: true,
+                        }
+                    }
                 },
                 ("layer3", "editor", Some("richtext")) => rsx! {
-                    div { class: placeholder_box(), p { "RichTextEditor component - coming soon" } }
+                    div { style: "width: 100%; max-width: 500px;",
+                        RichTextEditor {
+                            toolbar: true,
+                            placeholder: "Start typing...".to_string(),
+                        }
+                    }
                 },
                 ("layer3", "editor", _) => rsx! {
-                    div { class: placeholder_box(), p { "Editor components: Markdown, Code, RichText" } }
+                    div { class: flex_col_gap(),
+                        RichTextEditor {
+                            toolbar: true,
+                            placeholder: "Rich text editor".to_string(),
+                        }
+                    }
                 },
 
                 ("layer3", "visualization", Some("draglayer")) => rsx! {
-                    div { class: placeholder_box(), p { "DragLayer component - coming soon" } }
+                    div { style: "width: 100%; height: 200px; position: relative; background: var(--hi-surface); border-radius: 8px;",
+                        DragLayer {
+                            is_dragging: true,
+                            drag_item: Some(DragItem {
+                                id: "item-1".to_string(),
+                                label: "Draggable Component".to_string(),
+                                item_type: "component".to_string(),
+                            }),
+                            position: (150, 100),
+                            show_drop_zones: true,
+                        }
+                    }
                 },
                 ("layer3", "visualization", Some("timeline")) => rsx! {
-                    div { class: placeholder_box(), p { "Timeline component - coming soon" } }
+                    Timeline {
+                        position: TimelinePosition::Alternate,
+                        TimelineItem {
+                            position: TimelinePosition::Left,
+                            time: "Step 1".to_string(),
+                            title: "Design Phase".to_string(),
+                            "Initial design and planning"
+                        }
+                        TimelineItem {
+                            position: TimelinePosition::Right,
+                            time: "Step 2".to_string(),
+                            title: "Development".to_string(),
+                            "Core feature implementation"
+                        }
+                        TimelineItem {
+                            position: TimelinePosition::Left,
+                            time: "Step 3".to_string(),
+                            title: "Testing".to_string(),
+                            last: true,
+                            "Quality assurance and testing"
+                        }
+                    }
                 },
                 ("layer3", "visualization", Some("userguide")) => rsx! {
-                    div { class: placeholder_box(), p { "UserGuide component - coming soon" } }
+                    div { style: "width: 100%; max-width: 400px; position: relative; min-height: 200px;",
+                        UserGuide {
+                            steps: vec![
+                                GuideStep {
+                                    target: String::new(),
+                                    title: "Welcome to Hikari".to_string(),
+                                    description: "This is a step-by-step guide to introduce new features.".to_string(),
+                                    placement: GuidePlacement::Bottom,
+                                },
+                                GuideStep {
+                                    target: String::new(),
+                                    title: "Explore Components".to_string(),
+                                    description: "Browse our comprehensive component library.".to_string(),
+                                    placement: GuidePlacement::Bottom,
+                                },
+                                GuideStep {
+                                    target: String::new(),
+                                    title: "Get Started".to_string(),
+                                    description: "Start building your application with Hikari!".to_string(),
+                                    placement: GuidePlacement::Bottom,
+                                },
+                            ],
+                            current: 0,
+                            visible: true,
+                        }
+                    }
                 },
                 ("layer3", "visualization", _) => rsx! {
-                    div { class: placeholder_box(), p { "Visualization components: DragLayer, Timeline, UserGuide" } }
+                    div { class: flex_col_gap(),
+                        Timeline {
+                            position: TimelinePosition::Left,
+                            TimelineItem {
+                                time: "1".to_string(),
+                                title: "Step 1".to_string(),
+                                "First step"
+                            }
+                            TimelineItem {
+                                time: "2".to_string(),
+                                title: "Step 2".to_string(),
+                                last: true,
+                                "Final step"
+                            }
+                        }
+                    }
                 },
 
                 ("layer3", "user_guide", _) => rsx! {
-                    div { class: placeholder_box(), p { "UserGuide: Step-by-step user onboarding and feature tours" } }
+                    div { style: "width: 100%; max-width: 400px; position: relative; min-height: 200px;",
+                        UserGuide {
+                            steps: vec![
+                                GuideStep {
+                                    target: String::new(),
+                                    title: "Welcome".to_string(),
+                                    description: "This is a step-by-step guide".to_string(),
+                                    placement: GuidePlacement::Bottom,
+                                },
+                            ],
+                            current: 0,
+                            visible: true,
+                        }
+                    }
                 },
                 ("layer3", "zoom_controls", _) => rsx! {
-                    div { class: placeholder_box(), p { "ZoomControls: Zoom in/out controls with keyboard shortcuts" } }
+                    div { style: "width: 100%; display: flex; justify-content: center;",
+                        ZoomControls {
+                            zoom: 100,
+                            min_zoom: 25,
+                            max_zoom: 200,
+                            show_percentage: true,
+                        }
+                    }
                 },
 
                 // ========== System ==========
                 ("system", "css", Some("display")) => rsx! {
-                    div { class: placeholder_box(), p { "Display utilities: block, flex, grid, hidden" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(FontWeight::Semibold).build(), "Display Utilities" }
+                        div { class: flex_row_wrap(),
+                            div { class: "hi-flex hi-items-center hi-gap-2 hi-p-2", "flex items-center" }
+                            div { class: "hi-block hi-p-2", "block" }
+                            div { class: "hi-inline hi-p-2", "inline" }
+                        }
+                    }
                 },
                 ("system", "css", Some("flex")) => rsx! {
-                    div { class: placeholder_box(), p { "Flex utilities: flex-row, flex-col, items-center, justify-between" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(FontWeight::Semibold).build(), "Flex Utilities" }
+                        div { class: "hi-flex hi-flex-row hi-gap-4",
+                            div { class: "hi-p-2 hi-bg-gray-100", "Row" }
+                            div { class: "hi-p-2 hi-bg-gray-100", "Layout" }
+                        }
+                    }
                 },
                 ("system", "css", Some("spacing")) => rsx! {
-                    div { class: placeholder_box(), p { "Spacing utilities: p-4, m-2, gap-4" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(FontWeight::Semibold).build(), "Spacing Utilities" }
+                        div { class: "hi-flex hi-gap-2",
+                            div { class: "hi-p-2 hi-bg-gray-100", "p-2" }
+                            div { class: "hi-p-4 hi-bg-gray-100", "p-4" }
+                            div { class: "hi-p-6 hi-bg-gray-100", "p-6" }
+                        }
+                    }
                 },
                 ("system", "css", Some("typography")) => rsx! {
-                    div { class: placeholder_box(), p { "Typography utilities: text-sm, font-bold, text-center" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(FontWeight::Semibold).build(), "Typography Utilities" }
+                        p { class: "hi-text-sm", "Small text (text-sm)" }
+                        p { class: "hi-text-base", "Base text (text-base)" }
+                        p { class: "hi-text-lg", "Large text (text-lg)" }
+                    }
                 },
                 ("system", "css", Some("colors")) => rsx! {
-                    div { class: placeholder_box(), p { "Color utilities: bg-primary, text-secondary" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(FontWeight::Semibold).build(), "Color Utilities" }
+                        div { class: flex_row_wrap(),
+                            div { class: "hi-p-2 hi-bg-primary hi-text-white", "primary" }
+                            div { class: "hi-p-2 hi-bg-secondary hi-text-white", "secondary" }
+                            div { class: "hi-p-2 hi-bg-danger hi-text-white", "danger" }
+                        }
+                    }
                 },
                 ("system", "css", _) => rsx! {
-                    div { class: placeholder_box(), p { "CSS Utilities: Tailwind-compatible utility classes" } }
+                    div { class: flex_col_gap(),
+                        p { "CSS Utility System" }
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "Tailwind-compatible utility classes for rapid UI development"
+                        }
+                    }
                 },
 
                 ("system", "i18n", Some("basic")) => rsx! {
-                    div { class: placeholder_box(), p { "i18n basic usage - coming soon" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(TextColor::Primary).build(),
+                            "i18n system provides internationalization support with:"
+                        }
+                        ul { style: "margin-left: 1.5rem;",
+                            li { "I18nProvider - Context provider for language data" }
+                            li { "use_i18n() - Hook to access translations" }
+                            li { "LanguageSwitcher - UI component for language selection" }
+                            li { "TOML-based translation files" }
+                        }
+                    }
                 },
                 ("system", "i18n", Some("switch")) => rsx! {
-                    div { class: placeholder_box(), p { "i18n language switching - coming soon" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "Language switcher component (demo):"
+                        }
+                        div {
+                            style: "display: flex; gap: 8px; padding: 8px; background: var(--hi-surface); border-radius: 8px; width: fit-content;",
+                            button {
+                                class: "hi-button hi-button-sm hi-button-primary",
+                                "EN"
+                            }
+                            button {
+                                class: "hi-button hi-button-sm hi-button-ghost",
+                                "简"
+                            }
+                            button {
+                                class: "hi-button hi-button-sm hi-button-ghost",
+                                "繁"
+                            }
+                        }
+                    }
                 },
                 ("system", "i18n", _) => rsx! {
-                    div { class: placeholder_box(), p { "i18n internationalization system" } }
+                    div { class: flex_col_gap(),
+                        p { class: ClassesBuilder::new().add(TextColor::Primary).build(),
+                            "i18n internationalization system"
+                        }
+                        p { class: ClassesBuilder::new().add(TextColor::Secondary).build(),
+                            "Supports: English, Chinese Simplified, Chinese Traditional"
+                        }
+                    }
                 },
 
                 _ => rsx! {

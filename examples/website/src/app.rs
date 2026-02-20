@@ -71,8 +71,6 @@ pub enum Route {
     Empty { lang: String },
     #[route("/:lang/components/layer1/comment")]
     Comment { lang: String },
-    #[route("/:lang/components/layer1/description_list")]
-    DescriptionList { lang: String },
 
     #[route("/:lang/components/layer2")]
     Layer2Overview { lang: String },
@@ -420,17 +418,6 @@ fn Comment(lang: String) -> Element {
         crate::components::DynamicDocPage {
             current_route: Route::Comment { lang: lang.clone() },
             doc_path: "components/layer1/comment",
-        }
-    }
-}
-
-#[component]
-fn DescriptionList(lang: String) -> Element {
-    crate::hooks::use_update_language_from_route(&lang);
-    rsx! {
-        crate::components::DynamicDocPage {
-            current_route: Route::DescriptionList { lang: lang.clone() },
-            doc_path: "components/layer1/description_list",
         }
     }
 }

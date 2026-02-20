@@ -1,5 +1,5 @@
 //! hi-components/src/feedback/mod.rs
-//! Feedback components: Alert, Toast, Tooltip, Glow, Popover, Drawer, Skeleton, Spin, Progress
+//! Feedback components: Alert, Toast, Tooltip, Glow, Popover, Drawer, Spin, Progress
 //!
 //! Arknights + FUI styling:
 //! - Shimmer animations
@@ -13,7 +13,6 @@ pub mod glow;
 pub mod modal;
 pub mod popover;
 pub mod progress;
-pub mod skeleton;
 pub mod spin;
 pub mod toast;
 pub mod tooltip;
@@ -24,7 +23,6 @@ pub use glow::*;
 pub use modal::*;
 pub use popover::*;
 pub use progress::*;
-pub use skeleton::*;
 pub use spin::*;
 pub use toast::*;
 pub use tooltip::*;

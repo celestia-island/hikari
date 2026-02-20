@@ -1,11 +1,12 @@
 // node_graph/plugins/processor.rs
 // Processor node plugin - performs data transformations
 
-use serde_json::Value;
-
 use dioxus::prelude::*;
 
-use crate::node_graph::node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition};
+use crate::node_graph::{
+    node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition},
+    value::NodeValue,
+};
 
 /// Processor operation types
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -94,8 +95,7 @@ impl ProcessorNode {
     }
 
     /// Perform operation
-    #[allow(dead_code)]
-    fn compute(&self, a: Value, b: Value) -> Result<Value, String> {
+    pub fn compute(&self, a: NodeValue, b: NodeValue) -> Result<NodeValue, String> {
         let a_num = a
             .as_f64()
             .ok_or_else(|| "First input is not a number".to_string())?;
@@ -115,7 +115,7 @@ impl ProcessorNode {
             }
         };
 
-        Ok(Value::Number(serde_json::Number::from_f64(result).unwrap()))
+        Ok(NodeValue::from(result))
     }
 }
 
@@ -144,7 +144,7 @@ impl NodePlugin for ProcessorNode {
         }
     }
 
-    fn handle_input(&self, _port_id: PortId, _data: Value) {
+    fn handle_input(&self, _port_id: PortId, _data: NodeValue) {
         // Processor nodes need to store input values and compute output
         // This is a simplified implementation
         // In a real implementation, we would:
@@ -154,7 +154,7 @@ impl NodePlugin for ProcessorNode {
         // 4. Store output
     }
 
-    fn get_output(&self, _port_id: PortId) -> Option<Value> {
+    fn get_output(&self, _port_id: PortId) -> Option<NodeValue> {
         // In a real implementation, this would return computed output
         // For now, return None to indicate no output is available
         None

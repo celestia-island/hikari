@@ -5,6 +5,7 @@ pub mod anchor;
 pub mod breadcrumb;
 pub mod menu;
 pub mod sidebar;
+pub mod stepper;
 pub mod steps;
 pub mod tabs;
 
@@ -12,5 +13,6 @@ pub use anchor::*;
 pub use breadcrumb::*;
 pub use menu::*;
 pub use sidebar::*;
-pub use steps::*;
+pub use stepper::*;
+pub use steps::{StepItemProps, StepsComponent, StepsDirection, StepsProps};
 pub use tabs::*;

@@ -2,7 +2,7 @@
 //!
 //! This module defines the SvgIcon struct used in icon data and provides parsing utilities.
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use std::collections::HashMap;
 
 use quick_xml::events::Event;
@@ -116,8 +116,7 @@ pub fn parse_svg(svg: &str) -> Result<SvgIcon> {
     };
 
     let mut current_attrs: HashMap<String, String> = HashMap::new();
-    #[allow(unused_assignments)]
-    let mut current_tag = String::new();
+    let mut current_tag;
 
     loop {
         match reader.read_event() {

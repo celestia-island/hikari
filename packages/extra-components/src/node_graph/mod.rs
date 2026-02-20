@@ -10,6 +10,7 @@ pub mod plugins;
 pub mod port;
 pub mod registry;
 pub mod serialization;
+pub mod value;
 pub mod viewport;
 
 pub use canvas::NodeGraphCanvas;
@@ -21,4 +22,5 @@ pub use plugins::*;
 pub use port::{Port, PortId, PortType};
 pub use registry::{NodeRegistry, RegistryEntry, list_all_plugins};
 pub use serialization::SerializedNodeGraph;
+pub use value::NodeValue;
 pub use viewport::Viewport;

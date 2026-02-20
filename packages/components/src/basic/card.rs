@@ -3,7 +3,6 @@
 
 use dioxus::prelude::*;
 use palette::classes::{CardClass, ClassesBuilder, UtilityClass};
-
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 

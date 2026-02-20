@@ -4,10 +4,7 @@
 use dioxus::prelude::*;
 
 use _animation::presets::{glow, neon, tech, transition};
-use _components::{
-    basic::{Button, ButtonSize, ButtonVariant},
-    layout::{Row, Section},
-};
+use _components::{basic::{Button, ButtonSize, ButtonVariant}, layout::{Row, Section}};
 
 /// Animation demonstration page
 ///

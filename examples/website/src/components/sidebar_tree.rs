@@ -285,12 +285,6 @@ fn build_navigation_tree() -> Vec<TreeNodeData> {
                             disabled: false,
                         },
                         TreeNodeData {
-                            key: "display-description-list".to_string(),
-                            label: "DescriptionList 描述列表".to_string(),
-                            children: None,
-                            disabled: false,
-                        },
-                        TreeNodeData {
                             key: "display-qrcode".to_string(),
                             label: "QRCode 二维码".to_string(),
                             children: None,

@@ -4,8 +4,7 @@
 use dioxus::prelude::*;
 use dioxus_router::{use_navigator, use_route};
 
-use crate::app::Route;
-use crate::hooks::use_language;
+use crate::{app::Route, hooks::use_language};
 use _components::navigation::{Menu, MenuItem, MenuItemHeight, MenuMode, SubMenu};
 use _i18n::context::Language;
 use _icons::{Icon, MdiIcon};
@@ -176,9 +175,6 @@ fn route_key_to_route(key: &str, lang: &str) -> Route {
         "comment" => Route::Comment {
             lang: lang.to_string(),
         },
-        "description_list" => Route::DescriptionList {
-            lang: lang.to_string(),
-        },
         "layer2" => Route::Layer2Overview {
             lang: lang.to_string(),
         },
@@ -262,6 +258,10 @@ fn route_key_to_route(key: &str, lang: &str) -> Route {
 
 #[component]
 pub fn Sidebar(current_route: Route) -> Element {
+    // 订阅 i18n keys 的变化，确保语言切换时重新渲染
+    let i18n = crate::hooks::use_i18n();
+    let _ = i18n.keys.read();
+
     use_effect(move || {
         let scroll_pos = *SIDEBAR_SCROLL_POSITION.read();
         if scroll_pos > 0.0 {

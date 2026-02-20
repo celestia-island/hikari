@@ -1,18 +1,19 @@
 // node_graph/plugins/input_node.rs
 // Input node plugin - accepts user input or external data
 
-use serde_json::Value;
-
 use dioxus::prelude::*;
 
-use crate::node_graph::node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition};
+use crate::node_graph::{
+    node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition},
+    value::NodeValue,
+};
 
 /// Input node plugin
 pub struct InputNode {
     node_type: NodeType,
     output_port_id: PortId,
     input_type: String,
-    default_value: Value,
+    default_value: NodeValue,
 }
 
 impl InputNode {
@@ -28,7 +29,7 @@ impl InputNode {
     }
 
     /// Create a new input node with default value
-    pub fn with_default(name: &str, input_type: &str, default_value: Value) -> Self {
+    pub fn with_default(name: &str, input_type: &str, default_value: NodeValue) -> Self {
         let output_port_id = format!("{}_output", name);
         Self {
             node_type: NodeType::new("input", name),
@@ -38,12 +39,12 @@ impl InputNode {
         }
     }
 
-    fn default_value_for_type(input_type: &str) -> Value {
+    fn default_value_for_type(input_type: &str) -> NodeValue {
         match input_type {
-            "number" => Value::Number(serde_json::Number::from(0)),
-            "text" => Value::String(String::new()),
-            "checkbox" => Value::Bool(false),
-            _ => Value::Null,
+            "number" => NodeValue::Number(0.0),
+            "text" => NodeValue::Text(String::new()),
+            "checkbox" => NodeValue::Boolean(false),
+            _ => NodeValue::Null,
         }
     }
 
@@ -54,11 +55,7 @@ impl InputNode {
 
     /// Create a numeric input node with default value
     pub fn numeric_with_default(name: &str, default: f64) -> Self {
-        Self::with_default(
-            name,
-            "number",
-            Value::Number(serde_json::Number::from_f64(default).unwrap()),
-        )
+        Self::with_default(name, "number", NodeValue::from(default))
     }
 
     /// Create a string input node
@@ -68,7 +65,7 @@ impl InputNode {
 
     /// Create a string input node with default value
     pub fn string_with_default(name: &str, default: &str) -> Self {
-        Self::with_default(name, "text", Value::String(default.to_string()))
+        Self::with_default(name, "text", NodeValue::from(default))
     }
 
     /// Create a boolean input node
@@ -78,7 +75,7 @@ impl InputNode {
 
     /// Create a boolean input node with default value
     pub fn boolean_with_default(name: &str, default: bool) -> Self {
-        Self::with_default(name, "checkbox", Value::Bool(default))
+        Self::with_default(name, "checkbox", NodeValue::from(default))
     }
 
     /// Get default ports for this node type
@@ -116,7 +113,7 @@ impl NodePlugin for InputNode {
         let on_change = {
             let node_id = node_id.clone();
             let output_port_id = output_port_id.clone();
-            move |val: Value| {
+            move |val: NodeValue| {
                 if let Err(e) = store_node_value(node_id.clone(), output_port_id.clone(), val) {
                     #[cfg(target_arch = "wasm32")]
                     web_sys::console::error_1(&format!("Failed to store node value: {}", e).into());
@@ -126,13 +123,7 @@ impl NodePlugin for InputNode {
             }
         };
 
-        let initial_value = match &self.default_value {
-            Value::Number(n) => n.to_string(),
-            Value::String(s) => s.clone(),
-            Value::Bool(b) => b.to_string(),
-            Value::Null => String::new(),
-            _ => String::new(),
-        };
+        let initial_value = self.default_value.to_display_string();
 
         rsx! {
             div {
@@ -147,14 +138,12 @@ impl NodePlugin for InputNode {
                         let val = match input_type_str.as_str() {
                             "number" => {
                                 if let Ok(num) = new_value.parse::<f64>() {
-                                    Some(Value::Number(
-                                        serde_json::Number::from_f64(num).unwrap()
-                                    ))
+                                    Some(NodeValue::from(num))
                                 } else {
                                     None
                                 }
                             }
-                            "text" => Some(Value::String(new_value)),
+                            "text" => Some(NodeValue::from(new_value)),
                             "checkbox" => None, // Would use onchecked
                             _ => None,
                         };
@@ -169,11 +158,11 @@ impl NodePlugin for InputNode {
         }
     }
 
-    fn handle_input(&self, _port_id: PortId, _data: Value) {
+    fn handle_input(&self, _port_id: PortId, _data: NodeValue) {
         // Input nodes don't accept external input (they provide input to graph)
     }
 
-    fn get_output(&self, port_id: PortId) -> Option<Value> {
+    fn get_output(&self, port_id: PortId) -> Option<NodeValue> {
         if port_id == self.output_port_id {
             // Return the stored value from the global registry
             // For now, return the default value
@@ -191,55 +180,41 @@ impl NodePlugin for InputNode {
 /// to store node values. In a production system, this would use a proper
 /// state management system.
 #[cfg(target_arch = "wasm32")]
-fn store_node_value(node_id: String, port_id: String, value: Value) -> Result<(), String> {
-    use wasm_bindgen::{JsCast, JsValue};
+fn store_node_value(node_id: String, port_id: String, value: NodeValue) -> Result<(), String> {
     use js_sys::Object;
+    use wasm_bindgen::JsValue;
     use web_sys::window;
 
     let win = window().ok_or_else(|| "Failed to get window".to_string())?;
 
     // Get or create the global node values object
     let storage_key = "hikariNodeValues";
-    let node_values = if let Some(obj) = js_sys::Reflect::get(&win.clone().into(), &storage_key.into()).ok() {
-        if obj.is_object() {
-            obj.dyn_into::<Object>().map_err(|e| format!("Failed to cast to Object: {:?}", e))?
+    let node_values =
+        if let Some(obj) = js_sys::Reflect::get(&win.clone().into(), &storage_key.into()).ok() {
+            if obj.is_object() {
+                obj.into()
+            } else {
+                Object::new()
+            }
         } else {
             Object::new()
-        }
-    } else {
-        Object::new()
-    };
+        };
 
     // Get or create the node's value object
     let node_obj = if js_sys::Reflect::has(&node_values, &node_id.clone().into()).unwrap_or(false) {
         js_sys::Reflect::get(&node_values, &node_id.clone().into())
             .map_err(|e| format!("Failed to get node object: {:?}", e))?
-            .dyn_into::<Object>()
-            .map_err(|e| format!("Failed to cast node object to Object: {:?}", e))?
+            .into()
     } else {
         Object::new()
     };
 
-    // Convert serde_json::Value to JS value
+    // Convert NodeValue to JS value
     let value_js: JsValue = match value {
-        Value::Null => JsValue::null(),
-        Value::Bool(b) => JsValue::from_bool(b),
-        Value::Number(n) => {
-            if let Some(u) = n.as_u64() {
-                JsValue::from_f64(u as f64)
-            } else if let Some(i) = n.as_i64() {
-                JsValue::from_f64(i as f64)
-            } else {
-                JsValue::from_f64(n.as_f64().unwrap_or(0.0))
-            }
-        }
-        Value::String(s) => JsValue::from_str(&s),
-        Value::Array(_) | Value::Object(_) => {
-            // For complex types, serialize to JSON string then parse
-            let json_str = serde_json::to_string(&value)
-                .map_err(|e| format!("Failed to serialize value: {:?}", e))?;
-            JsValue::from_str(&json_str)
-        }
+        NodeValue::Null => JsValue::null(),
+        NodeValue::Boolean(b) => JsValue::from_bool(b),
+        NodeValue::Number(n) => JsValue::from_f64(n),
+        NodeValue::Text(s) => JsValue::from_str(&s),
     };
 
     js_sys::Reflect::set(&node_obj, &port_id.into(), &value_js)
@@ -249,15 +224,19 @@ fn store_node_value(node_id: String, port_id: String, value: Value) -> Result<()
         .map_err(|e| format!("Failed to set node object: {:?}", e))?;
 
     // Store the updated object back to global scope
-    js_sys::Reflect::set(&win.clone().into(), &storage_key.into(), &node_values.into())
-        .map_err(|e| format!("Failed to store global object: {:?}", e))?;
+    js_sys::Reflect::set(
+        &win.clone().into(),
+        &storage_key.into(),
+        &node_values.into(),
+    )
+    .map_err(|e| format!("Failed to store global object: {:?}", e))?;
 
     Ok(())
 }
 
 /// Store a node's output value in the global registry (SSR version)
 #[cfg(not(target_arch = "wasm32"))]
-fn store_node_value(_node_id: String, _port_id: String, _value: Value) -> Result<(), String> {
+fn store_node_value(_node_id: String, _port_id: String, _value: NodeValue) -> Result<(), String> {
     // On SSR, we can't store values globally
     // Return an error to indicate this isn't supported
     Err("Node value storage not supported on non-WASM targets".to_string())

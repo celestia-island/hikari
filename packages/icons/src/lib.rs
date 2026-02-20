@@ -285,7 +285,9 @@ fn log_icon_warning_once(icon_name: String) {
     {
         let warned =
             WARNED_ICONS.get_or_init(|| std::sync::Mutex::new(std::collections::HashSet::new()));
-        let mut warned = warned.lock().unwrap();
+        let mut warned = warned
+            .lock()
+            .expect("Failed to acquire lock on warned icons set - mutex poisoned");
 
         if !warned.contains(&icon_name) {
             warned.insert(icon_name.clone());
@@ -317,42 +319,6 @@ fn log_icon_warning_once(icon_name: String) {
                 eprintln!("   - Or run: python scripts/icons/fetch_mdi_icons.py");
             }
         }
-    }
-}
-
-/// Log success message for dynamic fetch (only once per icon)
-#[cfg(feature = "dynamic-fetch")]
-#[allow(dead_code)]
-fn log_dynamic_fetch_success(icon_name: String) {
-    // Check if dynamic fetch warnings are disabled
-    #[cfg(not(feature = "dynamic-fetch-warnings"))]
-    {
-        // Don't log anything if warnings are disabled
-        return;
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        let warned_success = std::sync::OnceLock::new();
-        warned_success.get_or_init(|| {
-            web_sys::console::log_1(
-                &format!(
-                "✅ [Hikari Icons] Icon '{}' successfully fetched from server (network request)",
-                icon_name
-            )
-                .into(),
-            );
-
-            true
-        });
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        eprintln!(
-            "✅ [Hikari Icons] Icon '{}' successfully fetched from server (network request)",
-            icon_name
-        );
     }
 }
 

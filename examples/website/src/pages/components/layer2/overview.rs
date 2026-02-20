@@ -3,8 +3,7 @@
 
 use dioxus::prelude::*;
 
-use crate::components::PageContainer;
-use crate::hooks::{use_i18n, use_language};
+use crate::{components::PageContainer, hooks::{use_i18n, use_language}};
 use _palette::classes::{ClassesBuilder, FontSize, TextColor};
 
 pub fn Layer2Overview() -> Element {

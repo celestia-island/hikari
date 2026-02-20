@@ -1,0 +1,117 @@
+[common]
+[common.button]
+submit = "Enviar"
+cancel = "Cancelar"
+confirm = "Confirmar"
+delete = "Eliminar"
+edit = "Editar"
+save = "Guardar"
+
+[common.navigation]
+home = "Inicio"
+about = "Acerca de"
+documentation = "Documentación"
+components = "Componentes"
+theme = "Tema"
+
+[common.status]
+loading = "Cargando..."
+success = "Éxito"
+error = "Error"
+warning = "Advertencia"
+
+[theme]
+light = "Claro"
+dark = "Oscuro"
+auto = "Auto"
+
+[page]
+[page.home]
+[page.home.hero]
+title = "Framework UI Hikari"
+subtitle = "Luz - Un Framework UI Moderno en Rust"
+description = "Basado en Dioxus + Grass + Axum, diseñado con la estética Arknights y el estilo FUI."
+tagline = "No hay vergüenza en querer sentirse feliz."
+explore = "Explorar Componentes →"
+
+[page.home.features]
+title = "Características"
+description = "Diseñado para desarrolladores que desean crear aplicaciones web hermosas y de alto rendimiento."
+
+[page.components]
+title = "Componentes"
+description = "Una rica colección de componentes UI reutilizables."
+
+[page.documentation]
+title = "Documentación"
+description = "Comienza con Hikari y aprende a crear aplicaciones increíbles."
+getting_started = "Primeros Pasos"
+quick_start = "Inicio Rápido"
+
+[language]
+english = "English"
+chinese_simplified = "简体中文"
+chinese_traditional = "繁體中文"
+french = "Français"
+russian = "Русский"
+spanish = "Español"
+arabic = "العربية"
+japanese = "日本語"
+korean = "한국어"
+
+[sidebar]
+[sidebar.overview]
+title = "Bienvenido"
+home = "Bienvenido"
+
+[sidebar.components]
+title = "Componentes"
+layer1 = "Capa 1"
+layer2 = "Capa 2"
+layer3 = "Capa 3"
+
+[sidebar.system]
+title = "Sistema"
+overview = "Vista General"
+css_utilities = "Utilidades CSS"
+icons = "Iconos"
+palette = "Paleta"
+animations = "Animaciones"
+animation_demo = "Demo de Animación"
+
+[sidebar.demos]
+title = "Demos"
+all_demos = "Todos los Demos"
+
+[sidebar.items]
+button = "Botón"
+form = "Formulario"
+number_input = "Entrada Numérica"
+search = "Búsqueda"
+switch = "Interruptor"
+feedback = "Retroalimentación"
+display = "Visualización"
+avatar = "Avatar"
+image = "Imagen"
+tag = "Etiqueta"
+empty = "Vacío"
+comment = "Comentario"
+description_list = "Lista de Descripción"
+navigation = "Navegación"
+collapsible = "Colapsable"
+data = "Datos"
+table = "Tabla"
+tree = "Árbol"
+pagination = "Paginación"
+qrcode = "Código QR"
+timeline = "Línea de Tiempo"
+cascader = "Cascada"
+transfer = "Transferencia"
+media = "Medios"
+editor = "Editor"
+visualization = "Visualización"
+user_guide = "Guía de Usuario"
+zoom_controls = "Controles de Zoom"
+form_demo = "Demo de Formulario"
+dashboard_demo = "Demo de Panel"
+video_demo = "Demo de Video"

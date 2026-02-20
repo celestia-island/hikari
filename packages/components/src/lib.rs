@@ -96,6 +96,7 @@ pub mod styled;
 pub mod layout;
 
 // Theme provider (always available)
+pub mod theme;
 pub mod theme_provider;
 
 // Responsive hooks (always available)
@@ -233,14 +234,8 @@ pub use navigation::*;
 #[cfg(feature = "feedback")]
 pub use feedback::*;
 
-// Re-export display components when display feature is enabled
-#[cfg(feature = "display")]
-#[allow(unused_imports)]
-pub use display::*;
-
 // Re-export production components when production feature is enabled
 #[cfg(feature = "production")]
-#[allow(unused_imports)]
 pub use production::*;
 
 pub use icons::{Icon, MdiIcon};
@@ -252,9 +247,9 @@ pub use utils::positioning::{
 };
 
 // Theme provider exports
-pub use theme_provider::{
-    ComponentOverrides, ComponentPalette, ThemeContext, ThemePalette, ThemeProvider,
-    get_default_theme, get_registered_theme, prefers_dark_mode, register_theme, use_theme,
+pub use theme::{
+    ComponentOverrides, ComponentPalette, IntoThemeName, LayoutDirection, ThemeContext, ThemePalette, ThemeProvider,
+    get_default_theme, get_registered_theme, prefers_dark_mode, register_theme, use_layout_direction, use_theme,
 };
 
 // Portal exports

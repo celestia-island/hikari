@@ -2,11 +2,10 @@
 // Tooltip component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, TooltipClass};
+use palette::classes::{ClassesBuilder, TooltipClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// Tooltip 组件的类型包装器（用于实现 StyledComponent）
 pub struct TooltipComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -29,7 +28,7 @@ pub struct TooltipProps {
     #[props(default)]
     pub delay: Option<u64>,
 
-    #[props(default)]
+    #[props(default = true)]
     pub arrow: bool,
 
     #[props(default)]
@@ -51,38 +50,15 @@ impl Default for TooltipProps {
     }
 }
 
-/// Tooltip component with Arknights + FUI styling
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Tooltip, TooltipPlacement};
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Tooltip {
-///             content: "This is a helpful tooltip".to_string(),
-///             placement: TooltipPlacement::Top,
-///             Button { "Hover me" }
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Tooltip(props: TooltipProps) -> Element {
+    let mut is_visible = use_signal(|| false);
+
     let placement_class = match props.placement {
         TooltipPlacement::Top => TooltipClass::TooltipTop,
         TooltipPlacement::Bottom => TooltipClass::TooltipBottom,
         TooltipPlacement::Left => TooltipClass::TooltipLeft,
         TooltipPlacement::Right => TooltipClass::TooltipRight,
-    };
-
-    let arrow_class = match props.placement {
-        TooltipPlacement::Top => TooltipClass::TooltipArrowTop,
-        TooltipPlacement::Bottom => TooltipClass::TooltipArrowBottom,
-        TooltipPlacement::Left => TooltipClass::TooltipArrowLeft,
-        TooltipPlacement::Right => TooltipClass::TooltipArrowRight,
     };
 
     let wrapper_classes = ClassesBuilder::new()
@@ -93,30 +69,38 @@ pub fn Tooltip(props: TooltipProps) -> Element {
     let tooltip_classes = ClassesBuilder::new()
         .add(TooltipClass::Tooltip)
         .add(placement_class)
+        .add_if(TooltipClass::TooltipVisible, move || is_visible())
         .build();
 
-    let arrow_classes = ClassesBuilder::new()
-        .add(TooltipClass::TooltipArrow)
-        .add(arrow_class)
-        .build();
+    let handle_mouse_enter = move |_| {
+        is_visible.set(true);
+    };
+
+    let handle_mouse_leave = move |_| {
+        is_visible.set(false);
+    };
 
     rsx! {
         div {
             class: "{wrapper_classes}",
 
             div {
-                class: "TooltipClass::TooltipTrigger.as_class()",
+                class: "{TooltipClass::TooltipTrigger.as_class()}",
+                onmouseenter: handle_mouse_enter,
+                onmouseleave: handle_mouse_leave,
                 { props.children }
             }
 
-            div {
-                class: "{tooltip_classes}",
+            if is_visible() {
+                div {
+                    class: "{tooltip_classes}",
 
-                div { class: "TooltipClass::TooltipContent.as_class()",
-                    "{props.content}"
+                    div { class: "{TooltipClass::TooltipContent.as_class()}",
+                        "{props.content}"
+                    }
 
                     if props.arrow {
-                        div { class: "{arrow_classes}" }
+                        div { class: "hi-tooltip-arrow" }
                     }
                 }
             }

@@ -16,12 +16,98 @@ use axum::{
 use thiserror::Error;
 use tower_http::services::ServeDir;
 
+pub use super::icon_route::get_icon_data;
 use super::{
     plugin::{RouterRoute, StaticMountConfig},
     registry::StyleRegistry,
 };
 
-pub use super::icon_route::get_icon_data;
+/// Macro for building HTTP responses with compile-time safety.
+///
+/// # Example
+///
+/// ```ignore
+/// // Simple response with default content-type
+/// let response = response!(StatusCode::OK, "Hello World");
+///
+/// // Response with content-type
+/// let response = response!(StatusCode::OK, "text/html", "<html>...</html>");
+/// ```
+macro_rules! response {
+    // Simple: status + body
+    ($status:expr, $body:expr) => {
+        Response::builder()
+            .status($status)
+            .body(Body::from($body))
+            .expect("Failed to build HTTP response")
+    };
+
+    // With content-type
+    ($status:expr, $content_type:expr, $body:expr) => {
+        Response::builder()
+            .status($status)
+            .header(header::CONTENT_TYPE, $content_type)
+            .body(Body::from($body))
+            .expect("Failed to build HTTP response")
+    };
+}
+
+/// HTML response helper
+macro_rules! html_response {
+    ($status:expr, $body:expr) => {
+        response!($status, "text/html; charset=utf-8", $body)
+    };
+}
+
+/// JSON response helper
+macro_rules! json_response {
+    ($status:expr, $body:expr) => {
+        response!($status, "application/json", $body)
+    };
+}
+
+/// CSS response helper
+macro_rules! css_response {
+    ($status:expr, $body:expr) => {
+        response!($status, "text/css; charset=utf-8", $body)
+    };
+}
+
+/// CSS response with cache control
+macro_rules! css_response_cached {
+    ($status:expr, $body:expr) => {
+        Response::builder()
+            .status($status)
+            .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
+            .header(header::CACHE_CONTROL, "public, max-age=3600")
+            .body(Body::from($body))
+            .expect("Failed to build HTTP response")
+    };
+}
+
+/// Redirect response helper
+macro_rules! redirect_response {
+    ($status:expr, $location:expr) => {
+        Response::builder()
+            .status($status)
+            .header(header::LOCATION, $location)
+            .header(header::CACHE_CONTROL, "no-cache")
+            .body(Body::from(""))
+            .expect("Failed to build HTTP response")
+    };
+}
+
+/// SVG response with no-cache
+macro_rules! svg_response_no_cache {
+    ($status:expr, $body:expr) => {
+        Response::builder()
+            .status($status)
+            .header(header::CONTENT_TYPE, "image/svg+xml; charset=utf-8")
+            .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+            .body(Body::from($body))
+            .expect("Failed to build HTTP response")
+    };
+}
 
 /// Application state shared across all handlers.
 #[derive(Clone, Debug)]
@@ -118,11 +204,20 @@ pub fn build_router(
     // Legacy route redirects - redirect old routes without language prefix to default language
     // These routes handle paths like /components, /system, /demos without language prefix
     router = router.route("/components", axum::routing::get(legacy_redirect_handler));
-    router = router.route("/components/<*path>", axum::routing::get(legacy_redirect_handler));
+    router = router.route(
+        "/components/<*path>",
+        axum::routing::get(legacy_redirect_handler),
+    );
     router = router.route("/system", axum::routing::get(legacy_redirect_handler));
-    router = router.route("/system/<*path>", axum::routing::get(legacy_redirect_handler));
+    router = router.route(
+        "/system/<*path>",
+        axum::routing::get(legacy_redirect_handler),
+    );
     router = router.route("/demos", axum::routing::get(legacy_redirect_handler));
-    router = router.route("/demos/<*path>", axum::routing::get(legacy_redirect_handler));
+    router = router.route(
+        "/demos/<*path>",
+        axum::routing::get(legacy_redirect_handler),
+    );
 
     for mount_config in static_mounts {
         let serve_dir = ServeDir::new(&mount_config.local_path);
@@ -165,15 +260,11 @@ async fn index_handler(State(state): State<AppState>) -> impl IntoResponse {
         }
     };
 
-    Response::builder()
-        .status(StatusCode::OK)
-        .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
-        .body(Body::from(html))
-        .unwrap()
+    html_response!(StatusCode::OK, html)
 }
 
 /// Legacy redirect handler - redirects old routes to language-prefixed routes
-/// 
+///
 /// Converts:
 /// - /components -> /zh-chs/components
 /// - /components/layer1/button -> /zh-chs/components/layer1/button
@@ -183,13 +274,8 @@ async fn legacy_redirect_handler(uri: Uri) -> impl IntoResponse {
     let path = uri.path();
     let default_lang = "zh-chs";
     let new_path = format!("/{}{}", default_lang, path);
-    
-    Response::builder()
-        .status(StatusCode::FOUND)
-        .header(header::LOCATION, new_path)
-        .header(header::CACHE_CONTROL, "no-cache")
-        .body(Body::from(""))
-        .unwrap()
+
+    redirect_response!(StatusCode::FOUND, new_path)
 }
 
 /// Icon fallback handler - returns 404 for missing icon files
@@ -206,12 +292,7 @@ async fn icon_fallback_handler(Path(path): Path<String>) -> impl IntoResponse {
         path
     );
 
-    Response::builder()
-        .status(StatusCode::NOT_FOUND)
-        .header(header::CONTENT_TYPE, "image/svg+xml; charset=utf-8")
-        .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate")
-        .body(Body::from(svg_404))
-        .unwrap()
+    svg_response_no_cache!(StatusCode::NOT_FOUND, svg_404)
 }
 
 /// SPA fallback handler - returns index.html for all unmatched routes
@@ -219,8 +300,7 @@ async fn spa_fallback_handler(_uri: Uri, State(state): State<AppState>) -> impl 
     let index_path = format!("{}/index.html", state.public_dir);
     let html = match tokio::fs::read_to_string(&index_path).await {
         Ok(content) => content,
-        Err(_) => {
-            r#"<!DOCTYPE html>
+        Err(_) => r#"<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -234,15 +314,10 @@ async fn spa_fallback_handler(_uri: Uri, State(state): State<AppState>) -> impl 
     </div>
 </body>
 </html>"#
-                .to_string()
-        }
+            .to_string(),
     };
 
-    Response::builder()
-        .status(StatusCode::OK)
-        .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
-        .body(Body::from(html))
-        .unwrap()
+    html_response!(StatusCode::OK, html)
 }
 
 /// Dioxus SSR handler for server-side rendering.
@@ -273,45 +348,31 @@ async fn ssr_handler(uri: Uri, State(state): State<AppState>) -> impl IntoRespon
         }
     };
 
-    Response::builder()
-        .status(StatusCode::OK)
-        .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
-        .body(Body::from(html))
-        .unwrap()
+    html_response!(StatusCode::OK, html)
 }
 
 /// Health check handler for monitoring and load balancers.
 pub async fn health_check() -> impl IntoResponse {
-    Response::builder()
-        .status(StatusCode::OK)
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(
-            r#"{"status":"ok","service":"hikari-render-service"}"#,
-        ))
-        .unwrap()
+    json_response!(
+        StatusCode::OK,
+        r#"{"status":"ok","service":"hikari-render-service"}"#
+    )
 }
 
 /// 404 Not Found handler.
 pub async fn not_found() -> impl IntoResponse {
-    Response::builder()
-        .status(StatusCode::NOT_FOUND)
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(
-            r#"{"error":"Not Found","message":"The requested resource was not found"}"#,
-        ))
-        .unwrap()
+    json_response!(
+        StatusCode::NOT_FOUND,
+        r#"{"error":"Not Found","message":"The requested resource was not found"}"#
+    )
 }
 
 /// 500 Internal Server Error handler.
 pub async fn internal_error(err: String) -> impl IntoResponse {
-    Response::builder()
-        .status(StatusCode::INTERNAL_SERVER_ERROR)
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(format!(
-            r#"{{"error":"Internal Server Error","message":"{}"}}"#,
-            err
-        )))
-        .unwrap()
+    json_response!(
+        StatusCode::INTERNAL_SERVER_ERROR,
+        format!(r#"{{"error":"Internal Server Error","message":"{}"}}"#, err)
+    )
 }
 
 /// CSS bundle handler - serves all registered component styles as a single CSS bundle.
@@ -319,20 +380,10 @@ async fn css_bundle_handler(State(state): State<AppState>) -> impl IntoResponse 
     match &state.style_registry {
         Some(registry) => {
             let css = registry.css_bundle();
-            Response::builder()
-                .status(StatusCode::OK)
-                .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
-                .header(header::CACHE_CONTROL, "public, max-age=3600")
-                .body(Body::from(css))
-                .unwrap()
+            css_response_cached!(StatusCode::OK, css)
         }
         None => {
-            let empty = "/* No style registry configured */";
-            Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
-                .body(Body::from(empty))
-                .unwrap()
+            css_response!(StatusCode::NOT_FOUND, "/* No style registry configured */")
         }
     }
 }
@@ -346,28 +397,14 @@ async fn component_css_handler(
 
     match &state.style_registry {
         Some(registry) => match registry.get(component_name) {
-            Some(css) => Response::builder()
-                .status(StatusCode::OK)
-                .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
-                .header(header::CACHE_CONTROL, "public, max-age=3600")
-                .body(Body::from(css.to_string()))
-                .unwrap(),
+            Some(css) => css_response_cached!(StatusCode::OK, css.to_string()),
             None => {
                 let not_found = format!("/* Component '{}' not found */", component_name);
-                Response::builder()
-                    .status(StatusCode::NOT_FOUND)
-                    .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
-                    .body(Body::from(not_found))
-                    .unwrap()
+                css_response!(StatusCode::NOT_FOUND, not_found)
             }
         },
         None => {
-            let empty = "/* No style registry configured */";
-            Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
-                .body(Body::from(empty))
-                .unwrap()
+            css_response!(StatusCode::NOT_FOUND, "/* No style registry configured */")
         }
     }
 }
@@ -454,30 +491,17 @@ async fn style_info_handler(State(state): State<AppState>) -> impl IntoResponse 
 
     let json = serde_json::to_string_pretty(&info).unwrap_or_default();
 
-    Response::builder()
-        .status(StatusCode::OK)
-        .header(header::CONTENT_TYPE, "application/json; charset=utf-8")
-        .body(Body::from(json))
-        .unwrap()
+    json_response!(StatusCode::OK, json)
 }
 
 /// Tailwind CSS handler - serves Tailwind CSS framework.
 async fn tailwind_css_handler(State(state): State<AppState>) -> impl IntoResponse {
     match state.tailwind_css {
-        Some(css) => Response::builder()
-            .status(StatusCode::OK)
-            .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
-            .header(header::CACHE_CONTROL, "public, max-age=3600")
-            .body(Body::from(css))
-            .unwrap(),
+        Some(css) => css_response_cached!(StatusCode::OK, css),
         None => {
             let not_found_css =
                 "/* Tailwind CSS is not enabled. Make sure hikari-theme is properly built. */";
-            Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .header(header::CONTENT_TYPE, "text/css; charset=utf-8")
-                .body(Body::from(not_found_css))
-                .unwrap()
+            css_response!(StatusCode::NOT_FOUND, not_found_css)
         }
     }
 }

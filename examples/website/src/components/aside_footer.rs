@@ -4,8 +4,7 @@
 use dioxus::prelude::*;
 use dioxus_router::{use_navigator, use_route};
 
-use crate::app::Route;
-use crate::hooks::use_language;
+use crate::{app::Route, hooks::use_language};
 use _components::{
     basic::{IconButton, IconButtonSize},
     feedback::{GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning},
@@ -18,16 +17,41 @@ use _icons::MdiIcon;
 use _palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, JustifyContent, Shadow};
 
 fn language_name_in(lang: Language, display_lang: Language) -> String {
-    match (lang, display_lang) {
-        (Language::English, Language::English) => "English",
-        (Language::ChineseSimplified, Language::English) => "Simplified Chinese",
-        (Language::ChineseTraditional, Language::English) => "Traditional Chinese",
-        (Language::English, Language::ChineseSimplified) => "英语",
-        (Language::ChineseSimplified, Language::ChineseSimplified) => "简体中文",
-        (Language::ChineseTraditional, Language::ChineseSimplified) => "繁体中文",
-        (Language::English, Language::ChineseTraditional) => "英語",
-        (Language::ChineseSimplified, Language::ChineseTraditional) => "簡體中文",
-        (Language::ChineseTraditional, Language::ChineseTraditional) => "繁體中文",
+    match display_lang {
+        Language::English => match lang {
+            Language::English => "English",
+            Language::ChineseSimplified => "Simplified Chinese",
+            Language::ChineseTraditional => "Traditional Chinese",
+            Language::French => "French",
+            Language::Russian => "Russian",
+            Language::Spanish => "Spanish",
+            Language::Arabic => "Arabic",
+            Language::Japanese => "Japanese",
+            Language::Korean => "Korean",
+        },
+        Language::ChineseSimplified => match lang {
+            Language::English => "英语",
+            Language::ChineseSimplified => "简体中文",
+            Language::ChineseTraditional => "繁体中文",
+            Language::French => "法语",
+            Language::Russian => "俄语",
+            Language::Spanish => "西班牙语",
+            Language::Arabic => "阿拉伯语",
+            Language::Japanese => "日语",
+            Language::Korean => "韩语",
+        },
+        Language::ChineseTraditional => match lang {
+            Language::English => "英語",
+            Language::ChineseSimplified => "簡體中文",
+            Language::ChineseTraditional => "繁體中文",
+            Language::French => "法語",
+            Language::Russian => "俄語",
+            Language::Spanish => "西班牙語",
+            Language::Arabic => "阿拉伯語",
+            Language::Japanese => "日語",
+            Language::Korean => "韓語",
+        },
+        _ => lang.native_name(),
     }
     .to_string()
 }
@@ -99,9 +123,6 @@ fn get_route_with_lang(route: &Route, new_lang: &str) -> Option<Route> {
             lang: new_lang.to_string(),
         }),
         Route::Comment { .. } => Some(Route::Comment {
-            lang: new_lang.to_string(),
-        }),
-        Route::DescriptionList { .. } => Some(Route::DescriptionList {
             lang: new_lang.to_string(),
         }),
         Route::Layer2Overview { .. } => Some(Route::Layer2Overview {
@@ -321,6 +342,102 @@ pub fn AsideFooter() -> Element {
                                 }
                             },
                             "{language_bilingual_display(Language::ChineseTraditional, current_lang)}"
+                        }
+                        MenuItem {
+                            item_key: "fr".to_string(),
+                            height: MenuItemHeight::Compact,
+                            onclick: {
+                                let current_route = current_route.clone();
+                                let navigator = navigator.clone();
+                                move |_| {
+                                    language.set(Language::French);
+                                    is_popover_open.set(false);
+                                    if let Some(new_route) = get_route_with_lang(&current_route, "fr") {
+                                        navigator.push(new_route);
+                                    }
+                                }
+                            },
+                            "{language_bilingual_display(Language::French, current_lang)}"
+                        }
+                        MenuItem {
+                            item_key: "ru".to_string(),
+                            height: MenuItemHeight::Compact,
+                            onclick: {
+                                let current_route = current_route.clone();
+                                let navigator = navigator.clone();
+                                move |_| {
+                                    language.set(Language::Russian);
+                                    is_popover_open.set(false);
+                                    if let Some(new_route) = get_route_with_lang(&current_route, "ru") {
+                                        navigator.push(new_route);
+                                    }
+                                }
+                            },
+                            "{language_bilingual_display(Language::Russian, current_lang)}"
+                        }
+                        MenuItem {
+                            item_key: "es".to_string(),
+                            height: MenuItemHeight::Compact,
+                            onclick: {
+                                let current_route = current_route.clone();
+                                let navigator = navigator.clone();
+                                move |_| {
+                                    language.set(Language::Spanish);
+                                    is_popover_open.set(false);
+                                    if let Some(new_route) = get_route_with_lang(&current_route, "es") {
+                                        navigator.push(new_route);
+                                    }
+                                }
+                            },
+                            "{language_bilingual_display(Language::Spanish, current_lang)}"
+                        }
+                        MenuItem {
+                            item_key: "ar".to_string(),
+                            height: MenuItemHeight::Compact,
+                            onclick: {
+                                let current_route = current_route.clone();
+                                let navigator = navigator.clone();
+                                move |_| {
+                                    language.set(Language::Arabic);
+                                    is_popover_open.set(false);
+                                    if let Some(new_route) = get_route_with_lang(&current_route, "ar") {
+                                        navigator.push(new_route);
+                                    }
+                                }
+                            },
+                            "{language_bilingual_display(Language::Arabic, current_lang)}"
+                        }
+                        MenuItem {
+                            item_key: "ja".to_string(),
+                            height: MenuItemHeight::Compact,
+                            onclick: {
+                                let current_route = current_route.clone();
+                                let navigator = navigator.clone();
+                                move |_| {
+                                    language.set(Language::Japanese);
+                                    is_popover_open.set(false);
+                                    if let Some(new_route) = get_route_with_lang(&current_route, "ja") {
+                                        navigator.push(new_route);
+                                    }
+                                }
+                            },
+                            "{language_bilingual_display(Language::Japanese, current_lang)}"
+                        }
+                        MenuItem {
+                            item_key: "ko".to_string(),
+                            height: MenuItemHeight::Compact,
+                            onclick: {
+                                let current_route = current_route.clone();
+                                let navigator = navigator.clone();
+                                move |_| {
+                                    language.set(Language::Korean);
+                                    is_popover_open.set(false);
+                                    if let Some(new_route) = get_route_with_lang(&current_route, "ko") {
+                                        navigator.push(new_route);
+                                    }
+                                }
+                            },
+                            "{language_bilingual_display(Language::Korean, current_lang)}"
                         }
                     }
                 }

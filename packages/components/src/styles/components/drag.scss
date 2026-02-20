@@ -1,6 +1,15 @@
 // Drag and drop component styles
 // Drag and drop for tree node reordering
 
+// CSS variables for drag colors (can be overridden by theme)
+:root {
+  --hi-drag-indicator-color: var(--hi-color-primary, #4fd1c5);
+  --hi-drag-indicator-glow: rgba(79, 209, 197, 0.8);
+  --hi-drag-ghost-bg: rgba(79, 209, 197, 0.1);
+  --hi-drag-handle-color: var(--hi-color-text-tertiary, #a0aec0);
+  --hi-drag-indent: 24px;
+}
+
 .hi-drag-drop-tree {
   position: relative;
 }
@@ -8,8 +17,8 @@
 .hi-drop-indicator {
   position: fixed;
   height: 2px;
-  background: var(--hi-color-primary, #00a0e9);
-  box-shadow: 0 0 8px rgba(0, 160, 233, 0.8);
+  background: var(--hi-drag-indicator-color);
+  box-shadow: 0 0 8px var(--hi-drag-indicator-glow);
   pointer-events: none;
   z-index: 1000;
   display: none;
@@ -52,4 +61,43 @@
     cursor: not-allowed;
     pointer-events: none;
   }
+}
+
+.hi-drag-handle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  cursor: move;
+}
+
+.hi-drag-handle-icon {
+  color: var(--hi-drag-handle-color);
+  font-size: 12px;
+}
+
+.hi-node-content {
+  flex: 1;
+}
+
+.hi-drag-ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--hi-drag-ghost-bg);
+  border: 1px dashed var(--hi-drag-indicator-color);
+  pointer-events: none;
+}
+
+.hi-drop-line {
+  height: 2px;
+  background: var(--hi-drag-indicator-color);
+  box-shadow: 0 0 8px var(--hi-drag-indicator-glow);
+  margin: 4px 0;
+}
+
+.hi-node-children {
+  margin-left: var(--hi-drag-indent);
 }

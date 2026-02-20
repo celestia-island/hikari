@@ -1,6 +1,7 @@
 // hi-components/src/layout/flex.rs
 // FlexBox component for flexible layouts
 
+use crate::theme::{use_layout_direction, LayoutDirection};
 use dioxus::prelude::*;
 use palette::classes::{
     AlignItems, ClassesBuilder, Display, Flex as FlexUtil, FlexDirection, FlexWrap, JustifyContent,
@@ -104,6 +105,10 @@ pub struct FlexBoxProps {
     #[props(default)]
     pub inline: bool,
 
+    /// Override RTL behavior (default: follow theme direction)
+    #[props(default)]
+    pub rtl: Option<bool>,
+
     #[props(default)]
     pub class: String,
 
@@ -128,6 +133,7 @@ impl Default for FlexBoxProps {
             max_width: None,
             max_height: None,
             inline: false,
+            rtl: None,
             class: String::default(),
             style: String::default(),
             children: VNode::empty(),
@@ -137,10 +143,25 @@ impl Default for FlexBoxProps {
 
 #[component]
 pub fn FlexBox(props: FlexBoxProps) -> Element {
+    let layout_direction = use_layout_direction();
+    let is_rtl = props.rtl.unwrap_or_else(|| layout_direction.is_rtl());
+
     let direction_class = match props.direction {
         Direction::Column => FlexDirection::Column,
-        Direction::Row => FlexDirection::Row,
-        Direction::RowReverse => FlexDirection::RowReverse,
+        Direction::Row => {
+            if is_rtl {
+                FlexDirection::RowReverse
+            } else {
+                FlexDirection::Row
+            }
+        }
+        Direction::RowReverse => {
+            if is_rtl {
+                FlexDirection::Row
+            } else {
+                FlexDirection::RowReverse
+            }
+        }
         Direction::ColumnReverse => FlexDirection::ColumnReverse,
     };
 
@@ -184,7 +205,7 @@ pub fn FlexBox(props: FlexBoxProps) -> Element {
         Display::Flex
     };
 
-    let mut builder = ClassesBuilder::new()
+    let builder = ClassesBuilder::new()
         .add(display_class)
         .add(direction_class)
         .add(align_class)

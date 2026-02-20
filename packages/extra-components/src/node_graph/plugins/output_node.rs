@@ -1,11 +1,12 @@
 // node_graph/plugins/output_node.rs
 // Output node plugin - displays output data
 
-use serde_json::Value;
-
 use dioxus::prelude::*;
 
-use crate::node_graph::node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition};
+use crate::node_graph::{
+    node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition},
+    value::NodeValue,
+};
 
 /// Output node plugin
 pub struct OutputNode {
@@ -79,14 +80,14 @@ impl NodePlugin for OutputNode {
         }
     }
 
-    fn handle_input(&self, _port_id: PortId, data: Value) {
+    fn handle_input(&self, _port_id: PortId, data: NodeValue) {
         // Output nodes receive data and display it
         // In a real implementation, this would update DOM
         // For now, we'll just log it
         eprintln!("Output node received: {:?}", data);
     }
 
-    fn get_output(&self, _port_id: PortId) -> Option<Value> {
+    fn get_output(&self, _port_id: PortId) -> Option<NodeValue> {
         // Output nodes don't have output ports
         None
     }

@@ -25,6 +25,7 @@
 //! }
 //! ```
 
+use crate::theme::use_layout_direction;
 use dioxus::prelude::*;
 use palette::{classes::components::*, ClassesBuilder, UtilityClass};
 
@@ -69,6 +70,10 @@ pub fn Aside(
     #[props(default = false)]
     initial_open: bool,
 
+    /// Override RTL behavior (default: follow theme direction)
+    #[props(default)]
+    rtl: Option<bool>,
+
     /// Callback when close button is clicked (mobile)
     on_close: EventHandler,
 
@@ -77,15 +82,15 @@ pub fn Aside(
     class: String,
 ) -> Element {
     let is_open = use_signal(|| initial_open);
+    let layout_direction = use_layout_direction();
+    let is_rtl = rtl.unwrap_or_else(|| layout_direction.is_rtl());
 
-    // Get width classes
     let width_class = match width.as_str() {
         "sm" => AsideClass::Sm,
         "lg" => AsideClass::Lg,
-        _ => AsideClass::Md, // md (default)
+        _ => AsideClass::Md,
     };
 
-    // Get variant-specific styles
     let variant_class = match variant.as_str() {
         "light" => AsideClass::Light,
         _ => AsideClass::Dark,
@@ -97,7 +102,10 @@ pub fn Aside(
         .add(width_class)
         .add(variant_class);
 
-    // Add drawer-open state class if open
+    if is_rtl {
+        builder = builder.add_raw("hi-aside-rtl");
+    }
+
     if *is_open.read() {
         builder = builder.add(AsideClass::DrawerOpen);
     }
@@ -109,23 +117,17 @@ pub fn Aside(
 
     rsx! {
         aside {
-            // Responsive drawer classes:
-            // - Desktop (lg): static positioning, always visible
-            // - Mobile: fixed positioning, slide in/out based on is_open
             class: "{classes}",
 
-            // Sidebar header (if provided)
             if let Some(header_content) = header {
                 div { class: "{header_class}", {header_content} }
             }
 
-            // Sidebar content with scroll support
             div {
                 class: "{content_class}",
                 { children }
             }
 
-            // Sidebar footer (if provided)
             if let Some(footer_content) = footer {
                 div { class: "{footer_class}", {footer_content} }
             }

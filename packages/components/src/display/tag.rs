@@ -160,14 +160,14 @@ impl StyledComponent for TagComponent {
 }
 
 .hi-tag-success {
-    background-color: rgba(14, 184, 64, 0.1);
-    color: #0ea5e9;
-    border-color: rgba(14, 184, 64, 0.3);
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.3);
 }
 
 .hi-tag-success:hover {
-    background-color: rgba(14, 184, 64, 0.2);
-    box-shadow: 0 0 8px rgba(14, 184, 64, 0.3);
+    background-color: rgba(16, 185, 129, 0.2);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
 }
 
 .hi-tag-warning {

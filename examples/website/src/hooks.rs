@@ -1,21 +1,34 @@
 // website/src/hooks.rs
 // Custom hooks for the website
 
-use _i18n::{context::Language, keys::I18nKeys, loader::load_toml};
-use dioxus::prelude::*;
-use std::cell::RefCell;
-
 mod i18n_toml {
+
     pub const EN_US: &str = include_str!("../../../packages/i18n/locales/en-US/strings.toml");
     pub const ZH_CHS: &str = include_str!("../../../packages/i18n/locales/zh-CHS/strings.toml");
     pub const ZH_CHT: &str = include_str!("../../../packages/i18n/locales/zh-CHT/strings.toml");
+    pub const FR_FR: &str = include_str!("../../../packages/i18n/locales/fr-FR/strings.toml");
+    pub const RU_RU: &str = include_str!("../../../packages/i18n/locales/ru-RU/strings.toml");
+    pub const ES_ES: &str = include_str!("../../../packages/i18n/locales/es-ES/strings.toml");
+    pub const AR_SA: &str = include_str!("../../../packages/i18n/locales/ar-SA/strings.toml");
+    pub const JA_JP: &str = include_str!("../../../packages/i18n/locales/ja-JP/strings.toml");
+    pub const KO_KR: &str = include_str!("../../../packages/i18n/locales/ko-KR/strings.toml");
 }
+
+use dioxus::prelude::*;
+
+use _i18n::{loader::load_toml, I18nKeys, Language};
 
 pub fn get_toml_content(lang: Language) -> &'static str {
     match lang {
         Language::English => i18n_toml::EN_US,
         Language::ChineseSimplified => i18n_toml::ZH_CHS,
         Language::ChineseTraditional => i18n_toml::ZH_CHT,
+        Language::French => i18n_toml::FR_FR,
+        Language::Russian => i18n_toml::RU_RU,
+        Language::Spanish => i18n_toml::ES_ES,
+        Language::Arabic => i18n_toml::AR_SA,
+        Language::Japanese => i18n_toml::JA_JP,
+        Language::Korean => i18n_toml::KO_KR,
     }
 }
 
@@ -33,29 +46,16 @@ pub fn use_language() -> LanguageContext {
     use_context::<LanguageContext>()
 }
 
-/// 响应式 I18n context
+/// 响应式 I18n context - 使用 Signal 实现响应式更新
+#[derive(Clone, Copy)]
 pub struct ReactiveI18nContext {
     pub language: Signal<Language>,
-    keys: RefCell<I18nKeys>,
+    pub keys: Signal<I18nKeys>,
 }
 
 impl ReactiveI18nContext {
-    pub fn keys(&self) -> std::cell::Ref<'_, I18nKeys> {
-        self.keys.borrow()
-    }
-
-    fn update_keys(&self, lang: Language) {
-        let mut keys = self.keys.borrow_mut();
-        *keys = load_keys(lang);
-    }
-}
-
-impl Clone for ReactiveI18nContext {
-    fn clone(&self) -> Self {
-        Self {
-            language: self.language,
-            keys: RefCell::new(self.keys.borrow().clone()),
-        }
+    pub fn keys(&self) -> I18nKeys {
+        self.keys.read().clone()
     }
 }
 
@@ -86,21 +86,20 @@ fn get_language_from_url() -> Language {
 #[component]
 pub fn I18nProviderWrapper(props: I18nProviderWrapperProps) -> Element {
     let mut lang_ctx = use_language();
+    let url_lang = get_language_from_url();
 
-    // 提供响应式 context，初始值直接从 URL 读取
-    let reactive_ctx = use_context_provider(|| {
-        let url_lang = get_language_from_url();
-        lang_ctx.language.set(url_lang);
-        ReactiveI18nContext {
-            language: lang_ctx.language,
-            keys: RefCell::new(load_keys(url_lang)),
-        }
+    let mut current_keys = use_signal(|| load_keys(url_lang));
+    lang_ctx.language.set(url_lang);
+
+    let _reactive_ctx = use_context_provider(|| ReactiveI18nContext {
+        language: lang_ctx.language,
+        keys: current_keys,
     });
 
-    // 监听语言变化
     use_effect(move || {
         let current_lang = *lang_ctx.language.read();
-        reactive_ctx.update_keys(current_lang);
+        let new_keys = load_keys(current_lang);
+        current_keys.set(new_keys);
     });
 
     rsx! {

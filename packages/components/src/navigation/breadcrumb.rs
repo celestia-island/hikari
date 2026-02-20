@@ -2,11 +2,10 @@
 // Breadcrumb component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, components::BreadcrumbClass};
+use palette::classes::{components::BreadcrumbClass, ClassesBuilder, Display, FlexDirection, Gap};
 
 use crate::styled::StyledComponent;
 
-/// Breadcrumb 组件的类型包装器（用于实现 StyledComponent）
 pub struct BreadcrumbComponent;
 
 #[derive(Clone, PartialEq, Props)]
@@ -60,51 +59,13 @@ impl Default for BreadcrumbProps {
     }
 }
 
-/// Breadcrumb component with modern, premium styling
-///
-/// A navigation breadcrumb component that shows the current page's location
-/// in the site hierarchy. Inspired by Material UI and Element Plus.
-///
-/// # Features
-/// - **Chevron Separators**: Default SVG chevron-right icons (refined, not text-based)
-/// - **Hover Effects**: Subtle background and color transitions
-/// - **Custom Separators**: Support for custom separator styles (slash, arrow, dot)
-/// - **Style Variants**: Background and pill styles for different contexts
-/// - **Responsive**: Size variants (sm, lg) for different screen sizes
-/// - **Icons**: Support for icons alongside breadcrumb text
-///
-/// # Examples
-///
-/// ## Basic Breadcrumb
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Breadcrumb, BreadcrumbItem};
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Breadcrumb {
-///             BreadcrumbItem { item_key: "1".to_string(), "Home" }
-///             BreadcrumbItem { item_key: "2".to_string(), "Library" }
-///             BreadcrumbItem { item_key: "3".to_string(), "Book" }
-///         }
-///     }
-/// }
-/// ```
-///
-/// # Styling
-/// The component uses CSS custom properties for theming:
-/// - `--hi-text-primary`: Current page text color
-/// - `--hi-text-secondary`: Clickable item color
-/// - `--hi-primary-600`: Hover state color
-///
-/// # Size Variants
-/// - **Default**: 14px font
-/// - **Small** (`.hi-breadcrumb-sm`): 12px font
-/// - **Large** (`.hi-breadcrumb-lg`): 16px font
 #[component]
 pub fn Breadcrumb(props: BreadcrumbProps) -> Element {
     let classes = ClassesBuilder::new()
         .add(BreadcrumbClass::Breadcrumb)
+        .add(Display::Flex)
+        .add(FlexDirection::Row)
+        .add(Gap::Gap2)
         .add_raw(&props.class)
         .build();
 
@@ -113,11 +74,7 @@ pub fn Breadcrumb(props: BreadcrumbProps) -> Element {
             class: "{classes}",
             "aria-label": "Breadcrumb",
 
-            ol {
-                class: "hi-breadcrumb-list",
-
-                { props.children }
-            }
+            { props.children }
         }
     }
 }
@@ -132,83 +89,88 @@ impl StyledComponent for BreadcrumbComponent {
     }
 }
 
-/// Breadcrumb item component
 #[component]
 pub fn BreadcrumbItem(props: BreadcrumbItemProps) -> Element {
     let classes = ClassesBuilder::new()
         .add(BreadcrumbClass::BreadcrumbItem)
+        .add(Display::Flex)
+        .add(FlexDirection::Row)
+        .add(Gap::Gap2)
         .add_raw(&props.class)
         .build();
 
     rsx! {
-        li {
+        div {
             class: "{classes}",
 
-            if props.href.is_some() || props.onclick.is_some() {
-                {
-                    if let Some(href) = props.href {
-                        rsx! {
-                            a {
-                                class: "hi-breadcrumb-link",
-                                href: "{href}",
-                                onclick: move |e| {
-                                    if let Some(handler) = props.onclick.as_ref() {
-                                        handler.call(e);
-                                    }
-                                },
-                                { props.children }
-                            }
+            if let Some(href) = props.href {
+                a {
+                    class: "hi-breadcrumb-link",
+                    href: "{href}",
+                    onclick: move |e| {
+                        if let Some(handler) = props.onclick.as_ref() {
+                            handler.call(e);
                         }
-                    } else {
-                        rsx! {
-                            span {
-                                class: "hi-breadcrumb-link",
-                                onclick: move |e| {
-                                    if let Some(handler) = props.onclick.as_ref() {
-                                        handler.call(e);
-                                    }
-                                },
-                                { props.children }
-                            }
+                    },
+                    { props.children }
+                }
+            } else if props.onclick.is_some() {
+                span {
+                    class: "hi-breadcrumb-link",
+                    onclick: move |e| {
+                        if let Some(handler) = props.onclick.as_ref() {
+                            handler.call(e);
                         }
-                    }
+                    },
+                    { props.children }
                 }
             } else {
                 span {
-                    class: "hi-breadcrumb-separator",
-                    {props.children}
+                    class: "hi-breadcrumb-current",
+                    { props.children }
+                }
+            }
+
+            span {
+                class: "hi-breadcrumb-separator",
+                svg {
+                    xmlns: "http://www.w3.org/2000/svg",
+                    width: "16",
+                    height: "16",
+                    view_box: "0 0 24 24",
+                    fill: "none",
+                    stroke: "currentColor",
+                    stroke_width: "2",
+                    stroke_linecap: "round",
+                    stroke_linejoin: "round",
+                    path { d: "M9 18l6-6-6-6" }
                 }
             }
         }
     }
 }
 
-/// Breadcrumb separator component
 #[component]
 pub fn BreadcrumbSeparator(#[props(default)] separator: String) -> Element {
     rsx! {
-        li {
-             class: "hi-breadcrumb-separator",
-             if separator.is_empty() {
-                 // Default chevron-right icon
-                 svg {
-                     xmlns: "http://www.w3.org/2000/svg",
-                     view_box: "0 0 24 24",
-                     fill: "none",
-                     stroke: "currentColor",
-                     "stroke-width": "0",
-                     "stroke-linecap": "round",
-                     "stroke-linejoin": "round",
-                     path {
-                         d: "M9 18l6-6-6-6"
-                     }
-                 }
-             } else {
-                 span {
-                     class: "hi-breadcrumb-separator-icon",
-                     "{separator}"
-                 }
-             }
-         }
+        span {
+            class: "hi-breadcrumb-separator",
+            if separator.is_empty() {
+                svg {
+                    xmlns: "http://www.w3.org/2000/svg",
+                    width: "16",
+                    height: "16",
+                    view_box: "0 0 24 24",
+                    fill: "none",
+                    stroke: "currentColor",
+                    stroke_width: "2",
+                    stroke_linecap: "round",
+                    stroke_linejoin: "round",
+                    path { d: "M9 18l6-6-6-6" }
+                }
+            } else {
+                "{separator}"
+            }
+        }
     }
 }

@@ -3,8 +3,7 @@
 
 use dioxus::prelude::*;
 
-use crate::components::{DemoSection, PageContainer};
-use crate::hooks::{use_i18n, use_language};
+use crate::{components::{DemoSection, PageContainer}, hooks::{use_i18n, use_language}};
 use _icons::{Icon, MdiIcon};
 use _palette::classes::{ClassesBuilder, Display, Gap, Padding};
 

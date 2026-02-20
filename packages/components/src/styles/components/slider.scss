@@ -1,0 +1,127 @@
+// Slider Component Styles
+// Uses CSS variables for animation control via AnimationBuilder
+
+.hi-slider {
+    position: relative;
+    width: 100%;
+    height: 12px;
+    cursor: pointer;
+    padding: 4px 0;
+}
+
+.hi-slider-sm {
+    height: 10px;
+}
+
+.hi-slider-lg {
+    height: 16px;
+}
+
+.hi-slider-rail {
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--hi-color-border, #e8e8e8);
+    border-radius: 2px;
+    transition: background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+}
+
+.hi-slider-track {
+    position: absolute;
+    height: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--hi-color-primary, #1890ff);
+    border-radius: 2px;
+    transition: width var(--hikari-duration-fast, 0.1s) linear,
+                background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+}
+
+.hi-slider-handle {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--hi-color-primary, #1890ff);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform var(--hikari-duration-fast, 0.15s) var(--hikari-ease-smooth, ease),
+                box-shadow var(--hikari-duration-fast, 0.15s) var(--hikari-ease-smooth, ease),
+                background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+    z-index: 1;
+}
+
+.hi-slider-handle:hover {
+    transform: translate(-50%, -50%) scale(1.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.hi-slider-handle:active {
+    transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: var(--hi-glow-primary-sm, 0 0 8px rgba(59, 130, 246, 0.3));
+}
+
+.hi-slider-input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    margin: 0;
+    z-index: 2;
+}
+
+.hi-slider-disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.hi-slider-disabled .hi-slider-track {
+    background-color: var(--hi-color-text-disabled, #bfbfbf);
+}
+
+.hi-slider-disabled .hi-slider-handle {
+    background-color: var(--hi-color-text-disabled, #bfbfbf);
+    cursor: not-allowed;
+}
+
+.hi-slider-disabled .hi-slider-handle:hover {
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+// Dark theme
+[data-theme="dark"] .hi-slider-rail,
+[data-theme="tairitsu"] .hi-slider-rail {
+    background-color: var(--hi-border, #333);
+}
+
+[data-theme="dark"] .hi-slider-track,
+[data-theme="tairitsu"] .hi-slider-track {
+    background-color: var(--hi-color-primary, #1890ff);
+}
+
+[data-theme="dark"] .hi-slider-handle,
+[data-theme="tairitsu"] .hi-slider-handle {
+    background-color: var(--hi-color-primary, #1890ff);
+    border-color: var(--hi-surface, #1a1a1a);
+}
+
+[data-theme="dark"] .hi-slider-disabled .hi-slider-track,
+[data-theme="tairitsu"] .hi-slider-disabled .hi-slider-track {
+    background-color: var(--hi-text-disabled, #555);
+}
+
+[data-theme="dark"] .hi-slider-disabled .hi-slider-handle,
+[data-theme="tairitsu"] .hi-slider-disabled .hi-slider-handle {
+    background-color: var(--hi-text-disabled, #555);
+}
+
+// Focus state for accessibility
+.hi-slider:focus-within .hi-slider-handle {
+    box-shadow: 0 0 0 3px var(--hi-color-primary-glow, rgba(24, 144, 255, 0.2));
+}

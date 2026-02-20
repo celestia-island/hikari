@@ -23,11 +23,13 @@
 //! ```
 
 use dioxus::prelude::*;
-use palette::classes::{AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass};
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
+use palette::classes::{
+    AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass,
+};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::closure::Closure;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsCast;
 
 /// Anchor item configuration
 #[derive(Clone, Debug, PartialEq, Props)]
@@ -47,7 +49,6 @@ pub struct AnchorItem {
 /// - Active section highlighting
 /// - Click to scroll
 /// - Customizable position
-#[allow(unused_variables)]
 #[component]
 pub fn Anchor(
     /// Anchor items (href + title pairs)
@@ -86,6 +87,7 @@ pub fn Anchor(
                     active_anchor.set(href.clone());
 
                     // Remove '#' from href
+                    #[cfg(target_arch = "wasm32")]
                     let target_id = href.trim_start_matches('#');
 
                     #[cfg(target_arch = "wasm32")]

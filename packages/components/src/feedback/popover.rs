@@ -6,8 +6,10 @@ use palette::classes::{ClassesBuilder, Display, Position};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 
-use crate::portal::{generate_portal_id, use_portal, PortalEntry};
-use crate::styled::StyledComponent;
+use crate::{
+    portal::{generate_portal_id, use_portal, PortalEntry},
+    styled::StyledComponent,
+};
 
 /// Popover placement direction
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -106,8 +108,13 @@ impl Default for PopoverProps {
 pub fn Popover(props: PopoverProps) -> Element {
     let mut open = use_signal(|| props.open);
     let mut popover_id = use_signal(|| String::new());
-    let mut trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
+
     let mut close_requested = use_signal(|| false);
+
+    #[cfg(target_arch = "wasm32")]
+    let mut trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
+    #[cfg(not(target_arch = "wasm32"))]
+    let trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
 
     let portal = use_portal();
     let positioning = props.positioning.clone();

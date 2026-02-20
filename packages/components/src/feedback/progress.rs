@@ -2,62 +2,31 @@
 // Progress component with Arknights + FUI styling
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, ProgressClass, UtilityClass};
+use palette::classes::{ClassesBuilder, ProgressClass};
 
 use crate::styled::StyledComponent;
 
-/// Progress component type wrapper (for StyledComponent)
 pub struct ProgressComponent;
 
-/// Progress component with Arknights + FUI styling
-///
-/// A progress bar component with configurable percentage, size, and status.
-/// Supports linear (bar) and circular (spinner) styles.
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::Progress;
-///
-/// fn app() -> Element {
-///     let mut progress = use_signal(|| 65);
-///
-///     rsx! {
-///         Progress {
-///             value: progress(),
-///             max: 100,
-///             show_info: true,
-///         }
-///     }
-/// }
-/// ```
 #[derive(Clone, PartialEq, Props)]
 pub struct ProgressProps {
-    /// Current progress value
     pub value: f64,
 
-    /// Maximum value (default: 100)
     #[props(default = 100.0)]
     pub max: f64,
 
-    /// Progress bar type
     #[props(default)]
     pub progress_type: ProgressType,
 
-    /// Progress status
     #[props(default)]
     pub status: ProgressStatus,
 
-    /// Show percentage text
     #[props(default = false)]
     pub show_info: bool,
 
-    /// Additional CSS class
     #[props(default)]
     pub class: String,
 
-    /// Additional inline style
     #[props(default)]
     pub style: String,
 }
@@ -74,8 +43,8 @@ pub enum ProgressStatus {
     #[default]
     Normal,
     Active,
-    Exception,
     Success,
+    Exception,
 }
 
 #[component]
@@ -87,79 +56,67 @@ pub fn Progress(props: ProgressProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let type_class = match props.progress_type {
-        ProgressType::Linear => ProgressClass::Linear,
-        ProgressType::Circular => ProgressClass::Circular,
-    };
-
     let status_class = match props.status {
-        ProgressStatus::Normal => ProgressClass::Normal,
-        ProgressStatus::Active => ProgressClass::Active,
-        ProgressStatus::Exception => ProgressClass::Exception,
-        ProgressStatus::Success => ProgressClass::Success,
+        ProgressStatus::Normal => "hi-progress-normal",
+        ProgressStatus::Active => "hi-progress-active",
+        ProgressStatus::Success => "hi-progress-success",
+        ProgressStatus::Exception => "hi-progress-exception",
     };
-
-    let progress_classes = ClassesBuilder::new()
-        .add(ProgressClass::Progress)
-        .add(type_class)
-        .add(status_class)
-        .build();
-
-    let bar_style = if props.progress_type == ProgressType::Linear {
-        format!("width: {}%;", percentage)
-    } else {
-        String::new()
-    };
-
-    let circumference = 2.0 * std::f64::consts::PI * 30.0; // radius 30
-    let offset = circumference * (1.0 - percentage / 100.0);
-    let stroke_dasharray = format!("{circumference} {offset}");
 
     rsx! {
         div {
-            class: "{wrapper_classes}",
+            class: "{wrapper_classes} {status_class}",
             style: "{props.style}",
 
             if props.progress_type == ProgressType::Linear {
-                // Linear progress bar
-                div {
-                    class: "{progress_classes}",
-                    style: "{bar_style}",
+                div { class: "hi-progress-outer",
+                    div { class: "hi-progress-inner",
+                        div {
+                            class: "hi-progress-bg",
+                            style: "width: {percentage}%;",
+                        }
+                    }
 
                     if props.show_info {
-                        span {
-                            class: "{ProgressClass::Info.as_class()}",
+                        span { class: "hi-progress-text",
                             "{percentage:.0}%"
                         }
                     }
                 }
             } else {
-                // Circular progress spinner
-                div {
-                    class: "{progress_classes}",
+                div { class: "hi-progress-circle-wrapper",
+                    svg {
+                        class: "hi-progress-circle",
+                        width: "120",
+                        height: "120",
+                        view_box: "0 0 120 120",
 
-                    if props.show_info {
-                        span {
-                            class: "{ProgressClass::Info.as_class()}",
-                            "{percentage:.0}%"
+                        circle {
+                            class: "hi-progress-circle-trail",
+                            cx: "60",
+                            cy: "60",
+                            r: "54",
+                            stroke_width: "6",
+                            fill: "none",
+                        }
+
+                        circle {
+                            class: "hi-progress-circle-path",
+                            cx: "60",
+                            cy: "60",
+                            r: "54",
+                            stroke_width: "6",
+                            fill: "none",
+                            stroke_linecap: "round",
+                            stroke_dasharray: "{339.292}",
+                            stroke_dashoffset: "{339.292 * (1.0 - percentage / 100.0)}",
+                            transform: "rotate(-90 60 60)",
                         }
                     }
 
-                    svg {
-                        width: "64px",
-                        height: "64px",
-                        view_box: "0 0 36 36",
-                        class: "{ProgressClass::Circle.as_class()}",
-
-                        circle {
-                            cx: "18",
-                            cy: "18",
-                            r: "15.9",
-                            stroke: "currentColor",
-                            stroke_width: "3",
-                            stroke_dasharray: "{stroke_dasharray}",
-                            stroke_dashoffset: "{offset}",
-                            fill: "none",
+                    if props.show_info {
+                        span { class: "hi-progress-circle-text",
+                            "{percentage:.0}%"
                         }
                     }
                 }
@@ -178,70 +135,120 @@ impl StyledComponent for ProgressComponent {
     gap: 0.5rem;
 }
 
-.hi-progress {
-    position: relative;
+.hi-progress-outer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.hi-progress-inner {
+    flex: 1;
+    background-color: var(--hi-color-background, #f5f5f5);
+    border-radius: 100px;
     overflow: hidden;
-}
-
-.hi-progress-linear {
     height: 8px;
-    background-color: var(--hi-color-background);
-    border-radius: 8px;
-    transition: all 0.3s ease;
 }
 
-.hi-progress-normal .hi-progress-linear {
-    background-color: var(--hi-color-border);
+.hi-progress-bg {
+    height: 100%;
+    border-radius: 100px;
+    background-color: var(--hi-color-primary, #1890ff);
+    transition: width 0.3s ease;
 }
 
-.hi-progress-active .hi-progress-linear {
-    background-color: var(--hi-color-primary);
+.hi-progress-text {
+    flex-shrink: 0;
+    font-size: 14px;
+    color: var(--hi-color-text-primary, #333);
+    min-width: 40px;
+    text-align: right;
 }
 
-.hi-progress-exception .hi-progress-linear {
-    background-color: var(--hi-color-warning);
+/* Status variants */
+.hi-progress-active .hi-progress-bg {
+    background: linear-gradient(90deg, var(--hi-color-primary, #1890ff) 0%, #40a9ff 100%);
+    animation: hi-progress-active 2s linear infinite;
 }
 
-.hi-progress-success .hi-progress-linear {
-    background-color: var(--hi-color-success);
+@keyframes hi-progress-active {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
 }
 
-.hi-progress-circular {
-    width: 64px;
-    height: 64px;
-    display: inline-block;
+.hi-progress-success .hi-progress-bg {
+    background-color: var(--hi-color-success, #52c41a);
+}
+
+.hi-progress-success .hi-progress-text {
+    color: var(--hi-color-success, #52c41a);
+}
+
+.hi-progress-exception .hi-progress-bg {
+    background-color: var(--hi-color-danger, #ff4d4f);
+}
+
+.hi-progress-exception .hi-progress-text {
+    color: var(--hi-color-danger, #ff4d4f);
+}
+
+/* Circular progress */
+.hi-progress-circle-wrapper {
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .hi-progress-circle {
-    transform: rotate(-90deg);
+    display: block;
+}
+
+.hi-progress-circle-trail {
+    stroke: var(--hi-color-background, #f5f5f5);
+}
+
+.hi-progress-circle-path {
+    stroke: var(--hi-color-primary, #1890ff);
     transition: stroke-dashoffset 0.3s ease;
 }
 
-.hi-progress-normal .hi-progress-circle circle {
-    stroke: var(--hi-color-border);
+.hi-progress-active .hi-progress-circle-path {
+    stroke: var(--hi-color-primary, #1890ff);
 }
 
-.hi-progress-active .hi-progress-circle circle {
-    stroke: var(--hi-color-primary);
+.hi-progress-success .hi-progress-circle-path {
+    stroke: var(--hi-color-success, #52c41a);
 }
 
-.hi-progress-exception .hi-progress-circle circle {
-    stroke: var(--hi-color-warning);
+.hi-progress-exception .hi-progress-circle-path {
+    stroke: var(--hi-color-danger, #ff4d4f);
 }
 
-.hi-progress-success .hi-progress-circle circle {
-    stroke: var(--hi-color-success);
-}
-
-.hi-progress-info {
+.hi-progress-circle-text {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 0.875rem;
+    font-size: 24px;
     font-weight: 600;
-    color: var(--hi-color-text-primary);
+    color: var(--hi-color-text-primary, #333);
+}
+
+[data-theme="dark"] .hi-progress-inner {
+    background-color: var(--hi-surface-hover, #252525);
+}
+
+[data-theme="dark"] .hi-progress-circle-trail {
+    stroke: var(--hi-surface-hover, #252525);
+}
+
+[data-theme="dark"] .hi-progress-text {
+    color: var(--hi-text-primary, #e0e0e0);
+}
+
+[data-theme="dark"] .hi-progress-circle-text {
+    color: var(--hi-text-primary, #e0e0e0);
 }
 "#
     }

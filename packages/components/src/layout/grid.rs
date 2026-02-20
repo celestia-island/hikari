@@ -18,7 +18,8 @@
 //! ```
 
 use dioxus::prelude::*;
-use palette::{ClassesBuilder, classes::components::*};
+use palette::{classes::components::*, ClassesBuilder};
+use theme::use_theme;
 
 /// Grid component - 12-column responsive grid container
 ///
@@ -127,6 +128,7 @@ pub fn Col(
 /// - Responsive wrapping
 /// - Gap control
 /// - Alignment options
+/// - RTL support
 #[component]
 pub fn Row(
     /// Row content
@@ -148,6 +150,10 @@ pub fn Row(
     #[props(default = "center".to_string())]
     align: String,
 
+    /// Override RTL behavior (default: follow theme direction)
+    #[props(default)]
+    rtl: Option<bool>,
+
     /// Custom CSS classes
     #[props(default)]
     class: String,
@@ -156,10 +162,13 @@ pub fn Row(
     #[props(default)]
     style: String,
 ) -> Element {
+    let theme = use_theme();
+    let is_rtl = rtl.unwrap_or_else(|| theme.direction.is_rtl());
+
     let gap_class = match gap.as_str() {
         "sm" => RowClass::GapSm,
         "lg" => RowClass::GapLg,
-        _ => RowClass::GapMd, // md (default)
+        _ => RowClass::GapMd,
     };
 
     let justify_style = match justify.as_str() {
@@ -167,20 +176,26 @@ pub fn Row(
         "end" => "justify-content: flex-end;",
         "between" => "justify-content: space-between;",
         "around" => "justify-content: space-around;",
-        _ => "justify-content: flex-start;", // start (default)
+        _ => "justify-content: flex-start;",
     };
 
     let align_style = match align.as_str() {
         "start" => "align-items: flex-start;",
         "end" => "align-items: flex-end;",
         "stretch" => "align-items: stretch;",
-        _ => "align-items: center;", // center (default)
+        _ => "align-items: center;",
     };
 
     let wrap_style = if wrap {
         "flex-wrap: wrap;"
     } else {
         "flex-wrap: nowrap;"
+    };
+
+    let direction_style = if is_rtl {
+        "flex-direction: row-reverse;"
+    } else {
+        "flex-direction: row;"
     };
 
     let classes = ClassesBuilder::new()
@@ -192,7 +207,7 @@ pub fn Row(
     rsx! {
         div {
             class: "{classes}",
-            style: format!("display: flex; {justify_style} {align_style} {wrap_style} {style}"),
+            style: format!("display: flex; {direction_style} {justify_style} {align_style} {wrap_style} {style}"),
             { children }
         }
     }

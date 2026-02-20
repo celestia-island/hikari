@@ -101,6 +101,12 @@ pub struct LanguageKeys {
     pub english: String,
     pub chinese_simplified: String,
     pub chinese_traditional: String,
+    pub french: String,
+    pub russian: String,
+    pub spanish: String,
+    pub arabic: String,
+    pub japanese: String,
+    pub korean: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

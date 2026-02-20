@@ -11,7 +11,7 @@
 use dioxus::prelude::*;
 use palette::*;
 
-use crate::context::ThemeContext;
+use crate::context::{LayoutDirection, ThemeContext};
 
 /// Theme provider properties
 ///
@@ -21,6 +21,7 @@ use crate::context::ThemeContext;
 ///
 /// - `initial_palette` - Initial theme identifier string (default: "hikari")
 /// - `language` - Language code string (default: "en-US")
+/// - `direction` - Layout direction for RTL support (default: "ltr")
 /// - `children` - Child elements to render within the theme context
 #[derive(Clone, Props, PartialEq)]
 pub struct ThemeProviderProps {
@@ -29,6 +30,9 @@ pub struct ThemeProviderProps {
 
     #[props(default = "en-US".to_string())]
     pub language: String,
+
+    #[props(default = "ltr".to_string())]
+    pub direction: String,
 
     children: Element,
 }
@@ -40,7 +44,8 @@ pub struct ThemeProviderProps {
 /// # Props
 ///
 /// - `initial_palette` - Initial theme identifier ("hikari" or "tairitsu")
-/// - `language` - Language code ("en-US", "zh-CHS", or "zh-CHT")
+/// - `language` - Language code ("en-US", "zh-CHS", etc.)
+/// - `direction` - Layout direction ("ltr" or "rtl")
 /// - `children` - Child elements that receive theme context
 ///
 /// # Example
@@ -52,6 +57,7 @@ pub struct ThemeProviderProps {
 ///     ThemeProvider {
 ///         initial_palette: "tairitsu",
 ///         language: "zh-CHS",
+///         direction: "ltr",
 ///     } {
 ///         // Children here
 ///     }
@@ -60,15 +66,17 @@ pub struct ThemeProviderProps {
 /// ```
 #[component]
 pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
-    // Internal state for current theme
     let current_palette = use_signal(|| props.initial_palette.clone());
     let current_colors = use_signal(|| match props.initial_palette.as_str() {
         "hikari" => themes::Hikari::palette(),
         "tairitsu" => themes::Tairitsu::palette(),
         _ => themes::Hikari::palette(),
     });
+    let current_direction = use_signal(|| match props.direction.as_str() {
+        "rtl" => LayoutDirection::Rtl,
+        _ => LayoutDirection::Ltr,
+    });
 
-    // Callback to change theme
     let mut palette_for_callback = current_palette;
     let mut colors_for_callback = current_colors;
     let set_theme = Callback::new(move |new_palette: String| {
@@ -81,18 +89,21 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
         colors_for_callback.set(new_colors);
     });
 
-    // Provide theme context
     use_context_provider(move || ThemeContext {
         palette: (*current_palette.read()).clone(),
         colors: (*current_colors.read()).clone(),
+        direction: *current_direction.read(),
         set_theme,
     });
+
+    let dir = current_direction.read().as_str();
 
     rsx! {
         div {
             class: "hi-theme-provider",
             "data-theme": "{current_palette.read()}",
             "data-language": "{props.language}",
+            "dir": "{dir}",
             {props.children}
         }
     }

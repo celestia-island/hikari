@@ -5,6 +5,7 @@ use dioxus::prelude::*;
 use palette::classes::{
     AlignItems, ClassesBuilder, Display, Flex as FlexUtil, FlexDirection, FlexWrap, JustifyContent,
 };
+use theme::use_theme;
 
 use crate::styled::StyledComponent;
 
@@ -104,6 +105,10 @@ pub struct FlexBoxProps {
     #[props(default)]
     pub inline: bool,
 
+    /// Override RTL behavior (default: follow theme direction)
+    #[props(default)]
+    pub rtl: Option<bool>,
+
     #[props(default)]
     pub class: String,
 
@@ -128,6 +133,7 @@ impl Default for FlexBoxProps {
             max_width: None,
             max_height: None,
             inline: false,
+            rtl: None,
             class: String::default(),
             style: String::default(),
             children: VNode::empty(),
@@ -137,10 +143,25 @@ impl Default for FlexBoxProps {
 
 #[component]
 pub fn FlexBox(props: FlexBoxProps) -> Element {
+    let theme = use_theme();
+    let is_rtl = props.rtl.unwrap_or_else(|| theme.direction.is_rtl());
+
     let direction_class = match props.direction {
         Direction::Column => FlexDirection::Column,
-        Direction::Row => FlexDirection::Row,
-        Direction::RowReverse => FlexDirection::RowReverse,
+        Direction::Row => {
+            if is_rtl {
+                FlexDirection::RowReverse
+            } else {
+                FlexDirection::Row
+            }
+        }
+        Direction::RowReverse => {
+            if is_rtl {
+                FlexDirection::Row
+            } else {
+                FlexDirection::RowReverse
+            }
+        }
         Direction::ColumnReverse => FlexDirection::ColumnReverse,
     };
 

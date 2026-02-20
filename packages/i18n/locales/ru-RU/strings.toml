@@ -1,0 +1,117 @@
+[common]
+[common.button]
+submit = "Отправить"
+cancel = "Отмена"
+confirm = "Подтвердить"
+delete = "Удалить"
+edit = "Редактировать"
+save = "Сохранить"
+
+[common.navigation]
+home = "Главная"
+about = "О нас"
+documentation = "Документация"
+components = "Компоненты"
+theme = "Тема"
+
+[common.status]
+loading = "Загрузка..."
+success = "Успех"
+error = "Ошибка"
+warning = "Предупреждение"
+
+[theme]
+light = "Светлая"
+dark = "Тёмная"
+auto = "Авто"
+
+[page]
+[page.home]
+[page.home.hero]
+title = "UI Фреймворк Hikari"
+subtitle = "Свет - Современный UI Фреймворк на Rust"
+description = "Основан на Dioxus + Grass + Axum, разработан с эстетикой Arknights и стилем FUI."
+tagline = "Нет ничего постыдного в желании быть счастливым."
+explore = "Исследовать Компоненты →"
+
+[page.home.features]
+title = "Возможности"
+description = "Создан для разработчиков, которые хотят создавать красивые и производительные веб-приложения."
+
+[page.components]
+title = "Компоненты"
+description = "Богатая коллекция переиспользуемых UI компонентов."
+
+[page.documentation]
+title = "Документация"
+description = "Начните работу с Hikari и научитесь создавать потрясающие приложения."
+getting_started = "Начало Работы"
+quick_start = "Быстрый Старт"
+
+[language]
+english = "English"
+chinese_simplified = "简体中文"
+chinese_traditional = "繁體中文"
+french = "Français"
+russian = "Русский"
+spanish = "Español"
+arabic = "العربية"
+japanese = "日本語"
+korean = "한국어"
+
+[sidebar]
+[sidebar.overview]
+title = "Добро пожаловать"
+home = "Добро пожаловать"
+
+[sidebar.components]
+title = "Компоненты"
+layer1 = "Уровень 1"
+layer2 = "Уровень 2"
+layer3 = "Уровень 3"
+
+[sidebar.system]
+title = "Система"
+overview = "Обзор"
+css_utilities = "CSS Утилиты"
+icons = "Иконки"
+palette = "Палитра"
+animations = "Анимации"
+animation_demo = "Демо Анимации"
+
+[sidebar.demos]
+title = "Демо"
+all_demos = "Все Демо"
+
+[sidebar.items]
+button = "Кнопка"
+form = "Форма"
+number_input = "Числовой Ввод"
+search = "Поиск"
+switch = "Переключатель"
+feedback = "Обратная Связь"
+display = "Отображение"
+avatar = "Аватар"
+image = "Изображение"
+tag = "Тег"
+empty = "Пусто"
+comment = "Комментарий"
+description_list = "Список Описаний"
+navigation = "Навигация"
+collapsible = "Сворачиваемый"
+data = "Данные"
+table = "Таблица"
+tree = "Дерево"
+pagination = "Пагинация"
+qrcode = "QR Код"
+timeline = "Временная Шкала"
+cascader = "Каскадер"
+transfer = "Трансфер"
+media = "Медиа"
+editor = "Редактор"
+visualization = "Визуализация"
+user_guide = "Руководство"
+zoom_controls = "Управление Масштабом"
+form_demo = "Демо Формы"
+dashboard_demo = "Демо Панели"
+video_demo = "Демо Видео"

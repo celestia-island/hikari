@@ -1,10 +1,10 @@
 # Switch 开关组件
 
-Switch 组件提供开关切换功能，支持多种变体。
+Switch 组件提供开关切换功能，支持多种颜色和变体。
 
 ## Switch 基础开关
 
-基础的开关切换组件，使用 Glow 鼠标跟随高亮效果。
+支持多种颜色：Success、Primary、Secondary、Danger、Warning、Info。
 
 ```_hikari_component
 pages/components/layer1/switch#switch
@@ -61,6 +61,7 @@ pages/components/layer1/switch#slider
 | disabled | `bool` | `false` | 是否禁用 |
 | size | `SwitchSize` | `Medium` | 尺寸 |
 | variant | `SwitchVariant` | `Default` | 变体类型 |
+| color | `SwitchColor` | `Success` | 选中时的颜色 |
 | checked_content | `Option<SwitchContent>` | `None` | 选中时显示的内容 |
 | unchecked_content | `Option<SwitchContent>` | `None` | 未选中时显示的内容 |
 
@@ -70,6 +71,15 @@ pages/components/layer1/switch#slider
 - `Text` - 文本变体
 - `Icon` - 图标变体
 - `Custom` - 自定义变体
+
+### SwitchColor
+
+- `Success` - 成功/开启（葱倩绿，默认）
+- `Primary` - 主色（蓝色）
+- `Secondary` - 次要色（宝蓝）
+- `Danger` - 危险（朱红）
+- `Warning` - 警告（鹅黄）
+- `Info` - 信息（靛蓝）
 
 ### SwitchContent
 

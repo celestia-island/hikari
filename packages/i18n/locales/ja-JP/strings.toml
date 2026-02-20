@@ -1,0 +1,117 @@
+[common]
+[common.button]
+submit = "送信"
+cancel = "キャンセル"
+confirm = "確認"
+delete = "削除"
+edit = "編集"
+save = "保存"
+
+[common.navigation]
+home = "ホーム"
+about = "概要"
+documentation = "ドキュメント"
+components = "コンポーネント"
+theme = "テーマ"
+
+[common.status]
+loading = "読み込み中..."
+success = "成功"
+error = "エラー"
+warning = "警告"
+
+[theme]
+light = "ライト"
+dark = "ダーク"
+auto = "自動"
+
+[page]
+[page.home]
+[page.home.hero]
+title = "Hikari UI フレームワーク"
+subtitle = "光 - モダンな Rust UI フレームワーク"
+description = "Dioxus + Grass + Axum に基づき、アークナイツの美学と FUI スタイルで設計されています。"
+tagline = "幸せを感じたいことに恥じることはない。"
+explore = "コンポーネントを探す →"
+
+[page.home.features]
+title = "機能"
+description = "美しく高性能なウェブアプリケーションを構築したい開発者のために設計されています。"
+
+[page.components]
+title = "コンポーネント"
+description = "再利用可能な UI コンポーネントの豊富なコレクション。"
+
+[page.documentation]
+title = "ドキュメント"
+description = "Hikari を始めて、素晴らしいアプリケーションの構築方法を学びましょう。"
+getting_started = "はじめに"
+quick_start = "クイックスタート"
+
+[language]
+english = "English"
+chinese_simplified = "简体中文"
+chinese_traditional = "繁體中文"
+french = "Français"
+russian = "Русский"
+spanish = "Español"
+arabic = "العربية"
+japanese = "日本語"
+korean = "한국어"
+
+[sidebar]
+[sidebar.overview]
+title = "ようこそ"
+home = "ようこそ"
+
+[sidebar.components]
+title = "コンポーネント"
+layer1 = "レイヤー1"
+layer2 = "レイヤー2"
+layer3 = "レイヤー3"
+
+[sidebar.system]
+title = "システム"
+overview = "概要"
+css_utilities = "CSS ユーティリティ"
+icons = "アイコン"
+palette = "パレット"
+animations = "アニメーション"
+animation_demo = "アニメーションデモ"
+
+[sidebar.demos]
+title = "デモ"
+all_demos = "すべてのデモ"
+
+[sidebar.items]
+button = "ボタン"
+form = "フォーム"
+number_input = "数値入力"
+search = "検索"
+switch = "スイッチ"
+feedback = "フィードバック"
+display = "表示"
+avatar = "アバター"
+image = "画像"
+tag = "タグ"
+empty = "空"
+comment = "コメント"
+description_list = "説明リスト"
+navigation = "ナビゲーション"
+collapsible = "折りたたみ"
+data = "データ"
+table = "テーブル"
+tree = "ツリー"
+pagination = "ページネーション"
+qrcode = "QRコード"
+timeline = "タイムライン"
+cascader = "カスケード"
+transfer = "トランスファー"
+media = "メディア"
+editor = "エディター"
+visualization = "ビジュアライゼーション"
+user_guide = "ユーザーガイド"
+zoom_controls = "ズームコントロール"
+form_demo = "フォームデモ"
+dashboard_demo = "ダッシュボードデモ"
+video_demo = "ビデオデモ"

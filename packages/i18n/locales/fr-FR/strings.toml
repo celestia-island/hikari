@@ -1,0 +1,117 @@
+[common]
+[common.button]
+submit = "Soumettre"
+cancel = "Annuler"
+confirm = "Confirmer"
+delete = "Supprimer"
+edit = "Modifier"
+save = "Enregistrer"
+
+[common.navigation]
+home = "Accueil"
+about = "À propos"
+documentation = "Documentation"
+components = "Composants"
+theme = "Thème"
+
+[common.status]
+loading = "Chargement..."
+success = "Succès"
+error = "Erreur"
+warning = "Avertissement"
+
+[theme]
+light = "Clair"
+dark = "Sombre"
+auto = "Auto"
+
+[page]
+[page.home]
+[page.home.hero]
+title = "Framework UI Hikari"
+subtitle = "Lumière - Un Framework UI Moderne en Rust"
+description = "Basé sur Dioxus + Grass + Axum, conçu avec l'esthétique Arknights et le style FUI."
+tagline = "Il n'y a aucune honte à vouloir être heureux."
+explore = "Explorer les Composants →"
+
+[page.home.features]
+title = "Fonctionnalités"
+description = "Conçu pour les développeurs qui souhaitent créer des applications web belles et performantes."
+
+[page.components]
+title = "Composants"
+description = "Une riche collection de composants UI réutilisables."
+
+[page.documentation]
+title = "Documentation"
+description = "Commencez avec Hikari et apprenez à créer des applications incroyables."
+getting_started = "Pour Commencer"
+quick_start = "Démarrage Rapide"
+
+[language]
+english = "English"
+chinese_simplified = "简体中文"
+chinese_traditional = "繁體中文"
+french = "Français"
+russian = "Русский"
+spanish = "Español"
+arabic = "العربية"
+japanese = "日本語"
+korean = "한국어"
+
+[sidebar]
+[sidebar.overview]
+title = "Bienvenue"
+home = "Bienvenue"
+
+[sidebar.components]
+title = "Composants"
+layer1 = "Couche 1"
+layer2 = "Couche 2"
+layer3 = "Couche 3"
+
+[sidebar.system]
+title = "Système"
+overview = "Aperçu"
+css_utilities = "Utilitaires CSS"
+icons = "Icônes"
+palette = "Palette"
+animations = "Animations"
+animation_demo = "Démo Animation"
+
+[sidebar.demos]
+title = "Démos"
+all_demos = "Toutes les Démos"
+
+[sidebar.items]
+button = "Bouton"
+form = "Formulaire"
+number_input = "Entrée Numérique"
+search = "Recherche"
+switch = "Interrupteur"
+feedback = "Retour"
+display = "Affichage"
+avatar = "Avatar"
+image = "Image"
+tag = "Étiquette"
+empty = "Vide"
+comment = "Commentaire"
+description_list = "Liste de Description"
+navigation = "Navigation"
+collapsible = "Repliable"
+data = "Données"
+table = "Tableau"
+tree = "Arbre"
+pagination = "Pagination"
+qrcode = "QR Code"
+timeline = "Chronologie"
+cascader = "Cascade"
+transfer = "Transfert"
+media = "Média"
+editor = "Éditeur"
+visualization = "Visualisation"
+user_guide = "Guide Utilisateur"
+zoom_controls = "Contrôles Zoom"
+form_demo = "Démo Formulaire"
+dashboard_demo = "Démo Tableau de Bord"
+video_demo = "Démo Vidéo"

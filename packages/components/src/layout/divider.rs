@@ -3,6 +3,7 @@
 
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, DividerClass};
+use theme::use_theme;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DividerOrientation {
@@ -33,6 +34,14 @@ pub struct DividerProps {
     #[props(default)]
     pub divider_type: DividerType,
 
+    /// Text alignment for horizontal dividers with text (default: center)
+    #[props(default = "center".to_string())]
+    pub text_align: String,
+
+    /// Override RTL behavior (default: follow theme direction)
+    #[props(default)]
+    pub rtl: Option<bool>,
+
     /// Additional CSS classes
     #[props(default)]
     pub class: String,
@@ -61,6 +70,9 @@ pub struct DividerProps {
 /// ```
 #[component]
 pub fn Divider(props: DividerProps) -> Element {
+    let theme = use_theme();
+    let is_rtl = props.rtl.unwrap_or_else(|| theme.direction.is_rtl());
+
     let orientation_class = match props.orientation {
         DividerOrientation::Horizontal => DividerClass::Horizontal,
         DividerOrientation::Vertical => DividerClass::Vertical,
@@ -72,17 +84,45 @@ pub fn Divider(props: DividerProps) -> Element {
         DividerType::Dotted => DividerClass::Dotted,
     };
 
-    let divider_classes = ClassesBuilder::new()
+    let mut builder = ClassesBuilder::new()
         .add(DividerClass::Divider)
         .add(orientation_class)
         .add(type_class)
         .add_if(DividerClass::WithText, || props.text.is_some())
-        .add_raw(&props.class)
-        .build();
+        .add_raw(&props.class);
+
+    if is_rtl {
+        builder = builder.add_raw("hi-divider-rtl");
+    }
+
+    let divider_classes = builder.build();
+
+    let text_align_style = if props.text.is_some() {
+        match props.text_align.as_str() {
+            "left" => {
+                if is_rtl {
+                    "text-align: right;"
+                } else {
+                    "text-align: left;"
+                }
+            }
+            "right" => {
+                if is_rtl {
+                    "text-align: left;"
+                } else {
+                    "text-align: right;"
+                }
+            }
+            _ => "text-align: center;",
+        }
+    } else {
+        ""
+    };
 
     rsx! {
         div {
             class: "{divider_classes}",
+            style: "{text_align_style}",
             if let Some(label) = props.text {
                 span { class: "hi-divider-text", "{label}" }
             }

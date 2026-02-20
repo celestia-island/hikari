@@ -1,0 +1,117 @@
+[common]
+[common.button]
+submit = "제출"
+cancel = "취소"
+confirm = "확인"
+delete = "삭제"
+edit = "편집"
+save = "저장"
+
+[common.navigation]
+home = "홈"
+about = "소개"
+documentation = "문서"
+components = "컴포넌트"
+theme = "테마"
+
+[common.status]
+loading = "로딩 중..."
+success = "성공"
+error = "오류"
+warning = "경고"
+
+[theme]
+light = "라이트"
+dark = "다크"
+auto = "자동"
+
+[page]
+[page.home]
+[page.home.hero]
+title = "Hikari UI 프레임워크"
+subtitle = "빛 - 현대적인 Rust UI 프레임워크"
+description = "Dioxus + Grass + Axum 기반으로 Arknights 미학과 FUI 스타일로 설계되었습니다."
+tagline = "행복하고 싶은 것은 부끄러운 일이 아닙니다."
+explore = "컴포넌트 탐색 →"
+
+[page.home.features]
+title = "기능"
+description = "아름답고 고성능 웹 애플리케이션을 구축하고자 하는 개발자를 위해 설계되었습니다."
+
+[page.components]
+title = "컴포넌트"
+description = "재사용 가능한 UI 컴포넌트의 풍부한 컬렉션."
+
+[page.documentation]
+title = "문서"
+description = "Hikari를 시작하고 놀라운 애플리케이션을 구축하는 방법을 배우세요."
+getting_started = "시작하기"
+quick_start = "빠른 시작"
+
+[language]
+english = "English"
+chinese_simplified = "简体中文"
+chinese_traditional = "繁體中文"
+french = "Français"
+russian = "Русский"
+spanish = "Español"
+arabic = "العربية"
+japanese = "日本語"
+korean = "한국어"
+
+[sidebar]
+[sidebar.overview]
+title = "환영합니다"
+home = "환영합니다"
+
+[sidebar.components]
+title = "컴포넌트"
+layer1 = "레이어 1"
+layer2 = "레이어 2"
+layer3 = "레이어 3"
+
+[sidebar.system]
+title = "시스템"
+overview = "개요"
+css_utilities = "CSS 유틸리티"
+icons = "아이콘"
+palette = "팔레트"
+animations = "애니메이션"
+animation_demo = "애니메이션 데모"
+
+[sidebar.demos]
+title = "데모"
+all_demos = "모든 데모"
+
+[sidebar.items]
+button = "버튼"
+form = "폼"
+number_input = "숫자 입력"
+search = "검색"
+switch = "스위치"
+feedback = "피드백"
+display = "표시"
+avatar = "아바타"
+image = "이미지"
+tag = "태그"
+empty = "비어있음"
+comment = "댓글"
+description_list = "설명 목록"
+navigation = "내비게이션"
+collapsible = "접기"
+data = "데이터"
+table = "테이블"
+tree = "트리"
+pagination = "페이지네이션"
+qrcode = "QR 코드"
+timeline = "타임라인"
+cascader = "캐스케이드"
+transfer = "트랜스퍼"
+media = "미디어"
+editor = "에디터"
+visualization = "시각화"
+user_guide = "사용자 가이드"
+zoom_controls = "줌 컨트롤"
+form_demo = "폼 데모"
+dashboard_demo = "대시보드 데모"
+video_demo = "비디오 데모"

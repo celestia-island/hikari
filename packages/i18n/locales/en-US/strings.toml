@@ -52,6 +52,12 @@ quick_start = "Quick Start"
 english = "English"
 chinese_simplified = "简体中文"
 chinese_traditional = "繁體中文"
+french = "Français"
+russian = "Русский"
+spanish = "Español"
+arabic = "العربية"
+japanese = "日本語"
+korean = "한국어"
 
 [sidebar]
 [sidebar.overview]

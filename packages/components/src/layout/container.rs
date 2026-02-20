@@ -3,6 +3,7 @@
 
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, ContainerClass};
+use theme::use_theme;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum ContainerSize {
@@ -30,6 +31,10 @@ pub struct ContainerProps {
     /// Center content
     #[props(default = false)]
     pub center: bool,
+
+    /// Override RTL behavior (default: follow theme direction)
+    #[props(default)]
+    pub rtl: Option<bool>,
 
     /// Additional CSS classes
     #[props(default)]
@@ -66,6 +71,9 @@ impl ContainerSize {
 /// ```
 #[component]
 pub fn Container(props: ContainerProps) -> Element {
+    let theme = use_theme();
+    let is_rtl = props.rtl.unwrap_or_else(|| theme.direction.is_rtl());
+
     let size_class = match props.size {
         ContainerSize::Small => ContainerClass::Sm,
         ContainerSize::Medium => ContainerClass::Md,
@@ -73,19 +81,23 @@ pub fn Container(props: ContainerProps) -> Element {
         ContainerSize::Xl => ContainerClass::Xl,
     };
 
-    let container_classes = ClassesBuilder::new()
+    let mut builder = ClassesBuilder::new()
         .add(ContainerClass::Container)
         .add(size_class)
-        .add_if(ContainerClass::Centered, || props.center)
-        .add_raw(&props.class)
-        .build();
+        .add_if(ContainerClass::Centered, || props.center);
+
+    if is_rtl {
+        builder = builder.add_raw("hi-container-rtl");
+    }
+
+    let container_classes = builder.add_raw(&props.class).build();
 
     let max_width = props
         .max_width
         .unwrap_or_else(|| props.size.max_width().to_string());
 
     let center_style = if props.center {
-        "margin-left: auto; margin-right: auto;"
+        "margin-inline-start: auto; margin-inline-end: auto;"
     } else {
         ""
     };

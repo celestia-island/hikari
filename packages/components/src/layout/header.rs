@@ -18,7 +18,8 @@
 
 use dioxus::prelude::*;
 use dioxus_core::VNode;
-use palette::{ClassesBuilder, classes::*};
+use palette::{classes::*, ClassesBuilder};
+use theme::use_theme;
 
 /// Header component - Modern application header bar
 ///
@@ -47,6 +48,10 @@ pub fn Header(
     /// Callback when menu toggle is clicked
     on_menu_toggle: EventHandler,
 
+    /// Override RTL behavior (default: follow theme direction)
+    #[props(default)]
+    rtl: Option<bool>,
+
     /// Custom CSS classes
     #[props(default)]
     class: String,
@@ -55,7 +60,9 @@ pub fn Header(
     #[props(default = VNode::empty())]
     right_content: Element,
 ) -> Element {
-    // Build utility classes for header content container
+    let theme = use_theme();
+    let is_rtl = rtl.unwrap_or_else(|| theme.direction.is_rtl());
+
     let content_classes = ClassesBuilder::new()
         .add(Display::Flex)
         .add(AlignItems::Center)
@@ -64,30 +71,38 @@ pub fn Header(
         .add(Flex::Shrink0)
         .build();
 
-    let header_classes = ClassesBuilder::new()
+    let mut header_builder = ClassesBuilder::new()
         .add(components::Header::Header)
         .add(components::Header::Sticky)
         .add(components::Header::Md)
         .add_if(components::Header::Transparent, || !bordered)
-        .add_raw(&class)
-        .build();
+        .add_raw(&class);
+
+    if is_rtl {
+        header_builder = header_builder.add_raw("hi-header-rtl");
+    }
+
+    let header_classes = header_builder.build();
+
+    let (left_class, right_class) = if is_rtl {
+        ("hi-header-right", "hi-header-left")
+    } else {
+        ("hi-header-left", "hi-header-right")
+    };
 
     rsx! {
         header {
             class: "{header_classes}",
 
-            // Left section: Menu toggle + optional content
             div {
-                class: "hi-header-left",
+                class: "{left_class}",
 
-                // Menu toggle button (mobile)
                 if show_menu_toggle {
                     button {
                         class: "hi-header-toggle",
                         onclick: move |_| on_menu_toggle.call(()),
                         "aria-label": "Toggle menu",
 
-                        // Menu icon (hamburger)
                         svg {
                             xmlns: "http://www.w3.org/2000/svg",
                             fill: "none",
@@ -101,16 +116,14 @@ pub fn Header(
                     }
                 }
 
-                // Header content
                 div {
                     class: "{content_classes}",
                     { children }
                 }
             }
 
-            // Right section (optional actions)
             div {
-                class: "hi-header-right",
+                class: "{right_class}",
                 { right_content }
             }
         }

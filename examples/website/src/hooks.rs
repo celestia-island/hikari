@@ -6,6 +6,12 @@ mod i18n_toml {
     pub const EN_US: &str = include_str!("../../../packages/i18n/locales/en-US/strings.toml");
     pub const ZH_CHS: &str = include_str!("../../../packages/i18n/locales/zh-CHS/strings.toml");
     pub const ZH_CHT: &str = include_str!("../../../packages/i18n/locales/zh-CHT/strings.toml");
+    pub const FR_FR: &str = include_str!("../../../packages/i18n/locales/fr-FR/strings.toml");
+    pub const RU_RU: &str = include_str!("../../../packages/i18n/locales/ru-RU/strings.toml");
+    pub const ES_ES: &str = include_str!("../../../packages/i18n/locales/es-ES/strings.toml");
+    pub const AR_SA: &str = include_str!("../../../packages/i18n/locales/ar-SA/strings.toml");
+    pub const JA_JP: &str = include_str!("../../../packages/i18n/locales/ja-JP/strings.toml");
+    pub const KO_KR: &str = include_str!("../../../packages/i18n/locales/ko-KR/strings.toml");
 }
 
 use std::cell::RefCell;
@@ -19,6 +25,12 @@ pub fn get_toml_content(lang: Language) -> &'static str {
         Language::English => i18n_toml::EN_US,
         Language::ChineseSimplified => i18n_toml::ZH_CHS,
         Language::ChineseTraditional => i18n_toml::ZH_CHT,
+        Language::French => i18n_toml::FR_FR,
+        Language::Russian => i18n_toml::RU_RU,
+        Language::Spanish => i18n_toml::ES_ES,
+        Language::Arabic => i18n_toml::AR_SA,
+        Language::Japanese => i18n_toml::JA_JP,
+        Language::Korean => i18n_toml::KO_KR,
     }
 }
 

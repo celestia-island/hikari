@@ -12,9 +12,15 @@ pub struct DynamicDocPageProps {
 
 fn lang_to_path_prefix(lang: Language) -> &'static str {
     match lang {
-        Language::English => "en",
-        Language::ChineseSimplified => "zh-chs",
-        Language::ChineseTraditional => "zh-cht",
+        Language::English => "en-US",
+        Language::ChineseSimplified => "zh-CHS",
+        Language::ChineseTraditional => "zh-CHT",
+        Language::French => "fr-FR",
+        Language::Russian => "ru-RU",
+        Language::Spanish => "es-ES",
+        Language::Arabic => "ar-SA",
+        Language::Japanese => "ja-JP",
+        Language::Korean => "ko-KR",
     }
 }
 

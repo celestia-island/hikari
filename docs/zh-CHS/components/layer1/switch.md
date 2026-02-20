@@ -67,30 +67,38 @@ pages/components/layer1/switch#slider
 
 ### SwitchVariant
 
-- `Default` - 默认样式（圆点）
-- `Text` - 文本变体
-- `Icon` - 图标变体
-- `Custom` - 自定义变体
+| 值 | 说明 |
+|------|------|
+| `Default` | 默认样式（圆点） |
+| `Text` | 文本变体 |
+| `Icon` | 图标变体 |
+| `Custom` | 自定义变体 |
 
 ### SwitchColor
 
-- `Success` - 成功/开启（葱倩绿，默认）
-- `Primary` - 主色（蓝色）
-- `Secondary` - 次要色（宝蓝）
-- `Danger` - 危险（朱红）
-- `Warning` - 警告（鹅黄）
-- `Info` - 信息（靛蓝）
+| 值 | 说明 |
+|------|------|
+| `Success` | 成功/开启（葱倩绿，默认） |
+| `Primary` | 主色（蓝色） |
+| `Secondary` | 次要色（宝蓝） |
+| `Danger` | 危险（朱红） |
+| `Warning` | 警告（鹅黄） |
+| `Info` | 信息（靛蓝） |
 
 ### SwitchContent
 
-- `Text(String)` - 文本内容
-- `Icon(SwitchIcon)` - 图标内容
-- `Image(String)` - 图片 URL
+| 值 | 说明 |
+|------|------|
+| `Text(String)` | 文本内容 |
+| `Icon(SwitchIcon)` | 图标内容 |
+| `Image(String)` | 图片 URL |
 
 ### SwitchIcon
 
-- `Check` - 勾选图标
-- `Close` - 关闭图标
-- `Plus` - 加号图标
-- `Minus` - 减号图标
-- `Custom(&'static str)` - 自定义 SVG path
+| 值 | 说明 |
+|------|------|
+| `Check` | 勾选图标 |
+| `Close` | 关闭图标 |
+| `Plus` | 加号图标 |
+| `Minus` | 减号图标 |
+| `Custom(&'static str)` | 自定义 SVG path |

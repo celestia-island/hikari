@@ -258,6 +258,10 @@ fn route_key_to_route(key: &str, lang: &str) -> Route {
 
 #[component]
 pub fn Sidebar(current_route: Route) -> Element {
+    // 订阅 i18n keys 的变化，确保语言切换时重新渲染
+    let i18n = crate::hooks::use_i18n();
+    let _ = i18n.keys.read();
+
     use_effect(move || {
         let scroll_pos = *SIDEBAR_SCROLL_POSITION.read();
         if scroll_pos > 0.0 {

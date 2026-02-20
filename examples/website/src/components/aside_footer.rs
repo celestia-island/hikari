@@ -16,8 +16,44 @@ use _i18n::context::Language;
 use _icons::MdiIcon;
 use _palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, JustifyContent, Shadow};
 
-fn language_name_in(lang: Language, _display_lang: Language) -> String {
-    lang.native_name().to_string()
+fn language_name_in(lang: Language, display_lang: Language) -> String {
+    match display_lang {
+        Language::English => match lang {
+            Language::English => "English",
+            Language::ChineseSimplified => "Simplified Chinese",
+            Language::ChineseTraditional => "Traditional Chinese",
+            Language::French => "French",
+            Language::Russian => "Russian",
+            Language::Spanish => "Spanish",
+            Language::Arabic => "Arabic",
+            Language::Japanese => "Japanese",
+            Language::Korean => "Korean",
+        },
+        Language::ChineseSimplified => match lang {
+            Language::English => "英语",
+            Language::ChineseSimplified => "简体中文",
+            Language::ChineseTraditional => "繁体中文",
+            Language::French => "法语",
+            Language::Russian => "俄语",
+            Language::Spanish => "西班牙语",
+            Language::Arabic => "阿拉伯语",
+            Language::Japanese => "日语",
+            Language::Korean => "韩语",
+        },
+        Language::ChineseTraditional => match lang {
+            Language::English => "英語",
+            Language::ChineseSimplified => "簡體中文",
+            Language::ChineseTraditional => "繁體中文",
+            Language::French => "法語",
+            Language::Russian => "俄語",
+            Language::Spanish => "西班牙語",
+            Language::Arabic => "阿拉伯語",
+            Language::Japanese => "日語",
+            Language::Korean => "韓語",
+        },
+        _ => lang.native_name(),
+    }
+    .to_string()
 }
 
 fn language_bilingual_display(lang: Language, current_lang: Language) -> String {

@@ -14,8 +14,6 @@ mod i18n_toml {
     pub const KO_KR: &str = include_str!("../../../packages/i18n/locales/ko-KR/strings.toml");
 }
 
-use std::cell::RefCell;
-
 use dioxus::prelude::*;
 
 use _i18n::{loader::load_toml, I18nKeys, Language};
@@ -48,29 +46,16 @@ pub fn use_language() -> LanguageContext {
     use_context::<LanguageContext>()
 }
 
-/// 响应式 I18n context
+/// 响应式 I18n context - 使用 Signal 实现响应式更新
+#[derive(Clone, Copy)]
 pub struct ReactiveI18nContext {
     pub language: Signal<Language>,
-    keys: RefCell<I18nKeys>,
+    pub keys: Signal<I18nKeys>,
 }
 
 impl ReactiveI18nContext {
-    pub fn keys(&self) -> std::cell::Ref<'_, I18nKeys> {
-        self.keys.borrow()
-    }
-
-    fn update_keys(&self, lang: Language) {
-        let mut keys = self.keys.borrow_mut();
-        *keys = load_keys(lang);
-    }
-}
-
-impl Clone for ReactiveI18nContext {
-    fn clone(&self) -> Self {
-        Self {
-            language: self.language,
-            keys: RefCell::new(self.keys.borrow().clone()),
-        }
+    pub fn keys(&self) -> I18nKeys {
+        self.keys.read().clone()
     }
 }
 
@@ -101,21 +86,20 @@ fn get_language_from_url() -> Language {
 #[component]
 pub fn I18nProviderWrapper(props: I18nProviderWrapperProps) -> Element {
     let mut lang_ctx = use_language();
+    let url_lang = get_language_from_url();
 
-    // 提供响应式 context，初始值直接从 URL 读取
-    let reactive_ctx = use_context_provider(|| {
-        let url_lang = get_language_from_url();
-        lang_ctx.language.set(url_lang);
-        ReactiveI18nContext {
-            language: lang_ctx.language,
-            keys: RefCell::new(load_keys(url_lang)),
-        }
+    let mut current_keys = use_signal(|| load_keys(url_lang));
+    lang_ctx.language.set(url_lang);
+
+    let _reactive_ctx = use_context_provider(|| ReactiveI18nContext {
+        language: lang_ctx.language,
+        keys: current_keys,
     });
 
-    // 监听语言变化
     use_effect(move || {
         let current_lang = *lang_ctx.language.read();
-        reactive_ctx.update_keys(current_lang);
+        let new_keys = load_keys(current_lang);
+        current_keys.set(new_keys);
     });
 
     rsx! {

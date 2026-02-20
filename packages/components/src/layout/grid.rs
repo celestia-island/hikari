@@ -17,9 +17,9 @@
 //! }
 //! ```
 
+use crate::theme::use_layout_direction;
 use dioxus::prelude::*;
 use palette::{classes::components::*, ClassesBuilder};
-use theme::use_theme;
 
 /// Grid component - 12-column responsive grid container
 ///
@@ -162,8 +162,8 @@ pub fn Row(
     #[props(default)]
     style: String,
 ) -> Element {
-    let theme = use_theme();
-    let is_rtl = rtl.unwrap_or_else(|| theme.direction.is_rtl());
+    let layout_direction = use_layout_direction();
+    let is_rtl = rtl.unwrap_or_else(|| layout_direction.is_rtl());
 
     let gap_class = match gap.as_str() {
         "sm" => RowClass::GapSm,

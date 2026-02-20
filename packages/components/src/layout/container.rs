@@ -1,9 +1,9 @@
 // hi-components/src/layout/container.rs
 // Container component for responsive content wrapping
 
+use crate::theme::use_layout_direction;
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, ContainerClass};
-use theme::use_theme;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum ContainerSize {
@@ -71,8 +71,8 @@ impl ContainerSize {
 /// ```
 #[component]
 pub fn Container(props: ContainerProps) -> Element {
-    let theme = use_theme();
-    let is_rtl = props.rtl.unwrap_or_else(|| theme.direction.is_rtl());
+    let layout_direction = use_layout_direction();
+    let is_rtl = props.rtl.unwrap_or_else(|| layout_direction.is_rtl());
 
     let size_class = match props.size {
         ContainerSize::Small => ContainerClass::Sm,

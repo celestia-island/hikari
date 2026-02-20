@@ -1,9 +1,9 @@
 // hi-components/src/layout/divider.rs
 // Divider component for visual separation
 
+use crate::theme::use_layout_direction;
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, DividerClass};
-use theme::use_theme;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DividerOrientation {
@@ -70,8 +70,8 @@ pub struct DividerProps {
 /// ```
 #[component]
 pub fn Divider(props: DividerProps) -> Element {
-    let theme = use_theme();
-    let is_rtl = props.rtl.unwrap_or_else(|| theme.direction.is_rtl());
+    let layout_direction = use_layout_direction();
+    let is_rtl = props.rtl.unwrap_or_else(|| layout_direction.is_rtl());
 
     let orientation_class = match props.orientation {
         DividerOrientation::Horizontal => DividerClass::Horizontal,

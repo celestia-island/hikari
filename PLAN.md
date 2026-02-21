@@ -98,6 +98,7 @@ sequenceDiagram
 ## 提交记录
 
 ```
+7aba848 docs: update PLAN.md with latest commits and warning explanation
 aed1ca5 fix: resolve remaining clippy warnings
 d376b84 feat: add E2E testing framework with visual analysis
 b6e6ac8 docs: finalize PLAN.md - all tasks completed

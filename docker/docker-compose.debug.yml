@@ -1,0 +1,21 @@
+services:
+  chrome-debug:
+    image: selenium/standalone-chrome:latest
+    container_name: hikari-chrome-debug
+    ports:
+      - "4444:4444"
+      - "5900:5900"
+      - "7900:7900"
+    environment:
+      - SE_NODE_SESSION_TIMEOUT=300
+      - SE_VNC_NO_PASSWORD=1
+      - SCREEN_WIDTH=1920
+      - SCREEN_HEIGHT=1080
+    shm_size: 2gb
+    volumes:
+      - /dev/shm:/dev/shm
+      - ./scripts/dev/screenshots:/screenshots
+
+networks:
+  hikari-debug:
+    driver: bridge

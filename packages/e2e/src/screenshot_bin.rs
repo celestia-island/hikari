@@ -39,65 +39,56 @@ const SCREENSHOT_DIR: &str = "/tmp/e2e_screenshots";
 
 /// All routes to capture screenshots for
 const ROUTES: &[(&str, &str)] = &[
-    // Home
-    ("/", "home"),
-    ("/components", "components"),
-    ("/demos", "demos"),
-    ("/demos/animation", "demos_animation"),
-    ("/demos/layer1/form", "demos_layer1_form"),
-    ("/demos/layer2/dashboard", "demos_layer2_dashboard"),
-    ("/demos/layer3/video", "demos_layer3_video"),
-    // Layer 1 Basic
-    ("/components/layer1/basic", "components_layer1_basic"),
-    ("/components/layer1/form", "components_layer1_form"),
-    ("/components/layer1/switch", "components_layer1_switch"),
-    ("/components/layer1/feedback", "components_layer1_feedback"),
-    ("/components/layer1/display", "components_layer1_display"),
-    // Entry components
-    ("/components/entry/cascader", "components_entry_cascader"),
-    ("/components/entry/transfer", "components_entry_transfer"),
-    (
-        "/components/entry/number_input",
-        "components_entry_number_input",
-    ),
-    ("/components/entry/search", "components_entry_search"),
+    // Home & Overview
+    ("/en", "home"),
+    ("/en/components", "components"),
+    ("/en/demos", "demos"),
+    // Demos
+    ("/en/demos/animation", "demos_animation"),
+    ("/en/demos/layer1/form", "demos_layer1_form"),
+    ("/en/demos/layer2/dashboard", "demos_layer2_dashboard"),
+    ("/en/demos/layer3/video", "demos_layer3_video"),
+    // Layer 1
+    ("/en/components/layer1/button", "components_layer1_button"),
+    ("/en/components/layer1/form", "components_layer1_form"),
+    ("/en/components/layer1/switch", "components_layer1_switch"),
+    ("/en/components/layer1/feedback", "components_layer1_feedback"),
+    ("/en/components/layer1/display", "components_layer1_display"),
+    ("/en/components/layer1/number_input", "components_layer1_number_input"),
+    ("/en/components/layer1/search", "components_layer1_search"),
+    ("/en/components/layer1/avatar", "components_layer1_avatar"),
+    ("/en/components/layer1/image", "components_layer1_image"),
+    ("/en/components/layer1/tag", "components_layer1_tag"),
+    ("/en/components/layer1/empty", "components_layer1_empty"),
+    ("/en/components/layer1/comment", "components_layer1_comment"),
     // Layer 2
-    ("/components/layer2", "components_layer2"),
-    (
-        "/components/layer2/navigation",
-        "components_layer2_navigation",
-    ),
-    ("/components/layer2/data", "components_layer2_data"),
-    ("/components/layer2/form", "components_layer2_form"),
-    ("/components/layer2/feedback", "components_layer2_feedback"),
+    ("/en/components/layer2", "components_layer2"),
+    ("/en/components/layer2/navigation", "components_layer2_navigation"),
+    ("/en/components/layer2/data", "components_layer2_data"),
+    ("/en/components/layer2/form", "components_layer2_form"),
+    ("/en/components/layer2/feedback", "components_layer2_feedback"),
+    ("/en/components/layer2/cascader", "components_layer2_cascader"),
+    ("/en/components/layer2/transfer", "components_layer2_transfer"),
+    ("/en/components/layer2/collapsible", "components_layer2_collapsible"),
+    ("/en/components/layer2/timeline", "components_layer2_timeline"),
+    ("/en/components/layer2/table", "components_layer2_table"),
+    ("/en/components/layer2/tree", "components_layer2_tree"),
+    ("/en/components/layer2/pagination", "components_layer2_pagination"),
+    ("/en/components/layer2/qrcode", "components_layer2_qrcode"),
     // Layer 3
-    ("/components/layer3/overview", "components_layer3_overview"),
-    ("/components/layer3/media", "components_layer3_media"),
-    ("/components/layer3/editor", "components_layer3_editor"),
-    (
-        "/components/layer3/visualization",
-        "components_layer3_visualization",
-    ),
-    // Extra components
-    (
-        "/components/extra/collapsible",
-        "components_extra_collapsible",
-    ),
-    ("/components/extra/timeline", "components_extra_timeline"),
-    (
-        "/components/extra/user_guide",
-        "components_extra_user_guide",
-    ),
-    (
-        "/components/extra/zoom_controls",
-        "components_extra_zoom_controls",
-    ),
+    ("/en/components/layer3/overview", "components_layer3_overview"),
+    ("/en/components/layer3/media", "components_layer3_media"),
+    ("/en/components/layer3/editor", "components_layer3_editor"),
+    ("/en/components/layer3/visualization", "components_layer3_visualization"),
+    ("/en/components/layer3/user_guide", "components_layer3_user_guide"),
+    ("/en/components/layer3/zoom_controls", "components_layer3_zoom_controls"),
     // System
-    ("/system", "system"),
-    ("/system/css", "system_css"),
-    ("/system/icons", "system_icons"),
-    ("/system/palette", "system_palette"),
-    ("/system/animations", "system_animations"),
+    ("/en/system", "system"),
+    ("/en/system/css", "system_css"),
+    ("/en/system/icons", "system_icons"),
+    ("/en/system/palette", "system_palette"),
+    ("/en/system/animations", "system_animations"),
+    ("/en/system/i18n", "system_i18n"),
 ];
 
 /// Screenshot generator using headless Chromium

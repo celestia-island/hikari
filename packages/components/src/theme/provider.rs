@@ -280,7 +280,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
             Some(palette) => palette,
             None => {
                 let default_name = get_default_theme();
-                get_registered_theme(default_name).unwrap_or_else(|| Hikari::palette())
+                get_registered_theme(default_name).unwrap_or_else(Hikari::palette)
             }
         };
 

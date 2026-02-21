@@ -135,13 +135,13 @@ pub fn Select(props: SelectProps) -> Element {
         .add(SelectClass::SelectTrigger)
         .add(size_class)
         .add_if(SelectClass::Disabled, || props.disabled)
-        .add_if(SelectClass::Open, || open())
+        .add_if(SelectClass::Open, move || open())
         .add_raw(&props.class)
         .build();
 
     // Build the options menu for sharing in the click handler
     let options_for_menu = props.options.clone();
-    let on_change = props.on_change.clone();
+    let on_change = props.on_change;
 
     let handle_trigger_click = move |e: MouseEvent| {
         e.stop_propagation();
@@ -200,10 +200,10 @@ pub fn Select(props: SelectProps) -> Element {
             };
 
             let opts = options_for_menu.clone();
-            let on_change_inner = on_change.clone();
+            let on_change_inner = on_change;
             let portal_inner = portal.clone();
             let id_inner = id.clone();
-            let internal_value_clone2 = internal_value.clone();
+            let internal_value_clone2 = internal_value;
 
             let menu_content = rsx! {
                 div {
@@ -217,12 +217,12 @@ pub fn Select(props: SelectProps) -> Element {
                             let label = opt.label.clone();
                             let is_selected = value == *internal_value_clone2.read();
                             let value_for_click = value.clone();
-                            let on_change_item = on_change_inner.clone();
+                            let on_change_item = on_change_inner;
                             let portal_close = portal_inner.clone();
                             let id_close = id_inner.clone();
 
                             // Create click handler for this option
-                            let mut internal_value_clone3 = internal_value.clone();
+                            let mut internal_value_clone3 = internal_value;
                             let click_handler = EventHandler::new(move |e: MouseEvent| {
                                 e.stop_propagation();
                                 internal_value_clone3.set(value_for_click.clone());

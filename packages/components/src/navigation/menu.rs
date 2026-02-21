@@ -290,7 +290,7 @@ pub fn Menu(props: MenuProps) -> Element {
     use_context_provider(|| MenuContext {
         in_popover: props.in_popover,
         glow_enabled,
-        request_close: props.request_close.clone(),
+        request_close: props.request_close,
     });
 
     rsx! {
@@ -343,13 +343,11 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
                         handler.call(e);
                     }
                     // Request close if in popover mode
-                    if let Some(ctx) = &menu_context {
-                        if ctx.in_popover {
-                            if let Some(close_cb) = &ctx.request_close {
+                    if let Some(ctx) = &menu_context
+                        && ctx.in_popover
+                            && let Some(close_cb) = &ctx.request_close {
                                 close_cb.call(());
                             }
-                        }
-                    }
                 }
             },
 

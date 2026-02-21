@@ -107,7 +107,7 @@ impl Default for PopoverProps {
 #[component]
 pub fn Popover(props: PopoverProps) -> Element {
     let mut open = use_signal(|| props.open);
-    let mut popover_id = use_signal(|| String::new());
+    let mut popover_id = use_signal(String::new);
 
     let mut close_requested = use_signal(|| false);
 
@@ -124,8 +124,8 @@ pub fn Popover(props: PopoverProps) -> Element {
         PopoverPositioning::Absolute(_) => vec![PopoverPlacement::Bottom],
     };
 
-    let on_open_change = props.on_open_change.clone();
-    let on_open_change_for_close = props.on_open_change.clone();
+    let on_open_change = props.on_open_change;
+    let on_open_change_for_close = props.on_open_change;
 
     let on_close = Callback::new(move |_| {
         open.set(false);
@@ -193,7 +193,7 @@ pub fn Popover(props: PopoverProps) -> Element {
                 title: props.title.clone(),
                 close_on_click_outside: props.close_on_click_outside,
                 close_on_select: props.close_on_select,
-                on_close: Some(on_close.clone()),
+                on_close: Some(on_close),
                 close_requested,
                 children: props.children.clone(),
             });

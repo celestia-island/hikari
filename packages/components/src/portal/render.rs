@@ -216,7 +216,7 @@ pub fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                     title: title.clone(),
                                     close_on_click_outside: *close_on_click_outside,
                                     close_on_select: *close_on_select,
-                                    on_close: on_close.clone(),
+                                    on_close: *on_close,
                                     close_requested: *close_requested,
                                     children: children.clone(),
                                 }
@@ -564,7 +564,7 @@ fn PopoverPortalEntry(
         use_animated_portal_entry(id.clone(), ModalAnimationState::Appearing, "Popover");
 
     {
-        let on_close_clone = on_close.clone();
+        let on_close_clone = on_close;
         use_effect(move || {
             if close_requested() {
                 let current_state = *animation_state.read();
@@ -680,8 +680,8 @@ fn PopoverPortalEntry(
                 PopoverPlacement::Right,
             ];
             for placement in default_order {
-                if !preferred_placements.contains(&placement) {
-                    if let Some(result) = check_placement(
+                if !preferred_placements.contains(&placement)
+                    && let Some(result) = check_placement(
                         placement,
                         tx,
                         ty,
@@ -699,7 +699,6 @@ fn PopoverPortalEntry(
                     ) {
                         return result;
                     }
-                }
             }
 
             (PopoverPlacement::Bottom, trigger_center_x, ty + th + offset)
@@ -749,7 +748,7 @@ fn PopoverPortalEntry(
     let backdrop_z_index = z_index.saturating_sub(1);
 
     let handle_close = {
-        let on_close = on_close.clone();
+        let on_close = on_close;
         move |e: MouseEvent| {
             close_popover.call(e);
             if let Some(handler) = on_close.as_ref() {
@@ -763,7 +762,7 @@ fn PopoverPortalEntry(
             div {
                 class: "hi-popover-backdrop",
                 style: "position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: {backdrop_z_index}; background: transparent; pointer-events: auto;",
-                onclick: handle_close.clone(),
+                onclick: handle_close,
             }
         }
 

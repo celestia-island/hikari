@@ -209,7 +209,7 @@ pub fn Cascader(props: CascaderProps) -> Element {
                     .add(CascaderClass::Cascader)
                     .add(size_class)
                     .add_if(CascaderClass::Disabled, || props.disabled)
-                    .add_if(CascaderClass::Open, || is_open())
+                    .add_if(CascaderClass::Open, move || is_open())
                     .add_raw(&props.class)
                     .build(),
 

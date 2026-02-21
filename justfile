@@ -279,7 +279,56 @@ outdated:
 
 # Generate SCSS bundle manually (for debugging)
 generate-scss:
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Generating SCSS bundle..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @cargo build --manifest-path packages/builder/Cargo.toml
+
+# ============================================================================
+# Interactive Browser Debug (for AI agents)
+# ============================================================================
+
+# Build browser debug tool
+build-debug:
+    @cargo build --release --package hikari-e2e --bin hikari-browser-debug
+
+# Capture screenshot of a page (for AI visual analysis)
+debug-screenshot url="http://localhost:3000" output="screenshot.png" wait="10" inject="":
+    @{{py}} scripts/dev/browser_debug.py screenshot --url "{{url}}" --output "{{output}}" --wait {{wait}} {{if inject != "" { "--inject " + inject } else { "" } }}
+
+# Check if page is properly loaded
+debug-check url="http://localhost:3000" wait="10":
+    @{{py}} scripts/dev/browser_debug.py check --url "{{url}}" --wait {{wait}}
+
+# Execute JavaScript and get result
+debug-script url="http://localhost:3000" script="return document.title;" wait="10":
+    @{{py}} scripts/dev/browser_debug.py script --url "{{url}}" --script '{{script}}' --wait {{wait}}
+
+# Run interactive debug commands from JSON file
+debug-interactive input="scripts/dev/commands/example_commands.json":
+    @{{py}} scripts/dev/browser_debug.py interactive --input "{{input}}" --output-dir scripts/dev/screenshots
+
+# Quick visual check - capture key pages
+debug-visual-check:
+    @{{py}} scripts/dev/browser_debug.py interactive --input "scripts/dev/commands/example_commands.json" --output-dir scripts/dev/screenshots
+
+# Generate commands file from routes
+debug-generate *routes:
+    @{{py}} scripts/dev/browser_debug.py generate --routes {{routes}} --output "scripts/dev/commands/generated.json" --base-url "http://localhost:3000"
+
+# Full debug session for a route
+debug-session route="/":
+    @{{py}} scripts/dev/browser_debug.py screenshot \
+        --url "http://localhost:3000{{route}}" \
+        --output "debug.png" \
+        --wait 10
+
+# Start Chrome debug container (VNC on 5900, noVNC on 7900)
+debug-chrome-up:
+    @docker compose -f docker/docker-compose.debug.yml up -d chrome-debug
+    @echo "Chrome debug container started"
+    @echo "  - VNC: vnc://localhost:5900 (no password)"
+    @echo "  - noVNC: http://localhost:7900"
+
+debug-chrome-down:
+    @docker compose -f docker/docker-compose.debug.yml down

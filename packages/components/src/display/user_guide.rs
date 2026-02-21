@@ -111,8 +111,8 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
         .build();
 
     let handle_next = {
-        let on_step_change = props.on_step_change.clone();
-        let on_finish = props.on_finish.clone();
+        let on_step_change = props.on_step_change;
+        let on_finish = props.on_finish;
         let _total = total_steps;
         move |_| {
             if is_last_step {
@@ -126,18 +126,17 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     };
 
     let handle_prev = {
-        let on_step_change = props.on_step_change.clone();
+        let on_step_change = props.on_step_change;
         move |_| {
-            if !is_first_step {
-                if let Some(handler) = on_step_change.as_ref() {
+            if !is_first_step
+                && let Some(handler) = on_step_change.as_ref() {
                     handler.call(current_step - 1);
                 }
-            }
         }
     };
 
     let handle_skip = {
-        let on_skip = props.on_skip.clone();
+        let on_skip = props.on_skip;
         move |_| {
             if let Some(handler) = on_skip.as_ref() {
                 handler.call(());

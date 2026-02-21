@@ -89,8 +89,8 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    if let Some(rows) = props.rows {
-        if rows > 1 {
+    if let Some(rows) = props.rows
+        && rows > 1 {
             return rsx! {
                 div {
                     class: "hi-skeleton-group",
@@ -105,7 +105,6 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
                 }
             };
         }
-    }
 
     rsx! {
         div {

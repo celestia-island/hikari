@@ -501,7 +501,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
             let scroll_height = el.scroll_height() as f64;
             let client_height = el.client_height() as f64;
             let max_scroll = (scroll_height - client_height).max(1.0);
-            let ratio = (scroll_top / max_scroll).min(1.0).max(0.0);
+            let ratio = (scroll_top / max_scroll).clamp(0.0, 1.0);
             *scroll_ratio_scroll.borrow_mut() = ratio;
         }
 
@@ -639,9 +639,7 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
 
         // Center thumb at click position
         let thumb_center_offset = thumb_height / 8.0;
-        let click_ratio = ((click_y - thumb_center_offset) / track_height)
-            .max(0.0)
-            .min(1.0);
+        let click_ratio = ((click_y - thumb_center_offset) / track_height).clamp(0.0, 1.0);
         let new_scroll_top = click_ratio * max_scroll;
 
         content_for_click.set_scroll_top(new_scroll_top as i32);
@@ -763,7 +761,7 @@ fn setup_drag_scroll(
 
     // Find the track element (parent of thumb)
     let track_element = match thumb.parent_node() {
-        Some(node) => node.dyn_ref::<web_sys::Element>().map(|el| el.clone()),
+        Some(node) => node.dyn_ref::<web_sys::Element>().cloned(),
         None => None,
     };
 

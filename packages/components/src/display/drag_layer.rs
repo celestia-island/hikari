@@ -11,6 +11,7 @@ pub struct DragLayerComponent;
 
 /// Drag item data
 #[derive(Clone, PartialEq, Debug)]
+#[derive(Default)]
 pub struct DragItem {
     /// Unique identifier
     pub id: String,
@@ -20,15 +21,6 @@ pub struct DragItem {
     pub item_type: String,
 }
 
-impl Default for DragItem {
-    fn default() -> Self {
-        Self {
-            id: String::new(),
-            label: String::new(),
-            item_type: String::new(),
-        }
-    }
-}
 
 /// DragLayer component props
 #[derive(Clone, PartialEq, Props)]

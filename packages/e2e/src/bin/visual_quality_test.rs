@@ -4,7 +4,6 @@
 use hikari_e2e::tests::visual_quality::VisualQualityTests;
 use thirtyfour::{WebDriver, prelude::*};
 use tracing::{error, info};
-use tracing_subscriber;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

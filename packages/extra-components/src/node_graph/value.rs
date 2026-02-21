@@ -8,18 +8,15 @@ use serde::{Deserialize, Serialize};
 /// This replaces `serde_json::Value` to provide type safety
 /// and better error messages in the node graph system.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default)]
 pub enum NodeValue {
     Number(f64),
     Text(String),
     Boolean(bool),
+    #[default]
     Null,
 }
 
-impl Default for NodeValue {
-    fn default() -> Self {
-        NodeValue::Null
-    }
-}
 
 impl NodeValue {
     pub fn is_null(&self) -> bool {

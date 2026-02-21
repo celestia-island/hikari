@@ -1,0 +1,240 @@
+[
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/",
+    "output": "home.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components",
+    "output": "components.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/demos",
+    "output": "demos.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/demos/animation",
+    "output": "demos_animation.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/demos/layer1/form",
+    "output": "demos_layer1_form.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/demos/layer2/dashboard",
+    "output": "demos_layer2_dashboard.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/demos/layer3/video",
+    "output": "demos_layer3_video.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/layer1/basic",
+    "output": "components_layer1_basic.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/layer1/form",
+    "output": "components_layer1_form.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/layer1/switch",
+    "output": "components_layer1_switch.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/layer1/feedback",
+    "output": "components_layer1_feedback.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/layer1/display",
+    "output": "components_layer1_display.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/entry/cascader",
+    "output": "components_entry_cascader.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/entry/transfer",
+    "output": "components_entry_transfer.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/entry/number_input",
+    "output": "components_entry_number_input.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/entry/search",
+    "output": "components_entry_search.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/layer2",
+    "output": "components_layer2.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/layer2/navigation",
+    "output": "components_layer2_navigation.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/layer2/data",
+    "output": "components_layer2_data.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/layer2/form",
+    "output": "components_layer2_form.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/layer2/feedback",
+    "output": "components_layer2_feedback.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/layer3/overview",
+    "output": "components_layer3_overview.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/layer3/media",
+    "output": "components_layer3_media.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/layer3/editor",
+    "output": "components_layer3_editor.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/layer3/visualization",
+    "output": "components_layer3_visualization.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/extra/collapsible",
+    "output": "components_extra_collapsible.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/extra/timeline",
+    "output": "components_extra_timeline.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/extra/user_guide",
+    "output": "components_extra_user_guide.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/components/extra/zoom_controls",
+    "output": "components_extra_zoom_controls.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/system",
+    "output": "system.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/system/css",
+    "output": "system_css.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/system/icons",
+    "output": "system_icons.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/system/palette",
+    "output": "system_palette.png",
+    "wait_ms": 10000,
+    "full_page": true
+  },
+  {
+    "action": "screenshot",
+    "url": "http://localhost:3000/system/animations",
+    "output": "system_animations.png",
+    "wait_ms": 10000,
+    "full_page": true
+  }
+]

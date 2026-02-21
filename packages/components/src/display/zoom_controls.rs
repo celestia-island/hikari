@@ -58,7 +58,7 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
         .build();
 
     let handle_zoom_in = {
-        let on_zoom_change = props.on_zoom_change.clone();
+        let on_zoom_change = props.on_zoom_change;
         let max = props.max_zoom;
         let step = props.step;
         move |_| {
@@ -71,7 +71,7 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
     };
 
     let handle_zoom_out = {
-        let on_zoom_change = props.on_zoom_change.clone();
+        let on_zoom_change = props.on_zoom_change;
         let min = props.min_zoom;
         let step = props.step;
         move |_| {
@@ -84,7 +84,7 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
     };
 
     let handle_reset = {
-        let on_zoom_change = props.on_zoom_change.clone();
+        let on_zoom_change = props.on_zoom_change;
         move |_| {
             zoom.set(100);
             if let Some(handler) = on_zoom_change.as_ref() {

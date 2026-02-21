@@ -94,7 +94,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
     };
 
     let handle_input = {
-        let on_change = props.on_change.clone();
+        let on_change = props.on_change;
         move |e: Event<FormData>| {
             let new_value = e.value();
             content.set(new_value.clone());
@@ -104,7 +104,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         }
     };
 
-    let on_change_for_insert = props.on_change.clone();
+    let on_change_for_insert = props.on_change;
     let insert_bold = move |_| {
         let current = content();
         let new_value = format!("**{}**", current);
@@ -114,7 +114,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         }
     };
 
-    let on_change_for_italic = props.on_change.clone();
+    let on_change_for_italic = props.on_change;
     let insert_italic = move |_| {
         let current = content();
         let new_value = format!("*{}*", current);
@@ -124,7 +124,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         }
     };
 
-    let on_change_for_heading = props.on_change.clone();
+    let on_change_for_heading = props.on_change;
     let insert_heading = move |_| {
         let current = content();
         let new_value = format!("# {}", current);
@@ -134,7 +134,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         }
     };
 
-    let on_change_for_code = props.on_change.clone();
+    let on_change_for_code = props.on_change;
     let insert_code = move |_| {
         let current = content();
         let new_value = format!("```\n{}\n```", current);
@@ -144,7 +144,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         }
     };
 
-    let on_change_for_link = props.on_change.clone();
+    let on_change_for_link = props.on_change;
     let insert_link = move |_| {
         let current = content();
         let new_value = format!("[{}](url)", current);
@@ -154,7 +154,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         }
     };
 
-    let on_change_for_image = props.on_change.clone();
+    let on_change_for_image = props.on_change;
     let insert_image = move |_| {
         let current = content();
         let new_value = format!("![alt]({})", current);
@@ -164,7 +164,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         }
     };
 
-    let on_change_for_list = props.on_change.clone();
+    let on_change_for_list = props.on_change;
     let insert_list = move |_| {
         let current = content();
         let new_value = format!("- {}", current);
@@ -174,7 +174,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         }
     };
 
-    let on_change_for_numbered = props.on_change.clone();
+    let on_change_for_numbered = props.on_change;
     let insert_numbered = move |_| {
         let current = content();
         let new_value = format!("1. {}", current);
@@ -184,7 +184,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         }
     };
 
-    let on_change_for_quote = props.on_change.clone();
+    let on_change_for_quote = props.on_change;
     let insert_quote = move |_| {
         let current = content();
         let new_value = format!("> {}", current);

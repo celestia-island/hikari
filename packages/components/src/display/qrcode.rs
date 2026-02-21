@@ -118,9 +118,9 @@ pub fn QRCode(props: QRCodeProps) -> Element {
                     onmounted: move |evt| {
                         if drawn() { return; }
 
-                        if let Some(canvas) = evt.data().downcast::<web_sys::HtmlCanvasElement>() {
-                            if let Ok(Some(ctx)) = canvas.get_context("2d") {
-                                if let Ok(ctx) = ctx.dyn_into::<CanvasRenderingContext2d>() {
+                        if let Some(canvas) = evt.data().downcast::<web_sys::HtmlCanvasElement>()
+                            && let Ok(Some(ctx)) = canvas.get_context("2d")
+                                && let Ok(ctx) = ctx.dyn_into::<CanvasRenderingContext2d>() {
                                     let canvas_size = size as f64;
 
                                     ctx.set_fill_style_str(&background);
@@ -149,8 +149,6 @@ pub fn QRCode(props: QRCodeProps) -> Element {
 
                                     drawn.set(true);
                                 }
-                            }
-                        }
                     },
                 }
             }

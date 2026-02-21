@@ -149,7 +149,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                         onclick: move |_| {
                             if copy_to_clipboard(&code_for_copy) {
                                 copied.set(true);
-                                let mut copied_signal = copied.clone();
+                                let mut copied_signal = copied;
                                 Timeout::new(2000, move || {
                                     copied_signal.set(false);
                                 }).forget();

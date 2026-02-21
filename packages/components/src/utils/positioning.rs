@@ -277,7 +277,7 @@ mod tests {
         assert_eq!(config.placement, Placement::Bottom);
         assert_eq!(config.strategy, PositionStrategy::Absolute);
         assert_eq!(config.offset, (0, 8));
-        assert_eq!(config.flip, true);
+        assert!(config.flip);
         assert_eq!(config.padding, 8);
     }
 
@@ -292,7 +292,7 @@ mod tests {
         assert_eq!(config.placement, Placement::Top);
         assert_eq!(config.strategy, PositionStrategy::Fixed);
         assert_eq!(config.offset, (10, 20));
-        assert_eq!(config.flip, false);
+        assert!(!config.flip);
         assert_eq!(config.padding, 16);
     }
 

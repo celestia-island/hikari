@@ -16,7 +16,7 @@ mod tests {
         let props = AlertProps::default();
 
         assert_eq!(props.variant, AlertVariant::Info);
-        assert_eq!(props.closable, false);
+        assert!(!props.closable);
     }
 
     #[test]
@@ -67,7 +67,7 @@ mod tests {
 
         assert_eq!(props.variant, ToastVariant::Info);
         assert_eq!(props.position, ToastPosition::TopRight);
-        assert_eq!(props.closable, true);
+        assert!(props.closable);
     }
 
     #[test]
@@ -117,7 +117,7 @@ mod tests {
         let props = TooltipProps::default();
 
         assert_eq!(props.placement, TooltipPlacement::Top);
-        assert_eq!(props.arrow, true);
+        assert!(props.arrow);
     }
 
     #[test]

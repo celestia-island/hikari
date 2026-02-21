@@ -503,10 +503,10 @@ mod tests {
     fn test_code_highlighter_props_default() {
         let props = CodeHighlighterProps::default();
         assert_eq!(props.language, Language::Rust);
-        assert_eq!(props.show_line_numbers, true);
-        assert_eq!(props.show_language, true);
-        assert_eq!(props.show_copy, true);
-        assert_eq!(props.wrap, true);
+        assert!(props.show_line_numbers);
+        assert!(props.show_language);
+        assert!(props.show_copy);
+        assert!(props.wrap);
     }
 
     #[test]

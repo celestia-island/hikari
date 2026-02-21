@@ -55,7 +55,7 @@ fn test_pattern_validator_type() {
 fn test_custom_validator_type() {
     // Test CustomValidator compiles with String type
     let validator: CustomValidator<String> = CustomValidator::new(|value: &String| {
-        if value.len() > 0 {
+        if !value.is_empty() {
             Ok(())
         } else {
             Err(FieldError::new("Value is empty"))

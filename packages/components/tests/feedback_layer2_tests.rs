@@ -96,7 +96,7 @@ fn test_drawer_props_default() {
         ..Default::default()
     };
 
-    assert_eq!(props.open, false);
+    assert!(!props.open);
     assert_eq!(props.placement, DrawerPlacement::Right);
     assert_eq!(props.size, DrawerSize::Medium);
     assert!(props.mask_closable);
@@ -265,5 +265,4 @@ fn test_drawer_with_custom_class() {
 fn test_dropdown_default_renders() {
     // Test that Dropdown can be imported and used
     // Dropdown is a complex component, we test its basic rendering capability
-    assert!(true);
 }

@@ -243,7 +243,7 @@ mod tests {
         };
 
         let cloned = props.clone();
-        assert_eq!(cloned.expanded, true);
+        assert!(cloned.expanded);
         assert_eq!(cloned.duration, 300);
         assert!(cloned.animated);
         assert_eq!(cloned.class, "test-class");

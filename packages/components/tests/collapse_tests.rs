@@ -11,9 +11,9 @@ mod tests {
     fn test_collapse_props_default() {
         let props = CollapseProps::default();
 
-        assert_eq!(props.expanded, false);
+        assert!(!props.expanded);
         assert_eq!(props.duration, 200);
-        assert_eq!(props.animated, true);
+        assert!(props.animated);
         assert_eq!(props.class, String::new());
     }
 
@@ -71,6 +71,6 @@ mod tests {
 
         // Verify children exists by checking that it renders
         // Note: In Dioxus 0.7, VNode is opaque - we verify through rendering
-        assert!(true); // Test passes if props can be constructed with children
+        // Test passes if props can be constructed with children
     }
 }

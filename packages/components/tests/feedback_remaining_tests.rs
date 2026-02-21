@@ -27,7 +27,7 @@ mod tests {
         };
 
         assert_eq!(props.variant, SkeletonVariant::Text);
-        assert_eq!(props.animation, true);
+        assert!(props.animation);
         assert_eq!(props.rows, Some(3));
     }
 
@@ -121,8 +121,8 @@ mod tests {
             rows: 3,
         };
 
-        assert_eq!(props.show_header, true);
-        assert_eq!(props.show_avatar, true);
+        assert!(props.show_header);
+        assert!(props.show_avatar);
         assert_eq!(props.rows, 3);
     }
 
@@ -157,7 +157,7 @@ mod tests {
         assert_eq!(props.max, 100.0);
         assert_eq!(props.progress_type, ProgressType::Linear);
         assert_eq!(props.status, ProgressStatus::Normal);
-        assert_eq!(props.show_info, false);
+        assert!(!props.show_info);
     }
 
     #[test]
@@ -323,7 +323,7 @@ mod tests {
             class: String::new(),
         };
 
-        assert_eq!(props.spinning, false);
+        assert!(!props.spinning);
         assert_eq!(props.size, SpinSize::Medium);
         assert_eq!(props.tip, SpinTip::None);
     }

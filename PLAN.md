@@ -89,6 +89,8 @@ sequenceDiagram
 | `packages/e2e/src/screenshot_bin.rs` | 截图工具 (路由已修复) |
 | `scripts/dev/browser_debug.py` | Python 调试脚本 |
 | `scripts/dev/screenshots/*.png` | 44 张页面截图 |
+| `scripts/dev/e2e_tests/runner.py` | E2E 测试运行器 |
+| `scripts/dev/e2e_tests/config/test_suites/*.json` | 测试套件配置 (3 files) |
 | `.clippy.toml` | Clippy 配置文件 |
 
 ---
@@ -103,6 +105,47 @@ sequenceDiagram
 
 ---
 
+### 4. E2E 测试框架 ✅
+
+**目录结构**:
+```
+scripts/dev/e2e_tests/
+├── runner.py                    # 主测试运行器
+├── config/
+│   └── test_suites/
+│       ├── visual_quality.json    # 视觉质量分析 (7 tests)
+│       ├── interactive_states.json # 交互状态测试 (6 tests)
+│       └── layout_spacing.json    # 布局间距分析 (5 tests)
+├── actions/                      # 可复用动作定义
+└── reports/
+    └── screenshots/              # 测试截图输出
+```
+
+**运行器功能**:
+- `BrowserController`: Selenium 浏览器控制 (hover, click, input, screenshot)
+- `GLMVisionAnalyzer`: GLM Vision API 集成
+- `VisualQualityPrompts`: 预定义的视觉分析提示词
+- `E2ETestRunner`: 测试套件执行引擎
+
+**使用方法**:
+```bash
+# 安装依赖
+pip install selenium requests
+
+# 运行测试套件
+python scripts/dev/e2e_tests/runner.py config/test_suites/visual_quality.json
+
+# 保存结果到文件
+python scripts/dev/e2e_tests/runner.py config/test_suites/visual_quality.json -o results.json
+```
+
+**测试类型**:
+- **Visual Quality**: 阴影、边框、对齐、颜色一致性检查
+- **Interactive States**: Hover、Focus、Active 状态视觉反馈
+- **Layout Spacing**: 网格对齐、间距、布局一致性
+
+---
+
 ## 结论
 
 **所有任务已完成**:
@@ -111,3 +154,4 @@ sequenceDiagram
 3. ✅ 44 个页面截图成功
 4. ✅ 视觉分析确认 UI 健康
 5. ✅ 所有更改已推送到 dev 分支
+6. ✅ E2E 测试框架创建完成 (18 个测试用例)

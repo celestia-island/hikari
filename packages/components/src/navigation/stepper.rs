@@ -118,31 +118,6 @@ pub fn Stepper(props: StepperProps) -> Element {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_stepper_direction() {
-        let horizontal = StepperDirection::Horizontal;
-        assert_eq!(horizontal, StepperDirection::default());
-    }
-
-    #[test]
-    fn test_step_status() {
-        let wait = StepStatus::Wait;
-        assert_eq!(wait, StepStatus::default());
-    }
-
-    #[test]
-    fn test_stepper_default() {
-        let props = StepperProps::default();
-        assert_eq!(props.current, 0);
-        assert_eq!(props.total, 5);
-        assert_eq!(props.direction, StepperDirection::default());
-    }
-}
-
 impl StyledComponent for StepperComponent {
     fn styles() -> &'static str {
         r#"
@@ -227,5 +202,30 @@ impl StyledComponent for StepperComponent {
 
     fn name() -> &'static str {
         "stepper"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_stepper_direction() {
+        let horizontal = StepperDirection::Horizontal;
+        assert_eq!(horizontal, StepperDirection::default());
+    }
+
+    #[test]
+    fn test_step_status() {
+        let wait = StepStatus::Wait;
+        assert_eq!(wait, StepStatus::default());
+    }
+
+    #[test]
+    fn test_stepper_default() {
+        let props = StepperProps::default();
+        assert_eq!(props.current, 0);
+        assert_eq!(props.total, 5);
+        assert_eq!(props.direction, StepperDirection::default());
     }
 }

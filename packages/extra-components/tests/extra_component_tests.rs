@@ -33,7 +33,6 @@ mod tests {
                         max_x: Some(500.0),
                         min_y: Some(0.0),
                         max_y: Some(500.0),
-                        ..Default::default()
                     },
                     div { "Drag me" }
                 }

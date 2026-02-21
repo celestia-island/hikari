@@ -7,8 +7,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// This replaces `serde_json::Value` to provide type safety
 /// and better error messages in the node graph system.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub enum NodeValue {
     Number(f64),
     Text(String),
@@ -16,7 +15,6 @@ pub enum NodeValue {
     #[default]
     Null,
 }
-
 
 impl NodeValue {
     pub fn is_null(&self) -> bool {
@@ -158,8 +156,8 @@ mod tests {
 
     #[test]
     fn test_from_f64() {
-        let val = NodeValue::from(3.14);
-        assert_eq!(val.as_f64(), Some(3.14));
+        let val = NodeValue::from(2.71);
+        assert_eq!(val.as_f64(), Some(2.71));
     }
 
     #[test]

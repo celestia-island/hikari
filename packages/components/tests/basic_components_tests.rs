@@ -18,8 +18,8 @@ mod tests {
         assert_eq!(props.variant, ButtonVariant::Primary);
         assert_eq!(props.size, ButtonSize::Medium);
         assert_eq!(props.width, ButtonWidth::Auto);
-        assert_eq!(props.disabled, false);
-        assert_eq!(props.loading, false);
+        assert!(!props.disabled);
+        assert!(!props.loading);
     }
 
     #[test]
@@ -49,8 +49,8 @@ mod tests {
         let props = InputProps::default();
 
         assert_eq!(props.size, InputSize::Medium);
-        assert_eq!(props.disabled, false);
-        assert_eq!(props.readonly, false);
+        assert!(!props.disabled);
+        assert!(!props.readonly);
     }
 
     #[test]
@@ -79,8 +79,8 @@ mod tests {
     fn test_card_props_default() {
         let props = CardProps::default();
 
-        assert_eq!(props.bordered, false);
-        assert_eq!(props.hoverable, false);
+        assert!(!props.bordered);
+        assert!(!props.hoverable);
     }
 
     #[test]
@@ -100,7 +100,7 @@ mod tests {
         let props = BadgeProps::default();
 
         assert_eq!(props.variant, BadgeVariant::Default);
-        assert_eq!(props.dot, false);
+        assert!(!props.dot);
     }
 
     #[test]

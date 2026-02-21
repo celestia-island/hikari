@@ -1,0 +1,123 @@
+{
+  "name": "Interactive States Analysis",
+  "description": "Test hover, focus, and active states for interactive components",
+  "requires_mcp": true,
+  "tests": [
+    {
+      "id": "button_hover_state",
+      "name": "Button Hover State Visual Analysis",
+      "route": "/en/components/layer1/button",
+      "description": "Analyze button hover effects and transitions",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/components/layer1/button"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "hover", "params": {"selector": ".hi-button, button[type='button']"}},
+        {"action": "wait", "params": {"duration": 0.5}},
+        {"action": "screenshot", "params": {"output": "button_hover.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze the button hover state in this screenshot. Check for:\n1. Color change - Is there a visible but subtle background color shift?\n2. Shadow enhancement - Does the shadow become more pronounced?\n3. Cursor indication - Visually assess if the button appears clickable\n4. Transition smoothness - Look for any harsh color/shadow transitions\n5. Glow effect - Is there an appropriate glow or ring effect?\n6. Border changes - Does border color/width change on hover?\n\nReport any issues with the hover state visual feedback.",
+            "image_path": "button_hover.png"
+          }
+        }
+      ]
+    },
+    {
+      "id": "input_focus_state",
+      "name": "Input Focus State Visual Analysis",
+      "route": "/en/components/layer1/form",
+      "description": "Analyze input focus effects",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/components/layer1/form"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "click", "params": {"selector": "input[type='text'], .hi-input input"}},
+        {"action": "wait", "params": {"duration": 0.3}},
+        {"action": "screenshot", "params": {"output": "input_focus.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze the input focus state. Check for:\n1. Border change - Does the border color change to indicate focus?\n2. Glow/ring - Is there a focus ring or glow effect?\n3. Shadow effect - Does a subtle shadow appear?\n4. Placeholder visibility - Is placeholder text still readable?\n5. Cursor visibility - Can you see a text cursor in the field?\n6. Animation - Are focus transitions smooth?\n\nIdentify any accessibility or visual issues.",
+            "image_path": "input_focus.png"
+          }
+        }
+      ]
+    },
+    {
+      "id": "switch_toggle_state",
+      "name": "Switch Toggle State Analysis",
+      "route": "/en/components/layer1/switch",
+      "description": "Analyze switch on/off states",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/components/layer1/switch"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "screenshot", "params": {"output": "switch_initial.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze switch/toggle components. Check for:\n1. State distinction - Is on/off state clearly different?\n2. Thumb positioning - Is the toggle thumb properly positioned?\n3. Track styling - Does the track change color appropriately?\n4. Size proportion - Is thumb size appropriate for the track?\n5. Border radius - Are corners consistently rounded?\n6. Shadow on thumb - Does the thumb have appropriate depth?\n\nReport any visual inconsistencies.",
+            "image_path": "switch_initial.png"
+          }
+        }
+      ]
+    },
+    {
+      "id": "card_hover_effect",
+      "name": "Card Hover Effect Analysis",
+      "route": "/en/components/layer1/display",
+      "description": "Analyze card hover animations",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/components/layer1/display"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "hover", "params": {"selector": ".hi-card, [class*='card']"}},
+        {"action": "wait", "params": {"duration": 0.5}},
+        {"action": "screenshot", "params": {"output": "card_hover.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze the card hover effect. Check for:\n1. Elevation change - Does the card appear to lift/elevate?\n2. Shadow increase - Does shadow become deeper on hover?\n3. Border change - Is there a subtle border effect?\n4. Scale/transform - Any slight scaling or transformation?\n5. Transition - Is the effect smooth and not jarring?\n6. Content shift - Does any content shift unexpectedly?\n\nDescribe the quality of the hover interaction.",
+            "image_path": "card_hover.png"
+          }
+        }
+      ]
+    },
+    {
+      "id": "collapsible_interaction",
+      "name": "Collapsible Component Analysis",
+      "route": "/en/components/layer2/collapsible",
+      "description": "Analyze collapsible expand/collapse states",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/components/layer2/collapsible"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "screenshot", "params": {"output": "collapsible_initial.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze collapsible/accordion components. Check for:\n1. Expand/collapse indicator - Is there a visible arrow/chevron?\n2. Header styling - Is the clickable header clearly interactive?\n3. Content animation - Would content transition smoothly?\n4. State indication - Can you distinguish expanded vs collapsed?\n5. Border/separator - Is there proper visual separation between items?\n\nReport any issues with the collapsible visual design.",
+            "image_path": "collapsible_initial.png"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pagination_interaction",
+      "name": "Pagination Component Analysis",
+      "route": "/en/components/layer2/pagination",
+      "description": "Analyze pagination states and layout",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/components/layer2/pagination"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "hover", "params": {"selector": ".hi-pagination button, [class*='pagination'] button"}},
+        {"action": "wait", "params": {"duration": 0.5}},
+        {"action": "screenshot", "params": {"output": "pagination_hover.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze pagination components. Check for:\n1. Active page - Is the current page clearly highlighted?\n2. Hover states - Do page numbers have visible hover effects?\n3. Navigation arrows - Are prev/next buttons clearly styled?\n4. Spacing - Is there appropriate spacing between page numbers?\n5. Disabled state - Are disabled navigation items clearly muted?\n6. Size - Are click targets large enough for touch?\n\nDescribe any visual issues found.",
+            "image_path": "pagination_hover.png"
+          }
+        }
+      ]
+    }
+  ]
+}

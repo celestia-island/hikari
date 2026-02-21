@@ -1,0 +1,133 @@
+{
+  "name": "Visual Quality Analysis",
+  "description": "Comprehensive visual quality checks for all UI components",
+  "requires_mcp": true,
+  "tests": [
+    {
+      "id": "button_visual_quality",
+      "name": "Button Component Visual Quality",
+      "route": "/en/components/layer1/button",
+      "description": "Check button shadows, borders, alignment, and colors",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/components/layer1/button"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "screenshot", "params": {"output": "button_initial.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze the button components in this screenshot. Check for:\n1. Shadow depth - Are any shadows abnormally deep or blurry compared to nearby elements?\n2. Border overflow - Do borders have any corner artifacts or overflow?\n3. Alignment - Are button contents (text/icons) properly centered?\n4. Color consistency - Are colors uniform across similar button states?\n5. Spacing - Is padding consistent within buttons?\n\nProvide a detailed analysis with specific issues found.",
+            "image_path": "button_initial.png"
+          }
+        }
+      ]
+    },
+    {
+      "id": "form_visual_quality",
+      "name": "Form Component Visual Quality",
+      "route": "/en/components/layer1/form",
+      "description": "Check form inputs, labels, and validation states",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/components/layer1/form"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "screenshot", "params": {"output": "form_initial.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze the form components in this screenshot. Check for:\n1. Input field borders - Are borders consistent and properly aligned?\n2. Label positioning - Are labels correctly aligned with inputs?\n3. Validation states - Are error/success states visually distinct?\n4. Spacing - Is there consistent spacing between form elements?\n5. Typography - Are fonts consistent in labels and placeholders?\n\nIdentify any visual inconsistencies or design issues.",
+            "image_path": "form_initial.png"
+          }
+        }
+      ]
+    },
+    {
+      "id": "avatar_visual_quality",
+      "name": "Avatar Component Visual Quality",
+      "route": "/en/components/layer1/avatar",
+      "description": "Check avatar sizing, borders, and positioning",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/components/layer1/avatar"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "screenshot", "params": {"output": "avatar_initial.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze the avatar components. Check for:\n1. Border radius - Are circular avatars perfectly round?\n2. Image fitting - Do images fill the avatar container properly?\n3. Border shadows - Are shadow effects consistent?\n4. Size consistency - Are different sizes proportionally correct?\n5. Group alignment - In avatar groups, is overlap/positioning correct?",
+            "image_path": "avatar_initial.png"
+          }
+        }
+      ]
+    },
+    {
+      "id": "card_visual_quality",
+      "name": "Card Component Visual Quality",
+      "route": "/en/components/layer1/display",
+      "description": "Check card shadows, borders, and content layout",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/components/layer1/display"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "screenshot", "params": {"output": "display_initial.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze card/display components. Check for:\n1. Card shadows - Are shadows natural and consistent in depth/direction?\n2. Border radius - Are corners consistently rounded?\n3. Content padding - Is internal spacing appropriate?\n4. Border overflow - Any content clipping at rounded corners?\n5. Visual hierarchy - Is there clear content organization?",
+            "image_path": "display_initial.png"
+          }
+        }
+      ]
+    },
+    {
+      "id": "table_visual_quality",
+      "name": "Table Component Visual Quality",
+      "route": "/en/components/layer2/table",
+      "description": "Check table layout, borders, and alignment",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/components/layer2/table"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "screenshot", "params": {"output": "table_initial.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze table components. Check for:\n1. Column alignment - Are columns properly aligned?\n2. Row borders - Are horizontal/vertical borders consistent?\n3. Header styling - Is the header visually distinct?\n4. Cell padding - Is content spacing appropriate?\n5. Zebra striping - If present, is it subtle and consistent?",
+            "image_path": "table_initial.png"
+          }
+        }
+      ]
+    },
+    {
+      "id": "navigation_visual_quality",
+      "name": "Navigation Component Visual Quality",
+      "route": "/en/components/layer2/navigation",
+      "description": "Check navigation alignment and hover states",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/components/layer2/navigation"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "screenshot", "params": {"output": "navigation_initial.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze navigation components. Check for:\n1. Item alignment - Are nav items evenly spaced and aligned?\n2. Active state - Is the active/current item clearly indicated?\n3. Hover states - Are hover effects subtle but noticeable?\n4. Icon alignment - Are icons aligned with text labels?\n5. Responsive behavior - Does layout adapt appropriately?",
+            "image_path": "navigation_initial.png"
+          }
+        }
+      ]
+    },
+    {
+      "id": "timeline_visual_quality",
+      "name": "Timeline Component Visual Quality",
+      "route": "/en/components/layer2/timeline",
+      "description": "Check timeline alignment and spacing",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/components/layer2/timeline"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "screenshot", "params": {"output": "timeline_initial.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze timeline components. Check for:\n1. Vertical alignment - Is the timeline line perfectly vertical?\n2. Node positioning - Are timeline dots/nodes centered on the line?\n3. Content alignment - Is content aligned with corresponding nodes?\n4. Spacing consistency - Are intervals between items even?\n5. Connector styling - Are lines/dots visually consistent?",
+            "image_path": "timeline_initial.png"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -125,7 +125,7 @@ pub fn Alert(props: AlertProps) -> Element {
             class: "hi-alert-glow-wrapper",
             blur: GlowBlur::Light,
             color: glow_color,
-            intensity: GlowIntensity::Seventy,
+            intensity: GlowIntensity::Soft,
             div {
                 class: "{alert_classes}",
 

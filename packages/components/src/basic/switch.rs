@@ -189,7 +189,7 @@ pub fn Switch(props: SwitchProps) -> Element {
             div { class: "hi-switch-glow-wrapper",
                 Glow {
                     color: glow_color,
-                    intensity: GlowIntensity::Thirty,
+                    intensity: GlowIntensity::Dim,
                     class: "hi-switch-glow {glow_class}",
                 }
                 div { class: "{switch_classes}",

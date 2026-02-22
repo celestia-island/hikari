@@ -84,10 +84,10 @@ pub fn Card(props: CardProps) -> Element {
 
     let content = rsx! {
         // Glow overlay (background layer)
-        // Cards always use the subtle (Thirty) intensity for a soft, elegant look
+        // Cards always use the subtle (Dim) intensity for a soft, elegant look
         if props.glow {
             div {
-                class: "hi-card-glow hi-glow-thirty",
+                class: "hi-card-glow hi-glow-dim",
                 style: "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: var(--hi-glow-button-primary);",
             }
         }

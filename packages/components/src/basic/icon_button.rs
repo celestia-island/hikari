@@ -64,7 +64,7 @@ pub struct IconButtonProps {
     pub glow_color: GlowColor,
 
     /// Glow intensity (default: Standard)
-    #[props(default = GlowIntensity::Seventy)]
+    #[props(default = GlowIntensity::Soft)]
     pub glow_intensity: GlowIntensity,
 
     /// Whether to button is disabled (default: false)

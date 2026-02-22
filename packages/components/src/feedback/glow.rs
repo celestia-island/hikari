@@ -46,18 +46,18 @@ pub enum GlowColor {
 
 /// Glow intensity (shadow strength)
 ///
-/// Use `Thirty` for large surface containers (cards, panels) — barely perceptible ambient glow.
-/// Use `Seventy` (default) for interactive elements (buttons, inputs) — clear but balanced feedback.
-/// Use `Hundred` for emphasis and active states — intense spotlight effect.
+/// Use `Dim` for large surface containers (cards, panels) — barely perceptible ambient glow.
+/// Use `Soft` (default) for interactive elements (buttons, inputs) — clear but balanced feedback.
+/// Use `Bright` for emphasis and active states — intense spotlight effect.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowIntensity {
-    /// 30% glow intensity (subtle, for cards / containers)
-    Thirty,
-    /// 70% glow intensity (medium, default for buttons / interactive)
+    /// Dim glow (subtle, for cards / containers)
+    Dim,
+    /// Soft glow (medium, default for buttons / interactive)
     #[default]
-    Seventy,
-    /// 100% glow intensity (intense, for emphasis)
-    Hundred,
+    Soft,
+    /// Bright glow (intense, for emphasis)
+    Bright,
 }
 
 #[derive(Clone, PartialEq, Props)]
@@ -107,9 +107,9 @@ pub fn Glow(props: GlowProps) -> Element {
     };
 
     let intensity_class = match props.intensity {
-        GlowIntensity::Thirty => GlowClass::GlowThirty,
-        GlowIntensity::Seventy => GlowClass::GlowSeventy,
-        GlowIntensity::Hundred => GlowClass::GlowHundred,
+        GlowIntensity::Dim => GlowClass::GlowDim,
+        GlowIntensity::Soft => GlowClass::GlowSoft,
+        GlowIntensity::Bright => GlowClass::GlowBright,
     };
 
     let glow_classes = ClassesBuilder::new()

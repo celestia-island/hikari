@@ -392,45 +392,17 @@ pub fn render_component(component_type: ComponentType) -> Element {
                     let mut c2 = use_signal(|| true);
                     let mut c3 = use_signal(|| false);
                     let mut c4 = use_signal(|| true);
-                    let mut c5 = use_signal(|| false);
-                    let mut c6 = use_signal(|| true);
-                    let mut c7 = use_signal(|| false);
-                    let mut c8 = use_signal(|| true);
-                    let mut c9 = use_signal(|| false);
-                    let mut c10 = use_signal(|| true);
-                    let mut c11 = use_signal(|| false);
-                    let mut c12 = use_signal(|| true);
                     rsx! {
                         div { class: flex_col_gap(),
                             div { style: "display: flex; align-items: center; gap: 0.75rem;",
-                                span { style: "min-width: 80px; font-size: 12px; color: var(--hi-color-text-secondary);", "Success" }
-                                Switch { checked: c1(), on_change: move |v| c1.set(v), color: SwitchColor::Success }
-                                Switch { checked: c2(), on_change: move |v| c2.set(v), color: SwitchColor::Success }
-                            }
-                            div { style: "display: flex; align-items: center; gap: 0.75rem;",
                                 span { style: "min-width: 80px; font-size: 12px; color: var(--hi-color-text-secondary);", "Primary" }
-                                Switch { checked: c3(), on_change: move |v| c3.set(v), color: SwitchColor::Primary }
-                                Switch { checked: c4(), on_change: move |v| c4.set(v), color: SwitchColor::Primary }
+                                Switch { checked: c1(), on_change: move |v| c1.set(v), color: SwitchColor::Primary }
+                                Switch { checked: c2(), on_change: move |v| c2.set(v), color: SwitchColor::Primary }
                             }
                             div { style: "display: flex; align-items: center; gap: 0.75rem;",
                                 span { style: "min-width: 80px; font-size: 12px; color: var(--hi-color-text-secondary);", "Secondary" }
-                                Switch { checked: c5(), on_change: move |v| c5.set(v), color: SwitchColor::Secondary }
-                                Switch { checked: c6(), on_change: move |v| c6.set(v), color: SwitchColor::Secondary }
-                            }
-                            div { style: "display: flex; align-items: center; gap: 0.75rem;",
-                                span { style: "min-width: 80px; font-size: 12px; color: var(--hi-color-text-secondary);", "Danger" }
-                                Switch { checked: c7(), on_change: move |v| c7.set(v), color: SwitchColor::Danger }
-                                Switch { checked: c8(), on_change: move |v| c8.set(v), color: SwitchColor::Danger }
-                            }
-                            div { style: "display: flex; align-items: center; gap: 0.75rem;",
-                                span { style: "min-width: 80px; font-size: 12px; color: var(--hi-color-text-secondary);", "Warning" }
-                                Switch { checked: c9(), on_change: move |v| c9.set(v), color: SwitchColor::Warning }
-                                Switch { checked: c10(), on_change: move |v| c10.set(v), color: SwitchColor::Warning }
-                            }
-                            div { style: "display: flex; align-items: center; gap: 0.75rem;",
-                                span { style: "min-width: 80px; font-size: 12px; color: var(--hi-color-text-secondary);", "Info" }
-                                Switch { checked: c11(), on_change: move |v| c11.set(v), color: SwitchColor::Info }
-                                Switch { checked: c12(), on_change: move |v| c12.set(v), color: SwitchColor::Info }
+                                Switch { checked: c3(), on_change: move |v| c3.set(v), color: SwitchColor::Secondary }
+                                Switch { checked: c4(), on_change: move |v| c4.set(v), color: SwitchColor::Secondary }
                             }
                         }
                     }
@@ -512,16 +484,6 @@ pub fn render_component(component_type: ComponentType) -> Element {
                         Progress {
                             value: 70.0,
                             status: ProgressStatus::Active,
-                            show_info: true,
-                        }
-                        Progress {
-                            value: 100.0,
-                            status: ProgressStatus::Success,
-                            show_info: true,
-                        }
-                        Progress {
-                            value: 50.0,
-                            status: ProgressStatus::Exception,
                             show_info: true,
                         }
                     }

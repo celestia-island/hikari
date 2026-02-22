@@ -204,7 +204,7 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
             Glow {
                 blur: GlowBlur::Light,
                 color: GlowColor::Primary,
-                intensity: GlowIntensity::Thirty,
+                intensity: GlowIntensity::Dim,
                 div {
                     class: "{SidebarClass::SectionHeader.as_class()}",
                     onclick: move |_| { is_expanded.toggle(); },
@@ -308,7 +308,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
             Glow {
                 blur: GlowBlur::Light,
                 color: GlowColor::Primary,
-                intensity: GlowIntensity::Thirty,
+                intensity: GlowIntensity::Dim,
                 div {
                     class: "{SidebarClass::ItemHeader.as_class()}",
                     "data-has-children": "{has_items}",

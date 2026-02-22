@@ -25,20 +25,20 @@
 .hi-switch-label .hi-switch-glow.hi-glow-wrapper {
     position: absolute;
     inset: -4px;
-    border-radius: 100px !important;
+    border-radius: 6px !important;
     overflow: visible;
     z-index: 0;
 }
 
 // Ensure glow overlay also uses switch radius
 .hi-switch-label .hi-switch-glow::before {
-    border-radius: 100px;
+    border-radius: 6px;
 }
 
-// Lower glow opacity for switch
-.hi-switch-label .hi-switch-glow.hi-glow-thirty::before {
-    --glow-opacity: 0.04;
-    --glow-spread: 2.0;
+// Very subtle glow for switch - preserves background colors while keeping mouse-follow effect
+.hi-switch-label .hi-switch-glow.hi-glow-dim::before {
+    --glow-opacity: 0.015;
+    --glow-spread: 2.5;
 }
 
 .hi-switch {
@@ -46,7 +46,7 @@
     display: inline-flex;
     align-items: center;
     background-color: var(--hi-color-border, #bfbfbf);
-    border-radius: 100px;
+    border-radius: 4px;
     transition: background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease),
                 filter var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
     vertical-align: middle;
@@ -76,7 +76,7 @@
     align-items: center;
     justify-content: center;
     background-color: #fff;
-    border-radius: 50%;
+    border-radius: 2px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     transition: transform var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease),
                 background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
@@ -107,10 +107,7 @@
     background-color: var(--hi-success, #10B981);
 }
 
-.hi-switch:hover:not(.hi-switch-disabled) {
-    background-color: color-mix(in srgb, var(--hi-color-border, #bfbfbf) 85%, black);
-}
-
+// Hover effect handled by glow wrapper
 .hi-switch-checked:hover:not(.hi-switch-disabled) {
     filter: brightness(1.05);
 }
@@ -218,7 +215,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 50%;
+    border-radius: 2px;
 }
 
 // Label text

@@ -72,9 +72,9 @@ pub enum GlowClass {
     GlowSecondary,
     GlowDanger,
     GlowSuccess,
-    GlowThirty,
-    GlowSeventy,
-    GlowHundred,
+    GlowDim,
+    GlowSoft,
+    GlowBright,
 }
 
 impl UtilityClass for GlowClass {
@@ -92,9 +92,9 @@ impl UtilityClass for GlowClass {
             GlowClass::GlowSecondary => "glow-secondary",
             GlowClass::GlowDanger => "glow-danger",
             GlowClass::GlowSuccess => "glow-success",
-            GlowClass::GlowThirty => "glow-thirty",
-            GlowClass::GlowSeventy => "glow-seventy",
-            GlowClass::GlowHundred => "glow-hundred",
+            GlowClass::GlowDim => "glow-dim",
+            GlowClass::GlowSoft => "glow-soft",
+            GlowClass::GlowBright => "glow-bright",
         }
     }
 }

@@ -236,7 +236,7 @@ pub fn Select(props: SelectProps) -> Element {
                                 Glow {
                                     block: true,
                                     blur: crate::GlowBlur::Light,
-                                    intensity: crate::GlowIntensity::Seventy,
+                                    intensity: crate::GlowIntensity::Soft,
 
                                     div {
                                         class: if is_selected { "hi-select-option hi-select-option-selected" } else { "hi-select-option" },

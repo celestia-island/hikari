@@ -152,7 +152,7 @@ pub fn Toast(props: ToastProps) -> Element {
             class: "hi-toast-glow-wrapper",
             blur: GlowBlur::Light,
             color: glow_color,
-            intensity: GlowIntensity::Seventy,
+            intensity: GlowIntensity::Soft,
             div {
                 class: "{toast_classes}",
 

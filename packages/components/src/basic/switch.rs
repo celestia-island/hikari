@@ -60,12 +60,8 @@ pub enum SwitchVariant {
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SwitchColor {
     #[default]
-    Success,
     Primary,
     Secondary,
-    Danger,
-    Warning,
-    Info,
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -101,12 +97,8 @@ pub fn Switch(props: SwitchProps) -> Element {
     };
 
     let color_class = match props.color {
-        SwitchColor::Success => "",
         SwitchColor::Primary => "hi-switch-color-primary",
         SwitchColor::Secondary => "hi-switch-color-secondary",
-        SwitchColor::Danger => "hi-switch-color-danger",
-        SwitchColor::Warning => "hi-switch-color-warning",
-        SwitchColor::Info => "hi-switch-color-info",
     };
 
     let switch_classes = ClassesBuilder::new()
@@ -173,12 +165,8 @@ pub fn Switch(props: SwitchProps) -> Element {
     };
 
     let (glow_color, glow_class) = match props.color {
-        SwitchColor::Success => (GlowColor::Success, "hi-switch-glow-success"),
         SwitchColor::Primary => (GlowColor::Primary, "hi-switch-glow-primary"),
         SwitchColor::Secondary => (GlowColor::Secondary, "hi-switch-glow-secondary"),
-        SwitchColor::Danger => (GlowColor::Danger, "hi-switch-glow-danger"),
-        SwitchColor::Warning => (GlowColor::Warning, "hi-switch-glow-warning"),
-        SwitchColor::Info => (GlowColor::Info, "hi-switch-glow-info"),
     };
 
     rsx! {

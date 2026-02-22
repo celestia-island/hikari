@@ -251,36 +251,6 @@ mod tests {
     }
 
     #[test]
-    fn test_progress_status_exception() {
-        let props = ProgressProps {
-            value: 50.0,
-            max: 100.0,
-            progress_type: ProgressType::Linear,
-            status: ProgressStatus::Exception,
-            show_info: false,
-            class: String::new(),
-            style: String::new(),
-        };
-
-        assert_eq!(props.status, ProgressStatus::Exception);
-    }
-
-    #[test]
-    fn test_progress_status_success() {
-        let props = ProgressProps {
-            value: 50.0,
-            max: 100.0,
-            progress_type: ProgressType::Linear,
-            status: ProgressStatus::Success,
-            show_info: false,
-            class: String::new(),
-            style: String::new(),
-        };
-
-        assert_eq!(props.status, ProgressStatus::Success);
-    }
-
-    #[test]
     fn test_progress_props_with_show_info() {
         let props = ProgressProps {
             value: 50.0,

@@ -43,8 +43,6 @@ pub enum ProgressStatus {
     #[default]
     Normal,
     Active,
-    Success,
-    Exception,
 }
 
 #[component]
@@ -59,8 +57,6 @@ pub fn Progress(props: ProgressProps) -> Element {
     let status_class = match props.status {
         ProgressStatus::Normal => "hi-progress-normal",
         ProgressStatus::Active => "hi-progress-active",
-        ProgressStatus::Success => "hi-progress-success",
-        ProgressStatus::Exception => "hi-progress-exception",
     };
 
     rsx! {
@@ -176,22 +172,6 @@ impl StyledComponent for ProgressComponent {
     100% { background-position: 200% 50%; }
 }
 
-.hi-progress-success .hi-progress-bg {
-    background-color: var(--hi-color-success, #52c41a);
-}
-
-.hi-progress-success .hi-progress-text {
-    color: var(--hi-color-success, #52c41a);
-}
-
-.hi-progress-exception .hi-progress-bg {
-    background-color: var(--hi-color-danger, #ff4d4f);
-}
-
-.hi-progress-exception .hi-progress-text {
-    color: var(--hi-color-danger, #ff4d4f);
-}
-
 /* Circular progress */
 .hi-progress-circle-wrapper {
     position: relative;
@@ -215,14 +195,6 @@ impl StyledComponent for ProgressComponent {
 
 .hi-progress-active .hi-progress-circle-path {
     stroke: var(--hi-color-primary, #1890ff);
-}
-
-.hi-progress-success .hi-progress-circle-path {
-    stroke: var(--hi-color-success, #52c41a);
-}
-
-.hi-progress-exception .hi-progress-circle-path {
-    stroke: var(--hi-color-danger, #ff4d4f);
 }
 
 .hi-progress-circle-text {

@@ -42,7 +42,6 @@
     width: 1.25rem;
     height: 1.25rem;
     margin-top: 0.125rem;
-    filter: drop-shadow(0 0 4px currentColor);
 
     svg {
       width: 100%;
@@ -114,7 +113,6 @@
 
   .hi-alert-icon {
     color: var(--hi-color-success);
-    filter: drop-shadow(0 0 6px var(--hi-glow-button-success));
   }
 }
 
@@ -124,7 +122,6 @@
 
   .hi-alert-icon {
     color: var(--hi-color-primary);
-    filter: drop-shadow(0 0 6px var(--hi-glow-button-info));
   }
 }
 
@@ -134,7 +131,6 @@
 
   .hi-alert-icon {
     color: var(--hi-color-warning);
-    filter: drop-shadow(0 0 6px var(--hi-glow-button-warning));
   }
 }
 
@@ -144,7 +140,6 @@
 
   .hi-alert-icon {
     color: var(--hi-color-danger);
-    filter: drop-shadow(0 0 6px var(--hi-glow-button-danger));
   }
 }
 

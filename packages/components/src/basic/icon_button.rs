@@ -51,6 +51,10 @@ pub struct IconButtonProps {
     #[props(default)]
     pub variant: IconButtonVariant,
 
+    /// Icon color override (uses theme color by default)
+    #[props(default)]
+    pub icon_color: Option<String>,
+
     /// Whether to enable glow effect (default: true)
     #[props(default = true)]
     pub glow: bool,
@@ -137,6 +141,7 @@ pub fn IconButton(props: IconButtonProps) -> Element {
                 icon: props.icon,
                 size: icon_size,
                 class: "{icon_classes}",
+                color: props.icon_color.clone().unwrap_or_default(),
             }
         }
     };

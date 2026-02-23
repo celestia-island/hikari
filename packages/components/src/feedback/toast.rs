@@ -150,7 +150,7 @@ pub fn Toast(props: ToastProps) -> Element {
     rsx! {
         Glow {
             class: "hi-toast-glow-wrapper",
-            blur: GlowBlur::Light,
+            blur: GlowBlur::Medium,
             color: glow_color,
             intensity: GlowIntensity::Soft,
             div {

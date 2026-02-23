@@ -18,6 +18,7 @@ target/e2e_screenshots/
 *.iml
 /.idea/
 /.vscode/
+/.trae/
 
 # build output for WASM demos (old: dist/, new: public/)
 dist/

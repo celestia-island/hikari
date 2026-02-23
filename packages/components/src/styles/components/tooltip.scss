@@ -3,15 +3,30 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari // Hikari // Hikari // Hikari // Hikari Tooltip Component - FUI Styling Component Component Component Component
+// Hikari Tooltip Component - FUI Styling
+// Features: Portal-based rendering, card-like appearance, smooth animations
+// ============================================
 
 // ============================================
-// Base Tooltip Styles
+// Tooltip Wrapper (trigger container)
+// ============================================
+
+.hi-tooltip-wrapper {
+  display: inline-block;
+  position: relative;
+}
+
+.hi-tooltip-trigger {
+  display: inline-block;
+}
+
+// ============================================
+// Base Tooltip Styles - Card-like appearance
 // ============================================
 
 .hi-tooltip {
   // Layout
-  position: absolute;
+  position: fixed;
   z-index: 10000;
 
   // Spacing
@@ -25,30 +40,31 @@
   white-space: nowrap;
   color: var(--hi-color-text-primary);
 
-  // Appearance - subtle rounded corners
+  // Appearance - Card-like styling (same as Card component)
   border-radius: vars.$hikari-radius-fui-sm;
-  border: 1px solid var(--hi-color-border);
+  border: 1px solid rgba(226, 232, 240, 0.8);
 
-  // Acrylic background effect
-  background: rgba(15, 15, 15, 0.95);
+  // Use theme surface background (not dark)
+  background: var(--hi-color-surface);
   backdrop-filter: blur(4px);
 
-  // Elevated shadow
+  // Subtle shadow (same as Card)
   box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.4),
-    0 0 0 1px var(--hi-white-8, rgba(255, 255, 255, 0.08)) inset;
+    0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.08)),
+    0 0 0 1px rgba(241, 245, 249, 0.5) inset;
 
-  // Transitions - smooth GSAP-style easing
-  // DISABLED - migrated to JS animation
-
-  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  // No pointer events - tooltip should not be interactive
+  pointer-events: none;
 
   // Position for arrow
   position: relative;
 
-  // Opacity for animation
+  // Animation - smooth fade + scale
   opacity: 0;
-  pointer-events: none;
+  transform: scale(0.95);
+  transition:
+    opacity 150ms ease-out,
+    transform 150ms ease-out;
 
   // Arrow (pseudo-element)
   &::before {
@@ -57,37 +73,16 @@
     width: 0;
     height: 0;
     border: 5px solid transparent;
-    // DISABLED - migrated to JS animation
-
-    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
-  }
-
-  // Glow effect on arrow
-  &::after {
-    content: '';
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    background: var(--hi-primary);
-    filter: blur(4px);
-    opacity: 0;
-    // DISABLED - migrated to JS animation
-
-    // transition: opacity vars.$hikari-duration-fast vars.$hikari-ease-smooth;
   }
 }
 
 // ============================================
-// Visible State
+// Visible State - animated entrance
 // ============================================
 
 .hi-tooltip-visible {
   opacity: 1;
-  pointer-events: auto;
-
-  &::after {
-    opacity: 0.6;
-  }
+  transform: scale(1);
 }
 
 // ============================================
@@ -96,274 +91,51 @@
 
 // Top
 .hi-tooltip-top {
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%) translateY(-4px);
-
-  &.hi-tooltip-visible {
-    transform: translateX(-50%) translateY(0);
-  }
-
   &::before {
     bottom: -10px;
     left: 50%;
     transform: translateX(-50%);
-    border-top-color: var(--hi-color-border);
-  }
-
-  &::after {
-    bottom: -12px;
-    left: 50%;
-    transform: translateX(-50%);
+    border-top-color: rgba(226, 232, 240, 0.8);
   }
 }
 
 // Bottom
 .hi-tooltip-bottom {
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
-
-  &.hi-tooltip-visible {
-    transform: translateX(-50%) translateY(0);
-  }
-
   &::before {
     top: -10px;
     left: 50%;
     transform: translateX(-50%);
-    border-bottom-color: var(--hi-color-border);
-  }
-
-  &::after {
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%);
+    border-bottom-color: rgba(226, 232, 240, 0.8);
   }
 }
 
 // Left
 .hi-tooltip-left {
-  right: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%) translateX(-4px);
-
-  &.hi-tooltip-visible {
-    transform: translateY(-50%) translateX(0);
-  }
-
   &::before {
     right: -10px;
     top: 50%;
     transform: translateY(-50%);
-    border-left-color: var(--hi-color-border);
-  }
-
-  &::after {
-    right: -12px;
-    top: 50%;
-    transform: translateY(-50%);
+    border-left-color: rgba(226, 232, 240, 0.8);
   }
 }
 
 // Right
 .hi-tooltip-right {
-  left: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%) translateX(4px);
-
-  &.hi-tooltip-visible {
-    transform: translateY(-50%) translateX(0);
-  }
-
   &::before {
     left: -10px;
     top: 50%;
     transform: translateY(-50%);
-    border-right-color: var(--hi-color-border);
-  }
-
-  &::after {
-    left: -12px;
-    top: 50%;
-    transform: translateY(-50%);
+    border-right-color: rgba(226, 232, 240, 0.8);
   }
 }
 
-// Top-left
-.hi-tooltip-top-left {
-  bottom: calc(100% + 8px);
-  right: 0;
-  transform: translateY(-4px);
+// ============================================
+// Tooltip Content
+// ============================================
 
-  &.hi-tooltip-visible {
-    transform: translateY(0);
-  }
-
-  &::before {
-    bottom: -10px;
-    right: 8px;
-    border-top-color: var(--hi-color-border);
-  }
-
-  &::after {
-    bottom: -12px;
-    right: 6px;
-  }
-}
-
-// Top-right
-.hi-tooltip-top-right {
-  bottom: calc(100% + 8px);
-  left: 0;
-  transform: translateY(-4px);
-
-  &.hi-tooltip-visible {
-    transform: translateY(0);
-  }
-
-  &::before {
-    bottom: -10px;
-    left: 8px;
-    border-top-color: var(--hi-color-border);
-  }
-
-  &::after {
-    bottom: -12px;
-    left: 6px;
-  }
-}
-
-// Bottom-left
-.hi-tooltip-bottom-left {
-  top: calc(100% + 8px);
-  right: 0;
-  transform: translateY(4px);
-
-  &.hi-tooltip-visible {
-    transform: translateY(0);
-  }
-
-  &::before {
-    top: -10px;
-    right: 8px;
-    border-bottom-color: var(--hi-color-border);
-  }
-
-  &::after {
-    top: -12px;
-    right: 6px;
-  }
-}
-
-// Bottom-right
-.hi-tooltip-bottom-right {
-  top: calc(100% + 8px);
-  left: 0;
-  transform: translateY(4px);
-
-  &.hi-tooltip-visible {
-    transform: translateY(0);
-  }
-
-  &::before {
-    top: -10px;
-    left: 8px;
-    border-bottom-color: var(--hi-color-border);
-  }
-
-  &::after {
-    top: -12px;
-    left: 6px;
-  }
-}
-
-// Left-top
-.hi-tooltip-left-top {
-  right: calc(100% + 8px);
-  bottom: 0;
-  transform: translateX(-4px);
-
-  &.hi-tooltip-visible {
-    transform: translateX(0);
-  }
-
-  &::before {
-    right: -10px;
-    bottom: 8px;
-    border-left-color: var(--hi-color-border);
-  }
-
-  &::after {
-    right: -12px;
-    bottom: 6px;
-  }
-}
-
-// Left-bottom
-.hi-tooltip-left-bottom {
-  right: calc(100% + 8px);
-  top: 0;
-  transform: translateX(-4px);
-
-  &.hi-tooltip-visible {
-    transform: translateX(0);
-  }
-
-  &::before {
-    right: -10px;
-    top: 8px;
-    border-left-color: var(--hi-color-border);
-  }
-
-  &::after {
-    right: -12px;
-    top: 6px;
-  }
-}
-
-// Right-top
-.hi-tooltip-right-top {
-  left: calc(100% + 8px);
-  bottom: 0;
-  transform: translateX(4px);
-
-  &.hi-tooltip-visible {
-    transform: translateX(0);
-  }
-
-  &::before {
-    left: -10px;
-    bottom: 8px;
-    border-right-color: var(--hi-color-border);
-  }
-
-  &::after {
-    left: -12px;
-    bottom: 6px;
-  }
-}
-
-// Right-bottom
-.hi-tooltip-right-bottom {
-  left: calc(100% + 8px);
-  top: 0;
-  transform: translateX(4px);
-
-  &.hi-tooltip-visible {
-    transform: translateX(0);
-  }
-
-  &::before {
-    left: -10px;
-    top: 8px;
-    border-right-color: var(--hi-color-border);
-  }
-
-  &::after {
-    left: -12px;
-    top: 6px;
-  }
+.hi-tooltip-content {
+  position: relative;
+  z-index: 1;
 }
 
 // ============================================
@@ -397,63 +169,43 @@
 }
 
 // ============================================
-// Color Variants
+// Color Variants (optional)
 // ============================================
 
 // Primary (Blue)
 .hi-tooltip-primary {
   border-color: rgba(59, 130, 246, 0.5);
-  background: rgba(15, 15, 15, 0.95);
   box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.08)),
     0 0 12px rgba(59, 130, 246, 0.2),
     0 0 0 1px rgba(59, 130, 246, 0.3) inset;
-
-  &::after {
-    background: rgba(59, 130, 246, 0.6);
-  }
 }
 
 // Success (Green)
 .hi-tooltip-success {
   border-color: rgba(14, 184, 64, 0.5);
-  background: rgba(15, 15, 15, 0.95);
   box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.08)),
     0 0 12px rgba(14, 184, 64, 0.2),
     0 0 0 1px rgba(14, 184, 64, 0.3) inset;
-
-  &::after {
-    background: rgba(14, 184, 64, 0.6);
-  }
 }
 
 // Warning (Yellow)
 .hi-tooltip-warning {
   border-color: rgba(245, 158, 11, 0.5);
-  background: rgba(15, 15, 15, 0.95);
   box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.08)),
     0 0 12px rgba(245, 158, 11, 0.2),
     0 0 0 1px rgba(245, 158, 11, 0.3) inset;
-
-  &::after {
-    background: rgba(245, 158, 11, 0.6);
-  }
 }
 
 // Error (Red)
 .hi-tooltip-error {
   border-color: rgba(255, 76, 0, 0.5);
-  background: rgba(15, 15, 15, 0.95);
   box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.08)),
     0 0 12px rgba(255, 76, 0, 0.2),
     0 0 0 1px rgba(255, 76, 0, 0.3) inset;
-
-  &::after {
-    background: rgba(255, 76, 0, 0.6);
-  }
 }
 
 // ============================================
@@ -510,161 +262,57 @@
 }
 
 // ============================================
-// Dark/Light Theme
+// Animation Variants (placement-based)
 // ============================================
 
-.hi-tooltip-light {
-  background: rgba(255, 255, 255, 0.95);
-  color: var(--hi-color-text-primary, #1e293b);
-  border-color: var(--hi-black-10, rgba(0, 0, 0, 0.1));
+// Top - slide up + fade
+.hi-tooltip-top {
+  transform-origin: bottom center;
 
-  box-shadow:
-    0 4px 12px var(--hi-black-20, rgba(0, 0, 0, 0.15)),
-    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
-}
-
-// ============================================
-// Animations
-// ============================================
-
-// Fade-in animation
-.hi-tooltip-fade-in {
   &.hi-tooltip-visible {
-    // DISABLED - migrated to JS animation
+    transform: scale(1) translateY(0);
+  }
 
-    // animation: tooltip-fade-in vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
+  &:not(.hi-tooltip-visible) {
+    transform: scale(0.95) translateY(4px);
   }
 }
 
-// DISABLED - migrated to JS animation
-// @keyframes tooltip-fade-in {
-//   from {
-//     opacity: 0;
-//   }
-//   to {
-//     opacity: 1;
-//   }
-// }
+// Bottom - slide down + fade
+.hi-tooltip-bottom {
+  transform-origin: top center;
 
-// Scale-in animation
-.hi-tooltip-scale-in {
   &.hi-tooltip-visible {
-    // DISABLED - migrated to JS animation
+    transform: scale(1) translateY(0);
+  }
 
-    // animation: tooltip-scale-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  &:not(.hi-tooltip-visible) {
+    transform: scale(0.95) translateY(-4px);
   }
 }
 
-// DISABLED - migrated to JS animation
-// @keyframes tooltip-scale-in {
-//   from {
-//     opacity: 0;
-//     transform: scale(0.95);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: scale(1);
-//   }
-// }
+// Left - slide left + fade
+.hi-tooltip-left {
+  transform-origin: right center;
 
-// Slide-in animation (position-specific)
-.hi-tooltip-top.hi-tooltip-slide-in,
-.hi-tooltip-top-left.hi-tooltip-slide-in,
-.hi-tooltip-top-right.hi-tooltip-slide-in {
   &.hi-tooltip-visible {
-    // DISABLED - migrated to JS animation
+    transform: scale(1) translateX(0);
+  }
 
-    // animation: tooltip-slide-in-top vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  &:not(.hi-tooltip-visible) {
+    transform: scale(0.95) translateX(4px);
   }
 }
 
-.hi-tooltip-bottom.hi-tooltip-slide-in,
-.hi-tooltip-bottom-left.hi-tooltip-slide-in,
-.hi-tooltip-bottom-right.hi-tooltip-slide-in {
+// Right - slide right + fade
+.hi-tooltip-right {
+  transform-origin: left center;
+
   &.hi-tooltip-visible {
-    // DISABLED - migrated to JS animation
-
-    // animation: tooltip-slide-in-bottom vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+    transform: scale(1) translateX(0);
   }
-}
 
-.hi-tooltip-left.hi-tooltip-slide-in,
-.hi-tooltip-left-top.hi-tooltip-slide-in,
-.hi-tooltip-left-bottom.hi-tooltip-slide-in {
-  &.hi-tooltip-visible {
-    // DISABLED - migrated to JS animation
-
-    // animation: tooltip-slide-in-left vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  &:not(.hi-tooltip-visible) {
+    transform: scale(0.95) translateX(-4px);
   }
-}
-
-.hi-tooltip-right.hi-tooltip-slide-in,
-.hi-tooltip-right-top.hi-tooltip-slide-in,
-.hi-tooltip-right-bottom.hi-tooltip-slide-in {
-  &.hi-tooltip-visible {
-    // DISABLED - migrated to JS animation
-
-    // animation: tooltip-slide-in-right vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
-  }
-}
-
-// DISABLED - migrated to JS animation
-// @keyframes tooltip-slide-in-top {
-//   from {
-//     opacity: 0;
-//     transform: translateY(-8px);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: translateY(0);
-//   }
-// }
-
-// DISABLED - migrated to JS animation
-// @keyframes tooltip-slide-in-bottom {
-//   from {
-//     opacity: 0;
-//     transform: translateY(8px);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: translateY(0);
-//   }
-// }
-
-// DISABLED - migrated to JS animation
-// @keyframes tooltip-slide-in-left {
-//   from {
-//     opacity: 0;
-//     transform: translateX(-8px);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: translateX(0);
-//   }
-// }
-
-// DISABLED - migrated to JS animation
-// @keyframes tooltip-slide-in-right {
-//   from {
-//     opacity: 0;
-//     transform: translateX(8px);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: translateX(0);
-//   }
-// }
-
-// Delay variants
-.hi-tooltip-delay-short {
-  transition-delay: 0.3s;
-}
-
-.hi-tooltip-delay-medium {
-  transition-delay: 0.6s;
-}
-
-.hi-tooltip-delay-long {
-  transition-delay: 1s;
 }

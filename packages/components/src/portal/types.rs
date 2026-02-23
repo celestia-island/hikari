@@ -80,6 +80,13 @@ pub enum PortalEntry {
         close_requested: Signal<bool>,
         children: Element,
     },
+    Tooltip {
+        id: String,
+        trigger_rect: Option<(f64, f64, f64, f64)>,
+        placement: TriggerPlacement,
+        content: String,
+        arrow: bool,
+    },
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]

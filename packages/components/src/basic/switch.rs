@@ -4,10 +4,7 @@
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, SwitchClass};
 
-use crate::{
-    feedback::{Glow, GlowColor, GlowIntensity},
-    styled::StyledComponent,
-};
+use crate::styled::StyledComponent;
 
 #[derive(Clone, PartialEq, Props)]
 pub struct SwitchProps {
@@ -60,12 +57,8 @@ pub enum SwitchVariant {
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SwitchColor {
     #[default]
-    Success,
     Primary,
     Secondary,
-    Danger,
-    Warning,
-    Info,
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -101,12 +94,8 @@ pub fn Switch(props: SwitchProps) -> Element {
     };
 
     let color_class = match props.color {
-        SwitchColor::Success => "",
         SwitchColor::Primary => "hi-switch-color-primary",
         SwitchColor::Secondary => "hi-switch-color-secondary",
-        SwitchColor::Danger => "hi-switch-color-danger",
-        SwitchColor::Warning => "hi-switch-color-warning",
-        SwitchColor::Info => "hi-switch-color-info",
     };
 
     let switch_classes = ClassesBuilder::new()
@@ -172,30 +161,14 @@ pub fn Switch(props: SwitchProps) -> Element {
         None => rsx! { div { class: "hi-switch-thumb-dot" } },
     };
 
-    let (glow_color, glow_class) = match props.color {
-        SwitchColor::Success => (GlowColor::Success, "hi-switch-glow-success"),
-        SwitchColor::Primary => (GlowColor::Primary, "hi-switch-glow-primary"),
-        SwitchColor::Secondary => (GlowColor::Secondary, "hi-switch-glow-secondary"),
-        SwitchColor::Danger => (GlowColor::Danger, "hi-switch-glow-danger"),
-        SwitchColor::Warning => (GlowColor::Warning, "hi-switch-glow-warning"),
-        SwitchColor::Info => (GlowColor::Info, "hi-switch-glow-info"),
-    };
-
     rsx! {
         label {
             class: "hi-switch-label",
             onclick: handle_click,
 
-            div { class: "hi-switch-glow-wrapper",
-                Glow {
-                    color: glow_color,
-                    intensity: GlowIntensity::Thirty,
-                    class: "hi-switch-glow {glow_class}",
-                }
-                div { class: "{switch_classes}",
-                    div { class: "hi-switch-track",
-                        div { class: "hi-switch-thumb", {thumb_inner} }
-                    }
+            div { class: "{switch_classes}",
+                div { class: "hi-switch-track",
+                    div { class: "hi-switch-thumb", {thumb_inner} }
                 }
             }
 
@@ -230,10 +203,17 @@ impl StyledComponent for SwitchComponent {
     position: relative;
     display: inline-flex;
     align-items: center;
-    background-color: var(--hi-color-border, #bfbfbf);
+    background-color: var(--hi-component-selection-surface);
+    border: 1.5px solid var(--hi-component-selection-border);
     border-radius: 100px;
-    transition: background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+    transition: all 0.2s ease;
     vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.hi-switch:hover:not(.hi-switch-disabled) {
+    border-color: var(--hi-primary);
+    box-shadow: 0 0 8px var(--hi-component-selection-glow);
 }
 
 .hi-switch-track {
@@ -258,17 +238,17 @@ impl StyledComponent for SwitchComponent {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #fff;
+    background-color: var(--hi-component-selection-surface);
     border-radius: 50%;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    transition: transform var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease),
-                background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+    transition: transform 0.2s ease, background 0.2s ease;
     flex-shrink: 0;
+    box-sizing: border-box;
 }
 
-.hi-switch-sm .hi-switch-thumb { width: 16px; height: 16px; }
-.hi-switch-md .hi-switch-thumb { width: 22px; height: 22px; }
-.hi-switch-lg .hi-switch-thumb { width: 28px; height: 28px; }
+.hi-switch-sm .hi-switch-thumb { width: 14px; height: 14px; }
+.hi-switch-md .hi-switch-thumb { width: 20px; height: 20px; }
+.hi-switch-lg .hi-switch-thumb { width: 26px; height: 26px; }
 
 .hi-switch-icon-variant .hi-switch-thumb,
 .hi-switch-text-variant .hi-switch-thumb {
@@ -276,9 +256,9 @@ impl StyledComponent for SwitchComponent {
 }
 
 .hi-switch-text-variant .hi-switch-thumb { padding: 0 4px; }
-.hi-switch-sm.hi-switch-text-variant .hi-switch-thumb { width: auto; min-width: 20px; }
-.hi-switch-md.hi-switch-text-variant .hi-switch-thumb { width: auto; min-width: 26px; }
-.hi-switch-lg.hi-switch-text-variant .hi-switch-thumb { width: auto; min-width: 32px; }
+.hi-switch-sm.hi-switch-text-variant .hi-switch-thumb { width: auto; min-width: 18px; }
+.hi-switch-md.hi-switch-text-variant .hi-switch-thumb { width: auto; min-width: 24px; }
+.hi-switch-lg.hi-switch-text-variant .hi-switch-thumb { width: auto; min-width: 30px; }
 
 .hi-switch-checked .hi-switch-track {
     justify-content: flex-end;
@@ -292,66 +272,79 @@ impl StyledComponent for SwitchComponent {
 .hi-switch-text-variant.hi-switch-md.hi-switch-checked .hi-switch-thumb { transform: translateX(0); }
 .hi-switch-text-variant.hi-switch-lg.hi-switch-checked .hi-switch-thumb { transform: translateX(0); }
 
+/* Checked state - uses Layer 2 gradient background */
 .hi-switch-checked {
-    background-color: var(--hi-success, #10B981);
+    background: var(--hi-component-selection-bg);
+    border-color: var(--hi-primary);
+    box-shadow: 0 0 6px var(--hi-component-selection-glow), inset 0 0 3px rgba(255, 255, 255, 0.15);
 }
 
-.hi-switch:hover:not(.hi-switch-disabled) {
-    background-color: color-mix(in srgb, var(--hi-color-border, #bfbfbf) 85%, black);
+.hi-switch-checked .hi-switch-thumb {
+    background-color: var(--hi-component-selection-surface);
+    box-shadow: 0 0 4px var(--hi-component-selection-glow);
 }
 
-.hi-switch-checked:hover:not(.hi-switch-disabled) {
-    background-color: var(--hi-success, #10B981);
-    filter: brightness(1.1);
+.hi-switch-label:hover .hi-switch-checked:not(.hi-switch-disabled) {
+    box-shadow: 0 0 10px var(--hi-component-selection-glow), inset 0 0 4px rgba(255, 255, 255, 0.2);
+    transform: scale(1.02);
 }
 
 .hi-switch-disabled {
     opacity: 0.4;
+    cursor: not-allowed;
     pointer-events: none;
+    background: var(--hi-component-selection-surface);
+    border-color: var(--hi-component-selection-border);
 }
 
+/* Thumb dot - uses Layer 2 icon color */
 .hi-switch-thumb-dot {
-    width: 8px;
-    height: 8px;
-    background-color: var(--hi-color-border, #bfbfbf);
+    width: 6px;
+    height: 6px;
+    background-color: var(--hi-component-selection-border);
     border-radius: 50%;
-    transition: background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+    transition: background 0.2s ease;
 }
+
+.hi-switch-sm .hi-switch-thumb-dot { width: 4px; height: 4px; }
+.hi-switch-lg .hi-switch-thumb-dot { width: 8px; height: 8px; }
 
 .hi-switch-checked .hi-switch-thumb-dot {
-    background-color: var(--hi-success, #10B981);
+    background: var(--hi-component-selection-icon);
 }
 
+/* Thumb text - uses Layer 2 icon color */
 .hi-switch-thumb-text {
     font-size: 11px;
     font-weight: 600;
-    color: var(--hi-color-border, #bfbfbf);
+    color: var(--hi-component-selection-border);
     white-space: nowrap;
     line-height: 1;
-    transition: color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+    transition: color 0.2s ease;
 }
 
-.hi-switch-sm .hi-switch-thumb-text { font-size: 10px; }
+.hi-switch-sm .hi-switch-thumb-text { font-size: 9px; }
 .hi-switch-lg .hi-switch-thumb-text { font-size: 12px; }
 
 .hi-switch-checked .hi-switch-thumb-text {
-    color: var(--hi-success, #10B981);
+    color: var(--hi-component-selection-icon);
 }
 
+/* Thumb icon - uses Layer 2 icon color */
 .hi-switch-thumb-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--hi-color-border, #bfbfbf);
-    transition: color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+    color: var(--hi-component-selection-border);
+    transition: color 0.2s ease;
 }
 
-.hi-switch-sm .hi-switch-thumb-icon svg { width: 10px; height: 10px; }
-.hi-switch-md .hi-switch-thumb-icon svg { width: 14px; height: 14px; }
-.hi-switch-lg .hi-switch-thumb-icon svg { width: 18px; height: 18px; }
+.hi-switch-sm .hi-switch-thumb-icon svg { width: 8px; height: 8px; }
+.hi-switch-md .hi-switch-thumb-icon svg { width: 12px; height: 12px; }
+.hi-switch-lg .hi-switch-thumb-icon svg { width: 16px; height: 16px; }
 
 .hi-switch-checked .hi-switch-thumb-icon {
-    color: var(--hi-success, #10B981);
+    color: var(--hi-component-selection-icon);
 }
 
 .hi-switch-thumb-image {
@@ -363,52 +356,17 @@ impl StyledComponent for SwitchComponent {
 
 .hi-switch-text {
     font-size: 14px;
-    color: var(--hi-color-text-primary, #333);
+    color: var(--hi-text-primary);
     line-height: 1.5;
 }
 
-[data-theme="dark"] .hi-switch,
-[data-theme="tairitsu"] .hi-switch {
-    background-color: var(--hi-surface-hover, #333);
+/* Primary/Secondary color variants */
+.hi-switch-color-primary.hi-switch-checked {
+    --hi-primary: var(--hi-primary);
 }
 
-[data-theme="dark"] .hi-switch-thumb,
-[data-theme="tairitsu"] .hi-switch-thumb {
-    background-color: #2a2a2a;
-}
-
-[data-theme="dark"] .hi-switch-thumb-dot,
-[data-theme="tairitsu"] .hi-switch-thumb-dot {
-    background-color: #666;
-}
-
-[data-theme="dark"] .hi-switch-checked,
-[data-theme="tairitsu"] .hi-switch-checked {
-    background-color: var(--hi-success, #10B981);
-}
-
-[data-theme="dark"] .hi-switch-checked .hi-switch-thumb-dot,
-[data-theme="tairitsu"] .hi-switch-checked .hi-switch-thumb-dot {
-    background-color: #fff;
-}
-
-[data-theme="dark"] .hi-switch-thumb-text,
-[data-theme="dark"] .hi-switch-thumb-icon,
-[data-theme="tairitsu"] .hi-switch-thumb-text,
-[data-theme="tairitsu"] .hi-switch-thumb-icon {
-    color: #666;
-}
-
-[data-theme="dark"] .hi-switch-checked .hi-switch-thumb-text,
-[data-theme="dark"] .hi-switch-checked .hi-switch-thumb-icon,
-[data-theme="tairitsu"] .hi-switch-checked .hi-switch-thumb-text,
-[data-theme="tairitsu"] .hi-switch-checked .hi-switch-thumb-icon {
-    color: #fff;
-}
-
-[data-theme="dark"] .hi-switch-text,
-[data-theme="tairitsu"] .hi-switch-text {
-    color: var(--hi-text-primary, #e0e0e0);
+.hi-switch-color-secondary.hi-switch-checked {
+    --hi-primary: var(--hi-secondary);
 }
 "#
     }

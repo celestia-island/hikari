@@ -4,7 +4,7 @@
 
 // ============================================
 // Hikari Alert Component
-// Features: Glowing icons, gradient borders, smooth transitions
+// Features: Glowing icons, smooth transitions, no static borders
 // ============================================
 
 // ============================================
@@ -20,49 +20,21 @@
   // Spacing
   padding: 1rem 1.25rem;
 
-  // Appearance - Subtle rounded corners
+  // Appearance - Subtle rounded corners, NO static border
   border-radius: vars.$hikari-radius-fui-md;
-  border: 1px solid var(--hi-color-border);
+  border: none;
 
-  // Acrylic background effect (light)
-  background: rgba(255, 255, 255, 0.85);
+  // Acrylic background effect (light) - same as Card
+  background: var(--hi-color-surface);
   backdrop-filter: blur(4px);
 
-  // Elevated shadow
-  box-shadow:
-    0 4px 8px var(--hi-black-20, rgba(0, 0, 0, 0.2)),
-    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
+  // Subtle shadow only (same as Card)
+  box-shadow: 0 1px 3px var(--hi-color-black-10),
+    0 0 0 1px var(--hi-color-white-15) inset;
 
-  // Transitions - smooth GSAP-style easing
-  // DISABLED - migrated to JS animation
-
-  // // DISABLED - migrated to JS animation
- // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
-
-  // Position for gradient border
+  // Position
   position: relative;
-  overflow: hidden;
-
-  // Gradient border effect
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      currentColor 50%,
-      transparent 100%
-    );
-    opacity: 0;
-    // DISABLED - migrated to JS animation
-
-    // // DISABLED - migrated to JS animation
- // transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
-  }
+  overflow: visible;
 
   // Icon
   .hi-alert-icon {
@@ -70,7 +42,6 @@
     width: 1.25rem;
     height: 1.25rem;
     margin-top: 0.125rem;
-    filter: drop-shadow(0 0 4px currentColor);
 
     svg {
       width: 100%;
@@ -104,137 +75,71 @@
     line-height: 1.5;
   }
 
-  // Close button
+  // Close button - simple icon button, glow handled by wrapper
   .hi-alert-close {
     flex-shrink: 0;
-    width: 1rem;
-    height: 1rem;
-    margin: -0.25rem -0.25rem 0 0;
-    padding: 0;
+    align-self: flex-start;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0;
+    padding: 0.125rem;
     background: transparent;
     border: none;
     color: var(--hi-color-text-secondary);
     cursor: pointer;
-    // DISABLED - migrated to JS animation
-
-    // // DISABLED - migrated to JS animation
- // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
     border-radius: vars.$hikari-radius-fui-sm;
 
     &:hover {
-      color: var(--hi-color-text-primary);
-      background: rgba(255, 76, 0, 0.2);
-      box-shadow: 0 0 8px rgba(255, 76, 0, 0.3);
+      color: var(--hi-color-danger);
     }
 
     svg {
       width: 100%;
       height: 100%;
+      display: block;
     }
   }
 
-  // Hover state
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow:
-      0 6px 12px var(--hi-black-30, rgba(0, 0, 0, 0.25)),
-      0 0 12px var(--hi-primary);
-
-    &::before {
-      opacity: 0.6;
-    }
-  }
+  // No hover transform or border effects - Glow handled by wrapper
 }
 
 // ============================================
-// Color Variants
+// Color Variants - subtle accent only
 // ============================================
 
 // Success (Green)
 .hi-alert-success {
-  border-color: rgba(14, 184, 64, 0.4);
-  color: var(--hi-color-success);
-  box-shadow:
-    0 4px 8px var(--hi-black-20, rgba(0, 0, 0, 0.2)),
-    0 0 12px rgba(14, 184, 64, 0.15),
-    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
+  border-left: 3px solid var(--hi-color-success);
 
   .hi-alert-icon {
     color: var(--hi-color-success);
-    filter: drop-shadow(0 0 6px rgba(14, 184, 64, 0.6));
-  }
-
-  &:hover {
-    border-color: rgba(14, 184, 64, 0.6);
-    box-shadow:
-      0 6px 12px var(--hi-black-30, rgba(0, 0, 0, 0.25)),
-      0 0 16px rgba(14, 184, 64, 0.25);
   }
 }
 
 // Info (Blue)
 .hi-alert-info {
-  border-color: rgba(59, 130, 246, 0.4);
-  color: var(--hi-color-text-primary);
-  box-shadow:
-    0 4px 8px var(--hi-black-20, rgba(0, 0, 0, 0.2)),
-    0 0 12px rgba(59, 130, 246, 0.15),
-    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
+  border-left: 3px solid var(--hi-color-primary);
 
   .hi-alert-icon {
     color: var(--hi-color-primary);
-    filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.6));
-  }
-
-  &:hover {
-    border-color: rgba(59, 130, 246, 0.6);
-    box-shadow:
-      0 6px 12px var(--hi-black-30, rgba(0, 0, 0, 0.25)),
-      0 0 16px rgba(59, 130, 246, 0.25);
   }
 }
 
 // Warning (Yellow)
 .hi-alert-warning {
-  border-color: rgba(245, 158, 11, 0.4);
-  color: var(--hi-color-warning);
-  box-shadow:
-    0 4px 8px var(--hi-black-20, rgba(0, 0, 0, 0.2)),
-    0 0 12px rgba(245, 158, 11, 0.15),
-    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
+  border-left: 3px solid var(--hi-color-warning);
 
   .hi-alert-icon {
     color: var(--hi-color-warning);
-    filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
-  }
-
-  &:hover {
-    border-color: rgba(245, 158, 11, 0.6);
-    box-shadow:
-      0 6px 12px var(--hi-black-30, rgba(0, 0, 0, 0.25)),
-      0 0 16px rgba(245, 158, 11, 0.25);
   }
 }
 
 // Error (Red)
 .hi-alert-error {
-  border-color: rgba(255, 76, 0, 0.4);
-  color: var(--hi-color-danger);
-  box-shadow:
-    0 4px 8px var(--hi-black-20, rgba(0, 0, 0, 0.2)),
-    0 0 12px rgba(255, 76, 0, 0.15),
-    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
+  border-left: 3px solid var(--hi-color-danger);
 
   .hi-alert-icon {
     color: var(--hi-color-danger);
-    filter: drop-shadow(0 0 6px rgba(255, 76, 0, 0.6));
-  }
-
-  &:hover {
-    border-color: rgba(255, 76, 0, 0.6);
-    box-shadow:
-      0 6px 12px var(--hi-black-30, rgba(0, 0, 0, 0.25)),
-      0 0 16px rgba(255, 76, 0, 0.25);
   }
 }
 
@@ -242,23 +147,9 @@
 // Variant Types
 // ============================================
 
-// Solid variant (more prominent background)
+// Solid variant - uses surface background, glow handled by wrapper
 .hi-alert-solid {
-  &.hi-alert-success {
-    background: linear-gradient(135deg, rgba(14, 184, 64, 0.15), rgba(14, 184, 64, 0.05));
-  }
-
-  &.hi-alert-info {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
-  }
-
-  &.hi-alert-warning {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
-  }
-
-  &.hi-alert-error {
-    background: linear-gradient(135deg, rgba(255, 76, 0, 0.15), rgba(255, 76, 0, 0.05));
-  }
+  // No static gradient - glow effect handled by GlowWrapper
 }
 
 // Outlined variant (transparent background, more prominent border)
@@ -269,23 +160,23 @@
   box-shadow: none;
 
   &.hi-alert-success {
-    background: rgba(14, 184, 64, 0.05);
-    border-width: 2px;
+    border: 2px solid var(--hi-glow-button-success);
+    border-left-width: 3px;
   }
 
   &.hi-alert-info {
-    background: rgba(59, 130, 246, 0.05);
-    border-width: 2px;
+    border: 2px solid var(--hi-glow-button-info);
+    border-left-width: 3px;
   }
 
   &.hi-alert-warning {
-    background: rgba(245, 158, 11, 0.05);
-    border-width: 2px;
+    border: 2px solid var(--hi-glow-button-warning);
+    border-left-width: 3px;
   }
 
   &.hi-alert-error {
-    background: rgba(255, 76, 0, 0.05);
-    border-width: 2px;
+    border: 2px solid var(--hi-glow-button-danger);
+    border-left-width: 3px;
   }
 }
 
@@ -339,10 +230,6 @@
   border-radius: 0;
   border-left: none;
   border-right: none;
-
-  &::before {
-    height: 3px;
-  }
 }
 
 // ============================================
@@ -374,7 +261,7 @@
 // With Action Button
 // ============================================
 
-.hi alert-action {
+.hi-alert-action {
   .hi-alert-actions {
     display: flex;
     gap: 0.5rem;
@@ -383,128 +270,9 @@
 }
 
 // ============================================
-// Icon Glow Animation
-// ============================================
-
-.hi-alert-glow {
-  .hi-alert-icon {
-    // DISABLED - migrated to JS animation
-
-    // // DISABLED - migrated to JS animation
- // animation: alert-icon-glow 2s ease-in-out infinite;
-  }
-}
-
-// DISABLED - migrated to JS animation
-// // DISABLED - migrated to JS animation
-// @keyframes alert-icon-glow {
-//   0%, 100% {
-//     filter: drop-shadow(0 0 4px currentColor);
-//   }
-//   50% {
-//     filter: drop-shadow(0 0 8px currentColor);
-//   }
-// }
-
-// ============================================
-// Animations
-// ============================================
-
-.hi-alert-animate-in {
-  // DISABLED - migrated to JS animation
-
-  // // DISABLED - migrated to JS animation
- // animation: alert-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
-}
-
-// DISABLED - migrated to JS animation
-// // DISABLED - migrated to JS animation
-// @keyframes alert-fade-in {
-//   from {
-//     opacity: 0;
-//     transform: translateY(-8px);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: translateY(0);
-//   }
-// }
-
-.hi-alert-slide-in {
-  // DISABLED - migrated to JS animation
-
-  // // DISABLED - migrated to JS animation
- // animation: alert-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
-}
-
-// DISABLED - migrated to JS animation
-// // DISABLED - migrated to JS animation
-// @keyframes alert-slide-in {
-//   from {
-//     opacity: 0;
-//     transform: translateX(-100%);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: translateX(0);
-//   }
-// }
-
-// Exit animation
-.hi-alert-exit {
-  // DISABLED - migrated to JS animation
-
-  // // DISABLED - migrated to JS animation
- // animation: alert-exit vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
-}
-
-// DISABLED - migrated to JS animation
-// // DISABLED - migrated to JS animation
-// @keyframes alert-exit {
-//   from {
-//     opacity: 1;
-//     transform: scale(1);
-//   }
-//   to {
-//     opacity: 0;
-//     transform: scale(0.95);
-//   }
-// }
-
-// ============================================
 // Closable State
 // ============================================
 
 .hi-alert-closable {
   cursor: pointer;
 }
-
-// ============================================
-// Dismiss Animation
-// ============================================
-
-.hi-alert-dismissing {
-  // DISABLED - migrated to JS animation
-
-  // // DISABLED - migrated to JS animation
- // animation: alert-dismiss vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
-}
-
-// DISABLED - migrated to JS animation
-// // DISABLED - migrated to JS animation
-// @keyframes alert-dismiss {
-//   from {
-//     opacity: 1;
-//     transform: scale(1);
-//     max-height: 200px;
-//     margin-bottom: 1rem;
-//   }
-//   to {
-//     opacity: 0;
-//     transform: scale(0.95);
-//     max-height: 0;
-//     margin-bottom: 0;
-//     padding-top: 0;
-//     padding-bottom: 0;
-//   }
-// }

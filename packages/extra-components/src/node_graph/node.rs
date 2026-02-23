@@ -222,8 +222,8 @@ mod tests {
         assert_eq!(state.id, "node1");
         assert_eq!(state.position, (0.0, 0.0));
         assert_eq!(state.size, (200.0, 150.0));
-        assert_eq!(state.selected, false);
-        assert_eq!(state.minimized, false);
+        assert!(!state.selected);
+        assert!(!state.minimized);
     }
 
     #[test]

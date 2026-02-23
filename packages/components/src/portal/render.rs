@@ -2,7 +2,10 @@
 // Portal rendering components
 
 use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass};
+use palette::classes::{
+    ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass, TooltipClass,
+    UtilityClass,
+};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::{JsCast, closure::Closure};
 
@@ -216,9 +219,26 @@ pub fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                     title: title.clone(),
                                     close_on_click_outside: *close_on_click_outside,
                                     close_on_select: *close_on_select,
-                                    on_close: on_close.clone(),
+                                    on_close: *on_close,
                                     close_requested: *close_requested,
                                     children: children.clone(),
+                                }
+                            },
+                            PortalEntry::Tooltip {
+                                id,
+                                trigger_rect,
+                                placement,
+                                content,
+                                arrow,
+                            } => rsx! {
+                                TooltipPortalEntry {
+                                    key: "{id}",
+                                    z_index,
+                                    id: id.clone(),
+                                    trigger_rect: *trigger_rect,
+                                    placement: *placement,
+                                    content: content.clone(),
+                                    arrow: *arrow,
                                 }
                             },
                         }
@@ -564,7 +584,7 @@ fn PopoverPortalEntry(
         use_animated_portal_entry(id.clone(), ModalAnimationState::Appearing, "Popover");
 
     {
-        let on_close_clone = on_close.clone();
+        let on_close_clone = on_close;
         use_effect(move || {
             if close_requested() {
                 let current_state = *animation_state.read();
@@ -680,8 +700,8 @@ fn PopoverPortalEntry(
                 PopoverPlacement::Right,
             ];
             for placement in default_order {
-                if !preferred_placements.contains(&placement) {
-                    if let Some(result) = check_placement(
+                if !preferred_placements.contains(&placement)
+                    && let Some(result) = check_placement(
                         placement,
                         tx,
                         ty,
@@ -696,9 +716,9 @@ fn PopoverPortalEntry(
                         viewport_height(),
                         offset,
                         PADDING,
-                    ) {
-                        return result;
-                    }
+                    )
+                {
+                    return result;
                 }
             }
 
@@ -749,7 +769,7 @@ fn PopoverPortalEntry(
     let backdrop_z_index = z_index.saturating_sub(1);
 
     let handle_close = {
-        let on_close = on_close.clone();
+        let on_close = on_close;
         move |e: MouseEvent| {
             close_popover.call(e);
             if let Some(handler) = on_close.as_ref() {
@@ -763,7 +783,7 @@ fn PopoverPortalEntry(
             div {
                 class: "hi-popover-backdrop",
                 style: "position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: {backdrop_z_index}; background: transparent; pointer-events: auto;",
-                onclick: handle_close.clone(),
+                onclick: handle_close,
             }
         }
 
@@ -808,6 +828,113 @@ fn PopoverPortalEntry(
                     }
                 },
                 {children}
+            }
+        }
+    }
+}
+
+#[component]
+fn TooltipPortalEntry(
+    z_index: usize,
+    id: String,
+    trigger_rect: Option<(f64, f64, f64, f64)>,
+    placement: TriggerPlacement,
+    content: String,
+    arrow: bool,
+) -> Element {
+    let viewport_width = use_signal(|| {
+        #[cfg(target_arch = "wasm32")]
+        {
+            web_sys::window()
+                .and_then(|w| w.inner_width().ok())
+                .and_then(|v| v.as_f64())
+                .unwrap_or(1920.0)
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            1920.0
+        }
+    });
+    let viewport_height = use_signal(|| {
+        #[cfg(target_arch = "wasm32")]
+        {
+            web_sys::window()
+                .and_then(|w| w.inner_height().ok())
+                .and_then(|v| v.as_f64())
+                .unwrap_or(1080.0)
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            1080.0
+        }
+    });
+
+    let tooltip_width = use_signal(|| 120.0);
+    let tooltip_height = use_signal(|| 40.0);
+
+    let position_style = use_memo(move || {
+        let vw = *viewport_width.read();
+        let vh = *viewport_height.read();
+        let tw = *tooltip_width.read();
+        let th = *tooltip_height.read();
+
+        if let Some((tx, ty, tw_rect, th_rect)) = trigger_rect {
+            let trigger_center_x = tx + tw_rect / 2.0;
+            let trigger_center_y = ty + th_rect / 2.0;
+
+            let (x, y) = match placement {
+                TriggerPlacement::Top => (trigger_center_x - tw / 2.0, ty - th - 8.0),
+                TriggerPlacement::TopLeft => (tx, ty - th - 8.0),
+                TriggerPlacement::TopRight => (tx + tw_rect - tw, ty - th - 8.0),
+                TriggerPlacement::Bottom => (trigger_center_x - tw / 2.0, ty + th_rect + 8.0),
+                TriggerPlacement::BottomLeft => (tx, ty + th_rect + 8.0),
+                TriggerPlacement::BottomRight => (tx + tw_rect - tw, ty + th_rect + 8.0),
+                TriggerPlacement::Left => (tx - tw - 8.0, trigger_center_y - th / 2.0),
+                TriggerPlacement::LeftTop => (tx - tw - 8.0, ty),
+                TriggerPlacement::LeftBottom => (tx - tw - 8.0, ty + th_rect - th),
+                TriggerPlacement::Right => (tx + tw_rect + 8.0, trigger_center_y - th / 2.0),
+                TriggerPlacement::RightTop => (tx + tw_rect + 8.0, ty),
+                TriggerPlacement::RightBottom => (tx + tw_rect + 8.0, ty + th_rect - th),
+                TriggerPlacement::Center => {
+                    (trigger_center_x - tw / 2.0, trigger_center_y - th / 2.0)
+                }
+            };
+
+            let x_clamped = x.clamp(8.0, vw - tw - 8.0);
+            let y_clamped = y.clamp(8.0, vh - th - 8.0);
+
+            format!(
+                "position: fixed; left: {}px; top: {}px;",
+                x_clamped, y_clamped
+            )
+        } else {
+            format!("position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);")
+        }
+    });
+
+    let placement_class = match placement {
+        TriggerPlacement::Top => TooltipClass::TooltipTop,
+        TriggerPlacement::Bottom => TooltipClass::TooltipBottom,
+        TriggerPlacement::Left => TooltipClass::TooltipLeft,
+        TriggerPlacement::Right => TooltipClass::TooltipRight,
+        _ => TooltipClass::TooltipTop,
+    };
+
+    let tooltip_classes = ClassesBuilder::new()
+        .add(TooltipClass::Tooltip)
+        .add(placement_class)
+        .add(TooltipClass::TooltipVisible)
+        .build();
+
+    rsx! {
+        div {
+            class: "{tooltip_classes}",
+            style: "{position_style.read()} z-index: {z_index}; pointer-events: none;",
+
+            div { class: "{TooltipClass::TooltipContent.as_class()}", "{content}" }
+
+            if arrow {
+                div { class: "hi-tooltip-arrow" }
             }
         }
     }

@@ -3,7 +3,10 @@
 @use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari // Hikari // Hikari // Hikari // Hikari Toast Component - FUI Styling Component Component Component Component
+// Hikari Toast Component - Emphasis Style
+// Features: Solid accent color backgrounds, white text
+// Distinct from Alert component (which uses surface background)
+// ============================================
 
 // ============================================
 // Toast Container
@@ -57,7 +60,8 @@
 }
 
 // ============================================
-// Base Toast Styles
+// Base Toast Styles - Emphasis color background
+// No static shadow - glow handled by GlowWrapper
 // ============================================
 
 .hi-toast {
@@ -71,23 +75,14 @@
   min-width: 320px;
   max-width: 480px;
 
-  // Appearance - subtle rounded corners
+  // Appearance - rounded corners, no border
   border-radius: vars.$hikari-radius-fui-md;
-  border: 1px solid var(--hi-color-border);
+  border: none;
 
-  // Acrylic background effect
-  background: var(--hi-surface);
-  backdrop-filter: blur(4px);
+  // Default background (will be overridden by variants)
+  background: var(--hi-color-primary);
 
-  // Elevated shadow
-  box-shadow:
-    0 8px 16px var(--hi-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
-
-  // Transitions - smooth GSAP-style easing
-  // DISABLED - migrated to JS animation
-
-  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // No static shadow - glow effect handled by GlowWrapper
 
   // Position for progress bar
   position: relative;
@@ -96,12 +91,13 @@
   // Enable pointer events
   pointer-events: auto;
 
-  // Icon
+  // Icon - always white
   .hi-toast-icon {
     flex-shrink: 0;
     width: 1.25rem;
     height: 1.25rem;
     margin-top: 0.125rem;
+    color: var(--hi-color-white-100);
 
     svg {
       width: 100%;
@@ -115,57 +111,50 @@
     min-width: 0;
   }
 
-  // Title
+  // Title - always white
   .hi-toast-title {
     margin: 0 0 0.25rem 0;
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-sm;
     font-weight: 600;
-    color: var(--hi-color-text-primary);
+    color: var(--hi-color-white-100);
     line-height: 1.4;
   }
 
-  // Message
+  // Message - always white with slight transparency
   .hi-toast-message {
     margin: 0;
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-sm;
     font-weight: 400;
-    color: var(--hi-color-text-secondary);
+    color: var(--hi-color-white-90);
     line-height: 1.5;
   }
 
-  // Close button
+  // Close button - always white (layer2 toast style), simple icon button
   .hi-toast-close {
     flex-shrink: 0;
-    width: 1rem;
-    height: 1rem;
-    margin: -0.25rem -0.25rem 0 0;
-    padding: 0;
+    align-self: flex-start;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0;
+    padding: 0.125rem;
     background: transparent;
     border: none;
-    color: var(--hi-color-text-secondary);
+    color: var(--hi-color-white-100);
     cursor: pointer;
-    // DISABLED - migrated to JS animation
-
-    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
     border-radius: vars.$hikari-radius-fui-sm;
-
-    &:hover {
-      color: var(--hi-color-text-primary);
-      background: var(--hi-button-danger-hover);
-      box-shadow: var(--hi-glow-button-danger);
-    }
 
     svg {
       width: 100%;
       height: 100%;
+      display: block;
     }
   }
 }
 
 // ============================================
-// Progress Bar
+// Progress Bar - white/transparent (using palette)
 // ============================================
 
 .hi-toast-progress {
@@ -174,7 +163,7 @@
   left: 0;
   width: 100%;
   height: 3px;
-  background: var(--hi-white-10, rgba(255, 255, 255, 0.1));
+  background: var(--hi-color-white-20);
   overflow: hidden;
 
   &::after {
@@ -183,139 +172,63 @@
     top: 0;
     left: 0;
     height: 100%;
-    background: currentColor;
-    // DISABLED - migrated to JS animation
-
-    // animation: toast-progress linear forwards;
+    background: var(--hi-color-white-50);
   }
 }
 
-// DISABLED - migrated to JS animation
-// @keyframes toast-progress {
-//   from {
-//     width: 100%;
-//   }
-//   to {
-//     width: 0;
-//   }
-// }
-
 // ============================================
-// Color Variants
+// Color Variants - Solid accent color backgrounds
+// All use white text for consistency
+// No static glow - dynamic glow handled by GlowWrapper
 // ============================================
 
-// Success (Green)
+// Success (Green) - 葱倩
 .hi-toast-success {
-  border-color: var(--hi-button-success-hover);
-  box-shadow:
-    0 8px 16px var(--hi-color-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 12px var(--hi-glow-button-success);
-
-  .hi-toast-icon {
-    color: var(--hi-color-success);
-    filter: drop-shadow(0 0 4px var(--hi-glow-button-success));
-  }
-
-  .hi-toast-progress::after {
-    background: var(--hi-color-success);
-    box-shadow: 0 0 8px var(--hi-glow-color);
-  }
+  background: var(--hi-color-success);
 }
 
-// Info (Blue)
+// Info (Blue) - 魁卵青
 .hi-toast-info {
-  border-color: var(--hi-button-primary-hover);
-  box-shadow:
-    0 8px 16px var(--hi-color-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 12px var(--hi-glow-button-primary);
-
-  .hi-toast-icon {
-    color: var(--hi-color-primary);
-    filter: drop-shadow(0 0 4px var(--hi-glow-button-primary));
-  }
-
-  .hi-toast-progress::after {
-    background: var(--hi-color-primary);
-    box-shadow: 0 0 8px var(--hi-glow-color);
-  }
+  background: var(--hi-color-info);
 }
 
-// Warning (Yellow)
+// Warning (Yellow) - 鹅黄 (use darker variant for white text readability)
 .hi-toast-warning {
-  border-color: var(--hi-button-warning-hover);
-  box-shadow:
-    0 8px 16px var(--hi-color-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 12px var(--hi-glow-button-warning);
-
-  .hi-toast-icon {
-    color: var(--hi-color-warning);
-    filter: drop-shadow(0 0 4px var(--hi-glow-button-warning));
-  }
-
-  .hi-toast-progress::after {
-    background: var(--hi-color-warning);
-    box-shadow: 0 0 8px var(--hi-glow-color);
-  }
+  background: var(--hi-button-warning-dark);
 }
 
-// Error (Red)
+// Error (Red) - 朱红
 .hi-toast-error {
-  border-color: var(--hi-button-danger-hover);
-  box-shadow:
-    0 8px 16px var(--hi-color-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 12px var(--hi-glow-button-danger);
-
-  .hi-toast-icon {
-    color: var(--hi-color-danger);
-    filter: drop-shadow(0 0 4px var(--hi-glow-button-danger));
-  }
-
-  .hi-toast-progress::after {
-    background: var(--hi-color-danger);
-    box-shadow: 0 0 8px var(--hi-glow-color);
-  }
+  background: var(--hi-color-danger);
 }
 
 // Loading (Blue with spinner)
 .hi-toast-loading {
-  border-color: var(--hi-button-primary-hover);
-  box-shadow:
-    0 8px 16px var(--hi-color-black-30, rgba(0, 0, 0, 0.3)),
-    0 0 12px var(--hi-glow-button-primary);
+  background: var(--hi-color-info);
 
   .hi-toast-icon {
-    color: var(--hi-color-primary);
-    // DISABLED - migrated to JS animation
-
-    // animation: toast-spin 1s linear infinite;
-
     svg {
-      filter: drop-shadow(0 0 4px var(--hi-glow-button-primary));
+      animation: toast-spin 1s linear infinite;
     }
   }
 }
 
-// DISABLED - migrated to JS animation
-// @keyframes toast-spin {
-//   from {
-//     transform: rotate(0deg);
-//   }
-//   to {
-//     transform: rotate(360deg);
-//   }
-// }
+@keyframes toast-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 // ============================================
-// Hover State
+// Hover State - no static effects, glow handled by wrapper
 // ============================================
 
 .hi-toast {
   &:hover {
-    transform: translateX(-4px);
-    box-shadow:
-      0 12px 24px rgba(0, 0, 0, 0.4),
-      var(--hi-glow-lg);
-
+    // Pause progress animation on hover
     .hi-toast-progress {
       &::after {
         animation-play-state: paused;
@@ -370,213 +283,6 @@
 }
 
 // ============================================
-// Slide-in Animations
-// ============================================
-
-// Top-right
-.hi-toast-top-right .hi-toast {
-  // DISABLED - migrated to JS animation
-
-  // animation: toast-slide-in-right vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
-}
-
-.hi-toast-top-right .hi-toast.hi-toast-leave {
-  // DISABLED - migrated to JS animation
-
-  // animation: toast-slide-out-right vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
-}
-
-// Top-left
-.hi-toast-top-left .hi-toast {
-  // DISABLED - migrated to JS animation
-
-  // animation: toast-slide-in-left vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
-}
-
-.hi-toast-top-left .hi-toast.hi-toast-leave {
-  // DISABLED - migrated to JS animation
-
-  // animation: toast-slide-out-left vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
-}
-
-// Bottom-right
-.hi-toast-bottom-right .hi-toast {
-  // DISABLED - migrated to JS animation
-
-  // animation: toast-slide-in-right vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
-}
-
-.hi-toast-bottom-right .hi-toast.hi-toast-leave {
-  // DISABLED - migrated to JS animation
-
-  // animation: toast-slide-out-right vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
-}
-
-// Bottom-left
-.hi-toast-bottom-left .hi-toast {
-  // DISABLED - migrated to JS animation
-
-  // animation: toast-slide-in-left vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
-}
-
-.hi-toast-bottom-left .hi-toast.hi-toast-leave {
-  // DISABLED - migrated to JS animation
-
-  // animation: toast-slide-out-left vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
-}
-
-// Top-center
-.hi-toast-top-center .hi-toast {
-  // DISABLED - migrated to JS animation
-
-  // animation: toast-slide-in-top vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
-}
-
-.hi-toast-top-center .hi-toast.hi-toast-leave {
-  // DISABLED - migrated to JS animation
-
-  // animation: toast-slide-out-top vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
-}
-
-// Bottom-center
-.hi-toast-bottom-center .hi-toast {
-  // DISABLED - migrated to JS animation
-
-  // animation: toast-slide-in-bottom vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
-}
-
-.hi-toast-bottom-center .hi-toast.hi-toast-leave {
-  // DISABLED - migrated to JS animation
-
-  // animation: toast-slide-out-bottom vars.$hikari-duration-fast vars.$hikari-ease-smooth forwards;
-}
-
-// Animation keyframes
-// DISABLED - migrated to JS animation
-// @keyframes toast-slide-in-right {
-//   from {
-//     opacity: 0;
-//     transform: translateX(100%);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: translateX(0);
-//   }
-// }
-
-// DISABLED - migrated to JS animation
-// @keyframes toast-slide-out-right {
-//   from {
-//     opacity: 1;
-//     transform: translateX(0);
-//   }
-//   to {
-//     opacity: 0;
-//     transform: translateX(100%);
-//   }
-// }
-
-// DISABLED - migrated to JS animation
-// @keyframes toast-slide-in-left {
-//   from {
-//     opacity: 0;
-//     transform: translateX(-100%);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: translateX(0);
-//   }
-// }
-
-// DISABLED - migrated to JS animation
-// @keyframes toast-slide-out-left {
-//   from {
-//     opacity: 1;
-//     transform: translateX(0);
-//   }
-//   to {
-//     opacity: 0;
-//     transform: translateX(-100%);
-//   }
-// }
-
-// DISABLED - migrated to JS animation
-// @keyframes toast-slide-in-top {
-//   from {
-//     opacity: 0;
-//     transform: translateY(-100%);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: translateY(0);
-//   }
-// }
-
-// DISABLED - migrated to JS animation
-// @keyframes toast-slide-out-top {
-//   from {
-//     opacity: 1;
-//     transform: translateY(0);
-//   }
-//   to {
-//     opacity: 0;
-//     transform: translateY(-100%);
-//   }
-// }
-
-// DISABLED - migrated to JS animation
-// @keyframes toast-slide-in-bottom {
-//   from {
-//     opacity: 0;
-//     transform: translateY(100%);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: translateY(0);
-//   }
-// }
-
-// DISABLED - migrated to JS animation
-// @keyframes toast-slide-out-bottom {
-//   from {
-//     opacity: 1;
-//     transform: translateY(0);
-//   }
-//   to {
-//     opacity: 0;
-//     transform: translateY(100%);
-//   }
-// }
-
-// ============================================
-// Stacked Animation (for multiple toasts)
-// ============================================
-
-.hi-toast-container .hi-toast {
-  // DISABLED - migrated to JS animation
-
-  // animation: toast-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
-
-  @for $i from 1 through 10 {
-    &:nth-child(#{$i}) {
-      animation-delay: #{$i * 0.1s};
-    }
-  }
-}
-
-// DISABLED - migrated to JS animation
-// @keyframes toast-fade-in {
-//   from {
-//     opacity: 0;
-//     transform: scale(0.95) translateY(-10px);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: scale(1) translateY(0);
-//   }
-// }
-
-// ============================================
 // Clickable Toast
 // ============================================
 
@@ -584,17 +290,6 @@
   cursor: pointer;
 
   &:hover {
-    border-color: var(--hi-color-primary);
-    box-shadow:
-      0 12px 24px rgba(0, 0, 0, 0.4),
-      var(--hi-glow-lg),
-      0 0 0 1px var(--hi-button-primary-hover) inset;
-  }
-
-  &:active {
-    transform: translateX(-4px) scale(0.98);
-    // DISABLED - migrated to JS animation
-
-    // transition: transform vars.$hikari-duration-instant ease-out;
+    transform: translateY(-1px);
   }
 }

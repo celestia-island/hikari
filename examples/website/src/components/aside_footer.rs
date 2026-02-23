@@ -258,7 +258,7 @@ pub fn AsideFooter() -> Element {
                 glow: true,
                 glow_blur: GlowBlur::Medium,
                 glow_color: GlowColor::Ghost,
-                glow_intensity: GlowIntensity::Thirty,
+                glow_intensity: GlowIntensity::Dim,
                 onclick: move |_| {
                     let icon = *current_icon.read();
                     let new_theme = if icon == MdiIcon::WhiteBalanceSunny {
@@ -284,7 +284,7 @@ pub fn AsideFooter() -> Element {
                         glow: true,
                         glow_blur: GlowBlur::Medium,
                         glow_color: GlowColor::Ghost,
-                        glow_intensity: GlowIntensity::Thirty,
+                        glow_intensity: GlowIntensity::Dim,
                         onclick: move |_| {},
                     }
                 },

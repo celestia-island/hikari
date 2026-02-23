@@ -1,0 +1,97 @@
+{
+  "name": "Layout and Spacing Analysis",
+  "description": "Check layout consistency, spacing, and alignment across pages",
+  "requires_mcp": true,
+  "tests": [
+    {
+      "id": "home_layout",
+      "name": "Home Page Layout Analysis",
+      "route": "/en/",
+      "description": "Analyze overall home page layout and spacing",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "screenshot", "params": {"output": "home_layout.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze the home page layout. Check for:\n1. Grid alignment - Are elements aligned to a consistent grid?\n2. Section spacing - Is there appropriate spacing between sections?\n3. Content hierarchy - Is visual hierarchy clear and logical?\n4. White space - Is there adequate breathing room?\n5. Edge margins - Are page margins consistent?\n6. Responsive layout - Does content flow naturally?\n\nProvide a detailed layout assessment.",
+            "image_path": "home_layout.png"
+          }
+        }
+      ]
+    },
+    {
+      "id": "components_overview_layout",
+      "name": "Components Page Layout Analysis",
+      "route": "/en/components",
+      "description": "Analyze components overview page layout",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/components"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "screenshot", "params": {"output": "components_layout.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze the components overview page. Check for:\n1. Card grid - Are component cards aligned in a consistent grid?\n2. Card sizing - Are cards uniform in size and proportion?\n3. Category sections - Is there clear visual separation between categories?\n4. Typography hierarchy - Are headings and descriptions properly styled?\n5. Navigation sidebar - Is sidebar width and positioning appropriate?\n6. Content area - Is main content area well-proportioned?",
+            "image_path": "components_layout.png"
+          }
+        }
+      ]
+    },
+    {
+      "id": "icon_spacing",
+      "name": "Icons Page Spacing Analysis",
+      "route": "/en/system/icons",
+      "description": "Analyze icon grid and spacing",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/system/icons"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "screenshot", "params": {"output": "icons_spacing.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze the icons page layout. Check for:\n1. Icon grid - Are icons arranged in a uniform grid?\n2. Icon sizing - Are all icons the same size?\n3. Cell padding - Is there consistent padding around icons?\n4. Label positioning - Are icon labels properly aligned?\n5. Grid gaps - Is spacing between cells consistent?\n6. Search/filter UI - Is the icon search interface well-placed?",
+            "image_path": "icons_spacing.png"
+          }
+        }
+      ]
+    },
+    {
+      "id": "palette_layout",
+      "name": "Color Palette Layout Analysis",
+      "route": "/en/system/palette",
+      "description": "Analyze color palette presentation",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/system/palette"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "screenshot", "params": {"output": "palette_layout.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze the color palette page. Check for:\n1. Color swatch sizing - Are color samples uniform in size?\n2. Color grouping - Are related colors grouped logically?\n3. Label positioning - Are color names/codes properly aligned?\n4. Contrast - Is there adequate contrast between colors and labels?\n5. Section organization - Are color categories clearly separated?\n6. Documentation - Is color usage information clear?",
+            "image_path": "palette_layout.png"
+          }
+        }
+      ]
+    },
+    {
+      "id": "dashboard_demo_layout",
+      "name": "Dashboard Demo Layout Analysis",
+      "route": "/en/demos/layer2/dashboard",
+      "description": "Analyze dashboard layout and component integration",
+      "steps": [
+        {"action": "navigate", "params": {"route": "/en/demos/layer2/dashboard"}},
+        {"action": "wait", "params": {"duration": 8}},
+        {"action": "screenshot", "params": {"output": "dashboard_layout.png"}},
+        {
+          "action": "visual_analysis",
+          "params": {
+            "prompt": "Analyze the dashboard demo layout. Check for:\n1. Widget grid - Are dashboard widgets aligned consistently?\n2. Card consistency - Do all cards have matching styling?\n3. Chart integration - Are charts properly contained?\n4. Header/toolbar - Is the page header well-designed?\n5. Content density - Is information density appropriate?\n6. Responsive behavior - Does the layout adapt to different sizes?\n\nProvide feedback on the overall dashboard visual quality.",
+            "image_path": "dashboard_layout.png"
+          }
+        }
+      ]
+    }
+  ]
+}

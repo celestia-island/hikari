@@ -52,4 +52,8 @@ path = "src/bin/visual_quality_test.rs"
 name = "test-all-pages"
 path = "src/bin/test_all_pages.rs"
 
+[[bin]]
+name = "hikari-browser-debug"
+path = "src/bin/browser_debug.rs"
+
 [dev-dependencies]

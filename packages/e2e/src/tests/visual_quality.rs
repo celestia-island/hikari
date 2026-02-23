@@ -130,7 +130,7 @@ impl VisualQualityTests {
                                 check_name: "Buttons Visible".to_string(),
                                 check_type: VisualCheckType::Visibility,
                                 description: format!("Found {} buttons", buttons.len()),
-                                passed: buttons.len() > 0,
+                                passed: !buttons.is_empty(),
                                 details: format!("Page has {} buttons", buttons.len()),
                                 screenshot_before: None,
                                 screenshot_after: None,
@@ -232,7 +232,7 @@ impl VisualQualityTests {
                                 check_name: "Form Inputs Visible".to_string(),
                                 check_type: VisualCheckType::Visibility,
                                 description: format!("Found {} form inputs", inputs.len()),
-                                passed: inputs.len() > 0,
+                                passed: !inputs.is_empty(),
                                 details: format!("Page has {} form inputs", inputs.len()),
                                 screenshot_before: None,
                                 screenshot_after: None,
@@ -325,7 +325,7 @@ impl VisualQualityTests {
                                 check_name: "Control Buttons Visible".to_string(),
                                 check_type: VisualCheckType::Visibility,
                                 description: format!("Found {} control buttons", buttons.len()),
-                                passed: buttons.len() > 0,
+                                passed: !buttons.is_empty(),
                                 details: format!("Page has {} control buttons", buttons.len()),
                                 screenshot_before: None,
                                 screenshot_after: None,
@@ -422,7 +422,7 @@ impl VisualQualityTests {
                                 check_name: "Dashboard Elements Visible".to_string(),
                                 check_type: VisualCheckType::Visibility,
                                 description: format!("Found {} dashboard elements", elements.len()),
-                                passed: elements.len() > 0,
+                                passed: !elements.is_empty(),
                                 details: format!("Page has {} dashboard elements", elements.len()),
                                 screenshot_before: None,
                                 screenshot_after: None,
@@ -503,7 +503,7 @@ impl VisualQualityTests {
                         check_name: "Cascader Component Visible".to_string(),
                         check_type: VisualCheckType::Visibility,
                         description: format!("Found {} interactive elements", elements.len()),
-                        passed: elements.len() > 0,
+                        passed: !elements.is_empty(),
                         details: format!("Page has {} interactive elements", elements.len()),
                         screenshot_before: None,
                         screenshot_after: None,
@@ -569,7 +569,7 @@ impl VisualQualityTests {
                         check_name: "Collapsible Component Visible".to_string(),
                         check_type: VisualCheckType::Visibility,
                         description: format!("Found {} interactive elements", elements.len()),
-                        passed: elements.len() > 0,
+                        passed: !elements.is_empty(),
                         details: format!("Page has {} interactive elements", elements.len()),
                         screenshot_before: None,
                         screenshot_after: None,
@@ -637,7 +637,7 @@ impl VisualQualityTests {
                                 check_name: "Layer 3 Components Visible".to_string(),
                                 check_type: VisualCheckType::Visibility,
                                 description: format!("Found {} layer 3 components", elements.len()),
-                                passed: elements.len() > 0,
+                                passed: !elements.is_empty(),
                                 details: format!("Page has {} layer 3 components", elements.len()),
                                 screenshot_before: None,
                                 screenshot_after: None,
@@ -731,7 +731,7 @@ impl VisualQualityTests {
                                 check_name: "Color Swatches Visible".to_string(),
                                 check_type: VisualCheckType::ColorTheme,
                                 description: format!("Found {} color swatches", swatches.len()),
-                                passed: swatches.len() > 0,
+                                passed: !swatches.is_empty(),
                                 details: format!("Page has {} color swatches", swatches.len()),
                                 screenshot_before: None,
                                 screenshot_after: None,
@@ -953,10 +953,7 @@ impl VisualQualityTests {
 
         match driver.execute(script, vec![]).await {
             Ok(result) => {
-                let count: i64 = match result.convert() {
-                    Ok(c) => c,
-                    Err(_) => 0,
-                };
+                let count: i64 = result.convert().unwrap_or_default();
 
                 if count > 0 {
                     info!(
@@ -983,7 +980,7 @@ impl VisualQualityTests {
         suffix: &str,
     ) -> Result<String> {
         let output_dir = PathBuf::from("target/e2e_screenshots/visual_quality");
-        std::fs::create_dir_all(&output_dir).unwrap_or_else(|_| ());
+        let _ = std::fs::create_dir_all(&output_dir);
 
         let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
         let filename = format!(

@@ -27,7 +27,7 @@ mod tests {
         };
 
         assert_eq!(props.variant, SkeletonVariant::Text);
-        assert_eq!(props.animation, true);
+        assert!(props.animation);
         assert_eq!(props.rows, Some(3));
     }
 
@@ -121,8 +121,8 @@ mod tests {
             rows: 3,
         };
 
-        assert_eq!(props.show_header, true);
-        assert_eq!(props.show_avatar, true);
+        assert!(props.show_header);
+        assert!(props.show_avatar);
         assert_eq!(props.rows, 3);
     }
 
@@ -157,7 +157,7 @@ mod tests {
         assert_eq!(props.max, 100.0);
         assert_eq!(props.progress_type, ProgressType::Linear);
         assert_eq!(props.status, ProgressStatus::Normal);
-        assert_eq!(props.show_info, false);
+        assert!(!props.show_info);
     }
 
     #[test]
@@ -251,36 +251,6 @@ mod tests {
     }
 
     #[test]
-    fn test_progress_status_exception() {
-        let props = ProgressProps {
-            value: 50.0,
-            max: 100.0,
-            progress_type: ProgressType::Linear,
-            status: ProgressStatus::Exception,
-            show_info: false,
-            class: String::new(),
-            style: String::new(),
-        };
-
-        assert_eq!(props.status, ProgressStatus::Exception);
-    }
-
-    #[test]
-    fn test_progress_status_success() {
-        let props = ProgressProps {
-            value: 50.0,
-            max: 100.0,
-            progress_type: ProgressType::Linear,
-            status: ProgressStatus::Success,
-            show_info: false,
-            class: String::new(),
-            style: String::new(),
-        };
-
-        assert_eq!(props.status, ProgressStatus::Success);
-    }
-
-    #[test]
     fn test_progress_props_with_show_info() {
         let props = ProgressProps {
             value: 50.0,
@@ -323,7 +293,7 @@ mod tests {
             class: String::new(),
         };
 
-        assert_eq!(props.spinning, false);
+        assert!(!props.spinning);
         assert_eq!(props.size, SpinSize::Medium);
         assert_eq!(props.tip, SpinTip::None);
     }

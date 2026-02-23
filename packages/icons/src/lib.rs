@@ -300,7 +300,7 @@ fn log_icon_warning_once(icon_name: String) {
                     icon_name
                 );
                 eprintln!("   This icon will use a fallback while fetching from server.");
-                eprintln!("");
+                eprintln!();
                 eprintln!("   If fetch succeeds, warning will be updated automatically.");
             }
 

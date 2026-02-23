@@ -1,0 +1,7 @@
+# Clippy configuration for Hikari project
+
+# Allow certain lints that are common in this codebase
+avoid-breaking-exported-api = true
+
+# These are in our specific patterns and are acceptable
+standard-macro-braces = []

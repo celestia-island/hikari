@@ -601,8 +601,6 @@ pub fn render_component(component_type: ComponentType) -> Element {
                             NumberInput {
                                 value: value(),
                                 on_change: move |v| value.set(v),
-                                min: Some(0),
-                                max: Some(100),
                             }
                         }
                     }
@@ -614,7 +612,7 @@ pub fn render_component(component_type: ComponentType) -> Element {
                     rsx! {
                         div { class: flex_col_gap(),
                             div { style: "display: flex; align-items: center; gap: 0.5rem;",
-                                span { style: "width: 60px;", "Small:" }
+                                span { style: "width: 60px; font-size: 14px; color: var(--hi-color-text-secondary);", "Small:" }
                                 NumberInput {
                                     value: v1(),
                                     on_change: move |v| v1.set(v),
@@ -622,7 +620,7 @@ pub fn render_component(component_type: ComponentType) -> Element {
                                 }
                             }
                             div { style: "display: flex; align-items: center; gap: 0.5rem;",
-                                span { style: "width: 60px;", "Medium:" }
+                                span { style: "width: 60px; font-size: 14px; color: var(--hi-color-text-secondary);", "Medium:" }
                                 NumberInput {
                                     value: v2(),
                                     on_change: move |v| v2.set(v),
@@ -630,12 +628,40 @@ pub fn render_component(component_type: ComponentType) -> Element {
                                 }
                             }
                             div { style: "display: flex; align-items: center; gap: 0.5rem;",
-                                span { style: "width: 60px;", "Large:" }
+                                span { style: "width: 60px; font-size: 14px; color: var(--hi-color-text-secondary);", "Large:" }
                                 NumberInput {
                                     value: v3(),
                                     on_change: move |v| v3.set(v),
                                     size: NumberInputSize::Large,
                                 }
+                            }
+                        }
+                    }
+                }
+                ("layer1", "number_input", Some("disabled")) => {
+                    rsx! {
+                        div { class: flex_row_wrap(),
+                            NumberInput {
+                                value: 50,
+                                on_change: move |_| {},
+                                disabled: true,
+                            }
+                        }
+                    }
+                }
+                ("layer1", "number_input", Some("stepper")) => {
+                    let mut value = use_signal(|| 50);
+                    rsx! {
+                        div { class: flex_col_gap(),
+                            div { style: "display: flex; align-items: center; gap: 0.5rem;",
+                                span { style: "font-size: 14px; color: var(--hi-color-text-secondary);", "Value: {value()}" }
+                            }
+                            NumberInput {
+                                value: value(),
+                                on_change: move |v| value.set(v),
+                                min: Some(0),
+                                max: Some(100),
+                                step: 5,
                             }
                         }
                     }
@@ -647,8 +673,6 @@ pub fn render_component(component_type: ComponentType) -> Element {
                             NumberInput {
                                 value: value(),
                                 on_change: move |v| value.set(v),
-                                min: Some(0),
-                                max: Some(100),
                             }
                         }
                     }

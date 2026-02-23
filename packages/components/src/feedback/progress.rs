@@ -140,7 +140,8 @@ impl StyledComponent for ProgressComponent {
 
 .hi-progress-inner {
     flex: 1;
-    background-color: var(--hi-color-background, #f5f5f5);
+    background-color: var(--hi-component-selection-surface);
+    border: 1px solid var(--hi-component-selection-border);
     border-radius: 100px;
     overflow: hidden;
     height: 8px;
@@ -149,27 +150,27 @@ impl StyledComponent for ProgressComponent {
 .hi-progress-bg {
     height: 100%;
     border-radius: 100px;
-    background-color: var(--hi-color-primary, #1890ff);
+    background: var(--hi-component-selection-bg);
     transition: width 0.3s ease;
 }
 
 .hi-progress-text {
     flex-shrink: 0;
     font-size: 14px;
-    color: var(--hi-color-text-primary, #333);
+    color: var(--hi-text-primary);
     min-width: 40px;
     text-align: right;
 }
 
-/* Status variants */
+/* Active status */
 .hi-progress-active .hi-progress-bg {
-    background: linear-gradient(90deg, var(--hi-color-primary, #1890ff) 0%, #40a9ff 100%);
     animation: hi-progress-active 2s linear infinite;
 }
 
 @keyframes hi-progress-active {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 200% 50%; }
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
 }
 
 /* Circular progress */
@@ -185,16 +186,22 @@ impl StyledComponent for ProgressComponent {
 }
 
 .hi-progress-circle-trail {
-    stroke: var(--hi-color-background, #f5f5f5);
+    stroke: var(--hi-component-selection-surface);
 }
 
 .hi-progress-circle-path {
-    stroke: var(--hi-color-primary, #1890ff);
+    stroke: var(--hi-primary);
     transition: stroke-dashoffset 0.3s ease;
 }
 
 .hi-progress-active .hi-progress-circle-path {
-    stroke: var(--hi-color-primary, #1890ff);
+    animation: hi-progress-circle-active 2s linear infinite;
+}
+
+@keyframes hi-progress-circle-active {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
 }
 
 .hi-progress-circle-text {
@@ -204,23 +211,7 @@ impl StyledComponent for ProgressComponent {
     transform: translate(-50%, -50%);
     font-size: 24px;
     font-weight: 600;
-    color: var(--hi-color-text-primary, #333);
-}
-
-[data-theme="dark"] .hi-progress-inner {
-    background-color: var(--hi-surface-hover, #252525);
-}
-
-[data-theme="dark"] .hi-progress-circle-trail {
-    stroke: var(--hi-surface-hover, #252525);
-}
-
-[data-theme="dark"] .hi-progress-text {
-    color: var(--hi-text-primary, #e0e0e0);
-}
-
-[data-theme="dark"] .hi-progress-circle-text {
-    color: var(--hi-text-primary, #e0e0e0);
+    color: var(--hi-text-primary);
 }
 "#
     }

@@ -35,6 +35,7 @@ pub fn PortalProvider(children: Element) -> Element {
             PortalEntry::Dropdown { id: entry_id, .. } => entry_id != &id,
             PortalEntry::Toast { id: entry_id, .. } => entry_id != &id,
             PortalEntry::Popover { id: entry_id, .. } => entry_id != &id,
+            PortalEntry::Tooltip { id: entry_id, .. } => entry_id != &id,
         });
     });
 

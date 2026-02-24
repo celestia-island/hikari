@@ -1,5 +1,7 @@
 // NumberInput Component Styles
-// Features: Borderless buttons, unified input styling, independent glow zones
+// Features: Borderless buttons, unified input styling, independent glow zones via Glow component
+
+@use '../../../../theme/styles/variables.scss'as vars;
 
 // ============================================
 // Wrapper Styles
@@ -8,21 +10,21 @@
 .hi-number-input-wrapper {
   display: inline-flex;
   align-items: stretch;
-  border-radius: 8px;
-  border: 1px solid var(--hi-color-border, #d9d9d9);
-  background-color: var(--hi-color-surface, #fff);
+  border-radius: vars.$hikari-radius-fui-lg;
+  border: 1px solid var(--hi-color-border);
+  background-color: var(--hi-color-surface);
   overflow: hidden;
-  transition: all 0.2s ease;
-  // Fixed width to avoid excessive stretching
+  transition: all vars.$hikari-transition-fast;
   width: auto;
-  max-width: 200px;
+  min-width: 120px;
+  box-sizing: border-box;
 }
 
 .hi-number-input-wrapper:focus-within {
-  border-color: var(--hi-color-primary, #1890ff);
+  border-color: var(--hi-color-primary);
   box-shadow:
-    0 0 0 2px var(--hi-color-primary),
-    0 0 8px var(--hi-glow-color);
+    0 0 0 1px var(--hi-color-primary),
+    0 0 6px var(--hi-glow-color);
 }
 
 // ============================================
@@ -31,17 +33,35 @@
 
 .hi-number-input-sm {
   height: 24px;
-  font-size: 12px;
+  font-size: vars.$hikari-font-size-xs;
+
+  .hi-number-input-btn,
+  .hi-number-input-glow-btn {
+    width: 24px;
+    min-width: 24px;
+  }
 }
 
 .hi-number-input-md {
   height: 32px;
-  font-size: 14px;
+  font-size: vars.$hikari-font-size-sm;
+
+  .hi-number-input-btn,
+  .hi-number-input-glow-btn {
+    width: 32px;
+    min-width: 32px;
+  }
 }
 
 .hi-number-input-lg {
   height: 40px;
-  font-size: 16px;
+  font-size: vars.$hikari-font-size-base;
+
+  .hi-number-input-btn,
+  .hi-number-input-glow-btn {
+    width: 40px;
+    min-width: 40px;
+  }
 }
 
 // ============================================
@@ -54,225 +74,153 @@
   justify-content: center;
   flex-shrink: 0;
   width: 32px;
+  min-width: 32px;
+  height: 100%;
   padding: 0;
+  margin: 0;
   background-color: transparent;
   border: none;
-  color: var(--hi-color-text-secondary, #666);
+  color: var(--hi-color-text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all vars.$hikari-transition-fast;
   outline: none;
   position: relative;
-  overflow: hidden;
+  box-sizing: border-box;
 }
 
-// Remove all extra borders - borderless design
 .hi-number-input-btn-decrement,
 .hi-number-input-btn-increment {
   border: none;
   border-radius: 0;
 }
 
-// Subtle separator using pseudo-element instead of border
-.hi-number-input-btn-decrement::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 20%;
-  height: 60%;
-  width: 1px;
-  background-color: var(--hi-color-border, #d9d9d9);
-  opacity: 0.5;
-  transition: opacity 0.15s ease;
-}
-
-.hi-number-input-btn-increment::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 20%;
-  height: 60%;
-  width: 1px;
-  background-color: var(--hi-color-border, #d9d9d9);
-  opacity: 0.5;
-  transition: opacity 0.15s ease;
-}
-
-// Hide separators on hover/focus for cleaner look
-.hi-number-input-wrapper:focus-within .hi-number-input-btn-decrement::after,
-.hi-number-input-wrapper:focus-within .hi-number-input-btn-increment::before {
-  opacity: 0.3;
-}
-
-// ============================================
-// Individual Glow Zones for Left/Right Buttons
-// ============================================
-
-// Left button (decrement) glow zone - uses ::before
-.hi-number-input-btn-decrement::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  background: radial-gradient(
-    circle at center,
-    var(--hi-glow-color) 0%,
-    transparent 70%
-  );
-}
-
-.hi-number-input-btn-decrement:hover:not(:disabled)::before {
-  opacity: 0.4;
-}
-
-// Right button (increment) glow zone - uses ::after
-.hi-number-input-btn-increment::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  background: radial-gradient(
-    circle at center,
-    var(--hi-glow-color) 0%,
-    transparent 70%
-  );
-}
-
-.hi-number-input-btn-increment:hover:not(:disabled)::after {
-  opacity: 0.4;
-}
-
-// ============================================
-// Button States
-// ============================================
-
 .hi-number-input-btn:hover:not(:disabled) {
-  color: var(--hi-color-primary, #1890ff);
-  background-color: var(--hi-color-primary-glow);
+  color: var(--hi-color-primary);
+  background-color: var(--hi-color-black-5);
 }
 
 .hi-number-input-btn:active:not(:disabled) {
   transform: scale(0.92);
-  background-color: var(--hi-color-primary, #1890ff);
-  color: var(--hi-color-surface, #fff);
+  background-color: var(--hi-color-primary);
+  color: var(--hi-color-surface);
 }
 
 .hi-number-input-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-  color: var(--hi-color-text-disabled, #bfbfbf);
+  color: var(--hi-color-gray-50);
   background-color: transparent;
 }
 
 .hi-number-input-btn:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--hi-color-primary, #1890ff);
+  box-shadow: inset 0 0 0 1px var(--hi-color-primary);
 }
 
-.hi-number-input-btn svg {
-  width: 14px;
-  height: 14px;
+.hi-number-input-icon {
   flex-shrink: 0;
-  position: relative;
-  z-index: 2;
-}
-
-// Size-specific button widths
-.hi-number-input-sm .hi-number-input-btn {
-  width: 24px;
-}
-
-.hi-number-input-sm .hi-number-input-btn svg {
-  width: 12px;
-  height: 12px;
-}
-
-.hi-number-input-lg .hi-number-input-btn {
-  width: 40px;
-}
-
-.hi-number-input-lg .hi-number-input-btn svg {
-  width: 16px;
-  height: 16px;
 }
 
 // ============================================
-// Input Styles (Unified with hi-input)
+// Input Styles (Unified with hi-input - Borderless)
+// High specificity to override :root input styles without !important
 // ============================================
 
-.hi-number-input-input {
+// Use :where() to increase specificity without increasing cascade weight
+// Combined with parent class for higher specificity than :root input
+:where(.hi-number-input-wrapper) .hi-number-input-input,
+.hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input {
   flex: 1;
+  width: 100%;
   min-width: 48px;
-  max-width: 80px;
   height: 100%;
-  padding: 0 8px;
-  border: none;
+  padding: 0 vars.$hikari-spacing-xs;
+  margin: 0;
   background-color: transparent;
-  color: var(--hi-color-text-primary, #333);
+  border: none;
+  outline: none;
+  box-shadow: none;
+  color: var(--hi-color-text-primary);
   font-size: inherit;
   text-align: center;
-  outline: none;
   font-weight: 500;
-  position: relative;
-  z-index: 1;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border-radius: 0;
+}
 
-  // Match hi-input placeholder style
-  &::placeholder {
-    color: var(--hi-color-text-secondary, #999);
-    opacity: 0.6;
-  }
+// Override focus states with higher specificity
+:where(.hi-number-input-wrapper) .hi-number-input-input:focus,
+:where(.hi-number-input-wrapper) .hi-number-input-input:focus-visible,
+.hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input:focus,
+.hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input:focus-visible {
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
 
-  // Remove number input spinners
-  &::-webkit-outer-spin-button,
-  &::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
+// Placeholder styles
+:where(.hi-number-input-wrapper) .hi-number-input-input::placeholder,
+.hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input::placeholder {
+  color: var(--hi-color-text-secondary);
+  opacity: 0.6;
+}
 
-  &[type=number] {
-    -moz-appearance: textfield;
-  }
+// Remove spin buttons
+:where(.hi-number-input-wrapper) .hi-number-input-input::-webkit-outer-spin-button,
+:where(.hi-number-input-wrapper) .hi-number-input-input::-webkit-inner-spin-button,
+.hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input::-webkit-outer-spin-button,
+.hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+:where(.hi-number-input-wrapper) .hi-number-input-input[type=number],
+.hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input[type=number] {
+  appearance: textfield;
+}
+
+// Disabled state
+:where(.hi-number-input-wrapper) .hi-number-input-input:disabled,
+.hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 // ============================================
-// Middle Input Glow Zone
+// Input Wrapper (for Glow component)
 // ============================================
 
 .hi-number-input-input-wrapper {
-  position: relative;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  min-width: 48px;
+  height: 100%;
+  border: none;
+  background-color: transparent;
 }
 
-.hi-number-input-input-wrapper::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  background: radial-gradient(
-    circle at center,
-    var(--hi-glow-color) 0%,
-    transparent 70%
-  );
+// ============================================
+// Glow Wrapper Customization
+// ============================================
+
+.hi-number-input-glow-btn {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  width: 32px;
+  min-width: 32px;
+  height: 100%;
 }
 
-.hi-number-input-wrapper:hover .hi-number-input-input-wrapper::before {
-  opacity: 0.3;
+.hi-number-input-glow-middle {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  height: 100%;
 }
 
 // ============================================
@@ -281,36 +229,31 @@
 
 [data-theme="dark"] .hi-number-input-wrapper,
 [data-theme="tairitsu"] .hi-number-input-wrapper {
-  background-color: var(--hi-surface, #1a1a1a);
-  border-color: var(--hi-border, #333);
+  background-color: var(--hi-surface);
+  border-color: var(--hi-border);
 }
 
 [data-theme="dark"] .hi-number-input-btn,
 [data-theme="tairitsu"] .hi-number-input-btn {
   background-color: transparent;
-  color: var(--hi-text-secondary, #aaa);
+  color: var(--hi-text-secondary);
 }
 
 [data-theme="dark"] .hi-number-input-btn:hover:not(:disabled),
 [data-theme="tairitsu"] .hi-number-input-btn:hover:not(:disabled) {
-  background-color: var(--hi-color-primary-glow);
-  color: var(--hi-color-primary, #40a9ff);
+  background-color: var(--hi-color-white-5);
+  color: var(--hi-color-primary);
 }
 
 [data-theme="dark"] .hi-number-input-btn:active:not(:disabled),
 [data-theme="tairitsu"] .hi-number-input-btn:active:not(:disabled) {
-  background-color: var(--hi-color-primary, #1890ff);
-  color: var(--hi-color-surface, #fff);
+  background-color: var(--hi-color-primary);
+  color: var(--hi-color-surface);
 }
 
-[data-theme="dark"] .hi-number-input-input,
-[data-theme="tairitsu"] .hi-number-input-input {
-  color: var(--hi-text-primary, #e0e0e0);
-}
-
-[data-theme="dark"] .hi-number-input-btn-decrement::after,
-[data-theme="dark"] .hi-number-input-btn-increment::before,
-[data-theme="tairitsu"] .hi-number-input-btn-decrement::after,
-[data-theme="tairitsu"] .hi-number-input-btn-increment::before {
-  background-color: var(--hi-border, #333);
+[data-theme="dark"] :where(.hi-number-input-wrapper) .hi-number-input-input,
+[data-theme="tairitsu"] :where(.hi-number-input-wrapper) .hi-number-input-input,
+[data-theme="dark"] .hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input,
+[data-theme="tairitsu"] .hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input {
+  color: var(--hi-text-primary);
 }

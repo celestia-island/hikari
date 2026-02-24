@@ -93,6 +93,7 @@ pub enum MdiIcon {
     CheckboxMarkedCircle,
     ToggleSwitch,
     Minus,
+    Plus,
 
     // Data
     Table,
@@ -200,6 +201,7 @@ impl std::fmt::Display for MdiIcon {
             MdiIcon::CheckboxMarkedCircle => write!(f, "checkbox-marked-circle"),
             MdiIcon::ToggleSwitch => write!(f, "toggle-switch"),
             MdiIcon::Minus => write!(f, "minus"),
+            MdiIcon::Plus => write!(f, "plus"),
             MdiIcon::Table => write!(f, "table"),
             MdiIcon::Tree => write!(f, "tree"),
             MdiIcon::SourceBranch => write!(f, "source-branch"),
@@ -297,6 +299,7 @@ impl std::convert::From<&str> for MdiIcon {
             "checkbox-marked-circle" => MdiIcon::CheckboxMarkedCircle,
             "toggle-switch" => MdiIcon::ToggleSwitch,
             "minus" => MdiIcon::Minus,
+            "plus" => MdiIcon::Plus,
             "table" => MdiIcon::Table,
             "tree" => MdiIcon::Tree,
             "source-branch" => MdiIcon::SourceBranch,

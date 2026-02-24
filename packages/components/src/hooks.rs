@@ -9,6 +9,8 @@
 //! - **Tablet**: 641-1023px
 //! - **Desktop**: ≥1024px
 
+pub mod use_voice_input;
+
 use dioxus::prelude::*;
 use wasm_bindgen::prelude::*;
 

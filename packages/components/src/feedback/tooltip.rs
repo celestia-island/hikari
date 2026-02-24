@@ -5,9 +5,7 @@ use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, TooltipClass, UtilityClass};
 
 use crate::{
-    portal::{
-        provider::{generate_portal_id, use_portal},
-    },
+    portal::provider::{generate_portal_id, use_portal},
     styled::StyledComponent,
 };
 
@@ -76,7 +74,7 @@ impl Default for TooltipProps {
 pub fn Tooltip(props: TooltipProps) -> Element {
     let portal = use_portal();
     let tooltip_id = use_signal(|| generate_portal_id());
-    let mut trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
+    let trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
 
     let wrapper_classes = ClassesBuilder::new()
         .add(TooltipClass::TooltipWrapper)
@@ -115,14 +113,13 @@ pub fn Tooltip(props: TooltipProps) -> Element {
     };
 
     rsx! {
-        div {
-            class: "{wrapper_classes}",
+        div { class: "{wrapper_classes}",
 
             div {
                 class: "{TooltipClass::TooltipTrigger.as_class()}",
                 onmouseenter: handle_mouse_enter,
                 onmouseleave: handle_mouse_leave,
-                { props.children }
+                {props.children}
             }
         }
     }

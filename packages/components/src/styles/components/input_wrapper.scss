@@ -22,7 +22,8 @@
   background-color: var(--hi-color-surface);
   overflow: hidden;
   transition: all vars.$hikari-transition-fast;
-  width: 100%;
+  width: auto;
+  min-width: 120px;
   box-sizing: border-box;
 
   // Focus state - applied when any child input is focused

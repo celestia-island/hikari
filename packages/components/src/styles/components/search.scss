@@ -14,6 +14,162 @@
 
 .hi-search-input-wrapper {
   width: 100%;
+
+  // Search input wrapper should take full width
+  .hi-input-wrapper {
+    width: 100%;
+  }
+}
+
+// ============================================
+// Input Container (for embedded voice background)
+// ============================================
+
+.hi-search-input-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-width: 48px;
+
+  input {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    width: 100%;
+    min-width: 48px;
+    height: 100%;
+    padding: 0 vars.$hikari-spacing-xs;
+    margin: 0;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    color: var(--hi-color-text-primary);
+    font-size: vars.$hikari-font-size-sm;
+    text-align: left;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: 0;
+
+    &:focus {
+      border: none;
+      outline: none;
+      box-shadow: none;
+    }
+
+    &::placeholder {
+      color: var(--hi-color-text-secondary);
+      opacity: 0.6;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    // Remove search cancel button
+    &::-webkit-search-cancel-button,
+    &::-webkit-search-decoration {
+      -webkit-appearance: none;
+      appearance: none;
+    }
+  }
+}
+
+// ============================================
+// Voice Input Background (Embedded in input)
+// ============================================
+
+.hi-search-voice-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(var(--hi-color-surface-rgb, 255, 255, 255), 0.9);
+  border-radius: vars.$hikari-radius-fui-md;
+  z-index: 1;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+// Position variants
+.hi-search-voice-bg-center {
+  // Default centered position
+}
+
+.hi-search-voice-bg-right {
+  justify-content: flex-end;
+  padding-right: 40px;
+  align-items: center;
+
+  .hi-search-voice-waveform {
+    justify-content: flex-end;
+    padding-right: 8px;
+  }
+}
+
+// ============================================
+// Voice Waveform
+// ============================================
+
+.hi-search-voice-waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 24px;
+  width: 100%;
+}
+
+.hi-search-voice-bar {
+  width: 3px;
+  height: 16px;
+  background-color: var(--hi-color-primary);
+  border-radius: 2px;
+  animation: hi-search-voice-bar 0.8s ease-in-out infinite;
+  opacity: 0.6;
+}
+
+@keyframes hi-search-voice-bar {
+  0%, 100% {
+    transform: scaleY(0.4);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 0.8;
+  }
+}
+
+// ============================================
+// Voice Text Display
+// ============================================
+
+.hi-search-voice-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: vars.$hikari-font-size-sm;
+  color: var(--hi-color-text-primary);
+  background-color: rgba(var(--hi-color-surface-rgb, 255, 255, 255), 0.8);
+  padding: 2px 8px;
+  border-radius: vars.$hikari-radius-fui-sm;
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 3;
 }
 
 // ============================================
@@ -30,69 +186,6 @@
   }
   to {
     transform: rotate(360deg);
-  }
-}
-
-// ============================================
-// Voice Input
-// ============================================
-
-.hi-search-voice-btn {
-  color: var(--hi-color-text-secondary);
-}
-
-.hi-search-voice-recording {
-  color: var(--hi-color-primary);
-  background-color: var(--hi-color-primary-glow);
-}
-
-.hi-search-voice-stop {
-  width: 12px;
-  height: 12px;
-  background-color: currentColor;
-  border-radius: 2px;
-}
-
-.hi-search-voice-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--hi-color-surface);
-  border-radius: vars.$hikari-radius-fui-lg;
-  z-index: 10;
-  cursor: pointer;
-}
-
-.hi-search-voice-waveform {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  height: 40px;
-}
-
-.hi-search-voice-bar {
-  width: 4px;
-  height: 20px;
-  background-color: var(--hi-color-primary);
-  border-radius: 2px;
-  animation: hi-search-voice-bar 0.8s ease-in-out infinite;
-}
-
-@keyframes hi-search-voice-bar {
-  0%, 100% {
-    transform: scaleY(0.4);
-    opacity: 0.5;
-  }
-  50% {
-    transform: scaleY(1);
-    opacity: 1;
   }
 }
 
@@ -156,7 +249,13 @@
   color: var(--hi-text-secondary);
 }
 
-[data-theme="dark"] .hi-search-voice-overlay,
-[data-theme="tairitsu"] .hi-search-voice-overlay {
-  background-color: var(--hi-surface);
+[data-theme="dark"] .hi-search-voice-bg,
+[data-theme="tairitsu"] .hi-search-voice-bg {
+  background-color: rgba(var(--hi-surface-rgb, 30, 30, 30), 0.9);
+}
+
+[data-theme="dark"] .hi-search-voice-text,
+[data-theme="tairitsu"] .hi-search-voice-text {
+  background-color: rgba(var(--hi-surface-rgb, 30, 30, 30), 0.8);
+  color: var(--hi-text-primary);
 }

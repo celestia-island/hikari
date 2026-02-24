@@ -13,6 +13,7 @@ use wasm_bindgen::JsCast;
 use crate::{
     basic::{InputWrapper, InputWrapperItem, InputWrapperSize},
     feedback::{GlowBlur, GlowColor, GlowIntensity},
+    hooks::use_voice_input::{use_voice_input, VoiceInputResult, is_speech_recognition_supported},
     portal::{generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement},
     styled::StyledComponent,
 };
@@ -63,10 +64,29 @@ pub struct SearchProps {
 #[component]
 pub fn Search(props: SearchProps) -> Element {
     let mut is_voice_recording = use_signal(|| false);
+    let mut voice_text = use_signal(String::new);
     let mut value_signal = use_signal(|| props.value.clone());
-    let mut dropdown_id = use_signal(String::new);
+    let mut dropdown_id = use_signal(|| String::new());
     let mut container_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
     let portal = use_portal();
+    
+    // Check if speech recognition is supported
+    let is_speech_supported = is_speech_recognition_supported();
+
+    // Voice input hook
+    let (_voice_state, start_voice, stop_voice, _) = use_voice_input(
+        Callback::new(move |result: VoiceInputResult| {
+            voice_text.set(result.text.clone());
+            if result.is_final {
+                value_signal.set(result.text.clone());
+                props.on_search.call(result.text);
+                is_voice_recording.set(false);
+            }
+        }),
+        Callback::new(move |_error: String| {
+            is_voice_recording.set(false);
+        }),
+    );
 
     let wrapper_classes = ClassesBuilder::new()
         .add(SearchClass::Wrapper)
@@ -119,13 +139,26 @@ pub fn Search(props: SearchProps) -> Element {
     } else if props.voice_input {
         // Voice input button - interactive
         let is_recording_value = *is_voice_recording.read();
-        right_items.push(InputWrapperItem::button(
-            if is_recording_value { MdiIcon::Stop } else { MdiIcon::Microphone },
-            EventHandler::new(move |_| {
-                let current = *is_voice_recording.read();
-                is_voice_recording.set(!current);
-            })
-        ));
+        
+        if !is_speech_supported {
+            // Show warning icon if speech recognition not supported
+            right_items.push(InputWrapperItem::icon(MdiIcon::Alert));
+        } else {
+            right_items.push(InputWrapperItem::button(
+                if is_recording_value { MdiIcon::Stop } else { MdiIcon::Microphone },
+                EventHandler::new(move |_| {
+                    let current = *is_voice_recording.read();
+                    if current {
+                        stop_voice.call(());
+                        is_voice_recording.set(false);
+                    } else {
+                        voice_text.set(String::new());
+                        start_voice.call(());
+                        is_voice_recording.set(true);
+                    }
+                })
+            ));
+        }
     } else {
         // Search submit button - interactive
         right_items.push(InputWrapperItem::button(
@@ -140,100 +173,143 @@ pub fn Search(props: SearchProps) -> Element {
         ));
     }
 
-    // Input element
-    let input_element = rsx! {
-        input {
-            r#type: "search",
-            value: "{current_value}",
-            placeholder: "{props.placeholder}",
-            disabled: props.disabled,
-            onfocus: move |_| {
-                if has_suggestions {
-                    let trigger_rect_opt = *container_rect.read();
-                    
-                    // Close existing dropdown if any
-                    let id = dropdown_id();
-                    if !id.is_empty() {
-                        portal.remove_entry.call(id.clone());
-                    }
-
-                    let new_id = generate_portal_id();
-                    dropdown_id.set(new_id.clone());
-
-                    let suggestions_for_dropdown = filtered_suggestions.clone();
-                    let on_search = props.on_search;
-                    let on_suggestion_click = props.on_suggestion_click.clone();
-                    let portal_remove = portal.remove_entry.clone();
-                    let mut value_signal_for_dropdown = value_signal;
-
-                    let dropdown_content = rsx! {
+    // Input element with embedded voice background
+    let is_recording = *is_voice_recording.read();
+    let voice_bg = if is_recording {
+        let text_len = current_value.len();
+        let position_class = if text_len > 20 {
+            "hi-search-voice-bg-right"
+        } else {
+            "hi-search-voice-bg-center"
+        };
+        
+        rsx! {
+            div {
+                class: "hi-search-voice-bg {position_class}",
+                onclick: move |_| {
+                    stop_voice.call(());
+                    is_voice_recording.set(false);
+                },
+                
+                // Waveform animation
+                div { class: "hi-search-voice-waveform",
+                    for delay in [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100].iter() {
                         div {
-                            class: "hi-search-suggestions-dropdown",
-                            for suggestion in suggestions_for_dropdown.iter() {
-                                {
-                                    let suggestion_value = suggestion.clone();
-                                    let suggestion_for_click = suggestion.clone();
-                                    let suggestion_for_search = suggestion.clone();
-                                    let suggestion_for_handler = suggestion.clone();
-                                    let id_close = new_id.clone();
-                                    rsx! {
-                                        div {
-                                            class: "hi-search-suggestion-item",
-                                            onclick: move |e: MouseEvent| {
-                                                e.stop_propagation();
-                                                value_signal_for_dropdown.set(suggestion_for_click.clone());
-                                                if let Some(ref handler) = on_suggestion_click {
-                                                    handler.call(suggestion_for_handler.clone());
+                            class: "hi-search-voice-bar",
+                            style: "animation-delay: {delay}ms",
+                        }
+                    }
+                }
+                
+                // Voice text display
+                if !voice_text().is_empty() {
+                    div { class: "hi-search-voice-text",
+                        "{voice_text()}"
+                    }
+                }
+            }
+        }
+    } else {
+        rsx! {}
+    };
+
+    let input_element = rsx! {
+        div {
+            class: "hi-search-input-container",
+            { voice_bg }
+            input {
+                r#type: "search",
+                value: "{current_value}",
+                placeholder: "{props.placeholder}",
+                disabled: props.disabled,
+                onfocus: move |_| {
+                    if has_suggestions {
+                        let trigger_rect_opt = *container_rect.read();
+                        
+                        // Close existing dropdown if any
+                        let id = dropdown_id();
+                        if !id.is_empty() {
+                            portal.remove_entry.call(id.clone());
+                        }
+
+                        let new_id = generate_portal_id();
+                        dropdown_id.set(new_id.clone());
+
+                        let suggestions_for_dropdown = filtered_suggestions.clone();
+                        let on_search = props.on_search;
+                        let on_suggestion_click = props.on_suggestion_click.clone();
+                        let portal_remove = portal.remove_entry.clone();
+                        let mut value_signal_for_dropdown = value_signal;
+
+                        let dropdown_content = rsx! {
+                            div {
+                                class: "hi-search-suggestions-dropdown",
+                                for suggestion in suggestions_for_dropdown.iter() {
+                                    {
+                                        let suggestion_value = suggestion.clone();
+                                        let suggestion_for_click = suggestion.clone();
+                                        let suggestion_for_search = suggestion.clone();
+                                        let suggestion_for_handler = suggestion.clone();
+                                        let id_close = new_id.clone();
+                                        rsx! {
+                                            div {
+                                                class: "hi-search-suggestion-item",
+                                                onclick: move |e: MouseEvent| {
+                                                    e.stop_propagation();
+                                                    value_signal_for_dropdown.set(suggestion_for_click.clone());
+                                                    if let Some(ref handler) = on_suggestion_click {
+                                                        handler.call(suggestion_for_handler.clone());
+                                                    }
+                                                    on_search.call(suggestion_for_search.clone());
+                                                    portal_remove.call(id_close.clone());
+                                                },
+                                                Icon {
+                                                    icon: MdiIcon::Magnify,
+                                                    size: 14,
+                                                    class: "hi-search-suggestion-icon",
+                                                    color: String::new(),
                                                 }
-                                                on_search.call(suggestion_for_search.clone());
-                                                portal_remove.call(id_close.clone());
-                                            },
-                                            Icon {
-                                                icon: MdiIcon::Magnify,
-                                                size: 14,
-                                                class: "hi-search-suggestion-icon",
-                                                color: String::new(),
+                                                span { "{suggestion_value}" }
                                             }
-                                            span { "{suggestion_value}" }
                                         }
                                     }
                                 }
                             }
-                        }
-                    };
+                        };
 
-                    portal.add_entry.call(PortalEntry::Dropdown {
-                        id: new_id,
-                        strategy: PortalPositionStrategy::TriggerBased {
-                            placement: TriggerPlacement::BottomLeft,
-                        },
-                        mask_mode: PortalMaskMode::Transparent,
-                        children: dropdown_content,
-                        trigger_rect: trigger_rect_opt,
-                        close_on_select: true,
-                    });
-                }
-            },
-            oninput: move |e| {
-                let new_value = e.value();
-                value_signal.set(new_value.clone());
-                props.on_search.call(new_value);
-            },
-            onkeydown: move |e| {
-                if e.key() == Key::Enter {
-                    let id = dropdown_id();
-                    if !id.is_empty() {
-                        portal.remove_entry.call(id);
+                        portal.add_entry.call(PortalEntry::Dropdown {
+                            id: new_id,
+                            strategy: PortalPositionStrategy::TriggerBased {
+                                placement: TriggerPlacement::BottomLeft,
+                            },
+                            mask_mode: PortalMaskMode::Transparent,
+                            children: dropdown_content,
+                            trigger_rect: trigger_rect_opt,
+                            close_on_select: true,
+                        });
                     }
-                    props.on_search.call(value_signal());
-                }
-                if e.key() == Key::Escape {
-                    let id = dropdown_id();
-                    if !id.is_empty() {
-                        portal.remove_entry.call(id);
+                },
+                oninput: move |e| {
+                    let new_value = e.value();
+                    value_signal.set(new_value.clone());
+                    props.on_search.call(new_value);
+                },
+                onkeydown: move |e| {
+                    if e.key() == Key::Enter {
+                        let id = dropdown_id();
+                        if !id.is_empty() {
+                            portal.remove_entry.call(id);
+                        }
+                        props.on_search.call(value_signal());
                     }
-                }
-            },
+                    if e.key() == Key::Escape {
+                        let id = dropdown_id();
+                        if !id.is_empty() {
+                            portal.remove_entry.call(id);
+                        }
+                    }
+                },
+            }
         }
     };
 
@@ -266,39 +342,6 @@ pub fn Search(props: SearchProps) -> Element {
                     glow_blur: GlowBlur::None,
                     glow_intensity: GlowIntensity::Dim,
                     glow_color: GlowColor::Ghost,
-                }
-            }
-
-            // Voice input waveform overlay
-            if *is_voice_recording.read() {
-                VoiceWaveform {
-                    on_stop: move |_| {
-                        is_voice_recording.set(false);
-                    },
-                }
-            }
-        }
-    }
-}
-
-// Voice waveform component
-#[component]
-fn VoiceWaveform(on_stop: EventHandler) -> Element {
-    // Pre-calculate animation delays (in milliseconds for integer calculation)
-    let delays = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100];
-    rsx! {
-        div {
-            class: "hi-search-voice-overlay",
-            onclick: move |_| {
-                on_stop.call(());
-            },
-            div { class: "hi-search-voice-waveform",
-                // Waveform bars
-                for delay in delays.iter() {
-                    div {
-                        class: "hi-search-voice-bar",
-                        style: "animation-delay: {delay}ms",
-                    }
                 }
             }
         }

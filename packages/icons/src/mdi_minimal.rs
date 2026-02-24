@@ -23,14 +23,17 @@ pub enum MdiIcon {
 
     // Actions
     Magnify,
+    MagnifyPlus,
     Cog,
     Check,
     GestureTap,
     Translate,
+    Microphone,
 
     // Media / Playback
     Play,
     Pause,
+    Stop,
     VolumeHigh,
     VolumeMute,
     Fullscreen,
@@ -125,7 +128,6 @@ pub enum MdiIcon {
     ArrowExpandHorizontal,
     ChartTimeline,
     BookOpen,
-    MagnifyPlus,
 
     // Theme
     MoonWaningCrescent,
@@ -149,8 +151,10 @@ impl std::fmt::Display for MdiIcon {
             MdiIcon::Check => write!(f, "check"),
             MdiIcon::GestureTap => write!(f, "gesture-tap"),
             MdiIcon::Translate => write!(f, "translate"),
+            MdiIcon::Microphone => write!(f, "microphone"),
             MdiIcon::Play => write!(f, "play"),
             MdiIcon::Pause => write!(f, "pause"),
+            MdiIcon::Stop => write!(f, "stop"),
             MdiIcon::VolumeHigh => write!(f, "volume-high"),
             MdiIcon::VolumeMute => write!(f, "volume-mute"),
             MdiIcon::Fullscreen => write!(f, "fullscreen"),
@@ -247,8 +251,10 @@ impl std::convert::From<&str> for MdiIcon {
             "check" => MdiIcon::Check,
             "gesture-tap" => MdiIcon::GestureTap,
             "translate" => MdiIcon::Translate,
+            "microphone" => MdiIcon::Microphone,
             "play" => MdiIcon::Play,
             "pause" => MdiIcon::Pause,
+            "stop" => MdiIcon::Stop,
             "volume-high" => MdiIcon::VolumeHigh,
             "volume-mute" => MdiIcon::VolumeMute,
             "fullscreen" => MdiIcon::Fullscreen,

@@ -1,7 +1,7 @@
 // NumberInput Component Styles
-// Features: Borderless buttons, unified input styling, independent glow zones via Glow component
+// Uses InputWrapper for layout, only number-input-specific styles here
 
-@use '../../../../theme/styles/variables.scss'as vars;
+@use '../../../../theme/styles/variables.scss' as vars;
 
 // ============================================
 // Wrapper Styles
@@ -22,9 +22,7 @@
 
 .hi-number-input-wrapper:focus-within {
   border-color: var(--hi-color-primary);
-  box-shadow:
-    0 0 0 1px var(--hi-color-primary),
-    0 0 6px var(--hi-glow-color);
+  box-shadow: 0 0 0 1px var(--hi-color-primary), 0 0 6px var(--hi-glow-color);
 }
 
 // ============================================
@@ -154,7 +152,8 @@
 :where(.hi-number-input-wrapper) .hi-number-input-input:focus,
 :where(.hi-number-input-wrapper) .hi-number-input-input:focus-visible,
 .hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input:focus,
-.hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input:focus-visible {
+.hi-number-input-wrapper.hi-number-input-wrapper
+  .hi-number-input-input:focus-visible {
   border: none;
   outline: none;
   box-shadow: none;
@@ -162,28 +161,35 @@
 
 // Placeholder styles
 :where(.hi-number-input-wrapper) .hi-number-input-input::placeholder,
-.hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input::placeholder {
+.hi-number-input-wrapper.hi-number-input-wrapper
+  .hi-number-input-input::placeholder {
   color: var(--hi-color-text-secondary);
   opacity: 0.6;
 }
 
 // Remove spin buttons
-:where(.hi-number-input-wrapper) .hi-number-input-input::-webkit-outer-spin-button,
-:where(.hi-number-input-wrapper) .hi-number-input-input::-webkit-inner-spin-button,
-.hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input::-webkit-outer-spin-button,
-.hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input::-webkit-inner-spin-button {
+:where(.hi-number-input-wrapper)
+  .hi-number-input-input::-webkit-outer-spin-button,
+:where(.hi-number-input-wrapper)
+  .hi-number-input-input::-webkit-inner-spin-button,
+.hi-number-input-wrapper.hi-number-input-wrapper
+  .hi-number-input-input::-webkit-outer-spin-button,
+.hi-number-input-wrapper.hi-number-input-wrapper
+  .hi-number-input-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-:where(.hi-number-input-wrapper) .hi-number-input-input[type=number],
-.hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input[type=number] {
+:where(.hi-number-input-wrapper) .hi-number-input-input[type='number'],
+.hi-number-input-wrapper.hi-number-input-wrapper
+  .hi-number-input-input[type='number'] {
   appearance: textfield;
 }
 
 // Disabled state
 :where(.hi-number-input-wrapper) .hi-number-input-input:disabled,
-.hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input:disabled {
+.hi-number-input-wrapper.hi-number-input-wrapper
+  .hi-number-input-input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -227,33 +233,37 @@
 // Dark Theme Support
 // ============================================
 
-[data-theme="dark"] .hi-number-input-wrapper,
-[data-theme="tairitsu"] .hi-number-input-wrapper {
+[data-theme='dark'] .hi-number-input-wrapper,
+[data-theme='tairitsu'] .hi-number-input-wrapper {
   background-color: var(--hi-surface);
   border-color: var(--hi-border);
 }
 
-[data-theme="dark"] .hi-number-input-btn,
-[data-theme="tairitsu"] .hi-number-input-btn {
+[data-theme='dark'] .hi-number-input-btn,
+[data-theme='tairitsu'] .hi-number-input-btn {
   background-color: transparent;
   color: var(--hi-text-secondary);
 }
 
-[data-theme="dark"] .hi-number-input-btn:hover:not(:disabled),
-[data-theme="tairitsu"] .hi-number-input-btn:hover:not(:disabled) {
+[data-theme='dark'] .hi-number-input-btn:hover:not(:disabled),
+[data-theme='tairitsu'] .hi-number-input-btn:hover:not(:disabled) {
   background-color: var(--hi-color-white-5);
   color: var(--hi-color-primary);
 }
 
-[data-theme="dark"] .hi-number-input-btn:active:not(:disabled),
-[data-theme="tairitsu"] .hi-number-input-btn:active:not(:disabled) {
+[data-theme='dark'] .hi-number-input-btn:active:not(:disabled),
+[data-theme='tairitsu'] .hi-number-input-btn:active:not(:disabled) {
   background-color: var(--hi-color-primary);
   color: var(--hi-color-surface);
 }
 
-[data-theme="dark"] :where(.hi-number-input-wrapper) .hi-number-input-input,
-[data-theme="tairitsu"] :where(.hi-number-input-wrapper) .hi-number-input-input,
-[data-theme="dark"] .hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input,
-[data-theme="tairitsu"] .hi-number-input-wrapper.hi-number-input-wrapper .hi-number-input-input {
+[data-theme='dark'] :where(.hi-number-input-wrapper) .hi-number-input-input,
+[data-theme='tairitsu'] :where(.hi-number-input-wrapper) .hi-number-input-input,
+[data-theme='dark']
+  .hi-number-input-wrapper.hi-number-input-wrapper
+  .hi-number-input-input,
+[data-theme='tairitsu']
+  .hi-number-input-wrapper.hi-number-input-wrapper
+  .hi-number-input-input {
   color: var(--hi-text-primary);
 }

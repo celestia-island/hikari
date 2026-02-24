@@ -1,0 +1,249 @@
+// Input Wrapper Component Styles
+// Generic wrapper for input elements with left/right icons and buttons
+// Uses IconButton component for all icon elements
+//
+// Layout Guidelines:
+// - Items arranged horizontally with 4px gap
+// - All items vertically centered
+// - Input field takes remaining space
+// - Icon sizes: Small(24px), Medium(32px), Large(40px)
+
+@use '../../../../theme/styles/variables.scss' as vars;
+
+// ============================================
+// Wrapper Container
+// ============================================
+
+.hi-input-wrapper {
+  display: inline-flex;
+  align-items: center;
+  border-radius: vars.$hikari-radius-fui-lg;
+  border: 1px solid var(--hi-color-border);
+  background-color: var(--hi-color-surface);
+  overflow: hidden;
+  transition: all vars.$hikari-transition-fast;
+  width: 100%;
+  box-sizing: border-box;
+
+  // Focus state - applied when any child input is focused
+  &:has(.hi-input-wrapper-input input:focus) {
+    border-color: var(--hi-color-primary);
+    box-shadow:
+      0 0 0 1px var(--hi-color-primary),
+      0 0 6px var(--hi-glow-color);
+  }
+}
+
+.hi-input-wrapper-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+
+  .hi-input-wrapper-input input {
+    cursor: not-allowed;
+  }
+}
+
+// ============================================
+// Size Variants
+// ============================================
+
+.hi-input-wrapper-sm {
+  height: 32px;
+  border-radius: vars.$hikari-radius-fui-md;
+
+  .hi-input-wrapper-item {
+    // 24px icon button size
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.hi-input-wrapper-md {
+  height: 40px;
+
+  .hi-input-wrapper-item {
+    // 32px icon button size
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.hi-input-wrapper-lg {
+  height: 48px;
+  border-radius: vars.$hikari-radius-fui-lg;
+
+  .hi-input-wrapper-item {
+    // 40px icon button size
+    width: 40px;
+    height: 40px;
+  }
+}
+
+// ============================================
+// Left/Right Sections
+// ============================================
+
+.hi-input-wrapper-left,
+.hi-input-wrapper-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 100%;
+  gap: 4px; // Consistent 4px gap between items
+}
+
+.hi-input-wrapper-left {
+  padding-left: 4px;
+}
+
+.hi-input-wrapper-right {
+  padding-right: 4px;
+}
+
+// ============================================
+// Side Items (IconButtons)
+// ============================================
+
+.hi-input-wrapper-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  line-height: 1;
+
+  // IconButton is already styled, just ensure proper sizing
+  .hi-icon-button {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// ============================================
+// Input Section
+// ============================================
+
+.hi-input-wrapper-input {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-width: 48px;
+  height: 100%;
+
+  input {
+    flex: 1;
+    width: 100%;
+    min-width: 48px;
+    height: 100%;
+    padding: 0 vars.$hikari-spacing-xs;
+    margin: 0;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    color: var(--hi-color-text-primary);
+    font-size: vars.$hikari-font-size-sm;
+    text-align: left;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: 0;
+
+    &:focus {
+      border: none;
+      outline: none;
+      box-shadow: none;
+    }
+
+    &::placeholder {
+      color: var(--hi-color-text-secondary);
+      opacity: 0.6;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    // Remove search cancel button
+    &::-webkit-search-cancel-button,
+    &::-webkit-search-decoration {
+      -webkit-appearance: none;
+      appearance: none;
+    }
+  }
+}
+
+// ============================================
+// Multi-Icon Layout States
+// ============================================
+
+// When multiple icons are present in a section
+.hi-input-wrapper-left:has(> .hi-input-wrapper-item + .hi-input-wrapper-item),
+.hi-input-wrapper-right:has(> .hi-input-wrapper-item + .hi-input-wrapper-item) {
+  // Ensure proper spacing between multiple icons
+  gap: 2px;
+}
+
+// ============================================
+// Icon States (Visual Feedback)
+// ============================================
+
+// Default state - inherited from IconButton
+.hi-input-wrapper-item .hi-icon-button {
+  // Ghost variant default styles
+  color: var(--hi-color-text-secondary);
+  background-color: transparent;
+
+  // Hover state
+  &:hover:not(:disabled) {
+    color: var(--hi-color-primary);
+    background-color: var(--hi-color-black-5);
+  }
+
+  // Active/Pressed state
+  &:active:not(:disabled) {
+    transform: scale(0.92);
+  }
+
+  // Disabled state (for pure icon display)
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+    color: var(--hi-color-text-secondary);
+  }
+}
+
+// ============================================
+// Dark Theme Support
+// ============================================
+
+[data-theme="dark"] .hi-input-wrapper,
+[data-theme="tairitsu"] .hi-input-wrapper {
+  background-color: var(--hi-surface);
+  border-color: var(--hi-border);
+}
+
+[data-theme="dark"] .hi-input-wrapper-item .hi-icon-button,
+[data-theme="tairitsu"] .hi-input-wrapper-item .hi-icon-button {
+  color: var(--hi-text-secondary);
+
+  &:hover:not(:disabled) {
+    background-color: var(--hi-color-white-5);
+    color: var(--hi-color-primary);
+  }
+
+  &:disabled {
+    color: var(--hi-text-secondary);
+  }
+}
+
+[data-theme="dark"] .hi-input-wrapper-input input,
+[data-theme="tairitsu"] .hi-input-wrapper-input input {
+  color: var(--hi-text-primary);
+
+  &::placeholder {
+    color: var(--hi-text-secondary);
+  }
+}

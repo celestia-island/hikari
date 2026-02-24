@@ -14,6 +14,7 @@
 //! - [`Card`] - Content container with optional header
 //! - [`Image`] - Image with configurable fit modes
 //! - [`Input`] - Text input with styling support
+//! - [`InputWrapper`] - Generic wrapper for input with left/right icons
 //! - [`Select`] - Dropdown selection
 //! - [`Checkbox`] - Checkbox with animations
 //! - [`RadioGroup`] - Radio button group
@@ -41,6 +42,7 @@ pub mod form_field;
 pub mod icon_button;
 pub mod image;
 pub mod input;
+pub mod input_wrapper;
 pub mod radio_group;
 pub mod select;
 pub mod slider;
@@ -62,6 +64,7 @@ pub use form_field::*;
 pub use icon_button::*;
 pub use image::*;
 pub use input::*;
+pub use input_wrapper::*;
 pub use radio_group::*;
 pub use select::*;
 pub use slider::*;

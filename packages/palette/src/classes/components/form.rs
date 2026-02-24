@@ -331,6 +331,35 @@ impl UtilityClass for SearchClass {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum InputWrapperClass {
+    Wrapper,
+    SizeSm,
+    SizeMd,
+    SizeLg,
+    Disabled,
+    LeftSection,
+    RightSection,
+    InputSection,
+    SideItem,
+}
+
+impl UtilityClass for InputWrapperClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            InputWrapperClass::Wrapper => "input-wrapper",
+            InputWrapperClass::SizeSm => "input-wrapper-sm",
+            InputWrapperClass::SizeMd => "input-wrapper-md",
+            InputWrapperClass::SizeLg => "input-wrapper-lg",
+            InputWrapperClass::Disabled => "input-wrapper-disabled",
+            InputWrapperClass::LeftSection => "input-wrapper-left",
+            InputWrapperClass::RightSection => "input-wrapper-right",
+            InputWrapperClass::InputSection => "input-wrapper-input",
+            InputWrapperClass::SideItem => "input-wrapper-item",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TransferClass {
     Transfer,
     Operations,

@@ -33,6 +33,7 @@
 
     // 黑色透明度变体
     --hi-color-black-100: rgba(0, 0, 0, 1.0);
+    --hi-color-black-95: rgba(0, 0, 0, 0.95);
     --hi-color-black-50: rgba(0, 0, 0, 0.5);
     --hi-color-black-30: rgba(0, 0, 0, 0.3);
     --hi-color-black-20: rgba(0, 0, 0, 0.2);
@@ -45,6 +46,7 @@
 
     // 白色透明度（用于暗黑模式发光）
     --hi-color-white-100: rgba(255, 255, 255, 1.0);
+    --hi-color-white-95: rgba(255, 255, 255, 0.95);
     --hi-color-white-90: rgba(255, 255, 255, 0.9);
     --hi-color-white-70: rgba(255, 255, 255, 0.7);
     --hi-color-white-50: rgba(255, 255, 255, 0.5);
@@ -57,6 +59,7 @@
 
     // 黑色透明度（用于阴影、发光）
     --hi-color-black-100: rgba(0, 0, 0, 1.0);
+    --hi-color-black-95: rgba(0, 0, 0, 0.95);
     --hi-color-black-50: rgba(0, 0, 0, 0.5);
     --hi-color-black-30: rgba(0, 0, 0, 0.3);
     --hi-color-black-20: rgba(0, 0, 0, 0.2);
@@ -178,8 +181,8 @@
     --hi-card-bg: var(--hi-button-secondary);
     --hi-card-bg-light: rgba(255, 255, 255, 0.95);
 
-    // Overlay遮罩色（反色）
-    --hi-overlay-color: rgba(0, 0, 0, 0.5);
+    // Overlay遮罩色（反色）- 使用调色板变量，95%透明度
+    --hi-overlay-color: var(--hi-color-black-95);
 
     // 滚动条颜色
     --hi-scrollbar-thumb-hover: var(--hi-glow-color);
@@ -413,8 +416,8 @@ textarea {
         --hi-glow-button-warning: rgba(238, 214, 119, 0.8);
         --hi-glow-button-info: rgba(106, 190, 214, 0.8);
 
-        // 暗黑模式Overlay遮罩色（淡白色）
-        --hi-overlay-color: rgba(255, 255, 255, 0.5);
+        // 暗黑模式Overlay遮罩色（淡白色）- 使用调色板变量，95%透明度
+        --hi-overlay-color: var(--hi-color-white-95);
 
         // 暗黑模式Card背景色（黑色半透明）
         --hi-card-bg-light: rgba(0, 0, 0, 0.95);

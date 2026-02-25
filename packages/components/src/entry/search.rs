@@ -12,11 +12,14 @@ use wasm_bindgen::JsCast;
 
 use crate::{
     basic::{InputWrapper, InputWrapperItem, InputWrapperSize},
-    feedback::{GlowBlur, GlowColor, GlowIntensity},
-    hooks::use_voice_input::{use_voice_input, VoiceInputResult, is_speech_recognition_supported},
+    feedback::{GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement},
+    hooks::use_audio_recorder::{use_audio_recorder, AudioRecorderState, is_audio_recording_supported},
     portal::{generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement},
     styled::StyledComponent,
 };
+
+#[cfg(target_arch = "wasm32")]
+use animation::{AnimationBuilder, CssProperty};
 
 pub struct SearchComponent;
 
@@ -63,30 +66,67 @@ pub struct SearchProps {
 
 #[component]
 pub fn Search(props: SearchProps) -> Element {
-    let mut is_voice_recording = use_signal(|| false);
-    let mut voice_text = use_signal(String::new);
     let mut value_signal = use_signal(|| props.value.clone());
     let mut dropdown_id = use_signal(|| String::new());
     let mut container_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
     let portal = use_portal();
     
-    // Check if speech recognition is supported
-    let is_speech_supported = is_speech_recognition_supported();
+    // Voice input state
+    let mut is_voice_recording = use_signal(|| false);
+    let mut temp_transcript = use_signal(String::new);
+    
+    // Check if audio recording is supported
+    let is_speech_supported = is_audio_recording_supported();
 
-    // Voice input hook
-    let (_voice_state, start_voice, stop_voice, _) = use_voice_input(
-        Callback::new(move |result: VoiceInputResult| {
-            voice_text.set(result.text.clone());
-            if result.is_final {
-                value_signal.set(result.text.clone());
-                props.on_search.call(result.text);
-                is_voice_recording.set(false);
+    // Audio recorder hook
+    let (audio_state, audio_levels, start_recording, stop_recording, voice_transcript, _) = use_audio_recorder();
+    
+    // Store waveform bar DOM references
+    #[cfg(target_arch = "wasm32")]
+    let mut waveform_bars: Signal<std::collections::HashMap<String, wasm_bindgen::JsValue>> = use_signal(std::collections::HashMap::new);
+
+    // Sync recording state from audio_state
+    use_effect(move || {
+        let is_recording = matches!(audio_state(), AudioRecorderState::Recording);
+        is_voice_recording.set(is_recording);
+    });
+
+    // Update temp transcript when voice transcript changes
+    use_effect(move || {
+        let transcript = voice_transcript();
+        if !transcript.is_empty() {
+            temp_transcript.set(transcript.clone());
+        }
+    });
+
+    // Animate waveform bars
+    #[cfg(target_arch = "wasm32")]
+    {
+        use_effect(move || {
+            let levels = audio_levels().levels;
+            let bars = waveform_bars();
+            
+            if !bars.is_empty() {
+                let elements: std::collections::HashMap<String, wasm_bindgen::JsValue> = bars.clone();
+                
+                for (bar_name, _) in &elements {
+                    let bar_index: usize = bar_name.strip_prefix("bar_")
+                        .and_then(|s| s.parse().ok())
+                        .unwrap_or(0);
+                    
+                    if bar_index < levels.len() {
+                        let level = levels[bar_index];
+                        let height = std::cmp::max(4, (level * 40.0) as i32);
+                        
+                        AnimationBuilder::new(&elements)
+                            .add_style(bar_name, CssProperty::Height, format!("{}px", height))
+                            .add_style(bar_name, CssProperty::Transition, "height 0.08s ease-out")
+                            .apply();
+                    }
+                }
             }
-        }),
-        Callback::new(move |_error: String| {
-            is_voice_recording.set(false);
-        }),
-    );
+        });
+    }
 
     let wrapper_classes = ClassesBuilder::new()
         .add(SearchClass::Wrapper)
@@ -95,7 +135,7 @@ pub fn Search(props: SearchProps) -> Element {
 
     let current_value = value_signal();
 
-    // Filter suggestions based on current value
+    // Filter suggestions
     let filtered_suggestions: Vec<String> = if current_value.is_empty() {
         props.suggestions.clone()
     } else {
@@ -110,7 +150,7 @@ pub fn Search(props: SearchProps) -> Element {
     let has_clear_button = props.allow_clear && !current_value.is_empty() && !props.disabled;
     let has_suggestions = !filtered_suggestions.is_empty() && !current_value.is_empty();
 
-    // Left icon - pure icon display (decorative, always disabled)
+    // Left icon
     let left_items = vec![
         InputWrapperItem::icon(MdiIcon::Magnify)
     ];
@@ -119,10 +159,8 @@ pub fn Search(props: SearchProps) -> Element {
     let mut right_items: Vec<InputWrapperItem> = Vec::new();
 
     if props.loading {
-        // Loading spinner - pure icon display
         right_items.push(InputWrapperItem::icon(MdiIcon::Loading));
     } else if has_clear_button {
-        // Clear button - interactive
         right_items.push(InputWrapperItem::button(
             MdiIcon::Close,
             EventHandler::new(move |_| {
@@ -136,31 +174,47 @@ pub fn Search(props: SearchProps) -> Element {
                 }
             })
         ));
-    } else if props.voice_input {
-        // Voice input button - interactive
-        let is_recording_value = *is_voice_recording.read();
+    } else if props.voice_input && is_speech_supported {
+        // Voice input - show confirm/cancel buttons when recording
+        // Use is_voice_recording() to subscribe to changes
+        let is_recording = is_voice_recording();
         
-        if !is_speech_supported {
-            // Show warning icon if speech recognition not supported
-            right_items.push(InputWrapperItem::icon(MdiIcon::Alert));
-        } else {
+        if is_recording {
+            // Cancel button
             right_items.push(InputWrapperItem::button(
-                if is_recording_value { MdiIcon::Stop } else { MdiIcon::Microphone },
+                MdiIcon::Close,
                 EventHandler::new(move |_| {
-                    let current = *is_voice_recording.read();
-                    if current {
-                        stop_voice.call(());
-                        is_voice_recording.set(false);
-                    } else {
-                        voice_text.set(String::new());
-                        start_voice.call(());
-                        is_voice_recording.set(true);
+                    stop_recording.call(());
+                    temp_transcript.set(String::new());
+                })
+            ));
+            // Confirm button  
+            right_items.push(InputWrapperItem::button(
+                MdiIcon::Check,
+                EventHandler::new(move |_| {
+                    let transcript = temp_transcript();
+                    if !transcript.is_empty() {
+                        value_signal.set(transcript.clone());
+                        props.on_search.call(transcript.clone());
                     }
+                    stop_recording.call(());
+                    temp_transcript.set(String::new());
+                })
+            ));
+        } else {
+            // Microphone button - opens Popover
+            right_items.push(InputWrapperItem::button(
+                MdiIcon::Microphone,
+                EventHandler::new(move |_| {
+                    temp_transcript.set(String::new());
+                    start_recording.call(());
                 })
             ));
         }
+    } else if props.voice_input {
+        // Not supported
+        right_items.push(InputWrapperItem::icon(MdiIcon::Alert));
     } else {
-        // Search submit button - interactive
         right_items.push(InputWrapperItem::button(
             MdiIcon::ArrowRight,
             EventHandler::new(move |_| {
@@ -173,38 +227,36 @@ pub fn Search(props: SearchProps) -> Element {
         ));
     }
 
-    // Input element with embedded voice background
-    let is_recording = *is_voice_recording.read();
-    let voice_bg = if is_recording {
-        let text_len = current_value.len();
-        let position_class = if text_len > 20 {
-            "hi-search-voice-bg-right"
-        } else {
-            "hi-search-voice-bg-center"
-        };
+    // Voice input popover content (shown when recording)
+    #[cfg(target_arch = "wasm32")]
+    let voice_popover_content = if is_voice_recording() {
+        let levels = audio_levels().levels;
+        let transcript_text = temp_transcript();
         
         rsx! {
-            div {
-                class: "hi-search-voice-bg {position_class}",
-                onclick: move |_| {
-                    stop_voice.call(());
-                    is_voice_recording.set(false);
-                },
-                
-                // Waveform animation
-                div { class: "hi-search-voice-waveform",
-                    for delay in [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100].iter() {
+            div { class: "hi-search-voice-popover",
+                // Waveform
+                div { class: "hi-search-voice-popover-waveform",
+                    for (i, level) in levels.iter().enumerate() {
                         div {
-                            class: "hi-search-voice-bar",
-                            style: "animation-delay: {delay}ms",
+                            key: "{i}",
+                            class: "hi-search-voice-popover-bar",
+                            style: "height: {std::cmp::max(4, (*level * 40.0) as i32)}px",
+                            onmounted: move |evt| {
+                                if let Some(element) = evt.data().downcast::<web_sys::Element>() {
+                                    let mut bars = waveform_bars.write();
+                                    bars.insert(format!("bar_{}", i), element.into());
+                                }
+                            }
                         }
                     }
                 }
-                
-                // Voice text display
-                if !voice_text().is_empty() {
-                    div { class: "hi-search-voice-text",
-                        "{voice_text()}"
+                // Transcript
+                div { class: "hi-search-voice-popover-transcript",
+                    if transcript_text.is_empty() {
+                        "请说话..."
+                    } else {
+                        "{transcript_text}"
                     }
                 }
             }
@@ -212,11 +264,13 @@ pub fn Search(props: SearchProps) -> Element {
     } else {
         rsx! {}
     };
+    
+    #[cfg(not(target_arch = "wasm32"))]
+    let voice_popover_content = rsx! {};
 
     let input_element = rsx! {
         div {
             class: "hi-search-input-container",
-            { voice_bg }
             input {
                 r#type: "search",
                 value: "{current_value}",
@@ -226,7 +280,6 @@ pub fn Search(props: SearchProps) -> Element {
                     if has_suggestions {
                         let trigger_rect_opt = *container_rect.read();
                         
-                        // Close existing dropdown if any
                         let id = dropdown_id();
                         if !id.is_empty() {
                             portal.remove_entry.call(id.clone());
@@ -313,7 +366,8 @@ pub fn Search(props: SearchProps) -> Element {
         }
     };
 
-    rsx! {
+    // Main search component with optional voice popover
+    let search_component = rsx! {
         div {
             class: "{wrapper_classes}",
             style: "{props.style}",
@@ -344,8 +398,13 @@ pub fn Search(props: SearchProps) -> Element {
                     glow_color: GlowColor::Ghost,
                 }
             }
+            
+            // Voice popover (shown below search box when recording)
+            {voice_popover_content}
         }
-    }
+    };
+
+    search_component
 }
 
 impl StyledComponent for SearchComponent {

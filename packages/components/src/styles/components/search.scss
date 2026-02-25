@@ -254,14 +254,15 @@
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
+  width: 100%;
   margin-top: 4px;
-  padding: vars.$hikari-spacing-md;
+  padding: vars.$hikari-spacing-sm;
   background-color: var(--hi-color-surface);
   border: 1px solid var(--hi-color-border);
   border-radius: vars.$hikari-radius-fui-lg;
   box-shadow: 0 4px 16px var(--hi-color-black-15);
   z-index: 100;
+  box-sizing: border-box;
 }
 
 .hi-search-voice-popover-waveform {
@@ -269,15 +270,15 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  height: 60px;
+  height: 36px;
   width: 100%;
-  padding: vars.$hikari-spacing-sm 0;
+  padding: vars.$hikari-spacing-xs 0;
 }
 
 .hi-search-voice-popover-bar {
-  width: 4px;
-  min-height: 4px;
-  max-height: 56px;
+  width: 3px;
+  min-height: 3px;
+  max-height: 32px;
   background-color: var(--hi-color-primary);
   border-radius: 2px;
   transition: height 0.08s ease-out;
@@ -285,14 +286,14 @@
 }
 
 .hi-search-voice-popover-transcript {
-  min-height: 48px;
-  max-height: 120px;
+  min-height: 32px;
+  max-height: 64px;
   width: 100%;
-  padding: vars.$hikari-spacing-sm;
+  padding: vars.$hikari-spacing-xs;
   margin-top: vars.$hikari-spacing-xs;
   background-color: var(--hi-color-black-5);
   border-radius: vars.$hikari-radius-fui-md;
-  font-size: vars.$hikari-font-size-base;
+  font-size: vars.$hikari-font-size-sm;
   color: var(--hi-color-text-primary);
   text-align: center;
   overflow-y: auto;

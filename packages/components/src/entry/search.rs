@@ -12,7 +12,7 @@ use wasm_bindgen::JsCast;
 
 use crate::{
     basic::{InputWrapper, InputWrapperItem, InputWrapperSize},
-    feedback::{GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement},
+    feedback::{GlowBlur, GlowColor, GlowIntensity},
     hooks::use_audio_recorder::{use_audio_recorder, AudioRecorderState, is_audio_recording_supported},
     portal::{generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement},
     styled::StyledComponent,
@@ -27,39 +27,27 @@ pub struct SearchComponent;
 pub struct SearchProps {
     #[props(default)]
     pub value: String,
-
     #[props(default)]
     pub placeholder: String,
-
     #[props(default = false)]
     pub disabled: bool,
-
     #[props(default = false)]
     pub loading: bool,
-
     #[props(default = true)]
     pub allow_clear: bool,
-
     #[props(default)]
     pub suggestions: Vec<String>,
-
     pub on_search: EventHandler<String>,
-
     #[props(default)]
     pub on_clear: Option<EventHandler>,
-
     #[props(default)]
     pub on_suggestion_click: Option<EventHandler<String>>,
-
     #[props(default)]
     pub class: String,
-
     #[props(default)]
     pub style: String,
-
     #[props(default = true)]
     pub glow: bool,
-
     #[props(default = false)]
     pub voice_input: bool,
 }
@@ -175,12 +163,11 @@ pub fn Search(props: SearchProps) -> Element {
             })
         ));
     } else if props.voice_input && is_speech_supported {
-        // Voice input - show confirm/cancel buttons when recording
-        // Use is_voice_recording() to subscribe to changes
+        // Voice input - single button that changes based on state
         let is_recording = is_voice_recording();
         
         if is_recording {
-            // Cancel button
+            // Cancel button (X) to stop recording
             right_items.push(InputWrapperItem::button(
                 MdiIcon::Close,
                 EventHandler::new(move |_| {
@@ -188,21 +175,8 @@ pub fn Search(props: SearchProps) -> Element {
                     temp_transcript.set(String::new());
                 })
             ));
-            // Confirm button  
-            right_items.push(InputWrapperItem::button(
-                MdiIcon::Check,
-                EventHandler::new(move |_| {
-                    let transcript = temp_transcript();
-                    if !transcript.is_empty() {
-                        value_signal.set(transcript.clone());
-                        props.on_search.call(transcript.clone());
-                    }
-                    stop_recording.call(());
-                    temp_transcript.set(String::new());
-                })
-            ));
         } else {
-            // Microphone button - opens Popover
+            // Microphone button to start recording
             right_items.push(InputWrapperItem::button(
                 MdiIcon::Microphone,
                 EventHandler::new(move |_| {
@@ -241,7 +215,7 @@ pub fn Search(props: SearchProps) -> Element {
                         div {
                             key: "{i}",
                             class: "hi-search-voice-popover-bar",
-                            style: "height: {std::cmp::max(4, (*level * 40.0) as i32)}px",
+                            style: "height: {std::cmp::max(3, (*level * 32.0) as i32)}px",
                             onmounted: move |evt| {
                                 if let Some(element) = evt.data().downcast::<web_sys::Element>() {
                                     let mut bars = waveform_bars.write();
@@ -258,6 +232,21 @@ pub fn Search(props: SearchProps) -> Element {
                     } else {
                         "{transcript_text}"
                     }
+                }
+                // Confirm button in popover
+                button {
+                    class: "hi-search-voice-confirm-btn",
+                    onclick: move |_| {
+                        let transcript = temp_transcript();
+                        if !transcript.is_empty() {
+                            value_signal.set(transcript.clone());
+                            props.on_search.call(transcript.clone());
+                        }
+                        stop_recording.call(());
+                        temp_transcript.set(String::new());
+                    },
+                    Icon { icon: MdiIcon::Check, size: 20 }
+                    " 确认"
                 }
             }
         }
@@ -366,8 +355,7 @@ pub fn Search(props: SearchProps) -> Element {
         }
     };
 
-    // Main search component with optional voice popover
-    let search_component = rsx! {
+    rsx! {
         div {
             class: "{wrapper_classes}",
             style: "{props.style}",
@@ -402,9 +390,7 @@ pub fn Search(props: SearchProps) -> Element {
             // Voice popover (shown below search box when recording)
             {voice_popover_content}
         }
-    };
-
-    search_component
+    }
 }
 
 impl StyledComponent for SearchComponent {

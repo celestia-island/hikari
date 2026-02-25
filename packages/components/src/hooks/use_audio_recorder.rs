@@ -147,6 +147,8 @@ pub fn use_audio_recorder() -> (
                                 let win = win.clone();
                                 
                                 Closure::wrap(Box::new(move |stream: JsValue| {
+                                    web_sys::console::log_1(&"[use_audio_recorder] Microphone access granted, setting up audio...".into());
+                                    
                                     // Store stream for cleanup
                                     media_stream.set(Some(stream.clone()));
                                     
@@ -183,6 +185,7 @@ pub fn use_audio_recorder() -> (
                                                             }
                                                             
                                                             state.set(AudioRecorderState::Recording);
+                                                            web_sys::console::log_1(&"[use_audio_recorder] Recording started, state set to Recording".into());
                                                             
                                                             // Create visualization loop
                                                             let visualize = {
@@ -240,6 +243,11 @@ pub fn use_audio_recorder() -> (
                                                                             levels,
                                                                             volume: total_volume / 12.0,
                                                                         });
+                                                                        
+                                                                        // Debug log
+                                                                        if total_volume > 0.1 {
+                                                                            web_sys::console::log_1(&format!("[use_audio_recorder] Audio level: {:.2}", total_volume / 12.0).into());
+                                                                        }
                                                                     }
                                                                     
                                                                     // Request next frame
@@ -379,6 +387,7 @@ pub fn use_audio_recorder() -> (
     // Stop recording callback
     let stop_recording = {
         let mut state = state.clone();
+        let transcript = transcript.clone();
         let _audio_levels = audio_levels.clone();
         let _animation_frame_id = animation_frame_id.clone();
         let _media_stream = media_stream.clone();
@@ -391,6 +400,8 @@ pub fn use_audio_recorder() -> (
                 use web_sys::window;
                 use wasm_bindgen::JsCast;
                 use js_sys::Reflect;
+                
+                web_sys::console::log_1(&"[use_audio_recorder] Stopping recording...".into());
                 
                 // Cancel animation frame
                 if let Some(id) = animation_frame_id() {
@@ -437,6 +448,11 @@ pub fn use_audio_recorder() -> (
                 
                 // Reset final transcript for next session
                 final_transcript.set(String::new());
+                
+                // Reset transcript
+                transcript.set(String::new());
+                
+                web_sys::console::log_1(&"[use_audio_recorder] Recording stopped, state reset to Idle".into());
             }
             
             state.set(AudioRecorderState::Idle);

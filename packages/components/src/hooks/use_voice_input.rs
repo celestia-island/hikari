@@ -68,8 +68,8 @@ pub fn use_voice_input(
     // Start listening callback
     let start_listening = {
         let mut state = state.clone();
-        let on_result = on_result.clone();
-        let on_error = on_error.clone();
+        let _on_result = on_result.clone();
+        let _on_error = on_error.clone();
         
         Callback::new(move |_| {
             #[cfg(target_arch = "wasm32")]

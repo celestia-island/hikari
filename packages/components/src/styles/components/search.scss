@@ -22,7 +22,7 @@
 }
 
 // ============================================
-// Input Container (for embedded voice background)
+// Input Container (for embedded voice visualization)
 // ============================================
 
 .hi-search-input-container {
@@ -81,7 +81,7 @@
 }
 
 // ============================================
-// Voice Input Background (Embedded in input)
+// Voice Input Visualization (Transparent background)
 // ============================================
 
 .hi-search-voice-bg {
@@ -94,7 +94,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: rgba(var(--hi-color-surface-rgb, 255, 255, 255), 0.9);
+  background-color: transparent;
   border-radius: vars.$hikari-radius-fui-md;
   z-index: 1;
   cursor: pointer;
@@ -118,7 +118,7 @@
 }
 
 // ============================================
-// Voice Waveform
+// Voice Waveform (Real-time visualization)
 // ============================================
 
 .hi-search-voice-waveform {
@@ -126,32 +126,23 @@
   align-items: center;
   justify-content: center;
   gap: 3px;
-  height: 24px;
+  height: 32px;
   width: 100%;
+  background-color: transparent;
 }
 
 .hi-search-voice-bar {
   width: 3px;
-  height: 16px;
+  min-height: 4px;
+  max-height: 28px;
   background-color: var(--hi-color-primary);
   border-radius: 2px;
-  animation: hi-search-voice-bar 0.8s ease-in-out infinite;
-  opacity: 0.6;
-}
-
-@keyframes hi-search-voice-bar {
-  0%, 100% {
-    transform: scaleY(0.4);
-    opacity: 0.4;
-  }
-  50% {
-    transform: scaleY(1);
-    opacity: 0.8;
-  }
+  transition: height 0.08s ease-out;
+  opacity: 0.85;
 }
 
 // ============================================
-// Voice Text Display
+// Voice Text Display (No background)
 // ============================================
 
 .hi-search-voice-text {
@@ -161,9 +152,9 @@
   transform: translate(-50%, -50%);
   font-size: vars.$hikari-font-size-sm;
   color: var(--hi-color-text-primary);
-  background-color: rgba(var(--hi-color-surface-rgb, 255, 255, 255), 0.8);
-  padding: 2px 8px;
-  border-radius: vars.$hikari-radius-fui-sm;
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
   max-width: 70%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -249,13 +240,112 @@
   color: var(--hi-text-secondary);
 }
 
-[data-theme="dark"] .hi-search-voice-bg,
-[data-theme="tairitsu"] .hi-search-voice-bg {
-  background-color: rgba(var(--hi-surface-rgb, 30, 30, 30), 0.9);
-}
-
 [data-theme="dark"] .hi-search-voice-text,
 [data-theme="tairitsu"] .hi-search-voice-text {
-  background-color: rgba(var(--hi-surface-rgb, 30, 30, 30), 0.8);
+  color: var(--hi-text-primary);
+  background-color: transparent;
+}
+
+// ============================================
+// Voice Input Popover (Attached below search box)
+// ============================================
+
+.hi-search-voice-popover {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  padding: vars.$hikari-spacing-md;
+  background-color: var(--hi-color-surface);
+  border: 1px solid var(--hi-color-border);
+  border-radius: vars.$hikari-radius-fui-lg;
+  box-shadow: 0 4px 16px var(--hi-color-black-15);
+  z-index: 100;
+}
+
+.hi-search-voice-popover-waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 60px;
+  width: 100%;
+  padding: vars.$hikari-spacing-sm 0;
+}
+
+.hi-search-voice-popover-bar {
+  width: 4px;
+  min-height: 4px;
+  max-height: 56px;
+  background-color: var(--hi-color-primary);
+  border-radius: 2px;
+  transition: height 0.08s ease-out;
+  opacity: 0.9;
+}
+
+.hi-search-voice-popover-transcript {
+  min-height: 48px;
+  max-height: 120px;
+  width: 100%;
+  padding: vars.$hikari-spacing-sm;
+  margin-top: vars.$hikari-spacing-xs;
+  background-color: var(--hi-color-black-5);
+  border-radius: vars.$hikari-radius-fui-md;
+  font-size: vars.$hikari-font-size-base;
+  color: var(--hi-color-text-primary);
+  text-align: center;
+  overflow-y: auto;
+  word-break: break-word;
+}
+
+.hi-search-voice-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all vars.$hikari-transition-fast;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.hi-search-voice-btn-cancel {
+  background-color: var(--hi-color-error);
+  color: white;
+
+  &:hover {
+    background-color: var(--hi-color-error-dark, #d32f2f);
+  }
+}
+
+.hi-search-voice-btn-confirm {
+  background-color: var(--hi-color-success);
+  color: white;
+
+  &:hover {
+    background-color: var(--hi-color-success-dark, #388e3c);
+  }
+}
+
+// Dark theme support for popover
+[data-theme="dark"] .hi-search-voice-popover,
+[data-theme="tairitsu"] .hi-search-voice-popover {
+  background-color: var(--hi-surface);
+  border-color: var(--hi-border);
+}
+
+[data-theme="dark"] .hi-search-voice-popover-transcript,
+[data-theme="tairitsu"] .hi-search-voice-popover-transcript {
+  background-color: var(--hi-color-white-5);
   color: var(--hi-text-primary);
 }

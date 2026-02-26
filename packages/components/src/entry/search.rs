@@ -76,6 +76,10 @@ pub fn Search(props: SearchProps) -> Element {
     // Sync recording state from audio_state
     use_effect(move || {
         let is_recording = matches!(audio_state(), AudioRecorderState::Recording);
+        #[cfg(target_arch = "wasm32")]
+        {
+            web_sys::console::log_1(&format!("[Search] Syncing state - audio_state: {:?}, is_recording: {}", audio_state(), is_recording).into());
+        }
         is_voice_recording.set(is_recording);
     });
 
@@ -165,6 +169,11 @@ pub fn Search(props: SearchProps) -> Element {
     } else if props.voice_input && is_speech_supported {
         // Voice input - single button that changes based on state
         let is_recording = is_voice_recording();
+        
+        #[cfg(target_arch = "wasm32")]
+        {
+            let _ = web_sys::console::log_1(&format!("[Search] is_recording: {}", is_recording).into());
+        }
         
         if is_recording {
             // Cancel button (X) to stop recording

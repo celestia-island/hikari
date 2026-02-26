@@ -387,7 +387,7 @@ pub fn use_audio_recorder() -> (
     // Stop recording callback
     let stop_recording = {
         let mut state = state.clone();
-        let transcript = transcript.clone();
+        let mut transcript = transcript.clone();
         let _audio_levels = audio_levels.clone();
         let _animation_frame_id = animation_frame_id.clone();
         let _media_stream = media_stream.clone();

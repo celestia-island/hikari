@@ -73,7 +73,7 @@ pub fn Grid(
 /// Defines column span within a Grid.
 ///
 /// # Features
-/// - Responsive column spans
+/// - Responsive column spans (span, span_sm, span_md, span_lg)
 /// - Auto-width option
 /// - Offset support
 #[component]
@@ -85,6 +85,18 @@ pub fn Col(
     #[props(default)]
     span: Option<u8>,
 
+    /// Column span for mobile screens (< 768px)
+    #[props(default)]
+    span_sm: Option<u8>,
+
+    /// Column span for tablet screens (>= 768px)
+    #[props(default)]
+    span_md: Option<u8>,
+
+    /// Column span for desktop screens (>= 1024px)
+    #[props(default)]
+    span_lg: Option<u8>,
+
     /// Offset by N columns
     #[props(default)]
     offset: Option<u8>,
@@ -93,20 +105,34 @@ pub fn Col(
     #[props(default)]
     class: String,
 ) -> Element {
-    let style = if let Some(s) = span {
-        format!("grid-column: span {s};")
+    // Build responsive grid-column style
+    let mut style_parts = Vec::new();
+
+    // Base span (mobile first)
+    let base_span = span_sm.or(span).unwrap_or(12);
+    style_parts.push(format!("grid-column: span {base_span};"));
+
+    // Responsive spans using media query simulation via CSS custom properties
+    // We'll use a CSS approach with inline styles
+    let md_span = span_md.or(span).unwrap_or(base_span);
+    let lg_span = span_lg.or(span_md).or(span).unwrap_or(md_span);
+
+    // Build the style with responsive behavior using CSS grid-column
+    let style = if let Some(o) = offset {
+        format!("grid-column: {} / span {};", o + 1, base_span)
     } else {
-        "grid-column: auto;".to_string()
+        format!("grid-column: span {base_span};")
     };
 
-    let style = if let Some(o) = offset {
-        format!("{}grid-column-start: {};", style, o + 1)
-    } else {
-        style
-    };
+    // Add responsive classes for different breakpoints
+    let responsive_class = format!(
+        "col-responsive col-span-{} md:col-span-{} lg:col-span-{}",
+        base_span, md_span, lg_span
+    );
 
     let classes = ClassesBuilder::new()
         .add(GridClass::Col)
+        .add_raw(&responsive_class)
         .add_raw(&class)
         .build();
 

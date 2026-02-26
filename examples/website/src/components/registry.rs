@@ -46,7 +46,7 @@ use _components::{
         toast::{Toast, ToastVariant},
         tooltip::{Tooltip, TooltipPlacement},
     },
-    layout::{Direction, FlexBox, FlexGap},
+    layout::{Col, Direction, FlexBox, FlexGap, Grid, Row},
     navigation::{
         breadcrumb::{Breadcrumb, BreadcrumbItem},
         menu::{Menu, MenuItem, MenuMode},
@@ -156,45 +156,65 @@ pub fn render_component(component_type: ComponentType) -> Element {
 
                 // ========== Form / Input ==========
                 ("layer1", "form", Some("input")) => rsx! {
-                    div { class: flex_col_gap(),
-                        Input { placeholder: Some("Basic input".to_string()) }
-                        Input { placeholder: Some("Password".to_string()), input_type: Some("password".to_string()) }
-                        Input { placeholder: Some("Disabled".to_string()), disabled: true }
+                    Grid {
+                        Col { span_sm: 12, span_md: 6,
+                            div { class: flex_col_gap(),
+                                Input { placeholder: Some("Basic input".to_string()) }
+                                Input { placeholder: Some("Password".to_string()), input_type: Some("password".to_string()) }
+                                Input { placeholder: Some("Disabled".to_string()), disabled: true }
+                            }
+                        }
                     }
                 },
                 ("layer1", "form", Some("select")) => rsx! {
-                    div { class: flex_col_gap(),
-                        Select {
-                            placeholder: "Select city".to_string(),
-                            options: vec![
-                                SelectOption { label: "Beijing".to_string(), value: "bj".to_string() },
-                                SelectOption { label: "Shanghai".to_string(), value: "sh".to_string() },
-                                SelectOption { label: "Guangzhou".to_string(), value: "gz".to_string() },
-                            ],
+                    Grid {
+                        Col { span_sm: 12, span_md: 6,
+                            div { class: flex_col_gap(),
+                                Select {
+                                    placeholder: "Select city".to_string(),
+                                    options: vec![
+                                        SelectOption { label: "Beijing".to_string(), value: "bj".to_string() },
+                                        SelectOption { label: "Shanghai".to_string(), value: "sh".to_string() },
+                                        SelectOption { label: "Guangzhou".to_string(), value: "gz".to_string() },
+                                    ],
+                                }
+                            }
                         }
                     }
                 },
                 ("layer1", "form", Some("checkbox")) => rsx! {
-                    div { class: flex_col_gap(),
-                        Checkbox { checked: false, on_change: move |_| {}, "Remember me" }
-                        Checkbox { checked: true, on_change: move |_| {}, "Agree to terms" }
+                    Grid {
+                        Col { span_sm: 12, span_md: 6,
+                            div { class: flex_col_gap(),
+                                Checkbox { checked: false, on_change: move |_| {}, "Remember me" }
+                                Checkbox { checked: true, on_change: move |_| {}, "Agree to terms" }
+                            }
+                        }
                     }
                 },
                 ("layer1", "form", Some("radio")) => rsx! {
-                    div { class: flex_col_gap(),
-                        RadioGroup {
-                            name: "gender".to_string(),
-                            value: "male".to_string(),
-                            on_change: move |_| {},
-                            direction: RadioDirection::Horizontal,
-                            RadioButton { value: "male".to_string(), "Male" }
-                            RadioButton { value: "female".to_string(), "Female" }
+                    Grid {
+                        Col { span_sm: 12, span_md: 6,
+                            div { class: flex_col_gap(),
+                                RadioGroup {
+                                    name: "gender".to_string(),
+                                    value: "male".to_string(),
+                                    on_change: move |_| {},
+                                    direction: RadioDirection::Horizontal,
+                                    RadioButton { value: "male".to_string(), "Male" }
+                                    RadioButton { value: "female".to_string(), "Female" }
+                                }
+                            }
                         }
                     }
                 },
                 ("layer1", "form", _) => rsx! {
-                    div { class: flex_col_gap(),
-                        Input { placeholder: Some("Basic input".to_string()) }
+                    Grid {
+                        Col { span_sm: 12, span_md: 6,
+                            div { class: flex_col_gap(),
+                                Input { placeholder: Some("Basic input".to_string()) }
+                            }
+                        }
                     }
                 },
 
@@ -597,10 +617,14 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 ("layer1", "number_input", Some("basic")) => {
                     let mut value = use_signal(|| 0);
                     rsx! {
-                        div { class: flex_col_gap(),
-                            NumberInput {
-                                value: value(),
-                                on_change: move |v| value.set(v),
+                        Grid {
+                            Col { span_sm: 12, span_md: 6,
+                                div { class: flex_col_gap(),
+                                    NumberInput {
+                                        value: value(),
+                                        on_change: move |v| value.set(v),
+                                    }
+                                }
                             }
                         }
                     }
@@ -610,29 +634,33 @@ pub fn render_component(component_type: ComponentType) -> Element {
                     let mut v2 = use_signal(|| 50);
                     let mut v3 = use_signal(|| 100);
                     rsx! {
-                        div { class: flex_col_gap(),
-                            div { style: "display: flex; align-items: center; gap: 0.5rem;",
-                                span { style: "width: 60px; font-size: 14px; color: var(--hi-color-text-secondary);", "Small:" }
-                                NumberInput {
-                                    value: v1(),
-                                    on_change: move |v| v1.set(v),
-                                    size: NumberInputSize::Small,
-                                }
-                            }
-                            div { style: "display: flex; align-items: center; gap: 0.5rem;",
-                                span { style: "width: 60px; font-size: 14px; color: var(--hi-color-text-secondary);", "Medium:" }
-                                NumberInput {
-                                    value: v2(),
-                                    on_change: move |v| v2.set(v),
-                                    size: NumberInputSize::Medium,
-                                }
-                            }
-                            div { style: "display: flex; align-items: center; gap: 0.5rem;",
-                                span { style: "width: 60px; font-size: 14px; color: var(--hi-color-text-secondary);", "Large:" }
-                                NumberInput {
-                                    value: v3(),
-                                    on_change: move |v| v3.set(v),
-                                    size: NumberInputSize::Large,
+                        Grid {
+                            Col { span_sm: 12, span_md: 6,
+                                div { class: flex_col_gap(),
+                                    div { style: "display: flex; align-items: center; gap: 0.5rem;",
+                                        span { style: "width: 60px; font-size: 14px; color: var(--hi-color-text-secondary);", "Small:" }
+                                        NumberInput {
+                                            value: v1(),
+                                            on_change: move |v| v1.set(v),
+                                            size: NumberInputSize::Small,
+                                        }
+                                    }
+                                    div { style: "display: flex; align-items: center; gap: 0.5rem;",
+                                        span { style: "width: 60px; font-size: 14px; color: var(--hi-color-text-secondary);", "Medium:" }
+                                        NumberInput {
+                                            value: v2(),
+                                            on_change: move |v| v2.set(v),
+                                            size: NumberInputSize::Medium,
+                                        }
+                                    }
+                                    div { style: "display: flex; align-items: center; gap: 0.5rem;",
+                                        span { style: "width: 60px; font-size: 14px; color: var(--hi-color-text-secondary);", "Large:" }
+                                        NumberInput {
+                                            value: v3(),
+                                            on_change: move |v| v3.set(v),
+                                            size: NumberInputSize::Large,
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -640,11 +668,15 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 }
                 ("layer1", "number_input", Some("disabled")) => {
                     rsx! {
-                        div { class: flex_row_wrap(),
-                            NumberInput {
-                                value: 50,
-                                on_change: move |_| {},
-                                disabled: true,
+                        Grid {
+                            Col { span_sm: 12, span_md: 6,
+                                div { class: flex_row_wrap(),
+                                    NumberInput {
+                                        value: 50,
+                                        on_change: move |_| {},
+                                        disabled: true,
+                                    }
+                                }
                             }
                         }
                     }
@@ -652,16 +684,20 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 ("layer1", "number_input", Some("stepper")) => {
                     let mut value = use_signal(|| 50);
                     rsx! {
-                        div { class: flex_col_gap(),
-                            div { style: "display: flex; align-items: center; gap: 0.5rem;",
-                                span { style: "font-size: 14px; color: var(--hi-color-text-secondary);", "Value: {value()}" }
-                            }
-                            NumberInput {
-                                value: value(),
-                                on_change: move |v| value.set(v),
-                                min: Some(0),
-                                max: Some(100),
-                                step: 5,
+                        Grid {
+                            Col { span_sm: 12, span_md: 6,
+                                div { class: flex_col_gap(),
+                                    div { style: "display: flex; align-items: center; gap: 0.5rem;",
+                                        span { style: "font-size: 14px; color: var(--hi-color-text-secondary);", "Value: {value()}" }
+                                    }
+                                    NumberInput {
+                                        value: value(),
+                                        on_change: move |v| value.set(v),
+                                        min: Some(0),
+                                        max: Some(100),
+                                        step: 5,
+                                    }
+                                }
                             }
                         }
                     }
@@ -669,10 +705,14 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 ("layer1", "number_input", _) => {
                     let mut value = use_signal(|| 0);
                     rsx! {
-                        div { class: flex_col_gap(),
-                            NumberInput {
-                                value: value(),
-                                on_change: move |v| value.set(v),
+                        Grid {
+                            Col { span_sm: 12, span_md: 6,
+                                div { class: flex_col_gap(),
+                                    NumberInput {
+                                        value: value(),
+                                        on_change: move |v| value.set(v),
+                                    }
+                                }
                             }
                         }
                     }
@@ -682,50 +722,62 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 ("layer1", "search", Some("basic")) => {
                     let mut value = use_signal(|| String::new());
                     rsx! {
-                        Search {
-                            value: value(),
-                            placeholder: "Search...".to_string(),
-                            suggestions: vec![
-                                "Hikari Components".to_string(),
-                                "Rust Programming".to_string(),
-                                "Dioxus Framework".to_string(),
-                                "WebAssembly".to_string(),
-                            ],
-                            on_search: move |v| value.set(v),
-                            on_clear: Some(Callback::new(move |_| value.set(String::new()))),
+                        Grid {
+                            Col { span_sm: 12, span_md: 6,
+                                Search {
+                                    value: value(),
+                                    placeholder: "Search...".to_string(),
+                                    suggestions: vec![
+                                        "Hikari Components".to_string(),
+                                        "Rust Programming".to_string(),
+                                        "Dioxus Framework".to_string(),
+                                        "WebAssembly".to_string(),
+                                    ],
+                                    on_search: move |v| value.set(v),
+                                    on_clear: Some(Callback::new(move |_| value.set(String::new()))),
+                                }
+                            }
                         }
                     }
                 }
                 ("layer1", "search", Some("voice")) => {
                     let mut value = use_signal(|| String::new());
                     rsx! {
-                        Search {
-                            value: value(),
-                            placeholder: "Click microphone to search by voice...".to_string(),
-                            suggestions: vec![
-                                "Voice Command".to_string(),
-                                "Speech Recognition".to_string(),
-                                "Audio Input".to_string(),
-                            ],
-                            voice_input: true,
-                            on_search: move |v| value.set(v),
-                            on_clear: Some(Callback::new(move |_| value.set(String::new()))),
+                        Grid {
+                            Col { span_sm: 12, span_md: 6,
+                                Search {
+                                    value: value(),
+                                    placeholder: "Click microphone to search by voice...".to_string(),
+                                    suggestions: vec![
+                                        "Voice Command".to_string(),
+                                        "Speech Recognition".to_string(),
+                                        "Audio Input".to_string(),
+                                    ],
+                                    voice_input: true,
+                                    on_search: move |v| value.set(v),
+                                    on_clear: Some(Callback::new(move |_| value.set(String::new()))),
+                                }
+                            }
                         }
                     }
                 }
                 ("layer1", "search", _) => {
                     let mut value = use_signal(|| String::new());
                     rsx! {
-                        Search {
-                            value: value(),
-                            placeholder: "Search...".to_string(),
-                            suggestions: vec![
-                                "Hikari Components".to_string(),
-                                "Rust Programming".to_string(),
-                                "Dioxus Framework".to_string(),
-                            ],
-                            on_search: move |v| value.set(v),
-                            on_clear: Some(Callback::new(move |_| value.set(String::new()))),
+                        Grid {
+                            Col { span_sm: 12, span_md: 6,
+                                Search {
+                                    value: value(),
+                                    placeholder: "Search...".to_string(),
+                                    suggestions: vec![
+                                        "Hikari Components".to_string(),
+                                        "Rust Programming".to_string(),
+                                        "Dioxus Framework".to_string(),
+                                    ],
+                                    on_search: move |v| value.set(v),
+                                    on_clear: Some(Callback::new(move |_| value.set(String::new()))),
+                                }
+                            }
                         }
                     }
                 }
@@ -938,11 +990,15 @@ pub fn render_component(component_type: ComponentType) -> Element {
                 },
 
                 ("layer2", "form", Some("form")) => rsx! {
-                    div { class: flex_col_gap(), style: "max-width: 320px;",
-                        Input { placeholder: Some("Username".to_string()) }
-                        Input { placeholder: Some("Password".to_string()), input_type: Some("password".to_string()) }
-                        Checkbox { checked: false, on_change: move |_| {}, "Remember me" }
-                        Button { variant: ButtonVariant::Primary, block: true, "Submit" }
+                    Grid {
+                        Col { span_sm: 12, span_md: 6,
+                            div { class: flex_col_gap(),
+                                Input { placeholder: Some("Username".to_string()) }
+                                Input { placeholder: Some("Password".to_string()), input_type: Some("password".to_string()) }
+                                Checkbox { checked: false, on_change: move |_| {}, "Remember me" }
+                                Button { variant: ButtonVariant::Primary, block: true, "Submit" }
+                            }
+                        }
                     }
                 },
                 ("layer2", "form", Some("dropdown")) => rsx! {
@@ -998,8 +1054,12 @@ pub fn render_component(component_type: ComponentType) -> Element {
                     }
                 },
                 ("layer2", "form", _) => rsx! {
-                    div { class: flex_col_gap(), style: "max-width: 320px;",
-                        Input { placeholder: Some("Form components".to_string()) }
+                    Grid {
+                        Col { span_sm: 12, span_md: 6,
+                            div { class: flex_col_gap(),
+                                Input { placeholder: Some("Form components".to_string()) }
+                            }
+                        }
                     }
                 },
 
@@ -1031,10 +1091,12 @@ pub fn render_component(component_type: ComponentType) -> Element {
                     }
                 },
                 ("layer2", "feedback", Some("upload")) => rsx! {
-                    div { style: "width: 100%; max-width: 400px;",
-                        FileUpload {
-                            upload_text: "Click or drag file to upload".to_string(),
-                            multiple: true,
+                    Grid {
+                        Col { span_sm: 12, span_md: 6,
+                            FileUpload {
+                                upload_text: "Click or drag file to upload".to_string(),
+                                multiple: true,
+                            }
                         }
                     }
                 },
@@ -1051,46 +1113,48 @@ pub fn render_component(component_type: ComponentType) -> Element {
 
                 // ========== Layer 2 - Specific ==========
                 ("layer2", "cascader", _) => rsx! {
-                    div { style: "width: 100%; max-width: 300px;",
-                        Cascader {
-                            placeholder: "Select location".to_string(),
-                            size: CascaderSize::Md,
-                            options: vec![
-                                CascaderOption {
-                                    label: "Zhejiang".to_string(),
-                                    value: "zhejiang".to_string(),
-                                    children: Some(vec![
-                                        CascaderOption {
-                                            label: "Hangzhou".to_string(),
-                                            value: "hangzhou".to_string(),
-                                            ..Default::default()
-                                        },
-                                        CascaderOption {
-                                            label: "Ningbo".to_string(),
-                                            value: "ningbo".to_string(),
-                                            ..Default::default()
-                                        },
-                                    ]),
-                                    ..Default::default()
-                                },
-                                CascaderOption {
-                                    label: "Jiangsu".to_string(),
-                                    value: "jiangsu".to_string(),
-                                    children: Some(vec![
-                                        CascaderOption {
-                                            label: "Nanjing".to_string(),
-                                            value: "nanjing".to_string(),
-                                            ..Default::default()
-                                        },
-                                        CascaderOption {
-                                            label: "Suzhou".to_string(),
-                                            value: "suzhou".to_string(),
-                                            ..Default::default()
-                                        },
-                                    ]),
-                                    ..Default::default()
-                                },
-                            ],
+                    Grid {
+                        Col { span_sm: 12, span_md: 6,
+                            Cascader {
+                                placeholder: "Select location".to_string(),
+                                size: CascaderSize::Md,
+                                options: vec![
+                                    CascaderOption {
+                                        label: "Zhejiang".to_string(),
+                                        value: "zhejiang".to_string(),
+                                        children: Some(vec![
+                                            CascaderOption {
+                                                label: "Hangzhou".to_string(),
+                                                value: "hangzhou".to_string(),
+                                                ..Default::default()
+                                            },
+                                            CascaderOption {
+                                                label: "Ningbo".to_string(),
+                                                value: "ningbo".to_string(),
+                                                ..Default::default()
+                                            },
+                                        ]),
+                                        ..Default::default()
+                                    },
+                                    CascaderOption {
+                                        label: "Jiangsu".to_string(),
+                                        value: "jiangsu".to_string(),
+                                        children: Some(vec![
+                                            CascaderOption {
+                                                label: "Nanjing".to_string(),
+                                                value: "nanjing".to_string(),
+                                                ..Default::default()
+                                            },
+                                            CascaderOption {
+                                                label: "Suzhou".to_string(),
+                                                value: "suzhou".to_string(),
+                                                ..Default::default()
+                                            },
+                                        ]),
+                                        ..Default::default()
+                                    },
+                                ],
+                            }
                         }
                     }
                 },

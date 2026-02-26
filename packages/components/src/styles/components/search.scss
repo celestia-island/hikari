@@ -9,6 +9,7 @@
 
 .hi-search-wrapper {
   position: relative;
+  display: inline-block;
   width: 100%;
 }
 
@@ -23,7 +24,7 @@
 }
 
 // ============================================
-// Input Container (for embedded voice visualization)
+// Input Container
 // ============================================
 
 .hi-search-input-container {
@@ -82,89 +83,6 @@
 }
 
 // ============================================
-// Voice Input Visualization (Transparent background)
-// ============================================
-
-.hi-search-voice-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: transparent;
-  border-radius: vars.$hikari-radius-fui-md;
-  z-index: 1;
-  cursor: pointer;
-  pointer-events: auto;
-}
-
-// Position variants
-.hi-search-voice-bg-center {
-  // Default centered position
-}
-
-.hi-search-voice-bg-right {
-  justify-content: flex-end;
-  padding-right: 40px;
-  align-items: center;
-
-  .hi-search-voice-waveform {
-    justify-content: flex-end;
-    padding-right: 8px;
-  }
-}
-
-// ============================================
-// Voice Waveform (Real-time visualization)
-// ============================================
-
-.hi-search-voice-waveform {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  height: 32px;
-  width: 100%;
-  background-color: transparent;
-}
-
-.hi-search-voice-bar {
-  width: 3px;
-  min-height: 4px;
-  max-height: 28px;
-  background-color: var(--hi-color-primary);
-  border-radius: 2px;
-  transition: height 0.08s ease-out;
-  opacity: 0.85;
-}
-
-// ============================================
-// Voice Text Display (No background)
-// ============================================
-
-.hi-search-voice-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: vars.$hikari-font-size-sm;
-  color: var(--hi-color-text-primary);
-  background-color: transparent;
-  padding: 0;
-  border-radius: 0;
-  max-width: 70%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  pointer-events: none;
-  z-index: 3;
-}
-
-// ============================================
 // Loading Spinner
 // ============================================
 
@@ -218,6 +136,134 @@
 }
 
 // ============================================
+// Voice Input Popover (Portal-based)
+// ============================================
+
+.hi-search-voice-popover {
+  padding: vars.$hikari-spacing-sm;
+  background-color: var(--hi-color-surface);
+  border: 1px solid var(--hi-color-border);
+  border-radius: vars.$hikari-radius-fui-lg;
+  box-shadow: 0 4px 16px var(--hi-color-black-15);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.hi-search-voice-popover-waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 36px;
+  width: 100%;
+  padding: vars.$hikari-spacing-xs 0;
+}
+
+.hi-search-voice-popover-bar {
+  width: 3px;
+  height: 3px;
+  background-color: var(--hi-color-primary);
+  border-radius: 2px;
+  opacity: 0.9;
+  animation: voice-bar-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes voice-bar-pulse {
+  0%, 100% {
+    height: 3px;
+  }
+  50% {
+    height: 24px;
+  }
+}
+
+// Wrapper for transcript and confirm button
+.hi-search-voice-popover-transcript-wrapper {
+  display: flex;
+  align-items: center;
+  gap: vars.$hikari-spacing-xs;
+  margin-top: vars.$hikari-spacing-xs;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+// Container for scrolling text with gradient
+.hi-search-voice-popover-transcript-container {
+  position: relative;
+  flex: 1;
+  min-width: 0; // Allow flex item to shrink
+  height: 32px;
+  overflow: hidden;
+  background-color: var(--hi-color-black-5);
+  border-radius: vars.$hikari-radius-fui-md;
+}
+
+// Scroll area
+.hi-search-voice-popover-transcript-scroll {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  direction: rtl; // Right to left for scrolling from right
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// Text content
+.hi-search-voice-popover-transcript {
+  height: 32px;
+  padding: 0 vars.$hikari-spacing-sm;
+  font-size: vars.$hikari-font-size-sm;
+  color: var(--hi-color-text-primary);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  direction: ltr; // Reset text direction
+}
+
+// Left gradient - only visible when content overflows (scrolls left)
+.hi-search-voice-popover-transcript-container::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  background: linear-gradient(to right, var(--hi-color-black-5), transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+
+// Confirm button inside modal
+.hi-search-voice-popover-confirm-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--hi-color-primary);
+  color: white;
+  border: none;
+  border-radius: vars.$hikari-radius-fui-md;
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background-color: var(--hi-color-primary-hover);
+  }
+}
+
+// ============================================
 // Dark Theme Support
 // ============================================
 
@@ -241,105 +287,6 @@
   color: var(--hi-text-secondary);
 }
 
-[data-theme="dark"] .hi-search-voice-text,
-[data-theme="tairitsu"] .hi-search-voice-text {
-  color: var(--hi-text-primary);
-  background-color: transparent;
-}
-
-// ============================================
-// Voice Input Popover (Attached below search box)
-// ============================================
-
-.hi-search-voice-popover {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  margin-top: 4px;
-  padding: vars.$hikari-spacing-sm;
-  background-color: var(--hi-color-surface);
-  border: 1px solid var(--hi-color-border);
-  border-radius: vars.$hikari-radius-fui-lg;
-  box-shadow: 0 4px 16px var(--hi-color-black-15);
-  z-index: 100;
-  box-sizing: border-box;
-}
-
-.hi-search-voice-popover-waveform {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  height: 36px;
-  width: 100%;
-  padding: vars.$hikari-spacing-xs 0;
-}
-
-.hi-search-voice-popover-bar {
-  width: 3px;
-  min-height: 3px;
-  max-height: 32px;
-  background-color: var(--hi-color-primary);
-  border-radius: 2px;
-  transition: height 0.08s ease-out;
-  opacity: 0.9;
-}
-
-.hi-search-voice-popover-transcript {
-  min-height: 32px;
-  max-height: 64px;
-  width: 100%;
-  padding: vars.$hikari-spacing-xs;
-  margin-top: vars.$hikari-spacing-xs;
-  background-color: var(--hi-color-black-5);
-  border-radius: vars.$hikari-radius-fui-md;
-  font-size: vars.$hikari-font-size-sm;
-  color: var(--hi-color-text-primary);
-  text-align: center;
-  overflow-y: auto;
-  word-break: break-word;
-}
-
-.hi-search-voice-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all vars.$hikari-transition-fast;
-
-  &:hover {
-    transform: scale(1.05);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-}
-
-.hi-search-voice-btn-cancel {
-  background-color: var(--hi-color-error);
-  color: white;
-
-  &:hover {
-    background-color: var(--hi-color-error-dark, #d32f2f);
-  }
-}
-
-.hi-search-voice-btn-confirm {
-  background-color: var(--hi-color-success);
-  color: white;
-
-  &:hover {
-    background-color: var(--hi-color-success-dark, #388e3c);
-  }
-}
-
-// Dark theme support for popover
 [data-theme="dark"] .hi-search-voice-popover,
 [data-theme="tairitsu"] .hi-search-voice-popover {
   background-color: var(--hi-surface);

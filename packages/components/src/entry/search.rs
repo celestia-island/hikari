@@ -1,25 +1,32 @@
 // packages/components/src/entry/search.rs
 // Search component with Arknights + FUI styling
 // Features: Embedded icons/buttons, unified input styling, Glow effects, Voice input
-// Uses InputWrapper for consistent layout and Portal system for dropdown suggestions
+// Uses InputWrapper for consistent layout and Portal system for dropdown suggestions and voice input
 
 use dioxus::prelude::*;
 use icons::{Icon, MdiIcon};
 use palette::classes::{ClassesBuilder, SearchClass};
 
 #[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{JsCast, closure::Closure};
 
 use crate::{
-    basic::{InputWrapper, InputWrapperItem, InputWrapperSize},
+    basic::{
+        IconButton, IconButtonSize, IconButtonVariant, InputWrapper, InputWrapperItem,
+        InputWrapperSize,
+    },
     feedback::{GlowBlur, GlowColor, GlowIntensity},
-    hooks::use_audio_recorder::{use_audio_recorder, AudioRecorderState, is_audio_recording_supported},
-    portal::{generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement},
+    hooks::use_audio_recorder::{
+        AudioRecorderState, is_audio_recording_supported, use_audio_recorder,
+    },
+    portal::{
+        PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
+        use_portal,
+    },
     styled::StyledComponent,
 };
 
-#[cfg(target_arch = "wasm32")]
-use animation::{AnimationBuilder, CssProperty};
+use animation::style::{CssProperty, StyleStringBuilder};
 
 pub struct SearchComponent;
 
@@ -56,32 +63,19 @@ pub struct SearchProps {
 pub fn Search(props: SearchProps) -> Element {
     let mut value_signal = use_signal(|| props.value.clone());
     let mut dropdown_id = use_signal(|| String::new());
+    let mut voice_portal_id = use_signal(|| String::new());
     let mut container_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
     let portal = use_portal();
-    
+
     // Voice input state
-    let mut is_voice_recording = use_signal(|| false);
     let mut temp_transcript = use_signal(String::new);
-    
+
     // Check if audio recording is supported
     let is_speech_supported = is_audio_recording_supported();
 
     // Audio recorder hook
-    let (audio_state, audio_levels, start_recording, stop_recording, voice_transcript, _) = use_audio_recorder();
-    
-    // Store waveform bar DOM references
-    #[cfg(target_arch = "wasm32")]
-    let mut waveform_bars: Signal<std::collections::HashMap<String, wasm_bindgen::JsValue>> = use_signal(std::collections::HashMap::new);
-
-    // Sync recording state from audio_state
-    use_effect(move || {
-        let is_recording = matches!(audio_state(), AudioRecorderState::Recording);
-        #[cfg(target_arch = "wasm32")]
-        {
-            web_sys::console::log_1(&format!("[Search] Syncing state - audio_state: {:?}, is_recording: {}", audio_state(), is_recording).into());
-        }
-        is_voice_recording.set(is_recording);
-    });
+    let (audio_state, _audio_levels, start_recording, stop_recording, voice_transcript, _) =
+        use_audio_recorder();
 
     // Update temp transcript when voice transcript changes
     use_effect(move || {
@@ -91,34 +85,8 @@ pub fn Search(props: SearchProps) -> Element {
         }
     });
 
-    // Animate waveform bars
-    #[cfg(target_arch = "wasm32")]
-    {
-        use_effect(move || {
-            let levels = audio_levels().levels;
-            let bars = waveform_bars();
-            
-            if !bars.is_empty() {
-                let elements: std::collections::HashMap<String, wasm_bindgen::JsValue> = bars.clone();
-                
-                for (bar_name, _) in &elements {
-                    let bar_index: usize = bar_name.strip_prefix("bar_")
-                        .and_then(|s| s.parse().ok())
-                        .unwrap_or(0);
-                    
-                    if bar_index < levels.len() {
-                        let level = levels[bar_index];
-                        let height = std::cmp::max(4, (level * 40.0) as i32);
-                        
-                        AnimationBuilder::new(&elements)
-                            .add_style(bar_name, CssProperty::Height, format!("{}px", height))
-                            .add_style(bar_name, CssProperty::Transition, "height 0.08s ease-out")
-                            .apply();
-                    }
-                }
-            }
-        });
-    }
+    // Voice popover width
+    let voice_popover_width = 240;
 
     let wrapper_classes = ClassesBuilder::new()
         .add(SearchClass::Wrapper)
@@ -143,9 +111,7 @@ pub fn Search(props: SearchProps) -> Element {
     let has_suggestions = !filtered_suggestions.is_empty() && !current_value.is_empty();
 
     // Left icon
-    let left_items = vec![
-        InputWrapperItem::icon(MdiIcon::Magnify)
-    ];
+    let left_items = vec![InputWrapperItem::icon(MdiIcon::Magnify)];
 
     // Build right side items
     let mut right_items: Vec<InputWrapperItem> = Vec::new();
@@ -164,40 +130,43 @@ pub fn Search(props: SearchProps) -> Element {
                 if let Some(ref on_clear) = props.on_clear {
                     on_clear.call(());
                 }
-            })
+            }),
         ));
     } else if props.voice_input && is_speech_supported {
-        // Voice input - single button that changes based on state
-        let is_recording = is_voice_recording();
-        
-        #[cfg(target_arch = "wasm32")]
-        {
-            let _ = web_sys::console::log_1(&format!("[Search] is_recording: {}", is_recording).into());
-        }
-        
+        let is_recording = matches!(audio_state(), AudioRecorderState::Recording);
+
         if is_recording {
-            // Cancel button (X) to stop recording
+            // During recording: show close button to cancel
             right_items.push(InputWrapperItem::button(
                 MdiIcon::Close,
                 EventHandler::new(move |_| {
                     stop_recording.call(());
                     temp_transcript.set(String::new());
-                })
+                    // Remove voice portal
+                    let id = voice_portal_id();
+                    if !id.is_empty() {
+                        portal.remove_entry.call(id);
+                        voice_portal_id.set(String::new());
+                    }
+                }),
             ));
         } else {
-            // Microphone button to start recording
+            // Not recording: show microphone button
             right_items.push(InputWrapperItem::button(
                 MdiIcon::Microphone,
                 EventHandler::new(move |_| {
+                    // Clear temp_transcript for new recording session
                     temp_transcript.set(String::new());
+                    // Start recording
                     start_recording.call(());
-                })
+                }),
             ));
         }
     } else if props.voice_input {
-        // Not supported
+        // Voice input requested but not supported
         right_items.push(InputWrapperItem::icon(MdiIcon::Alert));
     } else {
+        // Default: show search button
         right_items.push(InputWrapperItem::button(
             MdiIcon::ArrowRight,
             EventHandler::new(move |_| {
@@ -206,65 +175,9 @@ pub fn Search(props: SearchProps) -> Element {
                     portal.remove_entry.call(id);
                 }
                 props.on_search.call(value_signal());
-            })
+            }),
         ));
     }
-
-    // Voice input popover content (shown when recording)
-    #[cfg(target_arch = "wasm32")]
-    let voice_popover_content = if is_voice_recording() {
-        let levels = audio_levels().levels;
-        let transcript_text = temp_transcript();
-        
-        rsx! {
-            div { class: "hi-search-voice-popover",
-                // Waveform
-                div { class: "hi-search-voice-popover-waveform",
-                    for (i, level) in levels.iter().enumerate() {
-                        div {
-                            key: "{i}",
-                            class: "hi-search-voice-popover-bar",
-                            style: "height: {std::cmp::max(3, (*level * 32.0) as i32)}px",
-                            onmounted: move |evt| {
-                                if let Some(element) = evt.data().downcast::<web_sys::Element>() {
-                                    let mut bars = waveform_bars.write();
-                                    bars.insert(format!("bar_{}", i), element.into());
-                                }
-                            }
-                        }
-                    }
-                }
-                // Transcript
-                div { class: "hi-search-voice-popover-transcript",
-                    if transcript_text.is_empty() {
-                        "请说话..."
-                    } else {
-                        "{transcript_text}"
-                    }
-                }
-                // Confirm button in popover
-                button {
-                    class: "hi-search-voice-confirm-btn",
-                    onclick: move |_| {
-                        let transcript = temp_transcript();
-                        if !transcript.is_empty() {
-                            value_signal.set(transcript.clone());
-                            props.on_search.call(transcript.clone());
-                        }
-                        stop_recording.call(());
-                        temp_transcript.set(String::new());
-                    },
-                    Icon { icon: MdiIcon::Check, size: 20 }
-                    " 确认"
-                }
-            }
-        }
-    } else {
-        rsx! {}
-    };
-    
-    #[cfg(not(target_arch = "wasm32"))]
-    let voice_popover_content = rsx! {};
 
     let input_element = rsx! {
         div {
@@ -277,7 +190,7 @@ pub fn Search(props: SearchProps) -> Element {
                 onfocus: move |_| {
                     if has_suggestions {
                         let trigger_rect_opt = *container_rect.read();
-                        
+
                         let id = dropdown_id();
                         if !id.is_empty() {
                             portal.remove_entry.call(id.clone());
@@ -364,6 +277,73 @@ pub fn Search(props: SearchProps) -> Element {
         }
     };
 
+    // Manage voice portal based on recording state
+    {
+        let mut voice_portal_id = voice_portal_id.clone();
+        let portal = portal.clone();
+        let container_rect = container_rect.clone();
+        let mut temp_transcript = temp_transcript.clone();
+        let mut value_signal = value_signal.clone();
+        let stop_recording = stop_recording.clone();
+        let on_search = props.on_search.clone();
+
+        use_effect(move || {
+            let is_recording = matches!(audio_state(), AudioRecorderState::Recording);
+            let current_id = voice_portal_id();
+            let trigger_rect = container_rect();
+
+            if is_recording && current_id.is_empty() {
+                // Start recording - create portal
+                let new_id = generate_portal_id();
+                voice_portal_id.set(new_id.clone());
+
+                let temp_transcript_for_content = temp_transcript.clone();
+                let mut temp_transcript_for_confirm = temp_transcript.clone();
+                let mut value_signal_for_confirm = value_signal.clone();
+                let stop_recording_for_confirm = stop_recording.clone();
+                let on_search_for_confirm = on_search.clone();
+                let portal_for_confirm = portal.clone();
+                let voice_portal_id_for_confirm = voice_portal_id.clone();
+
+                let voice_content = rsx! {
+                    VoicePopoverContent {
+                        transcript_signal: temp_transcript_for_content,
+                        width: voice_popover_width,
+                        on_confirm: Callback::new(move |_| {
+                            let transcript = temp_transcript_for_confirm();
+                            if !transcript.is_empty() {
+                                value_signal_for_confirm.set(transcript.clone());
+                                on_search_for_confirm.call(transcript.clone());
+                            }
+                            stop_recording_for_confirm.call(());
+                            temp_transcript_for_confirm.set(String::new());
+                            // Remove portal
+                            let id = voice_portal_id_for_confirm();
+                            if !id.is_empty() {
+                                portal_for_confirm.remove_entry.call(id);
+                            }
+                        }),
+                    }
+                };
+
+                portal.add_entry.call(PortalEntry::Dropdown {
+                    id: new_id,
+                    strategy: PortalPositionStrategy::TriggerBased {
+                        placement: TriggerPlacement::BottomLeft,
+                    },
+                    mask_mode: PortalMaskMode::Transparent,
+                    children: voice_content,
+                    trigger_rect,
+                    close_on_select: false,
+                });
+            } else if !is_recording && !current_id.is_empty() {
+                // Recording stopped - remove portal
+                portal.remove_entry.call(current_id);
+                voice_portal_id.set(String::new());
+            }
+        });
+    }
+
     rsx! {
         div {
             class: "{wrapper_classes}",
@@ -395,9 +375,58 @@ pub fn Search(props: SearchProps) -> Element {
                     glow_color: GlowColor::Ghost,
                 }
             }
-            
-            // Voice popover (shown below search box when recording)
-            {voice_popover_content}
+        }
+    }
+}
+
+/// Voice popover content component
+#[component]
+fn VoicePopoverContent(
+    transcript_signal: Signal<String>,
+    width: u32,
+    on_confirm: Callback<()>,
+) -> Element {
+    let transcript = transcript_signal();
+
+    rsx! {
+        div {
+            class: "hi-search-voice-popover",
+            style: StyleStringBuilder::new()
+                .add_px(CssProperty::Width, width)
+                .build_clean(),
+            // Waveform container - CSS animated bars
+            div { class: "hi-search-voice-popover-waveform",
+                for i in 0..12 {
+                    div {
+                        class: "hi-search-voice-popover-bar",
+                        style: format!("animation-delay: {}ms;", i * 100),
+                    }
+                }
+            }
+            // Transcript display with scroll and gradient
+            div { class: "hi-search-voice-popover-transcript-wrapper",
+                div { class: "hi-search-voice-popover-transcript-container",
+                    div { class: "hi-search-voice-popover-transcript-scroll",
+                        div { class: "hi-search-voice-popover-transcript",
+                            if transcript.is_empty() {
+                                "请说话..."
+                            } else {
+                                "{transcript}"
+                            }
+                        }
+                    }
+                }
+                // Confirm button
+                IconButton {
+                    icon: MdiIcon::Check,
+                    size: IconButtonSize::Medium,
+                    variant: IconButtonVariant::Ghost,
+                    glow: false,
+                    onclick: move |_| {
+                        on_confirm.call(());
+                    },
+                }
+            }
         }
     }
 }

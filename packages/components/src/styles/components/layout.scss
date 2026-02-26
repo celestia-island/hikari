@@ -72,9 +72,7 @@
   // Scrolled state (applied via JS)
   &.hi-layout-header-scrolled {
     background: var(--hi-card-bg);
-    box-shadow:
-      0 8px 16px rgba(23, 89, 168, 0.25),
-      0 0 30px var(--hi-primary);
+    box-shadow: 0 8px 16px rgba(23, 89, 168, 0.25), 0 0 30px var(--hi-primary);
   }
 }
 
@@ -175,7 +173,8 @@
     overflow-x: hidden;
 
     // Padding inside scrollable area (no left padding)
-    padding: vars.$hikari-spacing-md vars.$hikari-spacing-md vars.$hikari-spacing-md 0;
+    padding: vars.$hikari-spacing-md vars.$hikari-spacing-md
+      vars.$hikari-spacing-md 0;
 
     // Position relative for gradient overlays
     position: relative;
@@ -484,6 +483,34 @@
 }
 
 // ============================================
+// Responsive Grid Column Classes
+// ============================================
+
+// Generate col-span classes for 1-12
+@for $i from 1 through 12 {
+  .col-span-#{$i} {
+    grid-column: span #{$i};
+  }
+}
+
+// Responsive breakpoints
+@media (min-width: 768px) {
+  @for $i from 1 through 12 {
+    .md\:col-span-#{$i} {
+      grid-column: span #{$i} !important;
+    }
+  }
+}
+
+@media (min-width: 1024px) {
+  @for $i from 1 through 12 {
+    .lg\:col-span-#{$i} {
+      grid-column: span #{$i} !important;
+    }
+  }
+}
+
+// ============================================
 // Print Styles
 // ============================================
 
@@ -507,4 +534,32 @@
     background: white;
     box-shadow: none;
   }
+}
+
+// ============================================
+// Dropdown Portal Styles
+// ============================================
+
+.dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: auto;
+  z-index: 10000;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.dropdown-overlay-dimmed {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.dropdown {
+  background-color: var(--hi-color-surface);
+  border: 1px solid var(--hi-color-border);
+  border-radius: vars.$hikari-radius-fui-lg;
+  box-shadow: 0 4px 16px var(--hi-color-black-15);
+  box-sizing: border-box;
+  overflow: hidden;
 }

@@ -298,11 +298,11 @@ pub fn start_audio_recording() {
                                 Reflect::set(&recognition, &"interimResults".into(), &true.into());
 
                             // Use browser's current language setting for speech recognition
-                            let speech_lang = if let Some(lang) =
-                                web_sys::window().and_then(|w| w.navigator().language())
-                            {
+                            let speech_lang = if let Some(lang) = web_sys::window().and_then(|w| w.navigator().language()) {
+                                web_sys::console::log_1(&format!("[SpeechRecognition] Using browser language: {}", lang).into());
                                 lang
                             } else {
+                                web_sys::console::log_1(&"[SpeechRecognition] No browser language found, using en-US".into());
                                 "en-US".to_string() // Fallback to English
                             };
                             let _ = Reflect::set(&recognition, &"lang".into(), &speech_lang.into());

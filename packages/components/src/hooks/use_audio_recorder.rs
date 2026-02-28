@@ -297,10 +297,6 @@ pub fn start_audio_recording() {
 
                             let recognition_clone = recognition.clone();
                             let onresult = Closure::wrap(Box::new(move |event: JsValue| {
-                                web_sys::console::log_1(
-                                    &"[SpeechRecognition] onresult triggered".into(),
-                                );
-
                                 if let Some(results) = Reflect::get(&event, &"results".into()).ok()
                                 {
                                     let length = Reflect::get(&results, &"length".into())
@@ -308,11 +304,6 @@ pub fn start_audio_recording() {
                                         .and_then(|l| l.as_f64())
                                         .unwrap_or(0.0)
                                         as u32;
-
-                                    web_sys::console::log_1(
-                                        &format!("[SpeechRecognition] results length: {}", length)
-                                            .into(),
-                                    );
 
                                     let mut final_text = String::new();
                                     let mut interim_text = String::new();
@@ -331,8 +322,6 @@ pub fn start_audio_recording() {
                                                     .and_then(|t| t.as_string())
                                                     .unwrap_or_default();
 
-                                            web_sys::console::log_1(&format!("[SpeechRecognition] result[{}]: isFinal={}, transcript='{}'", i, is_final, transcript).into());
-
                                             if is_final {
                                                 final_text.push_str(&transcript);
                                             } else {
@@ -348,13 +337,6 @@ pub fn start_audio_recording() {
                                         } else {
                                             format!("{}{}", current, final_text)
                                         };
-                                        web_sys::console::log_1(
-                                            &format!(
-                                                "[SpeechRecognition] Setting transcript: '{}'",
-                                                new_transcript
-                                            )
-                                            .into(),
-                                        );
                                         ctx.transcript.set(new_transcript);
                                     }
                                 } else {

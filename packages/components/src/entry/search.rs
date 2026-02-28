@@ -176,7 +176,7 @@ pub fn Search(props: SearchProps) -> Element {
                     start_audio_recording();
                 }),
                 disabled: false,
-                icon_color: Some("rgb(107, 114, 128)".to_string()),
+                icon_color: None, // Use default theme color like other icon buttons
             });
         }
     } else if props.voice_input {

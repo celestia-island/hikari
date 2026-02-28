@@ -141,7 +141,7 @@ pub fn IconButton(props: IconButtonProps) -> Element {
                 icon: props.icon,
                 size: icon_size,
                 class: "{icon_classes}",
-                color: props.icon_color.clone().unwrap_or_default(),
+                color: props.icon_color.clone().unwrap_or_else(|| "inherit".to_string()),
             }
         }
     };

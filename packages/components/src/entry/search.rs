@@ -65,6 +65,27 @@ pub fn Search(props: SearchProps) -> Element {
     let is_speech_supported = is_audio_recording_supported();
     let audio_ctx = use_audio_recorder();
 
+    // Force re-render when audio state changes
+    let audio_state = audio_ctx.state.read().clone();
+    let is_recording = matches!(
+        audio_state,
+        AudioRecorderState::Recording | AudioRecorderState::RequestingPermission
+    );
+
+    // Force re-render when audio_levels change during recording
+    if is_recording {
+        let _ = audio_ctx.audio_levels.read().clone();
+    }
+
+    // Listen to transcript changes and update value_signal in real-time during recording
+    if is_recording {
+        let transcript = audio_ctx.transcript.read().clone();
+        // Append new transcript to current value
+        if !transcript.is_empty() && value_signal() != transcript {
+            value_signal.set(transcript.clone());
+        }
+    }
+
     let wrapper_classes = ClassesBuilder::new()
         .add(SearchClass::Wrapper)
         .add_raw(&props.class)
@@ -115,51 +136,48 @@ pub fn Search(props: SearchProps) -> Element {
         );
 
         if is_active {
-            // Recording - show microphone with dynamic color based on volume
-            // Read audio levels directly to trigger re-renders when they change
+            // Recording - show microphone with dynamic color
+            // Yellow when silent → Green when speaking
             let audio_levels = audio_ctx.audio_levels.read().clone();
 
-            let mic_color = if audio_levels.volume > 0.0 {
-                let intensity = (audio_levels.volume * 2.0).min(1.0);
+            // Yellow (silent): rgb(241, 196, 15)
+            // Green (loud): rgb(46, 204, 113)
+            let yellow_r = 241u8;
+            let yellow_g = 196u8;
+            let yellow_b = 15u8;
 
-                // Add pulsing effect using audio level changes
-                // The color will update as audio levels change
-                format!(
-                    "rgb({}, {}, {})",
-                    (46.0 + 158.0 * intensity) as u8,
-                    (204.0 * intensity) as u8,
-                    (113.0 * intensity) as u8
-                )
-            } else {
-                String::new()
-            };
+            let green_r = 46u8;
+            let green_g = 204u8;
+            let green_b = 113u8;
+
+            let intensity = (audio_levels.volume * 2.0).min(1.0);
+
+            // Mix yellow to green based on volume
+            let r = (yellow_r as f32 * (1.0 - intensity) + green_r as f32 * intensity) as u8;
+            let g = (yellow_g as f32 * (1.0 - intensity) + green_g as f32 * intensity) as u8;
+            let b = (yellow_b as f32 * (1.0 - intensity) + green_b as f32 * intensity) as u8;
+
+            let mic_color = format!("rgb({}, {}, {})", r, g, b);
 
             right_items.push(InputWrapperItem::button_with_color(
                 MdiIcon::Microphone,
                 EventHandler::new(move |_| {
-                    #[cfg(target_arch = "wasm32")]
-                    {
-                        web_sys::console::log_1(
-                            &"[Search] Microphone button clicked (recording)".into(),
-                        );
-                    }
                     clear_transcript();
                     stop_audio_recording();
                 }),
                 mic_color,
             ));
         } else {
-            // Not recording - show normal microphone button
-            right_items.push(InputWrapperItem::button(
-                MdiIcon::Microphone,
-                EventHandler::new(move |_| {
-                    #[cfg(target_arch = "wasm32")]
-                    {
-                        web_sys::console::log_1(&"[Search] Microphone button clicked".into());
-                    }
+            // Not recording - show normal microphone button with default theme color
+            // Use a specific color value to avoid hover color change
+            right_items.push(InputWrapperItem::Button {
+                icon: MdiIcon::Microphone,
+                onclick: EventHandler::new(move |_| {
                     start_audio_recording();
                 }),
-            ));
+                disabled: false,
+                icon_color: Some("rgb(107, 114, 128)".to_string()),
+            });
         }
     } else if props.voice_input {
         right_items.push(InputWrapperItem::icon(MdiIcon::Alert));

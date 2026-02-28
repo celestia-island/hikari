@@ -293,7 +293,14 @@ pub fn start_audio_recording() {
                             let _ = Reflect::set(&recognition, &"continuous".into(), &true.into());
                             let _ =
                                 Reflect::set(&recognition, &"interimResults".into(), &true.into());
-                            let _ = Reflect::set(&recognition, &"lang".into(), &"en-US".into());
+                            
+                            // Use browser's current language setting for speech recognition
+                            let lang = if let Some(navigator) = web_sys::window().and_then(|w| w.navigator().language()) {
+                                lang
+                            } else {
+                                "en-US".to_string() // Fallback to English
+                            };
+                            let _ = Reflect::set(&recognition, &"lang".into(), &lang.into());
 
                             let recognition_clone = recognition.clone();
                             let onresult = Closure::wrap(Box::new(move |event: JsValue| {

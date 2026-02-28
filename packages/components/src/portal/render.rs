@@ -391,9 +391,8 @@ fn DropdownPortalEntry(
     });
 
     // Use trigger_rect width if available, otherwise default to 200.0
-    let element_width = use_signal(move || {
-        trigger_rect.map(|(_, _, width, _)| width).unwrap_or(200.0)
-    });
+    let element_width =
+        use_signal(move || trigger_rect.map(|(_, _, width, _)| width).unwrap_or(200.0));
 
     let _position_style = use_memo(move || {
         let viewport_w = *viewport_width.read();

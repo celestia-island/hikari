@@ -288,14 +288,19 @@ pub fn start_audio_recording() {
                         .ok();
 
                     if let Some(sr_ctor) = SpeechRecognition {
+                        web_sys::console::log_1(
+                            &"[SpeechRecognition] API found, initializing...".into(),
+                        );
                         let sr_ctor_fn: Function = sr_ctor.unchecked_into();
                         if let Ok(recognition) = Reflect::construct(&sr_ctor_fn, &Array::new()) {
                             let _ = Reflect::set(&recognition, &"continuous".into(), &true.into());
                             let _ =
                                 Reflect::set(&recognition, &"interimResults".into(), &true.into());
-                            
+
                             // Use browser's current language setting for speech recognition
-                            let speech_lang = if let Some(lang) = web_sys::window().and_then(|w| w.navigator().language()) {
+                            let speech_lang = if let Some(lang) =
+                                web_sys::window().and_then(|w| w.navigator().language())
+                            {
                                 lang
                             } else {
                                 "en-US".to_string() // Fallback to English
@@ -361,6 +366,9 @@ pub fn start_audio_recording() {
                             onresult.forget();
 
                             let onend = Closure::wrap(Box::new(move || {
+                                web_sys::console::log_1(
+                                    &"[SpeechRecognition] onend triggered".into(),
+                                );
                                 if let Some(mut ctx) = get_context() {
                                     ctx.state.set(AudioRecorderState::Idle);
                                     ctx.transcript.set(String::new());
@@ -368,6 +376,9 @@ pub fn start_audio_recording() {
                                         levels: [0.0; 12],
                                         volume: 0.0,
                                     });
+                                    web_sys::console::log_1(
+                                        &"[SpeechRecognition] State reset to Idle".into(),
+                                    );
                                 }
                             })
                                 as Box<dyn FnMut()>);
@@ -384,10 +395,17 @@ pub fn start_audio_recording() {
                             if let Some(start) = Reflect::get(&recognition, &"start".into()).ok() {
                                 let start_fn: Function = start.unchecked_into();
                                 let _ = start_fn.call0(&recognition);
+                                web_sys::console::log_1(
+                                    &"[SpeechRecognition] Started successfully".into(),
+                                );
                             }
 
                             AUDIO_RECOGNITION.with(|r| *r.borrow_mut() = Some(recognition));
                         }
+                    } else {
+                        web_sys::console::log_1(
+                            &"[SpeechRecognition] API not found in this browser".into(),
+                        );
                     }
 
                     if let Some(mut ctx) = get_context() {
@@ -422,6 +440,8 @@ pub fn stop_audio_recording() {
         use js_sys::{Function, Reflect};
         use wasm_bindgen::JsCast;
 
+        web_sys::console::log_1(&"[stop_audio_recording] Stopping...".into());
+
         AUDIO_STREAM.with(|s| {
             if let Some(stream) = s.borrow().clone() {
                 if let Some(tracks) = Reflect::get(&stream, &"getTracks".into()).ok() {
@@ -445,6 +465,9 @@ pub fn stop_audio_recording() {
 
         AUDIO_RECOGNITION.with(|r| {
             if let Some(recognition) = r.borrow().clone() {
+                web_sys::console::log_1(
+                    &"[stop_audio_recording] Calling recognition.stop()".into(),
+                );
                 if let Some(stop) = Reflect::get(&recognition, &"stop".into()).ok() {
                     let stop_fn: Function = stop.unchecked_into();
                     let _ = stop_fn.call0(&recognition);

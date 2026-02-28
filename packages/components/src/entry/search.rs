@@ -11,7 +11,10 @@ use palette::classes::{ClassesBuilder, SearchClass};
 use wasm_bindgen::JsCast;
 
 use crate::{
-    basic::{InputWrapper, InputWrapperItem, InputWrapperSize},
+    basic::{
+        IconButton, IconButtonSize, IconButtonVariant, InputWrapper, InputWrapperItem,
+        InputWrapperSize,
+    },
     feedback::{GlowBlur, GlowColor, GlowIntensity},
     hooks::use_audio_recorder::{
         AudioRecorderState, clear_transcript, is_audio_recording_supported, start_audio_recording,
@@ -65,14 +68,25 @@ pub fn Search(props: SearchProps) -> Element {
     let is_speech_supported = is_audio_recording_supported();
     let audio_ctx = use_audio_recorder();
 
-    // Force re-render when audio state changes
+    // Read state signal to establish reactive dependency
     let audio_state = audio_ctx.state.read().clone();
     let is_recording = matches!(
         audio_state,
         AudioRecorderState::Recording | AudioRecorderState::RequestingPermission
     );
 
-    // Force re-render when audio_levels change during recording
+    #[cfg(target_arch = "wasm32")]
+    {
+        web_sys::console::log_1(
+            &format!(
+                "[Search] Rendering with state: {:?}, is_recording: {}",
+                audio_state, is_recording
+            )
+            .into(),
+        );
+    }
+
+    // Read audio_levels signal during recording to establish reactive dependency
     if is_recording {
         let _ = audio_ctx.audio_levels.read().clone();
     }
@@ -159,25 +173,30 @@ pub fn Search(props: SearchProps) -> Element {
 
             let mic_color = format!("rgb({}, {}, {})", r, g, b);
 
-            right_items.push(InputWrapperItem::button_with_color(
-                MdiIcon::Microphone,
-                EventHandler::new(move |_| {
-                    clear_transcript();
-                    stop_audio_recording();
-                }),
-                mic_color,
-            ));
+            right_items.push(InputWrapperItem::custom(rsx! {
+                IconButton {
+                    icon: MdiIcon::Microphone,
+                    size: IconButtonSize::Medium,
+                    variant: IconButtonVariant::Ghost,
+                    icon_color: mic_color,
+                    onclick: move |_| {
+                        clear_transcript();
+                        stop_audio_recording();
+                    },
+                }
+            }));
         } else {
             // Not recording - show normal microphone button with default theme color
-            // Use a specific color value to avoid hover color change
-            right_items.push(InputWrapperItem::Button {
-                icon: MdiIcon::Microphone,
-                onclick: EventHandler::new(move |_| {
-                    start_audio_recording();
-                }),
-                disabled: false,
-                icon_color: None, // Use default theme color like other icon buttons
-            });
+            right_items.push(InputWrapperItem::custom(rsx! {
+                IconButton {
+                    icon: MdiIcon::Microphone,
+                    size: IconButtonSize::Medium,
+                    variant: IconButtonVariant::Ghost,
+                    onclick: move |_| {
+                        start_audio_recording();
+                    },
+                }
+            }));
         }
     } else if props.voice_input {
         right_items.push(InputWrapperItem::icon(MdiIcon::Alert));

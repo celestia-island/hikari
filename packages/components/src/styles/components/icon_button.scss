@@ -246,10 +246,13 @@
     }
   }
 
-  // Ghost variant icon color
+  // Ghost variant icon color - inherit from button or use inline style
+  // Don't force a color, allow inline styles to take precedence
   &.hi-icon-button-ghost .hi-icon-button-icon,
   &.hi-icon-button-borderless .hi-icon-button-icon {
-    color: var(--hi-color-text-primary);
+    // Use inherit to allow custom colors from icon_color prop
+    // If no custom color is set, it will inherit from the button's color
+    color: inherit;
   }
 
   // Solid variants - use appropriate text color
@@ -275,6 +278,12 @@
   &.hi-icon-button-danger:hover:not(:disabled) .hi-icon-button-icon,
   &.hi-icon-button-success:hover:not(:disabled) .hi-icon-button-icon {
     opacity: 0.9;
+  }
+  
+  // Ghost variant hover - keep the same color (no change)
+  &.hi-icon-button-ghost:hover:not(:disabled) .hi-icon-button-icon,
+  &.hi-icon-button-borderless:hover:not(:disabled) .hi-icon-button-icon {
+    // Color stays the same on hover
   }
 
   .hi-icon-button-disabled {

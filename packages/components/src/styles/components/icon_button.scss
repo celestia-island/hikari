@@ -127,6 +127,7 @@
 
     &:hover:not(:disabled) {
       background-color: var(--hi-color-gray-10, rgba(128, 128, 128, 0.1));
+      // Don't change icon color on hover - keep the custom color if set
     }
 
     &:active:not(:disabled) {

@@ -360,9 +360,8 @@ pub fn start_audio_recording() {
                                 Reflect::set(&recognition_clone, &"onresult".into(), &onresult_js);
                             onresult.forget();
 
-                            let recognition_for_end = recognition.clone();
                             let onend = Closure::wrap(Box::new(move || {
-                                if let Some(ctx) = get_context() {
+                                if let Some(mut ctx) = get_context() {
                                     ctx.state.set(AudioRecorderState::Idle);
                                     ctx.transcript.set(String::new());
                                     ctx.audio_levels.set(AudioLevelData {

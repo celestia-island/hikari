@@ -293,7 +293,7 @@ pub fn start_audio_recording() {
                             let _ = Reflect::set(&recognition, &"continuous".into(), &true.into());
                             let _ =
                                 Reflect::set(&recognition, &"interimResults".into(), &true.into());
-                            let _ = Reflect::set(&recognition, &"lang".into(), &"zh-CN".into());
+                            let _ = Reflect::set(&recognition, &"lang".into(), &"en-US".into());
 
                             let recognition_clone = recognition.clone();
                             let onresult = Closure::wrap(Box::new(move |event: JsValue| {

@@ -355,21 +355,13 @@ pub fn start_audio_recording() {
 
                             let recognition_for_end = recognition.clone();
                             let onend = Closure::wrap(Box::new(move || {
-                                web_sys::console::log_1(
-                                    &"[SpeechRecognition] onend triggered".into(),
-                                );
                                 if let Some(ctx) = get_context() {
-                                    if matches!(
-                                        ctx.state.read().clone(),
-                                        AudioRecorderState::Recording
-                                    ) {
-                                        if let Some(start) =
-                                            Reflect::get(&recognition_for_end, &"start".into()).ok()
-                                        {
-                                            let start_fn: Function = start.unchecked_into();
-                                            let _ = start_fn.call0(&recognition_for_end);
-                                        }
-                                    }
+                                    ctx.state.set(AudioRecorderState::Idle);
+                                    ctx.transcript.set(String::new());
+                                    ctx.audio_levels.set(AudioLevelData {
+                                        levels: [0.0; 12],
+                                        volume: 0.0,
+                                    });
                                 }
                             })
                                 as Box<dyn FnMut()>);
@@ -378,12 +370,7 @@ pub fn start_audio_recording() {
                             let _ = Reflect::set(&recognition, &"onend".into(), &onend_js);
                             onend.forget();
 
-                            let onstart = Closure::wrap(Box::new(move || {
-                                web_sys::console::log_1(
-                                    &"[SpeechRecognition] onstart triggered".into(),
-                                );
-                            })
-                                as Box<dyn FnMut()>);
+                            let onstart = Closure::wrap(Box::new(move || {}) as Box<dyn FnMut()>);
                             let onstart_js = onstart.as_ref();
                             let _ = Reflect::set(&recognition, &"onstart".into(), &onstart_js);
                             onstart.forget();
@@ -391,9 +378,6 @@ pub fn start_audio_recording() {
                             if let Some(start) = Reflect::get(&recognition, &"start".into()).ok() {
                                 let start_fn: Function = start.unchecked_into();
                                 let _ = start_fn.call0(&recognition);
-                                web_sys::console::log_1(
-                                    &"[SpeechRecognition] start() called".into(),
-                                );
                             }
 
                             AUDIO_RECOGNITION.with(|r| *r.borrow_mut() = Some(recognition));

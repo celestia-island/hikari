@@ -56,6 +56,8 @@ pub enum InputWrapperItem {
     Icon {
         icon: MdiIcon,
     },
+    /// Custom element (for advanced use cases)
+    Custom(Element),
 }
 
 impl InputWrapperItem {
@@ -80,6 +82,11 @@ impl InputWrapperItem {
     /// Create a pure icon display item
     pub fn icon(icon: MdiIcon) -> Self {
         Self::Icon { icon }
+    }
+
+    /// Create a custom element item
+    pub fn custom(element: Element) -> Self {
+        Self::Custom(element)
     }
 }
 
@@ -226,6 +233,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                     }
                 }
             }
+            InputWrapperItem::Custom(element) => element.clone(),
         }
     };
 

@@ -5,7 +5,7 @@ use dioxus::prelude::*;
 use dioxus_router::{Routable, Router};
 
 use crate::hooks::{I18nProviderWrapper, LanguageContext};
-use _components::{PortalProvider, ThemeProvider};
+use _components::{hooks::use_audio_recorder::AudioRecorderProvider, PortalProvider, ThemeProvider};
 use _i18n::context::Language;
 
 #[component]
@@ -16,8 +16,10 @@ pub fn App() -> Element {
     rsx! {
         I18nProviderWrapper {
             ThemeProvider { palette: "hikari".to_string(),
-                PortalProvider {
-                    Router::<Route> {}
+                AudioRecorderProvider {
+                    PortalProvider {
+                        Router::<Route> {}
+                    }
                 }
             }
         }

@@ -230,6 +230,12 @@
   direction: ltr; // Reset text direction
 }
 
+// Placeholder text style
+.hi-search-voice-transcript-placeholder {
+  font-style: italic;
+  color: var(--hi-color-text-tertiary);
+}
+
 // Left gradient - only visible when content overflows (scrolls left)
 .hi-search-voice-popover-transcript-container::before {
   content: '';

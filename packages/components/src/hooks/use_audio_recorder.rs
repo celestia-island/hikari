@@ -295,12 +295,12 @@ pub fn start_audio_recording() {
                                 Reflect::set(&recognition, &"interimResults".into(), &true.into());
                             
                             // Use browser's current language setting for speech recognition
-                            let lang = if let Some(navigator) = web_sys::window().and_then(|w| w.navigator().language()) {
+                            let speech_lang = if let Some(lang) = web_sys::window().and_then(|w| w.navigator().language()) {
                                 lang
                             } else {
                                 "en-US".to_string() // Fallback to English
                             };
-                            let _ = Reflect::set(&recognition, &"lang".into(), &lang.into());
+                            let _ = Reflect::set(&recognition, &"lang".into(), &speech_lang.into());
 
                             let recognition_clone = recognition.clone();
                             let onresult = Closure::wrap(Box::new(move |event: JsValue| {

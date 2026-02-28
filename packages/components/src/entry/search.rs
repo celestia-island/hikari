@@ -11,15 +11,11 @@ use palette::classes::{ClassesBuilder, SearchClass};
 use wasm_bindgen::JsCast;
 
 use crate::{
-    basic::{
-        IconButton, IconButtonSize, IconButtonVariant, InputWrapper, InputWrapperItem,
-        InputWrapperSize,
-    },
+    basic::{InputWrapper, InputWrapperItem, InputWrapperSize},
     feedback::{GlowBlur, GlowColor, GlowIntensity},
     hooks::use_audio_recorder::{
-        AudioRecorderContext, AudioRecorderState, clear_transcript, get_transcript,
-        is_audio_recording_supported, start_audio_recording, stop_audio_recording,
-        use_audio_recorder,
+        AudioRecorderState, clear_transcript, is_audio_recording_supported, start_audio_recording,
+        stop_audio_recording, use_audio_recorder,
     },
     portal::{
         PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
@@ -27,8 +23,6 @@ use crate::{
     },
     styled::StyledComponent,
 };
-
-use animation::style::{CssProperty, StyleStringBuilder};
 
 pub struct SearchComponent;
 
@@ -70,8 +64,6 @@ pub fn Search(props: SearchProps) -> Element {
 
     let is_speech_supported = is_audio_recording_supported();
     let audio_ctx = use_audio_recorder();
-
-    let voice_popover_width: u32 = 240;
 
     let wrapper_classes = ClassesBuilder::new()
         .add(SearchClass::Wrapper)
@@ -123,50 +115,51 @@ pub fn Search(props: SearchProps) -> Element {
         );
 
         if is_active {
-            // Recording - show close button
-            right_items.push(InputWrapperItem::button(
-                MdiIcon::Close,
-                EventHandler::new(move |_| {
-                    #[cfg(target_arch = "wasm32")]
-                    {
-                        web_sys::console::log_1(&"[Search] Close button clicked".into());
-                    }
-                    clear_transcript();
-                    stop_audio_recording();
-                }),
-            ));
-        } else {
-            // Not recording - show microphone with dynamic color based on audio level
+            // Recording - show microphone with dynamic color based on volume
+            // Read audio levels directly to trigger re-renders when they change
             let audio_levels = audio_ctx.audio_levels.read().clone();
+
             let mic_color = if audio_levels.volume > 0.0 {
-                // Calculate green color intensity based on volume (0.0 - 1.0)
                 let intensity = (audio_levels.volume * 2.0).min(1.0);
-                // Deep green to bright green based on volume
+
+                // Add pulsing effect using audio level changes
+                // The color will update as audio levels change
                 format!(
                     "rgb({}, {}, {})",
-                    (46.0 * intensity) as u8,
+                    (46.0 + 158.0 * intensity) as u8,
                     (204.0 * intensity) as u8,
                     (113.0 * intensity) as u8
                 )
             } else {
-                String::new() // Use default theme color
+                String::new()
             };
 
-            right_items.push(InputWrapperItem::custom(rsx! {
-                IconButton {
-                    icon: MdiIcon::Microphone,
-                    size: IconButtonSize::Medium,
-                    variant: IconButtonVariant::Ghost,
-                    icon_color: mic_color,
-                    onclick: move |_| {
-                        #[cfg(target_arch = "wasm32")]
-                        {
-                            web_sys::console::log_1(&"[Search] Microphone button clicked".into());
-                        }
-                        start_audio_recording();
-                    },
-                }
-            }));
+            right_items.push(InputWrapperItem::button_with_color(
+                MdiIcon::Microphone,
+                EventHandler::new(move |_| {
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        web_sys::console::log_1(
+                            &"[Search] Microphone button clicked (recording)".into(),
+                        );
+                    }
+                    clear_transcript();
+                    stop_audio_recording();
+                }),
+                mic_color,
+            ));
+        } else {
+            // Not recording - show normal microphone button
+            right_items.push(InputWrapperItem::button(
+                MdiIcon::Microphone,
+                EventHandler::new(move |_| {
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        web_sys::console::log_1(&"[Search] Microphone button clicked".into());
+                    }
+                    start_audio_recording();
+                }),
+            ));
         }
     } else if props.voice_input {
         right_items.push(InputWrapperItem::icon(MdiIcon::Alert));
@@ -304,15 +297,6 @@ pub fn Search(props: SearchProps) -> Element {
                     }
                 },
 
-                if props.voice_input && is_speech_supported {
-                    VoiceInputModal {
-                        value_signal: value_signal,
-                        on_search: props.on_search,
-                        trigger_rect: container_rect,
-                        width: voice_popover_width,
-                    }
-                }
-
                 InputWrapper {
                     left: left_items,
                     right: right_items,
@@ -323,170 +307,6 @@ pub fn Search(props: SearchProps) -> Element {
                     glow_blur: GlowBlur::None,
                     glow_intensity: GlowIntensity::Dim,
                     glow_color: GlowColor::Ghost,
-                }
-            }
-        }
-    }
-}
-
-#[component]
-fn VoiceInputModal(
-    mut value_signal: Signal<String>,
-    on_search: EventHandler<String>,
-    trigger_rect: Signal<Option<(f64, f64, f64, f64)>>,
-    width: u32,
-) -> Element {
-    let mut portal_id = use_signal(|| String::new());
-    let portal = use_portal();
-    let audio_ctx = use_context::<AudioRecorderContext>();
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        web_sys::console::log_1(
-            &format!("[VoiceInputModal] render - portal_id: {}", portal_id()).into(),
-        );
-    }
-
-    let rect = trigger_rect();
-    let _current_id = portal_id();
-
-    use_effect(move || {
-        let audio_state = audio_ctx.state.read().clone();
-        let is_active = matches!(
-            audio_state,
-            AudioRecorderState::Recording | AudioRecorderState::RequestingPermission
-        );
-        let current_id = portal_id();
-
-        #[cfg(target_arch = "wasm32")]
-        {
-            web_sys::console::log_1(
-                &format!(
-                    "[VoiceInputModal] effect - state: {:?}, is_active: {}, current_id: {}",
-                    audio_state, is_active, current_id
-                )
-                .into(),
-            );
-        }
-
-        if is_active && current_id.is_empty() {
-            let new_id = generate_portal_id();
-            portal_id.set(new_id.clone());
-
-            #[cfg(target_arch = "wasm32")]
-            {
-                web_sys::console::log_1(
-                    &format!(
-                        "[VoiceInputModal] Creating portal: {}, rect: {:?}",
-                        new_id, rect
-                    )
-                    .into(),
-                );
-            }
-
-            let mut value_signal_for_confirm = value_signal.clone();
-            let on_search_for_confirm = on_search.clone();
-            let mut portal_id_for_confirm = portal_id.clone();
-
-            let voice_content = rsx! {
-                VoicePopoverContent {
-                    width: width,
-                    on_confirm: Callback::new(move |_| {
-                        let transcript = get_transcript();
-                        if !transcript.is_empty() {
-                            value_signal_for_confirm.set(transcript.clone());
-                            on_search_for_confirm.call(transcript.clone());
-                        }
-                        clear_transcript();
-                        stop_audio_recording();
-                        portal_id_for_confirm.set(String::new());
-                    }),
-                    on_clear_and_close: Callback::new(move |_| {
-                        clear_transcript();
-                        stop_audio_recording();
-                        portal_id_for_confirm.set(String::new());
-                    }),
-                }
-            };
-
-            portal.add_entry.call(PortalEntry::Dropdown {
-                id: new_id,
-                strategy: PortalPositionStrategy::TriggerBased {
-                    placement: TriggerPlacement::BottomLeft,
-                },
-                mask_mode: PortalMaskMode::Transparent,
-                children: voice_content,
-                trigger_rect: rect,
-                close_on_select: false,
-            });
-        } else if !is_active && !current_id.is_empty() {
-            #[cfg(target_arch = "wasm32")]
-            {
-                web_sys::console::log_1(
-                    &format!("[VoiceInputModal] Removing portal: {}", current_id).into(),
-                );
-            }
-            portal.remove_entry.call(current_id.clone());
-            portal_id.set(String::new());
-        }
-    });
-
-    rsx! {}
-}
-
-#[component]
-fn VoicePopoverContent(
-    width: u32,
-    on_confirm: Callback<()>,
-    on_clear_and_close: Callback<()>,
-) -> Element {
-    let audio_ctx = use_audio_recorder();
-    let transcript = audio_ctx.transcript.read().clone();
-
-    rsx! {
-        div {
-            class: "hi-search-voice-popover",
-            style: StyleStringBuilder::new()
-                .add_px(CssProperty::Width, width)
-                .build_clean(),
-            div { class: "hi-search-voice-popover-waveform",
-                for i in 0..12 {
-                    div {
-                        class: "hi-search-voice-popover-bar",
-                        style: format!("animation-delay: {}ms;", i * 100),
-                    }
-                }
-            }
-            div { class: "hi-search-voice-popover-transcript-wrapper",
-                div { class: "hi-search-voice-popover-transcript-container",
-                    div { class: "hi-search-voice-popover-transcript-scroll",
-                        div {
-                            class: "hi-search-voice-popover-transcript",
-                            if transcript.is_empty() {
-                                span { class: "hi-search-voice-transcript-placeholder", "请说话..." }
-                            } else {
-                                "{transcript}"
-                            }
-                        }
-                    }
-                }
-                IconButton {
-                    icon: MdiIcon::Close,
-                    size: IconButtonSize::Medium,
-                    variant: IconButtonVariant::Ghost,
-                    glow: false,
-                    onclick: move |_| {
-                        on_clear_and_close.call(());
-                    },
-                }
-                IconButton {
-                    icon: MdiIcon::Check,
-                    size: IconButtonSize::Medium,
-                    variant: IconButtonVariant::Ghost,
-                    glow: false,
-                    onclick: move |_| {
-                        on_confirm.call(());
-                    },
                 }
             }
         }

@@ -93,6 +93,7 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
                 }
             }),
             disabled: props.disabled || decrement_disabled,
+            icon_color: None,
         }
     ];
 
@@ -111,6 +112,7 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
                 }
             }),
             disabled: props.disabled || increment_disabled,
+            icon_color: None,
         }
     ];
 

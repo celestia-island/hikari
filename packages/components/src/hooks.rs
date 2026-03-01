@@ -9,8 +9,6 @@
 //! - **Tablet**: 641-1023px
 //! - **Desktop**: ≥1024px
 
-pub mod use_audio_recorder;
-
 use dioxus::prelude::*;
 use wasm_bindgen::prelude::*;
 

@@ -14,7 +14,7 @@
 ### Layer2 - 组件层级（Component）
 - 组件级 CSS 变量覆盖
 - 组件特有属性配置
-- 状态变体配置（hover/active/disabled）
+- 状态变体配置（active/disabled，hover 由 Glow wrapper 处理）
 
 ### Custom - 自定义层级（Runtime）
 - AnimationBuilder 动态控制
@@ -66,7 +66,7 @@
 // Layer2 组件变量
 --hi-{component}-{property}: value;
 
-// Layer2 状态变量
+// Layer2 状态变量（仅 active/disabled，无 hover）
 --hi-{component}-{state}-{property}: value;
 ```
 
@@ -87,6 +87,12 @@ pub struct ComponentProps {
 }
 ```
 
+### Glow Wrapper 职责
+
+- **Hover 效果**：由 Glow wrapper 统一处理（鼠标跟随高亮）
+- **Active 效果**：由组件 CSS 处理（scale 变换）
+- **圆角**：Glow wrapper 继承子元素圆角，或通过 `radius` prop 覆盖
+
 ## 验收结果
 
 | 检查项 | 状态 |
@@ -105,3 +111,7 @@ pub struct ComponentProps {
 4. `fix(components): resolve clippy warnings`
 5. `docs: add design system documentation (Phase 5.1)`
 6. `docs: update component API documentation (Phase 5.2)`
+7. `fix(components): resolve conditional compilation warnings`
+8. `fix(components): add mut for container_rect in search.rs`
+9. `refactor(button): remove hover styles, handled by Glow wrapper`
+10. `feat(glow): add dynamic border-radius support`

@@ -1,33 +1,43 @@
 // Use theme variables with namespace to avoid conflicts
 @use '../../../../theme/styles/variables.scss' as vars;
 @use '../../../../theme/styles/mixins.scss' as mix;
+@use './button-vars.scss' as button-vars;
 
 // ============================================
 // Hikari Button Component
 // Features: Subtle rounded corners, glow effects, ambient animations
+// Three-layer CSS variable system:
+// - Layer1: Foundation variables (foundation.scss)
+// - Layer2: Component variables (button-vars.scss)
+// - Custom: Runtime overrides via AnimationBuilder
 // ============================================
 
 // Base button styles
 .hi-button {
+  // Import Layer2 component variables
+  // Variables are defined in button-vars.scss
+
   // Layout
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  // Spacing
-  padding: 0.5rem 1rem;
+  // Spacing - use CSS variables
+  padding: var(--hi-button-padding-y) var(--hi-button-padding-x);
   margin: 0;
+  gap: var(--hi-button-gap);
 
-  // Typography
+  // Typography - use CSS variables
   font-family: vars.$hikari-font-family-sans;
-  font-size: vars.$hikari-font-size-sm;
-  font-weight: 500;
-  line-height: 1.5;
-  letter-spacing: 0.01em;
+  font-size: var(--hi-button-font-size);
+  font-weight: var(--hi-button-font-weight);
+  line-height: var(--hi-button-line-height);
+  letter-spacing: var(--hi-button-letter-spacing);
+  color: var(--hi-button-text-color);
 
-  // Appearance - Subtle rounded corners
-  border-radius: vars.$hikari-radius-fui-sm;
-  border: 1px solid transparent;
+  // Appearance - use CSS variables
+  border-radius: var(--hi-button-radius);
+  border: var(--hi-button-border-width) var(--hi-button-border-style) var(--hi-button-border-color);
 
   // Cursor & interaction
   cursor: pointer;
@@ -35,48 +45,49 @@
   white-space: nowrap;
   outline: none;
 
-  // Transitions - Global transition for all states
-  transition: all 0.3s vars.$hikari-ease-smooth;
+  // Transitions - use CSS variables
+  transition: var(--hi-button-transition);
 
   // Position for pseudo-elements
   position: relative;
   overflow: hidden;
 
-  // Acrylic background with theme support
-  background-color: var(--hi-color-surface);
-  backdrop-filter: blur(4px);
+  // Background - use CSS variables
+  background-color: var(--hi-button-bg);
+  backdrop-filter: var(--hi-button-bg-blur);
 
-  // Shine effect on hover (animated sweep) - DISABLED for JS animation
-  // &::before {
-  //   content: '';
-  //   position: absolute;
-  //   top: 0;
-  //   left: -100%;
-  //   width: 100%;
-  //   height: 100%;
-  //   background: linear-gradient(
-  //     90deg,
-  //     transparent,
-  //     var(--hi-white-15, rgba(255, 255, 255, 0.15)),
-  //     transparent
-  //   );
-  //   transition: left vars.$hikari-duration-slow vars.$hikari-ease-smooth;
-  //   pointer-events: none;
-  //   z-index: 1;
-  // }
+  // Transform
+  transform: var(--hi-button-transform);
 
-  // &:hover::before {
-  //   left: 100%;
-  // }
+  // Hover state
+  &:hover:not(:disabled) {
+    color: var(--hi-button-text-color-hover);
+    background-color: var(--hi-button-bg-hover);
+    border-color: var(--hi-button-border-color-hover);
+    box-shadow: var(--hi-button-shadow-hover);
+    transform: var(--hi-button-transform-hover);
+  }
 
-  &:active {
-    transform: scale(0.98);
-    // transition: transform vars.$hikari-duration-instant ease-out;
+  // Active state
+  &:active:not(:disabled) {
+    color: var(--hi-button-text-color-active);
+    background-color: var(--hi-button-bg-active);
+    transform: var(--hi-button-transform-active);
+    transition-duration: var(--hi-button-duration-active);
+  }
+
+  // Focus state
+  &:focus-visible {
+    border-color: var(--hi-button-border-color-focus);
+    border-width: var(--hi-button-border-width-focus);
+    outline: none;
   }
 
   // Disabled state
   &:disabled {
-    opacity: 0.5;
+    color: var(--hi-button-text-color-disabled);
+    background-color: var(--hi-button-bg-disabled);
+    border-color: var(--hi-button-border-color-disabled);
     cursor: not-allowed;
     pointer-events: none;
   }
@@ -123,25 +134,28 @@
 // ============================================
 
 .hi-button-primary {
-  background: linear-gradient(135deg, var(--hi-button-primary), var(--hi-button-primary-dark));
-  color: var(--hi-color-text-on-primary, #ffffff);
-  border: 1px solid var(--hi-border-light, rgba(255, 255, 255, 0.2));
+  // Layer2 variables are already defined in button-vars.scss
+  // This class just applies the variable overrides
+
+  background: var(--hi-button-bg);
+  color: var(--hi-button-text-color);
+  border-color: var(--hi-button-border-color);
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--hi-button-primary-hover-start), var(--hi-button-primary-hover-end));
-    box-shadow: var(--hi-glow-color);
+    background: var(--hi-button-bg-hover);
+    box-shadow: var(--hi-button-glow);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--hi-button-primary);
+    outline: 2px solid var(--hi-button-border-color-focus);
     outline-offset: 2px;
   }
 
   &:active:not(:disabled) {
     box-shadow:
-      0 0 4px var(--hi-button-primary),
+      0 0 4px var(--hi-button-border-color-focus),
       inset 0 1px 0 var(--hi-white-10, rgba(255,255,255, 0.1));
-    transform: translateY(0) scale(0.98);
+    transform: var(--hi-button-transform-active);
   }
 }
 
@@ -150,25 +164,25 @@
 // ============================================
 
 .hi-button-secondary {
-  background: linear-gradient(135deg, var(--hi-button-secondary), var(--hi-button-secondary-dark));
-  color: var(--hi-color-text-on-secondary, #ffffff);
-  border: 1px solid var(--hi-border-light, rgba(255, 255, 255, 0.2));
+  background: var(--hi-button-bg);
+  color: var(--hi-button-text-color);
+  border-color: var(--hi-button-border-color);
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--hi-button-secondary-hover-start), var(--hi-button-secondary-hover-end));
-    box-shadow: var(--hi-glow-color);
+    background: var(--hi-button-bg-hover);
+    box-shadow: var(--hi-button-glow);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--hi-button-secondary);
+    outline: 2px solid var(--hi-button-border-color-focus);
     outline-offset: 2px;
   }
 
   &:active:not(:disabled) {
     box-shadow:
-      0 0 4px var(--hi-button-secondary),
+      0 0 4px var(--hi-button-border-color-focus),
       inset 0 1px 0 var(--hi-white-10, rgba(255,255,255, 0.1));
-    transform: translateY(0) scale(0.98);
+    transform: var(--hi-button-transform-active);
   }
 }
 
@@ -177,25 +191,26 @@
 // ============================================
 
 .hi-button-ghost {
-  background-color: transparent;
-  color: var(--hi-ghost-text);
-  border: 1px solid var(--hi-ghost-border);
+  background-color: var(--hi-button-bg);
+  color: var(--hi-button-text-color);
+  border-color: var(--hi-button-border-color);
   --hi-glow-transparent: true;
   --hi-glow-bg-color: transparent;
-  --hi-glow-color: var(--hi-ghost-glow);
+  --hi-glow-color: var(--hi-button-glow);
 
   &:hover:not(:disabled) {
+    background-color: var(--hi-button-bg-hover);
     box-shadow: var(--hi-glow-color);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--hi-ghost-border);
+    outline: 2px solid var(--hi-button-border-color-focus);
     outline-offset: 2px;
   }
 
   &:active:not(:disabled) {
     box-shadow: 0 0 4px var(--hi-glow-color);
-    transform: scale(0.98);
+    transform: var(--hi-button-transform-active);
   }
 }
 
@@ -204,25 +219,25 @@
 // ============================================
 
 .hi-button-borderless {
-  background-color: transparent;
-  color: var(--hi-ghost-text);
+  background-color: var(--hi-button-bg);
+  color: var(--hi-button-text-color);
   border: none;
   --hi-glow-transparent: true;
   --hi-glow-bg-color: transparent;
-  --hi-glow-color: var(--hi-ghost-glow);
+  --hi-glow-color: var(--hi-button-glow);
 
   &:hover:not(:disabled) {
     box-shadow: var(--hi-glow-color);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--hi-ghost-border);
+    outline: 2px solid var(--hi-button-border-color-focus);
     outline-offset: 2px;
   }
 
   &:active:not(:disabled) {
     box-shadow: 0 0 4px var(--hi-glow-color);
-    transform: scale(0.98);
+    transform: var(--hi-button-transform-active);
   }
 }
 
@@ -231,25 +246,25 @@
 // ============================================
 
 .hi-button-danger {
-  background: linear-gradient(135deg, var(--hi-button-danger), var(--hi-button-danger-dark));
-  color: var(--hi-color-text-on-danger, #ffffff);
-  border: 1px solid var(--hi-border-light, rgba(255, 255, 255, 0.2));
+  background: var(--hi-button-bg);
+  color: var(--hi-button-text-color);
+  border-color: var(--hi-button-border-color);
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--hi-button-danger-hover-start), var(--hi-button-danger-hover-end));
-    box-shadow: var(--hi-glow-color);
+    background: var(--hi-button-bg-hover);
+    box-shadow: var(--hi-button-glow);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--hi-button-danger);
+    outline: 2px solid var(--hi-button-border-color-focus);
     outline-offset: 2px;
   }
 
   &:active:not(:disabled) {
     box-shadow:
-      0 0 4px var(--hi-button-danger),
+      0 0 4px var(--hi-button-border-color-focus),
       inset 0 1px 0 var(--hi-white-10, rgba(255,255,255, 0.1));
-    transform: translateY(0) scale(0.98);
+    transform: var(--hi-button-transform-active);
   }
 }
 
@@ -258,51 +273,42 @@
 // ============================================
 
 .hi-button-success {
-  background: linear-gradient(135deg, var(--hi-button-success), var(--hi-button-success-dark));
-  color: var(--hi-color-text-on-success, #ffffff);
-  border: 1px solid var(--hi-border-light, rgba(255, 255, 255, 0.2));
+  background: var(--hi-button-bg);
+  color: var(--hi-button-text-color);
+  border-color: var(--hi-button-border-color);
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--hi-button-success-hover-start), var(--hi-button-success-hover-end));
-    box-shadow: var(--hi-glow-color);
+    background: var(--hi-button-bg-hover);
+    box-shadow: var(--hi-button-glow);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--hi-button-success);
+    outline: 2px solid var(--hi-button-border-color-focus);
     outline-offset: 2px;
   }
 
   &:active:not(:disabled) {
     box-shadow:
-      0 0 4px var(--hi-button-success),
+      0 0 4px var(--hi-button-border-color-focus),
       inset 0 1px 0 var(--hi-white-10, rgba(255,255,255, 0.1));
-    transform: translateY(0) scale(0.98);
+    transform: var(--hi-button-transform-active);
   }
 }
 
 // ============================================
-// Size Variants
+// Size Variants - Use CSS Variables
 // ============================================
 
 .hi-button-sm {
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
-  gap: 0.375rem;
-  border-radius: 3px;
+  // Variables already defined in button-vars.scss
 }
 
 .hi-button-md {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  gap: 0.5rem;
-  border-radius: vars.$hikari-radius-fui-sm;
+  // Variables already defined in button-vars.scss
 }
 
 .hi-button-lg {
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  gap: 0.625rem;
-  border-radius: vars.$hikari-radius-fui-md;
+  // Variables already defined in button-vars.scss
 }
 
 // ============================================
@@ -330,72 +336,26 @@
 }
 
 // ============================================
-// Entrance Animation (Optional)
+// Icon styling - Use CSS Variables
 // ============================================
 
-// DISABLED - migrated to JS animation
-// .hi-button-animate-in {
-//   animation: button-fade-in 300ms vars.$hikari-ease-smooth forwards;
-// }
-//
-// @keyframes button-fade-in {
-//   from {
-//     opacity: 0;
-//     transform: scale(0.95);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: scale(1);
-//   }
-// }
-
-// ============================================
-// Ripple Effect (Optional enhancement)
-// ============================================
-
-// DISABLED - handled by JS animation library
-// .hi-button-ripple {
-//   &::after {
-//     content: '';
-//     position: absolute;
-//     top: 50%;
-//     left: 50%;
-//     width: 0;
-//     height: 0;
-//     background: var(--hi-white-30, rgba(255,255,255, 0.3));
-//     border-radius: 50%;
-//     transform: translate(-50%, -50%);
-//     transition: width 0.6s ease-out, height 0.6s ease-out;
-//   }
-//
-//   &:active::after {
-//     width: 300px;
-//     height: 300px;
-//   }
-// }
-
-// Icons inside buttons inherit button color
-button.hi-button-primary .hikari-icon,
-button.hi-button-secondary .hikari-icon,
-button.hi-button-danger .hikari-icon,
-button.hi-button-success .hikari-icon {
-  color: var(--hi-color-text-on-primary, currentColor);
+// Icons inside buttons use CSS variable colors
+button.hi-button .hikari-icon {
+  color: var(--hi-button-icon-color);
+  fill: var(--hi-button-icon-fill);
+  opacity: var(--hi-button-icon-fill-opacity);
 }
 
-button.hi-button-secondary .hikari-icon {
-  color: var(--hi-color-text-on-secondary, currentColor);
+button.hi-button:hover .hikari-icon {
+  color: var(--hi-button-icon-color-hover);
 }
 
-button.hi-button-danger .hikari-icon {
-  color: var(--hi-color-text-on-danger, currentColor);
+button.hi-button:active .hikari-icon {
+  color: var(--hi-button-icon-color-active);
 }
 
-button.hi-button-success .hikari-icon {
-  color: var(--hi-color-text-on-success, currentColor);
-}
-
-button.hi-button-ghost .hikari-icon {
-  color: var(--hi-ghost-text-color, currentColor);
+button.hi-button:disabled .hikari-icon {
+  color: var(--hi-button-icon-color-disabled);
 }
 
 // SVG elements inherit color from parent
@@ -410,17 +370,8 @@ button .hikari-icon svg line {
   color: inherit;
 }
 
-// Hover state opacity
-button.hi-button-primary:hover .hikari-icon,
-button.hi-button-secondary:hover .hikari-icon,
-button.hi-button-danger:hover .hikari-icon,
-button.hi-button-success:hover .hikari-icon,
-button.hi-button-ghost:hover .hikari-icon {
-  opacity: 0.9;
-}
-
 // ============================================
-// Icon and Suffix wrappers - Fixed 14px size (NOT for IconButton)
+// Icon and Suffix wrappers - Use CSS Variables
 // ============================================
 
 // Only apply to Button components, not IconButton
@@ -430,23 +381,22 @@ button.hi-button:not(.hi-icon-button) {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    width: vars.$hikari-icon-size-sm;
-    height: vars.$hikari-icon-size-sm;
+    width: var(--hi-button-icon-size);
+    height: var(--hi-button-icon-size);
 
-    // Constrain icon wrapper and SVG to 14px
     .hikari-icon {
-      width: vars.$hikari-icon-size-sm;
-      height: vars.$hikari-icon-size-sm;
+      width: var(--hi-button-icon-size);
+      height: var(--hi-button-icon-size);
     }
 
     .hikari-icon svg {
-      width: vars.$hikari-icon-size-sm;
-      height: vars.$hikari-icon-size-sm;
+      width: var(--hi-button-icon-size);
+      height: var(--hi-button-icon-size);
     }
 
     .hi-button-icon svg {
-      width: vars.$hikari-icon-size-sm;
-      height: vars.$hikari-icon-size-sm;
+      width: var(--hi-button-icon-size);
+      height: var(--hi-button-icon-size);
     }
   }
 
@@ -456,26 +406,24 @@ button.hi-button:not(.hi-icon-button) {
     justify-content: center;
     flex-shrink: 0;
 
-    // Constrain Arrow to 14px
     .hi-arrow {
-      width: vars.$hikari-icon-size-sm;
-      height: vars.$hikari-icon-size-sm;
+      width: var(--hi-button-icon-size);
+      height: var(--hi-button-icon-size);
     }
 
     .hi-arrow svg {
-      width: vars.$hikari-icon-size-sm;
-      height: vars.$hikari-icon-size-sm;
+      width: var(--hi-button-icon-size);
+      height: var(--hi-button-icon-size);
     }
 
-    // Constrain icon wrapper and SVG to 14px
     .hikari-icon {
-      width: vars.$hikari-icon-size-sm;
-      height: vars.$hikari-icon-size-sm;
+      width: var(--hi-button-icon-size);
+      height: var(--hi-button-icon-size);
     }
 
     .hikari-icon svg {
-      width: vars.$hikari-icon-size-sm;
-      height: vars.$hikari-icon-size-sm;
+      width: var(--hi-button-icon-size);
+      height: var(--hi-button-icon-size);
     }
   }
 }
@@ -485,17 +433,14 @@ button.hi-button:not(.hi-icon-button) {
 // ============================================
 
 button.hi-button-space-between {
-  // Icon and suffix on opposite edges, text in center
   justify-content: space-between;
 
-  // Text should use line-height for baseline alignment
   > *:not(.hi-button-icon):not(.hi-button-suffix) {
     flex: 1;
     text-align: center;
-    line-height: 1.5;
+    line-height: var(--hi-button-line-height);
   }
 
-  // Icon and suffix should be flex-centered (NOT line-height)
   .hi-button-icon,
   .hi-button-suffix {
     display: flex;
@@ -503,11 +448,6 @@ button.hi-button-space-between {
     justify-content: center;
     line-height: 1;
   }
-}
-
-// Default gap for center layout (8px)
-button.hi-button:not(.hi-button-space-between) {
-  gap: 8px;
 }
 
 // ============================================
@@ -530,3 +470,15 @@ button.hi-button:not(.hi-button-space-between) {
   width: 160px;
 }
 
+// ============================================
+// Animation Keyframes
+// ============================================
+
+@keyframes hi-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

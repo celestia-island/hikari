@@ -1,5 +1,9 @@
 // hi-components/src/basic/button.rs
 // Button component with Arknights + FUI styling
+// Three-layer CSS variable system:
+// - Layer1: Foundation variables (foundation.scss)
+// - Layer2: Component variables (button-vars.scss)
+// - Custom: Runtime overrides via icon_color, text_color, animation_id
 
 use dioxus::prelude::*;
 use palette::classes::{ButtonClass, ClassesBuilder, JustifyContent};
@@ -132,6 +136,36 @@ pub struct ButtonProps {
     #[props(default)]
     pub glow_color: Option<GlowColor>,
 
+    /// Custom icon color (Layer2/Custom override)
+    /// Overrides the default icon color from CSS variables
+    #[props(default)]
+    pub icon_color: Option<String>,
+
+    /// Custom text color (Layer2/Custom override)
+    /// Overrides the default text color from CSS variables
+    #[props(default)]
+    pub text_color: Option<String>,
+
+    /// Custom background color (Layer2/Custom override)
+    /// Overrides the default background color from CSS variables
+    #[props(default)]
+    pub background_color: Option<String>,
+
+    /// Custom border color (Layer2/Custom override)
+    /// Overrides the default border color from CSS variables
+    #[props(default)]
+    pub border_color: Option<String>,
+
+    /// Animation ID for AnimationBuilder integration (Custom layer)
+    /// Use this to apply runtime animations via AnimationBuilder
+    #[props(default)]
+    pub animation_id: Option<String>,
+
+    /// Custom CSS variable overrides (Custom layer)
+    /// Apply arbitrary CSS variable overrides at runtime
+    #[props(default)]
+    pub css_vars: Option<Vec<(&'static str, String)>>,
+
     pub onclick: Option<EventHandler<MouseEvent>>,
 }
 
@@ -153,12 +187,32 @@ impl Default for ButtonProps {
             glow_blur: Default::default(),
             glow_intensity: crate::feedback::GlowIntensity::Soft,
             glow_color: None,
+            icon_color: None,
+            text_color: None,
+            background_color: None,
+            border_color: None,
+            animation_id: None,
+            css_vars: None,
             onclick: None,
         }
     }
 }
 
 /// Button component with Arknights + FUI styling
+///
+/// # Three-Layer CSS Variable System
+///
+/// This component supports the three-layer CSS variable architecture:
+///
+/// ## Layer1 - Foundation (Global)
+/// Variables defined in `foundation.scss` provide global defaults.
+///
+/// ## Layer2 - Component
+/// Variables defined in `button-vars.scss` provide component-specific defaults.
+///
+/// ## Custom - Runtime
+/// Use `icon_color`, `text_color`, `background_color`, `border_color`,
+/// `animation_id`, or `css_vars` props for runtime overrides.
 ///
 /// # Examples
 ///
@@ -168,12 +222,25 @@ impl Default for ButtonProps {
 ///
 /// fn app() -> Element {
 ///     rsx! {
+///         // Basic button
 ///         Button { variant: ButtonVariant::Primary, "Click me" }
-///         Button { variant: ButtonVariant::Secondary, "Cancel" }
+///
+///         // With custom colors (Custom layer)
 ///         Button {
 ///             variant: ButtonVariant::Primary,
-///             spotlight: true,
-///             "Button with Spotlight"
+///             icon_color: Some("#ff0000".to_string()),
+///             text_color: Some("#ffffff".to_string()),
+///             "Custom Colors"
+///         }
+///
+///         // With CSS variable overrides (Custom layer)
+///         Button {
+///             variant: ButtonVariant::Ghost,
+///             css_vars: Some(vec![
+///                 ("--hi-button-radius", "16px".to_string()),
+///                 ("--hi-button-bg-hover", "rgba(255, 0, 0, 0.1)".to_string()),
+///             ]),
+///             "CSS Vars Override"
 ///         }
 ///     }
 /// }
@@ -204,7 +271,6 @@ pub fn Button(props: ButtonProps) -> Element {
 
     let disabled = props.disabled || props.loading;
 
-    // Auto-determine justify-content: space-between if both icon and suffix exist, else center
     let has_both_sides = props.icon.is_some() && props.suffix.is_some();
     let justify_content = if has_both_sides {
         JustifyContent::Between
@@ -224,7 +290,6 @@ pub fn Button(props: ButtonProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    // Convert animation type to data attribute value
     let animation_attr = match props.animation {
         ButtonAnimation::None => None,
         ButtonAnimation::Scale => Some("scale"),
@@ -233,10 +298,48 @@ pub fn Button(props: ButtonProps) -> Element {
         ButtonAnimation::IconRotate => Some("icon-rotate"),
     };
 
+    let mut css_vars_string = String::new();
+
+    if let Some(color) = &props.icon_color {
+        css_vars_string.push_str(&format!("--hi-button-icon-color:{};", color));
+        css_vars_string.push_str(&format!("--hi-button-icon-color-hover:{};", color));
+        css_vars_string.push_str(&format!("--hi-button-icon-color-active:{};", color));
+    }
+
+    if let Some(color) = &props.text_color {
+        css_vars_string.push_str(&format!("--hi-button-text-color:{};", color));
+        css_vars_string.push_str(&format!("--hi-button-text-color-hover:{};", color));
+        css_vars_string.push_str(&format!("--hi-button-text-color-active:{};", color));
+    }
+
+    if let Some(color) = &props.background_color {
+        css_vars_string.push_str(&format!("--hi-button-bg:{};", color));
+        css_vars_string.push_str(&format!("--hi-button-bg-hover:{};", color));
+    }
+
+    if let Some(color) = &props.border_color {
+        css_vars_string.push_str(&format!("--hi-button-border-color:{};", color));
+        css_vars_string.push_str(&format!("--hi-button-border-color-focus:{};", color));
+    }
+
+    if let Some(vars) = &props.css_vars {
+        for (name, value) in vars {
+            css_vars_string.push_str(&format!("{}:{};", name, value));
+        }
+    }
+
+    let style_attr = if css_vars_string.is_empty() {
+        None
+    } else {
+        Some(css_vars_string)
+    };
+
     let button_content = rsx! {
         button {
             class: "{classes}",
+            style: style_attr,
             "data-button-animation": animation_attr,
+            "data-animation-id": props.animation_id,
             disabled: disabled,
             onclick: move |e| {
                 if let Some(handler) = props.onclick.as_ref() {
@@ -268,9 +371,7 @@ pub fn Button(props: ButtonProps) -> Element {
         }
     };
 
-    // Wrap with glow container if enabled
     if props.glow {
-        // Determine glow color based on variant and button background lightness
         let glow_color = if let Some(color) = props.glow_color {
             color
         } else {

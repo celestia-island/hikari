@@ -910,7 +910,7 @@ fn TooltipPortalEntry(
                 x_clamped, y_clamped
             )
         } else {
-            format!("position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);")
+            "position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);".to_string()
         }
     });
 

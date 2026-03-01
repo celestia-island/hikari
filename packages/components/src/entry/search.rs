@@ -53,7 +53,8 @@ pub struct SearchProps {
 pub fn Search(props: SearchProps) -> Element {
     let mut value_signal = use_signal(|| props.value.clone());
     let mut dropdown_id = use_signal(|| String::new());
-    let container_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
+    #[allow(unused_mut)]
+    let mut container_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
     let portal = use_portal();
 
     let wrapper_classes = ClassesBuilder::new()

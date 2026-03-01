@@ -48,7 +48,6 @@
 // ============================================
 
 // 30% intensity (subtle, for large surfaces: cards, panels, containers)
-// Very low opacity + wide spread for an almost imperceptible ambient glow
 .hi-glow-dim {
   --glow-opacity: 0.07;
   --glow-spread: 2.4;
@@ -60,7 +59,6 @@
 }
 
 // 70% intensity (medium, default for interactive elements: buttons, inputs)
-// Balanced opacity + moderate spread for clear but non-distracting feedback
 .hi-glow-soft {
   --glow-opacity: 0.15;
   --glow-spread: 1.6;
@@ -86,13 +84,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0; // 防止在 flex 容器中收缩
-  align-self: flex-start; // 防止在 flex 容器中被 stretch 拉伸
+  flex-shrink: 0;
+  align-self: flex-start;
 
-  // 继承子元素的圆角，或使用 CSS 变量覆盖
-  border-radius: var(--hi-glow-radius, inherit);
+  // 使用 CSS 变量，默认为按钮圆角
+  // 子组件（Button/Input）会设置这个变量
+  border-radius: var(--hi-glow-radius, vars.$hikari-radius-fui-sm);
 
-  // FIX: Prevent button overflow: hidden from clipping glow overlay
   overflow: visible;
 }
 
@@ -102,8 +100,8 @@
   flex-direction: column;
   width: 100%;
   
-  // 继承子元素的圆角，或使用 CSS 变量覆盖
-  border-radius: var(--hi-glow-radius, inherit);
+  // 使用 CSS 变量，默认为卡片圆角
+  border-radius: var(--hi-glow-radius, vars.$hikari-radius-fui-md);
   overflow: visible;
 }
 

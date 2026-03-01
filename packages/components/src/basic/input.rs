@@ -289,11 +289,19 @@ pub fn Input(props: InputProps) -> Element {
     };
 
     if props.glow {
+        // 根据输入框尺寸确定圆角
+        let glow_radius = match props.size {
+            InputSize::Small => "4px",
+            InputSize::Medium => "6px",
+            InputSize::Large => "8px",
+        };
+
         rsx! {
             Glow {
                 blur: props.glow_blur,
                 color: props.glow_color,
                 intensity: props.glow_intensity,
+                radius: Some(glow_radius.to_string()),
                 { input_content }
             }
         }

@@ -5,18 +5,17 @@
 
 // ============================================
 // Hikari Button Component
-// Features: Subtle rounded corners, glow effects, ambient animations
+// Features: Subtle rounded corners, glow effects (via Glow wrapper)
 // Three-layer CSS variable system:
 // - Layer1: Foundation variables (foundation.scss)
 // - Layer2: Component variables (button-vars.scss)
 // - Custom: Runtime overrides via AnimationBuilder
+//
+// NOTE: Hover effects are handled by Glow wrapper, not here
 // ============================================
 
 // Base button styles
 .hi-button {
-  // Import Layer2 component variables
-  // Variables are defined in button-vars.scss
-
   // Layout
   display: inline-flex;
   align-items: center;
@@ -59,16 +58,7 @@
   // Transform
   transform: var(--hi-button-transform);
 
-  // Hover state
-  &:hover:not(:disabled) {
-    color: var(--hi-button-text-color-hover);
-    background-color: var(--hi-button-bg-hover);
-    border-color: var(--hi-button-border-color-hover);
-    box-shadow: var(--hi-button-shadow-hover);
-    transform: var(--hi-button-transform-hover);
-  }
-
-  // Active state
+  // Active state only - no hover (Glow wrapper handles hover)
   &:active:not(:disabled) {
     color: var(--hi-button-text-color-active);
     background-color: var(--hi-button-bg-active);
@@ -76,7 +66,7 @@
     transition-duration: var(--hi-button-duration-active);
   }
 
-  // Focus state
+  // Focus state - only outline, no color changes
   &:focus-visible {
     border-color: var(--hi-button-border-color-focus);
     border-width: var(--hi-button-border-width-focus);
@@ -96,71 +86,24 @@
   &.hi-button-loading {
     pointer-events: none;
   }
-
-  // Optional: Enable CSS transitions with this class (for CSS-only mode)
-  &.hi-button-css-transitions {
-    transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        var(--hi-white-15, rgba(255, 255, 255, 0.15)),
-        transparent
-      );
-      transition: left vars.$hikari-duration-slow vars.$hikari-ease-smooth;
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    &:hover::before {
-      left: 100%;
-    }
-
-    &:active {
-      transition: transform vars.$hikari-duration-instant ease-out;
-    }
-  }
 }
 
 // ============================================
-// Variant: Primary (Pink glow accent)
+// Variant: Primary
 // ============================================
 
 .hi-button-primary {
-  // Layer2 variables are already defined in button-vars.scss
-  // This class just applies the variable overrides
-
   background: var(--hi-button-bg);
   color: var(--hi-button-text-color);
   border-color: var(--hi-button-border-color);
 
-  &:hover:not(:disabled) {
-    background: var(--hi-button-bg-hover);
-    box-shadow: var(--hi-button-glow);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--hi-button-border-color-focus);
-    outline-offset: 2px;
-  }
-
   &:active:not(:disabled) {
-    box-shadow:
-      0 0 4px var(--hi-button-border-color-focus),
-      inset 0 1px 0 var(--hi-white-10, rgba(255,255,255, 0.1));
     transform: var(--hi-button-transform-active);
   }
 }
 
 // ============================================
-// Variant: Secondary (Blue accent)
+// Variant: Secondary
 // ============================================
 
 .hi-button-secondary {
@@ -168,81 +111,41 @@
   color: var(--hi-button-text-color);
   border-color: var(--hi-button-border-color);
 
-  &:hover:not(:disabled) {
-    background: var(--hi-button-bg-hover);
-    box-shadow: var(--hi-button-glow);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--hi-button-border-color-focus);
-    outline-offset: 2px;
-  }
-
   &:active:not(:disabled) {
-    box-shadow:
-      0 0 4px var(--hi-button-border-color-focus),
-      inset 0 1px 0 var(--hi-white-10, rgba(255,255,255, 0.1));
     transform: var(--hi-button-transform-active);
   }
 }
 
 // ============================================
-// Variant: Ghost (Transparent with theme color border)
+// Variant: Ghost
 // ============================================
 
 .hi-button-ghost {
   background-color: var(--hi-button-bg);
   color: var(--hi-button-text-color);
   border-color: var(--hi-button-border-color);
-  --hi-glow-transparent: true;
-  --hi-glow-bg-color: transparent;
-  --hi-glow-color: var(--hi-button-glow);
-
-  &:hover:not(:disabled) {
-    background-color: var(--hi-button-bg-hover);
-    box-shadow: var(--hi-glow-color);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--hi-button-border-color-focus);
-    outline-offset: 2px;
-  }
 
   &:active:not(:disabled) {
-    box-shadow: 0 0 4px var(--hi-glow-color);
     transform: var(--hi-button-transform-active);
   }
 }
 
 // ============================================
-// Variant: Borderless (No border, minimal styling)
+// Variant: Borderless
 // ============================================
 
 .hi-button-borderless {
   background-color: var(--hi-button-bg);
   color: var(--hi-button-text-color);
   border: none;
-  --hi-glow-transparent: true;
-  --hi-glow-bg-color: transparent;
-  --hi-glow-color: var(--hi-button-glow);
-
-  &:hover:not(:disabled) {
-    box-shadow: var(--hi-glow-color);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--hi-button-border-color-focus);
-    outline-offset: 2px;
-  }
 
   &:active:not(:disabled) {
-    box-shadow: 0 0 4px var(--hi-glow-color);
     transform: var(--hi-button-transform-active);
   }
 }
 
 // ============================================
-// Variant: Danger (Red glow accent)
+// Variant: Danger
 // ============================================
 
 .hi-button-danger {
@@ -250,26 +153,13 @@
   color: var(--hi-button-text-color);
   border-color: var(--hi-button-border-color);
 
-  &:hover:not(:disabled) {
-    background: var(--hi-button-bg-hover);
-    box-shadow: var(--hi-button-glow);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--hi-button-border-color-focus);
-    outline-offset: 2px;
-  }
-
   &:active:not(:disabled) {
-    box-shadow:
-      0 0 4px var(--hi-button-border-color-focus),
-      inset 0 1px 0 var(--hi-white-10, rgba(255,255,255, 0.1));
     transform: var(--hi-button-transform-active);
   }
 }
 
 // ============================================
-// Variant: Success (Green glow accent)
+// Variant: Success
 // ============================================
 
 .hi-button-success {
@@ -277,20 +167,7 @@
   color: var(--hi-button-text-color);
   border-color: var(--hi-button-border-color);
 
-  &:hover:not(:disabled) {
-    background: var(--hi-button-bg-hover);
-    box-shadow: var(--hi-button-glow);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--hi-button-border-color-focus);
-    outline-offset: 2px;
-  }
-
   &:active:not(:disabled) {
-    box-shadow:
-      0 0 4px var(--hi-button-border-color-focus),
-      inset 0 1px 0 var(--hi-white-10, rgba(255,255,255, 0.1));
     transform: var(--hi-button-transform-active);
   }
 }
@@ -299,14 +176,8 @@
 // Size Variants - Use CSS Variables
 // ============================================
 
-.hi-button-sm {
-  // Variables already defined in button-vars.scss
-}
-
-.hi-button-md {
-  // Variables already defined in button-vars.scss
-}
-
+.hi-button-sm,
+.hi-button-md,
 .hi-button-lg {
   // Variables already defined in button-vars.scss
 }
@@ -339,15 +210,10 @@
 // Icon styling - Use CSS Variables
 // ============================================
 
-// Icons inside buttons use CSS variable colors
 button.hi-button .hikari-icon {
   color: var(--hi-button-icon-color);
   fill: var(--hi-button-icon-fill);
   opacity: var(--hi-button-icon-fill-opacity);
-}
-
-button.hi-button:hover .hikari-icon {
-  color: var(--hi-button-icon-color-hover);
 }
 
 button.hi-button:active .hikari-icon {
@@ -374,7 +240,6 @@ button .hikari-icon svg line {
 // Icon and Suffix wrappers - Use CSS Variables
 // ============================================
 
-// Only apply to Button components, not IconButton
 button.hi-button:not(.hi-icon-button) {
   .hi-button-icon {
     display: inline-flex;
@@ -390,11 +255,6 @@ button.hi-button:not(.hi-icon-button) {
     }
 
     .hikari-icon svg {
-      width: var(--hi-button-icon-size);
-      height: var(--hi-button-icon-size);
-    }
-
-    .hi-button-icon svg {
       width: var(--hi-button-icon-size);
       height: var(--hi-button-icon-size);
     }

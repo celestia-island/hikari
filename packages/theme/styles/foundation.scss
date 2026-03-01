@@ -1,0 +1,195 @@
+// hikari-theme/styles/foundation.scss
+// Layer1 - Foundation Layer: Global CSS Variables
+// 
+// This file defines the base layer of the design system.
+// All variables here can be overridden at Layer2 (component level) or Custom (runtime).
+
+// ============================================
+// 1. Color System
+// ============================================
+
+// Text Colors
+:root {
+  --hi-color-text-primary: #ffffff;
+  --hi-color-text-secondary: rgba(255, 255, 255, 0.7);
+  --hi-color-text-disabled: rgba(255, 255, 255, 0.3);
+  --hi-color-text-on-primary: #ffffff;
+  --hi-color-text-on-secondary: #ffffff;
+
+  // Icon Colors
+  --hi-icon-color: var(--hi-color-text-primary);
+  --hi-icon-color-secondary: var(--hi-color-text-secondary);
+  --hi-icon-color-disabled: var(--hi-color-text-disabled);
+
+  // Background Colors
+  --hi-bg-surface: rgba(30, 30, 30, 0.8);
+  --hi-bg-surface-dark: rgba(20, 20, 20, 0.9);
+  --hi-bg-overlay: rgba(0, 0, 0, 0.6);
+  --hi-bg-transparent: transparent;
+
+  // Border Colors
+  --hi-border-color: rgba(255, 255, 255, 0.1);
+  --hi-border-color-focus: var(--hi-color-primary);
+  --hi-border-color-disabled: rgba(255, 255, 255, 0.05);
+
+  // Shadow Colors
+  --hi-shadow-color: rgba(0, 0, 0, 0.1);
+  --hi-glow-color: rgba(255, 79, 0, 0.5);
+
+  // ============================================
+  // 2. Border Radius System
+  // ============================================
+
+  // Base Radius
+  --hi-radius-none: 0;
+  --hi-radius-sm: 4px;
+  --hi-radius-md: 8px;
+  --hi-radius-lg: 12px;
+  --hi-radius-xl: 16px;
+  --hi-radius-full: 9999px;
+
+  // Component Radius
+  --hi-button-radius: var(--hi-radius-md);
+  --hi-input-radius: var(--hi-radius-md);
+  --hi-card-radius: var(--hi-radius-lg);
+  --hi-modal-radius: var(--hi-radius-xl);
+
+  // Internal Element Radius
+  --hi-icon-radius: var(--hi-radius-sm);
+  --hi-badge-radius: var(--hi-radius-full);
+
+  // ============================================
+  // 3. Animation System
+  // ============================================
+
+  // Duration
+  --hi-duration-instant: 0ms;
+  --hi-duration-fast: 150ms;
+  --hi-duration-normal: 300ms;
+  --hi-duration-slow: 500ms;
+
+  // Easing Functions
+  --hi-ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --hi-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --hi-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --hi-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --hi-ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --hi-ease-elastic: cubic-bezier(0.5, 1.5, 0.5, 1);
+
+  // Animation Delay
+  --hi-delay-none: 0ms;
+  --hi-delay-short: 100ms;
+  --hi-delay-medium: 200ms;
+  --hi-delay-long: 300ms;
+
+  // ============================================
+  // 4. Background System
+  // ============================================
+
+  // Solid Background
+  --hi-bg-solid-primary: var(--hi-color-primary);
+  --hi-bg-solid-secondary: var(--hi-color-secondary);
+  --hi-bg-solid-surface: var(--hi-color-surface);
+
+  // Gradient Background
+  --hi-bg-gradient-primary: linear-gradient(135deg, var(--hi-color-primary), var(--hi-color-primary-dark));
+  --hi-bg-gradient-secondary: linear-gradient(135deg, var(--hi-color-secondary), var(--hi-color-secondary-dark));
+
+  // Blur Background
+  --hi-bg-blur-sm: blur(10px);
+  --hi-bg-blur-md: blur(20px);
+  --hi-bg-blur-lg: blur(30px);
+
+  // ============================================
+  // 5. SVG System
+  // ============================================
+
+  // Fill
+  --hi-icon-fill: currentColor;
+  --hi-icon-fill-opacity: 1;
+
+  // Stroke
+  --hi-icon-stroke: none;
+  --hi-icon-stroke-width: 1;
+  --hi-icon-stroke-opacity: 1;
+
+  // Size
+  --hi-icon-size-xs: 12px;
+  --hi-icon-size-sm: 14px;
+  --hi-icon-size-md: 16px;
+  --hi-icon-size-lg: 20px;
+  --hi-icon-size-xl: 24px;
+
+  // ============================================
+  // 6. Spacing System
+  // ============================================
+
+  --hi-spacing-xs: 0.25rem;
+  --hi-spacing-sm: 0.5rem;
+  --hi-spacing-md: 1rem;
+  --hi-spacing-lg: 1.5rem;
+  --hi-spacing-xl: 2rem;
+  --hi-spacing-2xl: 3rem;
+
+  // ============================================
+  // 7. Shadow System
+  // ============================================
+
+  --hi-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --hi-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --hi-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --hi-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+
+  // ============================================
+  // 8. Border System
+  // ============================================
+
+  --hi-border-width: 1px;
+  --hi-border-width-focus: 2px;
+  --hi-border-style: solid;
+  --hi-border-style-dashed: dashed;
+
+  // ============================================
+  // 9. Z-Index System
+  // ============================================
+
+  --hi-z-index-dropdown: 1000;
+  --hi-z-index-sticky: 1020;
+  --hi-z-index-fixed: 1030;
+  --hi-z-index-modal-backdrop: 1040;
+  --hi-z-index-modal: 1050;
+  --hi-z-index-popover: 1060;
+  --hi-z-index-tooltip: 1070;
+}
+
+// ============================================
+// Dark Theme Overrides
+// ============================================
+
+[data-theme="dark"] {
+  --hi-color-text-primary: #ffffff;
+  --hi-color-text-secondary: rgba(255, 255, 255, 0.7);
+  --hi-color-text-disabled: rgba(255, 255, 255, 0.3);
+  
+  --hi-bg-surface: rgba(30, 30, 30, 0.8);
+  --hi-bg-surface-dark: rgba(20, 20, 20, 0.9);
+  
+  --hi-border-color: rgba(255, 255, 255, 0.1);
+  --hi-border-color-disabled: rgba(255, 255, 255, 0.05);
+}
+
+// ============================================
+// Light Theme Overrides
+// ============================================
+
+[data-theme="light"] {
+  --hi-color-text-primary: #1a1a1a;
+  --hi-color-text-secondary: rgba(0, 0, 0, 0.7);
+  --hi-color-text-disabled: rgba(0, 0, 0, 0.3);
+  
+  --hi-bg-surface: rgba(255, 255, 255, 0.9);
+  --hi-bg-surface-dark: rgba(245, 245, 245, 0.95);
+  
+  --hi-border-color: rgba(0, 0, 0, 0.1);
+  --hi-border-color-disabled: rgba(0, 0, 0, 0.05);
+}

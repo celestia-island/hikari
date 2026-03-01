@@ -1,6 +1,9 @@
 // hikari-theme/styles/base.scss
 // 基础样式（使用 hikari-palette）
 
+// Layer1 - Foundation Layer
+@use './foundation.scss' as *;
+
 @use './variables.scss' as *;
 @use './mixins.scss' as *;
 

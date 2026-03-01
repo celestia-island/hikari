@@ -217,6 +217,8 @@ pub fn Search(props: SearchProps) -> Element {
                 class: "hi-search-input-wrapper",
                 onmounted: move |_evt| {
                     #[cfg(target_arch = "wasm32")]
+                    let evt = _evt;
+                    #[cfg(target_arch = "wasm32")]
                     {
                         if let Some(element) = evt.data().downcast::<web_sys::Element>() {
                             if let Some(html_el) = element.dyn_ref::<web_sys::HtmlElement>() {

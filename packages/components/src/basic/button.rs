@@ -299,22 +299,22 @@ pub fn Button(props: ButtonProps) -> Element {
     };
 
     let mut css_vars_string = String::new();
+    
+    // 设置 glow radius 变量，让 Glow wrapper 可以读取
+    css_vars_string.push_str("--hi-glow-radius:var(--hi-button-radius);");
 
     if let Some(color) = &props.icon_color {
         css_vars_string.push_str(&format!("--hi-button-icon-color:{};", color));
-        css_vars_string.push_str(&format!("--hi-button-icon-color-hover:{};", color));
         css_vars_string.push_str(&format!("--hi-button-icon-color-active:{};", color));
     }
 
     if let Some(color) = &props.text_color {
         css_vars_string.push_str(&format!("--hi-button-text-color:{};", color));
-        css_vars_string.push_str(&format!("--hi-button-text-color-hover:{};", color));
         css_vars_string.push_str(&format!("--hi-button-text-color-active:{};", color));
     }
 
     if let Some(color) = &props.background_color {
         css_vars_string.push_str(&format!("--hi-button-bg:{};", color));
-        css_vars_string.push_str(&format!("--hi-button-bg-hover:{};", color));
     }
 
     if let Some(color) = &props.border_color {
@@ -328,11 +328,7 @@ pub fn Button(props: ButtonProps) -> Element {
         }
     }
 
-    let style_attr = if css_vars_string.is_empty() {
-        None
-    } else {
-        Some(css_vars_string)
-    };
+    let style_attr = Some(css_vars_string);
 
     let button_content = rsx! {
         button {
@@ -385,15 +381,11 @@ pub fn Button(props: ButtonProps) -> Element {
             }
         };
 
-        // 统一使用 4px 圆角
-        let glow_radius = "4px";
-
         rsx! {
             Glow {
                 blur: props.glow_blur,
                 color: glow_color,
                 intensity: props.glow_intensity,
-                radius: Some(glow_radius.to_string()),
                 { button_content }
             }
         }

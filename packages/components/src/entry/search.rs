@@ -1,7 +1,7 @@
 // packages/components/src/entry/search.rs
 // Search component with Arknights + FUI styling
-// Features: Embedded icons/buttons, unified input styling, Glow effects, Voice input
-// Uses InputWrapper for consistent layout and Portal system for dropdown suggestions and voice input
+// Features: Embedded icons/buttons, unified input styling, Glow effects
+// Uses InputWrapper for consistent layout and Portal system for dropdown suggestions
 
 use dioxus::prelude::*;
 use icons::{Icon, MdiIcon};
@@ -11,15 +11,8 @@ use palette::classes::{ClassesBuilder, SearchClass};
 use wasm_bindgen::JsCast;
 
 use crate::{
-    basic::{
-        IconButton, IconButtonSize, IconButtonVariant, InputWrapper, InputWrapperItem,
-        InputWrapperSize,
-    },
+    basic::{InputWrapper, InputWrapperItem, InputWrapperSize},
     feedback::{GlowBlur, GlowColor, GlowIntensity},
-    hooks::use_audio_recorder::{
-        AudioRecorderState, clear_transcript, is_audio_recording_supported, start_audio_recording,
-        stop_audio_recording, use_audio_recorder,
-    },
     portal::{
         PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
         use_portal,
@@ -54,51 +47,14 @@ pub struct SearchProps {
     pub style: String,
     #[props(default = true)]
     pub glow: bool,
-    #[props(default = false)]
-    pub voice_input: bool,
 }
 
 #[component]
 pub fn Search(props: SearchProps) -> Element {
     let mut value_signal = use_signal(|| props.value.clone());
     let mut dropdown_id = use_signal(|| String::new());
-    let mut container_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
+    let container_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
     let portal = use_portal();
-
-    let is_speech_supported = is_audio_recording_supported();
-    let audio_ctx = use_audio_recorder();
-
-    // Read state signal to establish reactive dependency
-    let audio_state = audio_ctx.state.read().clone();
-    let is_recording = matches!(
-        audio_state,
-        AudioRecorderState::Recording | AudioRecorderState::RequestingPermission
-    );
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        web_sys::console::log_1(
-            &format!(
-                "[Search] Rendering with state: {:?}, is_recording: {}",
-                audio_state, is_recording
-            )
-            .into(),
-        );
-    }
-
-    // Read audio_levels signal during recording to establish reactive dependency
-    if is_recording {
-        let _ = audio_ctx.audio_levels.read().clone();
-    }
-
-    // Listen to transcript changes and update value_signal in real-time during recording
-    if is_recording {
-        let transcript = audio_ctx.transcript.read().clone();
-        // Append new transcript to current value
-        if !transcript.is_empty() && value_signal() != transcript {
-            value_signal.set(transcript.clone());
-        }
-    }
 
     let wrapper_classes = ClassesBuilder::new()
         .add(SearchClass::Wrapper)
@@ -125,8 +81,6 @@ pub fn Search(props: SearchProps) -> Element {
 
     let mut right_items: Vec<InputWrapperItem> = Vec::new();
 
-    let audio_state = audio_ctx.state.read().clone();
-
     if props.loading {
         right_items.push(InputWrapperItem::icon(MdiIcon::Loading));
     } else if has_clear_button {
@@ -143,65 +97,6 @@ pub fn Search(props: SearchProps) -> Element {
                 }
             }),
         ));
-    } else if props.voice_input && is_speech_supported {
-        let is_active = matches!(
-            audio_state,
-            AudioRecorderState::Recording | AudioRecorderState::RequestingPermission
-        );
-
-        if is_active {
-            // Recording - show microphone with dynamic color
-            // Yellow when silent → Green when speaking
-            let audio_levels = audio_ctx.audio_levels.read().clone();
-
-            // Yellow (silent): rgb(241, 196, 15)
-            // Green (loud): rgb(46, 204, 113)
-            let yellow_r = 241u8;
-            let yellow_g = 196u8;
-            let yellow_b = 15u8;
-
-            let green_r = 46u8;
-            let green_g = 204u8;
-            let green_b = 113u8;
-
-            let intensity = (audio_levels.volume * 2.0).min(1.0);
-
-            // Mix yellow to green based on volume
-            let r = (yellow_r as f32 * (1.0 - intensity) + green_r as f32 * intensity) as u8;
-            let g = (yellow_g as f32 * (1.0 - intensity) + green_g as f32 * intensity) as u8;
-            let b = (yellow_b as f32 * (1.0 - intensity) + green_b as f32 * intensity) as u8;
-
-            let mic_color = format!("rgb({}, {}, {})", r, g, b);
-
-            right_items.push(InputWrapperItem::custom(rsx! {
-                IconButton {
-                    icon: MdiIcon::Microphone,
-                    size: IconButtonSize::Medium,
-                    variant: IconButtonVariant::Ghost,
-                    icon_color: mic_color,
-                    glow_color: GlowColor::Ghost,
-                    onclick: move |_| {
-                        clear_transcript();
-                        stop_audio_recording();
-                    },
-                }
-            }));
-        } else {
-            // Not recording - show normal microphone button with default theme color
-            right_items.push(InputWrapperItem::custom(rsx! {
-                IconButton {
-                    icon: MdiIcon::Microphone,
-                    size: IconButtonSize::Medium,
-                    variant: IconButtonVariant::Ghost,
-                    glow_color: GlowColor::Ghost,
-                    onclick: move |_| {
-                        start_audio_recording();
-                    },
-                }
-            }));
-        }
-    } else if props.voice_input {
-        right_items.push(InputWrapperItem::icon(MdiIcon::Alert));
     } else {
         right_items.push(InputWrapperItem::button(
             MdiIcon::ArrowRight,
@@ -320,7 +215,7 @@ pub fn Search(props: SearchProps) -> Element {
 
             div {
                 class: "hi-search-input-wrapper",
-                onmounted: move |evt| {
+                onmounted: move |_evt| {
                     #[cfg(target_arch = "wasm32")]
                     {
                         if let Some(element) = evt.data().downcast::<web_sys::Element>() {
@@ -328,9 +223,6 @@ pub fn Search(props: SearchProps) -> Element {
                                 let rect = html_el.get_bounding_client_rect();
                                 let rect_value = (rect.x(), rect.y(), rect.width(), rect.height());
                                 container_rect.set(Some(rect_value));
-                                web_sys::console::log_1(
-                                    &format!("[Search] container_rect set: {:?}", rect_value).into(),
-                                );
                             }
                         }
                     }

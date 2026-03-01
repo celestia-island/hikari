@@ -740,27 +740,6 @@ pub fn render_component(component_type: ComponentType) -> Element {
                         }
                     }
                 }
-                ("layer1", "search", Some("voice")) => {
-                    let mut value = use_signal(|| String::new());
-                    rsx! {
-                        Grid {
-                            Col { span_sm: 12, span_md: 6,
-                                Search {
-                                    value: value(),
-                                    placeholder: "Click microphone to search by voice...".to_string(),
-                                    suggestions: vec![
-                                        "Voice Command".to_string(),
-                                        "Speech Recognition".to_string(),
-                                        "Audio Input".to_string(),
-                                    ],
-                                    voice_input: true,
-                                    on_search: move |v| value.set(v),
-                                    on_clear: Some(Callback::new(move |_| value.set(String::new()))),
-                                }
-                            }
-                        }
-                    }
-                }
                 ("layer1", "search", _) => {
                     let mut value = use_signal(|| String::new());
                     rsx! {

@@ -179,6 +179,7 @@ pub fn Search(props: SearchProps) -> Element {
                     size: IconButtonSize::Medium,
                     variant: IconButtonVariant::Ghost,
                     icon_color: mic_color,
+                    glow_color: GlowColor::Ghost,
                     onclick: move |_| {
                         clear_transcript();
                         stop_audio_recording();
@@ -192,6 +193,7 @@ pub fn Search(props: SearchProps) -> Element {
                     icon: MdiIcon::Microphone,
                     size: IconButtonSize::Medium,
                     variant: IconButtonVariant::Ghost,
+                    glow_color: GlowColor::Ghost,
                     onclick: move |_| {
                         start_audio_recording();
                     },

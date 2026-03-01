@@ -226,7 +226,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                         glow_intensity: GlowIntensity::Soft,
                         glow_blur: GlowBlur::None,
                         glow_color: GlowColor::Ghost,
-                        onclick: onclick.clone(),
+                        onclick: *onclick,
                         icon_color: icon_color.clone(),
                     }
                 }

@@ -58,15 +58,16 @@
 **目标**: 建立三层级配置的基础架构
 
 #### 1.1 CSS 变量系统重构
-- [ ] 创建 `packages/theme/styles/foundation.scss`
+- [x] 创建 `packages/theme/styles/foundation.scss`
   - 定义 Layer1 全局变量
   - 按类别组织变量（颜色、圆角、动画、背景、SVG）
   - 支持主题切换
 
 #### 1.2 组件变量规范
-- [ ] 创建 `packages/theme/styles/component-vars.scss`
+- [x] 创建 `packages/components/src/styles/components/button-vars.scss`
   - 定义 Layer2 组件变量命名规范
-  - 创建变量生成工具函数
+  - 创建 Button 组件变量示例
+  - 包含 9 大系统（颜色、圆角、动画、背景、SVG、间距、边框、变换、排版）
 
 #### 1.3 AnimationBuilder 扩展
 - [ ] 扩展 `packages/animation/src/builder.rs`

@@ -1,0 +1,155 @@
+// packages/components/src/styles/components/input-vars.scss
+// Layer2 - Input Component Variables
+// 
+// This file defines component-level CSS variables for the Input component.
+// These variables can be overridden at runtime via AnimationBuilder.
+
+// ============================================
+// Base Input Variables
+// ============================================
+
+.hi-input {
+  // ============================================
+  // 1. Color System
+  // ============================================
+  
+  // Text Colors
+  --hi-input-text-color: var(--hi-color-text-primary);
+  --hi-input-text-color-disabled: var(--hi-color-text-disabled);
+  
+  // Placeholder Colors
+  --hi-input-placeholder-color: var(--hi-color-text-secondary);
+  --hi-input-placeholder-opacity: 0.6;
+  
+  // Background Colors
+  --hi-input-bg: transparent;
+  --hi-input-bg-disabled: rgba(255, 255, 255, 0.5);
+  
+  // Border Colors
+  --hi-input-border-color: var(--hi-color-border);
+  --hi-input-border-color-focus: var(--hi-color-primary);
+  --hi-input-border-color-disabled: var(--hi-border-color-disabled);
+  --hi-input-border-color-error: var(--hi-color-danger);
+  --hi-input-border-color-success: var(--hi-color-success);
+  
+  // Shadow & Glow
+  --hi-input-shadow-focus: 0 0 0 2px var(--hi-color-primary), 0 0 8px var(--hi-glow-color);
+  --hi-input-shadow-active: 0 0 0 2px var(--hi-color-primary), 0 0 12px var(--hi-glow-color);
+  --hi-input-glow: var(--hi-glow-color);
+  
+  // ============================================
+  // 2. Border Radius System
+  // ============================================
+  
+  --hi-input-radius: var(--hi-radius-md);
+  
+  // ============================================
+  // 3. Animation System
+  // ============================================
+  
+  // Duration
+  --hi-input-duration: var(--hi-duration-fast);
+  
+  // Easing
+  --hi-input-easing: var(--hi-ease-default);
+  
+  // Transition
+  --hi-input-transition: all var(--hi-input-duration) var(--hi-input-easing);
+  
+  // ============================================
+  // 4. Spacing System
+  // ============================================
+  
+  --hi-input-padding-x: 0.75rem;
+  --hi-input-padding-y: 0.5rem;
+  
+  // ============================================
+  // 5. Border System
+  // ============================================
+  
+  --hi-input-border-width: 1px;
+  --hi-input-border-style: solid;
+  
+  // ============================================
+  // 6. Typography System
+  // ============================================
+  
+  --hi-input-font-size: var(--hi-font-size-sm);
+  --hi-input-line-height: 1.5;
+}
+
+// ============================================
+// Input Wrapper Variables
+// ============================================
+
+.hi-input-wrapper {
+  // Colors
+  --hi-input-wrapper-bg: var(--hi-color-surface);
+  --hi-input-wrapper-bg-focus: var(--hi-color-surface);
+  --hi-input-wrapper-border-color: var(--hi-color-border);
+  --hi-input-wrapper-border-color-focus: var(--hi-color-primary);
+  
+  // Shadow
+  --hi-input-wrapper-shadow-focus: 0 0 0 2px var(--hi-color-primary), 0 0 8px var(--hi-glow-color);
+  --hi-input-wrapper-shadow-active: 0 0 0 2px var(--hi-color-primary), 0 0 12px var(--hi-glow-color);
+  
+  // Radius
+  --hi-input-wrapper-radius: var(--hi-radius-md);
+  
+  // Blur
+  --hi-input-wrapper-blur: blur(4px);
+}
+
+// ============================================
+// Size Variants
+// ============================================
+
+.hi-input-sm,
+.hi-input-wrapper-sm {
+  --hi-input-font-size: var(--hi-font-size-xs);
+  --hi-input-padding-x: 0.5rem;
+  --hi-input-padding-y: 0.25rem;
+  --hi-input-radius: var(--hi-radius-sm);
+}
+
+.hi-input-md,
+.hi-input-wrapper-md {
+  --hi-input-font-size: var(--hi-font-size-sm);
+  --hi-input-padding-x: 0.75rem;
+  --hi-input-padding-y: 0.375rem;
+  --hi-input-radius: var(--hi-radius-md);
+}
+
+.hi-input-lg,
+.hi-input-wrapper-lg {
+  --hi-input-font-size: var(--hi-font-size-base);
+  --hi-input-padding-x: 1rem;
+  --hi-input-padding-y: 0.5rem;
+  --hi-input-radius: var(--hi-radius-lg);
+}
+
+// ============================================
+// State Variants
+// ============================================
+
+.hi-input-error {
+  --hi-input-border-color: var(--hi-color-danger);
+  --hi-input-shadow-focus: 0 0 0 1px var(--hi-color-danger), 0 0 12px var(--hi-glow-color);
+}
+
+.hi-input-success {
+  --hi-input-border-color: var(--hi-color-success);
+  --hi-input-shadow-focus: 0 0 0 1px var(--hi-color-success), 0 0 12px var(--hi-glow-color);
+}
+
+// ============================================
+// Prefix/Suffix Variables
+// ============================================
+
+.hi-input-prefix,
+.hi-input-suffix {
+  --hi-input-affix-color: var(--hi-color-text-secondary);
+  --hi-input-affix-padding: 0 0.5rem;
+  --hi-input-affix-font-size: var(--hi-font-size-sm);
+  --hi-input-affix-border-color: var(--hi-color-border);
+}

@@ -1,5 +1,9 @@
 // hi-components/src/basic/input.rs
 // Input component with Arknights + FUI styling
+// Three-layer CSS variable system:
+// - Layer1: Foundation variables (foundation.scss)
+// - Layer2: Component variables (input-vars.scss)
+// - Custom: Runtime overrides via text_color, border_color, animation_id
 
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, InputClass, UtilityClass};
@@ -78,6 +82,36 @@ pub struct InputProps {
     /// Uses Ghost glow color (black/white based on theme)
     #[props(default)]
     pub glow_color: GlowColor,
+
+    /// Custom text color (Layer2/Custom override)
+    /// Overrides default text color from CSS variables
+    #[props(default)]
+    pub text_color: Option<String>,
+
+    /// Custom placeholder color (Layer2/Custom override)
+    /// Overrides default placeholder color from CSS variables
+    #[props(default)]
+    pub placeholder_color: Option<String>,
+
+    /// Custom border color (Layer2/Custom override)
+    /// Overrides default border color from CSS variables
+    #[props(default)]
+    pub border_color: Option<String>,
+
+    /// Custom background color (Layer2/Custom override)
+    /// Overrides default background color from CSS variables
+    #[props(default)]
+    pub background_color: Option<String>,
+
+    /// Animation ID for AnimationBuilder integration (Custom layer)
+    /// Use this to apply runtime animations via AnimationBuilder
+    #[props(default)]
+    pub animation_id: Option<String>,
+
+    /// Custom CSS variable overrides (Custom layer)
+    /// Apply arbitrary CSS variable overrides at runtime
+    #[props(default)]
+    pub css_vars: Option<Vec<(&'static str, String)>>,
 }
 
 impl Default for InputProps {
@@ -101,11 +135,31 @@ impl Default for InputProps {
             glow_blur: Default::default(),
             glow_intensity: Default::default(),
             glow_color: GlowColor::Ghost,
+            text_color: None,
+            placeholder_color: None,
+            border_color: None,
+            background_color: None,
+            animation_id: None,
+            css_vars: None,
         }
     }
 }
 
 /// Input component with Arknights + FUI styling
+///
+/// # Three-Layer CSS Variable System
+///
+/// This component supports three-layer CSS variable architecture:
+///
+/// ## Layer1 - Foundation (Global)
+/// Variables defined in `foundation.scss` provide global defaults.
+///
+/// ## Layer2 - Component
+/// Variables defined in `input-vars.scss` provide component-specific defaults.
+///
+/// ## Custom - Runtime
+/// Use `text_color`, `placeholder_color`, `border_color`, `background_color`,
+/// `animation_id`, or `css_vars` props for runtime overrides.
 ///
 /// # Examples
 ///
@@ -115,9 +169,26 @@ impl Default for InputProps {
 ///
 /// fn app() -> Element {
 ///     rsx! {
+///         // Basic input
 ///         Input {
 ///             placeholder: "Enter your name",
 ///             value: "Hello",
+///         }
+///
+///         // With custom colors (Custom layer)
+///         Input {
+///             placeholder: "Custom styled",
+///             text_color: Some("#ff0000".to_string()),
+///             border_color: Some("#ff4f00".to_string()),
+///         }
+///
+///         // With CSS variable overrides (Custom layer)
+///         Input {
+///             placeholder: "CSS Vars Override",
+///             css_vars: Some(vec![
+///                 ("--hi-input-radius", "16px".to_string()),
+///                 ("--hi-input-bg", "rgba(0, 0, 0, 0.1)".to_string()),
+///             ]),
 ///         }
 ///     }
 /// }
@@ -139,8 +210,43 @@ pub fn Input(props: InputProps) -> Element {
         .add_if(InputClass::InputDisabled, || props.disabled)
         .build();
 
+    let mut css_vars_string = String::new();
+
+    if let Some(color) = &props.text_color {
+        css_vars_string.push_str(&format!("--hi-input-text-color:{};", color));
+    }
+
+    if let Some(color) = &props.placeholder_color {
+        css_vars_string.push_str(&format!("--hi-input-placeholder-color:{};", color));
+    }
+
+    if let Some(color) = &props.border_color {
+        css_vars_string.push_str(&format!("--hi-input-border-color:{};", color));
+        css_vars_string.push_str(&format!("--hi-input-wrapper-border-color:{};", color));
+    }
+
+    if let Some(color) = &props.background_color {
+        css_vars_string.push_str(&format!("--hi-input-bg:{};", color));
+        css_vars_string.push_str(&format!("--hi-input-wrapper-bg:{};", color));
+    }
+
+    if let Some(vars) = &props.css_vars {
+        for (name, value) in vars {
+            css_vars_string.push_str(&format!("{}:{};", name, value));
+        }
+    }
+
+    let style_attr = if css_vars_string.is_empty() {
+        None
+    } else {
+        Some(css_vars_string)
+    };
+
     let input_content = rsx! {
-        div { class: "{wrapper_classes}",
+        div { 
+            class: "{wrapper_classes}",
+            style: style_attr,
+            "data-animation-id": props.animation_id,
 
             if let Some(icon) = props.prefix_icon {
                 span { class: "{InputClass::InputPrefix.as_class()}", { icon } }
@@ -182,7 +288,6 @@ pub fn Input(props: InputProps) -> Element {
         }
     };
 
-    // Wrap with glow if enabled
     if props.glow {
         rsx! {
             Glow {

@@ -1,10 +1,15 @@
 // Use theme variables with namespace to avoid conflicts
 @use '../../../../theme/styles/variables.scss' as vars;
 @use '../../../../theme/styles/mixins.scss' as mix;
+@use './input-vars.scss' as input-vars;
 
 // ============================================
 // Hikari Input Component
 // Features: Acrylic focus, glowing borders, smooth transitions
+// Three-layer CSS variable system:
+// - Layer1: Foundation variables (foundation.scss)
+// - Layer2: Component variables (input-vars.scss)
+// - Custom: Runtime overrides via AnimationBuilder
 // ============================================
 
 // ============================================
@@ -12,95 +17,81 @@
 // ============================================
 
 .hi-input {
+  // Layer2 variables are defined in input-vars.scss
+
   // Layout
   display: inline-block;
   width: 100%;
 
-  // Typography
+  // Typography - use CSS variables
   font-family: vars.$hikari-font-family-sans;
-  font-size: vars.$hikari-font-size-sm;
-  line-height: 1.5;
-  color: var(--hi-color-text-primary);
+  font-size: var(--hi-input-font-size);
+  line-height: var(--hi-input-line-height);
+  color: var(--hi-input-text-color);
 
-  // Spacing
-  padding: 0.5rem 0.75rem;
+  // Spacing - use CSS variables
+  padding: var(--hi-input-padding-y) var(--hi-input-padding-x);
 
-  // Appearance - Subtle rounded corners
-  border-radius: vars.$hikari-radius-fui-sm;
-  border: 1px solid var(--hi-color-border);
+  // Appearance - use CSS variables
+  border-radius: var(--hi-input-radius);
+  border: var(--hi-input-border-width) var(--hi-input-border-style) var(--hi-input-border-color);
+
+  // Background
+  background: var(--hi-input-bg);
 
   // Remove default outline
   outline: none;
 
-  // Placeholder styling
+  // Placeholder styling - use CSS variables
   &::placeholder {
-    color: var(--hi-color-text-secondary);
-    opacity: 0.6;
+    color: var(--hi-input-placeholder-color);
+    opacity: var(--hi-input-placeholder-opacity);
   }
 
   // Override browser autofill styles to remove background color
-  // NOTE: Using background-color: transparent does NOT work - browsers ignore it
-  // The workaround is to use a very long transition delay to effectively
-  // prevent the autofill background from ever showing
   &:-webkit-autofill,
   &:-webkit-autofill:hover,
   &:-webkit-autofill:focus,
   &:-webkit-autofill:active {
-    // Use maximum possible transition duration (2147483647s = ~68 years)
-    // to prevent autofill background from ever showing
-    // This is a workaround because browsers override background-color !important
     transition: background-color 2147483647s ease-in-out 0s;
-    // Preserve text color in autofilled state (WebKit-specific property)
-    -webkit-text-fill-color: var(--hi-color-text-primary);
-    // Ensure caret color matches theme
-    caret-color: var(--hi-color-text-primary);
-    // Remove any box-shadow that might be added by browser
+    -webkit-text-fill-color: var(--hi-input-text-color);
+    caret-color: var(--hi-input-text-color);
     box-shadow: none;
   }
 
-  // Focus state with sharp border (no blur, only offset)
+  // Focus state - use CSS variables
   &:focus {
-    border-color: var(--hi-color-primary);
+    border-color: var(--hi-input-border-color-focus);
+    box-shadow: var(--hi-input-shadow-focus);
 
-    // Sharp border effect (no blur, only offset) + glow
-    box-shadow:
-      0 0 0 2px var(--hi-color-primary),
-      0 0 8px var(--hi-glow-color);
-
-    // Active state: add additional glow on top of focus shadow
     &:active {
-      box-shadow:
-        0 0 0 2px var(--hi-color-primary),
-        0 0 12px var(--hi-glow-color);
+      box-shadow: var(--hi-input-shadow-active);
     }
   }
 
-  // Disabled state
+  // Disabled state - use CSS variables
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background: rgba(255,255,255, 0.5);
+    background: var(--hi-input-bg-disabled);
+    color: var(--hi-input-text-color-disabled);
   }
 
-  // Error state
+  // Error state - use CSS variables
   &.hi-input-error {
-    border-color: var(--hi-color-danger);
+    border-color: var(--hi-input-border-color-error);
 
     &:focus {
-      box-shadow:
-        0 0 0 1px var(--hi-color-danger),
-        0 0 12px var(--hi-glow-color);
+      box-shadow: var(--hi-input-shadow-focus);
     }
   }
 
-  // Success state
+  // Success state - use CSS variables
   &.hi-input-success {
-    border-color: var(--hi-color-success);
+    border-color: var(--hi-input-border-color-success);
 
     &:focus {
-      box-shadow:
-        0 0 0 1px var(--hi-color-success),
-        0 0 12px var(--hi-glow-color);
+      box-shadow: var(--hi-input-shadow-focus);
     }
   }
 }
@@ -116,40 +107,26 @@
   width: 100%;
   max-width: 320px;
 
-  // Acrylic background effect with theme support
-  background: var(--hi-color-surface);
-  backdrop-filter: blur(4px);
+  // Background - use CSS variables
+  background: var(--hi-input-wrapper-bg);
+  backdrop-filter: var(--hi-input-wrapper-blur);
 
-  border-radius: vars.$hikari-radius-fui-sm;
-  border: 1px solid var(--hi-color-border);
-
-  // DISABLED - migrated to JS animation
-
-
-  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  border-radius: var(--hi-input-wrapper-radius);
+  border: var(--hi-input-border-width) var(--hi-input-border-style) var(--hi-input-wrapper-border-color);
 
   &:focus-within {
-    border-color: var(--hi-color-primary);
-    background: var(--hi-color-surface);
+    border-color: var(--hi-input-wrapper-border-color-focus);
+    background: var(--hi-input-wrapper-bg-focus);
+    box-shadow: var(--hi-input-wrapper-shadow-focus);
 
-    // Sharp border effect (no blur, only offset) + glow - inherits border-radius
-    box-shadow:
-      0 0 0 2px var(--hi-color-primary),
-      0 0 8px var(--hi-glow-color);
-
-    // Active state: add additional glow on top of focus shadow
     &:active {
-      box-shadow:
-        0 0 0 2px var(--hi-color-primary),
-        0 0 12px var(--hi-glow-color);
+      box-shadow: var(--hi-input-wrapper-shadow-active);
     }
 
-    // Ensure inner input doesn't override wrapper's box-shadow
     .hi-input:focus {
       box-shadow: none;
     }
 
-    // Ensure inner input active state doesn't override wrapper's box-shadow
     .hi-input:focus:active {
       box-shadow: none;
     }
@@ -162,23 +139,13 @@
     box-shadow: none;
     max-width: none;
 
-    // Override browser autofill styles for input within wrapper
-    // NOTE: Using background-color: transparent does NOT work - browsers ignore it
-    // The workaround is to use a very long transition delay to effectively
-    // prevent the autofill background from ever showing
     &:-webkit-autofill,
     &:-webkit-autofill:hover,
     &:-webkit-autofill:focus,
     &:-webkit-autofill:active {
-      // Use maximum possible transition duration (2147483647s = ~68 years)
-      // to prevent autofill background from ever showing
-      // This is a workaround because browsers override background-color !important
       transition: background-color 2147483647s ease-in-out 0s;
-      // Preserve text color in autofilled state (WebKit-specific property)
-      -webkit-text-fill-color: var(--hi-color-text-primary);
-      // Ensure caret color matches theme
-      caret-color: var(--hi-color-text-primary);
-      // Remove any box-shadow that might be added by browser
+      -webkit-text-fill-color: var(--hi-input-text-color);
+      caret-color: var(--hi-input-text-color);
       box-shadow: none;
     }
 
@@ -192,22 +159,22 @@
   }
 }
 
-// Prefix and Suffix
+// Prefix and Suffix - use CSS variables
 .hi-input-prefix,
 .hi-input-suffix {
   display: inline-flex;
   align-items: center;
-  padding: 0 0.5rem;
-  color: var(--hi-color-text-secondary);
-  font-size: vars.$hikari-font-size-sm;
+  padding: var(--hi-input-affix-padding);
+  color: var(--hi-input-affix-color);
+  font-size: var(--hi-input-affix-font-size);
 }
 
 .hi-input-prefix {
-  border-right: 1px solid var(--hi-color-border);
+  border-right: 1px solid var(--hi-input-affix-border-color);
 }
 
 .hi-input-suffix {
-  border-left: 1px solid var(--hi-color-border);
+  border-left: 1px solid var(--hi-input-affix-border-color);
 }
 
 // Clear button
@@ -218,14 +185,11 @@
   padding: 0.25rem;
   margin-right: 0.25rem;
   cursor: pointer;
-  color: var(--hi-color-text-secondary);
-  border-radius: vars.$hikari-radius-fui-sm;
-  // DISABLED - migrated to JS animation
-
-  // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  color: var(--hi-input-affix-color);
+  border-radius: var(--hi-input-radius);
 
   &:hover {
-    color: var(--hi-color-text-primary);
+    color: var(--hi-input-text-color);
     background: rgba(255, 76, 0, 0.2);
   }
 }
@@ -247,9 +211,6 @@
 .hi-input-search {
   .hi-input-suffix {
     cursor: pointer;
-    // DISABLED - migrated to JS animation
-
-    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     &:hover {
       color: var(--hi-color-primary);
@@ -264,9 +225,6 @@
 .hi-input-password {
   .hi-input-suffix {
     cursor: pointer;
-    // DISABLED - migrated to JS animation
-
-    // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     &:hover {
       color: var(--hi-color-primary);
@@ -275,60 +233,54 @@
 }
 
 // ============================================
-// Size Variants
+// Size Variants - Variables defined in input-vars.scss
 // ============================================
 
 .hi-input-sm,
 .hi-input-wrapper-sm {
-  font-size: vars.$hikari-font-size-xs;
   height: 24px;
-  padding: 0.25rem 0.5rem;
 
   .hi-input {
-    padding: 0.25rem 0.5rem;
-    font-size: vars.$hikari-font-size-xs;
+    padding: var(--hi-input-padding-y) var(--hi-input-padding-x);
+    font-size: var(--hi-input-font-size);
   }
 
   .hi-input-prefix,
   .hi-input-suffix {
     padding: 0 0.375rem;
-    font-size: vars.$hikari-font-size-xs;
+    font-size: var(--hi-input-font-size);
   }
 }
 
 .hi-input-md,
 .hi-input-wrapper-md {
-  font-size: vars.$hikari-font-size-sm;
   height: 32px;
-  padding: 0.375rem 0.75rem;
 
   .hi-input {
-    padding: 0.375rem 0.75rem;
-    font-size: vars.$hikari-font-size-sm;
+    padding: var(--hi-input-padding-y) var(--hi-input-padding-x);
+    font-size: var(--hi-input-font-size);
   }
 
   .hi-input-prefix,
   .hi-input-suffix {
-    padding: 0 0.5rem;
-    font-size: vars.$hikari-font-size-sm;
+    padding: var(--hi-input-affix-padding);
+    font-size: var(--hi-input-affix-font-size);
   }
 }
 
 .hi-input-lg,
 .hi-input-wrapper-lg {
-  font-size: vars.$hikari-font-size-base;
   height: 40px;
-  padding: 0.5rem 1rem;
 
   .hi-input {
-    padding: 0.5rem 1rem;
-    font-size: vars.$hikari-font-size-base;
+    padding: var(--hi-input-padding-y) var(--hi-input-padding-x);
+    font-size: var(--hi-input-font-size);
   }
 
   .hi-input-prefix,
   .hi-input-suffix {
     padding: 0 0.75rem;
-    font-size: vars.$hikari-font-size-base;
+    font-size: var(--hi-input-font-size);
   }
 }
 
@@ -380,77 +332,31 @@
 
   &.hi-input-counter-limit {
     color: var(--hi-color-danger);
-    // DISABLED - migrated to JS animation
-
-    // animation: counter-pulse 0.5s vars.$hikari-ease-smooth;
   }
 }
-
-// DISABLED - migrated to JS animation
-// @keyframes counter-pulse {
-//   0%, 100% {
-//     opacity: 0.8;
-//   }
-//   50% {
-//     opacity: 1;
-//     text-shadow: 0 0 8px var(--hi-color-danger);
-//   }
-// }
 
 // ============================================
 // Animations
 // ============================================
 
 .hi-input-animate-in {
-  // DISABLED - migrated to JS animation
-
-  // animation: input-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+  // Animation handled by JS
 }
 
-// DISABLED - migrated to JS animation
-// @keyframes input-fade-in {
-//   from {
-//     opacity: 0;
-//     transform: translateY(-8px);
-//   }
-//   to {
-//     opacity: 1;
-//     transform: translateY(0);
-//   }
-// }
-
-// Shake animation for error state
 .hi-input-shake {
-  // DISABLED - migrated to JS animation
-
-  // animation: input-shake 0.5s vars.$hikari-ease-smooth;
+  // Animation handled by JS
 }
-
-// DISABLED - migrated to JS animation
-// @keyframes input-shake {
-//   0%, 100% {
-//     transform: translateX(0);
-//   }
-//   10%, 30%, 50%, 70%, 90% {
-//     transform: translateX(-4px);
-//   }
-//   20%, 40%, 60%, 80% {
-//     transform: translateX(4px);
-//   }
-// }
 
 // ============================================
 // Spotlight Effect (Mouse-following glow)
 // ============================================
 
-// Spotlight wrapper for input
 .hi-input-spotlight-wrapper {
   position: relative;
   display: inline-block;
   width: 100%;
   max-width: 320px;
 
-  // Create spotlight overlay using ::before pseudo-element
   &::before {
     content: '';
     position: absolute;
@@ -460,18 +366,15 @@
     border-radius: inherit;
     opacity: var(--spotlight-opacity, 0);
 
-    // Primary color radial gradient spotlight positioned by CSS variables
     background-image: radial-gradient(
       circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
       var(--hi-color-primary) 0%,
       transparent 70%
     );
 
-    // Smooth opacity transition (only for opacity, position updates are instant)
     transition: opacity 0.1s ease-out;
   }
 
-  // Ensure input is above the spotlight overlay
   .hi-input,
   .hi-input-wrapper {
     position: relative;

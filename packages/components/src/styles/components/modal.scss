@@ -1,9 +1,15 @@
 // Use theme variables with namespace to avoid conflicts
 @use '../../../../theme/styles/variables.scss' as vars;
 @use '../../../../theme/styles/mixins.scss' as mix;
+@use './modal-vars.scss' as modal-vars;
 
 // ============================================
-// Hikari // Hikari // Hikari // Hikari // Hikari Modal Component - FUI Styling Component Component Component Component
+// Hikari Modal Component - FUI Styling
+// Three-layer CSS variable system:
+// - Layer1: Foundation variables (foundation.scss)
+// - Layer2: Component variables (modal-vars.scss)
+// - Custom: Runtime overrides via AnimationBuilder
+// ============================================
 
 // ============================================
 // Modal Overlay
@@ -15,19 +21,19 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 1000;
+  z-index: var(--hi-modal-z-index);
 
-  // Acrylic background effect - themed (opaque mode, inverse color)
-  background: var(--hi-overlay-color);
-  backdrop-filter: blur(8px);
+  // Acrylic background effect - use CSS variables
+  background: var(--hi-modal-overlay-bg);
+  backdrop-filter: var(--hi-modal-overlay-blur);
 
   // Flex center
   display: flex;
   align-items: center;
   justify-content: center;
 
-  // Transitions
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+  // Transitions - use CSS variables
+  transition: var(--hi-modal-transition);
 }
 
 // Transparent mode (non-blocking modal, like toast)
@@ -52,43 +58,40 @@
   display: flex;
   flex-direction: column;
 
-  // Appearance
-  border-radius: vars.$hikari-radius-fui-md;
-  border: 1px solid var(--hi-color-border);
+  // Appearance - use CSS variables
+  border-radius: var(--hi-modal-radius);
+  border: var(--hi-modal-border-width) var(--hi-modal-border-style) var(--hi-modal-border-color);
 
-  // Acrylic background effect
-  background: var(--hi-card-bg-light);
-  backdrop-filter: blur(4px);
+  // Acrylic background effect - use CSS variables
+  background: var(--hi-modal-bg);
+  backdrop-filter: var(--hi-modal-blur);
 
-  // Elevated shadow with FUI glow
-  box-shadow:
-    0 16px 32px var(--hi-color-black-40, rgba(0, 0, 0, 0.4)),
-    0 0 0 1px var(--hi-color-white-5, rgba(255, 255, 255, 0.05)) inset,
-    var(--hi-glow-lg);
+  // Elevated shadow with FUI glow - use CSS variables
+  box-shadow: var(--hi-modal-shadow);
 
-  // Transitions
-  transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
-  max-height: calc(100vh - 2rem);
+  // Transitions - use CSS variables
+  transition: var(--hi-modal-transition);
+  max-height: var(--hi-modal-max-height);
 
-  // Size variants
+  // Size variants - use CSS variables
   &.hi-modal-sm {
-    width: 90%;
-    max-width: 400px;
+    width: var(--hi-modal-width);
+    max-width: var(--hi-modal-max-width);
   }
 
   &.hi-modal-md {
-    width: 90%;
-    max-width: 560px;
+    width: var(--hi-modal-width);
+    max-width: var(--hi-modal-max-width);
   }
 
   &.hi-modal-lg {
-    width: 90%;
-    max-width: 720px;
+    width: var(--hi-modal-width);
+    max-width: var(--hi-modal-max-width);
   }
 
   &.hi-modal-xl {
-    width: 95%;
-    max-width: 960px;
+    width: var(--hi-modal-width);
+    max-width: var(--hi-modal-max-width);
   }
 
   // Position variants
@@ -104,17 +107,18 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--hi-color-border);
+    gap: var(--hi-modal-gap);
+    padding: var(--hi-modal-padding-header);
+    border-bottom: 1px solid var(--hi-modal-divider-color);
+    background: var(--hi-modal-bg-header);
   }
 
   .hi-modal-title {
     margin: 0;
     font-family: vars.$hikari-font-family-sans;
-    font-size: vars.$hikari-font-size-lg;
-    font-weight: 600;
-    color: var(--hi-color-text-primary);
+    font-size: var(--hi-modal-title-font-size);
+    font-weight: var(--hi-modal-title-font-weight);
+    color: var(--hi-modal-title-color);
     line-height: 1.4;
   }
 
@@ -125,9 +129,9 @@
     padding: 0.25rem;
     background: transparent;
     border: none;
-    color: var(--hi-color-text-secondary);
+    color: var(--hi-modal-close-color);
     cursor: pointer;
-    border-radius: vars.$hikari-radius-fui-sm;
+    border-radius: var(--hi-radius-sm);
     transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     svg {
@@ -136,8 +140,8 @@
     }
 
     &:hover {
-      color: var(--hi-color-text-primary);
-      background: var(--hi-button-danger-hover);
+      color: var(--hi-modal-close-color-hover);
+      background: var(--hi-modal-bg-close-hover);
       box-shadow: var(--hi-glow-button-danger);
     }
 
@@ -152,10 +156,13 @@
 
   .hi-modal-body {
     flex: 1;
-    padding: 1.5rem;
+    padding: var(--hi-modal-padding-body);
     overflow-y: auto;
     overflow-x: hidden;
     min-height: 0;
+    color: var(--hi-modal-body-color);
+    font-size: var(--hi-modal-body-font-size);
+    line-height: var(--hi-modal-body-line-height);
 
     // Custom scrollbar
     &::-webkit-scrollbar {
@@ -169,7 +176,7 @@
     }
 
     &::-webkit-scrollbar-thumb {
-      background: var(--hi-color-border);
+      background: var(--hi-modal-border-color);
       border-radius: 4px;
       transition: background vars.$hikari-duration-fast vars.$hikari-ease-smooth;
     }
@@ -187,9 +194,10 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.75rem;
-    padding: 1rem 1.5rem;
-    border-top: 1px solid var(--hi-color-border);
+    gap: var(--hi-modal-gap);
+    padding: var(--hi-modal-padding-footer);
+    border-top: 1px solid var(--hi-modal-divider-color);
+    background: var(--hi-modal-bg-footer);
   }
 }
 

@@ -1,0 +1,148 @@
+// packages/components/src/styles/components/modal-vars.scss
+// Layer2 - Modal Component Variables
+// 
+// This file defines component-level CSS variables for the Modal component.
+// These variables can be overridden at runtime via AnimationBuilder.
+
+// ============================================
+// Modal Overlay Variables
+// ============================================
+
+.hi-modal-overlay {
+  // ============================================
+  // 1. Color System
+  // ============================================
+  
+  // Overlay Colors
+  --hi-modal-overlay-bg: var(--hi-overlay-color);
+  --hi-modal-overlay-blur: blur(8px);
+  
+  // ============================================
+  // 2. Z-Index System
+  // ============================================
+  
+  --hi-modal-z-index: var(--hi-z-index-modal-backdrop);
+}
+
+// ============================================
+// Modal Container Variables
+// ============================================
+
+.hi-modal {
+  // ============================================
+  // 1. Color System
+  // ============================================
+  
+  // Text Colors
+  --hi-modal-title-color: var(--hi-color-text-primary);
+  --hi-modal-body-color: var(--hi-color-text-primary);
+  --hi-modal-close-color: var(--hi-color-text-secondary);
+  --hi-modal-close-color-hover: var(--hi-color-text-primary);
+  
+  // Background Colors
+  --hi-modal-bg: var(--hi-card-bg-light);
+  --hi-modal-bg-header: transparent;
+  --hi-modal-bg-body: transparent;
+  --hi-modal-bg-footer: transparent;
+  --hi-modal-bg-close-hover: var(--hi-button-danger-hover);
+  
+  // Border Colors
+  --hi-modal-border-color: var(--hi-color-border);
+  --hi-modal-divider-color: var(--hi-color-border);
+  
+  // Shadow
+  --hi-modal-shadow: 0 16px 32px var(--hi-color-black-40, rgba(0, 0, 0, 0.4)), 0 0 0 1px var(--hi-color-white-5, rgba(255, 255, 255, 0.05)) inset, var(--hi-glow-lg);
+  --hi-modal-glow: var(--hi-glow-lg);
+  
+  // ============================================
+  // 2. Border Radius System
+  // ============================================
+  
+  --hi-modal-radius: var(--hi-radius-xl);
+  
+  // ============================================
+  // 3. Animation System
+  // ============================================
+  
+  --hi-modal-duration: var(--hi-duration-normal);
+  --hi-modal-easing: var(--hi-ease-default);
+  --hi-modal-transition: all var(--hi-modal-duration) var(--hi-modal-easing);
+  
+  // ============================================
+  // 4. Spacing System
+  // ============================================
+  
+  --hi-modal-padding-header: 1.25rem 1.5rem;
+  --hi-modal-padding-body: 1.5rem;
+  --hi-modal-padding-footer: 1rem 1.5rem;
+  --hi-modal-gap: 0.75rem;
+  
+  // ============================================
+  // 5. Border System
+  // ============================================
+  
+  --hi-modal-border-width: 1px;
+  --hi-modal-border-style: solid;
+  
+  // ============================================
+  // 6. Typography System
+  // ============================================
+  
+  --hi-modal-title-font-size: var(--hi-font-size-lg);
+  --hi-modal-title-font-weight: 600;
+  --hi-modal-body-font-size: var(--hi-font-size-sm);
+  --hi-modal-body-line-height: 1.6;
+  
+  // ============================================
+  // 7. Size System
+  // ============================================
+  
+  --hi-modal-max-height: calc(100vh - 2rem);
+  
+  // ============================================
+  // 8. Blur System
+  // ============================================
+  
+  --hi-modal-blur: blur(4px);
+}
+
+// ============================================
+// Size Variants
+// ============================================
+
+.hi-modal-sm {
+  --hi-modal-width: 90%;
+  --hi-modal-max-width: 400px;
+}
+
+.hi-modal-md {
+  --hi-modal-width: 90%;
+  --hi-modal-max-width: 560px;
+}
+
+.hi-modal-lg {
+  --hi-modal-width: 90%;
+  --hi-modal-max-width: 720px;
+}
+
+.hi-modal-xl {
+  --hi-modal-width: 95%;
+  --hi-modal-max-width: 960px;
+}
+
+// ============================================
+// Position Variants
+// ============================================
+
+.hi-modal-top {
+  --hi-modal-margin-top: 4rem;
+}
+
+// ============================================
+// Transparent Overlay Variant
+// ============================================
+
+.hi-modal-overlay-transparent {
+  --hi-modal-overlay-bg: transparent;
+  --hi-modal-overlay-blur: none;
+}

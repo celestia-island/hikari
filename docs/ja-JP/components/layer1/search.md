@@ -1,25 +1,27 @@
-# 検索
+# Search
 
-検索コンポーネントは、検索入力用のコンポーネントです。
+Search component for search input.
 
-## 基本的な使い方
+## Basic Usage
 
 ```_hikari_component
 pages/components/layer1/search#basic
 ```
 
-## 音声入力
+## With Suggestions
 
-音声入力機能をサポートしています。マイクアイコンをクリックして録音を開始します。
+Search with suggestion dropdown.
 
 ```_hikari_component
-pages/components/layer1/search#voice
+pages/components/layer1/search#suggestions
 ```
 
 ## API
 
-| プロパティ | 説明 | 型 | デフォルト値 |
+| Property | Description | Type | Default |
 |----------|-------------|------|---------|
-| placeholder | プレースホルダーテキスト | String | "検索..." |
-| on_search | 検索コールバック | Option\<EventHandler\<String\>\> | None |
-| voice_input | 音声入力を有効にする | bool | false |
+| placeholder | Placeholder text | String | "Search..." |
+| on_search | Search callback | Option\<EventHandler\<String\>\> | None |
+| suggestions | Suggestion list | Vec\<String> | [] |
+| allow_clear | Show clear button | bool | true |
+| loading | Show loading state | bool | false |

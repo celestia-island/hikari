@@ -8,12 +8,12 @@ Search component for search input.
 pages/components/layer1/search#basic
 ```
 
-## Voice Input
+## With Suggestions
 
-Supports voice input functionality. Click the microphone icon to start recording.
+Search with suggestion dropdown.
 
 ```_hikari_component
-pages/components/layer1/search#voice
+pages/components/layer1/search#suggestions
 ```
 
 ## API
@@ -22,4 +22,6 @@ pages/components/layer1/search#voice
 |----------|-------------|------|---------|
 | placeholder | Placeholder text | String | "Search..." |
 | on_search | Search callback | Option\<EventHandler\<String\>\> | None |
-| voice_input | Enable voice input | bool | false |
+| suggestions | Suggestion list | Vec\<String> | [] |
+| allow_clear | Show clear button | bool | true |
+| loading | Show loading state | bool | false |

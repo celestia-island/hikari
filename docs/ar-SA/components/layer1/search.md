@@ -1,25 +1,27 @@
-# البحث
+# Search
 
-مكون البحث لإدخال البحث.
+Search component for search input.
 
-## الاستخدام الأساسي
+## Basic Usage
 
 ```_hikari_component
 pages/components/layer1/search#basic
 ```
 
-## الإدخال الصوتي
+## With Suggestions
 
-يدعم وظيفة الإدخال الصوتي. انقر على أيقونة الميكروفون لبدء التسجيل.
+Search with suggestion dropdown.
 
 ```_hikari_component
-pages/components/layer1/search#voice
+pages/components/layer1/search#suggestions
 ```
 
-## واجهة البرمجة
+## API
 
-| الخاصية | الوصف | النوع | الافتراضي |
-|---------|-------|-------|-----------|
-| placeholder | نص العنصر النائب | String | "بحث..." |
-| on_search | رد البحث | Option\<EventHandler\<String\>\> | None |
-| voice_input | تفعيل الإدخال الصوتي | bool | false |
+| Property | Description | Type | Default |
+|----------|-------------|------|---------|
+| placeholder | Placeholder text | String | "Search..." |
+| on_search | Search callback | Option\<EventHandler\<String\>\> | None |
+| suggestions | Suggestion list | Vec\<String> | [] |
+| allow_clear | Show clear button | bool | true |
+| loading | Show loading state | bool | false |

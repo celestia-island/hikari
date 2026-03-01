@@ -1,25 +1,27 @@
-# Поиск
+# Search
 
-Компонент Search для поискового ввода.
+Search component for search input.
 
-## Базовое использование
+## Basic Usage
 
 ```_hikari_component
 pages/components/layer1/search#basic
 ```
 
-## Голосовой ввод
+## With Suggestions
 
-Поддерживает функцию голосового ввода. Нажмите на значок микрофона, чтобы начать запись.
+Search with suggestion dropdown.
 
 ```_hikari_component
-pages/components/layer1/search#voice
+pages/components/layer1/search#suggestions
 ```
 
 ## API
 
-| Свойство | Описание | Тип | По умолчанию |
-|----------|----------|-----|--------------|
-| placeholder | Текст-заполнитель | String | "Поиск..." |
-| on_search | Обратный вызов поиска | Option\<EventHandler\<String\>\> | None |
-| voice_input | Включить голосовой ввод | bool | false |
+| Property | Description | Type | Default |
+|----------|-------------|------|---------|
+| placeholder | Placeholder text | String | "Search..." |
+| on_search | Search callback | Option\<EventHandler\<String\>\> | None |
+| suggestions | Suggestion list | Vec\<String> | [] |
+| allow_clear | Show clear button | bool | true |
+| loading | Show loading state | bool | false |

@@ -1,6 +1,6 @@
 # Search 搜尋
 
-Search 元件用於搜尋輸入。
+搜尋輸入元件。
 
 ## 基礎用法
 
@@ -8,12 +8,12 @@ Search 元件用於搜尋輸入。
 pages/components/layer1/search#basic
 ```
 
-## 語音輸入
+## 帶建議
 
-支援語音輸入功能，點擊麥克風圖標開始錄音。
+帶建議下拉的搜尋。
 
 ```_hikari_component
-pages/components/layer1/search#voice
+pages/components/layer1/search#suggestions
 ```
 
 ## API
@@ -22,4 +22,6 @@ pages/components/layer1/search#voice
 |------|------|------|--------|
 | placeholder | 佔位文字 | String | "搜尋..." |
 | on_search | 搜尋回調 | Option\<EventHandler\<String\>\> | None |
-| voice_input | 啟用語音輸入 | bool | false |
+| suggestions | 建議列表 | Vec\<String> | [] |
+| allow_clear | 顯示清除按鈕 | bool | true |
+| loading | 顯示載入狀態 | bool | false |

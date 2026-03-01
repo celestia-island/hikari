@@ -1,25 +1,27 @@
 # Search
 
-Componente Search para entrada de búsqueda.
+Search component for search input.
 
-## Uso Básico
+## Basic Usage
 
 ```_hikari_component
 pages/components/layer1/search#basic
 ```
 
-## Entrada de Voz
+## With Suggestions
 
-Admite funcionalidad de entrada de voz. Haga clic en el icono del micrófono para comenzar a grabar.
+Search with suggestion dropdown.
 
 ```_hikari_component
-pages/components/layer1/search#voice
+pages/components/layer1/search#suggestions
 ```
 
 ## API
 
-| Propiedad | Descripción | Tipo | Por Defecto |
-|-----------|-------------|------|-------------|
-| placeholder | Texto de marcador de posición | String | "Buscar..." |
-| on_search | Callback de búsqueda | Option\<EventHandler\<String\>\> | None |
-| voice_input | Habilitar entrada de voz | bool | false |
+| Property | Description | Type | Default |
+|----------|-------------|------|---------|
+| placeholder | Placeholder text | String | "Search..." |
+| on_search | Search callback | Option\<EventHandler\<String\>\> | None |
+| suggestions | Suggestion list | Vec\<String> | [] |
+| allow_clear | Show clear button | bool | true |
+| loading | Show loading state | bool | false |

@@ -399,6 +399,32 @@ pub fn start_audio_recording() {
                             let _ = Reflect::set(&recognition, &"onend".into(), &onend_js);
                             onend.forget();
 
+                            // Add error handler for debugging
+                            let onerror = Closure::wrap(Box::new(move |event: JsValue| {
+                                if let Some(error) = Reflect::get(&event, &"error".into()).ok() {
+                                    if let Some(error_msg) = error.as_string() {
+                                        web_sys::console::log_1(
+                                            &format!("[SpeechRecognition] Error: {}", error_msg).into(),
+                                        );
+                                    } else if let Some(error_obj) = Reflect::get(&event, &"message".into()).ok() {
+                                        if let Some(msg) = error_obj.as_string() {
+                                            web_sys::console::log_1(
+                                                &format!("[SpeechRecognition] Error message: {}", msg).into(),
+                                            );
+                                        }
+                                    } else {
+                                        web_sys::console::log_1(
+                                            &"[SpeechRecognition] Unknown error occurred".into(),
+                                        );
+                                    }
+                                }
+                            })
+                                as Box<dyn FnMut(JsValue)>);
+
+                            let onerror_js = onerror.as_ref();
+                            let _ = Reflect::set(&recognition, &"onerror".into(), &onerror_js);
+                            onerror.forget();
+
                             let onstart = Closure::wrap(Box::new(move || {}) as Box<dyn FnMut()>);
                             let onstart_js = onstart.as_ref();
                             let _ = Reflect::set(&recognition, &"onstart".into(), &onstart_js);

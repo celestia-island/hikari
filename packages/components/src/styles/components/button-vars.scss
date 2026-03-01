@@ -1,0 +1,273 @@
+// packages/components/src/styles/components/button-vars.scss
+// Layer2 - Button Component Variables
+// 
+// This file defines component-level CSS variables for the Button component.
+// These variables can be overridden at runtime via AnimationBuilder.
+
+// ============================================
+// Base Button Variables
+// ============================================
+
+.hi-button {
+  // ============================================
+  // 1. Color System
+  // ============================================
+  
+  // Text Colors
+  --hi-button-text-color: var(--hi-color-text-primary);
+  --hi-button-text-color-hover: var(--hi-color-text-primary);
+  --hi-button-text-color-active: var(--hi-color-text-primary);
+  --hi-button-text-color-disabled: var(--hi-color-text-disabled);
+  
+  // Icon Colors
+  --hi-button-icon-color: var(--hi-icon-color);
+  --hi-button-icon-color-hover: var(--hi-icon-color);
+  --hi-button-icon-color-active: var(--hi-icon-color);
+  --hi-button-icon-color-disabled: var(--hi-icon-color-disabled);
+  
+  // Background Colors
+  --hi-button-bg: var(--hi-bg-surface);
+  --hi-button-bg-hover: var(--hi-bg-surface-dark);
+  --hi-button-bg-active: var(--hi-bg-surface-dark);
+  --hi-button-bg-disabled: var(--hi-bg-surface);
+  
+  // Border Colors
+  --hi-button-border-color: var(--hi-border-color);
+  --hi-button-border-color-hover: var(--hi-border-color);
+  --hi-button-border-color-focus: var(--hi-border-color-focus);
+  --hi-button-border-color-disabled: var(--hi-border-color-disabled);
+  
+  // Shadow & Glow
+  --hi-button-shadow: var(--hi-shadow-sm);
+  --hi-button-shadow-hover: var(--hi-shadow-md);
+  --hi-button-glow: var(--hi-glow-color);
+  
+  // ============================================
+  // 2. Border Radius System
+  // ============================================
+  
+  --hi-button-radius: var(--hi-radius-md);
+  --hi-button-radius-hover: var(--hi-radius-md);
+  --hi-button-radius-active: var(--hi-radius-md);
+  
+  // ============================================
+  // 3. Animation System
+  // ============================================
+  
+  // Duration
+  --hi-button-duration: var(--hi-duration-normal);
+  --hi-button-duration-fast: var(--hi-duration-fast);
+  --hi-button-duration-active: var(--hi-duration-instant);
+  
+  // Easing
+  --hi-button-easing: var(--hi-ease-default);
+  --hi-button-easing-active: var(--hi-ease-out);
+  
+  // Transition
+  --hi-button-transition: 
+    background-color var(--hi-button-duration) var(--hi-button-easing),
+    border-color var(--hi-button-duration) var(--hi-button-easing),
+    box-shadow var(--hi-button-duration) var(--hi-button-easing),
+    transform var(--hi-button-duration-active) var(--hi-button-easing-active);
+  
+  // ============================================
+  // 4. Background System
+  // ============================================
+  
+  --hi-button-bg-gradient: var(--hi-bg-gradient-primary);
+  --hi-button-bg-blur: var(--hi-bg-blur-sm);
+  --hi-button-bg-opacity: 1;
+  --hi-button-bg-opacity-hover: 0.9;
+  --hi-button-bg-opacity-active: 0.8;
+  
+  // ============================================
+  // 5. SVG System
+  // ============================================
+  
+  --hi-button-icon-fill: var(--hi-icon-fill);
+  --hi-button-icon-fill-opacity: var(--hi-icon-fill-opacity);
+  --hi-button-icon-stroke: var(--hi-icon-stroke);
+  --hi-button-icon-stroke-width: var(--hi-icon-stroke-width);
+  --hi-button-icon-size: var(--hi-icon-size-sm);
+  
+  // ============================================
+  // 6. Spacing System
+  // ============================================
+  
+  --hi-button-padding-x: var(--hi-spacing-md);
+  --hi-button-padding-y: var(--hi-spacing-sm);
+  --hi-button-gap: var(--hi-spacing-xs);
+  
+  // ============================================
+  // 7. Border System
+  // ============================================
+  
+  --hi-button-border-width: var(--hi-border-width);
+  --hi-button-border-width-focus: var(--hi-border-width-focus);
+  --hi-button-border-style: var(--hi-border-style);
+  
+  // ============================================
+  // 8. Transform System
+  // ============================================
+  
+  --hi-button-transform: none;
+  --hi-button-transform-hover: none;
+  --hi-button-transform-active: scale(0.98);
+  
+  // ============================================
+  // 9. Typography System
+  // ============================================
+  
+  --hi-button-font-size: var(--hi-font-size-sm);
+  --hi-button-font-weight: 500;
+  --hi-button-line-height: 1.5;
+  --hi-button-letter-spacing: 0.01em;
+}
+
+// ============================================
+// Primary Variant Variables
+// ============================================
+
+.hi-button-primary {
+  --hi-button-text-color: var(--hi-color-text-on-primary);
+  --hi-button-text-color-hover: var(--hi-color-text-on-primary);
+  --hi-button-text-color-active: var(--hi-color-text-on-primary);
+  
+  --hi-button-icon-color: var(--hi-color-text-on-primary);
+  --hi-button-icon-color-hover: var(--hi-color-text-on-primary);
+  --hi-button-icon-color-active: var(--hi-color-text-on-primary);
+  
+  --hi-button-bg: var(--hi-color-primary);
+  --hi-button-bg-hover: var(--hi-color-primary-dark);
+  --hi-button-bg-active: var(--hi-color-primary-dark);
+  
+  --hi-button-border-color: transparent;
+  --hi-button-border-color-hover: transparent;
+  --hi-button-border-color-focus: var(--hi-color-primary);
+  
+  --hi-button-glow: var(--hi-glow-color);
+}
+
+// ============================================
+// Secondary Variant Variables
+// ============================================
+
+.hi-button-secondary {
+  --hi-button-text-color: var(--hi-color-text-on-secondary);
+  --hi-button-text-color-hover: var(--hi-color-text-on-secondary);
+  --hi-button-text-color-active: var(--hi-color-text-on-secondary);
+  
+  --hi-button-icon-color: var(--hi-color-text-on-secondary);
+  --hi-button-icon-color-hover: var(--hi-color-text-on-secondary);
+  --hi-button-icon-color-active: var(--hi-color-text-on-secondary);
+  
+  --hi-button-bg: var(--hi-color-secondary);
+  --hi-button-bg-hover: var(--hi-color-secondary-dark);
+  --hi-button-bg-active: var(--hi-color-secondary-dark);
+  
+  --hi-button-border-color: transparent;
+  --hi-button-border-color-hover: transparent;
+  --hi-button-border-color-focus: var(--hi-color-secondary);
+  
+  --hi-button-glow: var(--hi-glow-color);
+}
+
+// ============================================
+// Ghost Variant Variables
+// ============================================
+
+.hi-button-ghost {
+  --hi-button-text-color: var(--hi-color-text-primary);
+  --hi-button-text-color-hover: var(--hi-color-text-primary);
+  --hi-button-text-color-active: var(--hi-color-text-primary);
+  
+  --hi-button-icon-color: var(--hi-icon-color);
+  --hi-button-icon-color-hover: var(--hi-icon-color);
+  --hi-button-icon-color-active: var(--hi-icon-color);
+  
+  --hi-button-bg: transparent;
+  --hi-button-bg-hover: var(--hi-bg-surface);
+  --hi-button-bg-active: var(--hi-bg-surface-dark);
+  
+  --hi-button-border-color: var(--hi-border-color);
+  --hi-button-border-color-hover: var(--hi-border-color);
+  --hi-button-border-color-focus: var(--hi-border-color-focus);
+  
+  --hi-button-glow: var(--hi-glow-color);
+}
+
+// ============================================
+// Danger Variant Variables
+// ============================================
+
+.hi-button-danger {
+  --hi-button-text-color: var(--hi-color-text-on-danger, #ffffff);
+  --hi-button-text-color-hover: var(--hi-color-text-on-danger, #ffffff);
+  --hi-button-text-color-active: var(--hi-color-text-on-danger, #ffffff);
+  
+  --hi-button-icon-color: var(--hi-color-text-on-danger, #ffffff);
+  --hi-button-icon-color-hover: var(--hi-color-text-on-danger, #ffffff);
+  --hi-button-icon-color-active: var(--hi-color-text-on-danger, #ffffff);
+  
+  --hi-button-bg: var(--hi-color-danger);
+  --hi-button-bg-hover: var(--hi-color-danger-dark);
+  --hi-button-bg-active: var(--hi-color-danger-dark);
+  
+  --hi-button-border-color: transparent;
+  --hi-button-border-color-hover: transparent;
+  --hi-button-border-color-focus: var(--hi-color-danger);
+  
+  --hi-button-glow: var(--hi-glow-color);
+}
+
+// ============================================
+// Success Variant Variables
+// ============================================
+
+.hi-button-success {
+  --hi-button-text-color: var(--hi-color-text-on-success, #ffffff);
+  --hi-button-text-color-hover: var(--hi-color-text-on-success, #ffffff);
+  --hi-button-text-color-active: var(--hi-color-text-on-success, #ffffff);
+  
+  --hi-button-icon-color: var(--hi-color-text-on-success, #ffffff);
+  --hi-button-icon-color-hover: var(--hi-color-text-on-success, #ffffff);
+  --hi-button-icon-color-active: var(--hi-color-text-on-success, #ffffff);
+  
+  --hi-button-bg: var(--hi-color-success);
+  --hi-button-bg-hover: var(--hi-color-success-dark);
+  --hi-button-bg-active: var(--hi-color-success-dark);
+  
+  --hi-button-border-color: transparent;
+  --hi-button-border-color-hover: transparent;
+  --hi-button-border-color-focus: var(--hi-color-success);
+  
+  --hi-button-glow: var(--hi-glow-color);
+}
+
+// ============================================
+// Size Variant Variables
+// ============================================
+
+.hi-button-sm {
+  --hi-button-padding-x: var(--hi-spacing-sm);
+  --hi-button-padding-y: var(--hi-spacing-xs);
+  --hi-button-icon-size: var(--hi-icon-size-xs);
+  --hi-button-radius: var(--hi-radius-sm);
+  --hi-button-font-size: var(--hi-font-size-xs);
+}
+
+.hi-button-md {
+  --hi-button-padding-x: var(--hi-spacing-md);
+  --hi-button-padding-y: var(--hi-spacing-sm);
+  --hi-button-icon-size: var(--hi-icon-size-sm);
+  --hi-button-radius: var(--hi-radius-md);
+  --hi-button-font-size: var(--hi-font-size-sm);
+}
+
+.hi-button-lg {
+  --hi-button-padding-x: var(--hi-spacing-lg);
+  --hi-button-padding-y: var(--hi-spacing-md);
+  --hi-button-icon-size: var(--hi-icon-size-md);
+  --hi-button-radius: var(--hi-radius-lg);
+  --hi-button-font-size: var(--hi-font-size-base);
+}

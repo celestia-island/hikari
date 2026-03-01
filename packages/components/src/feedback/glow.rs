@@ -77,12 +77,6 @@ pub struct GlowProps {
     #[props(default)]
     pub intensity: GlowIntensity,
 
-    /// Border radius override
-    /// If None, inherits from child element (default behavior)
-    /// If Some, uses the specified CSS value (e.g., "8px", "var(--hi-button-radius)")
-    #[props(default)]
-    pub radius: Option<String>,
-
     /// Additional CSS classes
     #[props(default)]
     pub class: String,
@@ -106,25 +100,7 @@ pub struct GlowProps {
 ///
 /// # Border Radius
 ///
-/// The glow wrapper inherits border-radius from its child element by default.
-/// You can override this with the `radius` prop:
-///
-/// ```rust
-/// // Inherit from child (default)
-/// Glow { children: rsx! { Button { "Click" } } }
-///
-/// // Override with specific value
-/// Glow {
-///     radius: Some("16px".to_string()),
-///     children: rsx! { Button { "Click" } }
-/// }
-///
-/// // Use CSS variable
-/// Glow {
-///     radius: Some("var(--hi-button-radius)".to_string()),
-///     children: rsx! { Button { "Click" } }
-/// }
-/// ```
+/// Glow wrapper uses unified 4px border-radius for all components.
 #[component]
 pub fn Glow(props: GlowProps) -> Element {
     let blur_class = match props.blur {
@@ -161,17 +137,10 @@ pub fn Glow(props: GlowProps) -> Element {
 
     #[cfg(target_arch = "wasm32")]
     {
-        let mut style_parts = vec![
-            "--glow-x: 50%;".to_string(),
-            "--glow-y: 50%;".to_string(),
-            format!("--hi-glow-color: {};", glow_color),
-        ];
-
-        if let Some(radius) = &props.radius {
-            style_parts.push(format!("--hi-glow-radius: {};", radius));
-        }
-
-        let initial_style = style_parts.join(" ");
+        let initial_style = format!(
+            "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: {};",
+            glow_color
+        );
 
         let onmousemove_handler = move |event: Event<MouseData>| {
             if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
@@ -234,15 +203,10 @@ pub fn Glow(props: GlowProps) -> Element {
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let style_attr = props.radius.as_ref().map(|r| {
-            format!("--hi-glow-radius: {};", r)
-        });
-
         rsx! {
             div {
                 class: "{glow_classes}",
                 "data-glow": "true",
-                style: style_attr,
                 {props.children}
             }
         }

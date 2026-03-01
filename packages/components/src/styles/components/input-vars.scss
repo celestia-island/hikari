@@ -41,7 +41,7 @@
   // 2. Border Radius System
   // ============================================
   
-  --hi-input-radius: var(--hi-radius-md);
+  --hi-input-radius: 4px;
   
   // ============================================
   // 3. Animation System
@@ -94,7 +94,7 @@
   --hi-input-wrapper-shadow-active: 0 0 0 2px var(--hi-color-primary), 0 0 12px var(--hi-glow-color);
   
   // Radius
-  --hi-input-wrapper-radius: var(--hi-radius-md);
+  --hi-input-wrapper-radius: 4px;
   
   // Blur
   --hi-input-wrapper-blur: blur(4px);
@@ -109,7 +109,7 @@
   --hi-input-font-size: var(--hi-font-size-xs);
   --hi-input-padding-x: 0.5rem;
   --hi-input-padding-y: 0.25rem;
-  --hi-input-radius: var(--hi-radius-sm);
+  --hi-input-radius: 4px;
 }
 
 .hi-input-md,
@@ -117,7 +117,7 @@
   --hi-input-font-size: var(--hi-font-size-sm);
   --hi-input-padding-x: 0.75rem;
   --hi-input-padding-y: 0.375rem;
-  --hi-input-radius: var(--hi-radius-md);
+  --hi-input-radius: 4px;
 }
 
 .hi-input-lg,
@@ -125,7 +125,7 @@
   --hi-input-font-size: var(--hi-font-size-base);
   --hi-input-padding-x: 1rem;
   --hi-input-padding-y: 0.5rem;
-  --hi-input-radius: var(--hi-radius-lg);
+  --hi-input-radius: 4px;
 }
 
 // ============================================

@@ -43,7 +43,7 @@
   // 2. Border Radius System
   // ============================================
   
-  --hi-button-radius: var(--hi-radius-md);
+  --hi-button-radius: 4px;
   
   // ============================================
   // 3. Animation System
@@ -217,7 +217,7 @@
   --hi-button-padding-x: var(--hi-spacing-sm);
   --hi-button-padding-y: var(--hi-spacing-xs);
   --hi-button-icon-size: var(--hi-icon-size-xs);
-  --hi-button-radius: var(--hi-radius-sm);
+  --hi-button-radius: 4px;
   --hi-button-font-size: var(--hi-font-size-xs);
 }
 
@@ -225,7 +225,7 @@
   --hi-button-padding-x: var(--hi-spacing-md);
   --hi-button-padding-y: var(--hi-spacing-sm);
   --hi-button-icon-size: var(--hi-icon-size-sm);
-  --hi-button-radius: var(--hi-radius-md);
+  --hi-button-radius: 4px;
   --hi-button-font-size: var(--hi-font-size-sm);
 }
 
@@ -233,6 +233,6 @@
   --hi-button-padding-x: var(--hi-spacing-lg);
   --hi-button-padding-y: var(--hi-spacing-md);
   --hi-button-icon-size: var(--hi-icon-size-md);
-  --hi-button-radius: var(--hi-radius-lg);
+  --hi-button-radius: 4px;
   --hi-button-font-size: var(--hi-font-size-base);
 }

@@ -211,6 +211,9 @@ pub fn Input(props: InputProps) -> Element {
         .build();
 
     let mut css_vars_string = String::new();
+    
+    // 设置 glow radius 变量，让 Glow wrapper 可以读取
+    css_vars_string.push_str("--hi-glow-radius:var(--hi-input-radius);");
 
     if let Some(color) = &props.text_color {
         css_vars_string.push_str(&format!("--hi-input-text-color:{};", color));
@@ -236,11 +239,7 @@ pub fn Input(props: InputProps) -> Element {
         }
     }
 
-    let style_attr = if css_vars_string.is_empty() {
-        None
-    } else {
-        Some(css_vars_string)
-    };
+    let style_attr = Some(css_vars_string);
 
     let input_content = rsx! {
         div { 
@@ -289,15 +288,11 @@ pub fn Input(props: InputProps) -> Element {
     };
 
     if props.glow {
-        // 统一使用 4px 圆角
-        let glow_radius = "4px";
-
         rsx! {
             Glow {
                 blur: props.glow_blur,
                 color: props.glow_color,
                 intensity: props.glow_intensity,
-                radius: Some(glow_radius.to_string()),
                 { input_content }
             }
         }

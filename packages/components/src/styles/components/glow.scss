@@ -87,9 +87,8 @@
   flex-shrink: 0;
   align-self: flex-start;
 
-  // 使用 CSS 变量，默认为按钮圆角
-  // 子组件（Button/Input）会设置这个变量
-  border-radius: var(--hi-glow-radius, vars.$hikari-radius-fui-sm);
+  // 统一使用 4px 圆角
+  border-radius: 4px;
 
   overflow: visible;
 }
@@ -100,8 +99,8 @@
   flex-direction: column;
   width: 100%;
   
-  // 使用 CSS 变量，默认为卡片圆角
-  border-radius: var(--hi-glow-radius, vars.$hikari-radius-fui-md);
+  // 统一使用 4px 圆角
+  border-radius: 4px;
   overflow: visible;
 }
 

@@ -252,11 +252,19 @@ pub fn IconButton(props: IconButtonProps) -> Element {
     };
 
     if props.glow {
+        // 根据图标按钮尺寸确定圆角
+        let glow_radius = match props.size {
+            IconButtonSize::Small => "6px",
+            IconButtonSize::Medium => "8px",
+            IconButtonSize::Large => "10px",
+        };
+
         rsx! {
             Glow {
                 blur: props.glow_blur,
                 color: glow_color,
                 intensity: props.glow_intensity,
+                radius: Some(glow_radius.to_string()),
                 { button_content }
             }
         }

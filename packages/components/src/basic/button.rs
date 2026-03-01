@@ -385,11 +385,19 @@ pub fn Button(props: ButtonProps) -> Element {
             }
         };
 
+        // 根据按钮尺寸确定圆角
+        let glow_radius = match props.size {
+            ButtonSize::Small => "4px",
+            ButtonSize::Medium => "6px",
+            ButtonSize::Large => "8px",
+        };
+
         rsx! {
             Glow {
                 blur: props.glow_blur,
                 color: glow_color,
                 intensity: props.glow_intensity,
+                radius: Some(glow_radius.to_string()),
                 { button_content }
             }
         }

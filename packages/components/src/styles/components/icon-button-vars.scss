@@ -19,12 +19,12 @@
   // Icon Colors
   --hi-icon-button-icon-color: var(--hi-icon-color);
   --hi-icon-button-icon-color-active: var(--hi-icon-color);
-  --hi-icon-button-icon-color-disabled: var(--hi-icon-color-disabled);
+  --hi-icon-button-icon-color-disabled: rgba(128, 128, 128, 0.5);
   
   // Background Colors
   --hi-icon-button-bg: transparent;
   --hi-icon-button-bg-active: var(--hi-bg-surface-dark);
-  --hi-icon-button-bg-disabled: transparent;
+  --hi-icon-button-bg-disabled: rgba(128, 128, 128, 0.1);
   
   // Border Colors
   --hi-icon-button-border-color: transparent;

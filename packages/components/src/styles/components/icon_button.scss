@@ -72,7 +72,7 @@
     background: var(--hi-icon-button-bg-disabled);
     color: var(--hi-icon-button-icon-color-disabled);
     cursor: not-allowed;
-    opacity: 0.5;
+    pointer-events: none;
   }
 
   // Active state only - no hover (Glow wrapper handles hover)

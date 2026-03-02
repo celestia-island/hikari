@@ -130,6 +130,15 @@
     .hi-input:focus:active {
       box-shadow: none;
     }
+
+    // 确保 IconButton 在 Input focus 时不改变颜色
+    .hi-icon-button {
+      color: var(--hi-icon-button-icon-color);
+      
+      .hi-icon-button-icon {
+        color: var(--hi-icon-button-icon-color);
+      }
+    }
   }
 
   .hi-input {

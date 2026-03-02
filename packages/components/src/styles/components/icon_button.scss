@@ -9,6 +9,8 @@
 // - Layer1: Foundation variables (foundation.scss)
 // - Layer2: Component variables (icon-button-vars.scss)
 // - Custom: Runtime overrides via AnimationBuilder
+//
+// NOTE: Hover effects are handled by Glow wrapper, not here
 // ============================================
 
 .hi-icon-button {
@@ -59,15 +61,7 @@
   // Cursor
   cursor: pointer;
 
-  // Hover state
-  &:hover:not(:disabled) {
-    background: var(--hi-icon-button-bg-hover);
-    color: var(--hi-icon-button-icon-color-hover);
-    transform: var(--hi-icon-button-transform-hover);
-    box-shadow: var(--hi-icon-button-shadow-hover);
-  }
-
-  // Focus state
+  // Focus state - only outline, no color changes
   &:focus-visible {
     outline: 2px solid var(--hi-icon-button-border-color-focus);
     outline-offset: 2px;
@@ -81,7 +75,7 @@
     opacity: 0.5;
   }
 
-  // Active state
+  // Active state only - no hover (Glow wrapper handles hover)
   &:active:not(:disabled) {
     background: var(--hi-icon-button-bg-active);
     color: var(--hi-icon-button-icon-color-active);
@@ -161,11 +155,6 @@
       display: block;
       fill: currentColor;
     }
-  }
-
-  // Hover state for icon
-  &:hover:not(:disabled) .hi-icon-button-icon {
-    color: var(--hi-icon-button-icon-color-hover);
   }
 
   // Active state for icon

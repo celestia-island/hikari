@@ -71,6 +71,11 @@
     border-color: var(--hi-button-border-color-focus);
     border-width: var(--hi-button-border-width-focus);
     outline: none;
+    color: var(--hi-button-text-color);
+    
+    .hikari-icon {
+      color: var(--hi-button-icon-color);
+    }
   }
 
   // Disabled state

@@ -7,12 +7,17 @@
 // ============================================
 
 // Base glow wrapper styles
+// All states are controlled by AnimationBuilder via CSS variables
 .hi-glow-wrapper,
 .hi-glow-wrapper-block {
   position: relative;
 
-  // Initialize scale factors for dynamic intensity changes
-  // Set to 0 to hide glow by default (Idle state)
+  // Initialize scale factors - default to 0 (hidden)
+  // AnimationBuilder will set these via CSS variables for different states:
+  // - Idle: 0 (no glow)
+  // - Hover: 0.5 (subtle glow)
+  // - Focus: 0.7 (medium glow)
+  // - Active: 1.0 (intense glow)
   --glow-intensity-scale: 0;
   --glow-spread-scale: 1.0;
   transition: --glow-intensity-scale 100ms ease-out, --glow-spread-scale 100ms ease-out;
@@ -25,7 +30,8 @@
     pointer-events: none;
     z-index: 2;
     border-radius: inherit;
-    // Default hidden, controlled by --glow-intensity-scale
+    // Use CSS variable directly - controlled by AnimationBuilder
+    // Fallback values provide default behavior if AnimationBuilder doesn't set them
     opacity: var(--glow-intensity-scale, 0);
 
     // Use radial-gradient for acrylic spotlight effect
@@ -36,9 +42,20 @@
     );
   }
 
-  // Show glow on hover - use explicitly set scale value, or 1.0 if not set
-  // This allows hover to show glow while preserving explicitly set values (e.g., active state)
+  // Default hover behavior: subtle glow (0.5)
   &:hover::before {
+    opacity: var(--glow-intensity-scale, 0.5);
+  }
+
+  // Default focus behavior: medium glow (0.7)
+  &:focus-within::before,
+  &:has(*:focus-visible)::before {
+    opacity: var(--glow-intensity-scale, 0.7);
+  }
+
+  // Default active behavior: intense glow (1.0)
+  &:active::before,
+  &:has(*:active)::before {
     opacity: var(--glow-intensity-scale, 1.0);
   }
 

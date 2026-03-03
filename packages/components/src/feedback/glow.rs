@@ -73,9 +73,14 @@ pub struct GlowProps {
     #[props(default)]
     pub color: GlowColor,
 
-    /// Glow intensity
+    /// Glow intensity (normal state)
     #[props(default)]
     pub intensity: GlowIntensity,
+
+    /// Glow intensity when active/pressed
+    /// If None, uses normal intensity (no change on press)
+    #[props(default)]
+    pub active_intensity: Option<GlowIntensity>,
 
     /// Additional CSS classes
     #[props(default)]
@@ -84,6 +89,11 @@ pub struct GlowProps {
     /// Display mode: inline (default) or block
     #[props(default)]
     pub block: bool,
+
+    /// Animation transition duration in milliseconds
+    /// Set to 0 to disable transition
+    #[props(default = "100".to_string())]
+    pub transition_duration: String,
 }
 
 /// Unified glow component with mouse-following effect
@@ -101,6 +111,13 @@ pub struct GlowProps {
 /// # Border Radius
 ///
 /// Glow wrapper uses unified 4px border-radius for all components.
+///
+/// # Active State Animation
+///
+/// The component supports dynamic intensity changes via CSS variables:
+/// - Set `--glow-intensity-scale` to change opacity (0.0 - 2.0)
+/// - Set `--glow-spread-scale` to change spread (0.5 - 2.0)
+/// These can be controlled by parent components for press animations
 #[component]
 pub fn Glow(props: GlowProps) -> Element {
     let blur_class = match props.blur {
@@ -137,9 +154,12 @@ pub fn Glow(props: GlowProps) -> Element {
 
     #[cfg(target_arch = "wasm32")]
     {
+        // Build initial style with transition support
         let initial_style = format!(
-            "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: {};",
-            glow_color
+            "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: {}; --glow-intensity-scale: 1.0; --glow-spread-scale: 1.0; transition: --glow-intensity-scale {}ms ease-out, --glow-spread-scale {}ms ease-out;",
+            glow_color,
+            props.transition_duration,
+            props.transition_duration
         );
 
         let onmousemove_handler = move |event: Event<MouseData>| {

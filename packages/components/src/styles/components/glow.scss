@@ -11,6 +11,11 @@
 .hi-glow-wrapper-block {
   position: relative;
 
+  // Initialize scale factors for dynamic intensity changes
+  --glow-intensity-scale: 1.0;
+  --glow-spread-scale: 1.0;
+  transition: --glow-intensity-scale 100ms ease-out, --glow-spread-scale 100ms ease-out;
+
   // Create dynamic glow overlay using CSS variables (spotlight effect)
   &::before {
     content: '';
@@ -20,7 +25,6 @@
     z-index: 2;
     border-radius: inherit;
     opacity: 0;
-    transition: opacity 0.3s ease-in-out;
 
     // Use radial-gradient for acrylic spotlight effect
     background: radial-gradient(
@@ -47,14 +51,21 @@
 // Glow Intensity Levels (Opacity & Spread)
 // ============================================
 
+// Base scale factors for dynamic intensity changes
+// These can be controlled by parent components (e.g., AnimationBuilder)
+.hi-glow-wrapper {
+  --glow-intensity-scale: 1.0;
+  --glow-spread-scale: 1.0;
+}
+
 // 30% intensity (subtle, for large surfaces: cards, panels, containers)
 .hi-glow-dim {
   --glow-opacity: 0.07;
   --glow-spread: 2.4;
 
   &::before {
-    --glow-opacity: 0.07;
-    --glow-spread: 2.4;
+    opacity: calc(0.07 * var(--glow-intensity-scale, 1.0));
+    --glow-spread: calc(2.4 * var(--glow-spread-scale, 1.0));
   }
 }
 
@@ -64,8 +75,8 @@
   --glow-spread: 1.6;
 
   &::before {
-    --glow-opacity: 0.15;
-    --glow-spread: 1.6;
+    opacity: calc(0.15 * var(--glow-intensity-scale, 1.0));
+    --glow-spread: calc(1.6 * var(--glow-spread-scale, 1.0));
   }
 }
 
@@ -75,8 +86,8 @@
   --glow-spread: 1.3;
 
   &::before {
-    --glow-opacity: 0.30;
-    --glow-spread: 1.3;
+    opacity: calc(0.30 * var(--glow-intensity-scale, 1.0));
+    --glow-spread: calc(1.3 * var(--glow-spread-scale, 1.0));
   }
 }
 

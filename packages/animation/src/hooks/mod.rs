@@ -1,17 +1,18 @@
-//! Dioxus hooks for animation integration
+//! Animation hooks for Dioxus components
 //!
-//! This module provides React-style hooks for using the animation system
-//! within Dioxus components, including hooks for tweening,
-//! animated values, transitions, and animation frame callbacks.
+//! Provides React-like hooks for managing animations in Dioxus components.
+//! Includes:
+//! - use_animation: Basic animation management hook
+//! - use_button_state: Button state machine hook
+//! - use_glow_animation: Glow effect animation hook
+//!
+//! Note: These hooks are designed for use within Dioxus components.
+//! They provide state management and cleanup functionality.
 
-mod animated_value;
-mod animation_frame;
-mod continuous;
-mod tween;
-
-pub use animated_value::{
-    use_animated_value, use_transition, use_transition_with_config, UseTransition,
+// Re-export state machine types for convenience
+pub use crate::state_machine::{
+    ButtonEvent, ButtonState, ButtonStateMachine,
 };
-pub use animation_frame::use_animation_frame;
-pub use continuous::{use_interval, use_timeout};
-pub use tween::{use_animation_engine, use_tween, UseTween};
+
+// Re-export animation types
+pub use crate::lifecycle::AnimationManager;

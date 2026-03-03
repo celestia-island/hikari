@@ -105,8 +105,8 @@
 
 .hi-icon-button-ghost,
 .hi-icon-button-borderless {
-  --hi-icon-button-icon-color: var(--hi-color-text-primary);
-  --hi-icon-button-icon-color-active: var(--hi-color-text-primary);
+  --hi-icon-button-icon-color: var(--hi-color-text-secondary);
+  --hi-icon-button-icon-color-active: var(--hi-color-text-secondary);
   
   --hi-icon-button-bg: transparent;
   --hi-icon-button-bg-active: var(--hi-color-gray-20, rgba(128, 128, 128, 0.2));

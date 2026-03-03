@@ -227,7 +227,8 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                         glow_blur: GlowBlur::None,
                         glow_color: GlowColor::Ghost,
                         onclick: *onclick,
-                        icon_color: icon_color.clone(),
+                        // Use explicit CSS variable instead of "inherit" to avoid color inheritance issues
+                        icon_color: icon_color.clone().or_else(|| Some("var(--hi-color-text-secondary)".to_string())),
                     }
                 }
             }

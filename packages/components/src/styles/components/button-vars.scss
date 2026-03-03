@@ -154,11 +154,11 @@
 // ============================================
 
 .hi-button-ghost {
-  --hi-button-text-color: var(--hi-color-text-primary);
-  --hi-button-text-color-active: var(--hi-color-text-primary);
+  --hi-button-text-color: var(--hi-color-text-secondary);
+  --hi-button-text-color-active: var(--hi-color-text-secondary);
   
-  --hi-button-icon-color: var(--hi-icon-color);
-  --hi-button-icon-color-active: var(--hi-icon-color);
+  --hi-button-icon-color: var(--hi-color-text-secondary);
+  --hi-button-icon-color-active: var(--hi-color-text-secondary);
   
   --hi-button-bg: transparent;
   --hi-button-bg-active: var(--hi-bg-surface-dark);

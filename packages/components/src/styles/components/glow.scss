@@ -116,7 +116,7 @@
 // Focus glow enhancement (uses glow overlay)
 .hi-glow-wrapper .hi-button:focus-visible {
   box-shadow:
-    0 0 0 2px currentColor,
+    0 0 0 2px var(--hi-button-border-color-focus, rgba(128, 128, 128, 0.5)),
     0 0 12px var(--hi-glow-color);
 }
 

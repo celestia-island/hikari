@@ -32,6 +32,26 @@
     box-shadow:
       0 0 0 1px var(--hi-color-primary),
       0 0 6px var(--hi-glow-color);
+
+    // 确保图标按钮在输入框聚焦时保持默认颜色
+    // 使用多个选择器来覆盖所有可能的样式来源
+    .hi-input-wrapper-item,
+    .hi-input-wrapper-item .hi-button,
+    .hi-input-wrapper-item .hi-icon-button,
+    .hi-input-wrapper-item .hi-button.hi-icon-button,
+    .hi-input-wrapper-item .hi-glow-wrapper,
+    .hi-input-wrapper-item .hi-glow-wrapper .hi-button,
+    .hi-input-wrapper-item .hi-glow-wrapper .hi-icon-button {
+      color: var(--hi-color-text-secondary) !important;
+    }
+
+    .hi-input-wrapper-item .hi-icon-button-icon,
+    .hi-input-wrapper-item .hi-icon-button .hikari-icon,
+    .hi-input-wrapper-item .hi-glow-wrapper .hikari-icon,
+    .hi-input-wrapper-item .hi-glow-wrapper .hi-icon-button-icon,
+    .hi-input-wrapper-item .hikari-icon {
+      color: var(--hi-color-text-secondary) !important;
+    }
   }
 }
 
@@ -192,7 +212,8 @@
 // ============================================
 
 // Default state - inherited from IconButton
-.hi-input-wrapper-item .hi-icon-button {
+// Use higher specificity to override button.scss styles
+.hi-input-wrapper-item .hi-button.hi-icon-button {
   // Ghost variant default styles
   color: var(--hi-color-text-secondary);
   background-color: transparent;
@@ -201,6 +222,16 @@
   &:hover:not(:disabled) {
     color: var(--hi-color-primary);
     background-color: var(--hi-color-black-5);
+  }
+
+  // Focus-visible state - keep default color (same as non-focused state)
+  &:focus-visible {
+    color: var(--hi-color-text-secondary) !important;
+
+    .hi-icon-button-icon,
+    .hikari-icon {
+      color: var(--hi-color-text-secondary) !important;
+    }
   }
 
   // Active/Pressed state
@@ -226,13 +257,23 @@
   border-color: var(--hi-border);
 }
 
-[data-theme="dark"] .hi-input-wrapper-item .hi-icon-button,
-[data-theme="tairitsu"] .hi-input-wrapper-item .hi-icon-button {
+[data-theme="dark"] .hi-input-wrapper-item .hi-button.hi-icon-button,
+[data-theme="tairitsu"] .hi-input-wrapper-item .hi-button.hi-icon-button {
   color: var(--hi-text-secondary);
 
   &:hover:not(:disabled) {
     background-color: var(--hi-color-white-5);
     color: var(--hi-color-primary);
+  }
+
+  // Focus-visible state - keep default color (same as non-focused state)
+  &:focus-visible {
+    color: var(--hi-text-secondary) !important;
+
+    .hi-icon-button-icon,
+    .hikari-icon {
+      color: var(--hi-text-secondary) !important;
+    }
   }
 
   &:disabled {

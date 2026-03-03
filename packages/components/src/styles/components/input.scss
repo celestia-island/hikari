@@ -132,11 +132,13 @@
     }
 
     // 确保 IconButton 在 Input focus 时不改变颜色
+    // 保持 secondary 颜色，不使用 --hi-icon-button-icon-color（ghost 变体中指向 primary）
     .hi-icon-button {
-      color: var(--hi-icon-button-icon-color);
+      color: var(--hi-color-text-secondary) !important;
       
-      .hi-icon-button-icon {
-        color: var(--hi-icon-button-icon-color);
+      .hi-icon-button-icon,
+      .hikari-icon {
+        color: var(--hi-color-text-secondary) !important;
       }
     }
   }

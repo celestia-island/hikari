@@ -208,12 +208,15 @@ pub fn Glow(props: GlowProps) -> Element {
 
         // Handler for mouse enter - show glow (hover state)
         let onmouseenter_handler = move |event: Event<MouseData>| {
-            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
-                if let Some(target) = web_event.current_target() {
-                    if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
-                        StyleBuilder::new(wrapper)
-                            .add_custom("--glow-intensity-scale", "0.5")
-                            .apply();
+            #[cfg(target_arch = "wasm32")]
+            {
+                if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+                    if let Some(target) = web_event.current_target() {
+                        if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
+                            StyleBuilder::new(wrapper)
+                                .add_custom("--glow-intensity-scale", "0.5")
+                                .apply();
+                        }
                     }
                 }
             }
@@ -221,25 +224,32 @@ pub fn Glow(props: GlowProps) -> Element {
 
         // Handler for mouse leave - hide glow (idle state)
         let onmouseleave_handler = move |event: Event<MouseData>| {
-            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
-                if let Some(target) = web_event.current_target() {
-                    if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
-                        StyleBuilder::new(wrapper)
-                            .add_custom("--glow-intensity-scale", "0")
-                            .apply();
+            #[cfg(target_arch = "wasm32")]
+            {
+                if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+                    if let Some(target) = web_event.current_target() {
+                        if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
+                            StyleBuilder::new(wrapper)
+                                .add_custom("--glow-intensity-scale", "0")
+                                .apply();
+                        }
                     }
                 }
             }
         };
 
         // Handler for mouse down - intense glow (active state)
+        // Use onmousedown on the wrapper to catch the event from children
         let onmousedown_handler = move |event: Event<MouseData>| {
-            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
-                if let Some(target) = web_event.current_target() {
-                    if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
-                        StyleBuilder::new(wrapper)
-                            .add_custom("--glow-intensity-scale", "1.0")
-                            .apply();
+            #[cfg(target_arch = "wasm32")]
+            {
+                if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+                    if let Some(target) = web_event.current_target() {
+                        if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
+                            StyleBuilder::new(wrapper)
+                                .add_custom("--glow-intensity-scale", "1.0")
+                                .apply();
+                        }
                     }
                 }
             }
@@ -247,12 +257,15 @@ pub fn Glow(props: GlowProps) -> Element {
 
         // Handler for mouse up - return to hover state
         let onmouseup_handler = move |event: Event<MouseData>| {
-            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
-                if let Some(target) = web_event.current_target() {
-                    if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
-                        StyleBuilder::new(wrapper)
-                            .add_custom("--glow-intensity-scale", "0.5")
-                            .apply();
+            #[cfg(target_arch = "wasm32")]
+            {
+                if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+                    if let Some(target) = web_event.current_target() {
+                        if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
+                            StyleBuilder::new(wrapper)
+                                .add_custom("--glow-intensity-scale", "0.5")
+                                .apply();
+                        }
                     }
                 }
             }

@@ -155,8 +155,9 @@ pub fn Glow(props: GlowProps) -> Element {
     #[cfg(target_arch = "wasm32")]
     {
         // Build initial style with transition support
+        // Default to 0 (hidden), will be controlled by state machine/AnimationBuilder
         let initial_style = format!(
-            "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: {}; --glow-intensity-scale: 1.0; --glow-spread-scale: 1.0; transition: --glow-intensity-scale {}ms ease-out, --glow-spread-scale {}ms ease-out;",
+            "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: {}; --glow-intensity-scale: 0; --glow-spread-scale: 1.0; transition: --glow-intensity-scale {}ms ease-out, --glow-spread-scale {}ms ease-out;",
             glow_color,
             props.transition_duration,
             props.transition_duration

@@ -5,22 +5,28 @@
 // ============================================
 // Hikari Glow Component - Single Glow Color System
 // ============================================
+//
+// IMPORTANT: All glow states are controlled by AnimationBuilder via inline styles.
+// CSS does NOT provide any default hover/active/focus behavior.
+// The --glow-intensity-scale variable is set inline:
+// - Idle: 0 (no glow)
+// - Hover: 0.5 (subtle glow)  
+// - Focus: 0.7 (medium glow)
+// - Active: 1.0 (intense glow)
+//
+// CSS only provides:
+// 1. Base structure (::before pseudo-element)
+// 2. Intensity classes (dim/soft/bright) for base opacity multiplier
+// 3. Transition timing
 
 // Base glow wrapper styles
-// All states are controlled by AnimationBuilder via CSS variables
 .hi-glow-wrapper,
 .hi-glow-wrapper-block {
   position: relative;
 
   // Initialize scale factors - default to 0 (hidden)
-  // AnimationBuilder will set these via CSS variables for different states:
-  // - Idle: 0 (no glow)
-  // - Hover: 0.5 (subtle glow)
-  // - Focus: 0.7 (medium glow)
-  // - Active: 1.0 (intense glow)
   --glow-intensity-scale: 0;
   --glow-spread-scale: 1.0;
-  transition: --glow-intensity-scale 100ms ease-out, --glow-spread-scale 100ms ease-out;
 
   // Create dynamic glow overlay using CSS variables (spotlight effect)
   &::before {
@@ -30,9 +36,9 @@
     pointer-events: none;
     z-index: 2;
     border-radius: inherit;
-    // Controlled by AnimationBuilder via --glow-intensity-scale
-    // When --glow-intensity-scale is 0, glow is hidden
-    opacity: calc(var(--glow-base-opacity, 1) * var(--glow-intensity-scale, 0));
+    // Use inline style value directly, no fallback
+    // AnimationBuilder controls this via --glow-intensity-scale
+    opacity: calc(var(--glow-base-opacity, 1) * var(--glow-intensity-scale));
 
     // Use radial-gradient for acrylic spotlight effect
     background: radial-gradient(
@@ -40,23 +46,9 @@
       var(--hi-glow-color) 0%,
       transparent calc(var(--glow-spread, 1.5) * 100%)
     );
-  }
 
-  // Hover state: subtle glow (scale 0.5)
-  &:hover::before {
-    opacity: calc(var(--glow-base-opacity, 1) * var(--glow-intensity-scale, 0.5));
-  }
-
-  // Focus state: medium glow (scale 0.7)
-  &:focus-within::before,
-  &:has(*:focus-visible)::before {
-    opacity: calc(var(--glow-base-opacity, 1) * var(--glow-intensity-scale, 0.7));
-  }
-
-  // Active state: intense glow (scale 1.0)
-  &:active::before,
-  &:has(*:active)::before {
-    opacity: calc(var(--glow-base-opacity, 1) * var(--glow-intensity-scale, 1.0));
+    // Transition for smooth state changes
+    transition: opacity 100ms ease-out;
   }
 
   // Ensure children (links, buttons) are always clickable

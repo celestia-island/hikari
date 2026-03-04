@@ -55,8 +55,7 @@
   // Transitions - use CSS variables
   transition: var(--hi-icon-button-transition);
 
-  // Transform
-  transform: var(--hi-icon-button-transform);
+  // No transform - controlled by AnimationBuilder via Glow wrapper
 
   // Cursor
   cursor: pointer;
@@ -80,13 +79,7 @@
     pointer-events: none;
   }
 
-  // Active state only - no hover (Glow wrapper handles hover)
-  &:active:not(:disabled) {
-    background: var(--hi-icon-button-bg-active);
-    color: var(--hi-icon-button-icon-color-active);
-    transform: var(--hi-icon-button-transform-active);
-    transition-duration: var(--hi-icon-button-duration-active);
-  }
+  // No active state - controlled by AnimationBuilder via Glow wrapper
 
   // ============================================
   // Size Variants - Variables defined in icon-button-vars.scss

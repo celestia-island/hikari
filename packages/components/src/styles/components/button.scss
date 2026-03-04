@@ -55,16 +55,7 @@
   background-color: var(--hi-button-bg);
   backdrop-filter: var(--hi-button-bg-blur);
 
-  // Transform
-  transform: var(--hi-button-transform);
-
-  // Active state - only transform, no background color change
-  // Glow wrapper handles the visual feedback
-  &:active:not(:disabled) {
-    color: var(--hi-button-text-color-active);
-    transform: var(--hi-button-transform-active);
-    transition-duration: var(--hi-button-duration-active);
-  }
+  // No transform - controlled by AnimationBuilder via Glow wrapper
 
   // Focus state - only outline, no color changes
   &:focus-visible {
@@ -101,10 +92,6 @@
   background: var(--hi-button-bg);
   color: var(--hi-button-text-color);
   border-color: var(--hi-button-border-color);
-
-  &:active:not(:disabled) {
-    transform: var(--hi-button-transform-active);
-  }
 }
 
 // ============================================
@@ -115,10 +102,6 @@
   background: var(--hi-button-bg);
   color: var(--hi-button-text-color);
   border-color: var(--hi-button-border-color);
-
-  &:active:not(:disabled) {
-    transform: var(--hi-button-transform-active);
-  }
 }
 
 // ============================================
@@ -129,10 +112,6 @@
   background-color: var(--hi-button-bg);
   color: var(--hi-button-text-color);
   border-color: var(--hi-button-border-color);
-
-  &:active:not(:disabled) {
-    transform: var(--hi-button-transform-active);
-  }
 }
 
 // ============================================
@@ -143,10 +122,6 @@
   background-color: var(--hi-button-bg);
   color: var(--hi-button-text-color);
   border: none;
-
-  &:active:not(:disabled) {
-    transform: var(--hi-button-transform-active);
-  }
 }
 
 // ============================================
@@ -157,10 +132,6 @@
   background: var(--hi-button-bg);
   color: var(--hi-button-text-color);
   border-color: var(--hi-button-border-color);
-
-  &:active:not(:disabled) {
-    transform: var(--hi-button-transform-active);
-  }
 }
 
 // ============================================
@@ -171,10 +142,6 @@
   background: var(--hi-button-bg);
   color: var(--hi-button-text-color);
   border-color: var(--hi-button-border-color);
-
-  &:active:not(:disabled) {
-    transform: var(--hi-button-transform-active);
-  }
 }
 
 // ============================================

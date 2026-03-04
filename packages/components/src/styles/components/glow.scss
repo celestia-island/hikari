@@ -65,38 +65,30 @@
 
 // These classes define the BASE opacity for different glow intensities
 // The actual visibility is controlled by --glow-intensity-scale (0 = hidden, 1 = full intensity)
+// IMPORTANT: --glow-base-opacity must be defined on the parent, not on ::before
+//
+// Opacity calculation: base-opacity * intensity-scale
+// - Hover (0.5): subtle glow
+// - Active (1.0): intense glow (2x hover)
 
 // 30% intensity (subtle, for large surfaces: cards, panels, containers)
 .hi-glow-dim {
   --glow-spread: 2.4;
-  --glow-base-opacity: 0.07;
-
-  &::before {
-    opacity: calc(var(--glow-base-opacity, 0.07) * var(--glow-intensity-scale, 0));
-    --glow-spread: calc(2.4 * var(--glow-spread-scale, 1.0));
-  }
+  --glow-base-opacity: 0.15;
 }
 
 // 70% intensity (medium, default for interactive elements: buttons, inputs)
+// Hover: 0.30 * 0.5 = 0.15
+// Active: 0.30 * 1.0 = 0.30 (visible difference)
 .hi-glow-soft {
   --glow-spread: 1.6;
-  --glow-base-opacity: 0.15;
-
-  &::before {
-    opacity: calc(var(--glow-base-opacity, 0.15) * var(--glow-intensity-scale, 0));
-    --glow-spread: calc(1.6 * var(--glow-spread-scale, 1.0));
-  }
+  --glow-base-opacity: 0.30;
 }
 
 // 100% intensity (intense, for emphasis: active states, focus rings)
 .hi-glow-bright {
   --glow-spread: 1.3;
-  --glow-base-opacity: 0.30;
-
-  &::before {
-    opacity: calc(var(--glow-base-opacity, 0.30) * var(--glow-intensity-scale, 0));
-    --glow-spread: calc(1.3 * var(--glow-spread-scale, 1.0));
-  }
+  --glow-base-opacity: 0.50;
 }
 
 .hi-glow-wrapper {

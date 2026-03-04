@@ -252,9 +252,23 @@ pub fn Glow(props: GlowProps) -> Element {
                     if let Some(target) = web_event.current_target() {
                         if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
                             web_sys::console::log_1(&"🔴 Glow: setting intensity to 1.0".into());
+                            
+                            // Log current style before change
+                            let current_style = wrapper.style().get_property_value("--glow-intensity-scale").unwrap_or_default();
+                            web_sys::console::log_1(&format!("🔴 Glow: current intensity = {}", current_style).into());
+                            
                             StyleBuilder::new(wrapper)
                                 .add_custom("--glow-intensity-scale", "1.0")
                                 .apply();
+                            
+                            // Log style after change
+                            let new_style = wrapper.style().get_property_value("--glow-intensity-scale").unwrap_or_default();
+                            web_sys::console::log_1(&format!("🔴 Glow: new intensity = {}", new_style).into());
+                            
+                            // Log computed opacity
+                            if let Some(before) = wrapper.query_selector("::before").ok().flatten() {
+                                web_sys::console::log_1(&"🔴 Glow: found ::before pseudo element".into());
+                            }
                         }
                     }
                 }

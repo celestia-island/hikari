@@ -263,8 +263,14 @@ pub fn Glow(props: GlowProps) -> Element {
                             if let Some(computed) = computed {
                                 let computed_intensity = computed.get_property_value("--glow-intensity-scale").unwrap_or_default();
                                 let computed_base = computed.get_property_value("--glow-base-opacity").unwrap_or_default();
-                                web_sys::console::log_1(&format!("🔴 Glow: computed intensity = '{}', base-opacity = '{}'", computed_intensity, computed_base).into());
+                                let computed_opacity = computed.get_property_value("opacity").unwrap_or_default();
+                                web_sys::console::log_1(&format!("🔴 Glow: computed intensity='{}', base-opacity='{}', wrapper opacity='{}'", computed_intensity, computed_base, computed_opacity).into());
                             }
+                            
+                            // Check class list
+                            let class_list = wrapper.class_list();
+                            let classes: Vec<String> = class_list.to_vec();
+                            web_sys::console::log_1(&format!("🔴 Glow: wrapper classes = {:?}", classes).into());
                             
                             StyleBuilder::new(wrapper)
                                 .add_custom("--glow-intensity-scale", "1.0")
@@ -278,7 +284,8 @@ pub fn Glow(props: GlowProps) -> Element {
                             let computed2 = window.get_computed_style(wrapper).ok().flatten();
                             if let Some(computed2) = computed2 {
                                 let computed_intensity2 = computed2.get_property_value("--glow-intensity-scale").unwrap_or_default();
-                                web_sys::console::log_1(&format!("🔴 Glow: after apply, computed intensity = '{}'", computed_intensity2).into());
+                                let computed_opacity2 = computed2.get_property_value("opacity").unwrap_or_default();
+                                web_sys::console::log_1(&format!("🔴 Glow: after apply, computed intensity='{}', wrapper opacity='{}'", computed_intensity2, computed_opacity2).into());
                             }
                         }
                     }

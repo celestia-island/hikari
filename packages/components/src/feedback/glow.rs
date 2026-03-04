@@ -211,8 +211,10 @@ pub fn Glow(props: GlowProps) -> Element {
             #[cfg(target_arch = "wasm32")]
             {
                 if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+                    web_sys::console::log_1(&"🔵 Glow: mouseenter triggered".into());
                     if let Some(target) = web_event.current_target() {
                         if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
+                            web_sys::console::log_1(&"🔵 Glow: setting intensity to 0.5".into());
                             StyleBuilder::new(wrapper)
                                 .add_custom("--glow-intensity-scale", "0.5")
                                 .apply();
@@ -227,8 +229,10 @@ pub fn Glow(props: GlowProps) -> Element {
             #[cfg(target_arch = "wasm32")]
             {
                 if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+                    web_sys::console::log_1(&"⚫ Glow: mouseleave triggered".into());
                     if let Some(target) = web_event.current_target() {
                         if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
+                            web_sys::console::log_1(&"⚫ Glow: setting intensity to 0".into());
                             StyleBuilder::new(wrapper)
                                 .add_custom("--glow-intensity-scale", "0")
                                 .apply();
@@ -244,8 +248,10 @@ pub fn Glow(props: GlowProps) -> Element {
             #[cfg(target_arch = "wasm32")]
             {
                 if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+                    web_sys::console::log_1(&"🔴 Glow: mousedown triggered".into());
                     if let Some(target) = web_event.current_target() {
                         if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
+                            web_sys::console::log_1(&"🔴 Glow: setting intensity to 1.0".into());
                             StyleBuilder::new(wrapper)
                                 .add_custom("--glow-intensity-scale", "1.0")
                                 .apply();
@@ -260,8 +266,10 @@ pub fn Glow(props: GlowProps) -> Element {
             #[cfg(target_arch = "wasm32")]
             {
                 if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+                    web_sys::console::log_1(&"🟢 Glow: mouseup triggered".into());
                     if let Some(target) = web_event.current_target() {
                         if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
+                            web_sys::console::log_1(&"🟢 Glow: setting intensity to 0.5".into());
                             StyleBuilder::new(wrapper)
                                 .add_custom("--glow-intensity-scale", "0.5")
                                 .apply();

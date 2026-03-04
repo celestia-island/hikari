@@ -154,21 +154,18 @@ pub fn Glow(props: GlowProps) -> Element {
 
     #[cfg(target_arch = "wasm32")]
     {
-        // Build initial style with transition support
-        // Default to 0 (hidden), will be controlled by state machine/AnimationBuilder
+        // Build initial style - default to hidden (scale 0)
         let initial_style = format!(
-            "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: {}; --glow-intensity-scale: 0; --glow-spread-scale: 1.0; transition: --glow-intensity-scale {}ms ease-out, --glow-spread-scale {}ms ease-out;",
+            "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: {}; --glow-intensity-scale: 0; --glow-spread-scale: 1.0;",
             glow_color,
-            props.transition_duration,
-            props.transition_duration
         );
 
+        // Handler for mouse move - update glow position
         let onmousemove_handler = move |event: Event<MouseData>| {
             if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
                 let client_x = web_event.client_x() as f64;
                 let client_y = web_event.client_y() as f64;
 
-                // Find the glow wrapper by traversing up from the target
                 let mut target: Option<web_sys::EventTarget> = web_event.target();
 
                 while let Some(current) = target {
@@ -176,7 +173,6 @@ pub fn Glow(props: GlowProps) -> Element {
 
                     if let Some(el) = current_el {
                         if el.class_list().contains("hi-glow-wrapper") {
-                            // Found the glow wrapper
                             if let Some(wrapper) = el.dyn_ref::<HtmlElement>() {
                                 let rect = wrapper.get_bounding_client_rect();
 
@@ -202,11 +198,62 @@ pub fn Glow(props: GlowProps) -> Element {
                         }
                     }
 
-                    // Move up to parent
                     let node = current.dyn_ref::<web_sys::Node>();
                     target = node
                         .and_then(|n| n.parent_node())
                         .and_then(|n| n.dyn_into::<web_sys::EventTarget>().ok());
+                }
+            }
+        };
+
+        // Handler for mouse enter - show glow (hover state)
+        let onmouseenter_handler = move |event: Event<MouseData>| {
+            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+                if let Some(target) = web_event.current_target() {
+                    if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
+                        StyleBuilder::new(wrapper)
+                            .add_custom("--glow-intensity-scale", "0.5")
+                            .apply();
+                    }
+                }
+            }
+        };
+
+        // Handler for mouse leave - hide glow (idle state)
+        let onmouseleave_handler = move |event: Event<MouseData>| {
+            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+                if let Some(target) = web_event.current_target() {
+                    if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
+                        StyleBuilder::new(wrapper)
+                            .add_custom("--glow-intensity-scale", "0")
+                            .apply();
+                    }
+                }
+            }
+        };
+
+        // Handler for mouse down - intense glow (active state)
+        let onmousedown_handler = move |event: Event<MouseData>| {
+            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+                if let Some(target) = web_event.current_target() {
+                    if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
+                        StyleBuilder::new(wrapper)
+                            .add_custom("--glow-intensity-scale", "1.0")
+                            .apply();
+                    }
+                }
+            }
+        };
+
+        // Handler for mouse up - return to hover state
+        let onmouseup_handler = move |event: Event<MouseData>| {
+            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+                if let Some(target) = web_event.current_target() {
+                    if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
+                        StyleBuilder::new(wrapper)
+                            .add_custom("--glow-intensity-scale", "0.5")
+                            .apply();
+                    }
                 }
             }
         };
@@ -217,6 +264,10 @@ pub fn Glow(props: GlowProps) -> Element {
                 "data-glow": "true",
                 style: "{initial_style}",
                 onmousemove: onmousemove_handler,
+                onmouseenter: onmouseenter_handler,
+                onmouseleave: onmouseleave_handler,
+                onmousedown: onmousedown_handler,
+                onmouseup: onmouseup_handler,
                 {props.children}
             }
         }

@@ -58,10 +58,10 @@
   // Transform
   transform: var(--hi-button-transform);
 
-  // Active state only - no hover (Glow wrapper handles hover)
+  // Active state - only transform, no background color change
+  // Glow wrapper handles the visual feedback
   &:active:not(:disabled) {
     color: var(--hi-button-text-color-active);
-    background-color: var(--hi-button-bg-active);
     transform: var(--hi-button-transform-active);
     transition-duration: var(--hi-button-duration-active);
   }

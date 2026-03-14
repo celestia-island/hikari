@@ -52,3 +52,15 @@ packages/icons/assets/lucide_manifest.json
 # NPM cache
 .npm/
 
+# Python cache and virtual environments
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+

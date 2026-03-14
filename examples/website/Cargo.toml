@@ -19,7 +19,7 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["dioxus"]
-server = ["dep:tokio", "dep:axum", "dep:tower-http", "dep:tower", "dep:anyhow", "dep:tracing", "dep:tracing-subscriber", "dep:http", "dep:_render_service", "dioxus"]
+server = ["dep:tokio", "dep:axum", "dep:tower-http", "dep:tower", "dep:anyhow", "dep:tracing", "dep:tracing-subscriber", "dep:http", "dep:include_dir", "dep:_render_service", "dioxus"]
 
 [dependencies]
 # Workspace dependencies (short aliases for internal packages)
@@ -54,6 +54,7 @@ anyhow = { version = "1", optional = true }
 tracing = { version = "0.1", optional = true }
 tracing-subscriber = { version = "0.3", optional = true }
 http = { version = "1", optional = true }
+include_dir = { version = "0.7", optional = true }
 
 [build-dependencies]
 hikari-builder = { path = "../../packages/builder" }

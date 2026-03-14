@@ -180,11 +180,11 @@ AnimationBuilder::new(&elements)
 
 ## المساهمة
 
-المساهمات مرحب بها! يرجى قراءة [CONTRIBUTING.md](../../CONTRIBUTING.md) للتفاصيل.
+المساهمات مرحب بها! يرجى قراءة [CONTRIBUTING.md](../../en-US/guides/CONTRIBUTING.md) للتفاصيل.
 
 ## الترخيص
 
-[رخصة MIT](../../LICENSE)
+[رخصة MIT](../../../LICENSE)
 
 ## شكر وتقدير
 

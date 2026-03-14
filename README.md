@@ -46,7 +46,7 @@
       Examples
     </a>
     <span> | </span>
-    <a href="docs/ARCHITECTURE.md">
+    <a href="docs/en-US/guides/ARCHITECTURE.md">
       Architecture
     </a>
   </h3>
@@ -190,8 +190,12 @@ hikari/
 │   └── ssr-demo/                # SSR example
 │
 ├── docs/
-│   ├── ARCHITECTURE.md          # Architecture overview
-│   └── CONTRIBUTING.md          # Contributing guidelines
+│   ├── en-US/
+│   │   ├── guides/
+│   │   ├── design/
+│   │   ├── components/
+│   │   └── system/
+│   └── zh-CHS/                  # Other locales follow the same layout
 │
 ├── Cargo.toml                   # Workspace configuration
 ├── PLAN.md                      # Implementation plan
@@ -356,12 +360,12 @@ See [PLAN.md](PLAN.md) for detailed implementation status.
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
+We welcome contributions! Please see [CONTRIBUTING.md](docs/en-US/guides/CONTRIBUTING.md) for guidelines.
 
 ## Documentation
 
-- [Architecture Overview](docs/ARCHITECTURE.md)
-- [Contributing Guidelines](docs/CONTRIBUTING.md)
+- [Architecture Overview](docs/en-US/guides/ARCHITECTURE.md)
+- [Contributing Guidelines](docs/en-US/guides/CONTRIBUTING.md)
 - [hikari-palette Documentation](packages/hikari-palette/README.md)
 - [hikari-theme Documentation](packages/hikari-theme/README.md)
 - [hikari-components Documentation](packages/hikari-components/README.md)

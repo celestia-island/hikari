@@ -79,42 +79,38 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
     let increment_disabled = props.max.is_some_and(|max| props.value >= max);
 
     // Left button (decrement) - interactive
-    let left_items = vec![
-        InputWrapperItem::Button {
-            icon: MdiIcon::Minus,
-            onclick: EventHandler::new(move |_| {
-                if !props.disabled {
-                    let new_value = if let Some(min) = props.min {
-                        (props.value - props.step).max(min)
-                    } else {
-                        props.value - props.step
-                    };
-                    props.on_change.call(new_value);
-                }
-            }),
-            disabled: props.disabled || decrement_disabled,
-            icon_color: None,
-        }
-    ];
+    let left_items = vec![InputWrapperItem::Button {
+        icon: MdiIcon::Minus,
+        onclick: EventHandler::new(move |_| {
+            if !props.disabled {
+                let new_value = if let Some(min) = props.min {
+                    (props.value - props.step).max(min)
+                } else {
+                    props.value - props.step
+                };
+                props.on_change.call(new_value);
+            }
+        }),
+        disabled: props.disabled || decrement_disabled,
+        icon_color: None,
+    }];
 
     // Right button (increment) - interactive
-    let right_items = vec![
-        InputWrapperItem::Button {
-            icon: MdiIcon::Plus,
-            onclick: EventHandler::new(move |_| {
-                if !props.disabled {
-                    let new_value = if let Some(max) = props.max {
-                        (props.value + props.step).min(max)
-                    } else {
-                        props.value + props.step
-                    };
-                    props.on_change.call(new_value);
-                }
-            }),
-            disabled: props.disabled || increment_disabled,
-            icon_color: None,
-        }
-    ];
+    let right_items = vec![InputWrapperItem::Button {
+        icon: MdiIcon::Plus,
+        onclick: EventHandler::new(move |_| {
+            if !props.disabled {
+                let new_value = if let Some(max) = props.max {
+                    (props.value + props.step).min(max)
+                } else {
+                    props.value + props.step
+                };
+                props.on_change.call(new_value);
+            }
+        }),
+        disabled: props.disabled || increment_disabled,
+        icon_color: None,
+    }];
 
     // Input element
     let input_element = rsx! {

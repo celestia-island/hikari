@@ -6,7 +6,6 @@
 use dioxus::prelude::*;
 use icons::{Icon, MdiIcon};
 use palette::classes::{ClassesBuilder, SearchClass};
-
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 

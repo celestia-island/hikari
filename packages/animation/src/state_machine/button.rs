@@ -159,30 +159,90 @@ impl ButtonStateMachine {
         // Each tuple represents: (from_state, event, to_state)
         let transitions = vec![
             // From Idle
-            ButtonTransition { from: ButtonState::Idle, event: ButtonEvent::MouseEnter, to: ButtonState::Hover },
-            ButtonTransition { from: ButtonState::Idle, event: ButtonEvent::Focus, to: ButtonState::Focused },
-            ButtonTransition { from: ButtonState::Idle, event: ButtonEvent::Disable, to: ButtonState::Disabled },
-            
+            ButtonTransition {
+                from: ButtonState::Idle,
+                event: ButtonEvent::MouseEnter,
+                to: ButtonState::Hover,
+            },
+            ButtonTransition {
+                from: ButtonState::Idle,
+                event: ButtonEvent::Focus,
+                to: ButtonState::Focused,
+            },
+            ButtonTransition {
+                from: ButtonState::Idle,
+                event: ButtonEvent::Disable,
+                to: ButtonState::Disabled,
+            },
             // From Hover (user moved mouse over button)
-            ButtonTransition { from: ButtonState::Hover, event: ButtonEvent::MouseLeave, to: ButtonState::Idle },
-            ButtonTransition { from: ButtonState::Hover, event: ButtonEvent::MouseDown, to: ButtonState::Active },
-            ButtonTransition { from: ButtonState::Hover, event: ButtonEvent::Blur, to: ButtonState::Idle },
-            ButtonTransition { from: ButtonState::Hover, event: ButtonEvent::Disable, to: ButtonState::Disabled },
-            
+            ButtonTransition {
+                from: ButtonState::Hover,
+                event: ButtonEvent::MouseLeave,
+                to: ButtonState::Idle,
+            },
+            ButtonTransition {
+                from: ButtonState::Hover,
+                event: ButtonEvent::MouseDown,
+                to: ButtonState::Active,
+            },
+            ButtonTransition {
+                from: ButtonState::Hover,
+                event: ButtonEvent::Blur,
+                to: ButtonState::Idle,
+            },
+            ButtonTransition {
+                from: ButtonState::Hover,
+                event: ButtonEvent::Disable,
+                to: ButtonState::Disabled,
+            },
             // From Active (user is pressing the button)
-            ButtonTransition { from: ButtonState::Active, event: ButtonEvent::MouseUp, to: ButtonState::Hover },
-            ButtonTransition { from: ButtonState::Active, event: ButtonEvent::MouseLeave, to: ButtonState::Idle },
-            ButtonTransition { from: ButtonState::Active, event: ButtonEvent::Blur, to: ButtonState::Idle },
-            ButtonTransition { from: ButtonState::Active, event: ButtonEvent::Disable, to: ButtonState::Disabled },
-            
+            ButtonTransition {
+                from: ButtonState::Active,
+                event: ButtonEvent::MouseUp,
+                to: ButtonState::Hover,
+            },
+            ButtonTransition {
+                from: ButtonState::Active,
+                event: ButtonEvent::MouseLeave,
+                to: ButtonState::Idle,
+            },
+            ButtonTransition {
+                from: ButtonState::Active,
+                event: ButtonEvent::Blur,
+                to: ButtonState::Idle,
+            },
+            ButtonTransition {
+                from: ButtonState::Active,
+                event: ButtonEvent::Disable,
+                to: ButtonState::Disabled,
+            },
             // From Focused (keyboard navigation)
-            ButtonTransition { from: ButtonState::Focused, event: ButtonEvent::Blur, to: ButtonState::Idle },
-            ButtonTransition { from: ButtonState::Focused, event: ButtonEvent::MouseEnter, to: ButtonState::Hover },
-            ButtonTransition { from: ButtonState::Focused, event: ButtonEvent::MouseDown, to: ButtonState::Active },
-            ButtonTransition { from: ButtonState::Focused, event: ButtonEvent::Disable, to: ButtonState::Disabled },
-            
+            ButtonTransition {
+                from: ButtonState::Focused,
+                event: ButtonEvent::Blur,
+                to: ButtonState::Idle,
+            },
+            ButtonTransition {
+                from: ButtonState::Focused,
+                event: ButtonEvent::MouseEnter,
+                to: ButtonState::Hover,
+            },
+            ButtonTransition {
+                from: ButtonState::Focused,
+                event: ButtonEvent::MouseDown,
+                to: ButtonState::Active,
+            },
+            ButtonTransition {
+                from: ButtonState::Focused,
+                event: ButtonEvent::Disable,
+                to: ButtonState::Disabled,
+            },
             // From Disabled (can only exit via Enable)
-            ButtonTransition { from: ButtonState::Disabled, event: ButtonEvent::Enable, to: ButtonState::Idle },
+            ButtonTransition {
+                from: ButtonState::Disabled,
+                event: ButtonEvent::Enable,
+                to: ButtonState::Idle,
+            },
         ];
 
         Self {
@@ -224,7 +284,7 @@ impl ButtonStateMachine {
                 return Some(self.current_state);
             }
         }
-        
+
         // Special case: Disable can be triggered from any state
         // This ensures buttons can be disabled regardless of current interaction
         match event {
@@ -244,7 +304,7 @@ impl ButtonStateMachine {
             // All other event combinations that don't have predefined transitions are ignored
             _ => {}
         }
-        
+
         None
     }
 
@@ -402,9 +462,7 @@ impl ButtonAnimationConfig {
         Self {
             duration_ms: 150,
             easing: "ease-out",
-            targets: vec![
-                ButtonAnimationTarget::GlowOpacity,
-            ],
+            targets: vec![ButtonAnimationTarget::GlowOpacity],
         }
     }
 }
@@ -416,46 +474,64 @@ mod tests {
     #[test]
     fn test_basic_transitions() {
         let mut sm = ButtonStateMachine::new();
-        
+
         // Idle -> Hover (mouse enter)
-        assert_eq!(sm.handle_event(ButtonEvent::MouseEnter), Some(ButtonState::Hover));
+        assert_eq!(
+            sm.handle_event(ButtonEvent::MouseEnter),
+            Some(ButtonState::Hover)
+        );
         assert!(sm.is_in(ButtonState::Hover));
-        
+
         // Hover -> Active (mouse down)
-        assert_eq!(sm.handle_event(ButtonEvent::MouseDown), Some(ButtonState::Active));
+        assert_eq!(
+            sm.handle_event(ButtonEvent::MouseDown),
+            Some(ButtonState::Active)
+        );
         assert!(sm.is_in(ButtonState::Active));
-        
+
         // Active -> Hover (mouse up)
-        assert_eq!(sm.handle_event(ButtonEvent::MouseUp), Some(ButtonState::Hover));
+        assert_eq!(
+            sm.handle_event(ButtonEvent::MouseUp),
+            Some(ButtonState::Hover)
+        );
         assert!(sm.is_in(ButtonState::Hover));
-        
+
         // Hover -> Idle (mouse leave)
-        assert_eq!(sm.handle_event(ButtonEvent::MouseLeave), Some(ButtonState::Idle));
+        assert_eq!(
+            sm.handle_event(ButtonEvent::MouseLeave),
+            Some(ButtonState::Idle)
+        );
         assert!(sm.is_in(ButtonState::Idle));
     }
 
     #[test]
     fn test_disabled_transition() {
         let mut sm = ButtonStateMachine::new();
-        
+
         // Any state -> Disabled
         sm.handle_event(ButtonEvent::MouseEnter);
-        assert_eq!(sm.handle_event(ButtonEvent::Disable), Some(ButtonState::Disabled));
+        assert_eq!(
+            sm.handle_event(ButtonEvent::Disable),
+            Some(ButtonState::Disabled)
+        );
         assert!(!sm.is_interactive());
-        
+
         // Disabled -> Idle (enable)
-        assert_eq!(sm.handle_event(ButtonEvent::Enable), Some(ButtonState::Idle));
+        assert_eq!(
+            sm.handle_event(ButtonEvent::Enable),
+            Some(ButtonState::Idle)
+        );
         assert!(sm.is_interactive());
     }
 
     #[test]
     fn test_invalid_transition_ignored() {
         let mut sm = ButtonStateMachine::new();
-        
+
         // Cannot go directly from Idle to Active without Hover
         assert_eq!(sm.handle_event(ButtonEvent::MouseDown), None);
         assert_eq!(sm.current_state(), ButtonState::Idle);
-        
+
         // Cannot go from Hover to Focus
         sm.handle_event(ButtonEvent::MouseEnter);
         assert_eq!(sm.handle_event(ButtonEvent::Focus), None);

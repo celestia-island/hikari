@@ -90,21 +90,22 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
         .build();
 
     if let Some(rows) = props.rows
-        && rows > 1 {
-            return rsx! {
-                div {
-                    class: "hi-skeleton-group",
-                    style: "display: flex; flex-direction: column; gap: 0.5rem;",
-                    for i in 0..rows {
-                        div {
-                            key: "{i}",
-                            class: "{classes}",
-                            style: if i == rows - 1 { "width: 60%;" } else { "" },
-                        }
+        && rows > 1
+    {
+        return rsx! {
+            div {
+                class: "hi-skeleton-group",
+                style: "display: flex; flex-direction: column; gap: 0.5rem;",
+                for i in 0..rows {
+                    div {
+                        key: "{i}",
+                        class: "{classes}",
+                        style: if i == rows - 1 { "width: 60%;" } else { "" },
                     }
                 }
-            };
-        }
+            }
+        };
+    }
 
     rsx! {
         div {

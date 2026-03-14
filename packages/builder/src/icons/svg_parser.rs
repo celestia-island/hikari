@@ -2,7 +2,7 @@
 //!
 //! This module defines the SvgIcon struct used in icon data and provides parsing utilities.
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use std::collections::HashMap;
 
 use quick_xml::events::Event;

@@ -547,8 +547,7 @@ mod impl_;
 #[cfg(test)]
 mod tests;
 
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 pub use chinese::*;
 

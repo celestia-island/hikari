@@ -8,8 +8,7 @@
 //! - WeakRef-based target element monitoring
 //! - Animation state callbacks (onComplete, onError, onCancel)
 
-use std::collections::HashMap;
-use std::rc::Weak;
+use std::{collections::HashMap, rc::Weak};
 
 use wasm_bindgen::JsValue;
 use web_sys::HtmlElement;
@@ -158,22 +157,23 @@ impl AnimationRegistry {
     pub fn stop_animation(&mut self, id: &str, reason: &str) -> bool {
         if let Some(entry) = self.animations.remove(id) {
             // Collect callbacks to call
-            let callbacks_to_call: Vec<_> = entry.callbacks
+            let callbacks_to_call: Vec<_> = entry
+                .callbacks
                 .into_iter()
                 .filter_map(|cb| match cb {
                     LifecycleCallback::OnInterrupt(f) => Some(f),
                     _ => None,
                 })
                 .collect();
-            
+
             // Execute stop function
             (entry.stop_fn)();
-            
+
             // Execute cleanup function if present
             if let Some(cleanup) = entry.cleanup_fn {
                 cleanup();
             }
-            
+
             // Call callbacks after cleanup
             for cb in callbacks_to_call {
                 cb();
@@ -199,7 +199,8 @@ impl AnimationRegistry {
 
         for (id, entry) in animations {
             // Collect callbacks to call
-            let callbacks_to_call: Vec<_> = entry.callbacks
+            let callbacks_to_call: Vec<_> = entry
+                .callbacks
                 .into_iter()
                 .filter_map(|cb| match cb {
                     LifecycleCallback::OnInterrupt(f) => Some(f),

@@ -4,11 +4,11 @@
 #[cfg(test)]
 mod tests {
 
-    use hikari_components::display::{
-        SkeletonCardProps, SkeletonProps, SkeletonSize, SkeletonTableProps, SkeletonVariant,
-    };
-    use hikari_components::feedback::{
-        ProgressProps, ProgressStatus, ProgressType, SpinProps, SpinSize, SpinTip,
+    use hikari_components::{
+        display::{
+            SkeletonCardProps, SkeletonProps, SkeletonSize, SkeletonTableProps, SkeletonVariant,
+        },
+        feedback::{ProgressProps, ProgressStatus, ProgressType, SpinProps, SpinSize, SpinTip},
     };
 
     // ============= Skeleton Tests =============

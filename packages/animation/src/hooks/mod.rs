@@ -10,9 +10,7 @@
 //! They provide state management and cleanup functionality.
 
 // Re-export state machine types for convenience
-pub use crate::state_machine::{
-    ButtonEvent, ButtonState, ButtonStateMachine,
-};
+pub use crate::state_machine::{ButtonEvent, ButtonState, ButtonStateMachine};
 
 // Re-export animation types
 pub use crate::lifecycle::AnimationManager;

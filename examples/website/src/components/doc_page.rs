@@ -1,11 +1,10 @@
 use dioxus::prelude::*;
+#[cfg(all(not(target_arch = "wasm32"), feature = "server"))]
+use include_dir::{Dir, include_dir};
 
 use crate::{components::{Layout, render_markdown}, hooks::use_language};
 use _components::layout::Container;
 use _i18n::context::Language;
-
-#[cfg(all(not(target_arch = "wasm32"), feature = "server"))]
-use include_dir::{Dir, include_dir};
 
 #[cfg(all(not(target_arch = "wasm32"), feature = "server"))]
 static DOCS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../docs");

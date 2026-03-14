@@ -1,9 +1,10 @@
 // hi-components/src/layout/divider.rs
 // Divider component for visual separation
 
-use crate::theme::use_layout_direction;
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, DividerClass};
+
+use crate::theme::use_layout_direction;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DividerOrientation {

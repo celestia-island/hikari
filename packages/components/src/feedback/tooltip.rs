@@ -3,16 +3,15 @@
 
 use dioxus::prelude::*;
 use palette::classes::{ClassesBuilder, TooltipClass, UtilityClass};
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsCast;
 
+#[cfg(target_arch = "wasm32")]
+use crate::portal::{PortalEntry, TriggerPlacement};
 use crate::{
     portal::provider::{generate_portal_id, use_portal},
     styled::StyledComponent,
 };
-
-#[cfg(target_arch = "wasm32")]
-use crate::portal::{PortalEntry, TriggerPlacement};
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
 
 pub struct TooltipComponent;
 

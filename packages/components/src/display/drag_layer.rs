@@ -10,8 +10,7 @@ use crate::styled::StyledComponent;
 pub struct DragLayerComponent;
 
 /// Drag item data
-#[derive(Clone, PartialEq, Debug)]
-#[derive(Default)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct DragItem {
     /// Unique identifier
     pub id: String,
@@ -20,7 +19,6 @@ pub struct DragItem {
     /// Item type
     pub item_type: String,
 }
-
 
 /// DragLayer component props
 #[derive(Clone, PartialEq, Props)]

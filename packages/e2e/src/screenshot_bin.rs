@@ -52,9 +52,15 @@ const ROUTES: &[(&str, &str)] = &[
     ("/en/components/layer1/button", "components_layer1_button"),
     ("/en/components/layer1/form", "components_layer1_form"),
     ("/en/components/layer1/switch", "components_layer1_switch"),
-    ("/en/components/layer1/feedback", "components_layer1_feedback"),
+    (
+        "/en/components/layer1/feedback",
+        "components_layer1_feedback",
+    ),
     ("/en/components/layer1/display", "components_layer1_display"),
-    ("/en/components/layer1/number_input", "components_layer1_number_input"),
+    (
+        "/en/components/layer1/number_input",
+        "components_layer1_number_input",
+    ),
     ("/en/components/layer1/search", "components_layer1_search"),
     ("/en/components/layer1/avatar", "components_layer1_avatar"),
     ("/en/components/layer1/image", "components_layer1_image"),
@@ -63,25 +69,58 @@ const ROUTES: &[(&str, &str)] = &[
     ("/en/components/layer1/comment", "components_layer1_comment"),
     // Layer 2
     ("/en/components/layer2", "components_layer2"),
-    ("/en/components/layer2/navigation", "components_layer2_navigation"),
+    (
+        "/en/components/layer2/navigation",
+        "components_layer2_navigation",
+    ),
     ("/en/components/layer2/data", "components_layer2_data"),
     ("/en/components/layer2/form", "components_layer2_form"),
-    ("/en/components/layer2/feedback", "components_layer2_feedback"),
-    ("/en/components/layer2/cascader", "components_layer2_cascader"),
-    ("/en/components/layer2/transfer", "components_layer2_transfer"),
-    ("/en/components/layer2/collapsible", "components_layer2_collapsible"),
-    ("/en/components/layer2/timeline", "components_layer2_timeline"),
+    (
+        "/en/components/layer2/feedback",
+        "components_layer2_feedback",
+    ),
+    (
+        "/en/components/layer2/cascader",
+        "components_layer2_cascader",
+    ),
+    (
+        "/en/components/layer2/transfer",
+        "components_layer2_transfer",
+    ),
+    (
+        "/en/components/layer2/collapsible",
+        "components_layer2_collapsible",
+    ),
+    (
+        "/en/components/layer2/timeline",
+        "components_layer2_timeline",
+    ),
     ("/en/components/layer2/table", "components_layer2_table"),
     ("/en/components/layer2/tree", "components_layer2_tree"),
-    ("/en/components/layer2/pagination", "components_layer2_pagination"),
+    (
+        "/en/components/layer2/pagination",
+        "components_layer2_pagination",
+    ),
     ("/en/components/layer2/qrcode", "components_layer2_qrcode"),
     // Layer 3
-    ("/en/components/layer3/overview", "components_layer3_overview"),
+    (
+        "/en/components/layer3/overview",
+        "components_layer3_overview",
+    ),
     ("/en/components/layer3/media", "components_layer3_media"),
     ("/en/components/layer3/editor", "components_layer3_editor"),
-    ("/en/components/layer3/visualization", "components_layer3_visualization"),
-    ("/en/components/layer3/user_guide", "components_layer3_user_guide"),
-    ("/en/components/layer3/zoom_controls", "components_layer3_zoom_controls"),
+    (
+        "/en/components/layer3/visualization",
+        "components_layer3_visualization",
+    ),
+    (
+        "/en/components/layer3/user_guide",
+        "components_layer3_user_guide",
+    ),
+    (
+        "/en/components/layer3/zoom_controls",
+        "components_layer3_zoom_controls",
+    ),
     // System
     ("/en/system", "system"),
     ("/en/system/css", "system_css"),

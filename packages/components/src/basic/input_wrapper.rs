@@ -54,9 +54,7 @@ pub enum InputWrapperItem {
         icon_color: Option<String>,
     },
     /// Pure icon display (decorative, always disabled)
-    Icon {
-        icon: MdiIcon,
-    },
+    Icon { icon: MdiIcon },
     /// Custom element (for advanced use cases)
     Custom(Element),
 }
@@ -73,7 +71,11 @@ impl InputWrapperItem {
     }
 
     /// Create a button item with custom icon color
-    pub fn button_with_color(icon: MdiIcon, onclick: EventHandler<MouseEvent>, icon_color: String) -> Self {
+    pub fn button_with_color(
+        icon: MdiIcon,
+        onclick: EventHandler<MouseEvent>,
+        icon_color: String,
+    ) -> Self {
         Self::Button {
             icon,
             onclick,
@@ -215,7 +217,12 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
     // Render item as IconButton
     let render_item = move |item: &InputWrapperItem| -> Element {
         match item {
-            InputWrapperItem::Button { icon, onclick, disabled, icon_color } => {
+            InputWrapperItem::Button {
+                icon,
+                onclick,
+                disabled,
+                icon_color,
+            } => {
                 rsx! {
                     IconButton {
                         icon: *icon,

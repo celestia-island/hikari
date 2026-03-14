@@ -4,6 +4,12 @@ use crate::{components::{Layout, render_markdown}, hooks::use_language};
 use _components::layout::Container;
 use _i18n::context::Language;
 
+#[cfg(all(not(target_arch = "wasm32"), feature = "server"))]
+use include_dir::{Dir, include_dir};
+
+#[cfg(all(not(target_arch = "wasm32"), feature = "server"))]
+static DOCS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../docs");
+
 #[derive(Clone, PartialEq, Props)]
 pub struct DynamicDocPageProps {
     pub current_route: crate::app::Route,
@@ -120,10 +126,15 @@ async fn load_markdown_content(path: &str) -> Result<String, String> {
 
 #[cfg(all(not(target_arch = "wasm32"), feature = "server"))]
 async fn load_markdown_content(path: &str) -> Result<String, String> {
-    let file_path = format!("public/docs/{}.md", path);
-    tokio::fs::read_to_string(&file_path)
-        .await
-        .map_err(|e| format!("Failed to read {}: {}", file_path, e))
+    if path.contains("..") {
+        return Err(format!("Invalid path: {}", path));
+    }
+
+    let file_path = format!("{}.md", path);
+    DOCS_DIR
+        .get_file(&file_path)
+        .map(|file| String::from_utf8_lossy(file.contents()).into_owned())
+        .ok_or_else(|| format!("Document not found: {}", file_path))
 }
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "server")))]

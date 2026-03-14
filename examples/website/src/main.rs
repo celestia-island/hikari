@@ -4,15 +4,21 @@
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 
+use axum::extract::Path;
 use axum::response::IntoResponse;
+use axum::response::Response;
 use http::StatusCode;
 use tower_http::cors::{Any, CorsLayer};
+
+use include_dir::{Dir, include_dir};
 
 use _components::StyleRegistry;
 use _render_service::{HikariRenderServicePlugin, plugin::StaticMountConfig, static_files::StaticFileConfig};
 
 // Import centralized path configuration
 use website::paths::STATIC_PATHS;
+
+static DOCS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../docs");
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -37,6 +43,7 @@ async fn main() -> anyhow::Result<()> {
         .component_style_registry(style_registry)
         .add_route("/health", axum::routing::get(health_handler))
         .add_route("/_dioxus", axum::routing::get(dioxus_hmr_handler))
+        .add_route("/docs/*path", axum::routing::get(docs_handler))
         .static_assets(STATIC_PATHS.assets_fs, STATIC_PATHS.assets_mount)
         // Disable cache for styles directory to force reload during development
         .mount_static(
@@ -47,8 +54,6 @@ async fn main() -> anyhow::Result<()> {
         // Mount icons at /icons (not /static/icons) to match Icon component path
         // This ensures icon requests don't fall through to SPA fallback
         .icon_assets(STATIC_PATHS.icons_fs, "/icons")
-        // Mount docs directory for Markdown files
-        .static_assets(STATIC_PATHS.docs_fs, STATIC_PATHS.docs_mount)
         .build()?
         .layer(cors);
 
@@ -74,4 +79,23 @@ async fn health_handler() -> impl IntoResponse {
 /// Dioxus HMR handler - explicitly disable hot reload
 async fn dioxus_hmr_handler() -> impl IntoResponse {
     (StatusCode::NOT_FOUND, "Hot reload is disabled")
+}
+
+async fn docs_handler(Path(path): Path<String>) -> Response {
+    if path.contains("..") {
+        return (StatusCode::BAD_REQUEST, "Invalid path").into_response();
+    }
+
+    if !path.ends_with(".md") {
+        return (StatusCode::NOT_FOUND, "Document not found").into_response();
+    }
+
+    match DOCS_DIR.get_file(&path) {
+        Some(file) => (
+            [("content-type", "text/markdown; charset=utf-8")],
+            String::from_utf8_lossy(file.contents()).into_owned(),
+        )
+            .into_response(),
+        None => (StatusCode::NOT_FOUND, "Document not found").into_response(),
+    }
 }

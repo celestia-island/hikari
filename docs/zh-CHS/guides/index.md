@@ -180,11 +180,11 @@ AnimationBuilder::new(&elements)
 
 ## 贡献
 
-欢迎贡献！请阅读 [CONTRIBUTING.md](../../CONTRIBUTING.md) 了解详情。
+欢迎贡献！请阅读 [CONTRIBUTING.md](../../en-US/guides/CONTRIBUTING.md) 了解详情。
 
 ## 许可证
 
-[MIT License](../../LICENSE)
+[MIT License](../../../LICENSE)
 
 ## 致谢
 

@@ -128,10 +128,9 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     let handle_prev = {
         let on_step_change = props.on_step_change;
         move |_| {
-            if !is_first_step
-                && let Some(handler) = on_step_change.as_ref() {
-                    handler.call(current_step - 1);
-                }
+            if !is_first_step && let Some(handler) = on_step_change.as_ref() {
+                handler.call(current_step - 1);
+            }
         }
     };
 

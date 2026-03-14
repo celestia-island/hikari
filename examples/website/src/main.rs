@@ -4,12 +4,9 @@
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 
-use axum::extract::Path;
-use axum::response::IntoResponse;
-use axum::response::Response;
+use axum::{extract::Path, response::{IntoResponse, Response}};
 use http::StatusCode;
 use tower_http::cors::{Any, CorsLayer};
-
 use include_dir::{Dir, include_dir};
 
 use _components::StyleRegistry;

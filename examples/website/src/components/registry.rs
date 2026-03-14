@@ -1,72 +1,8 @@
 use dioxus::prelude::*;
 
-use _components::{
-    basic::{
-        avatar::{Avatar as AvatarComponent, AvatarFallbackMode},
-        badge::Badge,
-        button::Button,
-        card::Card,
-        checkbox::Checkbox,
-        divider::Divider,
-        file_upload::FileUpload,
-        image::{Image as ImageComponent, ImagePlaceholder},
-        input::Input,
-        radio_group::{RadioButton, RadioDirection, RadioGroup},
-        select::{Select, SelectOption},
-        slider::Slider,
-        switch::{Switch, SwitchColor, SwitchContent, SwitchIcon, SwitchSize, SwitchVariant},
-    },
-    data::{
-        collapse::Collapse,
-        pagination::Pagination,
-        table::{ColumnAlign, ColumnDef, Table},
-        tree::Tree,
-        TreeNodeData,
-    },
-    display::{
-        drag_layer::{DragItem, DragLayer},
-        empty::Empty,
-        qrcode::QRCode,
-        skeleton::{Skeleton, SkeletonCard, SkeletonTable, SkeletonVariant},
-        timeline::{Timeline, TimelineItem, TimelinePosition},
-        user_guide::{GuidePlacement, GuideStep, UserGuide},
-        zoom_controls::ZoomControls,
-    },
-    entry::{
-        cascader::{Cascader, CascaderOption, CascaderSize},
-        number_input::{NumberInput, NumberInputSize},
-        search::Search,
-        transfer::{Transfer, TransferItem},
-    },
-    feedback::{
-        alert::{Alert, AlertVariant},
-        modal::{use_modal, ModalContent},
-        popover::Popover,
-        progress::{Progress, ProgressStatus},
-        toast::{Toast, ToastVariant},
-        tooltip::{Tooltip, TooltipPlacement},
-    },
-    layout::{Col, Direction, FlexBox, FlexGap, Grid, Row},
-    navigation::{
-        breadcrumb::{Breadcrumb, BreadcrumbItem},
-        menu::{Menu, MenuItem, MenuMode},
-        tabs::{TabPane, Tabs},
-    },
-    production::{
-        audio_player::AudioPlayer,
-        code_highlight::CodeHighlight,
-        markdown_editor::{MarkdownEditor, MarkdownEditorMode},
-        rich_text_editor::RichTextEditor,
-        video_player::VideoPlayer,
-    },
-    AvatarSize, AvatarVariant, BadgeVariant, ButtonVariant, IconButton, IconButtonSize,
-    IconButtonVariant,
-};
+use _components::{AvatarSize, AvatarVariant, BadgeVariant, ButtonVariant, IconButton, IconButtonSize, IconButtonVariant, basic::{avatar::{Avatar as AvatarComponent, AvatarFallbackMode}, badge::Badge, button::Button, card::Card, checkbox::Checkbox, divider::Divider, file_upload::FileUpload, image::{Image as ImageComponent, ImagePlaceholder}, input::Input, radio_group::{RadioButton, RadioDirection, RadioGroup}, select::{Select, SelectOption}, slider::Slider, switch::{Switch, SwitchColor, SwitchContent, SwitchIcon, SwitchSize, SwitchVariant}}, data::{TreeNodeData, collapse::Collapse, pagination::Pagination, table::{ColumnAlign, ColumnDef, Table}, tree::Tree}, display::{drag_layer::{DragItem, DragLayer}, empty::Empty, qrcode::QRCode, skeleton::{Skeleton, SkeletonCard, SkeletonTable, SkeletonVariant}, timeline::{Timeline, TimelineItem, TimelinePosition}, user_guide::{GuidePlacement, GuideStep, UserGuide}, zoom_controls::ZoomControls}, entry::{cascader::{Cascader, CascaderOption, CascaderSize}, number_input::{NumberInput, NumberInputSize}, search::Search, transfer::{Transfer, TransferItem}}, feedback::{alert::{Alert, AlertVariant}, modal::{ModalContent, use_modal}, popover::Popover, progress::{Progress, ProgressStatus}, toast::{Toast, ToastVariant}, tooltip::{Tooltip, TooltipPlacement}}, layout::{Col, Direction, FlexBox, FlexGap, Grid, Row}, navigation::{breadcrumb::{Breadcrumb, BreadcrumbItem}, menu::{Menu, MenuItem, MenuMode}, tabs::{TabPane, Tabs}}, production::{audio_player::AudioPlayer, code_highlight::CodeHighlight, markdown_editor::{MarkdownEditor, MarkdownEditorMode}, rich_text_editor::RichTextEditor, video_player::VideoPlayer}};
 use _icons::MdiIcon;
-use _palette::classes::{
-    AlignItems, ClassesBuilder, Display, FlexDirection, FlexWrap, FontWeight, Gap, Padding,
-    TextColor,
-};
+use _palette::classes::{ AlignItems, ClassesBuilder, Display, FlexDirection, FlexWrap, FontWeight, Gap, Padding, TextColor, };
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ComponentType {

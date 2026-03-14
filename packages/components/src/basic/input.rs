@@ -211,7 +211,7 @@ pub fn Input(props: InputProps) -> Element {
         .build();
 
     let mut css_vars_string = String::new();
-    
+
     // 设置 glow radius 变量，让 Glow wrapper 可以读取
     css_vars_string.push_str("--hi-glow-radius:var(--hi-input-radius);");
 
@@ -242,7 +242,7 @@ pub fn Input(props: InputProps) -> Element {
     let style_attr = Some(css_vars_string);
 
     let input_content = rsx! {
-        div { 
+        div {
             class: "{wrapper_classes}",
             style: style_attr,
             "data-animation-id": props.animation_id,

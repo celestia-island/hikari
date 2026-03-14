@@ -7,7 +7,7 @@
 
 use dioxus::prelude::*;
 use icons::{Icon, MdiIcon};
-use palette::classes::{components::ButtonClass, ClassesBuilder};
+use palette::classes::{ClassesBuilder, components::ButtonClass};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
@@ -198,7 +198,7 @@ pub fn IconButton(props: IconButtonProps) -> Element {
         .build();
 
     let mut css_vars_string = String::new();
-    
+
     // 设置 glow radius 变量，让 Glow wrapper 可以读取
     css_vars_string.push_str("--hi-glow-radius:var(--hi-icon-button-radius);");
 

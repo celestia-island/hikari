@@ -25,9 +25,10 @@
 //! }
 //! ```
 
-use crate::theme::use_layout_direction;
 use dioxus::prelude::*;
-use palette::{classes::components::*, ClassesBuilder, UtilityClass};
+use palette::{ClassesBuilder, UtilityClass, classes::components::*};
+
+use crate::theme::use_layout_direction;
 
 /// Aside component - Modern sidebar navigation panel
 ///

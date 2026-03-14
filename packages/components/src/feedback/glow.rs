@@ -252,39 +252,60 @@ pub fn Glow(props: GlowProps) -> Element {
                     if let Some(target) = web_event.current_target() {
                         if let Some(wrapper) = target.dyn_ref::<HtmlElement>() {
                             web_sys::console::log_1(&"🔴 Glow: setting intensity to 1.0".into());
-                            
+
                             // Log current style before change
-                            let current_style = wrapper.style().get_property_value("--glow-intensity-scale").unwrap_or_default();
-                            web_sys::console::log_1(&format!("🔴 Glow: current inline intensity = '{}'", current_style).into());
-                            
+                            let current_style = wrapper
+                                .style()
+                                .get_property_value("--glow-intensity-scale")
+                                .unwrap_or_default();
+                            web_sys::console::log_1(
+                                &format!("🔴 Glow: current inline intensity = '{}'", current_style)
+                                    .into(),
+                            );
+
                             // Log computed style
                             let window = web_sys::window().unwrap();
                             let computed = window.get_computed_style(wrapper).ok().flatten();
                             if let Some(computed) = computed {
-                                let computed_intensity = computed.get_property_value("--glow-intensity-scale").unwrap_or_default();
-                                let computed_base = computed.get_property_value("--glow-base-opacity").unwrap_or_default();
-                                let computed_opacity = computed.get_property_value("opacity").unwrap_or_default();
+                                let computed_intensity = computed
+                                    .get_property_value("--glow-intensity-scale")
+                                    .unwrap_or_default();
+                                let computed_base = computed
+                                    .get_property_value("--glow-base-opacity")
+                                    .unwrap_or_default();
+                                let computed_opacity =
+                                    computed.get_property_value("opacity").unwrap_or_default();
                                 web_sys::console::log_1(&format!("🔴 Glow: computed intensity='{}', base-opacity='{}', wrapper opacity='{}'", computed_intensity, computed_base, computed_opacity).into());
                             }
-                            
+
                             // Check class list
                             let class_list = wrapper.class_list();
                             let classes: Vec<String> = class_list.to_vec();
-                            web_sys::console::log_1(&format!("🔴 Glow: wrapper classes = {:?}", classes).into());
-                            
+                            web_sys::console::log_1(
+                                &format!("🔴 Glow: wrapper classes = {:?}", classes).into(),
+                            );
+
                             StyleBuilder::new(wrapper)
                                 .add_custom("--glow-intensity-scale", "1.0")
                                 .apply();
-                            
+
                             // Log style after change
-                            let new_style = wrapper.style().get_property_value("--glow-intensity-scale").unwrap_or_default();
-                            web_sys::console::log_1(&format!("🔴 Glow: new inline intensity = '{}'", new_style).into());
-                            
+                            let new_style = wrapper
+                                .style()
+                                .get_property_value("--glow-intensity-scale")
+                                .unwrap_or_default();
+                            web_sys::console::log_1(
+                                &format!("🔴 Glow: new inline intensity = '{}'", new_style).into(),
+                            );
+
                             // Log computed style after change
                             let computed2 = window.get_computed_style(wrapper).ok().flatten();
                             if let Some(computed2) = computed2 {
-                                let computed_intensity2 = computed2.get_property_value("--glow-intensity-scale").unwrap_or_default();
-                                let computed_opacity2 = computed2.get_property_value("opacity").unwrap_or_default();
+                                let computed_intensity2 = computed2
+                                    .get_property_value("--glow-intensity-scale")
+                                    .unwrap_or_default();
+                                let computed_opacity2 =
+                                    computed2.get_property_value("opacity").unwrap_or_default();
                                 web_sys::console::log_1(&format!("🔴 Glow: after apply, computed intensity='{}', wrapper opacity='{}'", computed_intensity2, computed_opacity2).into());
                             }
                         }

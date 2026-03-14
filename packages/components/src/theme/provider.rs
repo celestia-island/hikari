@@ -228,11 +228,9 @@ pub struct ThemeProviderProps {
 pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
     let current_palette = use_signal(|| props.palette.clone());
     let current_theme_name = use_signal(|| props.palette.clone());
-    let current_direction = use_signal(|| {
-        match props.direction.as_str() {
-            "rtl" => LayoutDirection::Rtl,
-            _ => LayoutDirection::Ltr,
-        }
+    let current_direction = use_signal(|| match props.direction.as_str() {
+        "rtl" => LayoutDirection::Rtl,
+        _ => LayoutDirection::Ltr,
     });
 
     let mut palette_for_callback = current_palette;

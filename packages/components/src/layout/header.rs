@@ -16,10 +16,11 @@
 //! }
 //! ```
 
-use crate::theme::use_layout_direction;
 use dioxus::prelude::*;
 use dioxus_core::VNode;
-use palette::{classes::*, ClassesBuilder};
+use palette::{ClassesBuilder, classes::*};
+
+use crate::theme::use_layout_direction;
 
 /// Header component - Modern application header bar
 ///

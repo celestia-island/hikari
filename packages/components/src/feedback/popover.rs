@@ -7,7 +7,7 @@ use palette::classes::{ClassesBuilder, Display, Position};
 use wasm_bindgen::JsCast;
 
 use crate::{
-    portal::{generate_portal_id, use_portal, PortalEntry},
+    portal::{PortalEntry, generate_portal_id, use_portal},
     styled::StyledComponent,
 };
 

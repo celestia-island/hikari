@@ -17,9 +17,10 @@
 //! }
 //! ```
 
-use crate::theme::use_layout_direction;
 use dioxus::prelude::*;
-use palette::{classes::components::*, ClassesBuilder};
+use palette::{ClassesBuilder, classes::components::*};
+
+use crate::theme::use_layout_direction;
 
 /// Grid component - 12-column responsive grid container
 ///

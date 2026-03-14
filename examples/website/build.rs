@@ -15,7 +15,10 @@
 //! - `/assets/*` → assets_mount
 //! - `/styles/*` → styles_mount
 
-use std::{path::{Path, absolute as path_absolute}, process::Command};
+use std::{
+    path::{absolute as path_absolute, Path},
+    process::Command,
+};
 
 fn main() {
     println!("cargo:warning=🏗️  website build starting...");
@@ -185,4 +188,3 @@ fn get_workspace_root() -> std::path::PathBuf {
         workspace_root
     }
 }
-

@@ -86,16 +86,25 @@ async fn docs_handler(Path(path): Path<String>) -> Response {
         return (StatusCode::BAD_REQUEST, "Invalid path").into_response();
     }
 
-    if !path.ends_with(".md") {
-        return (StatusCode::NOT_FOUND, "Document not found").into_response();
+    // Build candidate paths to try in order:
+    // 1. exact path (if already ends with .md)
+    // 2. path + ".md"
+    // 3. path + "/index.md"
+    let candidates: &[String] = &if path.ends_with(".md") {
+        vec![path.clone()]
+    } else {
+        vec![format!("{}.md", path), format!("{}/index.md", path)]
+    };
+
+    for candidate in candidates {
+        if let Some(file) = DOCS_DIR.get_file(candidate.as_str()) {
+            return (
+                [("content-type", "text/markdown; charset=utf-8")],
+                String::from_utf8_lossy(file.contents()).into_owned(),
+            )
+                .into_response();
+        }
     }
 
-    match DOCS_DIR.get_file(&path) {
-        Some(file) => (
-            [("content-type", "text/markdown; charset=utf-8")],
-            String::from_utf8_lossy(file.contents()).into_owned(),
-        )
-            .into_response(),
-        None => (StatusCode::NOT_FOUND, "Document not found").into_response(),
-    }
+    (StatusCode::NOT_FOUND, "Document not found").into_response()
 }

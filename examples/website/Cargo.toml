@@ -19,12 +19,35 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["dioxus"]
-server = ["dep:tokio", "dep:axum", "dep:tower-http", "dep:tower", "dep:anyhow", "dep:tracing", "dep:tracing-subscriber", "dep:http", "dep:include_dir", "dep:_render_service", "dioxus"]
+server = [
+  "dep:tokio",
+  "dep:axum",
+  "dep:tower-http",
+  "dep:tower",
+  "dep:anyhow",
+  "dep:tracing",
+  "dep:tracing-subscriber",
+  "dep:http",
+  "dep:include_dir",
+  "dep:_render_service",
+  "dioxus",
+]
 
 [dependencies]
 # Workspace dependencies (short aliases for internal packages)
-_components = { path = "../../packages/components", package = "hikari-components", features = ["basic", "feedback", "navigation", "data", "display", "entry", "layout"], default-features = false }
-_icons = { path = "../../packages/icons", package = "hikari-icons", features = ["dynamic-fetch", "dynamic-fetch-warnings"] }
+_components = { path = "../../packages/components", package = "hikari-components", features = [
+  "basic",
+  "feedback",
+  "navigation",
+  "data",
+  "display",
+  "entry",
+  "layout",
+], default-features = false }
+_icons = { path = "../../packages/icons", package = "hikari-icons", features = [
+  "dynamic-fetch",
+  "dynamic-fetch-warnings",
+] }
 _palette = { path = "../../packages/palette", package = "hikari-palette" }
 _animation = { path = "../../packages/animation", package = "hikari-animation" }
 _extra_components = { path = "../../packages/extra-components", package = "hikari-extra-components" }
@@ -48,7 +71,11 @@ console_error_panic_hook = "0.1"
 # Server-side dependencies (only used when server feature is enabled)
 tokio = { version = "1", features = ["full"], optional = true }
 axum = { version = "0.8", features = ["macros"], optional = true }
-tower-http = { version = "0.6", features = ["fs", "trace", "cors"], optional = true }
+tower-http = { version = "0.6", features = [
+  "fs",
+  "trace",
+  "cors",
+], optional = true }
 tower = { version = "0.5", features = ["full"], optional = true }
 anyhow = { version = "1", optional = true }
 tracing = { version = "0.1", optional = true }

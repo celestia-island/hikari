@@ -20,6 +20,7 @@ import json
 import io
 import sys
 import zipfile
+import tempfile
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Set, Tuple, Any
@@ -59,7 +60,9 @@ def download_and_extract_mdi() -> Tuple[Dict[str, Dict[str, str]], List[Any]]:
     """
     print("Downloading Material Design Icons from GitHub...")
 
-    zip_path = Path("/tmp/mdi.zip")
+    tmp_dir = Path(tempfile.gettempdir()) / "hikari-icons"
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+    zip_path = tmp_dir / "mdi.zip"
 
     # Download the repository zip
     try:
@@ -75,59 +78,69 @@ def download_and_extract_mdi() -> Tuple[Dict[str, Dict[str, str]], List[Any]]:
         print(f"  ERROR: Failed to download: {e}")
         raise
 
-    # Extract SVG files
-    print("\nExtracting SVG files...")
-    svg_map = {}
-    metadata = []
-
-    with zipfile.ZipFile(zip_path, 'r') as zf:
-        # Find all SVG files
-        svg_files = [f for f in zf.namelist() if f.endswith('.svg')
-                     and '/svg/' in f]
-
-        print(f"  Found {len(svg_files)} SVG files")
-
-        # Extract each SVG
-        for svg_file in svg_files:
-            try:
-                # Extract icon name from path (e.g., "MaterialDesign-master/svg/account.svg" -> "account")
-                icon_name = svg_file.split('/')[-1].replace('.svg', '')
-
-                # Read SVG content
-                svg_content = zf.read(svg_file).decode('utf-8')
-
-                # Determine style
-                if icon_name.endswith('-outline'):
-                    style = 'outline'
-                    base_name = icon_name.replace('-outline', '')
-                else:
-                    style = 'filled'
-                    base_name = icon_name
-
-                svg_map[icon_name] = {
-                    'svg': svg_content,
-                    'style': style,
-                    'base_name': base_name
-                }
-
-            except Exception as e:
-                print(f"  WARNING: Failed to extract {svg_file}: {e}")
-
-    print(f"  OK: Extracted {len(svg_map)} icons")
-
-    # Extract metadata from meta.json if available
     try:
-        with zipfile.ZipFile(zip_path, 'r') as zf:
-            meta_files = [f for f in zf.namelist() if f.endswith('meta.json')]
-            if meta_files:
-                meta_content = zf.read(meta_files[0]).decode('utf-8')
-                metadata = json.loads(meta_content)
-                print(f"  OK: Loaded metadata for {len(metadata)} icons")
-    except Exception as e:
-        print(f"  WARNING: Failed to extract metadata: {e}")
+        # Extract SVG files
+        print("\nExtracting SVG files...")
+        svg_map = {}
         metadata = []
 
-    return svg_map, metadata
+        with zipfile.ZipFile(zip_path, 'r') as zf:
+            # Find all SVG files
+            svg_files = [f for f in zf.namelist() if f.endswith('.svg')
+                         and '/svg/' in f]
+
+            print(f"  Found {len(svg_files)} SVG files")
+
+            # Extract each SVG
+            for svg_file in svg_files:
+                try:
+                    # Extract icon name from path (e.g., "MaterialDesign-master/svg/account.svg" -> "account")
+                    icon_name = svg_file.split('/')[-1].replace('.svg', '')
+
+                    # Read SVG content
+                    svg_content = zf.read(svg_file).decode('utf-8')
+
+                    # Determine style
+                    if icon_name.endswith('-outline'):
+                        style = 'outline'
+                        base_name = icon_name.replace('-outline', '')
+                    else:
+                        style = 'filled'
+                        base_name = icon_name
+
+                    svg_map[icon_name] = {
+                        'svg': svg_content,
+                        'style': style,
+                        'base_name': base_name
+                    }
+
+                except Exception as e:
+                    print(f"  WARNING: Failed to extract {svg_file}: {e}")
+
+        print(f"  OK: Extracted {len(svg_map)} icons")
+
+        # Extract metadata from meta.json if available
+        try:
+            with zipfile.ZipFile(zip_path, 'r') as zf:
+                meta_files = [
+                    f for f in zf.namelist() if f.endswith('meta.json')]
+                if meta_files:
+                    meta_content = zf.read(meta_files[0]).decode('utf-8')
+                    metadata = json.loads(meta_content)
+                    print(f"  OK: Loaded metadata for {len(metadata)} icons")
+        except Exception as e:
+            print(f"  WARNING: Failed to extract metadata: {e}")
+            metadata = []
+
+        return svg_map, metadata
+    finally:
+        # Keep temp directory for reuse, but remove the downloaded archive each run.
+        try:
+            if zip_path.exists():
+                zip_path.unlink()
+        except Exception as e:
+            print(
+                f"  WARNING: Failed to clean temporary archive {zip_path}: {e}")
 
 
 def analyze_metadata(svg_map: Dict, metadata: List) -> Dict:

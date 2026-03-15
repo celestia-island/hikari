@@ -280,7 +280,12 @@ pub fn Glow(props: GlowProps) -> Element {
 
                             // Check class list
                             let class_list = wrapper.class_list();
-                            let classes: Vec<String> = class_list.to_vec();
+                            let mut classes: Vec<String> = Vec::new();
+                            for i in 0..class_list.length() {
+                                if let Some(class_name) = class_list.item(i) {
+                                    classes.push(class_name);
+                                }
+                            }
                             web_sys::console::log_1(
                                 &format!("🔴 Glow: wrapper classes = {:?}", classes).into(),
                             );

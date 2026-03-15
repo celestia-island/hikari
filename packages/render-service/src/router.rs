@@ -182,7 +182,7 @@ pub fn build_router(
             axum::routing::get(css_bundle_handler),
         );
         router = router.route(
-            "/styles/components/<name>.css",
+            "/styles/components/{*name}",
             axum::routing::get(component_css_handler),
         );
         router = router.route("/styles/info", axum::routing::get(style_info_handler));
@@ -198,24 +198,23 @@ pub fn build_router(
     router = router.route("/", axum::routing::get(index_handler));
     router = router.route("/index.html", axum::routing::get(index_handler));
 
-    router = router.route("/ssr/<*path>", any(ssr_handler));
-    router = router.route("/icons/<*path>", any(icon_fallback_handler));
+    router = router.route("/ssr/{*path}", any(ssr_handler));
 
     // Legacy route redirects - redirect old routes without language prefix to default language
     // These routes handle paths like /components, /system, /demos without language prefix
     router = router.route("/components", axum::routing::get(legacy_redirect_handler));
     router = router.route(
-        "/components/<*path>",
+        "/components/{*path}",
         axum::routing::get(legacy_redirect_handler),
     );
     router = router.route("/system", axum::routing::get(legacy_redirect_handler));
     router = router.route(
-        "/system/<*path>",
+        "/system/{*path}",
         axum::routing::get(legacy_redirect_handler),
     );
     router = router.route("/demos", axum::routing::get(legacy_redirect_handler));
     router = router.route(
-        "/demos/<*path>",
+        "/demos/{*path}",
         axum::routing::get(legacy_redirect_handler),
     );
 

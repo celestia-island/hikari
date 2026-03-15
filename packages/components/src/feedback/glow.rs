@@ -355,11 +355,7 @@ pub fn Glow(props: GlowProps) -> Element {
     #[cfg(not(target_arch = "wasm32"))]
     {
         rsx! {
-            div {
-                class: "{glow_classes}",
-                "data-glow": "true",
-                {props.children}
-            }
+            div { class: "{glow_classes}", "data-glow": "true", {props.children} }
         }
     }
 }

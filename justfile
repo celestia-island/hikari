@@ -85,6 +85,7 @@ dev *force="":
     @cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/website/Cargo.toml
     @echo ""
     @echo "🔧 Binding WASM..."
+    @{{py}} scripts/build/ensure_wasm_bindgen.py 0.2.106
     @wasm-bindgen --target web --out-dir public/assets --no-typescript examples/website/target/wasm32-unknown-unknown/debug/website.wasm
     @echo ""
     @echo "✅ WASM client built successfully"
@@ -145,6 +146,7 @@ build-watch-internal:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @cargo build --package hikari-builder
     @cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/website/Cargo.toml
+    @{{py}} scripts/build/ensure_wasm_bindgen.py 0.2.106
     @wasm-bindgen --target web --out-dir public/assets --no-typescript examples/website/target/wasm32-unknown-unknown/debug/website.wasm 2>/dev/null || true
     @echo "✅ Build complete - server will restart automatically"
 

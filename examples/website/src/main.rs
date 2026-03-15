@@ -40,7 +40,7 @@ async fn main() -> anyhow::Result<()> {
         .component_style_registry(style_registry)
         .add_route("/health", axum::routing::get(health_handler))
         .add_route("/_dioxus", axum::routing::get(dioxus_hmr_handler))
-        .add_route("/docs/*path", axum::routing::get(docs_handler))
+        .add_route("/docs/{*path}", axum::routing::get(docs_handler))
         .static_assets(STATIC_PATHS.assets_fs, STATIC_PATHS.assets_mount)
         // Disable cache for styles directory to force reload during development
         .mount_static(

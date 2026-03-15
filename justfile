@@ -37,15 +37,6 @@ build-dev:
     @echo "Fetching MDI icons..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @{{py}} scripts/icons/fetch_mdi_icons.py
-    @if [ $? -ne 0 ]; then \
-        echo ""; \
-        echo "❌ ERROR: Failed to fetch MDI icons"; \
-        echo ""; \
-        echo "   The build cannot continue without MDI icons."; \
-        echo "   Please check your internet connection and try again."; \
-        echo ""; \
-        exit 1; \
-    fi
     @echo ""
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Building all (Debug mode)..."
@@ -84,15 +75,6 @@ dev *force="":
     @echo "Fetching MDI icons..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @{{py}} scripts/icons/fetch_mdi_icons.py
-    @if [ $? -ne 0 ]; then \
-        echo ""; \
-        echo "❌ ERROR: Failed to fetch MDI icons"; \
-        echo ""; \
-        echo "   The build cannot continue without MDI icons."; \
-        echo "   Please check your internet connection and try again."; \
-        echo ""; \
-        exit 1; \
-    fi
     @echo ""
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Building website WASM client..."

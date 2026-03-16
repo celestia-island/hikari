@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Ensure wasm-bindgen CLI version matches the project requirement."""
+"""Legacy helper for wasm-bindgen-cli.
+
+Deprecated: Hikari is migrating to the Tairitsu component pipeline.
+"""
 
 import re
 import subprocess
@@ -32,6 +35,9 @@ def install_version(version: str) -> None:
 
 
 def main() -> int:
+    print("[DEPRECATED] scripts/build/ensure_wasm_bindgen.py")
+    print("[DEPRECATED] Please migrate to tairitsu-packager (component pipeline).")
+
     required = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_VERSION
     current = get_current_version()
 
@@ -40,7 +46,8 @@ def main() -> int:
         return 0
 
     if current:
-        print(f"[WARN] wasm-bindgen-cli version mismatch: current={current}, required={required}")
+        print(
+            f"[WARN] wasm-bindgen-cli version mismatch: current={current}, required={required}")
     else:
         print("[WARN] wasm-bindgen-cli is missing or version unknown")
 
@@ -52,7 +59,8 @@ def main() -> int:
 
     updated = get_current_version()
     if updated != required:
-        print(f"[ERROR] wasm-bindgen-cli verification failed: got={updated}, expected={required}")
+        print(
+            f"[ERROR] wasm-bindgen-cli verification failed: got={updated}, expected={required}")
         return 1
 
     print(f"[OK] wasm-bindgen-cli updated to {required}")

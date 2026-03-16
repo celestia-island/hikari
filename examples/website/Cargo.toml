@@ -85,3 +85,28 @@ include_dir = { version = "0.7", optional = true }
 
 [build-dependencies]
 hikari-builder = { path = "../../packages/builder" }
+
+[package.metadata.tairitsu]
+app-name = "Hikari Website"
+title = "Hikari Website"
+description = "Hikari website migration target for tairitsu-packager"
+
+[package.metadata.tairitsu.build]
+target = "component"
+output-dir = "../../target/hikari-packager-dist"
+optimize = true
+sourcemap = true
+
+[package.metadata.tairitsu.dev]
+port = 3000
+hot-reload = true
+open-browser = false
+
+[package.metadata.tairitsu.html]
+lang = "zh-CN"
+charset = "UTF-8"
+viewport = "width=device-width, initial-scale=1.0"
+title = "Hikari"
+
+[package.metadata.tairitsu.assets]
+include = ["public/**"]

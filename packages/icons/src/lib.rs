@@ -265,7 +265,7 @@ fn log_icon_warning_once(icon_name: String) {
             warned.insert(icon_name.clone());
             drop(warned);
 
-            #[cfg(feature = "dynamic-fetch")]
+            #[cfg(all(feature = "dynamic-fetch", feature = "dioxus"))]
             {
                 web_sys::console::warn_1(&format!(
                     "⚠️  [Hikari Icons] Icon '{}' not found, attempting dynamic fetch...\n   This icon will use a fallback while fetching from server.\n\n   If fetch succeeds, warning will be updated automatically.",
@@ -273,7 +273,7 @@ fn log_icon_warning_once(icon_name: String) {
                 ).into());
             }
 
-            #[cfg(not(feature = "dynamic-fetch"))]
+            #[cfg(all(not(feature = "dynamic-fetch"), feature = "dioxus"))]
             {
                 web_sys::console::warn_1(&format!(
                     "⚠️  [Hikari Icons] Icon not found: '{}'\n   This icon has fallen back to default warning icon.\n\n   Possible causes:\n   1. The icon is not included in selected icon set (build.rs)\n   2. The icon name is misspelled or uses wrong case\n   3. The icon SVG file does not exist in cache\n\n   To fix this:\n   - Add '{}' to IconSelection in build.rs\n   - Or run: python scripts/icons/fetch_mdi_icons.py",

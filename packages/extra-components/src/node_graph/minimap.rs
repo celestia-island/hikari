@@ -93,7 +93,13 @@ impl NodeGraphMinimap {
     }
 
     /// Convert a click position in minimap to canvas pan coordinates
-    pub fn click_to_pan(&self, click_x: f64, click_y: f64, canvas_width: f64, canvas_height: f64) -> (f64, f64) {
+    pub fn click_to_pan(
+        &self,
+        click_x: f64,
+        click_y: f64,
+        canvas_width: f64,
+        canvas_height: f64,
+    ) -> (f64, f64) {
         // Reverse the viewport calculation
         let total_width = canvas_width * self.zoom;
         let total_height = canvas_height * self.zoom;
@@ -167,13 +173,11 @@ mod tests {
     #[test]
     fn test_set_nodes() {
         let mut minimap = NodeGraphMinimap::new(200.0, 150.0);
-        let nodes = vec![
-            MinimapNode {
-                id: "node1".to_string(),
-                position: (100.0, 100.0),
-                size: (200.0, 150.0),
-            },
-        ];
+        let nodes = vec![MinimapNode {
+            id: "node1".to_string(),
+            position: (100.0, 100.0),
+            size: (200.0, 150.0),
+        }];
 
         minimap.set_nodes(nodes);
         assert_eq!(minimap.nodes.len(), 1);

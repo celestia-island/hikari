@@ -225,8 +225,16 @@ impl Node {
         format!(
             "hi-node-graph-node hi-node-{} {} {}",
             self.node_type,
-            if self.selected { "hi-node-selected" } else { "" },
-            if self.minimized { "hi-node-minimized" } else { "" }
+            if self.selected {
+                "hi-node-selected"
+            } else {
+                ""
+            },
+            if self.minimized {
+                "hi-node-minimized"
+            } else {
+                ""
+            }
         )
     }
 }
@@ -336,8 +344,18 @@ mod tests {
     fn test_effective_height() {
         let mut node = Node::new("node1".to_string(), "Node".to_string());
         node.ports = vec![
-            NodePort::new("p1".to_string(), "input".to_string(), "P1".to_string(), PortPosition::Left),
-            NodePort::new("p2".to_string(), "input".to_string(), "P2".to_string(), PortPosition::Left),
+            NodePort::new(
+                "p1".to_string(),
+                "input".to_string(),
+                "P1".to_string(),
+                PortPosition::Left,
+            ),
+            NodePort::new(
+                "p2".to_string(),
+                "input".to_string(),
+                "P2".to_string(),
+                PortPosition::Left,
+            ),
         ];
 
         assert!(!node.minimized);

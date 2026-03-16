@@ -4,7 +4,10 @@ use std::{cell::RefCell, rc::Rc, time::Duration};
 
 use dioxus::prelude::*;
 
-use crate::{core::{AnimationEngine, AnimationOptions, Tween, TweenId}, provider::try_use_animation_config};
+use crate::{
+    core::{AnimationEngine, AnimationOptions, Tween, TweenId},
+    provider::try_use_animation_config,
+};
 
 #[derive(Clone)]
 pub struct UseTween {

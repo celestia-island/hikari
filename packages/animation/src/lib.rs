@@ -114,8 +114,8 @@ pub use hooks::*;
 #[cfg(feature = "dioxus")]
 pub use provider::{
     try_use_animation_config, use_animation_config, use_animation_duration_scale,
-    use_animation_enabled, use_animation_reduced_motion, AnimationContext as AnimationProviderContext,
-    AnimationProvider,
+    use_animation_enabled, use_animation_reduced_motion,
+    AnimationContext as AnimationProviderContext, AnimationProvider,
 };
 
 // Re-export transition presets for convenience (only available with wasm/dioxus feature)

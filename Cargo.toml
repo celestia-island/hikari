@@ -10,7 +10,6 @@ members = [
     "packages/e2e",
     "packages/i18n",
     "packages/render-service",
-    "examples/node-graph-demo",
 ]
 
 resolver = "2"
@@ -55,7 +54,8 @@ log = "0.4"
 tracing = "0.1"
 
 # =================================================================
-# Dioxus frontend framework
+# Legacy Dioxus frontend framework (deprecated, use Tairitsu instead)
+# Note: These are kept for backward compatibility but should not be used in new code
 # =================================================================
 dioxus = { version = "^0.7", features = ["web", "router"] }
 wasm-bindgen = { version = "0.2" }

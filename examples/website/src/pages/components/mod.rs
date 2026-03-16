@@ -49,25 +49,58 @@ fn render_overview() -> VNode {
     use tairitsu_vdom::{VElement, VNode};
 
     let layer1_components: &[(&str, &str)] = &[
-        ("Button", "Primary action trigger with variants: primary, secondary, danger, ghost."),
-        ("Input", "Text entry field with validation states and placeholder support."),
+        (
+            "Button",
+            "Primary action trigger with variants: primary, secondary, danger, ghost.",
+        ),
+        (
+            "Input",
+            "Text entry field with validation states and placeholder support.",
+        ),
         ("Switch", "Boolean toggle control."),
-        ("Avatar", "User or entity representation with image and initials fallback."),
+        (
+            "Avatar",
+            "User or entity representation with image and initials fallback.",
+        ),
         ("Tag", "Compact label for categorisation or status display."),
         ("Image", "Responsive image with lazy loading and fallback."),
-        ("Empty", "Empty state placeholder with configurable icon and message."),
-        ("Comment", "User comment display with author, time, and content."),
-        ("Number Input", "Numeric field with increment / decrement controls."),
+        (
+            "Empty",
+            "Empty state placeholder with configurable icon and message.",
+        ),
+        (
+            "Comment",
+            "User comment display with author, time, and content.",
+        ),
+        (
+            "Number Input",
+            "Numeric field with increment / decrement controls.",
+        ),
         ("Search", "Search input with instant filtering support."),
     ];
 
     let layer2_components: &[(&str, &str)] = &[
-        ("Navigation", "Tabs, breadcrumbs, steps, and menu components."),
-        ("Data", "Tables, lists, and data grids with sorting / filtering."),
-        ("Form", "Form builder with validation, layout, and submission handling."),
-        ("Feedback", "Toast notifications, alerts, progress bars, and spinners."),
+        (
+            "Navigation",
+            "Tabs, breadcrumbs, steps, and menu components.",
+        ),
+        (
+            "Data",
+            "Tables, lists, and data grids with sorting / filtering.",
+        ),
+        (
+            "Form",
+            "Form builder with validation, layout, and submission handling.",
+        ),
+        (
+            "Feedback",
+            "Toast notifications, alerts, progress bars, and spinners.",
+        ),
         ("Cascader", "Hierarchical multi-level select picker."),
-        ("Transfer", "Dual-panel transfer widget for moving items between lists."),
+        (
+            "Transfer",
+            "Dual-panel transfer widget for moving items between lists.",
+        ),
         ("Collapsible", "Accordion / collapse panels with animation."),
         ("Timeline", "Chronological event display."),
         ("Tree", "Hierarchical tree view with expand / collapse."),
@@ -94,9 +127,7 @@ fn render_overview() -> VNode {
                 VElement::new("div")
                     .class("page-section")
                     .child(VNode::Element(
-                        VElement::new("div")
-                            .class("component-grid")
-                            .children(cards),
+                        VElement::new("div").class("component-grid").children(cards),
                     )),
             )),
     )
@@ -106,36 +137,41 @@ fn render_layer1() -> VNode {
     rsx! {
         div { id: "page-components-layer1", class: "hikari-page",
             div { class: "page-header",
-                h1 { class: "page-header__title",
-                    "Layer 1 — Base Components"
-                }
+                h1 { class: "page-header__title", "Layer 1 — Base Components" }
                 p { class: "page-header__subtitle",
                     "Atomic UI primitives: buttons, inputs, tags, avatars, and more."
                 }
             }
             div { class: "page-section",
                 h2 { "Button" }
-                p { "The Button component supports primary, secondary, danger, and ghost variants in three sizes." }
+                p {
+                    "The Button component supports primary, secondary, danger, and ghost variants in three sizes."
+                }
                 div { class: "demo-row",
-                    button { class: "hi-btn hi-btn--primary",
-                        "Primary"
-                    }
-                    button { class: "hi-btn hi-btn--secondary",
-                        "Secondary"
-                    }
-                    button { class: "hi-btn hi-btn--primary hi-btn--sm",
-                        "Small"
-                    }
-                    button { class: "hi-btn hi-btn--primary hi-btn--lg",
-                        "Large"
-                    }
+                    button { class: "hi-btn hi-btn--primary", "Primary" }
+                    button { class: "hi-btn hi-btn--secondary", "Secondary" }
+                    button { class: "hi-btn hi-btn--primary hi-btn--sm", "Small" }
+                    button { class: "hi-btn hi-btn--primary hi-btn--lg", "Large" }
                 }
                 h2 { "Input" }
                 p { "Text input fields with placeholder, disabled, and error states." }
                 div { class: "demo-row",
-                    input { class: "hi-input", placeholder: "Default input", r#type: "text" }
-                    input { class: "hi-input hi-input--error", placeholder: "Error state", r#type: "text" }
-                    input { class: "hi-input", placeholder: "Disabled", r#type: "text", disabled: "true" }
+                    input {
+                        class: "hi-input",
+                        placeholder: "Default input",
+                        r#type: "text",
+                    }
+                    input {
+                        class: "hi-input hi-input--error",
+                        placeholder: "Error state",
+                        r#type: "text",
+                    }
+                    input {
+                        class: "hi-input",
+                        placeholder: "Disabled",
+                        r#type: "text",
+                        disabled: "true",
+                    }
                 }
                 h2 { "Switch" }
                 p { "Boolean toggle control." }
@@ -162,9 +198,7 @@ fn render_layer2() -> VNode {
     rsx! {
         div { id: "page-components-layer2", class: "hikari-page",
             div { class: "page-header",
-                h1 { class: "page-header__title",
-                    "Layer 2 — Composed Components"
-                }
+                h1 { class: "page-header__title", "Layer 2 — Composed Components" }
                 p { class: "page-header__subtitle",
                     "Pattern-level components built from Layer 1 primitives."
                 }
@@ -173,12 +207,8 @@ fn render_layer2() -> VNode {
                 h2 { "Feedback" }
                 p { "Toast notifications, alerts, and progress indicators." }
                 div { class: "demo-row",
-                    div { class: "hi-alert hi-alert--info",
-                        "ℹ  This is an informational alert."
-                    }
-                    div { class: "hi-alert hi-alert--success",
-                        "✓  Operation completed successfully."
-                    }
+                    div { class: "hi-alert hi-alert--info", "ℹ  This is an informational alert." }
+                    div { class: "hi-alert hi-alert--success", "✓  Operation completed successfully." }
                     div { class: "hi-alert hi-alert--danger",
                         "✗  An error occurred. Please try again."
                     }
@@ -201,19 +231,21 @@ fn render_layer3() -> VNode {
     rsx! {
         div { id: "page-components-layer3", class: "hikari-page",
             div { class: "page-header",
-                h1 { class: "page-header__title",
-                    "Layer 3 — Complex Components"
-                }
+                h1 { class: "page-header__title", "Layer 3 — Complex Components" }
                 p { class: "page-header__subtitle",
                     "Advanced widgets: rich editor, media player, visualisation, and interactive guides."
                 }
             }
             div { class: "page-section",
-                p { "Layer 3 components are high-complexity, domain-specific widgets that integrate multiple Layer 1 and Layer 2 components." }
+                p {
+                    "Layer 3 components are high-complexity, domain-specific widgets that integrate multiple Layer 1 and Layer 2 components."
+                }
                 div { class: "card-grid",
                     div { class: "card",
                         h3 { class: "card__title", "Rich Editor" }
-                        p { class: "card__body", "Full-featured rich text editing with formatting, code blocks, and media embedding." }
+                        p { class: "card__body",
+                            "Full-featured rich text editing with formatting, code blocks, and media embedding."
+                        }
                     }
                     div { class: "card",
                         h3 { class: "card__title", "Visualisation" }
@@ -225,7 +257,9 @@ fn render_layer3() -> VNode {
                     }
                     div { class: "card",
                         h3 { class: "card__title", "User Guide" }
-                        p { class: "card__body", "Interactive onboarding and feature discovery overlay." }
+                        p { class: "card__body",
+                            "Interactive onboarding and feature discovery overlay."
+                        }
                     }
                 }
             }

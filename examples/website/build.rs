@@ -1,21 +1,13 @@
-//! Build script for website
+//! Build script for website.
 //!
-//! This script:
-//! 1. Generates bulk import mod.rs files using include! macros
-//! 2. Copies index.html to public/
-//! 3. Sets up development environment
-//!
-//! # IMPORTANT: Path Configuration
-//!
-//! Filesystem paths used here MUST match those defined in `src/paths.rs`:
-//! - `public/assets` → assets_fs
-//! - `public/styles` → styles_fs
-//!
-//! HTML paths in `index.html` must also match paths in `src/paths.rs`:
-//! - `/assets/*` → assets_mount
-//! - `/styles/*` → styles_mount
+//! It keeps website-local source assets ready for tairitsu-packager by
+//! checking the staged `public/` directory and optionally running auxiliary
+//! generation scripts when they exist.
 
-use std::{path::{Path, absolute as path_absolute}, process::Command};
+use std::{
+    path::{Path, absolute as path_absolute},
+    process::Command,
+};
 
 fn main() {
     println!("cargo:warning=🏗️  website build starting...");
@@ -89,59 +81,24 @@ fn main() {
         workspace_root
     );
 
-    // Create public directory paths (using lexical paths)
-    let root_public_dir = workspace_root.join("public");
-    let images_dir = root_public_dir.join("images");
-
-    println!("cargo:warning=📂 Root public dir: {:?}", root_public_dir);
-
-    // Ensure root public/images directory exists
-    if let Err(e) = std::fs::create_dir_all(&images_dir) {
-        println!("cargo:warning=⚠️  Failed to create public/images/: {}", e);
-    }
-
-    // Copy index.html to root public/
-    let index_src = manifest_path.join("index.html");
-    let index_dst = root_public_dir.join("index.html");
+    let staged_public_dir = manifest_path.join("public");
+    let css_bundle_path = staged_public_dir.join("styles/bundle.css");
 
     println!(
-        "cargo:warning=📄 Copying: {:?} -> {:?}",
-        index_src, index_dst
+        "cargo:warning=📂 Website staged public dir: {:?}",
+        staged_public_dir
     );
-
-    if index_src.exists() {
-        match std::fs::copy(&index_src, &index_dst) {
-            Ok(bytes) => {
-                println!(
-                    "cargo:warning=📄 Copied index.html to public/ ({} bytes)",
-                    bytes
-                );
-                // Verify it actually exists
-                if index_dst.exists() {
-                    println!(
-                        "cargo:warning=✅ Verification: index.html exists at {:?}",
-                        index_dst
-                    );
-                } else {
-                    println!(
-                        "cargo:warning=❌ ERROR: index.html NOT found at {:?}",
-                        index_dst
-                    );
-                }
-            }
-            Err(e) => println!("cargo:warning=⚠️  Failed to copy index.html: {}", e),
-        }
-    } else {
-        println!("cargo:warning=⚠️  index.html not found at {:?}", index_src);
-    }
-
-    // Check CSS bundle
-    let css_bundle_path = root_public_dir.join("styles/bundle.css");
-
     println!(
         "cargo:warning=🎨 Checking CSS bundle at {:?}",
         css_bundle_path
     );
+
+    if let Err(e) = std::fs::create_dir_all(staged_public_dir.join("styles")) {
+        println!(
+            "cargo:warning=⚠️  Failed to create staged public/styles directory: {}",
+            e
+        );
+    }
 
     if css_bundle_path.exists() {
         if let Ok(metadata) = css_bundle_path.metadata() {
@@ -158,13 +115,15 @@ fn main() {
             "cargo:warning=⚠️  CSS bundle not found at {:?}",
             css_bundle_path
         );
-        println!("cargo:warning=⚠️  Run 'just build-dev' to generate it");
+        println!(
+            "cargo:warning=⚠️  Run 'python scripts/build/compile_scss.py' to generate it"
+        );
     }
 
     println!("cargo:warning=✅ website build completed!");
 
     // Tell cargo to rerun build.rs if these files change
-    println!("cargo:rerun-if-changed=index.html");
+    println!("cargo:rerun-if-changed=public");
     println!("cargo:rerun-if-changed=../../scripts/generate_bulk_imports.py");
     println!("cargo:rerun-if-changed=src/components");
     println!("cargo:rerun-if-changed=src/pages");

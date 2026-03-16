@@ -16,11 +16,15 @@ fn render_overview() -> VNode {
                 div { class: "card-grid",
                     a { href: "#/demos/form", class: "card card--link",
                         h3 { class: "card__title", "Form Demo" }
-                        p { class: "card__body", "Registration form with validation, input types, switches, and a submit flow." }
+                        p { class: "card__body",
+                            "Registration form with validation, input types, switches, and a submit flow."
+                        }
                     }
                     a { href: "#/demos/dashboard", class: "card card--link",
                         h3 { class: "card__title", "Dashboard Demo" }
-                        p { class: "card__body", "Data dashboard with stats cards, a simple data table, and navigation tabs." }
+                        p { class: "card__body",
+                            "Data dashboard with stats cards, a simple data table, and navigation tabs."
+                        }
                     }
                 }
             }
@@ -40,33 +44,27 @@ fn render_form_demo() -> VNode {
             div { class: "page-section",
                 form { class: "hi-form demo-form",
                     div { class: "hi-form-row",
-                        label { class: "hi-label", r#for: "demo-name",
-                            "Full Name"
-                        }
+                        label { class: "hi-label", r#for: "demo-name", "Full Name" }
                         input {
                             id: "demo-name",
                             class: "hi-input",
                             r#type: "text",
                             placeholder: "Enter your full name",
-                            required: "true"
+                            required: "true",
                         }
                     }
                     div { class: "hi-form-row",
-                        label { class: "hi-label", r#for: "demo-email",
-                            "Email"
-                        }
+                        label { class: "hi-label", r#for: "demo-email", "Email" }
                         input {
                             id: "demo-email",
                             class: "hi-input",
                             r#type: "email",
                             placeholder: "you@example.com",
-                            required: "true"
+                            required: "true",
                         }
                     }
                     div { class: "hi-form-row",
-                        label { class: "hi-label", r#for: "demo-role",
-                            "Role"
-                        }
+                        label { class: "hi-label", r#for: "demo-role", "Role" }
                         select { id: "demo-role", class: "hi-select",
                             option { value: "dev", "Developer" }
                             option { value: "design", "Designer" }
@@ -76,18 +74,28 @@ fn render_form_demo() -> VNode {
                     }
                     div { class: "hi-form-row hi-form-row--inline",
                         label { class: "hi-switch",
-                            input { r#type: "checkbox", class: "hi-switch__input", id: "demo-notifications" }
+                            input {
+                                r#type: "checkbox",
+                                class: "hi-switch__input",
+                                id: "demo-notifications",
+                            }
                             span { class: "hi-switch__rail" }
                         }
-                        label { class: "hi-label hi-label--inline", r#for: "demo-notifications",
+                        label {
+                            class: "hi-label hi-label--inline",
+                            r#for: "demo-notifications",
                             "Receive email notifications"
                         }
                     }
                     div { class: "hi-form-row",
-                        button { r#type: "submit", class: "hi-btn hi-btn--primary hi-btn--lg",
+                        button {
+                            r#type: "submit",
+                            class: "hi-btn hi-btn--primary hi-btn--lg",
                             "Create Account"
                         }
-                        button { r#type: "button", class: "hi-btn hi-btn--secondary hi-btn--lg",
+                        button {
+                            r#type: "button",
+                            class: "hi-btn hi-btn--secondary hi-btn--lg",
                             "Cancel"
                         }
                     }
@@ -146,28 +154,36 @@ fn render_dashboard_demo() -> VNode {
                             td { "Viewed" }
                             td { "Button" }
                             td { "2025-01-10" }
-                            td { span { class: "hi-tag hi-tag--success", "OK" } }
+                            td {
+                                span { class: "hi-tag hi-tag--success", "OK" }
+                            }
                         }
                         tr {
                             td { "Bob" }
                             td { "Downloaded" }
                             td { "Icon Set" }
                             td { "2025-01-10" }
-                            td { span { class: "hi-tag hi-tag--success", "OK" } }
+                            td {
+                                span { class: "hi-tag hi-tag--success", "OK" }
+                            }
                         }
                         tr {
                             td { "Carol" }
                             td { "Reported" }
                             td { "Transfer" }
                             td { "2025-01-09" }
-                            td { span { class: "hi-tag hi-tag--warning", "Pending" } }
+                            td {
+                                span { class: "hi-tag hi-tag--warning", "Pending" }
+                            }
                         }
                         tr {
                             td { "Dave" }
                             td { "Submitted" }
                             td { "Form Demo" }
                             td { "2025-01-09" }
-                            td { span { class: "hi-tag hi-tag--success", "OK" } }
+                            td {
+                                span { class: "hi-tag hi-tag--success", "OK" }
+                            }
                         }
                     }
                 }

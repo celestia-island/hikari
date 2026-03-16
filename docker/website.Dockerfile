@@ -10,15 +10,19 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     ca-certificates \
+    git \
     python3 \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Rust target for WASM
-RUN rustup target add wasm32-unknown-unknown
+RUN rustup target add wasm32-wasip2
 
 # Copy workspace files
 COPY . .
+
+# Fetch sibling tairitsu repository required by tairitsu-packager
+RUN git clone --depth 1 https://github.com/celestia-island/tairitsu.git /tairitsu
 
 # Install Python dependencies
 RUN pip3 install --break-system-packages beautifulsoup4 lxml
@@ -26,14 +30,9 @@ RUN pip3 install --break-system-packages beautifulsoup4 lxml
 # Fetch MDI icons (skip for now - icons already generated)
 # RUN python3 scripts/icons/fetch_mdi_icons.py
 
-# Build workspace
-# RUN cargo build --package hikari-builder
-
-# Clear Cargo cache (keep registry for caching)
-# RUN rm -rf ~/.cargo/registry/src/* && rm -f examples/website/Cargo.lock
-
-# Build WASM library
-RUN cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/website/Cargo.toml
+# Stage website source assets and build final public output
+RUN python3 scripts/build/compile_scss.py
+RUN cd examples/website && cargo run --manifest-path /tairitsu/packages/packager/Cargo.toml -- --manifest-path Cargo.toml build
 
 # Runtime stage
 FROM rust:1.85-slim
@@ -46,8 +45,6 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy build artifacts from builder
-COPY --from=builder /hikari/target /hikari/target
-COPY --from=builder /hikari/examples/website /hikari/examples/website
 COPY --from=builder /hikari/public /hikari/public
 
 # Set environment variables
@@ -57,5 +54,5 @@ ENV RUST_LOG=info
 # Expose port 3000
 EXPOSE 3000
 
-# Default command: start website server
-CMD ["cargo", "run", "--manifest-path", "examples/website/Cargo.toml", "--features", "server"]
+# Default command: serve final public directory via a simple HTTP server
+CMD ["python3", "-m", "http.server", "3000", "--directory", "/hikari/public"]

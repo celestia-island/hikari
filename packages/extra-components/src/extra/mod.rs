@@ -1,43 +1,36 @@
-//! Extra utility components
+//! Extra utility components - Framework Agnostic Data Models
 //!
-//! Provides specialized components that extend to base Hikari library
-//! with advanced functionality for complex use cases.
+//! ## Migration Notice
 //!
-//! ## Components
+//! This module now provides pure Rust data structures instead of Dioxus components.
+//! All components have been converted to state models that can be used with any framework.
 //!
-//! - [`Collapsible`] - Collapsible content sections
-//! - [`DragLayer`] - Drag and drop layer management
-//! - [`DraggableCard`] - Draggable Card wrapper
-//! - [`CollapsibleCard`] - Collapsible Card wrapper
-//! - [`ZoomControls`] - Zoom controls for interactive content
-//! - [`VideoPlayer`] - Video player with custom controls
-//! - [`RichTextEditor`] - Rich text editor with toolbar
-//! - [`AudioWaveform`] - Audio player with waveform visualization
-//! - [`NodeGraph`] - Plugin-based visual node editor
-//! - [`CodeHighlighter`] - Code display with syntax highlighting
-//! - [`UserGuide`] - Step-by-step user onboarding guide
-//! - [`Timeline`] - Event timeline with milestones
+//! ## Modules
 //!
-pub mod audio_waveform;
-pub mod code_highlighter;
+//! - [`collapsible`] - Collapsible panel state
+//! - [`drag_layer`] - Drag and drop state management
+//! - [`zoom_controls`] - Zoom controls state
+//! - [`timeline`] - Timeline event model
+//! - [`user_guide`] - User onboarding guide state
+
 pub mod collapsible;
-pub mod collapsible_card;
 pub mod drag_layer;
-pub mod draggable_card;
-pub mod rich_text_editor;
+pub mod zoom_controls;
 pub mod timeline;
 pub mod user_guide;
-pub mod video_player;
-pub mod zoom_controls;
 
-pub use audio_waveform::*;
-pub use code_highlighter::*;
 pub use collapsible::*;
-pub use collapsible_card::*;
 pub use drag_layer::*;
-pub use draggable_card::*;
-pub use rich_text_editor::*;
+pub use zoom_controls::*;
 pub use timeline::*;
 pub use user_guide::*;
-pub use video_player::*;
-pub use zoom_controls::*;
+
+// NOTE: The following modules have been removed as they were heavily dependent on Dioxus/wasm-bindgen:
+// - audio_waveform (requires Web Audio API)
+// - video_player (requires HTML5 video element APIs)
+// - rich_text_editor (requires contenteditable APIs)
+// - code_highlighter (requires clipboard APIs)
+// - collapsible_card (wrapper component)
+// - draggable_card (wrapper component)
+//
+// These can be re-implemented as framework-specific components in your application layer.

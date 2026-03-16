@@ -212,6 +212,7 @@ pub mod generated;
 pub mod mdi_minimal;
 pub mod svg_macro;
 
+#[cfg(feature = "dioxus")]
 use dioxus::prelude::*;
 
 // Re-export MDI icon enum (minimal version to avoid WASM size limits)
@@ -223,7 +224,8 @@ pub use generated::mdi_selected::{get, IconData, PathData, SvgElem};
 // Re-export generated data module
 pub use generated::mdi_selected::data;
 
-// StyleStringBuilder for building styles
+// StyleStringBuilder for building styles (requires dioxus feature)
+#[cfg(feature = "dioxus")]
 pub use hikari_animation::style::{CssProperty, StyleStringBuilder};
 
 /// Re-export dynamic fetch module
@@ -510,6 +512,7 @@ impl IconRef {
 /// component (the Button), it forces the Button to be recreated, which in turn
 /// forces the Icon to be recreated, triggering `use_memo` to run again
 /// and rebuild the SVG.
+#[cfg(feature = "dioxus")]
 #[component]
 pub fn Icon(
     #[props(into)] icon: IconRef,
@@ -575,6 +578,7 @@ const DEFAULT_SVG: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" width="24" 
 // ======== Material Design Icon Shortcuts ========
 
 /// MDI icon shortcuts
+#[cfg(feature = "dioxus")]
 #[allow(non_snake_case)]
 pub mod mdi {
     use super::*;

@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = []
+default = ["dioxus"]
+dioxus = ["dep:dioxus", "hikari-animation/dioxus"]
 dynamic-fetch = []
 dynamic-fetch-warnings = []
 
@@ -12,11 +13,11 @@ dynamic-fetch-warnings = []
 hikari-builder = { path = "../builder" }
 
 [dependencies]
-# MCP / network and protocols
-dioxus = { workspace = true }
+# MCP / network and protocols (optional for tairitsu compatibility)
+dioxus = { workspace = true, optional = true }
 
-# Styling
-hikari-animation = { path = "../animation" }
+# Styling (enable wasm feature when dioxus is enabled)
+hikari-animation = { path = "../animation", default-features = false, optional = true, features = ["wasm"] }
 
 # Data serialization
 serde.workspace = true

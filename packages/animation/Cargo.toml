@@ -5,9 +5,15 @@ edition = "2021"
 rust-version = "1.75"
 
 [dependencies]
-dioxus = { version = "0.7", features = ["web"] }
-wasm-bindgen = "0.2"
-web-sys = { version = "0.3", features = [
+# Core dependencies (no wasm-bindgen required)
+serde = { version = "^1", features = ["derive"] }
+serde_json = "^1"
+slotmap = "1.0"
+once_cell = "1.17"
+
+# Optional WASM/browser dependencies (only for dioxus feature)
+wasm-bindgen = { version = "0.2", optional = true }
+web-sys = { version = "0.3", optional = true, features = [
     "Window",
     "Performance",
     "Element",
@@ -21,16 +27,17 @@ web-sys = { version = "0.3", features = [
     "MutationRecord",
     "MediaQueryList",
 ] }
-js-sys = "0.3"
-serde = { version = "^1", features = ["derive"] }
-serde_json = "^1"
-serde-wasm-bindgen = "0.6"
-slotmap = "1.0"
-once_cell = "1.17"
+js-sys = { version = "0.3", optional = true }
+serde-wasm-bindgen = { version = "0.6", optional = true }
 
-[dev-dependencies]
-wasm-bindgen-test = "0.3"
+# Dioxus integration (optional feature)
+dioxus = { version = "0.7", features = ["web"], optional = true }
+
 
 [features]
 default = []
+# Enable Dioxus framework integration (requires wasm-bindgen)
+dioxus = ["dep:dioxus", "wasm-bindgen", "web-sys", "js-sys", "serde-wasm-bindgen"]
+# Minimal WASM support without Dioxus
+wasm = ["wasm-bindgen", "web-sys", "js-sys", "serde-wasm-bindgen"]
 fui = []

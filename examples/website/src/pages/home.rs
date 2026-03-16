@@ -1,96 +1,62 @@
-// website/src/pages/home.rs
-// Home page - Showcasing Hikari Component Library
+//! Home page — hero section and navigation cards.
 
-use dioxus::prelude::*;
-use dioxus_router::components::Link;
+use tairitsu_macros::rsx;
+use tairitsu_vdom::VNode;
 
-use crate::{app::Route, components::Layout, hooks::{use_i18n, use_language}};
-use _components::{Button, ButtonSize, ButtonVariant, basic::Logo as HikariLogo, layout::{Container, Row, Section, Spacer}};
-use _palette::classes::{ClassesBuilder, FontSize, MarginBottom, TextAlign, TextColor};
-
-#[component]
-pub fn Home() -> Element {
-    let i18n = use_i18n();
-    let lang_ctx = use_language();
-    let lang = (*lang_ctx.language.read()).url_prefix().to_string();
-
-    let keys = i18n.keys();
-    let title = keys.page.home.hero.title.clone();
-    let subtitle = keys.page.home.hero.subtitle.clone();
-    let description = keys.page.home.hero.description.clone();
-    let tagline = keys.page.home.hero.tagline.clone();
-    let explore_text = keys.page.home.hero.explore.clone();
-    let docs_text = keys.page.documentation.quick_start.clone();
-    drop(keys);
-
+pub fn render() -> VNode {
     rsx! {
-        Layout { current_route: Route::LangHome { lang: lang.clone() },
-
-            Container { max_width: "xxl".to_string(),
-
-                // Hero Section
-                Section { size: "lg".to_string(),
-
-                    // Hero Content using semantic HTML
-                    div { class: ClassesBuilder::new().add(TextAlign::Center).build(),
-
-                        HikariLogo {
-                            src: "/images/logo.png".to_string(),
-                            alt: "Hikari Logo".to_string(),
-                            height: 80,
-                            max_width: 300,
+        div { id: "page-home", class: "hikari-page",
+            section { class: "page-hero",
+                div { class: "page-hero__inner",
+                    h1 { class: "page-hero__title",
+                        "Hikari"
+                    }
+                    p { class: "page-hero__subtitle",
+                        "A comprehensive Rust UI component library"
+                    }
+                    p { class: "page-hero__desc",
+                        "Built with a reactive virtual DOM, compiled to WebAssembly. Hikari provides a rich set of components from basic primitives to complex data visualisations."
+                    }
+                    div { class: "page-hero__actions",
+                        a { href: "#/components", class: "hi-btn hi-btn--primary hi-btn--lg",
+                            "Explore Components"
                         }
-                        p {
-                            class: ClassesBuilder::new()
-                                .add(FontSize::X2xl)
-                                .add(TextColor::Secondary)
-                                .add(MarginBottom::Mb6)
-                                .build(),
-                            "{title}"
-                        }
-
-                        Spacer { size: "md".to_string() }
-
-                        p { class: ClassesBuilder::new().add(FontSize::Lg).add(TextColor::Primary).build(),
-                            "{subtitle}"
-                        }
-
-                        p { class: ClassesBuilder::new().add(FontSize::Sm).add(TextColor::Primary).build(),
-                            "{description}"
-                        }
-
-                        p { class: ClassesBuilder::new().add(FontSize::Sm).add(TextColor::Secondary).build(),
-                            "{tagline}"
+                        a { href: "#/system", class: "hi-btn hi-btn--secondary hi-btn--lg",
+                            "Design System"
                         }
                     }
                 }
-
-                Spacer { size: "lg".to_string() }
-
-                // CTA Buttons
-                Row {
-                    justify: "center".to_string(),
-                    gap: "md".to_string(),
-                    wrap: true,
-
-                    Link { to: Route::ComponentsOverview { lang: lang.clone() },
-                        Button {
-                            variant: ButtonVariant::Primary,
-                            size: ButtonSize::Large,
-                            "{explore_text}"
+            }
+            section { class: "page-section",
+                h2 { class: "page-section__title",
+                    "What is Hikari?"
+                }
+                div { class: "card-grid",
+                    div { class: "card",
+                        h3 { class: "card__title",
+                            "Component Library"
+                        }
+                        p { class: "card__body",
+                            "Layered architecture: Layer 1 (base primitives), Layer 2 (composed patterns), Layer 3 (complex widgets)."
                         }
                     }
-
-                    Link { to: Route::SystemOverview { lang: lang.clone() },
-                        Button {
-                            variant: ButtonVariant::Secondary,
-                            size: ButtonSize::Large,
-                            "{docs_text}"
+                    div { class: "card",
+                        h3 { class: "card__title",
+                            "Design System"
+                        }
+                        p { class: "card__body",
+                            "500+ traditional Chinese colours, CSS utility classes, icon library, animations, and i18n system."
+                        }
+                    }
+                    div { class: "card",
+                        h3 { class: "card__title",
+                            "WebAssembly First"
+                        }
+                        p { class: "card__body",
+                            "Ships as a wasm32-wasip2 component. Rendered with the Tairitsu virtual DOM — no JavaScript framework required."
                         }
                     }
                 }
-
-                Spacer { size: "xl".to_string() }
             }
         }
     }

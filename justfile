@@ -20,6 +20,9 @@ set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "
 # Python command (platform adaptive)
 py := if os_family() == "windows" { "python" } else { "python3" }
 
+# External packager from sibling repository (tairitsu)
+tairitsu_packager_manifest := "../tairitsu/packages/packager/Cargo.toml"
+
 # ============================================================================
 # Core tasks
 # ============================================================================
@@ -30,6 +33,10 @@ default:
 # ============================================================================
 # Infrastructure setup
 # ============================================================================
+
+# Check that tairitsu-packager is available from sibling repository
+check-tairitsu-packager:
+    @{{py}} -c "import pathlib,sys; p=pathlib.Path('{{tairitsu_packager_manifest}}'); sys.exit(0) if p.exists() else (print(f'[ERROR] Missing tairitsu-packager: {p}'), sys.exit(1))"
 
 # Complete build (Debug mode)
 build-dev:
@@ -64,7 +71,7 @@ check-port *force="":
 # Build website WASM client (debug mode)
 # Note: build.rs will automatically compile SCSS and copy assets to public/
 
-# Development mode for website (build WASM client and start server)
+# Development mode for website (migrated to tairitsu-packager component pipeline)
 dev *force="":
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Checking port 3000..."
@@ -77,7 +84,25 @@ dev *force="":
     @{{py}} scripts/icons/fetch_mdi_icons.py
     @echo ""
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Building website WASM client..."
+    @echo "Running tairitsu-packager dev pipeline..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @just check-tairitsu-packager
+    @cargo run --manifest-path {{tairitsu_packager_manifest}} -- --manifest-path examples/website/Cargo.toml dev --port 3000 --watch
+
+# Legacy development mode for Dioxus + wasm-bindgen-cli pipeline
+dev-legacy *force="":
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "[LEGACY] Checking port 3000..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @{{py}} scripts/utils/clean_process_linux.py {{force}}
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "[LEGACY] Fetching MDI icons..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @{{py}} scripts/icons/fetch_mdi_icons.py
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "[LEGACY] Building website WASM client..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Step 1: Build hikari-builder to generate CSS bundle"
     @cargo build --package hikari-builder
@@ -101,9 +126,10 @@ dev *force="":
 # This starts the dev server in background and exits when it's listening on port 3000
 dev-by-agent:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Starting dev server (agent mode)..."
+    @echo "Starting dev server (agent mode, tairitsu-packager)..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/build/dev_by_agent.py
+    @just check-tairitsu-packager
+    @cargo run --manifest-path {{tairitsu_packager_manifest}} -- --manifest-path examples/website/Cargo.toml dev --port 3000
 
 # Alias for dev
 serve: dev
@@ -111,36 +137,15 @@ serve: dev
 # Development mode with file watching (auto-rebuild on changes)
 # Requires: cargo install cargo-watch
 watch:
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Starting watch mode..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "👀 Watching for changes in:"
-    @echo "   - Rust source files (*.rs)"
-    @echo "   - SCSS files (*.scss)"
-    @echo "   - HTML files (*.html)"
-    @echo "   - Cargo.toml files"
-    @echo ""
-    @echo "🔄 Will automatically rebuild and restart on file changes"
-    @echo "Press Ctrl+C to stop"
-    @echo ""
-    @{{py}} scripts/utils/clean_process_linux.py
-    @cargo watch \
-        --clear \
-        --watch packages \
-        --watch examples/website/src \
-        --watch examples/website/index.html \
-        --watch examples/website/Cargo.toml \
-        --ignore '*/target/*' \
-        --ignore '*/generated/*' \
-        --shell 'just build-watch-internal'
+    @just dev
 
 # Advanced watch mode with parallel server (recommended for development)
 # Auto-rebuilds WASM and restarts server on file changes
 watch-dev:
-    @{{py}} scripts/build/watch_dev.py
+    @just dev
 
 # Internal: Watch mode build step (called by cargo-watch)
-build-watch-internal:
+build-watch-internal-legacy:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "🔨 Rebuilding..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

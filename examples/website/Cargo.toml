@@ -7,89 +7,32 @@ publish = false
 [workspace]
 # This is a standalone example, not part of the main workspace
 
-[[bin]]
-name = "website_server"
-path = "src/main.rs"
-required-features = ["server"]
-
 [lib]
 name = "website"
 path = "src/lib.rs"
 crate-type = ["cdylib", "rlib"]
 
-[features]
-default = ["dioxus"]
-server = [
-  "dep:tokio",
-  "dep:axum",
-  "dep:tower-http",
-  "dep:tower",
-  "dep:anyhow",
-  "dep:tracing",
-  "dep:tracing-subscriber",
-  "dep:http",
-  "dep:include_dir",
-  "dep:_render_service",
-  "dioxus",
-]
-
 [dependencies]
-# Workspace dependencies (short aliases for internal packages)
-_components = { path = "../../packages/components", package = "hikari-components", features = [
-  "basic",
-  "feedback",
-  "navigation",
-  "data",
-  "display",
-  "entry",
-  "layout",
-], default-features = false }
-_icons = { path = "../../packages/icons", package = "hikari-icons", features = [
-  "dynamic-fetch",
-  "dynamic-fetch-warnings",
-] }
-_palette = { path = "../../packages/palette", package = "hikari-palette" }
-_animation = { path = "../../packages/animation", package = "hikari-animation" }
-_extra_components = { path = "../../packages/extra-components", package = "hikari-extra-components" }
-_i18n = { path = "../../packages/i18n", package = "hikari-i18n" }
-_render_service = { path = "../../packages/render-service", package = "hikari-render-service", optional = true }
+# Tairitsu framework packages
+tairitsu-vdom = { path = "../../../tairitsu/packages/vdom" }
+tairitsu-hooks = { path = "../../../tairitsu/packages/hooks" }
+tairitsu-macros = { path = "../../../tairitsu/packages/macros" }
+tairitsu-web = { path = "../../../tairitsu/packages/web", features = ["wit-bindings"] }
 
-# Dioxus frontend framework
-dioxus = { version = "0.7", features = ["web"], optional = true }
-dioxus-router = "0.7"
-dioxus-web = "0.7"
+# Hikari design system (pure Rust, no Dioxus)
+hikari-palette = { path = "../../packages/palette" }
 
-# Markdown parsing
+# Markdown rendering
 pulldown-cmark = "0.12"
 
-# WASM related
-wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4"
-web-sys = "0.3"
-console_error_panic_hook = "0.1"
-
-# Server-side dependencies (only used when server feature is enabled)
-tokio = { version = "1", features = ["full"], optional = true }
-axum = { version = "0.8", features = ["macros"], optional = true }
-tower-http = { version = "0.6", features = [
-  "fs",
-  "trace",
-  "cors",
-], optional = true }
-tower = { version = "0.5", features = ["full"], optional = true }
-anyhow = { version = "1", optional = true }
-tracing = { version = "0.1", optional = true }
-tracing-subscriber = { version = "0.3", optional = true }
-http = { version = "1", optional = true }
-include_dir = { version = "0.7", optional = true }
-
-[build-dependencies]
-hikari-builder = { path = "../../packages/builder" }
+# Logging and error handling
+tracing = "^0.1"
+anyhow = "^1"
 
 [package.metadata.tairitsu]
-app-name = "Hikari Website"
-title = "Hikari Website"
-description = "Hikari website migration target for tairitsu-packager"
+app-name = "Hikari Design System"
+title = "Hikari Design System"
+description = "Hikari UI component library documentation"
 
 [package.metadata.tairitsu.build]
 target = "component"
@@ -103,10 +46,64 @@ hot-reload = true
 open-browser = false
 
 [package.metadata.tairitsu.html]
-lang = "zh-CN"
+lang = "en"
 charset = "UTF-8"
 viewport = "width=device-width, initial-scale=1.0"
 title = "Hikari"
+head = """
+<link rel="stylesheet" href="/styles/bundle.css">
+<link rel="stylesheet" href="/styles/hikari-spa.css">
+<script>
+(() => {
+  const ROUTES = {
+    '': 'home',
+    '/': 'home',
+    '/components': 'components-overview',
+    '/components/layer1': 'components-layer1',
+    '/components/layer2': 'components-layer2',
+    '/components/layer3': 'components-layer3',
+    '/system': 'system-overview',
+    '/system/palette': 'system-palette',
+    '/system/css': 'system-css',
+    '/system/icons': 'system-icons',
+    '/system/animations': 'system-animations',
+    '/system/i18n': 'system-i18n',
+    '/demos': 'demos-overview',
+    '/demos/form': 'demos-form',
+    '/demos/dashboard': 'demos-dashboard',
+  };
+
+  function getRouteId() {
+    var hash = (location.hash || '').replace(/^#/, '');
+    if (hash.length > 1 && hash[hash.length - 1] === '/') hash = hash.slice(0, -1);
+    if (!hash) hash = '/';
+    return ROUTES[hash] || 'not-found';
+  }
+
+  function navigate() {
+    var routeId = getRouteId();
+    document.querySelectorAll('.hikari-page').forEach(function(p) {
+      p.classList.remove('is-active');
+      p.setAttribute('aria-hidden', 'true');
+    });
+    var page = document.getElementById('page-' + routeId);
+    if (page) {
+      page.classList.add('is-active');
+      page.removeAttribute('aria-hidden');
+      window.scrollTo(0, 0);
+    }
+    document.querySelectorAll('.sidebar-link').forEach(function(link) {
+      link.classList.remove('is-active');
+    });
+    var currentHash = location.hash || '#/';
+    var activeLink = document.querySelector('.sidebar-link[href="' + currentHash + '"]');
+    if (activeLink) { activeLink.classList.add('is-active'); }
+  }
+
+  window.addEventListener('hashchange', navigate);
+  document.addEventListener('DOMContentLoaded', navigate);
+})();
+</script>"""
 
 [package.metadata.tairitsu.assets]
 include = ["public/**"]

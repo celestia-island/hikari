@@ -1,40 +1,25 @@
-// website/src/lib.rs
-// WASM library entry point
+//! Hikari Design System website.
+//!
+//! Built with Tairitsu framework, compiled to wasm32-wasip2.
 
-#![allow(clippy::too_many_arguments)]
-#![allow(clippy::type_complexity)]
-
-// Import Dioxus (only needed for WASM target)
-#[cfg(target_arch = "wasm32")]
-use dioxus::prelude::*;
-
-// Use console_error_panic_hook for better error messages in WASM
-#[cfg(target_arch = "wasm32")]
-use console_error_panic_hook::set_once;
-
-// Re-export the app
-#[cfg(target_arch = "wasm32")]
-pub use app::App;
+use anyhow::Result;
+use tairitsu_web::WitPlatform;
+use tracing::error;
 
 mod app;
 mod components;
-mod hooks;
 mod pages;
 
-// Shared configuration (used by main.rs)
-#[cfg(not(target_arch = "wasm32"))]
-pub mod paths;
-
-// Initialize panic hook for WASM (auto-called on WASM startup)
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen::prelude::wasm_bindgen(start)]
-pub fn init_panic_hook() {
-    set_once();
+fn run_app() -> Result<()> {
+    let platform = WitPlatform::new()?;
+    let vnode = app::render();
+    platform.mount_vnode_to_app(&vnode)?;
+    Ok(())
 }
 
-// WASM entry point - called from JavaScript after init()
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen::prelude::wasm_bindgen]
-pub fn hydrate() {
-    launch(App);
+#[no_mangle]
+pub extern "C" fn tairitsu_component_bootstrap() {
+    if let Err(err) = run_app() {
+        error!("website failed to start: {err}");
+    }
 }

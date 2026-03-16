@@ -1,17 +1,7 @@
-// website/src/pages/mod.rs
-// Page modules
+//! Page render functions, organised by route group.
 
-// Home page
-pub mod home;
-
-// Component pages
 pub mod components;
-
-// System pages
-pub mod system;
-
-// Demo pages
 pub mod demos;
-
-// Animation demo page
-pub mod animation_demo;
+pub mod home;
+pub mod not_found;
+pub mod system;

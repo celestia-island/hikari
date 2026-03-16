@@ -1,14 +1,14 @@
 // node_graph/plugins/constant.rs
 // Constant node plugin - provides static values
 
-use dioxus::prelude::*;
-
 use crate::node_graph::{
-    node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition},
+    node::{NodePlugin, NodePort, NodeType, PortId, PortPosition},
     value::NodeValue,
 };
 
 /// Constant node plugin
+///
+/// Provides static/output values that don't change.
 pub struct ConstantNode {
     node_type: NodeType,
     value: NodeValue,
@@ -41,14 +41,14 @@ impl ConstantNode {
         Self::new(name, NodeValue::from(value))
     }
 
-    /// Get default ports for this node type
-    pub fn default_ports(&self) -> Vec<NodePort> {
-        vec![NodePort {
-            port_id: self.output_port_id.clone(),
-            port_type: "output".to_string(),
-            label: "Value".to_string(),
-            position: PortPosition::Right,
-        }]
+    /// Get the current value
+    pub fn value(&self) -> &NodeValue {
+        &self.value
+    }
+
+    /// Set a new value
+    pub fn set_value(&mut self, value: NodeValue) {
+        self.value = value;
     }
 }
 
@@ -57,24 +57,17 @@ impl NodePlugin for ConstantNode {
         self.node_type.clone()
     }
 
-    fn render_node(
-        &self,
-        _id: String,
-        _title: String,
-        _state: NodeState,
-        _ports: Vec<NodePort>,
-    ) -> Element {
-        let value_str = self.value.to_display_string();
+    fn display_value(&self) -> Option<String> {
+        Some(self.value.to_display_string())
+    }
 
-        rsx! {
-            div {
-                class: "hi-node-constant hi-node-body",
-                div {
-                    class: "hi-node-constant-value",
-                    "{value_str}"
-                }
-            }
-        }
+    fn default_ports(&self) -> Vec<NodePort> {
+        vec![NodePort {
+            port_id: self.output_port_id.clone(),
+            port_type: "output".to_string(),
+            label: "Value".to_string(),
+            position: PortPosition::Right,
+        }]
     }
 
     fn handle_input(&self, _port_id: PortId, _data: NodeValue) {
@@ -87,5 +80,50 @@ impl NodePlugin for ConstantNode {
         } else {
             None
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_constant_numeric() {
+        let node = ConstantNode::numeric("number", 42.0);
+        assert_eq!(node.node_type().name, "number");
+        assert_eq!(node.display_value(), Some("42".to_string()));
+        assert_eq!(node.get_output("number_output".to_string()), Some(NodeValue::Number(42.0)));
+    }
+
+    #[test]
+    fn test_constant_string() {
+        let node = ConstantNode::string("text", "hello");
+        assert_eq!(node.node_type().name, "text");
+        assert_eq!(node.display_value(), Some("hello".to_string()));
+        assert_eq!(node.get_output("text_output".to_string()), Some(NodeValue::Text("hello".to_string())));
+    }
+
+    #[test]
+    fn test_constant_boolean() {
+        let node = ConstantNode::boolean("flag", true);
+        assert_eq!(node.node_type().name, "flag");
+        assert_eq!(node.display_value(), Some("true".to_string()));
+        assert_eq!(node.get_output("flag_output".to_string()), Some(NodeValue::Boolean(true)));
+    }
+
+    #[test]
+    fn test_set_value() {
+        let mut node = ConstantNode::numeric("number", 42.0);
+        node.set_value(NodeValue::Number(100.0));
+        assert_eq!(node.get_output("number_output".to_string()), Some(NodeValue::Number(100.0)));
+    }
+
+    #[test]
+    fn test_default_ports() {
+        let node = ConstantNode::numeric("number", 42.0);
+        let ports = node.default_ports();
+        assert_eq!(ports.len(), 1);
+        assert_eq!(ports[0].port_id, "number_output");
+        assert_eq!(ports[0].port_type, "output");
     }
 }

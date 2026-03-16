@@ -1,8 +1,8 @@
 //! # I18n Context
 //!
-//! React-like context for internationalization in Dioxus.
+//! Language definitions and utilities for internationalization.
 
-use crate::{keys::I18nKeys, loader::load_toml};
+use crate::keys::I18nKeys;
 
 /// Text direction for layout
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -170,70 +170,5 @@ pub struct I18nContext {
 impl I18nContext {
     pub fn new(language: Language, keys: I18nKeys) -> Self {
         Self { language, keys }
-    }
-}
-
-use dioxus::prelude::*;
-
-/// I18n Provider component
-#[derive(Clone, Props, PartialEq)]
-pub struct I18nProviderProps {
-    pub language: Language,
-    pub toml_content: &'static str,
-    children: Element,
-}
-
-#[component]
-pub fn I18nProvider(props: I18nProviderProps) -> Element {
-    let keys = load_toml(props.toml_content).expect("Failed to load TOML");
-    let _i18n_context = use_context_provider(|| I18nContext::new(props.language, keys));
-    let dir = if props.language.is_rtl() {
-        "rtl"
-    } else {
-        "ltr"
-    };
-
-    rsx! {
-        div {
-            "data-language": "{props.language.code()}",
-            dir: "{dir}",
-            {props.children}
-        }
-    }
-}
-
-/// Hook to access i18n context
-pub fn use_i18n() -> I18nContext {
-    use_context::<I18nContext>()
-}
-
-/// Language switcher component
-#[derive(Clone, Props, PartialEq)]
-pub struct LanguageSwitcherProps {
-    pub current_language: Language,
-    pub on_language_change: EventHandler<Language>,
-}
-
-#[component]
-pub fn LanguageSwitcher(props: LanguageSwitcherProps) -> Element {
-    let languages = Language::all();
-
-    rsx! {
-        div {
-            class: "hi-language-switcher",
-            {languages.iter().map(|&lang| {
-                let is_active = props.current_language == lang;
-                let lang_name = lang.short_name();
-
-                rsx! {
-                button {
-                    class: if is_active { "hi-language-switcher-button hi-active" } else { "hi-language-switcher-button" },
-                    onclick: move |_| (props.on_language_change)(lang),
-                    title: lang.native_name(),
-                    "{lang_name}"
-                }
-                }
-            })}
-        }
     }
 }

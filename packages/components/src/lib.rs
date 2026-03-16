@@ -89,171 +89,217 @@
 //! - [`styled`] - Styling infrastructure traits
 //! - [`utils`] - Utility modules (positioning, etc.)
 
-// Styling infrastructure (always available)
+// Styling infrastructure (always available - pure Rust)
 pub mod styled;
 
-// Layout components (always available)
+// Layout components (conditionally available with dioxus feature)
+#[cfg(feature = "dioxus")]
 pub mod layout;
 
-// Theme provider (always available)
+// Theme provider (conditionally available with dioxus feature)
+#[cfg(feature = "dioxus")]
 pub mod theme;
+#[cfg(feature = "dioxus")]
 pub mod theme_provider;
 
-// Responsive hooks (always available)
+// Responsive hooks (conditionally available with dioxus feature)
+#[cfg(feature = "dioxus")]
 pub mod hooks;
 
-// JavaScript utilities (always available)
+// JavaScript utilities (conditionally available with dioxus feature)
+#[cfg(feature = "dioxus")]
 pub mod scripts;
 
-// Utility modules (always available)
+// Utility modules (conditionally available with dioxus feature)
+#[cfg(feature = "dioxus")]
 pub mod utils;
 
-// Portal system (always available)
+// Portal system (conditionally available with dioxus feature)
+#[cfg(feature = "dioxus")]
 pub mod portal;
 
-// Feature-gated modules
-#[cfg(any(
-    feature = "basic",
-    feature = "button",
-    feature = "input",
-    feature = "card",
-    feature = "badge",
-    feature = "checkbox",
-    feature = "radio_group",
-    feature = "switch",
-    feature = "slider",
-    feature = "textarea",
-    feature = "file_upload",
-    feature = "form_field",
-    feature = "date_picker"
+// Feature-gated modules (require dioxus feature)
+#[cfg(all(
+    feature = "dioxus",
+    any(
+        feature = "basic",
+        feature = "button",
+        feature = "input",
+        feature = "card",
+        feature = "badge",
+        feature = "checkbox",
+        feature = "radio_group",
+        feature = "switch",
+        feature = "slider",
+        feature = "textarea",
+        feature = "file_upload",
+        feature = "form_field",
+        feature = "date_picker"
+    )
 ))]
 pub mod basic;
 
-#[cfg(any(
-    feature = "display",
-    feature = "tag",
-    feature = "empty",
-    feature = "comment",
-    feature = "description_list",
-    feature = "qrcode",
-    feature = "carousel"
+#[cfg(all(
+    feature = "dioxus",
+    any(
+        feature = "display",
+        feature = "tag",
+        feature = "empty",
+        feature = "comment",
+        feature = "description_list",
+        feature = "qrcode",
+        feature = "carousel"
+    )
 ))]
 pub mod display;
 
 // Re-export display components when display feature is enabled
-#[cfg(any(
-    feature = "display",
-    feature = "avatar",
-    feature = "comment",
-    feature = "description_list",
-    feature = "empty",
-    feature = "image",
-    feature = "qrcode",
-    feature = "tag"
+#[cfg(all(
+    feature = "dioxus",
+    any(
+        feature = "display",
+        feature = "avatar",
+        feature = "comment",
+        feature = "description_list",
+        feature = "empty",
+        feature = "image",
+        feature = "qrcode",
+        feature = "tag"
+    )
 ))]
 pub use display::*;
 
-#[cfg(any(
-    feature = "feedback",
-    feature = "alert",
-    feature = "toast",
-    feature = "tooltip",
-    feature = "modal",
-    feature = "popover",
-    feature = "drawer",
-    feature = "dropdown",
-    feature = "progress",
-    feature = "skeleton",
-    feature = "spin",
-    feature = "spotlight",
-    feature = "glow"
+#[cfg(all(
+    feature = "dioxus",
+    any(
+        feature = "feedback",
+        feature = "alert",
+        feature = "toast",
+        feature = "tooltip",
+        feature = "modal",
+        feature = "popover",
+        feature = "drawer",
+        feature = "dropdown",
+        feature = "progress",
+        feature = "skeleton",
+        feature = "spin",
+        feature = "spotlight",
+        feature = "glow"
+    )
 ))]
 pub mod feedback;
 
-#[cfg(any(
-    feature = "navigation",
-    feature = "menu",
-    feature = "tabs",
-    feature = "breadcrumb",
-    feature = "steps"
+#[cfg(all(
+    feature = "dioxus",
+    any(
+        feature = "navigation",
+        feature = "menu",
+        feature = "tabs",
+        feature = "breadcrumb",
+        feature = "steps"
+    )
 ))]
 pub mod navigation;
 
-#[cfg(any(
-    feature = "data",
-    feature = "table",
-    feature = "tree",
-    feature = "pagination"
+#[cfg(all(
+    feature = "dioxus",
+    any(
+        feature = "data",
+        feature = "table",
+        feature = "tree",
+        feature = "pagination"
+    )
 ))]
 pub mod data;
 
 // Re-export data components when data feature is enabled
-#[cfg(any(
-    feature = "data",
-    feature = "table",
-    feature = "tree",
-    feature = "pagination"
+#[cfg(all(
+    feature = "dioxus",
+    any(
+        feature = "data",
+        feature = "table",
+        feature = "tree",
+        feature = "pagination"
+    )
 ))]
 pub use data::*;
 
-#[cfg(any(
-    feature = "entry",
-    feature = "number_input",
-    feature = "search",
-    feature = "cascader",
-    feature = "transfer"
+#[cfg(all(
+    feature = "dioxus",
+    any(
+        feature = "entry",
+        feature = "number_input",
+        feature = "search",
+        feature = "cascader",
+        feature = "transfer"
+    )
 ))]
 pub mod entry;
 
-#[cfg(any(
-    feature = "production",
-    feature = "code_highlight",
-    feature = "video_player",
-    feature = "rich_text_editor"
+#[cfg(all(
+    feature = "dioxus",
+    any(
+        feature = "production",
+        feature = "code_highlight",
+        feature = "video_player",
+        feature = "rich_text_editor"
+    )
 ))]
 pub mod production;
 
 // Re-export entry components when entry feature is enabled
-#[cfg(any(
-    feature = "entry",
-    feature = "number_input",
-    feature = "search",
-    feature = "auto_complete"
+#[cfg(all(
+    feature = "dioxus",
+    any(
+        feature = "entry",
+        feature = "number_input",
+        feature = "search",
+        feature = "auto_complete"
+    )
 ))]
 pub use entry::*;
 
 // Re-export basic components when basic feature is enabled
-#[cfg(feature = "basic")]
+#[cfg(all(feature = "dioxus", feature = "basic"))]
 pub use basic::*;
 
 // Re-export navigation components when navigation feature is enabled
-#[cfg(feature = "navigation")]
+#[cfg(all(feature = "dioxus", feature = "navigation"))]
 pub use navigation::*;
 
 // Re-export feedback components when feedback feature is enabled
-#[cfg(feature = "feedback")]
+#[cfg(all(feature = "dioxus", feature = "feedback"))]
 pub use feedback::*;
 
 // Re-export production components when production feature is enabled
-#[cfg(feature = "production")]
+#[cfg(all(feature = "dioxus", feature = "production"))]
 pub use production::*;
 
-pub use icons::{Icon, MdiIcon};
+// Icons export (requires dioxus feature - only Icon component, not MdiIcon enum)
+#[cfg(feature = "dioxus")]
+pub use icons::Icon;
+// MdiIcon enum is always available (pure Rust data)
+pub use icons::MdiIcon;
+
+// StyleRegistry is always available (pure Rust)
 pub use styled::{StyleRegistry, StyledComponent};
 
-// Utility exports
+// Utility exports (require dioxus)
+#[cfg(feature = "dioxus")]
 pub use utils::positioning::{
     OverlayZIndex, Placement, PositionConfig, PositionStrategy, UsePositionReturn, use_position,
 };
 
-// Theme provider exports
+// Theme provider exports (require dioxus)
+#[cfg(feature = "dioxus")]
 pub use theme::{
     ComponentOverrides, ComponentPalette, IntoThemeName, LayoutDirection, ThemeContext,
     ThemePalette, ThemeProvider, get_default_theme, get_registered_theme, prefers_dark_mode,
     register_theme, use_layout_direction, use_theme,
 };
 
-// Portal exports
+// Portal exports (require dioxus)
+#[cfg(feature = "dioxus")]
 pub use portal::{
     PortalEntry, PortalMaskMode, PortalPositionStrategy, PortalProvider, TriggerPlacement,
     generate_portal_id, use_portal,

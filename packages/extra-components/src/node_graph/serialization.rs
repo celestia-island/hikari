@@ -126,6 +126,7 @@ impl SerializedNodeGraph {
                 to_node: serialized_conn.to_node.clone(),
                 to_port: serialized_conn.to_port.clone(),
                 path: Vec::new(),
+                selected: false,
             };
             connections.push(connection);
         }

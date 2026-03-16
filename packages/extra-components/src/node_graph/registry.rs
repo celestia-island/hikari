@@ -6,8 +6,6 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use dioxus::prelude::*;
-
 use crate::node_graph::node::{NodePlugin, NodeType};
 
 /// Node registry entry

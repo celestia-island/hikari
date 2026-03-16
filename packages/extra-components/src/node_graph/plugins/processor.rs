@@ -1,10 +1,8 @@
 // node_graph/plugins/processor.rs
 // Processor node plugin - performs data transformations
 
-use dioxus::prelude::*;
-
 use crate::node_graph::{
-    node::{NodePlugin, NodePort, NodeState, NodeType, PortId, PortPosition},
+    node::{NodePlugin, NodePort, NodeType, PortId, PortPosition},
     value::NodeValue,
 };
 
@@ -29,6 +27,8 @@ impl ProcessorOperation {
 }
 
 /// Processor node plugin
+///
+/// Performs arithmetic operations on input values.
 pub struct ProcessorNode {
     node_type: NodeType,
     operation: ProcessorOperation,
@@ -70,28 +70,9 @@ impl ProcessorNode {
         Self::new("divide", ProcessorOperation::Divide)
     }
 
-    /// Get default ports for this node type
-    pub fn default_ports(&self) -> Vec<NodePort> {
-        vec![
-            NodePort {
-                port_id: self.input_port_a.clone(),
-                port_type: "input".to_string(),
-                label: "A".to_string(),
-                position: PortPosition::Left,
-            },
-            NodePort {
-                port_id: self.input_port_b.clone(),
-                port_type: "input".to_string(),
-                label: "B".to_string(),
-                position: PortPosition::Left,
-            },
-            NodePort {
-                port_id: self.output_port.clone(),
-                port_type: "output".to_string(),
-                label: "Result".to_string(),
-                position: PortPosition::Right,
-            },
-        ]
+    /// Get the operation type
+    pub fn operation(&self) -> ProcessorOperation {
+        self.operation
     }
 
     /// Perform operation
@@ -124,24 +105,31 @@ impl NodePlugin for ProcessorNode {
         self.node_type.clone()
     }
 
-    fn render_node(
-        &self,
-        _id: String,
-        _title: String,
-        _state: NodeState,
-        _ports: Vec<NodePort>,
-    ) -> Element {
-        let operation_symbol = self.operation.as_str();
+    fn label(&self) -> String {
+        self.operation.as_str().to_string()
+    }
 
-        rsx! {
-            div {
-                class: "hi-node-processor hi-node-body",
-                div {
-                    class: "hi-node-processor-operation",
-                    "{operation_symbol}"
-                }
-            }
-        }
+    fn default_ports(&self) -> Vec<NodePort> {
+        vec![
+            NodePort {
+                port_id: self.input_port_a.clone(),
+                port_type: "input".to_string(),
+                label: "A".to_string(),
+                position: PortPosition::Left,
+            },
+            NodePort {
+                port_id: self.input_port_b.clone(),
+                port_type: "input".to_string(),
+                label: "B".to_string(),
+                position: PortPosition::Left,
+            },
+            NodePort {
+                port_id: self.output_port.clone(),
+                port_type: "output".to_string(),
+                label: "Result".to_string(),
+                position: PortPosition::Right,
+            },
+        ]
     }
 
     fn handle_input(&self, _port_id: PortId, _data: NodeValue) {
@@ -158,5 +146,78 @@ impl NodePlugin for ProcessorNode {
         // In a real implementation, this would return computed output
         // For now, return None to indicate no output is available
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_processor_add() {
+        let node = ProcessorNode::add();
+        assert_eq!(node.node_type().name, "add");
+        assert_eq!(node.operation(), ProcessorOperation::Add);
+
+        let result = node.compute(NodeValue::Number(5.0), NodeValue::Number(3.0));
+        assert_eq!(result, Ok(NodeValue::Number(8.0)));
+    }
+
+    #[test]
+    fn test_processor_subtract() {
+        let node = ProcessorNode::subtract();
+        let result = node.compute(NodeValue::Number(10.0), NodeValue::Number(3.0));
+        assert_eq!(result, Ok(NodeValue::Number(7.0)));
+    }
+
+    #[test]
+    fn test_processor_multiply() {
+        let node = ProcessorNode::multiply();
+        let result = node.compute(NodeValue::Number(4.0), NodeValue::Number(5.0));
+        assert_eq!(result, Ok(NodeValue::Number(20.0)));
+    }
+
+    #[test]
+    fn test_processor_divide() {
+        let node = ProcessorNode::divide();
+        let result = node.compute(NodeValue::Number(20.0), NodeValue::Number(4.0));
+        assert_eq!(result, Ok(NodeValue::Number(5.0)));
+    }
+
+    #[test]
+    fn test_processor_divide_by_zero() {
+        let node = ProcessorNode::divide();
+        let result = node.compute(NodeValue::Number(10.0), NodeValue::Number(0.0));
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Division by zero");
+    }
+
+    #[test]
+    fn test_processor_invalid_input() {
+        let node = ProcessorNode::add();
+        let result = node.compute(NodeValue::Text("hello".to_string()), NodeValue::Number(3.0));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_operation_as_str() {
+        assert_eq!(ProcessorOperation::Add.as_str(), "+");
+        assert_eq!(ProcessorOperation::Subtract.as_str(), "-");
+        assert_eq!(ProcessorOperation::Multiply.as_str(), "×");
+        assert_eq!(ProcessorOperation::Divide.as_str(), "÷");
+    }
+
+    #[test]
+    fn test_default_ports() {
+        let node = ProcessorNode::add();
+        let ports = node.default_ports();
+        assert_eq!(ports.len(), 3);
+
+        // Should have 2 input ports and 1 output port
+        let input_ports: Vec<_> = ports.iter().filter(|p| p.port_type == "input").collect();
+        let output_ports: Vec<_> = ports.iter().filter(|p| p.port_type == "output").collect();
+
+        assert_eq!(input_ports.len(), 2);
+        assert_eq!(output_ports.len(), 1);
     }
 }

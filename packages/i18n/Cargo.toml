@@ -15,8 +15,5 @@ serde_json = { workspace = true }
 anyhow = { workspace = true }
 yuuka = { workspace = true }
 
-# Dioxus frontend framework
-dioxus.workspace = true
-
 # For TOML parsing
 toml = "^0.8"

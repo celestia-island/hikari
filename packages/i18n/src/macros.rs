@@ -7,11 +7,10 @@
 /// ## Usage
 ///
 /// ```rust,no_run
-/// use hikari_i18n::{i18n, use_i18n};
+/// use hikari_i18n::{I18nContext, i18n};
 ///
-/// fn Component() {
-///     let i18n_ctx = use_i18n();
-///     let text = i18n!(i18n_ctx, keys.common.button.submit);
+/// fn get_text(i18n_ctx: &I18nContext) -> &str {
+///     i18n!(i18n_ctx, keys.common.button.submit)
 /// }
 /// ```
 #[macro_export]

@@ -1,19 +1,19 @@
 // node_graph/canvas.rs
-// Main canvas component for node graph rendering
+// Main canvas state for node graph rendering - Framework Agnostic
 
 use std::collections::HashMap;
 
-use dioxus::prelude::*;
-
 use crate::node_graph::{
-    connection::{Connection, ConnectionId, ConnectionLine},
+    connection::{Connection, ConnectionId},
     history::{HistoryAction, HistoryState},
-    minimap::NodeGraphMinimap,
-    node::{Node, NodeState, NodeType, PortPosition},
+    node::{Node, NodeId, NodeState, NodeType, PortPosition},
     serialization::SerializedNodeGraph,
 };
 
 /// Node graph state
+///
+/// Previously a Dioxus component with complex rendering logic.
+/// Now a pure state model that can be used with any framework.
 #[derive(Clone, Debug, PartialEq)]
 pub struct NodeGraphState {
     pub nodes: HashMap<String, NodeState>,
@@ -23,15 +23,6 @@ pub struct NodeGraphState {
     pub zoom: f64,
     pub pan: (f64, f64),
 }
-
-/// Undo/Redo callback handler type
-pub type UndoRedoCallback = EventHandler<()>;
-
-/// Save/Load callback handler type
-pub type SaveLoadCallback = EventHandler<Option<String>>;
-
-/// Type alias for connection position data
-type ConnectionPositionData = (Connection, (f64, f64), (f64, f64));
 
 impl Default for NodeGraphState {
     fn default() -> Self {
@@ -49,6 +40,98 @@ impl NodeGraphState {
             zoom: 1.0,
             pan: (0.0, 0.0),
         }
+    }
+
+    /// Add a node to the graph
+    pub fn add_node(&mut self, state: NodeState) {
+        self.nodes.insert(state.id.clone(), state);
+    }
+
+    /// Remove a node from the graph
+    pub fn remove_node(&mut self, id: &str) -> Option<NodeState> {
+        self.nodes.remove(id)
+    }
+
+    /// Get a node by ID
+    pub fn get_node(&self, id: &str) -> Option<&NodeState> {
+        self.nodes.get(id)
+    }
+
+    /// Get a mutable node by ID
+    pub fn get_node_mut(&mut self, id: &str) -> Option<&mut NodeState> {
+        self.nodes.get_mut(id)
+    }
+
+    /// Update node position
+    pub fn update_node_position(&mut self, id: &str, x: f64, y: f64) -> bool {
+        if let Some(node) = self.nodes.get_mut(id) {
+            node.position = (x, y);
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Add a connection
+    pub fn add_connection(&mut self, connection: Connection) {
+        self.connections.push(connection);
+    }
+
+    /// Remove a connection by ID
+    pub fn remove_connection(&mut self, id: &ConnectionId) -> Option<Connection> {
+        let pos = self.connections.iter().position(|c| &c.id == id)?;
+        Some(self.connections.remove(pos))
+    }
+
+    /// Select a node
+    pub fn select_node(&mut self, id: Option<String>) {
+        // Deselect current
+        if let Some(current_id) = &self.selected_node {
+            if let Some(node) = self.nodes.get_mut(current_id) {
+                node.selected = false;
+            }
+        }
+
+        self.selected_node = id.clone();
+
+        // Select new
+        if let Some(new_id) = id {
+            if let Some(node) = self.nodes.get_mut(&new_id) {
+                node.selected = true;
+            }
+        }
+    }
+
+    /// Select a connection
+    pub fn select_connection(&mut self, id: Option<ConnectionId>) {
+        self.selected_connection = id;
+    }
+
+    /// Set zoom level (clamped)
+    pub fn set_zoom(&mut self, zoom: f64, min: f64, max: f64) {
+        self.zoom = zoom.clamp(min, max);
+    }
+
+    /// Zoom in by a factor
+    pub fn zoom_in(&mut self, factor: f64, min: f64, max: f64) {
+        self.set_zoom(self.zoom * factor, min, max);
+    }
+
+    /// Zoom out by a factor
+    pub fn zoom_out(&mut self, factor: f64, min: f64, max: f64) {
+        self.set_zoom(self.zoom / factor, min, max);
+    }
+
+    /// Reset zoom and pan
+    pub fn reset_view(&mut self) {
+        self.zoom = 1.0;
+        self.pan = (0.0, 0.0);
+    }
+
+    /// Pan the view
+    pub fn pan(&mut self, dx: f64, dy: f64) {
+        self.pan.0 += dx;
+        self.pan.1 += dy;
     }
 
     /// Calculate port position based on node position and port placement
@@ -71,543 +154,282 @@ impl NodeGraphState {
 
         Some((port_x, port_y))
     }
+
+    /// Get the transform CSS string for the canvas
+    pub fn transform_style(&self) -> String {
+        format!(
+            "transform: scale({}) translate({}px, {}px);",
+            self.zoom, self.pan.0, self.pan.1
+        )
+    }
+
+    /// Clear all nodes and connections
+    pub fn clear(&mut self) {
+        self.nodes.clear();
+        self.connections.clear();
+        self.selected_node = None;
+        self.selected_connection = None;
+    }
 }
 
-/// Main node graph canvas component with integrated features
-#[component]
-pub fn NodeGraphCanvas(
-    #[props(default)] width: f64,
-    #[props(default)] height: f64,
-    #[props(default)] children: Element,
-    #[props(default)] on_node_add: EventHandler<NodeType>,
-    #[props(default)] on_node_select: EventHandler<String>,
-    #[props(default)] on_node_move: EventHandler<(String, f64, f64)>,
-    #[props(default)] on_node_delete: EventHandler<String>,
-    #[props(default)] on_connection_create: EventHandler<(String, String, String, String)>,
-    #[props(default)] on_connection_delete: EventHandler<ConnectionId>,
-    #[props(default)] on_undo: UndoRedoCallback,
-    #[props(default)] on_redo: UndoRedoCallback,
-    #[props(default)] on_save: SaveLoadCallback,
-    #[props(default)] on_load: SaveLoadCallback,
-) -> Element {
-    let state = use_signal(NodeGraphState::new);
-    let mut history = use_signal(HistoryState::new);
-    let show_minimap = use_signal(|| true);
-    let show_controls = use_signal(|| true);
+/// Node graph canvas configuration
+///
+/// Configuration for the canvas, separate from state.
+#[derive(Clone, Debug, PartialEq)]
+pub struct NodeGraphCanvasConfig {
+    /// Canvas width in pixels
+    pub width: f64,
 
-    // Pre-calculate connection positions
-    let connections_data = use_memo(move || {
-        let state_ref = state.read();
-        let mut conn_data: Vec<ConnectionPositionData> = Vec::new();
-        for connection in state_ref.connections.iter() {
-            let from_port_pos = state_ref
-                .calculate_port_position(
-                    &connection.from_node,
-                    &connection.from_port,
-                    PortPosition::Right,
-                )
-                .unwrap_or((0.0, 0.0));
+    /// Canvas height in pixels
+    pub height: f64,
 
-            let to_port_pos = state_ref
-                .calculate_port_position(
-                    &connection.to_node,
-                    &connection.to_port,
-                    PortPosition::Left,
-                )
-                .unwrap_or((0.0, 0.0));
+    /// Minimum zoom level
+    pub min_zoom: f64,
 
-            conn_data.push((connection.clone(), from_port_pos, to_port_pos));
+    /// Maximum zoom level
+    pub max_zoom: f64,
+
+    /// Whether to show minimap
+    pub show_minimap: bool,
+
+    /// Whether to show controls
+    pub show_controls: bool,
+
+    /// Grid size in pixels
+    pub grid_size: f64,
+}
+
+impl Default for NodeGraphCanvasConfig {
+    fn default() -> Self {
+        Self {
+            width: 1200.0,
+            height: 800.0,
+            min_zoom: 0.1,
+            max_zoom: 3.0,
+            show_minimap: true,
+            show_controls: true,
+            grid_size: 20.0,
         }
-        conn_data
-    });
+    }
+}
 
-    // Pre-calculate node data
-    let nodes_data = use_memo(move || {
-        let state_ref = state.read();
-        let mut node_data: Vec<(String, NodeState)> = Vec::new();
-        for (node_id, node_state) in state_ref.nodes.iter() {
-            node_data.push((node_id.clone(), node_state.clone()));
-        }
-        node_data
-    });
+impl NodeGraphCanvasConfig {
+    pub fn with_size(mut self, width: f64, height: f64) -> Self {
+        self.width = width;
+        self.height = height;
+        self
+    }
 
-    // Canvas transformation
-    let transform = format!(
-        "transform: scale({}) translate({}px, {}px);",
-        state.read().zoom,
-        state.read().pan.0,
-        state.read().pan.1
-    );
+    pub fn with_zoom_bounds(mut self, min: f64, max: f64) -> Self {
+        self.min_zoom = min;
+        self.max_zoom = max;
+        self
+    }
 
-    // Viewport zoom handlers
-    let mut zoom_state = state;
-    let handle_zoom_in = move |_| {
-        let mut state = zoom_state.write();
-        state.zoom = (state.zoom * 1.2).min(3.0);
-    };
+    pub fn with_minimap(mut self, show: bool) -> Self {
+        self.show_minimap = show;
+        self
+    }
 
-    let mut zoom_state = state;
-    let handle_zoom_out = move |_| {
-        let mut state = zoom_state.write();
-        state.zoom = (state.zoom / 1.2).max(0.1);
-    };
+    pub fn with_controls(mut self, show: bool) -> Self {
+        self.show_controls = show;
+        self
+    }
 
-    let mut pan_state = state;
-    let handle_zoom_reset = move |_| {
-        let mut state = pan_state.write();
-        state.zoom = 1.0;
-        state.pan = (0.0, 0.0);
-    };
+    /// Get the container style string
+    pub fn container_style(&self) -> String {
+        format!("width: {}px; height: {}px;", self.width, self.height)
+    }
+}
 
-    // Viewport pan handlers (keyboard)
-    let mut pan_state = state;
-    let on_undo_clone = on_undo;
-    let on_redo_clone = on_redo;
+/// Events that can be emitted by the node graph canvas
+#[derive(Clone, PartialEq, Debug)]
+pub enum NodeGraphEvent {
+    /// A node was added
+    NodeAdded { id: String, node_type: NodeType, position: (f64, f64) },
 
-    let handle_keydown = move |e: KeyboardEvent| {
-        let mut state = pan_state.write();
+    /// A node was selected
+    NodeSelected(String),
 
-        match e.key() {
-            Key::Character(c) if c == "+" || c == "=" => {
-                state.zoom = (state.zoom * 1.2).min(3.0);
-            }
-            Key::Character(c) if c == "-" || c == "_" => {
-                state.zoom = (state.zoom / 1.2).max(0.1);
-            }
-            Key::Character(c) if c == "0" => {
-                state.zoom = 1.0;
-                state.pan = (0.0, 0.0);
-            }
-            Key::Character(c)
-                if (c == "z" || c == "Z") && e.modifiers().contains(Modifiers::CONTROL) =>
-            {
-                // Ctrl+Z for undo
-                let action = {
-                    let mut hist = history.write();
-                    if hist.can_undo() { hist.undo() } else { None }
-                };
+    /// A node was moved
+    NodeMoved { id: String, to: (f64, f64) },
 
-                if let Some(action) = action {
-                    match action {
-                        HistoryAction::NodeAdd { id, .. } => {
-                            state.nodes.remove(&id);
-                        }
-                        HistoryAction::NodeDelete {
-                            id,
-                            state: node_state,
-                        } => {
-                            let new_node_state: NodeState = node_state.into();
-                            state.nodes.insert(id, new_node_state);
-                        }
-                        HistoryAction::NodeMove { id, from, .. } => {
-                            if let Some(node) = state.nodes.get_mut(&id) {
-                                node.position = from;
-                            }
-                        }
-                        HistoryAction::ConnectionAdd { id, .. } => {
-                            state.connections.retain(|c| c.id != id);
-                        }
-                        HistoryAction::ConnectionDelete {
-                            id: _,
-                            state: conn_state,
-                        } => {
-                            let connection = Connection::new(
-                                &conn_state.from_node,
-                                &conn_state.from_port,
-                                &conn_state.to_node,
-                                &conn_state.to_port,
-                            );
-                            state.connections.push(connection);
-                        }
-                    }
+    /// A node was deleted
+    NodeDeleted(String),
 
-                    on_undo_clone.call(());
-                }
-            }
-            Key::Character(c)
-                if (c == "y" || c == "Y") && e.modifiers().contains(Modifiers::CONTROL) =>
-            {
-                // Ctrl+Y for redo
-                let action = {
-                    let mut hist = history.write();
-                    if hist.can_redo() { hist.redo() } else { None }
-                };
+    /// A connection was created
+    ConnectionCreated { id: ConnectionId, from_node: String, from_port: String, to_node: String, to_port: String },
 
-                if let Some(action) = action {
-                    match action {
-                        HistoryAction::NodeAdd {
-                            id,
-                            position,
-                            node_type: _,
-                        } => {
-                            let node_state = NodeState {
-                                id: id.clone(),
-                                position,
-                                size: (200.0, 150.0),
-                                selected: false,
-                                minimized: false,
-                            };
-                            state.nodes.insert(id, node_state);
-                        }
-                        HistoryAction::NodeDelete { id, .. } => {
-                            state.nodes.remove(&id);
-                        }
-                        HistoryAction::NodeMove { id, to, .. } => {
-                            if let Some(node) = state.nodes.get_mut(&id) {
-                                node.position = to;
-                            }
-                        }
-                        HistoryAction::ConnectionAdd {
-                            id: _,
-                            from_node,
-                            from_port,
-                            to_node,
-                            to_port,
-                        } => {
-                            let connection =
-                                Connection::new(&from_node, &from_port, &to_node, &to_port);
-                            state.connections.push(connection);
-                        }
-                        HistoryAction::ConnectionDelete { id, .. } => {
-                            state.connections.retain(|c| c.id != id);
-                        }
-                    }
+    /// A connection was deleted
+    ConnectionDeleted(ConnectionId),
 
-                    on_redo_clone.call(());
-                }
-            }
-            Key::ArrowUp => {
-                state.pan.1 -= 20.0 / state.zoom;
-            }
-            Key::ArrowDown => {
-                state.pan.1 += 20.0 / state.zoom;
-            }
-            Key::ArrowLeft => {
-                state.pan.0 -= 20.0 / state.zoom;
-            }
-            Key::ArrowRight => {
-                state.pan.0 += 20.0 / state.zoom;
-            }
-            _ => {}
-        }
-    };
+    /// Zoom changed
+    ZoomChanged(f64),
 
-    // Undo handler (Ctrl+Z)
-    let mut history_undo = history;
-    let mut state_for_undo = state;
-    let handle_undo = move |_| {
-        let action = {
-            let mut hist = history_undo.write();
-            if hist.can_undo() { hist.undo() } else { None }
+    /// View was panned
+    Panned { dx: f64, dy: f64 },
+
+    /// Undo requested
+    Undo,
+
+    /// Redo requested
+    Redo,
+
+    /// Save requested
+    Save,
+
+    /// Load requested
+    Load,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_node_graph_state_new() {
+        let state = NodeGraphState::new();
+        assert!(state.nodes.is_empty());
+        assert!(state.connections.is_empty());
+        assert_eq!(state.zoom, 1.0);
+        assert_eq!(state.pan, (0.0, 0.0));
+    }
+
+    #[test]
+    fn test_add_remove_node() {
+        let mut state = NodeGraphState::new();
+        let node = NodeState::new("node1".to_string());
+
+        state.add_node(node.clone());
+        assert_eq!(state.nodes.len(), 1);
+        assert!(state.get_node("node1").is_some());
+
+        let removed = state.remove_node("node1");
+        assert!(removed.is_some());
+        assert!(state.nodes.is_empty());
+    }
+
+    #[test]
+    fn test_update_node_position() {
+        let mut state = NodeGraphState::new();
+        state.add_node(NodeState::new("node1".to_string()));
+
+        assert!(state.update_node_position("node1", 100.0, 200.0));
+        assert_eq!(state.get_node("node1").unwrap().position, (100.0, 200.0));
+    }
+
+    #[test]
+    fn test_select_node() {
+        let mut state = NodeGraphState::new();
+        state.add_node(NodeState::new("node1".to_string()));
+        state.add_node(NodeState::new("node2".to_string()));
+
+        state.select_node(Some("node1".to_string()));
+        assert_eq!(state.selected_node, Some("node1".to_string()));
+        assert!(state.get_node("node1").unwrap().selected);
+
+        state.select_node(Some("node2".to_string()));
+        assert_eq!(state.selected_node, Some("node2".to_string()));
+        assert!(!state.get_node("node1").unwrap().selected);
+        assert!(state.get_node("node2").unwrap().selected);
+    }
+
+    #[test]
+    fn test_zoom() {
+        let mut state = NodeGraphState::new();
+
+        state.set_zoom(2.0, 0.1, 3.0);
+        assert_eq!(state.zoom, 2.0);
+
+        state.set_zoom(5.0, 0.1, 3.0);
+        assert_eq!(state.zoom, 3.0); // Clamped to max
+
+        state.zoom_in(1.5, 0.1, 3.0);
+        assert_eq!(state.zoom, 3.0); // 3.0 * 1.5 = 4.5, clamped to 3.0
+
+        state.zoom_out(2.0, 0.1, 3.0);
+        assert_eq!(state.zoom, 1.5); // 3.0 / 2.0 = 1.5
+    }
+
+    #[test]
+    fn test_pan() {
+        let mut state = NodeGraphState::new();
+
+        state.pan(10.0, 20.0);
+        assert_eq!(state.pan, (10.0, 20.0));
+
+        state.pan(-5.0, -10.0);
+        assert_eq!(state.pan, (5.0, 10.0));
+    }
+
+    #[test]
+    fn test_reset_view() {
+        let mut state = NodeGraphState::new();
+        state.zoom = 2.0;
+        state.pan = (100.0, 200.0);
+
+        state.reset_view();
+        assert_eq!(state.zoom, 1.0);
+        assert_eq!(state.pan, (0.0, 0.0));
+    }
+
+    #[test]
+    fn test_calculate_port_position() {
+        let mut state = NodeGraphState::new();
+        let node = NodeState::new("node1".to_string())
+            .with_position(100.0, 100.0)
+            .with_size(200.0, 150.0);
+        state.add_node(node);
+
+        let pos = state.calculate_port_position("node1", "port1", PortPosition::Top);
+        assert_eq!(pos, Some((200.0, 100.0)));
+
+        let pos = state.calculate_port_position("node1", "port1", PortPosition::Right);
+        assert_eq!(pos, Some((300.0, 175.0)));
+
+        let pos = state.calculate_port_position("node1", "port1", PortPosition::Bottom);
+        assert_eq!(pos, Some((200.0, 250.0)));
+
+        let pos = state.calculate_port_position("node1", "port1", PortPosition::Left);
+        assert_eq!(pos, Some((100.0, 175.0)));
+    }
+
+    #[test]
+    fn test_transform_style() {
+        let state = NodeGraphState {
+            zoom: 1.5,
+            pan: (10.0, 20.0),
+            ..Default::default()
         };
 
-        if let Some(action) = action {
-            match action {
-                HistoryAction::NodeAdd { id, .. } => {
-                    let mut state = state_for_undo.write();
-                    state.nodes.remove(&id);
-                }
-                HistoryAction::NodeDelete {
-                    id,
-                    state: node_state,
-                } => {
-                    let mut state = state_for_undo.write();
-                    let new_node_state: NodeState = node_state.into();
-                    state.nodes.insert(id, new_node_state);
-                }
-                HistoryAction::NodeMove { id, from, .. } => {
-                    if let Some(node) = state_for_undo.write().nodes.get_mut(&id) {
-                        node.position = from;
-                    }
-                }
-                HistoryAction::ConnectionAdd { id, .. } => {
-                    let mut state = state_for_undo.write();
-                    state.connections.retain(|c| c.id != id);
-                }
-                HistoryAction::ConnectionDelete {
-                    id: _,
-                    state: conn_state,
-                } => {
-                    let mut state = state_for_undo.write();
-                    let connection = Connection::new(
-                        &conn_state.from_node,
-                        &conn_state.from_port,
-                        &conn_state.to_node,
-                        &conn_state.to_port,
-                    );
-                    state.connections.push(connection);
-                }
-            }
+        let style = state.transform_style();
+        assert!(style.contains("scale(1.5)"));
+        assert!(style.contains("translate(10px"));
+        assert!(style.contains("20px"));
+    }
 
-            on_undo_clone.call(());
-        }
-    };
+    #[test]
+    fn test_config_default() {
+        let config = NodeGraphCanvasConfig::default();
+        assert_eq!(config.width, 1200.0);
+        assert_eq!(config.height, 800.0);
+        assert_eq!(config.min_zoom, 0.1);
+        assert_eq!(config.max_zoom, 3.0);
+    }
 
-    // Redo handler (Ctrl+Y)
-    let mut history_redo = history;
-    let mut state_for_redo = state;
-    let handle_redo = move |_| {
-        let action = {
-            let mut hist = history_redo.write();
-            if hist.can_redo() { hist.redo() } else { None }
-        };
+    #[test]
+    fn test_config_builder() {
+        let config = NodeGraphCanvasConfig::default()
+            .with_size(800.0, 600.0)
+            .with_zoom_bounds(0.5, 2.0)
+            .with_minimap(false)
+            .with_controls(false);
 
-        if let Some(action) = action {
-            match action {
-                HistoryAction::NodeAdd {
-                    id,
-                    position,
-                    node_type: _,
-                } => {
-                    let mut state = state_for_redo.write();
-                    let node_state = NodeState {
-                        id: id.clone(),
-                        position,
-                        size: (200.0, 150.0),
-                        selected: false,
-                        minimized: false,
-                    };
-                    state.nodes.insert(id, node_state);
-                }
-                HistoryAction::NodeDelete { id, .. } => {
-                    let mut state = state_for_redo.write();
-                    state.nodes.remove(&id);
-                }
-                HistoryAction::NodeMove { id, to, .. } => {
-                    if let Some(node) = state_for_redo.write().nodes.get_mut(&id) {
-                        node.position = to;
-                    }
-                }
-                HistoryAction::ConnectionAdd {
-                    id: _,
-                    from_node,
-                    from_port,
-                    to_node,
-                    to_port,
-                } => {
-                    let mut state = state_for_redo.write();
-                    let connection = Connection::new(&from_node, &from_port, &to_node, &to_port);
-                    state.connections.push(connection);
-                }
-                HistoryAction::ConnectionDelete { id, .. } => {
-                    let mut state = state_for_redo.write();
-                    state.connections.retain(|c| c.id != id);
-                }
-            }
-
-            on_redo_clone.call(());
-        }
-    };
-
-    // Save handler
-    let state_save = state;
-    let handle_save = move |_| {
-        let state_ref = state_save.read();
-        let serialized = SerializedNodeGraph::from_state(&state_ref.nodes, &state_ref.connections);
-        if let Ok(json) = serialized.to_json() {
-            on_save.call(Some(json));
-        }
-    };
-
-    // Minimap click handler
-    let mut state_for_minimap = state;
-    let handle_minimap_click: EventHandler<(f64, f64)> =
-        EventHandler::new(move |(x, y): (f64, f64)| {
-            let mut state = state_for_minimap.write();
-            let total_width = width * state.zoom;
-            let total_height = height * state.zoom;
-            let new_pan_x = (x / 200.0) * total_width - total_width / 2.0;
-            let new_pan_y = (y / 150.0) * total_height - total_height / 2.0;
-            state.pan = (new_pan_x, new_pan_y);
-        });
-
-    rsx! {
-        div {
-            class: "hi-node-graph-wrapper",
-            style: format!("width: {}px; height: {}px;", width, height),
-            onkeydown: handle_keydown,
-            tabindex: "0",
-
-            // Canvas layer
-            svg {
-                class: "hi-node-graph-canvas",
-                width: "100%",
-                height: "100%",
-                style: "{transform}",
-
-                // Background grid
-                defs {
-                    pattern {
-                        id: "grid",
-                        width: "20",
-                        height: "20",
-                        pattern_units: "userSpaceOnUse",
-
-                        path {
-                            d: "M 20 0 L 0 0 20",
-                            fill: "none",
-                            stroke: "var(--hi-color-border)",
-                            "stroke-width": "0.5",
-                            "stroke-opacity": "0.3",
-                        }
-                    }
-                }
-
-                rect {
-                    width: "100%",
-                    height: "100%",
-                    fill: "url(#grid)",
-                }
-
-                // Connections layer
-                g { class: "hi-node-graph-connections-layer",
-                    for (connection, from_pos, to_pos) in connections_data.read().iter() {
-                        ConnectionLine {
-                            id: connection.id.clone(),
-                            from_pos: *from_pos,
-                            to_pos: *to_pos,
-                            from_side: "right".to_string(),
-                            to_side: "left".to_string(),
-                            selected: state.read().selected_connection.as_ref() == Some(&connection.id),
-                            on_click: move |id| on_connection_delete.call(id),
-                        }
-                    }
-                }
-
-                // Nodes layer
-                g { class: "hi-node-graph-nodes-layer",
-                    for (node_id, node_state) in nodes_data.read().iter() {
-                        Node {
-                            id: node_id.clone(),
-                            title: node_id.clone(),
-                            position: node_state.position,
-                            selected: state.read().selected_node.as_ref() == Some(node_id),
-                            minimized: node_state.minimized,
-                            node_type: "custom".to_string(),
-                            ports: vec![],
-                            div { "Node Content" },
-                        }
-                    }
-                }
-
-                // Children overlay
-                g { class: "hi-node-graph-overlay-layer",
-                    {children}
-                }
-            }
-
-            // Minimap (bottom-right)
-            if show_minimap() {
-                NodeGraphMinimap {
-                    width: 200.0,
-                    height: 150.0,
-                    _zoom: state.read().zoom,
-                    _pan: state.read().pan,
-                    _nodes: state.read().nodes.iter()
-                        .map(|(id, st)| (id.clone(), st.position, st.size))
-                        .collect(),
-                    _connections: state.read().connections.iter()
-                        .map(|conn| {
-                            let from_pos = state.read()
-                                .calculate_port_position(
-                                    &conn.from_node,
-                                    &conn.from_port,
-                                    PortPosition::Right,
-                                )
-                                .unwrap_or((0.0, 0.0));
-                            let to_pos = state.read()
-                                .calculate_port_position(
-                                    &conn.to_node,
-                                    &conn.to_port,
-                                    PortPosition::Left,
-                                )
-                                .unwrap_or((0.0, 0.0));
-                            (conn.id.clone(), from_pos, to_pos)
-                        })
-                        .collect(),
-                    on_minimap_click: handle_minimap_click,
-                }
-            }
-
-            // Controls (top-right)
-            if show_controls() {
-                div {
-                    class: "hi-node-graph-controls",
-                    style: "position: absolute; top: 10px; right: 10px; display: flex; gap: 8px;",
-
-                    // Undo/Redo group
-                    div {
-                        style: "display: flex; gap: 4px;",
-
-                        button {
-                            class: "hi-control-btn",
-                            onclick: handle_undo,
-                            disabled: !history.read().can_undo(),
-                            title: "Undo (Ctrl+Z)",
-                            "↩"
-                        }
-
-                        button {
-                            class: "hi-control-btn",
-                            onclick: handle_redo,
-                            disabled: !history.read().can_redo(),
-                            title: "Redo (Ctrl+Y)",
-                            "↪"
-                        }
-                    }
-
-                    // Save/Load group
-                    div {
-                        style: "display: flex; gap: 4px;",
-
-                        button {
-                            class: "hi-control-btn",
-                            onclick: handle_save,
-                            title: "Save",
-                            "💾"
-                        }
-
-                        button {
-                            class: "hi-control-btn",
-                            onclick: move |_| on_load.call(None),
-                            title: "Load",
-                            "📂"
-                        }
-                    }
-
-                    // Zoom group
-                    div {
-                        style: "display: flex; gap: 4px;",
-
-                        button {
-                            class: "hi-control-btn",
-                            onclick: handle_zoom_out,
-                            title: "Zoom Out (-)",
-                            "-"
-                        }
-
-                        span {
-                            class: "hi-zoom-level",
-                            style: "display: flex; align-items: center; padding: 0 8px;",
-                            "{state.read().zoom}"
-                        }
-
-                        button {
-                            class: "hi-control-btn",
-                            onclick: handle_zoom_in,
-                            title: "Zoom In (+)",
-                            "+"
-                        }
-
-                        button {
-                            class: "hi-control-btn",
-                            onclick: handle_zoom_reset,
-                            title: "Reset (0)",
-                            "100%"
-                        }
-                    }
-                }
-            }
-        }
+        assert_eq!(config.width, 800.0);
+        assert_eq!(config.height, 600.0);
+        assert_eq!(config.min_zoom, 0.5);
+        assert_eq!(config.max_zoom, 2.0);
+        assert!(!config.show_minimap);
+        assert!(!config.show_controls);
     }
 }

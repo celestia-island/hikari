@@ -9,12 +9,13 @@ license.workspace = true
 doctest = false
 
 [features]
-default = ["scss"]
+default = ["scss", "dioxus"]
 scss = []       # Default SCSS compilation
+dioxus = ["dep:dioxus"]  # Dioxus framework integration (optional for tairitsu)
 
 [dependencies]
 # Workspace dependencies
 palette = { path = "../palette", package = "hikari-palette" }
 
-# MCP / network and protocols
-dioxus.workspace = true
+# MCP / network and protocols (optional for tairitsu compatibility)
+dioxus = { workspace = true, optional = true }

@@ -33,8 +33,8 @@ def main():
         print(f"\n❌ Error: {index_scss} not found")
         sys.exit(1)
 
-    # Output directory
-    output_dir = workspace_root / "public/styles"
+    # Output directory for website source assets consumed by tairitsu-packager
+    output_dir = workspace_root / "examples/website/public/styles"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     output_css = output_dir / "bundle.css"

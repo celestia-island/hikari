@@ -22,6 +22,7 @@ py := if os_family() == "windows" { "python" } else { "python3" }
 
 # External packager from sibling repository (tairitsu)
 tairitsu_packager_manifest := "../tairitsu/packages/packager/Cargo.toml"
+website_manifest := "examples/website/Cargo.toml"
 
 # ============================================================================
 # Core tasks
@@ -46,6 +47,11 @@ build-dev:
     @{{py}} scripts/icons/fetch_mdi_icons.py
     @echo ""
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Compiling website SCSS assets..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @{{py}} scripts/build/compile_scss.py
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Building all (Debug mode)..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     cargo build --workspace
@@ -55,7 +61,26 @@ build:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Building all (Release mode)..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @{{py}} scripts/build/compile_scss.py
     cargo build --workspace --release
+
+# Build website with tairitsu-packager (production output to public/)
+build-website:
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Fetching MDI icons..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @{{py}} scripts/icons/fetch_mdi_icons.py
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Compiling website SCSS assets..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @{{py}} scripts/build/compile_scss.py
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Building website with tairitsu-packager..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @just check-tairitsu-packager
+    @cd examples/website && cargo run --manifest-path ../../../tairitsu/packages/packager/Cargo.toml -- --manifest-path Cargo.toml build
 
 # ============================================================================
 # Examples
@@ -69,7 +94,8 @@ check-port *force="":
     @{{py}} scripts/utils/clean_process_linux.py {{force}}
 
 # Build website WASM client (debug mode)
-# Note: build.rs will automatically compile SCSS and copy assets to public/
+# Note: website source assets are staged under examples/website/public and
+# tairitsu-packager emits the final site to root public/
 
 # Development mode for website (migrated to tairitsu-packager component pipeline)
 dev *force="":
@@ -84,43 +110,15 @@ dev *force="":
     @{{py}} scripts/icons/fetch_mdi_icons.py
     @echo ""
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @echo "Compiling website SCSS assets..."
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    @{{py}} scripts/build/compile_scss.py
+    @echo ""
+    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Running tairitsu-packager dev pipeline..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @just check-tairitsu-packager
-    @cargo run --manifest-path {{tairitsu_packager_manifest}} -- --manifest-path examples/website/Cargo.toml dev --port 3000 --watch
-
-# Legacy development mode for Dioxus + wasm-bindgen-cli pipeline
-dev-legacy *force="":
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "[LEGACY] Checking port 3000..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/utils/clean_process_linux.py {{force}}
-    @echo ""
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "[LEGACY] Fetching MDI icons..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/icons/fetch_mdi_icons.py
-    @echo ""
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "[LEGACY] Building website WASM client..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Step 1: Build hikari-builder to generate CSS bundle"
-    @cargo build --package hikari-builder
-    @echo "Step 2: Build WASM library (triggers build.rs to copy index.html and logo)"
-    @cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/website/Cargo.toml
-    @echo ""
-    @echo "🔧 Binding WASM..."
-    @{{py}} scripts/build/ensure_wasm_bindgen.py 0.2.106
-    @wasm-bindgen --target web --out-dir public/assets --no-typescript examples/website/target/wasm32-unknown-unknown/debug/website.wasm
-    @echo ""
-    @echo "✅ WASM client built successfully"
-    @echo ""
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Starting website server..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Press Ctrl+C to stop server"
-    @echo ""
-    @cargo run --manifest-path examples/website/Cargo.toml --features server
+    @cd examples/website && cargo run --manifest-path ../../../tairitsu/packages/packager/Cargo.toml -- --manifest-path Cargo.toml dev --port 3000 --watch
 
 # Start dev server and exit when ready (for AI agent)
 # This starts the dev server in background and exits when it's listening on port 3000
@@ -129,7 +127,8 @@ dev-by-agent:
     @echo "Starting dev server (agent mode, tairitsu-packager)..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @just check-tairitsu-packager
-    @cargo run --manifest-path {{tairitsu_packager_manifest}} -- --manifest-path examples/website/Cargo.toml dev --port 3000
+    @{{py}} scripts/build/compile_scss.py
+    @cd examples/website && cargo run --manifest-path ../../../tairitsu/packages/packager/Cargo.toml -- --manifest-path Cargo.toml dev --port 3000
 
 # Alias for dev
 serve: dev
@@ -144,32 +143,7 @@ watch:
 watch-dev:
     @just dev
 
-# Internal: Watch mode build step (called by cargo-watch)
-build-watch-internal-legacy:
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "🔨 Rebuilding..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @cargo build --package hikari-builder
-    @cargo build --lib --target wasm32-unknown-unknown --manifest-path examples/website/Cargo.toml
-    @{{py}} scripts/build/ensure_wasm_bindgen.py 0.2.106
-    @wasm-bindgen --target web --out-dir public/assets --no-typescript examples/website/target/wasm32-unknown-unknown/debug/website.wasm 2>/dev/null || true
-    @echo "✅ Build complete - server will restart automatically"
-
-# Run website (one-click start, no WASM rebuild)
-run:
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Checking port 3000..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/utils/clean_process_linux.py
-    @echo ""
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Starting website server (skipping WASM build)..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "🌐 Server will be available at: http://localhost:3000"
-    @echo ""
-    @echo "Press Ctrl+C to stop the server"
-    @echo ""
-    @cargo run --manifest-path examples/website/Cargo.toml --features server
+run: dev
 
 # ============================================================================
 # Code quality
@@ -196,11 +170,11 @@ clippy:
 # Clean build artifacts
 [linux]
 clean:
-    @bash -c "echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'; echo 'Cleaning build artifacts...'; cargo clean; rm -rf examples/website/public examples/website/dist packages/builder/src/generated public 2>/dev/null || true; echo '✅ Clean completed'"
+    @bash -c "echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'; echo 'Cleaning build artifacts...'; cargo clean; rm -rf examples/website/dist packages/builder/src/generated public 2>/dev/null || true; echo '✅ Clean completed'"
 
 [windows]
 clean:
-    @pwsh.exe -NoLogo -Command "echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'; echo 'Cleaning build artifacts...'; cargo clean; if (Test-Path examples/website/public) { Remove-Item -Recurse -Force examples/website/public }; if (Test-Path examples/website/dist) { Remove-Item -Recurse -Force examples/website/dist }; if (Test-Path packages/builder/src/generated) { Remove-Item -Recurse -Force packages/builder/src/generated }; if (Test-Path public) { Remove-Item -Recurse -Force public }; echo '✅ Clean completed'"
+    @pwsh.exe -NoLogo -Command "echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'; echo 'Cleaning build artifacts...'; cargo clean; if (Test-Path examples/website/dist) { Remove-Item -Recurse -Force examples/website/dist }; if (Test-Path packages/builder/src/generated) { Remove-Item -Recurse -Force packages/builder/src/generated }; if (Test-Path public) { Remove-Item -Recurse -Force public }; echo '✅ Clean completed'"
 
 # Clean only old dist/ directories (migrated to public/)
 [linux]
@@ -228,7 +202,7 @@ e2e-parallel:
 # Test specific route (for debugging)
 e2e-test route="":
     @echo "Testing single route: {{route}}..."
-    @docker run --rm --network host -v "$(pwd)/target/e2e_screenshots:/tmp/e2e_screenshots" -v "$(pwd)/examples/website/public:/public:ro" hikari/screenshot:selenium /usr/local/bin/hikari-screenshot --start "{{route}}" --end "{{route}}" > /dev/null
+    @docker run --rm --network host -v "$(pwd)/target/e2e_screenshots:/tmp/e2e_screenshots" -v "$(pwd)/public:/public:ro" hikari/screenshot:selenium /usr/local/bin/hikari-screenshot --start "{{route}}" --end "{{route}}" > /dev/null
 
 # ============================================================================
 # Testing

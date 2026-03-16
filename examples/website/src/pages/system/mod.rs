@@ -18,11 +18,15 @@ fn render_overview() -> VNode {
                 div { class: "card-grid",
                     a { href: "#/system/palette", class: "card card--link",
                         h3 { class: "card__title", "Color Palette" }
-                        p { class: "card__body", "500+ traditional Chinese colors with rich historical context." }
+                        p { class: "card__body",
+                            "500+ traditional Chinese colors with rich historical context."
+                        }
                     }
                     a { href: "#/system/css", class: "card card--link",
                         h3 { class: "card__title", "CSS Utilities" }
-                        p { class: "card__body", "Type-safe utility classes inspired by Tailwind CSS." }
+                        p { class: "card__body",
+                            "Type-safe utility classes inspired by Tailwind CSS."
+                        }
                     }
                     a { href: "#/system/icons", class: "card card--link",
                         h3 { class: "card__title", "Icons" }
@@ -30,11 +34,15 @@ fn render_overview() -> VNode {
                     }
                     a { href: "#/system/animations", class: "card card--link",
                         h3 { class: "card__title", "Animations" }
-                        p { class: "card__body", "Spring-physics animation system with preset transitions." }
+                        p { class: "card__body",
+                            "Spring-physics animation system with preset transitions."
+                        }
                     }
                     a { href: "#/system/i18n", class: "card card--link",
                         h3 { class: "card__title", "i18n" }
-                        p { class: "card__body", "Multi-language support: en-US, zh-CHS, zh-CHT, ja-JP, ko-KR, fr-FR, es-ES, ru-RU." }
+                        p { class: "card__body",
+                            "Multi-language support: en-US, zh-CHS, zh-CHT, ja-JP, ko-KR, fr-FR, es-ES, ru-RU."
+                        }
                     }
                 }
             }
@@ -102,7 +110,9 @@ fn render_icons() -> VNode {
             }
             div { class: "page-section",
                 h2 { "Usage" }
-                p { "Icons are referenced by name. The icon system supports solid, outline, and duo-tone variants." }
+                p {
+                    "Icons are referenced by name. The icon system supports solid, outline, and duo-tone variants."
+                }
                 div { class: "demo-row",
                     span { class: "hi-icon mdi mdi-home" }
                     span { class: "hi-icon mdi mdi-account" }
@@ -136,21 +146,15 @@ fn render_animations() -> VNode {
                 h2 { "Keyframe Animations" }
                 p { "CSS keyframe animations available as utility classes:" }
                 div { class: "demo-grid",
-                    div { class: "demo-card hikari-anim--slide-in-left",
-                        "slide-in-left"
-                    }
-                    div { class: "demo-card hikari-anim--slide-in-right",
-                        "slide-in-right"
-                    }
-                    div { class: "demo-card hikari-anim--fade-in-scale",
-                        "fade-in-scale"
-                    }
-                    div { class: "demo-card hikari-anim--pulse",
-                        "pulse"
-                    }
+                    div { class: "demo-card hikari-anim--slide-in-left", "slide-in-left" }
+                    div { class: "demo-card hikari-anim--slide-in-right", "slide-in-right" }
+                    div { class: "demo-card hikari-anim--fade-in-scale", "fade-in-scale" }
+                    div { class: "demo-card hikari-anim--pulse", "pulse" }
                 }
                 h2 { "Spring Physics" }
-                p { "The hikari-animation crate exposes a spring solver for programmatic animations. Parameters:" }
+                p {
+                    "The hikari-animation crate exposes a spring solver for programmatic animations. Parameters:"
+                }
                 div { class: "demo-row",
                     code { "stiffness" }
                     code { "damping" }
@@ -185,42 +189,58 @@ fn render_i18n() -> VNode {
                         tr {
                             td { "en-US" }
                             td { "English (United States)" }
-                            td { span { class: "hi-tag hi-tag--success", "Complete" } }
+                            td {
+                                span { class: "hi-tag hi-tag--success", "Complete" }
+                            }
                         }
                         tr {
                             td { "zh-CHS" }
                             td { "Chinese Simplified" }
-                            td { span { class: "hi-tag hi-tag--success", "Complete" } }
+                            td {
+                                span { class: "hi-tag hi-tag--success", "Complete" }
+                            }
                         }
                         tr {
                             td { "zh-CHT" }
                             td { "Chinese Traditional" }
-                            td { span { class: "hi-tag hi-tag--success", "Complete" } }
+                            td {
+                                span { class: "hi-tag hi-tag--success", "Complete" }
+                            }
                         }
                         tr {
                             td { "ja-JP" }
                             td { "Japanese" }
-                            td { span { class: "hi-tag hi-tag--success", "Complete" } }
+                            td {
+                                span { class: "hi-tag hi-tag--success", "Complete" }
+                            }
                         }
                         tr {
                             td { "ko-KR" }
                             td { "Korean" }
-                            td { span { class: "hi-tag hi-tag--success", "Complete" } }
+                            td {
+                                span { class: "hi-tag hi-tag--success", "Complete" }
+                            }
                         }
                         tr {
                             td { "fr-FR" }
                             td { "French" }
-                            td { span { class: "hi-tag hi-tag--success", "Complete" } }
+                            td {
+                                span { class: "hi-tag hi-tag--success", "Complete" }
+                            }
                         }
                         tr {
                             td { "es-ES" }
                             td { "Spanish" }
-                            td { span { class: "hi-tag hi-tag--success", "Complete" } }
+                            td {
+                                span { class: "hi-tag hi-tag--success", "Complete" }
+                            }
                         }
                         tr {
                             td { "ru-RU" }
                             td { "Russian" }
-                            td { span { class: "hi-tag hi-tag--success", "Complete" } }
+                            td {
+                                span { class: "hi-tag hi-tag--success", "Complete" }
+                            }
                         }
                     }
                 }

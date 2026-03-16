@@ -39,12 +39,18 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+          targets: wasm32-wasip2
 
       - name: Restore Rust Cache
         uses: Swatinem/rust-cache@v2
 
       - name: Run cargo clippy
         run: cargo clippy --all --all-features
+        env:
+          RUSTFLAGS: '--cfg releasing'
+
+      - name: Lint wasm32-wasip2 target
+        run: cargo clippy --workspace --exclude hikari-render-service --exclude hikari-e2e --all-features --target wasm32-wasip2
         env:
           RUSTFLAGS: '--cfg releasing'
 
@@ -62,12 +68,18 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+          targets: wasm32-wasip2
 
       - name: Restore Rust Cache
         uses: Swatinem/rust-cache@v2
 
       - name: Run cargo test
         run: cargo test --all-features --all
+        env:
+          RUSTFLAGS: '--cfg releasing'
+
+      - name: Check wasm32-wasip2 target
+        run: cargo check --workspace --exclude hikari-render-service --exclude hikari-e2e --all-features --target wasm32-wasip2
         env:
           RUSTFLAGS: '--cfg releasing'
 

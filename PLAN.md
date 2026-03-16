@@ -1,9 +1,16 @@
 # Hikari -> Tairitsu 构建链迁移计划
 
-更新时间: 2026-03-16
+更新时间: 2026-03-17
 
 ## 已完成
 
+- **应用层迁移完成** (commit `e226e43`):
+  - `examples/website/src` 全部改写为 Tairitsu vdom/rsx 模型。
+  - 移除 `#[wasm_bindgen]` 启动入口，改用 `tairitsu_component_bootstrap`。
+  - 去除 Dioxus/wasm-bindgen 依赖，编译目标 `wasm32-wasip2` 通过。
+  - 添加 `public/styles/hikari-spa.css` SPA 路由样式。
+  - 清理全部旧 Dioxus 源文件（51 文件，删减 7149 行）。
+- **构建链迁移完成** (commit `bdcb3ca`):
 - 默认开发入口迁移到 `tairitsu-packager`:
   - `just dev`
   - `just watch`
@@ -16,16 +23,11 @@
 
 ## 当前阻塞与评估结论
 
-- `examples/website` 仍深度依赖 Dioxus (`dioxus`, `dioxus-router`, `dioxus-web`)。
-- `tairitsu-packager` 默认构建目标为 `wasm32-wasip2` component，当前网站应用层并未迁移到 Tairitsu web/vdom API。
-- 因此暂时不能实现“无 Dioxus、无 wasm-bindgen-cli、且能完整运行”的一次性切换。
+- **已解除**：`examples/website` 应用层已完全迁移，`wasm32-wasip2` 编译通过。
 
 ## 下一步（按优先级）
 
-1. Website 应用层迁移
-
-- 将 `examples/website/src` 从 Dioxus 组件与路由迁移到 Tairitsu 组件模型。
-- 移除 `#[wasm_bindgen]` 启动入口，改为 Tairitsu 推荐入口。
+~~1. Website 应用层迁移~~ **已完成**
 
 1. 依赖与工作区收敛
 

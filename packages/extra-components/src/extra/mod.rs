@@ -15,15 +15,15 @@
 
 pub mod collapsible;
 pub mod drag_layer;
-pub mod zoom_controls;
 pub mod timeline;
 pub mod user_guide;
+pub mod zoom_controls;
 
 pub use collapsible::*;
 pub use drag_layer::*;
-pub use zoom_controls::*;
 pub use timeline::*;
 pub use user_guide::*;
+pub use zoom_controls::*;
 
 // NOTE: The following modules have been removed as they were heavily dependent on Dioxus/wasm-bindgen:
 // - audio_waveform (requires Web Audio API)

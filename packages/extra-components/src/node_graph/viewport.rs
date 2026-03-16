@@ -204,10 +204,16 @@ mod tests {
 
     #[test]
     fn test_zoom_text() {
-        let viewport = Viewport { zoom: 1.5, ..Default::default() };
+        let viewport = Viewport {
+            zoom: 1.5,
+            ..Default::default()
+        };
         assert_eq!(viewport.zoom_text(), "1x");
 
-        let viewport = Viewport { zoom: 2.7, ..Default::default() };
+        let viewport = Viewport {
+            zoom: 2.7,
+            ..Default::default()
+        };
         assert_eq!(viewport.zoom_text(), "3x");
     }
 }

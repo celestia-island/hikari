@@ -147,8 +147,18 @@ impl ConnectionLine {
 
     /// Get the SVG path data
     pub fn path_data(&self) -> String {
-        Connection::calculate_bezier_path(self.from_pos, self.to_pos, &self.from_side, &self.to_side);
-        let path = Connection::calculate_bezier_path(self.from_pos, self.to_pos, &self.from_side, &self.to_side);
+        Connection::calculate_bezier_path(
+            self.from_pos,
+            self.to_pos,
+            &self.from_side,
+            &self.to_side,
+        );
+        let path = Connection::calculate_bezier_path(
+            self.from_pos,
+            self.to_pos,
+            &self.from_side,
+            &self.to_side,
+        );
 
         format!(
             "M {} {} C {} {} {} {} {} {} {} {}",

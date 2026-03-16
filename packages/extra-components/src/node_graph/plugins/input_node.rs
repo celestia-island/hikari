@@ -129,27 +129,39 @@ mod tests {
         let node = InputNode::numeric("number");
         assert_eq!(node.node_type().name, "number");
         assert_eq!(node.input_type(), "number");
-        assert_eq!(node.get_output("number_output".to_string()), Some(NodeValue::Number(0.0)));
+        assert_eq!(
+            node.get_output("number_output".to_string()),
+            Some(NodeValue::Number(0.0))
+        );
     }
 
     #[test]
     fn test_input_numeric_with_default() {
         let node = InputNode::numeric_with_default("number", 42.0);
-        assert_eq!(node.get_output("number_output".to_string()), Some(NodeValue::Number(42.0)));
+        assert_eq!(
+            node.get_output("number_output".to_string()),
+            Some(NodeValue::Number(42.0))
+        );
     }
 
     #[test]
     fn test_input_string() {
         let node = InputNode::string("text");
         assert_eq!(node.input_type(), "text");
-        assert_eq!(node.get_output("text_output".to_string()), Some(NodeValue::Text(String::new())));
+        assert_eq!(
+            node.get_output("text_output".to_string()),
+            Some(NodeValue::Text(String::new()))
+        );
     }
 
     #[test]
     fn test_input_boolean() {
         let node = InputNode::boolean("flag");
         assert_eq!(node.input_type(), "checkbox");
-        assert_eq!(node.get_output("flag_output".to_string()), Some(NodeValue::Boolean(false)));
+        assert_eq!(
+            node.get_output("flag_output".to_string()),
+            Some(NodeValue::Boolean(false))
+        );
     }
 
     #[test]

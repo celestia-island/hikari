@@ -20,23 +20,48 @@ pub struct DragConstraints {
 
 impl DragConstraints {
     /// Create new constraints with all bounds
-    pub fn new(min_x: Option<f64>, max_x: Option<f64>, min_y: Option<f64>, max_y: Option<f64>) -> Self {
-        Self { min_x, max_x, min_y, max_y }
+    pub fn new(
+        min_x: Option<f64>,
+        max_x: Option<f64>,
+        min_y: Option<f64>,
+        max_y: Option<f64>,
+    ) -> Self {
+        Self {
+            min_x,
+            max_x,
+            min_y,
+            max_y,
+        }
     }
 
     /// Create horizontal-only constraints
     pub fn horizontal(min: f64, max: f64) -> Self {
-        Self { min_x: Some(min), max_x: Some(max), min_y: None, max_y: None }
+        Self {
+            min_x: Some(min),
+            max_x: Some(max),
+            min_y: None,
+            max_y: None,
+        }
     }
 
     /// Create vertical-only constraints
     pub fn vertical(min: f64, max: f64) -> Self {
-        Self { min_x: None, max_x: None, min_y: Some(min), max_y: Some(max) }
+        Self {
+            min_x: None,
+            max_x: None,
+            min_y: Some(min),
+            max_y: Some(max),
+        }
     }
 
     /// Create bounded constraints (all directions)
     pub fn bounded(min_x: f64, max_x: f64, min_y: f64, max_y: f64) -> Self {
-        Self { min_x: Some(min_x), max_x: Some(max_x), min_y: Some(min_y), max_y: Some(max_y) }
+        Self {
+            min_x: Some(min_x),
+            max_x: Some(max_x),
+            min_y: Some(min_y),
+            max_y: Some(max_y),
+        }
     }
 
     /// Constrain a value within the X bounds

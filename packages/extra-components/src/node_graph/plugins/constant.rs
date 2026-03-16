@@ -92,7 +92,10 @@ mod tests {
         let node = ConstantNode::numeric("number", 42.0);
         assert_eq!(node.node_type().name, "number");
         assert_eq!(node.display_value(), Some("42".to_string()));
-        assert_eq!(node.get_output("number_output".to_string()), Some(NodeValue::Number(42.0)));
+        assert_eq!(
+            node.get_output("number_output".to_string()),
+            Some(NodeValue::Number(42.0))
+        );
     }
 
     #[test]
@@ -100,7 +103,10 @@ mod tests {
         let node = ConstantNode::string("text", "hello");
         assert_eq!(node.node_type().name, "text");
         assert_eq!(node.display_value(), Some("hello".to_string()));
-        assert_eq!(node.get_output("text_output".to_string()), Some(NodeValue::Text("hello".to_string())));
+        assert_eq!(
+            node.get_output("text_output".to_string()),
+            Some(NodeValue::Text("hello".to_string()))
+        );
     }
 
     #[test]
@@ -108,14 +114,20 @@ mod tests {
         let node = ConstantNode::boolean("flag", true);
         assert_eq!(node.node_type().name, "flag");
         assert_eq!(node.display_value(), Some("true".to_string()));
-        assert_eq!(node.get_output("flag_output".to_string()), Some(NodeValue::Boolean(true)));
+        assert_eq!(
+            node.get_output("flag_output".to_string()),
+            Some(NodeValue::Boolean(true))
+        );
     }
 
     #[test]
     fn test_set_value() {
         let mut node = ConstantNode::numeric("number", 42.0);
         node.set_value(NodeValue::Number(100.0));
-        assert_eq!(node.get_output("number_output".to_string()), Some(NodeValue::Number(100.0)));
+        assert_eq!(
+            node.get_output("number_output".to_string()),
+            Some(NodeValue::Number(100.0))
+        );
     }
 
     #[test]

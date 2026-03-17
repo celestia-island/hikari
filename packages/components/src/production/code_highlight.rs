@@ -83,7 +83,7 @@ pub struct CodeHighlightProps {
 
 #[component]
 pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
-    let mut copied = use_signal(|| false);
+    let copied = use_signal(|| false);
     let lines: Vec<&str> = props.code.lines().collect();
     let line_count = lines.len();
 
@@ -121,6 +121,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
     };
 
     let code_for_copy = props.code.clone();
+    let code = props.code.clone();
     let language = props.language.clone();
 
     // Computed button class with copied state
@@ -162,7 +163,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
 
                 div {
                     class: language_classes,
-                    {language}
+                    language
                 }
 
                 if props.copyable {
@@ -188,7 +189,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                                 }
                             }
                         },
-                        {button_text}
+                        button_text
                     }
                 }
             }
@@ -199,7 +200,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
 
                 if props.line_numbers {
                     div {
-                        class: {line_classes},
+                        class: line_classes,
                         ..line_number_nodes
                     }
                 }
@@ -208,7 +209,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                     class: code_classes,
                     code {
                         class: language_class,
-                        {props.code}
+                        code
                     }
                 }
             }

@@ -285,7 +285,7 @@ fn CascaderMenus(
                 class: CascaderClass::Menu.as_class(),
                 key: format!("menu-{}", level),
                 ul { class: CascaderClass::MenuList.as_class(),
-                    {menu_items}
+                    ..menu_items
                 }
             }
         });

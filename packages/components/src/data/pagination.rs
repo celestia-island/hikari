@@ -263,12 +263,76 @@ pub fn Pagination(props: PaginationProps) -> Element {
         }
     };
 
+    // Build page size options outside rsx!
+    let page_size_option_elements: Vec<Element> = props.page_size_options.iter().map(|size| {
+        rsx! {
+            option { value: size.to_string(), "{size} / page" }
+        }
+    }).collect();
+
+    // Build simple page numbers for total_pages <= 7
+    let simple_page_elements: Vec<Element> = if total_pages <= 7 {
+        (1..=total_pages).map(|i| {
+            let page_class = ClassesBuilder::new()
+                .add(PaginationClass::PaginationItem)
+                .add_if(PaginationClass::PaginationActive, move || i == current_page.get())
+                .build();
+            let handler = make_page_handler(i);
+            rsx! {
+                Glow {
+                    blur: GlowBlur::Medium,
+                    color: GlowColor::Primary,
+                    intensity: GlowIntensity::Dim,
+                    button {
+                        class: page_class,
+                        onclick: handler,
+                        "{i}"
+                    }
+                }
+            }
+        }).collect()
+    } else {
+        vec![]
+    };
+
+    // Build middle page elements for total_pages > 7
+    let middle_page_elements: Vec<Element> = if total_pages > 7 {
+        let current = current_page.get();
+        [
+            current.saturating_sub(1).max(2),
+            current,
+            current + 1,
+        ].into_iter()
+        .filter(|&i| i >= 2 && i <= total_pages.saturating_sub(1))
+        .map(|i| {
+            let page_class = ClassesBuilder::new()
+                .add(PaginationClass::PaginationItem)
+                .add_if(PaginationClass::PaginationActive, move || i == current_page.get())
+                .build();
+            let handler = make_page_handler(i);
+            rsx! {
+                Glow {
+                    blur: GlowBlur::Medium,
+                    color: GlowColor::Primary,
+                    intensity: GlowIntensity::Dim,
+                    button {
+                        class: page_class,
+                        onclick: handler,
+                        "{i}"
+                    }
+                }
+            }
+        }).collect()
+    } else {
+        vec![]
+    };
+
     rsx! {
         div { class: container_classes,
 
             if props.show_total {
                 div { class: total_classes,
-                    {format!("{start}-{end} of {total_items}")}
+                    "{start}-{end} of {total_items}"
                 }
             }
 
@@ -278,9 +342,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         class: "hi-select hi-select-sm",
                         value: current_size.to_string(),
                         onchange: handle_size_change,
-                        for size in props.page_size_options.iter() {
-                            option { value: size.to_string(), "{size} / page" }
-                        }
+                        ..page_size_option_elements
                     }
                 }
             }
@@ -305,21 +367,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
                 // Simple page numbers - just handle the basic case for now
                     if total_pages <= 7 {
-                        for i in 1..=total_pages {
-                            Glow {
-                                blur: GlowBlur::Medium,
-                                color: GlowColor::Primary,
-                                intensity: GlowIntensity::Dim,
-                                button {
-                                    class: ClassesBuilder::new()
-                                        .add(PaginationClass::PaginationItem)
-                                        .add_if(PaginationClass::PaginationActive, || i == current_page.get())
-                                        .build(),
-                                    onclick: make_page_handler(i),
-                                    i
-                                }
-                            }
-                        }
+                        ..simple_page_elements
                 } else {
                     // First page
                     Glow {
@@ -366,28 +414,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                     }
 
                     // Current page and surrounding pages
-                    for i in [
-                        current_page.get().saturating_sub(1).max(2),
-                        current_page.get(),
-                        current_page.get() + 1,
-                    ].iter()
-                    .copied.get()
-                    .filter(|&i| i >= 2 && i <= total_pages.saturating_sub(1))
-                    {
-                        Glow {
-                            blur: GlowBlur::Medium,
-                            color: GlowColor::Primary,
-                            intensity: GlowIntensity::Dim,
-                            button {
-                                class: ClassesBuilder::new()
-                                    .add(PaginationClass::PaginationItem)
-                                    .add_if(PaginationClass::PaginationActive, || i == current_page.get())
-                                    .build(),
-                                onclick: make_page_handler(i),
-                                {i}
-                            }
-                        }
-                    }
+                    ..middle_page_elements
 
                     // Ellipsis if needed - clickable with icon
                     if current_page.get() < total_pages - 3 {
@@ -430,7 +457,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                 .add_if(PaginationClass::PaginationActive, || total_pages == current_page.get())
                                 .build(),
                             onclick: make_page_handler(total_pages),
-                            {total_pages}
+                            "{total_pages}"
                         }
                         }
                     }

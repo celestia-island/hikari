@@ -142,6 +142,17 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
 
     let language_class = format!("language-{}", language);
 
+    // Pre-compute line number elements outside rsx! using VElement builder
+    let line_number_nodes: Vec<VNode> = (1..=line_count)
+        .map(|i| {
+            VNode::Element(
+                VElement::new("div")
+                    .class("hi-code-highlight-line-number")
+                    .child(VNode::Text(VText::new(&i.to_string())))
+            )
+        })
+        .collect();
+
     rsx! {
         div {
             class: container_classes,
@@ -189,12 +200,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                 if props.line_numbers {
                     div {
                         class: {line_classes},
-                        for i in 1..=line_count {
-                            div {
-                                class: {"hi-code-highlight-line-number"},
-                                {i}
-                            }
-                        }
+                        {line_number_nodes}
                     }
                 }
 

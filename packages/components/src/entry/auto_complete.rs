@@ -80,8 +80,10 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
     // Handle input change
     let handle_input = {
         let on_select = props.on_select;
-        move |e: Event<FormData>| {
-            on_select.call(e.value());
+        move |e: Event| {
+            if let Some(form_data) = e.as_any().downcast_ref::<FormData>() {
+                on_select.call(form_data.value.clone());
+            }
             is_open.set(true);
             focused_index.set(0);
         }

@@ -17,6 +17,17 @@ pub enum StepStatus {
     Error,
 }
 
+impl IntoAttrValue for StepStatus {
+    fn into_attr_value(self) -> Option<String> {
+        Some(match self {
+            StepStatus::Wait => "wait".to_string(),
+            StepStatus::Process => "process".to_string(),
+            StepStatus::Finish => "finish".to_string(),
+            StepStatus::Error => "error".to_string(),
+        })
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum StepsDirection {
     #[default]
@@ -39,6 +50,12 @@ pub struct StepData {
 
     #[props(default)]
     pub class: String,
+}
+
+impl IntoAttrValue for StepData {
+    fn into_attr_value(self) -> Option<String> {
+        Some(self.title)
+    }
 }
 
 #[derive(Clone, PartialEq, Props, Default)]

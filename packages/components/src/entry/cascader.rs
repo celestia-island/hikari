@@ -154,7 +154,7 @@ pub fn Cascader(props: CascaderProps) -> Element {
             .join(" / ")
     };
 
-    let _close_dropdown = move |_: Event<()>| {
+    let _close_dropdown = move |_: Event| {
         is_open.set(false);
     };
 
@@ -230,45 +230,62 @@ fn CascaderMenus(
         let opts_clone = opts.clone();
         let selected_at_level = selected_values.get(level).cloned();
 
-        menus.push(rsx! {
-            div { class: CascaderClass::Menu.as_class(),
-                ul { class: {CascaderClass::MenuList.as_class()},
-                    for opt in opts_clone.iter() {
-                        {
-                            let opt_value = opt.value.clone();
-                            let _opt_label = opt.label.clone();
-                            let opt_disabled = opt.disabled;
-                            let has_children = opt.children.as_ref().map(|c| !c.is_empty()).unwrap_or(false);
-                            let is_selected = selected_at_level.as_ref() == Some(&opt_value);
-                            let handler_for_item = on_select;
+        // Pre-compute menu items outside of rsx! macro
+        let menu_items: Vec<Element> = opts_clone
+            .iter()
+            .enumerate()
+            .map(|(idx, opt)| {
+                let opt_value = opt.value.clone();
+                let opt_label = opt.label.clone();
+                let opt_disabled = opt.disabled;
+                let has_children = opt.children.as_ref().map(|c| !c.is_empty()).unwrap_or(false);
+                let is_selected = selected_at_level.as_ref() == Some(&opt_value);
+                let handler_for_item = on_select;
 
-                            rsx! {
-                                li {
-                                    class: ClassesBuilder::new()
-                                        .add(CascaderClass::MenuItem)
-                                        .add_if(CascaderClass::MenuItemSelected, || is_selected)
-                                        .add_if(CascaderClass::MenuItemDisabled, || opt_disabled)
-                                        .build(),
-
-                                    onclick: move |_| {
-                                        if !opt_disabled {
-                                            handler_for_item.call(opt_value.clone());
-                                        }
-                                    },
-
-                                    {opt.label.clone()}
-
-                                    if has_children {
-                                        Icon {
-                                            icon: MdiIcon::ChevronRight,
-                                            size: 14,
-                                            class: {CascaderClass::MenuItemArrow.as_class()},
-                                        }
-                                    }
-                                }
-                            }
+                // Pre-compute the optional icon
+                let arrow_icon: Option<Element> = if has_children {
+                    Some(rsx! {
+                        Icon {
+                            icon: MdiIcon::ChevronRight,
+                            size: 14,
+                            class: CascaderClass::MenuItemArrow.as_class(),
                         }
+                    })
+                } else {
+                    None
+                };
+
+                let item_class = ClassesBuilder::new()
+                    .add(CascaderClass::MenuItem)
+                    .add_if(CascaderClass::MenuItemSelected, || is_selected)
+                    .add_if(CascaderClass::MenuItemDisabled, || opt_disabled)
+                    .build();
+
+                rsx! {
+                    li {
+                        key: format!("item-{}-{}", level, idx),
+                        class: item_class,
+
+                        onclick: move |_| {
+                            if !opt_disabled {
+                                handler_for_item.call(opt_value.clone());
+                            }
+                        },
+
+                        {opt_label}
+
+                        {arrow_icon}
                     }
+                }
+            })
+            .collect();
+
+        menus.push(rsx! {
+            div {
+                class: CascaderClass::Menu.as_class(),
+                key: format!("menu-{}", level),
+                ul { class: CascaderClass::MenuList.as_class(),
+                    {menu_items}
                 }
             }
         });
@@ -287,11 +304,7 @@ fn CascaderMenus(
         }
     }
 
-    rsx! {
-        for menu in menus.into_iter() {
-            {menu}
-        }
-    }
+    VNode::Fragment(menus)
 }
 
 fn find_option_by_value<'a>(

@@ -46,29 +46,32 @@
   - 修复 `Signal.toggle()` → `Signal.set(!Signal.get())`
   - 添加 Debug/Default derives 到多个组件枚举
 
+- **Tairitsu VNode/Signal 增强** (commit `998c243`, `6754b35`):
+  - 添加 `Default` impl for `VNode` (返回 empty Fragment)
+  - 添加 `PartialEq` impl for `Signal<T>` (identity comparison)
+  - 添加 `From<Option<String>>` impl for `Style`
+  - 修复多个 `Event<T>` → `Event` + downcast pattern
+  - 修复 Signal move errors 使用 `.clone()`
+
 ## 🟡 进行中
 
 ### hikari-components 编译修复
 
-**当前错误数**: ~180
+**当前错误数**: ~148 (从初始 ~232 减少 36%)
+
+**已修复错误类型**:
+- ✅ Event<T> generic args → Event with downcast
+- ✅ Style: From<Option<String>>
+- ✅ Signal move errors (大部分)
+- ✅ IntoAttrValue for component enum types (ArrowDirection, InputSize, StepStatus, etc.)
+- ✅ rsx! 语法: let in for loops → Vec<VNode> pattern
+- ✅ rsx! 语法: tuple keys → simple keys
 
 **剩余错误类型**:
-- 41 mismatched types (类型不匹配)
-- 6 type annotations needed (需要类型注解)
-- 5 Event<T> generic args (Event 不是泛型)
-- 4 Vec<T>: IntoAttrValue (需要 trait impl)
-- 3 EventData.value method (方法不存在)
-- 3 Signal move errors (Signal 移动语义)
-- 3 Style: From<Option<String>> (转换不存在)
-- 3 &Option<tuple>: IntoAttrValue (trait 未实现)
-
-**修复策略**:
-1. ✅ 实现 `Default` for `VNode` (返回 empty VNode)
-2. ✅ 修复 `Memo<T>` 使用 `.read()` 而不是直接调用
-3. ✅ 添加 `FileData` 和 `files` 字段到 FormData
-4. 为 `Vec<T>` 类型实现 `IntoAttrValue`
-5. 修复 `Style: From<Option<String>>` 转换
-6. 修复 Event<T> → Event (不是泛型)
+- 55 mismatched types (VNode 转换问题)
+- 7 type annotations needed
+- 4 expected `,` (rsx! 语法)
+- IntoAttrValue for Vec types (可能需要不同方法)
 
 ## 验收标准
 

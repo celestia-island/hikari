@@ -132,7 +132,7 @@ pub fn Selection(props: SelectionProps) -> Element {
                     }
                 }
 
-                {available_keys.iter().map(|key| {
+                let selection_items: Vec<Element> = available_keys.iter().map(|key| {
                     let key_clone = key.clone();
                     let checked = is_row_selected(key);
 
@@ -154,7 +154,9 @@ pub fn Selection(props: SelectionProps) -> Element {
                             }
                         }
                     }
-                })}
+                }).collect();
+
+                ..selection_items
             }
         }
     }

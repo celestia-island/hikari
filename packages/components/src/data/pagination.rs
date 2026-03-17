@@ -392,7 +392,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                 preferred: vec![PopoverPlacement::Top, PopoverPlacement::Bottom],
                             },
                             close_on_click_outside: true,
-                            on_open_change: handle_modal_close,
+                            on_open_change: Some(handle_modal_close.clone()),
                             trigger: rsx! {
                                 Glow {
                                     blur: GlowBlur::Medium,
@@ -424,7 +424,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                 preferred: vec![PopoverPlacement::Top, PopoverPlacement::Bottom],
                             },
                             close_on_click_outside: true,
-                            on_open_change: handle_modal_close,
+                            on_open_change: Some(handle_modal_close.clone()),
                             trigger: rsx! {
                                 Glow {
                                     blur: GlowBlur::Medium,

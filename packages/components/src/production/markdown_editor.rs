@@ -80,11 +80,13 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
     let handle_input = {
         let on_change = props.on_change;
-        move |e: Event<FormData>| {
-            let new_value = e.value();
-            content.set(new_value.clone());
-            if let Some(handler) = on_change.as_ref() {
-                handler.call(new_value);
+        move |e: Event| {
+            if let Some(form_data) = e.as_any().downcast_ref::<FormData>() {
+                let new_value = form_data.value.clone();
+                content.set(new_value.clone());
+                if let Some(handler) = on_change.as_ref() {
+                    handler.call(new_value);
+                }
             }
         }
     };

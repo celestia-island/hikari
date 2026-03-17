@@ -298,6 +298,45 @@ fn ModalPortalEntry(
 
     let body_classes = ClassesBuilder::new().add(ModalClass::Body).build();
 
+    // Build title element outside rsx!
+    let title_el = if title.is_some() {
+        rsx! {
+            h3 { class: title_classes, {title.as_ref().unwrap().clone()} }
+        }
+    } else {
+        VNode::empty()
+    };
+
+    // Build close button outside rsx!
+    let close_button = if closable {
+        rsx! {
+            button {
+                class: close_classes,
+                onclick: button_close,
+                svg {
+                    view_box: "0 0 24 24",
+                    fill: "none",
+                    stroke: "currentColor",
+                    stroke_width: "2",
+                    line {
+                        x1: "18",
+                        y1: "6",
+                        x2: "6",
+                        y2: "18",
+                    }
+                    line {
+                        x1: "6",
+                        y1: "6",
+                        x2: "18",
+                        y2: "18",
+                    }
+                }
+            }
+        }
+    } else {
+        VNode::empty()
+    };
+
     rsx! {
         div {
             class: overlay_classes,
@@ -317,34 +356,8 @@ fn ModalPortalEntry(
                 },
 
                 div { class: header_classes,
-                    if title.is_some() {
-                        h3 { class: title_classes, {title.as_ref().unwrap().clone()} }
-                    }
-
-                    if closable {
-                        button {
-                            class: {close_classes},
-                            onclick: button_close,
-                            svg {
-                                view_box: "0 0 24 24",
-                                fill: "none",
-                                stroke: "currentColor",
-                                stroke_width: "2",
-                                line {
-                                    x1: "18",
-                                    y1: "6",
-                                    x2: "6",
-                                    y2: "18",
-                                }
-                                line {
-                                    x1: "6",
-                                    y1: "6",
-                                    x2: "18",
-                                    y2: "18",
-                                }
-                            }
-                        }
-                    }
+                    {title_el}
+                    {close_button}
                 }
 
                 div { class: body_classes, {children} }
@@ -792,23 +805,34 @@ fn PopoverPortalEntry(
 
     let backdrop_style = format!("position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: {}; background: transparent; pointer-events: auto;", backdrop_z_index);
 
-    rsx! {
-        if close_on_click_outside {
+    let backdrop = if close_on_click_outside {
+        rsx! {
             div {
                 class: "hi-popover-backdrop",
                 style: backdrop_style,
                 onclick: handle_close,
             }
         }
+    } else {
+        VNode::empty()
+    };
 
+    // Build title element outside rsx!
+    let title_el = if title.is_some() {
+        rsx! {
+            div { class: "hi-popover-title", {title.as_ref().unwrap().clone()} }
+        }
+    } else {
+        VNode::empty()
+    };
+
+    let popover_content = rsx! {
         div {
             class: popover_classes,
             style: popover_style,
             "data-open": "true",
 
-            if title.is_some() {
-                div { class: "hi-popover-title", {title.as_ref().unwrap().clone()} }
-            }
+            {title_el}
 
             div {
                 class: "hi-popover-content",
@@ -844,7 +868,9 @@ fn PopoverPortalEntry(
                 {children}
             }
         }
-    }
+    };
+
+    VNode::Fragment(vec![backdrop, popover_content])
 }
 
 #[component]
@@ -942,16 +968,23 @@ fn TooltipPortalEntry(
 
     let tooltip_style = format!("{} z-index: {}; pointer-events: none;", position_style.read(), z_index);
 
+    // Build arrow element outside rsx!
+    let arrow_el = if arrow {
+        rsx! {
+            div { class: "hi-tooltip-arrow" }
+        }
+    } else {
+        VNode::empty()
+    };
+
     rsx! {
         div {
             class: tooltip_classes,
             style: tooltip_style,
 
-            div { class: {TooltipClass::TooltipContent.as_class()}, {content.clone()} }
+            div { class: TooltipClass::TooltipContent.as_class(), {content.clone()} }
 
-            if arrow {
-                div { class: "hi-tooltip-arrow", }
-            }
+            {arrow_el}
         }
     }
 }

@@ -3,8 +3,6 @@
 
 use crate::prelude::*;
 use hikari_palette::classes::{CardClass, ClassesBuilder, UtilityClass};
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
 
 use crate::styled::StyledComponent;
 
@@ -113,93 +111,17 @@ pub fn Card(props: CardProps) -> Element {
         body,
     ]);
 
-    #[cfg(target_arch = "wasm32")]
-    {
-        rsx! {
-            div {
-                class: card_classes,
-                onclick: move |e| {
-                    if let Some(handler) = props.onclick.as_ref() {
-                        handler.call(e);
-                    }
-                },
-                onmousemove: move |event: Event<MouseData>| {
-                    if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
-                        let client_x = web_event.client_x() as f64;
-                        let client_y = web_event.client_y() as f64;
-
-                        // Find the card by traversing up from target
-                        let mut target: Option<web_sys::EventTarget> = web_event.target();
-
-                        while let Some(current) = target {
-                            let current_el = current.dyn_ref::<web_sys::Element>();
-
-                            if let Some(el) = current_el {
-                                if el.class_list().contains("hi-card") {
-                                    // Found the card
-                                    if let Some(card_el) = el.dyn_ref::<web_sys::HtmlElement>() {
-                                        let rect = card_el.get_bounding_client_rect();
-                                        let relative_x = client_x - rect.left();
-                                        let relative_y = client_y - rect.top();
-                                        let width = rect.width();
-                                        let height = rect.height();
-
-                                        if width > 0.0 && height > 0.0 {
-                                            let percent_x = ((relative_x / width) * 100.0)
-                                                .clamp(0.0, 100.0);
-                                            let percent_y = ((relative_y / height) * 100.0)
-                                                .clamp(0.0, 100.0);
-                                            let glow_el = card_el
-                                                .query_selector(".hi-card-glow")
-                                                .ok()
-                                                .flatten();
-                                            if let Some(glow_el) = glow_el {
-                                                glow_el
-                                                    .dyn_ref::<web_sys::HtmlElement>()
-                                                    .and_then(|style_el| {
-                                                        style_el
-                                                            .style()
-                                                            .set_property("--glow-x", &format!("{:.1}%", percent_x))
-                                                            .ok()
-                                                    });
-                                                glow_el
-                                                    .dyn_ref::<web_sys::HtmlElement>()
-                                                    .and_then(|style_el| {
-                                                        style_el
-                                                            .style()
-                                                            .set_property("--glow-y", &format!("{:.1}%", percent_y))
-                                                            .ok()
-                                                    });
-                                            }
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                            let node = current.dyn_ref::<web_sys::Node>();
-                            target = node
-                                .and_then(|n| n.parent_node())
-                                .and_then(|n| n.dyn_into::<web_sys::EventTarget>().ok());
-                        }
-                    }
-                },
-                {content}
-            }
-        }
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        rsx! {
-            div {
-                class: card_classes,
-                onclick: move |e| {
-                    if let Some(handler) = props.onclick.as_ref() {
-                        handler.call(e);
-                    }
-                },
-                {content}
-            }
+    // Unified version for all targets
+    // Note: Glow effect with mouse tracking requires element refs which will be added later
+    rsx! {
+        div {
+            class: card_classes,
+            onclick: move |e| {
+                if let Some(handler) = props.onclick.as_ref() {
+                    handler.call(e);
+                }
+            },
+            {content}
         }
     }
 }

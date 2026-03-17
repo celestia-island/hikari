@@ -23,6 +23,16 @@ pub enum InputSize {
     Large,
 }
 
+impl IntoAttrValue for InputSize {
+    fn into_attr_value(self) -> Option<String> {
+        Some(match self {
+            InputSize::Small => "small".to_string(),
+            InputSize::Medium => "medium".to_string(),
+            InputSize::Large => "large".to_string(),
+        })
+    }
+}
+
 #[derive(Clone, PartialEq, Props)]
 pub struct InputProps {
     #[props(default)]

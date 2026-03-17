@@ -112,12 +112,14 @@ pub fn Selection(props: SelectionProps) -> Element {
         .add_if(SelectionClassNew::SelectionFixed, || props.fixed_column)
         .build();
 
+    let is_checkbox_type = props.selection_type == SelectionType::Checkbox;
+
     rsx! {
         div { class: container_classes,
 
             div { class: column_classes,
 
-                if props.selection_type == SelectionType::Checkbox {
+                if is_checkbox_type {
                     div { class: SelectionClassNew::SelectionHeader.as_class(),
                         label { class: SelectionClassNew::SelectionAll.as_class(),
                             input {
@@ -199,6 +201,12 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
         .add_if(SelectionClassNew::RowSelectionChecked, || is_selected)
         .build();
 
+    let is_checkbox = props.selection_type == SelectionType::Checkbox;
+    let is_radio = props.selection_type == SelectionType::Radio;
+    let show_checkbox_icon = is_checkbox && is_selected;
+    let show_radio_dot = is_radio && is_selected;
+    let input_name = if is_radio { "hi-selection-radio-group" } else { "" };
+
     rsx! {
         div { class: container_classes,
             label { class: SelectionClassNew::RowSelectionLabel.as_class(),
@@ -206,18 +214,14 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
                     class: SelectionClassNew::RowSelectionInput.as_class(),
                     r#type: "checkbox",
                     checked: is_selected,
-                    name: if props.selection_type == SelectionType::Radio {
-                        "hi-selection-radio-group"
-                    } else {
-                        ""
-                    },
+                    name: input_name,
                     onchange: handle_change,
                 }
 
                 span {
                     class: custom_classes,
 
-                    if props.selection_type == SelectionType::Checkbox && is_selected {
+                    if show_checkbox_icon {
                         svg {
                             xmlns: "http://www.w3.org/2000/svg",
                             fill: "none",
@@ -232,7 +236,7 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
                         }
                     }
 
-                    if props.selection_type == SelectionType::Radio && is_selected {
+                    if show_radio_dot {
                         span { class: SelectionClassNew::RowSelectionRadioDot.as_class() }
                     }
                 }

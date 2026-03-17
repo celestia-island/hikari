@@ -20,14 +20,14 @@ pub struct PortalContext {
 #[component]
 pub fn PortalProvider(children: Element) -> Element {
     let entries = use_signal(Vec::new);
-    let mut entries_for_callbacks = entries;
+    let mut entries_for_callbacks = entries.clone();
 
     let add_entry = Callback::new(move |entry: PortalEntry| {
         let mut e = entries_for_callbacks.write();
         e.push(entry);
     });
 
-    let mut entries_for_remove = entries;
+    let mut entries_for_remove = entries.clone();
     let remove_entry = Callback::new(move |id: String| {
         let mut e = entries_for_remove.write();
         e.retain(|entry| match entry {
@@ -39,13 +39,13 @@ pub fn PortalProvider(children: Element) -> Element {
         });
     });
 
-    let mut entries_for_clear = entries;
+    let mut entries_for_clear = entries.clone();
     let clear_all = Callback::new(move |_| {
         let mut e = entries_for_clear.write();
         e.clear();
     });
 
-    let mut entries_for_close_anim = entries;
+    let mut entries_for_close_anim = entries.clone();
     let start_close_animation = Callback::new(move |id: String| {
         let mut e = entries_for_close_anim.write();
         for entry in e.iter_mut() {
@@ -63,7 +63,7 @@ pub fn PortalProvider(children: Element) -> Element {
     });
 
     use_context_provider(|| PortalContext {
-        entries,
+        entries: entries.clone(),
         add_entry,
         remove_entry,
         clear_all,

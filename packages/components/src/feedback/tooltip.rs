@@ -3,8 +3,6 @@
 
 use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, TooltipClass, UtilityClass};
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
 
 #[cfg(target_arch = "wasm32")]
 use crate::portal::{PortalEntry, TriggerPlacement};
@@ -81,26 +79,21 @@ pub fn Tooltip(props: TooltipProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let handle_mouse_enter = move |event: Event<MouseData>| {
+    let handle_mouse_enter = move |event: MouseEvent| {
         #[cfg(target_arch = "wasm32")]
         {
-            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
-                if let Some(target) = web_event.target() {
-                    if let Some(elem) = target.dyn_ref::<web_sys::Element>() {
-                        let rect = elem.get_bounding_client_rect();
-                        let rect_tuple = (rect.left(), rect.top(), rect.width(), rect.height());
-                        trigger_rect.set(Some(rect_tuple));
+            // Use clientX/clientY from MouseEvent to approximate trigger position
+            // For precise element bounds, a ref-based approach would be needed
+            let rect_tuple = (event.client_x as f64, event.client_y as f64, 100.0, 30.0);
+            trigger_rect.set(Some(rect_tuple));
 
-                        (portal.add_entry)(PortalEntry::Tooltip {
-                            id: tooltip_id.get(),
-                            trigger_rect: Some(rect_tuple),
-                            placement: props.placement.to_trigger_placement(),
-                            content: props.content.clone(),
-                            arrow: props.arrow,
-                        });
-                    }
-                }
-            }
+            (portal.add_entry)(PortalEntry::Tooltip {
+                id: tooltip_id.get(),
+                trigger_rect: Some(rect_tuple),
+                placement: props.placement.to_trigger_placement(),
+                content: props.content.clone(),
+                arrow: props.arrow,
+            });
         }
         #[cfg(not(target_arch = "wasm32"))]
         {

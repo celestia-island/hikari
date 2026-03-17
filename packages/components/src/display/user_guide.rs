@@ -126,12 +126,17 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     // Pre-compute values needed in rsx! blocks
     let counter_text = format!("{} / {}", current_step + 1, total_steps);
     let next_btn_class = format!("{} {}", UserGuideClass::NavButton.as_class(), UserGuideClass::PrimaryButton.as_class());
-    let dot_classes: Vec<String> = (0..total_steps)
+
+    // Pre-build progress dots as Vec<VNode>
+    let progress_dots: Vec<VNode> = (0..total_steps)
         .map(|i| {
-            if i == current_step {
+            let dot_class = if i == current_step {
                 format!("{} {}", UserGuideClass::ProgressDot.as_class(), UserGuideClass::ProgressDotActive.as_class())
             } else {
                 UserGuideClass::ProgressDot.as_class()
+            };
+            rsx! {
+                div { class: dot_class }
             }
         })
         .collect();
@@ -139,6 +144,16 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     // Build overlay and guide separately, then combine as fragment
     let overlay = rsx! {
         div { class: {UserGuideClass::Overlay.as_class()} }
+    };
+
+    let progress_section = if props.show_progress && total_steps > 1 {
+        rsx! {
+            div { class: {UserGuideClass::Progress.as_class()},
+                {VNode::Fragment(progress_dots)}
+            }
+        }
+    } else {
+        VNode::empty()
     };
 
     let guide_tooltip = rsx! {
@@ -203,15 +218,7 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
             }
 
             // Progress dots
-            if props.show_progress && total_steps > 1 {
-                div { class: {UserGuideClass::Progress.as_class()},
-                    for i in 0..total_steps {
-                        div {
-                            class: dot_classes[i].clone(),
-                        }
-                    }
-                }
-            }
+            {progress_section}
         }
     };
 

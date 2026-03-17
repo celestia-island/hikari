@@ -40,6 +40,15 @@ impl Default for PopoverPositioning {
     }
 }
 
+impl IntoAttrValue for PopoverPositioning {
+    fn into_attr_value(self) -> Option<String> {
+        Some(match self {
+            PopoverPositioning::Relative { .. } => "relative".to_string(),
+            PopoverPositioning::Absolute(_) => "absolute".to_string(),
+        })
+    }
+}
+
 impl PopoverPositioning {
     pub fn default_relative() -> Self {
         PopoverPositioning::Relative {

@@ -172,11 +172,11 @@ pub fn Glow(props: GlowProps) -> Element {
         );
 
         // Handler for mouse move - update glow position
-        let onmousemove_handler = move |event: Event<MouseData>| {
-            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
-                let client_x = web_event.client_x() as f64;
-                let client_y = web_event.client_y() as f64;
+        let onmousemove_handler = move |event: MouseEvent| {
+            let client_x = event.client_x as f64;
+            let client_y = event.client_y as f64;
 
+            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
                 let mut target: Option<web_sys::EventTarget> = web_event.target();
 
                 while let Some(current) = target {
@@ -218,7 +218,7 @@ pub fn Glow(props: GlowProps) -> Element {
         };
 
         // Handler for mouse enter - show glow (hover state)
-        let onmouseenter_handler = move |event: Event<MouseData>| {
+        let onmouseenter_handler = move |event: MouseEvent| {
             #[cfg(target_arch = "wasm32")]
             {
                 if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
@@ -236,7 +236,7 @@ pub fn Glow(props: GlowProps) -> Element {
         };
 
         // Handler for mouse leave - hide glow (idle state)
-        let onmouseleave_handler = move |event: Event<MouseData>| {
+        let onmouseleave_handler = move |event: MouseEvent| {
             #[cfg(target_arch = "wasm32")]
             {
                 if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
@@ -255,7 +255,7 @@ pub fn Glow(props: GlowProps) -> Element {
 
         // Handler for mouse down - intense glow (active state)
         // Use onmousedown on the wrapper to catch the event from children
-        let onmousedown_handler = move |event: Event<MouseData>| {
+        let onmousedown_handler = move |event: MouseEvent| {
             #[cfg(target_arch = "wasm32")]
             {
                 if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
@@ -331,7 +331,7 @@ pub fn Glow(props: GlowProps) -> Element {
         };
 
         // Handler for mouse up - return to hover state
-        let onmouseup_handler = move |event: Event<MouseData>| {
+        let onmouseup_handler = move |event: MouseEvent| {
             #[cfg(target_arch = "wasm32")]
             {
                 if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {

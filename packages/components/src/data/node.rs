@@ -61,6 +61,30 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
     let node_key = props.node_key.clone();
     let level = props.level;
 
+    // Pre-build child nodes as Vec<Element> to avoid let statements in for loop
+    let child_nodes: Vec<Element> = if has_children && is_expanded.get() {
+        if let Some(children) = &props.node_children {
+            children
+                .iter()
+                .map(|child| {
+                    rsx! {
+                        TreeNode {
+                            node_key: child.key.clone(),
+                            label: child.label.clone(),
+                            node_children: child.children.clone(),
+                            disabled: child.disabled,
+                            level: props.level + 1,
+                        }
+                    }
+                })
+                .collect()
+        } else {
+            vec![]
+        }
+    } else {
+        vec![]
+    };
+
     rsx! {
         li {
             class: node_classes,
@@ -112,18 +136,7 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
                     class: "hi-tree-node-children",
                     role: "group",
 
-                    if let Some(children) = &props.node_children {
-                        for child in children {
-                            TreeNode {
-                                node_key: child.key.clone(),
-                                label: child.label.clone(),
-                                node_children: child.children.clone(),
-                                disabled: child.disabled,
-                                level: props.level + 1,
-                                ..TreeNodeProps::default()
-                            }
-                        }
-                    }
+                    VNode::Fragment(child_nodes)
                 }
             }
         }

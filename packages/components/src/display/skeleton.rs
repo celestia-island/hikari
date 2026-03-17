@@ -83,7 +83,7 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
     let animation_class = if props.animation {
         "hi-skeleton-animated"
     } else {
-{ "" }
+        ""
     };
 
     let mut style = props.style.clone();
@@ -107,18 +107,26 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
         let row_styles: Vec<String> = (0..rows)
             .map(|i| if i == rows - 1 { "width: 60%;".to_string() } else { String::new() })
             .collect();
+
+        let children: Vec<VNode> = (0..rows)
+            .map(|i| {
+                let row_style = row_styles[i as usize].clone();
+                let classes = classes.clone();
+                rsx! {
+                    div {
+                        key: i,
+                        class: classes,
+                        style: row_style,
+                    }
+                }
+            })
+            .collect();
+
         return rsx! {
             div {
                 class: "hi-skeleton-group",
                 style: "display: flex; flex-direction: column; gap: 0.5rem;",
-                for i in 0..rows {
-                    let row_style = row_styles[i as usize].clone();
-                    div {
-                        key: i,
-                        class: {classes.clone()},
-                        style: row_style,
-                    }
-                }
+                {children}
             }
         };
     }
@@ -160,6 +168,20 @@ pub fn SkeletonCard(props: SkeletonCardProps) -> Element {
         .add_raw(&props.class)
         .build();
 
+    let rows = props.rows;
+    let content_rows: Vec<VNode> = (0..rows)
+        .map(|i| {
+            let width = if i == rows - 1 { "70%" } else { "100%" };
+            rsx! {
+                Skeleton {
+                    key: i,
+                    variant: SkeletonVariant::Text,
+                    width: Some(width.to_string()),
+                }
+            }
+        })
+        .collect();
+
     rsx! {
         div {
             class: container_classes,
@@ -198,13 +220,7 @@ pub fn SkeletonCard(props: SkeletonCardProps) -> Element {
             div {
                 class: "hi-skeleton-card-content",
                 style: "display: flex; flex-direction: column; gap: 0.5rem;",
-                for i in 0..props.rows {
-                    Skeleton {
-                        key: i,
-                        variant: SkeletonVariant::Text,
-                        width: if i == props.rows - 1 { Some("70%".to_string()) } else { Some("100%".to_string()) },
-                    }
-                }
+                {content_rows}
             }
         }
     }
@@ -227,6 +243,48 @@ pub struct SkeletonTableProps {
 
 #[component]
 pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
+    let columns = props.columns;
+    let rows = props.rows;
+
+    // Build header cells
+    let header_cells: Vec<VNode> = (0..columns)
+        .map(|col| {
+            rsx! {
+                Skeleton {
+                    key: col,
+                    variant: SkeletonVariant::Text,
+                    width: Some("80px".to_string()),
+                    height: Some("16px".to_string()),
+                }
+            }
+        })
+        .collect();
+
+    // Build table rows
+    let table_rows: Vec<VNode> = (0..rows)
+        .map(|row| {
+            let cells: Vec<VNode> = (0..columns)
+                .map(|col| {
+                    rsx! {
+                        Skeleton {
+                            key: col,
+                            variant: SkeletonVariant::Text,
+                            height: Some("14px".to_string()),
+                        }
+                    }
+                })
+                .collect();
+            rsx! {
+                div {
+                    key: row,
+                    class: "hi-skeleton-table-row",
+                    style: "display: flex; gap: 1rem; padding: 0.75rem 1rem;",
+                    {cells}
+                }
+            }
+        })
+        .collect();
+
     rsx! {
         div {
             class: "hi-skeleton-table {props.class}",
@@ -235,30 +293,10 @@ pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
             div {
                 class: "hi-skeleton-table-header",
                 style: "display: flex; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--hi-color-border);",
-                for col in 0..props.columns {
-                    Skeleton {
-                        key: ("header", col),
-                        variant: SkeletonVariant::Text,
-                        width: Some("80px".to_string()),
-                        height: Some("16px".to_string()),
-                    }
-                }
+                {header_cells}
             }
 
-            for row in 0..props.rows {
-                div {
-                    key: row,
-                    class: "hi-skeleton-table-row",
-                    style: "display: flex; gap: 1rem; padding: 0.75rem 1rem;",
-                    for col in 0..props.columns {
-                        Skeleton {
-                            key: (row, col),
-                            variant: SkeletonVariant::Text,
-                            height: Some("14px".to_string()),
-                        }
-                    }
-                }
-            }
+            {table_rows}
         }
     }
 }

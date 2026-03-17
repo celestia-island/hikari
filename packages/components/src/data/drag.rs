@@ -133,6 +133,7 @@ fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
     let item_key_3 = props.node.item_key.clone();
     let item_key_4 = props.node.item_key.clone();
     let disabled = props.node.disabled;
+    let node_title = props.node.title.clone();
 
     let is_dragging = props.dragged_key.read().as_ref() == Some(&item_key_1);
 
@@ -244,13 +245,13 @@ fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
 
                 div {
                     class: "hi-node-content",
-                    "{props.node.title.clone()}"
+                    {node_title}
                 }
 
                 if is_dragging {
                     div {
                         class: "hi-drag-ghost",
-{ "" }
+                        key: "drag-ghost",
                     }
                 }
             }
@@ -258,7 +259,7 @@ fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
             if is_drag_over && props.drop_allowed {
                 div {
                     class: "hi-drop-line",
-{ "" }
+                    key: "drop-line",
                 }
             }
 

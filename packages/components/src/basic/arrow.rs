@@ -18,6 +18,17 @@ pub enum ArrowDirection {
     Down,
 }
 
+impl IntoAttrValue for ArrowDirection {
+    fn into_attr_value(self) -> Option<String> {
+        Some(match self {
+            ArrowDirection::Right => "right".to_string(),
+            ArrowDirection::Left => "left".to_string(),
+            ArrowDirection::Up => "up".to_string(),
+            ArrowDirection::Down => "down".to_string(),
+        })
+    }
+}
+
 ///
 ///
 ///

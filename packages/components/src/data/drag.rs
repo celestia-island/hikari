@@ -100,12 +100,12 @@ pub fn DragDropTree(props: DragDropTreeProps) -> Element {
                     depth: 0,
                     draggable: props.draggable,
                     drop_allowed: props.drop_allowed,
-                    allow_drag: props.allow_drag,
-                    allow_drop: props.allow_drop,
-                    dragged_key: dragged_key,
-                    drop_target: drop_target,
-                    drag_over_key: drag_over_key,
-                    on_drop: props.on_drop,
+                    allow_drag: props.allow_drag.clone(),
+                    allow_drop: props.allow_drop.clone(),
+                    dragged_key: dragged_key.clone(),
+                    drop_target: drop_target.clone(),
+                    drag_over_key: drag_over_key.clone(),
+                    on_drop: props.on_drop.clone(),
                 }
             }
         }
@@ -262,7 +262,7 @@ fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
 
                 div {
                     class: "hi-node-content",
-                    {node_title}
+                    "{node_title}"
                 }
 
                 if is_dragging {

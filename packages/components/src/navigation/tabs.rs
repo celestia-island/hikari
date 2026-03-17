@@ -191,7 +191,7 @@ pub fn TabPane(props: TabPaneProps) -> Element {
                 span { class: "hi-tabs-tab-icon", icon }
             }
 
-            span { class: "hi-tabs-tab-label", {props.tab} }
+            span { class: "hi-tabs-tab-label", "{props.tab}" }
         }
     };
 

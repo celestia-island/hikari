@@ -370,7 +370,7 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
                   Arrow {
                      direction: if is_open.read() { ArrowDirection::Down } else { ArrowDirection::Right },
                      size: 14,
-                     class: if is_open.read() { "hi-menu-item-arrow hi-menu-submenu-arrow-open" } else { "hi-menu-item-arrow" },
+                     class: if is_open.read() { "hi-menu-item-arrow hi-menu-submenu-arrow-open".to_string() } else { "hi-menu-item-arrow".to_string() },
                   }
              }
          }

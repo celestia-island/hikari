@@ -92,7 +92,7 @@ pub fn Stepper(props: StepperProps) -> Element {
 
                             // Step number
                             div {
-                                class: {step_number_class},
+                                class: step_number_class.clone(),
                                 "{step_number}"
                             }
 

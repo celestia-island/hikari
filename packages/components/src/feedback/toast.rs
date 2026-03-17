@@ -103,7 +103,7 @@ pub fn Toast(props: ToastProps) -> Element {
                 icon: MdiIcon::Information,
                 class: ToastClass::ToastIcon.as_class().to_string(),
                 size: 20,
-                color: "var(--hi-color-white-100)",
+                color: "var(--hi-color-white-100)".to_string(),
             }
         },
         ToastVariant::Success => rsx! {
@@ -111,7 +111,7 @@ pub fn Toast(props: ToastProps) -> Element {
                 icon: MdiIcon::Check,
                 class: ToastClass::ToastIcon.as_class().to_string(),
                 size: 20,
-                color: "var(--hi-color-white-100)",
+                color: "var(--hi-color-white-100)".to_string(),
             }
         },
         ToastVariant::Warning => rsx! {
@@ -119,7 +119,7 @@ pub fn Toast(props: ToastProps) -> Element {
                 icon: MdiIcon::AlertTriangle,
                 class: ToastClass::ToastIcon.as_class().to_string(),
                 size: 20,
-                color: "var(--hi-color-white-100)",
+                color: "var(--hi-color-white-100)".to_string(),
             }
         },
         ToastVariant::Error => rsx! {
@@ -127,14 +127,14 @@ pub fn Toast(props: ToastProps) -> Element {
                 icon: MdiIcon::Alert,
                 class: ToastClass::ToastIcon.as_class().to_string(),
                 size: 20,
-                color: "var(--hi-color-white-100)",
+                color: "var(--hi-color-white-100)".to_string(),
             }
         },
     };
 
     rsx! {
         Glow {
-            class: "hi-toast-glow-wrapper",
+            class: "hi-toast-glow-wrapper".to_string(),
             blur: GlowBlur::Medium,
             color: glow_color,
             intensity: GlowIntensity::Soft,
@@ -162,11 +162,11 @@ pub fn Toast(props: ToastProps) -> Element {
                         class: "hi-toast-close".to_string(),
                         icon_color: Some("var(--hi-color-white-100)".to_string()),
                         glow: false,
-                        onclick: Some(move |e| {
+                        onclick: move |e| {
                             if let Some(handler) = props.on_close.as_ref() {
                                 handler.call(e);
                             }
-                        }),
+                        },
                     }
                 }
             }

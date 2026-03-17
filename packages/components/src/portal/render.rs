@@ -122,7 +122,7 @@ fn use_animated_portal_entry(
     }
 
     (
-        internal_animation_state,
+        internal_animation_state.clone(),
         close_callback,
         computed_opacity_scale,
     )
@@ -296,7 +296,7 @@ fn ModalPortalEntry(
     // Build title element outside rsx!
     let title_el = if title.is_some() {
         rsx! {
-            h3 { class: title_classes, {title.as_ref().unwrap().clone()} }
+            h3 { class: title_classes, "{title.as_ref().unwrap().clone()}" }
         }
     } else {
         VNode::empty()
@@ -815,7 +815,7 @@ fn PopoverPortalEntry(
     // Build title element outside rsx!
     let title_el = if title.is_some() {
         rsx! {
-            div { class: "hi-popover-title", {title.as_ref().unwrap().clone()} }
+            div { class: "hi-popover-title", "{title.as_ref().unwrap().clone()}" }
         }
     } else {
         VNode::empty()

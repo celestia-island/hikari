@@ -212,10 +212,10 @@ fn StepItem(props: StepItemProps) -> Element {
 
     let icon_el = match props.step_status {
         StepStatus::Wait => rsx! {
-            span { class: props.number_class, {step_number} }
+            span { class: props.number_class, "{step_number}" }
         },
         StepStatus::Process => rsx! {
-            span { class: props.number_class, {step_number} }
+            span { class: props.number_class, "{step_number}" }
         },
         StepStatus::Finish => rsx! {
             svg {
@@ -242,7 +242,7 @@ fn StepItem(props: StepItemProps) -> Element {
     };
 
     let desc_el = if let Some(ref desc) = step_description {
-        rsx! { div { class: props.description_class, {desc} } }
+        rsx! { div { class: props.description_class, "{desc}" } }
     } else {
         VNode::empty()
     };

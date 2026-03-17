@@ -252,13 +252,7 @@ pub fn Select(props: SelectProps) -> Element {
             div { class: trigger_classes, onclick: handle_trigger_click,
 
                 span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
-                    {
-                        if let Some(label) = &selected_label {
-                            label.clone()
-                        } else {
-                            props.placeholder.clone().unwrap_or_else(|| "请选择".to_string())
-                        }
-                    }
+                    "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"请选择\".to_string()) }}"
                 }
 
                 // Chevron arrow

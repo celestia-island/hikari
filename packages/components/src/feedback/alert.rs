@@ -74,7 +74,7 @@ pub fn Alert(props: AlertProps) -> Element {
                 icon: MdiIcon::Information,
                 class: AlertClass::AlertIcon.as_class().to_string(),
                 size: 20,
-                color: "var(--hi-color-primary)",
+                color: "var(--hi-color-primary)".to_string(),
             }
         }),
         AlertVariant::Success => Some(rsx! {
@@ -82,7 +82,7 @@ pub fn Alert(props: AlertProps) -> Element {
                 icon: MdiIcon::Check,
                 class: AlertClass::AlertIcon.as_class().to_string(),
                 size: 20,
-                color: "var(--hi-color-success)",
+                color: "var(--hi-color-success)".to_string(),
             }
         }),
         AlertVariant::Warning => Some(rsx! {
@@ -90,7 +90,7 @@ pub fn Alert(props: AlertProps) -> Element {
                 icon: MdiIcon::AlertTriangle,
                 class: AlertClass::AlertIcon.as_class().to_string(),
                 size: 20,
-                color: "var(--hi-color-warning)",
+                color: "var(--hi-color-warning)".to_string(),
             }
         }),
         AlertVariant::Error => Some(rsx! {
@@ -98,7 +98,7 @@ pub fn Alert(props: AlertProps) -> Element {
                 icon: MdiIcon::Alert,
                 class: AlertClass::AlertIcon.as_class().to_string(),
                 size: 20,
-                color: "var(--hi-color-danger)",
+                color: "var(--hi-color-danger)".to_string(),
             }
         }),
     };
@@ -112,7 +112,7 @@ pub fn Alert(props: AlertProps) -> Element {
 
     rsx! {
         Glow {
-            class: "hi-alert-glow-wrapper",
+            class: "hi-alert-glow-wrapper".to_string(),
             blur: GlowBlur::Light,
             color: glow_color,
             intensity: GlowIntensity::Soft,
@@ -121,7 +121,7 @@ pub fn Alert(props: AlertProps) -> Element {
 
                 if icon.is_some() {
                     div { class: icon_wrapper_class,
-                        { icon.as_ref().unwrap() }
+                        { icon.unwrap().clone() }
                     }
                 }
 

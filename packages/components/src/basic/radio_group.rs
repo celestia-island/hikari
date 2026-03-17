@@ -6,7 +6,7 @@ use hikari_palette::classes::{ClassesBuilder, RadioClass};
 
 use crate::styled::StyledComponent;
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct RadioContext {
     pub name: &'static str,
     pub selected_value: Signal<String>,
@@ -27,11 +27,13 @@ pub struct RadioButtonProps {
 
 #[component]
 pub fn RadioButton(props: RadioButtonProps) -> Element {
-    let ctx = use_context::<RadioContext>();
+    let ctx = use_context::<RadioContext>().expect("RadioContext not found");
+    let ctx = ctx.get();
     let is_checked = *ctx.selected_value.read() == props.value;
     let disabled = props.disabled || ctx.disabled;
 
     let radio_name = ctx.name.to_string();
+    let on_change = ctx.on_change.clone();
 
     let radio_classes = ClassesBuilder::new()
         .add(RadioClass::Label)
@@ -41,7 +43,7 @@ pub fn RadioButton(props: RadioButtonProps) -> Element {
     let handle_change = {
         let value = props.value.clone();
         move |_| {
-            (ctx.on_change)(value.clone());
+            on_change.call(value.clone());
         }
     };
 

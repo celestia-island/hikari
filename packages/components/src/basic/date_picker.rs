@@ -60,7 +60,7 @@ pub fn DatePicker(props: DatePickerProps) -> Element {
     let disabled_class = if props.disabled {
         "hi-date-picker-disabled"
     } else {
-{ "" }
+        ""
     };
 
     let display_value = props.value.clone().unwrap_or_default();
@@ -80,11 +80,9 @@ pub fn DatePicker(props: DatePickerProps) -> Element {
                 disabled: props.disabled,
                 readonly: props.readonly,
                 placeholder: props.placeholder,
-                onchange: move |e: Event| {
+                onchange: move |e: ChangeEvent| {
                     if let Some(handler) = props.on_change.as_ref() {
-                        if let Some(form_data) = e.as_any().downcast_ref::<FormData>() {
-                            handler.call(form_data.value.clone());
-                        }
+                        handler.call(e.value.clone());
                     }
                 },
                 onfocus: move |e: FocusEvent| {

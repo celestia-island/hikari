@@ -137,10 +137,10 @@ pub fn Selection(props: SelectionProps) -> Element {
                     let checked = is_row_selected(key);
 
                     rsx! {
-                        div { class: SelectionClassNew::SelectionRow.as_class(),
-                            label { class: SelectionClassNew::SelectionItem.as_class(),
+                        div { class: {SelectionClassNew::SelectionRow.as_class()},
+                            label { class: {SelectionClassNew::SelectionItem.as_class()},
                                 input {
-                                    class: SelectionClassNew::SelectionCheckbox.as_class(),
+                                    class: {SelectionClassNew::SelectionCheckbox.as_class()},
                                     r#type: get_input_type(),
                                     checked: checked,
                                     name: if props.selection_type == SelectionType::Radio {
@@ -150,7 +150,7 @@ pub fn Selection(props: SelectionProps) -> Element {
                                     },
                                     onchange: move |_| handle_row_select(key_clone.clone()),
                                 }
-                                {key.clone()}
+                                "{key}"
                             }
                         }
                     }

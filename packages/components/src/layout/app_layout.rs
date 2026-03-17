@@ -75,7 +75,7 @@ pub fn Layout(
         .build();
 
     let overlay_classes = ClassesBuilder::new()
-        .add_if(LayoutClass::OverlayOpen, || *is_drawer_open.read())
+        .add_if(LayoutClass::OverlayOpen, || is_drawer_open.read())
         .build();
 
     rsx! {

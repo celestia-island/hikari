@@ -117,7 +117,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
             }
 
             let options = filtered_options.read().clone();
-            let current = *focused_index.read();
+            let current = focused_index.read();
 
             match e.key() {
                 Key::Enter => {
@@ -162,8 +162,8 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
 
     let input_classes = ClassesBuilder::new().add(AutoCompleteClass::Input).build();
 
-    let is_open_value = *is_open.read();
-    let focused_index_value = *focused_index.read();
+    let is_open_value = is_open.read();
+    let focused_index_value = focused_index.read();
     let options_arr = filtered_options.read().clone();
 
     let wrapper_class = AutoCompleteClass::Wrapper.as_class();

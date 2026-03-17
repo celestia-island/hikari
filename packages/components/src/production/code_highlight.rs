@@ -115,7 +115,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
     // Computed button class with copied state
     let button_class = {
         let base = copy_classes.clone();
-        let copied_state = *copied.read();
+        let copied_state = copied.read();
         if copied_state {
             format!("{} copied hi-code-highlight-copy-copied", base)
         } else {
@@ -123,7 +123,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         }
     };
 
-    let button_text = if *copied.read() {
+    let button_text = if copied.read() {
         "已复制"
     } else {
         "复制"

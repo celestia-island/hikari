@@ -136,7 +136,7 @@
 //!         },
 //!         mask_mode: PortalMaskMode::Transparent,
 //!         children: rsx! { div { "Menu items" } },
-//!         trigger_rect: *trigger_rect.read(),
+//!         trigger_rect: trigger_rect.read(),
 //!         close_on_select: true,
 //!     });
 //! };

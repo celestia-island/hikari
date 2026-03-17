@@ -65,7 +65,7 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
     let checked = props.checked;
     use_effect(move || {
         // Only animate if state actually changed
-        if *prev_checked.read() != checked {
+        if prev_checked.read() != checked {
             prev_checked.set(checked);
         }
     });

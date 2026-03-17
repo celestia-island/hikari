@@ -87,7 +87,7 @@ pub fn Aside(
         builder = builder.add_raw("hi-aside-rtl");
     }
 
-    if *is_open.read() {
+    if is_open.read() {
         builder = builder.add(AsideClass::DrawerOpen);
     }
 

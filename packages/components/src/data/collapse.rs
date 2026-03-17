@@ -53,21 +53,21 @@ pub fn Collapse(props: CollapseProps) -> Element {
     };
 
     // Use a large max-height for expanded state (will be clamped by content height)
-    let max_height = if *is_expanded.read() {
+    let max_height = if is_expanded.read() {
         "1000px".to_string()
     } else {
         "0px".to_string()
     };
 
-    let opacity = if *is_expanded.read() { "1" } else { "0" };
+    let opacity = if is_expanded.read() { "1" } else { "0" };
 
-    let arrow_rotation = if *is_expanded.read() { "90deg" } else { "0deg" };
+    let arrow_rotation = if is_expanded.read() { "90deg" } else { "0deg" };
 
     let handle_toggle = move |_| {
         is_expanded.set(!is_expanded.get());
 
         if let Some(handler) = props.on_expand.as_ref() {
-            handler.call(*is_expanded.read());
+            handler.call(is_expanded.read());
         }
     };
 
@@ -97,7 +97,7 @@ pub fn Collapse(props: CollapseProps) -> Element {
 
             div {
                 class: "hi-collapse-content",
-                class: if *is_expanded.read() { "hi-collapse-expanded" } else { "" },
+                class: if is_expanded.read() { "hi-collapse-expanded" } else { "" },
                 style: format!(
                     "max-height: {}; overflow: hidden; opacity: {}; {};",
                     max_height, opacity, animation_style

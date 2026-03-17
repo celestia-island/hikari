@@ -57,7 +57,7 @@
 
 ### hikari-components 编译修复
 
-**当前错误数**: ~148 (从初始 ~232 减少 36%)
+**当前错误数**: ~139 (从初始 ~232 减少 40%)
 
 **已修复错误类型**:
 - ✅ Event<T> generic args → Event with downcast
@@ -66,10 +66,12 @@
 - ✅ IntoAttrValue for component enum types (ArrowDirection, InputSize, StepStatus, etc.)
 - ✅ rsx! 语法: let in for loops → Vec<VNode> pattern
 - ✅ rsx! 语法: tuple keys → simple keys
+- ✅ Context<T> access via .get() method
+- ✅ RadioContext Copy → Clone
 
 **剩余错误类型**:
-- 55 mismatched types (VNode 转换问题)
-- 7 type annotations needed
+- 47 mismatched types (VNode 转换问题)
+- 7 type annotations needed (event handlers)
 - 4 expected `,` (rsx! 语法)
 - IntoAttrValue for Vec types (可能需要不同方法)
 

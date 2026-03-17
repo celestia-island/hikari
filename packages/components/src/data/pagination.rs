@@ -404,7 +404,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                         Icon {
                                             icon: MdiIcon::DotsHorizontal,
                                             size: 16,
-                                            color: "var(--hi-color-text-secondary)",
+                                            color: "var(--hi-color-text-secondary)".to_string(),
                                         }
                                     }
                                 }
@@ -436,7 +436,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                         Icon {
                                             icon: MdiIcon::DotsHorizontal,
                                             size: 16,
-                                            color: "var(--hi-color-text-secondary)",
+                                            color: "var(--hi-color-text-secondary)".to_string(),
                                         }
                                     }
                                 }

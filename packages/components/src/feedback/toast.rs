@@ -162,11 +162,11 @@ pub fn Toast(props: ToastProps) -> Element {
                         class: "hi-toast-close".to_string(),
                         icon_color: Some("var(--hi-color-white-100)".to_string()),
                         glow: false,
-                        onclick: move |e| {
+                        onclick: Some(move |e| {
                             if let Some(handler) = props.on_close.as_ref() {
                                 handler.call(e);
                             }
-                        },
+                        }),
                     }
                 }
             }

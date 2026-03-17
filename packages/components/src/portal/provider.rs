@@ -71,11 +71,9 @@ pub fn PortalProvider(children: Element) -> Element {
     });
 
     rsx! {
-        Fragment {
-            children
-            PortalRender {
-                entries,
-            }
+        {children}
+        PortalRender {
+            entries,
         }
     }
 }

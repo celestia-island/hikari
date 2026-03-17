@@ -183,8 +183,8 @@ pub fn Pagination(props: PaginationProps) -> Element {
         }
     };
 
-    let handle_size_change = move |evt: FormEvent| {
-        if let Ok(size) = evt.value().parse::<u32>() {
+    let handle_size_change = move |evt: ChangeEvent| {
+        if let Ok(size) = evt.value.parse::<u32>() {
             current_size.set(size);
 
             let new_total_pages = if total_items == 0 {

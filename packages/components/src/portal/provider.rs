@@ -5,7 +5,7 @@ use std::sync::atomic::Ordering;
 
 use crate::prelude::*;
 
-use super::render::PortalRender;
+use super::render::{PortalRender, PortalRenderProps};
 use crate::portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry};
 
 #[derive(Clone)]
@@ -71,7 +71,7 @@ pub fn PortalProvider(children: Element) -> Element {
     });
 
     rsx! {
-        {children}
+        children
         PortalRender {
             entries,
         }

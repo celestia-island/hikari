@@ -84,8 +84,9 @@ pub fn Tooltip(props: TooltipProps) -> Element {
         let trigger_rect = trigger_rect.clone();
         let portal_add_entry = portal.add_entry.clone();
         let content = props.content.clone();
-        let placement = props.placement.to_trigger_placement();
         let arrow = props.arrow;
+        #[cfg(target_arch = "wasm32")]
+        let placement = props.placement.to_trigger_placement();
         move |event: MouseEvent| {
             #[cfg(target_arch = "wasm32")]
             {
@@ -104,7 +105,7 @@ pub fn Tooltip(props: TooltipProps) -> Element {
             }
             #[cfg(not(target_arch = "wasm32"))]
             {
-                let _ = (&tooltip_id, &trigger_rect, &event);
+                let _ = (&tooltip_id, &trigger_rect, &event, &content, arrow);
             }
         }
     };

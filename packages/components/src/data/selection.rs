@@ -48,30 +48,41 @@ pub fn Selection(props: SelectionProps) -> Element {
     let available_keys_for_effect = available_keys.clone();
     let available_keys_for_select_all = available_keys.clone();
 
+    // Clone signals for use_effect
+    let selected_for_effect = selected.clone();
+    let is_all_selected_for_effect = is_all_selected.clone();
+    let is_indeterminate_for_effect = is_indeterminate.clone();
     use_effect(move || {
-        let total_selected = selected.get().len();
+        let total_selected = selected_for_effect.get().len();
         let total_available = available_keys_for_effect.len();
 
-        is_all_selected.set(total_selected > 0 && total_selected == total_available);
-        is_indeterminate.set(total_selected > 0 && total_selected < total_available);
+        is_all_selected_for_effect.set(total_selected > 0 && total_selected == total_available);
+        is_indeterminate_for_effect.set(total_selected > 0 && total_selected < total_available);
     });
 
+    // Clone signals for handle_select_all
+    let selected_for_select_all = selected.clone();
+    let is_all_selected_for_select_all = is_all_selected.clone();
+    let on_change_for_select_all = props.on_change.clone();
     let handle_select_all = move |_| {
-        let new_selection = if is_all_selected.get() {
+        let new_selection = if is_all_selected_for_select_all.get() {
             Vec::new()
         } else {
             available_keys_for_select_all.clone()
         };
 
-        selected.set(new_selection.clone());
+        selected_for_select_all.set(new_selection.clone());
 
-        if let Some(handler) = props.on_change.as_ref() {
+        if let Some(handler) = on_change_for_select_all.as_ref() {
             handler.call(new_selection);
         }
     };
 
+    // Clone signals for handle_row_select
+    let selected_for_row_select = selected.clone();
+    let on_change_for_row_select = props.on_change.clone();
     let mut handle_row_select = move |row_key: String| {
-        let mut new_selection = selected.get();
+        let mut new_selection = selected_for_row_select.get();
 
         match props.selection_type {
             SelectionType::Checkbox => {
@@ -87,14 +98,16 @@ pub fn Selection(props: SelectionProps) -> Element {
             }
         }
 
-        selected.set(new_selection.clone());
+        selected_for_row_select.set(new_selection.clone());
 
-        if let Some(handler) = props.on_change.as_ref() {
+        if let Some(handler) = on_change_for_row_select.as_ref() {
             handler.call(new_selection);
         }
     };
 
-    let is_row_selected = move |key: &str| -> bool { selected.get().iter().any(|k| k == key) };
+    // Clone signal for is_row_selected
+    let selected_for_is_row = selected.clone();
+    let is_row_selected = move |key: &str| -> bool { selected_for_is_row.get().iter().any(|k| k == key) };
 
     let get_input_type = || match props.selection_type {
         SelectionType::Checkbox => "checkbox",
@@ -114,6 +127,33 @@ pub fn Selection(props: SelectionProps) -> Element {
 
     let is_checkbox_type = props.selection_type == SelectionType::Checkbox;
 
+    // Clone is_all_selected for use in rsx! template
+    let is_all_selected_for_template = is_all_selected.clone();
+
+    let selection_items: Vec<Element> = available_keys.iter().map(|key| {
+        let key_clone = key.clone();
+        let checked = is_row_selected(key);
+
+        rsx! {
+            div { class: {SelectionClassNew::SelectionRow.as_class()},
+                label { class: {SelectionClassNew::SelectionItem.as_class()},
+                    input {
+                        class: {SelectionClassNew::SelectionCheckbox.as_class()},
+                        r#type: get_input_type(),
+                        checked: checked,
+                        name: if props.selection_type == SelectionType::Radio {
+                            "hi-selection-radio-group"
+                        } else {
+                            ""
+                        },
+                        onchange: move |_| handle_row_select(key_clone.clone()),
+                    }
+                    "{key}"
+                }
+            }
+        }
+    }).collect();
+
     rsx! {
         div { class: {container_classes},
 
@@ -125,36 +165,12 @@ pub fn Selection(props: SelectionProps) -> Element {
                             input {
                                 class: {SelectionClassNew::SelectionCheckbox.as_class()},
                                 r#type: "checkbox",
-                                checked: is_all_selected.get(),
+                                checked: is_all_selected_for_template.get(),
                                 onchange: handle_select_all,
                             }
                         }
                     }
                 }
-
-                let selection_items: Vec<Element> = available_keys.iter().map(|key| {
-                    let key_clone = key.clone();
-                    let checked = is_row_selected(key);
-
-                    rsx! {
-                        div { class: {SelectionClassNew::SelectionRow.as_class()},
-                            label { class: {SelectionClassNew::SelectionItem.as_class()},
-                                input {
-                                    class: {SelectionClassNew::SelectionCheckbox.as_class()},
-                                    r#type: get_input_type(),
-                                    checked: checked,
-                                    name: if props.selection_type == SelectionType::Radio {
-                                        "hi-selection-radio-group"
-                                    } else {
-                                        ""
-                                    },
-                                    onchange: move |_| handle_row_select(key_clone.clone()),
-                                }
-                                "{key}"
-                            }
-                        }
-                    }
-                }).collect();
 
                 ..selection_items
             }

@@ -161,7 +161,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
             } => {
                 rsx! {
                     IconButton {
-                        icon: *icon,
+                        icon: Some(*icon),
                         size: icon_button_size,
                         variant: crate::basic::IconButtonVariant::Ghost,
                         disabled: *disabled || props.disabled,
@@ -169,7 +169,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                         glow_intensity: GlowIntensity::Soft,
                         glow_blur: GlowBlur::None,
                         glow_color: GlowColor::Ghost,
-                        onclick: *onclick,
+                        onclick: Some((*onclick).clone()),
                         // Use explicit CSS variable instead of "inherit" to avoid color inheritance issues
                         icon_color: icon_color.clone().or_else(|| Some("var(--hi-color-text-secondary)".to_string())),
                     }
@@ -179,7 +179,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                 // Pure icon display - always disabled with default glow
                 rsx! {
                     IconButton {
-                        icon: *icon,
+                        icon: Some(*icon),
                         size: icon_button_size,
                         variant: crate::basic::IconButtonVariant::Ghost,
                         disabled: true,
@@ -187,7 +187,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                         glow_intensity: GlowIntensity::Soft,
                         glow_blur: GlowBlur::None,
                         glow_color: GlowColor::Ghost,
-                        onclick: EventHandler::new(|_| {}),
+                        onclick: Some(EventHandler::new(|_| {})),
                     }
                 }
             }
@@ -217,7 +217,9 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
             // Input section
             div {
                 class: InputWrapperClass::InputSection.as_class(),
-                { props.input }
+                if let Some(input) = props.input.as_ref() {
+                    { input.clone() }
+                }
             }
 
             // Right section

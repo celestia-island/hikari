@@ -190,14 +190,14 @@ pub fn Search(props: SearchProps) -> Element {
                     props.on_search.call(new_value);
                 },
                 onkeydown: move |e| {
-                    if e.key() == Key::Enter {
+                    if e.key_code() == Key::Enter {
                         let id = dropdown_id.get();
                         if !id.is_empty() {
                             portal.remove_entry.call(id);
                         }
                         props.on_search.call(value_signal.get());
                     }
-                    if e.key() == Key::Escape {
+                    if e.key_code() == Key::Escape {
                         let id = dropdown_id.get();
                         if !id.is_empty() {
                             portal.remove_entry.call(id);

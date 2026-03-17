@@ -83,7 +83,7 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
     let animation_class = if props.animation {
         "hi-skeleton-animated"
     } else {
-        ""
+{ "" }
     };
 
     let mut style = props.style.clone();
@@ -104,16 +104,19 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
 
     if props.rows.is_some() && props.rows.unwrap() > 1 {
         let rows = props.rows.unwrap();
+        let row_styles: Vec<String> = (0..rows)
+            .map(|i| if i == rows - 1 { "width: 60%;".to_string() } else { String::new() })
+            .collect();
         return rsx! {
             div {
                 class: "hi-skeleton-group",
                 style: "display: flex; flex-direction: column; gap: 0.5rem;",
                 for i in 0..rows {
+                    let row_style = row_styles[i as usize].clone();
                     div {
                         key: i,
-                        class: classes.clone(),
-                        style: if i == rows - 1 { "width: 60%;" } else { "" },
-                        ""
+                        class: {classes.clone()},
+                        style: row_style,
                     }
                 }
             }
@@ -124,7 +127,6 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
         div {
             class: classes,
             style: style,
-            {""}
         }
     }
 }

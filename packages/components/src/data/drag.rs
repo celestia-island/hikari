@@ -244,7 +244,7 @@ fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
 
                 div {
                     class: "hi-node-content",
-                    {props.node.title.clone()}
+                    "{props.node.title.clone()}"
                 }
 
                 if is_dragging {

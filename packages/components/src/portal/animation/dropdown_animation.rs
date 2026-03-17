@@ -12,7 +12,10 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::style_builder::{CssProperty, StyleBuilder};
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+#[cfg(target_arch = "wasm32")]
+use web_sys;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DropdownAnimationState {
@@ -43,12 +46,14 @@ impl DropdownAnimationState {
 }
 
 #[derive(Clone)]
+#[cfg(target_arch = "wasm32")]
 pub struct DropdownRenderContext {
     pub overlay: web_sys::Element,
     pub content: web_sys::Element,
     pub state: Rc<RefCell<DropdownAnimationState>>,
 }
 
+#[cfg(target_arch = "wasm32")]
 impl DropdownRenderContext {
     pub fn new(overlay: web_sys::Element, content: web_sys::Element) -> Self {
         Self {
@@ -78,6 +83,7 @@ pub enum DropdownEvent {
 ///
 ///
 ///
+#[cfg(target_arch = "wasm32")]
 pub fn dropdown_transition(ctx: &DropdownRenderContext, event: DropdownEvent) -> bool {
     let current_state = ctx.state();
     let new_state = match (current_state, event) {
@@ -122,6 +128,7 @@ pub fn dropdown_transition(ctx: &DropdownRenderContext, event: DropdownEvent) ->
 ///
 ///
 ///
+#[cfg(target_arch = "wasm32")]
 pub fn dropdown_render(ctx: &DropdownRenderContext) -> bool {
     let state = ctx.state();
     let opacity = state.target_opacity();

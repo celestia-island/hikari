@@ -3,6 +3,9 @@
 //! This is a lightweight replacement for hikari_animation::style that can be used
 //! in non-WASM builds.
 
+#[cfg(target_arch = "wasm32")]
+pub use hikari_animation::style::{AttributeBuilder, Property, StyleBuilder};
+
 /// CSS property names for type-safe style building
 #[derive(Debug, Clone, Copy)]
 pub enum CssProperty {
@@ -21,6 +24,8 @@ pub enum CssProperty {
     AlignItems,
     JustifyContent,
     Overflow,
+    OverflowX,
+    OverflowY,
     Position,
     Top,
     Left,
@@ -82,6 +87,8 @@ pub enum CssProperty {
     Animation,
     Filter,
     ClipPath,
+    ObjectFit,
+    TransformOrigin,
 }
 
 impl CssProperty {
@@ -103,6 +110,8 @@ impl CssProperty {
             CssProperty::AlignItems => "align-items",
             CssProperty::JustifyContent => "justify-content",
             CssProperty::Overflow => "overflow",
+            CssProperty::OverflowX => "overflow-x",
+            CssProperty::OverflowY => "overflow-y",
             CssProperty::Position => "position",
             CssProperty::Top => "top",
             CssProperty::Left => "left",
@@ -164,6 +173,8 @@ impl CssProperty {
             CssProperty::Animation => "animation",
             CssProperty::Filter => "filter",
             CssProperty::ClipPath => "clip-path",
+            CssProperty::ObjectFit => "object-fit",
+            CssProperty::TransformOrigin => "transform-origin",
         }
     }
 }
@@ -225,7 +236,8 @@ impl StyleStringBuilder {
     }
 }
 
-/// Type alias for compatibility
+/// Type alias for compatibility (non-WASM only uses string builder)
+#[cfg(not(target_arch = "wasm32"))]
 pub type StyleBuilder = StyleStringBuilder;
 
 #[cfg(test)]

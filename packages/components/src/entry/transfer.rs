@@ -245,24 +245,25 @@ fn TransferPanel(
     let items = filtered_items();
 
     rsx! {
-        div { class: TransferClass::Panel.as_class(),
-            div { class: TransferClass::PanelHeader.as_class(),
+        div { class: {TransferClass::Panel.as_class()},
+            div { class: {TransferClass::PanelHeader.as_class()},
                 input {
-                    class: TransferClass::PanelCheckbox.as_class(),
+                    class: {TransferClass::PanelCheckbox.as_class()},
                     r#type: "checkbox",
                     checked: is_all_selected,
                     onchange: handle_toggle_all,
                 }
-                span { class: TransferClass::PanelTitle.as_class(), {title.clone()} }
-                span { class: TransferClass::PanelCount.as_class(),
+                span { class: {TransferClass::PanelTitle.as_class()}, {title.clone()} }
+                span { class: {TransferClass::PanelCount.as_class()},
                     {items.len().to_string()}
                 }
             }
 
             if show_search {
-                div { class: TransferClass::PanelSearch.as_class(),
+                div {
+                    class: {TransferClass::PanelSearch.as_class()},
                     input {
-                        class: TransferClass::PanelInput.as_class(),
+                        class: {TransferClass::PanelInput.as_class()},
                         r#type: "text",
                         placeholder: "Search...",
                         value: search_text.get(),
@@ -271,7 +272,7 @@ fn TransferPanel(
                 }
             }
 
-             ul { class: TransferClass::PanelList.as_class(),
+             ul { class: {TransferClass::PanelList.as_class()},
                 for item in items.iter() {
                     {
                         // Capture values for the closure (each item gets its own clone)

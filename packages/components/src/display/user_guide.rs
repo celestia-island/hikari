@@ -123,58 +123,71 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
         }
     };
 
+    // Pre-compute values needed in rsx! blocks
+    let counter_text = format!("{} / {}", current_step + 1, total_steps);
+    let next_btn_class = format!("{} {}", UserGuideClass::NavButton.as_class(), UserGuideClass::PrimaryButton.as_class());
+    let dot_classes: Vec<String> = (0..total_steps)
+        .map(|i| {
+            if i == current_step {
+                format!("{} {}", UserGuideClass::ProgressDot.as_class(), UserGuideClass::ProgressDotActive.as_class())
+            } else {
+                UserGuideClass::ProgressDot.as_class()
+            }
+        })
+        .collect();
+
     // Build overlay and guide separately, then combine as fragment
     let overlay = rsx! {
-        div { class: UserGuideClass::Overlay.as_class() }
+        div { class: {UserGuideClass::Overlay.as_class()} }
     };
 
     let guide_tooltip = rsx! {
         div { class: container_classes,
             // Arrow
-            div { class: UserGuideClass::Arrow.as_class() }
+            div { class: {UserGuideClass::Arrow.as_class()} }
 
             // Content
-            div { class: UserGuideClass::Content.as_class(),
+            div { class: {UserGuideClass::Content.as_class()},
                 // Header with step counter
-                div { class: UserGuideClass::Header.as_class(),
-                    span { class: UserGuideClass::Title.as_class(),
+                div { class: {UserGuideClass::Header.as_class()},
+                    span { class: {UserGuideClass::Title.as_class()},
                         {step.title.clone()}
                     }
                     if props.show_progress {
-                        span { class: UserGuideClass::Counter.as_class(),
-                            {format!("{} / {}", current_step + 1, total_steps)}
+                        span { class: {UserGuideClass::Counter.as_class()},
+                            {counter_text.clone()}
                         }
                     }
                 }
 
                 // Description
-                div { class: UserGuideClass::Description.as_class(),
+                div { class: {UserGuideClass::Description.as_class()},
                     {step.description.clone()}
                 }
 
                 // Footer with controls
-                div { class: UserGuideClass::Footer.as_class(),
+                div { class: {UserGuideClass::Footer.as_class()},
                     // Skip button
                     if props.skippable {
                         button {
-                            class: UserGuideClass::SkipButton.as_class(),
+                            class: {UserGuideClass::SkipButton.as_class()},
                             onclick: handle_skip,
                             "Skip"
                         }
                     }
 
                     // Navigation
-                    div { class: UserGuideClass::Navigation.as_class(),
+                    div { class: {UserGuideClass::Navigation.as_class()},
                         if !is_first_step {
                             button {
-                                class: UserGuideClass::NavButton.as_class(),
+                                class: {UserGuideClass::NavButton.as_class()},
                                 onclick: handle_prev,
-                                Icon { icon: MdiIcon::ChevronLeft, size: 18 }
+                                Icon { icon: MdiIcon::ChevronLeft, size: 18, }
                             }
                         }
 
                         button {
-                            class: format!("{} {}", UserGuideClass::NavButton.as_class(), UserGuideClass::PrimaryButton.as_class()),
+                            class: {next_btn_class.clone()},
                             onclick: handle_next,
                             if is_last_step {
                                 "Finish"
@@ -191,14 +204,10 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
 
             // Progress dots
             if props.show_progress && total_steps > 1 {
-                div { class: UserGuideClass::Progress.as_class(),
+                div { class: {UserGuideClass::Progress.as_class()},
                     for i in 0..total_steps {
                         div {
-                            class: if i == current_step {
-                                format!("{} {}", UserGuideClass::ProgressDot.as_class(), UserGuideClass::ProgressDotActive.as_class())
-                            } else {
-                                UserGuideClass::ProgressDot.as_class()
-                            },
+                            class: dot_classes[i].clone(),
                         }
                     }
                 }

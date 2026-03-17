@@ -99,30 +99,21 @@ fn first_day_of_month(year: i32, month: u32) -> u32 {
 }
 
 const MONTH_NAMES: [&str; 12] = [
-    "一月",
-    "二月",
-    "三月",
-    "四月",
-    "五月",
-    "六月",
-    "七月",
-    "八月",
-    "九月",
-    "十月",
-    "十一月",
-    "十二月",
+    "一月", "二月", "三月", "四月", "五月", "六月",
+    "七月", "八月", "九月", "十月", "十一月", "十二月",
 ];
 
 const WEEKDAY_NAMES: [&str; 7] = ["日", "一", "二", "三", "四", "五", "六"];
 
 #[component]
 pub fn Calendar(props: CalendarProps) -> Element {
-    let mut current_year = use_signal(|| props.default_year);
-    let mut current_month = use_signal(|| props.default_month);
-    let mut selected_day = use_signal(|| 1u32);
+    let current_year = use_signal(|| props.default_year);
+    let current_month = use_signal(|| props.default_month);
+    let selected_day = use_signal(|| 1u32);
 
-    let month = current_month.get();
-    let year = current_year.get();
+    let month = current_month.read();
+    let year = current_year.read();
+    let sel_day = selected_day.read();
 
     let days_count = days_in_month(year, month);
     let first_day = first_day_of_month(year, month);
@@ -136,169 +127,190 @@ pub fn Calendar(props: CalendarProps) -> Element {
     let weekday_class = CalendarClass::CalendarWeekday.as_class();
     let grid_class = CalendarClass::CalendarGrid.as_class();
     let day_cell_class = CalendarClass::CalendarDayCell.as_class();
+    let day_class = CalendarClass::CalendarDay.as_class();
+    let selected_day_class = CalendarClass::CalendarDaySelected.as_class();
 
     let calendar_classes = ClassesBuilder::new()
         .add(CalendarClass::Calendar)
         .add_raw(&props.class)
         .build();
 
+    // Build weekday headers outside rsx!
+    let weekday_headers: Vec<VNode> = WEEKDAY_NAMES
+        .iter()
+        .map(|weekday| {
+            VNode::Element(
+                VElement::new("div")
+                    .class(weekday_class.clone())
+                    .child(VNode::Text(VText::new(weekday)))
+            )
+        })
+        .collect();
+
+    // Build empty cells for days before the 1st
+    let empty_cells: Vec<VNode> = (0..first_day)
+        .map(|_| {
+            VNode::Element(
+                VElement::new("div").class(day_cell_class.clone())
+            )
+        })
+        .collect();
+
+    // Build day cells
+    let day_cells: Vec<VNode> = (1..=days_count)
+        .map(|day| {
+            let is_selected = day == sel_day;
+            let day_cell_cls = day_cell_class.clone();
+            let inner_class = if is_selected {
+                format!("{} {}", day_class.clone(), selected_day_class.clone())
+            } else {
+                day_class.clone()
+            };
+
+            let cy = current_year.clone();
+            let cm = current_month.clone();
+            let sd = selected_day.clone();
+            let on_date_select = props.on_date_select.clone();
+            let y = year;
+            let m = month;
+
+            VNode::Element(
+                VElement::new("div")
+                    .class(day_cell_cls)
+                    .on_event("click", move |_e: Box<dyn EventData>| {
+                        *sd.write() = day;
+                        if let Some(ref handler) = on_date_select {
+                            handler.call((y, m, day));
+                        }
+                    })
+                    .child(VNode::Element(
+                        VElement::new("div")
+                            .class(inner_class)
+                            .child(VNode::Text(VText::new(&day.to_string())))
+                    ))
+            )
+        })
+        .collect();
+
+    // Build nav buttons
+    let cy_prev = current_year.clone();
+    let cm_prev = current_month.clone();
+    let min_yr = props.min_year;
+    let prev_btn = VNode::Element(
+        VElement::new("button")
+            .class(nav_btn_class.clone())
+            .attr("disabled", year <= min_yr && month == 1)
+            .on_event("click", move |_e: Box<dyn EventData>| {
+                let ny = if month == 1 { year - 1 } else { year };
+                let nm = if month == 1 { 12 } else { month - 1 };
+                if ny >= min_yr {
+                    *cy_prev.write() = ny;
+                    *cm_prev.write() = nm;
+                }
+            })
+            .child(VNode::Text(VText::new("‹")))
+    );
+
+    let cy_prev2 = current_year.clone();
+    let cm_prev2 = current_month.clone();
+    let prev_btn2 = VNode::Element(
+        VElement::new("button")
+            .class(nav_btn_class.clone())
+            .on_event("click", move |_e: Box<dyn EventData>| {
+                let ny = if month == 1 { year - 1 } else { year };
+                let nm = if month == 1 { 12 } else { month - 1 };
+                if ny >= min_yr {
+                    *cy_prev2.write() = ny;
+                    *cm_prev2.write() = nm;
+                }
+            })
+            .child(VNode::Text(VText::new("◀")))
+    );
+
+    let cy_today = current_year.clone();
+    let cm_today = current_month.clone();
+    let today_btn = VNode::Element(
+        VElement::new("button")
+            .class(nav_btn_class.clone())
+            .on_event("click", move |_e: Box<dyn EventData>| {
+                let (today_year, today_month) = get_current_date();
+                if today_year >= min_yr && today_year <= props.max_year {
+                    *cy_today.write() = today_year;
+                    *cm_today.write() = today_month;
+                }
+            })
+            .child(VNode::Text(VText::new("今天")))
+    );
+
+    let cy_next = current_year.clone();
+    let cm_next = current_month.clone();
+    let max_yr = props.max_year;
+    let next_btn = VNode::Element(
+        VElement::new("button")
+            .class(nav_btn_class.clone())
+            .on_event("click", move |_e: Box<dyn EventData>| {
+                let ny = if month == 12 { year + 1 } else { year };
+                let nm = if month == 12 { 1 } else { month + 1 };
+                if ny <= max_yr {
+                    *cy_next.write() = ny;
+                    *cm_next.write() = nm;
+                }
+            })
+            .child(VNode::Text(VText::new("▶")))
+    );
+
+    let cy_next2 = current_year.clone();
+    let cm_next2 = current_month.clone();
+    let next_btn2 = VNode::Element(
+        VElement::new("button")
+            .class(nav_btn_class.clone())
+            .attr("disabled", year >= max_yr && month == 12)
+            .on_event("click", move |_e: Box<dyn EventData>| {
+                let ny = if month == 12 { year + 1 } else { year };
+                let nm = if month == 12 { 1 } else { month + 1 };
+                if ny <= max_yr {
+                    *cy_next2.write() = ny;
+                    *cm_next2.write() = nm;
+                }
+            })
+            .child(VNode::Text(VText::new("›")))
+    );
+
+    let title_text = format!("{}年 {}", year, MONTH_NAMES[(month - 1) as usize]);
+
+    // Combine all grid cells
+    let mut all_day_cells = empty_cells;
+    all_day_cells.extend(day_cells);
+
     rsx! {
         div {
             class: calendar_classes,
             style: props.style,
-
             div {
                 class: cal_class,
-
                 div {
                     class: header_class,
-
                     div {
                         class: nav_class,
-
-                        button {
-                            class: nav_btn_class,
-                            disabled: year <= props.min_year && month == 1,
-                            onclick: move |_| {
-                                let ny = if month == 1 { year - 1 } else { year };
-                                let nm = if month == 1 { 12 } else { month - 1 };
-                                if ny >= props.min_year {
-                                    *current_year.write() = ny;
-                                    *current_month.write() = nm;
-                                }
-                            },
-                            "‹"
-                        }
-
-                        button {
-                            class: nav_btn_class,
-                            onclick: move |_| {
-                                let ny = if month == 1 { year - 1 } else { year };
-                                let nm = if month == 1 { 12 } else { month - 1 };
-                                if ny >= props.min_year {
-                                    *current_year.write() = ny;
-                                    *current_month.write() = nm;
-                                }
-                            },
-                            "◀"
-                        }
-
-                        button {
-                            class: nav_btn_class,
-                            onclick: move |_| {
-                                let (today_year, today_month) = get_current_date();
-                                if today_year >= props.min_year && today_year <= props.max_year {
-                                    *current_year.write() = today_year;
-                                    *current_month.write() = today_month;
-                                }
-                            },
-                            "今天"
-                        }
-
-                        button {
-                            class: nav_btn_class,
-                            onclick: move |_| {
-                                let ny = if month == 12 { year + 1 } else { year };
-                                let nm = if month == 12 { 1 } else { month + 1 };
-                                if ny <= props.max_year {
-                                    *current_year.write() = ny;
-                                    *current_month.write() = nm;
-                                }
-                            },
-                            "▶"
-                        }
-
-                        button {
-                            class: nav_btn_class,
-                            disabled: year >= props.max_year && month == 12,
-                            onclick: move |_| {
-                                let ny = if month == 12 { year + 1 } else { year };
-                                let nm = if month == 12 { 1 } else { month + 1 };
-                                if ny <= props.max_year {
-                                    *current_year.write() = ny;
-                                    *current_month.write() = nm;
-                                }
-                            },
-                            "›"
-                        }
+                        {prev_btn}
+                        {prev_btn2}
+                        {today_btn}
+                        {next_btn}
+                        {next_btn2}
                     }
-
                     div {
                         class: title_class,
-                        {format!("{}年 {}", year, MONTH_NAMES[(month - 1) as usize])}
+                        "{title_text}"
                     }
                 }
-
                 div {
                     class: weekdays_class,
-                    for (idx, weekday) in WEEKDAY_NAMES.into_iter().enumerate() {
-                        div {
-                            key: idx,
-                            class: weekday_class,
-                            weekday
-                        }
-                    }
+                    ..weekday_headers
                 }
-
                 div {
                     class: grid_class,
-
-                    for _ in 0..first_day {
-                        div {
-                            class: day_cell_class,
-                            ""
-                        }
-                    }
-
-                    for day in 1..=days_count {
-                        CalendarDayCell {
-                            day,
-                            year,
-                            month,
-                            selected_day: selected_day.get(),
-                            onclick: move |d: u32| {
-                                *selected_day.write() = d;
-                                if props.on_date_select.is_some() {
-                                    props.on_date_select.as_ref().unwrap().call((year, month, d));
-                                }
-                            },
-                        }
-                    }
+                    ..all_day_cells
                 }
-            }
-        }
-    }
-}
-
-#[derive(Clone, PartialEq, Props)]
-struct CalendarDayCellProps {
-    day: u32,
-    year: i32,
-    month: u32,
-    selected_day: u32,
-    onclick: EventHandler<u32>,
-}
-
-#[component]
-fn CalendarDayCell(props: CalendarDayCellProps) -> Element {
-    let day_cls = CalendarClass::CalendarDay.as_class();
-    let day_sel_cls = CalendarClass::CalendarDaySelected.as_class();
-    let cell_cls = CalendarClass::CalendarDayCell.as_class();
-
-    let is_sel = props.selected_day == props.day;
-    let day_classes = if is_sel {
-        format!("{} {}", day_cls, day_sel_cls)
-    } else {
-        day_cls
-    };
-
-    rsx! {
-        div {
-            class: cell_cls,
-            onclick: move |_| props.onclick.call(props.day),
-            div {
-                class: day_classes,
-                {props.day}
             }
         }
     }

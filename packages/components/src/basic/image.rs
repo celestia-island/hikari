@@ -62,13 +62,13 @@ pub fn Image(
     let mut builder = StyleStringBuilder::new().add(CssProperty::ObjectFit, fit.as_str());
 
     if let Some(w) = width {
-        builder = builder.add_px(CssProperty::Width, w);
+        builder = builder.add_px(CssProperty::Width, w.to_string());
     }
     if let Some(h) = height {
-        builder = builder.add_px(CssProperty::Height, h);
+        builder = builder.add_px(CssProperty::Height, h.to_string());
     }
     if let Some(mw) = max_width {
-        builder = builder.add_px(CssProperty::MaxWidth, mw);
+        builder = builder.add_px(CssProperty::MaxWidth, mw.to_string());
     }
     if responsive {
         builder = builder
@@ -177,8 +177,8 @@ pub fn Logo(
     #[props(default)] class: String,
 ) -> Element {
     let style = StyleStringBuilder::new()
-        .add_px(CssProperty::Height, height)
-        .add_px(CssProperty::MaxWidth, max_width)
+        .add_px(CssProperty::Height, height.to_string())
+        .add_px(CssProperty::MaxWidth, max_width.to_string())
         .add(CssProperty::Width, "auto")
         .add(CssProperty::ObjectFit, "contain")
         .build_clean();

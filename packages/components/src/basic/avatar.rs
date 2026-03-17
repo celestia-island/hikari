@@ -92,8 +92,8 @@ pub fn Avatar(
     let font_size = size.font_size();
 
     let container_style = StyleStringBuilder::new()
-        .add_px(CssProperty::Width, size_px)
-        .add_px(CssProperty::Height, size_px)
+        .add_px(CssProperty::Width, size_px.to_string())
+        .add_px(CssProperty::Height, size_px.to_string())
         .add(CssProperty::BorderRadius, variant.as_str())
         .add(CssProperty::Display, "flex")
         .add(CssProperty::AlignItems, "center")
@@ -102,8 +102,8 @@ pub fn Avatar(
         .build_clean();
 
     let img_style = StyleStringBuilder::new()
-        .add_px(CssProperty::Width, size_px)
-        .add_px(CssProperty::Height, size_px)
+        .add_px(CssProperty::Width, size_px.to_string())
+        .add_px(CssProperty::Height, size_px.to_string())
         .add(CssProperty::ObjectFit, "cover")
         .build_clean();
 

@@ -10,7 +10,10 @@
 //! - **Desktop**: ≥1024px
 
 use crate::prelude::*;
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+#[cfg(target_arch = "wasm32")]
+use web_sys;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Breakpoint {
@@ -67,6 +70,7 @@ pub fn use_screen_size() -> Signal<ScreenSize> {
     let screen_size = use_signal(get_screen_size_from_window);
 
     // Set up resize listener
+    #[cfg(target_arch = "wasm32")]
     use_effect(move || {
         let window = web_sys::window().expect("no window");
         let mut screen_size = screen_size;
@@ -90,35 +94,43 @@ pub fn use_screen_size() -> Signal<ScreenSize> {
 ///
 ///
 ///
-pub fn use_is_mobile() -> Memo<bool> {
+pub fn use_is_mobile() -> Signal<bool> {
     let screen_size = use_screen_size();
-    use_memo(move || screen_size.read().is_mobile())
+    use_memo(move || screen_size.read().is_mobile()).value()
 }
 
 ///
 ///
 ///
 ///
-pub fn use_is_desktop() -> Memo<bool> {
+pub fn use_is_desktop() -> Signal<bool> {
     let screen_size = use_screen_size();
-    use_memo(move || screen_size.read().is_desktop_or_larger())
+    use_memo(move || screen_size.read().is_desktop_or_larger()).value()
 }
 
 fn get_screen_size_from_window() -> ScreenSize {
-    if let Some(window) = web_sys::window() {
-        let width_result = window.inner_width();
-        let width = match width_result {
-            Ok(w) => w.as_f64().unwrap_or(0.0) as u32,
-            Err(_) => 0,
-        };
+    #[cfg(target_arch = "wasm32")]
+    {
+        if let Some(window) = web_sys::window() {
+            let width_result = window.inner_width();
+            let width = match width_result {
+                Ok(w) => w.as_f64().unwrap_or(0.0) as u32,
+                Err(_) => 0,
+            };
 
-        match width {
-            0..=640 => ScreenSize::Mobile,
-            641..=1023 => ScreenSize::Tablet,
-            1024.. => ScreenSize::Desktop,
+            match width {
+                0..=640 => ScreenSize::Mobile,
+                641..=1023 => ScreenSize::Tablet,
+                1024.. => ScreenSize::Desktop,
+            }
+        } else {
+            // Default to desktop for SSR
+            ScreenSize::Desktop
         }
-    } else {
-        // Default to desktop for SSR
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        // Default to desktop for non-WASM targets
         ScreenSize::Desktop
     }
 }
@@ -132,6 +144,7 @@ fn get_screen_size_from_window() -> ScreenSize {
 pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> Signal<bool> {
     let matches = use_signal(|| check_media_query(min_width, max_width));
 
+    #[cfg(target_arch = "wasm32")]
     use_effect(move || {
         let window = web_sys::window().expect("no window");
         let mut matches = matches;
@@ -152,28 +165,37 @@ pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> Signal
 }
 
 fn check_media_query(min_width: Option<u32>, max_width: Option<u32>) -> bool {
-    if let Some(window) = web_sys::window() {
-        let width_result = window.inner_width();
-        let width = match width_result {
-            Ok(w) => w.as_f64().unwrap_or(0.0) as u32,
-            Err(_) => 0,
-        };
+    #[cfg(target_arch = "wasm32")]
+    {
+        if let Some(window) = web_sys::window() {
+            let width_result = window.inner_width();
+            let width = match width_result {
+                Ok(w) => w.as_f64().unwrap_or(0.0) as u32,
+                Err(_) => 0,
+            };
 
-        if let Some(min) = min_width
-            && width < min
-        {
-            return false;
+            if let Some(min) = min_width
+                && width < min
+            {
+                return false;
+            }
+
+            if let Some(max) = max_width
+                && width > max
+            {
+                return false;
+            }
+
+            true
+        } else {
+            // Default to false for SSR
+            false
         }
-
-        if let Some(max) = max_width
-            && width > max
-        {
-            return false;
-        }
-
-        true
-    } else {
-        // Default to false for SSR
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        // Default to false for non-WASM targets
+        let _ = (min_width, max_width);
         false
     }
 }

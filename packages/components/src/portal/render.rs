@@ -8,6 +8,8 @@ use hikari_palette::classes::{
 };
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::{JsCast, closure::Closure};
+#[cfg(target_arch = "wasm32")]
+use web_sys;
 
 use super::provider::PortalContext;
 use crate::{
@@ -29,7 +31,7 @@ fn use_animated_portal_entry(
 ) -> (
     Signal<ModalAnimationState>,
     Callback<MouseEvent>,
-    Memo<(String, String)>,
+    Signal<(String, String)>,
 ) {
     #[cfg_attr(not(target_arch = "wasm32"), allow(unused_variables))]
     let context = use_context::<PortalContext>();
@@ -64,7 +66,7 @@ fn use_animated_portal_entry(
             ModalAnimationState::Disappearing => ("0".to_string(), "0.95".to_string()),
         };
         (opacity, scale)
-    });
+    }).value();
 
     #[cfg(target_arch = "wasm32")]
     {
@@ -320,7 +322,9 @@ fn ModalPortalEntry(
                     }
 
                     if closable {
-                        button { class: close_classes, onclick: button_close,
+                        button {
+                            class: {close_classes},
+                            onclick: button_close,
                             svg {
                                 view_box: "0 0 24 24",
                                 fill: "none",
@@ -667,6 +671,18 @@ fn PopoverPortalEntry(
             }
         }
 
+        #[cfg(target_arch = "wasm32")]
+        fn get_viewport_width() -> f64 {
+            web_sys::window()
+                .and_then(|w| w.inner_width().ok())
+                .and_then(|v| v.as_f64())
+                .unwrap_or(1920.0)
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        fn get_viewport_width() -> f64 {
+            1920.0
+        }
+
         const PADDING: f64 = 16.0;
         const POPOVER_W: f64 = 160.0;
         const POPOVER_H: f64 = 120.0;
@@ -683,10 +699,7 @@ fn PopoverPortalEntry(
                     th,
                     POPOVER_W,
                     POPOVER_H,
-                    web_sys::window()
-                        .and_then(|w| w.inner_width().ok())
-                        .and_then(|v| v.as_f64())
-                        .unwrap_or(1920.0),
+                    get_viewport_width(),
                     viewport_height.get(),
                     offset,
                     PADDING,
@@ -711,10 +724,7 @@ fn PopoverPortalEntry(
                         th,
                         POPOVER_W,
                         POPOVER_H,
-                        web_sys::window()
-                            .and_then(|w| w.inner_width().ok())
-                            .and_then(|v| v.as_f64())
-                            .unwrap_or(1920.0),
+                        get_viewport_width(),
                         viewport_height.get(),
                         offset,
                         PADDING,
@@ -780,11 +790,13 @@ fn PopoverPortalEntry(
         }
     };
 
+    let backdrop_style = format!("position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: {}; background: transparent; pointer-events: auto;", backdrop_z_index);
+
     rsx! {
         if close_on_click_outside {
             div {
                 class: "hi-popover-backdrop",
-                style: "position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: {backdrop_z_index}; background: transparent; pointer-events: auto;",
+                style: backdrop_style,
                 onclick: handle_close,
             }
         }
@@ -928,15 +940,17 @@ fn TooltipPortalEntry(
         .add(TooltipClass::TooltipVisible)
         .build();
 
+    let tooltip_style = format!("{} z-index: {}; pointer-events: none;", position_style.read(), z_index);
+
     rsx! {
         div {
             class: tooltip_classes,
-            style: "{position_style.read()} z-index: {z_index}; pointer-events: none;",
+            style: tooltip_style,
 
-            div { class: TooltipClass::TooltipContent.as_class(), {content.clone()} }
+            div { class: {TooltipClass::TooltipContent.as_class()}, {content.clone()} }
 
             if arrow {
-                div { class: "hi-tooltip-arrow" }
+                div { class: "hi-tooltip-arrow", }
             }
         }
     }

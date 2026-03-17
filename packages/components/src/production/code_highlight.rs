@@ -188,11 +188,11 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
 
                 if props.line_numbers {
                     div {
-                        class: line_classes,
+                        class: {line_classes},
                         for i in 1..=line_count {
                             div {
-                                class: "hi-code-highlight-line-number",
-                                i
+                                class: {"hi-code-highlight-line-number"},
+                                {i}
                             }
                         }
                     }

@@ -161,7 +161,7 @@ impl StyledComponent for TabsComponent {
 pub fn TabPane(props: TabPaneProps) -> Element {
     use hikari_palette::classes::{ClassesBuilder, components::TabsClass};
 
-    let active_key = use_context::<Signal<String>>();
+    let active_key = use_context::<Signal<String>>().expect("TabsContext not found");
     let is_active = active_key.get() == props.item_key;
 
     let tab_classes = ClassesBuilder::new()

@@ -184,9 +184,10 @@ fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
                 if can_drag {
                     props.dragged_key.set(Some(key.clone()));
 
-                    let data_transfer = e.data_transfer();
-                    let _ = data_transfer.set_data("text/plain", &key);
-                    data_transfer.set_effect_allowed("move");
+                    if let Some(data_transfer) = e.data_transfer() {
+                        let _ = data_transfer.set_data("text/plain", &key);
+                        data_transfer.set_effect_allowed("move");
+                    }
                 }
             },
 
@@ -204,8 +205,9 @@ fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
                     let key = item_key_3.clone();
                     props.drag_over_key.set(Some(key));
 
-                    let data_transfer = e.data_transfer();
-                    data_transfer.set_drop_effect("move");
+                    if let Some(data_transfer) = e.data_transfer() {
+                        data_transfer.set_drop_effect("move");
+                    }
                 }
             },
 

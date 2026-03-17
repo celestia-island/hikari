@@ -1,8 +1,8 @@
 // hi-components/src/basic/textarea.rs
 // Textarea component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, InputClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, InputClass};
 
 use crate::styled::StyledComponent;
 
@@ -16,39 +16,30 @@ pub enum TextareaSize {
 
 #[derive(Clone, PartialEq, Props)]
 pub struct TextareaProps {
-    /// Current value
     #[props(default)]
     pub value: String,
 
-    /// Callback when value changes
     #[props(default)]
     pub oninput: Option<EventHandler<String>>,
 
-    /// Placeholder text
     #[props(default)]
     pub placeholder: Option<String>,
 
-    /// Whether textarea is disabled
     #[props(default)]
     pub disabled: bool,
 
-    /// Whether textarea is readonly
     #[props(default)]
     pub readonly: bool,
 
-    /// Number of rows
     #[props(default = 3)]
     pub rows: u32,
 
-    /// Textarea size
     #[props(default)]
     pub size: TextareaSize,
 
-    /// Maximum character count
     #[props(default)]
     pub maxlength: Option<u32>,
 
-    /// Additional CSS class
     #[props(default)]
     pub class: String,
 }
@@ -69,26 +60,10 @@ impl Default for TextareaProps {
     }
 }
 
-/// Textarea component with resize support
 ///
-/// A multi-line text input with configurable size.
 ///
-/// # Examples
 ///
-/// ## Basic Usage
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::Textarea;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Textarea {
-///             placeholder: "Enter your message",
-///             rows: 4,
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Textarea(props: TextareaProps) -> Element {
     let size_class = match props.size {
@@ -122,7 +97,6 @@ pub fn Textarea(props: TextareaProps) -> Element {
     }
 }
 
-/// Textarea component's type wrapper for StyledComponent
 pub struct TextareaComponent;
 
 impl StyledComponent for TextareaComponent {

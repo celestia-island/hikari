@@ -17,6 +17,7 @@ pub use tairitsu_vdom::{
     InputEvent,
     FocusEvent,
     ChangeEvent,
+    Callback,
 };
 
 // Re-export tairitsu hooks
@@ -27,7 +28,6 @@ pub use tairitsu_hooks::{
     use_ref,
     use_context,
     provide_context,
-    use_context as consume_context,
     Context,
     UseRef,
 };
@@ -41,37 +41,18 @@ pub use tairitsu_macros::component as Props;
 // Re-export hikari palette
 pub use hikari_palette::*;
 
-/// Event handler type for compatibility
-pub struct EventHandler<T> {
-    handler: Box<dyn FnMut(T) + 'static>,
+/// Event handler type alias (using tairitsu's Callback)
+pub type EventHandler<T> = Callback<T, ()>;
+
+/// Consume context helper - retrieves and clones the context value
+pub fn consume_context<T: 'static + Clone>() -> T {
+    use_context::<T>()
+        .expect("Context not found. Make sure to call provide_context first.")
+        .get()
+        .clone()
 }
 
-impl<T: 'static> EventHandler<T> {
-    pub fn new<F: FnMut(T) + 'static>(f: F) -> Self {
-        Self { handler: Box::new(f) }
-    }
-}
-
-impl<T> std::ops::Deref for EventHandler<T> {
-    type Target = Box<dyn FnMut(T) + 'static>;
-    fn deref(&self) -> &Self::Target {
-        &self.handler
-    }
-}
-
-impl<T> std::ops::DerefMut for EventHandler<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.handler
-    }
-}
-
-/// Callback type alias (Dioxus compatibility)
-pub type Callback<T> = EventHandler<T>;
-
-// VNode extension
-impl VNode {
-    /// Create an empty VNode (text node with empty string)
-    pub fn empty() -> Self {
-        VNode::text("")
-    }
+/// Create an empty VNode (text node with empty string)
+pub fn empty_vnode() -> VNode {
+    VNode::Text(VText::new(""))
 }

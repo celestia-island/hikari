@@ -3,9 +3,9 @@
 // Features: Embedded icons/buttons, unified input styling, Glow effects
 // Uses InputWrapper for consistent layout and Portal system for dropdown suggestions
 
-use crate::prelude::*;;
+use crate::prelude::*;
 use icons::{Icon, MdiIcon};
-use palette::classes::{ClassesBuilder, SearchClass};
+use hikari_palette::classes::{ClassesBuilder, SearchClass};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 

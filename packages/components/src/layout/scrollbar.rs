@@ -4,41 +4,22 @@
 //! A Dioxus component wrapper that uses the script-based scrollbar system.
 //! The component renders a container that's initialized by the script.
 
-use crate::prelude::*;;
+use crate::prelude::*;
 
-/// Custom Scrollbar Container component
 ///
-/// This component renders a container with a special class that's picked up
-/// by the scrollbar initialization script. The scrollbar is fully managed
-/// by the WASM script system.
 ///
-/// # Example
 ///
-/// ```rust,ignore
-/// use hikari_components::ScrollbarContainer;
-/// use crate::prelude::*;;
 ///
-/// rsx! {
-///     ScrollbarContainer {
-///         height: "400px",
-///         div { "Content with custom scrollbar..." }
-///     }
-/// }
-/// ```
 #[component]
 pub fn ScrollbarContainer(
-    /// Content to display with custom scrollbar
     children: Element,
 
-    /// Container height (default: "100%")
     #[props(default = "100%".to_string())]
     height: String,
 
-    /// Container width (default: "100%")
     #[props(default = "100%".to_string())]
     width: String,
 
-    /// Additional CSS classes
     #[props(default)]
     class: String,
 ) -> Element {

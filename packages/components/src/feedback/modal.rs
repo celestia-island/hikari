@@ -3,7 +3,7 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use crate::prelude::*;;
+use crate::prelude::*;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::{JsCast, closure::Closure};
 
@@ -14,17 +14,13 @@ use crate::{
 
 static MODAL_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 
-/// Modal 组件的类型包装器（用于实现 StyledComponent）
 pub struct ModalComponent;
 
-/// Modal 定位方式
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ModalPosition {
-    /// 屏幕中间居中
     #[default]
     Center,
 
-    /// 基于鼠标坐标的八个方位
     TopLeft,
     Top,
     TopRight,
@@ -35,18 +31,14 @@ pub enum ModalPosition {
     Left,
 }
 
-/// Modal 遮掩方式
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum MaskMode {
-    /// 变黑蒙版（阻塞式 modal，如对话框）
     #[default]
     Opaque,
 
-    /// 穿透透明（非阻塞式 modal，如 toast）
     Transparent,
 }
 
-/// Modal 实例配置
 #[derive(Clone, PartialEq)]
 pub struct ModalConfig {
     pub id: String,
@@ -70,7 +62,6 @@ impl Default for ModalConfig {
     }
 }
 
-/// Hook for controlling a modal instance
 pub fn use_modal(initial_config: ModalConfig) -> ModalController {
     let portal = use_portal();
     let config = use_signal(|| initial_config);
@@ -131,14 +122,12 @@ pub fn use_modal(initial_config: ModalConfig) -> ModalController {
     }
 }
 
-/// Modal Content - Content to display in modal
 #[derive(Clone, PartialEq)]
 pub struct ModalContent {
     pub title: Option<String>,
     pub children: Element,
 }
 
-/// Modal Controller - 用于控制单个 modal 实例
 #[derive(Clone)]
 pub struct ModalController {
     pub config: Signal<ModalConfig>,
@@ -146,7 +135,6 @@ pub struct ModalController {
     pub close: Callback<()>,
 }
 
-/// 计算智能定位后的实际位置（检测溢出并自动调整）
 pub fn calculate_position(
     position: ModalPosition,
     mouse_x: Option<f64>,

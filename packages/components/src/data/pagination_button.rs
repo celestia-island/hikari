@@ -1,8 +1,8 @@
 // hi-components/src/data/pagination_button.rs
 // Unified pagination button component with consistent structure
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, PaginationClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, PaginationClass};
 
 use crate::{
     basic::{Arrow, ArrowDirection},
@@ -10,60 +10,45 @@ use crate::{
     styled::StyledComponent,
 };
 
-/// Pagination button wrapper (for StyledComponent)
 pub struct PaginationButtonComponent;
 
-/// Pagination button props
 #[derive(Clone, PartialEq, Props)]
 pub struct PaginationButtonProps {
-    /// Button content (arrow or text)
     pub content: PaginationButtonContent,
 
-    /// Whether button is active/selected
     #[props(default = false)]
     pub active: bool,
 
-    /// Whether button is disabled
     #[props(default = false)]
     pub disabled: bool,
 
-    /// Custom CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Click handler
     pub onclick: EventHandler<MouseEvent>,
 
-    /// Glow blur amount (default: Medium)
     #[props(default = GlowBlur::Medium)]
     pub glow_blur: GlowBlur,
 
-    /// Glow color (default: Primary)
     #[props(default = GlowColor::Primary)]
     pub glow_color: GlowColor,
 
-    /// Glow intensity (default: Subtle)
     #[props(default = GlowIntensity::Dim)]
     pub glow_intensity: GlowIntensity,
 }
 
-/// Pagination button content types
 #[derive(Clone, PartialEq)]
 pub enum PaginationButtonContent {
-    /// Arrow content with direction and size
     Arrow {
         direction: ArrowDirection,
         size: u32,
     },
 
-    /// Text content with font size
     Text { text: String, font_size: u32 },
 
-    /// Ellipsis for large page counts
     Ellipsis,
 }
 
-/// Pagination button component - unified structure solution
 #[component]
 pub fn PaginationButton(props: PaginationButtonProps) -> Element {
     // Build base classes

@@ -45,15 +45,10 @@ pub use tairitsu_hooks::{
 };
 
 // Re-export tairitsu macros
-pub use tairitsu_macros::{rsx, component};
+pub use tairitsu_macros::{rsx, component, Props};
 
-/// Placeholder for Dioxus Props derive
-/// In Tairitsu, props are generated automatically by the #[component] macro
-/// This macro is provided for migration compatibility only
 pub use tairitsu_macros::component as derive_props;
 
-/// Event handler wrapper (compatibility shim)
-/// In Tairitsu, events are handled differently - this provides a compatibility layer
 pub struct EventHandler<T> {
     handler: Box<dyn FnMut(T) + 'static>,
 }
@@ -82,7 +77,6 @@ impl<T> std::ops::DerefMut for EventHandler<T> {
     }
 }
 
-/// Create an event handler
 pub fn event_handler<F, T>(f: F) -> EventHandler<T>
 where
     F: FnMut(T) + 'static,
@@ -90,18 +84,9 @@ where
     EventHandler::new(f)
 }
 
-/// Empty element (placeholder for VNode::empty)
 pub fn empty_vnode() -> VNode {
-    VNode::text("")
+    VNode::Text(VText::new(""))
 }
-
-/// Props attribute macro (compatibility shim)
-/// In Tairitsu, use #[component] on functions instead
-pub use tairitsu_macros::component as props;
-
-/// Props derive macro alias (compatibility for #[derive(Props)])
-/// Note: This doesn't actually derive anything - it's a placeholder for migration
-pub use tairitsu_macros::component as Props;
 
 // Re-export styled components
 pub use crate::styled::{StyledComponent, StyleRegistry};

@@ -1,12 +1,11 @@
 // hi-components/src/data/drag.rs
 // Drag and drop component for tree node reordering
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, TreeClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, TreeClass};
 
 use crate::styled::StyledComponent;
 
-/// Drag component wrapper (for StyledComponent)
 pub struct DragComponent;
 
 #[derive(Clone, PartialEq, Props, Default)]

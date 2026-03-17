@@ -1,8 +1,8 @@
 // hi-components/src/basic/select.rs
 // Custom Select component with Portal-based dropdown and FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, Display, Position, SelectClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 
@@ -15,7 +15,6 @@ use crate::{
     styled::StyledComponent,
 };
 
-/// Select 组件的类型包装器（用于实现 StyledComponent）
 pub struct SelectComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -49,7 +48,6 @@ pub struct SelectProps {
     #[props(default)]
     pub class: String,
 
-    /// Current selected value (controlled mode)
     #[props(default)]
     pub value: Option<String>,
 
@@ -57,33 +55,11 @@ pub struct SelectProps {
     pub on_change: Option<EventHandler<String>>,
 }
 
-/// Custom Select component with Portal-based dropdown and FUI styling
 ///
-/// Uses the Portal system to render dropdown options as an overlay layer,
-/// ensuring proper z-index stacking and click-outside-to-close behavior.
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::{Select, SelectOption, SelectSize};
 ///
-/// fn app() -> Element {
-///     let mut selected = use_signal(|| String::new());
 ///
-///     rsx! {
-///         Select {
-///             placeholder: "Select an option".to_string(),
-///             size: SelectSize::Md,
-///             options: vec![
-///                 SelectOption { label: "Option 1".to_string(), value: "1".to_string() },
-///                 SelectOption { label: "Option 2".to_string(), value: "2".to_string() },
-///             ],
-///             on_change: move |value| selected.set(value),
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Select(props: SelectProps) -> Element {
     let portal = use_portal();

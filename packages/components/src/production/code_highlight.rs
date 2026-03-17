@@ -7,9 +7,9 @@
 // or highlight.js. For built-in Rust-based highlighting, consider
 // integrating with syntect.
 
-use crate::prelude::*;;
+use crate::prelude::*;
 use gloo::timers::callback::Timeout;
-use palette::classes::{ClassesBuilder, CodeHighlightClass};
+use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
 use wasm_bindgen::prelude::*;
 
 use crate::styled::StyledComponent;
@@ -46,10 +46,8 @@ fn copy_to_clipboard(text: &str) -> bool {
     true
 }
 
-/// CodeHighlight component type wrapper (for StyledComponent)
 pub struct CodeHighlightComponent;
 
-/// Code highlighting component with Arknights + FUI styling
 #[derive(Clone, PartialEq, Props)]
 pub struct CodeHighlightProps {
     #[props(default)]

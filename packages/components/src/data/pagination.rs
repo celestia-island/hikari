@@ -1,9 +1,9 @@
 // hi-components/src/data/pagination.rs
 // Pagination component with Arknights + FUI styling
 
-use crate::prelude::*;;
+use crate::prelude::*;
 use icons::{Icon, MdiIcon};
-use palette::classes::{ClassesBuilder, PaginationClass};
+use hikari_palette::classes::{ClassesBuilder, PaginationClass};
 
 use crate::{
     basic::{Arrow, ArrowDirection, IconButton, IconButtonSize, Input, InputSize},
@@ -13,43 +13,32 @@ use crate::{
     styled::StyledComponent,
 };
 
-/// Pagination component wrapper (for StyledComponent)
 pub struct PaginationComponent;
 
-/// Pagination component props
 #[derive(Clone, PartialEq, Props, Debug)]
 pub struct PaginationProps {
-    /// Current page number (1-based)
     #[props(default = 1)]
     pub current: u32,
 
-    /// Total number of items
     pub total: u32,
 
-    /// Number of items per page
     #[props(default = 10)]
     pub page_size: u32,
 
-    /// Show page size selector
     #[props(default = false)]
     pub show_size_changer: bool,
 
-    /// Show total items info (e.g., "1-50 of 500")
     #[props(default = false)]
     pub show_total: bool,
 
-    /// Page size options
     #[props(default)]
     pub page_size_options: Vec<u32>,
 
-    /// Custom CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Page change handler - called with new page number
     pub on_change: Option<EventHandler<u32>>,
 
-    /// Page size change handler - called with new page size
     pub on_size_change: Option<EventHandler<u32>>,
 }
 
@@ -69,7 +58,6 @@ impl Default for PaginationProps {
     }
 }
 
-/// Pagination component
 #[component]
 pub fn Pagination(props: PaginationProps) -> Element {
     let mut current_page = use_signal(|| props.current);

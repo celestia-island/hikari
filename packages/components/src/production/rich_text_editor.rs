@@ -6,15 +6,13 @@
 // contenteditable, execCommand support, etc., consider integrating
 // with libraries like ProseMirror, Tiptap, or Quill.
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, RichTextEditorClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, RichTextEditorClass};
 
 use crate::styled::StyledComponent;
 
-/// RichTextEditor component type wrapper (for StyledComponent)
 pub struct RichTextEditorComponent;
 
-/// Rich text editor component with Arknights + FUI styling
 #[derive(Clone, PartialEq, Props)]
 pub struct RichTextEditorProps {
     #[props(default)]

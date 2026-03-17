@@ -1,25 +1,19 @@
 // packages/components/src/display/user_guide.rs
 // UserGuide component with Arknights + FUI styling
 
-use crate::prelude::*;;
+use crate::prelude::*;
 use icons::{Icon, MdiIcon};
-use palette::classes::{ClassesBuilder, UserGuideClass, UtilityClass};
+use hikari_palette::classes::{ClassesBuilder, UserGuideClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// UserGuide component type wrapper (for StyledComponent)
 pub struct UserGuideComponent;
 
-/// Single guide step
 #[derive(Clone, PartialEq, Debug)]
 pub struct GuideStep {
-    /// Target element selector (CSS selector)
     pub target: String,
-    /// Step title
     pub title: String,
-    /// Step description
     pub description: String,
-    /// Optional placement
     pub placement: GuidePlacement,
 }
 
@@ -34,7 +28,6 @@ impl Default for GuideStep {
     }
 }
 
-/// Guide tooltip placement
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GuidePlacement {
     #[default]
@@ -44,46 +37,33 @@ pub enum GuidePlacement {
     Right,
 }
 
-/// UserGuide component props
 #[derive(Clone, PartialEq, Props)]
 pub struct UserGuideProps {
-    /// Guide steps
     pub steps: Vec<GuideStep>,
 
-    /// Current step index (0-based)
     #[props(default)]
     pub current: usize,
 
-    /// Whether guide is visible
     #[props(default = true)]
     pub visible: bool,
 
-    /// Show progress indicator
     #[props(default = true)]
     pub show_progress: bool,
 
-    /// Allow skipping the guide
     #[props(default = true)]
     pub skippable: bool,
 
-    /// Additional CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Callback when step changes
     pub on_step_change: Option<EventHandler<usize>>,
 
-    /// Callback when guide completes
     pub on_finish: Option<EventHandler<()>>,
 
-    /// Callback when guide is skipped
     pub on_skip: Option<EventHandler<()>>,
 }
 
-/// UserGuide component - Step-by-step user onboarding
 ///
-/// A guide component for introducing new features to users.
-/// Displays tooltips with navigation controls.
 #[component]
 pub fn UserGuide(props: UserGuideProps) -> Element {
     if !props.visible || props.steps.is_empty() {

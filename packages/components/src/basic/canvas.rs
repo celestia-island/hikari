@@ -1,37 +1,26 @@
 // packages/components/src/basic/canvas.rs
 // Canvas component with requestAnimationFrame integration
 
-use crate::prelude::*;;
+use crate::prelude::*;
 
 use crate::styled::StyledComponent;
 
-/// Canvas component type wrapper (for StyledComponent)
 pub struct CanvasComponent;
 
-/// Canvas render mode
 #[derive(Clone, Copy, Default, PartialEq)]
 pub enum CanvasMode {
-    /// Draw once after mount (default)
     #[default]
     Once,
-    /// Continuous animation loop
     Loop,
 }
 
-/// Canvas component with requestAnimationFrame integration
 ///
-/// Provides a 2D canvas element. Use the onmounted event to get
-/// the canvas reference and draw on it.
 #[component]
 pub fn Canvas(
-    /// Canvas width in pixels
     width: u32,
-    /// Canvas height in pixels
     height: u32,
-    /// CSS class
     #[props(default)]
     class: String,
-    /// Inline styles
     #[props(default)]
     style: String,
 ) -> Element {

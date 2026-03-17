@@ -1,16 +1,14 @@
 // hi-components/src/entry/transfer.rs
 // Transfer component with Arknights + FUI styling
 
-use crate::prelude::*;;
+use crate::prelude::*;
 use icons::{Icon, MdiIcon};
-use palette::classes::{ClassesBuilder, TransferClass, UtilityClass};
+use hikari_palette::classes::{ClassesBuilder, TransferClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// Transfer component wrapper (for StyledComponent)
 pub struct TransferComponent;
 
-/// Event data for selection changes
 #[derive(Clone, PartialEq, Debug)]
 pub struct SelectChangeEvent {
     pub list_type: usize,
@@ -27,85 +25,41 @@ pub struct TransferItem {
 
 #[derive(Clone, PartialEq, Props)]
 pub struct TransferProps {
-    /// All available items
     pub data: Vec<TransferItem>,
 
-    /// Currently selected keys (keys in target list)
     #[props(default)]
     pub target_keys: Vec<String>,
 
-    /// Currently selected keys in source list
     #[props(default)]
     pub source_selected_keys: Vec<String>,
 
-    /// Currently selected keys in target list
     #[props(default)]
     pub target_selected_keys: Vec<String>,
 
-    /// Custom titles for source and target lists
     #[props(default)]
     pub titles: Option<[String; 2]>,
 
-    /// Whether to show search inputs
     #[props(default)]
     pub show_search: bool,
 
-    /// Whether to enable one-way transfer (only to target)
     #[props(default)]
     pub one_way: bool,
 
-    /// Whether the transfer is disabled
     #[props(default)]
     pub disabled: bool,
 
-    /// Custom classes
     #[props(default)]
     pub class: String,
 
-    /// Callback when selection changes (list_type: 0=source, 1=target)
     pub on_select_change: Option<EventHandler<SelectChangeEvent>>,
 
-    /// Callback when transfer changes (target keys)
     pub on_change: Option<EventHandler<Vec<String>>>,
 }
 
-/// Transfer component - Move items between two lists
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::{Transfer, TransferItem, SelectChangeEvent};
 ///
-/// fn app() -> Element {
-///     let mut target_keys = use_signal(|| vec!["3".to_string(), "4".to_string()]);
-///     let mut source_selected = use_signal(Vec::new);
-///     let mut target_selected = use_signal(Vec::new);
 ///
-///     rsx! {
-///         Transfer {
-///             data: vec![
-///                 TransferItem { key: "1".to_string(), label: "Item 1".to_string(), ..Default::default() },
-///                 TransferItem { key: "2".to_string(), label: "Item 2".to_string(), ..Default::default() },
-///                 TransferItem { key: "3".to_string(), label: "Item 3".to_string(), ..Default::default() },
-///                 TransferItem { key: "4".to_string(), label: "Item 4".to_string(), ..Default::default() },
-///             ],
-///             target_keys: target_keys(),
-///             source_selected_keys: source_selected(),
-///             target_selected_keys: target_selected(),
-///             titles: Some(["Source".to_string(), "Target".to_string()]),
-///             on_select_change: move |event| {
-///                 match event.list_type {
-///                     0 => source_selected.set(event.keys),
-///                     1 => target_selected.set(event.keys),
-///                     _ => {}
-///                 }
-///             },
-///             on_change: move |keys| target_keys.set(keys),
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Transfer(props: TransferProps) -> Element {
     let titles = props

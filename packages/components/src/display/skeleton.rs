@@ -1,8 +1,8 @@
 // packages/components/src/display/skeleton.rs
 // Skeleton component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, Padding};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, Padding};
 
 use crate::styled::StyledComponent;
 

@@ -4,7 +4,7 @@
 //!
 //! ```rust
 //! use hikari_components::navigation::Anchor;
-//! use crate::prelude::*;;
+//! use crate::prelude::*;
 //!
 //! rsx! {
 //!     div { id: "content",
@@ -22,8 +22,8 @@
 //! }
 //! ```
 
-use crate::prelude::*;;
-use palette::classes::{
+use crate::prelude::*;
+use hikari_palette::classes::{
     AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass,
 };
 #[cfg(target_arch = "wasm32")]
@@ -31,42 +31,27 @@ use wasm_bindgen::JsCast;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::closure::Closure;
 
-/// Anchor item configuration
 #[derive(Clone, Debug, PartialEq, Props)]
 pub struct AnchorItem {
-    /// Link href (e.g., "#section1")
     pub href: String,
-    /// Display title
     pub title: String,
 }
 
-/// Anchor component - In-page navigation with smooth scrolling
 ///
-/// Provides a navigation sidebar that links to sections on the same page.
 ///
-/// # Features
-/// - Smooth scrolling to sections
-/// - Active section highlighting
-/// - Click to scroll
-/// - Customizable position
 #[component]
 pub fn Anchor(
-    /// Anchor items (href + title pairs)
     items: Vec<AnchorItem>,
 
-    /// Fixed position (right or left)
     #[props(default = "right".to_string())]
     position: String,
 
-    /// Offset from top (default: 20px)
     #[props(default = 20)]
     offset: i32,
 
-    /// Custom CSS classes
     #[props(default)]
     class: String,
 
-    /// Anchor content (page sections)
     children: Element,
 ) -> Element {
     let mut active_anchor = use_signal(String::new);
@@ -136,10 +121,7 @@ pub fn Anchor(
     }
 }
 
-/// Scroll spy effect - Automatically highlight active section on scroll
 ///
-/// This effect monitors scroll position and updates active anchor.
-/// Call this in a component that uses Anchor.
 #[cfg(target_arch = "wasm32")]
 pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> Signal<String> {
     let active_anchor = use_signal(|| String::new());

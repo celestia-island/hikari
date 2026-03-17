@@ -1,13 +1,12 @@
 // hi-components/src/data/sort.rs
 // Sort component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, SortClass, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, SortClass, UtilityClass};
 
 pub use super::column::ColumnDef;
 use crate::styled::StyledComponent;
 
-/// Sort component wrapper (for StyledComponent)
 pub struct SortComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -35,7 +34,6 @@ impl SortDirection {
         }
     }
 
-    /// Get CSS class for sort direction
     pub fn class(&self) -> &'static str {
         match self {
             SortDirection::None => "",

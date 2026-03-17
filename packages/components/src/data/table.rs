@@ -3,8 +3,8 @@
 
 use std::collections::HashMap;
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, TableClass, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, TableClass, UtilityClass};
 
 pub use super::{
     column::{ColumnAlign, ColumnDef},
@@ -12,13 +12,10 @@ pub use super::{
 };
 use crate::styled::StyledComponent;
 
-/// Filter state for a column: map of column key to selected values
 pub type TableFilters = HashMap<String, Vec<String>>;
 
-/// Table component wrapper (for StyledComponent)
 pub struct TableComponent;
 
-/// Table size variants
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TableSize {
     #[default]
@@ -27,7 +24,6 @@ pub enum TableSize {
     Large,
 }
 
-/// Text alignment for table cells
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum Align {
     #[default]
@@ -46,58 +42,44 @@ impl From<ColumnAlign> for Align {
     }
 }
 
-/// Table component properties
 #[derive(Clone, PartialEq, Props)]
 pub struct TableProps {
-    /// Table data (2D array of strings)
     #[props(default)]
     pub data: Vec<Vec<String>>,
 
-    /// Column definitions
     #[props(default)]
     pub columns: Vec<ColumnDef>,
 
-    /// Show borders
     #[props(default)]
     pub bordered: bool,
 
-    /// Striped rows
     #[props(default)]
     pub striped: bool,
 
-    /// Hover effect on rows
     #[props(default)]
     pub hoverable: bool,
 
-    /// Table size
     #[props(default)]
     pub size: TableSize,
 
-    /// Custom CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Empty state message
     #[props(default)]
     pub empty_text: String,
 
-    /// Current sort column key
     #[props(default)]
     pub sort_column: String,
 
-    /// Current sort direction
     #[props(default)]
     pub sort_direction: SortDirection,
 
-    /// Sort change callback
     #[props(default)]
     pub on_sort_change: Option<EventHandler<SortConfig>>,
 
-    /// Active filters (column key -> selected values)
     #[props(default)]
     pub filters: TableFilters,
 
-    /// Filter change callback
     #[props(default)]
     pub on_filter_change: Option<EventHandler<TableFilters>>,
 }
@@ -122,39 +104,11 @@ impl Default for TableProps {
     }
 }
 
-/// Table component with Arknights + FUI styling
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::Table;
-/// use hikari_components::ColumnDef;
-/// use hikari_components::ColumnAlign;
 ///
-/// fn app() -> Element {
-///     let columns = vec![
-///         ColumnDef::new("name", "Name").sortable(true),
-///         ColumnDef::new("role", "Role"),
-///         ColumnDef::new("level", "Level").align(ColumnAlign::Center),
-///     ];
 ///
-///     let data = vec![
-///         vec!["Amiya".to_string(), "Guard".to_string(), "6".to_string()],
-///         vec!["SilverAsh".to_string(), "Guard".to_string(), "6".to_string()],
-///     ];
 ///
-///     rsx! {
-///         Table {
-///             columns: columns,
-///             data: data,
-///             bordered: true,
-///             striped: true,
-///             hoverable: true,
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Table(props: TableProps) -> Element {
     // First filter data, then sort it
@@ -339,7 +293,6 @@ impl StyledComponent for TableComponent {
     }
 }
 
-/// Sort table data based on column and direction
 fn sort_data(
     data: &[Vec<String>],
     columns: &[ColumnDef],
@@ -384,7 +337,6 @@ fn sort_data(
     sorted_data
 }
 
-/// Get sorted data (memoized hook-like behavior)
 fn use_sortable_data(
     data: &[Vec<String>],
     columns: &[ColumnDef],
@@ -394,7 +346,6 @@ fn use_sortable_data(
     sort_data(data, columns, sort_column, sort_direction)
 }
 
-/// Filter table data based on active filters
 fn filter_data(
     data: &[Vec<String>],
     columns: &[ColumnDef],

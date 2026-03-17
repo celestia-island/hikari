@@ -1,15 +1,13 @@
 // packages/components/src/production/audio_player.rs
 // Audio player component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{AudioPlayerClass, ClassesBuilder, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{AudioPlayerClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// AudioPlayer component type wrapper (for StyledComponent)
 pub struct AudioPlayerComponent;
 
-/// Audio player size variants
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum AudioPlayerSize {
     #[default]
@@ -18,51 +16,38 @@ pub enum AudioPlayerSize {
     Large,
 }
 
-/// Audio player component with Arknights + FUI styling
 ///
-/// A audio player with cover art, title/artist info, and native controls.
 #[derive(Clone, PartialEq, Props)]
 pub struct AudioPlayerProps {
-    /// Audio source URL
     pub src: String,
 
-    /// Audio title
     #[props(default)]
     pub title: Option<String>,
 
-    /// Audio artist/author
     #[props(default)]
     pub artist: Option<String>,
 
-    /// Cover image URL
     #[props(default)]
     pub cover: Option<String>,
 
-    /// Autoplay audio
     #[props(default)]
     pub autoplay: bool,
 
-    /// Show controls (uses native browser controls)
     #[props(default = true)]
     pub controls: bool,
 
-    /// Loop audio
     #[props(default)]
     pub loop_: bool,
 
-    /// Muted by default
     #[props(default)]
     pub muted: bool,
 
-    /// Player size
     #[props(default)]
     pub size: AudioPlayerSize,
 
-    /// Additional CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Additional CSS styles
     #[props(default)]
     pub style: String,
 }

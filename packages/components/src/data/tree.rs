@@ -1,51 +1,41 @@
 // hi-components/src/data/tree.rs
 // Tree component for hierarchical data display
 
-use crate::prelude::*;;
+use crate::prelude::*;
 
 use crate::{
     data::node::{TreeNode, TreeNodeData, TreeNodeProps},
     styled::StyledComponent,
 };
 
-/// Tree component wrapper (for StyledComponent)
 pub struct TreeComponent;
 
 #[derive(Clone, PartialEq, Props, Default)]
 pub struct TreeProps {
-    /// Tree data structure
     pub data: Vec<TreeNodeData>,
 
-    /// Initially expanded node keys
     #[props(default)]
     pub default_expanded_keys: Vec<String>,
 
-    /// Initially selected node keys
     #[props(default)]
     pub default_selected_keys: Vec<String>,
 
-    /// Show checkboxes
     #[props(default)]
     pub checkable: bool,
 
-    /// Show connecting lines
     #[props(default)]
     pub show_line: bool,
 
-    /// Custom classes
     #[props(default)]
     pub class: String,
 
-    /// Selection handler
     #[props(default)]
     pub on_select: Option<EventHandler<String>>,
 
-    /// Expand handler
     #[props(default)]
     pub on_expand: Option<EventHandler<String>>,
 }
 
-/// Tree component - Container managing multiple tree nodes
 #[component]
 pub fn Tree(props: TreeProps) -> Element {
     let expanded_keys = use_signal(|| props.default_expanded_keys.clone());
@@ -96,7 +86,6 @@ pub fn Tree(props: TreeProps) -> Element {
     }
 }
 
-/// Recursive function to render tree nodes
 fn render_tree_nodes(
     nodes: &[TreeNodeData],
     level: usize,

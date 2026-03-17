@@ -1,8 +1,8 @@
 // hi-components/src/layout/divider.rs
 // Divider component for visual separation
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, DividerClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, DividerClass};
 
 use crate::theme::use_layout_direction;
 
@@ -23,52 +23,28 @@ pub enum DividerType {
 
 #[derive(Clone, PartialEq, Props)]
 pub struct DividerProps {
-    /// Divider text (for labeled dividers)
     #[props(default)]
     pub text: Option<String>,
 
-    /// Divider orientation
     #[props(default)]
     pub orientation: DividerOrientation,
 
-    /// Divider line style
     #[props(default)]
     pub divider_type: DividerType,
 
-    /// Text alignment for horizontal dividers with text (default: center)
     #[props(default = "center".to_string())]
     pub text_align: String,
 
-    /// Override RTL behavior (default: follow theme direction)
     #[props(default)]
     pub rtl: Option<bool>,
 
-    /// Additional CSS classes
     #[props(default)]
     pub class: String,
 }
 
-/// Divider component for visual separation
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::{Divider, DividerOrientation, DividerType};
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Divider {}
-///         Divider {
-///             text: "Section Title".to_string(),
-///         }
-///         Divider {
-///             orientation: DividerOrientation::Vertical,
-///             divider_type: DividerType::Dashed,
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Divider(props: DividerProps) -> Element {
     let layout_direction = use_layout_direction();
@@ -131,7 +107,6 @@ pub fn Divider(props: DividerProps) -> Element {
     }
 }
 
-/// Divider component's type wrapper for StyledComponent
 pub struct DividerComponent;
 
 impl crate::styled::StyledComponent for DividerComponent {

@@ -16,6 +16,13 @@ pub mod production;
 pub mod portal;
 pub mod hooks;
 pub mod utils;
+pub mod styled;
+
+// Prelude module
+pub mod prelude;
+
+// Re-export StyledComponent
+pub use styled::StyledComponent;
 
 // Re-exports
 pub use basic::*;
@@ -29,7 +36,7 @@ pub use production::*;
 // Theme system
 pub mod theme;
 pub use theme::{
-    ComponentOverrides, ComponentPalette, IntoTheme, LayoutDirection, ThemeContext,
+    ComponentOverrides, ComponentPalette, IntoThemeName, LayoutDirection, ThemeContext,
     ThemePalette, ThemeProvider, get_default_theme, get_registered_theme, prefers_dark_mode,
     register_theme, use_layout_direction, use_theme,
 };
@@ -56,63 +63,20 @@ pub use tairitsu_hooks::{
 
 pub use tairitsu_macros::{rsx, component};
 
-/// # Hierarchical Theme System
 ///
-/// Hikari components support a powerful hierarchical theme system that allows
-/// you to use different themes at different levels of your application.
 ///
-/// ## Basic Usage
 ///
-/// ```rust,ignore
-/// use hikari_components::ThemeProvider;
 ///
-/// rsx! {
-///     ThemeProvider { palette: "hikari" } {
-///         // Your entire app uses Hikari (light) theme
-///     }
-/// }
-/// ```
 ///
-/// ## Nested Providers (Local Theme Override)
 ///
-/// ```rust,ignore
-/// rsx! {
-///     ThemeProvider { palette: "hikari" } {
-///         // Most of the app uses Hikari (light) theme
 ///
-///         Sidebar { }
 ///
-///         div {
-///             ThemeProvider { palette: "tairitsu" } {
-///                 // This section uses Tairitsu (dark) theme
-///                 DarkWidget { }
-///             }
-///         }
-///     }
-/// }
-/// ```
 ///
-/// ## Accessing Theme in Components
 ///
-/// ```rust,ignore
-/// use hikari_components::use_theme;
 ///
-/// fn MyComponent() -> VNode {
-///     let theme = use_theme();  // Always returns a ThemeContext
 ///
-///     rsx! {
-///         div {
-///             style: "color: {theme.palette.primary}",
-///             "Themed content"
-///         }
-///     }
-/// }
-/// ```
 
-/// Get complete CSS bundle (utility classes + component styles)
 ///
-/// This is a convenience function that combines utility classes
-/// with all registered component styles.
 #[deprecated(note = "Utility classes are now managed by the CSS bundle. Use CSS classes directly.")]
 pub fn get_utility_classes() -> &'static str {
     "" // Utility classes are now in the SCSS bundle

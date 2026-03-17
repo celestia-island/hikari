@@ -75,6 +75,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> VNode {
         palette: props.initial_palette.clone(),
         colors,
         direction: if dir == "rtl" { LayoutDirection::Rtl } else { LayoutDirection::Ltr },
+        set_theme: Callback::new(|_| {}),
     };
 
     // Provide context to children (simplified - full implementation would use provide_context)

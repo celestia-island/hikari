@@ -1,8 +1,8 @@
 // hi-components/src/portal/render.rs
 // Portal rendering components
 
-use crate::prelude::*;;
-use palette::classes::{
+use crate::prelude::*;
+use hikari_palette::classes::{
     ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass, TooltipClass,
     UtilityClass,
 };

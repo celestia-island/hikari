@@ -1,15 +1,13 @@
 // display/carousel.rs
 // Carousel component - Image/content slider with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{CarouselClass, ClassesBuilder, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{CarouselClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// CarouselComponent type wrapper
 pub struct CarouselComponent;
 
-/// Carousel indicator position
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum CarouselIndicatorPosition {
     #[default]
@@ -19,7 +17,6 @@ pub enum CarouselIndicatorPosition {
     Right,
 }
 
-/// Carousel variant
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum CarouselIndicatorType {
     #[default]
@@ -28,7 +25,6 @@ pub enum CarouselIndicatorType {
     Hidden,
 }
 
-/// Carousel props
 #[derive(Props, Clone, PartialEq, Debug)]
 pub struct CarouselProps {
     #[props(default)]
@@ -56,7 +52,6 @@ pub struct CarouselProps {
     pub initial_paused: bool,
 }
 
-/// Carousel component - Image/content slider with navigation
 #[component]
 pub fn Carousel(props: CarouselProps) -> Element {
     let mut current_index = use_signal(|| 0);

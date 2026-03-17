@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use crate::prelude::*;
 
 /// Style configuration
-#[derive(Clone, PartialEq, Default)]
+#[derive(Clone, PartialEq)]
 pub struct StyleConfig {
     /// Custom CSS class prefix (default: "hi")
     pub class_prefix: String,

@@ -1,31 +1,24 @@
 // hi-components/src/data/node_content.rs
 // TreeNodeContent component - content wrapper for tree nodes
 
-use crate::prelude::*;;
+use crate::prelude::*;
 
-/// Content wrapper for tree nodes
 #[derive(Clone, PartialEq, Props)]
 pub struct TreeNodeContentProps {
-    /// Indentation level (0-based)
     pub level: usize,
 
-    /// Whether the node is disabled
     #[props(default)]
     pub disabled: bool,
 
-    /// Custom classes
     #[props(default)]
     pub class: String,
 
-    /// Click handler
     #[props(default)]
     pub onclick: Option<EventHandler<MouseEvent>>,
 
-    /// Child elements (arrow, icon, label)
     children: Element,
 }
 
-/// TreeNodeContent - Wraps the visual content of a tree node with proper indentation
 #[component]
 pub fn TreeNodeContent(props: TreeNodeContentProps) -> Element {
     let indentation_style = format!("padding-left: {}px;", props.level * 24);

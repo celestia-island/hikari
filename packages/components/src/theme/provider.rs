@@ -67,8 +67,8 @@
 
 #[cfg(target_arch = "wasm32")]
 use animation::global_manager::init_global_animation_manager;
-use crate::prelude::*;;
-use palette::*;
+use crate::prelude::*;
+use hikari_palette::*;
 
 use crate::{
     scripts::scrollbar_container::init_all as init_scrollbars,
@@ -78,7 +78,6 @@ use crate::{
     },
 };
 
-/// Layout direction for RTL/LTR support
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum LayoutDirection {
     #[default]
@@ -99,7 +98,6 @@ impl LayoutDirection {
     }
 }
 
-/// Theme context for accessing current theme
 #[derive(Clone, PartialEq)]
 pub struct ThemeContext {
     pub palette: Signal<String>,
@@ -108,18 +106,14 @@ pub struct ThemeContext {
     pub set_theme: Callback<String>,
 }
 
-/// Theme provider properties
 #[derive(Clone, Props, PartialEq)]
 pub struct ThemeProviderProps {
-    /// Theme identifier: "hikari" (light) or "tairitsu" (dark)
     #[props(default = "hikari".to_string())]
     pub palette: String,
 
-    /// Layout direction: "ltr" or "rtl" (default: "ltr")
     #[props(default = "ltr".to_string())]
     pub direction: String,
 
-    /// Custom color overrides (optional)
     #[props(default)]
     pub primary: Option<String>,
 
@@ -153,77 +147,27 @@ pub struct ThemeProviderProps {
     #[props(default)]
     pub text_secondary: Option<String>,
 
-    /// Layer 2: Component color overrides (optional)
     #[props(default)]
     pub component_overrides: ComponentOverrides,
 
     children: Element,
 }
 
-/// Theme Provider component
 ///
-/// Provides theme context to all child components and injects CSS variables.
 ///
-/// # Hierarchical Theme System
 ///
-/// ThemeProvider components can be nested to create local theme overrides:
-/// - Child providers override parent theme settings
-/// - Components automatically use the nearest provider's theme
-/// - CSS variables cascade naturally through the DOM
 ///
-/// # Props
 ///
-/// - `palette` - Theme identifier ("hikari" or "tairitsu", default: "hikari")
-/// - `primary`, `secondary`, etc. - Optional color overrides
-/// - `children` - Child elements that receive theme context
 ///
-/// # Examples
 ///
-/// ## Basic Usage
 ///
-/// ```rust,no_run
-/// use hikari_components::ThemeProvider;
 ///
-/// rsx! {
-///     ThemeProvider { palette: "hikari" } {
-///         // All children use Hikari theme
-///         MyComponent { }
-///     }
-/// }
-/// ```
 ///
-/// ## Nested Providers (Local Override)
 ///
-/// ```rust,no_run
-/// rsx! {
-///     ThemeProvider { palette: "hikari" } {
-///         // Main app uses light theme
 ///
-///         Header { }
 ///
-///         div {
-///             ThemeProvider { palette: "tairitsu" } {
-///                 // This section uses dark theme
-///                 DarkWidget { }
-///             }
-///         }
-///     }
-/// }
-/// ```
 ///
-/// ## Custom Color Override
 ///
-/// ```rust,no_run
-/// rsx! {
-///     ThemeProvider {
-///         palette: "hikari",
-///         primary: Some("#FF6B6B".to_string()),
-///     } {
-///         // Uses Hikari theme with custom primary color
-///         MyComponent { }
-///     }
-/// }
-/// ```
 #[component]
 pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
     let current_palette = use_signal(|| props.palette.clone());
@@ -322,75 +266,27 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
     }
 }
 
-/// Hook to access the current theme
 ///
-/// Returns the ThemeContext provided by the nearest ancestor `ThemeProvider`.
-/// The context includes the current theme palette, theme name, and a
-/// functional `set_theme` callback for switching themes.
 ///
-/// # Platform Support
 ///
-/// - **WASM**: Reads theme from Dioxus context
-/// - **Non-WASM**: Returns default Hikari theme
 ///
-/// # Hierarchical Behavior
 ///
-/// When multiple ThemeProviders are nested, `use_theme()` returns the theme
-/// from the **nearest** provider (closest parent in the DOM hierarchy).
 ///
-/// # Example
 ///
-/// ```rust,no_run
-/// use crate::prelude::*;;
-/// use hikari_components::use_theme;
 ///
-/// fn MyComponent() -> Element {
-///     let theme = use_theme();
-///     let primary_color = &theme.palette.read();
 ///
-///     rsx! {
-///         div {
-///             style: "color: {primary_color}",
-///             "Themed text"
-///         }
-///     }
-/// }
-/// ```
 ///
-/// # Example with Nested Providers
 ///
-/// ```rust,no_run
-/// rsx! {
-///     ThemeProvider { palette: "hikari" } {
-///         OuterComponent { }  // use_theme() returns Hikari theme
 ///
-///         ThemeProvider { palette: "tairitsu" } {
-///             InnerComponent { }  // use_theme() returns Tairitsu theme
-///         }
-///     }
-/// }
-/// ```
 ///
-/// # Returns
 ///
-/// Returns the current `ThemeContext`. If called outside of any `ThemeProvider`,
-/// returns a default theme based on system color scheme (Hikari for light mode,
-/// Tairitsu for dark mode) and logs a warning to the browser console.
 ///
-/// # Note
 ///
-/// This hook uses `use_context()` to retrieve the ThemeContext with a
-/// functional `set_theme` callback. This enables theme switching functionality
-/// in child components. Components should always be wrapped in a `ThemeProvider`
-/// to ensure proper theme functionality.
 pub fn use_theme() -> ThemeContext {
     use_context()
 }
 
-/// Hook to get layout direction for RTL support
 ///
-/// Returns the current layout direction (LTR or RTL).
-/// Defaults to LTR if no ThemeProvider is present.
 pub fn use_layout_direction() -> LayoutDirection {
     try_consume_context::<ThemeContext>()
         .map(|ctx| *ctx.direction.read())

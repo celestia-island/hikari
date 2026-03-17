@@ -5,7 +5,7 @@
 //!
 //! ```rust
 //! use hikari_components::layout::Section;
-//! use crate::prelude::*;;
+//! use crate::prelude::*;
 //!
 //! rsx! {
 //!     Section {
@@ -16,37 +16,24 @@
 //! }
 //! ```
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, SectionClass, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, SectionClass, UtilityClass};
 
-/// Section component - Content section with optional header
 ///
-/// Provides a semantic section element with optional title and description.
-/// Perfect for grouping related content.
 ///
-/// # Features
-/// - Optional title and description
-/// - Semantic HTML5 section element
-/// - Responsive spacing
-/// - Clean typography
 #[component]
 pub fn Section(
-    /// Section content
     children: Element,
 
-    /// Section title (optional)
     #[props(optional)]
     title: Option<String>,
 
-    /// Section description/subtitle (optional)
     #[props(optional)]
     description: Option<String>,
 
-    /// Section size (default: md)
     #[props(default = "md".to_string())]
     size: String,
 
-    /// Custom CSS classes
     #[props(default)]
     class: String,
 ) -> Element {
@@ -96,25 +83,16 @@ pub fn Section(
     }
 }
 
-/// Spacer component - Vertical or horizontal spacing
 ///
-/// Provides consistent spacing within layouts.
 ///
-/// # Features
-/// - Vertical or horizontal orientation
-/// - Multiple size presets
-/// - Zero-height component
 #[component]
 pub fn Spacer(
-    /// Spacer orientation (default: vertical)
     #[props(default = "vertical".to_string())]
     orientation: String,
 
-    /// Spacer size (xs/sm/md/lg/xl, default: md)
     #[props(default = "md".to_string())]
     size: String,
 
-    /// Custom CSS classes
     #[props(default)]
     class: String,
 ) -> Element {

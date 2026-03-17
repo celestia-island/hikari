@@ -5,13 +5,10 @@ use std::sync::Arc;
 
 use super::error::{FieldError, ValidationResult};
 
-/// Trait for defining validation rules for a form field
 pub trait ValidationSchema<T>: Send + Sync {
-    /// Validate a single field value
     fn validate(&self, value: &T) -> ValidationResult;
 }
 
-/// Required field validator
 #[derive(Clone, Debug)]
 pub struct Required;
 
@@ -34,7 +31,6 @@ impl ValidationSchema<Option<String>> for Required {
     }
 }
 
-/// Minimum length validator
 #[derive(Clone, Debug)]
 pub struct MinLength(pub usize);
 
@@ -51,7 +47,6 @@ impl ValidationSchema<String> for MinLength {
     }
 }
 
-/// Maximum length validator
 #[derive(Clone, Debug)]
 pub struct MaxLength(pub usize);
 
@@ -68,7 +63,6 @@ impl ValidationSchema<String> for MaxLength {
     }
 }
 
-/// Email format validator
 #[derive(Clone, Debug)]
 pub struct Email;
 
@@ -87,7 +81,6 @@ impl ValidationSchema<String> for Email {
     }
 }
 
-/// Pattern validator (regex)
 #[derive(Clone, Debug)]
 pub struct Pattern {
     pattern: String,
@@ -119,7 +112,6 @@ impl ValidationSchema<String> for Pattern {
     }
 }
 
-/// Custom validator using a closure
 #[derive(Clone)]
 pub struct CustomValidator<T> {
     validator: Arc<dyn Fn(&T) -> ValidationResult + Send + Sync>,
@@ -142,7 +134,6 @@ impl<T> ValidationSchema<T> for CustomValidator<T> {
     }
 }
 
-/// Combines multiple validators into one
 #[derive(Clone)]
 pub struct Validators<T> {
     validators: Vec<Arc<dyn ValidationSchema<T> + Send + Sync>>,

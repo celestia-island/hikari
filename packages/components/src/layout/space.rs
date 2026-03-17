@@ -1,8 +1,8 @@
 // hi-components/src/layout/space.rs
 // Space component for adding spacing
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, SpaceClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, SpaceClass};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum SpaceDirection {
@@ -19,23 +19,18 @@ impl Default for SpaceDirection {
 
 #[derive(Clone, PartialEq, Props)]
 pub struct SpaceProps {
-    /// Space size (number of 8px units)
     #[props(default = 1)]
     pub size: u8,
 
-    /// Direction of spacing
     #[props(default)]
     pub direction: SpaceDirection,
 
-    /// Whether to wrap content
     #[props(default = false)]
     pub wrap: bool,
 
-    /// Additional CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Content to display
     pub children: Element,
 }
 
@@ -51,28 +46,9 @@ impl Default for SpaceProps {
     }
 }
 
-/// Space component for adding spacing
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::{Space, SpaceDirection};
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Space {
-///             size: 2,
-///             div { "Content" }
-///         }
-///         Space {
-///             direction: SpaceDirection::Vertical,
-///             size: 1,
-///             div { "Content" }
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Space(props: SpaceProps) -> Element {
     let direction_class = match props.direction {
@@ -115,7 +91,6 @@ pub fn Space(props: SpaceProps) -> Element {
     }
 }
 
-/// Space component's type wrapper for StyledComponent
 pub struct SpaceComponent;
 
 impl crate::styled::StyledComponent for SpaceComponent {

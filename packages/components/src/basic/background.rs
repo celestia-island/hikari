@@ -6,51 +6,28 @@
 
 #[cfg(target_arch = "wasm32")]
 use animation::style::StyleBuilder;
-use crate::prelude::*;;
+use crate::prelude::*;
 #[cfg(target_arch = "wasm32")]
-use palette::{墨色, 月白, 粉红, 靛蓝};
+use hikari_palette::{墨色, 月白, 粉红, 靛蓝};
 
 use crate::styled::StyledComponent;
 
-/// Background component type wrapper (for implementing StyledComponent)
 pub struct BackgroundComponent;
 
-/// Background component properties
 ///
-/// # Fields
 ///
-/// - `children` - Optional child elements (background is transparent)
 #[derive(Clone, Props, PartialEq)]
 pub struct BackgroundProps {
     children: Element,
 }
 
-/// Background component
 ///
-/// A fixed, full-screen gradient background that automatically adapts to current theme.
-/// The background includes a slow 60-second rotating gradient animation with breathing effect.
 ///
-/// # Positioning
 ///
-/// - `position: fixed` - Covers entire viewport regardless of scroll
-/// - `top/left/right/bottom: 0` - Full viewport dimensions
-/// - `z-index: -1` - Behind all content
-/// - `pointer-events: none` - Click-through to content
 ///
-/// # Theme Support
 ///
-/// Automatically switches gradients based on theme from `use_theme()` hook:
-/// - Hikari (light): 月白 → 粉红 gradient with 60s rotation and breathing
-/// - Tairitsu (dark): 墨色 → 靛蓝 gradient with 60s rotation and breathing
-/// - Theme changes trigger animation restart via `use_effect` dependency
 ///
-/// # Animation
 ///
-/// The gradient smoothly rotates and breathes:
-/// - Uses StyleBuilder for efficient updates
-/// - 60-second rotation period
-/// - 4-second breathing cycle with ±5% saturation/lightness variation
-/// - Receives theme context from use_theme() for dynamic theme support
 #[component]
 pub fn Background(props: BackgroundProps) -> Element {
     #[cfg(target_arch = "wasm32")]
@@ -68,17 +45,7 @@ pub fn Background(props: BackgroundProps) -> Element {
     }
 }
 
-/// Starts gradient rotation and breathing animation
 ///
-/// The gradient smoothly rotates and breathes by updating CSS variables:
-/// - Updates `--bg-center-x` and `--bg-center-y` in each frame for rotation
-/// - Updates `--bg-color-1` and `--bg-color-2` for breathing colors
-/// - Uses StyleBuilder for efficient updates
-/// - Automatic requestAnimationFrame loop
-/// - 60-second rotation period
-/// - 4-second breathing cycle with ±5% saturation/lightness variation
-/// - Reads theme from nearest ThemeProvider via DOM (supports real-time theme switching)
-/// - Returns cleanup function to stop animation on unmount
 #[cfg(target_arch = "wasm32")]
 fn start_gradient_animation() -> Box<dyn FnOnce()> {
     use std::cell::RefCell;

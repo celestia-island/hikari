@@ -1,31 +1,25 @@
 // hi-components/src/data/node_arrow.rs
 // TreeNodeArrow component - expand/collapse arrow for tree nodes
 
-use crate::prelude::*;;
+use crate::prelude::*;
 
 use crate::basic::{Arrow, ArrowDirection};
 
-/// Expand/collapse arrow for tree nodes
 #[derive(Clone, PartialEq, Props)]
 pub struct TreeNodeArrowProps {
-    /// Whether to node is expanded
     #[props(default)]
     pub expanded: bool,
 
-    /// Whether to node is disabled
     #[props(default)]
     pub disabled: bool,
 
-    /// Custom classes
     #[props(default)]
     pub class: String,
 
-    /// Click handler (when clicking specifically on arrow)
     #[props(default)]
     pub onclick: Option<EventHandler<MouseEvent>>,
 }
 
-/// TreeNodeArrow - The expand/collapse arrow indicator
 #[component]
 pub fn TreeNodeArrow(props: TreeNodeArrowProps) -> Element {
     if props.disabled {

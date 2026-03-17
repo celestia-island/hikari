@@ -1,36 +1,17 @@
 // packages/components/src/display/comment.rs
 // Comment component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, CommentClass, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, CommentClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// Comment component type wrapper (for StyledComponent)
 pub struct CommentComponent;
 
-/// Comment component with Arknights + FUI styling
 ///
-/// A reusable component for displaying user comments, reviews, or feedback.
-/// Supports nested replies through `actions` prop.
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::{Comment, CommentProps};
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Comment {
-///             author: Some("Alice".to_string()),
-///             avatar: Some("alice.jpg".to_string()),
-///             content: "This is a great feature!".to_string(),
-///             datetime: Some("2024-01-22 10:30".to_string()),
-///         }
-///     }
-/// }
-/// ```
 #[derive(Clone, PartialEq, Props, Default)]
 pub struct CommentProps {
     #[props(default)]

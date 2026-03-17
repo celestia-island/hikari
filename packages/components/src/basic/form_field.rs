@@ -1,12 +1,11 @@
 // packages/components/src/basic/form_field.rs
 // FormField component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, FormFieldClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, FormFieldClass};
 
 use crate::styled::StyledComponent;
 
-/// FormField component type wrapper (for StyledComponent)
 pub struct FormFieldComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -20,38 +19,29 @@ pub enum FormFieldStatus {
 
 #[derive(Clone, PartialEq, Props)]
 pub struct FormFieldProps {
-    /// Field label
     pub label: String,
 
-    /// Whether the field is required
     #[props(default = false)]
     pub required: bool,
 
-    /// Field help text (optional)
     #[props(default)]
     pub help_text: Option<String>,
 
-    /// Field error message (optional)
     #[props(default)]
     pub error_message: Option<String>,
 
-    /// Field status
     #[props(default)]
     pub status: FormFieldStatus,
 
-    /// Whether to show the status icon
     #[props(default = true)]
     pub show_status: bool,
 
-    /// Additional CSS class
     #[props(default)]
     pub class: String,
 
-    /// Additional inline style
     #[props(default)]
     pub style: String,
 
-    /// Children - the form input component
     children: Element,
 }
 

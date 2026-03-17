@@ -9,10 +9,9 @@
 //! - **Tablet**: 641-1023px
 //! - **Desktop**: ≥1024px
 
-use crate::prelude::*;;
+use crate::prelude::*;
 use wasm_bindgen::prelude::*;
 
-/// Breakpoint definitions for responsive design
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Breakpoint {
     Mobile = 0,
@@ -21,7 +20,6 @@ pub enum Breakpoint {
 }
 
 impl Breakpoint {
-    /// Get the minimum width in pixels for this breakpoint
     pub fn min_width(&self) -> u32 {
         match self {
             Breakpoint::Mobile => 0,
@@ -30,7 +28,6 @@ impl Breakpoint {
         }
     }
 
-    /// Get the maximum width in pixels for this breakpoint
     pub fn max_width(&self) -> Option<u32> {
         match self {
             Breakpoint::Mobile => Some(640),
@@ -40,7 +37,6 @@ impl Breakpoint {
     }
 }
 
-/// Screen size category
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ScreenSize {
     Mobile,
@@ -49,46 +45,24 @@ pub enum ScreenSize {
 }
 
 impl ScreenSize {
-    /// Check if this is a mobile screen
     pub fn is_mobile(&self) -> bool {
         matches!(self, ScreenSize::Mobile)
     }
 
-    /// Check if this is a tablet or larger
     pub fn is_tablet_or_larger(&self) -> bool {
         matches!(self, ScreenSize::Tablet | ScreenSize::Desktop)
     }
 
-    /// Check if this is a desktop or larger
     pub fn is_desktop_or_larger(&self) -> bool {
         matches!(self, ScreenSize::Desktop)
     }
 }
 
-/// Hook to get the current screen size
 ///
-/// This hook monitors window resize events and returns the current screen size category.
 ///
-/// # Example
 ///
-/// ```rust,no_run
-/// use hikari_components::hooks::use_screen_size;
 ///
-/// fn App() -> Element {
-///     let screen_size = use_screen_size();
 ///
-///     rsx! {
-///         div {
-///             style: if screen_size.is_mobile() {
-///                 "font-size: 14px;"
-///             } else {
-///                 "font-size: 16px;"
-///             },
-///             {format!("{:?}", screen_size)}
-///         }
-///     }
-/// }
-/// ```
 pub fn use_screen_size() -> Signal<ScreenSize> {
     let screen_size = use_signal(get_screen_size_from_window);
 
@@ -112,54 +86,24 @@ pub fn use_screen_size() -> Signal<ScreenSize> {
     screen_size
 }
 
-/// Hook to check if the current screen is mobile
 ///
-/// # Example
 ///
-/// ```rust,no_run
-/// use crate::prelude::*;;
-/// use hikari_components::hooks::use_is_mobile;
 ///
-/// fn Sidebar() -> Element {
-///     let is_mobile = use_is_mobile();
 ///
-///     rsx! {
-///         div {
-///             style: if *is_mobile { "display: none;" } else { "display: block;" }
-///         }
-///     }
-/// }
-/// ```
 pub fn use_is_mobile() -> Memo<bool> {
     let screen_size = use_screen_size();
     use_memo(move || screen_size.read().is_mobile())
 }
 
-/// Hook to check if the current screen is desktop or larger
 ///
-/// # Example
 ///
-/// ```rust,no_run
-/// use crate::prelude::*;;
-/// use hikari_components::hooks::use_is_desktop;
 ///
-/// fn Layout() -> Element {
-///     let is_desktop = use_is_desktop();
 ///
-///     rsx! {
-///         div {
-///             // Only show sidebar on desktop
-///             style: if *is_desktop { "display: flex;" } else { "display: none;" }
-///         }
-///     }
-/// }
-/// ```
 pub fn use_is_desktop() -> Memo<bool> {
     let screen_size = use_screen_size();
     use_memo(move || screen_size.read().is_desktop_or_larger())
 }
 
-/// Get screen size from browser window
 fn get_screen_size_from_window() -> ScreenSize {
     if let Some(window) = web_sys::window() {
         let width_result = window.inner_width();
@@ -179,28 +123,12 @@ fn get_screen_size_from_window() -> ScreenSize {
     }
 }
 
-/// Hook to get media query state for custom breakpoints
 ///
-/// # Arguments
 ///
-/// * `min_width` - Minimum width in pixels (None for no minimum)
-/// * `max_width` - Maximum width in pixels (None for no maximum)
 ///
-/// # Example
 ///
-/// ```rust,no_run
-/// use hikari_components::hooks::use_media_query;
 ///
-/// fn Component() -> Element {
-///     let is_medium = use_media_query(Some(768), Some(1023));
 ///
-///     rsx! {
-///         div {
-///             style: if *is_medium { "background: blue;" } else { "background: red;" }
-///         }
-///     }
-/// }
-/// ```
 pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> Signal<bool> {
     let matches = use_signal(|| check_media_query(min_width, max_width));
 
@@ -223,7 +151,6 @@ pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> Signal
     matches
 }
 
-/// Check if the current window matches the media query criteria
 fn check_media_query(min_width: Option<u32>, max_width: Option<u32>) -> bool {
     if let Some(window) = web_sys::window() {
         let width_result = window.inner_width();

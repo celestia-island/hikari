@@ -1,60 +1,47 @@
 // packages/components/src/basic/date_picker.rs
 // DatePicker component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, DatePickerClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, DatePickerClass};
 
 use crate::styled::StyledComponent;
 
-/// DatePicker component type wrapper (for StyledComponent)
 pub struct DatePickerComponent;
 
 #[derive(Clone, PartialEq, Props)]
 pub struct DatePickerProps {
-    /// Current date value
     #[props(default)]
     pub value: Option<String>,
 
-    /// Minimum date (optional)
     #[props(default)]
     pub min: Option<String>,
 
-    /// Maximum date (optional)
     #[props(default)]
     pub max: Option<String>,
 
-    /// Date format (default: YYYY-MM-DD)
     #[props(default = "YYYY-MM-DD".to_string())]
     pub format: String,
 
-    /// Placeholder text
     #[props(default)]
     pub placeholder: Option<String>,
 
-    /// Whether the input is disabled
     #[props(default = false)]
     pub disabled: bool,
 
-    /// Whether the input is readonly
     #[props(default = false)]
     pub readonly: bool,
 
-    /// Additional CSS class
     #[props(default)]
     pub class: String,
 
-    /// Additional inline style
     #[props(default)]
     pub style: String,
 
-    /// Callback when date changes
     pub on_change: Option<EventHandler<String>>,
 
-    /// Callback on focus
     #[props(default)]
     pub on_focus: Option<EventHandler<FocusEvent>>,
 
-    /// Callback on blur
     #[props(default)]
     pub on_blur: Option<EventHandler<FocusEvent>>,
 }

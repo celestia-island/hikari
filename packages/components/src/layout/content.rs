@@ -1,41 +1,24 @@
 // hikari-components/src/layout/content.rs
 //! Content component - Main content area wrapper
 
-use crate::prelude::*;;
+use crate::prelude::*;
 
-/// Content component - Main content area wrapper
 ///
-/// # Example
 ///
-/// ```rust
-/// use hikari_components::layout::Content;
-/// use crate::prelude::*;;
 ///
-/// rsx! {
-///     Content {
-///         h1 { "Page Title" }
-///         p { "Page content goes here..." }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Content(
-    /// Content
     children: Element,
 
-    /// Background color (default: uses theme background variable)
     #[props(default = "var(--hi-background, #f5f5f5)".to_string())]
     background_color: String,
 
-    /// Padding (default: p-6 lg:p-10)
     #[props(default = "p-6 lg:p-10".to_string())]
     padding: String,
 
-    /// Whether to enable scroll
     #[props(default = true)]
     scrollable: bool,
 
-    /// Custom CSS classes
     #[props(default)]
     class: String,
 ) -> Element {

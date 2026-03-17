@@ -2,7 +2,7 @@
 // Arrow indicator component with rotation support
 
 use crate::prelude::*;
-use icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, components::ArrowClass};
 
 use crate::StyledComponent;

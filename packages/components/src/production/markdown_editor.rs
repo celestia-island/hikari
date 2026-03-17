@@ -2,7 +2,7 @@
 // MarkdownEditor component with Arknights + FUI styling
 
 use crate::prelude::*;
-use icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, MarkdownEditorClass, UtilityClass};
 
 use crate::styled::StyledComponent;
@@ -91,7 +91,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
     let on_change_for_insert = props.on_change;
     let insert_bold = move |_| {
-        let current = content();
+        let current = content.get();
         let new_value = format!("**{}**", current);
         content.set(new_value.clone());
         if let Some(handler) = on_change_for_insert.as_ref() {
@@ -101,7 +101,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
     let on_change_for_italic = props.on_change;
     let insert_italic = move |_| {
-        let current = content();
+        let current = content.get();
         let new_value = format!("*{}*", current);
         content.set(new_value.clone());
         if let Some(handler) = on_change_for_italic.as_ref() {
@@ -111,7 +111,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
     let on_change_for_heading = props.on_change;
     let insert_heading = move |_| {
-        let current = content();
+        let current = content.get();
         let new_value = format!("# {}", current);
         content.set(new_value.clone());
         if let Some(handler) = on_change_for_heading.as_ref() {
@@ -121,7 +121,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
     let on_change_for_code = props.on_change;
     let insert_code = move |_| {
-        let current = content();
+        let current = content.get();
         let new_value = format!("```\n{}\n```", current);
         content.set(new_value.clone());
         if let Some(handler) = on_change_for_code.as_ref() {
@@ -131,7 +131,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
     let on_change_for_link = props.on_change;
     let insert_link = move |_| {
-        let current = content();
+        let current = content.get();
         let new_value = format!("[{}](url)", current);
         content.set(new_value.clone());
         if let Some(handler) = on_change_for_link.as_ref() {
@@ -141,7 +141,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
     let on_change_for_image = props.on_change;
     let insert_image = move |_| {
-        let current = content();
+        let current = content.get();
         let new_value = format!("![alt]({})", current);
         content.set(new_value.clone());
         if let Some(handler) = on_change_for_image.as_ref() {
@@ -151,7 +151,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
     let on_change_for_list = props.on_change;
     let insert_list = move |_| {
-        let current = content();
+        let current = content.get();
         let new_value = format!("- {}", current);
         content.set(new_value.clone());
         if let Some(handler) = on_change_for_list.as_ref() {
@@ -161,7 +161,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
     let on_change_for_numbered = props.on_change;
     let insert_numbered = move |_| {
-        let current = content();
+        let current = content.get();
         let new_value = format!("1. {}", current);
         content.set(new_value.clone());
         if let Some(handler) = on_change_for_numbered.as_ref() {
@@ -171,7 +171,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
     let on_change_for_quote = props.on_change;
     let insert_quote = move |_| {
-        let current = content();
+        let current = content.get();
         let new_value = format!("> {}", current);
         content.set(new_value.clone());
         if let Some(handler) = on_change_for_quote.as_ref() {
@@ -259,7 +259,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
                     // Mode buttons
                     button {
-                        class: if current_mode() == MarkdownEditorMode::Edit {
+                        class: if current_mode.get() == MarkdownEditorMode::Edit {
                             "{MarkdownEditorClass::ToolbarButton.as_class()} {MarkdownEditorClass::ToolbarButtonActive.as_class()}"
                         } else {
                             "{MarkdownEditorClass::ToolbarButton.as_class()}"
@@ -268,7 +268,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                         "Edit"
                     }
                     button {
-                        class: if current_mode() == MarkdownEditorMode::Preview {
+                        class: if current_mode.get() == MarkdownEditorMode::Preview {
                             "{MarkdownEditorClass::ToolbarButton.as_class()} {MarkdownEditorClass::ToolbarButtonActive.as_class()}"
                         } else {
                             "{MarkdownEditorClass::ToolbarButton.as_class()}"
@@ -277,7 +277,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                         "Preview"
                     }
                     button {
-                        class: if current_mode() == MarkdownEditorMode::Split {
+                        class: if current_mode.get() == MarkdownEditorMode::Split {
                             "{MarkdownEditorClass::ToolbarButton.as_class()} {MarkdownEditorClass::ToolbarButtonActive.as_class()}"
                         } else {
                             "{MarkdownEditorClass::ToolbarButton.as_class()}"
@@ -290,7 +290,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
             // Editor area
             div { class: "{MarkdownEditorClass::Content.as_class()}",
-                match current_mode() {
+                match current_mode.get() {
                     MarkdownEditorMode::Edit => rsx! {
                         textarea {
                             class: "{MarkdownEditorClass::Textarea.as_class()}",
@@ -303,7 +303,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                         div { class: "{MarkdownEditorClass::Preview.as_class()}",
                             // Basic markdown rendering (simplified)
                             div {
-                                dangerous_inner_html: "{render_markdown_simple(&content())}",
+                                dangerous_inner_html: "{render_markdown_simple(&content.get())}",
                             }
                         }
                     },
@@ -318,7 +318,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                             div {
                                 class: "{MarkdownEditorClass::Preview.as_class()} {MarkdownEditorClass::SplitPane.as_class()}",
                                 div {
-                                    dangerous_inner_html: "{render_markdown_simple(&content())}",
+                                    dangerous_inner_html: "{render_markdown_simple(&content.get())}",
                                 }
                             }
                         }

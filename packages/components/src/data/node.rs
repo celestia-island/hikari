@@ -64,7 +64,7 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
             role: "treeitem",
             "data-node-key": "{props.node_key}",
             "data-level": "{props.level}",
-            aria_expanded: if has_children { is_expanded().to_string() } else { "false".to_string() },
+            aria_expanded: if has_children { is_expanded.get().to_string() } else { "false".to_string() },
             aria_selected: props.selected.to_string(),
             aria_disabled: props.disabled.to_string(),
 
@@ -75,7 +75,7 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
                 onclick: Some(EventHandler::new(move |e| {
                     if !props.disabled {
                         if has_children {
-                            is_expanded.set(!is_expanded());
+                            is_expanded.set(!is_expanded.get());
                         }
 
                         if let Some(handler) = props.onclick.as_ref() {
@@ -86,12 +86,12 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
 
                 // Expand/collapse arrow
                 TreeNodeArrow {
-                    expanded: is_expanded(),
+                    expanded: is_expanded.get(),
                     disabled: props.disabled,
                     onclick: Some(EventHandler::new(move |e: MouseEvent| {
                         e.stop_propagation();
                         if !props.disabled {
-                            is_expanded.set(!is_expanded());
+                            is_expanded.set(!is_expanded.get());
                         }
                     }))
                 }
@@ -104,7 +104,7 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
             }
 
             // Render children if expanded
-            if has_children && is_expanded() {
+            if has_children && is_expanded.get() {
                 ul {
                     class: "hi-tree-node-children",
                     role: "group",

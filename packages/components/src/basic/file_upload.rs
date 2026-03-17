@@ -63,7 +63,7 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let status_class = match upload_status() {
+    let status_class = match upload_status.get() {
         FileUploadStatus::Dragging => Some(FileUploadClass::Dragging),
         FileUploadStatus::Uploading => Some(FileUploadClass::Uploading),
         FileUploadStatus::Success => Some(FileUploadClass::Success),
@@ -92,7 +92,7 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
 
         #[cfg(target_arch = "wasm32")]
         {
-            let file_list = e.data_transfer().files();
+            let file_list = e.data_transfer().files.get();
 
             let mut selected_files = Vec::new();
             let mut errors = Vec::new();
@@ -135,7 +135,7 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
     let on_change = move |e: Event<FormData>| {
         #[cfg(target_arch = "wasm32")]
         {
-            let file_list = e.files();
+            let file_list = e.files.get();
 
             let mut selected_files = Vec::new();
             let mut errors = Vec::new();
@@ -221,9 +221,9 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
 
                     p { class: "hi-file-upload-text", "{props.upload_text}" }
 
-                    if props.show_preview && !files().is_empty() {
+                    if props.show_preview && !files.get().is_empty() {
                         div { class: "hi-file-upload-preview",
-                            for file in files().iter() {
+                            for file in files.get().iter() {
                                 div { class: "hi-file-upload-file", "{file}" }
                             }
                         }

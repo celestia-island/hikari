@@ -60,7 +60,7 @@ pub fn Anchor(
     let anchor_links = items.iter().map(|item| {
         let href = item.href.clone();
         let title = item.title.clone();
-        let is_active = active_anchor() == href;
+        let is_active = active_anchor.get() == href;
 
         rsx! {
             button {

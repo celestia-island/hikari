@@ -44,14 +44,14 @@ pub fn Filter(props: FilterProps) -> Element {
     let mut is_open = use_signal(|| false);
     let mut selected = use_signal(|| props.selected_values.clone());
 
-    let active_count = selected().len();
+    let active_count = selected.get().len();
 
     let handle_toggle = move |_| {
-        is_open.set(!is_open());
+        is_open.set(!is_open.get());
     };
 
     let mut handle_select = move |value: String| {
-        let mut current = selected();
+        let mut current = selected.get();
         if let Some(pos) = current.iter().position(|v| v == &value) {
             current.remove(pos);
         } else {
@@ -72,7 +72,7 @@ pub fn Filter(props: FilterProps) -> Element {
         }
     };
 
-    let is_selected = move |value: &str| -> bool { selected().iter().any(|v| v == value) };
+    let is_selected = move |value: &str| -> bool { selected.get().iter().any(|v| v == value) };
 
     let close_dropdown = move |_| {
         is_open.set(false);
@@ -148,7 +148,7 @@ pub fn Filter(props: FilterProps) -> Element {
                 }
             }
 
-            if is_open() {
+            if is_open.get() {
                 div { class: "{FilterClass::FilterDropdown.as_class()}",
                     onclick: close_dropdown,
 

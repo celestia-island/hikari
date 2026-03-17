@@ -23,13 +23,13 @@ impl StyleRegistry {
 
     ///
     pub fn css_bundle(&self) -> String {
-        self.styles.values().copied().collect::<Vec<_>>().join("\n")
+        self.styles.values.get().copied.get().collect::<Vec<_>>().join("\n")
     }
 
     ///
     ///
     pub fn get(&self, name: &str) -> Option<&'static str> {
-        self.styles.get(name).copied()
+        self.styles.get(name).copied.get()
     }
 
     ///

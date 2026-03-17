@@ -6,7 +6,7 @@
 // - Custom: Runtime overrides via icon_color, animation_id
 
 use crate::prelude::*;
-use icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, components::ButtonClass};
 
 use crate::{

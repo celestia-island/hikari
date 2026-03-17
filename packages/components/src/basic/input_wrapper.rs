@@ -9,7 +9,7 @@
 // 4. Icon sizes: Small(24px), Medium(32px), Large(40px)
 
 use crate::prelude::*;
-use icons::MdiIcon;
+use hikari_icons::MdiIcon;
 use hikari_palette::classes::{ClassesBuilder, InputWrapperClass, UtilityClass};
 
 use crate::{

@@ -92,7 +92,7 @@ pub fn Tooltip(props: TooltipProps) -> Element {
                         trigger_rect.set(Some(rect_tuple));
 
                         (portal.add_entry)(PortalEntry::Tooltip {
-                            id: tooltip_id(),
+                            id: tooltip_id.get(),
                             trigger_rect: Some(rect_tuple),
                             placement: props.placement.to_trigger_placement(),
                             content: props.content.clone(),
@@ -109,7 +109,7 @@ pub fn Tooltip(props: TooltipProps) -> Element {
     };
 
     let handle_mouse_leave = move |_| {
-        (portal.remove_entry)(tooltip_id());
+        (portal.remove_entry)(tooltip_id.get());
     };
 
     rsx! {

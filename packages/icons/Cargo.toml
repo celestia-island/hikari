@@ -5,6 +5,8 @@ edition = "2021"
 
 [features]
 default = []
+dioxus = []
+tairitsu = ["tairitsu-vdom", "tairitsu-hooks", "tairitsu-macros"]
 dynamic-fetch = []
 dynamic-fetch-warnings = []
 
@@ -12,10 +14,10 @@ dynamic-fetch-warnings = []
 hikari-builder = { path = "../builder" }
 
 [dependencies]
-# Tairitsu framework
-tairitsu-vdom = { path = "../../../tairitsu/packages/vdom" }
-tairitsu-hooks = { path = "../../../tairitsu/packages/hooks" }
-tairitsu-macros = { path = "../../../tairitsu/packages/macros" }
+# Tairitsu framework (optional)
+tairitsu-vdom = { path = "../../../tairitsu/packages/vdom", optional = true }
+tairitsu-hooks = { path = "../../../tairitsu/packages/hooks", optional = true }
+tairitsu-macros = { path = "../../../tairitsu/packages/macros", optional = true }
 
 # Hikari design system
 hikari-animation = { path = "../animation", default-features = false }

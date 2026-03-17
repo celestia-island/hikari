@@ -2,7 +2,7 @@
 // ZoomControls component with Arknights + FUI styling
 
 use crate::prelude::*;
-use icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, UtilityClass, ZoomControlsClass};
 
 use crate::styled::StyledComponent;
@@ -50,7 +50,7 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
         let max = props.max_zoom;
         let step = props.step;
         move |_| {
-            let new_zoom = (zoom() + step).min(max);
+            let new_zoom = (zoom.get() + step).min(max);
             zoom.set(new_zoom);
             if let Some(handler) = on_zoom_change.as_ref() {
                 handler.call(new_zoom);
@@ -63,7 +63,7 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
         let min = props.min_zoom;
         let step = props.step;
         move |_| {
-            let new_zoom = zoom().saturating_sub(step).max(min);
+            let new_zoom = zoom.get().saturating_sub(step).max(min);
             zoom.set(new_zoom);
             if let Some(handler) = on_zoom_change.as_ref() {
                 handler.call(new_zoom);
@@ -81,8 +81,8 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
         }
     };
 
-    let can_zoom_in = zoom() < props.max_zoom;
-    let can_zoom_out = zoom() > props.min_zoom;
+    let can_zoom_in = zoom.get() < props.max_zoom;
+    let can_zoom_out = zoom.get() > props.min_zoom;
 
     rsx! {
         div {
@@ -103,7 +103,7 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
             // Zoom percentage display
             if props.show_percentage {
                 div { class: "{ZoomControlsClass::Percentage.as_class()}",
-                    "{zoom()}%"
+                    "{zoom.get()}%"
                 }
             }
 

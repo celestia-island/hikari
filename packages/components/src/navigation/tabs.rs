@@ -114,7 +114,7 @@ pub fn Tabs(props: TabsProps) -> Element {
     let animated_class = if props.animated {
         "hi-tabs-animated"
     } else {
-{ "" }
+        ""
     };
 
     rsx! {
@@ -162,7 +162,7 @@ pub fn TabPane(props: TabPaneProps) -> Element {
     use hikari_palette::classes::{ClassesBuilder, components::TabsClass};
 
     let active_key = use_context::<Signal<String>>();
-    let is_active = active_key.get() == props.item_key;
+    let is_active = active_key.map_or(false, |key| key.get() == props.item_key);
 
     let tab_classes = ClassesBuilder::new()
         .add(TabsClass::TabsTab)
@@ -191,7 +191,7 @@ pub fn TabPane(props: TabPaneProps) -> Element {
                 span { class: "hi-tabs-tab-icon", icon }
             }
 
-                               span { class: "hi-tabs-tab-label", "{props.tab}" }
+            span { class: "hi-tabs-tab-label", {props.tab} }
         }
     };
 
@@ -202,9 +202,11 @@ pub fn TabPane(props: TabPaneProps) -> Element {
             "data-key": props.item_key,
             "aria-hidden": aria_hidden_val,
 
-            if is_active {
+            {if is_active {
                 props.children
-            }
+            } else {
+                VNode::empty()
+            }}
         }
     };
 

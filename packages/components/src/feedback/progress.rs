@@ -70,60 +70,65 @@ pub fn Progress(props: ProgressProps) -> Element {
             class: combined_classes,
             style: props.style,
 
-            if props.progress_type == ProgressType::Linear {
-                div { class: "hi-progress-outer",
-                    div { class: "hi-progress-inner",
+            {if props.progress_type == ProgressType::Linear {
+                rsx! {
+                    div {
+                        class: "hi-progress-outer",
                         div {
-                            class: "hi-progress-bg",
-                            style: width_style,
-                            ""
+                            class: "hi-progress-inner",
+                            div {
+                                class: "hi-progress-bg",
+                                style: width_style,
+                            }
                         }
-                    }
 
-                    if props.show_info {
-                        span { class: "hi-progress-text",
-                            {percentage_text}
+                        if props.show_info {
+                            span { class: "hi-progress-text",
+                                percentage_text
+                            }
                         }
                     }
                 }
             } else {
-                div { class: "hi-progress-circle-wrapper",
-                    svg {
-                        class: "hi-progress-circle",
-                        width: "120",
-                        height: "120",
-                        view_box: "0 0 120 120",
+                rsx! {
+                    div { class: "hi-progress-circle-wrapper",
+                        svg {
+                            class: "hi-progress-circle",
+                            width: "120",
+                            height: "120",
+                            view_box: "0 0 120 120",
 
-                        circle {
-                            class: "hi-progress-circle-trail",
-                            cx: "60",
-                            cy: "60",
-                            r: "54",
-                            stroke_width: "6",
-                            fill: "none",
+                            circle {
+                                class: "hi-progress-circle-trail",
+                                cx: "60",
+                                cy: "60",
+                                r: "54",
+                                stroke_width: "6",
+                                fill: "none",
+                            }
+
+                            circle {
+                                class: "hi-progress-circle-path",
+                                cx: "60",
+                                cy: "60",
+                                r: "54",
+                                stroke_width: "6",
+                                fill: "none",
+                                stroke_linecap: "round",
+                                stroke_dasharray: stroke_dasharray_val,
+                                stroke_dashoffset: stroke_dashoffset_val,
+                                transform: "rotate(-90 60 60)",
+                            }
                         }
 
-                        circle {
-                            class: "hi-progress-circle-path",
-                            cx: "60",
-                            cy: "60",
-                            r: "54",
-                            stroke_width: "6",
-                            fill: "none",
-                            stroke_linecap: "round",
-                            stroke_dasharray: stroke_dasharray_val,
-                            stroke_dashoffset: stroke_dashoffset_val,
-                            transform: "rotate(-90 60 60)",
-                        }
-                    }
-
-                    if props.show_info {
-                        span { class: "hi-progress-circle-text",
-                            {percentage_text}
+                        if props.show_info {
+                            span { class: "hi-progress-circle-text",
+                                percentage_text
+                            }
                         }
                     }
                 }
-            }
+            }}
         }
     }
 }

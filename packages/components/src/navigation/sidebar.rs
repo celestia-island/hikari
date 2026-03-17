@@ -230,7 +230,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
 
     rsx! {
         div {
-            class: item_classes,
+            class: {item_classes},
             "data-id": props.id,
 
             // Item header (always visible)
@@ -240,7 +240,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
                 color: GlowColor::Primary,
                 intensity: GlowIntensity::Dim,
                 div {
-                    class: header_class,
+                    class: {header_class},
                     "data-has-children": has_items,
 
                     // Add onclick handler to entire header for expand/collapse
@@ -254,37 +254,30 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
                     // Custom content slot - user provides Link or other content
                     // If content is provided, use it; otherwise render labels
                     div {
-                        class: content_class,
+                        class: {content_class},
                         if let Some(content) = &props.content {
                             content
                         } else {
                             {props.label.clone()}
                             if let Some(secondary) = &props.secondary_label {
-                                span { class: secondary_class, {secondary.clone()}
+                                span { class: {secondary_class}, {secondary.clone()} }
                             }
                         }
                     }
 
                     // Expand/collapse arrow (only if has items)
                     // Visual indicator only - onclick is on the parent header
-                    if has_items {
-                        div {
-                            class: arrow_classes,
-                            aria_expanded: expanded_attr,
-                            Icon { icon: MdiIcon::ChevronRight }
+                    {if has_items {
+                        rsx! {
+                            div {
+                                class: arrow_classes.clone(),
+                                aria_expanded: expanded_attr,
+                                Icon { icon: MdiIcon::ChevronRight }
+                            }
                         }
-                    }
-                }
-
-                    // Expand/collapse arrow (only if has items)
-                    // Visual indicator only - onclick is on the parent header
-                    if has_items {
-                        div {
-                            class: arrow_classes,
-                            aria_expanded: expanded_attr,
-                            Icon { icon: MdiIcon::ChevronRight }
-                        }
-                    }
+                    } else {
+                        VNode::empty()
+                    }}
                 }
             }
 

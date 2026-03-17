@@ -88,29 +88,37 @@ pub fn Stepper(props: StepperProps) -> Element {
 
                     rsx! {
                         div {
-                            class: step_classes,
+                            class: {step_classes},
 
                             // Step number
                             div {
-                                class: step_number_class,
+                                class: {step_number_class},
                                 {step_number}
                             }
 
                             // Connector line (except for last step in horizontal mode)
-                            if index < props.total - 1 && props.direction == StepperDirection::Horizontal {
-                                div {
-                                    class: connector_class,
-                                    ""
+                            {if index < props.total - 1 && props.direction == StepperDirection::Horizontal {
+                                rsx! {
+                                    div {
+                                        class: connector_class.clone(),
+                                        { "" }
+                                    }
                                 }
-                            }
+                            } else {
+                                VNode::empty()
+                            }}
 
                             // Vertical connector line
-                            if props.direction == StepperDirection::Vertical && index < props.total - 1 {
-                                div {
-                                    class: connector_vertical_class,
-                                    ""
+                            {if props.direction == StepperDirection::Vertical && index < props.total - 1 {
+                                rsx! {
+                                    div {
+                                        class: connector_vertical_class.clone(),
+                                        { "" }
+                                    }
                                 }
-                            }
+                            } else {
+                                VNode::empty()
+                            }}
                         }
                     }
                 }

@@ -37,7 +37,7 @@ pub struct SearchProps {
     pub suggestions: Vec<String>,
     pub on_search: EventHandler<String>,
     #[props(default)]
-    pub on_clear: Option<EventHandler>,
+    pub on_clear: Option<EventHandler<()>>,
     #[props(default)]
     pub on_suggestion_click: Option<EventHandler<String>>,
     #[props(default)]

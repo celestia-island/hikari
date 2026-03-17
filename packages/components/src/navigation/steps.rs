@@ -24,8 +24,8 @@ pub enum StepsDirection {
     Vertical,
 }
 
-#[derive(Clone, PartialEq, Props)]
-pub struct StepItemProps {
+#[derive(Clone, PartialEq, Props, Debug, Default)]
+pub struct StepData {
     pub title: String,
 
     #[props(default)]
@@ -49,7 +49,7 @@ pub struct StepsProps {
     #[props(default)]
     pub direction: StepsDirection,
 
-    pub steps: Vec<StepItemProps>,
+    pub steps: Vec<StepData>,
 
     #[props(default)]
     pub class: String,
@@ -58,7 +58,16 @@ pub struct StepsProps {
     pub style: String,
 
     #[props(default)]
-    pub on_change: Option<EventHandler<usize>>,
+    pub on_change: Option<Callback<usize, ()>>,
+}
+
+/// Internal data structure for step items
+struct StepItemData {
+    index: usize,
+    step: StepData,
+    step_classes: String,
+    is_clickable: bool,
+    step_status: StepStatus,
 }
 
 ///
@@ -106,7 +115,13 @@ pub fn Steps(props: StepsProps) -> Element {
 
             let is_clickable = props.on_change.is_some();
 
-            (index, step, step_classes, is_clickable, step_status)
+            StepItemData {
+                index,
+                step: step.clone(),
+                step_classes,
+                is_clickable,
+                step_status,
+            }
         })
         .collect();
 
@@ -121,64 +136,122 @@ pub fn Steps(props: StepsProps) -> Element {
             class: wrapper_classes,
             style: props.style,
 
-            for (index, step, step_classes, is_clickable, step_status) in step_items {
-                {
-                    let step_number = index + 1;
-                    let step_title = step.title.clone();
-                    let step_description = step.description.clone();
-
-                    rsx! {
-                        div {
-                            class: step_classes,
-                            onclick: move |_e| {
-                                if is_clickable
-                                    && let Some(handler) = props.on_change.as_ref() {
-                                        handler.call(index);
-                                    }
-                            },
-
-                            // Step indicator
-                            div {
-                                class: icon_class,
-
-                                if step_status == StepStatus::Wait {
-                                    span { class: number_class, {step_number} }
-                                } else if step_status == StepStatus::Process {
-                                    span { class: number_class, {step_number} }
-                                } else if step_status == StepStatus::Finish {
-                                    svg {
-                                        class: number_class,
-                                        view_box: "0 0 24 24",
-                                        fill: "none",
-                                        stroke: "currentColor",
-                                        stroke_width: "2",
-                                        polyline { points: "20 6 9 17 4 12" }
-                                    }
-                                } else {
-                                    svg {
-                                        class: number_class,
-                                        view_box: "0 0 24 24",
-                                        fill: "none",
-                                        stroke: "currentColor",
-                                        stroke_width: "2",
-                                        circle { cx: "12", cy: "12", r: "10" }
-                                        line { x1: "12", y1: "8", x2: "12", y2: "12" }
-                                        line { x1: "12", y1: "16", x2: "12.01", y2: "16" }
-                                    }
-                                }
-                            }
-
-                            // Step content
-                            div {
-                                class: content_class,
-                                div { class: title_class, {step_title} }
-                                if let Some(ref desc) = step_description {
-                                    div { class: description_class, {desc} }
-                                }
-                            }
-                        }
+            {step_items.into_iter().map(|item| {
+                rsx! {
+                    StepItem {
+                        index: item.index,
+                        step: item.step,
+                        step_classes: item.step_classes,
+                        is_clickable: item.is_clickable,
+                        step_status: item.step_status,
+                        icon_class: icon_class.clone(),
+                        number_class: number_class.clone(),
+                        content_class: content_class.clone(),
+                        title_class: title_class.clone(),
+                        description_class: description_class.clone(),
+                        on_change: props.on_change.clone(),
                     }
                 }
+            })}
+        }
+    }
+}
+
+/// Internal component for rendering individual step items
+#[derive(Clone, PartialEq, Props, Debug, Default)]
+struct StepItemPropsInternal {
+    #[props(default)]
+    index: usize,
+    #[props(default)]
+    step: StepData,
+    #[props(default)]
+    step_classes: String,
+    #[props(default)]
+    is_clickable: bool,
+    #[props(default)]
+    step_status: StepStatus,
+    #[props(default)]
+    icon_class: String,
+    #[props(default)]
+    number_class: String,
+    #[props(default)]
+    content_class: String,
+    #[props(default)]
+    title_class: String,
+    #[props(default)]
+    description_class: String,
+    #[props(default)]
+    on_change: Option<Callback<usize, ()>>,
+}
+
+#[component]
+fn StepItem(props: StepItemPropsInternal) -> Element {
+    let step_number = props.index + 1;
+    let step_title = props.step.title.clone();
+    let step_description = props.step.description.clone();
+    let index = props.index;
+    let is_clickable = props.is_clickable;
+    let on_change = props.on_change.clone();
+
+    let icon_el = match props.step_status {
+        StepStatus::Wait => rsx! {
+            span { class: props.number_class, {step_number} }
+        },
+        StepStatus::Process => rsx! {
+            span { class: props.number_class, {step_number} }
+        },
+        StepStatus::Finish => rsx! {
+            svg {
+                class: props.number_class,
+                view_box: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                stroke_width: "2",
+                polyline { points: "20 6 9 17 4 12" }
+            }
+        },
+        StepStatus::Error => rsx! {
+            svg {
+                class: props.number_class,
+                view_box: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                stroke_width: "2",
+                circle { cx: "12", cy: "12", r: "10" }
+                line { x1: "12", y1: "8", x2: "12", y2: "12" }
+                line { x1: "12", y1: "16", x2: "12.01", y2: "16" }
+            }
+        },
+    };
+
+    let desc_el = if let Some(ref desc) = step_description {
+        rsx! { div { class: props.description_class, {desc} } }
+    } else {
+        VNode::empty()
+    };
+
+    rsx! {
+        div {
+            class: props.step_classes,
+            onclick: move |_e| {
+                if is_clickable {
+                    if let Some(handler) = on_change.as_ref() {
+                        handler.emit(index);
+                    }
+                }
+            },
+
+            // Step indicator
+            div {
+                class: props.icon_class,
+                icon_el
+            }
+
+            // Step content
+            div {
+                class: props.content_class,
+                div { class: props.title_class, step_title }
+                desc_el
             }
         }
     }

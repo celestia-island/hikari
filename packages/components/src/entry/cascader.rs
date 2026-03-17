@@ -232,7 +232,7 @@ fn CascaderMenus(
 
         menus.push(rsx! {
             div { class: CascaderClass::Menu.as_class(),
-                ul { class: CascaderClass::MenuList.as_class(),
+                ul { class: {CascaderClass::MenuList.as_class()},
                     for opt in opts_clone.iter() {
                         {
                             let opt_value = opt.value.clone();
@@ -262,7 +262,7 @@ fn CascaderMenus(
                                         Icon {
                                             icon: MdiIcon::ChevronRight,
                                             size: 14,
-                                            class: CascaderClass::MenuItemArrow.as_class(),
+                                            class: {CascaderClass::MenuItemArrow.as_class()},
                                         }
                                     }
                                 }

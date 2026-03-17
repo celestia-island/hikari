@@ -126,7 +126,7 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
             div {
                 class: "hi-skeleton-group",
                 style: "display: flex; flex-direction: column; gap: 0.5rem;",
-                {children}
+                ..children
             }
         };
     }
@@ -220,7 +220,7 @@ pub fn SkeletonCard(props: SkeletonCardProps) -> Element {
             div {
                 class: "hi-skeleton-card-content",
                 style: "display: flex; flex-direction: column; gap: 0.5rem;",
-                {content_rows}
+                ..content_rows
             }
         }
     }
@@ -279,7 +279,7 @@ pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
                     key: row,
                     class: "hi-skeleton-table-row",
                     style: "display: flex; gap: 1rem; padding: 0.75rem 1rem;",
-                    {cells}
+                    ..cells
                 }
             }
         })
@@ -293,10 +293,10 @@ pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
             div {
                 class: "hi-skeleton-table-header",
                 style: "display: flex; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--hi-color-border);",
-                {header_cells}
+                ..header_cells
             }
 
-            {table_rows}
+            ..table_rows
         }
     }
 }

@@ -123,8 +123,8 @@ pub fn Badge(props: BadgeProps) -> Element {
 
                     if props.dot {
                         span { class: "hi-badge-dot-inner" }
-                    } else if display_count.is_some() {
-                        {display_count.as_ref().unwrap()}
+                    } else if let Some(count) = display_count {
+                        "{count}"
                     }
                 }
             }

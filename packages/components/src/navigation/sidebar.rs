@@ -110,7 +110,7 @@ impl Default for SidebarSectionProps {
 
 #[component]
 pub fn SidebarSection(props: SidebarSectionProps) -> Element {
-    let mut is_expanded = use_signal(|| props.default_expanded);
+    let is_expanded = use_signal(|| props.default_expanded);
 
     let expanded_attr = if is_expanded.get() { "true" } else { "false" };
 
@@ -119,9 +119,10 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
         .add_raw(&props.class)
         .build();
 
+    let is_expanded_for_arrow = is_expanded.clone();
     let arrow_classes = ClassesBuilder::new()
         .add(SidebarClass::SectionArrow)
-        .add_if(SidebarClass::SectionArrowRotated, move || is_expanded.get())
+        .add_if(SidebarClass::SectionArrowRotated, move || is_expanded_for_arrow.get())
         .build();
 
     let header_class = SidebarClass::SectionHeader.as_class();
@@ -130,6 +131,11 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
     let title_secondary_class = SidebarClass::SectionTitleSecondary.as_class();
     let children_class = SidebarClass::SectionChildren.as_class();
     let aria_hidden_val = (!is_expanded.get()).to_string();
+
+    let is_expanded_for_click = is_expanded.clone();
+    let handle_click = move |_| {
+        is_expanded_for_click.set(!is_expanded_for_click.get());
+    };
 
     rsx! {
         div {
@@ -143,7 +149,7 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
                 intensity: GlowIntensity::Dim,
                 div {
                     class: header_class,
-                    onclick: move |_| { is_expanded.set(!is_expanded.get()); },
+                    onclick: handle_click,
                     aria_expanded: expanded_attr,
 
                     div {

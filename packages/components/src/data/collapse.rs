@@ -41,7 +41,7 @@ impl Default for CollapseProps {
 
 #[component]
 pub fn Collapse(props: CollapseProps) -> Element {
-    let mut is_expanded = use_signal(|| props.expanded);
+    let is_expanded = use_signal(|| props.expanded);
 
     let animation_style = if props.animated {
         format!(
@@ -53,21 +53,23 @@ pub fn Collapse(props: CollapseProps) -> Element {
     };
 
     // Use a large max-height for expanded state (will be clamped by content height)
-    let max_height = if is_expanded.read() {
+    let max_height = if is_expanded.get() {
         "1000px".to_string()
     } else {
         "0px".to_string()
     };
 
-    let opacity = if is_expanded.read() { "1" } else { "0" };
+    let opacity = if is_expanded.get() { "1" } else { "0" };
 
-    let arrow_rotation = if is_expanded.read() { "90deg" } else { "0deg" };
+    let arrow_rotation = if is_expanded.get() { "90deg" } else { "0deg" };
 
+    let is_expanded_for_toggle = is_expanded.clone();
+    let on_expand_for_toggle = props.on_expand.clone();
     let handle_toggle = move |_| {
-        is_expanded.set(!is_expanded.get());
+        is_expanded_for_toggle.set(!is_expanded_for_toggle.get());
 
-        if let Some(handler) = props.on_expand.as_ref() {
-            handler.call(is_expanded.read());
+        if let Some(handler) = on_expand_for_toggle.as_ref() {
+            handler.call(is_expanded_for_toggle.get());
         }
     };
 

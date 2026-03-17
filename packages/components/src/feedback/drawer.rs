@@ -78,8 +78,9 @@ pub fn Drawer(props: DrawerProps) -> Element {
     let on_close = props.on_close;
     let mask_closable = props.mask_closable;
 
+    let on_close_for_mask = on_close.clone();
     let handle_mask_click = move |e: MouseEvent| {
-        if mask_closable && let Some(handler) = on_close.as_ref() {
+        if mask_closable && let Some(handler) = on_close_for_mask.as_ref() {
             handler.call(e);
         }
     };

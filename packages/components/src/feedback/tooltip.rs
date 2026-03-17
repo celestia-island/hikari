@@ -79,30 +79,40 @@ pub fn Tooltip(props: TooltipProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let handle_mouse_enter = move |event: MouseEvent| {
-        #[cfg(target_arch = "wasm32")]
-        {
-            // Use clientX/clientY from MouseEvent to approximate trigger position
-            // For precise element bounds, a ref-based approach would be needed
-            let rect_tuple = (event.client_x as f64, event.client_y as f64, 100.0, 30.0);
-            trigger_rect.set(Some(rect_tuple));
+    let handle_mouse_enter = {
+        let tooltip_id = tooltip_id.clone();
+        let trigger_rect = trigger_rect.clone();
+        let portal_add_entry = portal.add_entry.clone();
+        let content = props.content.clone();
+        let placement = props.placement.to_trigger_placement();
+        let arrow = props.arrow;
+        move |event: MouseEvent| {
+            #[cfg(target_arch = "wasm32")]
+            {
+                // Use clientX/clientY from MouseEvent to approximate trigger position
+                // For precise element bounds, a ref-based approach would be needed
+                let rect_tuple = (event.client_x as f64, event.client_y as f64, 100.0, 30.0);
+                trigger_rect.set(Some(rect_tuple));
 
-            (portal.add_entry)(PortalEntry::Tooltip {
-                id: tooltip_id.get(),
-                trigger_rect: Some(rect_tuple),
-                placement: props.placement.to_trigger_placement(),
-                content: props.content.clone(),
-                arrow: props.arrow,
-            });
-        }
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let _ = (&tooltip_id, &trigger_rect, &event);
+                portal_add_entry(PortalEntry::Tooltip {
+                    id: tooltip_id.get(),
+                    trigger_rect: Some(rect_tuple),
+                    placement,
+                    content: content.clone(),
+                    arrow,
+                });
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let _ = (&tooltip_id, &trigger_rect, &event);
+            }
         }
     };
 
+    let tooltip_id_for_leave = tooltip_id.clone();
+    let portal_remove_entry = portal.remove_entry.clone();
     let handle_mouse_leave = move |_| {
-        (portal.remove_entry)(tooltip_id.get());
+        portal_remove_entry(tooltip_id_for_leave.get());
     };
 
     rsx! {

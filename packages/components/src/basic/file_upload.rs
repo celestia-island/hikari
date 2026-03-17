@@ -50,10 +50,10 @@ pub struct FileUploadProps {
 
 #[component]
 pub fn FileUpload(props: FileUploadProps) -> Element {
-    let mut upload_status = use_signal(|| FileUploadStatus::Idle);
+    let upload_status = use_signal(|| FileUploadStatus::Idle);
 
     #[cfg(target_arch = "wasm32")]
-    let mut files = use_signal(|| Vec::<String>::new());
+    let files = use_signal(|| Vec::<String>::new());
 
     #[cfg(not(target_arch = "wasm32"))]
     let files = use_signal(Vec::<String>::new);
@@ -77,18 +77,22 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
     }
     let drag_classes = drag_builder.build();
 
+    let upload_status_for_drag_over = upload_status.clone();
     let on_drag_over = move |e: DragEvent| {
         e.prevent_default();
-        upload_status.set(FileUploadStatus::Dragging);
+        upload_status_for_drag_over.set(FileUploadStatus::Dragging);
     };
 
+    let upload_status_for_drag_leave = upload_status.clone();
     let on_drag_leave = move |_: DragEvent| {
-        upload_status.set(FileUploadStatus::Idle);
+        upload_status_for_drag_leave.set(FileUploadStatus::Idle);
     };
 
+    let upload_status_for_drop = upload_status.clone();
+    let files_for_drop = files.clone();
     let on_drop = move |e: DragEvent| {
         e.prevent_default();
-        upload_status.set(FileUploadStatus::Idle);
+        upload_status_for_drop.set(FileUploadStatus::Idle);
 
         #[cfg(target_arch = "wasm32")]
         {
@@ -113,18 +117,20 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
                 }
 
                 if !selected_files.is_empty() {
-                    files.set(selected_files.clone());
+                    files_for_drop.set(selected_files.clone());
 
                     if let Some(handler) = props.on_files.as_ref() {
                         handler.call(selected_files);
                     }
 
-                    upload_status.set(FileUploadStatus::Success);
+                    upload_status_for_drop.set(FileUploadStatus::Success);
                 }
             }
         }
     };
 
+    let upload_status_for_change = upload_status.clone();
+    let files_for_change = files.clone();
     let on_change = move |e: ChangeEvent| {
         #[cfg(target_arch = "wasm32")]
         {
@@ -159,13 +165,13 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
             }
 
             if !selected_files.is_empty() {
-                files.set(selected_files.clone());
+                files_for_change.set(selected_files.clone());
 
                 if let Some(handler) = props.on_files.as_ref() {
                     handler.call(selected_files);
                 }
 
-                upload_status.set(FileUploadStatus::Success);
+                upload_status_for_change.set(FileUploadStatus::Success);
             }
         }
 

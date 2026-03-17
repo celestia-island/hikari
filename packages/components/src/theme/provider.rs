@@ -177,17 +177,20 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
         _ => LayoutDirection::Ltr,
     });
 
-    let mut palette_for_callback = current_palette;
-    let mut theme_name_for_callback = current_theme_name;
+    let palette_for_callback = current_palette.clone();
+    let theme_name_for_callback = current_theme_name.clone();
     let set_theme = Callback::new(move |new_theme: String| {
         palette_for_callback.set(new_theme.clone());
         theme_name_for_callback.set(new_theme);
     });
 
+    let palette_for_context = current_palette.clone();
+    let theme_name_for_context = current_theme_name.clone();
+    let direction_for_context = current_direction.clone();
     use_context_provider(move || ThemeContext {
-        palette: current_palette,
-        theme_name: current_theme_name,
-        direction: current_direction,
+        palette: palette_for_context,
+        theme_name: theme_name_for_context,
+        direction: direction_for_context,
         set_theme,
     });
 

@@ -151,7 +151,9 @@ pub fn TimelineItem(props: TimelineItemProps) -> Element {
             div {
                 class: TimelineClass::Dot.as_class(),
                 style: dot_style,
-                {props.icon}
+                if let Some(icon) = props.icon {
+                    { icon }
+                }
             }
 
             // Timeline content

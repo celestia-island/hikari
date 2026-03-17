@@ -54,45 +54,45 @@ pub struct CarouselProps {
 
 #[component]
 pub fn Carousel(props: CarouselProps) -> Element {
-    let mut current_index = use_signal(|| 0);
+    let current_index = use_signal(|| 0);
     let is_paused = use_signal(|| props.initial_paused);
-    let children_count = use_memo(move || {
-        let mut count = 0;
-        if let VNode::Fragment(children) = &props.children {
-            count = children.len();
-        }
-        count
-    });
 
-    let total = children_count.read();
+    // Count children without moving props.children
+    let total = match &props.children {
+        VNode::Fragment(children) => children.len(),
+        _ => 0,
+    };
 
+    let current_index_for_prev = current_index.clone();
     let handle_prev = move |_| {
         if total == 0 {
             return;
         }
-        let mut idx = current_index.write();
+        let mut idx = current_index_for_prev.write();
         *idx = if *idx == 0 { total - 1 } else { *idx - 1 };
     };
 
+    let current_index_for_next = current_index.clone();
     let handle_next = move |_| {
         if total == 0 {
             return;
         }
-        let mut idx = current_index.write();
+        let mut idx = current_index_for_next.write();
         *idx = (*idx + 1) % total;
     };
 
+    let current_index_for_dot = current_index.clone();
     let handle_dot_click = move |index: usize| {
-        *current_index.write() = index;
+        *current_index_for_dot.write() = index;
     };
 
+    let is_paused_for_toggle = is_paused.clone();
     let toggle_pause = move |_| {
-        *is_paused.write() = !is_paused.get();
+        *is_paused_for_toggle.write() = !is_paused_for_toggle.get();
     };
 
     // Note: Autoplay functionality temporarily disabled until async runtime integration
     // TODO: Implement use_interval or spawn_local for autoplay
-    let _index_for_autoplay = current_index;
     let _ = (props.autoplay, is_paused.get());
 
     let track_transform = format!(
@@ -124,17 +124,23 @@ pub fn Carousel(props: CarouselProps) -> Element {
         .build();
 
     // Pre-compute dot elements
+    let current_index_for_dots = current_index.clone();
     let dot_elements: Vec<Element> = (0..total)
-        .map(|i| {
+        .map(move |i| {
+            let current_index_in_map = current_index_for_dots.clone();
+            let current_index_for_add_if = current_index_in_map.clone();
             let dot_classes = ClassesBuilder::new()
                 .add(CarouselClass::Dot)
-                .add_if(CarouselClass::DotActive, move || i == current_index.get())
+                .add_if(CarouselClass::DotActive, move || i == current_index_for_add_if.get())
                 .build();
 
+            let idx_signal = current_index_in_map.clone();
             rsx! {
                 button {
                     class: dot_classes,
-                    onclick: move |_| handle_dot_click(i),
+                    onclick: move |_| {
+                        *idx_signal.write() = i;
+                    },
                     aria_label: format!("Slide {}", i + 1),
                     disabled: total <= 1,
                 }

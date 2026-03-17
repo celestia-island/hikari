@@ -346,7 +346,7 @@ pub fn SidebarLeaf(props: SidebarLeafProps) -> Element {
                 class: leaf_content_class,
                 { props.children }
                 if let Some(secondary) = &props.secondary_label {
-                    span { class: secondary_class, {secondary} }
+                    span { class: secondary_class, "{secondary}" }
                 }
             }
         }

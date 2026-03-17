@@ -123,7 +123,7 @@ pub fn Popover(props: PopoverProps) -> Element {
         PopoverPositioning::Absolute(_) => vec![PopoverPlacement::Bottom],
     };
 
-    let on_open_change = props.on_open_change;
+    let on_open_change = props.on_open_change.clone();
     let on_open_change_for_close = props.on_open_change.clone();
 
     let open_for_close = open.clone();

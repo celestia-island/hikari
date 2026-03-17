@@ -68,7 +68,7 @@ pub fn use_modal(initial_config: ModalConfig) -> ModalController {
 
     let open = {
         let add_entry = portal.add_entry;
-        let cfg = config;
+        let cfg = config.clone();
         Callback::new(move |content: ModalContent| {
             let current_cfg = cfg.read();
             let entry = PortalEntry::Modal {
@@ -88,7 +88,7 @@ pub fn use_modal(initial_config: ModalConfig) -> ModalController {
     let close = {
         let remove_entry = portal.remove_entry;
         let start_close = portal.start_close_animation;
-        let cfg = config;
+        let cfg = config.clone();
         Callback::new(move |_| {
             let id = cfg.read().id.clone();
             start_close.call(id.clone());

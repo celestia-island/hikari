@@ -101,7 +101,7 @@ pub fn Cell(props: CellProps) -> Element {
             "data-key": props.column.column_key,
             "data-editable": "{props.editable}",
 
-            { value }
+            "{value}"
         }
     }
 }

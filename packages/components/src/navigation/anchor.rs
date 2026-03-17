@@ -92,7 +92,7 @@ pub fn Anchor(
                         }
                     }
                 },
-                {title}
+                "{title}"
             }
         }
     }).collect();

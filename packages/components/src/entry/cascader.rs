@@ -272,9 +272,11 @@ fn CascaderMenus(
                             }
                         },
 
-                        {opt_label}
+                        "{opt_label}"
 
-                        {arrow_icon}
+                        if let Some(icon) = arrow_icon {
+                            { icon }
+                        }
                     }
                 }
             })

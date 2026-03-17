@@ -91,8 +91,8 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
         .build();
 
     let handle_next = {
-        let on_step_change = props.on_step_change;
-        let on_finish = props.on_finish;
+        let on_step_change = props.on_step_change.clone();
+        let on_finish = props.on_finish.clone();
         let _total = total_steps;
         move |_| {
             if is_last_step {
@@ -106,7 +106,7 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     };
 
     let handle_prev = {
-        let on_step_change = props.on_step_change;
+        let on_step_change = props.on_step_change.clone();
         move |_| {
             if !is_first_step && let Some(handler) = on_step_change.as_ref() {
                 handler.call(current_step - 1);
@@ -115,7 +115,7 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     };
 
     let handle_skip = {
-        let on_skip = props.on_skip;
+        let on_skip = props.on_skip.clone();
         move |_| {
             if let Some(handler) = on_skip.as_ref() {
                 handler.call(());
@@ -166,18 +166,18 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
                 // Header with step counter
                 div { class: {UserGuideClass::Header.as_class()},
                     span { class: {UserGuideClass::Title.as_class()},
-                        {step.title.clone()}
+                        "{step.title.clone()}"
                     }
                     if props.show_progress {
                         span { class: {UserGuideClass::Counter.as_class()},
-                            {counter_text.clone()}
+                            "{counter_text.clone()}"
                         }
                     }
                 }
 
                 // Description
                 div { class: {UserGuideClass::Description.as_class()},
-                    {step.description.clone()}
+                    "{step.description.clone()}"
                 }
 
                 // Footer with controls

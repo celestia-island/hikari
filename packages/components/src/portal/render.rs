@@ -40,7 +40,7 @@ fn use_animated_portal_entry(
     let internal_animation_state = use_signal(|| initial_state);
 
     let close_callback = {
-        let mut anim_state = internal_animation_state;
+        let anim_state = internal_animation_state.clone();
         Callback::new(move |_| {
             #[cfg(target_arch = "wasm32")]
             {

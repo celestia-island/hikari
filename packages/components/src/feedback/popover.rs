@@ -105,13 +105,13 @@ impl Default for PopoverProps {
 
 #[component]
 pub fn Popover(props: PopoverProps) -> Element {
-    let mut open = use_signal(|| props.open);
-    let mut popover_id = use_signal(String::new);
+    let open = use_signal(|| props.open);
+    let popover_id = use_signal(String::new);
 
-    let mut close_requested = use_signal(|| false);
+    let close_requested = use_signal(|| false);
 
     #[cfg(target_arch = "wasm32")]
-    let mut trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
+    let trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
     #[cfg(not(target_arch = "wasm32"))]
     let trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
 
@@ -124,11 +124,13 @@ pub fn Popover(props: PopoverProps) -> Element {
     };
 
     let on_open_change = props.on_open_change;
-    let on_open_change_for_close = props.on_open_change;
+    let on_open_change_for_close = props.on_open_change.clone();
 
+    let open_for_close = open.clone();
+    let close_requested_for_close = close_requested.clone();
     let on_close = Callback::new(move |_| {
-        open.set(false);
-        close_requested.set(true);
+        open_for_close.set(false);
+        close_requested_for_close.set(true);
         if let Some(handler) = on_open_change_for_close.as_ref() {
             handler.call(false);
         }
@@ -136,72 +138,73 @@ pub fn Popover(props: PopoverProps) -> Element {
 
     // Sync external open prop with internal state
     let props_open = props.open;
+    let open_for_effect = open.clone();
+    let close_requested_for_effect = close_requested.clone();
     use_effect(move || {
-        if props_open != open.get() {
-            open.set(props_open);
+        if props_open != open_for_effect.get() {
+            open_for_effect.set(props_open);
             if props_open {
-                close_requested.set(false);
+                close_requested_for_effect.set(false);
             } else {
-                close_requested.set(true);
+                close_requested_for_effect.set(true);
             }
         }
     });
 
-    let handle_trigger_click = move |e: MouseEvent| {
-        e.stop_propagation();
+    let handle_trigger_click = {
+        let open = open.clone();
+        let popover_id = popover_id.clone();
+        let close_requested = close_requested.clone();
+        let trigger_rect = trigger_rect.clone();
+        let portal = portal.clone();
+        let preferred_placements = preferred_placements.clone();
+        let on_open_change = on_open_change;
+        let on_close = on_close.clone();
 
-        let new_state = !open.get();
-        open.set(new_state);
+        move |e: MouseEvent| {
+            e.stop_propagation();
 
-        if new_state {
-            let id = generate_portal_id();
-            popover_id.set(id.clone());
-            close_requested.set(false);
+            let new_state = !open.get();
+            open.set(new_state);
 
-            #[cfg(target_arch = "wasm32")]
-            {
-                if let Some(web_event) = e.downcast::<web_sys::MouseEvent>() {
-                    if let Some(target) = web_event.target() {
-                        if let Some(element) = target.dyn_ref::<web_sys::Element>() {
-                            let button = element.closest("button").ok().flatten();
-                            let trigger_element = button
-                                .as_ref()
-                                .map(|b| b as &web_sys::Element)
-                                .unwrap_or(element);
-                            if let Some(html_el) = trigger_element.dyn_ref::<web_sys::HtmlElement>()
-                            {
-                                let rect = html_el.get_bounding_client_rect();
-                                trigger_rect.set(Some((
-                                    rect.left(),
-                                    rect.top(),
-                                    rect.width(),
-                                    rect.height(),
-                                )));
-                            }
-                        }
+            if new_state {
+                let id = generate_portal_id();
+                popover_id.set(id.clone());
+                close_requested.set(false);
+
+                #[cfg(target_arch = "wasm32")]
+                {
+                    if let Some(drag_event) = e.as_any().downcast_ref::<MouseEvent>() {
+                        // Use client coordinates for approximate positioning
+                        trigger_rect.set(Some((
+                            drag_event.client_x as f64,
+                            drag_event.client_y as f64,
+                            100.0,
+                            30.0,
+                        )));
                     }
                 }
+
+                portal.add_entry.call(PortalEntry::Popover {
+                    id,
+                    trigger_rect: trigger_rect.read(),
+                    preferred_placements: preferred_placements.clone(),
+                    offset: props.offset,
+                    width: props.width.clone(),
+                    title: props.title.clone(),
+                    close_on_click_outside: props.close_on_click_outside,
+                    close_on_select: props.close_on_select,
+                    on_close: Some(on_close),
+                    close_requested,
+                    children: props.children.clone(),
+                });
+            } else {
+                close_requested.set(true);
             }
 
-            portal.add_entry.call(PortalEntry::Popover {
-                id,
-                trigger_rect: trigger_rect.read(),
-                preferred_placements: preferred_placements.clone(),
-                offset: props.offset,
-                width: props.width.clone(),
-                title: props.title.clone(),
-                close_on_click_outside: props.close_on_click_outside,
-                close_on_select: props.close_on_select,
-                on_close: Some(on_close),
-                close_requested,
-                children: props.children.clone(),
-            });
-        } else {
-            close_requested.set(true);
-        }
-
-        if let Some(handler) = on_open_change.as_ref() {
-            handler.call(new_state);
+            if let Some(handler) = on_open_change.as_ref() {
+                handler.call(new_state);
+            }
         }
     };
 

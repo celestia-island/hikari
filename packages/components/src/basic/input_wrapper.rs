@@ -13,8 +13,8 @@ use hikari_icons::MdiIcon;
 use hikari_palette::classes::{ClassesBuilder, InputWrapperClass, UtilityClass};
 
 use crate::{
-    basic::IconButton,
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    basic::{IconButton, IconButtonProps},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
     styled::StyledComponent,
 };
 

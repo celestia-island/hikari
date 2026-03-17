@@ -17,7 +17,6 @@
 //! ```
 
 use crate::prelude::*;
-use dioxus_core::VNode;
 use hikari_palette::{ClassesBuilder, classes::*};
 
 use crate::theme::use_layout_direction;
@@ -34,7 +33,7 @@ pub fn Header(
     #[props(default = false)]
     show_menu_toggle: bool,
 
-    on_menu_toggle: EventHandler,
+    on_menu_toggle: Option<EventHandler<MouseEvent>>,
 
     #[props(default)]
     rtl: Option<bool>,
@@ -42,8 +41,8 @@ pub fn Header(
     #[props(default)]
     class: String,
 
-    #[props(default = VNode::empty())]
-    right_content: Element,
+    #[props(default)]
+    right_content: Option<Element>,
 ) -> Element {
     let layout_direction = use_layout_direction();
     let is_rtl = rtl.unwrap_or_else(|| layout_direction.is_rtl());
@@ -85,7 +84,11 @@ pub fn Header(
                 if show_menu_toggle {
                     button {
                         class: "hi-header-toggle",
-                        onclick: move |_| on_menu_toggle.call(()),
+                        onclick: move |e| {
+                            if let Some(handler) = &on_menu_toggle {
+                                handler.call(e);
+                            }
+                        },
                         "aria-label": "Toggle menu",
 
                         svg {
@@ -107,9 +110,11 @@ pub fn Header(
                 }
             }
 
-            div {
-                class: right_class,
-                { right_content }
+            if let Some(right) = right_content {
+                div {
+                    class: right_class,
+                    { right }
+                }
             }
         }
     }

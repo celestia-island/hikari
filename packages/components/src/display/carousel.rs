@@ -139,10 +139,29 @@ pub fn Carousel(props: CarouselProps) -> Element {
         .add(CarouselClass::ArrowNext)
         .build();
 
+    // Pre-compute dot elements
+    let dot_elements: Vec<Element> = (0..total)
+        .map(|i| {
+            let dot_classes = ClassesBuilder::new()
+                .add(CarouselClass::Dot)
+                .add_if(CarouselClass::DotActive, move || i == current_index.get())
+                .build();
+
+            rsx! {
+                button {
+                    class: dot_classes,
+                    onclick: move |_| handle_dot_click(i),
+                    aria_label: format!("Slide {}", i + 1),
+                    disabled: total <= 1,
+                }
+            }
+        })
+        .collect();
+
     rsx! {
         div {
             class: CarouselClass::Container.as_class(),
-            
+
             // Track
             div {
                 class: CarouselClass::Track.as_class(),
@@ -171,23 +190,7 @@ pub fn Carousel(props: CarouselProps) -> Element {
             if props.indicator_type != CarouselIndicatorType::Hidden && total > 1 {
                 div {
                     class: indicator_classes,
-                    for i in 0..total {
-                        {
-                            let dot_classes = ClassesBuilder::new()
-                                .add(CarouselClass::Dot)
-                                .add_if(CarouselClass::DotActive, move || i == current_index.get())
-                                .build();
-
-                            rsx! {
-                                button {
-                                    class: dot_classes,
-                                    onclick: move |_| handle_dot_click(i),
-                                    aria_label: format!("Slide {}", i + 1),
-                                    disabled: total <= 1,
-                                }
-                            }
-                        }
-                    }
+                    ..dot_elements
                 }
             }
 

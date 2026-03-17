@@ -88,3 +88,67 @@ pub fn empty_vnode() -> VNode {
 
 // Re-export styled components
 pub use crate::styled::{StyledComponent, StyleRegistry};
+
+// Re-export Props types from components for use in rsx! macro
+// When using Component { ... } in rsx!, the macro generates Component(ComponentProps { ... })
+// These types need to be in scope
+
+// Basic component Props
+pub use crate::basic::{
+    BackgroundProps, BadgeProps, ButtonProps, CardActionsProps, CardContentProps,
+    CardHeaderProps, CardMediaProps, CardProps, CheckboxProps, DatePickerProps,
+    DividerProps, FileUploadProps, FormFieldProps, IconButtonProps, InputProps,
+    InputWrapperProps, RadioButtonProps, RadioGroupProps, SelectProps, SliderProps,
+    SwitchProps, TextareaProps,
+};
+
+// Feedback component Props
+pub use crate::feedback::{
+    AlertProps, DrawerProps, GlowProps, PopoverProps,
+    ProgressProps, SpinProps, ToastProps, TooltipProps,
+};
+
+// Display component Props
+pub use crate::display::{
+    CalendarProps, CarouselProps, CommentProps, DragLayerProps, EmptyProps,
+    QRCodeProps, SkeletonCardProps, SkeletonProps, SkeletonTableProps,
+    TagProps, TimelineItemProps, TimelineProps, UserGuideProps, ZoomControlsProps,
+};
+
+// Data component Props
+pub use crate::data::{
+    CellProps, CollapseProps, ColumnProps, DragDropTreeProps, FilterProps,
+    PaginationButtonProps, PaginationProps, RenderDragNodeProps, RowSelectionProps,
+    SelectionProps, SortProps, TableProps, TreeNodeArrowProps, TreeNodeContentProps,
+    TreeNodeLabelProps, TreeNodeProps, TreeProps, VirtualTreeProps,
+};
+
+// Navigation component Props
+pub use crate::navigation::{
+    BreadcrumbItemProps, BreadcrumbProps, MenuItemProps, MenuProps,
+    SidebarItemProps, SidebarLeafProps, SidebarProps, SidebarSectionProps,
+    StepsProps, SubMenuProps, TabPaneProps, TabsProps,
+};
+
+// Entry component Props
+pub use crate::entry::{
+    AutoCompleteProps, CascaderProps, NumberInputProps, SearchProps, TransferProps,
+};
+
+// Production component Props
+pub use crate::production::{
+    AudioPlayerProps, CodeHighlightProps, MarkdownEditorProps,
+    RichTextEditorProps, VideoPlayerProps,
+};
+
+// Layout component Props
+pub use crate::layout::{
+    ContainerProps, DividerProps as LayoutDividerProps, FlexBoxProps,
+    FooterProps, SpaceProps,
+};
+
+// Add ArrowProps from basic module
+pub use crate::basic::ArrowProps;
+
+// Re-export IconProps from hikari-icons for convenience
+pub use hikari_icons::IconProps;

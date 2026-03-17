@@ -6,11 +6,11 @@
 // - Custom: Runtime overrides via icon_color, animation_id
 
 use crate::prelude::*;
-use hikari_icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, IconProps, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, components::ButtonClass};
 
 use crate::{
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
     styled::StyledComponent,
 };
 

@@ -46,36 +46,24 @@ pub fn Filter(props: FilterProps) -> Element {
 
     let active_count = selected.get().len();
 
+    let is_open_for_toggle = is_open.clone();
     let handle_toggle = move |_| {
-        is_open.set(!is_open.get());
+        is_open_for_toggle.set(!is_open_for_toggle.get());
     };
 
-    let mut handle_select = move |value: String| {
-        let mut current = selected.get();
-        if let Some(pos) = current.iter().position(|v| v == &value) {
-            current.remove(pos);
-        } else {
-            current.push(value);
-        }
-        selected.set(current.clone());
-
-        if let Some(handler) = props.on_filter_change.as_ref() {
-            handler.call(current);
-        }
-    };
-
+    let selected_for_clear = selected.clone();
+    let on_filter_change_for_clear = props.on_filter_change.clone();
     let handle_clear = move |_| {
-        selected.set(Vec::new());
+        selected_for_clear.set(Vec::new());
 
-        if let Some(handler) = props.on_filter_change.as_ref() {
+        if let Some(handler) = on_filter_change_for_clear.as_ref() {
             handler.call(Vec::new());
         }
     };
 
-    let is_selected = move |value: &str| -> bool { selected.get().iter().any(|v| v == value) };
-
+    let is_open_for_close = is_open.clone();
     let close_dropdown = move |_| {
-        is_open.set(false);
+        is_open_for_close.set(false);
     };
 
     let container_classes = ClassesBuilder::new()
@@ -88,28 +76,49 @@ pub fn Filter(props: FilterProps) -> Element {
         .add_if(FilterClass::FilterActive, || active_count > 0)
         .build();
 
-    let filter_options: Vec<Element> = props.filters.iter().map(|option| {
-        let opt_value = option.value.clone();
-        let label_text = option.label.clone();
-        let checked = is_selected(&option.value);
+    let filter_options: Vec<Element> = {
+        let selected_for_option = selected.clone();
+        let on_filter_change_for_option = props.on_filter_change.clone();
+        props.filters.iter().map(move |option| {
+            let opt_value = option.value.clone();
+            let label_text = option.label.clone();
+            let checked = selected_for_option.read().iter().any(|v| v == &option.value);
 
-        rsx! {
-            label {
-                class: FilterClass::FilterOption.as_class(),
-                onclick: move |_| handle_select(opt_value.clone()),
-
-                input {
-                    class: FilterClass::FilterCheckbox.as_class(),
-                    r#type: "checkbox",
-                    checked: checked,
+            let selected_for_click = selected_for_option.clone();
+            let on_filter_change_for_click = on_filter_change_for_option.clone();
+            let opt_value_for_click = opt_value.clone();
+            let handle_click = move |_| {
+                let mut current = selected_for_click.get();
+                if let Some(pos) = current.iter().position(|v| v == &opt_value_for_click) {
+                    current.remove(pos);
+                } else {
+                    current.push(opt_value_for_click.clone());
                 }
+                selected_for_click.set(current.clone());
 
-                span { class: FilterClass::FilterLabel.as_class(),
-                    "{label_text}"
+                if let Some(handler) = on_filter_change_for_click.as_ref() {
+                    handler.call(current);
+                }
+            };
+
+            rsx! {
+                label {
+                    class: FilterClass::FilterOption.as_class(),
+                    onclick: handle_click,
+
+                    input {
+                        class: FilterClass::FilterCheckbox.as_class(),
+                        r#type: "checkbox",
+                        checked: checked,
+                    }
+
+                    span { class: FilterClass::FilterLabel.as_class(),
+                        "{label_text}"
+                    }
                 }
             }
-        }
-    }).collect();
+        }).collect()
+    };
 
     rsx! {
         div { class: container_classes,

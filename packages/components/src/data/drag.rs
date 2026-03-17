@@ -179,7 +179,7 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
         if can_drag {
             dragged_key_for_start.set(Some(key.clone()));
 
-            if let Some(data_transfer) = e.data_transfer() {
+            if let Some(mut data_transfer) = e.data_transfer() {
                 let _ = data_transfer.set_data("text/plain", &key);
             }
         }
@@ -308,12 +308,12 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
                             depth: props.depth + 1,
                             draggable: props.draggable,
                             drop_allowed: props.drop_allowed,
-                            allow_drag: props.allow_drag,
-                            allow_drop: props.allow_drop,
-                            dragged_key: props.dragged_key,
-                            drop_target: props.drop_target,
-                            drag_over_key: props.drag_over_key,
-                            on_drop: props.on_drop,
+                            allow_drag: props.allow_drag.clone(),
+                            allow_drop: props.allow_drop.clone(),
+                            dragged_key: props.dragged_key.clone(),
+                            drop_target: props.drop_target.clone(),
+                            drag_over_key: props.drag_over_key.clone(),
+                            on_drop: props.on_drop.clone(),
                         }
                     }
                 }

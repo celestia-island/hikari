@@ -162,7 +162,8 @@ pub fn TabPane(props: TabPaneProps) -> Element {
     use hikari_palette::classes::{ClassesBuilder, components::TabsClass};
 
     let active_key = use_context::<Signal<String>>().expect("TabsContext not found");
-    let is_active = active_key.get().get() == props.item_key;
+    let item_key = props.item_key.clone();
+    let is_active = active_key.get().get() == item_key;
 
     let tab_classes = ClassesBuilder::new()
         .add(TabsClass::TabsTab)
@@ -183,7 +184,7 @@ pub fn TabPane(props: TabPaneProps) -> Element {
         div {
             class: tab_classes,
             role: "tab",
-            "data-key": props.item_key,
+            "data-key": item_key.clone(),
             "aria-selected": is_active,
             "aria-disabled": props.disabled,
 
@@ -199,7 +200,7 @@ pub fn TabPane(props: TabPaneProps) -> Element {
         div {
             class: tabpane_classes,
             role: "tabpanel",
-            "data-key": props.item_key,
+            "data-key": item_key,
             "aria-hidden": aria_hidden_val,
 
             {if is_active {

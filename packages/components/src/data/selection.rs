@@ -130,29 +130,62 @@ pub fn Selection(props: SelectionProps) -> Element {
     // Clone is_all_selected for use in rsx! template
     let is_all_selected_for_template = is_all_selected.clone();
 
-    let selection_items: Vec<Element> = available_keys.iter().map(|key| {
-        let key_clone = key.clone();
-        let checked = is_row_selected(key);
+    // Create selection_items by creating individual handlers for each key
+    let selection_items: Vec<Element> = {
+        let selected_for_item = selected.clone();
+        let on_change_for_item = props.on_change.clone();
+        let selection_type = props.selection_type;
+        available_keys.iter().map(move |key| {
+            let key_clone = key.clone();
+            let key_for_check = key.clone();
+            let checked = selected_for_item.read().iter().any(|k| k == &key_for_check);
 
-        rsx! {
-            div { class: {SelectionClassNew::SelectionRow.as_class()},
-                label { class: {SelectionClassNew::SelectionItem.as_class()},
-                    input {
-                        class: {SelectionClassNew::SelectionCheckbox.as_class()},
-                        r#type: get_input_type(),
-                        checked: checked,
-                        name: if props.selection_type == SelectionType::Radio {
-                            "hi-selection-radio-group"
+            let selected_for_change = selected_for_item.clone();
+            let on_change_for_change = on_change_for_item.clone();
+            let handle_change = move |_| {
+                let mut new_selection = selected_for_change.get();
+
+                match selection_type {
+                    SelectionType::Checkbox => {
+                        if let Some(pos) = new_selection.iter().position(|k| k == &key_clone) {
+                            new_selection.remove(pos);
                         } else {
-                            ""
-                        },
-                        onchange: move |_| handle_row_select(key_clone.clone()),
+                            new_selection.push(key_clone.clone());
+                        }
                     }
-                    "{key}"
+                    SelectionType::Radio => {
+                        new_selection.clear();
+                        new_selection.push(key_clone.clone());
+                    }
+                }
+
+                selected_for_change.set(new_selection.clone());
+
+                if let Some(handler) = on_change_for_change.as_ref() {
+                    handler.call(new_selection);
+                }
+            };
+
+            rsx! {
+                div { class: {SelectionClassNew::SelectionRow.as_class()},
+                    label { class: {SelectionClassNew::SelectionItem.as_class()},
+                        input {
+                            class: {SelectionClassNew::SelectionCheckbox.as_class()},
+                            r#type: get_input_type(),
+                            checked: checked,
+                            name: if selection_type == SelectionType::Radio {
+                                "hi-selection-radio-group"
+                            } else {
+                                ""
+                            },
+                            onchange: handle_change,
+                        }
+                        "{key}"
+                    }
                 }
             }
-        }
-    }).collect();
+        }).collect()
+    };
 
     rsx! {
         div { class: {container_classes},

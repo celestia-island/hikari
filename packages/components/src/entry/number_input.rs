@@ -78,55 +78,76 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
     let decrement_disabled = props.min.is_some_and(|min| props.value <= min);
     let increment_disabled = props.max.is_some_and(|max| props.value >= max);
 
+    // Clone props for left button
+    let disabled_for_left = props.disabled;
+    let min_for_left = props.min;
+    let value_for_left = props.value;
+    let step_for_left = props.step;
+    let on_change_for_left = props.on_change.clone();
+
     // Left button (decrement) - interactive
     let left_items = vec![InputWrapperItem::Button {
         icon: MdiIcon::Minus,
         onclick: EventHandler::new(move |_| {
-            if !props.disabled {
-                let new_value = if let Some(min) = props.min {
-                    (props.value - props.step).max(min)
+            if !disabled_for_left {
+                let new_value = if let Some(min) = min_for_left {
+                    (value_for_left - step_for_left).max(min)
                 } else {
-                    props.value - props.step
+                    value_for_left - step_for_left
                 };
-                props.on_change.call(new_value);
+                on_change_for_left.call(new_value);
             }
         }),
         disabled: props.disabled || decrement_disabled,
         icon_color: None,
     }];
 
+    // Clone props for right button
+    let disabled_for_right = props.disabled;
+    let max_for_right = props.max;
+    let value_for_right = props.value;
+    let step_for_right = props.step;
+    let on_change_for_right = props.on_change.clone();
+
     // Right button (increment) - interactive
     let right_items = vec![InputWrapperItem::Button {
         icon: MdiIcon::Plus,
         onclick: EventHandler::new(move |_| {
-            if !props.disabled {
-                let new_value = if let Some(max) = props.max {
-                    (props.value + props.step).min(max)
+            if !disabled_for_right {
+                let new_value = if let Some(max) = max_for_right {
+                    (value_for_right + step_for_right).min(max)
                 } else {
-                    props.value + props.step
+                    value_for_right + step_for_right
                 };
-                props.on_change.call(new_value);
+                on_change_for_right.call(new_value);
             }
         }),
         disabled: props.disabled || increment_disabled,
         icon_color: None,
     }];
 
+    // Clone props for input
+    let value_for_input = props.value;
+    let disabled_for_input = props.disabled;
+    let min_for_input = props.min;
+    let max_for_input = props.max;
+    let on_change_for_input = props.on_change.clone();
+
     // Input element
     let input_element = rsx! {
         input {
             r#type: "text",
-            value: "{props.value}",
-            disabled: props.disabled,
+            value: "{value_for_input}",
+            disabled: disabled_for_input,
             oninput: move |e: InputEvent| {
                 if let Ok(val) = e.data.parse::<i64>() {
-                    let constrained_val = match (props.min, props.max) {
+                    let constrained_val = match (min_for_input, max_for_input) {
                         (Some(min), Some(max)) => val.clamp(min, max),
                         (Some(min), None) => val.max(min),
                         (None, Some(max)) => val.min(max),
                         (None, None) => val,
                     };
-                    props.on_change.call(constrained_val);
+                    on_change_for_input.call(constrained_val);
                 }
             }
         }

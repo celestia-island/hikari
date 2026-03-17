@@ -43,7 +43,8 @@ pub struct FormFieldProps {
     #[props(default)]
     pub style: String,
 
-    children: Element,
+    #[props(default)]
+    pub children: Element,
 }
 
 #[component]

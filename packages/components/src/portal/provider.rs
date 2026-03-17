@@ -45,13 +45,13 @@ pub fn PortalProvider(children: Element) -> Element {
         e.clear();
     });
 
-    let mut entries_for_close_anim = entries.clone();
+    let entries_for_close_anim = entries.clone();
     let start_close_animation = Callback::new(move |id: String| {
         let mut e = entries_for_close_anim.write();
         for entry in e.iter_mut() {
             if let PortalEntry::Modal {
                 id: entry_id,
-                ref mut animation_state,
+                animation_state,
                 ..
             } = entry
                 && entry_id == &id
@@ -62,8 +62,11 @@ pub fn PortalProvider(children: Element) -> Element {
         }
     });
 
+    let entries_for_context = entries.clone();
+    let entries_for_render = entries.clone();
+
     use_context_provider(|| PortalContext {
-        entries: entries.clone(),
+        entries: entries_for_context,
         add_entry,
         remove_entry,
         clear_all,
@@ -73,7 +76,7 @@ pub fn PortalProvider(children: Element) -> Element {
     rsx! {
         children
         PortalRender {
-            entries: Some(entries),
+            entries: Some(entries_for_render),
         }
     }
 }

@@ -15,7 +15,8 @@ pub struct TreeNodeContentProps {
 
     pub onclick: EventHandler<MouseEvent>,
 
-    children: Element,
+    #[props(default)]
+    pub children: Element,
 }
 
 impl Default for TreeNodeContentProps {

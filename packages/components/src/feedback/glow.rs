@@ -98,7 +98,8 @@ impl IntoAttrValue for GlowIntensity {
 
 #[derive(Clone, PartialEq, Props)]
 pub struct GlowProps {
-    children: Element,
+    #[props(default)]
+    pub children: Element,
 
     #[props(default)]
     pub blur: GlowBlur,

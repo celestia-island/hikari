@@ -84,31 +84,62 @@ pub fn Search(props: SearchProps) -> Element {
     if props.loading {
         right_items.push(InputWrapperItem::icon(MdiIcon::Loading));
     } else if has_clear_button {
+        // Clone for clear button
+        let value_signal_for_clear = value_signal.clone();
+        let dropdown_id_for_clear = dropdown_id.clone();
+        let portal_for_clear = portal.clone();
+        let on_clear_for_clear = props.on_clear.clone();
+
         right_items.push(InputWrapperItem::button(
             MdiIcon::Close,
             EventHandler::new(move |_| {
-                value_signal.set(String::new());
-                let id = dropdown_id.get();
+                value_signal_for_clear.set(String::new());
+                let id = dropdown_id_for_clear.get();
                 if !id.is_empty() {
-                    portal.remove_entry.call(id);
+                    portal_for_clear.remove_entry.call(id);
                 }
-                if let Some(ref on_clear) = props.on_clear {
+                if let Some(ref on_clear) = on_clear_for_clear {
                     on_clear.call(());
                 }
             }),
         ));
     } else {
+        // Clone for search button
+        let value_signal_for_search_btn = value_signal.clone();
+        let dropdown_id_for_search_btn = dropdown_id.clone();
+        let portal_for_search_btn = portal.clone();
+        let on_search_for_btn = props.on_search.clone();
+
         right_items.push(InputWrapperItem::button(
             MdiIcon::ArrowRight,
             EventHandler::new(move |_| {
-                let id = dropdown_id.get();
+                let id = dropdown_id_for_search_btn.get();
                 if !id.is_empty() {
-                    portal.remove_entry.call(id);
+                    portal_for_search_btn.remove_entry.call(id);
                 }
-                props.on_search.call(value_signal.get());
+                on_search_for_btn.call(value_signal_for_search_btn.get());
             }),
         ));
     }
+
+    // Clone for input handlers - each handler needs its own clones
+    // Clones for onfocus handler
+    let value_signal_for_onfocus = value_signal.clone();
+    let dropdown_id_for_onfocus = dropdown_id.clone();
+    let container_rect_for_onfocus = container_rect.clone();
+    let portal_for_onfocus = portal.clone();
+    let on_search_for_onfocus = props.on_search.clone();
+    let on_suggestion_click_for_onfocus = props.on_suggestion_click.clone();
+    let has_suggestions_for_onfocus = has_suggestions;
+    let filtered_suggestions_for_onfocus = filtered_suggestions.clone();
+
+    // Clones for oninput handler
+    let value_signal_for_oninput = value_signal.clone();
+    let on_search_for_oninput = props.on_search.clone();
+
+    // Clones for onkeydown handler
+    let dropdown_id_for_onkeydown = dropdown_id.clone();
+    let portal_for_onkeydown = portal.clone();
 
     let input_element = rsx! {
         div {
@@ -119,22 +150,22 @@ pub fn Search(props: SearchProps) -> Element {
                 placeholder: props.placeholder,
                 disabled: props.disabled,
                 onfocus: move |_| {
-                    if has_suggestions {
-                        let trigger_rect_opt = container_rect.read();
+                    if has_suggestions_for_onfocus {
+                        let trigger_rect_opt = container_rect_for_onfocus.read();
 
-                        let id = dropdown_id.get();
+                        let id = dropdown_id_for_onfocus.get();
                         if !id.is_empty() {
-                            portal.remove_entry.call(id.clone());
+                            portal_for_onfocus.remove_entry.call(id.clone());
                         }
 
                         let new_id = generate_portal_id();
-                        dropdown_id.set(new_id.clone());
+                        dropdown_id_for_onfocus.set(new_id.clone());
 
-                        let suggestions_for_dropdown = filtered_suggestions.clone();
-                        let on_search = props.on_search;
-                        let on_suggestion_click = props.on_suggestion_click.clone();
-                        let portal_remove = portal.remove_entry.clone();
-                        let mut value_signal_for_dropdown = value_signal;
+                        let suggestions_for_dropdown = filtered_suggestions_for_onfocus.clone();
+                        let on_search = on_search_for_onfocus.clone();
+                        let on_suggestion_click = on_suggestion_click_for_onfocus.clone();
+                        let portal_remove = portal_for_onfocus.remove_entry.clone();
+                        let value_signal_for_dropdown = value_signal_for_onfocus.clone();
 
                         let dropdown_content = rsx! {
                             div {
@@ -146,17 +177,22 @@ pub fn Search(props: SearchProps) -> Element {
                                         let suggestion_for_search = suggestion.clone();
                                         let suggestion_for_handler = suggestion.clone();
                                         let id_close = new_id.clone();
+                                        // Clone for this iteration's onclick handler
+                                        let value_signal_for_item = value_signal_for_dropdown.clone();
+                                        let on_suggestion_click_for_item = on_suggestion_click.clone();
+                                        let on_search_for_item = on_search.clone();
+                                        let portal_remove_for_item = portal_remove.clone();
                                         rsx! {
                                             div {
                                                 class: "hi-search-suggestion-item",
                                                 onclick: move |e: MouseEvent| {
                                                     e.stop_propagation();
-                                                    value_signal_for_dropdown.set(suggestion_for_click.clone());
-                                                    if let Some(ref handler) = on_suggestion_click {
+                                                    value_signal_for_item.set(suggestion_for_click.clone());
+                                                    if let Some(ref handler) = on_suggestion_click_for_item {
                                                         handler.call(suggestion_for_handler.clone());
                                                     }
-                                                    on_search.call(suggestion_for_search.clone());
-                                                    portal_remove.call(id_close.clone());
+                                                    on_search_for_item.call(suggestion_for_search.clone());
+                                                    portal_remove_for_item.call(id_close.clone());
                                                 },
                                                 Icon {
                                                     icon: MdiIcon::Magnify,
@@ -172,7 +208,7 @@ pub fn Search(props: SearchProps) -> Element {
                             }
                         };
 
-                        portal.add_entry.call(PortalEntry::Dropdown {
+                        portal_for_onfocus.add_entry.call(PortalEntry::Dropdown {
                             id: new_id,
                             strategy: PortalPositionStrategy::TriggerBased {
                                 placement: TriggerPlacement::BottomLeft,
@@ -186,21 +222,14 @@ pub fn Search(props: SearchProps) -> Element {
                 },
                 oninput: move |e: InputEvent| {
                     let new_value = e.data.clone();
-                    value_signal.set(new_value.clone());
-                    props.on_search.call(new_value);
+                    value_signal_for_oninput.set(new_value.clone());
+                    on_search_for_oninput.call(new_value);
                 },
                 onkeydown: move |e: KeyboardEvent| {
-                    if e.key_code() == Key::Enter {
-                        let id = dropdown_id.get();
-                        if !id.is_empty() {
-                            portal.remove_entry.call(id);
-                        }
-                        props.on_search.call(value_signal.get());
-                    }
                     if e.key_code() == Key::Escape {
-                        let id = dropdown_id.get();
+                        let id = dropdown_id_for_onkeydown.get();
                         if !id.is_empty() {
-                            portal.remove_entry.call(id);
+                            portal_for_onkeydown.remove_entry.call(id);
                         }
                     }
                 },

@@ -25,8 +25,8 @@ pub mod scripts;
 // Prelude module
 pub mod prelude;
 
-// Re-export StyledComponent
-pub use styled::StyledComponent;
+// Re-export StyledComponent and StyleRegistry
+pub use styled::{StyledComponent, StyleRegistry};
 
 // Re-exports
 pub use basic::*;

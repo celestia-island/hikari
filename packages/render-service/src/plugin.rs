@@ -7,6 +7,9 @@ use std::{collections::HashMap, path::PathBuf};
 use axum::routing::MethodRouter;
 use thiserror::Error;
 
+// Import StyleRegistry from components crate
+use components::StyleRegistry as ComponentsStyleRegistry;
+
 use crate::{
     registry::StyleRegistry as RenderServiceStyleRegistry,
     router::{AppState, build_router},
@@ -145,8 +148,8 @@ impl HikariRenderServicePlugin {
     ///
     /// # Arguments
     ///
-    /// * `registry` - components::StyleRegistry with registered component styles
-    pub fn component_style_registry(mut self, registry: components::StyleRegistry) -> Self {
+    /// * `registry` - ComponentsStyleRegistry with registered component styles
+    pub fn component_style_registry(mut self, registry: ComponentsStyleRegistry) -> Self {
         // Convert components::StyleRegistry to render-service StyleRegistry
         let mut render_registry = RenderServiceStyleRegistry::default();
 

@@ -1,15 +1,13 @@
 // hi-components/src/data/virtual_scroll.rs
 // Virtual scroll component for large tree data sets
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, TreeClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, TreeClass};
 
 use crate::styled::StyledComponent;
 
-/// VirtualScroll component wrapper (for StyledComponent)
 pub struct VirtualScrollComponent;
 
-/// Tree node data structure
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct VirtualTreeNodeData {
     pub id: String,
@@ -23,19 +21,15 @@ pub struct VirtualTreeNodeData {
 
 #[derive(Clone, PartialEq, Props)]
 pub struct VirtualTreeProps {
-    /// Full tree data
     #[props(default)]
     pub data: Vec<VirtualTreeNodeData>,
 
-    /// Container height (e.g., "400px")
     #[props(default)]
     pub height: String,
 
-    /// Height of each tree node
     #[props(default)]
     pub item_height: u32,
 
-    /// Extra items to render (buffer)
     #[props(default)]
     pub overscan: u32,
 
@@ -58,7 +52,6 @@ impl Default for VirtualTreeProps {
     }
 }
 
-/// Virtual scroll tree component for large datasets
 #[component]
 pub fn VirtualTree(props: VirtualTreeProps) -> Element {
     let mut scroll_position = use_signal(|| 0.0);

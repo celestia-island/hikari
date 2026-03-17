@@ -1,8 +1,8 @@
 // hi-components/src/layout/container.rs
 // Container component for responsive content wrapping
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, ContainerClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, ContainerClass};
 
 use crate::theme::use_layout_direction;
 
@@ -17,27 +17,21 @@ pub enum ContainerSize {
 
 #[derive(Clone, PartialEq, Props)]
 pub struct ContainerProps {
-    /// Container content
     #[props(default)]
     pub children: Element,
 
-    /// Container size preset
     #[props(default)]
     pub size: ContainerSize,
 
-    /// Custom max-width
     #[props(default)]
     pub max_width: Option<String>,
 
-    /// Center content
     #[props(default = false)]
     pub center: bool,
 
-    /// Override RTL behavior (default: follow theme direction)
     #[props(default)]
     pub rtl: Option<bool>,
 
-    /// Additional CSS classes
     #[props(default)]
     pub class: String,
 }
@@ -53,23 +47,9 @@ impl ContainerSize {
     }
 }
 
-/// Container component for responsive content wrapping
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::{Container, ContainerSize};
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Container {
-///             size: ContainerSize::Medium,
-///             h1 { "Hello Hikari!" }
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Container(props: ContainerProps) -> Element {
     let layout_direction = use_layout_direction();
@@ -112,7 +92,6 @@ pub fn Container(props: ContainerProps) -> Element {
     }
 }
 
-/// Container component's type wrapper for StyledComponent
 pub struct ContainerComponent;
 
 impl crate::styled::StyledComponent for ContainerComponent {

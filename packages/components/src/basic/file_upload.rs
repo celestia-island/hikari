@@ -1,12 +1,11 @@
 // packages/components/src/basic/file_upload.rs
 // FileUpload component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, FileUploadClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, FileUploadClass};
 
 use crate::styled::StyledComponent;
 
-/// FileUpload component type wrapper (for StyledComponent)
 pub struct FileUploadComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -21,39 +20,30 @@ pub enum FileUploadStatus {
 
 #[derive(Clone, PartialEq, Props, Default)]
 pub struct FileUploadProps {
-    /// Whether to accept multiple files
     #[props(default = false)]
     pub multiple: bool,
 
-    /// Accepted file types (e.g., "image/*,.pdf")
     #[props(default)]
     pub accept: String,
 
-    /// Maximum file size in bytes
     #[props(default = 10485760)] // 10MB default
     pub max_size: usize,
 
-    /// Whether to show file preview
     #[props(default = true)]
     pub show_preview: bool,
 
-    /// Custom upload button text
     #[props(default = "Click or drag file to upload".to_string())]
     pub upload_text: String,
 
-    /// Additional CSS class
     #[props(default)]
     pub class: String,
 
-    /// Additional inline style
     #[props(default)]
     pub style: String,
 
-    /// Callback when files are selected
     #[props(default)]
     pub on_files: Option<EventHandler<Vec<String>>>,
 
-    /// Callback when file is too large
     #[props(default)]
     pub on_error: Option<EventHandler<String>>,
 }

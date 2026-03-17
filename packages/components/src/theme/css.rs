@@ -1,8 +1,7 @@
 //! CSS variable generation for themes
 
-use palette::*;
+use hikari_palette::*;
 
-/// Palette override configuration
 #[derive(Clone, Default)]
 pub struct PaletteOverrides {
     pub primary: Option<String>,
@@ -18,8 +17,6 @@ pub struct PaletteOverrides {
     pub text_secondary: Option<String>,
 }
 
-/// Component color override configuration (Layer 2)
-/// Users can override only the fields they need, others remain auto-calculated
 #[derive(Clone, Default, PartialEq)]
 pub struct ComponentOverrides {
     pub selection_icon_color: Option<String>,
@@ -32,8 +29,6 @@ pub struct ComponentOverrides {
     pub input_background: Option<String>,
 }
 
-/// Component-level color palette (Layer 2)
-/// All colors are auto-calculated from Palette, user can override via ComponentOverrides
 #[derive(Clone, PartialEq)]
 pub struct ComponentPalette {
     pub selection_icon_color: String,
@@ -140,7 +135,6 @@ impl ComponentPalette {
     }
 }
 
-/// Theme palette with CSS variable values
 #[derive(Clone, PartialEq)]
 pub struct ThemePalette {
     pub primary: String,

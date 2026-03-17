@@ -1,35 +1,28 @@
 // hi-components/src/data/collapse.rs
 // Animated collapse/expand component for tree nodes
 
-use crate::prelude::*;;
+use crate::prelude::*;
 
 use crate::styled::StyledComponent;
 
-/// Collapse component wrapper (for StyledComponent)
 pub struct CollapseComponent;
 
 #[derive(Clone, PartialEq, Props, Debug)]
 pub struct CollapseProps {
-    /// Whether collapse is initially expanded
     #[props(default)]
     pub expanded: bool,
 
-    /// Animation duration in milliseconds
     #[props(default)]
     pub duration: u64,
 
-    /// Whether to animate the collapse
     #[props(default)]
     pub animated: bool,
 
-    /// Custom classes
     #[props(default)]
     pub class: String,
 
-    /// Content to collapse/expand
     pub children: Element,
 
-    /// Callback when expand/collapse state changes
     pub on_expand: Option<EventHandler<bool>>,
 }
 

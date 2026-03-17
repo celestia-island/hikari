@@ -1,16 +1,14 @@
 // packages/components/src/production/markdown_editor.rs
 // MarkdownEditor component with Arknights + FUI styling
 
-use crate::prelude::*;;
+use crate::prelude::*;
 use icons::{Icon, MdiIcon};
-use palette::classes::{ClassesBuilder, MarkdownEditorClass, UtilityClass};
+use hikari_palette::classes::{ClassesBuilder, MarkdownEditorClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// MarkdownEditor component type wrapper (for StyledComponent)
 pub struct MarkdownEditorComponent;
 
-/// Markdown editor mode
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum MarkdownEditorMode {
     #[default]
@@ -19,7 +17,6 @@ pub enum MarkdownEditorMode {
     Split,
 }
 
-/// Markdown editor size
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum MarkdownEditorSize {
     #[default]
@@ -28,48 +25,36 @@ pub enum MarkdownEditorSize {
     Large,
 }
 
-/// MarkdownEditor component props
 #[derive(Clone, PartialEq, Props)]
 pub struct MarkdownEditorProps {
-    /// Initial content
     #[props(default)]
     pub value: String,
 
-    /// Placeholder text
     #[props(default)]
     pub placeholder: String,
 
-    /// Editor mode
     #[props(default)]
     pub mode: MarkdownEditorMode,
 
-    /// Editor size
     #[props(default)]
     pub size: MarkdownEditorSize,
 
-    /// Show toolbar
     #[props(default = true)]
     pub toolbar: bool,
 
-    /// Show line numbers
     #[props(default)]
     pub line_numbers: bool,
 
-    /// Custom height
     #[props(default)]
     pub height: Option<String>,
 
-    /// Additional CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Callback when content changes
     pub on_change: Option<EventHandler<String>>,
 }
 
-/// MarkdownEditor component with live preview
 ///
-/// A markdown editor with toolbar, syntax highlighting support, and live preview.
 #[component]
 pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
     let mut content = use_signal(|| props.value.clone());
@@ -344,7 +329,6 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
     }
 }
 
-/// Simple markdown to HTML converter (basic implementation)
 fn render_markdown_simple(markdown: &str) -> String {
     let mut html = markdown.to_string();
 

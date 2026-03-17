@@ -1,53 +1,41 @@
 // packages/components/src/display/zoom_controls.rs
 // ZoomControls component with Arknights + FUI styling
 
-use crate::prelude::*;;
+use crate::prelude::*;
 use icons::{Icon, MdiIcon};
-use palette::classes::{ClassesBuilder, UtilityClass, ZoomControlsClass};
+use hikari_palette::classes::{ClassesBuilder, UtilityClass, ZoomControlsClass};
 
 use crate::styled::StyledComponent;
 
-/// ZoomControls component type wrapper (for StyledComponent)
 pub struct ZoomControlsComponent;
 
-/// ZoomControls component props
 #[derive(Clone, PartialEq, Props)]
 pub struct ZoomControlsProps {
-    /// Current zoom level (percentage)
     #[props(default = 100)]
     pub zoom: u32,
 
-    /// Minimum zoom level
     #[props(default = 25)]
     pub min_zoom: u32,
 
-    /// Maximum zoom level
     #[props(default = 400)]
     pub max_zoom: u32,
 
-    /// Zoom step for buttons
     #[props(default = 25)]
     pub step: u32,
 
-    /// Show zoom percentage display
     #[props(default = true)]
     pub show_percentage: bool,
 
-    /// Show zoom slider
     #[props(default = false)]
     pub show_slider: bool,
 
-    /// Additional CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Callback when zoom changes
     pub on_zoom_change: Option<EventHandler<u32>>,
 }
 
-/// ZoomControls component for zoom in/out controls
 ///
-/// A control panel for adjusting zoom level with buttons and optional slider.
 #[component]
 pub fn ZoomControls(props: ZoomControlsProps) -> Element {
     let mut zoom = use_signal(|| props.zoom);

@@ -1,78 +1,50 @@
 // hi-components/src/basic/divider.rs
 // Divider component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, Display};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, Display};
 
 use crate::styled::StyledComponent;
 
-/// Divider component type wrapper (for implementing StyledComponent)
 pub struct DividerComponent;
 
-/// Divider orientation
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DividerOrientation {
-    /// Horizontal divider (default)
     #[default]
     Horizontal,
-    /// Vertical divider
     Vertical,
 }
 
-/// Divider text position
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DividerTextPosition {
-    /// No text (default)
     #[default]
     None,
-    /// Text in the center
     Center,
-    /// Text on the left
     Left,
-    /// Text on the right
     Right,
 }
 
 #[derive(Clone, PartialEq, Props, Default)]
 pub struct DividerProps {
-    /// Divider orientation
     #[props(default)]
     pub orientation: DividerOrientation,
 
-    /// Text to display in the divider
     #[props(into, default)]
     pub text: String,
 
-    /// Text position
     #[props(default)]
     pub text_position: DividerTextPosition,
 
-    /// Custom CSS class
     #[props(into, default)]
     pub class: String,
 }
 
-/// Divider component
 ///
-/// A simple divider line that can be horizontal or vertical,
-/// with optional text in the center, left, or right.
 ///
-/// # Example
 ///
-/// ```rust,ignore
-/// use hikari_components::Divider;
 ///
-/// rsx! {
-///     // Simple horizontal divider
-///     Divider {}
 ///
-///     // Divider with text
-///     Divider { text: "Section" }
 ///
-///     // Vertical divider
-///     Divider { orientation: DividerOrientation::Vertical }
-/// }
-/// ```
 #[component]
 pub fn Divider(props: DividerProps) -> Element {
     let orientation_class = match props.orientation {

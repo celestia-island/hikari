@@ -2,12 +2,11 @@
 // Drawer component with Arknights + FUI styling
 
 use animation::style::{CssProperty, StyleStringBuilder};
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, DrawerClass, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, DrawerClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// Drawer placement
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DrawerPlacement {
     #[default]
@@ -17,7 +16,6 @@ pub enum DrawerPlacement {
     Bottom,
 }
 
-/// Drawer size variants
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DrawerSize {
     #[default]
@@ -28,38 +26,29 @@ pub enum DrawerSize {
 
 #[derive(Clone, PartialEq, Props)]
 pub struct DrawerProps {
-    /// Whether the drawer is open
     pub open: bool,
 
-    /// Callback when open state changes
     #[props(default)]
     pub on_close: Option<EventHandler<MouseEvent>>,
 
-    /// Drawer placement
     #[props(default)]
     pub placement: DrawerPlacement,
 
-    /// Drawer size
     #[props(default)]
     pub size: DrawerSize,
 
-    /// Whether clicking outside closes the drawer
     #[props(default)]
     pub mask_closable: bool,
 
-    /// Drawer title (optional)
     #[props(default)]
     pub title: Option<String>,
 
-    /// Drawer footer content (optional)
     #[props(default)]
     pub footer: Option<Element>,
 
-    /// Additional CSS class
     #[props(default)]
     pub class: String,
 
-    /// Drawer content
     pub children: Element,
 }
 
@@ -79,35 +68,11 @@ impl Default for DrawerProps {
     }
 }
 
-/// Drawer component with slide-in animation
 ///
-/// A drawer panel that slides in from the edge of the screen.
-/// Commonly used for settings, forms, or detailed content.
 ///
-/// # Examples
 ///
-/// ## Basic Usage
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::{Drawer, Button};
 ///
-/// fn app() -> Element {
-///     let mut open = use_signal(|| false);
 ///
-///     rsx! {
-///         Button {
-///             onclick: move |_| open.set(true),
-///             "Open Drawer"
-///         }
-///         Drawer {
-///             open: open(),
-///             on_close: move |_| open.set(false),
-///             title: Some("Settings".to_string()),
-///             div { "Drawer content goes here" }
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Drawer(props: DrawerProps) -> Element {
     let on_close = props.on_close;
@@ -219,7 +184,6 @@ pub fn Drawer(props: DrawerProps) -> Element {
     }
 }
 
-/// Drawer component's type wrapper for StyledComponent
 pub struct DrawerComponent;
 
 impl StyledComponent for DrawerComponent {

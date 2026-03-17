@@ -3,121 +3,76 @@
 
 #[cfg(target_arch = "wasm32")]
 use animation::style::StyleBuilder;
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, GlowClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, GlowClass};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 #[cfg(target_arch = "wasm32")]
 use web_sys::HtmlElement;
 
-/// Glow blur intensity levels
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowBlur {
-    /// No blur
     None,
-    /// Light blur (5px)
     Light,
-    /// Medium blur (10px, default)
     #[default]
     Medium,
-    /// Heavy blur (20px)
     Heavy,
 }
 
-/// Glow color mode
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowColor {
-    /// Ghost button - transparent background, use black/white glow
     #[default]
     Ghost,
-    /// Primary button - depends on theme
     Primary,
-    /// Secondary button - depends on theme
     Secondary,
-    /// Danger button - depends on theme
     Danger,
-    /// Success button - depends on theme
     Success,
-    /// Warning button - depends on theme
     Warning,
-    /// Info button - depends on theme
     Info,
 }
 
-/// Glow intensity (shadow strength)
 ///
-/// Use `Dim` for large surface containers (cards, panels) — barely perceptible ambient glow.
-/// Use `Soft` (default) for interactive elements (buttons, inputs) — clear but balanced feedback.
-/// Use `Bright` for emphasis and active states — intense spotlight effect.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowIntensity {
-    /// Dim glow (subtle, for cards / containers)
     Dim,
-    /// Soft glow (medium, default for buttons / interactive)
     #[default]
     Soft,
-    /// Bright glow (intense, for emphasis)
     Bright,
 }
 
 #[derive(Clone, PartialEq, Props)]
 pub struct GlowProps {
-    /// Child elements to wrap
     children: Element,
 
-    /// Blur intensity
     #[props(default)]
     pub blur: GlowBlur,
 
-    /// Glow color mode
     #[props(default)]
     pub color: GlowColor,
 
-    /// Glow intensity (normal state)
     #[props(default)]
     pub intensity: GlowIntensity,
 
-    /// Glow intensity when active/pressed
-    /// If None, uses normal intensity (no change on press)
     #[props(default)]
     pub active_intensity: Option<GlowIntensity>,
 
-    /// Additional CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Display mode: inline (default) or block
     #[props(default)]
     pub block: bool,
 
-    /// Animation transition duration in milliseconds
-    /// Set to 0 to disable transition
     #[props(default = "100".to_string())]
     pub transition_duration: String,
 }
 
-/// Unified glow component with mouse-following effect
 ///
-/// Combines spotlight (mouse-following glow) and acrylic (blur) effects.
-/// Automatically adapts to theme colors.
 ///
-/// # Implementation Notes
 ///
-/// Glow effects use component-isolated mouse tracking:
-/// - Uses onmousemove handler to track mouse position relative to element
-/// - Updates CSS variables directly on DOM without re-render
-/// - No global monitoring or MutationObserver needed
 ///
-/// # Border Radius
 ///
-/// Glow wrapper uses unified 4px border-radius for all components.
 ///
-/// # Active State Animation
 ///
-/// The component supports dynamic intensity changes via CSS variables:
-/// - Set `--glow-intensity-scale` to change opacity (0.0 - 2.0)
-/// - Set `--glow-spread-scale` to change spread (0.5 - 2.0)
-/// These can be controlled by parent components for press animations
 #[component]
 pub fn Glow(props: GlowProps) -> Element {
     let blur_class = match props.blur {
@@ -360,7 +315,6 @@ pub fn Glow(props: GlowProps) -> Element {
     }
 }
 
-/// Type wrapper for styling
 pub struct GlowComponent;
 
 impl crate::styled::StyledComponent for GlowComponent {

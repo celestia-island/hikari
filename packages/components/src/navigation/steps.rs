@@ -1,15 +1,13 @@
 // packages/components/src/navigation/steps.rs
 // Steps component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, StepsClass, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, StepsClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// Steps component type wrapper (for StyledComponent)
 pub struct StepsComponent;
 
-/// Step item status
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum StepStatus {
     #[default]
@@ -19,7 +17,6 @@ pub enum StepStatus {
     Error,
 }
 
-/// Steps component direction
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum StepsDirection {
     #[default]
@@ -29,76 +26,45 @@ pub enum StepsDirection {
 
 #[derive(Clone, PartialEq, Props)]
 pub struct StepItemProps {
-    /// Step title
     pub title: String,
 
-    /// Step description (optional)
     #[props(default)]
     pub description: Option<String>,
 
-    /// Step icon (optional)
     #[props(default)]
     pub icon: Option<String>,
 
-    /// Step status
     #[props(default)]
     pub status: StepStatus,
 
-    /// Additional CSS class
     #[props(default)]
     pub class: String,
 }
 
 #[derive(Clone, PartialEq, Props, Default)]
 pub struct StepsProps {
-    /// Current step index (0-based)
     #[props(default = 0)]
     pub current: usize,
 
-    /// Direction of steps
     #[props(default)]
     pub direction: StepsDirection,
 
-    /// Step items
     pub steps: Vec<StepItemProps>,
 
-    /// Additional CSS class
     #[props(default)]
     pub class: String,
 
-    /// Additional inline style
     #[props(default)]
     pub style: String,
 
-    /// Callback when step changes (clickable)
     #[props(default)]
     pub on_change: Option<EventHandler<usize>>,
 }
 
-/// Steps component with Arknights + FUI styling
 ///
-/// A steps wizard component that displays progress through a series of steps.
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::Steps;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Steps {
-///             current: 1,
-///             direction: StepsDirection::Horizontal,
-///             steps: vec![
-///                 StepItemProps { title: "Step 1".to_string() },
-///                 StepItemProps { title: "Step 2".to_string() },
-///                 StepItemProps { title: "Step 3".to_string() },
-///             ],
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Steps(props: StepsProps) -> Element {
     let direction_class = match props.direction {

@@ -7,7 +7,7 @@
 //!
 //! ```rust
 //! use hikari_components::layout::Header;
-//! use crate::prelude::*;;
+//! use crate::prelude::*;
 //!
 //! rsx! {
 //!     Header {
@@ -16,48 +16,32 @@
 //! }
 //! ```
 
-use crate::prelude::*;;
+use crate::prelude::*;
 use dioxus_core::VNode;
-use palette::{ClassesBuilder, classes::*};
+use hikari_palette::{ClassesBuilder, classes::*};
 
 use crate::theme::use_layout_direction;
 
-/// Header component - Modern application header bar
 ///
-/// # Design Features
-/// - Glassmorphism effect with backdrop blur
-/// - Subtle border for visual separation
-/// - Smooth elevation shadow
-/// - Refined spacing and typography
 ///
-/// # Elevation System
-/// - Default: elevation-1 (subtle shadow)
-/// - Can be customized with elevation prop
 #[component]
 pub fn Header(
-    /// Header content
     children: Element,
 
-    /// Border bottom (default: true)
     #[props(default = true)]
     bordered: bool,
 
-    /// Whether to show mobile menu toggle button
     #[props(default = false)]
     show_menu_toggle: bool,
 
-    /// Callback when menu toggle is clicked
     on_menu_toggle: EventHandler,
 
-    /// Override RTL behavior (default: follow theme direction)
     #[props(default)]
     rtl: Option<bool>,
 
-    /// Custom CSS classes
     #[props(default)]
     class: String,
 
-    /// Right side content (e.g., theme toggle, user menu)
     #[props(default = VNode::empty())]
     right_content: Element,
 ) -> Element {

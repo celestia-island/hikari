@@ -1,17 +1,14 @@
 // hi-components/src/data/node.rs
 // TreeNode component for tree data structures
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, TreeNodeClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, TreeNodeClass};
 
 use crate::data::{TreeNodeArrow, TreeNodeContent, TreeNodeLabel};
 
-/// Shared data structure for tree nodes
 #[derive(Clone, PartialEq, Debug)]
 pub struct TreeNodeData {
-    /// Unique node identifier
     pub key: String,
-    /// Node display text
     pub label: String,
     pub children: Option<Vec<TreeNodeData>>,
     pub disabled: bool,
@@ -19,50 +16,35 @@ pub struct TreeNodeData {
 
 #[derive(Clone, PartialEq, Props, Default)]
 pub struct TreeNodeProps {
-    /// Unique node identifier
     pub node_key: String,
 
-    /// Node display text
     pub label: String,
 
-    /// Child nodes
     pub node_children: Option<Vec<TreeNodeData>>,
 
-    /// Custom icon
     #[props(default)]
     pub icon: Option<Element>,
 
-    /// Disable interaction
     #[props(default)]
     pub disabled: bool,
 
-    /// Initial expanded state
     #[props(default)]
     pub expanded: bool,
 
-    /// Selected state
     #[props(default)]
     pub selected: bool,
 
-    /// Nesting level for indentation
     #[props(default)]
     pub level: usize,
 
-    /// Custom classes
     #[props(default)]
     pub class: String,
 
-    /// Click handler
     #[props(default)]
     pub onclick: Option<EventHandler<MouseEvent>>,
 }
 
-/// TreeNode component - A single tree node that can be expanded/collapsed
 ///
-/// This component is composed of smaller sub-components for better modularity:
-/// - [`TreeNodeContent`] - Wraps the content with proper indentation
-/// - [`TreeNodeArrow`] - Expand/collapse arrow indicator
-/// - [`TreeNodeLabel`] - Text and optional icon display
 #[component]
 pub fn TreeNode(props: TreeNodeProps) -> Element {
     let mut is_expanded = use_signal(|| props.expanded);

@@ -1,8 +1,8 @@
 // hi-components/src/feedback/spin.rs
 // Spin component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, SpinClass, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, SpinClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
@@ -26,60 +26,31 @@ pub enum SpinTip {
 
 #[derive(Clone, PartialEq, Props)]
 pub struct SpinProps {
-    /// Spin size
     #[props(default)]
     pub size: SpinSize,
 
-    /// Whether to show tip text
     #[props(default)]
     pub tip: SpinTip,
 
-    /// Custom tip text (overrides tip enum)
     #[props(default)]
     pub custom_tip: Option<String>,
 
-    /// Whether to delay loading
     #[props(default)]
     pub delay: Option<u64>,
 
-    /// Whether to spin (can be controlled externally)
     #[props(default)]
     pub spinning: bool,
 
-    /// Additional CSS class
     #[props(default)]
     pub class: String,
 }
 
-/// Spin component with loading animation
 ///
-/// A loading spinner with optional tip text.
 ///
-/// # Examples
 ///
-/// ## Basic Usage
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::Spin;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Spin {}
-///     }
-/// }
-/// ```
 ///
-/// ## With Size
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::{Spin, SpinSize};
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Spin { size: SpinSize::Large }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Spin(props: SpinProps) -> Element {
     let size_class = match props.size {
@@ -119,7 +90,6 @@ pub fn Spin(props: SpinProps) -> Element {
     }
 }
 
-/// Spin component's type wrapper for StyledComponent
 pub struct SpinComponent;
 
 impl StyledComponent for SpinComponent {

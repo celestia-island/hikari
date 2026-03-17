@@ -14,26 +14,19 @@ use std::{cell::RefCell, rc::Rc};
 use animation::style::{CssProperty, StyleBuilder};
 use wasm_bindgen::prelude::*;
 
-/// Dropdown animation state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DropdownAnimationState {
-    /// Dropdown is hidden (not visible)
     Hidden,
-    /// Dropdown is appearing (fade/scale in animation)
     Appearing,
-    /// Dropdown is visible and stable
     Visible,
-    /// Dropdown is disappearing (fade/scale out animation)
     Disappearing,
 }
 
 impl DropdownAnimationState {
-    /// Returns true if dropdown should be visible in DOM
     pub fn should_display(&self) -> bool {
         matches!(self, Self::Appearing | Self::Visible | Self::Disappearing)
     }
 
-    /// Returns the target opacity for this state
     pub fn target_opacity(&self) -> f64 {
         match self {
             Self::Hidden | Self::Disappearing => 0.0,
@@ -41,7 +34,6 @@ impl DropdownAnimationState {
         }
     }
 
-    /// Returns the target scale for this state
     pub fn target_scale(&self) -> f64 {
         match self {
             Self::Hidden | Self::Disappearing => 0.95,
@@ -50,19 +42,14 @@ impl DropdownAnimationState {
     }
 }
 
-/// Context for rendering dropdown animations
 #[derive(Clone)]
 pub struct DropdownRenderContext {
-    /// Overlay element (mask)
     pub overlay: web_sys::Element,
-    /// Dropdown content element
     pub content: web_sys::Element,
-    /// Current animation state
     pub state: Rc<RefCell<DropdownAnimationState>>,
 }
 
 impl DropdownRenderContext {
-    /// Create a new render context
     pub fn new(overlay: web_sys::Element, content: web_sys::Element) -> Self {
         Self {
             overlay,
@@ -71,38 +58,26 @@ impl DropdownRenderContext {
         }
     }
 
-    /// Get current animation state
     pub fn state(&self) -> DropdownAnimationState {
         *self.state.borrow()
     }
 
-    /// Set animation state
     pub fn set_state(&self, state: DropdownAnimationState) {
         *self.state.borrow_mut() = state;
     }
 }
 
-/// Dropdown animation events
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DropdownEvent {
-    /// Dropdown should appear (fade/scale in)
     Show,
-    /// Dropdown should disappear (fade/scale out)
     Hide,
-    /// Animation completed
     AnimationComplete,
 }
 
-/// Transition dropdown animation state based on event
 ///
-/// # Arguments
 ///
-/// * `ctx` - Dropdown render context
-/// * `event` - Animation event
 ///
-/// # Returns
 ///
-/// `true` if state changed, `false` otherwise
 pub fn dropdown_transition(ctx: &DropdownRenderContext, event: DropdownEvent) -> bool {
     let current_state = ctx.state();
     let new_state = match (current_state, event) {
@@ -143,15 +118,10 @@ pub fn dropdown_transition(ctx: &DropdownRenderContext, event: DropdownEvent) ->
     changed
 }
 
-/// Render dropdown styles based on current animation state
 ///
-/// # Arguments
 ///
-/// * `ctx` - Dropdown render context
 ///
-/// # Returns
 ///
-/// Render output indicating if element should be visible
 pub fn dropdown_render(ctx: &DropdownRenderContext) -> bool {
     let state = ctx.state();
     let opacity = state.target_opacity();

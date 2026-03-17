@@ -1,61 +1,35 @@
 // packages/components/src/utils/form/field.rs
 // Field Component
 
-use crate::prelude::*;;
+use crate::prelude::*;
 
 use super::state::FormState;
 
-/// Props for Field component
 #[derive(Clone, PartialEq, Props)]
 pub struct FieldProps {
-    /// Field name (for form registration)
     pub name: String,
 
-    /// Field label
     pub label: String,
 
-    /// Whether the field is required
     #[props(default = false)]
     pub required: bool,
 
-    /// Field help text (optional)
     #[props(default)]
     pub help_text: Option<String>,
 
-    /// Additional CSS class
     #[props(default)]
     pub class: String,
 
-    /// Children - the form input component
     children: Element,
 
-    /// Form state from useForm hook
     #[props(default)]
     pub form_state: Option<FormState<String>>,
 }
 
-/// Field component - wrapper that integrates with useForm
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::utils::form::*;
 ///
-/// let form = useForm(|| "".to_string());
 ///
-/// rsx! {
-///     Field {
-///         name: "username".to_string(),
-///         label: "Username".to_string(),
-///         required: true,
-///         form_state: Some(form.clone()),
-///         Input {
-///             placeholder: "Enter username"
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Field(props: FieldProps) -> Element {
     // Get error message from form state

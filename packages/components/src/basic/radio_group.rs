@@ -1,8 +1,8 @@
 // hi-components/src/basic/radio_group.rs
 // RadioGroup component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, RadioClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, RadioClass};
 
 use crate::styled::StyledComponent;
 

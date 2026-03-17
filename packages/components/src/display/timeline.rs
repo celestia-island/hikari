@@ -1,44 +1,17 @@
 // packages/components/src/display/timeline.rs
 // Timeline component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, TimelineClass, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, TimelineClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// Timeline component type wrapper (for StyledComponent)
 pub struct TimelineComponent;
 
-/// Timeline component with Arknights + FUI styling
 ///
-/// A vertical timeline for displaying a series of events in chronological order.
-/// Supports custom icons, colors, and positioning.
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::{Timeline, TimelineItem, TimelinePosition};
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Timeline {
-///             TimelineItem {
-///                 position: TimelinePosition::Left,
-///                 time: "2024-01-01",
-///                 title: "Project Started",
-///                 "Initial project setup and planning"
-///             }
-///             TimelineItem {
-///                 position: TimelinePosition::Right,
-///                 time: "2024-02-15",
-///                 title: "First Milestone",
-///                 "Completed core features"
-///             }
-///         }
-///     }
-/// }
-/// ```
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TimelinePosition {
     #[default]
@@ -49,19 +22,15 @@ pub enum TimelinePosition {
 
 #[derive(Clone, PartialEq, Props)]
 pub struct TimelineProps {
-    /// Position of timeline items
     #[props(default)]
     pub position: TimelinePosition,
 
-    /// Show connecting line between items
     #[props(default = true)]
     pub line: bool,
 
-    /// Additional CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Additional CSS styles
     #[props(default)]
     pub style: String,
 
@@ -104,38 +73,29 @@ pub fn Timeline(props: TimelineProps) -> Element {
     }
 }
 
-/// Individual timeline item
 #[derive(Clone, PartialEq, Props)]
 pub struct TimelineItemProps {
-    /// Position of this item
     #[props(default)]
     pub position: TimelinePosition,
 
-    /// Time/date label
     #[props(default)]
     pub time: String,
 
-    /// Title of the timeline event
     #[props(default)]
     pub title: String,
 
-    /// Icon for the timeline dot
     #[props(default)]
     pub icon: Option<Element>,
 
-    /// Color of the timeline dot
     #[props(default)]
     pub color: String,
 
-    /// Whether this is the last item (hide line after it)
     #[props(default)]
     pub last: bool,
 
-    /// Additional CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Additional CSS styles
     #[props(default)]
     pub style: String,
 

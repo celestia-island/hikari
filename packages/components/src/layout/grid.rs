@@ -5,7 +5,7 @@
 //!
 //! ```rust
 //! use hikari_components::layout::{Grid, Col};
-//! use crate::prelude::*;;
+//! use crate::prelude::*;
 //!
 //! rsx! {
 //!     Grid {
@@ -17,34 +17,23 @@
 //! }
 //! ```
 
-use crate::prelude::*;;
-use palette::{ClassesBuilder, classes::components::*};
+use crate::prelude::*;
+use hikari_palette::{ClassesBuilder, classes::components::*};
 
 use crate::theme::use_layout_direction;
 
-/// Grid component - 12-column responsive grid container
 ///
-/// Provides a flexible grid system based on CSS Grid.
 ///
-/// # Features
-/// - 12-column grid system
-/// - Responsive gutters
-/// - Automatic wrapping
-/// - Gap control
 #[component]
 pub fn Grid(
-    /// Grid columns content
     children: Element,
 
-    /// Number of columns (default: 12)
     #[props(default = 12)]
     columns: u8,
 
-    /// Gap between grid items (default: md)
     #[props(default = "md".to_string())]
     gap: String,
 
-    /// Custom CSS classes
     #[props(default)]
     class: String,
 ) -> Element {
@@ -69,40 +58,27 @@ pub fn Grid(
     }
 }
 
-/// Col component - Grid column component
 ///
-/// Defines column span within a Grid.
 ///
-/// # Features
-/// - Responsive column spans (span, span_sm, span_md, span_lg)
-/// - Auto-width option
-/// - Offset support
 #[component]
 pub fn Col(
-    /// Column content
     children: Element,
 
-    /// Column span (1-12, default: auto)
     #[props(default)]
     span: Option<u8>,
 
-    /// Column span for mobile screens (< 768px)
     #[props(default)]
     span_sm: Option<u8>,
 
-    /// Column span for tablet screens (>= 768px)
     #[props(default)]
     span_md: Option<u8>,
 
-    /// Column span for desktop screens (>= 1024px)
     #[props(default)]
     span_lg: Option<u8>,
 
-    /// Offset by N columns
     #[props(default)]
     offset: Option<u8>,
 
-    /// Custom CSS classes
     #[props(default)]
     class: String,
 ) -> Element {
@@ -146,46 +122,30 @@ pub fn Col(
     }
 }
 
-/// Row component - Flexbox row for horizontal layouts
 ///
-/// Simple flex row container for horizontal layouts.
 ///
-/// # Features
-/// - Flexbox horizontal layout
-/// - Responsive wrapping
-/// - Gap control
-/// - Alignment options
-/// - RTL support
 #[component]
 pub fn Row(
-    /// Row content
     children: Element,
 
-    /// Gap between items (default: md)
     #[props(default = "md".to_string())]
     gap: String,
 
-    /// Wrap content (default: true)
     #[props(default = true)]
     wrap: bool,
 
-    /// Horizontal alignment (default: start)
     #[props(default = "start".to_string())]
     justify: String,
 
-    /// Vertical alignment (default: center)
     #[props(default = "center".to_string())]
     align: String,
 
-    /// Override RTL behavior (default: follow theme direction)
     #[props(default)]
     rtl: Option<bool>,
 
-    /// Custom CSS classes
     #[props(default)]
     class: String,
 
-    /// Custom inline styles
     #[props(default)]
     style: String,
 ) -> Element {

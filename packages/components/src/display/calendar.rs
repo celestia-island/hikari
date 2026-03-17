@@ -1,12 +1,11 @@
 // packages/components/src/display/calendar.rs
 // Calendar component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{CalendarClass, ClassesBuilder, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{CalendarClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// Get current year and month
 fn get_current_date() -> (i32, u32) {
     #[cfg(target_arch = "wasm32")]
     {
@@ -29,10 +28,8 @@ fn get_current_date() -> (i32, u32) {
     }
 }
 
-/// Calendar component type wrapper (for StyledComponent)
 pub struct CalendarComponent;
 
-/// Calendar component with Arknights + FUI styling
 #[derive(Clone, PartialEq, Props)]
 pub struct CalendarProps {
     #[props(default = 2026)]

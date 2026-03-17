@@ -1,8 +1,8 @@
 // packages/components/src/display/qrcode.rs
 // QRCode component using Canvas for rendering
 
-use crate::prelude::*;;
-use palette::classes::{
+use crate::prelude::*;
+use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, FlexDirection, Padding, QRCodeClass, UtilityClass,
 };
 use qrcode::{Color, QrCode};
@@ -11,43 +11,31 @@ use web_sys::CanvasRenderingContext2d;
 
 use crate::styled::StyledComponent;
 
-/// QRCode component type wrapper (for StyledComponent)
 pub struct QRCodeComponent;
 
-/// QRCode component with Arknights + FUI styling
 ///
-/// Displays a QR code for scanning with mobile devices.
-/// Uses canvas-based rendering for optimal performance.
 #[derive(Clone, PartialEq, Props)]
 pub struct QRCodeProps {
-    /// The content to encode in QR code
     pub value: String,
 
-    /// Size of QR code in pixels
     #[props(default = 200)]
     pub size: u32,
 
-    /// Color of the QR code (foreground)
     #[props(default = String::from("#000000"))]
     pub color: String,
 
-    /// Background color
     #[props(default = String::from("#ffffff"))]
     pub background: String,
 
-    /// Optional title displayed above the QR code
     #[props(default)]
     pub title: Option<String>,
 
-    /// CSS class
     #[props(default)]
     pub class: String,
 
-    /// Inline styles
     #[props(default)]
     pub style: String,
 
-    /// Error correction level: "low", "medium", "quartile", "high"
     #[props(default = String::from("medium"))]
     pub error_correction: String,
 }

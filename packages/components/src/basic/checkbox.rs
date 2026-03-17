@@ -1,37 +1,30 @@
 // hi-components/src/basic/checkbox.rs
 // Checkbox component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{CheckboxClass, ClassesBuilder};
+use crate::prelude::*;
+use hikari_palette::classes::{CheckboxClass, ClassesBuilder};
 
 use crate::styled::StyledComponent;
 
 #[derive(Clone, PartialEq, Props)]
 pub struct CheckboxProps {
-    /// Whether the checkbox is checked
     #[props(default)]
     pub checked: bool,
 
-    /// Callback when checked state changes
     pub on_change: EventHandler<bool>,
 
-    /// Whether the checkbox is disabled
     #[props(default)]
     pub disabled: bool,
 
-    /// Checkbox value for forms
     #[props(default)]
     pub value: Option<String>,
 
-    /// Label text
     #[props(default)]
     pub children: Element,
 
-    /// Additional CSS class
     #[props(default)]
     pub class: String,
 
-    /// Checkbox size
     #[props(default)]
     pub size: CheckboxSize,
 }
@@ -44,29 +37,11 @@ pub enum CheckboxSize {
     Large,
 }
 
-/// Checkbox component with smooth animations
 ///
-/// A customizable checkbox with optional label and different sizes.
 ///
-/// # Examples
 ///
-/// ## Basic Usage
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::Checkbox;
 ///
-/// fn app() -> Element {
-///     let mut checked = use_signal(|| false);
 ///
-///     rsx! {
-///         Checkbox {
-///             checked: checked(),
-///             on_change: move |v| checked.set(v),
-///             "Accept terms and conditions"
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Checkbox(props: CheckboxProps) -> Element {
     let size_class = match props.size {
@@ -131,7 +106,6 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
     }
 }
 
-/// Checkbox component's type wrapper for StyledComponent
 pub struct CheckboxComponent;
 
 impl StyledComponent for CheckboxComponent {

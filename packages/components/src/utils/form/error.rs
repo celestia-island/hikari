@@ -1,12 +1,9 @@
 // packages/components/src/utils/form/error.rs
 // Validation Error Types
 
-/// Represents a validation error for a field
 #[derive(Clone, PartialEq, Debug)]
 pub struct FieldError {
-    /// The error message
     pub message: String,
-    /// Optional error code for programmatic handling
     pub code: Option<String>,
 }
 
@@ -36,8 +33,6 @@ impl From<String> for FieldError {
     }
 }
 
-/// Result of field validation
 pub type ValidationResult = Result<(), FieldError>;
 
-/// Result of full form validation
 pub type FormValidationResult<T> = Result<T, std::collections::HashMap<String, FieldError>>;

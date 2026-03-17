@@ -1,12 +1,11 @@
 // hi-components/src/navigation/stepper.rs
 // Stepper component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, StepperClass, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, StepperClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// Stepper component type wrapper
 pub struct StepperComponent;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
@@ -27,19 +26,15 @@ pub enum StepperDirection {
 
 #[derive(Clone, PartialEq, Props)]
 pub struct StepperProps {
-    /// Current step index (0-based)
     #[props(default)]
     pub current: usize,
 
-    /// Total number of steps
     #[props(default = 5)]
     pub total: usize,
 
-    /// Step direction
     #[props(default)]
     pub direction: StepperDirection,
 
-    /// Additional CSS classes
     #[props(default)]
     pub class: String,
 }
@@ -55,9 +50,7 @@ impl Default for StepperProps {
     }
 }
 
-/// Stepper component
 ///
-/// A step wizard component showing progress through a multi-step process
 #[component]
 pub fn Stepper(props: StepperProps) -> Element {
     let direction_class = match props.direction {

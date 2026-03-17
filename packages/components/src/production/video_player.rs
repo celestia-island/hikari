@@ -6,47 +6,36 @@
 // For custom video controls, consider extending this component or
 // using libraries like Video.js or Plyr.
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, VideoPlayerClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, VideoPlayerClass};
 
 use crate::styled::StyledComponent;
 
-/// VideoPlayer component type wrapper (for StyledComponent)
 pub struct VideoPlayerComponent;
 
-/// Video player component with Arknights + FUI styling
 ///
-/// A styled video container using native HTML5 video controls.
 #[derive(Clone, PartialEq, Props)]
 pub struct VideoPlayerProps {
-    /// Video source URL
     pub src: String,
 
-    /// Video poster image
     #[props(default)]
     pub poster: String,
 
-    /// Autoplay video
     #[props(default)]
     pub autoplay: bool,
 
-    /// Show controls
     #[props(default = true)]
     pub controls: bool,
 
-    /// Loop video
     #[props(default)]
     pub loop_: bool,
 
-    /// Muted by default
     #[props(default)]
     pub muted: bool,
 
-    /// Additional CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Additional CSS styles
     #[props(default)]
     pub style: String,
 }

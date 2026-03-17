@@ -1,14 +1,13 @@
 // hi-components/src/layout/flex.rs
 // FlexBox component for flexible layouts
 
-use crate::prelude::*;;
-use palette::classes::{
+use crate::prelude::*;
+use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, Flex as FlexUtil, FlexDirection, FlexWrap, JustifyContent,
 };
 
 use crate::{styled::StyledComponent, theme::use_layout_direction};
 
-/// FlexBox component direction
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum Direction {
     #[default]
@@ -18,7 +17,6 @@ pub enum Direction {
     ColumnReverse,
 }
 
-/// FlexBox component alignment
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum Align {
     #[default]
@@ -29,7 +27,6 @@ pub enum Align {
     Baseline,
 }
 
-/// FlexBox component justify
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum Justify {
     #[default]
@@ -41,7 +38,6 @@ pub enum Justify {
     Evenly,
 }
 
-/// FlexBox component wrap
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum Wrap {
     #[default]
@@ -50,7 +46,6 @@ pub enum Wrap {
     WrapReverse,
 }
 
-/// FlexBox component gap size
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum FlexGap {
     #[default]
@@ -84,27 +79,21 @@ pub struct FlexBoxProps {
     #[props(default = true)]
     pub flex: bool,
 
-    /// Minimum width (CSS value like "120px", "10rem")
     #[props(default)]
     pub min_width: Option<String>,
 
-    /// Minimum height (CSS value like "100px", "5rem")
     #[props(default)]
     pub min_height: Option<String>,
 
-    /// Maximum width (CSS value like "300px", "20rem")
     #[props(default)]
     pub max_width: Option<String>,
 
-    /// Maximum height (CSS value like "400px", "25rem")
     #[props(default)]
     pub max_height: Option<String>,
 
-    /// Inline flex mode
     #[props(default)]
     pub inline: bool,
 
-    /// Override RTL behavior (default: follow theme direction)
     #[props(default)]
     pub rtl: Option<bool>,
 

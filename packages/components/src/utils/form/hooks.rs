@@ -3,32 +3,14 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use crate::prelude::*;;
+use crate::prelude::*;
 
 use super::{state::FormState, validators::ValidationSchema};
 
-/// Hook for managing form state with validation
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::utils::form::*;
 ///
-/// #[component]
-/// fn MyForm() -> Element {
-///     let form = useForm(|| "".to_string());
 ///
-///     rsx! {
-///         Input {
-///             placeholder: "Enter username",
-///             oninput: move |e| {
-///                 form.set_value.call(("username", e.data.value()));
-///             }
-///         }
-///     }
-/// }
-/// ```
 #[allow(non_snake_case)]
 pub fn useForm<T, F>(initial_values: F) -> FormState<T>
 where

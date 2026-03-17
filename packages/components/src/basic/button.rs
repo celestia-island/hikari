@@ -5,80 +5,54 @@
 // - Layer2: Component variables (button-vars.scss)
 // - Custom: Runtime overrides via icon_color, text_color, animation_id
 
-use crate::prelude::*;;
-use palette::classes::{ButtonClass, ClassesBuilder, JustifyContent};
+use crate::prelude::*;
+use hikari_palette::classes::{ButtonClass, ClassesBuilder, JustifyContent};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
     styled::StyledComponent,
 };
 
-/// Animation types for button hover/focus effects
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ButtonAnimation {
-    /// No animation
     #[default]
     None,
-    /// Subtle scale animation (1.0 → 1.05)
     Scale,
-    /// Scale with shadow elevation
     ScaleElevate,
-    /// Ripple effect on click
     Ripple,
-    /// Icon rotation (if icon present)
     IconRotate,
 }
 
-/// Button component type wrapper (for implementing StyledComponent)
 pub struct ButtonComponent;
 
-/// Button visual variants
 ///
-/// Different visual styles for a button component.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ButtonVariant {
-    /// Primary button (most prominent, uses primary color)
     #[default]
     Primary,
-    /// Secondary button (less prominent)
     Secondary,
-    /// Ghost button (transparent background, border only)
     Ghost,
-    /// Borderless button (no border, minimal styling)
     Borderless,
-    /// Danger button (uses danger color for destructive actions)
     Danger,
-    /// Success button (uses success color for positive actions)
     Success,
 }
 
-/// Button size variants
 ///
-/// Different size options for a button component.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ButtonSize {
-    /// Medium size (default)
     #[default]
     Medium,
-    /// Small size (compact)
     Small,
-    /// Large size (prominent)
     Large,
 }
 
-/// Button width variants
 ///
-/// Different width options for a button component.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ButtonWidth {
-    /// Auto width (default)
     #[default]
     Auto,
-    /// Fixed width 120px
     Width120,
-    /// Fixed width 140px
     Width140,
-    /// Fixed width 160px
     Width160,
 }
 
@@ -102,11 +76,9 @@ pub struct ButtonProps {
     #[props(default)]
     pub block: bool,
 
-    /// Prefix icon (displayed before text)
     #[props(default)]
     pub icon: Option<Element>,
 
-    /// Suffix icon (displayed after text)
     #[props(default)]
     pub suffix: Option<Element>,
 
@@ -119,50 +91,33 @@ pub struct ButtonProps {
     #[props(default)]
     pub animation: ButtonAnimation,
 
-    /// Enable glow effect (Win10-style blur and mouse-following highlight)
     #[props(default = true)]
     pub glow: bool,
 
-    /// Glow blur intensity (requires glow: true)
     #[props(default)]
     pub glow_blur: GlowBlur,
 
-    /// Glow intensity (requires glow: true)
     #[props(default)]
     pub glow_intensity: GlowIntensity,
 
-    /// Glow color mode (requires glow: true)
-    /// If not specified, automatically determined by button variant based on background lightness
     #[props(default)]
     pub glow_color: Option<GlowColor>,
 
-    /// Custom icon color (Layer2/Custom override)
-    /// Overrides the default icon color from CSS variables
     #[props(default)]
     pub icon_color: Option<String>,
 
-    /// Custom text color (Layer2/Custom override)
-    /// Overrides the default text color from CSS variables
     #[props(default)]
     pub text_color: Option<String>,
 
-    /// Custom background color (Layer2/Custom override)
-    /// Overrides the default background color from CSS variables
     #[props(default)]
     pub background_color: Option<String>,
 
-    /// Custom border color (Layer2/Custom override)
-    /// Overrides the default border color from CSS variables
     #[props(default)]
     pub border_color: Option<String>,
 
-    /// Animation ID for AnimationBuilder integration (Custom layer)
-    /// Use this to apply runtime animations via AnimationBuilder
     #[props(default)]
     pub animation_id: Option<String>,
 
-    /// Custom CSS variable overrides (Custom layer)
-    /// Apply arbitrary CSS variable overrides at runtime
     #[props(default)]
     pub css_vars: Option<Vec<(&'static str, String)>>,
 
@@ -198,53 +153,16 @@ impl Default for ButtonProps {
     }
 }
 
-/// Button component with Arknights + FUI styling
 ///
-/// # Three-Layer CSS Variable System
 ///
-/// This component supports the three-layer CSS variable architecture:
 ///
-/// ## Layer1 - Foundation (Global)
-/// Variables defined in `foundation.scss` provide global defaults.
 ///
-/// ## Layer2 - Component
-/// Variables defined in `button-vars.scss` provide component-specific defaults.
 ///
-/// ## Custom - Runtime
-/// Use `icon_color`, `text_color`, `background_color`, `border_color`,
-/// `animation_id`, or `css_vars` props for runtime overrides.
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::Button;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         // Basic button
-///         Button { variant: ButtonVariant::Primary, "Click me" }
 ///
-///         // With custom colors (Custom layer)
-///         Button {
-///             variant: ButtonVariant::Primary,
-///             icon_color: Some("#ff0000".to_string()),
-///             text_color: Some("#ffffff".to_string()),
-///             "Custom Colors"
-///         }
 ///
-///         // With CSS variable overrides (Custom layer)
-///         Button {
-///             variant: ButtonVariant::Ghost,
-///             css_vars: Some(vec![
-///                 ("--hi-button-radius", "16px".to_string()),
-///                 ("--hi-button-bg-hover", "rgba(255, 0, 0, 0.1)".to_string()),
-///             ]),
-///             "CSS Vars Override"
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Button(props: ButtonProps) -> Element {
     let variant_class = match props.variant {

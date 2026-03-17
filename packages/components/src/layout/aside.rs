@@ -7,7 +7,7 @@
 //!
 //! ```rust
 //! use hikari_components::layout::Aside;
-//! use crate::prelude::*;;
+//! use crate::prelude::*;
 //!
 //! rsx! {
 //!     Aside {
@@ -25,60 +25,40 @@
 //! }
 //! ```
 
-use crate::prelude::*;;
-use palette::{ClassesBuilder, UtilityClass, classes::components::*};
+use crate::prelude::*;
+use hikari_palette::{ClassesBuilder, UtilityClass, classes::components::*};
 
 use crate::theme::use_layout_direction;
 
-/// Aside component - Modern sidebar navigation panel
 ///
-/// # Design Features
-/// - Clean, minimal design with subtle shadows
-/// - Smooth slide-in/out animation on mobile
-/// - Refined padding and spacing
-/// - Optional close button on mobile
-/// - Proper border for visual separation
 ///
-/// # Responsive Behavior
-/// - Desktop (≥1024px): Static positioning, always visible
-/// - Mobile (<1024px): Fixed positioning, slides in from left
 #[component]
 pub fn Aside(
-    /// Sidebar content
     children: Element,
 
-    /// Header content (optional)
     #[props(optional)]
     header: Option<Element>,
 
-    /// Footer content (optional)
     #[props(optional)]
     footer: Option<Element>,
 
-    /// Width preset (sm: 200px, md: 250px, lg: 300px, default: md)
     #[props(default = "md".to_string())]
     width: String,
 
-    /// Background variant (default, white, light)
     #[props(default = "white".to_string())]
     variant: String,
 
-    /// Whether to be collapsible on mobile
     #[props(default = true)]
     collapsible: bool,
 
-    /// Initial open state for mobile
     #[props(default = false)]
     initial_open: bool,
 
-    /// Override RTL behavior (default: follow theme direction)
     #[props(default)]
     rtl: Option<bool>,
 
-    /// Callback when close button is clicked (mobile)
     on_close: EventHandler,
 
-    /// Custom CSS classes
     #[props(default)]
     class: String,
 ) -> Element {

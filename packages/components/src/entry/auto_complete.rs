@@ -1,72 +1,40 @@
 // packages/components/src/entry/auto_complete.rs
 // AutoComplete component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{AutoCompleteClass, ClassesBuilder, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{AutoCompleteClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// AutoComplete component type wrapper (for StyledComponent)
 pub struct AutoCompleteComponent;
 
-/// AutoComplete component with Arknights + FUI styling
 ///
-/// An auto-complete input component that suggests options as user types.
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::AutoComplete;
 ///
-/// fn app() -> Element {
-///     let mut value = use_signal(|| String::new());
-///     let options = vec![
-///         "Rust".to_string(),
-///         "Python".to_string(),
-///         "TypeScript".to_string(),
-///     ];
 ///
-///     rsx! {
-///         AutoComplete {
-///             value: value(),
-///             options: options,
-///             placeholder: "Select a language",
-///             on_select: move |v| value.set(v),
-///         }
-///     }
-/// }
-/// ```
 #[derive(Clone, PartialEq, Props)]
 pub struct AutoCompleteProps {
-    /// Current input value
     #[props(default)]
     pub value: String,
 
-    /// All available options
     pub options: Vec<String>,
 
-    /// Callback when option is selected
     #[props(default)]
     pub on_select: EventHandler<String>,
 
-    /// Placeholder text
     #[props(default)]
     pub placeholder: String,
 
-    /// Whether component is disabled
     #[props(default = false)]
     pub disabled: bool,
 
-    /// Whether to show clear button
     #[props(default = false)]
     pub allow_clear: bool,
 
-    /// Custom classes
     #[props(default)]
     pub class: String,
 
-    /// Custom styles
     #[props(default)]
     pub style: String,
 }

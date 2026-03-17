@@ -1,52 +1,39 @@
 // packages/components/src/display/drag_layer.rs
 // DragLayer component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, DragLayerClass, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, DragLayerClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// DragLayer component type wrapper (for StyledComponent)
 pub struct DragLayerComponent;
 
-/// Drag item data
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct DragItem {
-    /// Unique identifier
     pub id: String,
-    /// Display label
     pub label: String,
-    /// Item type
     pub item_type: String,
 }
 
-/// DragLayer component props
 #[derive(Clone, PartialEq, Props)]
 pub struct DragLayerProps {
-    /// Currently dragging item (if any)
     #[props(default)]
     pub drag_item: Option<DragItem>,
 
-    /// Current drag position (x, y)
     #[props(default)]
     pub position: (i32, i32),
 
-    /// Whether dragging is active
     #[props(default)]
     pub is_dragging: bool,
 
-    /// Show drop zones
     #[props(default)]
     pub show_drop_zones: bool,
 
-    /// Additional CSS classes
     #[props(default)]
     pub class: String,
 }
 
-/// DragLayer component for drag and drop visualization
 ///
-/// A layer that displays drag preview and drop zones during drag operations.
 #[component]
 pub fn DragLayer(props: DragLayerProps) -> Element {
     if !props.is_dragging {

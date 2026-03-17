@@ -1,12 +1,11 @@
 // hi-components/src/data/filter.rs
 // Filter component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, FilterClass, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, FilterClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// Filter component wrapper (for StyledComponent)
 pub struct FilterComponent;
 
 #[derive(Clone, PartialEq, Debug)]
@@ -217,5 +216,4 @@ impl StyledComponent for FilterComponent {
     }
 }
 
-/// Filter component wrapper for external use
 pub struct FilterComponentWrapper;

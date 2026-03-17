@@ -7,7 +7,7 @@
 //!
 //! ```rust
 //! use hikari_components::layout::{Layout, Header, Aside};
-//! use crate::prelude::*;;
+//! use crate::prelude::*;
 //!
 //! rsx! {
 //!     Layout {
@@ -34,53 +34,34 @@
 //! }
 //! ```
 
-use crate::prelude::*;;
-use palette::classes::{
+use crate::prelude::*;
+use hikari_palette::classes::{
     AppLayoutClass, ClassesBuilder, UtilityClass, components::Layout as LayoutClass,
 };
 
 use crate::basic::Background;
 
-/// Layout component - Modern application layout wrapper
 ///
-/// # Design Philosophy
-/// - Clean, minimal structure with refined shadows and borders
-/// - Smooth transitions and micro-interactions
-/// - Responsive by design with mobile-first approach
-/// - Glass morphism effects for modern feel
 ///
-/// # Features
-/// - Global gradient background (via Background component)
-/// - Responsive sidebar with backdrop overlay on mobile
-/// - Optional glassmorphism header
-/// - Smooth slide-in/out animations
-/// - Proper z-index layering
 #[component]
 pub fn Layout(
-    /// Header content
     #[props(optional)]
     header: Option<Element>,
 
-    /// Sidebar/Aside content
     #[props(optional)]
     aside: Option<Element>,
 
-    /// Footer content
     #[props(optional)]
     footer: Option<Element>,
 
-    /// Main content
     children: Element,
 
-    /// Whether to use glassmorphism effects (default: true)
     #[props(default = true)]
     glassmorphism: bool,
 
-    /// Background color (default: uses theme background variable)
     #[props(default = "var(--hi-background, #f8fafc)".to_string())]
     background_color: String,
 
-    /// Custom CSS classes
     #[props(default)]
     class: String,
 ) -> Element {

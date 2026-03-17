@@ -1,12 +1,11 @@
 // hi-components/src/data/selection.rs
 // Selection component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, SelectionClassNew, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, SelectionClassNew, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// Selection component wrapper (for StyledComponent)
 pub struct SelectionComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]

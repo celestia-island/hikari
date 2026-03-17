@@ -3,38 +3,30 @@
 
 use std::rc::Rc;
 
-use crate::prelude::*;;
-use palette::classes::{CellClass, ClassesBuilder};
+use crate::prelude::*;
+use hikari_palette::classes::{CellClass, ClassesBuilder};
 
 use super::column::ColumnDef;
 
-/// Cell component props
 #[derive(Clone, Props, Default)]
 pub struct CellProps {
-    /// Cell content
     #[props(default)]
     pub value: String,
 
-    /// Column configuration
     pub column: ColumnDef,
 
-    /// Row index
     #[props(default)]
     pub row_index: usize,
 
-    /// Column index
     #[props(default)]
     pub col_index: usize,
 
-    /// Custom CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Custom rendering callback
     #[props(default)]
     pub render: Option<CellRenderer>,
 
-    /// Editable flag
     #[props(default)]
     pub editable: bool,
 }
@@ -64,38 +56,11 @@ impl std::fmt::Debug for CellProps {
     }
 }
 
-/// Cell component for table data display
 ///
-/// Renders individual table cells with support for:
-/// - Custom cell rendering callbacks
-/// - Column alignment
-/// - Hover effects
-/// - Editable flag support
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::{Cell, ColumnDef, ColumnAlign};
 ///
-/// fn app() -> Element {
-///     let column = ColumnDef {
-///         column_key: "name".to_string(),
-///         title: "Name".to_string(),
-///         align: ColumnAlign::Left,
-///         ..Default::default()
-///     };
 ///
-///     rsx! {
-///         Cell {
-///             column: column.clone(),
-///             value: "Arknights".to_string(),
-///             row_index: 0,
-///             col_index: 0,
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Cell(props: CellProps) -> Element {
     let align_class = match props.column.align {
@@ -141,23 +106,11 @@ pub fn Cell(props: CellProps) -> Element {
     }
 }
 
-/// Custom cell renderer type
 pub type CellRenderer = Rc<dyn Fn(&str, usize, usize) -> Element>;
 
-/// Helper to create a cell renderer
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::cell::create_cell_renderer;
 ///
-/// let renderer = create_cell_renderer(|value, row, col| {
-///     rsx! {
-///         strong { "{value}" }
-///     }
-/// });
-/// ```
 pub fn create_cell_renderer<F>(f: F) -> CellRenderer
 where
     F: Fn(&str, usize, usize) -> Element + 'static,

@@ -2,8 +2,8 @@
 // Menu component with Arknights + FUI styling
 
 use animation::style::{CssProperty, StyleStringBuilder};
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, MenuClass};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, MenuClass};
 
 use crate::{
     GlowBlur, GlowColor, GlowIntensity,
@@ -12,7 +12,6 @@ use crate::{
     styled::StyledComponent,
 };
 
-/// Context for Menu to communicate with MenuItem
 #[derive(Clone, Default)]
 pub struct MenuContext {
     pub in_popover: bool,
@@ -30,7 +29,6 @@ impl MenuContext {
     }
 }
 
-/// Menu 组件的类型包装器（用于实现 StyledComponent）
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum MenuMode {
     #[default]
@@ -38,7 +36,6 @@ pub enum MenuMode {
     Horizontal,
 }
 
-/// Menu item height variants
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum MenuItemHeight {
     #[default]
@@ -170,15 +167,12 @@ pub struct MenuProps {
 
     pub on_select: Option<EventHandler<String>>,
 
-    /// Whether this menu is inside a Popover (enables auto-glow on items)
     #[props(default)]
     pub in_popover: bool,
 
-    /// Default glow setting for all items (overridden by in_popover)
     #[props(default)]
     pub glow: bool,
 
-    /// Callback to request closing the parent popover (when menu item is clicked)
     #[props(default)]
     pub request_close: Option<Callback<()>>,
 }
@@ -200,69 +194,15 @@ impl Default for MenuProps {
     }
 }
 
-/// Menu component with modern, premium styling
 ///
-/// A flexible navigation menu component inspired by Material UI and Element Plus.
-/// Features smooth animations, proper icon support, and multiple layout modes.
 ///
-/// # Features
-/// - **Multiple Modes**: Vertical (default), Horizontal, and Inline variants
-/// - **Nested Menus**: Support for submenus with animated chevron icons
-/// - **Hover Effects**: Subtle background transitions on hover
-/// - **Active States**: Clear visual indication for selected items
-/// - **Accessibility**: Proper ARIA attributes and keyboard navigation
-/// - **Responsive**: Size variants (sm, lg) for different contexts
 ///
-/// # Examples
 ///
-/// ## Basic Vertical Menu
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::{Menu, MenuItem};
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Menu {
-///             mode: MenuMode::Vertical,
-///             MenuItem { item_key: "1", "Dashboard" }
-///             MenuItem { item_key: "2", "Settings" }
-///             MenuItem { item_key: "3", "Profile" }
-///         }
-///     }
-/// }
-/// ```
 ///
-/// ## Menu with Submenus
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::{Menu, MenuItem, SubMenu};
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Menu {
-///             MenuItem { item_key: "1", "Home" }
-///             SubMenu {
-///                 item_key: "2".to_string(),
-///                 title: "Products".to_string(),
-///                 MenuItem { item_key: "2-1", "Category A" }
-///                 MenuItem { item_key: "2-2", "Category B" }
-///             }
-///         }
-///     }
-/// }
-/// ```
 ///
-/// # Styling
-/// The component uses CSS custom properties for theming:
-/// - `--hi-background`: Background color
-/// - `--hi-border`: Border color
-/// - `--hi-text-primary`: Primary text color
-/// - `--hi-primary-600`: Active state color
 ///
-/// # Size Variants
-/// - **Default**: 14px font, 10px padding
-/// - **Small** (`.hi-menu-sm`): 13px font, 6px padding
-/// - **Large** (`.hi-menu-lg`): 15px font, 12px padding
 #[component]
 pub fn Menu(props: MenuProps) -> Element {
     let _active_key = use_signal(|| props.default_active.clone());
@@ -303,7 +243,6 @@ pub fn Menu(props: MenuProps) -> Element {
     }
 }
 
-/// Menu 组件的类型包装器（用于实现 StyledComponent）
 pub struct MenuComponent;
 
 impl StyledComponent for MenuComponent {
@@ -316,7 +255,6 @@ impl StyledComponent for MenuComponent {
     }
 }
 
-/// Menu item component
 #[component]
 pub fn MenuItem(props: MenuItemProps) -> Element {
     let menu_context = try_consume_context::<MenuContext>();
@@ -381,7 +319,6 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
     }
 }
 
-/// Submenu component with nested items
 #[component]
 pub fn SubMenu(props: SubMenuProps) -> Element {
     let mut is_open = use_signal(|| props.default_expanded);

@@ -5,16 +5,15 @@
 // - Layer2: Component variables (icon-button-vars.scss)
 // - Custom: Runtime overrides via icon_color, animation_id
 
-use crate::prelude::*;;
+use crate::prelude::*;
 use icons::{Icon, MdiIcon};
-use palette::classes::{ClassesBuilder, components::ButtonClass};
+use hikari_palette::classes::{ClassesBuilder, components::ButtonClass};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
     styled::StyledComponent,
 };
 
-/// IconButton size variants
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum IconButtonSize {
     Small,
@@ -23,142 +22,73 @@ pub enum IconButtonSize {
     Large,
 }
 
-/// IconButton color variants
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum IconButtonVariant {
-    /// Ghost/Borderless - transparent background
     #[default]
     Ghost,
-    /// Primary - solid primary color
     Primary,
-    /// Secondary - solid secondary color
     Secondary,
-    /// Danger - solid danger color
     Danger,
-    /// Success - solid success color
     Success,
 }
 
-/// IconButton component
 ///
-/// A square button containing only an icon, with optional glow effects.
-/// Supports three-layer CSS variable architecture for runtime customization.
 #[derive(Clone, PartialEq, Props)]
 pub struct IconButtonProps {
-    /// Icon to display
     pub icon: MdiIcon,
 
-    /// Button size (default: Large = 40px)
     #[props(default)]
     pub size: IconButtonSize,
 
-    /// Button variant/color (default: Ghost)
     #[props(default)]
     pub variant: IconButtonVariant,
 
-    /// Custom icon color (Layer2/Custom override)
-    /// Overrides default icon color from CSS variables
     #[props(default)]
     pub icon_color: Option<String>,
 
-    /// Custom background color (Layer2/Custom override)
-    /// Overrides default background color from CSS variables
     #[props(default)]
     pub background_color: Option<String>,
 
-    /// Custom border radius (Layer2/Custom override)
-    /// Overrides default border radius from CSS variables
     #[props(default)]
     pub border_radius: Option<String>,
 
-    /// Animation ID for AnimationBuilder integration (Custom layer)
-    /// Use this to apply runtime animations via AnimationBuilder
     #[props(default)]
     pub animation_id: Option<String>,
 
-    /// Custom CSS variable overrides (Custom layer)
-    /// Apply arbitrary CSS variable overrides at runtime
     #[props(default)]
     pub css_vars: Option<Vec<(&'static str, String)>>,
 
-    /// Whether to enable glow effect (default: true)
     #[props(default = true)]
     pub glow: bool,
 
-    /// Glow blur amount (default: Medium)
     #[props(default = GlowBlur::Medium)]
     pub glow_blur: GlowBlur,
 
-    /// Glow color (default: Primary)
     #[props(default = GlowColor::Primary)]
     pub glow_color: GlowColor,
 
-    /// Glow intensity (default: Standard)
     #[props(default = GlowIntensity::Soft)]
     pub glow_intensity: GlowIntensity,
 
-    /// Whether to button is disabled (default: false)
     #[props(default = false)]
     pub disabled: bool,
 
-    /// Custom CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Click handler
     pub onclick: EventHandler<MouseEvent>,
 }
 
-/// IconButton component - Square button with icon and glow effects
 ///
-/// # Three-Layer CSS Variable System
 ///
-/// This component supports three-layer CSS variable architecture:
 ///
-/// ## Layer1 - Foundation (Global)
-/// Variables defined in `foundation.scss` provide global defaults.
 ///
-/// ## Layer2 - Component
-/// Variables defined in `icon-button-vars.scss` provide component-specific defaults.
 ///
-/// ## Custom - Runtime
-/// Use `icon_color`, `background_color`, `border_radius`,
-/// `animation_id`, or `css_vars` props for runtime overrides.
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::IconButton;
-/// use hikari_icons::MdiIcon;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         // Basic icon button
-///         IconButton {
-///             icon: MdiIcon::Magnify,
-///             onclick: |_| println!("Search clicked"),
-///         }
 ///
-///         // With custom color (Custom layer)
-///         IconButton {
-///             icon: MdiIcon::Heart,
-///             icon_color: Some("#ff0000".to_string()),
-///             onclick: |_| println!("Like clicked"),
-///         }
 ///
-///         // With CSS variable overrides (Custom layer)
-///         IconButton {
-///             icon: MdiIcon::Star,
-///             css_vars: Some(vec![
-///                 ("--hi-icon-button-radius", "50%".to_string()),
-///                 ("--hi-icon-button-bg-hover", "rgba(255, 215, 0, 0.2)".to_string()),
-///             ]),
-///             onclick: |_| println!("Star clicked"),
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn IconButton(props: IconButtonProps) -> Element {
     let icon_size = 14;
@@ -262,7 +192,6 @@ pub fn IconButton(props: IconButtonProps) -> Element {
     }
 }
 
-/// IconButton component wrapper (for StyledComponent)
 pub struct IconButtonComponent;
 
 impl StyledComponent for IconButtonComponent {

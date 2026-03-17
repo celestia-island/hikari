@@ -1,14 +1,13 @@
 // hi-components/src/basic/card.rs
 // Card component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{CardClass, ClassesBuilder, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{CardClass, ClassesBuilder, UtilityClass};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 
 use crate::styled::StyledComponent;
 
-/// Card 组件的类型包装器（用于实现 StyledComponent）
 pub struct CardComponent;
 
 #[derive(Clone, PartialEq, Props)]
@@ -33,9 +32,6 @@ pub struct CardProps {
 
     pub onclick: Option<EventHandler<MouseEvent>>,
 
-    /// Enable glow effect (mouse-following spotlight)
-    /// Cards use the subtle Thirty intensity — barely perceptible ambient glow
-    /// suited for large surfaces (vs Seventy for interactive elements like buttons)
     #[props(default = true)]
     pub glow: bool,
 }
@@ -55,24 +51,9 @@ impl Default for CardProps {
     }
 }
 
-/// Card component with Arknights + FUI styling
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::Card;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Card {
-///             title: "Card Title",
-///             hoverable: true,
-///             div { "Card content" }
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Card(props: CardProps) -> Element {
     let card_classes = ClassesBuilder::new()
@@ -231,26 +212,9 @@ pub struct CardHeaderProps {
     pub class: String,
 }
 
-/// Card header component
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::CardHeader;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         CardHeader {
-///             title: Some("Title".to_string()),
-///             subtitle: Some("Subtitle".to_string()),
-///             action: Some(rsx! {
-///                 button { "Action" }
-///             })
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn CardHeader(props: CardHeaderProps) -> Element {
     let classes = ClassesBuilder::new()
@@ -295,22 +259,9 @@ pub struct CardContentProps {
     pub class: String,
 }
 
-/// Card content component
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::CardContent;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         CardContent {
-///             div { "Content goes here" }
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn CardContent(props: CardContentProps) -> Element {
     let classes = ClassesBuilder::new()
@@ -335,28 +286,13 @@ pub struct CardActionsProps {
     #[props(default)]
     pub class: String,
 
-    /// If true, disable the default spacing between buttons
     #[props(default)]
     pub disable_spacing: bool,
 }
 
-/// Card actions component (footer with buttons)
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::CardActions;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         CardActions {
-///             button { "Cancel" }
-///             button { "Confirm" }
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn CardActions(props: CardActionsProps) -> Element {
     let classes = ClassesBuilder::new()
@@ -388,24 +324,9 @@ pub struct CardMediaProps {
     pub class: String,
 }
 
-/// Card media component for images/videos
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::CardMedia;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         CardMedia {
-///             src: "/images/photo.jpg".to_string(),
-///             alt: "Description".to_string(),
-///             height: Some("200px".to_string())
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn CardMedia(props: CardMediaProps) -> Element {
     let style = if let Some(height) = props.height {

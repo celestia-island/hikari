@@ -1,40 +1,17 @@
 // packages/components/src/display/tag.rs
 // Tag component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{AlignItems, ClassesBuilder, Display, Flex, Gap, TagClass, UtilityClass};
+use crate::prelude::*;
+use hikari_palette::classes::{AlignItems, ClassesBuilder, Display, Flex, Gap, TagClass, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// Tag component type wrapper (for StyledComponent)
 pub struct TagComponent;
 
-/// Tag component with Arknights + FUI styling
 ///
-/// A tag is similar to a badge but supports text content and an optional close button.
-/// Useful for displaying labels, tags, or keywords that users can add/remove.
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::{Tag, TagVariant};
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Tag {
-///             variant: TagVariant::Primary,
-///             "Rust"
-///         }
-///         Tag {
-///             variant: TagVariant::Success,
-///             closable: true,
-///             on_close: move |_| println!("Tag closed"),
-///             "WebAssembly"
-///         }
-///     }
-/// }
-/// ```
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TagVariant {
     #[default]

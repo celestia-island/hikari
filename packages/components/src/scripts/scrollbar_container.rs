@@ -29,23 +29,15 @@ use js_sys::Date;
 use wasm_bindgen::{JsCast, prelude::*};
 use web_sys::{MutationObserver, MutationObserverInit, ResizeObserver};
 
-/// Animation state for scrollbar width transition
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ScrollbarAnimationState {
-    /// Scrollbar at normal width (4px)
     Idle,
-    /// Scrollbar at expanded width (8px) - mouse hover
     Active,
-    /// Scrollbar at expanded width (8px) - currently dragging
     Dragging,
-    /// Scrollbar at expanded width (8px) - temporarily expanded after scroll
     ScrollHover,
 }
 
-/// Animation controller for scrollbar width transitions
 ///
-/// Manages state and animation lifecycle for hover effects.
-/// Uses hikari-animation's scrollbar module for smooth transitions.
 struct ScrollbarAnimator {
     state: RefCell<ScrollbarAnimationState>,
     scrollbar_id: String,
@@ -55,7 +47,6 @@ struct ScrollbarAnimator {
 }
 
 impl ScrollbarAnimator {
-    /// Create a new animator for the given track element
     fn new(track: web_sys::Element) -> Self {
         // Generate unique ID using timestamp
         let scrollbar_id = format!("scrollbar-{}", js_sys::Date::now());
@@ -71,7 +62,6 @@ impl ScrollbarAnimator {
         }
     }
 
-    /// Transition to active (hover) state
     fn activate(&self) {
         let current_state = *self.state.borrow();
         *self.is_mouse_over.borrow_mut() = true;
@@ -89,7 +79,6 @@ impl ScrollbarAnimator {
         }
     }
 
-    /// Transition to idle (normal) state
     fn deactivate(&self) {
         let current_state = *self.state.borrow();
         *self.is_mouse_over.borrow_mut() = false;
@@ -107,19 +96,16 @@ impl ScrollbarAnimator {
         }
     }
 
-    /// Transition to dragging state
     fn start_drag(&self) {
         *self.state.borrow_mut() = ScrollbarAnimationState::Dragging;
         animation::update_scrollbar_width(self.scrollbar_id.clone(), 8.0);
     }
 
-    /// End dragging - always return to idle state
     fn end_drag(&self) {
         *self.state.borrow_mut() = ScrollbarAnimationState::Idle;
         animation::update_scrollbar_width(self.scrollbar_id.clone(), 4.0);
     }
 
-    /// Trigger scroll hover state (expands for 500ms then returns to previous state)
     fn trigger_scroll_hover(&self) {
         let current_state = *self.state.borrow();
 
@@ -149,7 +135,6 @@ impl ScrollbarAnimator {
         *self.scroll_hover_timer.borrow_mut() = Some(timer_id);
     }
 
-    /// Restore state after scroll hover timer expires
     fn restore_from_scroll_hover(&self) {
         let is_over = *self.is_mouse_over.borrow();
         if is_over {
@@ -174,15 +159,8 @@ impl Clone for ScrollbarAnimator {
     }
 }
 
-/// Initialize custom scrollbar for a scrollable container
 ///
-/// # Arguments
-/// * `container_selector` - CSS selector for the scrollable container
 ///
-/// # Example
-/// ```rust,ignore
-/// scrollbar_container::init(".hi-aside-content");
-/// ```
 #[wasm_bindgen(js_name = initScrollbarContainer)]
 pub fn init(container_selector: &str) {
     // Find all containers matching the selector
@@ -201,11 +179,7 @@ pub fn init(container_selector: &str) {
     }
 }
 
-/// Initialize custom scrollbar for a single element (direct reference)
 ///
-/// This is used by MutationObserver when we already have the element reference.
-/// It checks both the class AND the actual DOM structure to handle cases where
-/// Dioxus re-renders and removes the scrollbar elements but keeps the container.
 fn init_single(element: &web_sys::Element) {
     // Check if already initialized AND structure is intact
     let has_container_class = has_class(element, "custom-scrollbar-container");
@@ -223,8 +197,6 @@ fn init_single(element: &web_sys::Element) {
     }
 }
 
-/// Clean up a broken scrollbar structure before re-initializing
-/// Returns the saved scroll position to restore after re-initialization
 fn cleanup_broken_scrollbar_and_save_scroll(container: &web_sys::Element) -> i32 {
     let mut scroll_top = 0;
 
@@ -256,20 +228,16 @@ fn cleanup_broken_scrollbar_and_save_scroll(container: &web_sys::Element) -> i32
     scroll_top
 }
 
-/// Find elements by selector
 fn find_elements(selector: &str) -> Option<web_sys::NodeList> {
     let window = web_sys::window()?;
     let document = window.document()?;
     document.query_selector_all(selector).ok()
 }
 
-/// Helper: Check if element has a class
 fn has_class(element: &web_sys::Element, class_name: &str) -> bool {
     element.class_list().contains(class_name)
 }
 
-/// Verify that the custom scrollbar structure is complete
-/// Returns true if all required elements (wrapper, content, track, thumb) exist
 fn verify_scrollbar_structure(container: &web_sys::Element) -> bool {
     // Check for wrapper
     let wrapper = match container.query_selector(".custom-scrollbar-wrapper") {
@@ -298,8 +266,6 @@ fn verify_scrollbar_structure(container: &web_sys::Element) -> bool {
     true
 }
 
-/// Setup custom scrollbar for a single container
-/// initial_scroll_top: the scroll position to restore after setup
 fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32) {
     let window = match web_sys::window() {
         Some(w) => w,
@@ -650,7 +616,6 @@ fn setup_custom_scrollbar(container: &web_sys::Element, initial_scroll_top: i32)
     closure_click.forget();
 }
 
-/// Update scrollbar position and size
 fn update_scrollbar(
     content_layer: &web_sys::Element,
     track: &web_sys::Element,
@@ -706,7 +671,6 @@ fn update_scrollbar(
     }
 }
 
-/// Update scrollbar position with cached thumb height (used during drag)
 fn update_scrollbar_with_cached_height(
     content_layer: &web_sys::Element,
     track: &web_sys::Element,
@@ -749,7 +713,6 @@ fn update_scrollbar_with_cached_height(
     }
 }
 
-/// Setup drag-to-scroll functionality
 fn setup_drag_scroll(
     content_layer: &web_sys::Element,
     thumb: &web_sys::Element,
@@ -889,14 +852,7 @@ fn setup_drag_scroll(
     closure_mousedown.forget();
 }
 
-/// Initialize custom scrollbar for all standard Hikari scrollable containers
 ///
-/// This includes:
-/// - Aside content areas (sidebar navigation)
-/// - Layout content areas (main content)
-/// - Tree components (virtual scrolling)
-/// - Tabs navigation (horizontal scrolling)
-/// - Table containers (horizontal scrolling)
 #[wasm_bindgen(js_name = initAllScrollbarContainers)]
 pub fn init_all() {
     // Aside components
@@ -927,11 +883,7 @@ pub fn init_all() {
     setup_mutation_observer();
 }
 
-/// Set up MutationObserver to watch for DOM changes and auto-initialize scrollbars
 ///
-/// This is crucial for SPA route changes where Dioxus re-renders the DOM.
-/// When new sidebar elements are added, the MutationObserver detects them
-/// and initializes custom scrollbars automatically.
 fn setup_mutation_observer() {
     let window = match web_sys::window() {
         Some(w) => w,

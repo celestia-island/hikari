@@ -1,8 +1,8 @@
 // hi-components/src/feedback/popover.rs
 // Popover component with smart positioning via Portal system
 
-use crate::prelude::*;;
-use palette::classes::{ClassesBuilder, Display, Position};
+use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, Display, Position};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 
@@ -11,7 +11,6 @@ use crate::{
     styled::StyledComponent,
 };
 
-/// Popover placement direction
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum PopoverPlacement {
     #[default]
@@ -21,26 +20,17 @@ pub enum PopoverPlacement {
     Right,
 }
 
-/// Absolute positioning options
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum PopoverAbsolutePosition {
-    /// Center of screen
     Center,
-    /// Fixed coordinates
     Fixed { x: f64, y: f64 },
 }
 
-/// Positioning mode for Popover
 #[derive(Clone, PartialEq, Debug)]
 pub enum PopoverPositioning {
-    /// Relative positioning with automatic collision detection
-    /// The popover will try preferred placements in order, falling back to other directions if collision occurs
     Relative {
-        /// Preferred placement order (default: [Bottom, Top, Left, Right])
-        /// Collision detection still applies - if preferred direction has collision, tries next
         preferred: Vec<PopoverPlacement>,
     },
-    /// Absolute positioning - fixed position without collision detection
     Absolute(PopoverAbsolutePosition),
 }
 

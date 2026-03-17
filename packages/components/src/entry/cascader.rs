@@ -1,13 +1,12 @@
 // hi-components/src/entry/cascader.rs
 // Cascader component with Arknights + FUI styling
 
-use crate::prelude::*;;
+use crate::prelude::*;
 use icons::{Icon, MdiIcon};
-use palette::classes::{CascaderClass, ClassesBuilder, UtilityClass};
+use hikari_palette::classes::{CascaderClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;
 
-/// Cascader component wrapper (for StyledComponent)
 pub struct CascaderComponent;
 
 #[derive(Clone, PartialEq, Debug, Default)]
@@ -28,76 +27,33 @@ pub enum CascaderSize {
 
 #[derive(Clone, PartialEq, Props)]
 pub struct CascaderProps {
-    /// Cascader options
     pub options: Vec<CascaderOption>,
 
-    /// Currently selected values (path of values)
     #[props(default)]
     pub value: Option<Vec<String>>,
 
-    /// Placeholder text
     #[props(default)]
     pub placeholder: Option<String>,
 
-    /// Cascader size
     #[props(default)]
     pub size: CascaderSize,
 
-    /// Whether cascader is disabled
     #[props(default)]
     pub disabled: bool,
 
-    /// Whether to clear selection
     #[props(default)]
     pub allow_clear: bool,
 
-    /// Custom classes
     #[props(default)]
     pub class: String,
 
-    /// Callback when value changes (returns selected path)
     pub on_change: Option<EventHandler<Vec<String>>>,
 }
 
-/// Cascader component - Hierarchical dropdown selection
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::{Cascader, CascaderOption, CascaderSize};
 ///
-/// fn app() -> Element {
-///     let mut selected = use_signal(|| Option::<Vec<String>>::None);
 ///
-///     rsx! {
-///         Cascader {
-///             placeholder: "Select location".to_string(),
-///             size: CascaderSize::Md,
-///             options: vec![
-///                 CascaderOption {
-///                     label: "Zhejiang".to_string(),
-///                     value: "zhejiang".to_string(),
-///                     children: Some(vec![
-///                         CascaderOption {
-///                             label: "Hangzhou".to_string(),
-///                             value: "hangzhou".to_string(),
-///                             ..Default::default()
-///                         },
-///                         CascaderOption {
-///                             label: "Ningbo".to_string(),
-///                             value: "ningbo".to_string(),
-///                             ..Default::default()
-///                         },
-///                     ]),
-///                     ..Default::default()
-///                 },
-///             ],
-///             on_change: move |values| selected.set(Some(values)),
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Cascader(props: CascaderProps) -> Element {
     let mut is_open = use_signal(|| false);

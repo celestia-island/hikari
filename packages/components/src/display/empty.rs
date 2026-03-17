@@ -1,37 +1,20 @@
 // packages/components/src/display/empty.rs
 // Empty state component with Arknights + FUI styling
 
-use crate::prelude::*;;
-use palette::classes::{
+use crate::prelude::*;
+use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, EmptyClass, FlexDirection, Gap, JustifyContent, Padding,
     TextAlign, UtilityClass,
 };
 
 use crate::styled::StyledComponent;
 
-/// Empty component type wrapper (for StyledComponent)
 pub struct EmptyComponent;
 
-/// Empty component with Arknights + FUI styling
 ///
-/// A placeholder for empty states in lists, tables, or data displays.
-/// Provides a visual representation when no data is available.
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::Empty;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Empty {
-///             image: "placeholder.svg",
-///             description: "No data available",
-///         }
-///     }
-/// }
-/// ```
 #[derive(Clone, PartialEq, Props, Default)]
 pub struct EmptyProps {
     #[props(default)]

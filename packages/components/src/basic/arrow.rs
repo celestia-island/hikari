@@ -1,59 +1,36 @@
 // hi-components/src/basic/arrow.rs
 // Arrow indicator component with rotation support
 
-use crate::prelude::*;;
+use crate::prelude::*;
 use icons::{Icon, MdiIcon};
-use palette::classes::{ClassesBuilder, components::ArrowClass};
+use hikari_palette::classes::{ClassesBuilder, components::ArrowClass};
 
 use crate::StyledComponent;
 
-/// Arrow component style holder
 pub struct ArrowComponent;
 
-/// Arrow direction
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ArrowDirection {
-    /// Arrow points right (default)
     #[default]
     Right,
-    /// Arrow points left
     Left,
-    /// Arrow points up
     Up,
-    /// Arrow points down
     Down,
 }
 
-/// Arrow indicator component
 ///
-/// Displays a chevron arrow with rotation support.
-/// Default state points right, rotates based on direction.
 ///
-/// # Examples
 ///
-/// ```rust
-/// use crate::prelude::*;;
-/// use hikari_components::{Arrow, ArrowDirection};
 ///
-/// rsx! {
-///     // Default: points right
-///     Arrow { direction: ArrowDirection::Right }
 ///
-///     // Rotated: points up
-///     Arrow { direction: ArrowDirection::Up }
-/// }
-/// ```
 #[component]
 pub fn Arrow(
-    /// Arrow direction (controls rotation)
     #[props(default)]
     direction: ArrowDirection,
 
-    /// Arrow size in pixels
     #[props(default = 16)]
     size: u32,
 
-    /// Additional CSS classes
     #[props(default)]
     class: String,
 ) -> Element {

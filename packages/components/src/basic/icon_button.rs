@@ -56,9 +56,10 @@ impl IntoAttrValue for IconButtonVariant {
 }
 
 ///
-#[derive(Clone, PartialEq, Props)]
+#[derive(Clone, PartialEq, Props, Default)]
 pub struct IconButtonProps {
-    pub icon: MdiIcon,
+    #[props(default)]
+    pub icon: Option<MdiIcon>,
 
     #[props(default)]
     pub size: IconButtonSize,
@@ -99,7 +100,8 @@ pub struct IconButtonProps {
     #[props(default)]
     pub class: String,
 
-    pub onclick: EventHandler<MouseEvent>,
+    #[props(default)]
+    pub onclick: Option<EventHandler<MouseEvent>>,
 }
 
 ///
@@ -193,7 +195,7 @@ pub fn IconButton(props: IconButtonProps) -> Element {
             onclick: props.onclick,
 
             Icon {
-                icon: props.icon,
+                icon: props.icon.unwrap_or_else(MdiIcon::Help),
                 size: icon_size,
                 class: icon_classes,
                 color: props.icon_color.clone().unwrap_or_else(|| "inherit".to_string()),

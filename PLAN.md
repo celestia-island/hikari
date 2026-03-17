@@ -36,28 +36,21 @@
   - 实现 `StyleStringBuilder` 和 `CssProperty` 枚举
   - 所有使用 `animation::style` 的组件改用本地模块
 
-- **组件库迁移进展** (commit `d9b5d64`, `dae7461`):
-  - 添加 WASM cfg guards 到 hooks.rs, render.rs, qrcode.rs
-  - 修复 `String: From<u32>` 错误
-  - 转换 `Memo<T>` 返回类型为 `Signal<T>`
-  - 重构 calendar.rs 使用 Vec<VNode> 模式
-  - 添加 `IntoAttrValue` trait 及多个类型的实现
-  - 添加 `try_consume_context` 别名
-  - 修复 `Signal.toggle()` → `Signal.set(!Signal.get())`
-  - 添加 Debug/Default derives 到多个组件枚举
+- **Tairitsu rsx! 宏增强** (commit `6350ae3`):
+  - 修复 if/match 条件解析问题 (使用 `parse_without_eager_brace`)
+  - 区分 HTML 元素和自定义组件的事件处理
+  - HTML 元素的 `on_*` 属性作为 DOM 事件处理器
+  - 自定义组件的 `on_*` 属性作为普通 props 传递
 
-- **Tairitsu VNode/Signal 增强** (commit `998c243`, `6754b35`):
-  - 添加 `Default` impl for `VNode` (返回 empty Fragment)
-  - 添加 `PartialEq` impl for `Signal<T>` (identity comparison)
-  - 添加 `From<Option<String>>` impl for `Style`
-  - 修复多个 `Event<T>` → `Event` + downcast pattern
-  - 修复 Signal move errors 使用 `.clone()`
+- **Tairitsu hooks 增强** (commit `69e6222`):
+  - 添加 `From<Memo<String>>` 实现 for `Style` 和 `Classes`
+  - 允许 `Memo<String>` 直接用作 style/class 属性
 
 ## 🟡 进行中
 
 ### hikari-components 编译修复
 
-**当前错误数**: ~139 (从初始 ~232 减少 40%)
+**当前错误数**: ~149 (从初始 ~232 减少 36%)
 
 **已修复错误类型**:
 - ✅ Event<T> generic args → Event with downcast
@@ -68,12 +61,14 @@
 - ✅ rsx! 语法: tuple keys → simple keys
 - ✅ Context<T> access via .get() method
 - ✅ RadioContext Copy → Clone
+- ✅ rsx! if/match 解析问题 (struct literal ambiguity)
+- ✅ HTML 元素 vs 自定义组件的事件处理区分
 
 **剩余错误类型**:
-- 47 mismatched types (VNode 转换问题)
-- 7 type annotations needed (event handlers)
-- 4 expected `,` (rsx! 语法)
-- IntoAttrValue for Vec types (可能需要不同方法)
+- 52 mismatched types (事件处理器类型、VNode 转换)
+- IntoAttrValue for Vec/Option types
+- Callback doesn't implement Display
+- Memo<String> to Style conversion (部分已修复)
 
 ## 验收标准
 

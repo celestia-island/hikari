@@ -4,7 +4,7 @@
 // Uses InputWrapper for consistent layout and Portal system for dropdown suggestions
 
 use crate::prelude::*;
-use icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, SearchClass};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
@@ -61,7 +61,7 @@ pub fn Search(props: SearchProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let current_value = value_signal();
+    let current_value = value_signal.get();
 
     let filtered_suggestions: Vec<String> = if current_value.is_empty() {
         props.suggestions.clone()
@@ -88,7 +88,7 @@ pub fn Search(props: SearchProps) -> Element {
             MdiIcon::Close,
             EventHandler::new(move |_| {
                 value_signal.set(String::new());
-                let id = dropdown_id();
+                let id = dropdown_id.get();
                 if !id.is_empty() {
                     portal.remove_entry.call(id);
                 }
@@ -101,11 +101,11 @@ pub fn Search(props: SearchProps) -> Element {
         right_items.push(InputWrapperItem::button(
             MdiIcon::ArrowRight,
             EventHandler::new(move |_| {
-                let id = dropdown_id();
+                let id = dropdown_id.get();
                 if !id.is_empty() {
                     portal.remove_entry.call(id);
                 }
-                props.on_search.call(value_signal());
+                props.on_search.call(value_signal.get());
             }),
         ));
     }
@@ -122,7 +122,7 @@ pub fn Search(props: SearchProps) -> Element {
                     if has_suggestions {
                         let trigger_rect_opt = *container_rect.read();
 
-                        let id = dropdown_id();
+                        let id = dropdown_id.get();
                         if !id.is_empty() {
                             portal.remove_entry.call(id.clone());
                         }
@@ -191,14 +191,14 @@ pub fn Search(props: SearchProps) -> Element {
                 },
                 onkeydown: move |e| {
                     if e.key() == Key::Enter {
-                        let id = dropdown_id();
+                        let id = dropdown_id.get();
                         if !id.is_empty() {
                             portal.remove_entry.call(id);
                         }
-                        props.on_search.call(value_signal());
+                        props.on_search.call(value_signal.get());
                     }
                     if e.key() == Key::Escape {
-                        let id = dropdown_id();
+                        let id = dropdown_id.get();
                         if !id.is_empty() {
                             portal.remove_entry.call(id);
                         }

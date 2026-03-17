@@ -2,7 +2,7 @@
 // Transfer component with Arknights + FUI styling
 
 use crate::prelude::*;
-use icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, TransferClass, UtilityClass};
 
 use crate::styled::StyledComponent;
@@ -203,7 +203,7 @@ fn TransferPanel(
     let all_selected = use_signal(|| false);
 
     let filtered_items = use_memo(move || {
-        let search = search_text().to_lowercase();
+        let search = search_text.get().to_lowercase();
         items
             .iter()
             .filter(|item| {
@@ -216,7 +216,7 @@ fn TransferPanel(
     });
 
     let handle_toggle_all = move |_| {
-        if all_selected() {
+        if all_selected.get() {
             on_select.call(Vec::new());
         } else {
             let all_keys: Vec<String> = filtered_items()
@@ -265,7 +265,7 @@ fn TransferPanel(
                         class: "{TransferClass::PanelInput.as_class()}",
                         r#type: "text",
                         placeholder: "Search...",
-                        value: "{search_text()}",
+                        value: "{search_text.get()}",
                         oninput: handle_search,
                     }
                 }

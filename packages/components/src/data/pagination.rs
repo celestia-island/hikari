@@ -2,7 +2,7 @@
 // Pagination component with Arknights + FUI styling
 
 use crate::prelude::*;
-use icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, PaginationClass};
 
 use crate::{
@@ -76,20 +76,20 @@ pub fn Pagination(props: PaginationProps) -> Element {
     let total_pages = if total_items == 0 {
         1
     } else {
-        (total_items.saturating_sub(1) / current_size()) + 1
+        (total_items.saturating_sub(1) / current_size.get()) + 1
     };
 
-    let start = (current_page().saturating_sub(1) * current_size()) + 1;
-    let end = (current_page() * current_size()).min(total_items);
+    let start = (current_page.get().saturating_sub(1) * current_size.get()) + 1;
+    let end = (current_page.get() * current_size.get()).min(total_items);
 
     let _handle_page_change = move |page: u32| {
         let total_pages = if total_items == 0 {
             1
         } else {
-            (total_items.saturating_sub(1) / current_size()) + 1
+            (total_items.saturating_sub(1) / current_size.get()) + 1
         };
 
-        if page < 1 || page > total_pages || page == current_page() {
+        if page < 1 || page > total_pages || page == current_page.get() {
             return;
         }
 
@@ -101,8 +101,8 @@ pub fn Pagination(props: PaginationProps) -> Element {
     };
 
     let handle_prev = move |_| {
-        if current_page() > 1 {
-            let new_page = current_page() - 1;
+        if current_page.get() > 1 {
+            let new_page = current_page.get() - 1;
             current_page.set(new_page);
             if let Some(handler) = props.on_change.as_ref() {
                 handler.call(new_page);
@@ -111,8 +111,8 @@ pub fn Pagination(props: PaginationProps) -> Element {
     };
 
     let handle_next = move |_| {
-        if current_page() < total_pages {
-            let new_page = current_page() + 1;
+        if current_page.get() < total_pages {
+            let new_page = current_page.get() + 1;
             current_page.set(new_page);
             if let Some(handler) = props.on_change.as_ref() {
                 handler.call(new_page);
@@ -145,7 +145,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                     Input {
                         size: InputSize::Medium,
                         input_type: Some("number".to_string()),
-                        value: Some(jump_to()),
+                        value: Some(jump_to.get()),
                         placeholder: Some("Page".to_string()),
                         autofocus: true,
                         oninput: Some(EventHandler::new(move |val: String| {
@@ -166,7 +166,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         glow: true,
                         glow_color: GlowColor::Ghost,
                         onclick: move |_| {
-                            if let Ok(page) = jump_to().parse::<u32>()
+                            if let Ok(page) = jump_to.get().parse::<u32>()
                                 && page >= 1 && page <= total_pages {
                                     handle_modal_jump(page);
                                 }
@@ -192,7 +192,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 (total_items.saturating_sub(1) / size) + 1
             };
 
-            if current_page() > new_total_pages {
+            if current_page.get() > new_total_pages {
                 current_page.set(new_total_pages);
             }
 
@@ -239,7 +239,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
         ClassesBuilder::new()
             .add(PaginationClass::PaginationItem)
             .add_if(PaginationClass::PaginationActive, || {
-                page_num == current_page()
+                page_num == current_page.get()
             })
             .build()
     };
@@ -249,11 +249,11 @@ pub fn Pagination(props: PaginationProps) -> Element {
         let total_pages_calc = if total_items == 0 {
             1
         } else {
-            (total_items.saturating_sub(1) / current_size()) + 1
+            (total_items.saturating_sub(1) / current_size.get()) + 1
         };
 
         move |_| {
-            if page_num < 1 || page_num > total_pages_calc || page_num == current_page() {
+            if page_num < 1 || page_num > total_pages_calc || page_num == current_page.get() {
                 return;
             }
             current_page.set(page_num);
@@ -294,7 +294,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                     intensity: GlowIntensity::Dim,
                     button {
                         class: "{prev_classes}",
-                        disabled: current_page() <= 1,
+                        disabled: current_page.get() <= 1,
                         onclick: handle_prev,
                         Arrow {
                             direction: ArrowDirection::Left,
@@ -313,7 +313,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                 button {
                                     class: ClassesBuilder::new()
                                         .add(PaginationClass::PaginationItem)
-                                        .add_if(PaginationClass::PaginationActive, || i == current_page())
+                                        .add_if(PaginationClass::PaginationActive, || i == current_page.get())
                                         .build(),
                                     onclick: make_page_handler(i),
                                     "{i}"
@@ -329,7 +329,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         button {
                             class: ClassesBuilder::new()
                                 .add(PaginationClass::PaginationItem)
-                                .add_if(PaginationClass::PaginationActive, || 1 == current_page())
+                                .add_if(PaginationClass::PaginationActive, || 1 == current_page.get())
                                 .build(),
                             onclick: make_page_handler(1),
                             "1"
@@ -337,7 +337,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                     }
 
                     // Ellipsis if needed - clickable with icon
-                    if current_page() > 4 {
+                    if current_page.get() > 4 {
                         Popover {
                             positioning: PopoverPositioning::Relative {
                                 preferred: vec![PopoverPlacement::Top, PopoverPlacement::Bottom],
@@ -367,11 +367,11 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
                     // Current page and surrounding pages
                     for i in [
-                        current_page().saturating_sub(1).max(2),
-                        current_page(),
-                        current_page() + 1,
+                        current_page.get().saturating_sub(1).max(2),
+                        current_page.get(),
+                        current_page.get() + 1,
                     ].iter()
-                    .copied()
+                    .copied.get()
                     .filter(|&i| i >= 2 && i <= total_pages.saturating_sub(1))
                     {
                         Glow {
@@ -381,7 +381,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                             button {
                                 class: ClassesBuilder::new()
                                     .add(PaginationClass::PaginationItem)
-                                    .add_if(PaginationClass::PaginationActive, || i == current_page())
+                                    .add_if(PaginationClass::PaginationActive, || i == current_page.get())
                                     .build(),
                                 onclick: make_page_handler(i),
                                 "{i}"
@@ -390,7 +390,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                     }
 
                     // Ellipsis if needed - clickable with icon
-                    if current_page() < total_pages - 3 {
+                    if current_page.get() < total_pages - 3 {
                         Popover {
                             positioning: PopoverPositioning::Relative {
                                 preferred: vec![PopoverPlacement::Top, PopoverPlacement::Bottom],
@@ -427,7 +427,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         button {
                             class: ClassesBuilder::new()
                                 .add(PaginationClass::PaginationItem)
-                                .add_if(PaginationClass::PaginationActive, || total_pages == current_page())
+                                .add_if(PaginationClass::PaginationActive, || total_pages == current_page.get())
                                 .build(),
                             onclick: make_page_handler(total_pages),
                             "{total_pages}"
@@ -443,7 +443,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                     intensity: GlowIntensity::Dim,
                     button {
                         class: "{next_classes}",
-                        disabled: current_page() >= total_pages,
+                        disabled: current_page.get() >= total_pages,
                         onclick: handle_next,
                         Arrow {
                             direction: ArrowDirection::Right,

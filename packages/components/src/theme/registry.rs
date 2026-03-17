@@ -72,7 +72,7 @@ pub fn prefers_dark_mode() -> bool {
             .match_media("(prefers-color-scheme: dark)")
             .ok()
             .flatten()
-            .map(|mql| mql.matches())
+            .map(|mql| mql.matches.get())
             .unwrap_or(false)
     }
 

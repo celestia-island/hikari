@@ -64,7 +64,7 @@ pub fn Collapse(props: CollapseProps) -> Element {
     let arrow_rotation = if *is_expanded.read() { "90deg" } else { "0deg" };
 
     let handle_toggle = move |_| {
-        is_expanded.set(!is_expanded());
+        is_expanded.set(!is_expanded.get());
 
         if let Some(handler) = props.on_expand.as_ref() {
             handler.call(*is_expanded.read());

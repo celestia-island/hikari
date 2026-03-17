@@ -86,7 +86,7 @@ auto_complete = []
 hikari-palette = { path = "../palette" }
 hikari-theme = { path = "../theme" }
 hikari-animation = { path = "../animation", default-features = false }
-hikari-icons = { path = "../icons", default-features = false }
+hikari-icons = { path = "../icons", default-features = false, features = ["tairitsu"] }
 
 # Tairitsu framework (replaces Dioxus)
 tairitsu-vdom = { path = "../../../tairitsu/packages/vdom" }

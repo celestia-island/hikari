@@ -121,8 +121,8 @@ pub fn Calendar(props: CalendarProps) -> Element {
     let mut current_month = use_signal(|| props.default_month);
     let mut selected_day = use_signal(|| 1u32);
 
-    let month = current_month();
-    let year = current_year();
+    let month = current_month.get();
+    let year = current_year.get();
 
     let days_count = days_in_month(year, month);
     let first_day = first_day_of_month(year, month);
@@ -253,7 +253,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
                             day,
                             year,
                             month,
-                            selected_day: selected_day(),
+                            selected_day: selected_day.get(),
                             onclick: move |d: u32| {
                                 *selected_day.write() = d;
                                 if let Some(ref cb) = props.on_date_select {

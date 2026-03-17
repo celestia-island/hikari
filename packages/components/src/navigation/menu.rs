@@ -332,7 +332,7 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
     let list_classes = ClassesBuilder::new().add(MenuClass::SubmenuList).build();
 
     let list_style = use_memo(move || {
-        let (display, opacity, transform) = if is_open() {
+        let (display, opacity, transform) = if is_open.get() {
             ("block", "1", "translateX(0)")
         } else {
             ("none", "0", "translateX(-8px)")
@@ -352,7 +352,7 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
            aria_disabled: props.disabled.to_string(),
            onclick: move |_e| {
                if !props.disabled {
-                   is_open.set(!is_open());
+                   is_open.set(!is_open.get());
                }
            },
 
@@ -398,7 +398,7 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
                 class: "{list_classes}",
                 style: "{list_style}",
                 role: "menu",
-                "aria-hidden": "{!is_open()}",
+                "aria-hidden": "{!is_open.get()}",
 
                 { props.children }
             }

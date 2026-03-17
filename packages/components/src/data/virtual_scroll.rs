@@ -80,7 +80,7 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
 
     // Calculate visible range
     let range = use_memo(move || {
-        let scroll = scroll_position();
+        let scroll = scroll_position.get();
         let start = (scroll / props.item_height as f64).floor() as usize;
         let visible_count = (container_height / props.item_height as f64).ceil() as usize;
         let end =

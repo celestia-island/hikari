@@ -21,6 +21,11 @@ pub use tairitsu_vdom::{
     ChangeEvent,
     ElementHandle,
     EventHandle,
+    // Use tairitsu's Callback and EventHandler (which implement Clone)
+    Callback,
+    EventHandler,
+    // Key type for keyboard events
+    Key,
 };
 
 // Re-export tairitsu hooks
@@ -33,6 +38,8 @@ pub use tairitsu_hooks::{
     provide_context,
     // consume_context is use_context in tairitsu
     use_context as consume_context,
+    // Dioxus compatibility alias
+    provide_context as use_context_provider,
     // Context type from tairitsu
     Context,
     UseRef,
@@ -42,6 +49,9 @@ pub use tairitsu_hooks::{
     AnimationDirection,
     AnimationState,
     EasingFunction,
+    // Dioxus compatibility
+    use_memo,
+    use_callback,
 };
 
 // Re-export tairitsu macros
@@ -49,34 +59,7 @@ pub use tairitsu_macros::{rsx, component, Props};
 
 pub use tairitsu_macros::component as derive_props;
 
-pub struct EventHandler<T> {
-    handler: Box<dyn FnMut(T) + 'static>,
-}
-
-impl<T: 'static> EventHandler<T> {
-    pub fn new<F: FnMut(T) + 'static>(f: F) -> Self {
-        Self { handler: Box::new(f) }
-    }
-
-    pub fn call(&mut self, event: T) {
-        (self.handler)(event)
-    }
-}
-
-impl<T> std::ops::Deref for EventHandler<T> {
-    type Target = Box<dyn FnMut(T) + 'static>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.handler
-    }
-}
-
-impl<T> std::ops::DerefMut for EventHandler<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.handler
-    }
-}
-
+/// Helper function to create an event handler
 pub fn event_handler<F, T>(f: F) -> EventHandler<T>
 where
     F: FnMut(T) + 'static,

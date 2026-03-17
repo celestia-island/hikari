@@ -49,7 +49,7 @@ pub fn Selection(props: SelectionProps) -> Element {
     let available_keys_for_select_all = available_keys.clone();
 
     use_effect(move || {
-        let total_selected = selected().len();
+        let total_selected = selected.get().len();
         let total_available = available_keys_for_effect.len();
 
         is_all_selected.set(total_selected > 0 && total_selected == total_available);
@@ -57,7 +57,7 @@ pub fn Selection(props: SelectionProps) -> Element {
     });
 
     let handle_select_all = move |_| {
-        let new_selection = if is_all_selected() {
+        let new_selection = if is_all_selected.get() {
             Vec::new()
         } else {
             available_keys_for_select_all.clone()
@@ -71,7 +71,7 @@ pub fn Selection(props: SelectionProps) -> Element {
     };
 
     let mut handle_row_select = move |row_key: String| {
-        let mut new_selection = selected();
+        let mut new_selection = selected.get();
 
         match props.selection_type {
             SelectionType::Checkbox => {
@@ -94,7 +94,7 @@ pub fn Selection(props: SelectionProps) -> Element {
         }
     };
 
-    let is_row_selected = move |key: &str| -> bool { selected().iter().any(|k| k == key) };
+    let is_row_selected = move |key: &str| -> bool { selected.get().iter().any(|k| k == key) };
 
     let get_input_type = || match props.selection_type {
         SelectionType::Checkbox => "checkbox",
@@ -123,7 +123,7 @@ pub fn Selection(props: SelectionProps) -> Element {
                             input {
                                 class: "{SelectionClassNew::SelectionCheckbox.as_class()}",
                                 r#type: "checkbox",
-                                checked: is_all_selected(),
+                                checked: is_all_selected.get(),
                                 onchange: handle_select_all,
                             }
                         }

@@ -8,7 +8,7 @@
 // - Styles via SCSS with CSS variables for theming
 
 use crate::prelude::*;
-use icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, SidebarClass, UtilityClass};
 
 use crate::{
@@ -112,7 +112,7 @@ impl Default for SidebarSectionProps {
 pub fn SidebarSection(props: SidebarSectionProps) -> Element {
     let mut is_expanded = use_signal(|| props.default_expanded);
 
-    let expanded_attr = if is_expanded() { "true" } else { "false" };
+    let expanded_attr = if is_expanded.get() { "true" } else { "false" };
 
     let section_classes = ClassesBuilder::new()
         .add(SidebarClass::Section)
@@ -121,7 +121,7 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
 
     let arrow_classes = ClassesBuilder::new()
         .add(SidebarClass::SectionArrow)
-        .add_if(SidebarClass::SectionArrowRotated, move || is_expanded())
+        .add_if(SidebarClass::SectionArrowRotated, move || is_expanded.get())
         .build();
 
     rsx! {
@@ -166,7 +166,7 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
             div {
                 class: "{SidebarClass::SectionChildren.as_class()}",
                 "data-expanded": expanded_attr,
-                aria_hidden: "{!is_expanded()}",
+                aria_hidden: "{!is_expanded.get()}",
 
                 { props.children }
             }
@@ -203,7 +203,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
     let has_items = props.items.is_some();
     let mut is_expanded = use_signal(|| props.default_expanded);
 
-    let expanded_attr = if is_expanded() { "true" } else { "false" };
+    let expanded_attr = if is_expanded.get() { "true" } else { "false" };
 
     let item_classes = ClassesBuilder::new()
         .add(SidebarClass::Item)
@@ -212,7 +212,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
 
     let arrow_classes = ClassesBuilder::new()
         .add(SidebarClass::ItemArrow)
-        .add_if(SidebarClass::ItemArrowRotated, move || is_expanded())
+        .add_if(SidebarClass::ItemArrowRotated, move || is_expanded.get())
         .build();
 
     rsx! {
@@ -267,7 +267,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
                 div {
                     class: "{SidebarClass::ItemChildren.as_class()}",
                     "data-expanded": expanded_attr,
-                    aria_hidden: "{!is_expanded()}",
+                    aria_hidden: "{!is_expanded.get()}",
 
                     // Render nested items
                     { items }

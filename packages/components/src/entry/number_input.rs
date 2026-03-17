@@ -3,7 +3,7 @@
 // Uses InputWrapper for consistent layout
 
 use crate::prelude::*;
-use icons::MdiIcon;
+use hikari_icons::MdiIcon;
 use hikari_palette::classes::{ClassesBuilder, Display, NumberInputClass};
 
 use crate::{

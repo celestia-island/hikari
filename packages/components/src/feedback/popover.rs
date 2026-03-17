@@ -128,7 +128,7 @@ pub fn Popover(props: PopoverProps) -> Element {
     // Sync external open prop with internal state
     let props_open = props.open;
     use_effect(move || {
-        if props_open != open() {
+        if props_open != open.get() {
             open.set(props_open);
             if props_open {
                 close_requested.set(false);
@@ -141,7 +141,7 @@ pub fn Popover(props: PopoverProps) -> Element {
     let handle_trigger_click = move |e: MouseEvent| {
         e.stop_propagation();
 
-        let new_state = !open();
+        let new_state = !open.get();
         open.set(new_state);
 
         if new_state {

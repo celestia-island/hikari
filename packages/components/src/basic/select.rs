@@ -94,7 +94,7 @@ pub fn Select(props: SelectProps) -> Element {
         }
     });
 
-    let current_value = internal_value();
+    let current_value = internal_value.get();
     let selected_label = props
         .options
         .iter()
@@ -111,7 +111,7 @@ pub fn Select(props: SelectProps) -> Element {
         .add(SelectClass::SelectTrigger)
         .add(size_class)
         .add_if(SelectClass::Disabled, || props.disabled)
-        .add_if(SelectClass::Open, move || open())
+        .add_if(SelectClass::Open, move || open.get())
         .add_raw(&props.class)
         .build();
 
@@ -126,11 +126,11 @@ pub fn Select(props: SelectProps) -> Element {
             return;
         }
 
-        let current_open = open();
+        let current_open = open.get();
 
         if current_open {
             // Close
-            let id = dropdown_id();
+            let id = dropdown_id.get();
             if !id.is_empty() {
                 portal.remove_entry.call(id);
             }

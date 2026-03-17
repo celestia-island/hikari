@@ -215,6 +215,13 @@ pub mod svg_macro;
 #[cfg(feature = "dioxus")]
 use dioxus::prelude::*;
 
+#[cfg(feature = "tairitsu")]
+use tairitsu_vdom::{VNode as Element, VNode, Classes, Style};
+#[cfg(feature = "tairitsu")]
+use tairitsu_macros::{rsx, component, Props};
+#[cfg(feature = "tairitsu")]
+use tairitsu_hooks::use_memo;
+
 // Re-export MDI icon enum (minimal version to avoid WASM size limits)
 pub use mdi_minimal::MdiIcon;
 
@@ -574,6 +581,48 @@ pub fn Icon(
 /// Default SVG fallback icon (exclamation mark)
 /// Uses fill="currentColor" to inherit theme text color
 const DEFAULT_SVG: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>"#;
+
+/// Icon Props for Tairitsu
+#[cfg(feature = "tairitsu")]
+#[derive(Clone, PartialEq)]
+pub struct IconProps {
+    pub icon: IconRef,
+    pub class: String,
+    pub size: u32,
+    pub color: String,
+}
+
+/// Icon component for Tairitsu framework
+#[cfg(feature = "tairitsu")]
+pub fn Icon(props: IconProps) -> Element {
+    // Get icon data from generated constants
+    let icon_data_opt = get(&props.icon.name());
+
+    // Build SVG content using the macro
+    let final_svg = if let Some(icon_data) = icon_data_opt {
+        build_svg!(icon_data)
+    } else {
+        log_icon_warning_once(props.icon.name());
+        String::from(DEFAULT_SVG)
+    };
+
+    // Build style string
+    let full_style = if props.color.is_empty() {
+        format!("width:{}px;height:{}px;", props.size, props.size)
+    } else {
+        format!("width:{}px;height:{}px;color:{};", props.size, props.size, props.color)
+    };
+
+    let full_class = format!("hikari-icon {}", props.class);
+
+    rsx! {
+        div {
+            class: full_class,
+            style: full_style,
+            dangerous_inner_html: final_svg,
+        }
+    }
+}
 
 // ======== Material Design Icon Shortcuts ========
 

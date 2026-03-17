@@ -2,7 +2,7 @@
 // Toast component with Arknights + FUI styling
 
 use crate::prelude::*;
-use icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, ToastClass, UtilityClass};
 
 use crate::{

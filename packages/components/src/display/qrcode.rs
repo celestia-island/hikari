@@ -104,7 +104,7 @@ pub fn QRCode(props: QRCodeProps) -> Element {
                     height: "{size}",
 
                     onmounted: move |evt| {
-                        if drawn() { return; }
+                        if drawn.get() { return; }
 
                         if let Some(canvas) = evt.data().downcast::<web_sys::HtmlCanvasElement>()
                             && let Ok(Some(ctx)) = canvas.get_context("2d")

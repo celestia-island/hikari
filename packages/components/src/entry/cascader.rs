@@ -2,7 +2,7 @@
 // Cascader component with Arknights + FUI styling
 
 use crate::prelude::*;
-use icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{CascaderClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;
@@ -76,23 +76,23 @@ pub fn Cascader(props: CascaderProps) -> Element {
         match e.key() {
             Key::Enter => {
                 e.prevent_default();
-                is_open.set(!is_open());
-                if is_open() {
+                is_open.set(!is_open.get());
+                if is_open.get() {
                     focused_index.set(0);
                 }
             }
             Key::Escape => {
                 is_open.set(false);
             }
-            Key::ArrowDown if is_open() => {
+            Key::ArrowDown if is_open.get() => {
                 e.prevent_default();
-                let current = focused_index();
+                let current = focused_index.get();
                 let total = options.len();
                 focused_index.set((current + 1) % total);
             }
-            Key::ArrowUp if is_open() => {
+            Key::ArrowUp if is_open.get() => {
                 e.prevent_default();
-                let current = focused_index();
+                let current = focused_index.get();
                 let total = options.len();
                 focused_index.set((current + total - 1) % total);
             }
@@ -103,13 +103,13 @@ pub fn Cascader(props: CascaderProps) -> Element {
     let handle_click = move |e: MouseEvent| {
         if !props.disabled {
             e.stop_propagation();
-            is_open.set(!is_open());
+            is_open.set(!is_open.get());
         }
     };
 
     let options = props.options.clone();
     let handle_select = EventHandler::new(move |value: String| {
-        let mut new_values = selected_values().clone();
+        let mut new_values = selected_values.get().clone();
 
         new_values.push(value);
 
@@ -140,13 +140,13 @@ pub fn Cascader(props: CascaderProps) -> Element {
         }
     };
 
-    let display_text = if selected_values().is_empty() {
+    let display_text = if selected_values.get().is_empty() {
         props
             .placeholder
             .clone()
             .unwrap_or_else(|| "Please select".to_string())
     } else {
-        selected_values()
+        selected_values.get()
             .iter()
             .filter_map(|v| find_option_by_value(&props.options, v))
             .map(|opt| opt.label.clone())
@@ -165,7 +165,7 @@ pub fn Cascader(props: CascaderProps) -> Element {
                     .add(CascaderClass::Cascader)
                     .add(size_class)
                     .add_if(CascaderClass::Disabled, || props.disabled)
-                    .add_if(CascaderClass::Open, move || is_open())
+                    .add_if(CascaderClass::Open, move || is_open.get())
                     .add_raw(&props.class)
                     .build(),
 
@@ -178,7 +178,7 @@ pub fn Cascader(props: CascaderProps) -> Element {
                         "{display_text}"
                     }
 
-                    if props.allow_clear && !selected_values().is_empty() && !props.disabled {
+                    if props.allow_clear && !selected_values.get().is_empty() && !props.disabled {
                         div {
                             class: "{CascaderClass::Clear.as_class()}",
                             onclick: handle_clear,
@@ -197,15 +197,15 @@ pub fn Cascader(props: CascaderProps) -> Element {
                 }
             }
 
-            if is_open() {
+            if is_open.get() {
                 div {
                     class: "{CascaderClass::Dropdown.as_class()}",
                     onclick: |e| e.stop_propagation(),
 
                     CascaderMenus {
                         options: props.options.clone(),
-                        selected_values: selected_values(),
-                        active_level: active_level(),
+                        selected_values: selected_values.get(),
+                        active_level: active_level.get(),
                         on_select: handle_select,
                     }
                 }

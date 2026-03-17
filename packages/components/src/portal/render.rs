@@ -588,7 +588,7 @@ fn PopoverPortalEntry(
     {
         let on_close_clone = on_close;
         use_effect(move || {
-            if close_requested() {
+            if close_requested.get() {
                 let current_state = *animation_state.read();
                 if current_state == ModalAnimationState::Visible {
                     animation_state.set(ModalAnimationState::Disappearing);
@@ -687,7 +687,7 @@ fn PopoverPortalEntry(
                         .and_then(|w| w.inner_width().ok())
                         .and_then(|v| v.as_f64())
                         .unwrap_or(1920.0),
-                    viewport_height(),
+                    viewport_height.get(),
                     offset,
                     PADDING,
                 ) {
@@ -715,7 +715,7 @@ fn PopoverPortalEntry(
                             .and_then(|w| w.inner_width().ok())
                             .and_then(|v| v.as_f64())
                             .unwrap_or(1920.0),
-                        viewport_height(),
+                        viewport_height.get(),
                         offset,
                         PADDING,
                     )
@@ -730,7 +730,7 @@ fn PopoverPortalEntry(
         }
     });
 
-    let (placement, x, y) = position_state();
+    let (placement, x, y) = position_state.get();
 
     let (position_style, transform_origin, translate_transform) = match placement {
         PopoverPlacement::Bottom => (
@@ -742,7 +742,7 @@ fn PopoverPortalEntry(
             format!(
                 "position: fixed; left: {}px; bottom: {}px;",
                 x,
-                viewport_height() - y
+                viewport_height.get() - y
             ),
             "bottom center",
             "translateX(-50%)",

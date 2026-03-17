@@ -89,12 +89,12 @@ pub fn Carousel(props: CarouselProps) -> Element {
     };
 
     let toggle_pause = move |_| {
-        *is_paused.write() = !is_paused();
+        *is_paused.write() = !is_paused.get();
     };
 
     let index_for_autoplay = current_index;
     use_effect(move || {
-        if props.autoplay == 0 || is_paused() || total <= 1 {
+        if props.autoplay == 0 || is_paused.get() || total <= 1 {
             return;
         }
 
@@ -113,7 +113,7 @@ pub fn Carousel(props: CarouselProps) -> Element {
 
     let track_transform = format!(
         "transform: translateX(-{}%);",
-        current_index() as f64 * 100.0
+        current_index.get() as f64 * 100.0
     );
 
     let indicator_classes = ClassesBuilder::new()
@@ -175,7 +175,7 @@ pub fn Carousel(props: CarouselProps) -> Element {
                         {
                             let dot_classes = ClassesBuilder::new()
                                 .add(CarouselClass::Dot)
-                                .add_if(CarouselClass::DotActive, move || i == current_index())
+                                .add_if(CarouselClass::DotActive, move || i == current_index.get())
                                 .build();
 
                             rsx! {
@@ -196,8 +196,8 @@ pub fn Carousel(props: CarouselProps) -> Element {
                 button {
                     class: "{CarouselClass::Pause.as_class()}",
                     onclick: toggle_pause,
-                    aria_label: if is_paused() { "Play" } else { "Pause" },
-                    if is_paused() { "▶" } else { "⏸" }
+                    aria_label: if is_paused.get() { "Play" } else { "Pause" },
+                    if is_paused.get() { "▶" } else { "⏸" }
                 }
             }
         }

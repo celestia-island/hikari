@@ -60,13 +60,17 @@ impl Default for PaginationProps {
 
 #[component]
 pub fn Pagination(props: PaginationProps) -> Element {
-    let mut current_page = use_signal(|| props.current);
-    let mut current_size = use_signal(|| props.page_size);
+    let current_page = use_signal(|| props.current);
+    let current_size = use_signal(|| props.page_size);
     let total_items = props.total;
 
     // Modal state for jump to page
     let show_jump_modal = use_signal(|| false);
     let jump_to = use_signal(|| props.current.to_string());
+
+    // Extract on_change for use in multiple closures
+    let on_change = props.on_change.clone();
+    let on_size_change = props.on_size_change.clone();
 
     // Handle modal close
     let show_jump_modal_for_close = show_jump_modal.clone();
@@ -80,112 +84,42 @@ pub fn Pagination(props: PaginationProps) -> Element {
         (total_items.saturating_sub(1) / current_size.get()) + 1
     };
 
-    let start = (current_page.get().saturating_sub(1) * current_size.get()) + 1;
-    let end = (current_page.get() * current_size.get()).min(total_items);
+    let _start = (current_page.get().saturating_sub(1) * current_size.get()) + 1;
+    let _end = (current_page.get() * current_size.get()).min(total_items);
 
-    let _handle_page_change = move |page: u32| {
-        let total_pages = if total_items == 0 {
-            1
-        } else {
-            (total_items.saturating_sub(1) / current_size.get()) + 1
-        };
-
-        if page < 1 || page > total_pages || page == current_page.get() {
-            return;
-        }
-
-        current_page.set(page);
-
-        if let Some(handler) = props.on_change.as_ref() {
-            handler.call(page);
-        }
-    };
-
+    // Handler for prev button
+    let current_page_for_prev = current_page.clone();
+    let on_change_for_prev = on_change.clone();
     let handle_prev = move |_| {
-        if current_page.get() > 1 {
-            let new_page = current_page.get() - 1;
-            current_page.set(new_page);
-            if let Some(handler) = props.on_change.as_ref() {
+        if current_page_for_prev.get() > 1 {
+            let new_page = current_page_for_prev.get() - 1;
+            current_page_for_prev.set(new_page);
+            if let Some(handler) = on_change_for_prev.as_ref() {
                 handler.call(new_page);
             }
         }
     };
 
+    // Handler for next button
+    let current_page_for_next = current_page.clone();
+    let on_change_for_next = on_change.clone();
     let handle_next = move |_| {
-        if current_page.get() < total_pages {
-            let new_page = current_page.get() + 1;
-            current_page.set(new_page);
-            if let Some(handler) = props.on_change.as_ref() {
+        if current_page_for_next.get() < total_pages {
+            let new_page = current_page_for_next.get() + 1;
+            current_page_for_next.set(new_page);
+            if let Some(handler) = on_change_for_next.as_ref() {
                 handler.call(new_page);
             }
         }
     };
 
-    // Handle page jump from modal
-    let mut handle_modal_jump = move |page: u32| {
-        current_page.set(page);
-        if let Some(handler) = props.on_change.as_ref() {
-            handler.call(page);
-        }
-        show_jump_modal.set(false);
-    };
-
-    // Create jump modal content (function to avoid ownership issues)
-    let create_jump_modal_content = move || {
-        rsx! {
-            div {
-                style: "padding: 20px; min-width: 200px;",
-                div {
-                    style: "font-weight: 600; margin-bottom: 16px; font-size: 14px;",
-                    "Jump to Page"
-                }
-
-                div {
-                    style: "display: flex; gap: 8px; margin-bottom: 12px;",
-
-                    Input {
-                        size: InputSize::Medium,
-                        input_type: Some("number".to_string()),
-                        value: Some(jump_to.get()),
-                        placeholder: Some("Page".to_string()),
-                        autofocus: true,
-                        oninput: Some(EventHandler::new(move |val: String| {
-                            if let Ok(v) = val.parse::<u32>()
-                                && v <= total_pages * 2 {
-                                    jump_to.set(val.to_string());
-                                }
-                        })),
-                        glow: true,
-                        glow_blur: GlowBlur::Medium,
-                        glow_color: GlowColor::Ghost,
-                        glow_intensity: GlowIntensity::Dim,
-                    }
-
-                    IconButton {
-                        icon: MdiIcon::ArrowRight,
-                        size: IconButtonSize::Medium,
-                        glow: true,
-                        glow_color: GlowColor::Ghost,
-                        onclick: move |_| {
-                            if let Ok(page) = jump_to.get().parse::<u32>()
-                                && page >= 1 && page <= total_pages {
-                                    handle_modal_jump(page);
-                                }
-                        },
-                    }
-                }
-
-                div {
-                    style: "font-size: 12px; color: var(--hi-color-text-secondary);",
-                    "Page 1 to {total_pages}"
-                }
-            }
-        }
-    };
-
+    // Handler for size change
+    let current_size_for_size_change = current_size.clone();
+    let current_page_for_size_change = current_page.clone();
+    let on_size_change_for_handler = on_size_change.clone();
     let handle_size_change = move |evt: ChangeEvent| {
         if let Ok(size) = evt.value.parse::<u32>() {
-            current_size.set(size);
+            current_size_for_size_change.set(size);
 
             let new_total_pages = if total_items == 0 {
                 1
@@ -193,11 +127,11 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 (total_items.saturating_sub(1) / size) + 1
             };
 
-            if current_page.get() > new_total_pages {
-                current_page.set(new_total_pages);
+            if current_page_for_size_change.get() > new_total_pages {
+                current_page_for_size_change.set(new_total_pages);
             }
 
-            if let Some(handler) = props.on_size_change.as_ref() {
+            if let Some(handler) = on_size_change_for_handler.as_ref() {
                 handler.call(size);
             }
         }
@@ -235,35 +169,6 @@ pub fn Pagination(props: PaginationProps) -> Element {
         .add(PaginationClass::PaginationNext)
         .build();
 
-    // Build page item classes
-    let _page_item_classes = |page_num: u32| {
-        ClassesBuilder::new()
-            .add(PaginationClass::PaginationItem)
-            .add_if(PaginationClass::PaginationActive, || {
-                page_num == current_page.get()
-            })
-            .build()
-    };
-
-    // Helper function for page button click handlers
-    let make_page_handler = move |page_num: u32| {
-        let total_pages_calc = if total_items == 0 {
-            1
-        } else {
-            (total_items.saturating_sub(1) / current_size.get()) + 1
-        };
-
-        move |_| {
-            if page_num < 1 || page_num > total_pages_calc || page_num == current_page.get() {
-                return;
-            }
-            current_page.set(page_num);
-            if let Some(handler) = props.on_change.as_ref() {
-                handler.call(page_num);
-            }
-        }
-    };
-
     // Build page size options outside rsx!
     let page_size_option_elements: Vec<Element> = props.page_size_options.iter().map(|size| {
         rsx! {
@@ -274,11 +179,21 @@ pub fn Pagination(props: PaginationProps) -> Element {
     // Build simple page numbers for total_pages <= 7
     let simple_page_elements: Vec<Element> = if total_pages <= 7 {
         (1..=total_pages).map(|i| {
+            let current_page_for_class = current_page.clone();
+            let current_page_for_handler = current_page.clone();
+            let on_change_for_handler = on_change.clone();
             let page_class = ClassesBuilder::new()
                 .add(PaginationClass::PaginationItem)
-                .add_if(PaginationClass::PaginationActive, move || i == current_page.get())
+                .add_if(PaginationClass::PaginationActive, move || i == current_page_for_class.get())
                 .build();
-            let handler = make_page_handler(i);
+            let handler = move |_| {
+                if i != current_page_for_handler.get() {
+                    current_page_for_handler.set(i);
+                    if let Some(h) = on_change_for_handler.as_ref() {
+                        h.call(i);
+                    }
+                }
+            };
             rsx! {
                 Glow {
                     blur: GlowBlur::Medium,
@@ -306,11 +221,21 @@ pub fn Pagination(props: PaginationProps) -> Element {
         ].into_iter()
         .filter(|&i| i >= 2 && i <= total_pages.saturating_sub(1))
         .map(|i| {
+            let current_page_for_class = current_page.clone();
+            let current_page_for_handler = current_page.clone();
+            let on_change_for_handler = on_change.clone();
             let page_class = ClassesBuilder::new()
                 .add(PaginationClass::PaginationItem)
-                .add_if(PaginationClass::PaginationActive, move || i == current_page.get())
+                .add_if(PaginationClass::PaginationActive, move || i == current_page_for_class.get())
                 .build();
-            let handler = make_page_handler(i);
+            let handler = move |_| {
+                if i != current_page_for_handler.get() {
+                    current_page_for_handler.set(i);
+                    if let Some(h) = on_change_for_handler.as_ref() {
+                        h.call(i);
+                    }
+                }
+            };
             rsx! {
                 Glow {
                     blur: GlowBlur::Medium,
@@ -328,12 +253,174 @@ pub fn Pagination(props: PaginationProps) -> Element {
         vec![]
     };
 
+    // Handler for first page button
+    let current_page_for_first = current_page.clone();
+    let on_change_for_first = on_change.clone();
+    let first_page_handler = move |_| {
+        if 1 != current_page_for_first.get() {
+            current_page_for_first.set(1);
+            if let Some(h) = on_change_for_first.as_ref() {
+                h.call(1);
+            }
+        }
+    };
+
+    // Handler for last page button
+    let current_page_for_last = current_page.clone();
+    let on_change_for_last = on_change.clone();
+    let last_page_handler = move |_| {
+        if total_pages != current_page_for_last.get() {
+            current_page_for_last.set(total_pages);
+            if let Some(h) = on_change_for_last.as_ref() {
+                h.call(total_pages);
+            }
+        }
+    };
+
+    // Create jump modal content for first ellipsis
+    let jump_to_for_modal1 = jump_to.clone();
+    let show_jump_modal_for_modal1 = show_jump_modal.clone();
+    let current_page_for_modal1 = current_page.clone();
+    let on_change_for_modal1 = on_change.clone();
+    let create_jump_modal_content_1 = move || {
+        let jump_to_for_input = jump_to_for_modal1.clone();
+        let jump_to_for_button = jump_to_for_modal1.clone();
+        let current_page_for_jump = current_page_for_modal1.clone();
+        let show_jump_modal_for_jump = show_jump_modal_for_modal1.clone();
+        let on_change_for_jump = on_change_for_modal1.clone();
+        let handle_modal_jump = move |page: u32| {
+            current_page_for_jump.set(page);
+            if let Some(h) = on_change_for_jump.as_ref() {
+                h.call(page);
+            }
+            show_jump_modal_for_jump.set(false);
+        };
+        rsx! {
+            div {
+                style: "padding: 20px; min-width: 200px;",
+                div {
+                    style: "font-weight: 600; margin-bottom: 16px; font-size: 14px;",
+                    "Jump to Page"
+                }
+
+                div {
+                    style: "display: flex; gap: 8px; margin-bottom: 12px;",
+
+                    Input {
+                        size: InputSize::Medium,
+                        input_type: Some("number".to_string()),
+                        value: Some(jump_to_for_modal1.get()),
+                        placeholder: Some("Page".to_string()),
+                        autofocus: true,
+                        oninput: Some(EventHandler::new(move |val: String| {
+                            if let Ok(v) = val.parse::<u32>()
+                                && v <= total_pages * 2 {
+                                    jump_to_for_input.set(val.to_string());
+                                }
+                        })),
+                        glow: true,
+                        glow_blur: GlowBlur::Medium,
+                        glow_color: GlowColor::Ghost,
+                        glow_intensity: GlowIntensity::Dim,
+                    }
+
+                    IconButton {
+                        icon: MdiIcon::ArrowRight,
+                        size: IconButtonSize::Medium,
+                        glow: true,
+                        glow_color: GlowColor::Ghost,
+                        onclick: move |_| {
+                            if let Ok(page) = jump_to_for_button.get().parse::<u32>()
+                                && page >= 1 && page <= total_pages {
+                                    handle_modal_jump(page);
+                                }
+                        },
+                    }
+                }
+
+                div {
+                    style: "font-size: 12px; color: var(--hi-color-text-secondary);",
+                    "Page 1 to {total_pages}"
+                }
+            }
+        }
+    };
+
+    // Create jump modal content for second ellipsis
+    let jump_to_for_modal2 = jump_to.clone();
+    let show_jump_modal_for_modal2 = show_jump_modal.clone();
+    let current_page_for_modal2 = current_page.clone();
+    let on_change_for_modal2 = on_change.clone();
+    let create_jump_modal_content_2 = move || {
+        let jump_to_for_input = jump_to_for_modal2.clone();
+        let jump_to_for_button = jump_to_for_modal2.clone();
+        let current_page_for_jump = current_page_for_modal2.clone();
+        let show_jump_modal_for_jump = show_jump_modal_for_modal2.clone();
+        let on_change_for_jump = on_change_for_modal2.clone();
+        let handle_modal_jump = move |page: u32| {
+            current_page_for_jump.set(page);
+            if let Some(h) = on_change_for_jump.as_ref() {
+                h.call(page);
+            }
+            show_jump_modal_for_jump.set(false);
+        };
+        rsx! {
+            div {
+                style: "padding: 20px; min-width: 200px;",
+                div {
+                    style: "font-weight: 600; margin-bottom: 16px; font-size: 14px;",
+                    "Jump to Page"
+                }
+
+                div {
+                    style: "display: flex; gap: 8px; margin-bottom: 12px;",
+
+                    Input {
+                        size: InputSize::Medium,
+                        input_type: Some("number".to_string()),
+                        value: Some(jump_to_for_modal2.get()),
+                        placeholder: Some("Page".to_string()),
+                        autofocus: true,
+                        oninput: Some(EventHandler::new(move |val: String| {
+                            if let Ok(v) = val.parse::<u32>()
+                                && v <= total_pages * 2 {
+                                    jump_to_for_input.set(val.to_string());
+                                }
+                        })),
+                        glow: true,
+                        glow_blur: GlowBlur::Medium,
+                        glow_color: GlowColor::Ghost,
+                        glow_intensity: GlowIntensity::Dim,
+                    }
+
+                    IconButton {
+                        icon: MdiIcon::ArrowRight,
+                        size: IconButtonSize::Medium,
+                        glow: true,
+                        glow_color: GlowColor::Ghost,
+                        onclick: move |_| {
+                            if let Ok(page) = jump_to_for_button.get().parse::<u32>()
+                                && page >= 1 && page <= total_pages {
+                                    handle_modal_jump(page);
+                                }
+                        },
+                    }
+                }
+
+                div {
+                    style: "font-size: 12px; color: var(--hi-color-text-secondary);",
+                    "Page 1 to {total_pages}"
+                }
+            }
+        }
+    };
+
     rsx! {
         div { class: container_classes,
 
             if props.show_total {
                 div { class: total_classes,
-                    "{start}-{end} of {total_items}"
+                    "{_start}-{_end} of {total_items}"
                 }
             }
 
@@ -380,7 +467,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                 .add(PaginationClass::PaginationItem)
                                 .add_if(PaginationClass::PaginationActive, || 1 == current_page.get())
                                 .build(),
-                            onclick: make_page_handler(1),
+                            onclick: first_page_handler,
                             "1"
                         }
                     }
@@ -410,7 +497,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                     }
                                 }
                             },
-                            {create_jump_modal_content()}
+                            {create_jump_modal_content_1()}
                         }
                     }
 
@@ -442,7 +529,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                     }
                                 }
                             },
-                            {create_jump_modal_content()}
+                            {create_jump_modal_content_2()}
                         }
                     }
 
@@ -457,7 +544,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                 .add(PaginationClass::PaginationItem)
                                 .add_if(PaginationClass::PaginationActive, || total_pages == current_page.get())
                                 .build(),
-                            onclick: make_page_handler(total_pages),
+                            onclick: last_page_handler,
                             "{total_pages}"
                         }
                         }

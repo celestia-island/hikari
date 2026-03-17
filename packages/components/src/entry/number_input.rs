@@ -118,7 +118,7 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
             r#type: "text",
             value: "{props.value}",
             disabled: props.disabled,
-            oninput: move |e| {
+            oninput: move |e: FormEvent| {
                 if let Ok(val) = e.value().parse::<i64>() {
                     let constrained_val = match (props.min, props.max) {
                         (Some(min), Some(max)) => val.clamp(min, max),

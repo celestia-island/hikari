@@ -161,7 +161,7 @@ pub fn Search(props: SearchProps) -> Element {
                                                 Icon {
                                                     icon: MdiIcon::Magnify,
                                                     size: 14,
-                                                    class: "hi-search-suggestion-icon",
+                                                    class: "hi-search-suggestion-icon".to_string(),
                                                     color: String::new(),
                                                 }
                                                 span { "{suggestion_value}" }
@@ -233,7 +233,7 @@ pub fn Search(props: SearchProps) -> Element {
                 InputWrapper {
                     left: left_items,
                     right: right_items,
-                    input: input_element,
+                    input: Some(input_element),
                     size: InputWrapperSize::Medium,
                     disabled: props.disabled,
                     glow: props.glow,

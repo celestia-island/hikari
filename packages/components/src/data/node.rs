@@ -136,7 +136,7 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
                     class: "hi-tree-node-children",
                     role: "group",
 
-                    VNode::Fragment(child_nodes)
+                    {child_nodes}
                 }
             }
         }

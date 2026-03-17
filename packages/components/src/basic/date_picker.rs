@@ -80,17 +80,19 @@ pub fn DatePicker(props: DatePickerProps) -> Element {
                 disabled: props.disabled,
                 readonly: props.readonly,
                 placeholder: props.placeholder,
-                onchange: move |e| {
+                onchange: move |e: Event| {
                     if let Some(handler) = props.on_change.as_ref() {
-                        handler.call(e.data.value());
+                        if let Some(form_data) = e.as_any().downcast_ref::<FormData>() {
+                            handler.call(form_data.value.clone());
+                        }
                     }
                 },
-                onfocus: move |e| {
+                onfocus: move |e: FocusEvent| {
                     if let Some(handler) = props.on_focus.as_ref() {
                         handler.call(e);
                     }
                 },
-                onblur: move |e| {
+                onblur: move |e: FocusEvent| {
                     if let Some(handler) = props.on_blur.as_ref() {
                         handler.call(e);
                     }

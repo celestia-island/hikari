@@ -56,13 +56,16 @@ impl Default for AutoCompleteProps {
 
 #[component]
 pub fn AutoComplete(props: AutoCompleteProps) -> Element {
-    let mut is_open = use_signal(|| false);
-    let mut focused_index = use_signal(|| 0);
-    let mut filtered_options = use_signal(Vec::new);
+    let is_open = use_signal(|| false);
+    let focused_index = use_signal(|| 0);
+    let filtered_options = use_signal(Vec::new);
 
     // Clone props values before using in effects
     let props_value = props.value.clone();
     let props_options = props.options.clone();
+
+    // Clone signals for use in multiple closures
+    let filtered_options_for_effect = filtered_options.clone();
 
     // Update filtered options when props change
     use_effect(move || {
@@ -74,66 +77,78 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
             })
             .cloned()
             .collect::<Vec<_>>();
-        filtered_options.set(filtered);
+        filtered_options_for_effect.set(filtered);
     });
 
     // Handle input change
+    let is_open_for_input = is_open.clone();
+    let focused_index_for_input = focused_index.clone();
     let handle_input = {
-        let on_select = props.on_select;
-        move |e: Event| {
-            if let Some(form_data) = e.as_any().downcast_ref::<FormData>() {
-                on_select.call(form_data.value.clone());
-            }
-            is_open.set(true);
-            focused_index.set(0);
+        let on_select = props.on_select.clone();
+        move |e: InputEvent| {
+            on_select.call(e.data.clone());
+            is_open_for_input.set(true);
+            focused_index_for_input.set(0);
         }
     };
 
     // Handle focus
-    let handle_focus = move |_| {
-        if !props.disabled {
-            is_open.set(true);
-            focused_index.set(0);
+    let is_open_for_focus = is_open.clone();
+    let focused_index_for_focus = focused_index.clone();
+    let handle_focus = {
+        let disabled = props.disabled;
+        move |_| {
+            if !disabled {
+                is_open_for_focus.set(true);
+                focused_index_for_focus.set(0);
+            }
         }
     };
 
     // Handle blur (close dropdown immediately)
+    let is_open_for_blur = is_open.clone();
     let handle_blur = move |_| {
-        is_open.set(false);
+        is_open_for_blur.set(false);
     };
 
-    // Handle option click
-    let mut handle_option_click = {
-        let on_select = props.on_select;
+    // Handle option click - used in keyboard navigation and click handler
+    let is_open_for_click = is_open.clone();
+    let handle_option_click = {
+        let on_select = props.on_select.clone();
         move |option: String| {
             on_select.call(option);
-            is_open.set(false);
+            is_open_for_click.set(false);
         }
     };
 
     // Handle keyboard navigation
+    let is_open_for_keydown = is_open.clone();
+    let focused_index_for_keydown = focused_index.clone();
+    let filtered_options_for_keydown = filtered_options.clone();
+    let handle_option_click_for_keydown = handle_option_click.clone();
     let handle_keydown = {
+        let disabled = props.disabled;
         move |e: KeyboardEvent| {
-            if props.disabled {
+            if disabled {
                 return;
             }
 
-            let options = filtered_options.read().clone();
-            let current = focused_index.read();
+            let options = filtered_options_for_keydown.read().clone();
+            let current = focused_index_for_keydown.read();
 
             match e.key_code() {
                 Key::Enter => {
                     e.prevent_default();
                     if !options.is_empty() && current < options.len() {
                         let selected_option = options[current].clone();
-                        handle_option_click(selected_option);
+                        handle_option_click_for_keydown(selected_option);
                     }
                 }
                 Key::ArrowDown => {
                     e.prevent_default();
                     if !options.is_empty() {
                         let next = (current + 1) % options.len();
-                        focused_index.set(next);
+                        focused_index_for_keydown.set(next);
                     }
                 }
                 Key::ArrowUp => {
@@ -141,12 +156,12 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
                     if !options.is_empty() {
                         let len = options.len();
                         let prev = (current + len - 1) % len;
-                        focused_index.set(prev);
+                        focused_index_for_keydown.set(prev);
                     }
                 }
                 Key::Escape => {
                     e.prevent_default();
-                    is_open.set(false);
+                    is_open_for_keydown.set(false);
                 }
                 _ => {}
             }
@@ -154,11 +169,12 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
     };
 
     // Handle clear button
+    let is_open_for_clear = is_open.clone();
     let handle_clear = {
-        let on_select = props.on_select;
+        let on_select = props.on_select.clone();
         move |_| {
             on_select.call(String::new());
-            is_open.set(false);
+            is_open_for_clear.set(false);
         }
     };
 
@@ -210,10 +226,14 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
                                 .add(AutoCompleteClass::Option)
                                 .add_if(AutoCompleteClass::OptionFocused, || index == focused_index_value)
                                 .build(),
-                            onclick: move |_| {
-                                let options = filtered_options.read();
-                                if index < options.len() {
-                                    handle_option_click(options[index].clone())
+                            onclick: {
+                                let handle_option_click_for_click = handle_option_click.clone();
+                                let filtered_options_for_click = filtered_options.clone();
+                                move |_| {
+                                    let options = filtered_options_for_click.read();
+                                    if index < options.len() {
+                                        handle_option_click_for_click(options[index].clone())
+                                    }
                                 }
                             },
                             "{options_arr[index]}"

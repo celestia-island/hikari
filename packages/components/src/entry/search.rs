@@ -184,8 +184,8 @@ pub fn Search(props: SearchProps) -> Element {
                         });
                     }
                 },
-                oninput: move |e| {
-                    let new_value = e.value();
+                oninput: move |e: FormEvent| {
+                    let new_value = e.value().to_string();
                     value_signal.set(new_value.clone());
                     props.on_search.call(new_value);
                 },

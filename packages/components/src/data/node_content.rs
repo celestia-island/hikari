@@ -55,7 +55,7 @@ pub fn TreeNodeContent(props: TreeNodeContentProps) -> Element {
                     props.onclick.call(e);
                 }
             },
-            props.children
+            {props.children}
         }
     }
 }

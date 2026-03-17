@@ -94,6 +94,40 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
         flattened_items.read()[start..end].to_vec()
     });
 
+    // Pre-compute items_data outside rsx!
+    let items_data: Vec<_> = visible_items.read().iter().map(|(item, depth)| {
+        let idx = {
+            let items = flattened_items.read();
+            items.iter()
+                .position(|(n, _)| n.id == item.id)
+                .unwrap_or(0)
+        };
+        (item.id.clone(), item.title.clone(), item.disabled, idx, *depth)
+    }).collect();
+
+    // Pre-build item elements outside rsx!
+    let item_elements: Vec<Element> = items_data.into_iter().map(|(id, title, disabled, idx, depth)| {
+        let node_classes = ClassesBuilder::new()
+            .add(TreeClass::VirtualTree)
+            .add_if(TreeClass::NodeDisabled, || disabled)
+            .build();
+
+        let item_height = props.item_height;
+        rsx! {
+            div {
+                class: node_classes,
+                style: "position: absolute; top: {(idx as f64 * item_height as f64)}px; left: 0; right: 0; height: {item_height}px; padding-left: {(depth * 24)}px; display: flex; align-items: center;",
+                "data-key": id,
+
+                span {
+                    class: "hi-tree-node-content",
+                    style: "display: flex; align-items: center; gap: 8px;",
+                    "{title}"
+                }
+            }
+        }
+    }).collect();
+
     rsx! {
         div {
             class: format!("hi-virtual-tree {}", props.class),
@@ -106,8 +140,10 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
             div {
                 class: "hi-virtual-tree-viewport",
                 style: "position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto;",
-                onscroll: move |e| {
-                    let scroll_top = e.scroll_top();
+                onscroll: move |_e: Event| {
+                    // TODO: Get scroll position from element via JS interop
+                    // For now, use a placeholder value
+                    let scroll_top = 0;
                     scroll_position.set(scroll_top);
 
                     if let Some(handler) = props.on_scroll.as_ref() {
@@ -118,36 +154,7 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
                 div {
                     style: "position: relative; height: {total_height}px;",
 
-                    {let items_data: Vec<_> = visible_items.read().iter().map(|(item, depth)| {
-                        let idx = {
-                            let items = flattened_items.read();
-                            items.iter()
-                                .position(|(n, _)| n.id == item.id)
-                                .unwrap_or(0)
-                        };
-                        (item.id.clone(), item.title.clone(), item.disabled, idx, *depth)
-                    }).collect();
-
-                    items_data.into_iter().map(|(id, title, disabled, idx, depth)| {
-                        let node_classes = ClassesBuilder::new()
-                            .add(TreeClass::VirtualTree)
-                            .add_if(TreeClass::NodeDisabled, || disabled)
-                            .build();
-
-                        rsx! {
-                            div {
-                                class: node_classes,
-                                style: "position: absolute; top: {(idx as f64 * props.item_height as f64)}px; left: 0; right: 0; height: {props.item_height}px; padding-left: {(depth * 24)}px; display: flex; align-items: center;",
-                                "data-key": id,
-
-                                span {
-                                    class: "hi-tree-node-content",
-                                    style: "display: flex; align-items: center; gap: 8px;",
-                                    "{title}"
-                                }
-                            }
-                        }
-                    })}
+                    ..item_elements
                 }
             }
         }

@@ -19,6 +19,18 @@ pub struct TreeNodeContentProps {
     children: Element,
 }
 
+impl Default for TreeNodeContentProps {
+    fn default() -> Self {
+        Self {
+            level: 0,
+            disabled: false,
+            class: String::new(),
+            onclick: None,
+            children: VNode::empty(),
+        }
+    }
+}
+
 #[component]
 pub fn TreeNodeContent(props: TreeNodeContentProps) -> Element {
     let indentation_style = format!("padding-left: {}px;", props.level * 24);

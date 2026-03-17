@@ -20,6 +20,17 @@ pub struct TreeNodeArrowProps {
     pub onclick: Option<EventHandler<MouseEvent>>,
 }
 
+impl Default for TreeNodeArrowProps {
+    fn default() -> Self {
+        Self {
+            expanded: false,
+            disabled: false,
+            class: String::new(),
+            onclick: None,
+        }
+    }
+}
+
 #[component]
 pub fn TreeNodeArrow(props: TreeNodeArrowProps) -> Element {
     if props.disabled {

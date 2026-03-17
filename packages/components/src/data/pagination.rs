@@ -65,13 +65,14 @@ pub fn Pagination(props: PaginationProps) -> Element {
     let total_items = props.total;
 
     // Modal state for jump to page
-    let mut show_jump_modal = use_signal(|| false);
-    let mut jump_to = use_signal(|| props.current.to_string());
+    let show_jump_modal = use_signal(|| false);
+    let jump_to = use_signal(|| props.current.to_string());
 
     // Handle modal close
-    let handle_modal_close = move |is_open: bool| {
-        show_jump_modal.set(is_open);
-    };
+    let show_jump_modal_for_close = show_jump_modal.clone();
+    let handle_modal_close = Callback::new(move |is_open: bool| {
+        show_jump_modal_for_close.set(is_open);
+    });
 
     let total_pages = if total_items == 0 {
         1

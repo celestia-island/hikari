@@ -148,28 +148,30 @@ pub fn Steps(props: StepsProps) -> Element {
     let title_class = StepsClass::Title.as_class();
     let description_class = StepsClass::Description.as_class();
 
+    let step_elements: Vec<Element> = step_items.into_iter().map(|item| {
+        rsx! {
+            StepItem {
+                index: item.index,
+                step: item.step,
+                step_classes: item.step_classes,
+                is_clickable: item.is_clickable,
+                step_status: item.step_status,
+                icon_class: icon_class.clone(),
+                number_class: number_class.clone(),
+                content_class: content_class.clone(),
+                title_class: title_class.clone(),
+                description_class: description_class.clone(),
+                on_change: props.on_change.clone(),
+            }
+        }
+    }).collect();
+
     rsx! {
         div {
             class: wrapper_classes,
             style: props.style,
 
-            {step_items.into_iter().map(|item| {
-                rsx! {
-                    StepItem {
-                        index: item.index,
-                        step: item.step,
-                        step_classes: item.step_classes,
-                        is_clickable: item.is_clickable,
-                        step_status: item.step_status,
-                        icon_class: icon_class.clone(),
-                        number_class: number_class.clone(),
-                        content_class: content_class.clone(),
-                        title_class: title_class.clone(),
-                        description_class: description_class.clone(),
-                        on_change: props.on_change.clone(),
-                    }
-                }
-            })}
+            ..step_elements
         }
     }
 }

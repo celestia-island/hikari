@@ -78,12 +78,28 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         String::new()
     };
 
-    let handle_input = {
-        let on_change = props.on_change;
+    // Create two separate handlers for the two textareas
+    let handle_input_edit = {
+        let on_change = props.on_change.clone();
+        let content_for_edit = content.clone();
         move |e: Event| {
             if let Some(form_data) = e.as_any().downcast_ref::<FormData>() {
                 let new_value = form_data.value.clone();
-                content.set(new_value.clone());
+                content_for_edit.set(new_value.clone());
+                if let Some(handler) = on_change.as_ref() {
+                    handler.call(new_value);
+                }
+            }
+        }
+    };
+
+    let handle_input_split = {
+        let on_change = props.on_change.clone();
+        let content_for_split = content.clone();
+        move |e: Event| {
+            if let Some(form_data) = e.as_any().downcast_ref::<FormData>() {
+                let new_value = form_data.value.clone();
+                content_for_split.set(new_value.clone());
                 if let Some(handler) = on_change.as_ref() {
                     handler.call(new_value);
                 }
@@ -298,7 +314,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                             class: MarkdownEditorClass::Textarea.as_class(),
                             placeholder: props.placeholder,
                             value: "{content}",
-                            oninput: handle_input,
+                            oninput: handle_input_edit,
                         }
                     },
                     MarkdownEditorMode::Preview => rsx! {
@@ -315,7 +331,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                                 class: "{MarkdownEditorClass::Textarea.as_class()} {MarkdownEditorClass::SplitPane.as_class()}",
                                 placeholder: props.placeholder,
                                 value: "{content}",
-                                oninput: handle_input,
+                                oninput: handle_input_split,
                             }
                             div {
                                 class: "{MarkdownEditorClass::Preview.as_class()} {MarkdownEditorClass::SplitPane.as_class()}",

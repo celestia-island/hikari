@@ -119,7 +119,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
             let options = filtered_options.read().clone();
             let current = focused_index.read();
 
-            match e.key() {
+            match e.key_code() {
                 Key::Enter => {
                     e.prevent_default();
                     if !options.is_empty() && current < options.len() {

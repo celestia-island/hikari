@@ -50,7 +50,7 @@ pub fn Tree(props: TreeProps) -> Element {
 
     let is_expanded = move |key: &str| expanded_keys.get().contains(&key.to_string());
 
-    let handle_keydown = move |e: KeyboardEvent| match e.key() {
+    let handle_keydown = move |e: KeyboardEvent| match e.key_code() {
         Key::ArrowUp | Key::ArrowDown | Key::ArrowLeft | Key::ArrowRight => {
             e.prevent_default();
         }

@@ -176,7 +176,7 @@ pub fn Popover(props: PopoverProps) -> Element {
 
             portal.add_entry.call(PortalEntry::Popover {
                 id,
-                trigger_rect: *trigger_rect.read(),
+                trigger_rect: trigger_rect.read(),
                 preferred_placements: preferred_placements.clone(),
                 offset: props.offset,
                 width: props.width.clone(),

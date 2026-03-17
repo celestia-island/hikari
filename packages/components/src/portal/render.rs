@@ -51,7 +51,7 @@ fn use_animated_portal_entry(
     };
 
     let computed_opacity_scale = use_memo(move || {
-        let state = *internal_animation_state.read();
+        let state = internal_animation_state.read();
         #[cfg(target_arch = "wasm32")]
         {
             web_sys::console::log_1(
@@ -395,8 +395,8 @@ fn DropdownPortalEntry(
         use_signal(move || trigger_rect.map(|(_, _, width, _)| width).unwrap_or(200.0));
 
     let _position_style = use_memo(move || {
-        let viewport_w = *viewport_width.read();
-        let viewport_h = *viewport_height.read();
+        let viewport_w = viewport_width.read();
+        let viewport_h = viewport_height.read();
         let elem_w = *element_width.read();
 
         let (placement, _trigger_x, trigger_y) = match &strategy {
@@ -875,10 +875,10 @@ fn TooltipPortalEntry(
     let tooltip_height = use_signal(|| 40.0);
 
     let position_style = use_memo(move || {
-        let vw = *viewport_width.read();
-        let vh = *viewport_height.read();
-        let tw = *tooltip_width.read();
-        let th = *tooltip_height.read();
+        let vw = viewport_width.read();
+        let vh = viewport_height.read();
+        let tw = tooltip_width.read();
+        let th = tooltip_height.read();
 
         if let Some((tx, ty, tw_rect, th_rect)) = trigger_rect {
             let trigger_center_x = tx + tw_rect / 2.0;

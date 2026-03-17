@@ -90,7 +90,7 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
     });
 
     let visible_items = use_memo(move || {
-        let (start, end) = *range.read();
+        let (start, end) = range.read();
         flattened_items.read()[start..end].to_vec()
     });
 

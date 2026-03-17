@@ -94,7 +94,7 @@ pub fn Image(
         "position: relative; display: inline-block;".to_string()
     };
 
-    let show_placeholder = !*loaded.read() || *has_error.read();
+    let show_placeholder = !loaded.read() || has_error.read();
     let placeholder_type = placeholder;
 
     let handle_load = move |_| {

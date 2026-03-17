@@ -120,7 +120,7 @@ pub fn Search(props: SearchProps) -> Element {
                 disabled: props.disabled,
                 onfocus: move |_| {
                     if has_suggestions {
-                        let trigger_rect_opt = *container_rect.read();
+                        let trigger_rect_opt = container_rect.read();
 
                         let id = dropdown_id.get();
                         if !id.is_empty() {

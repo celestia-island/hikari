@@ -40,6 +40,42 @@ pub enum GlowIntensity {
     Bright,
 }
 
+// Implement Display for CSS attribute generation
+impl std::fmt::Display for GlowBlur {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GlowBlur::None => write!(f, "none"),
+            GlowBlur::Light => write!(f, "light"),
+            GlowBlur::Medium => write!(f, "medium"),
+            GlowBlur::Heavy => write!(f, "heavy"),
+        }
+    }
+}
+
+impl std::fmt::Display for GlowColor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GlowColor::Ghost => write!(f, "ghost"),
+            GlowColor::Primary => write!(f, "primary"),
+            GlowColor::Secondary => write!(f, "secondary"),
+            GlowColor::Danger => write!(f, "danger"),
+            GlowColor::Success => write!(f, "success"),
+            GlowColor::Warning => write!(f, "warning"),
+            GlowColor::Info => write!(f, "info"),
+        }
+    }
+}
+
+impl std::fmt::Display for GlowIntensity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GlowIntensity::Dim => write!(f, "dim"),
+            GlowIntensity::Soft => write!(f, "soft"),
+            GlowIntensity::Bright => write!(f, "bright"),
+        }
+    }
+}
+
 #[derive(Clone, PartialEq, Props)]
 pub struct GlowProps {
     children: Element,

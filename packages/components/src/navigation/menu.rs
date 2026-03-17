@@ -325,7 +325,7 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
 
     let submenu_classes = ClassesBuilder::new()
         .add(MenuClass::Submenu)
-        .add_if(MenuClass::SubmenuListOpen, || *is_open.read())
+        .add_if(MenuClass::SubmenuListOpen, || is_open.read())
         .add_raw(&props.class)
         .build();
 
@@ -364,9 +364,9 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
                  span { class: "hi-menu-item-content", "{props.title}" }
 
                   Arrow {
-                     direction: if *is_open.read() { ArrowDirection::Down } else { ArrowDirection::Right },
+                     direction: if is_open.read() { ArrowDirection::Down } else { ArrowDirection::Right },
                      size: 14,
-                     class: if *is_open.read() { "hi-menu-item-arrow hi-menu-submenu-arrow-open" } else { "hi-menu-item-arrow" },
+                     class: if is_open.read() { "hi-menu-item-arrow hi-menu-submenu-arrow-open" } else { "hi-menu-item-arrow" },
                   }
              }
          }

@@ -17,6 +17,12 @@ pub enum PortalPositionStrategy {
     MouseBased { placement: TriggerPlacement },
 }
 
+impl Default for PortalPositionStrategy {
+    fn default() -> Self {
+        PortalPositionStrategy::TriggerBased { placement: TriggerPlacement::default() }
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TriggerPlacement {
     #[default]
@@ -35,8 +41,9 @@ pub enum TriggerPlacement {
     Center,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ModalAnimationState {
+    #[default]
     Appearing,
     Visible,
     Disappearing,
@@ -89,18 +96,20 @@ pub enum PortalEntry {
     },
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum PortalMaskMode {
+    #[default]
     Dimmed,
     Transparent,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ToastPosition {
     TopLeft,
     TopCenter,
     TopRight,
     BottomLeft,
     BottomCenter,
+    #[default]
     BottomRight,
 }

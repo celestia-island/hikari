@@ -227,10 +227,10 @@ pub fn Menu(props: MenuProps) -> Element {
         builder.build()
     };
 
-    use_context_provider(|| MenuContext {
+    use_context_provider(move || MenuContext {
         in_popover: props.in_popover,
         glow_enabled,
-        request_close: props.request_close,
+        request_close: props.request_close.clone(),
     });
 
     rsx! {
@@ -259,7 +259,10 @@ impl StyledComponent for MenuComponent {
 pub fn MenuItem(props: MenuItemProps) -> Element {
     let menu_context = try_consume_context::<MenuContext>();
     let should_glow = match &menu_context {
-        Some(ctx) => props.glow || (ctx.get().in_popover && ctx.get().glow_enabled),
+        Some(ctx) => {
+            let ctx_val = ctx.get();
+            props.glow || (ctx_val.in_popover && ctx_val.glow_enabled)
+        }
         None => props.glow,
     };
 

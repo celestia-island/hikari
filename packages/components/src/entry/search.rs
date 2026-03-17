@@ -184,12 +184,12 @@ pub fn Search(props: SearchProps) -> Element {
                         });
                     }
                 },
-                oninput: move |e: FormEvent| {
-                    let new_value = e.value().to_string();
+                oninput: move |e: InputEvent| {
+                    let new_value = e.data.clone();
                     value_signal.set(new_value.clone());
                     props.on_search.call(new_value);
                 },
-                onkeydown: move |e| {
+                onkeydown: move |e: KeyboardEvent| {
                     if e.key_code() == Key::Enter {
                         let id = dropdown_id.get();
                         if !id.is_empty() {

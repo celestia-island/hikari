@@ -131,133 +131,138 @@ fn use_animated_portal_entry(
 }
 
 #[component]
-pub fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
-    let entries = entries.read();
+pub fn PortalRender(#[props(default)] entries: Option<Signal<Vec<PortalEntry>>>) -> Element {
+    let entries = match entries {
+        Some(signal) => signal.read(),
+        None => return rsx! { div {} },
+    };
 
     let portal_classes = ClassesBuilder::new().add(PortalClass::PortalRoot).build();
+
+    // Pre-collect all portal entry elements
+    let entry_elements: Vec<Element> = entries
+        .iter()
+        .enumerate()
+        .map(|(index, entry)| {
+            let z_index = 10000 + index;
+            match entry {
+                PortalEntry::Modal {
+                    id,
+                    title,
+                    position,
+                    mask_mode,
+                    closable,
+                    mask_closable,
+                    children,
+                    animation_state,
+                } => rsx! {
+                    ModalPortalEntry {
+                        z_index,
+                        id: id.clone(),
+                        title: title.clone(),
+                        position: *position,
+                        mask_mode: *mask_mode,
+                        closable: *closable,
+                        mask_closable: *mask_closable,
+                        children: children.clone(),
+                        animation_state: *animation_state,
+                    }
+                },
+                PortalEntry::Dropdown {
+                    id,
+                    strategy,
+                    mask_mode,
+                    children,
+                    trigger_rect,
+                    close_on_select,
+                } => rsx! {
+                    DropdownPortalEntry {
+                        z_index,
+                        id: id.clone(),
+                        strategy: *strategy,
+                        mask_mode: *mask_mode,
+                        children: children.clone(),
+                        trigger_rect: *trigger_rect,
+                        close_on_select: *close_on_select,
+                    }
+                },
+                PortalEntry::Toast { id, position, children } => rsx! {
+                    ToastPortalEntry {
+                        z_index,
+                        id: id.clone(),
+                        position: *position,
+                        children: children.clone(),
+                    }
+                },
+                PortalEntry::Popover {
+                    id,
+                    trigger_rect,
+                    preferred_placements,
+                    offset,
+                    width,
+                    title,
+                    close_on_click_outside,
+                    close_on_select,
+                    on_close,
+                    close_requested,
+                    children,
+                } => rsx! {
+                    PopoverPortalEntry {
+                    z_index,
+                    id: id.clone(),
+                    trigger_rect: *trigger_rect,
+                    preferred_placements: preferred_placements.clone(),
+                    offset: *offset,
+                    width: width.clone(),
+                    title: title.clone(),
+                    close_on_click_outside: *close_on_click_outside,
+                    close_on_select: *close_on_select,
+                    on_close: on_close.clone(),
+                    close_requested: Some(close_requested.clone()),
+                    children: children.clone(),
+                }
+                },
+                PortalEntry::Tooltip {
+                    id,
+                    trigger_rect,
+                    placement,
+                    content,
+                    arrow,
+                } => rsx! {
+                    TooltipPortalEntry {
+                        z_index,
+                        id: id.clone(),
+                        trigger_rect: *trigger_rect,
+                        placement: *placement,
+                        content: content.clone(),
+                        arrow: *arrow,
+                    }
+                },
+            }
+        })
+        .collect();
 
     rsx! {
         div {
             class: portal_classes,
             style: "position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 9999;",
 
-            {
-                entries
-                    .iter()
-                    .enumerate()
-                    .map(|(index, entry)| {
-                        let z_index = 10000 + index;
-                        match entry {
-                            PortalEntry::Modal {
-                                id,
-                                title,
-                                position,
-                                mask_mode,
-                                closable,
-                                mask_closable,
-                                children,
-                                animation_state,
-                            } => rsx! {
-                                ModalPortalEntry {
-                                    z_index,
-                                    id: id.clone(),
-                                    title: title.clone(),
-                                    position: position,
-                                    mask_mode: mask_mode,
-                                    closable: closable,
-                                    mask_closable: mask_closable,
-                                    children: children.clone(),
-                                    animation_state: animation_state,
-                                }
-                            },
-                            PortalEntry::Dropdown {
-                                id,
-                                strategy,
-                                mask_mode,
-                                children,
-                                trigger_rect,
-                                close_on_select,
-                            } => rsx! {
-                                DropdownPortalEntry {
-                                    z_index,
-                                    id: id.clone(),
-                                    strategy: strategy,
-                                    mask_mode: mask_mode,
-                                    children: children.clone(),
-                                    trigger_rect: trigger_rect,
-                                    close_on_select: close_on_select,
-                                }
-                            },
-                            PortalEntry::Toast { id, position, children } => rsx! {
-                                ToastPortalEntry {
-                                    z_index,
-                                    id: id.clone(),
-                                    position: position,
-                                    children: children.clone(),
-                                }
-                            },
-                            PortalEntry::Popover {
-                                id,
-                                trigger_rect,
-                                preferred_placements,
-                                offset,
-                                width,
-                                title,
-                                close_on_click_outside,
-                                close_on_select,
-                                on_close,
-                                close_requested,
-                                children,
-                            } => rsx! {
-                                PopoverPortalEntry {
-                                    z_index,
-                                    id: id.clone(),
-                                    trigger_rect: trigger_rect,
-                                    preferred_placements: preferred_placements.clone(),
-                                    offset: offset,
-                                    width: width.clone(),
-                                    title: title.clone(),
-                                    close_on_click_outside: close_on_click_outside,
-                                    close_on_select: close_on_select,
-                                    on_close: on_close,
-                                    close_requested: close_requested,
-                                    children: children.clone(),
-                                }
-                            },
-                            PortalEntry::Tooltip {
-                                id,
-                                trigger_rect,
-                                placement,
-                                content,
-                                arrow,
-                            } => rsx! {
-                                TooltipPortalEntry {
-                                    z_index,
-                                    id: id.clone(),
-                                    trigger_rect: trigger_rect,
-                                    placement: placement,
-                                    content: content.clone(),
-                                    arrow: arrow,
-                                }
-                            },
-                        }
-                    })
-            }
+            ..entry_elements
         }
     }
 }
 
 #[component]
 fn ModalPortalEntry(
-    z_index: usize,
-    id: String,
-    title: Option<String>,
-    position: ModalPosition,
-    mask_mode: MaskMode,
-    closable: bool,
-    mask_closable: bool,
-    children: Element,
-    animation_state: ModalAnimationState,
+    #[props(default)] z_index: usize,
+    #[props(default)] id: String,
+    #[props(default)] title: Option<String>,
+    #[props(default)] position: ModalPosition,
+    #[props(default)] mask_mode: MaskMode,
+    #[props(default)] closable: bool,
+    #[props(default)] mask_closable: bool,
+    #[props(default)] children: Element,
+    #[props(default)] animation_state: ModalAnimationState,
 ) -> Element {
     let _internal_animation_state = use_signal(|| animation_state);
     let (_, button_close, computed_opacity_scale) =
@@ -365,13 +370,13 @@ fn ModalPortalEntry(
 
 #[component]
 fn DropdownPortalEntry(
-    z_index: usize,
-    id: String,
-    strategy: PortalPositionStrategy,
-    mask_mode: PortalMaskMode,
-    children: Element,
-    trigger_rect: Option<(f64, f64, f64, f64)>,
-    close_on_select: bool,
+    #[props(default)] z_index: usize,
+    #[props(default)] id: String,
+    #[props(default)] strategy: PortalPositionStrategy,
+    #[props(default)] mask_mode: PortalMaskMode,
+    #[props(default)] children: Element,
+    #[props(default)] trigger_rect: Option<(f64, f64, f64, f64)>,
+    #[props(default)] close_on_select: bool,
 ) -> Element {
     let _internal_animation_state = use_signal(|| ModalAnimationState::Appearing);
     let (_, close_dropdown, computed_opacity_scale) =
@@ -411,7 +416,7 @@ fn DropdownPortalEntry(
     let _position_style = use_memo(move || {
         let viewport_w = viewport_width.read();
         let viewport_h = viewport_height.read();
-        let elem_w = *element_width.read();
+        let elem_w = element_width.read();
 
         let (placement, _trigger_x, trigger_y) = match &strategy {
             PortalPositionStrategy::TriggerBased { placement } => {
@@ -554,10 +559,10 @@ fn DropdownPortalEntry(
 
 #[component]
 fn ToastPortalEntry(
-    z_index: usize,
-    id: String,
-    position: ToastPosition,
-    children: Element,
+    #[props(default)] z_index: usize,
+    #[props(default)] id: String,
+    #[props(default)] position: ToastPosition,
+    #[props(default)] children: Element,
 ) -> Element {
     let position_style = match position {
         ToastPosition::TopLeft => "position: fixed; top: 16px; left: 16px;",
@@ -583,26 +588,29 @@ fn ToastPortalEntry(
 
 #[component]
 fn PopoverPortalEntry(
-    z_index: usize,
-    id: String,
-    trigger_rect: Option<(f64, f64, f64, f64)>,
-    preferred_placements: Vec<PopoverPlacement>,
-    offset: f64,
-    width: Option<String>,
-    title: Option<String>,
-    close_on_click_outside: bool,
-    close_on_select: bool,
-    on_close: Option<Callback<()>>,
-    close_requested: Signal<bool>,
-    children: Element,
+    #[props(default)] z_index: usize,
+    #[props(default)] id: String,
+    #[props(default)] trigger_rect: Option<(f64, f64, f64, f64)>,
+    #[props(default)] preferred_placements: Vec<PopoverPlacement>,
+    #[props(default)] offset: f64,
+    #[props(default)] width: Option<String>,
+    #[props(default)] title: Option<String>,
+    #[props(default)] close_on_click_outside: bool,
+    #[props(default)] close_on_select: bool,
+    #[props(default)] on_close: Option<Callback<()>>,
+    #[props(default)] close_requested: Option<Signal<bool>>,
+    #[props(default)] children: Element,
 ) -> Element {
     let (mut animation_state, close_popover, computed_opacity_scale) =
         use_animated_portal_entry(id.clone(), ModalAnimationState::Appearing, "Popover");
 
+    // Create a default signal if none provided
+    let close_requested_signal = close_requested.unwrap_or_else(|| use_signal(|| false));
+
     {
         let on_close_clone = on_close;
         use_effect(move || {
-            if close_requested.get() {
+            if close_requested_signal.get() {
                 let current_state = animation_state.read();
                 if current_state == ModalAnimationState::Visible {
                     animation_state.set(ModalAnimationState::Disappearing);
@@ -872,12 +880,12 @@ fn PopoverPortalEntry(
 
 #[component]
 fn TooltipPortalEntry(
-    z_index: usize,
-    id: String,
-    trigger_rect: Option<(f64, f64, f64, f64)>,
-    placement: TriggerPlacement,
-    content: String,
-    arrow: bool,
+    #[props(default)] z_index: usize,
+    #[props(default)] id: String,
+    #[props(default)] trigger_rect: Option<(f64, f64, f64, f64)>,
+    #[props(default)] placement: TriggerPlacement,
+    #[props(default)] content: String,
+    #[props(default)] arrow: bool,
 ) -> Element {
     let viewport_width = use_signal(|| {
         #[cfg(target_arch = "wasm32")]
@@ -979,7 +987,7 @@ fn TooltipPortalEntry(
             class: tooltip_classes,
             style: tooltip_style,
 
-            div { class: TooltipClass::TooltipContent.as_class(), {content.clone()} }
+            div { class: TooltipClass::TooltipContent.as_class(), content.clone() }
 
             {arrow_el}
         }

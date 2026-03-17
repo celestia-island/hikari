@@ -126,6 +126,23 @@ pub struct RenderDragNodeProps {
     pub on_drop: Option<EventHandler<DropEvent>>,
 }
 
+impl Default for RenderDragNodeProps {
+    fn default() -> Self {
+        Self {
+            node: DragTreeNodeData::default(),
+            depth: 0,
+            draggable: true,
+            drop_allowed: true,
+            allow_drag: None,
+            allow_drop: None,
+            dragged_key: Signal::new(None),
+            drop_target: Signal::new(None),
+            drag_over_key: Signal::new(None),
+            on_drop: None,
+        }
+    }
+}
+
 #[component]
 fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
     let item_key_1 = props.node.item_key.clone();

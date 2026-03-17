@@ -50,23 +50,25 @@
 
 ### hikari-components 编译修复
 
-**当前错误数**: ~183
+**当前错误数**: ~180
 
 **剩余错误类型**:
 - 41 mismatched types (类型不匹配)
-- 6 VNode: Default (需要实现 Default trait)
-- 6 type alias generic args (泛型参数错误)
 - 6 type annotations needed (需要类型注解)
+- 5 Event<T> generic args (Event 不是泛型)
+- 4 Vec<T>: IntoAttrValue (需要 trait impl)
 - 3 EventData.value method (方法不存在)
 - 3 Signal move errors (Signal 移动语义)
-- 多个 IntoAttrValue trait bounds
+- 3 Style: From<Option<String>> (转换不存在)
+- 3 &Option<tuple>: IntoAttrValue (trait 未实现)
 
 **修复策略**:
-1. 实现 `Default` for `VNode` (返回 empty VNode)
-2. 修复 `Memo<T>` 使用 `.read()` 而不是直接调用
-3. 为 `Vec<T>` 类型实现 `IntoAttrValue`
-4. 修复 `Style: From<Option<String>>` 转换
-5. 修复 Signal 的移动语义问题 (使用 `.clone()`)
+1. ✅ 实现 `Default` for `VNode` (返回 empty VNode)
+2. ✅ 修复 `Memo<T>` 使用 `.read()` 而不是直接调用
+3. ✅ 添加 `FileData` 和 `files` 字段到 FormData
+4. 为 `Vec<T>` 类型实现 `IntoAttrValue`
+5. 修复 `Style: From<Option<String>>` 转换
+6. 修复 Event<T> → Event (不是泛型)
 
 ## 验收标准
 

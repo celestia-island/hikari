@@ -163,7 +163,7 @@ pub fn IconButton(props: IconButtonProps) -> Element {
 
     let button_content = rsx! {
         button {
-            class: "{button_classes}",
+            class: button_classes,
             style: style_attr,
             "data-animation-id": props.animation_id,
             disabled: props.disabled,
@@ -172,7 +172,7 @@ pub fn IconButton(props: IconButtonProps) -> Element {
             Icon {
                 icon: props.icon,
                 size: icon_size,
-                class: "{icon_classes}",
+                class: icon_classes,
                 color: props.icon_color.clone().unwrap_or_else(|| "inherit".to_string()),
             }
         }

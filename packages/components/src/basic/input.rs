@@ -187,16 +187,16 @@ pub fn Input(props: InputProps) -> Element {
 
     let input_content = rsx! {
         div {
-            class: "{wrapper_classes}",
+            class: wrapper_classes,
             style: style_attr,
             "data-animation-id": props.animation_id,
 
             if let Some(icon) = props.prefix_icon {
-                span { class: "{InputClass::InputPrefix.as_class()}", { icon } }
+                span { class: InputClass::InputPrefix.as_class(), { icon } }
             }
 
             input {
-                class: "{input_classes}",
+                class: input_classes,
                 r#type: props.input_type.unwrap_or("text".to_string()),
                 autofocus: props.autofocus,
                 disabled: props.disabled,
@@ -226,7 +226,7 @@ pub fn Input(props: InputProps) -> Element {
             }
 
             if let Some(icon) = props.suffix_icon {
-                span { class: "{InputClass::InputSuffix.as_class()}", { icon } }
+                span { class: InputClass::InputSuffix.as_class(), { icon } }
             }
         }
     };

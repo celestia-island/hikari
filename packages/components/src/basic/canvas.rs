@@ -14,7 +14,6 @@ pub enum CanvasMode {
     Loop,
 }
 
-///
 #[component]
 pub fn Canvas(
     width: u32,
@@ -32,10 +31,10 @@ pub fn Canvas(
 
     rsx! {
         canvas {
-            class: "{class_str}",
-            style: "{style}",
-            width: "{width}",
-            height: "{height}",
+            class: class_str,
+            style,
+            width,
+            height,
         }
     }
 }

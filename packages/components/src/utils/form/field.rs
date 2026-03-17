@@ -2,6 +2,7 @@
 // Field Component
 
 use crate::prelude::*;
+use crate::basic::FormField;
 
 use super::state::FormState;
 
@@ -56,14 +57,14 @@ pub fn Field(props: FieldProps) -> Element {
     };
 
     rsx! {
-        crate::basic::FormField {
+        FormField {
             label: props.label.clone(),
             required: props.required,
             help_text: props.help_text.clone(),
             error_message,
             status,
             class: props.class,
-            { props.children }
+            {props.children}
         }
     }
 }

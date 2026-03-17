@@ -247,9 +247,9 @@ pub fn Select(props: SelectProps) -> Element {
         .build();
 
     rsx! {
-        div { class: "{wrapper_classes}",
+        div { class: wrapper_classes,
 
-            div { class: "{trigger_classes}", onclick: handle_trigger_click,
+            div { class: trigger_classes, onclick: handle_trigger_click,
 
                 span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
                     {

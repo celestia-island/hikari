@@ -156,7 +156,7 @@ pub fn Switch(props: SwitchProps) -> Element {
             rsx! { span { class: "hi-switch-thumb-icon", {icon_svg} } }
         }
         Some(SwitchContent::Image(src)) => rsx! {
-            img { class: "hi-switch-thumb-image", src: "{src}", alt: "" }
+            img { class: "hi-switch-thumb-image", src: src, alt: "" }
         },
         None => rsx! { div { class: "hi-switch-thumb-dot" } },
     };
@@ -166,7 +166,7 @@ pub fn Switch(props: SwitchProps) -> Element {
             class: "hi-switch-label",
             onclick: handle_click,
 
-            div { class: "{switch_classes}",
+            div { class: switch_classes,
                 div { class: "hi-switch-track",
                     div { class: "hi-switch-thumb", {thumb_inner} }
                 }

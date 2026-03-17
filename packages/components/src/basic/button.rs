@@ -250,7 +250,7 @@ pub fn Button(props: ButtonProps) -> Element {
 
     let button_content = rsx! {
         button {
-            class: "{classes}",
+            class: classes,
             style: style_attr,
             "data-button-animation": animation_attr,
             "data-animation-id": props.animation_id,

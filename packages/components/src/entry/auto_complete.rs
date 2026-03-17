@@ -170,14 +170,14 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
 
     rsx! {
         div {
-            class: "{wrapper_class}",
+            class: wrapper_class,
             style: "position: relative; {props.style}",
 
             input {
-                class: "{input_classes}",
+                class: input_classes,
                 r#type: "text",
                 value: "{props.value}",
-                placeholder: "{props.placeholder}",
+                placeholder: props.placeholder,
                 disabled: props.disabled,
                 oninput: handle_input,
                 onfocus: handle_focus,
@@ -187,9 +187,9 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
 
             if props.allow_clear && !props.value.is_empty() && !props.disabled {
                 button {
-                    class: "{AutoCompleteClass::Clear.as_class()}",
+                    class: AutoCompleteClass::Clear.as_class(),
                     onclick: handle_clear,
-                    type: "button",
+                    r#type: "button",
                     "×"
                 }
             }

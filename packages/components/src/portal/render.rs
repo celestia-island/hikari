@@ -134,7 +134,7 @@ pub fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
 
     rsx! {
         div {
-            class: "{portal_classes}",
+            class: portal_classes,
             style: "position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 9999;",
 
             {
@@ -298,7 +298,7 @@ fn ModalPortalEntry(
 
     rsx! {
         div {
-            class: "{overlay_classes}",
+            class: overlay_classes,
             style: "position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: auto; display: flex; align-items: center; justify-content: center; z-index: {z_index};",
             onclick: move |e: MouseEvent| {
                 if mask_closable && mask_mode == MaskMode::Opaque {
@@ -308,19 +308,19 @@ fn ModalPortalEntry(
             },
 
             div {
-                class: "{modal_classes}",
-                style: "{modal_style.read()}",
+                class: modal_classes,
+                style: modal_style.read(),
                 onclick: |e: MouseEvent| {
                     e.stop_propagation();
                 },
 
-                div { class: "{header_classes}",
-                    if let Some(title_val) = title {
-                        h3 { class: "{title_classes}", "{title_val}" }
+                div { class: header_classes,
+                    if title.is_some() {
+                        h3 { class: title_classes, {title.as_ref().unwrap().clone()} }
                     }
 
                     if closable {
-                        button { class: "{close_classes}", onclick: button_close,
+                        button { class: close_classes, onclick: button_close,
                             svg {
                                 view_box: "0 0 24 24",
                                 fill: "none",
@@ -343,7 +343,7 @@ fn ModalPortalEntry(
                     }
                 }
 
-                div { class: "{body_classes}", {children} }
+                div { class: body_classes, {children} }
             }
         }
     }
@@ -499,16 +499,16 @@ fn DropdownPortalEntry(
 
     rsx! {
         div {
-            class: "{overlay_classes}",
-            style: "{overlay_style}",
+            class: overlay_classes,
+            style: overlay_style,
             onclick: move |e: MouseEvent| {
                 e.stop_propagation();
                 close_dropdown.call(e);
             },
 
             div {
-                class: "{dropdown_classes}",
-                style: "{content_style.read()}",
+                class: dropdown_classes,
+                style: content_style.read(),
                 onclick: move |e: MouseEvent| {
                     e.stop_propagation();
                     if close_on_select {
@@ -790,12 +790,12 @@ fn PopoverPortalEntry(
         }
 
         div {
-            class: "{popover_classes}",
-            style: "{popover_style}",
+            class: popover_classes,
+            style: popover_style,
             "data-open": "true",
 
-            if let Some(title) = title {
-                div { class: "hi-popover-title", "{title}" }
+            if title.is_some() {
+                div { class: "hi-popover-title", {title.as_ref().unwrap().clone()} }
             }
 
             div {
@@ -930,10 +930,10 @@ fn TooltipPortalEntry(
 
     rsx! {
         div {
-            class: "{tooltip_classes}",
+            class: tooltip_classes,
             style: "{position_style.read()} z-index: {z_index}; pointer-events: none;",
 
-            div { class: "{TooltipClass::TooltipContent.as_class()}", "{content}" }
+            div { class: TooltipClass::TooltipContent.as_class(), {content.clone()} }
 
             if arrow {
                 div { class: "hi-tooltip-arrow" }

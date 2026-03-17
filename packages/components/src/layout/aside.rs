@@ -98,19 +98,19 @@ pub fn Aside(
 
     rsx! {
         aside {
-            class: "{classes}",
+            class: classes,
 
             if let Some(header_content) = header {
-                div { class: "{header_class}", {header_content} }
+                div { class: header_class, {header_content} }
             }
 
             div {
-                class: "{content_class}",
+                class: content_class,
                 { children }
             }
 
             if let Some(footer_content) = footer {
-                div { class: "{footer_class}", {footer_content} }
+                div { class: footer_class, {footer_content} }
             }
         }
     }

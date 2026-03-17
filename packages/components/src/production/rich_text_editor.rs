@@ -59,12 +59,12 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
 
     rsx! {
         div {
-            class: "{container_classes}",
-            style: "{height_style}",
+            class: container_classes,
+            style: height_style,
 
             if props.toolbar {
                 div {
-                    class: "{toolbar_classes}",
+                    class: toolbar_classes,
 
                     button {
                         class: "hi-rich-text-editor-toolbar-button",
@@ -84,7 +84,7 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
             }
 
             div {
-                class: "{editor_classes}",
+                class: editor_classes,
                 "{content}"
             }
         }

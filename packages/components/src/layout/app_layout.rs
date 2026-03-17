@@ -83,7 +83,7 @@ pub fn Layout(
         Background {}
 
         div {
-            class: "{layout_classes}",
+            class: layout_classes,
 
             // Header (if provided) - full width at top
             if let Some(header_content) = header {
@@ -91,12 +91,12 @@ pub fn Layout(
             }
 
             // Body container with Aside and Main
-            div { class: "{AppLayoutClass::Body.as_class()}",
+            div { class: AppLayoutClass::Body.as_class(),
 
                 // Mobile overlay (backdrop) with blur effect
                 if aside.is_some() {
                     div {
-                        class: "{overlay_classes}",
+                        class: overlay_classes,
                         onclick: move |_| is_drawer_open.set(false),
                     }
                 }
@@ -107,10 +107,10 @@ pub fn Layout(
                 }
 
                 // Main content area
-                div { class: "{AppLayoutClass::Main.as_class()}",
+                div { class: AppLayoutClass::Main.as_class(),
 
                     // Main content with refined scroll
-                    main { class: "{AppLayoutClass::Content.as_class()}", {children} }
+                    main { class: AppLayoutClass::Content.as_class(), {children} }
                 }
             }
 

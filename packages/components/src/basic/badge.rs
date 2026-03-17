@@ -99,7 +99,7 @@ pub fn Badge(props: BadgeProps) -> Element {
         let badge_classes = builder.add_raw(&props.class).build();
 
         rsx! {
-            span { class: "{badge_classes}",
+            span { class: badge_classes,
                 {props.children}
             }
         }
@@ -119,12 +119,12 @@ pub fn Badge(props: BadgeProps) -> Element {
 
                 {props.children}
 
-                span { class: "{badge_classes}",
+                span { class: badge_classes,
 
                     if props.dot {
                         span { class: "hi-badge-dot-inner" }
-                    } else if let Some(count) = display_count {
-                        "{count}"
+                    } else if display_count.is_some() {
+                        {display_count.as_ref().unwrap()}
                     }
                 }
             }

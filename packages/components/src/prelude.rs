@@ -15,10 +15,15 @@ pub use tairitsu_vdom::{
     create_effect,
     EventData,
     MouseEvent,
+    MouseData,
     KeyboardEvent,
     InputEvent,
     FocusEvent,
     ChangeEvent,
+    FormData,
+    FormEvent,
+    DragEvent,
+    DataTransfer,
     ElementHandle,
     EventHandle,
     // Use tairitsu's Callback and EventHandler (which implement Clone)
@@ -27,6 +32,9 @@ pub use tairitsu_vdom::{
     // Key type for keyboard events
     Key,
 };
+
+// Re-export Event as a type alias for Dioxus compatibility
+pub use tairitsu_vdom::Event;
 
 // Re-export tairitsu hooks
 pub use tairitsu_hooks::{
@@ -52,6 +60,8 @@ pub use tairitsu_hooks::{
     // Dioxus compatibility
     use_memo,
     use_callback,
+    // Memo type
+    Memo,
 };
 
 // Re-export tairitsu macros

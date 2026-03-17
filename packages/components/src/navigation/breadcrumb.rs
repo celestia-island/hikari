@@ -71,7 +71,7 @@ pub fn Breadcrumb(props: BreadcrumbProps) -> Element {
 
     rsx! {
         nav {
-            class: "{classes}",
+            class: classes,
             "aria-label": "Breadcrumb",
 
             { props.children }
@@ -101,12 +101,12 @@ pub fn BreadcrumbItem(props: BreadcrumbItemProps) -> Element {
 
     rsx! {
         div {
-            class: "{classes}",
+            class: classes,
 
             if let Some(href) = props.href {
                 a {
                     class: "hi-breadcrumb-link",
-                    href: "{href}",
+                    href: href,
                     onclick: move |e| {
                         if let Some(handler) = props.onclick.as_ref() {
                             handler.call(e);

@@ -134,8 +134,8 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
 
     rsx! {
         div {
-            class: "{wrapper_classes}",
-            style: "{props.style}",
+            class: wrapper_classes,
+            style: props.style,
 
             InputWrapper {
                 left: left_items,

@@ -37,7 +37,7 @@ pub struct DragLayerProps {
 #[component]
 pub fn DragLayer(props: DragLayerProps) -> Element {
     if !props.is_dragging {
-        return rsx! {};
+        return VNode::empty();
     }
 
     let (x, y) = props.position;
@@ -49,13 +49,13 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
 
     rsx! {
         div {
-            class: "{container_classes}",
+            class: container_classes,
 
             // Drop zone overlay
             if props.show_drop_zones {
-                div { class: "{DragLayerClass::DropZoneOverlay.as_class()}",
+                div { class: DragLayerClass::DropZoneOverlay.as_class(),
                     div {
-                        class: "{DragLayerClass::DropZone.as_class()}",
+                        class: DragLayerClass::DropZone.as_class(),
                         style: "top: 50%; left: 50%; transform: translate(-50%, -50%);",
                         "Drop here"
                     }
@@ -65,14 +65,14 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
             // Drag preview
             if let Some(ref item) = props.drag_item {
                 div {
-                    class: "{DragLayerClass::DragPreview.as_class()}",
+                    class: DragLayerClass::DragPreview.as_class(),
                     style: "left: {x}px; top: {y}px;",
 
-                    div { class: "{DragLayerClass::DragPreviewContent.as_class()}",
-                        span { class: "{DragLayerClass::DragPreviewLabel.as_class()}",
+                    div { class: DragLayerClass::DragPreviewContent.as_class(),
+                        span { class: DragLayerClass::DragPreviewLabel.as_class(),
                             "{item.label}"
                         }
-                        span { class: "{DragLayerClass::DragPreviewType.as_class()}",
+                        span { class: DragLayerClass::DragPreviewType.as_class(),
                             "{item.item_type}"
                         }
                     }

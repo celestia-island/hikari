@@ -80,8 +80,8 @@ pub fn Space(props: SpaceProps) -> Element {
 
     rsx! {
         div {
-            class: "{space_classes}",
-            style: "{style}",
+            class: space_classes,
+            style: style,
             if props.wrap {
                 div { { props.children } }
             } else {

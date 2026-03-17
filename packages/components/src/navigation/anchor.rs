@@ -57,17 +57,18 @@ pub fn Anchor(
     let mut active_anchor = use_signal(String::new);
 
     // Build anchor links
-    let anchor_links = items.iter().map(|item| {
+    let anchor_links: Vec<Element> = items.iter().map(|item| {
         let href = item.href.clone();
         let title = item.title.clone();
-        let is_active = active_anchor.get() == href;
+        let is_active = active_anchor.read() == href;
+        let btn_class = ClassesBuilder::new()
+            .add(AnchorClass::Link)
+            .add_if(AnchorClass::Active, move || is_active)
+            .build();
 
         rsx! {
             button {
-                class: ClassesBuilder::new()
-                    .add(AnchorClass::Link)
-                    .add_if(AnchorClass::Active, || is_active)
-                    .build(),
+                class: btn_class,
                 onclick: move |_| {
                     active_anchor.set(href.clone());
 
@@ -91,10 +92,10 @@ pub fn Anchor(
                         }
                     }
                 },
-                "{title}"
+                {title}
             }
         }
-    });
+    }).collect();
 
     // Position class
     let position_class = match position.as_str() {
@@ -111,9 +112,10 @@ pub fn Anchor(
         .add_raw(&class)
         .build();
 
+    let wrapper_class = AnchorClass::Wrapper.as_class();
     rsx! {
-        div { class: "{AnchorClass::Wrapper.as_class()}",
-            div { class: "{anchor_classes}",
+        div { class: wrapper_class,
+            div { class: anchor_classes,
                 {anchor_links}
             }
             { children }

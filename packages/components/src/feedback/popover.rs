@@ -204,7 +204,7 @@ pub fn Popover(props: PopoverProps) -> Element {
 
     rsx! {
         div {
-            class: "{container_classes}",
+            class: container_classes,
             onclick: handle_trigger_click,
             { props.trigger }
         }

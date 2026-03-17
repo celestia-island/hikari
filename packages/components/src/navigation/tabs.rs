@@ -114,7 +114,7 @@ pub fn Tabs(props: TabsProps) -> Element {
     let animated_class = if props.animated {
         "hi-tabs-animated"
     } else {
-        ""
+{ "" }
     };
 
     rsx! {
@@ -159,7 +159,7 @@ impl StyledComponent for TabsComponent {
 
 #[component]
 pub fn TabPane(props: TabPaneProps) -> Element {
-    use palette::classes::{ClassesBuilder, components::TabsClass};
+    use hikari_palette::classes::{ClassesBuilder, components::TabsClass};
 
     let active_key = use_context::<Signal<String>>();
     let is_active = active_key.get() == props.item_key;
@@ -176,30 +176,37 @@ pub fn TabPane(props: TabPaneProps) -> Element {
         .add_if(TabsClass::TabpaneInactive, || !is_active)
         .build();
 
-    rsx! {
+    let aria_hidden_val = (!is_active).to_string();
+
+    // Tab and TabPane need to be rendered together
+    let tab_el = rsx! {
         div {
-            class: "{tab_classes}",
+            class: tab_classes,
             role: "tab",
-            "data-key": "{props.item_key}",
-            "aria-selected": "{is_active}",
-            "aria-disabled": "{props.disabled}",
+            "data-key": props.item_key,
+            "aria-selected": is_active,
+            "aria-disabled": props.disabled,
 
             if let Some(icon) = props.icon {
-                span { class: "hi-tabs-tab-icon", { icon } }
+                span { class: "hi-tabs-tab-icon", icon }
             }
 
-            span { class: "hi-tabs-tab-label", "{props.tab}" }
+                               span { class: "hi-tabs-tab-label", "{props.tab}" }
         }
+    };
 
+    let tabpane_el = rsx! {
         div {
-            class: "{tabpane_classes}",
+            class: tabpane_classes,
             role: "tabpanel",
-            "data-key": "{props.item_key}",
-            "aria-hidden": "{!is_active}",
+            "data-key": props.item_key,
+            "aria-hidden": aria_hidden_val,
 
             if is_active {
-                { props.children }
+                props.children
             }
         }
-    }
+    };
+
+    VNode::Fragment(vec![tab_el, tabpane_el])
 }

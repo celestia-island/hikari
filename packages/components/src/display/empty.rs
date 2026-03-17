@@ -52,14 +52,14 @@ pub fn Empty(props: EmptyProps) -> Element {
 
     rsx! {
         div {
-            class: "{container_classes}",
-            style: "{props.style}",
+            class: container_classes,
+            style: props.style,
 
             if let Some(ref image) = props.image {
                 div {
-                    class: "{EmptyClass::Image.as_class()}",
+                    class: EmptyClass::Image.as_class(),
                     img {
-                        src: "{image}",
+                        src: image,
                         alt: "Empty state",
                         class: "{EmptyClass::Img.as_class()}"
                     }
@@ -68,19 +68,19 @@ pub fn Empty(props: EmptyProps) -> Element {
 
             if let Some(ref title) = props.title {
                 h3 {
-                    class: "{EmptyClass::Title.as_class()}",
+                    class: EmptyClass::Title.as_class(),
                     "{title}"
                 }
             }
 
             p {
-                class: "{EmptyClass::Description.as_class()}",
+                class: EmptyClass::Description.as_class(),
                 "{props.description}"
             }
 
             if let Some(action) = props.action {
                 div {
-                    class: "{EmptyClass::Action.as_class()}",
+                    class: EmptyClass::Action.as_class(),
                     { action }
                 }
             }

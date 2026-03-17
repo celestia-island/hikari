@@ -102,18 +102,18 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    if let Some(rows) = props.rows
-        && rows > 1
-    {
+    if props.rows.is_some() && props.rows.unwrap() > 1 {
+        let rows = props.rows.unwrap();
         return rsx! {
             div {
                 class: "hi-skeleton-group",
                 style: "display: flex; flex-direction: column; gap: 0.5rem;",
                 for i in 0..rows {
                     div {
-                        key: "{i}",
-                        class: "{classes}",
+                        key: i,
+                        class: classes.clone(),
                         style: if i == rows - 1 { "width: 60%;" } else { "" },
+                        ""
                     }
                 }
             }
@@ -122,8 +122,9 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
 
     rsx! {
         div {
-            class: "{classes}",
-            style: "{style}",
+            class: classes,
+            style: style,
+            {""}
         }
     }
 }
@@ -159,8 +160,8 @@ pub fn SkeletonCard(props: SkeletonCardProps) -> Element {
 
     rsx! {
         div {
-            class: "{container_classes}",
-            style: "{props.style}",
+            class: container_classes,
+            style: props.style,
 
             if props.show_header {
                 div {
@@ -197,7 +198,7 @@ pub fn SkeletonCard(props: SkeletonCardProps) -> Element {
                 style: "display: flex; flex-direction: column; gap: 0.5rem;",
                 for i in 0..props.rows {
                     Skeleton {
-                        key: "{i}",
+                        key: i,
                         variant: SkeletonVariant::Text,
                         width: if i == props.rows - 1 { Some("70%".to_string()) } else { Some("100%".to_string()) },
                     }
@@ -227,14 +228,14 @@ pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
     rsx! {
         div {
             class: "hi-skeleton-table {props.class}",
-            style: "{props.style}",
+            style: props.style,
 
             div {
                 class: "hi-skeleton-table-header",
                 style: "display: flex; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--hi-color-border);",
                 for col in 0..props.columns {
                     Skeleton {
-                        key: "header-{col}",
+                        key: ("header", col),
                         variant: SkeletonVariant::Text,
                         width: Some("80px".to_string()),
                         height: Some("16px".to_string()),
@@ -244,12 +245,12 @@ pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
 
             for row in 0..props.rows {
                 div {
-                    key: "{row}",
+                    key: row,
                     class: "hi-skeleton-table-row",
                     style: "display: flex; gap: 1rem; padding: 0.75rem 1rem;",
                     for col in 0..props.columns {
                         Skeleton {
-                            key: "cell-{col}",
+                            key: (row, col),
                             variant: SkeletonVariant::Text,
                             height: Some("14px".to_string()),
                         }

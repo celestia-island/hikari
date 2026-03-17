@@ -143,140 +143,155 @@ pub fn Table(props: TableProps) -> Element {
     let has_columns = !props.columns.is_empty();
     let colspan_count = if has_columns { props.columns.len() } else { 1 };
 
-    rsx! {
-        div { class: "{TableClass::TableWrapper.as_class()}",
-            table {
-                class: "{table_classes}",
+    // Build table header if columns are defined
+    let header_el = if has_columns {
+        let columns = props.columns.clone();
+        Some(rsx! {
+            thead {
+                tr {
+                    class: TableClass::TableHeaderRow.as_class(),
+                    {columns.iter().map(|column| {
+                        let align_class = match column.align {
+                            ColumnAlign::Left => TableClass::TextLeft,
+                            ColumnAlign::Center => TableClass::TextCenter,
+                            ColumnAlign::Right => TableClass::TextRight,
+                        };
 
-                // Render table header if columns are defined
-                if has_columns {
-                    thead {
-                        tr {
-                            class: "{TableClass::TableHeaderRow.as_class()}",
-                            {props.columns.iter().map(|column| {
-                                let align_class = match column.align {
+                        let width_style = column.width.as_ref()
+                            .map_or(String::new(), |w| format!("width: {w};"));
+
+                        let is_sorted = sort_column == column.column_key
+                            && sort_direction != SortDirection::None;
+
+                        let sort_icon = if is_sorted {
+                            sort_direction.icon()
+                        } else if column.sortable {
+                            "⇅"
+                        } else {
+{ "" }
+                        };
+
+                        let cell_classes = ClassesBuilder::new()
+                            .add(TableClass::TableHeaderCell)
+                            .add(align_class)
+                            .add_if(TableClass::TableSortable, || column.sortable)
+                            .add_if(TableClass::TableSortActive, || is_sorted)
+                            .add_raw(&column.class)
+                            .build();
+
+                        // Clone for closure
+                        let col_key = column.column_key.clone();
+                        let current_sort_col = sort_column.clone();
+                        let current_sort_dir = sort_direction;
+                        let sort_handler = on_sort_handler;
+                        let is_sortable = column.sortable;
+
+                        rsx! {
+                            th {
+                                class: cell_classes,
+                                style: width_style,
+                                onclick: move |_| {
+                                    if !is_sortable {
+                                        return;
+                                    }
+                                    let new_direction = if current_sort_col == col_key {
+                                        current_sort_dir.toggle()
+                                    } else {
+                                        SortDirection::Ascending
+                                    };
+
+                                    if let Some(handler) = sort_handler.as_ref() {
+                                        handler.call(SortConfig {
+                                            column: col_key.clone(),
+                                            direction: new_direction,
+                                        });
+                                    }
+                                },
+
+                                "{column.title.clone()}"
+
+                                if !sort_icon.is_empty() {
+                                    span { class: TableClass::TableSortIcon.as_class(),
+                                        "{sort_icon}"
+                                    }
+                                }
+                            }
+                        }
+                    })}
+                }
+            }
+        })
+    } else {
+        None
+    };
+
+    // Build table body rows
+    let body_content = if has_data {
+        let columns = props.columns.clone();
+        VNode::Fragment(
+            sorted_data.iter().enumerate().map(|(row_index, row)| {
+                let cols = columns.clone();
+                rsx! {
+                    tr {
+                        class: TableClass::TableRow.as_class(),
+                        key: "{row_index}",
+
+                        {row.iter().enumerate().map(|(col_index, cell)| {
+                            let align_class = if has_columns && col_index < cols.len() {
+                                match cols[col_index].align {
                                     ColumnAlign::Left => TableClass::TextLeft,
                                     ColumnAlign::Center => TableClass::TextCenter,
                                     ColumnAlign::Right => TableClass::TextRight,
-                                };
-
-                                let width_style = column.width.as_ref()
-                                    .map_or(String::new(), |w| format!("width: {w};"));
-
-                                let is_sorted = sort_column == column.column_key
-                                    && sort_direction != SortDirection::None;
-
-                                let sort_icon = if is_sorted {
-                                    sort_direction.icon()
-                                } else if column.sortable {
-                                    "⇅"
-                                } else {
-                                    ""
-                                };
-
-                                let cell_classes = ClassesBuilder::new()
-                                    .add(TableClass::TableHeaderCell)
-                                    .add(align_class)
-                                    .add_if(TableClass::TableSortable, || column.sortable)
-                                    .add_if(TableClass::TableSortActive, || is_sorted)
-                                    .add_raw(&column.class)
-                                    .build();
-
-                                // Clone for closure
-                                let col_key = column.column_key.clone();
-                                let current_sort_col = sort_column.clone();
-                                let current_sort_dir = sort_direction;
-                                let sort_handler = on_sort_handler;
-                                let is_sortable = column.sortable;
-
-                                rsx! {
-                                    th {
-                                        class: "{cell_classes}",
-                                        style: "{width_style}",
-                                        onclick: move |_| {
-                                            if !is_sortable {
-                                                return;
-                                            }
-                                            let new_direction = if current_sort_col == col_key {
-                                                current_sort_dir.toggle()
-                                            } else {
-                                                SortDirection::Ascending
-                                            };
-
-                                            if let Some(handler) = sort_handler.as_ref() {
-                                                handler.call(SortConfig {
-                                                    column: col_key.clone(),
-                                                    direction: new_direction,
-                                                });
-                                            }
-                                        },
-
-                                        {column.title.clone()}
-
-                                        if !sort_icon.is_empty() {
-                                            span { class: "{TableClass::TableSortIcon.as_class()}",
-                                                "{sort_icon}"
-                                            }
-                                        }
-                                    }
                                 }
-                            })}
-                        }
-                    }
-                }
+                            } else {
+                                TableClass::TextLeft
+                            };
 
-                // Render table body with sorted data
-                tbody {
-                    class: "{TableClass::TableBody.as_class()}",
+                            let cell_classes = ClassesBuilder::new()
+                                .add(TableClass::TableCell)
+                                .add(align_class)
+                                .build();
 
-                    if has_data {
-                        {sorted_data.iter().enumerate().map(|(row_index, row)| {
                             rsx! {
-                                tr {
-                                    class: "{TableClass::TableRow.as_class()}",
-                                    key: "{row_index}",
+                                td {
+                                    class: cell_classes,
+                                    key: format!("{row_index}-{col_index}"),
 
-                                    {row.iter().enumerate().map(|(col_index, cell)| {
-                                        let align_class = if has_columns && col_index < props.columns.len() {
-                                            match props.columns[col_index].align {
-                                                ColumnAlign::Left => TableClass::TextLeft,
-                                                ColumnAlign::Center => TableClass::TextCenter,
-                                                ColumnAlign::Right => TableClass::TextRight,
-                                            }
-                                        } else {
-                                            TableClass::TextLeft
-                                        };
-
-                                        let cell_classes = ClassesBuilder::new()
-                                            .add(TableClass::TableCell)
-                                            .add(align_class)
-                                            .build();
-
-                                        rsx! {
-                                            td {
-                                                class: "{cell_classes}",
-                                                key: "{row_index}-{col_index}",
-
-                                                {cell.clone()}
-                                            }
-                                        }
-                                    })}
+                                    "{cell.clone()}"
                                 }
                             }
                         })}
-                    } else {
-                        // Empty state
-                        tr {
-                            class: "{TableClass::TableRow.as_class()}",
-                            td {
-                                class: "{TableClass::TableEmpty.as_class()}",
-                                colspan: "{colspan_count}",
-                                div { class: "{TableClass::TableEmptyContent.as_class()}",
-                                    {props.empty_text.clone()}
-                                }
-                            }
-                        }
                     }
+                }
+            }).collect()
+        )
+    } else {
+        // Empty state
+        rsx! {
+            tr {
+                class: TableClass::TableRow.as_class(),
+                td {
+                    class: TableClass::TableEmpty.as_class(),
+                    colspan: colspan_count,
+                    div { class: TableClass::TableEmptyContent.as_class(),
+                        "{props.empty_text.clone()}"
+                    }
+                }
+            }
+        }
+    };
+
+    rsx! {
+        div { class: TableClass::TableWrapper.as_class(),
+            table {
+                class: table_classes,
+
+                {header_el.unwrap_or_else(VNode::empty)}
+
+                // Render table body with sorted data
+                tbody {
+                    class: TableClass::TableBody.as_class(),
+                    {body_content}
                 }
             }
         }

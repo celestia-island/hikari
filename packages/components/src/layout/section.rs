@@ -53,21 +53,21 @@ pub fn Section(
 
     rsx! {
         section {
-            class: "{section_classes_str}",
+            class: section_classes_str,
 
             // Optional header
             if title.is_some() || description.is_some() {
                 div {
-                    class: "{SectionClass::SectionHeader.as_class()}",
+                    class: SectionClass::SectionHeader.as_class(),
                     if let Some(t) = title {
                         h2 {
-                            class: "{SectionClass::SectionTitle.as_class()}",
+                            class: SectionClass::SectionTitle.as_class(),
                             "{t}"
                         }
                     }
                     if let Some(d) = description {
                         p {
-                            class: "{SectionClass::SectionDescription.as_class()}",
+                            class: SectionClass::SectionDescription.as_class(),
                             "{d}"
                         }
                     }
@@ -76,7 +76,7 @@ pub fn Section(
 
             // Section content
             div {
-                class: "{SectionClass::SectionBody.as_class()}",
+                class: SectionClass::SectionBody.as_class(),
                 { children }
             }
         }
@@ -119,7 +119,7 @@ pub fn Spacer(
 
     rsx! {
         div {
-            class: "{classes_str}",
+            class: classes_str,
             style: style,
         }
     }

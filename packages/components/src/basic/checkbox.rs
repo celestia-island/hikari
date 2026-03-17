@@ -88,7 +88,7 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
                 checked: props.checked,
                 disabled: props.disabled,
             }
-            div { class: "{checkbox_classes}", onclick: handle_click,
+            div { class: checkbox_classes, onclick: handle_click,
                 svg {
                     class: "hi-checkbox-icon",
                     // No inline opacity/transform - let CSS handle it

@@ -154,9 +154,9 @@ pub fn Transfer(props: TransferProps) -> Element {
                 on_select: handle_source_select,
             }
 
-            div { class: "{TransferClass::Operations.as_class()}",
+            div { class: TransferClass::Operations.as_class(),
                 button {
-                    class: "{TransferClass::Operation.as_class()}",
+                    class: TransferClass::Operation.as_class(),
                     disabled: props.source_selected_keys.is_empty() || props.disabled,
                     onclick: handle_to_target,
 
@@ -168,7 +168,7 @@ pub fn Transfer(props: TransferProps) -> Element {
 
                 if !props.one_way {
                     button {
-                        class: "{TransferClass::Operation.as_class()}",
+                        class: TransferClass::Operation.as_class(),
                         disabled: props.target_selected_keys.is_empty() || props.disabled,
                         onclick: handle_to_source,
 
@@ -245,78 +245,80 @@ fn TransferPanel(
     let items = filtered_items();
 
     rsx! {
-        div { class: "{TransferClass::Panel.as_class()}",
-            div { class: "{TransferClass::PanelHeader.as_class()}",
+        div { class: TransferClass::Panel.as_class(),
+            div { class: TransferClass::PanelHeader.as_class(),
                 input {
-                    class: "{TransferClass::PanelCheckbox.as_class()}",
+                    class: TransferClass::PanelCheckbox.as_class(),
                     r#type: "checkbox",
                     checked: is_all_selected,
                     onchange: handle_toggle_all,
                 }
-                span { class: "{TransferClass::PanelTitle.as_class()}", "{title}" }
-                span { class: "{TransferClass::PanelCount.as_class()}",
-                    "{items.len()}"
+                span { class: TransferClass::PanelTitle.as_class(), {title.clone()} }
+                span { class: TransferClass::PanelCount.as_class(),
+                    {items.len().to_string()}
                 }
             }
 
             if show_search {
-                div { class: "{TransferClass::PanelSearch.as_class()}",
+                div { class: TransferClass::PanelSearch.as_class(),
                     input {
-                        class: "{TransferClass::PanelInput.as_class()}",
+                        class: TransferClass::PanelInput.as_class(),
                         r#type: "text",
                         placeholder: "Search...",
-                        value: "{search_text.get()}",
+                        value: search_text.get(),
                         oninput: handle_search,
                     }
                 }
             }
 
-             ul { class: "{TransferClass::PanelList.as_class()}",
-                {items.iter().map(|item| {
-                    // Capture values for the closure (each item gets its own clone)
-                    let item_key = item.item_key.clone();
-                    let label = item.label.clone();
-                    let item_disabled = item.disabled;
-                    let is_selected = selected_keys.contains(&item.item_key);
-                    let selected_keys_clone = selected_keys.clone();
-                    let on_select_clone = on_select;
+             ul { class: TransferClass::PanelList.as_class(),
+                for item in items.iter() {
+                    {
+                        // Capture values for the closure (each item gets its own clone)
+                        let item_key = item.item_key.clone();
+                        let label = item.label.clone();
+                        let item_disabled = item.disabled;
+                        let is_selected = selected_keys.contains(&item.item_key);
+                        let selected_keys_clone = selected_keys.clone();
+                        let on_select_clone = on_select;
 
-                    rsx! {
-                        li {
-                            class: ClassesBuilder::new()
-                                .add(TransferClass::PanelItem)
-                                .add_if(TransferClass::PanelItemSelected, || is_selected)
-                                .add_if(TransferClass::PanelItemDisabled, || item_disabled)
-                                .build(),
+                        rsx! {
+                            li {
+                                class: ClassesBuilder::new()
+                                    .add(TransferClass::PanelItem)
+                                    .add_if(TransferClass::PanelItemSelected, || is_selected)
+                                    .add_if(TransferClass::PanelItemDisabled, || item_disabled)
+                                    .build(),
 
-                            onclick: move |_| {
-                                if !item_disabled {
-                                    let mut new_selection = selected_keys_clone.clone();
-                                    if let Some(pos) = new_selection.iter().position(|k| k == &item_key) {
-                                        new_selection.remove(pos);
-                                    } else {
-                                        new_selection.push(item_key.clone());
+                                onclick: move |_| {
+                                    if !item_disabled {
+                                        let mut new_selection = selected_keys_clone.clone();
+                                        if let Some(pos) = new_selection.iter().position(|k| k == &item_key) {
+                                            new_selection.remove(pos);
+                                        } else {
+                                            new_selection.push(item_key.clone());
+                                        }
+                                        on_select_clone.call(new_selection);
                                     }
-                                    on_select_clone.call(new_selection);
+                                },
+
+                                input {
+                                    class: TransferClass::ItemCheckbox.as_class(),
+                                    r#type: "checkbox",
+                                    checked: is_selected,
+                                    disabled: item_disabled,
                                 }
-                            },
 
-                            input {
-                                class: "{TransferClass::ItemCheckbox.as_class()}",
-                                r#type: "checkbox",
-                                checked: is_selected,
-                                disabled: item_disabled,
-                            }
-
-                            span { class: "{TransferClass::ItemLabel.as_class()}",
-                                "{label}"
+                                span { class: TransferClass::ItemLabel.as_class(),
+                                    {label}
+                                }
                             }
                         }
                     }
-                })}
+                }
 
                 if items.is_empty() {
-                    li { class: "{TransferClass::PanelEmpty.as_class()}",
+                    li { class: TransferClass::PanelEmpty.as_class(),
                         "No items"
                     }
                 }

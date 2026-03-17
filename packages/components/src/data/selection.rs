@@ -113,15 +113,15 @@ pub fn Selection(props: SelectionProps) -> Element {
         .build();
 
     rsx! {
-        div { class: "{container_classes}",
+        div { class: container_classes,
 
-            div { class: "{column_classes}",
+            div { class: column_classes,
 
                 if props.selection_type == SelectionType::Checkbox {
-                    div { class: "{SelectionClassNew::SelectionHeader.as_class()}",
-                        label { class: "{SelectionClassNew::SelectionAll.as_class()}",
+                    div { class: SelectionClassNew::SelectionHeader.as_class(),
+                        label { class: SelectionClassNew::SelectionAll.as_class(),
                             input {
-                                class: "{SelectionClassNew::SelectionCheckbox.as_class()}",
+                                class: SelectionClassNew::SelectionCheckbox.as_class(),
                                 r#type: "checkbox",
                                 checked: is_all_selected.get(),
                                 onchange: handle_select_all,
@@ -135,10 +135,10 @@ pub fn Selection(props: SelectionProps) -> Element {
                     let checked = is_row_selected(key);
 
                     rsx! {
-                        div { class: "{SelectionClassNew::SelectionRow.as_class()}",
-                            label { class: "{SelectionClassNew::SelectionItem.as_class()}",
+                        div { class: SelectionClassNew::SelectionRow.as_class(),
+                            label { class: SelectionClassNew::SelectionItem.as_class(),
                                 input {
-                                    class: "{SelectionClassNew::SelectionCheckbox.as_class()}",
+                                    class: SelectionClassNew::SelectionCheckbox.as_class(),
                                     r#type: get_input_type(),
                                     checked: checked,
                                     name: if props.selection_type == SelectionType::Radio {
@@ -200,10 +200,10 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
         .build();
 
     rsx! {
-        div { class: "{container_classes}",
-            label { class: "{SelectionClassNew::RowSelectionLabel.as_class()}",
+        div { class: container_classes,
+            label { class: SelectionClassNew::RowSelectionLabel.as_class(),
                 input {
-                    class: "{SelectionClassNew::RowSelectionInput.as_class()}",
+                    class: SelectionClassNew::RowSelectionInput.as_class(),
                     r#type: "checkbox",
                     checked: is_selected,
                     name: if props.selection_type == SelectionType::Radio {
@@ -215,7 +215,7 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
                 }
 
                 span {
-                    class: "{custom_classes}",
+                    class: custom_classes,
 
                     if props.selection_type == SelectionType::Checkbox && is_selected {
                         svg {
@@ -233,7 +233,7 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
                     }
 
                     if props.selection_type == SelectionType::Radio && is_selected {
-                        span { class: "{SelectionClassNew::RowSelectionRadioDot.as_class()}" }
+                        span { class: SelectionClassNew::RowSelectionRadioDot.as_class() }
                     }
                 }
             }

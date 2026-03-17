@@ -77,10 +77,10 @@ pub fn Header(
 
     rsx! {
         header {
-            class: "{header_classes}",
+            class: header_classes,
 
             div {
-                class: "{left_class}",
+                class: left_class,
 
                 if show_menu_toggle {
                     button {
@@ -102,13 +102,13 @@ pub fn Header(
                 }
 
                 div {
-                    class: "{content_classes}",
+                    class: content_classes,
                     { children }
                 }
             }
 
             div {
-                class: "{right_class}",
+                class: right_class,
                 { right_content }
             }
         }

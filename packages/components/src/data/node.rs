@@ -58,12 +58,15 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
         .add_raw(&props.class)
         .build();
 
+    let node_key = props.node_key.clone();
+    let level = props.level;
+
     rsx! {
         li {
-            class: "{node_classes}",
+            class: node_classes,
             role: "treeitem",
-            "data-node-key": "{props.node_key}",
-            "data-level": "{props.level}",
+            "data-node-key": node_key,
+            "data-level": level,
             aria_expanded: if has_children { is_expanded.get().to_string() } else { "false".to_string() },
             aria_selected: props.selected.to_string(),
             aria_disabled: props.disabled.to_string(),

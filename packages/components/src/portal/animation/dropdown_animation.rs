@@ -11,7 +11,7 @@
 
 use std::{cell::RefCell, rc::Rc};
 
-use animation::style::{CssProperty, StyleBuilder};
+use crate::style_builder::{CssProperty, StyleBuilder};
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

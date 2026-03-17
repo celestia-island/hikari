@@ -1,11 +1,12 @@
 // hikari-components/src/basic/avatar.rs
 //! Avatar component for user profile images
 
-use animation::style::{CssProperty, StyleStringBuilder};
+use crate::style_builder::{CssProperty, StyleStringBuilder};
 use crate::prelude::*;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum AvatarSize {
+    #[default]
     Xs,
     Sm,
     Md,
@@ -119,48 +120,63 @@ pub fn Avatar(
             .unwrap_or_else(|| "?".to_string())
     });
 
-    rsx! {
-        div {
-            class: "{base_class}",
-            style: "{container_style}",
+    // Pre-compute conditions outside of rsx!
+    let has_src = src.is_some();
+    let is_icon_mode = fallback_mode == AvatarFallbackMode::Icon;
+    let is_initial_mode = fallback_mode == AvatarFallbackMode::Initial;
+    let src_val = src.clone();
 
-            if let Some(img_src) = src {
-                img {
-                    class: "hi-avatar-img",
-                    src: "{img_src}",
-                    alt: "{alt}",
-                    style: "{img_style}",
-                }
-            } else {
-                match fallback_mode {
-                    AvatarFallbackMode::Icon => rsx! {
-                        svg {
-                            class: "hi-avatar-icon",
-                            width: "{icon_size}",
-                            height: "{icon_size}",
-                            view_box: "0 0 24 24",
-                            fill: "currentColor",
-                            path {
-                                d: "M12 4a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4z"
-                            }
-                        }
-                    },
-                    AvatarFallbackMode::Initial => rsx! {
-                        span {
-                            class: "hi-avatar-fallback",
-                            style: "font-size: {font_size};",
-                            "{fallback_text}"
-                        }
-                    },
-                    AvatarFallbackMode::None => rsx! {
-                        span {
-                            class: "hi-avatar-fallback",
-                            style: "font-size: {font_size};",
-                            "{fallback_text}"
-                        }
-                    },
+    // Build fallback content outside rsx!
+    let fallback_content = if is_icon_mode {
+        rsx! {
+            svg {
+                class: "hi-avatar-icon",
+                width: icon_size,
+                height: icon_size,
+                view_box: "0 0 24 24",
+                fill: "currentColor",
+                path {
+                    d: "M12 4a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4z"
                 }
             }
+        }
+    } else if is_initial_mode {
+        rsx! {
+            span {
+                class: "hi-avatar-fallback",
+                style: "font-size: {font_size};",
+                "{fallback_text}"
+            }
+        }
+    } else {
+        rsx! {
+            span {
+                class: "hi-avatar-fallback",
+                style: "font-size: {font_size};",
+                "{fallback_text}"
+            }
+        }
+    };
+
+    // Build content based on condition
+    let inner_content = if has_src {
+        rsx! {
+            img {
+                class: "hi-avatar-img",
+                src: src_val.unwrap_or_default(),
+                alt: alt.clone(),
+                style: img_style,
+            }
+        }
+    } else {
+        fallback_content
+    };
+
+    rsx! {
+        div {
+            class: base_class,
+            style: container_style,
+            {inner_content}
         }
     }
 }

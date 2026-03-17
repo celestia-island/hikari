@@ -65,7 +65,7 @@ pub fn PaginationButton(props: PaginationButtonProps) -> Element {
     let button_element = match props.content {
         PaginationButtonContent::Arrow { direction, size } => rsx! {
             div {
-                class: "{button_classes}",
+                class: button_classes,
                 style: "display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; cursor: pointer; user-select: none;",
                 onclick: props.onclick,
 
@@ -77,7 +77,7 @@ pub fn PaginationButton(props: PaginationButtonProps) -> Element {
         },
         PaginationButtonContent::Text { text, font_size: _ } => rsx! {
             div {
-                class: "{button_classes}",
+                class: button_classes,
                 style: "display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; cursor: pointer; user-select: none;",
                 onclick: props.onclick,
                 "{text}"
@@ -85,7 +85,7 @@ pub fn PaginationButton(props: PaginationButtonProps) -> Element {
         },
         PaginationButtonContent::Ellipsis => rsx! {
             div {
-                class: "{button_classes}",
+                class: button_classes,
                 style: "display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; cursor: pointer; user-select: none; font-size: 14px; font-weight: 600; color: var(--hi-color-text-secondary); letter-spacing: 0.1em;",
                 onclick: props.onclick,
                 "..."

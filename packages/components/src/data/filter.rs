@@ -89,16 +89,16 @@ pub fn Filter(props: FilterProps) -> Element {
         .build();
 
     rsx! {
-        div { class: "{container_classes}",
+        div { class: container_classes,
 
-            div { class: "{FilterClass::FilterContainer.as_class()}",
+            div { class: FilterClass::FilterContainer.as_class(),
                 button {
-                    class: "{trigger_classes}",
+                    class: trigger_classes,
                     onclick: handle_toggle,
 
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: "{FilterClass::FilterIcon.as_class()}",
+                        class: FilterClass::FilterIcon.as_class(),
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,
@@ -111,14 +111,14 @@ pub fn Filter(props: FilterProps) -> Element {
                     }
 
                     if active_count > 0 {
-                        span { class: "{FilterClass::FilterBadge.as_class()}",
+                        span { class: FilterClass::FilterBadge.as_class(),
                             "{active_count}"
                         }
                     }
 
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: "{FilterClass::FilterIcon.as_class()}",
+                        class: FilterClass::FilterIcon.as_class(),
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,
@@ -131,14 +131,14 @@ pub fn Filter(props: FilterProps) -> Element {
                     }
 
                     if active_count > 0 {
-                        span { class: "{FilterClass::FilterBadge.as_class()}",
+                        span { class: FilterClass::FilterBadge.as_class(),
                             "{active_count}"
                         }
                     }
 
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: "{FilterClass::FilterDropdownIcon.as_class()}",
+                        class: FilterClass::FilterDropdownIcon.as_class(),
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,
@@ -149,24 +149,24 @@ pub fn Filter(props: FilterProps) -> Element {
             }
 
             if is_open.get() {
-                div { class: "{FilterClass::FilterDropdown.as_class()}",
+                div { class: FilterClass::FilterDropdown.as_class(),
                     onclick: close_dropdown,
 
-                    div { class: "{FilterClass::FilterHeader.as_class()}",
-                        span { class: "{FilterClass::FilterTitle.as_class()}",
+                    div { class: FilterClass::FilterHeader.as_class(),
+                        span { class: FilterClass::FilterTitle.as_class(),
                             "{props.column}"
                         }
 
                         if active_count > 0 {
                             button {
-                                class: "{FilterClass::FilterClearBtn.as_class()}",
+                                class: FilterClass::FilterClearBtn.as_class(),
                                 onclick: handle_clear,
                                 "Clear"
                             }
                         }
                     }
 
-                    div { class: "{FilterClass::FilterOptions.as_class()}",
+                    div { class: FilterClass::FilterOptions.as_class(),
                         {props.filters.iter().map(|option| {
                             let opt_value = option.value.clone();
                             let label_text = option.label.clone();
@@ -174,16 +174,16 @@ pub fn Filter(props: FilterProps) -> Element {
 
                             rsx! {
                                 label {
-                                    class: "{FilterClass::FilterOption.as_class()}",
+                                    class: FilterClass::FilterOption.as_class(),
                                     onclick: move |_| handle_select(opt_value.clone()),
 
                                     input {
-                                        class: "{FilterClass::FilterCheckbox.as_class()}",
+                                        class: FilterClass::FilterCheckbox.as_class(),
                                         r#type: "checkbox",
                                         checked: checked,
                                     }
 
-                                    span { class: "{FilterClass::FilterLabel.as_class()}",
+                                    span { class: FilterClass::FilterLabel.as_class(),
                                         "{label_text}"
                                     }
                                 }
@@ -191,8 +191,8 @@ pub fn Filter(props: FilterProps) -> Element {
                         })}
                     }
 
-                    div { class: "{FilterClass::FilterFooter.as_class()}",
-                        span { class: "{FilterClass::FilterHint.as_class()}",
+                    div { class: FilterClass::FilterFooter.as_class(),
+                        span { class: FilterClass::FilterHint.as_class(),
                             if active_count > 0 {
                                 "{active_count} selected"
                             } else {

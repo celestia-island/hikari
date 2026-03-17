@@ -60,19 +60,19 @@ pub fn DatePicker(props: DatePickerProps) -> Element {
     let disabled_class = if props.disabled {
         "hi-date-picker-disabled"
     } else {
-        ""
+{ "" }
     };
 
     let display_value = props.value.clone().unwrap_or_default();
 
     rsx! {
         div {
-            class: "{wrapper_classes}",
-            style: "{props.style}",
+            class: wrapper_classes,
+            style: props.style,
 
             input {
-                class: "{input_classes}",
-                class: "{disabled_class}",
+                class: input_classes,
+                class: disabled_class,
                 r#type: "date",
                 value: display_value,
                 min: props.min,

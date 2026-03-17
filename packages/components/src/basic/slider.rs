@@ -63,7 +63,7 @@ pub fn Slider(props: SliderProps) -> Element {
     };
 
     rsx! {
-        div { class: "{slider_classes}",
+        div { class: slider_classes,
             div { class: "hi-slider-rail" }
             div {
                 class: "hi-slider-track",

@@ -116,7 +116,7 @@ pub fn Anchor(
     rsx! {
         div { class: wrapper_class,
             div { class: anchor_classes,
-                {anchor_links}
+                ..anchor_links
             }
             { children }
         }

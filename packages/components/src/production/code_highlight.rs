@@ -200,7 +200,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                 if props.line_numbers {
                     div {
                         class: {line_classes},
-                        {line_number_nodes}
+                        ..line_number_nodes
                     }
                 }
 

@@ -136,7 +136,7 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
                     class: "hi-tree-node-children",
                     role: "group",
 
-                    {child_nodes}
+                    ..child_nodes
                 }
             }
         }

@@ -1,7 +1,7 @@
 // packages/components/src/display/empty.rs
 // Empty state component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{
     AlignItems, ClassesBuilder, Display, EmptyClass, FlexDirection, Gap, JustifyContent, Padding,
     TextAlign, UtilityClass,
@@ -20,7 +20,7 @@ pub struct EmptyComponent;
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::Empty;
 ///
 /// fn app() -> Element {

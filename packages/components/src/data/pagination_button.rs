@@ -1,7 +1,7 @@
 // hi-components/src/data/pagination_button.rs
 // Unified pagination button component with consistent structure
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, PaginationClass};
 
 use crate::{

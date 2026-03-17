@@ -2,7 +2,7 @@
 // Menu component with Arknights + FUI styling
 
 use animation::style::{CssProperty, StyleStringBuilder};
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, MenuClass};
 
 use crate::{
@@ -217,7 +217,7 @@ impl Default for MenuProps {
 ///
 /// ## Basic Vertical Menu
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Menu, MenuItem};
 ///
 /// fn app() -> Element {
@@ -234,7 +234,7 @@ impl Default for MenuProps {
 ///
 /// ## Menu with Submenus
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Menu, MenuItem, SubMenu};
 ///
 /// fn app() -> Element {

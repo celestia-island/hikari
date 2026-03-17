@@ -5,39 +5,15 @@ edition = "2021"
 rust-version = "1.75"
 
 [dependencies]
-# Core dependencies (no wasm-bindgen required)
+# Core dependencies
 serde = { version = "^1", features = ["derive"] }
 serde_json = "^1"
 slotmap = "1.0"
 once_cell = "1.17"
 
-# Optional WASM/browser dependencies (only for dioxus feature)
-wasm-bindgen = { version = "0.2", optional = true }
-web-sys = { version = "0.3", optional = true, features = [
-    "Window",
-    "Performance",
-    "Element",
-    "HtmlElement",
-    "DomTokenList",
-    "DomRect",
-    "Document",
-    "CssStyleDeclaration",
-    "MutationObserver",
-    "MutationObserverInit",
-    "MutationRecord",
-    "MediaQueryList",
-] }
-js-sys = { version = "0.3", optional = true }
-serde-wasm-bindgen = { version = "0.6", optional = true }
-
-# Dioxus integration (optional feature)
-dioxus = { version = "0.7", features = ["web"], optional = true }
-
+# Tairitsu framework integration
+tairitsu-vdom = { path = "../../../tairitsu/packages/vdom" }
+tairitsu-hooks = { path = "../../../tairitsu/packages/hooks" }
 
 [features]
 default = []
-# Enable Dioxus framework integration (requires wasm-bindgen)
-dioxus = ["dep:dioxus", "wasm-bindgen", "web-sys", "js-sys", "serde-wasm-bindgen"]
-# Minimal WASM support without Dioxus
-wasm = ["wasm-bindgen", "web-sys", "js-sys", "serde-wasm-bindgen"]
-fui = []

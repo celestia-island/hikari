@@ -5,7 +5,7 @@
 //!
 //! ```rust
 //! use hikari_components::layout::{Grid, Col};
-//! use dioxus::prelude::*;
+//! use crate::prelude::*;;
 //!
 //! rsx! {
 //!     Grid {
@@ -17,7 +17,7 @@
 //! }
 //! ```
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::{ClassesBuilder, classes::components::*};
 
 use crate::theme::use_layout_direction;

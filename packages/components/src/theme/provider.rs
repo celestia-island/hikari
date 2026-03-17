@@ -67,7 +67,7 @@
 
 #[cfg(target_arch = "wasm32")]
 use animation::global_manager::init_global_animation_manager;
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::*;
 
 use crate::{
@@ -341,7 +341,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 /// # Example
 ///
 /// ```rust,no_run
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::use_theme;
 ///
 /// fn MyComponent() -> Element {

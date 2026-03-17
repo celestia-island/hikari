@@ -1,7 +1,7 @@
 // hi-components/src/data/tree.rs
 // Tree component for hierarchical data display
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 
 use crate::{
     data::node::{TreeNode, TreeNodeData, TreeNodeProps},

@@ -5,7 +5,7 @@
 // - Layer2: Component variables (button-vars.scss)
 // - Custom: Runtime overrides via icon_color, text_color, animation_id
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ButtonClass, ClassesBuilder, JustifyContent};
 
 use crate::{
@@ -217,7 +217,7 @@ impl Default for ButtonProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::Button;
 ///
 /// fn app() -> Element {

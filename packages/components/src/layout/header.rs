@@ -7,7 +7,7 @@
 //!
 //! ```rust
 //! use hikari_components::layout::Header;
-//! use dioxus::prelude::*;
+//! use crate::prelude::*;;
 //!
 //! rsx! {
 //!     Header {
@@ -16,7 +16,7 @@
 //! }
 //! ```
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use dioxus_core::VNode;
 use palette::{ClassesBuilder, classes::*};
 

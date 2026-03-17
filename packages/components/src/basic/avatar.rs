@@ -2,7 +2,7 @@
 //! Avatar component for user profile images
 
 use animation::style::{CssProperty, StyleStringBuilder};
-use dioxus::prelude::*;
+use crate::prelude::*;;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum AvatarSize {

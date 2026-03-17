@@ -1,7 +1,7 @@
 // hi-components/src/feedback/tooltip.rs
 // Tooltip component with Arknights + FUI styling - Portal-based rendering with animation
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, TooltipClass, UtilityClass};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;

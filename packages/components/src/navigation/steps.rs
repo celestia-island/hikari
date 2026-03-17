@@ -1,7 +1,7 @@
 // packages/components/src/navigation/steps.rs
 // Steps component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, StepsClass, UtilityClass};
 
 use crate::styled::StyledComponent;
@@ -82,7 +82,7 @@ pub struct StepsProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::Steps;
 ///
 /// fn app() -> Element {

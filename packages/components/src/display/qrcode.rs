@@ -1,7 +1,7 @@
 // packages/components/src/display/qrcode.rs
 // QRCode component using Canvas for rendering
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{
     AlignItems, ClassesBuilder, Display, FlexDirection, Padding, QRCodeClass, UtilityClass,
 };

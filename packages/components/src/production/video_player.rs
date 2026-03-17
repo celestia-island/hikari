@@ -6,7 +6,7 @@
 // For custom video controls, consider extending this component or
 // using libraries like Video.js or Plyr.
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, VideoPlayerClass};
 
 use crate::styled::StyledComponent;

@@ -5,7 +5,7 @@
 // - Layer2: Component variables (input-vars.scss)
 // - Custom: Runtime overrides via text_color, border_color, animation_id
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, InputClass, UtilityClass};
 
 use crate::{
@@ -164,7 +164,7 @@ impl Default for InputProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::Input;
 ///
 /// fn app() -> Element {

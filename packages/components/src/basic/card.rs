@@ -1,7 +1,7 @@
 // hi-components/src/basic/card.rs
 // Card component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{CardClass, ClassesBuilder, UtilityClass};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
@@ -60,7 +60,7 @@ impl Default for CardProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::Card;
 ///
 /// fn app() -> Element {
@@ -236,7 +236,7 @@ pub struct CardHeaderProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::CardHeader;
 ///
 /// fn app() -> Element {
@@ -300,7 +300,7 @@ pub struct CardContentProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::CardContent;
 ///
 /// fn app() -> Element {
@@ -345,7 +345,7 @@ pub struct CardActionsProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::CardActions;
 ///
 /// fn app() -> Element {
@@ -393,7 +393,7 @@ pub struct CardMediaProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::CardMedia;
 ///
 /// fn app() -> Element {

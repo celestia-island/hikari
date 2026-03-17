@@ -1,7 +1,7 @@
 // hi-components/src/data/node_arrow.rs
 // TreeNodeArrow component - expand/collapse arrow for tree nodes
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 
 use crate::basic::{Arrow, ArrowDirection};
 

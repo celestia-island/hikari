@@ -1,7 +1,7 @@
 // packages/components/src/production/audio_player.rs
 // Audio player component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{AudioPlayerClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;

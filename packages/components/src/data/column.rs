@@ -1,7 +1,7 @@
 // hi-components/src/data/column.rs
 // Column component for table configuration
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 
 /// Column alignment options
 #[derive(Clone, Copy, PartialEq, Debug, Default)]

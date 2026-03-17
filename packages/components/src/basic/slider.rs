@@ -1,7 +1,7 @@
 // hi-components/src/basic/slider.rs
 // Slider component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, SliderClass};
 
 use crate::styled::StyledComponent;

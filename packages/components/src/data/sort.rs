@@ -1,7 +1,7 @@
 // hi-components/src/data/sort.rs
 // Sort component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, SortClass, UtilityClass};
 
 pub use super::column::ColumnDef;

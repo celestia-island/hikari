@@ -1,7 +1,7 @@
 // packages/components/src/basic/canvas.rs
 // Canvas component with requestAnimationFrame integration
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 
 use crate::styled::StyledComponent;
 

@@ -7,7 +7,7 @@
 // or highlight.js. For built-in Rust-based highlighting, consider
 // integrating with syntect.
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use gloo::timers::callback::Timeout;
 use palette::classes::{ClassesBuilder, CodeHighlightClass};
 use wasm_bindgen::prelude::*;

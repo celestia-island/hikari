@@ -1,7 +1,7 @@
 // hi-components/src/basic/select.rs
 // Custom Select component with Portal-based dropdown and FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
@@ -65,7 +65,7 @@ pub struct SelectProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Select, SelectOption, SelectSize};
 ///
 /// fn app() -> Element {

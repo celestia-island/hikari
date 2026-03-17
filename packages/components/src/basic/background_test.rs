@@ -9,7 +9,7 @@ use super::*;
     #[cfg(target_arch = "wasm32")]
     #[test]
     fn test_background_animation_setup() {
-        use dioxus::prelude::*;
+        use crate::prelude::*;;
         use hikari_theme::ThemeProvider;
         
         // Test that Background component can be created without panicking

@@ -6,7 +6,7 @@
 // contenteditable, execCommand support, etc., consider integrating
 // with libraries like ProseMirror, Tiptap, or Quill.
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, RichTextEditorClass};
 
 use crate::styled::StyledComponent;

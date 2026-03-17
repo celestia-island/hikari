@@ -1,7 +1,7 @@
 // hi-components/src/feedback/toast.rs
 // Toast component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use icons::{Icon, MdiIcon};
 use palette::classes::{ClassesBuilder, ToastClass, UtilityClass};
 

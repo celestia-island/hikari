@@ -4,10 +4,10 @@
 
 use std::collections::HashMap;
 
-use dioxus::prelude::*;
+use crate::prelude::*;
 
 /// Style configuration
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Default)]
 pub struct StyleConfig {
     /// Custom CSS class prefix (default: "hi")
     pub class_prefix: String,
@@ -19,44 +19,27 @@ pub struct StyleConfig {
     pub component_overrides: HashMap<String, String>,
 }
 
-impl Default for StyleConfig {
-    fn default() -> Self {
-        Self {
-            class_prefix: "hi".to_string(),
-            extra_classes: Vec::new(),
-            component_overrides: HashMap::new(),
-        }
-    }
-}
-
 /// Style context for accessing configuration
 #[derive(Clone)]
 pub struct StyleContext {
     /// Current configuration
-    pub config: Signal<StyleConfig>,
-
-    /// Callback to update configuration
-    pub set_config: Callback<StyleConfig>,
+    pub config: StyleConfig,
 }
 
 impl StyleContext {
     /// Get the class prefix
     pub fn class_prefix(&self) -> String {
-        self.config.read().class_prefix.clone()
+        self.config.class_prefix.clone()
     }
 
     /// Get extra classes as a space-separated string
     pub fn extra_classes_string(&self) -> String {
-        self.config.read().extra_classes.join(" ")
+        self.config.extra_classes.join(" ")
     }
 
     /// Get override class for a component
     pub fn get_override_class(&self, component_name: &str) -> Option<String> {
-        self.config
-            .read()
-            .component_overrides
-            .get(component_name)
-            .cloned()
+        self.config.component_overrides.get(component_name).cloned()
     }
 
     /// Get the complete class name for a component (base class + override class)
@@ -72,21 +55,27 @@ impl StyleContext {
 }
 
 /// StyleProvider Props
-#[derive(Clone, Props, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct StyleProviderProps {
     /// Custom CSS class prefix (default: "hi")
-    #[props(default)]
-    pub class_prefix: Option<String>,
-
+    pub class_prefix: String,
     /// Extra global CSS classes to apply
-    #[props(default)]
-    pub extra_classes: Option<Vec<String>>,
-
+    pub extra_classes: Vec<String>,
     /// Component style overrides (component name -> CSS class)
-    #[props(default)]
-    pub component_overrides: Option<HashMap<String, String>>,
+    pub component_overrides: HashMap<String, String>,
+    /// Child elements
+    pub children: Vec<VNode>,
+}
 
-    children: Element,
+impl Default for StyleProviderProps {
+    fn default() -> Self {
+        Self {
+            class_prefix: "hi".to_string(),
+            extra_classes: Vec::new(),
+            component_overrides: HashMap::new(),
+            children: Vec::new(),
+        }
+    }
 }
 
 /// StyleProvider component
@@ -105,48 +94,37 @@ pub struct StyleProviderProps {
 ///
 /// rsx! {
 ///     StyleProvider {
-///         class_prefix: Some("my-app".to_string()),
-///         extra_classes: Some(vec!["dark-mode".to_string()]),
-///         component_overrides: Some([
+///         class_prefix: "my-app".to_string(),
+///         extra_classes: vec!["dark-mode".to_string()],
+///         component_overrides: [
 ///             ("button".to_string(), "my-button".to_string()),
-///         ].into_iter().collect()),
+///         ].into_iter().collect(),
 ///
-///         App { }
+///         // App { }
 ///     }
 /// }
 /// ```
-#[component]
-pub fn StyleProvider(props: StyleProviderProps) -> Element {
-    let initial_config = StyleConfig {
-        class_prefix: props
-            .class_prefix
-            .clone()
-            .unwrap_or_else(|| "hi".to_string()),
-        extra_classes: props.extra_classes.clone().unwrap_or_default(),
-        component_overrides: props.component_overrides.clone().unwrap_or_default(),
+pub fn StyleProvider(props: StyleProviderProps) -> VNode {
+    // Create style context (simplified - full implementation would use provide_context)
+    let context = StyleContext {
+        config: StyleConfig {
+            class_prefix: props.class_prefix,
+            extra_classes: props.extra_classes,
+            component_overrides: props.component_overrides,
+        },
     };
 
-    let config = use_signal(|| initial_config);
+    // TODO: Implement proper context provider with tairitsu-hooks
+    // use_context_provider(move || context);
 
-    let mut config_for_callback = config;
-    let set_config = Callback::new(move |new_config: StyleConfig| {
-        config_for_callback.set(new_config);
-    });
-
-    use_context_provider(move || StyleContext { config, set_config });
-
-    let css_vars = use_memo(move || {
-        let cfg = config.read();
-        format!("--hi-style-class-prefix: {};", cfg.class_prefix)
-    });
-
-    let extra_classes = use_memo(move || config.read().extra_classes.join(" "));
+    let css_vars = format!("--hi-style-class-prefix: {};", context.config.class_prefix);
+    let extra_classes_str = context.config.extra_classes.join(" ");
 
     rsx! {
         div {
-            class: "hi-style-provider {extra_classes}",
-            style: "{css_vars}",
-            {props.children}
+            class: "hi-style-provider {extra_classes_str}",
+            style: css_vars,
+            ..props.children
         }
     }
 }
@@ -157,14 +135,18 @@ pub fn StyleProvider(props: StyleProviderProps) -> Element {
 ///
 /// Panics if called outside of a StyleProvider.
 pub fn use_style() -> StyleContext {
-    use_context()
+    // TODO: Implement with tairitsu-hooks context
+    // use_context::<StyleContext>()
+    StyleContext::default()
 }
 
 /// Hook: Try to get style configuration context
 ///
 /// Returns None if called outside of a StyleProvider.
 pub fn try_use_style() -> Option<StyleContext> {
-    try_consume_context::<StyleContext>()
+    // TODO: Implement with tairitsu-hooks context
+    // try_consume_context::<StyleContext>()
+    None
 }
 
 /// Hook: Get the complete class name for a component
@@ -177,12 +159,12 @@ pub fn try_use_style() -> Option<StyleContext> {
 /// ```rust,no_run
 /// use hikari_theme::use_component_class;
 ///
-/// fn MyButton() -> Element {
+/// fn MyButton() -> VNode {
 ///     let class = use_component_class("button", "hi-button");
 ///
 ///     rsx! {
 ///         button {
-///             class: "{class}",
+///             class: class,
 ///             "Click me"
 ///         }
 ///     }
@@ -193,5 +175,23 @@ pub fn use_component_class(component_name: &str, base_class: &str) -> String {
         ctx.get_component_class(component_name, base_class)
     } else {
         base_class.to_string()
+    }
+}
+
+impl Default for StyleContext {
+    fn default() -> Self {
+        Self {
+            config: StyleConfig::default(),
+        }
+    }
+}
+
+impl Default for StyleConfig {
+    fn default() -> Self {
+        Self {
+            class_prefix: "hi".to_string(),
+            extra_classes: Vec::new(),
+            component_overrides: HashMap::new(),
+        }
     }
 }

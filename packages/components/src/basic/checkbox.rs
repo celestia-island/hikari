@@ -1,7 +1,7 @@
 // hi-components/src/basic/checkbox.rs
 // Checkbox component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{CheckboxClass, ClassesBuilder};
 
 use crate::styled::StyledComponent;
@@ -52,7 +52,7 @@ pub enum CheckboxSize {
 ///
 /// ## Basic Usage
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::Checkbox;
 ///
 /// fn app() -> Element {

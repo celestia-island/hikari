@@ -1,7 +1,7 @@
 // hi-components/src/layout/space.rs
 // Space component for adding spacing
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, SpaceClass};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -56,7 +56,7 @@ impl Default for SpaceProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Space, SpaceDirection};
 ///
 /// fn app() -> Element {

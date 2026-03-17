@@ -4,7 +4,7 @@
 //!
 //! ```rust
 //! use hikari_components::navigation::Anchor;
-//! use dioxus::prelude::*;
+//! use crate::prelude::*;;
 //!
 //! rsx! {
 //!     div { id: "content",
@@ -22,7 +22,7 @@
 //! }
 //! ```
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{
     AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass,
 };

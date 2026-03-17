@@ -4,7 +4,7 @@
 //! A Dioxus component wrapper that uses the script-based scrollbar system.
 //! The component renders a container that's initialized by the script.
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 
 /// Custom Scrollbar Container component
 ///
@@ -16,7 +16,7 @@ use dioxus::prelude::*;
 ///
 /// ```rust,ignore
 /// use hikari_components::ScrollbarContainer;
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 ///
 /// rsx! {
 ///     ScrollbarContainer {

@@ -54,17 +54,6 @@ log = "0.4"
 tracing = "0.1"
 
 # =================================================================
-# Legacy Dioxus frontend framework (deprecated, use Tairitsu instead)
-# Note: These are kept for backward compatibility but should not be used in new code
-# =================================================================
-dioxus = { version = "^0.7", features = ["web", "router"] }
-wasm-bindgen = { version = "0.2" }
-wasm-bindgen-futures = { version = "0.4" }
-web-sys = { version = "0.3" }
-js-sys = { version = "0.3" }
-window = { version = "0.3" }
-
-# =================================================================
 # Server-side dependencies (for SSR)
 # =================================================================
 axum = { version = "^0.8", features = ["macros", "ws"] }

@@ -5,7 +5,7 @@
 // - Layer2: Component variables (icon-button-vars.scss)
 // - Custom: Runtime overrides via icon_color, animation_id
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use icons::{Icon, MdiIcon};
 use palette::classes::{ClassesBuilder, components::ButtonClass};
 
@@ -128,7 +128,7 @@ pub struct IconButtonProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::IconButton;
 /// use hikari_icons::MdiIcon;
 ///

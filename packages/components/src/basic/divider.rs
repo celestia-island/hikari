@@ -1,7 +1,7 @@
 // hi-components/src/basic/divider.rs
 // Divider component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, Display};
 
 use crate::styled::StyledComponent;

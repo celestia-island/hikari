@@ -1,7 +1,7 @@
 // hi-components/src/entry/cascader.rs
 // Cascader component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use icons::{Icon, MdiIcon};
 use palette::classes::{CascaderClass, ClassesBuilder, UtilityClass};
 
@@ -64,7 +64,7 @@ pub struct CascaderProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Cascader, CascaderOption, CascaderSize};
 ///
 /// fn app() -> Element {

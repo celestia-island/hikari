@@ -1,7 +1,7 @@
 // hi-components/src/layout/divider.rs
 // Divider component for visual separation
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, DividerClass};
 
 use crate::theme::use_layout_direction;
@@ -53,7 +53,7 @@ pub struct DividerProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Divider, DividerOrientation, DividerType};
 ///
 /// fn app() -> Element {

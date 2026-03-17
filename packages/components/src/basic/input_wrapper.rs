@@ -161,7 +161,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
             } => {
                 rsx! {
                     IconButton {
-                        icon: Some(*icon),
+                        icon: *icon,
                         size: icon_button_size,
                         variant: crate::basic::IconButtonVariant::Ghost,
                         disabled: *disabled || props.disabled,
@@ -169,9 +169,9 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                         glow_intensity: GlowIntensity::Soft,
                         glow_blur: GlowBlur::None,
                         glow_color: GlowColor::Ghost,
-                        onclick: Some((*onclick).clone()),
+                        onclick: (*onclick).clone(),
                         // Use explicit CSS variable instead of "inherit" to avoid color inheritance issues
-                        icon_color: icon_color.clone().or_else(|| Some("var(--hi-color-text-secondary)".to_string())),
+                        icon_color: icon_color.clone(),
                     }
                 }
             }
@@ -179,7 +179,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                 // Pure icon display - always disabled with default glow
                 rsx! {
                     IconButton {
-                        icon: Some(*icon),
+                        icon: *icon,
                         size: icon_button_size,
                         variant: crate::basic::IconButtonVariant::Ghost,
                         disabled: true,
@@ -187,7 +187,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                         glow_intensity: GlowIntensity::Soft,
                         glow_blur: GlowBlur::None,
                         glow_color: GlowColor::Ghost,
-                        onclick: Some(EventHandler::new(|_| {})),
+                        onclick: EventHandler::new(|_| {}),
                     }
                 }
             }

@@ -56,10 +56,9 @@ impl IntoAttrValue for IconButtonVariant {
 }
 
 ///
-#[derive(Clone, PartialEq, Props, Default)]
+#[derive(Clone, PartialEq, Props)]
 pub struct IconButtonProps {
-    #[props(default)]
-    pub icon: Option<MdiIcon>,
+    pub icon: MdiIcon,
 
     #[props(default)]
     pub size: IconButtonSize,
@@ -100,8 +99,29 @@ pub struct IconButtonProps {
     #[props(default)]
     pub class: String,
 
-    #[props(default)]
-    pub onclick: Option<EventHandler<MouseEvent>>,
+    pub onclick: EventHandler<MouseEvent>,
+}
+
+impl Default for IconButtonProps {
+    fn default() -> Self {
+        Self {
+            icon: MdiIcon::Help,
+            size: IconButtonSize::default(),
+            variant: IconButtonVariant::default(),
+            icon_color: None,
+            background_color: None,
+            border_radius: None,
+            animation_id: None,
+            css_vars: None,
+            glow: true,
+            glow_blur: GlowBlur::Medium,
+            glow_color: GlowColor::Primary,
+            glow_intensity: GlowIntensity::Soft,
+            disabled: false,
+            class: String::new(),
+            onclick: EventHandler::new(|_| {}),
+        }
+    }
 }
 
 ///

@@ -88,9 +88,9 @@ pub fn Textarea(props: TextareaProps) -> Element {
             value: "{props.value}",
             rows: props.rows,
             maxlength: props.maxlength.unwrap_or(0),
-            oninput: move |e| {
+            oninput: move |e: InputEvent| {
                 if let Some(handler) = props.oninput.as_ref() {
-                    handler.call(e.value());
+                    handler.call(e.data.clone());
                 }
             }
         }

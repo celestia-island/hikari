@@ -213,22 +213,22 @@ pub fn Input(props: InputProps) -> Element {
                 readonly: props.readonly,
                 placeholder: props.placeholder,
                 value: props.value,
-                oninput: move |e| {
+                oninput: move |e: InputEvent| {
                     if let Some(handler) = props.oninput.as_ref() {
-                        handler.call(e.data.value());
+                        handler.call(e.data.clone());
                     }
                 },
-                onfocus: move |e| {
+                onfocus: move |e: FocusEvent| {
                     if let Some(handler) = props.onfocus.as_ref() {
                         handler.call(e);
                     }
                 },
-                onblur: move |e| {
+                onblur: move |e: FocusEvent| {
                     if let Some(handler) = props.onblur.as_ref() {
                         handler.call(e);
                     }
                 },
-                onkeydown: move |e| {
+                onkeydown: move |e: KeyboardEvent| {
                     if let Some(handler) = props.onkeydown.as_ref() {
                         handler.call(e);
                     }

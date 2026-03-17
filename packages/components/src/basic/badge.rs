@@ -123,7 +123,7 @@ pub fn Badge(props: BadgeProps) -> Element {
 
                     if props.dot {
                         span { class: "hi-badge-dot-inner" }
-                    } else if let Some(count) = display_count {
+                    } else if let Some(count) = display_count.clone() {
                         "{count}"
                     }
                 }

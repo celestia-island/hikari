@@ -81,8 +81,8 @@ pub fn Slider(props: SliderProps) -> Element {
                 max: "{props.max}",
                 step: "{props.step}",
                 disabled: props.disabled,
-                oninput: move |e| {
-                    if let Ok(v) = e.value().parse::<i32>() {
+                oninput: move |e: InputEvent| {
+                    if let Ok(v) = e.data.parse::<i32>() {
                         let constrained = v.clamp(props.min, props.max);
                         props.on_change.call(constrained);
                     }

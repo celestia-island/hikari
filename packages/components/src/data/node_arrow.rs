@@ -16,8 +16,7 @@ pub struct TreeNodeArrowProps {
     #[props(default)]
     pub class: String,
 
-    #[props(default)]
-    pub onclick: Option<EventHandler<MouseEvent>>,
+    pub onclick: EventHandler<MouseEvent>,
 }
 
 impl Default for TreeNodeArrowProps {
@@ -26,7 +25,7 @@ impl Default for TreeNodeArrowProps {
             expanded: false,
             disabled: false,
             class: String::new(),
-            onclick: None,
+            onclick: EventHandler::new(|_| {}),
         }
     }
 }

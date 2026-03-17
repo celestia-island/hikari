@@ -3,6 +3,7 @@
 
 use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, Padding};
+use tairitsu_vdom::IntoAttrValue;
 
 use crate::styled::StyledComponent;
 
@@ -23,6 +24,18 @@ pub enum SkeletonSize {
     Medium,
     Small,
     Large,
+}
+
+// Implement IntoAttrValue so these types can be used as HTML attributes
+impl IntoAttrValue for SkeletonVariant {
+    fn into_attr_value(self) -> Option<String> {
+        Some(match self {
+            SkeletonVariant::Text => "text".to_string(),
+            SkeletonVariant::Circular => "circular".to_string(),
+            SkeletonVariant::Rectangular => "rectangular".to_string(),
+            SkeletonVariant::Rounded => "rounded".to_string(),
+        })
+    }
 }
 
 #[derive(Clone, PartialEq, Props, Default)]

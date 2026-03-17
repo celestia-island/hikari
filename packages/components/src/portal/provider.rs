@@ -51,7 +51,7 @@ pub fn PortalProvider(children: Element) -> Element {
         for entry in e.iter_mut() {
             if let PortalEntry::Modal {
                 id: entry_id,
-                animation_state,
+                ref mut animation_state,
                 ..
             } = entry
                 && entry_id == &id

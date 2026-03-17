@@ -5,6 +5,7 @@
 use animation::style::StyleBuilder;
 use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, GlowClass};
+use tairitsu_vdom::IntoAttrValue;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 #[cfg(target_arch = "wasm32")]
@@ -73,6 +74,25 @@ impl std::fmt::Display for GlowIntensity {
             GlowIntensity::Soft => write!(f, "soft"),
             GlowIntensity::Bright => write!(f, "bright"),
         }
+    }
+}
+
+// Implement IntoAttrValue so these types can be used as HTML attributes
+impl IntoAttrValue for GlowBlur {
+    fn into_attr_value(self) -> Option<String> {
+        Some(self.to_string())
+    }
+}
+
+impl IntoAttrValue for GlowColor {
+    fn into_attr_value(self) -> Option<String> {
+        Some(self.to_string())
+    }
+}
+
+impl IntoAttrValue for GlowIntensity {
+    fn into_attr_value(self) -> Option<String> {
+        Some(self.to_string())
     }
 }
 

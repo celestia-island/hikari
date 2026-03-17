@@ -159,12 +159,12 @@ pub fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                     z_index,
                                     id: id.clone(),
                                     title: title.clone(),
-                                    position: *position,
-                                    mask_mode: *mask_mode,
-                                    closable: *closable,
-                                    mask_closable: *mask_closable,
+                                    position: position,
+                                    mask_mode: mask_mode,
+                                    closable: closable,
+                                    mask_closable: mask_closable,
                                     children: children.clone(),
-                                    animation_state: *animation_state,
+                                    animation_state: animation_state,
                                 }
                             },
                             PortalEntry::Dropdown {
@@ -179,11 +179,11 @@ pub fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                     key: "{id}",
                                     z_index,
                                     id: id.clone(),
-                                    strategy: *strategy,
-                                    mask_mode: *mask_mode,
+                                    strategy: strategy,
+                                    mask_mode: mask_mode,
                                     children: children.clone(),
-                                    trigger_rect: *trigger_rect,
-                                    close_on_select: *close_on_select,
+                                    trigger_rect: trigger_rect,
+                                    close_on_select: close_on_select,
                                 }
                             },
                             PortalEntry::Toast { id, position, children } => rsx! {
@@ -191,7 +191,7 @@ pub fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                     key: "{id}",
                                     z_index,
                                     id: id.clone(),
-                                    position: *position,
+                                    position: position,
                                     children: children.clone(),
                                 }
                             },
@@ -212,15 +212,15 @@ pub fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                     key: "{id}",
                                     z_index,
                                     id: id.clone(),
-                                    trigger_rect: *trigger_rect,
+                                    trigger_rect: trigger_rect,
                                     preferred_placements: preferred_placements.clone(),
-                                    offset: *offset,
+                                    offset: offset,
                                     width: width.clone(),
                                     title: title.clone(),
-                                    close_on_click_outside: *close_on_click_outside,
-                                    close_on_select: *close_on_select,
-                                    on_close: *on_close,
-                                    close_requested: *close_requested,
+                                    close_on_click_outside: close_on_click_outside,
+                                    close_on_select: close_on_select,
+                                    on_close: on_close,
+                                    close_requested: close_requested,
                                     children: children.clone(),
                                 }
                             },
@@ -235,10 +235,10 @@ pub fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                     key: "{id}",
                                     z_index,
                                     id: id.clone(),
-                                    trigger_rect: *trigger_rect,
-                                    placement: *placement,
+                                    trigger_rect: trigger_rect,
+                                    placement: placement,
                                     content: content.clone(),
-                                    arrow: *arrow,
+                                    arrow: arrow,
                                 }
                             },
                         }
@@ -589,7 +589,7 @@ fn PopoverPortalEntry(
         let on_close_clone = on_close;
         use_effect(move || {
             if close_requested.get() {
-                let current_state = *animation_state.read();
+                let current_state = animation_state.read();
                 if current_state == ModalAnimationState::Visible {
                     animation_state.set(ModalAnimationState::Disappearing);
                     if let Some(handler) = on_close_clone.as_ref() {

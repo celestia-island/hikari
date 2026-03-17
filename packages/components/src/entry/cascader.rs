@@ -175,7 +175,7 @@ pub fn Cascader(props: CascaderProps) -> Element {
 
                 div { class: CascaderClass::Display.as_class(),
                     div { class: CascaderClass::Text.as_class(),
-                        {display_text}
+                        "{display_text}"
                     }
 
                     if props.allow_clear && !selected_values.get().is_empty() && !props.disabled {
@@ -203,8 +203,8 @@ pub fn Cascader(props: CascaderProps) -> Element {
                     onclick: |e| e.stop_propagation(),
 
                     CascaderMenus {
-                        options: props.options.clone(),
-                        selected_values: selected_values.get(),
+                        options: Some(props.options.clone()),
+                        selected_values: Some(selected_values.get()),
                         active_level: active_level.get(),
                         on_select: handle_select,
                     }

@@ -22,6 +22,7 @@ pub use tairitsu_vdom::{
     ChangeEvent,
     FormData,
     FormEvent,
+    FileData,
     DragEvent,
     DataTransfer,
     ElementHandle,

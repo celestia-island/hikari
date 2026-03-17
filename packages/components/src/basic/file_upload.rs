@@ -132,10 +132,12 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
         }
     };
 
-    let on_change = move |e: Event<FormData>| {
+    let on_change = move |e: Event| {
         #[cfg(target_arch = "wasm32")]
         {
-            let file_list = e.files.get();
+            let file_list = e.as_any().downcast_ref::<FormData>()
+                .map(|fd| fd.files.clone())
+                .unwrap_or_default();
 
             let mut selected_files = Vec::new();
             let mut errors = Vec::new();

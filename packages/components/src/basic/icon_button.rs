@@ -215,7 +215,7 @@ pub fn IconButton(props: IconButtonProps) -> Element {
             onclick: props.onclick,
 
             Icon {
-                icon: props.icon.unwrap_or_else(MdiIcon::Help),
+                icon: props.icon,
                 size: icon_size,
                 class: icon_classes,
                 color: props.icon_color.clone().unwrap_or_else(|| "inherit".to_string()),

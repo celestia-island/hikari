@@ -122,6 +122,21 @@ pub struct GlowProps {
     pub transition_duration: String,
 }
 
+impl Default for GlowProps {
+    fn default() -> Self {
+        Self {
+            children: VNode::empty(),
+            blur: GlowBlur::default(),
+            color: GlowColor::default(),
+            intensity: GlowIntensity::default(),
+            active_intensity: None,
+            class: String::new(),
+            block: false,
+            transition_duration: "100".to_string(),
+        }
+    }
+}
+
 ///
 ///
 ///

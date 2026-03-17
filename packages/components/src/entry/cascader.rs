@@ -205,7 +205,7 @@ pub fn Cascader(props: CascaderProps) -> Element {
                     CascaderMenus {
                         options: Some(props.options.clone()),
                         selected_values: Some(selected_values.get()),
-                        active_level: active_level.get(),
+                        active_level: Some(active_level.get()),
                         on_select: handle_select,
                     }
                 }

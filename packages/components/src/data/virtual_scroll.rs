@@ -54,7 +54,7 @@ impl Default for VirtualTreeProps {
 
 #[component]
 pub fn VirtualTree(props: VirtualTreeProps) -> Element {
-    let mut scroll_position = use_signal(|| 0.0);
+    let scroll_position = use_signal(|| 0.0);
     let container_height = props.height.parse::<f64>().unwrap_or(400.0);
 
     // Flatten tree data for virtual scrolling
@@ -79,25 +79,29 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
     let total_height = flattened_items.read().len() as f64 * props.item_height as f64;
 
     // Calculate visible range
+    let flattened_for_range = flattened_items.clone();
+    let scroll_for_range = scroll_position.clone();
     let range = use_memo(move || {
-        let scroll = scroll_position.get();
+        let scroll = scroll_for_range.get();
         let start = (scroll / props.item_height as f64).floor() as usize;
         let visible_count = (container_height / props.item_height as f64).ceil() as usize;
         let end =
-            (start + visible_count + props.overscan as usize).min(flattened_items.read().len());
+            (start + visible_count + props.overscan as usize).min(flattened_for_range.read().len());
         let start = start.saturating_sub(props.overscan as usize);
         (start, end)
     });
 
+    let flattened_for_visible = flattened_items.clone();
     let visible_items = use_memo(move || {
         let (start, end) = range.read();
-        flattened_items.read()[start..end].to_vec()
+        flattened_for_visible.read()[start..end].to_vec()
     });
 
     // Pre-compute items_data outside rsx!
+    let flattened_for_items = flattened_items.clone();
     let items_data: Vec<_> = visible_items.read().iter().map(|(item, depth)| {
         let idx = {
-            let items = flattened_items.read();
+            let items = flattened_for_items.read();
             items.iter()
                 .position(|(n, _)| n.id == item.id)
                 .unwrap_or(0)
@@ -128,6 +132,10 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
         }
     }).collect();
 
+    // Clone for onscroll handler
+    let scroll_position_for_onscroll = scroll_position.clone();
+    let on_scroll_handler = props.on_scroll.clone();
+
     rsx! {
         div {
             class: format!("hi-virtual-tree {}", props.class),
@@ -144,9 +152,9 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
                     // TODO: Get scroll position from element via JS interop
                     // For now, use a placeholder value
                     let scroll_top: f64 = 0.0;
-                    scroll_position.set(scroll_top);
+                    scroll_position_for_onscroll.set(scroll_top);
 
-                    if let Some(handler) = props.on_scroll.as_ref() {
+                    if let Some(handler) = on_scroll_handler.as_ref() {
                         handler.call(scroll_top);
                     }
                 },

@@ -103,7 +103,7 @@ pub fn Layout(
 
                 // Sidebar (if provided)
                 if let Some(ref aside_content) = aside {
-                    {aside_content}
+                    {aside_content.clone()}
                 }
 
                 // Main content area

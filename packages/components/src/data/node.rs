@@ -85,6 +85,11 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
         vec![]
     };
 
+    // Clone signals for use in closures
+    let is_expanded_for_click = is_expanded.clone();
+    let is_expanded_for_arrow = is_expanded.clone();
+    let is_expanded_for_children = is_expanded.clone();
+
     rsx! {
         li {
             class: node_classes,
@@ -102,7 +107,7 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
                 onclick: move |e| {
                     if !props.disabled {
                         if has_children {
-                            is_expanded.set(!is_expanded.get());
+                            is_expanded_for_click.set(!is_expanded_for_click.get());
                         }
 
                         if let Some(handler) = props.onclick.as_ref() {
@@ -113,12 +118,12 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
 
                 // Expand/collapse arrow
                 TreeNodeArrow {
-                    expanded: is_expanded.get(),
+                    expanded: is_expanded_for_arrow.get(),
                     disabled: props.disabled,
                     onclick: move |e: MouseEvent| {
                         e.stop_propagation();
                         if !props.disabled {
-                            is_expanded.set(!is_expanded.get());
+                            is_expanded_for_arrow.set(!is_expanded_for_arrow.get());
                         }
                     }
                 }
@@ -131,7 +136,7 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
             }
 
             // Render children if expanded
-            if has_children && is_expanded.get() {
+            if has_children && is_expanded_for_children.get() {
                 ul {
                     class: "hi-tree-node-children",
                     role: "group",

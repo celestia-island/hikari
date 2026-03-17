@@ -223,9 +223,10 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
         .add_raw(&props.class)
         .build();
 
+    let is_expanded_for_arrow = is_expanded.clone();
     let arrow_classes = ClassesBuilder::new()
         .add(SidebarClass::ItemArrow)
-        .add_if(SidebarClass::ItemArrowRotated, move || is_expanded.get())
+        .add_if(SidebarClass::ItemArrowRotated, move || is_expanded_for_arrow.get())
         .build();
 
     let header_class = SidebarClass::ItemHeader.as_class();
@@ -233,6 +234,8 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
     let secondary_class = SidebarClass::ItemSecondary.as_class();
     let item_children_class = SidebarClass::ItemChildren.as_class();
     let aria_hidden_val = (!is_expanded.get()).to_string();
+
+    let is_expanded_for_click = is_expanded.clone();
 
     rsx! {
         div {
@@ -253,7 +256,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
                     // When has children, clicking anywhere on the header toggles
                     onclick: move |_| {
                         if has_items {
-                            is_expanded.set(!is_expanded.get());
+                            is_expanded_for_click.set(!is_expanded_for_click.get());
                         }
                     },
 

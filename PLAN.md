@@ -36,49 +36,37 @@
   - 实现 `StyleStringBuilder` 和 `CssProperty` 枚举
   - 所有使用 `animation::style` 的组件改用本地模块
 
-## 🟡 进行中 (2024-03-17)
+- **组件库迁移进展** (commit `d9b5d64`, `dae7461`):
+  - 添加 WASM cfg guards 到 hooks.rs, render.rs, qrcode.rs
+  - 修复 `String: From<u32>` 错误
+  - 转换 `Memo<T>` 返回类型为 `Signal<T>`
+  - 重构 calendar.rs 使用 Vec<VNode> 模式
+  - 添加 `IntoAttrValue` trait 及多个类型的实现
+  - 添加 `try_consume_context` 别名
+  - 修复 `Signal.toggle()` → `Signal.set(!Signal.get())`
+  - 添加 Debug/Default derives 到多个组件枚举
 
-### rsx! 宏语法迁移
+## 🟡 进行中
 
-**已完成**:
-- [x] 添加 Tairitsu 缺失的事件类型 (FormData, DragEvent, MouseData, FormEvent)
-- [x] 创建本地 style_builder 模块
-- [x] 添加 WASM 条件编译 guards
-- [x] 修复 `#[component]` 宏的 props 默认值处理
-- [x] 修复 `if let` 模式匹配 (改用 `is_some()` + `unwrap()`)
-- [x] 修复条件渲染语法 (提取到 rsx! 外部变量)
-- [x] 添加 WASM 依赖 (wasm-bindgen, web-sys, gloo, js-sys)
+### hikari-components 编译修复
 
-**剩余工作** (~21 个文件):
+**当前错误数**: ~183
 
-- [ ] 修复 rsx! 中的格式字符串语法:
+**剩余错误类型**:
+- 41 mismatched types (类型不匹配)
+- 6 VNode: Default (需要实现 Default trait)
+- 6 type alias generic args (泛型参数错误)
+- 6 type annotations needed (需要类型注解)
+- 3 EventData.value method (方法不存在)
+- 3 Signal move errors (Signal 移动语义)
+- 多个 IntoAttrValue trait bounds
 
-  - `"{variable}"` → `{variable}`
-  - 复杂表达式提取到 rsx! 外部
-
-- [ ] 修复 `for` 循环中的 key 属性语法
-
-**错误位置**:
-```
-packages/components/src/display/calendar.rs:247
-packages/components/src/display/skeleton.rs:112
-packages/components/src/display/user_guide.rs:169
-packages/components/src/feedback/progress.rs:74
-packages/components/src/navigation/sidebar.rs:271
-packages/components/src/navigation/stepper.rs:101
-packages/components/src/navigation/steps.rs:125
-packages/components/src/navigation/tabs.rs:206
-packages/components/src/data/drag.rs:251
-packages/components/src/data/node.rs:117
-packages/components/src/data/pagination.rs:309
-packages/components/src/data/selection.rs:121, 221
-packages/components/src/data/sort.rs:152
-packages/components/src/data/tree.rs:101
-packages/components/src/entry/cascader.rs:262
-packages/components/src/entry/transfer.rs:263
-packages/components/src/production/code_highlight.rs:193
-packages/components/src/portal/render.rs:323, 785, 939
-```
+**修复策略**:
+1. 实现 `Default` for `VNode` (返回 empty VNode)
+2. 修复 `Memo<T>` 使用 `.read()` 而不是直接调用
+3. 为 `Vec<T>` 类型实现 `IntoAttrValue`
+4. 修复 `Style: From<Option<String>>` 转换
+5. 修复 Signal 的移动语义问题 (使用 `.clone()`)
 
 ## 验收标准
 
@@ -86,7 +74,7 @@ packages/components/src/portal/render.rs:323, 785, 939
 - [x] 删除 `scripts/build/ensure_wasm_bindgen.py` 和 `scripts/fix_index_html.py`
 - [x] 核心包在 wasm32-wasip2 下编译通过
 - [x] CI 支持 wasm32-wasip2 检查
-- [ ] **激进清理**: hikari-components 编译通过（剩余 ~21 文件的 rsx! 语法修复）
+- [ ] **激进清理**: hikari-components 编译通过
 
 ## 架构说明
 

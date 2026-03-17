@@ -159,6 +159,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                 disabled,
                 icon_color,
             } => {
+                let onclick_clone = onclick.clone();
                 rsx! {
                     IconButton {
                         icon: *icon,
@@ -169,7 +170,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                         glow_intensity: GlowIntensity::Soft,
                         glow_blur: GlowBlur::None,
                         glow_color: GlowColor::Ghost,
-                        onclick: (*onclick).clone(),
+                        onclick: move |e| onclick_clone.call(e),
                         // Use explicit CSS variable instead of "inherit" to avoid color inheritance issues
                         icon_color: icon_color.clone(),
                     }
@@ -187,7 +188,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                         glow_intensity: GlowIntensity::Soft,
                         glow_blur: GlowBlur::None,
                         glow_color: GlowColor::Ghost,
-                        onclick: EventHandler::new(|_| {}),
+                        onclick: |_| {},
                     }
                 }
             }

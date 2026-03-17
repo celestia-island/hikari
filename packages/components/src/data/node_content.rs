@@ -13,8 +13,7 @@ pub struct TreeNodeContentProps {
     #[props(default)]
     pub class: String,
 
-    #[props(default)]
-    pub onclick: Option<EventHandler<MouseEvent>>,
+    pub onclick: EventHandler<MouseEvent>,
 
     children: Element,
 }
@@ -25,7 +24,7 @@ impl Default for TreeNodeContentProps {
             level: 0,
             disabled: false,
             class: String::new(),
-            onclick: None,
+            onclick: EventHandler::new(|_| {}),
             children: VNode::empty(),
         }
     }

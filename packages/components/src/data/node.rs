@@ -99,7 +99,7 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
                 level: props.level,
                 disabled: props.disabled,
                 class: props.class.clone(),
-                onclick: Some(EventHandler::new(move |e| {
+                onclick: move |e| {
                     if !props.disabled {
                         if has_children {
                             is_expanded.set(!is_expanded.get());
@@ -109,18 +109,18 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
                             handler.call(e);
                         }
                     }
-                })),
+                },
 
                 // Expand/collapse arrow
                 TreeNodeArrow {
                     expanded: is_expanded.get(),
                     disabled: props.disabled,
-                    onclick: Some(EventHandler::new(move |e: MouseEvent| {
+                    onclick: move |e: MouseEvent| {
                         e.stop_propagation();
                         if !props.disabled {
                             is_expanded.set(!is_expanded.get());
                         }
-                    }))
+                    }
                 }
 
                 // Node label with optional icon

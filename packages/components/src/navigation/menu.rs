@@ -259,7 +259,7 @@ impl StyledComponent for MenuComponent {
 pub fn MenuItem(props: MenuItemProps) -> Element {
     let menu_context = try_consume_context::<MenuContext>();
     let should_glow = match &menu_context {
-        Some(ctx) => props.glow || (ctx.in_popover && ctx.glow_enabled),
+        Some(ctx) => props.glow || (ctx.get().in_popover && ctx.get().glow_enabled),
         None => props.glow,
     };
 
@@ -269,6 +269,7 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
         .add_raw(&props.class)
         .build();
 
+    let menu_context_for_click = menu_context.clone();
     let item_content = rsx! {
         li {
             class: item_classes,
@@ -281,11 +282,14 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
                         handler.call(e);
                     }
                     // Request close if in popover mode
-                    if let Some(ctx) = &menu_context
-                        && ctx.in_popover
-                            && let Some(close_cb) = &ctx.request_close {
+                    if let Some(ctx) = &menu_context_for_click {
+                        let ctx_val = ctx.get();
+                        if ctx_val.in_popover {
+                            if let Some(close_cb) = &ctx_val.request_close {
                                 close_cb.call(());
                             }
+                        }
+                    }
                 }
             },
 

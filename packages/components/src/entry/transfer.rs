@@ -92,7 +92,7 @@ pub fn Transfer(props: TransferProps) -> Element {
         let source_selected = props.source_selected_keys.clone();
         let current_target = props.target_keys.clone();
         let data_clone = props.data.clone();
-        let on_change_cb = props.on_change;
+        let on_change_cb = props.on_change.clone();
 
         move |_| {
             let mut new_target = current_target.clone();
@@ -113,7 +113,7 @@ pub fn Transfer(props: TransferProps) -> Element {
     let handle_to_source = {
         let target_selected = props.target_selected_keys.clone();
         let current_target = props.target_keys.clone();
-        let on_change_cb = props.on_change;
+        let on_change_cb = props.on_change.clone();
 
         move |_| {
             let new_target: Vec<String> = current_target
@@ -128,14 +128,16 @@ pub fn Transfer(props: TransferProps) -> Element {
         }
     };
 
+    let on_select_change_for_source = props.on_select_change.clone();
     let handle_source_select = EventHandler::new(move |keys: Vec<String>| {
-        if let Some(handler) = props.on_select_change.as_ref() {
+        if let Some(handler) = on_select_change_for_source.as_ref() {
             handler.call(SelectChangeEvent { list_type: 0, keys });
         }
     });
 
+    let on_select_change_for_target = props.on_select_change.clone();
     let handle_target_select = EventHandler::new(move |keys: Vec<String>| {
-        if let Some(handler) = props.on_select_change.as_ref() {
+        if let Some(handler) = on_select_change_for_target.as_ref() {
             handler.call(SelectChangeEvent { list_type: 1, keys });
         }
     });
@@ -212,12 +214,16 @@ fn TransferPanel(
     let show_search = show_search.unwrap_or(false);
     let on_select = on_select.unwrap_or_else(|| EventHandler::new(|_| {}));
 
-    let mut search_text = use_signal(String::new);
+    let search_text = use_signal(String::new);
     let all_selected = use_signal(|| false);
 
+    // Clone items for use_memo since items is needed later for empty check
+    let items_for_memo = items.clone();
+    // Clone for use_memo
+    let search_text_for_memo = search_text.clone();
     let filtered_items = use_memo(move || {
-        let search = search_text.get().to_lowercase();
-        items
+        let search = search_text_for_memo.get().to_lowercase();
+        items_for_memo
             .iter()
             .filter(|item| {
                 search.is_empty()
@@ -228,22 +234,30 @@ fn TransferPanel(
             .collect::<Vec<_>>()
     }).read();
 
+    // Clone for handle_toggle_all
+    let on_select_for_toggle = on_select.clone();
+    let filtered_items_for_toggle = filtered_items.clone();
     let handle_toggle_all = move |_| {
         if all_selected.get() {
-            on_select.call(Vec::new());
+            on_select_for_toggle.call(Vec::new());
         } else {
-            let all_keys: Vec<String> = filtered_items
+            let all_keys: Vec<String> = filtered_items_for_toggle
                 .iter()
                 .filter(|item| !item.disabled)
                 .map(|item| item.item_key.clone())
                 .collect();
-            on_select.call(all_keys);
+            on_select_for_toggle.call(all_keys);
         }
     };
 
+    // Clone for handle_search
+    let search_text_for_handler = search_text.clone();
     let handle_search = move |e: InputEvent| {
-        search_text.set(e.data.clone());
+        search_text_for_handler.set(e.data.clone());
     };
+
+    // Clone for display in input value
+    let search_text_value = search_text.get();
 
     let all_keys: Vec<String> = filtered_items
         .iter()
@@ -266,7 +280,7 @@ fn TransferPanel(
             let item_disabled = item.disabled;
             let is_selected = selected_keys.contains(&item.item_key);
             let selected_keys_clone = selected_keys.clone();
-            let on_select_clone = on_select;
+            let on_select_clone = on_select.clone();
 
             rsx! {
                 li {
@@ -312,7 +326,7 @@ fn TransferPanel(
                     class: TransferClass::PanelInput.as_class(),
                     r#type: "text",
                     placeholder: "Search...",
-                    value: search_text.get(),
+                    value: "{search_text_value}",
                     oninput: handle_search,
                 }
             }
@@ -321,7 +335,7 @@ fn TransferPanel(
         VNode::empty()
     };
 
-    // Pre-compute empty state
+    // Pre-compute empty state - use items directly since filtered_items is already computed
     let empty_state = if items.is_empty() {
         rsx! {
             li { class: TransferClass::PanelEmpty.as_class(),

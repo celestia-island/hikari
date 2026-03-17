@@ -57,8 +57,8 @@ pub struct MarkdownEditorProps {
 ///
 #[component]
 pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
-    let mut content = use_signal(|| props.value.clone());
-    let mut current_mode = use_signal(|| props.mode);
+    let content = use_signal(|| props.value.clone());
+    let current_mode = use_signal(|| props.mode);
 
     let size_class = match props.size {
         MarkdownEditorSize::Small => MarkdownEditorClass::Sm,
@@ -103,107 +103,149 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         }
     };
 
-    let on_change_for_insert = props.on_change;
-    let insert_bold = move |_| {
-        let current = content.get();
-        let new_value = format!("**{}**", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_insert.as_ref() {
-            handler.call(new_value);
+    // Insert handlers - each needs its own clones
+    let insert_bold = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("**{}**", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_italic = props.on_change;
-    let insert_italic = move |_| {
-        let current = content.get();
-        let new_value = format!("*{}*", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_italic.as_ref() {
-            handler.call(new_value);
+    let insert_italic = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("*{}*", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_heading = props.on_change;
-    let insert_heading = move |_| {
-        let current = content.get();
-        let new_value = format!("# {}", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_heading.as_ref() {
-            handler.call(new_value);
+    let insert_heading = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("# {}", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_code = props.on_change;
-    let insert_code = move |_| {
-        let current = content.get();
-        let new_value = format!("```\n{}\n```", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_code.as_ref() {
-            handler.call(new_value);
+    let insert_code = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("```\n{}\n```", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_link = props.on_change;
-    let insert_link = move |_| {
-        let current = content.get();
-        let new_value = format!("[{}](url)", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_link.as_ref() {
-            handler.call(new_value);
+    let insert_link = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("[{}](url)", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_image = props.on_change;
-    let insert_image = move |_| {
-        let current = content.get();
-        let new_value = format!("![alt]({})", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_image.as_ref() {
-            handler.call(new_value);
+    let insert_image = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("![alt]({})", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_list = props.on_change;
-    let insert_list = move |_| {
-        let current = content.get();
-        let new_value = format!("- {}", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_list.as_ref() {
-            handler.call(new_value);
+    let insert_list = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("- {}", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_numbered = props.on_change;
-    let insert_numbered = move |_| {
-        let current = content.get();
-        let new_value = format!("1. {}", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_numbered.as_ref() {
-            handler.call(new_value);
+    let insert_numbered = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("1. {}", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_quote = props.on_change;
-    let insert_quote = move |_| {
-        let current = content.get();
-        let new_value = format!("> {}", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_quote.as_ref() {
-            handler.call(new_value);
+    let insert_quote = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("> {}", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let set_mode_edit = move |_| {
-        current_mode.set(MarkdownEditorMode::Edit);
+    // Mode setters - each needs its own clone of current_mode
+    let set_mode_edit = {
+        let current_mode = current_mode.clone();
+        move |_| {
+            current_mode.set(MarkdownEditorMode::Edit);
+        }
     };
 
-    let set_mode_preview = move |_| {
-        current_mode.set(MarkdownEditorMode::Preview);
+    let set_mode_preview = {
+        let current_mode = current_mode.clone();
+        move |_| {
+            current_mode.set(MarkdownEditorMode::Preview);
+        }
     };
 
-    let set_mode_split = move |_| {
-        current_mode.set(MarkdownEditorMode::Split);
+    let set_mode_split = {
+        let current_mode = current_mode.clone();
+        move |_| {
+            current_mode.set(MarkdownEditorMode::Split);
+        }
     };
+
+    // Get current values for display
+    let current_mode_value = current_mode.get();
+    let content_value = content.get();
 
     rsx! {
         div {
@@ -273,7 +315,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
                     // Mode buttons
                     button {
-                        class: if current_mode.get() == MarkdownEditorMode::Edit {
+                        class: if current_mode_value == MarkdownEditorMode::Edit {
                             "{MarkdownEditorClass::ToolbarButton.as_class()} {MarkdownEditorClass::ToolbarButtonActive.as_class()}"
                         } else {
                             "{MarkdownEditorClass::ToolbarButton.as_class()}"
@@ -282,7 +324,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                         "Edit"
                     }
                     button {
-                        class: if current_mode.get() == MarkdownEditorMode::Preview {
+                        class: if current_mode_value == MarkdownEditorMode::Preview {
                             "{MarkdownEditorClass::ToolbarButton.as_class()} {MarkdownEditorClass::ToolbarButtonActive.as_class()}"
                         } else {
                             "{MarkdownEditorClass::ToolbarButton.as_class()}"
@@ -291,7 +333,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                         "Preview"
                     }
                     button {
-                        class: if current_mode.get() == MarkdownEditorMode::Split {
+                        class: if current_mode_value == MarkdownEditorMode::Split {
                             "{MarkdownEditorClass::ToolbarButton.as_class()} {MarkdownEditorClass::ToolbarButtonActive.as_class()}"
                         } else {
                             "{MarkdownEditorClass::ToolbarButton.as_class()}"
@@ -304,12 +346,12 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
             // Editor area
             div { class: MarkdownEditorClass::Content.as_class(),
-                match current_mode.get() {
+                match current_mode_value {
                     MarkdownEditorMode::Edit => rsx! {
                         textarea {
                             class: MarkdownEditorClass::Textarea.as_class(),
                             placeholder: props.placeholder,
-                            value: "{content}",
+                            value: "{content_value}",
                             oninput: handle_input_edit,
                         }
                     },
@@ -317,7 +359,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                         div { class: MarkdownEditorClass::Preview.as_class(),
                             // Basic markdown rendering (simplified)
                             div {
-                                dangerous_inner_html: "{render_markdown_simple(&content.get())}",
+                                dangerous_inner_html: render_markdown_simple(&content_value),
                             }
                         }
                     },
@@ -326,13 +368,13 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                             textarea {
                                 class: "{MarkdownEditorClass::Textarea.as_class()} {MarkdownEditorClass::SplitPane.as_class()}",
                                 placeholder: props.placeholder,
-                                value: "{content}",
+                                value: "{content_value}",
                                 oninput: handle_input_split,
                             }
                             div {
                                 class: "{MarkdownEditorClass::Preview.as_class()} {MarkdownEditorClass::SplitPane.as_class()}",
                                 div {
-                                    dangerous_inner_html: "{render_markdown_simple(&content.get())}",
+                                    dangerous_inner_html: render_markdown_simple(&content_value),
                                 }
                             }
                         }

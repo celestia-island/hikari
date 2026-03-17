@@ -268,6 +268,9 @@ fn ModalPortalEntry(
     let (_, button_close, computed_opacity_scale) =
         use_animated_portal_entry(id.clone(), animation_state, "Modal");
 
+    // Clone button_close for the overlay click handler
+    let button_close_for_overlay = button_close.clone();
+
     let overlay_classes = if mask_mode == MaskMode::Transparent {
         ClassesBuilder::new()
             .add(ModalClass::Overlay)
@@ -346,7 +349,7 @@ fn ModalPortalEntry(
             onclick: move |e: MouseEvent| {
                 if mask_closable && mask_mode == MaskMode::Opaque {
                     e.stop_propagation();
-                    button_close.call(e);
+                    button_close_for_overlay.call(e);
                 }
             },
 
@@ -381,6 +384,10 @@ fn DropdownPortalEntry(
     let _internal_animation_state = use_signal(|| ModalAnimationState::Appearing);
     let (_, close_dropdown, computed_opacity_scale) =
         use_animated_portal_entry(id.clone(), ModalAnimationState::Appearing, "Dropdown");
+
+    // Clone close_dropdown for multiple handlers
+    let close_dropdown_for_overlay = close_dropdown.clone();
+    let close_dropdown_for_content = close_dropdown.clone();
 
     let viewport_width = use_signal(|| {
         #[cfg(target_arch = "wasm32")]
@@ -522,7 +529,7 @@ fn DropdownPortalEntry(
             style: overlay_style,
             onclick: move |e: MouseEvent| {
                 e.stop_propagation();
-                close_dropdown.call(e);
+                close_dropdown_for_overlay.call(e);
             },
 
             div {
@@ -538,7 +545,7 @@ fn DropdownPortalEntry(
                                     if let Some(elem) = target.dyn_ref::<web_sys::Element>() {
                                         let is_menu_item = elem.closest(".hi-menu-item").ok();
                                         if is_menu_item.is_some() {
-                                            close_dropdown.call(e);
+                                            close_dropdown_for_content.call(e);
                                         }
                                     }
                                 }
@@ -546,7 +553,7 @@ fn DropdownPortalEntry(
                         }
                         #[cfg(not(target_arch = "wasm32"))]
                         {
-                            close_dropdown.call(e);
+                            close_dropdown_for_content.call(e);
                         }
                     }
                 },
@@ -607,14 +614,15 @@ fn PopoverPortalEntry(
     // Create a default signal if none provided
     let close_requested_signal = close_requested.unwrap_or_else(|| use_signal(|| false));
 
+    // Clone for use_effect
+    let on_close_for_effect = on_close.clone();
     {
-        let on_close_clone = on_close;
         use_effect(move || {
             if close_requested_signal.get() {
                 let current_state = animation_state.read();
                 if current_state == ModalAnimationState::Visible {
                     animation_state.set(ModalAnimationState::Disappearing);
-                    if let Some(handler) = on_close_clone.as_ref() {
+                    if let Some(handler) = on_close_for_effect.as_ref() {
                         handler.call(());
                     }
                 }
@@ -798,13 +806,13 @@ fn PopoverPortalEntry(
 
     let backdrop_z_index = z_index.saturating_sub(1);
 
-    let handle_close = {
-        let on_close = on_close;
-        move |e: MouseEvent| {
-            close_popover.call(e);
-            if let Some(handler) = on_close.as_ref() {
-                handler.call(());
-            }
+    // Clone for handle_close
+    let on_close_for_backdrop = on_close.clone();
+    let close_popover_for_backdrop = close_popover.clone();
+    let handle_close = move |e: MouseEvent| {
+        close_popover_for_backdrop.call(e);
+        if let Some(handler) = on_close_for_backdrop.as_ref() {
+            handler.call(());
         }
     };
 
@@ -831,6 +839,10 @@ fn PopoverPortalEntry(
         VNode::empty()
     };
 
+    // Clone for content onclick
+    let close_popover_for_content = close_popover.clone();
+    let on_close_for_content = on_close.clone();
+
     let popover_content = rsx! {
         div {
             class: popover_classes,
@@ -852,8 +864,8 @@ fn PopoverPortalEntry(
                                     if let Some(elem) = target.dyn_ref::<web_sys::Element>() {
                                         let is_menu_item = elem.closest(".hi-menu-item").ok();
                                         if is_menu_item.is_some() {
-                                            close_popover.call(e);
-                                            if let Some(handler) = on_close.as_ref() {
+                                            close_popover_for_content.call(e);
+                                            if let Some(handler) = on_close_for_content.as_ref() {
                                                 handler.call(());
                                             }
                                         }
@@ -863,8 +875,8 @@ fn PopoverPortalEntry(
                         }
                         #[cfg(not(target_arch = "wasm32"))]
                         {
-                            close_popover.call(e);
-                            if let Some(handler) = on_close.as_ref() {
+                            close_popover_for_content.call(e);
+                            if let Some(handler) = on_close_for_content.as_ref() {
                                 handler.call(());
                             }
                         }
@@ -987,7 +999,7 @@ fn TooltipPortalEntry(
             class: tooltip_classes,
             style: tooltip_style,
 
-            div { class: TooltipClass::TooltipContent.as_class(), content.clone() }
+            div { class: TooltipClass::TooltipContent.as_class(), "{content}" }
 
             {arrow_el}
         }

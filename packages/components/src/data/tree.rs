@@ -4,7 +4,7 @@
 use crate::prelude::*;
 
 use crate::{
-    data::node::{TreeNode, TreeNodeData},
+    data::node::{TreeNode, TreeNodeData, TreeNodeProps},
     styled::StyledComponent,
 };
 
@@ -58,14 +58,23 @@ pub fn Tree(props: TreeProps) -> Element {
         _ => {}
     };
 
-    // Pre-build tree nodes as Vec<Element>
-    let tree_nodes: Vec<Element> = build_tree_nodes(
-        &props.data,
-        &expanded_keys,
-        &selected_keys,
-        &props.on_select,
-        &props.on_expand,
-    );
+    // Build tree nodes by calling TreeNode function directly with props struct
+    let tree_nodes: Vec<Element> = props
+        .data
+        .iter()
+        .map(|item| {
+            TreeNode(TreeNodeProps {
+                node_key: item.key.clone(),
+                label: item.label.clone(),
+                node_children: item.children.clone(),
+                disabled: item.disabled,
+                expanded: expanded_keys.read().contains(&item.key),
+                selected: selected_keys.read().contains(&item.key),
+                level: 0,
+                ..TreeNodeProps::default()
+            })
+        })
+        .collect();
 
     rsx! {
         div {
@@ -79,33 +88,10 @@ pub fn Tree(props: TreeProps) -> Element {
                 class: format!("hi-tree {line_class}"),
                 role: "treegroup",
 
-                VNode::Fragment(tree_nodes)
+                ..tree_nodes
             }
         }
     }
-}
-
-fn build_tree_nodes(
-    nodes: &[TreeNodeData],
-    _expanded_keys: &Signal<Vec<String>>,
-    _selected_keys: &Signal<Vec<String>>,
-    _on_select: &Option<EventHandler<String>>,
-    _on_expand: &Option<EventHandler<String>>,
-) -> Vec<Element> {
-    nodes
-        .iter()
-        .map(|item| {
-            rsx! {
-                TreeNode {
-                    node_key: item.key.clone(),
-                    label: item.label.clone(),
-                    node_children: item.children.clone(),
-                    disabled: item.disabled,
-                    level: 0,
-                }
-            }
-        })
-        .collect()
 }
 
 impl StyledComponent for TreeComponent {

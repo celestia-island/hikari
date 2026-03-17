@@ -38,7 +38,7 @@ pub struct ZoomControlsProps {
 ///
 #[component]
 pub fn ZoomControls(props: ZoomControlsProps) -> Element {
-    let mut zoom = use_signal(|| props.zoom);
+    let zoom = use_signal(|| props.zoom);
 
     let container_classes = ClassesBuilder::new()
         .add(ZoomControlsClass::Container)
@@ -46,7 +46,8 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
         .build();
 
     let handle_zoom_in = {
-        let on_zoom_change = props.on_zoom_change;
+        let zoom = zoom.clone();
+        let on_zoom_change = props.on_zoom_change.clone();
         let max = props.max_zoom;
         let step = props.step;
         move |_| {
@@ -59,7 +60,8 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
     };
 
     let handle_zoom_out = {
-        let on_zoom_change = props.on_zoom_change;
+        let zoom = zoom.clone();
+        let on_zoom_change = props.on_zoom_change.clone();
         let min = props.min_zoom;
         let step = props.step;
         move |_| {
@@ -72,7 +74,8 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
     };
 
     let handle_reset = {
-        let on_zoom_change = props.on_zoom_change;
+        let zoom = zoom.clone();
+        let on_zoom_change = props.on_zoom_change.clone();
         move |_| {
             zoom.set(100);
             if let Some(handler) = on_zoom_change.as_ref() {

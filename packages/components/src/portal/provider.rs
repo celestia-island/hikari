@@ -73,13 +73,15 @@ pub fn PortalProvider(children: Element) -> Element {
     rsx! {
         children
         PortalRender {
-            entries,
+            entries: Some(entries),
         }
     }
 }
 
 pub fn use_portal() -> PortalContext {
-    use_context::<PortalContext>()
+    let ctx = use_context::<PortalContext>()
+        .expect("PortalContext not found");
+    ctx.get().clone()
 }
 
 pub fn generate_portal_id() -> String {

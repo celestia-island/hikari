@@ -60,7 +60,9 @@ pub fn Anchor(
     let anchor_links: Vec<Element> = items.iter().map(|item| {
         let href = item.href.clone();
         let title = item.title.clone();
-        let is_active = active_anchor.read() == href;
+        let active_anchor_for_click = active_anchor.clone();
+        let active_anchor_for_check = active_anchor.clone();
+        let is_active = active_anchor_for_check.read() == href;
         let btn_class = ClassesBuilder::new()
             .add(AnchorClass::Link)
             .add_if(AnchorClass::Active, move || is_active)
@@ -70,7 +72,7 @@ pub fn Anchor(
             button {
                 class: btn_class,
                 onclick: move |_| {
-                    active_anchor.set(href.clone());
+                    active_anchor_for_click.set(href.clone());
 
                     // Remove '#' from href
                     #[cfg(target_arch = "wasm32")]

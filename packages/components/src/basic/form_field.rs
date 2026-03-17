@@ -17,8 +17,9 @@ pub enum FormFieldStatus {
     Success,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[derive(Clone, PartialEq, Props, Default)]
 pub struct FormFieldProps {
+    #[props(default)]
     pub label: String,
 
     #[props(default = false)]

@@ -82,13 +82,11 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
     let handle_input_edit = {
         let on_change = props.on_change.clone();
         let content_for_edit = content.clone();
-        move |e: Event| {
-            if let Some(form_data) = e.as_any().downcast_ref::<FormData>() {
-                let new_value = form_data.value.clone();
-                content_for_edit.set(new_value.clone());
-                if let Some(handler) = on_change.as_ref() {
-                    handler.call(new_value);
-                }
+        move |e: InputEvent| {
+            let new_value = e.data.clone();
+            content_for_edit.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
             }
         }
     };
@@ -96,13 +94,11 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
     let handle_input_split = {
         let on_change = props.on_change.clone();
         let content_for_split = content.clone();
-        move |e: Event| {
-            if let Some(form_data) = e.as_any().downcast_ref::<FormData>() {
-                let new_value = form_data.value.clone();
-                content_for_split.set(new_value.clone());
-                if let Some(handler) = on_change.as_ref() {
-                    handler.call(new_value);
-                }
+        move |e: InputEvent| {
+            let new_value = e.data.clone();
+            content_for_split.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
             }
         }
     };

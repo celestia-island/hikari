@@ -287,13 +287,15 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 ///
 ///
 pub fn use_theme() -> ThemeContext {
-    use_context()
+    let ctx = use_context::<ThemeContext>()
+        .expect("ThemeContext not found");
+    ctx.get().clone()
 }
 
 ///
 pub fn use_layout_direction() -> LayoutDirection {
     try_consume_context::<ThemeContext>()
-        .map(|ctx| *ctx.direction.read())
+        .map(|ctx| ctx.get().direction.get())
         .unwrap_or_default()
 }
 

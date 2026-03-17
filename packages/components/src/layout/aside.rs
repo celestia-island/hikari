@@ -57,7 +57,8 @@ pub fn Aside(
     #[props(default)]
     rtl: Option<bool>,
 
-    on_close: EventHandler<MouseEvent>,
+    #[props(default)]
+    on_close: Option<EventHandler<MouseEvent>>,
 
     #[props(default)]
     class: String,

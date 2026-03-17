@@ -85,7 +85,7 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
 
             div {
                 class: editor_classes,
-                "{content}"
+                "{content.get()}"
             }
         }
     }

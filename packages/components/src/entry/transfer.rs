@@ -241,10 +241,8 @@ fn TransferPanel(
         }
     };
 
-    let handle_search = move |e: Event| {
-        if let Some(form_data) = e.as_any().downcast_ref::<FormData>() {
-            search_text.set(form_data.value.clone());
-        }
+    let handle_search = move |e: InputEvent| {
+        search_text.set(e.data.clone());
     };
 
     let all_keys: Vec<String> = filtered_items

@@ -96,9 +96,9 @@ pub fn RadioGroup(props: RadioGroupProps) -> Element {
 
     let name: &'static str = Box::leak(props.name.clone().into_boxed_str());
     let disabled = props.disabled;
-    let on_change = props.on_change;
+    let on_change = props.on_change.clone();
 
-    let _ctx = use_context_provider(|| RadioContext {
+    let _ctx = use_context_provider(move || RadioContext {
         name,
         selected_value,
         on_change,

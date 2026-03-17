@@ -1,7 +1,7 @@
 // hikari-components/src/layout/content.rs
 //! Content component - Main content area wrapper
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 
 /// Content component - Main content area wrapper
 ///
@@ -9,7 +9,7 @@ use dioxus::prelude::*;
 ///
 /// ```rust
 /// use hikari_components::layout::Content;
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 ///
 /// rsx! {
 ///     Content {

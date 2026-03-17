@@ -1,7 +1,7 @@
 // hi-components/src/basic/badge.rs
 // Badge component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{BadgeClass, ClassesBuilder, Display};
 
 use crate::styled::StyledComponent;

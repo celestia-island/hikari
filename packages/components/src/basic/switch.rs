@@ -1,7 +1,7 @@
 // hi-components/src/basic/switch.rs
 // Switch component with Glow effect and content variants
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, SwitchClass};
 
 use crate::styled::StyledComponent;

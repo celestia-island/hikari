@@ -1,7 +1,7 @@
 // hi-components/src/data/node_content.rs
 // TreeNodeContent component - content wrapper for tree nodes
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 
 /// Content wrapper for tree nodes
 #[derive(Clone, PartialEq, Props)]

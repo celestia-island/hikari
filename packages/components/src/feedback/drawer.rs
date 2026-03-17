@@ -2,7 +2,7 @@
 // Drawer component with Arknights + FUI styling
 
 use animation::style::{CssProperty, StyleStringBuilder};
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, DrawerClass, UtilityClass};
 
 use crate::styled::StyledComponent;
@@ -88,7 +88,7 @@ impl Default for DrawerProps {
 ///
 /// ## Basic Usage
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Drawer, Button};
 ///
 /// fn app() -> Element {

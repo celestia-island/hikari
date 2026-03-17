@@ -7,7 +7,7 @@
 //!
 //! ```rust
 //! use hikari_components::layout::Aside;
-//! use dioxus::prelude::*;
+//! use crate::prelude::*;;
 //!
 //! rsx! {
 //!     Aside {
@@ -25,7 +25,7 @@
 //! }
 //! ```
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::{ClassesBuilder, UtilityClass, classes::components::*};
 
 use crate::theme::use_layout_direction;

@@ -1,7 +1,7 @@
 // hi-components/src/data/virtual_scroll.rs
 // Virtual scroll component for large tree data sets
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, TreeClass};
 
 use crate::styled::StyledComponent;

@@ -9,13 +9,14 @@ license.workspace = true
 doctest = false
 
 [features]
-default = ["scss", "dioxus"]
-scss = []       # Default SCSS compilation
-dioxus = ["dep:dioxus"]  # Dioxus framework integration (optional for tairitsu)
+default = ["scss"]
+scss = []  # SCSS compilation
 
 [dependencies]
-# Workspace dependencies
-palette = { path = "../palette", package = "hikari-palette" }
+# Hikari palette
+hikari-palette = { path = "../palette" }
 
-# MCP / network and protocols (optional for tairitsu compatibility)
-dioxus = { workspace = true, optional = true }
+# Tairitsu framework (for theme context)
+tairitsu-vdom = { path = "../../../tairitsu/packages/vdom" }
+tairitsu-hooks = { path = "../../../tairitsu/packages/hooks" }
+tairitsu-macros = { path = "../../../tairitsu/packages/macros" }

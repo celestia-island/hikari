@@ -1,7 +1,7 @@
 // packages/components/src/display/calendar.rs
 // Calendar component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{CalendarClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;

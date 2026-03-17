@@ -1,7 +1,7 @@
 // hi-components/src/data/drag.rs
 // Drag and drop component for tree node reordering
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, TreeClass};
 
 use crate::styled::StyledComponent;

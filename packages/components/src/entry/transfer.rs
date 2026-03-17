@@ -1,7 +1,7 @@
 // hi-components/src/entry/transfer.rs
 // Transfer component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use icons::{Icon, MdiIcon};
 use palette::classes::{ClassesBuilder, TransferClass, UtilityClass};
 
@@ -74,7 +74,7 @@ pub struct TransferProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Transfer, TransferItem, SelectChangeEvent};
 ///
 /// fn app() -> Element {

@@ -3,7 +3,7 @@
 
 use std::sync::atomic::Ordering;
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 
 use super::render::PortalRender;
 use crate::portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry};

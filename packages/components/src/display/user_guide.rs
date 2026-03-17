@@ -1,7 +1,7 @@
 // packages/components/src/display/user_guide.rs
 // UserGuide component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use icons::{Icon, MdiIcon};
 use palette::classes::{ClassesBuilder, UserGuideClass, UtilityClass};
 

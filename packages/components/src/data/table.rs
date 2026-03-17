@@ -3,7 +3,7 @@
 
 use std::collections::HashMap;
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, TableClass, UtilityClass};
 
 pub use super::{
@@ -127,7 +127,7 @@ impl Default for TableProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::Table;
 /// use hikari_components::ColumnDef;
 /// use hikari_components::ColumnAlign;

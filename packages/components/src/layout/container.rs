@@ -1,7 +1,7 @@
 // hi-components/src/layout/container.rs
 // Container component for responsive content wrapping
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, ContainerClass};
 
 use crate::theme::use_layout_direction;
@@ -58,7 +58,7 @@ impl ContainerSize {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Container, ContainerSize};
 ///
 /// fn app() -> Element {

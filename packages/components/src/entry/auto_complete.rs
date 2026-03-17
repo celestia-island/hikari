@@ -1,7 +1,7 @@
 // packages/components/src/entry/auto_complete.rs
 // AutoComplete component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{AutoCompleteClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;
@@ -16,7 +16,7 @@ pub struct AutoCompleteComponent;
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::AutoComplete;
 ///
 /// fn app() -> Element {

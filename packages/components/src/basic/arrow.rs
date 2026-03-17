@@ -1,7 +1,7 @@
 // hi-components/src/basic/arrow.rs
 // Arrow indicator component with rotation support
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use icons::{Icon, MdiIcon};
 use palette::classes::{ClassesBuilder, components::ArrowClass};
 
@@ -32,7 +32,7 @@ pub enum ArrowDirection {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Arrow, ArrowDirection};
 ///
 /// rsx! {

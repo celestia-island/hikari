@@ -7,7 +7,7 @@
 //!
 //! ```rust
 //! use hikari_components::layout::{Layout, Header, Aside};
-//! use dioxus::prelude::*;
+//! use crate::prelude::*;;
 //!
 //! rsx! {
 //!     Layout {
@@ -34,7 +34,7 @@
 //! }
 //! ```
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{
     AppLayoutClass, ClassesBuilder, UtilityClass, components::Layout as LayoutClass,
 };

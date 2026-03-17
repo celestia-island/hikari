@@ -6,7 +6,7 @@
 
 #[cfg(target_arch = "wasm32")]
 use animation::style::StyleBuilder;
-use dioxus::prelude::*;
+use crate::prelude::*;;
 #[cfg(target_arch = "wasm32")]
 use palette::{墨色, 月白, 粉红, 靛蓝};
 

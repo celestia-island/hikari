@@ -1,7 +1,7 @@
 // hi-components/src/navigation/breadcrumb.rs
 // Breadcrumb component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, components::BreadcrumbClass};
 
 use crate::styled::StyledComponent;

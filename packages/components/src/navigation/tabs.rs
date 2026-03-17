@@ -1,7 +1,7 @@
 // hi-components/src/navigation/tabs.rs
 // Tabs component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 
 use crate::styled::StyledComponent;
 
@@ -101,7 +101,7 @@ impl Default for TabsProps {
 ///
 /// ## Basic Tabs
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Tabs, TabPane};
 ///
 /// fn app() -> Element {
@@ -125,7 +125,7 @@ impl Default for TabsProps {
 ///
 /// ## Tabs with Icons
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Tabs, TabPane};
 ///
 /// fn app() -> Element {

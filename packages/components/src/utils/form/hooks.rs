@@ -3,7 +3,7 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 
 use super::{state::FormState, validators::ValidationSchema};
 
@@ -12,7 +12,7 @@ use super::{state::FormState, validators::ValidationSchema};
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::utils::form::*;
 ///
 /// #[component]

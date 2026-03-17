@@ -1,7 +1,7 @@
 // hi-components/src/data/node.rs
 // TreeNode component for tree data structures
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, TreeNodeClass};
 
 use crate::data::{TreeNodeArrow, TreeNodeContent, TreeNodeLabel};

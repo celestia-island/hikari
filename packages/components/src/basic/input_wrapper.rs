@@ -8,7 +8,7 @@
 // 3. Multiple icons should use consistent spacing (4px gap)
 // 4. Icon sizes: Small(24px), Medium(32px), Large(40px)
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use icons::MdiIcon;
 use palette::classes::{ClassesBuilder, InputWrapperClass, UtilityClass};
 
@@ -176,7 +176,7 @@ pub struct InputWrapperProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{InputWrapper, InputWrapperItem};
 /// use icons::MdiIcon;
 ///

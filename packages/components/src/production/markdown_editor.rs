@@ -1,7 +1,7 @@
 // packages/components/src/production/markdown_editor.rs
 // MarkdownEditor component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use icons::{Icon, MdiIcon};
 use palette::classes::{ClassesBuilder, MarkdownEditorClass, UtilityClass};
 

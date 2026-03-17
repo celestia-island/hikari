@@ -1,7 +1,7 @@
 // hi-components/src/utils/positioning.rs
 // Positioning utility for components (Tooltip, Popover, Dropdown, Select)
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 
 /// Placement position relative to trigger element
 #[derive(Clone, Copy, PartialEq, Debug, Default)]

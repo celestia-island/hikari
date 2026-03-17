@@ -9,7 +9,7 @@
 //! - **Tablet**: 641-1023px
 //! - **Desktop**: ≥1024px
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use wasm_bindgen::prelude::*;
 
 /// Breakpoint definitions for responsive design
@@ -117,7 +117,7 @@ pub fn use_screen_size() -> Signal<ScreenSize> {
 /// # Example
 ///
 /// ```rust,no_run
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::hooks::use_is_mobile;
 ///
 /// fn Sidebar() -> Element {
@@ -140,7 +140,7 @@ pub fn use_is_mobile() -> Memo<bool> {
 /// # Example
 ///
 /// ```rust,no_run
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::hooks::use_is_desktop;
 ///
 /// fn Layout() -> Element {

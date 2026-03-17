@@ -1,7 +1,7 @@
 // packages/components/src/display/tag.rs
 // Tag component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{AlignItems, ClassesBuilder, Display, Flex, Gap, TagClass, UtilityClass};
 
 use crate::styled::StyledComponent;
@@ -17,7 +17,7 @@ pub struct TagComponent;
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Tag, TagVariant};
 ///
 /// fn app() -> Element {

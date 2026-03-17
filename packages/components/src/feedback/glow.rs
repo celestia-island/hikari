@@ -3,7 +3,7 @@
 
 #[cfg(target_arch = "wasm32")]
 use animation::style::StyleBuilder;
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, GlowClass};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;

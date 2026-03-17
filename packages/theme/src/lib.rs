@@ -58,7 +58,7 @@
 //!
 //! ```rust,no_run
 //! use theme::{use_theme, ThemeContext};
-//! use dioxus::prelude::*;
+//! use crate::prelude::*;;
 //!
 //! fn Component() -> Element {
 //!     let theme = use_theme()?;
@@ -100,7 +100,7 @@
 //!
 //! ```rust,no_run
 //! use theme::ThemeProvider;
-//! use dioxus::prelude::*;
+//! use crate::prelude::*;;
 //!
 //! fn App() -> Element {
 //!     let mut theme = use_signal(|| "hikari".to_string());
@@ -201,6 +201,7 @@
 //! }
 //! ```
 
+pub mod prelude;
 pub mod assets;
 pub mod context;
 pub mod provider;

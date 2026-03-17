@@ -1,7 +1,7 @@
 // packages/components/src/display/comment.rs
 // Comment component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, CommentClass, UtilityClass};
 
 use crate::styled::StyledComponent;
@@ -17,7 +17,7 @@ pub struct CommentComponent;
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Comment, CommentProps};
 ///
 /// fn app() -> Element {

@@ -1,7 +1,7 @@
 // packages/components/src/display/timeline.rs
 // Timeline component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, TimelineClass, UtilityClass};
 
 use crate::styled::StyledComponent;
@@ -17,7 +17,7 @@ pub struct TimelineComponent;
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Timeline, TimelineItem, TimelinePosition};
 ///
 /// fn app() -> Element {

@@ -1,7 +1,7 @@
 // hi-components/src/data/collapse.rs
 // Animated collapse/expand component for tree nodes
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 
 use crate::styled::StyledComponent;
 

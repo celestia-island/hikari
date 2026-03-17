@@ -1,7 +1,7 @@
 // hi-components/src/data/node_label.rs
 // TreeNodeLabel component - label text for tree nodes
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 
 /// Label text for tree nodes
 #[derive(Clone, PartialEq, Props, Default)]

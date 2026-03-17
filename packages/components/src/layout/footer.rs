@@ -1,7 +1,7 @@
 // hi-components/src/layout/footer.rs
 // Footer component for application footer
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, components::Footer as FooterClass};
 
 #[derive(Clone, PartialEq, Props)]
@@ -20,7 +20,7 @@ pub struct FooterProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::Footer;
 ///
 /// fn app() -> Element {

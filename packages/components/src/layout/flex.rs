@@ -1,7 +1,7 @@
 // hi-components/src/layout/flex.rs
 // FlexBox component for flexible layouts
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{
     AlignItems, ClassesBuilder, Display, Flex as FlexUtil, FlexDirection, FlexWrap, JustifyContent,
 };

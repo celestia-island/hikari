@@ -3,7 +3,7 @@
 
 use std::rc::Rc;
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{CellClass, ClassesBuilder};
 
 use super::column::ColumnDef;
@@ -75,7 +75,7 @@ impl std::fmt::Debug for CellProps {
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Cell, ColumnDef, ColumnAlign};
 ///
 /// fn app() -> Element {
@@ -149,7 +149,7 @@ pub type CellRenderer = Rc<dyn Fn(&str, usize, usize) -> Element>;
 /// # Examples
 ///
 /// ```rust
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::cell::create_cell_renderer;
 ///
 /// let renderer = create_cell_renderer(|value, row, col| {

@@ -2,7 +2,7 @@
 // NumberInput component with Arknights + FUI styling
 // Uses InputWrapper for consistent layout
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use icons::MdiIcon;
 use palette::classes::{ClassesBuilder, Display, NumberInputClass};
 

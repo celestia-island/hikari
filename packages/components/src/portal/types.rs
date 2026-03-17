@@ -1,7 +1,7 @@
 // hi-components/src/portal/types.rs
 // Type definitions for the portal system
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 
 use crate::{
     feedback::PopoverPlacement,

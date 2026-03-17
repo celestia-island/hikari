@@ -1,7 +1,7 @@
 // hi-components/src/feedback/popover.rs
 // Popover component with smart positioning via Portal system
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, Display, Position};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;

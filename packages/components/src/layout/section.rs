@@ -5,7 +5,7 @@
 //!
 //! ```rust
 //! use hikari_components::layout::Section;
-//! use dioxus::prelude::*;
+//! use crate::prelude::*;;
 //!
 //! rsx! {
 //!     Section {
@@ -16,7 +16,7 @@
 //! }
 //! ```
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, SectionClass, UtilityClass};
 
 /// Section component - Content section with optional header

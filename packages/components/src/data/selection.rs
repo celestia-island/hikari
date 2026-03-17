@@ -1,7 +1,7 @@
 // hi-components/src/data/selection.rs
 // Selection component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{ClassesBuilder, SelectionClassNew, UtilityClass};
 
 use crate::styled::StyledComponent;

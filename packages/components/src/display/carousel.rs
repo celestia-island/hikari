@@ -1,7 +1,7 @@
 // display/carousel.rs
 // Carousel component - Image/content slider with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use palette::classes::{CarouselClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;

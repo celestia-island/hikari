@@ -7,7 +7,7 @@
 // - Fully customizable through props and classes
 // - Styles via SCSS with CSS variables for theming
 
-use dioxus::prelude::*;
+use crate::prelude::*;;
 use icons::{Icon, MdiIcon};
 use palette::classes::{ClassesBuilder, SidebarClass, UtilityClass};
 
@@ -61,7 +61,7 @@ impl Default for SidebarProps {
 ///
 /// ## Basic Sidebar
 /// ```rust,ignore
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Sidebar, SidebarItem};
 /// use dioxus_router::components::Link;
 ///
@@ -86,7 +86,7 @@ impl Default for SidebarProps {
 ///
 /// ## Nested Sections
 /// ```rust,ignore
-/// use dioxus::prelude::*;
+/// use crate::prelude::*;;
 /// use hikari_components::{Sidebar, SidebarSection, SidebarItem};
 ///
 /// fn app() -> Element {

@@ -166,29 +166,31 @@ pub fn Filter(props: FilterProps) -> Element {
                         }
                     }
 
-                    div { class: FilterClass::FilterOptions.as_class(),
-                        {props.filters.iter().map(|option| {
-                            let opt_value = option.value.clone();
-                            let label_text = option.label.clone();
-                            let checked = is_selected(&option.value);
+                    let filter_options: Vec<Element> = props.filters.iter().map(|option| {
+                        let opt_value = option.value.clone();
+                        let label_text = option.label.clone();
+                        let checked = is_selected(&option.value);
 
-                            rsx! {
-                                label {
-                                    class: FilterClass::FilterOption.as_class(),
-                                    onclick: move |_| handle_select(opt_value.clone()),
+                        rsx! {
+                            label {
+                                class: FilterClass::FilterOption.as_class(),
+                                onclick: move |_| handle_select(opt_value.clone()),
 
-                                    input {
-                                        class: FilterClass::FilterCheckbox.as_class(),
-                                        r#type: "checkbox",
-                                        checked: checked,
-                                    }
+                                input {
+                                    class: FilterClass::FilterCheckbox.as_class(),
+                                    r#type: "checkbox",
+                                    checked: checked,
+                                }
 
-                                    span { class: FilterClass::FilterLabel.as_class(),
-                                        "{label_text}"
-                                    }
+                                span { class: FilterClass::FilterLabel.as_class(),
+                                    "{label_text}"
                                 }
                             }
-                        })}
+                        }
+                    }).collect();
+
+                    div { class: FilterClass::FilterOptions.as_class(),
+                        ..filter_options
                     }
 
                     div { class: FilterClass::FilterFooter.as_class(),

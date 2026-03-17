@@ -341,7 +341,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 div { class: size_selector_classes,
                     select {
                         class: "hi-select hi-select-sm",
-                        value: current_size.to_string(),
+                        value: current_size.get().to_string(),
                         onchange: handle_size_change,
                         ..page_size_option_elements
                     }

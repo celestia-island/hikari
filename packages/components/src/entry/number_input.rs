@@ -140,7 +140,7 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
             InputWrapper {
                 left: left_items,
                 right: right_items,
-                input: input_element,
+                input: Some(input_element),
                 size: props.size.to_wrapper_size(),
                 disabled: props.disabled,
                 glow: props.glow,

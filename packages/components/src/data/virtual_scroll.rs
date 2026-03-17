@@ -143,7 +143,7 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
                 onscroll: move |_e: Event| {
                     // TODO: Get scroll position from element via JS interop
                     // For now, use a placeholder value
-                    let scroll_top = 0;
+                    let scroll_top: f64 = 0.0;
                     scroll_position.set(scroll_top);
 
                     if let Some(handler) = props.on_scroll.as_ref() {

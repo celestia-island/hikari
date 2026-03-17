@@ -247,6 +247,10 @@ fn CascaderMenus(
     let mut menus = Vec::new();
 
     while let Some(opts) = current_options {
+        // Only show menus up to and including the active level
+        if level > active_level {
+            break;
+        }
         let opts_clone = opts.clone();
         let selected_at_level = selected_values.get(level).cloned();
 

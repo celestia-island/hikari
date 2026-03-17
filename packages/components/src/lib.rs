@@ -17,6 +17,9 @@ pub mod portal;
 pub mod hooks;
 pub mod utils;
 pub mod styled;
+pub mod style_builder;
+#[cfg(target_arch = "wasm32")]
+pub mod scripts;
 
 // Prelude module
 pub mod prelude;

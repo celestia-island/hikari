@@ -80,12 +80,12 @@ pub fn Container(props: ContainerProps) -> Element {
     let center_style = if props.center {
         "margin-inline-start: auto; margin-inline-end: auto;"
     } else {
-        ""
+{ "" }
     };
 
     rsx! {
         div {
-            class: "{container_classes}",
+            class: container_classes,
             style: "max-width: {max_width}; {center_style}",
             { props.children }
         }

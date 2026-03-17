@@ -51,16 +51,16 @@ pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
 
     rsx! {
         div {
-            class: "{container_classes}",
-            style: "{props.style}",
+            class: container_classes,
+            style: props.style,
 
             video {
-                class: "{video_classes}",
-                src: "{props.src}",
+                class: video_classes,
+                src: props.src,
                 poster: "{props.poster}",
                 autoplay: props.autoplay,
                 controls: props.controls,
-                loop: props.loop_,
+                r#loop: props.loop_,
                 muted: props.muted,
 
                 // Your browser does not support the video tag.

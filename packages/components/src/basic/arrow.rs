@@ -70,7 +70,7 @@ pub fn Arrow(
 
     rsx! {
         span {
-            class: "{classes}",
+            class: classes,
             Icon {
                 icon: MdiIcon::ChevronRight,
                 size,

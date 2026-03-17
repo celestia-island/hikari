@@ -81,7 +81,7 @@ pub fn Textarea(props: TextareaProps) -> Element {
 
     rsx! {
         textarea {
-            class: "{textarea_classes}",
+            class: textarea_classes,
             disabled: props.disabled,
             readonly: props.readonly,
             placeholder: props.placeholder.unwrap_or_default(),

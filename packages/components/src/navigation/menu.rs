@@ -1,7 +1,7 @@
 // hi-components/src/navigation/menu.rs
 // Menu component with Arknights + FUI styling
 
-use animation::style::{CssProperty, StyleStringBuilder};
+use crate::style_builder::{CssProperty, StyleStringBuilder};
 use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, MenuClass};
 
@@ -235,7 +235,7 @@ pub fn Menu(props: MenuProps) -> Element {
 
     rsx! {
         ul {
-            class: "{menu_classes}",
+            class: menu_classes,
             role: "menu",
 
             { props.children }
@@ -271,9 +271,9 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
 
     let item_content = rsx! {
         li {
-            class: "{item_classes}",
+            class: item_classes,
             role: "menuitem",
-            "data-key": "{props.item_key}",
+            "data-key": props.item_key,
             aria_disabled: props.disabled.to_string(),
             onclick: move |e| {
                 if !props.disabled {
@@ -303,7 +303,7 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
         let wrapper_class = format!("hi-menu-item-wrapper {}", props.height.as_str());
         rsx! {
             div {
-                class: "{wrapper_class}",
+                class: wrapper_class,
                 style: "width: 100%; position: relative;",
                 Glow {
                     block: true,
@@ -375,7 +375,7 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
     let wrapper_class = format!("hi-menu-item-wrapper {}", props.height.as_str());
     let title_with_glow = rsx! {
         div {
-            class: "{wrapper_class}",
+            class: wrapper_class,
             style: "width: 100%; position: relative;",
             Glow {
                 blur: GlowBlur::Medium,
@@ -388,15 +388,15 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
 
     rsx! {
         li {
-            class: "{submenu_classes}",
+            class: submenu_classes,
             role: "none",
-            "data-key": "{props.item_key}",
+            "data-key": props.item_key,
 
             { title_with_glow }
 
             ul {
-                class: "{list_classes}",
-                style: "{list_style}",
+                class: list_classes,
+                style: list_style,
                 role: "menu",
                 "aria-hidden": "{!is_open.get()}",
 

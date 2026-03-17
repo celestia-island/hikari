@@ -181,10 +181,10 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
     };
 
     rsx! {
-        div { class: "{wrapper_classes}", style: "{props.style}",
+        div { class: wrapper_classes, style: props.style,
 
             div {
-                class: "{drag_classes}",
+                class: drag_classes,
                 ondragover: on_drag_over,
                 ondragleave: on_drag_leave,
                 ondrop: on_drop,

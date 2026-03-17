@@ -37,8 +37,8 @@ pub fn TreeNodeContent(props: TreeNodeContentProps) -> Element {
 
     rsx! {
         div {
-            class: "{full_class}",
-            style: "{indentation_style}",
+            class: full_class,
+            style: indentation_style,
             onclick: move |e| {
                 if !props.disabled
                     && let Some(handler) = props.onclick.as_ref() {

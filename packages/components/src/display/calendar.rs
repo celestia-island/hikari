@@ -144,20 +144,20 @@ pub fn Calendar(props: CalendarProps) -> Element {
 
     rsx! {
         div {
-            class: "{calendar_classes}",
-            style: "{props.style}",
+            class: calendar_classes,
+            style: props.style,
 
             div {
-                class: "{cal_class}",
+                class: cal_class,
 
                 div {
-                    class: "{header_class}",
+                    class: header_class,
 
                     div {
-                        class: "{nav_class}",
+                        class: nav_class,
 
                         button {
-                            class: "{nav_btn_class}",
+                            class: nav_btn_class,
                             disabled: year <= props.min_year && month == 1,
                             onclick: move |_| {
                                 let ny = if month == 1 { year - 1 } else { year };
@@ -171,7 +171,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
                         }
 
                         button {
-                            class: "{nav_btn_class}",
+                            class: nav_btn_class,
                             onclick: move |_| {
                                 let ny = if month == 1 { year - 1 } else { year };
                                 let nm = if month == 1 { 12 } else { month - 1 };
@@ -184,7 +184,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
                         }
 
                         button {
-                            class: "{nav_btn_class}",
+                            class: nav_btn_class,
                             onclick: move |_| {
                                 let (today_year, today_month) = get_current_date();
                                 if today_year >= props.min_year && today_year <= props.max_year {
@@ -196,7 +196,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
                         }
 
                         button {
-                            class: "{nav_btn_class}",
+                            class: nav_btn_class,
                             onclick: move |_| {
                                 let ny = if month == 12 { year + 1 } else { year };
                                 let nm = if month == 12 { 1 } else { month + 1 };
@@ -209,7 +209,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
                         }
 
                         button {
-                            class: "{nav_btn_class}",
+                            class: nav_btn_class,
                             disabled: year >= props.max_year && month == 12,
                             onclick: move |_| {
                                 let ny = if month == 12 { year + 1 } else { year };
@@ -224,27 +224,29 @@ pub fn Calendar(props: CalendarProps) -> Element {
                     }
 
                     div {
-                        class: "{title_class}",
-                        "{year}年 {MONTH_NAMES[(month - 1) as usize]}"
+                        class: title_class,
+                        {format!("{}年 {}", year, MONTH_NAMES[(month - 1) as usize])}
                     }
                 }
 
                 div {
-                    class: "{weekdays_class}",
-                    for weekday in WEEKDAY_NAMES {
+                    class: weekdays_class,
+                    for (idx, weekday) in WEEKDAY_NAMES.into_iter().enumerate() {
                         div {
-                            class: "{weekday_class}",
-                            "{weekday}"
+                            key: idx,
+                            class: weekday_class,
+                            weekday
                         }
                     }
                 }
 
                 div {
-                    class: "{grid_class}",
+                    class: grid_class,
 
                     for _ in 0..first_day {
                         div {
-                            class: "{day_cell_class}",
+                            class: day_cell_class,
+                            ""
                         }
                     }
 
@@ -256,8 +258,8 @@ pub fn Calendar(props: CalendarProps) -> Element {
                             selected_day: selected_day.get(),
                             onclick: move |d: u32| {
                                 *selected_day.write() = d;
-                                if let Some(ref cb) = props.on_date_select {
-                                    cb.call((year, month, d));
+                                if props.on_date_select.is_some() {
+                                    props.on_date_select.as_ref().unwrap().call((year, month, d));
                                 }
                             },
                         }
@@ -292,11 +294,11 @@ fn CalendarDayCell(props: CalendarDayCellProps) -> Element {
 
     rsx! {
         div {
-            class: "{cell_cls}",
+            class: cell_cls,
             onclick: move |_| props.onclick.call(props.day),
             div {
-                class: "{day_classes}",
-                "{props.day}"
+                class: day_classes,
+                {props.day}
             }
         }
     }

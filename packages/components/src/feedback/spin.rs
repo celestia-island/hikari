@@ -79,10 +79,10 @@ pub fn Spin(props: SpinProps) -> Element {
     };
 
     rsx! {
-        div { class: "{spin_classes}",
+        div { class: spin_classes,
             div { class: "{SpinClass::Spinner.as_class()}" }
             if !tip_text.is_empty() {
-                div { class: "{SpinClass::Tip.as_class()}",
+                div { class: SpinClass::Tip.as_class(),
                     "{tip_text}"
                 }
             }

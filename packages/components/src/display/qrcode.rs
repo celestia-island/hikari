@@ -84,24 +84,24 @@ pub fn QRCode(props: QRCodeProps) -> Element {
 
     rsx! {
         div {
-            class: "{container_classes}",
-            style: "{props.style}",
+            class: container_classes,
+            style: props.style,
 
             if let Some(ref title) = props.title {
                 h4 {
-                    class: "{QRCodeClass::Title.as_class()}",
+                    class: QRCodeClass::Title.as_class(),
                     "{title}"
                 }
             }
 
             div {
-                class: "{QRCodeClass::Wrapper.as_class()}",
+                class: QRCodeClass::Wrapper.as_class(),
                 style: "width: {size_px}; height: {size_px};",
 
                 canvas {
-                    class: "{QRCodeClass::Image.as_class()}",
-                    width: "{size}",
-                    height: "{size}",
+                    class: QRCodeClass::Image.as_class(),
+                    width: size,
+                    height: size,
 
                     onmounted: move |evt| {
                         if drawn.get() { return; }

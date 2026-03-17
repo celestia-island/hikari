@@ -67,7 +67,7 @@ pub struct UserGuideProps {
 #[component]
 pub fn UserGuide(props: UserGuideProps) -> Element {
     if !props.visible || props.steps.is_empty() {
-        return rsx! {};
+        return VNode::empty();
     }
 
     let current_step = props.current.min(props.steps.len() - 1);
@@ -123,57 +123,58 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
         }
     };
 
-    rsx! {
-        // Overlay mask
-        div { class: "{UserGuideClass::Overlay.as_class()}" }
+    // Build overlay and guide separately, then combine as fragment
+    let overlay = rsx! {
+        div { class: UserGuideClass::Overlay.as_class() }
+    };
 
-        // Guide tooltip
-        div { class: "{container_classes}",
+    let guide_tooltip = rsx! {
+        div { class: container_classes,
             // Arrow
-            div { class: "{UserGuideClass::Arrow.as_class()}" }
+            div { class: UserGuideClass::Arrow.as_class() }
 
             // Content
-            div { class: "{UserGuideClass::Content.as_class()}",
+            div { class: UserGuideClass::Content.as_class(),
                 // Header with step counter
-                div { class: "{UserGuideClass::Header.as_class()}",
-                    span { class: "{UserGuideClass::Title.as_class()}",
-                        "{step.title}"
+                div { class: UserGuideClass::Header.as_class(),
+                    span { class: UserGuideClass::Title.as_class(),
+                        {step.title.clone()}
                     }
                     if props.show_progress {
-                        span { class: "{UserGuideClass::Counter.as_class()}",
-                            "{current_step + 1} / {total_steps}"
+                        span { class: UserGuideClass::Counter.as_class(),
+                            {format!("{} / {}", current_step + 1, total_steps)}
                         }
                     }
                 }
 
                 // Description
-                div { class: "{UserGuideClass::Description.as_class()}",
-                    "{step.description}"
+                div { class: UserGuideClass::Description.as_class(),
+                    {step.description.clone()}
                 }
 
                 // Footer with controls
-                div { class: "{UserGuideClass::Footer.as_class()}",
+                div { class: UserGuideClass::Footer.as_class(),
                     // Skip button
                     if props.skippable {
                         button {
-                            class: "{UserGuideClass::SkipButton.as_class()}",
+                            class: UserGuideClass::SkipButton.as_class(),
                             onclick: handle_skip,
                             "Skip"
                         }
                     }
 
                     // Navigation
-                    div { class: "{UserGuideClass::Navigation.as_class()}",
+                    div { class: UserGuideClass::Navigation.as_class(),
                         if !is_first_step {
                             button {
-                                class: "{UserGuideClass::NavButton.as_class()}",
+                                class: UserGuideClass::NavButton.as_class(),
                                 onclick: handle_prev,
                                 Icon { icon: MdiIcon::ChevronLeft, size: 18 }
                             }
                         }
 
                         button {
-                            class: "{UserGuideClass::NavButton.as_class()} {UserGuideClass::PrimaryButton.as_class()}",
+                            class: format!("{} {}", UserGuideClass::NavButton.as_class(), UserGuideClass::PrimaryButton.as_class()),
                             onclick: handle_next,
                             if is_last_step {
                                 "Finish"
@@ -190,20 +191,22 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
 
             // Progress dots
             if props.show_progress && total_steps > 1 {
-                div { class: "{UserGuideClass::Progress.as_class()}",
+                div { class: UserGuideClass::Progress.as_class(),
                     for i in 0..total_steps {
                         div {
                             class: if i == current_step {
-                                "{UserGuideClass::ProgressDot.as_class()} {UserGuideClass::ProgressDotActive.as_class()}"
+                                format!("{} {}", UserGuideClass::ProgressDot.as_class(), UserGuideClass::ProgressDotActive.as_class())
                             } else {
-                                "{UserGuideClass::ProgressDot.as_class()}"
+                                UserGuideClass::ProgressDot.as_class()
                             },
                         }
                     }
                 }
             }
         }
-    }
+    };
+
+    VNode::Fragment(vec![overlay, guide_tooltip])
 }
 
 impl StyledComponent for UserGuideComponent {

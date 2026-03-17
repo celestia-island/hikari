@@ -59,23 +59,30 @@ pub fn Progress(props: ProgressProps) -> Element {
         ProgressStatus::Active => "hi-progress-active",
     };
 
+    let combined_classes = format!("{wrapper_classes} {status_class}");
+    let width_style = format!("width: {percentage:.0}%;");
+    let stroke_dasharray_val = "339.292";
+    let stroke_dashoffset_val = format!("{:.3}", 339.292 * (1.0 - percentage / 100.0));
+    let percentage_text = format!("{percentage:.0}%");
+
     rsx! {
         div {
-            class: "{wrapper_classes} {status_class}",
-            style: "{props.style}",
+            class: combined_classes,
+            style: props.style,
 
             if props.progress_type == ProgressType::Linear {
                 div { class: "hi-progress-outer",
                     div { class: "hi-progress-inner",
                         div {
                             class: "hi-progress-bg",
-                            style: "width: {percentage}%;",
+                            style: width_style,
+                            ""
                         }
                     }
 
                     if props.show_info {
                         span { class: "hi-progress-text",
-                            "{percentage:.0}%"
+                            {percentage_text}
                         }
                     }
                 }
@@ -104,15 +111,15 @@ pub fn Progress(props: ProgressProps) -> Element {
                             stroke_width: "6",
                             fill: "none",
                             stroke_linecap: "round",
-                            stroke_dasharray: "{339.292}",
-                            stroke_dashoffset: "{339.292 * (1.0 - percentage / 100.0)}",
+                            stroke_dasharray: stroke_dasharray_val,
+                            stroke_dashoffset: stroke_dashoffset_val,
                             transform: "rotate(-90 60 60)",
                         }
                     }
 
                     if props.show_info {
                         span { class: "hi-progress-circle-text",
-                            "{percentage:.0}%"
+                            {percentage_text}
                         }
                     }
                 }

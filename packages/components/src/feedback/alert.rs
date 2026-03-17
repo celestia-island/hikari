@@ -105,6 +105,11 @@ pub fn Alert(props: AlertProps) -> Element {
 
     let icon = props.icon.as_ref().or(default_icon.as_ref());
 
+    let icon_wrapper_class = AlertClass::AlertIconWrapper.as_class();
+    let content_class = AlertClass::AlertContent.as_class();
+    let title_class = AlertClass::AlertTitle.as_class();
+    let description_class = AlertClass::AlertDescription.as_class();
+
     rsx! {
         Glow {
             class: "hi-alert-glow-wrapper",
@@ -112,22 +117,22 @@ pub fn Alert(props: AlertProps) -> Element {
             color: glow_color,
             intensity: GlowIntensity::Soft,
             div {
-                class: "{alert_classes}",
+                class: alert_classes,
 
-                if let Some(icon_element) = icon {
-                    div { class: "{AlertClass::AlertIconWrapper.as_class()}",
-                        { icon_element }
+                if icon.is_some() {
+                    div { class: icon_wrapper_class,
+                        { icon.as_ref().unwrap() }
                     }
                 }
 
-                div { class: "{AlertClass::AlertContent.as_class()}",
+                div { class: content_class,
 
-                    if let Some(title) = props.title {
-                        div { class: "{AlertClass::AlertTitle.as_class()}", "{title}" }
+                    if props.title.is_some() {
+                        div { class: title_class, "{props.title.as_ref().unwrap()}" }
                     }
 
-                    if let Some(description) = props.description {
-                        div { class: "{AlertClass::AlertDescription.as_class()}", "{description}" }
+                    if props.description.is_some() {
+                        div { class: description_class, "{props.description.as_ref().unwrap()}" }
                     }
                 }
 
@@ -139,8 +144,8 @@ pub fn Alert(props: AlertProps) -> Element {
                         class: "hi-alert-close".to_string(),
                         glow: false,
                         onclick: move |e| {
-                            if let Some(handler) = props.on_close.as_ref() {
-                                handler.call(e);
+                            if props.on_close.is_some() {
+                                props.on_close.as_ref().unwrap().call(e);
                             }
                         },
                     }

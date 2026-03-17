@@ -5,7 +5,7 @@
 //! Includes a 60-second rotating gradient animation with configurable breathing.
 
 #[cfg(target_arch = "wasm32")]
-use animation::style::StyleBuilder;
+use crate::style_builder::StyleBuilder;
 use crate::prelude::*;
 #[cfg(target_arch = "wasm32")]
 use hikari_palette::{墨色, 月白, 粉红, 靛蓝};

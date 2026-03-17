@@ -168,7 +168,7 @@ impl ColumnDef {
         if self.sortable {
             "hi-column-sortable"
         } else {
-            ""
+{ "" }
         }
     }
 
@@ -176,7 +176,7 @@ impl ColumnDef {
         if self.resizable {
             "hi-column-resizable"
         } else {
-            ""
+{ "" }
         }
     }
 

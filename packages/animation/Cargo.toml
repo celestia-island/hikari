@@ -17,3 +17,5 @@ tairitsu-hooks = { path = "../../../tairitsu/packages/hooks" }
 
 [features]
 default = []
+wasm = []
+dioxus = []

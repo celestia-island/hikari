@@ -8,13 +8,17 @@
 // integrating with syntect.
 
 use crate::prelude::*;
-use gloo::timers::callback::Timeout;
 use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
+
+#[cfg(target_arch = "wasm32")]
+use gloo::timers::callback::Timeout;
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
 use crate::styled::StyledComponent;
 
-// Helper function to copy text to clipboard
+// Helper function to copy text to clipboard (WASM only)
+#[cfg(target_arch = "wasm32")]
 #[wasm_bindgen(inline_js = r#"
 export function copyToClipboard(text) {
     if (navigator.clipboard && window.isSecureContext) {
@@ -38,12 +42,18 @@ extern "C" {
     fn copyToClipboard(text: &str) -> js_sys::Promise;
 }
 
-// Rust wrapper for the JS function
+// WASM implementation
+#[cfg(target_arch = "wasm32")]
 fn copy_to_clipboard(text: &str) -> bool {
     let _promise = copyToClipboard(text);
-    // We can't easily await in this context, so assume success
-    // The actual copy happens asynchronously
     true
+}
+
+// Non-WASM stub
+#[cfg(not(target_arch = "wasm32"))]
+fn copy_to_clipboard(_text: &str) -> bool {
+    // Clipboard not available on non-WASM targets
+    false
 }
 
 pub struct CodeHighlightComponent;
@@ -111,6 +121,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
     };
 
     let code_for_copy = props.code.clone();
+    let language = props.language.clone();
 
     // Computed button class with copied state
     let button_class = {
@@ -129,56 +140,69 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         "复制"
     };
 
+    let language_class = format!("language-{}", language);
+
     rsx! {
         div {
-            class: "{container_classes}",
+            class: container_classes,
 
             div {
-                class: "{header_classes}",
+                class: header_classes,
 
                 div {
-                    class: "{language_classes}",
-                    "{props.language}"
+                    class: language_classes,
+                    {language}
                 }
 
                 if props.copyable {
                     button {
-                        class: "{button_class}",
-                        onclick: move |_| {
-                            if copy_to_clipboard(&code_for_copy) {
-                                copied.set(true);
-                                let mut copied_signal = copied;
-                                Timeout::new(2000, move || {
-                                    copied_signal.set(false);
-                                }).forget();
+                        class: button_class,
+                        onclick: {
+                            let code_for_copy = code_for_copy.clone();
+                            move |_| {
+                                #[cfg(target_arch = "wasm32")]
+                                {
+                                    if copy_to_clipboard(&code_for_copy) {
+                                        copied.set(true);
+                                        let mut copied_signal = copied;
+                                        Timeout::new(2000, move || {
+                                            copied_signal.set(false);
+                                        }).forget();
+                                    }
+                                }
+                                #[cfg(not(target_arch = "wasm32"))]
+                                {
+                                    let _ = code_for_copy;
+                                    let _ = copied;
+                                }
                             }
                         },
-                        "{button_text}"
+                        {button_text}
                     }
                 }
             }
 
             div {
-                class: "{content_classes}",
-                style: "{max_height_style}",
+                class: content_classes,
+                style: max_height_style,
 
                 if props.line_numbers {
                     div {
-                        class: "{line_classes}",
+                        class: line_classes,
                         for i in 1..=line_count {
                             div {
                                 class: "hi-code-highlight-line-number",
-                                "{i}"
+                                i
                             }
                         }
                     }
                 }
 
                 pre {
-                    class: "{code_classes}",
+                    class: code_classes,
                     code {
-                        class: "language-{props.language}",
-                        "{props.code}"
+                        class: language_class,
+                        {props.code}
                     }
                 }
             }
@@ -307,7 +331,7 @@ impl StyledComponent for CodeHighlightComponent {
 }
 
 .token-operator,
-.token.entity,
+.token-entity,
 .token.url,
 .language-css .token.string,
 .style .token.string {

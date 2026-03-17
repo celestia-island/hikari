@@ -66,38 +66,54 @@ pub fn Divider(props: DividerProps) -> Element {
         base_classes,
         orientation_class,
         if props.text.is_empty() {
-            ""
+{ "" }
         } else {
             "hi-divider-with-text"
         },
         text_position_class
     );
 
+    let full_classes = format!("{} {}", divider_classes, props.class);
+
     if props.text.is_empty() {
         rsx! {
             div {
-                class: "{divider_classes} {props.class}",
+                class: full_classes,
                 div { class: "hi-divider-line" }
             }
         }
     } else {
         let show_text = props.text_position != DividerTextPosition::None;
+        let show_left_line = show_text && props.text_position != DividerTextPosition::Right;
+        let show_right_line = show_text && props.text_position != DividerTextPosition::Left;
+
+        // Build left line
+        let left_line = if show_left_line {
+            Some(rsx! { div { class: "hi-divider-line" } })
+        } else {
+            None
+        };
+
+        // Build text
+        let text_el = if show_text {
+            Some(rsx! { span { class: "hi-divider-text", "{props.text.clone()}" } })
+        } else {
+            None
+        };
+
+        // Build right line
+        let right_line = if show_right_line {
+            Some(rsx! { div { class: "hi-divider-line" } })
+        } else {
+            None
+        };
 
         rsx! {
             div {
-                class: "{divider_classes} {props.class}",
-
-                if show_text && props.text_position != DividerTextPosition::Right {
-                    div { class: "hi-divider-line" }
-                }
-
-                if show_text {
-                    span { class: "hi-divider-text", "{props.text}" }
-                }
-
-                if show_text && props.text_position != DividerTextPosition::Left {
-                    div { class: "hi-divider-line" }
-                }
+                class: full_classes,
+                {left_line.unwrap_or_else(VNode::empty)}
+                {text_el.unwrap_or_else(VNode::empty)}
+                {right_line.unwrap_or_else(VNode::empty)}
             }
         }
     }

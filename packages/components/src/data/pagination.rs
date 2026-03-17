@@ -264,28 +264,28 @@ pub fn Pagination(props: PaginationProps) -> Element {
     };
 
     rsx! {
-        div { class: "{container_classes}",
+        div { class: container_classes,
 
             if props.show_total {
-                div { class: "{total_classes}",
-                    "{start}-{end} of {total_items}"
+                div { class: total_classes,
+                    {format!("{start}-{end} of {total_items}")}
                 }
             }
 
             if props.show_size_changer {
-                div { class: "{size_selector_classes}",
+                div { class: size_selector_classes,
                     select {
                         class: "hi-select hi-select-sm",
-                        value: "{current_size}",
+                        value: current_size.to_string(),
                         onchange: handle_size_change,
                         for size in props.page_size_options.iter() {
-                            option { value: "{size}", "{size} / page" }
+                            option { value: size.to_string(), "{size} / page" }
                         }
                     }
                 }
             }
 
-            div { class: "{pages_container_classes}",
+            div { class: pages_container_classes,
 
                 // Previous button
                 Glow {
@@ -293,7 +293,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                     color: GlowColor::Primary,
                     intensity: GlowIntensity::Dim,
                     button {
-                        class: "{prev_classes}",
+                        class: prev_classes,
                         disabled: current_page.get() <= 1,
                         onclick: handle_prev,
                         Arrow {
@@ -316,7 +316,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                         .add_if(PaginationClass::PaginationActive, || i == current_page.get())
                                         .build(),
                                     onclick: make_page_handler(i),
-                                    "{i}"
+                                    i
                                 }
                             }
                         }
@@ -384,7 +384,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                     .add_if(PaginationClass::PaginationActive, || i == current_page.get())
                                     .build(),
                                 onclick: make_page_handler(i),
-                                "{i}"
+                                {i}
                             }
                         }
                     }
@@ -430,7 +430,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                 .add_if(PaginationClass::PaginationActive, || total_pages == current_page.get())
                                 .build(),
                             onclick: make_page_handler(total_pages),
-                            "{total_pages}"
+                            {total_pages}
                         }
                         }
                     }
@@ -442,7 +442,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                     color: GlowColor::Primary,
                     intensity: GlowIntensity::Dim,
                     button {
-                        class: "{next_classes}",
+                        class: next_classes,
                         disabled: current_page.get() >= total_pages,
                         onclick: handle_next,
                         Arrow {

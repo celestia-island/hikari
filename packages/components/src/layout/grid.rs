@@ -51,7 +51,7 @@ pub fn Grid(
 
     rsx! {
         div {
-            class: "{classes}",
+            class: classes,
             style: format!("grid-template-columns: repeat({columns}, minmax(0, 1fr));"),
             { children }
         }
@@ -115,7 +115,7 @@ pub fn Col(
 
     rsx! {
         div {
-            class: "{classes}",
+            class: classes,
             style: style,
             { children }
         }
@@ -193,7 +193,7 @@ pub fn Row(
 
     rsx! {
         div {
-            class: "{classes}",
+            class: classes,
             style: format!("display: flex; {direction_style} {justify_style} {align_style} {wrap_style} {style}"),
             { children }
         }

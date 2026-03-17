@@ -86,7 +86,7 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
 
     rsx! {
         div {
-            class: "{container_classes}",
+            class: container_classes,
 
             // Zoom out button
             button {
@@ -102,7 +102,7 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
 
             // Zoom percentage display
             if props.show_percentage {
-                div { class: "{ZoomControlsClass::Percentage.as_class()}",
+                div { class: ZoomControlsClass::Percentage.as_class(),
                     "{zoom.get()}%"
                 }
             }
@@ -121,7 +121,7 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
 
             // Reset button
             button {
-                class: "{ZoomControlsClass::Button.as_class()}",
+                class: ZoomControlsClass::Button.as_class(),
                 onclick: handle_reset,
                 title: "Reset to 100%",
                 Icon { icon: MdiIcon::Magnify, size: 18 }

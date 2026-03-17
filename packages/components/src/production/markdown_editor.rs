@@ -193,63 +193,63 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
     rsx! {
         div {
-            class: "{container_classes}",
-            style: "{height_style}",
+            class: container_classes,
+            style: height_style,
 
             // Toolbar
             if props.toolbar {
-                div { class: "{MarkdownEditorClass::Toolbar.as_class()}",
+                div { class: MarkdownEditorClass::Toolbar.as_class(),
                     // Format buttons
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.as_class(),
                         onclick: insert_bold,
                         title: "Bold",
                         Icon { icon: MdiIcon::FormatBold, size: 18 }
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.as_class(),
                         onclick: insert_italic,
                         title: "Italic",
                         Icon { icon: MdiIcon::FormatItalic, size: 18 }
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.as_class(),
                         onclick: insert_heading,
                         title: "Heading",
                         "H"
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.as_class(),
                         onclick: insert_code,
                         title: "Code Block",
                         Icon { icon: MdiIcon::Code, size: 18 }
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.as_class(),
                         onclick: insert_link,
                         title: "Link",
                         "🔗"
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.as_class(),
                         onclick: insert_image,
                         title: "Image",
                         Icon { icon: MdiIcon::Image, size: 18 }
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.as_class(),
                         onclick: insert_list,
                         title: "List",
                         Icon { icon: MdiIcon::FormatListBulleted, size: 18 }
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.as_class(),
                         onclick: insert_numbered,
                         title: "Numbered List",
                         Icon { icon: MdiIcon::FormatListNumbered, size: 18 }
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.as_class(),
                         onclick: insert_quote,
                         title: "Quote",
                         "\""
@@ -289,18 +289,18 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
             }
 
             // Editor area
-            div { class: "{MarkdownEditorClass::Content.as_class()}",
+            div { class: MarkdownEditorClass::Content.as_class(),
                 match current_mode.get() {
                     MarkdownEditorMode::Edit => rsx! {
                         textarea {
-                            class: "{MarkdownEditorClass::Textarea.as_class()}",
-                            placeholder: "{props.placeholder}",
+                            class: MarkdownEditorClass::Textarea.as_class(),
+                            placeholder: props.placeholder,
                             value: "{content}",
                             oninput: handle_input,
                         }
                     },
                     MarkdownEditorMode::Preview => rsx! {
-                        div { class: "{MarkdownEditorClass::Preview.as_class()}",
+                        div { class: MarkdownEditorClass::Preview.as_class(),
                             // Basic markdown rendering (simplified)
                             div {
                                 dangerous_inner_html: "{render_markdown_simple(&content.get())}",
@@ -308,10 +308,10 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                         }
                     },
                     MarkdownEditorMode::Split => rsx! {
-                        div { class: "{MarkdownEditorClass::SplitContainer.as_class()}",
+                        div { class: MarkdownEditorClass::SplitContainer.as_class(),
                             textarea {
                                 class: "{MarkdownEditorClass::Textarea.as_class()} {MarkdownEditorClass::SplitPane.as_class()}",
-                                placeholder: "{props.placeholder}",
+                                placeholder: props.placeholder,
                                 value: "{content}",
                                 oninput: handle_input,
                             }

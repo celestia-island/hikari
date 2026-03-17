@@ -63,37 +63,61 @@ pub fn Card(props: CardProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let content = rsx! {
-        // Glow overlay (background layer)
-        // Cards always use the subtle (Dim) intensity for a soft, elegant look
-        if props.glow {
+    let has_title = props.title.is_some();
+    let has_extra = props.extra.is_some();
+
+    // Build the card content as a fragment
+    let glow_overlay = if props.glow {
+        Some(rsx! {
             div {
                 class: "hi-card-glow hi-glow-dim",
                 style: "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: var(--hi-glow-button-primary);",
             }
-        }
-
-        if props.title.is_some() || props.extra.is_some() {
-            div { class: "{CardClass::CardHeader.as_class()}",
-
-                if let Some(title) = props.title {
-                    div { class: "{CardClass::CardTitle.as_class()}", "{title}" }
-                }
-
-                if let Some(extra) = props.extra {
-                    div { class: "{CardClass::CardExtra.as_class()}", {extra} }
-                }
-            }
-        }
-
-        div { class: "{CardClass::CardBody.as_class()}", {props.children} }
+        })
+    } else {
+        None
     };
+
+    // Build title element
+    let title_el = if let Some(title) = &props.title {
+        Some(rsx! { div { class: CardClass::CardTitle.as_class(), "{title}" } })
+    } else {
+        None
+    };
+
+    // Build extra element
+    let extra_el = if let Some(extra) = &props.extra {
+        Some(rsx! { div { class: CardClass::CardExtra.as_class(), {extra.clone()} } })
+    } else {
+        None
+    };
+
+    let header = if has_title || has_extra {
+        Some(rsx! {
+            div { class: CardClass::CardHeader.as_class(),
+                {title_el.unwrap_or_else(VNode::empty)}
+                {extra_el.unwrap_or_else(VNode::empty)}
+            }
+        })
+    } else {
+        None
+    };
+
+    let body = rsx! {
+        div { class: CardClass::CardBody.as_class(), {props.children} }
+    };
+
+    let content = VNode::Fragment(vec![
+        glow_overlay.unwrap_or_else(VNode::empty),
+        header.unwrap_or_else(VNode::empty),
+        body,
+    ]);
 
     #[cfg(target_arch = "wasm32")]
     {
         rsx! {
             div {
-                class: "{card_classes}",
+                class: card_classes,
                 onclick: move |e| {
                     if let Some(handler) = props.onclick.as_ref() {
                         handler.call(e);
@@ -168,7 +192,7 @@ pub fn Card(props: CardProps) -> Element {
     {
         rsx! {
             div {
-                class: "{card_classes}",
+                class: card_classes,
                 onclick: move |e| {
                     if let Some(handler) = props.onclick.as_ref() {
                         handler.call(e);
@@ -222,26 +246,52 @@ pub fn CardHeader(props: CardHeaderProps) -> Element {
         .add_raw(&props.class)
         .build();
 
+    let has_avatar = props.avatar.is_some();
+    let has_title = props.title.is_some();
+    let has_subtitle = props.subtitle.is_some();
+    let has_action = props.action.is_some();
+
+    // Build conditional sections
+    let avatar_el = if has_avatar {
+        let avatar = props.avatar.clone().unwrap();
+        Some(rsx! { div { class: "hi-card-header-avatar", {avatar} } })
+    } else {
+        None
+    };
+
+    let title_el = if has_title {
+        let title = props.title.clone().unwrap();
+        Some(rsx! { div { class: CardClass::CardTitle.as_class(), "{title}" } })
+    } else {
+        None
+    };
+
+    let subtitle_el = if has_subtitle {
+        let subtitle = props.subtitle.clone().unwrap();
+        Some(rsx! { div { class: CardClass::CardSubtitle.as_class(), "{subtitle}" } })
+    } else {
+        None
+    };
+
+    let action_el = if has_action {
+        let action = props.action.clone().unwrap();
+        Some(rsx! { div { class: "hi-card-header-action", {action} } })
+    } else {
+        None
+    };
+
     rsx! {
-        div { class: "{classes}",
+        div { class: classes,
             // Left section: avatar + title/subtitle
             div { class: "hi-card-header-left",
-                if let Some(avatar) = props.avatar {
-                    div { class: "hi-card-header-avatar", {avatar} }
-                }
+                {avatar_el.unwrap_or_else(VNode::empty)}
                 div {
-                    if let Some(title) = props.title {
-                        div { class: "{CardClass::CardTitle.as_class()}", "{title}" }
-                    }
-                    if let Some(subtitle) = props.subtitle {
-                        div { class: "{CardClass::CardSubtitle.as_class()}", "{subtitle}" }
-                    }
+                    {title_el.unwrap_or_else(VNode::empty)}
+                    {subtitle_el.unwrap_or_else(VNode::empty)}
                 }
             }
             // Right section: action buttons
-            if let Some(action) = props.action {
-                div { class: "hi-card-header-action", {action} }
-            }
+            {action_el.unwrap_or_else(VNode::empty)}
         }
     }
 }
@@ -270,7 +320,7 @@ pub fn CardContent(props: CardContentProps) -> Element {
         .build();
 
     rsx! {
-        div { class: "{classes}", {props.children} }
+        div { class: classes, {props.children} }
     }
 }
 
@@ -302,7 +352,7 @@ pub fn CardActions(props: CardActionsProps) -> Element {
         .build();
 
     rsx! {
-        div { class: "{classes}", {props.children} }
+        div { class: classes, {props.children} }
     }
 }
 
@@ -342,10 +392,10 @@ pub fn CardMedia(props: CardMediaProps) -> Element {
 
     rsx! {
         img {
-            class: "{classes}",
-            src: "{props.src}",
-            alt: "{props.alt}",
-            style: "{style}",
+            class: classes,
+            src: props.src,
+            alt: props.alt,
+            style,
         }
     }
 }

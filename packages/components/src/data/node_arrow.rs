@@ -34,7 +34,7 @@ pub fn TreeNodeArrow(props: TreeNodeArrowProps) -> Element {
             if props.expanded {
                 "hi-tree-node-arrow-expanded"
             } else {
-                ""
+{ "" }
             },
             props.class
         );
@@ -49,7 +49,7 @@ pub fn TreeNodeArrow(props: TreeNodeArrowProps) -> Element {
 
         rsx! {
             span {
-                class: "{arrow_class}",
+                class: arrow_class,
                 aria_hidden: "true",
                 onclick: move |e: MouseEvent| {
                     e.stop_propagation();

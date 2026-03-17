@@ -141,26 +141,26 @@ pub fn Carousel(props: CarouselProps) -> Element {
 
     rsx! {
         div {
-            class: "{CarouselClass::Container.as_class()}",
+            class: CarouselClass::Container.as_class(),
             
             // Track
             div {
-                class: "{CarouselClass::Track.as_class()}",
-                style: "{track_transform}",
+                class: CarouselClass::Track.as_class(),
+                style: track_transform,
                 {props.children}
             }
 
             // Navigation arrows
             if props.show_arrows {
                 button {
-                    class: "{prev_arrow_classes}",
+                    class: prev_arrow_classes,
                     onclick: handle_prev,
                     disabled: total <= 1,
                     "‹"
                 }
 
                 button {
-                    class: "{next_arrow_classes}",
+                    class: next_arrow_classes,
                     onclick: handle_next,
                     disabled: total <= 1,
                     "›"
@@ -170,7 +170,7 @@ pub fn Carousel(props: CarouselProps) -> Element {
             // Indicator dots
             if props.indicator_type != CarouselIndicatorType::Hidden && total > 1 {
                 div {
-                    class: "{indicator_classes}",
+                    class: indicator_classes,
                     for i in 0..total {
                         {
                             let dot_classes = ClassesBuilder::new()
@@ -180,7 +180,7 @@ pub fn Carousel(props: CarouselProps) -> Element {
 
                             rsx! {
                                 button {
-                                    class: "{dot_classes}",
+                                    class: dot_classes,
                                     onclick: move |_| handle_dot_click(i),
                                     aria_label: format!("Slide {}", i + 1),
                                     disabled: total <= 1,
@@ -194,7 +194,7 @@ pub fn Carousel(props: CarouselProps) -> Element {
             // Pause button
             if props.show_pause && props.autoplay > 0 && total > 1 {
                 button {
-                    class: "{CarouselClass::Pause.as_class()}",
+                    class: CarouselClass::Pause.as_class(),
                     onclick: toggle_pause,
                     aria_label: if is_paused.get() { "Play" } else { "Pause" },
                     if is_paused.get() { "▶" } else { "⏸" }

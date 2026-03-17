@@ -139,19 +139,19 @@ pub fn Toast(props: ToastProps) -> Element {
             color: glow_color,
             intensity: GlowIntensity::Soft,
             div {
-                class: "{toast_classes}",
+                class: toast_classes,
 
-                div { class: "{ToastClass::ToastIconWrapper.as_class()}",
+                div { class: ToastClass::ToastIconWrapper.as_class(),
                     { default_icon }
                 }
 
-                div { class: "{ToastClass::ToastContent.as_class()}",
+                div { class: ToastClass::ToastContent.as_class(),
 
                     if let Some(title) = props.title {
-                        div { class: "{ToastClass::ToastTitle.as_class()}", "{title}" }
+                        div { class: ToastClass::ToastTitle.as_class(), "{title}" }
                     }
 
-                    div { class: "{ToastClass::ToastMessage.as_class()}", "{props.message}" }
+                    div { class: ToastClass::ToastMessage.as_class(), "{props.message}" }
                 }
 
                 if props.closable {

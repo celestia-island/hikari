@@ -14,7 +14,7 @@ use hikari_palette::classes::{ClassesBuilder, InputWrapperClass, UtilityClass};
 
 use crate::{
     basic::IconButton,
-    feedback::{GlowBlur, GlowColor, GlowIntensity},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
     styled::StyledComponent,
 };
 
@@ -196,17 +196,17 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
 
     let content = rsx! {
         div {
-            class: "{wrapper_classes}",
-            style: "{props.style}",
+            class: wrapper_classes,
+            style: props.style,
 
             // Left section
             if !props.left.is_empty() {
                 div {
-                    class: "{InputWrapperClass::LeftSection.as_class()}",
+                    class: InputWrapperClass::LeftSection.as_class(),
                     for (i, item) in props.left.iter().enumerate() {
                         div {
-                            key: "{i}",
-                            class: "{InputWrapperClass::SideItem.as_class()}",
+                            key: i,
+                            class: InputWrapperClass::SideItem.as_class(),
                             { render_item(item) }
                         }
                     }
@@ -215,18 +215,18 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
 
             // Input section
             div {
-                class: "{InputWrapperClass::InputSection.as_class()}",
+                class: InputWrapperClass::InputSection.as_class(),
                 { props.input }
             }
 
             // Right section
             if !props.right.is_empty() {
                 div {
-                    class: "{InputWrapperClass::RightSection.as_class()}",
+                    class: InputWrapperClass::RightSection.as_class(),
                     for (i, item) in props.right.iter().enumerate() {
                         div {
-                            key: "{i}",
-                            class: "{InputWrapperClass::SideItem.as_class()}",
+                            key: i,
+                            class: InputWrapperClass::SideItem.as_class(),
                             { render_item(item) }
                         }
                     }
@@ -238,7 +238,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
     // Wrap with glow if enabled
     if props.glow {
         rsx! {
-            crate::feedback::Glow {
+            Glow {
                 blur: props.glow_blur,
                 color: props.glow_color,
                 intensity: props.glow_intensity,

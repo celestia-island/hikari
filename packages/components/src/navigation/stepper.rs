@@ -64,9 +64,13 @@ pub fn Stepper(props: StepperProps) -> Element {
         .add_raw(&props.class)
         .build();
 
+    let step_number_class = StepperClass::StepNumber.as_class();
+    let connector_class = StepperClass::StepConnector.as_class();
+    let connector_vertical_class = StepperClass::StepConnectorVertical.as_class();
+
     rsx! {
         div {
-            class: "{stepper_classes}",
+            class: stepper_classes,
             for index in 0..props.total {
                 {
                     let step_classes = ClassesBuilder::new()
@@ -80,27 +84,31 @@ pub fn Stepper(props: StepperProps) -> Element {
                         })
                         .build();
 
+                    let step_number = index + 1;
+
                     rsx! {
                         div {
-                            class: "{step_classes}",
+                            class: step_classes,
 
                             // Step number
                             div {
-                                class: "{StepperClass::StepNumber.as_class()}",
-                                "{index + 1}"
+                                class: step_number_class,
+                                {step_number}
                             }
 
                             // Connector line (except for last step in horizontal mode)
                             if index < props.total - 1 && props.direction == StepperDirection::Horizontal {
                                 div {
-                                    class: "{StepperClass::StepConnector.as_class()}",
+                                    class: connector_class,
+                                    ""
                                 }
                             }
 
                             // Vertical connector line
                             if props.direction == StepperDirection::Vertical && index < props.total - 1 {
                                 div {
-                                    class: "{StepperClass::StepConnectorVertical.as_class()}",
+                                    class: connector_vertical_class,
+                                    ""
                                 }
                             }
                         }

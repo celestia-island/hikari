@@ -79,14 +79,14 @@ pub fn Tag(props: TagProps) -> Element {
 
     rsx! {
         span {
-            class: "{tag_classes}",
-            style: "{props.style}",
+            class: tag_classes,
+            style: props.style,
 
             { props.children }
 
             if props.closable {
                 button {
-                    class: "{TagClass::Close.as_class()}",
+                    class: TagClass::Close.as_class(),
                     onclick: move |e| {
                         if let Some(ref on_close) = props.on_close {
                             on_close.call(e);

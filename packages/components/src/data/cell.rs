@@ -82,10 +82,10 @@ pub fn Cell(props: CellProps) -> Element {
         let element = render_fn(&props.value, props.row_index, props.col_index);
         return rsx! {
             td {
-                class: "{classes}",
+                class: classes,
                 "data-row-index": "{props.row_index}",
                 "data-col-index": "{props.col_index}",
-                "data-key": "{props.column.column_key}",
+                "data-key": props.column.column_key,
                 {element}
             }
         };
@@ -95,10 +95,10 @@ pub fn Cell(props: CellProps) -> Element {
     let value = props.value.clone();
     rsx! {
         td {
-            class: "{classes}",
+            class: classes,
             "data-row-index": "{props.row_index}",
             "data-col-index": "{props.col_index}",
-            "data-key": "{props.column.column_key}",
+            "data-key": props.column.column_key,
             "data-editable": "{props.editable}",
 
             { value }

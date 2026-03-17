@@ -93,13 +93,13 @@ pub fn Divider(props: DividerProps) -> Element {
             _ => "text-align: center;",
         }
     } else {
-        ""
+{ "" }
     };
 
     rsx! {
         div {
-            class: "{divider_classes}",
-            style: "{text_align_style}",
+            class: divider_classes,
+            style: text_align_style,
             if let Some(label) = props.text {
                 span { class: "hi-divider-text", "{label}" }
             }

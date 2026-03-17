@@ -147,10 +147,10 @@ fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
 
     rsx! {
         div {
-            class: "{drag_node_classes}",
+            class: drag_node_classes,
             style: format!("padding-left: {}px;", props.depth * 24),
             draggable: props.draggable && !disabled,
-            "data-key": "{item_key_1}",
+            "data-key": item_key_1,
 
             ondragstart: move |e: DragEvent| {
                 e.prevent_default();
@@ -244,12 +244,13 @@ fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
 
                 div {
                     class: "hi-node-content",
-                    "{props.node.title}"
+                    {props.node.title.clone()}
                 }
 
                 if is_dragging {
                     div {
                         class: "hi-drag-ghost",
+{ "" }
                     }
                 }
             }
@@ -257,6 +258,7 @@ fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
             if is_drag_over && props.drop_allowed {
                 div {
                     class: "hi-drop-line",
+{ "" }
                 }
             }
 

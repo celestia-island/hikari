@@ -66,16 +66,16 @@
 //! ```
 
 #[cfg(target_arch = "wasm32")]
-use animation::global_manager::init_global_animation_manager;
+use hikari_animation::global_manager::init_global_animation_manager;
 use crate::prelude::*;
 use hikari_palette::*;
 
-use crate::{
-    scripts::scrollbar_container::init_all as init_scrollbars,
-    theme::{
-        css::{ComponentOverrides, ComponentPalette, PaletteOverrides, ThemePalette},
-        registry::{get_default_theme, get_registered_theme},
-    },
+#[cfg(target_arch = "wasm32")]
+use crate::scripts::scrollbar_container::init_all as init_scrollbars;
+
+use crate::theme::{
+    css::{ComponentOverrides, ComponentPalette, PaletteOverrides, ThemePalette},
+    registry::{get_default_theme, get_registered_theme},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -191,11 +191,12 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
         set_theme,
     });
 
+    #[cfg(target_arch = "wasm32")]
     use_effect(|| {
-        spawn(async move {
+        // Use wasm_bindgen_futures for async in WASM
+        wasm_bindgen_futures::spawn_local(async move {
             gloo::timers::future::TimeoutFuture::new(50).await;
 
-            #[cfg(target_arch = "wasm32")]
             init_global_animation_manager();
 
             init_scrollbars();
@@ -260,7 +261,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
             class: "hi-theme-provider",
             "data-theme": "{current_theme_name.read()}",
             dir: "{dir}",
-            style: "{css_vars}",
+            style: css_vars,
             {props.children}
         }
     }

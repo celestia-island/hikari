@@ -221,8 +221,8 @@ pub fn FlexBox(props: FlexBoxProps) -> Element {
 
     rsx! {
         div {
-            class: "{classes}",
-            style: "{style}",
+            class: classes,
+            style: style,
             { props.children }
         }
     }

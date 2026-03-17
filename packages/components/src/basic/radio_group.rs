@@ -46,10 +46,10 @@ pub fn RadioButton(props: RadioButtonProps) -> Element {
     };
 
     rsx! {
-        label { class: "{radio_classes}",
+        label { class: radio_classes,
             input {
                 r#type: "radio",
-                name: "{radio_name}",
+                name: radio_name,
                 value: "{props.value}",
                 checked: is_checked,
                 disabled: disabled,
@@ -115,7 +115,7 @@ pub fn RadioGroup(props: RadioGroupProps) -> Element {
         .build();
 
     rsx! {
-        div { class: "{group_classes}", {props.children} }
+        div { class: group_classes, {props.children} }
     }
 }
 

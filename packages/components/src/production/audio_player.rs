@@ -68,38 +68,38 @@ pub fn AudioPlayer(props: AudioPlayerProps) -> Element {
 
     rsx! {
         div {
-            class: "{container_classes}",
-            style: "{props.style}",
+            class: container_classes,
+            style: props.style,
 
             // Cover and info section
-            div { class: "{AudioPlayerClass::Header.as_class()}",
+            div { class: AudioPlayerClass::Header.as_class(),
                 if let Some(cover) = &props.cover {
-                    div { class: "{AudioPlayerClass::Cover.as_class()}",
+                    div { class: AudioPlayerClass::Cover.as_class(),
                         img {
-                            src: "{cover}",
+                            src: cover,
                             alt: props.title.as_deref().unwrap_or("Audio cover"),
-                            class: "{AudioPlayerClass::CoverImage.as_class()}",
+                            class: AudioPlayerClass::CoverImage.as_class(),
                         }
                     }
                 }
 
-                div { class: "{AudioPlayerClass::Info.as_class()}",
+                div { class: AudioPlayerClass::Info.as_class(),
                     if let Some(title) = &props.title {
-                        div { class: "{AudioPlayerClass::Title.as_class()}", "{title}" }
+                        div { class: AudioPlayerClass::Title.as_class(), "{title}" }
                     }
                     if let Some(artist) = &props.artist {
-                        div { class: "{AudioPlayerClass::Artist.as_class()}", "{artist}" }
+                        div { class: AudioPlayerClass::Artist.as_class(), "{artist}" }
                     }
                 }
             }
 
             // Audio element with native controls
             audio {
-                class: "{AudioPlayerClass::Audio.as_class()}",
-                src: "{props.src}",
+                class: AudioPlayerClass::Audio.as_class(),
+                src: props.src,
                 autoplay: props.autoplay,
                 controls: props.controls,
-                loop: props.loop_,
+                r#loop: props.loop_,
                 muted: props.muted,
             }
         }

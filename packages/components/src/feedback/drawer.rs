@@ -1,7 +1,7 @@
 // hi-components/src/feedback/drawer.rs
 // Drawer component with Arknights + FUI styling
 
-use animation::style::{CssProperty, StyleStringBuilder};
+use crate::style_builder::{CssProperty, StyleStringBuilder};
 use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, DrawerClass, UtilityClass};
 
@@ -135,22 +135,22 @@ pub fn Drawer(props: DrawerProps) -> Element {
         if props.open {
             // Mask overlay
             div {
-                class: "{DrawerClass::Mask.as_class()}",
-                style: "{mask_style}",
+                class: DrawerClass::Mask.as_class(),
+                style: mask_style,
                 onclick: handle_mask_click,
             }
 
             // Drawer panel
             div {
-                class: "{drawer_classes}",
-                style: "{drawer_style}",
+                class: drawer_classes,
+                style: drawer_style,
 
                 // Header
                 if let Some(title) = props.title {
-                    div { class: "{DrawerClass::Header.as_class()}",
-                        div { class: "{DrawerClass::Title.as_class()}", "{title}" }
+                    div { class: DrawerClass::Header.as_class(),
+                        div { class: DrawerClass::Title.as_class(), "{title}" }
                         button {
-                            class: "{DrawerClass::Close.as_class()}",
+                            class: DrawerClass::Close.as_class(),
                             onclick: move |e| {
                                 if let Some(handler) = on_close.as_ref() {
                                     handler.call(e);
@@ -169,13 +169,13 @@ pub fn Drawer(props: DrawerProps) -> Element {
                 }
 
                 // Body
-                div { class: "{DrawerClass::Body.as_class()}",
+                div { class: DrawerClass::Body.as_class(),
                     { props.children }
                 }
 
                 // Footer
                 if let Some(footer) = props.footer {
-                    div { class: "{DrawerClass::Footer.as_class()}",
+                    div { class: DrawerClass::Footer.as_class(),
                         { footer }
                     }
                 }

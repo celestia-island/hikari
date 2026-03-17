@@ -99,7 +99,7 @@ pub fn Sort(props: SortProps) -> Element {
         .build();
 
     rsx! {
-        div { class: "{container_classes}",
+        div { class: container_classes,
 
             {props.columns.iter().filter(|column| column.sortable).map(|column| {
                 let column_key = column.column_key.clone();
@@ -117,7 +117,7 @@ pub fn Sort(props: SortProps) -> Element {
 
                 rsx! {
                     button {
-                        class: "{button_classes}",
+                        class: button_classes,
                         onclick: move |_| {
                             let new_direction = if sort_column == column_key {
                                 sort_direction.toggle()
@@ -133,15 +133,15 @@ pub fn Sort(props: SortProps) -> Element {
                             }
                         },
 
-                        span { class: "{SortClass::SortTitle.as_class()}",
+                        span { class: SortClass::SortTitle.as_class(),
                             {column.title.clone()}
                         }
 
-                        span { class: "{SortClass::SortIndicator.as_class()}",
+                        span { class: SortClass::SortIndicator.as_class(),
                             {if is_active {
-                                props.direction.icon()
+                                props.direction.icon().to_string()
                             } else {
-                                "⇅"
+                                "⇅".to_string()
                             }}
                         }
                     }
@@ -150,13 +150,13 @@ pub fn Sort(props: SortProps) -> Element {
 
             if has_active_sort {
                 button {
-                    class: "{SortClass::SortClear.as_class()}",
+                    class: SortClass::SortClear.as_class(),
                     onclick: handle_clear,
 
-                    span { class: "{SortClass::SortClearText.as_class()}", "Clear" }
+                    span { class: SortClass::SortClearText.as_class(), "Clear" }
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: "{SortClass::SortClearIcon.as_class()}",
+                        class: SortClass::SortClearIcon.as_class(),
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,

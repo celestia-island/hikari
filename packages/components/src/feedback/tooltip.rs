@@ -113,10 +113,10 @@ pub fn Tooltip(props: TooltipProps) -> Element {
     };
 
     rsx! {
-        div { class: "{wrapper_classes}",
+        div { class: wrapper_classes,
 
             div {
-                class: "{TooltipClass::TooltipTrigger.as_class()}",
+                class: TooltipClass::TooltipTrigger.as_class(),
                 onmouseenter: handle_mouse_enter,
                 onmouseleave: handle_mouse_leave,
                 {props.children}

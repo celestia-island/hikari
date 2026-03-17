@@ -2,7 +2,7 @@
 // Unified glow effect component with mouse-following spotlight and acrylic blur
 
 #[cfg(target_arch = "wasm32")]
-use animation::style::StyleBuilder;
+use crate::style_builder::StyleBuilder;
 use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, GlowClass};
 use tairitsu_vdom::IntoAttrValue;
@@ -350,9 +350,9 @@ pub fn Glow(props: GlowProps) -> Element {
 
         rsx! {
             div {
-                class: "{glow_classes}",
+                class: glow_classes,
                 "data-glow": "true",
-                style: "{initial_style}",
+                style: initial_style,
                 onmousemove: onmousemove_handler,
                 onmouseenter: onmouseenter_handler,
                 onmouseleave: onmouseleave_handler,
@@ -366,7 +366,7 @@ pub fn Glow(props: GlowProps) -> Element {
     #[cfg(not(target_arch = "wasm32"))]
     {
         rsx! {
-            div { class: "{glow_classes}", "data-glow": "true", {props.children} }
+            div { class: glow_classes, "data-glow": "true", {props.children} }
         }
     }
 }

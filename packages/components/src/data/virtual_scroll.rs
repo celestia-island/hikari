@@ -136,9 +136,9 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
 
                         rsx! {
                             div {
-                                class: "{node_classes}",
+                                class: node_classes,
                                 style: "position: absolute; top: {(idx as f64 * props.item_height as f64)}px; left: 0; right: 0; height: {props.item_height}px; padding-left: {(depth * 24)}px; display: flex; align-items: center;",
-                                "data-key": "{id}",
+                                "data-key": id,
 
                                 span {
                                     class: "hi-tree-node-content",

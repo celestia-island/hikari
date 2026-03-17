@@ -25,7 +25,7 @@ pub fn Footer(props: FooterProps) -> Element {
 
     rsx! {
         footer {
-            class: "{footer_classes}",
+            class: footer_classes,
             { props.children }
         }
     }

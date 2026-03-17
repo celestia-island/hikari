@@ -116,7 +116,7 @@ pub fn Search(props: SearchProps) -> Element {
             input {
                 r#type: "search",
                 value: "{current_value}",
-                placeholder: "{props.placeholder}",
+                placeholder: props.placeholder,
                 disabled: props.disabled,
                 onfocus: move |_| {
                     if has_suggestions {
@@ -210,8 +210,8 @@ pub fn Search(props: SearchProps) -> Element {
 
     rsx! {
         div {
-            class: "{wrapper_classes}",
-            style: "{props.style}",
+            class: wrapper_classes,
+            style: props.style,
 
             div {
                 class: "hi-search-input-wrapper",

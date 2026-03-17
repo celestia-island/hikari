@@ -110,58 +110,72 @@ pub fn Steps(props: StepsProps) -> Element {
         })
         .collect();
 
+    let icon_class = StepsClass::Icon.as_class();
+    let number_class = StepsClass::Number.as_class();
+    let content_class = StepsClass::Content.as_class();
+    let title_class = StepsClass::Title.as_class();
+    let description_class = StepsClass::Description.as_class();
+
     rsx! {
         div {
-            class: "{wrapper_classes}",
-            style: "{props.style}",
+            class: wrapper_classes,
+            style: props.style,
 
             for (index, step, step_classes, is_clickable, step_status) in step_items {
-                div {
-                    class: "{step_classes}",
-                    onclick: move |_e| {
-                        if is_clickable
-                            && let Some(handler) = props.on_change.as_ref() {
-                                handler.call(index);
-                            }
-                    },
+                {
+                    let step_number = index + 1;
+                    let step_title = step.title.clone();
+                    let step_description = step.description.clone();
 
-                    // Step indicator
-                    div {
-                        class: "{StepsClass::Icon.as_class()}",
+                    rsx! {
+                        div {
+                            class: step_classes,
+                            onclick: move |_e| {
+                                if is_clickable
+                                    && let Some(handler) = props.on_change.as_ref() {
+                                        handler.call(index);
+                                    }
+                            },
 
-                        if step_status == StepStatus::Wait {
-                            span { class: "{StepsClass::Number.as_class()}", "{index + 1}" }
-                        } else if step_status == StepStatus::Process {
-                            span { class: "{StepsClass::Number.as_class()}", "{index + 1}" }
-                        } else if step_status == StepStatus::Finish {
-                            svg {
-                                class: "{StepsClass::Number.as_class()}",
-                                view_box: "0 0 24 24",
-                                fill: "none",
-                                stroke: "currentColor",
-                                stroke_width: "2",
-                                polyline { points: "20 6 9 17 4 12" }
-                            }
-                        } else {
-                            svg {
-                                class: "{StepsClass::Number.as_class()}",
-                                view_box: "0 0 24 24",
-                                fill: "none",
-                                stroke: "currentColor",
-                                stroke_width: "2",
-                                circle { cx: "12", cy: "12", r: "10" }
-                                line { x1: "12", y1: "8", x2: "12", y2: "12" }
-                                line { x1: "12", y1: "16", x2: "12.01", y2: "16" }
-                            }
-                        }
-                    }
+                            // Step indicator
+                            div {
+                                class: icon_class,
 
-                    // Step content
-                    div {
-                        class: "{StepsClass::Content.as_class()}",
-                        div { class: "{StepsClass::Title.as_class()}", "{step.title}" }
-                        if let Some(ref desc) = step.description {
-                            div { class: "{StepsClass::Description.as_class()}", "{desc}" }
+                                if step_status == StepStatus::Wait {
+                                    span { class: number_class, {step_number} }
+                                } else if step_status == StepStatus::Process {
+                                    span { class: number_class, {step_number} }
+                                } else if step_status == StepStatus::Finish {
+                                    svg {
+                                        class: number_class,
+                                        view_box: "0 0 24 24",
+                                        fill: "none",
+                                        stroke: "currentColor",
+                                        stroke_width: "2",
+                                        polyline { points: "20 6 9 17 4 12" }
+                                    }
+                                } else {
+                                    svg {
+                                        class: number_class,
+                                        view_box: "0 0 24 24",
+                                        fill: "none",
+                                        stroke: "currentColor",
+                                        stroke_width: "2",
+                                        circle { cx: "12", cy: "12", r: "10" }
+                                        line { x1: "12", y1: "8", x2: "12", y2: "12" }
+                                        line { x1: "12", y1: "16", x2: "12.01", y2: "16" }
+                                    }
+                                }
+                            }
+
+                            // Step content
+                            div {
+                                class: content_class,
+                                div { class: title_class, {step_title} }
+                                if let Some(ref desc) = step_description {
+                                    div { class: description_class, {desc} }
+                                }
+                            }
                         }
                     }
                 }

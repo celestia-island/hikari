@@ -151,13 +151,13 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
 
                         span {
                             class: title_primary_class,
-                            {props.title}
+                            "{props.title}"
                         }
 
                         if let Some(secondary) = &props.secondary_title {
                             span {
                                 class: title_secondary_class,
-                                {secondary}
+                                "{secondary}"
                             }
                         }
                     }
@@ -175,7 +175,7 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
                 "data-expanded": expanded_attr,
                 aria_hidden: aria_hidden_val,
 
-                { props.children }
+                {props.children}
             }
         }
     }
@@ -258,9 +258,9 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
                         if let Some(content) = &props.content {
                             content
                         } else {
-                            {props.label.clone()}
+                            "{props.label}"
                             if let Some(secondary) = &props.secondary_label {
-                                span { class: {secondary_class}, {secondary.clone()} }
+                                span { class: {secondary_class}, "{secondary}" }
                             }
                         }
                     }

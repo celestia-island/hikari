@@ -93,7 +93,7 @@ pub fn Stepper(props: StepperProps) -> Element {
                             // Step number
                             div {
                                 class: {step_number_class},
-                                {step_number}
+                                "{step_number}"
                             }
 
                             // Connector line (except for last step in horizontal mode)
@@ -101,7 +101,6 @@ pub fn Stepper(props: StepperProps) -> Element {
                                 rsx! {
                                     div {
                                         class: connector_class.clone(),
-                                        { "" }
                                     }
                                 }
                             } else {
@@ -113,7 +112,6 @@ pub fn Stepper(props: StepperProps) -> Element {
                                 rsx! {
                                     div {
                                         class: connector_vertical_class.clone(),
-                                        { "" }
                                     }
                                 }
                             } else {

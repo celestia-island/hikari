@@ -52,8 +52,9 @@ fn use_animated_portal_entry(
         })
     };
 
+    let internal_animation_state_for_memo = internal_animation_state.clone();
     let computed_opacity_scale = use_memo(move || {
-        let state = internal_animation_state.read();
+        let state = internal_animation_state_for_memo.read();
         #[cfg(target_arch = "wasm32")]
         {
             web_sys::console::log_1(
@@ -70,8 +71,9 @@ fn use_animated_portal_entry(
 
     #[cfg(target_arch = "wasm32")]
     {
+        let internal_animation_state_for_effect = internal_animation_state.clone();
         use_effect(use_reactive(
-            (&internal_animation_state,),
+            (&internal_animation_state_for_effect,),
             move |(anim_state,)| {
                 let state = *anim_state.read();
                 #[cfg(target_arch = "wasm32")]
@@ -81,7 +83,7 @@ fn use_animated_portal_entry(
                     );
                 }
                 if state == ModalAnimationState::Appearing {
-                    let mut anim_state_clone = internal_animation_state.clone();
+                    let anim_state_clone = anim_state.clone();
                     let callback = Closure::once_into_js(move || {
                         anim_state_clone.set(ModalAnimationState::Visible);
                         #[cfg(target_arch = "wasm32")]

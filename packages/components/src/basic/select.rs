@@ -63,22 +63,23 @@ pub struct SelectProps {
 #[component]
 pub fn Select(props: SelectProps) -> Element {
     let portal = use_portal();
-    let mut internal_value = use_signal(|| props.value.clone().unwrap_or_default());
-    let mut dropdown_id = use_signal(String::new);
+    let internal_value = use_signal(|| props.value.clone().unwrap_or_default());
+    let dropdown_id = use_signal(String::new);
     let open = use_signal(|| false);
 
     // Sync controlled value
     let controlled_value = props.value.clone();
+    let internal_value_for_effect = internal_value.clone();
     use_effect(move || {
         if let Some(ref v) = controlled_value {
-            internal_value.set(v.clone());
+            internal_value_for_effect.set(v.clone());
         }
     });
 
     // Track open state from portal entries
-    let entries = portal.entries;
-    let dropdown_id_sync = dropdown_id;
-    let open_sync = open;
+    let entries = portal.entries.clone();
+    let dropdown_id_sync = dropdown_id.clone();
+    let open_sync = open.clone();
     use_effect(move || {
         let current_id = dropdown_id_sync.read();
         if !current_id.is_empty() {
@@ -89,8 +90,7 @@ pub fn Select(props: SelectProps) -> Element {
                     false
                 }
             });
-            let mut open_ref = open_sync;
-            open_ref.set(is_in_entries);
+            open_sync.set(is_in_entries);
         }
     });
 
@@ -107,18 +107,25 @@ pub fn Select(props: SelectProps) -> Element {
         SelectSize::Lg => SelectClass::Lg,
     };
 
+    let open_for_classes = open.clone();
     let trigger_classes = ClassesBuilder::new()
         .add(SelectClass::SelectTrigger)
         .add(size_class)
         .add_if(SelectClass::Disabled, || props.disabled)
-        .add_if(SelectClass::Open, move || open.get())
+        .add_if(SelectClass::Open, move || open_for_classes.get())
         .add_raw(&props.class)
         .build();
 
     // Build the options menu for sharing in the click handler
     let options_for_menu = props.options.clone();
-    let on_change = props.on_change;
+    let on_change = props.on_change.clone();
 
+    let open_for_click = open.clone();
+    let dropdown_id_for_click = dropdown_id.clone();
+    let portal_remove = portal.remove_entry.clone();
+    let portal_add = portal.add_entry.clone();
+    let internal_value_for_click = internal_value.clone();
+    let dropdown_id_for_click2 = dropdown_id.clone();
     let handle_trigger_click = move |e: MouseEvent| {
         e.stop_propagation();
 
@@ -126,18 +133,18 @@ pub fn Select(props: SelectProps) -> Element {
             return;
         }
 
-        let current_open = open.get();
+        let current_open = open_for_click.get();
 
         if current_open {
             // Close
-            let id = dropdown_id.get();
+            let id = dropdown_id_for_click.get();
             if !id.is_empty() {
-                portal.remove_entry.call(id);
+                portal_remove.call(id);
             }
         } else {
             // Open dropdown via Portal
             let id = generate_portal_id();
-            dropdown_id.set(id.clone());
+            dropdown_id_for_click.set(id.clone());
 
             // Get trigger rect for positioning
             let trigger_rect_opt = {
@@ -176,10 +183,9 @@ pub fn Select(props: SelectProps) -> Element {
             };
 
             let opts = options_for_menu.clone();
-            let on_change_inner = on_change;
-            let portal_inner = portal.clone();
+            let portal_inner = portal_remove.clone();
             let id_inner = id.clone();
-            let internal_value_clone2 = internal_value;
+            let internal_value_clone2 = internal_value_for_click.clone();
 
             let menu_content = rsx! {
                 div {
@@ -193,19 +199,19 @@ pub fn Select(props: SelectProps) -> Element {
                             let label = opt.label.clone();
                             let is_selected = value == *internal_value_clone2.read();
                             let value_for_click = value.clone();
-                            let on_change_item = on_change_inner;
+                            let on_change_item = on_change.clone();
                             let portal_close = portal_inner.clone();
                             let id_close = id_inner.clone();
 
                             // Create click handler for this option
-                            let mut internal_value_clone3 = internal_value;
+                            let internal_value_clone3 = internal_value_for_click.clone();
                             let click_handler = EventHandler::new(move |e: MouseEvent| {
                                 e.stop_propagation();
                                 internal_value_clone3.set(value_for_click.clone());
                                 if let Some(handler) = on_change_item.as_ref() {
                                     handler.call(value_for_click.clone());
                                 }
-                                portal_close.remove_entry.call(id_close.clone());
+                                portal_close.call(id_close.clone());
                             });
 
                             rsx! {
@@ -237,7 +243,7 @@ pub fn Select(props: SelectProps) -> Element {
                 close_on_select: true,
             };
 
-            portal.add_entry.call(entry);
+            portal_add.call(entry);
         }
     };
 

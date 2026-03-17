@@ -325,7 +325,7 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
 
 #[component]
 pub fn SubMenu(props: SubMenuProps) -> Element {
-    let mut is_open = use_signal(|| props.default_expanded);
+    let is_open = use_signal(|| props.default_expanded);
 
     let submenu_classes = ClassesBuilder::new()
         .add(MenuClass::Submenu)
@@ -335,8 +335,9 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
 
     let list_classes = ClassesBuilder::new().add(MenuClass::SubmenuList).build();
 
+    let is_open_for_memo = is_open.clone();
     let list_style = use_memo(move || {
-        let (display, opacity, transform) = if is_open.get() {
+        let (display, opacity, transform) = if is_open_for_memo.get() {
             ("block", "1", "translateX(0)")
         } else {
             ("none", "0", "translateX(-8px)")
@@ -350,13 +351,14 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
             .build()
     });
 
+    let is_open_for_click = is_open.clone();
     let title_content = rsx! {
        div {
            class: "{props.height.as_str()} hi-menu-submenu-title",
            aria_disabled: props.disabled.to_string(),
            onclick: move |_e| {
                if !props.disabled {
-                   is_open.set(!is_open.get());
+                   is_open_for_click.set(!is_open_for_click.get());
                }
            },
 

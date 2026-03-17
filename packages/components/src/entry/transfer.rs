@@ -15,7 +15,7 @@ pub struct SelectChangeEvent {
     pub keys: Vec<String>,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[derive(Clone, PartialEq, Debug, Props, Default)]
 pub struct TransferItem {
     pub item_key: String,
     pub label: String,

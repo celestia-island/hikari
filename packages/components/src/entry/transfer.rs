@@ -128,17 +128,17 @@ pub fn Transfer(props: TransferProps) -> Element {
         }
     };
 
-    let handle_source_select = move |keys: Vec<String>| {
+    let handle_source_select = EventHandler::new(move |keys: Vec<String>| {
         if let Some(handler) = props.on_select_change.as_ref() {
             handler.call(SelectChangeEvent { list_type: 0, keys });
         }
-    };
+    });
 
-    let handle_target_select = move |keys: Vec<String>| {
+    let handle_target_select = EventHandler::new(move |keys: Vec<String>| {
         if let Some(handler) = props.on_select_change.as_ref() {
             handler.call(SelectChangeEvent { list_type: 1, keys });
         }
-    };
+    });
 
     let container_classes = ClassesBuilder::new()
         .add(TransferClass::Transfer)
@@ -149,11 +149,11 @@ pub fn Transfer(props: TransferProps) -> Element {
         div { class: container_classes,
 
             TransferPanel {
-                title: titles[0].clone(),
-                items: source_items.clone(),
-                selected_keys: props.source_selected_keys.clone(),
-                show_search: props.show_search,
-                on_select: handle_source_select,
+                title: Some(titles[0].clone()),
+                items: Some(source_items.clone()),
+                selected_keys: Some(props.source_selected_keys.clone()),
+                show_search: Some(props.show_search),
+                on_select: Some(handle_source_select),
             }
 
             div { class: TransferClass::Operations.as_class(),
@@ -183,11 +183,11 @@ pub fn Transfer(props: TransferProps) -> Element {
             }
 
             TransferPanel {
-                title: titles[1].clone(),
-                items: target_items.clone(),
-                selected_keys: props.target_selected_keys.clone(),
-                show_search: props.show_search,
-                on_select: handle_target_select,
+                title: Some(titles[1].clone()),
+                items: Some(target_items.clone()),
+                selected_keys: Some(props.target_selected_keys.clone()),
+                show_search: Some(props.show_search),
+                on_select: Some(handle_target_select),
             }
         }
     }
@@ -195,12 +195,23 @@ pub fn Transfer(props: TransferProps) -> Element {
 
 #[component]
 fn TransferPanel(
-    title: String,
-    items: Vec<TransferItem>,
-    selected_keys: Vec<String>,
-    show_search: bool,
-    on_select: EventHandler<Vec<String>>,
+    #[props(default)]
+    title: Option<String>,
+    #[props(default)]
+    items: Option<Vec<TransferItem>>,
+    #[props(default)]
+    selected_keys: Option<Vec<String>>,
+    #[props(default)]
+    show_search: Option<bool>,
+    #[props(default)]
+    on_select: Option<EventHandler<Vec<String>>>,
 ) -> Element {
+    let title = title.unwrap_or_default();
+    let items = items.unwrap_or_default();
+    let selected_keys = selected_keys.unwrap_or_default();
+    let show_search = show_search.unwrap_or(false);
+    let on_select = on_select.unwrap_or_else(|| EventHandler::new(|_| {}));
+
     let mut search_text = use_signal(String::new);
     let all_selected = use_signal(|| false);
 

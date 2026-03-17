@@ -51,12 +51,11 @@ pub fn TreeNodeContent(props: TreeNodeContentProps) -> Element {
             class: full_class,
             style: indentation_style,
             onclick: move |e| {
-                if !props.disabled
-                    && let Some(handler) = props.onclick.as_ref() {
-                        handler.call(e);
-                    }
+                if !props.disabled {
+                    props.onclick.call(e);
+                }
             },
-            { props.children }
+            props.children
         }
     }
 }

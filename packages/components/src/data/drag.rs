@@ -144,7 +144,7 @@ impl Default for RenderDragNodeProps {
 }
 
 #[component]
-fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
+fn RenderDragNode(props: RenderDragNodeProps) -> Element {
     let item_key_1 = props.node.item_key.clone();
     let item_key_2 = props.node.item_key.clone();
     let item_key_3 = props.node.item_key.clone();
@@ -163,95 +163,110 @@ fn RenderDragNode(mut props: RenderDragNodeProps) -> Element {
         .add_if(TreeClass::NodeDisabled, || disabled)
         .build();
 
+    let dragged_key_for_start = props.dragged_key.clone();
+    let allow_drag_for_start = props.allow_drag.clone();
+    let ondragstart = move |e: DragEvent| {
+        e.prevent_default();
+
+        let key = item_key_2.clone();
+        let can_drag = if let Some(handler) = allow_drag_for_start.as_ref() {
+            handler.call((key.clone(), true));
+            true
+        } else {
+            true
+        };
+
+        if can_drag {
+            dragged_key_for_start.set(Some(key.clone()));
+
+            if let Some(data_transfer) = e.data_transfer() {
+                let _ = data_transfer.set_data("text/plain", &key);
+            }
+        }
+    };
+
+    let dragged_key_for_end = props.dragged_key.clone();
+    let drag_over_key_for_end = props.drag_over_key.clone();
+    let drop_target_for_end = props.drop_target.clone();
+    let ondragend = move |_: DragEvent| {
+        dragged_key_for_end.set(None);
+        drag_over_key_for_end.set(None);
+        drop_target_for_end.set(None);
+    };
+
+    let dragged_key_for_over = props.dragged_key.clone();
+    let drag_over_key_for_over = props.drag_over_key.clone();
+    let ondragover = move |e: DragEvent| {
+        e.prevent_default();
+        e.stop_propagation();
+
+        if dragged_key_for_over.read().is_some() && props.drop_allowed {
+            let key = item_key_3.clone();
+            drag_over_key_for_over.set(Some(key));
+
+            if let Some(data_transfer) = e.data_transfer() {
+                // Note: drop_effect uses builder pattern, skip for now
+                let _ = data_transfer;
+            }
+        }
+    };
+
+    let drag_over_key_for_leave = props.drag_over_key.clone();
+    let ondragleave = move |_: DragEvent| {
+        drag_over_key_for_leave.set(None);
+    };
+
+    let dragged_key_for_drop = props.dragged_key.clone();
+    let drag_over_key_for_drop = props.drag_over_key.clone();
+    let drop_target_for_drop = props.drop_target.clone();
+    let allow_drop_for_drop = props.allow_drop.clone();
+    let on_drop_for_drop = props.on_drop.clone();
+    let ondrop = move |e: DragEvent| {
+        e.prevent_default();
+        e.stop_propagation();
+
+        if let Some(dragged) = dragged_key_for_drop.read().clone() {
+            let position = DropPosition::Inside;
+            let key = item_key_4.clone();
+
+            let drop_target_info = DropTarget {
+                target_key: key.clone(),
+                position,
+            };
+
+            let can_drop = if let Some(handler) = allow_drop_for_drop.as_ref() {
+                handler.call((drop_target_info.clone(), true));
+                true
+            } else {
+                true
+            };
+
+            if can_drop {
+                let drop_event = DropEvent {
+                    dragged_key: dragged,
+                    target_key: key.clone(),
+                    position,
+                };
+
+                if let Some(handler) = on_drop_for_drop.as_ref() {
+                    handler.call(drop_event);
+                }
+            }
+
+            drag_over_key_for_drop.set(None);
+            drop_target_for_drop.set(None);
+        }
+    };
+
     rsx! {
         div {
             class: drag_node_classes,
-            style: format!("padding-left: {}px;", props.depth * 24),
             draggable: props.draggable && !disabled,
-            "data-key": item_key_1,
-
-            ondragstart: move |e: DragEvent| {
-                e.prevent_default();
-
-                let key = item_key_2.clone();
-                let can_drag = if let Some(handler) = props.allow_drag.as_ref() {
-                    handler.call((key.clone(), true));
-                    true
-                } else {
-                    true
-                };
-
-                if can_drag {
-                    props.dragged_key.set(Some(key.clone()));
-
-                    if let Some(data_transfer) = e.data_transfer() {
-                        let _ = data_transfer.set_data("text/plain", &key);
-                        // Note: effect_allowed uses builder pattern, skip for now
-                    }
-                }
-            },
-
-            ondragend: move |_: DragEvent| {
-                props.dragged_key.set(None);
-                props.drag_over_key.set(None);
-                props.drop_target.set(None);
-            },
-
-            ondragover: move |e: DragEvent| {
-                e.prevent_default();
-                e.stop_propagation();
-
-                if props.dragged_key.read().is_some() && props.drop_allowed {
-                    let key = item_key_3.clone();
-                    props.drag_over_key.set(Some(key));
-
-                    if let Some(data_transfer) = e.data_transfer() {
-                        // Note: drop_effect uses builder pattern, skip for now
-                        let _ = data_transfer;
-                    }
-                }
-            },
-
-            ondragleave: move |_: DragEvent| {
-                props.drag_over_key.set(None);
-            },
-
-            ondrop: move |e: DragEvent| {
-                e.prevent_default();
-                e.stop_propagation();
-
-                if let Some(dragged) = props.dragged_key.read().clone() {
-                    let position = DropPosition::Inside;
-                    let key = item_key_4.clone();
-
-                    let drop_target_info = DropTarget {
-                        target_key: key.clone(),
-                        position,
-                    };
-
-                    let can_drop = if let Some(handler) = props.allow_drop.as_ref() {
-                        handler.call((drop_target_info.clone(), true));
-                        true
-                    } else {
-                        true
-                    };
-
-                    if can_drop {
-                        let drop_event = DropEvent {
-                            dragged_key: dragged,
-                            target_key: key.clone(),
-                            position,
-                        };
-
-                        if let Some(handler) = props.on_drop.as_ref() {
-                            handler.call(drop_event);
-                        }
-                    }
-
-                    props.drag_over_key.set(None);
-                    props.drop_target.set(None);
-                }
-            },
+            ondragstart: ondragstart,
+            ondragend: ondragend,
+            ondragover: ondragover,
+            ondragleave: ondragleave,
+            ondrop: ondrop,
 
             div {
                 class: "hi-drag-handle",

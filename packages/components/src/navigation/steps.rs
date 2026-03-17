@@ -263,14 +263,14 @@ fn StepItem(props: StepItemProps) -> Element {
             // Step indicator
             div {
                 class: props.icon_class,
-                icon_el
+                {icon_el}
             }
 
             // Step content
             div {
                 class: props.content_class,
                 div { class: props.title_class, step_title }
-                desc_el
+                {desc_el}
             }
         }
     }

@@ -262,7 +262,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
                     div {
                         class: {content_class},
                         if let Some(content) = &props.content {
-                            content
+                            {content.clone()}
                         } else {
                             "{props.label}"
                             if let Some(secondary) = &props.secondary_label {
@@ -294,7 +294,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
                     aria_hidden: aria_hidden_val,
 
                     // Render nested items
-                    items
+                    {items.clone()}
                 }
             }
         }

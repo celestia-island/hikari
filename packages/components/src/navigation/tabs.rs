@@ -162,7 +162,7 @@ pub fn TabPane(props: TabPaneProps) -> Element {
     use hikari_palette::classes::{ClassesBuilder, components::TabsClass};
 
     let active_key = use_context::<Signal<String>>().expect("TabsContext not found");
-    let is_active = active_key.get() == props.item_key;
+    let is_active = active_key.get().get() == props.item_key;
 
     let tab_classes = ClassesBuilder::new()
         .add(TabsClass::TabsTab)
@@ -188,7 +188,7 @@ pub fn TabPane(props: TabPaneProps) -> Element {
             "aria-disabled": props.disabled,
 
             if let Some(icon) = props.icon {
-                span { class: "hi-tabs-tab-icon", icon }
+                span { class: "hi-tabs-tab-icon", {icon} }
             }
 
             span { class: "hi-tabs-tab-label", "{props.tab}" }

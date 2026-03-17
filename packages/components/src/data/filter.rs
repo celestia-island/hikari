@@ -88,6 +88,29 @@ pub fn Filter(props: FilterProps) -> Element {
         .add_if(FilterClass::FilterActive, || active_count > 0)
         .build();
 
+    let filter_options: Vec<Element> = props.filters.iter().map(|option| {
+        let opt_value = option.value.clone();
+        let label_text = option.label.clone();
+        let checked = is_selected(&option.value);
+
+        rsx! {
+            label {
+                class: FilterClass::FilterOption.as_class(),
+                onclick: move |_| handle_select(opt_value.clone()),
+
+                input {
+                    class: FilterClass::FilterCheckbox.as_class(),
+                    r#type: "checkbox",
+                    checked: checked,
+                }
+
+                span { class: FilterClass::FilterLabel.as_class(),
+                    "{label_text}"
+                }
+            }
+        }
+    }).collect();
+
     rsx! {
         div { class: container_classes,
 
@@ -165,29 +188,6 @@ pub fn Filter(props: FilterProps) -> Element {
                             }
                         }
                     }
-
-                    let filter_options: Vec<Element> = props.filters.iter().map(|option| {
-                        let opt_value = option.value.clone();
-                        let label_text = option.label.clone();
-                        let checked = is_selected(&option.value);
-
-                        rsx! {
-                            label {
-                                class: FilterClass::FilterOption.as_class(),
-                                onclick: move |_| handle_select(opt_value.clone()),
-
-                                input {
-                                    class: FilterClass::FilterCheckbox.as_class(),
-                                    r#type: "checkbox",
-                                    checked: checked,
-                                }
-
-                                span { class: FilterClass::FilterLabel.as_class(),
-                                    "{label_text}"
-                                }
-                            }
-                        }
-                    }).collect();
 
                     div { class: FilterClass::FilterOptions.as_class(),
                         ..filter_options

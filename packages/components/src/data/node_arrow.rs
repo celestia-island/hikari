@@ -63,9 +63,7 @@ pub fn TreeNodeArrow(props: TreeNodeArrowProps) -> Element {
                 aria_hidden: "true",
                 onclick: move |e: MouseEvent| {
                     e.stop_propagation();
-                    if let Some(ref h) = handler {
-                        h.call(e);
-                    }
+                    handler.call(e);
                 },
                 Arrow {
                     direction,

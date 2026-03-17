@@ -46,8 +46,9 @@ impl AvatarSize {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum AvatarVariant {
+    #[default]
     Circular,
     Rounded,
     Square,
@@ -63,7 +64,7 @@ impl AvatarVariant {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
 pub enum AvatarFallbackMode {
     #[default]
     Initial,

@@ -32,6 +32,29 @@ pub enum IconButtonVariant {
     Success,
 }
 
+// Implement IntoAttrValue for use as HTML attributes
+impl IntoAttrValue for IconButtonSize {
+    fn into_attr_value(self) -> Option<String> {
+        Some(match self {
+            IconButtonSize::Small => "small".to_string(),
+            IconButtonSize::Medium => "medium".to_string(),
+            IconButtonSize::Large => "large".to_string(),
+        })
+    }
+}
+
+impl IntoAttrValue for IconButtonVariant {
+    fn into_attr_value(self) -> Option<String> {
+        Some(match self {
+            IconButtonVariant::Ghost => "ghost".to_string(),
+            IconButtonVariant::Primary => "primary".to_string(),
+            IconButtonVariant::Secondary => "secondary".to_string(),
+            IconButtonVariant::Danger => "danger".to_string(),
+            IconButtonVariant::Success => "success".to_string(),
+        })
+    }
+}
+
 ///
 #[derive(Clone, PartialEq, Props)]
 pub struct IconButtonProps {

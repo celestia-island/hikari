@@ -592,6 +592,17 @@ pub struct IconProps {
     pub color: String,
 }
 
+impl Default for IconProps {
+    fn default() -> Self {
+        Self {
+            icon: IconRef(MdiIcon::Help),
+            class: String::new(),
+            size: 24,
+            color: String::new(),
+        }
+    }
+}
+
 /// Icon component for Tairitsu framework
 #[cfg(feature = "tairitsu")]
 pub fn Icon(props: IconProps) -> Element {

@@ -9,7 +9,7 @@ use crate::prelude::*;
 use hikari_palette::classes::{ButtonClass, ClassesBuilder, JustifyContent};
 
 use crate::{
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
     styled::StyledComponent,
 };
 

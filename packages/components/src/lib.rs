@@ -18,6 +18,7 @@ pub mod hooks;
 pub mod utils;
 pub mod styled;
 pub mod style_builder;
+pub mod layout;
 #[cfg(target_arch = "wasm32")]
 pub mod scripts;
 
@@ -35,6 +36,7 @@ pub use navigation::*;
 pub use data::*;
 pub use entry::*;
 pub use production::*;
+pub use layout::*;
 
 // Theme system
 pub mod theme;

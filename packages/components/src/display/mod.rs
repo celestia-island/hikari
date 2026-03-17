@@ -16,6 +16,7 @@
 //! - [`ZoomControls`] - Zoom in/out controls
 
 pub mod calendar;
+pub mod carousel;
 pub mod comment;
 pub mod drag_layer;
 pub mod empty;
@@ -27,6 +28,7 @@ pub mod user_guide;
 pub mod zoom_controls;
 
 pub use calendar::*;
+pub use carousel::*;
 pub use comment::*;
 pub use drag_layer::*;
 pub use empty::*;

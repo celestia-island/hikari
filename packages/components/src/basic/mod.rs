@@ -49,7 +49,7 @@ pub mod slider;
 pub mod switch;
 pub mod textarea;
 
-pub use arrow::{Arrow, ArrowComponent, ArrowDirection};
+pub use arrow::{Arrow, ArrowComponent, ArrowDirection, ArrowProps};
 pub use avatar::*;
 pub use background::*;
 pub use badge::*;

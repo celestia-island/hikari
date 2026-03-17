@@ -7,7 +7,7 @@ use hikari_palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 use wasm_bindgen::JsCast;
 
 use crate::{
-    glow::Glow,
+    feedback::{Glow, GlowProps},
     portal::{
         PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
         use_portal,

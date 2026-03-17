@@ -7,6 +7,9 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
+#[cfg(feature = "tairitsu")]
+use tairitsu_vdom::IntoAttrValue;
+
 /// Material Design Icons - minimal set for Hikari
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum MdiIcon {
@@ -331,5 +334,13 @@ impl std::convert::From<&str> for MdiIcon {
             "white-balance-sunny" => MdiIcon::WhiteBalanceSunny,
             _ => MdiIcon::Alert, // Default fallback
         }
+    }
+}
+
+// Implement IntoAttrValue so MdiIcon can be used as HTML attributes
+#[cfg(feature = "tairitsu")]
+impl IntoAttrValue for MdiIcon {
+    fn into_attr_value(self) -> Option<String> {
+        Some(self.to_string())
     }
 }

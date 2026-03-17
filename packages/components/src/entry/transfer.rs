@@ -75,7 +75,7 @@ pub fn Transfer(props: TransferProps) -> Element {
             .filter(|item| !target_keys_source.contains(&item.item_key))
             .cloned()
             .collect::<Vec<_>>()
-    });
+    }).read();
 
     let data_target = props.data.clone();
     let target_keys_target = props.target_keys.clone();
@@ -86,7 +86,7 @@ pub fn Transfer(props: TransferProps) -> Element {
             .filter(|item| target_keys_target.contains(&item.item_key))
             .cloned()
             .collect::<Vec<_>>()
-    });
+    }).read();
 
     let handle_to_target = {
         let source_selected = props.source_selected_keys.clone();
@@ -148,7 +148,7 @@ pub fn Transfer(props: TransferProps) -> Element {
 
             TransferPanel {
                 title: titles[0].clone(),
-                items: source_items(),
+                items: source_items.clone(),
                 selected_keys: props.source_selected_keys.clone(),
                 show_search: props.show_search,
                 on_select: handle_source_select,
@@ -182,7 +182,7 @@ pub fn Transfer(props: TransferProps) -> Element {
 
             TransferPanel {
                 title: titles[1].clone(),
-                items: target_items(),
+                items: target_items.clone(),
                 selected_keys: props.target_selected_keys.clone(),
                 show_search: props.show_search,
                 on_select: handle_target_select,
@@ -213,13 +213,13 @@ fn TransferPanel(
             })
             .cloned()
             .collect::<Vec<_>>()
-    });
+    }).read();
 
     let handle_toggle_all = move |_| {
         if all_selected.get() {
             on_select.call(Vec::new());
         } else {
-            let all_keys: Vec<String> = filtered_items()
+            let all_keys: Vec<String> = filtered_items
                 .iter()
                 .filter(|item| !item.disabled)
                 .map(|item| item.item_key.clone())
@@ -232,7 +232,7 @@ fn TransferPanel(
         search_text.set(e.value());
     };
 
-    let all_keys: Vec<String> = filtered_items()
+    let all_keys: Vec<String> = filtered_items
         .iter()
         .filter(|item| !item.disabled)
         .map(|item| item.item_key.clone())
@@ -241,8 +241,8 @@ fn TransferPanel(
     let is_all_selected =
         !all_keys.is_empty() && all_keys.iter().all(|k| selected_keys.contains(k));
 
-    // Cache filtered items to avoid lifetime issues
-    let items = filtered_items();
+    // Use filtered_items directly (already computed)
+    let display_items = filtered_items.clone();
 
     rsx! {
         div { class: {TransferClass::Panel.as_class()},
@@ -273,7 +273,7 @@ fn TransferPanel(
             }
 
              ul { class: {TransferClass::PanelList.as_class()},
-                for item in items.iter() {
+                for item in display_items.iter() {
                     {
                         // Capture values for the closure (each item gets its own clone)
                         let item_key = item.item_key.clone();

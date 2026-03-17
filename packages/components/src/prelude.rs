@@ -31,6 +31,8 @@ pub use tairitsu_vdom::{
     EventHandler,
     // Key type for keyboard events
     Key,
+    // Attribute value trait
+    IntoAttrValue,
 };
 
 // Re-export Event as a type alias for Dioxus compatibility
@@ -46,6 +48,8 @@ pub use tairitsu_hooks::{
     provide_context,
     // consume_context is use_context in tairitsu
     use_context as consume_context,
+    // try_consume_context is use_context (returns Option)
+    use_context as try_consume_context,
     // Dioxus compatibility alias
     provide_context as use_context_provider,
     // Context type from tairitsu
@@ -72,7 +76,7 @@ pub use tairitsu_macros::component as derive_props;
 /// Helper function to create an event handler
 pub fn event_handler<F, T>(f: F) -> EventHandler<T>
 where
-    F: FnMut(T) + 'static,
+    F: Fn(T) + 'static,
 {
     EventHandler::new(f)
 }

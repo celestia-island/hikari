@@ -143,7 +143,7 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
                 intensity: GlowIntensity::Dim,
                 div {
                     class: header_class,
-                    onclick: move |_| { is_expanded.toggle(); },
+                    onclick: move |_| { is_expanded.set(!is_expanded.get()); },
                     aria_expanded: expanded_attr,
 
                     div {
@@ -247,7 +247,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
                     // When has children, clicking anywhere on the header toggles
                     onclick: move |_| {
                         if has_items {
-                            is_expanded.toggle();
+                            is_expanded.set(!is_expanded.get());
                         }
                     },
 

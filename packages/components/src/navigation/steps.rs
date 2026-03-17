@@ -255,7 +255,7 @@ fn StepItem(props: StepItemProps) -> Element {
             onclick: move |_e| {
                 if is_clickable {
                     if let Some(handler) = on_change.as_ref() {
-                        handler.emit(index);
+                        handler.call(index);
                     }
                 }
             },

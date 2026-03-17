@@ -58,10 +58,8 @@ pub fn Carousel(props: CarouselProps) -> Element {
     let is_paused = use_signal(|| props.initial_paused);
     let children_count = use_memo(move || {
         let mut count = 0;
-        if let Some(children) = props.children.as_vnode() {
-            if let dioxus::core::VNode::Fragment(fragment) = &*children {
-                count = fragment.children.len();
-            }
+        if let VNode::Fragment(children) = &props.children {
+            count = children.len();
         }
         count
     });
@@ -92,24 +90,10 @@ pub fn Carousel(props: CarouselProps) -> Element {
         *is_paused.write() = !is_paused.get();
     };
 
-    let index_for_autoplay = current_index;
-    use_effect(move || {
-        if props.autoplay == 0 || is_paused.get() || total <= 1 {
-            return;
-        }
-
-        let index_signal = index_for_autoplay;
-        async move {
-            loop {
-                tokio::time::sleep(tokio::time::Duration::from_millis(props.autoplay)).await;
-                if total == 0 {
-                    break;
-                }
-                let mut idx = index_signal.write();
-                *idx = (*idx + 1) % total;
-            }
-        }
-    });
+    // Note: Autoplay functionality temporarily disabled until async runtime integration
+    // TODO: Implement use_interval or spawn_local for autoplay
+    let _index_for_autoplay = current_index;
+    let _ = (props.autoplay, is_paused.get());
 
     let track_transform = format!(
         "transform: translateX(-{}%);",

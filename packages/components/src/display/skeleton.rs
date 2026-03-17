@@ -174,7 +174,6 @@ pub fn SkeletonCard(props: SkeletonCardProps) -> Element {
             let width = if i == rows - 1 { "70%" } else { "100%" };
             rsx! {
                 Skeleton {
-                    key: i,
                     variant: SkeletonVariant::Text,
                     width: Some(width.to_string()),
                 }
@@ -248,10 +247,9 @@ pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
 
     // Build header cells
     let header_cells: Vec<VNode> = (0..columns)
-        .map(|col| {
+        .map(|_col| {
             rsx! {
                 Skeleton {
-                    key: col,
                     variant: SkeletonVariant::Text,
                     width: Some("80px".to_string()),
                     height: Some("16px".to_string()),
@@ -262,12 +260,11 @@ pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
 
     // Build table rows
     let table_rows: Vec<VNode> = (0..rows)
-        .map(|row| {
+        .map(|_row| {
             let cells: Vec<VNode> = (0..columns)
-                .map(|col| {
+                .map(|_col| {
                     rsx! {
                         Skeleton {
-                            key: col,
                             variant: SkeletonVariant::Text,
                             height: Some("14px".to_string()),
                         }
@@ -276,7 +273,6 @@ pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
                 .collect();
             rsx! {
                 div {
-                    key: row,
                     class: "hi-skeleton-table-row",
                     style: "display: flex; gap: 1rem; padding: 0.75rem 1rem;",
                     ..cells

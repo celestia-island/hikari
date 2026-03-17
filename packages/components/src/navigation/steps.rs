@@ -176,7 +176,7 @@ pub fn Steps(props: StepsProps) -> Element {
 
 /// Internal component for rendering individual step items
 #[derive(Clone, PartialEq, Props, Debug, Default)]
-struct StepItemPropsInternal {
+struct StepItemProps {
     #[props(default)]
     index: usize,
     #[props(default)]
@@ -202,7 +202,7 @@ struct StepItemPropsInternal {
 }
 
 #[component]
-fn StepItem(props: StepItemPropsInternal) -> Element {
+fn StepItem(props: StepItemProps) -> Element {
     let step_number = props.index + 1;
     let step_title = props.step.title.clone();
     let step_description = props.step.description.clone();

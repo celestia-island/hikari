@@ -91,7 +91,7 @@ impl InputWrapperItem {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[derive(Clone, PartialEq, Props, Default)]
 pub struct InputWrapperProps {
     #[props(default)]
     pub left: Vec<InputWrapperItem>,
@@ -99,7 +99,8 @@ pub struct InputWrapperProps {
     #[props(default)]
     pub right: Vec<InputWrapperItem>,
 
-    pub input: Element,
+    #[props(default)]
+    pub input: Option<Element>,
 
     #[props(default)]
     pub size: InputWrapperSize,

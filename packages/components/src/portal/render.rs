@@ -157,7 +157,6 @@ pub fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                 animation_state,
                             } => rsx! {
                                 ModalPortalEntry {
-                                    key: "{id}",
                                     z_index,
                                     id: id.clone(),
                                     title: title.clone(),
@@ -178,7 +177,6 @@ pub fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                 close_on_select,
                             } => rsx! {
                                 DropdownPortalEntry {
-                                    key: "{id}",
                                     z_index,
                                     id: id.clone(),
                                     strategy: strategy,
@@ -190,7 +188,6 @@ pub fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                             },
                             PortalEntry::Toast { id, position, children } => rsx! {
                                 ToastPortalEntry {
-                                    key: "{id}",
                                     z_index,
                                     id: id.clone(),
                                     position: position,
@@ -211,7 +208,6 @@ pub fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                 children,
                             } => rsx! {
                                 PopoverPortalEntry {
-                                    key: "{id}",
                                     z_index,
                                     id: id.clone(),
                                     trigger_rect: trigger_rect,
@@ -234,7 +230,6 @@ pub fn PortalRender(entries: Signal<Vec<PortalEntry>>) -> Element {
                                 arrow,
                             } => rsx! {
                                 TooltipPortalEntry {
-                                    key: "{id}",
                                     z_index,
                                     id: id.clone(),
                                     trigger_rect: trigger_rect,

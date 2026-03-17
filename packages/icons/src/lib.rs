@@ -586,16 +586,17 @@ const DEFAULT_SVG: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" width="24" 
 #[cfg(feature = "tairitsu")]
 #[derive(Clone, PartialEq)]
 pub struct IconProps {
-    pub icon: IconRef,
+    pub icon: MdiIcon,
     pub class: String,
     pub size: u32,
     pub color: String,
 }
 
+#[cfg(feature = "tairitsu")]
 impl Default for IconProps {
     fn default() -> Self {
         Self {
-            icon: IconRef(MdiIcon::Help),
+            icon: MdiIcon::Help,
             class: String::new(),
             size: 24,
             color: String::new(),
@@ -607,13 +608,15 @@ impl Default for IconProps {
 #[cfg(feature = "tairitsu")]
 pub fn Icon(props: IconProps) -> Element {
     // Get icon data from generated constants
-    let icon_data_opt = get(&props.icon.name());
+    let icon_ref = IconRef(props.icon);
+    let icon_name = icon_ref.name();
+    let icon_data_opt = get(&icon_name);
 
     // Build SVG content using the macro
     let final_svg = if let Some(icon_data) = icon_data_opt {
         build_svg!(icon_data)
     } else {
-        log_icon_warning_once(props.icon.name());
+        log_icon_warning_once(icon_name);
         String::from(DEFAULT_SVG)
     };
 

@@ -29,9 +29,9 @@ pub mod mdi_minimal;
 use dioxus::prelude::*;
 
 #[cfg(feature = "tairitsu")]
-use tairitsu_macros::{component, rsx, Props};
+use tairitsu_macros::{rsx, Props};
 #[cfg(feature = "tairitsu")]
-use tairitsu_vdom::{Classes, Style, VNode as Element, VNode};
+use tairitsu_vdom::VNode as Element;
 
 // Re-export MDI icon enum
 pub use mdi_minimal::MdiIcon;
@@ -44,6 +44,7 @@ pub use generated::mdi_selected::{get, IconData, PathData, SvgElem};
 pub use hikari_animation::style::{CssProperty, StyleStringBuilder};
 
 /// Default SVG fallback icon
+#[allow(dead_code)]
 const DEFAULT_SVG: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>"#;
 
 /// Icon reference wrapper
@@ -157,6 +158,18 @@ pub struct IconProps {
     pub size: u32,
     #[props(default)]
     pub color: String,
+}
+
+#[cfg(feature = "tairitsu")]
+impl Default for IconProps {
+    fn default() -> Self {
+        Self {
+            icon: MdiIcon::Help,
+            class: String::new(),
+            size: 24,
+            color: String::new(),
+        }
+    }
 }
 
 #[cfg(feature = "tairitsu")]

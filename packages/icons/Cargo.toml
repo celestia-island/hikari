@@ -12,6 +12,7 @@ dynamic-fetch-warnings = []
 
 [build-dependencies]
 hikari-builder = { path = "../builder" }
+anyhow = "^1"
 
 [dependencies]
 # Tairitsu framework (optional)

@@ -52,11 +52,19 @@
   - 配置 `Cargo.toml` 的 `[[package.metadata.tairitsu.scss.entries]]`
   - 移除对 Python SCSS 编译脚本的依赖（bundle.css 和 spa.css 由 tairitsu-packager 生成）
 
-- **wasm32-wasip2 条件编译修复** (commit 待提交):
+- **wasm32-wasip2 条件编译修复** (commit `7eb8f32`):
   - 修复 `#[cfg(target_arch = "wasm32")]` 为 `#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]`
   - 浏览器 WASM (wasm32-unknown-unknown) vs WASI (wasm32-wasip2) 正确区分
   - 修复文件: animation/*.rs, components/*.rs, theme/provider.rs, style_builder.rs
   - 添加 `StyleStringBuilder::add_custom()` 方法
+
+- **测试兼容性修复** (commit `87e45e8`):
+  - 修复 animation preset tests 的条件编译
+  - 为 CarouselProps 添加 Default 实现
+  - 修复 style_builder test 的参数类型
+  - 为 TimelineState/UserGuideState 添加 with_class 方法
+  - 修复 zoom_controls 和 minimap 测试的可变性
+  - 组件集成测试标记为非 WASI 环境（需要 DOM 支持）
 
 ## 验收标准
 
@@ -68,9 +76,9 @@
 
 ## 架构说明
 
-当前采用渐进式迁移策略：
+迁移完成后的架构：
 
-1. **已迁移到 Tairitsu**: `examples/website`
+1. **Tairitsu 应用层**: `examples/website` - 完全使用 Tairitsu 框架
 2. **核心基础设施** (无框架依赖): `packages/palette`, `packages/builder`, `packages/i18n`
-3. **迁移中** (rsx! 语法修复): `packages/components`
+3. **UI 组件层** (条件编译): `packages/components` - 支持 Tairitsu 和独立使用
 4. **服务器端专用** (不支持 wasm): `packages/render-service`, `packages/e2e`

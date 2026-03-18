@@ -46,6 +46,12 @@
   - 添加 `From<Memo<String>>` 实现 for `Style` 和 `Classes`
   - 允许 `Memo<String>` 直接用作 style/class 属性
 
+- **样式系统整合完成** (commit `ba69e39`):
+  - 创建 `examples/website/src/styles/spa.scss` 包含 SPA 路由样式
+  - tairitsu-packager 支持多 SCSS 入口配置
+  - 配置 `Cargo.toml` 的 `[[package.metadata.tairitsu.scss.entries]]`
+  - 移除对 Python SCSS 编译脚本的依赖（bundle.css 和 spa.css 由 tairitsu-packager 生成）
+
 ## 🟡 进行中
 
 ### hikari-components 编译修复
@@ -77,26 +83,6 @@
 - [x] 核心包在 wasm32-wasip2 下编译通过
 - [x] CI 支持 wasm32-wasip2 检查
 - [ ] **激进清理**: hikari-components 编译通过
-
-## 待完成
-
-### 样式系统整合
-
-当前问题：
-- `scripts/build/compile_scss.py` 用 Python+sass CLI 编译 SCSS
-- tairitsu-packager 有内置 SCSS 编译器，但只从 `src/styles/` 查找
-- `index.html` 引用 `/styles/bundle.css` 和 `/styles/hikari-spa.css`，后者无 SCSS 源文件
-
-任务：
-- [ ] 创建 `examples/website/src/styles/spa.scss` 包含 SPA 路由样式：
-  ```scss
-  .hikari-page { display: none; }
-  .hikari-page.is-active { display: block; }
-  .sidebar-link.is-active { font-weight: 600; }
-  ```
-- [ ] 等待 tairitsu-packager 支持多 SCSS 入口配置
-- [ ] 配置 `Cargo.toml` 的 `[package.metadata.tairitsu.scss]`
-- [ ] 删除 `scripts/build/compile_scss.py`（由 tairitsu-packager 替代）
 
 ## 架构说明
 

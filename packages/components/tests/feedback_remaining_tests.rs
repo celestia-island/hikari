@@ -1,3 +1,4 @@
+#![cfg(not(target_os = "wasi"))]
 // hi-components/tests/feedback_remaining_tests.rs
 // Remaining Layer 1 feedback components unit tests
 

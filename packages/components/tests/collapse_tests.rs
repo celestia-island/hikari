@@ -1,3 +1,4 @@
+#![cfg(not(target_os = "wasi"))]
 // hi-components/tests/collapse_tests.rs
 // Collapse component unit tests
 

@@ -1,3 +1,4 @@
+#![cfg(not(target_os = "wasi"))]
 // Unit tests for Layer 2 navigation components
 
 #[cfg(test)]

@@ -1,8 +1,9 @@
 // Extra component smoke tests
 // These are simple compilation and rendering tests
 // Full E2E tests would require Playwright/WebDriver setup
+// Only available with Dioxus feature (not for WASI)
 
-#[cfg(test)]
+#[cfg(all(test, feature = "dioxus"))]
 mod tests {
 
     use dioxus::prelude::*;

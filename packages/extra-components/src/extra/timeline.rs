@@ -177,6 +177,12 @@ impl TimelineState {
         self
     }
 
+    /// Set custom CSS class
+    pub fn with_class(mut self, class: impl Into<String>) -> Self {
+        self.class = class.into();
+        self
+    }
+
     /// Add an item
     pub fn add_item(&mut self, item: TimelineItem) {
         self.items.push(item);

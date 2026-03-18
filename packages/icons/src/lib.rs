@@ -29,7 +29,7 @@ pub mod mdi_minimal;
 use dioxus::prelude::*;
 
 #[cfg(feature = "tairitsu")]
-use tairitsu_macros::{rsx, Props};
+use tairitsu_macros::{rsx, define_props};
 #[cfg(feature = "tairitsu")]
 use tairitsu_vdom::VNode as Element;
 
@@ -148,28 +148,16 @@ pub fn Icon(
 // ============================================================================
 
 #[cfg(feature = "tairitsu")]
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct IconProps {
-    #[props(default)]
+    #[default(MdiIcon::Help)]
     pub icon: MdiIcon,
-    #[props(default)]
+    #[default(String::new())]
     pub class: String,
-    #[props(default = 24)]
+    #[default(24)]
     pub size: u32,
-    #[props(default)]
+    #[default(String::new())]
     pub color: String,
-}
-
-#[cfg(feature = "tairitsu")]
-impl Default for IconProps {
-    fn default() -> Self {
-        Self {
-            icon: MdiIcon::Help,
-            class: String::new(),
-            size: 24,
-            color: String::new(),
-        }
-    }
 }
 
 #[cfg(feature = "tairitsu")]

@@ -9,7 +9,6 @@
 //! - `"tairitsu"` - Dark theme (tairitsu)
 
 use crate::prelude::*;
-use hikari_palette::*;
 
 use crate::context::{LayoutDirection, ThemeContext};
 
@@ -56,6 +55,7 @@ impl Default for ThemeProviderProps {
 ///     }
 /// }
 /// ```
+#[allow(non_snake_case)]
 pub fn ThemeProvider(props: ThemeProviderProps) -> VNode {
     // Get the theme palette
     let palette_name = props.initial_palette.as_str();

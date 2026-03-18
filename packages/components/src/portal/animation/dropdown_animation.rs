@@ -9,8 +9,10 @@
 // This is based on the same pattern as ScrollbarAnimationState, but specifically
 // designed for dropdown overlay animations.
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use std::{cell::RefCell, rc::Rc};
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::style_builder::{CssProperty, StyleBuilder};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::prelude::*;

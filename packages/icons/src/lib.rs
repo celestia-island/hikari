@@ -173,6 +173,7 @@ impl Default for IconProps {
 }
 
 #[cfg(feature = "tairitsu")]
+#[allow(non_snake_case)]
 pub fn Icon(props: IconProps) -> Element {
     let icon_ref = IconRef(props.icon);
     let icon_name = icon_ref.name();

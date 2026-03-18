@@ -104,6 +104,7 @@ impl Default for StyleProviderProps {
 ///     }
 /// }
 /// ```
+#[allow(non_snake_case)]
 pub fn StyleProvider(props: StyleProviderProps) -> VNode {
     // Create style context (simplified - full implementation would use provide_context)
     let context = StyleContext {
@@ -119,10 +120,11 @@ pub fn StyleProvider(props: StyleProviderProps) -> VNode {
 
     let css_vars = format!("--hi-style-class-prefix: {};", context.config.class_prefix);
     let extra_classes_str = context.config.extra_classes.join(" ");
+    let class = format!("hi-style-provider {}", extra_classes_str);
 
     rsx! {
         div {
-            class: "hi-style-provider {extra_classes_str}",
+            class: class,
             style: css_vars,
             ..props.children
         }

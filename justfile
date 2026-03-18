@@ -47,11 +47,6 @@ build-dev:
     @{{py}} scripts/icons/fetch_mdi_icons.py
     @echo ""
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Compiling website SCSS assets..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/build/compile_scss.py
-    @echo ""
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Building all (Debug mode)..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     cargo build --workspace
@@ -61,7 +56,6 @@ build:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Building all (Release mode)..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/build/compile_scss.py
     cargo build --workspace --release
 
 # Build website with tairitsu-packager (production output to public/)
@@ -72,15 +66,10 @@ build-website:
     @{{py}} scripts/icons/fetch_mdi_icons.py
     @echo ""
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Compiling website SCSS assets..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/build/compile_scss.py
-    @echo ""
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Building website with tairitsu-packager..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @just check-tairitsu-packager
-    @cd examples/website && cargo run --manifest-path ../../../tairitsu/packages/packager/Cargo.toml -- --manifest-path Cargo.toml build
+    @cd examples/website && tairitsu --manifest-path Cargo.toml build
 
 # ============================================================================
 # Examples
@@ -110,15 +99,10 @@ dev *force="":
     @{{py}} scripts/icons/fetch_mdi_icons.py
     @echo ""
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Compiling website SCSS assets..."
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/build/compile_scss.py
-    @echo ""
-    @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @echo "Running tairitsu-packager dev pipeline..."
+    @echo "Running tairitsu dev pipeline..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @just check-tairitsu-packager
-    @cd examples/website && cargo run --manifest-path ../../../tairitsu/packages/packager/Cargo.toml -- --manifest-path Cargo.toml dev --port 3000 --watch
+    @cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch
 
 # Start dev server and exit when ready (for AI agent)
 # This starts the dev server in background and exits when it's listening on port 3000
@@ -127,8 +111,7 @@ dev-by-agent:
     @echo "Starting dev server (agent mode, tairitsu-packager)..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @just check-tairitsu-packager
-    @{{py}} scripts/build/compile_scss.py
-    @cd examples/website && cargo run --manifest-path ../../../tairitsu/packages/packager/Cargo.toml -- --manifest-path Cargo.toml dev --port 3000
+    @cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000
 
 # Alias for dev
 serve: dev

@@ -116,7 +116,7 @@ fn main() {
             css_bundle_path
         );
         println!(
-            "cargo:warning=⚠️  Run 'python scripts/build/compile_scss.py' to generate it"
+            "cargo:warning=⚠️  Run 'tairitsu build' or 'just dev' to generate it"
         );
     }
 

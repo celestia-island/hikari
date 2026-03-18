@@ -42,66 +42,25 @@ impl From<ColumnAlign> for TableAlign {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct TableProps {
-    #[props(default)]
     pub data: Vec<Vec<String>>,
-
-    #[props(default)]
     pub columns: Vec<ColumnDef>,
-
-    #[props(default)]
+    #[default(false)]
     pub bordered: bool,
-
-    #[props(default)]
+    #[default(false)]
     pub striped: bool,
-
-    #[props(default)]
+    #[default(false)]
     pub hoverable: bool,
-
-    #[props(default)]
     pub size: TableSize,
-
-    #[props(default)]
     pub class: String,
-
-    #[props(default)]
+    #[default(String::from("No data available"))]
     pub empty_text: String,
-
-    #[props(default)]
     pub sort_column: String,
-
-    #[props(default)]
     pub sort_direction: SortDirection,
-
-    #[props(default)]
     pub on_sort_change: Option<EventHandler<SortConfig>>,
-
-    #[props(default)]
     pub filters: TableFilters,
-
-    #[props(default)]
     pub on_filter_change: Option<EventHandler<TableFilters>>,
-}
-
-impl Default for TableProps {
-    fn default() -> Self {
-        Self {
-            data: Vec::default(),
-            columns: Vec::default(),
-            bordered: false,
-            striped: false,
-            hoverable: false,
-            size: Default::default(),
-            class: String::default(),
-            empty_text: String::from("No data available"),
-            sort_column: String::default(),
-            sort_direction: SortDirection::default(),
-            on_sort_change: None,
-            filters: TableFilters::default(),
-            on_filter_change: None,
-        }
-    }
 }
 
 ///

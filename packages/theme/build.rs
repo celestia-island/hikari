@@ -4,8 +4,6 @@
 use anyhow::Result;
 use std::{env, fs, path::Path};
 
-use tairitsu_packager::styles::ScssCompiler;
-
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=styles");
     println!("cargo:rerun-if-changed=tailwind");

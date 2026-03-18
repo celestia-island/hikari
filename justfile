@@ -74,23 +74,12 @@ check-port *force="":
     @{{py}} scripts/utils/clean_process_linux.py {{force}} 2>/dev/null || true
 
 # Development mode for website
-dev *force="": (check-port force)
-    @echo ""
-    @echo "  ╭──────────────────────────────────────────────────╮"
-    @echo "  │        🌸 Hikari Development Server               │"
-    @echo "  ╰──────────────────────────────────────────────────╯"
-    @echo ""
-    @echo "  │  Port: 3000"
-    @echo "  │  URL:  http://localhost:3000"
-    @echo "  │  Watch: enabled"
-    @echo "  │"
-    @just check-tairitsu-packager
-    @cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch
+dev *force="": (check-port force) (check-tairitsu-packager)
+    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch
 
 # Start dev server (no watch, for AI agent)
 dev-by-agent: (check-tairitsu-packager)
-    @echo "  │  Starting dev server (agent mode)..."
-    @cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000
+    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000
 
 # Alias for dev
 serve: dev

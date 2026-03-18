@@ -1,3 +1,4 @@
+#![cfg(not(target_os = "wasi"))]
 // packages/components/tests/form_utility_tests.rs
 // E2E tests for form utilities
 

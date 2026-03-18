@@ -1,3 +1,4 @@
+#![cfg(not(target_os = "wasi"))]
 // Unit tests for Layer 2 data components (Tree, Table, Pagination)
 
 use hikari_components::data::{

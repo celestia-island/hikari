@@ -1,5 +1,8 @@
 // hi-components/tests/basic_components_tests.rs
 // Layer 1 basic components unit tests
+// Note: Only available on browser WASM and native (requires DOM rendering)
+
+#![cfg(not(target_os = "wasi"))]
 
 #[cfg(test)]
 mod tests {

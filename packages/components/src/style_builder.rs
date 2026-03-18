@@ -255,7 +255,7 @@ mod tests {
     #[test]
     fn test_style_builder() {
         let style = StyleStringBuilder::new()
-            .add_px(CssProperty::Width, 100)
+            .add_px(CssProperty::Width, "100")
             .add(CssProperty::Display, "flex")
             .build();
         assert_eq!(style, "width: 100px; display: flex");

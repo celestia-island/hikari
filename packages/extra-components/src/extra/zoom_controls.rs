@@ -246,7 +246,6 @@ mod tests {
         let mut state = ZoomControlsState::new().with_bounds(0.5, 1.5);
 
         // Should clamp to max
-        state.zoom = 2.0;
         state.set_zoom(2.0);
         assert_eq!(state.zoom, 1.5);
 
@@ -259,15 +258,15 @@ mod tests {
     fn test_can_zoom() {
         let state = ZoomControlsState::new().with_bounds(0.5, 1.5);
 
-        state.zoom = 1.0;
+        let state = state.with_zoom(1.0);
         assert!(state.can_zoom_in());
         assert!(state.can_zoom_out());
 
-        state.zoom = 1.5;
+        let state = state.with_zoom(1.5);
         assert!(!state.can_zoom_in());
         assert!(state.can_zoom_out());
 
-        state.zoom = 0.5;
+        let state = state.with_zoom(0.5);
         assert!(state.can_zoom_in());
         assert!(!state.can_zoom_out());
     }
@@ -275,7 +274,7 @@ mod tests {
     #[test]
     fn test_reset() {
         let mut state = ZoomControlsState::new();
-        state.zoom = 1.5;
+        state.set_zoom(1.5);
         assert!(state.reset());
         assert_eq!(state.zoom, 1.0);
 
@@ -305,7 +304,7 @@ mod tests {
         assert_eq!(state.handle_key("_", false), Some(1.0));
 
         // Zero key resets
-        state.zoom = 1.5;
+        state.set_zoom(1.5);
         assert_eq!(state.handle_key("0", false), Some(1.0));
 
         // Unknown key returns None

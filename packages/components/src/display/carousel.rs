@@ -52,6 +52,21 @@ pub struct CarouselProps {
     pub initial_paused: bool,
 }
 
+impl Default for CarouselProps {
+    fn default() -> Self {
+        Self {
+            children: VNode::empty(),
+            autoplay: 5000,
+            show_arrows: true,
+            indicator_position: CarouselIndicatorPosition::Bottom,
+            indicator_type: CarouselIndicatorType::Dots,
+            show_pause: true,
+            infinite: false,
+            initial_paused: false,
+        }
+    }
+}
+
 #[component]
 pub fn Carousel(props: CarouselProps) -> Element {
     let current_index = use_signal(|| 0);

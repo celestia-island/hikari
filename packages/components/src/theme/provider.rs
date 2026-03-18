@@ -303,7 +303,7 @@ pub fn use_layout_direction() -> LayoutDirection {
 mod tests {
     use super::*;
     use crate::theme::css::{PaletteOverrides, ThemePalette};
-    use palette::{Hikari, Tairitsu};
+    use hikari_palette::{Hikari, Tairitsu};
 
     #[test]
     fn test_theme_palette_from_palette() {

@@ -1,0 +1,15 @@
+// SPA Page Routing Styles
+// Used for hash-based client-side routing
+
+.hikari-page {
+  display: none;
+}
+
+.hikari-page.is-active {
+  display: block;
+}
+
+.sidebar-link.is-active {
+  font-weight: 600;
+  color: var(--primary, #6366f1);
+}

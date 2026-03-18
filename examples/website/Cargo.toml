@@ -54,7 +54,7 @@ viewport = "width=device-width, initial-scale=1.0"
 title = "Hikari"
 head = """
 <link rel="stylesheet" href="/styles/bundle.css">
-<link rel="stylesheet" href="/styles/hikari-spa.css">
+<link rel="stylesheet" href="/styles/spa.css">
 <script>
 (() => {
   const ROUTES = {
@@ -109,3 +109,18 @@ head = """
 
 [package.metadata.tairitsu.assets]
 include = ["public/**"]
+
+# SCSS compilation configuration
+[package.metadata.tairitsu.scss]
+load_paths = [
+  "../../packages/theme/styles",
+  "../../packages/components/src/styles",
+]
+
+[[package.metadata.tairitsu.scss.entries]]
+entry = "../../packages/components/src/styles/index.scss"
+output = "styles/bundle.css"
+
+[[package.metadata.tairitsu.scss.entries]]
+entry = "src/styles/spa.scss"
+output = "styles/spa.css"

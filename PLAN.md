@@ -82,3 +82,105 @@
 2. **核心基础设施** (无框架依赖): `packages/palette`, `packages/builder`, `packages/i18n`
 3. **UI 组件层** (条件编译): `packages/components` - 支持 Tairitsu 和独立使用
 4. **服务器端专用** (不支持 wasm): `packages/render-service`, `packages/e2e`
+
+---
+
+## Phase 2: CSS 基础设施迁移到 tairitsu-style
+
+### 背景
+
+当前 hikari 中的 CSS 相关代码分散在多个包中：
+
+| 包 | 内容 | 目标位置 |
+|---|---|---|
+| `hikari-animation/src/style/` | StyleStringBuilder, CssProperty | `tairitsu-style/builders/style.rs`, `tairitsu-style/properties/` |
+| `hikari-palette/src/classes/` | ClassesBuilder, UtilityClass | `tairitsu-style/builders/classes.rs`, `tairitsu-style/traits/` |
+
+### 前置条件
+
+- [ ] tairitsu-style 包创建完成（见 tairitsu/PLAN.md）
+- [ ] tairitsu-style 发布到 crates.io 或 git 依赖可用
+
+### 迁移步骤
+
+#### Step 1: 添加依赖
+
+- [ ] 添加 `tairitsu-style` 依赖到：
+  - `hikari-animation/Cargo.toml`
+  - `hikari-palette/Cargo.toml`
+  - `hikari-icons/Cargo.toml`
+  - `hikari-components/Cargo.toml`
+
+#### Step 2: 更新 imports
+
+- [ ] 更新所有 import 语句（约 50+ 文件）：
+
+  ```rust
+  // 之前
+  use hikari_animation::style::{StyleStringBuilder, CssProperty};
+  use hikari_palette::{ClassesBuilder, UtilityClass};
+
+  // 之后
+  use tairitsu_style::{StyleStringBuilder, CssProperty, ClassesBuilder, UtilityClass};
+  ```
+
+#### Step 3: 删除旧代码
+
+- [ ] 删除以下代码（迁移到 tairitsu）：
+  - `packages/animation/src/style/builder.rs`
+  - `packages/animation/src/style/properties.rs`
+  - `packages/palette/src/classes/mod.rs` 中的 ClassesBuilder
+
+- [ ] 或者保留 re-export 以保持向后兼容：
+
+  ```rust
+  // packages/animation/src/lib.rs
+  #[deprecated(note = "Use tairitsu_style instead")]
+  pub use tairitsu_style::{StyleBuilder, StyleStringBuilder, CssProperty};
+  ```
+
+#### Step 4: 清理 hikari-palette
+
+- [ ] 保留组件特定的 class 枚举（如 `ButtonClass`, `TableClass`）
+- [ ] 更新 re-exports
+
+### 受影响的文件
+
+需要更新 import 的文件（详见 `grep -r "StyleStringBuilder\|ClassesBuilder" packages/`）：
+
+- `packages/components/src/data/table.rs`
+- `packages/components/src/basic/button.rs`
+- `packages/components/src/basic/input.rs`
+- `packages/components/src/layout/flex.rs`
+- ... (约 50+ 文件)
+
+### 验收标准
+
+- [ ] 所有 hikari 包编译通过
+- [ ] 无新增编译警告
+- [ ] `StyleStringBuilder` 来自 `tairitsu_style`
+- [ ] `ClassesBuilder` 来自 `tairitsu_style`
+- [ ] `CssProperty` 包含全部 W3C 标准属性
+
+---
+
+## Phase 3: Props 宏迁移（后续）
+
+将更多组件 Props 迁移到 `#[define_props]` 宏：
+
+| 组件 | Props | 状态 |
+|---|---|---|
+| icons | IconProps | ✅ 已完成 |
+| data/table | TableProps | ✅ 已完成 |
+| basic/avatar | AvatarProps | 待处理 |
+| basic/button | ButtonProps | 待处理 |
+| basic/input | InputProps | 待处理 |
+| ... | ... | ... |
+
+---
+
+## Phase 4: 文档更新
+
+- [ ] 更新 `docs/en-US/guides/02-classesbuilder-system.md`
+- [ ] 更新 `docs/en-US/guides/03-stylestringbuilder-system.md`
+- [ ] 添加迁移指南

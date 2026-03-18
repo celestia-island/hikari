@@ -1,14 +1,14 @@
 // hi-components/src/feedback/glow.rs
 // Unified glow effect component with mouse-following spotlight and acrylic blur
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::style_builder::StyleBuilder;
 use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, GlowClass};
 use tairitsu_vdom::IntoAttrValue;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::JsCast;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use web_sys::HtmlElement;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -168,7 +168,7 @@ pub fn Glow(props: GlowProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     let glow_color = match props.color {
         GlowColor::Ghost => "var(--hi-ghost-glow, rgba(128, 128, 128, 0.5))",
         GlowColor::Primary => "var(--hi-glow-button-primary)",
@@ -179,7 +179,7 @@ pub fn Glow(props: GlowProps) -> Element {
         GlowColor::Info => "var(--hi-glow-button-info)",
     };
 
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
         // Build initial style - default to hidden (scale 0)
         let initial_style = format!(
@@ -235,7 +235,7 @@ pub fn Glow(props: GlowProps) -> Element {
 
         // Handler for mouse enter - show glow (hover state)
         let onmouseenter_handler = move |event: MouseEvent| {
-            #[cfg(target_arch = "wasm32")]
+            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
                 if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
                     web_sys::console::log_1(&"🔵 Glow: mouseenter triggered".into());
@@ -253,7 +253,7 @@ pub fn Glow(props: GlowProps) -> Element {
 
         // Handler for mouse leave - hide glow (idle state)
         let onmouseleave_handler = move |event: MouseEvent| {
-            #[cfg(target_arch = "wasm32")]
+            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
                 if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
                     web_sys::console::log_1(&"⚫ Glow: mouseleave triggered".into());
@@ -272,7 +272,7 @@ pub fn Glow(props: GlowProps) -> Element {
         // Handler for mouse down - intense glow (active state)
         // Use onmousedown on the wrapper to catch the event from children
         let onmousedown_handler = move |event: MouseEvent| {
-            #[cfg(target_arch = "wasm32")]
+            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
                 if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
                     web_sys::console::log_1(&"🔴 Glow: mousedown triggered".into());
@@ -348,7 +348,7 @@ pub fn Glow(props: GlowProps) -> Element {
 
         // Handler for mouse up - return to hover state
         let onmouseup_handler = move |event: MouseEvent| {
-            #[cfg(target_arch = "wasm32")]
+            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
                 if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
                     web_sys::console::log_1(&"🟢 Glow: mouseup triggered".into());
@@ -379,7 +379,7 @@ pub fn Glow(props: GlowProps) -> Element {
         }
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
     {
         rsx! {
             div { class: glow_classes, "data-glow": "true", {props.children} }

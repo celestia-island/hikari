@@ -6,9 +6,9 @@ use hikari_palette::classes::{
     ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass, TooltipClass,
     UtilityClass,
 };
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::{JsCast, closure::Closure};
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use web_sys;
 
 use super::provider::PortalContext;
@@ -42,11 +42,11 @@ fn use_animated_portal_entry(
     let close_callback = {
         let anim_state = internal_animation_state.clone();
         Callback::new(move |_| {
-            #[cfg(target_arch = "wasm32")]
+            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
                 web_sys::console::log_1(&format!("{} close triggered", name).into());
             }
-            #[cfg(not(target_arch = "wasm32"))]
+            #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
             let _ = name;
             anim_state.set(ModalAnimationState::Disappearing);
         })
@@ -55,7 +55,7 @@ fn use_animated_portal_entry(
     let internal_animation_state_for_memo = internal_animation_state.clone();
     let computed_opacity_scale = use_memo(move || {
         let state = internal_animation_state_for_memo.read();
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
         {
             web_sys::console::log_1(
                 &format!("{} use_memo triggered, state: {:?}", name, state).into(),
@@ -69,14 +69,14 @@ fn use_animated_portal_entry(
         (opacity, scale)
     }).value();
 
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
         let internal_animation_state_for_effect = internal_animation_state.clone();
         use_effect(use_reactive(
             (&internal_animation_state_for_effect,),
             move |(anim_state,)| {
                 let state = *anim_state.read();
-                #[cfg(target_arch = "wasm32")]
+                #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                 {
                     web_sys::console::log_1(
                         &format!("{} use_effect triggered, state: {:?}", name, state).into(),
@@ -86,7 +86,7 @@ fn use_animated_portal_entry(
                     let anim_state_clone = anim_state.clone();
                     let callback = Closure::once_into_js(move || {
                         anim_state_clone.set(ModalAnimationState::Visible);
-                        #[cfg(target_arch = "wasm32")]
+                        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                         {
                             web_sys::console::log_1(
                                 &format!("{} set to visible via requestAnimationFrame", name)
@@ -99,12 +99,12 @@ fn use_animated_portal_entry(
                         .request_animation_frame(callback.unchecked_ref());
                 } else if state == ModalAnimationState::Disappearing {
                     let id = id_for_close.clone();
-                    #[cfg(target_arch = "wasm32")]
+                    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                     web_sys::console::log_1(
                         &format!("{} setTimeout scheduled for removing entry: {}", name, id).into(),
                     );
                     let callback = Closure::once_into_js(move || {
-                        #[cfg(target_arch = "wasm32")]
+                        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                         {
                             web_sys::console::log_1(
                                 &format!("{} removing entry after timeout: {}", name, id).into(),
@@ -288,7 +288,7 @@ fn ModalPortalEntry(
             "opacity: {}; transform: scale({}); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;",
             opacity, scale
         );
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
         {
             web_sys::console::log_1(&format!("Modal style computed: {}", style).into());
         }
@@ -390,27 +390,27 @@ fn DropdownPortalEntry(
     let close_dropdown_for_content = close_dropdown.clone();
 
     let viewport_width = use_signal(|| {
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
         {
             web_sys::window()
                 .and_then(|w| w.inner_width().ok())
                 .and_then(|v| v.as_f64())
                 .unwrap_or(1920.0)
         }
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
         {
             1920.0
         }
     });
     let viewport_height = use_signal(|| {
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
         {
             web_sys::window()
                 .and_then(|w| w.inner_height().ok())
                 .and_then(|v| v.as_f64())
                 .unwrap_or(1080.0)
         }
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
         {
             1080.0
         }
@@ -516,7 +516,7 @@ fn DropdownPortalEntry(
             "{} opacity: {}; transform: scaleY({}); transform-origin: {}; transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;",
             pos, opacity, scale, transform_origin
         );
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
         {
             web_sys::console::log_1(&format!("Dropdown style computed: {}", style).into());
         }
@@ -538,7 +538,7 @@ fn DropdownPortalEntry(
                 onclick: move |e: MouseEvent| {
                     e.stop_propagation();
                     if close_on_select {
-                        #[cfg(target_arch = "wasm32")]
+                        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                         {
                             if let Some(web_event) = e.downcast::<web_sys::MouseEvent>() {
                                 if let Some(target) = web_event.target() {
@@ -551,7 +551,7 @@ fn DropdownPortalEntry(
                                 }
                             }
                         }
-                        #[cfg(not(target_arch = "wasm32"))]
+                        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
                         {
                             close_dropdown_for_content.call(e);
                         }
@@ -631,14 +631,14 @@ fn PopoverPortalEntry(
     }
 
     let viewport_height = use_signal(|| {
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
         {
             web_sys::window()
                 .and_then(|w| w.inner_height().ok())
                 .and_then(|v| v.as_f64())
                 .unwrap_or(1080.0)
         }
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
         {
             1080.0
         }
@@ -697,14 +697,14 @@ fn PopoverPortalEntry(
             }
         }
 
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
         fn get_viewport_width() -> f64 {
             web_sys::window()
                 .and_then(|w| w.inner_width().ok())
                 .and_then(|v| v.as_f64())
                 .unwrap_or(1920.0)
         }
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
         fn get_viewport_width() -> f64 {
             1920.0
         }
@@ -857,7 +857,7 @@ fn PopoverPortalEntry(
                     e.stop_propagation();
 
                     if close_on_select {
-                        #[cfg(target_arch = "wasm32")]
+                        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                         {
                             if let Some(web_event) = e.downcast::<web_sys::MouseEvent>() {
                                 if let Some(target) = web_event.target() {
@@ -873,7 +873,7 @@ fn PopoverPortalEntry(
                                 }
                             }
                         }
-                        #[cfg(not(target_arch = "wasm32"))]
+                        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
                         {
                             close_popover_for_content.call(e);
                             if let Some(handler) = on_close_for_content.as_ref() {
@@ -900,27 +900,27 @@ fn TooltipPortalEntry(
     #[props(default)] arrow: bool,
 ) -> Element {
     let viewport_width = use_signal(|| {
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
         {
             web_sys::window()
                 .and_then(|w| w.inner_width().ok())
                 .and_then(|v| v.as_f64())
                 .unwrap_or(1920.0)
         }
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
         {
             1920.0
         }
     });
     let viewport_height = use_signal(|| {
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
         {
             web_sys::window()
                 .and_then(|w| w.inner_height().ok())
                 .and_then(|v| v.as_f64())
                 .unwrap_or(1080.0)
         }
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
         {
             1080.0
         }

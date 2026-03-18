@@ -3,10 +3,10 @@
 //! Provides a simple global animation loop for WASM only.
 
 /// Global animation manager (no global state - just functions)
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub struct GlobalAnimationManager;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 impl GlobalAnimationManager {
     /// Create a new global animation manager
     pub fn new() -> Self {
@@ -34,24 +34,24 @@ impl GlobalAnimationManager {
     }
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 static GLOBAL_MANAGER: GlobalAnimationManager = GlobalAnimationManager;
 
 /// Get the global animation manager
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub fn global_animation_manager() -> &'static GlobalAnimationManager {
     &GLOBAL_MANAGER
 }
 
 /// Initialize the global animation manager
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub fn init_global_animation_manager() {
     web_sys::console::log_1(&"🎬 Initializing global animation manager".into());
     global_animation_manager().start();
 }
 
 /// Create an animation callback (simplified)
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub fn create_animation_callback(
     _element: web_sys::HtmlElement,
     _state: crate::state::AnimationState,

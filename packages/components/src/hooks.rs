@@ -10,9 +10,9 @@
 //! - **Desktop**: ≥1024px
 
 use crate::prelude::*;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::prelude::*;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use web_sys;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -70,7 +70,7 @@ pub fn use_screen_size() -> Signal<ScreenSize> {
     let screen_size = use_signal(get_screen_size_from_window);
 
     // Set up resize listener
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     use_effect(move || {
         let window = web_sys::window().expect("no window");
         let mut screen_size = screen_size;
@@ -109,7 +109,7 @@ pub fn use_is_desktop() -> Signal<bool> {
 }
 
 fn get_screen_size_from_window() -> ScreenSize {
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
         if let Some(window) = web_sys::window() {
             let width_result = window.inner_width();
@@ -128,9 +128,9 @@ fn get_screen_size_from_window() -> ScreenSize {
             ScreenSize::Desktop
         }
     }
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
     {
-        // Default to desktop for non-WASM targets
+        // Default to desktop for non-browser-WASM targets
         ScreenSize::Desktop
     }
 }
@@ -144,7 +144,7 @@ fn get_screen_size_from_window() -> ScreenSize {
 pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> Signal<bool> {
     let matches = use_signal(|| check_media_query(min_width, max_width));
 
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     use_effect(move || {
         let window = web_sys::window().expect("no window");
         let mut matches = matches;
@@ -165,7 +165,7 @@ pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> Signal
 }
 
 fn check_media_query(min_width: Option<u32>, max_width: Option<u32>) -> bool {
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
         if let Some(window) = web_sys::window() {
             let width_result = window.inner_width();
@@ -192,9 +192,9 @@ fn check_media_query(min_width: Option<u32>, max_width: Option<u32>) -> bool {
             false
         }
     }
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
     {
-        // Default to false for non-WASM targets
+        // Default to false for non-browser-WASM targets
         let _ = (min_width, max_width);
         false
     }

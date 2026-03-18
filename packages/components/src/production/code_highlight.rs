@@ -10,15 +10,17 @@
 use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use gloo::timers::callback::Timeout;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::prelude::*;
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use js_sys::Promise;
 
 use crate::styled::StyledComponent;
 
 // Helper function to copy text to clipboard (WASM only)
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 #[wasm_bindgen(inline_js = r#"
 export function copyToClipboard(text) {
     if (navigator.clipboard && window.isSecureContext) {
@@ -38,21 +40,22 @@ export function copyToClipboard(text) {
     }
 }
 "#)]
-extern "C" {
+#[allow(unsafe)]
+unsafe extern "C" {
     fn copyToClipboard(text: &str) -> js_sys::Promise;
 }
 
 // WASM implementation
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 fn copy_to_clipboard(text: &str) -> bool {
     let _promise = copyToClipboard(text);
     true
 }
 
-// Non-WASM stub
-#[cfg(not(target_arch = "wasm32"))]
+// Non-browser WASM stub (WASI) and non-WASM stub
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
 fn copy_to_clipboard(_text: &str) -> bool {
-    // Clipboard not available on non-WASM targets
+    // Clipboard not available on non-browser-WASM targets
     false
 }
 
@@ -172,7 +175,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                         onclick: {
                             let code_for_copy = code_for_copy.clone();
                             move |_| {
-                                #[cfg(target_arch = "wasm32")]
+                                #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                                 {
                                     if copy_to_clipboard(&code_for_copy) {
                                         copied.set(true);
@@ -182,7 +185,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                                         }).forget();
                                     }
                                 }
-                                #[cfg(not(target_arch = "wasm32"))]
+                                #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
                                 {
                                     let _ = code_for_copy;
                                     let _ = copied;

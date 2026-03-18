@@ -1,14 +1,14 @@
 //! Continuous animation hooks (timeout, interval) for Dioxus
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use std::sync::{Arc, Mutex};
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use dioxus::prelude::*;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::JsCast;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub fn use_timeout(duration_ms: u64, callback: impl Fn() + 'static) -> impl Fn() {
     let timeout_id = Arc::new(Mutex::new(Option::<i32>::None));
     let callback_arc = Arc::new(callback);
@@ -47,12 +47,12 @@ pub fn use_timeout(duration_ms: u64, callback: impl Fn() + 'static) -> impl Fn()
     trigger
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
 pub fn use_timeout(_duration_ms: u64, _callback: impl Fn() + 'static) -> impl Fn() {
     move || {}
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub fn use_interval(duration_ms: u64, callback: impl Fn() + 'static) {
     let interval_id = Arc::new(Mutex::new(Option::<i32>::None));
     let callback_arc = Arc::new(callback);
@@ -82,5 +82,5 @@ pub fn use_interval(duration_ms: u64, callback: impl Fn() + 'static) {
     });
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
 pub fn use_interval(_duration_ms: u64, _callback: impl Fn() + 'static) {}

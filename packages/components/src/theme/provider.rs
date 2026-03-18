@@ -65,12 +65,12 @@
 //! }
 //! ```
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use hikari_animation::global_manager::init_global_animation_manager;
 use crate::prelude::*;
 use hikari_palette::*;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::scripts::scrollbar_container::init_all as init_scrollbars;
 
 use crate::theme::{
@@ -194,9 +194,9 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
         set_theme,
     });
 
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     use_effect(|| {
-        // Use wasm_bindgen_futures for async in WASM
+        // Use wasm_bindgen_futures for async in WASM (browser only)
         wasm_bindgen_futures::spawn_local(async move {
             gloo::timers::future::TimeoutFuture::new(50).await;
 

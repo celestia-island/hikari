@@ -2,12 +2,12 @@
 // Component-isolated glow effect using Dioxus hooks
 
 use dioxus::prelude::*;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::JsValue;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use web_sys::HtmlElement;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::style::StyleBuilder;
 
 /// Glow component properties
@@ -47,7 +47,7 @@ pub struct GlowProps {
 /// ```
 #[component]
 pub fn Glow(props: GlowProps) -> Element {
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
         use wasm_bindgen::JsCast;
 
@@ -166,7 +166,7 @@ pub fn Glow(props: GlowProps) -> Element {
         }
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
     {
         // SSR fallback: just render children
         rsx! {

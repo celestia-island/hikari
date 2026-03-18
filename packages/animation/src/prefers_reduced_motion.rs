@@ -8,7 +8,7 @@
 /// # Platform Support
 /// - WASM: Uses `window.matchMedia('(prefers-reduced-motion: reduce)')`
 /// - Non-WASM: Always returns false
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub fn prefers_reduced_motion() -> bool {
     web_sys::window()
         .and_then(|w| w.match_media("(prefers-reduced-motion: reduce)").ok())
@@ -17,7 +17,7 @@ pub fn prefers_reduced_motion() -> bool {
         .unwrap_or(false)
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
 pub fn prefers_reduced_motion() -> bool {
     false
 }
@@ -29,7 +29,7 @@ pub fn prefers_reduced_motion() -> bool {
 /// # Platform Support
 /// - WASM: Uses MediaQueryList.onchange
 /// - Non-WASM: No-op
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub fn watch_prefers_reduced_motion(callback: impl Fn(bool) + 'static) {
     use wasm_bindgen::JsCast;
 
@@ -47,7 +47,7 @@ pub fn watch_prefers_reduced_motion(callback: impl Fn(bool) + 'static) {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
 pub fn watch_prefers_reduced_motion(_callback: impl Fn(bool) + 'static) {
     // No-op on non-WASM platforms
 }

@@ -25,7 +25,7 @@ pub fn calculate_position(
                 let trigger_center_x = rect_x + rect_w / 2.0;
                 let trigger_center_y = rect_y + rect_h / 2.0;
 
-                #[cfg(target_arch = "wasm32")]
+                #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                 {
                     web_sys::console::log_1(
                         &format!("Portal calculate_position: placement={:?}, trigger_rect=({:.1}, {:.1}, {:.1}, {:.1}), viewport=({:.1}, {:.1}), elem_width={:.1}",
@@ -71,7 +71,7 @@ pub fn calculate_position(
                     TriggerPlacement::Center => y.clamp(PADDING, viewport_height - PADDING),
                 };
 
-                #[cfg(target_arch = "wasm32")]
+                #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                 {
                     web_sys::console::log_1(
                         &format!(
@@ -84,7 +84,7 @@ pub fn calculate_position(
 
                 (x_clamped, y_clamped)
             } else {
-                #[cfg(target_arch = "wasm32")]
+                #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                 {
                     web_sys::console::log_1(
                         &"Portal: trigger_rect is None, using center fallback".into(),

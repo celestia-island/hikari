@@ -6,7 +6,7 @@
 use crate::prelude::*;
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, SearchClass};
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::JsCast;
 
 use crate::{
@@ -245,9 +245,9 @@ pub fn Search(props: SearchProps) -> Element {
             div {
                 class: "hi-search-input-wrapper",
                 onmounted: move |_evt| {
-                    #[cfg(target_arch = "wasm32")]
+                    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                     let evt = _evt;
-                    #[cfg(target_arch = "wasm32")]
+                    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                     {
                         if let Some(element) = evt.data().downcast::<web_sys::Element>() {
                             if let Some(html_el) = element.dyn_ref::<web_sys::HtmlElement>() {

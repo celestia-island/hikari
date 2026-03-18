@@ -6,9 +6,9 @@ use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, FlexDirection, Padding, QRCodeClass, UtilityClass,
 };
 use qrcode::{Color, QrCode};
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::JsCast;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use web_sys::{self, CanvasRenderingContext2d};
 
 use crate::styled::StyledComponent;
@@ -108,7 +108,7 @@ pub fn QRCode(props: QRCodeProps) -> Element {
                     onmounted: move |evt| {
                         if drawn.get() { return; }
 
-                        #[cfg(target_arch = "wasm32")]
+                        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                         {
                             if let Some(canvas) = evt.data().downcast::<web_sys::HtmlCanvasElement>()
                                 && let Ok(Some(ctx)) = canvas.get_context("2d")
@@ -142,7 +142,7 @@ pub fn QRCode(props: QRCodeProps) -> Element {
                                         drawn.set(true);
                                     }
                         }
-                        #[cfg(not(target_arch = "wasm32"))]
+                        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
                         {
                             let _ = evt;
                         }

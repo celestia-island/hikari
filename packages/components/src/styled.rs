@@ -58,7 +58,7 @@ impl StyleRegistry {
     pub fn register_basic_components(&mut self) {
         use crate::basic::{
             ArrowComponent, BackgroundComponent, BadgeComponent, ButtonComponent, CanvasComponent,
-            CardComponent, CheckboxComponent, DatePickerComponent, DividerComponent,
+            CardComponent, CheckboxComponent, DatePickerComponent,
             FileUploadComponent, FormFieldComponent, IconButtonComponent, InputComponent,
             RadioGroupComponent, SelectComponent, SliderComponent, SwitchComponent,
             TextareaComponent,
@@ -70,7 +70,6 @@ impl StyleRegistry {
         InputComponent::register(self);
         CardComponent::register(self);
         BadgeComponent::register(self);
-        DividerComponent::register(self);
         CheckboxComponent::register(self);
         RadioGroupComponent::register(self);
         SelectComponent::register(self);

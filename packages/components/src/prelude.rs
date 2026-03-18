@@ -70,7 +70,7 @@ pub use tairitsu_hooks::{
 };
 
 // Re-export tairitsu macros
-pub use tairitsu_macros::{rsx, component, Props};
+pub use tairitsu_macros::{rsx, component, Props, define_props};
 
 pub use tairitsu_macros::component as derive_props;
 
@@ -97,7 +97,7 @@ pub use crate::styled::{StyledComponent, StyleRegistry};
 pub use crate::basic::{
     BackgroundProps, BadgeProps, ButtonProps, CardActionsProps, CardContentProps,
     CardHeaderProps, CardMediaProps, CardProps, CheckboxProps, DatePickerProps,
-    DividerProps, FileUploadProps, FormFieldProps, IconButtonProps, InputProps,
+    FileUploadProps, FormFieldProps, IconButtonProps, InputProps,
     InputWrapperProps, RadioButtonProps, RadioGroupProps, SelectProps, SliderProps,
     SwitchProps, TextareaProps,
 };

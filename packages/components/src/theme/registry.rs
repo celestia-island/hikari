@@ -43,7 +43,7 @@ pub fn get_registered_theme(name: &str) -> Option<Palette> {
 ///
 ///
 pub fn get_default_theme() -> &'static str {
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
         if prefers_dark_mode() {
             "tairitsu"
@@ -52,7 +52,7 @@ pub fn get_default_theme() -> &'static str {
         }
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
     {
         "hikari"
     }
@@ -64,7 +64,7 @@ pub fn get_default_theme() -> &'static str {
 ///
 ///
 pub fn prefers_dark_mode() -> bool {
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
         use gloo::utils::window;
 
@@ -76,7 +76,7 @@ pub fn prefers_dark_mode() -> bool {
             .unwrap_or(false)
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
     {
         false
     }

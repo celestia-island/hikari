@@ -17,8 +17,8 @@
 //! - requestAnimationFrame drives smooth width transitions (300ms)
 //! - CSS cubic-bezier for smooth easing
 
-// WASM-specific implementation
-#[cfg(target_arch = "wasm32")]
+// WASM-specific implementation (browser WASM only, not WASI)
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 mod wasm_impl {
     use std::{cell::RefCell, rc::Rc};
 
@@ -566,17 +566,17 @@ mod wasm_impl {
     }
 }
 
-// Non-WASM stub implementations
-#[cfg(not(target_arch = "wasm32"))]
+// Non-WASM stub implementations (includes WASI platforms)
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
 pub fn init(_container_selector: &str) {
     // No-op on non-WASM platforms
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
 pub fn init_all() {
     // No-op on non-WASM platforms
 }
 
-// Re-export WASM functions when available
-#[cfg(target_arch = "wasm32")]
+// Re-export WASM functions when available (browser WASM only)
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub use wasm_impl::{init, init_all};

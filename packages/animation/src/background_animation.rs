@@ -126,7 +126,7 @@ struct ThemeCache {
 ///
 /// Returns: (color1, color2) as hex strings
 fn get_theme_colors() -> (String, String) {
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
         use palette::{墨色, 月白, 粉红, 靛蓝};
         use std::cell::RefCell;
@@ -182,7 +182,7 @@ fn get_theme_colors() -> (String, String) {
         colors
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
     {
         // Fallback colors for non-WASM
         use palette::{月白, 粉红};

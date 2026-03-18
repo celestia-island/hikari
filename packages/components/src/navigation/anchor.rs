@@ -26,9 +26,9 @@ use crate::prelude::*;
 use hikari_palette::classes::{
     AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass,
 };
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::JsCast;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::closure::Closure;
 
 #[derive(Clone, Debug, PartialEq, Props)]
@@ -75,10 +75,10 @@ pub fn Anchor(
                     active_anchor_for_click.set(href.clone());
 
                     // Remove '#' from href
-                    #[cfg(target_arch = "wasm32")]
+                    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                     let target_id = href.trim_start_matches('#');
 
-                    #[cfg(target_arch = "wasm32")]
+                    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                     {
                         use web_sys::window;
                         if let Some(window) = window() {
@@ -126,7 +126,7 @@ pub fn Anchor(
 }
 
 ///
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> Signal<String> {
     let active_anchor = use_signal(|| String::new());
 

@@ -1,14 +1,14 @@
 //! Animation frame hook for Dioxus
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use std::cell::RefCell;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use std::rc::Rc;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::JsCast;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub fn use_animation_frame(callback: impl Fn(f64) + 'static) {
     let callback = Rc::new(callback);
 
@@ -49,5 +49,5 @@ pub fn use_animation_frame(callback: impl Fn(f64) + 'static) {
         .unwrap();
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
 pub fn use_animation_frame(_callback: impl Fn(f64) + 'static) {}

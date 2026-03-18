@@ -3,7 +3,9 @@
 //! This is a lightweight replacement for hikari_animation::style that can be used
 //! in non-WASM builds.
 
-#[cfg(target_arch = "wasm32")]
+// Only use hikari_animation::style in browser WASM (wasm32-unknown-unknown)
+// For WASI (wasm32-wasip2), use the local StyleStringBuilder implementation
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub use hikari_animation::style::{AttributeBuilder, Property, StyleBuilder};
 
 /// CSS property names for type-safe style building
@@ -216,6 +218,12 @@ impl StyleStringBuilder {
         self
     }
 
+    /// Add a custom CSS property (e.g., CSS variables like --my-var)
+    pub fn add_custom(mut self, property: &str, value: &str) -> Self {
+        self.styles.push((property.to_string(), value.to_string()));
+        self
+    }
+
     /// Build the final CSS string
     pub fn build(self) -> String {
         self.styles
@@ -236,8 +244,8 @@ impl StyleStringBuilder {
     }
 }
 
-/// Type alias for compatibility (non-WASM only uses string builder)
-#[cfg(not(target_arch = "wasm32"))]
+/// Type alias for compatibility (non-browser WASM only uses string builder)
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
 pub type StyleBuilder = StyleStringBuilder;
 
 #[cfg(test)]

@@ -4,10 +4,10 @@
 //! Automatically adapts to theme changes via global theme provider registry.
 //! Includes a 60-second rotating gradient animation with configurable breathing.
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::style_builder::StyleBuilder;
 use crate::prelude::*;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use hikari_palette::{墨色, 月白, 粉红, 靛蓝};
 
 use crate::styled::StyledComponent;
@@ -31,7 +31,7 @@ pub struct BackgroundProps {
 ///
 #[component]
 pub fn Background(props: BackgroundProps) -> Element {
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
         use_effect(move || {
             let _stop = start_gradient_animation();
@@ -47,7 +47,7 @@ pub fn Background(props: BackgroundProps) -> Element {
 }
 
 ///
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 fn start_gradient_animation() -> Box<dyn FnOnce()> {
     use std::cell::RefCell;
     use std::rc::Rc;

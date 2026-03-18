@@ -3,7 +3,7 @@
 
 use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, Display, Position, SelectClass};
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::JsCast;
 
 use crate::{
@@ -148,7 +148,7 @@ pub fn Select(props: SelectProps) -> Element {
 
             // Get trigger rect for positioning
             let trigger_rect_opt = {
-                #[cfg(target_arch = "wasm32")]
+                #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                 {
                     if let Some(web_event) = e.downcast::<web_sys::MouseEvent>() {
                         if let Some(target) = web_event.target() {
@@ -176,7 +176,7 @@ pub fn Select(props: SelectProps) -> Element {
                     }
                 }
 
-                #[cfg(not(target_arch = "wasm32"))]
+                #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
                 {
                     None::<(f64, f64, f64, f64)>
                 }

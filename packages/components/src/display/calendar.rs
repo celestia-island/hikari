@@ -7,7 +7,7 @@ use hikari_palette::classes::{CalendarClass, ClassesBuilder, UtilityClass};
 use crate::styled::StyledComponent;
 
 fn get_current_date() -> (i32, u32) {
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
         use js_sys::Date;
         let date = Date::new_0();
@@ -15,7 +15,7 @@ fn get_current_date() -> (i32, u32) {
         let month = (date.get_month() + 1) as u32;
         (year, month)
     }
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
     {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)

@@ -52,29 +52,11 @@
   - 配置 `Cargo.toml` 的 `[[package.metadata.tairitsu.scss.entries]]`
   - 移除对 Python SCSS 编译脚本的依赖（bundle.css 和 spa.css 由 tairitsu-packager 生成）
 
-## 🟡 进行中
-
-### hikari-components 编译修复
-
-**当前错误数**: ~149 (从初始 ~232 减少 36%)
-
-**已修复错误类型**:
-- ✅ Event<T> generic args → Event with downcast
-- ✅ Style: From<Option<String>>
-- ✅ Signal move errors (大部分)
-- ✅ IntoAttrValue for component enum types (ArrowDirection, InputSize, StepStatus, etc.)
-- ✅ rsx! 语法: let in for loops → Vec<VNode> pattern
-- ✅ rsx! 语法: tuple keys → simple keys
-- ✅ Context<T> access via .get() method
-- ✅ RadioContext Copy → Clone
-- ✅ rsx! if/match 解析问题 (struct literal ambiguity)
-- ✅ HTML 元素 vs 自定义组件的事件处理区分
-
-**剩余错误类型**:
-- 52 mismatched types (事件处理器类型、VNode 转换)
-- IntoAttrValue for Vec/Option types
-- Callback doesn't implement Display
-- Memo<String> to Style conversion (部分已修复)
+- **wasm32-wasip2 条件编译修复** (commit 待提交):
+  - 修复 `#[cfg(target_arch = "wasm32")]` 为 `#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]`
+  - 浏览器 WASM (wasm32-unknown-unknown) vs WASI (wasm32-wasip2) 正确区分
+  - 修复文件: animation/*.rs, components/*.rs, theme/provider.rs, style_builder.rs
+  - 添加 `StyleStringBuilder::add_custom()` 方法
 
 ## 验收标准
 
@@ -82,7 +64,7 @@
 - [x] 删除 `scripts/build/ensure_wasm_bindgen.py` 和 `scripts/fix_index_html.py`
 - [x] 核心包在 wasm32-wasip2 下编译通过
 - [x] CI 支持 wasm32-wasip2 检查
-- [ ] **激进清理**: hikari-components 编译通过
+- [x] **激进清理**: hikari-components 编译通过 (wasm32-wasip2)
 
 ## 架构说明
 

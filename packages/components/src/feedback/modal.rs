@@ -4,7 +4,7 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::prelude::*;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::{JsCast, closure::Closure};
 
 use crate::{
@@ -93,7 +93,7 @@ pub fn use_modal(initial_config: ModalConfig) -> ModalController {
             let id = cfg.read().id.clone();
             start_close.call(id.clone());
 
-            #[cfg(target_arch = "wasm32")]
+            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
                 let remove = remove_entry.clone();
                 let id_timeout = id.clone();
@@ -108,7 +108,7 @@ pub fn use_modal(initial_config: ModalConfig) -> ModalController {
                     );
             }
 
-            #[cfg(not(target_arch = "wasm32"))]
+            #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
             {
                 remove_entry.call(id);
             }

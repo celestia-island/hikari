@@ -3,7 +3,7 @@
 
 use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, Display, Position};
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::JsCast;
 
 use crate::{

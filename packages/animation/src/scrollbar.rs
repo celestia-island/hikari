@@ -11,7 +11,7 @@ use web_sys::HtmlElement;
 use super::style::{CssProperty, StyleBuilder};
 
 /// Store all scrollbar elements for animation updates
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 static mut SCROLLBARS: Option<HashMap<String, HtmlElement>> = None;
 
 /// Register a scrollbar element for animation
@@ -20,7 +20,7 @@ static mut SCROLLBARS: Option<HashMap<String, HtmlElement>> = None;
 ///
 /// * `id` - Unique identifier for this scrollbar
 /// * `track` - The scrollbar track element
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 #[wasm_bindgen(js_name = registerScrollbar)]
 pub fn register_scrollbar(id: String, track: JsValue) {
     let track_element = match track.dyn_into::<HtmlElement>() {
@@ -50,7 +50,7 @@ pub fn register_scrollbar(id: String, track: JsValue) {
 ///
 /// * `id` - Unique identifier for scrollbar
 /// * `width` - Target width in pixels (e.g., 4.0 or 8.0)
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 #[wasm_bindgen(js_name = updateScrollbarWidth)]
 pub fn update_scrollbar_width(id: String, width: f64) {
     unsafe {
@@ -71,8 +71,8 @@ pub fn update_scrollbar_width(id: String, width: f64) {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
 pub fn register_scrollbar(_id: String, _track: JsValue) {}
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
 pub fn update_scrollbar_width(_id: String, _width: f64) {}

@@ -132,7 +132,7 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
     let upload_status_for_change = upload_status.clone();
     let files_for_change = files.clone();
     let on_change = move |e: ChangeEvent| {
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
         {
             let file_list = e.data.as_any().downcast_ref::<FormData>()
                 .map(|fd| fd.files.clone())

@@ -25,19 +25,19 @@ pub enum TableSize {
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum Align {
+pub enum TableAlign {
     #[default]
     Left,
     Center,
     Right,
 }
 
-impl From<ColumnAlign> for Align {
+impl From<ColumnAlign> for TableAlign {
     fn from(align: ColumnAlign) -> Self {
         match align {
-            ColumnAlign::Left => Align::Left,
-            ColumnAlign::Center => Align::Center,
-            ColumnAlign::Right => Align::Right,
+            ColumnAlign::Left => TableAlign::Left,
+            ColumnAlign::Center => TableAlign::Center,
+            ColumnAlign::Right => TableAlign::Right,
         }
     }
 }

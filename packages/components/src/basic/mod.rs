@@ -25,7 +25,6 @@
 //! - [`FileUpload`] - File upload with drag-drop
 //! - [`FormField`] - Form field wrapper with label and error
 //! - [`DatePicker`] - Date picker component
-//! - [`Divider`] - Horizontal/vertical divider line
 
 pub mod arrow;
 pub mod avatar;
@@ -36,7 +35,6 @@ pub mod canvas;
 pub mod card;
 pub mod checkbox;
 pub mod date_picker;
-pub mod divider;
 pub mod file_upload;
 pub mod form_field;
 pub mod icon_button;
@@ -58,7 +56,6 @@ pub use canvas::*;
 pub use card::*;
 pub use checkbox::*;
 pub use date_picker::*;
-pub use divider::*;
 pub use file_upload::*;
 pub use form_field::*;
 pub use icon_button::*;

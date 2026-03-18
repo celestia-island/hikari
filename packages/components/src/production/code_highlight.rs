@@ -52,13 +52,6 @@ fn copy_to_clipboard(text: &str) -> bool {
     true
 }
 
-// Non-browser WASM stub (WASI) and non-WASM stub
-#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-fn copy_to_clipboard(_text: &str) -> bool {
-    // Clipboard not available on non-browser-WASM targets
-    false
-}
-
 pub struct CodeHighlightComponent;
 
 #[derive(Clone, PartialEq, Props)]

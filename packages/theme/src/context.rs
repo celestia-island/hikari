@@ -22,7 +22,6 @@
 //! ```
 
 use crate::prelude::*;
-use hikari_palette::*;
 
 /// Layout direction for RTL/LTR support
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]

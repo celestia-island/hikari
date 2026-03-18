@@ -20,3 +20,7 @@ hikari-palette = { path = "../palette" }
 tairitsu-vdom = { path = "../../../tairitsu/packages/vdom" }
 tairitsu-hooks = { path = "../../../tairitsu/packages/hooks" }
 tairitsu-macros = { path = "../../../tairitsu/packages/macros" }
+
+[build-dependencies]
+tairitsu-packager = { path = "../../../tairitsu/packages/packager" }
+anyhow = "^1"

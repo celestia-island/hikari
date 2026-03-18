@@ -394,9 +394,9 @@ pub fn default_components() -> HashSet<String> {
     Ok(())
 }
 
-/// Compile SCSS to CSS bundle using Grass (Rust Sass compiler)
+/// Compile SCSS to CSS bundle using tairitsu-packager's ScssCompiler
 fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
-    println!("🎨 Compiling SCSS with Grass...");
+    println!("🎨 Compiling SCSS with tairitsu-packager...");
 
     // Use index.scss as entry point (has @import for all components)
     let index_scss = workspace_root.join("packages/components/src/styles/index.scss");
@@ -406,9 +406,9 @@ fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
 
     println!("   Entry point: {:?}", index_scss);
 
-    // Compile with Grass - it will handle @import and @use resolution automatically
-    let css_content = grass::from_path(&index_scss, &grass::Options::default())
-        .map_err(|e| anyhow::anyhow!("SCSS compilation failed: {:?}", e))?;
+    // Compile with tairitsu-packager's ScssCompiler
+    let compiler = tairitsu_packager::styles::ScssCompiler::new();
+    let css_content = compiler.compile_file(&index_scss)?;
 
     // Apply autoprefixer using lightningcss
     println!("🔄 Applying autoprefixer...");

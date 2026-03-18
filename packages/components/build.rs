@@ -1,10 +1,10 @@
 // hikari-components/build.rs
-// SCSS build script - auto-discovers and compiles SCSS files using Grass compiler
+// SCSS build script using tairitsu-packager's ScssCompiler
 
 use anyhow::Result;
 use std::{env, fs, path::Path};
 
-use grass::Options;
+use tairitsu_packager::styles::ScssCompiler;
 
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=src/styles");
@@ -12,7 +12,7 @@ fn main() -> Result<()> {
     let out_dir = env::var("OUT_DIR")?;
     let styles_out_dir = Path::new(&out_dir).join("styles");
 
-    // 创建输出目录
+    // Create output directory
     fs::create_dir_all(&styles_out_dir)?;
 
     println!("🔨 Auto-discovering and compiling SCSS files...");
@@ -31,14 +31,17 @@ fn main() -> Result<()> {
 
     println!("   Found {} SCSS file(s)", scss_files.len());
 
-    // Always compile (in development, we want all styles available)
+    // Create compiler with default options (minify enabled)
+    let compiler = ScssCompiler::new();
+
+    // Compile each SCSS file
     for scss_path in scss_files {
         let relative_path = scss_path
             .strip_prefix(manifest_dir)?
             .to_string_lossy()
             .replace('\\', "/");
 
-        compile_scss(&scss_path, &styles_out_dir, &relative_path)?;
+        compile_scss(&compiler, &scss_path, &styles_out_dir, &relative_path)?;
     }
 
     println!("✅ SCSS compilation complete!");
@@ -61,7 +64,7 @@ fn discover_scss_files(dir: &Path) -> Vec<std::path::PathBuf> {
     files
 }
 
-fn compile_scss(full_path: &Path, output_dir: &Path, relative_path: &str) -> Result<()> {
+fn compile_scss(compiler: &ScssCompiler, full_path: &Path, output_dir: &Path, relative_path: &str) -> Result<()> {
     // Get filename without extension
     let css_name = full_path
         .file_name()
@@ -69,15 +72,8 @@ fn compile_scss(full_path: &Path, output_dir: &Path, relative_path: &str) -> Res
         .to_string_lossy()
         .replace(".scss", ".css");
 
-    // Set up Grass options with load path for theme package
-    let manifest_dir_str = env::var("CARGO_MANIFEST_DIR")?;
-    let manifest_dir = Path::new(&manifest_dir_str);
-    let theme_styles_dir = manifest_dir.join("../theme/styles").canonicalize()?;
-
-    let options = Options::default().load_path(&theme_styles_dir);
-
-    // Compile SCSS to CSS using Grass (from_path handles imports correctly)
-    let css_content = grass::from_path(full_path, &options)?;
+    // Compile SCSS to CSS using tairitsu-packager's compiler
+    let css_content = compiler.compile_file(full_path)?;
 
     // Write to output directory
     let output_path = output_dir.join(&css_name);

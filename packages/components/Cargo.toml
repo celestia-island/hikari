@@ -112,6 +112,6 @@ web-sys = { version = "0.3", features = [
 gloo = { version = "0.11", features = ["futures", "timers"] }
 
 [build-dependencies]
-grass = "^0.13"
+tairitsu-packager = { path = "../../../tairitsu/packages/packager" }
 anyhow = "^1"
 

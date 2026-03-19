@@ -33,108 +33,56 @@ impl IntoAttrValue for InputSize {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct InputProps {
-    #[props(default)]
     pub size: InputSize,
 
-    #[props(default)]
     pub disabled: bool,
 
-    #[props(default)]
     pub readonly: bool,
 
-    #[props(default)]
     pub placeholder: Option<String>,
 
-    #[props(default)]
     pub value: Option<String>,
 
-    #[props(default)]
     pub input_type: Option<String>,
 
-    #[props(default)]
     pub autofocus: bool,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub prefix_icon: Option<Element>,
 
-    #[props(default)]
     pub suffix_icon: Option<Element>,
 
     pub oninput: Option<EventHandler<String>>,
 
-    #[props(default)]
     pub onfocus: Option<EventHandler<FocusEvent>>,
 
-    #[props(default)]
     pub onblur: Option<EventHandler<FocusEvent>>,
 
     pub onkeydown: Option<EventHandler<KeyboardEvent>>,
 
-    #[props(default = true)]
+    #[default(true)]
     pub glow: bool,
 
-    #[props(default)]
     pub glow_blur: GlowBlur,
 
-    #[props(default)]
     pub glow_intensity: GlowIntensity,
 
-    #[props(default)]
     pub glow_color: GlowColor,
 
-    #[props(default)]
     pub text_color: Option<String>,
 
-    #[props(default)]
     pub placeholder_color: Option<String>,
 
-    #[props(default)]
     pub border_color: Option<String>,
 
-    #[props(default)]
     pub background_color: Option<String>,
 
-    #[props(default)]
     pub animation_id: Option<String>,
 
-    #[props(default)]
     pub css_vars: Option<Vec<(&'static str, String)>>,
-}
-
-impl Default for InputProps {
-    fn default() -> Self {
-        Self {
-            size: Default::default(),
-            disabled: false,
-            readonly: false,
-            placeholder: None,
-            value: None,
-            input_type: None,
-            autofocus: false,
-            class: String::default(),
-            prefix_icon: None,
-            suffix_icon: None,
-            oninput: None,
-            onfocus: None,
-            onblur: None,
-            onkeydown: None,
-            glow: true,
-            glow_blur: Default::default(),
-            glow_intensity: Default::default(),
-            glow_color: GlowColor::Ghost,
-            text_color: None,
-            placeholder_color: None,
-            border_color: None,
-            background_color: None,
-            animation_id: None,
-            css_vars: None,
-        }
-    }
 }
 
 ///

@@ -59,74 +59,38 @@ pub enum FlexGap {
     Gap8,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct FlexBoxProps {
-    #[props(default)]
     pub direction: Direction,
 
-    #[props(default)]
     pub align: Align,
 
-    #[props(default)]
     pub justify: Justify,
 
-    #[props(default)]
     pub wrap: Wrap,
 
-    #[props(default)]
     pub gap: FlexGap,
 
-    #[props(default = true)]
+    #[default(true)]
     pub flex: bool,
 
-    #[props(default)]
     pub min_width: Option<String>,
 
-    #[props(default)]
     pub min_height: Option<String>,
 
-    #[props(default)]
     pub max_width: Option<String>,
 
-    #[props(default)]
     pub max_height: Option<String>,
 
-    #[props(default)]
     pub inline: bool,
 
-    #[props(default)]
     pub rtl: Option<bool>,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub style: String,
 
-    #[props(default)]
     pub children: Element,
-}
-
-impl Default for FlexBoxProps {
-    fn default() -> Self {
-        Self {
-            direction: Direction::Column,
-            align: Align::Start,
-            justify: Justify::Start,
-            wrap: Wrap::NoWrap,
-            gap: FlexGap::None,
-            flex: true,
-            min_width: None,
-            min_height: None,
-            max_width: None,
-            max_height: None,
-            inline: false,
-            rtl: None,
-            class: String::default(),
-            style: String::default(),
-            children: VNode::empty(),
-        }
-    }
 }
 
 #[component]

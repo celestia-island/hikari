@@ -20,41 +20,27 @@ pub enum BadgeVariant {
     Info,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct BadgeProps {
-    #[props(default)]
+    #[default]
     pub variant: BadgeVariant,
 
-    #[props(default)]
+    #[default]
     pub dot: bool,
 
-    #[props(default)]
+    #[default]
     pub count: Option<i32>,
 
-    #[props(default)]
+    #[default]
     pub max: Option<i32>,
 
-    #[props(default)]
+    #[default]
     pub show_zero: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
     pub children: Element,
-}
-
-impl Default for BadgeProps {
-    fn default() -> Self {
-        Self {
-            variant: Default::default(),
-            dot: false,
-            count: None,
-            max: None,
-            show_zero: false,
-            class: String::default(),
-            children: VNode::empty(),
-        }
-    }
 }
 
 #[component]

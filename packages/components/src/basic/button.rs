@@ -56,101 +56,31 @@ pub enum ButtonWidth {
     Width160,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct ButtonProps {
-    #[props(default)]
     pub variant: ButtonVariant,
-
-    #[props(default)]
     pub size: ButtonSize,
-
-    #[props(default)]
     pub width: ButtonWidth,
-
-    #[props(default)]
     pub disabled: bool,
-
-    #[props(default)]
     pub loading: bool,
-
-    #[props(default)]
     pub block: bool,
-
-    #[props(default)]
     pub icon: Option<Element>,
-
-    #[props(default)]
     pub suffix: Option<Element>,
-
-    #[props(default)]
     pub children: Element,
-
-    #[props(default)]
     pub class: String,
-
-    #[props(default)]
     pub animation: ButtonAnimation,
-
-    #[props(default = true)]
+    #[default(true)]
     pub glow: bool,
-
-    #[props(default)]
     pub glow_blur: GlowBlur,
-
-    #[props(default)]
     pub glow_intensity: GlowIntensity,
-
-    #[props(default)]
     pub glow_color: Option<GlowColor>,
-
-    #[props(default)]
     pub icon_color: Option<String>,
-
-    #[props(default)]
     pub text_color: Option<String>,
-
-    #[props(default)]
     pub background_color: Option<String>,
-
-    #[props(default)]
     pub border_color: Option<String>,
-
-    #[props(default)]
     pub animation_id: Option<String>,
-
-    #[props(default)]
     pub css_vars: Option<Vec<(&'static str, String)>>,
-
     pub onclick: Option<EventHandler<MouseEvent>>,
-}
-
-impl Default for ButtonProps {
-    fn default() -> Self {
-        Self {
-            variant: Default::default(),
-            size: Default::default(),
-            width: Default::default(),
-            disabled: false,
-            loading: false,
-            block: false,
-            icon: None,
-            suffix: None,
-            children: VNode::empty(),
-            class: String::default(),
-            animation: Default::default(),
-            glow: true,
-            glow_blur: Default::default(),
-            glow_intensity: crate::feedback::GlowIntensity::Soft,
-            glow_color: None,
-            icon_color: None,
-            text_color: None,
-            background_color: None,
-            border_color: None,
-            animation_id: None,
-            css_vars: None,
-            onclick: None,
-        }
-    }
 }
 
 ///

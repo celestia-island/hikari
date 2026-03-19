@@ -14,15 +14,15 @@ pub struct RadioContext {
     pub disabled: bool,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct RadioButtonProps {
     pub value: String,
-    #[props(default)]
     pub children: Element,
-    #[props(default)]
+    #[default(false)]
     pub disabled: bool,
-    #[props(default)]
+    #[default(String::new())]
     pub class: String,
+    pub on_change: Option<EventHandler<String>>,
 }
 
 #[component]
@@ -42,8 +42,11 @@ pub fn RadioButton(props: RadioButtonProps) -> Element {
 
     let handle_change = {
         let value = props.value.clone();
+        let on_change = props.on_change;
         move |_| {
-            on_change.call(value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(value.clone());
+            }
         }
     };
 
@@ -67,19 +70,16 @@ pub fn RadioButton(props: RadioButtonProps) -> Element {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct RadioGroupProps {
     pub name: String,
-    #[props(default)]
     pub value: String,
-    pub on_change: EventHandler<String>,
-    #[props(default)]
+    pub on_change: Option<EventHandler<String>>,
+    #[default(false)]
     pub disabled: bool,
-    #[props(default)]
     pub children: Element,
-    #[props(default)]
+    #[default(String::new())]
     pub class: String,
-    #[props(default)]
     pub direction: RadioDirection,
 }
 
@@ -96,7 +96,7 @@ pub fn RadioGroup(props: RadioGroupProps) -> Element {
 
     let name: &'static str = Box::leak(props.name.clone().into_boxed_str());
     let disabled = props.disabled;
-    let on_change = props.on_change.clone();
+    let on_change = props.on_change.as_ref().map(|h| h.clone()).unwrap_or_else(|| EventHandler::new(|_| {}));
 
     let _ctx = use_context_provider(move || RadioContext {
         name,

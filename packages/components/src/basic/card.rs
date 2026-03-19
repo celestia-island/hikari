@@ -118,21 +118,16 @@ impl StyledComponent for CardComponent {
 // CardHeader - Optional header with title, subtitle, and actions
 // ============================================
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CardHeaderProps {
-    #[props(default)]
     pub title: Option<String>,
 
-    #[props(default)]
     pub subtitle: Option<String>,
 
-    #[props(default)]
     pub avatar: Option<Element>,
 
-    #[props(default)]
     pub action: Option<Element>,
 
-    #[props(default)]
     pub class: String,
 }
 
@@ -200,12 +195,10 @@ pub fn CardHeader(props: CardHeaderProps) -> Element {
 // CardContent - Main content area
 // ============================================
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CardContentProps {
-    #[props(default)]
     pub children: Element,
 
-    #[props(default)]
     pub class: String,
 }
 
@@ -228,15 +221,12 @@ pub fn CardContent(props: CardContentProps) -> Element {
 // CardActions - Footer with action buttons
 // ============================================
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CardActionsProps {
-    #[props(default)]
     pub children: Element,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub disable_spacing: bool,
 }
 
@@ -260,17 +250,14 @@ pub fn CardActions(props: CardActionsProps) -> Element {
 // CardMedia - Optional media container (images/videos)
 // ============================================
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CardMediaProps {
     pub src: String,
 
-    #[props(default)]
     pub alt: String,
 
-    #[props(default)]
     pub height: Option<String>,
 
-    #[props(default)]
     pub class: String,
 }
 

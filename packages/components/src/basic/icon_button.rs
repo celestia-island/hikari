@@ -56,72 +56,41 @@ impl IntoAttrValue for IconButtonVariant {
 }
 
 ///
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct IconButtonProps {
+    #[default(MdiIcon::Help)]
     pub icon: MdiIcon,
 
-    #[props(default)]
     pub size: IconButtonSize,
 
-    #[props(default)]
     pub variant: IconButtonVariant,
 
-    #[props(default)]
     pub icon_color: Option<String>,
 
-    #[props(default)]
     pub background_color: Option<String>,
 
-    #[props(default)]
     pub border_radius: Option<String>,
 
-    #[props(default)]
     pub animation_id: Option<String>,
 
-    #[props(default)]
     pub css_vars: Option<Vec<(&'static str, String)>>,
 
-    #[props(default = true)]
+    #[default(true)]
     pub glow: bool,
 
-    #[props(default = GlowBlur::Medium)]
     pub glow_blur: GlowBlur,
 
-    #[props(default = GlowColor::Primary)]
     pub glow_color: GlowColor,
 
-    #[props(default = GlowIntensity::Soft)]
     pub glow_intensity: GlowIntensity,
 
-    #[props(default = false)]
+    #[default(false)]
     pub disabled: bool,
 
-    #[props(default)]
+    #[default(String::new())]
     pub class: String,
 
-    pub onclick: EventHandler<MouseEvent>,
-}
-
-impl Default for IconButtonProps {
-    fn default() -> Self {
-        Self {
-            icon: MdiIcon::Help,
-            size: IconButtonSize::default(),
-            variant: IconButtonVariant::default(),
-            icon_color: None,
-            background_color: None,
-            border_radius: None,
-            animation_id: None,
-            css_vars: None,
-            glow: true,
-            glow_blur: GlowBlur::Medium,
-            glow_color: GlowColor::Primary,
-            glow_intensity: GlowIntensity::Soft,
-            disabled: false,
-            class: String::new(),
-            onclick: EventHandler::new(|_| {}),
-        }
-    }
+    pub onclick: Option<EventHandler<MouseEvent>>,
 }
 
 ///
@@ -212,7 +181,11 @@ pub fn IconButton(props: IconButtonProps) -> Element {
             style: style_attr,
             "data-animation-id": props.animation_id,
             disabled: props.disabled,
-            onclick: props.onclick,
+            onclick: move |e| {
+                if let Some(handler) = props.onclick.as_ref() {
+                    handler(e);
+                }
+            },
 
             Icon {
                 icon: props.icon,

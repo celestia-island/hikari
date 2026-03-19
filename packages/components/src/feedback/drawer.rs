@@ -24,48 +24,25 @@ pub enum DrawerSize {
     Large,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct DrawerProps {
     pub open: bool,
 
-    #[props(default)]
     pub on_close: Option<EventHandler<MouseEvent>>,
 
-    #[props(default)]
     pub placement: DrawerPlacement,
 
-    #[props(default)]
     pub size: DrawerSize,
 
-    #[props(default)]
     pub mask_closable: bool,
 
-    #[props(default)]
     pub title: Option<String>,
 
-    #[props(default)]
     pub footer: Option<Element>,
 
-    #[props(default)]
     pub class: String,
 
     pub children: Element,
-}
-
-impl Default for DrawerProps {
-    fn default() -> Self {
-        Self {
-            open: false,
-            on_close: None,
-            placement: Default::default(),
-            size: Default::default(),
-            mask_closable: true,
-            title: None,
-            footer: None,
-            class: String::default(),
-            children: VNode::empty(),
-        }
-    }
 }
 
 ///

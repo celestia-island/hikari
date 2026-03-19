@@ -8,26 +8,22 @@ use crate::styled::StyledComponent;
 
 pub struct ProgressComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct ProgressProps {
     pub value: f64,
 
-    #[props(default = 100.0)]
+    #[default(100.0)]
     pub max: f64,
 
-    #[props(default)]
     pub progress_type: ProgressType,
 
-    #[props(default)]
     pub status: ProgressStatus,
 
-    #[props(default = false)]
+    #[default(false)]
     pub show_info: bool,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub style: String,
 }
 

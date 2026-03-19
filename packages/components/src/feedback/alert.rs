@@ -22,27 +22,14 @@ pub enum AlertVariant {
     Error,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct AlertProps {
-    #[props(default)]
     pub variant: AlertVariant,
-
-    #[props(default)]
     pub title: Option<String>,
-
-    #[props(default)]
     pub description: Option<String>,
-
-    #[props(default)]
     pub closable: bool,
-
-    #[props(default)]
     pub icon: Option<Element>,
-
-    #[props(default)]
     pub class: String,
-
-    #[props(default)]
     pub on_close: Option<EventHandler<MouseEvent>>,
 }
 

@@ -62,45 +62,23 @@ impl PopoverPositioning {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct PopoverProps {
     pub trigger: Element,
     pub children: Element,
-    #[props(default)]
+    #[default(false)]
     pub open: bool,
     pub on_open_change: Option<Callback<bool>>,
-    #[props(default)]
     pub positioning: PopoverPositioning,
-    #[props(default = true)]
+    #[default(true)]
     pub close_on_click_outside: bool,
-    #[props(default = true)]
+    #[default(true)]
     pub close_on_select: bool,
-    #[props(default)]
     pub title: Option<String>,
-    #[props(default)]
     pub width: Option<String>,
-    #[props(default)]
     pub class: String,
-    #[props(default)]
+    #[default(8.0)]
     pub offset: f64,
-}
-
-impl Default for PopoverProps {
-    fn default() -> Self {
-        Self {
-            trigger: VNode::empty(),
-            children: VNode::empty(),
-            open: false,
-            on_open_change: None,
-            positioning: PopoverPositioning::default_relative(),
-            close_on_click_outside: true,
-            close_on_select: true,
-            title: None,
-            width: None,
-            class: String::default(),
-            offset: 8.0,
-        }
-    }
 }
 
 #[component]

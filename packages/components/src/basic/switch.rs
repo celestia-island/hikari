@@ -6,34 +6,31 @@ use hikari_palette::classes::{ClassesBuilder, SwitchClass};
 
 use crate::styled::StyledComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct SwitchProps {
     pub checked: bool,
 
-    pub on_change: EventHandler<bool>,
+    pub on_change: Option<EventHandler<bool>>,
 
-    #[props(default)]
+    #[default(false)]
     pub disabled: bool,
 
-    #[props(default)]
+    #[default(SwitchSize::Medium)]
     pub size: SwitchSize,
 
-    #[props(default)]
+    #[default(String::new())]
     pub class: String,
 
-    #[props(default)]
     pub children: Element,
 
-    #[props(default)]
+    #[default(SwitchVariant::Default)]
     pub variant: SwitchVariant,
 
-    #[props(default)]
     pub checked_content: Option<SwitchContent>,
 
-    #[props(default)]
     pub unchecked_content: Option<SwitchContent>,
 
-    #[props(default)]
+    #[default(SwitchColor::Primary)]
     pub color: SwitchColor,
 }
 
@@ -108,13 +105,6 @@ pub fn Switch(props: SwitchProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let handle_click = move |e: MouseEvent| {
-        if !props.disabled {
-            e.stop_propagation();
-            props.on_change.call(!props.checked);
-        }
-    };
-
     let thumb_content = if props.checked {
         props.checked_content.clone()
     } else {
@@ -164,7 +154,14 @@ pub fn Switch(props: SwitchProps) -> Element {
     rsx! {
         label {
             class: "hi-switch-label",
-            onclick: handle_click,
+            onclick: move |e: MouseEvent| {
+                if !props.disabled {
+                    e.stop_propagation();
+                    if let Some(callback) = props.on_change.as_ref() {
+                        callback.call(!props.checked);
+                    }
+                }
+            },
 
             div { class: switch_classes,
                 div { class: "hi-switch-track",

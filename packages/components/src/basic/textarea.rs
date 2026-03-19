@@ -14,50 +14,34 @@ pub enum TextareaSize {
     Large,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct TextareaProps {
-    #[props(default)]
+    #[default]
     pub value: String,
 
-    #[props(default)]
+    #[default]
     pub oninput: Option<EventHandler<String>>,
 
-    #[props(default)]
+    #[default]
     pub placeholder: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub disabled: bool,
 
-    #[props(default)]
+    #[default]
     pub readonly: bool,
 
-    #[props(default = 3)]
+    #[default(3)]
     pub rows: u32,
 
-    #[props(default)]
+    #[default]
     pub size: TextareaSize,
 
-    #[props(default)]
+    #[default]
     pub maxlength: Option<u32>,
 
-    #[props(default)]
+    #[default]
     pub class: String,
-}
-
-impl Default for TextareaProps {
-    fn default() -> Self {
-        Self {
-            value: String::default(),
-            oninput: None,
-            placeholder: None,
-            disabled: false,
-            readonly: false,
-            rows: 3,
-            size: Default::default(),
-            maxlength: None,
-            class: String::default(),
-        }
-    }
 }
 
 ///

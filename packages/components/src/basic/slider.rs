@@ -14,29 +14,22 @@ pub enum SliderSize {
     Large,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct SliderProps {
-    #[props(default = 0)]
     pub value: i32,
 
-    pub on_change: EventHandler<i32>,
+    pub on_change: Option<EventHandler<i32>>,
 
-    #[props(default = 0)]
     pub min: i32,
 
-    #[props(default = 100)]
     pub max: i32,
 
-    #[props(default = 1)]
     pub step: i32,
 
-    #[props(default)]
     pub disabled: bool,
 
-    #[props(default)]
     pub size: SliderSize,
 
-    #[props(default)]
     pub class: String,
 }
 
@@ -84,7 +77,9 @@ pub fn Slider(props: SliderProps) -> Element {
                 oninput: move |e: InputEvent| {
                     if let Ok(v) = e.data.parse::<i32>() {
                         let constrained = v.clamp(props.min, props.max);
-                        props.on_change.call(constrained);
+                        if let Some(handler) = &props.on_change {
+                            handler.call(constrained);
+                        }
                     }
                 }
             }

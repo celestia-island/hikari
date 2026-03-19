@@ -8,45 +8,23 @@ use crate::styled::StyledComponent;
 
 pub struct CardComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CardProps {
-    #[props(default)]
     pub hoverable: bool,
 
-    #[props(default)]
     pub bordered: bool,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub title: Option<String>,
 
-    #[props(default)]
     pub extra: Option<Element>,
 
-    #[props(default)]
     pub children: Element,
 
     pub onclick: Option<EventHandler<MouseEvent>>,
 
-    #[props(default = true)]
     pub glow: bool,
-}
-
-impl Default for CardProps {
-    fn default() -> Self {
-        Self {
-            hoverable: false,
-            bordered: false,
-            class: String::default(),
-            title: None,
-            extra: None,
-            children: VNode::empty(),
-            onclick: None,
-            glow: true,
-        }
-    }
 }
 
 ///

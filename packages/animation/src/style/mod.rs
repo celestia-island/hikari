@@ -3,6 +3,9 @@
 //! Provides a type-safe way to set CSS properties on DOM elements,
 //! reducing boilerplate and catching property name typos at compile time.
 //!
+//! This module re-exports core types from `tairitsu_style` and provides
+//! additional DOM manipulation utilities for web-sys integration.
+//!
 //! # Example
 //!
 //! ```ignore
@@ -36,14 +39,22 @@
 //!     .add(CssProperty::Width, "100%")
 //!     .apply();
 //! ```
+//!
+//! # Migration Note
+//!
+//! The `CssProperty`, `Property`, and `StyleStringBuilder` types are now
+//! re-exported from `tairitsu_style`. This provides access to 400+ W3C
+//! standard CSS properties with full metadata support.
 
+// Re-export core types from tairitsu_style
+pub use tairitsu_style::{CssProperty, Property, StyleStringBuilder};
+
+// DOM manipulation utilities (web-sys specific)
 mod builder;
 mod helpers;
-mod properties;
 
-pub use builder::{AttributeBuilder, StyleBuilder, StyleStringBuilder};
+pub use builder::{AttributeBuilder, StyleBuilder};
 pub use helpers::{get_style, remove_style, set_style, set_styles};
-pub use properties::{CssProperty, Property};
 
 #[cfg(test)]
 mod tests {

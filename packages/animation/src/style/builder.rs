@@ -1,12 +1,13 @@
-//! Style and attribute builders
+//! Style and attribute builders for DOM manipulation
 
 use web_sys::HtmlElement;
 
-use super::{CssProperty, Property};
+use super::{CssProperty, Property, StyleStringBuilder};
 
 /// Builder for applying multiple CSS properties atomically
 ///
-/// Provides a fluent interface for setting multiple styles at once.
+/// Provides a fluent interface for setting multiple styles at once
+/// on a web-sys HtmlElement.
 ///
 /// # Example
 ///
@@ -118,20 +119,22 @@ impl<'a> StyleBuilder<'a> {
 
     /// Build the style as a CSS string (for Dioxus style attribute)
     ///
+    /// Uses the tairitsu_style::StyleStringBuilder internally.
+    ///
     /// # Example
     ///
     /// ```ignore
     /// let style = StyleBuilder::build_string(|builder| {
     ///     builder.add(CssProperty::Width, "100px")
-    ///           .add(CssProperty::Height, "50px")
+    ///            .add(CssProperty::Height, "50px")
     /// });
-    /// // Returns: "width:100px;height:50px;"
+    /// // Returns: "width:100px;height:50px"
     /// ```
     pub fn build_string<F>(f: F) -> String
     where
         F: FnOnce(StyleStringBuilder) -> StyleStringBuilder,
     {
-        f(StyleStringBuilder(Vec::new())).build()
+        f(StyleStringBuilder::new()).build()
     }
 
     /// Build the style as a clean CSS string (without trailing semicolons)
@@ -139,119 +142,7 @@ impl<'a> StyleBuilder<'a> {
     where
         F: FnOnce(StyleStringBuilder) -> StyleStringBuilder,
     {
-        f(StyleStringBuilder(Vec::new())).build_clean()
-    }
-}
-
-/// Style entry for storing CSS properties
-#[derive(Debug, Clone)]
-enum StyleEntry {
-    Known(CssProperty, String),
-    Custom(String, String), // (property_name, value)
-}
-
-impl StyleEntry {
-    /// Get the CSS style string for this entry (property: value format)
-    fn as_style_string(&self) -> String {
-        match self {
-            StyleEntry::Known(prop, value) => format!("{}:{}", prop.as_str(), value),
-            StyleEntry::Custom(prop, value) => format!("{}:{}", prop, value),
-        }
-    }
-}
-
-/// String-based style builder for Dioxus components
-///
-/// This version doesn't require an HtmlElement and is used for
-/// generating style strings for `style` attribute.
-///
-/// # Example
-///
-/// ```ignore
-/// use animation::style::StyleStringBuilder;
-/// use animation::style::CssProperty;
-///
-/// let style = StyleStringBuilder::new()
-///     .add(CssProperty::Width, "100px")
-///     .add_px(CssProperty::Height, 50)
-///     .add_custom("--glow-x", "50px")
-///     .build_clean();
-/// // Returns: "width:100px;height:50px;--glow-x:50px"
-/// ```
-pub struct StyleStringBuilder(Vec<StyleEntry>);
-
-impl Default for StyleStringBuilder {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl StyleStringBuilder {
-    /// Create a new style string builder
-    pub fn new() -> Self {
-        Self(Vec::new())
-    }
-
-    /// Add a CSS property
-    pub fn add(mut self, property: CssProperty, value: &str) -> Self {
-        self.0.push(StyleEntry::Known(property, value.to_string()));
-        self
-    }
-
-    /// Add a CSS property with pixel value
-    pub fn add_px(mut self, property: CssProperty, pixels: u32) -> Self {
-        self.0
-            .push(StyleEntry::Known(property, format!("{}px", pixels)));
-        self
-    }
-
-    /// Add a custom CSS property (e.g., CSS variables like --my-var)
-    ///
-    /// # Arguments
-    ///
-    /// * `property` - Custom property name (e.g., "--glow-x")
-    /// * `value` - Property value
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// let style = StyleStringBuilder::new()
-    ///     .add_custom("--glow-x", "100px")
-    ///     .add_custom("--glow-y", "200px")
-    ///     .build_clean();
-    /// // Returns: "--glow-x:100px;--glow-y:200px"
-    /// ```
-    pub fn add_custom(mut self, property: &str, value: &str) -> Self {
-        self.0
-            .push(StyleEntry::Custom(property.to_string(), value.to_string()));
-        self
-    }
-
-    /// Add a raw style string
-    pub fn add_raw(mut self, style: &str) -> Self {
-        self.0.push(StyleEntry::Known(
-            CssProperty::Display,
-            format!("{};", style),
-        ));
-        self
-    }
-
-    /// Build final style string (with trailing semicolons)
-    pub fn build(self) -> String {
-        self.0
-            .iter()
-            .map(|entry| entry.as_style_string())
-            .collect::<Vec<_>>()
-            .join(";")
-    }
-
-    /// Build final style string without trailing semicolons
-    pub fn build_clean(self) -> String {
-        self.0
-            .iter()
-            .map(|entry| entry.as_style_string())
-            .collect::<Vec<_>>()
-            .join(";")
+        f(StyleStringBuilder::new()).build_clean()
     }
 }
 

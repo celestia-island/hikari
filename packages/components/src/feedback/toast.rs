@@ -33,46 +33,17 @@ pub enum ToastPosition {
     BottomLeft,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct ToastProps {
-    #[props(default)]
     pub variant: ToastVariant,
-
-    #[props(default)]
     pub message: String,
-
-    #[props(default)]
     pub title: Option<String>,
-
-    #[props(default)]
     pub duration: Option<u64>,
-
-    #[props(default)]
     pub position: ToastPosition,
-
-    #[props(default = true)]
+    #[default(true)]
     pub closable: bool,
-
-    #[props(default)]
     pub class: String,
-
-    #[props(default)]
     pub on_close: Option<EventHandler<MouseEvent>>,
-}
-
-impl Default for ToastProps {
-    fn default() -> Self {
-        Self {
-            variant: Default::default(),
-            message: String::default(),
-            title: None,
-            duration: None,
-            position: Default::default(),
-            closable: true,
-            class: String::default(),
-            on_close: None,
-        }
-    }
 }
 
 #[component]

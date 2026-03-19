@@ -34,37 +34,15 @@ impl TooltipPlacement {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct TooltipProps {
-    #[props(default)]
     pub content: String,
-
-    #[props(default)]
     pub placement: TooltipPlacement,
-
-    #[props(default)]
     pub delay: Option<u64>,
-
-    #[props(default = true)]
+    #[default(true)]
     pub arrow: bool,
-
-    #[props(default)]
     pub class: String,
-
     pub children: Element,
-}
-
-impl Default for TooltipProps {
-    fn default() -> Self {
-        Self {
-            content: String::default(),
-            placement: Default::default(),
-            delay: None,
-            arrow: true,
-            class: String::default(),
-            children: VNode::empty(),
-        }
-    }
 }
 
 #[component]

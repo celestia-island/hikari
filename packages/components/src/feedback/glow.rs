@@ -96,46 +96,24 @@ impl IntoAttrValue for GlowIntensity {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct GlowProps {
-    #[props(default)]
     pub children: Element,
 
-    #[props(default)]
     pub blur: GlowBlur,
 
-    #[props(default)]
     pub color: GlowColor,
 
-    #[props(default)]
     pub intensity: GlowIntensity,
 
-    #[props(default)]
     pub active_intensity: Option<GlowIntensity>,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub block: bool,
 
-    #[props(default = "100".to_string())]
+    #[default("100".to_string())]
     pub transition_duration: String,
-}
-
-impl Default for GlowProps {
-    fn default() -> Self {
-        Self {
-            children: VNode::empty(),
-            blur: GlowBlur::default(),
-            color: GlowColor::default(),
-            intensity: GlowIntensity::default(),
-            active_intensity: None,
-            class: String::new(),
-            block: false,
-            transition_duration: "100".to_string(),
-        }
-    }
 }
 
 ///

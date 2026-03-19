@@ -24,24 +24,18 @@ pub enum SpinTip {
     Success,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct SpinProps {
-    #[props(default)]
     pub size: SpinSize,
 
-    #[props(default)]
     pub tip: SpinTip,
 
-    #[props(default)]
     pub custom_tip: Option<String>,
 
-    #[props(default)]
     pub delay: Option<u64>,
 
-    #[props(default)]
     pub spinning: bool,
 
-    #[props(default)]
     pub class: String,
 }
 

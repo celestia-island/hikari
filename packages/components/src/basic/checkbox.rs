@@ -6,26 +6,23 @@ use hikari_palette::classes::{CheckboxClass, ClassesBuilder};
 
 use crate::styled::StyledComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CheckboxProps {
-    #[props(default)]
+    #[default(false)]
     pub checked: bool,
 
-    pub on_change: EventHandler<bool>,
+    pub on_change: Option<EventHandler<bool>>,
 
-    #[props(default)]
+    #[default(false)]
     pub disabled: bool,
 
-    #[props(default)]
     pub value: Option<String>,
 
-    #[props(default)]
     pub children: Element,
 
-    #[props(default)]
+    #[default(String::new())]
     pub class: String,
 
-    #[props(default)]
     pub size: CheckboxSize,
 }
 
@@ -73,10 +70,15 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
     // Use CSS class for icon visibility - no inline styles needed
     // The CSS .hi-checkbox-icon already handles opacity properly via classes
 
-    let handle_click = move |e: MouseEvent| {
-        if !props.disabled {
-            e.stop_propagation();
-            props.on_change.call(!props.checked);
+    let handle_click = {
+        let on_change = props.on_change;
+        move |e: MouseEvent| {
+            if !props.disabled {
+                e.stop_propagation();
+                if let Some(handler) = on_change.as_ref() {
+                    handler.call(!props.checked);
+                }
+            }
         }
     };
 

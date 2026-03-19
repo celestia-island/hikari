@@ -124,6 +124,11 @@ pub fn Alert(props: AlertProps) -> Element {
                 }
 
                 if props.closable {
+                    let onclick = if let Some(handler) = props.on_close.as_ref() {
+                        Some(handler.clone())
+                    } else {
+                        None
+                    };
                     IconButton {
                         icon: MdiIcon::Close,
                         size: IconButtonSize::Small,
@@ -131,8 +136,8 @@ pub fn Alert(props: AlertProps) -> Element {
                         class: "hi-alert-close".to_string(),
                         glow: false,
                         onclick: move |e| {
-                            if props.on_close.is_some() {
-                                props.on_close.as_ref().unwrap().call(e);
+                            if let Some(handler) = onclick.as_ref() {
+                                handler.call(e);
                             }
                         },
                     }

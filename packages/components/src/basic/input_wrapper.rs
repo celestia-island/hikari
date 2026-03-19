@@ -159,18 +159,23 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                 disabled,
                 icon_color,
             } => {
-                let onclick_clone = onclick.clone();
+                let is_disabled = *disabled || props.disabled;
+                let onclick_clone = if is_disabled { None } else { Some(onclick.clone()) };
                 rsx! {
                     IconButton {
                         icon: *icon,
                         size: icon_button_size,
                         variant: crate::basic::IconButtonVariant::Ghost,
-                        disabled: *disabled || props.disabled,
+                        disabled: is_disabled,
                         glow: true,
                         glow_intensity: GlowIntensity::Soft,
                         glow_blur: GlowBlur::None,
                         glow_color: GlowColor::Ghost,
-                        onclick: move |e| onclick_clone.call(e),
+                        onclick: move |e| {
+                            if let Some(handler) = onclick_clone.as_ref() {
+                                handler.call(e);
+                            }
+                        },
                         // Use explicit CSS variable instead of "inherit" to avoid color inheritance issues
                         icon_color: icon_color.clone(),
                     }

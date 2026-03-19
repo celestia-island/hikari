@@ -376,9 +376,3 @@ impl crate::styled::StyledComponent for GlowComponent {
         "glow"
     }
 }
-
-// Re-exports for backward compatibility
-pub use Glow as Acrylic;
-pub use GlowBlur as AcrylicBlur;
-pub use GlowColor as AcrylicMode;
-pub use GlowIntensity as AcrylicIntensity;

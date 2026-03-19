@@ -97,6 +97,9 @@ pub fn Alert(props: AlertProps) -> Element {
     let title_class = AlertClass::AlertTitle.as_class();
     let description_class = AlertClass::AlertDescription.as_class();
 
+    // Pre-compute onclick handler for closable button
+    let on_close_handler = props.on_close.clone();
+
     rsx! {
         Glow {
             class: "hi-alert-glow-wrapper".to_string(),
@@ -124,11 +127,6 @@ pub fn Alert(props: AlertProps) -> Element {
                 }
 
                 if props.closable {
-                    let onclick = if let Some(handler) = props.on_close.as_ref() {
-                        Some(handler.clone())
-                    } else {
-                        None
-                    };
                     IconButton {
                         icon: MdiIcon::Close,
                         size: IconButtonSize::Small,
@@ -136,8 +134,8 @@ pub fn Alert(props: AlertProps) -> Element {
                         class: "hi-alert-close".to_string(),
                         glow: false,
                         onclick: move |e| {
-                            if let Some(handler) = onclick.as_ref() {
-                                handler.call(e);
+                            if let Some(handler) = on_close_handler.as_ref() {
+                                handler(e);
                             }
                         },
                     }

@@ -135,7 +135,7 @@ pub fn Toast(props: ToastProps) -> Element {
                         glow: false,
                         onclick: move |e| {
                             if let Some(handler) = props.on_close.as_ref() {
-                                handler.call(e);
+                                handler(e);
                             }
                         },
                     }

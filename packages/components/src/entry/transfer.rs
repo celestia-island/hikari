@@ -23,32 +23,24 @@ pub struct TransferItem {
     pub disabled: bool,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct TransferProps {
     pub data: Vec<TransferItem>,
 
-    #[props(default)]
     pub target_keys: Vec<String>,
 
-    #[props(default)]
     pub source_selected_keys: Vec<String>,
 
-    #[props(default)]
     pub target_selected_keys: Vec<String>,
 
-    #[props(default)]
     pub titles: Option<[String; 2]>,
 
-    #[props(default)]
     pub show_search: bool,
 
-    #[props(default)]
     pub one_way: bool,
 
-    #[props(default)]
     pub disabled: bool,
 
-    #[props(default)]
     pub class: String,
 
     pub on_select_change: Option<EventHandler<SelectChangeEvent>>,

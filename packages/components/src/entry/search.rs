@@ -13,38 +13,32 @@ use crate::{
     basic::{InputWrapper, InputWrapperItem, InputWrapperSize},
     feedback::{GlowBlur, GlowColor, GlowIntensity},
     portal::{
-        PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
-        use_portal,
+        generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy,
+        TriggerPlacement,
     },
     styled::StyledComponent,
 };
 
 pub struct SearchComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct SearchProps {
-    #[props(default)]
     pub value: String,
-    #[props(default)]
     pub placeholder: String,
-    #[props(default = false)]
+    #[default(false)]
     pub disabled: bool,
-    #[props(default = false)]
+    #[default(false)]
     pub loading: bool,
-    #[props(default = true)]
+    #[default(true)]
     pub allow_clear: bool,
-    #[props(default)]
     pub suggestions: Vec<String>,
+    #[default(EventHandler::new(|_| {}))]
     pub on_search: EventHandler<String>,
-    #[props(default)]
     pub on_clear: Option<EventHandler<()>>,
-    #[props(default)]
     pub on_suggestion_click: Option<EventHandler<String>>,
-    #[props(default)]
     pub class: String,
-    #[props(default)]
     pub style: String,
-    #[props(default = true)]
+    #[default(true)]
     pub glow: bool,
 }
 

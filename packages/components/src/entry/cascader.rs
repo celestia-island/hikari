@@ -25,26 +25,20 @@ pub enum CascaderSize {
     Lg,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CascaderProps {
     pub options: Vec<CascaderOption>,
 
-    #[props(default)]
     pub value: Option<Vec<String>>,
 
-    #[props(default)]
     pub placeholder: Option<String>,
 
-    #[props(default)]
     pub size: CascaderSize,
 
-    #[props(default)]
     pub disabled: bool,
 
-    #[props(default)]
     pub allow_clear: bool,
 
-    #[props(default)]
     pub class: String,
 
     pub on_change: Option<EventHandler<Vec<String>>>,

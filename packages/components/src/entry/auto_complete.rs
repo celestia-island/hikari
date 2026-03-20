@@ -13,45 +13,26 @@ pub struct AutoCompleteComponent;
 ///
 ///
 ///
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct AutoCompleteProps {
-    #[props(default)]
     pub value: String,
 
     pub options: Vec<String>,
 
-    #[props(default)]
+    #[default(EventHandler::new(|_: String| {}))]
     pub on_select: EventHandler<String>,
 
-    #[props(default)]
     pub placeholder: String,
 
-    #[props(default = false)]
+    #[default(false)]
     pub disabled: bool,
 
-    #[props(default = false)]
+    #[default(false)]
     pub allow_clear: bool,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub style: String,
-}
-
-impl Default for AutoCompleteProps {
-    fn default() -> Self {
-        Self {
-            value: String::new(),
-            options: vec![],
-            on_select: EventHandler::new(|_: String| {}),
-            placeholder: String::new(),
-            disabled: false,
-            allow_clear: false,
-            class: String::new(),
-            style: String::new(),
-        }
-    }
 }
 
 #[component]

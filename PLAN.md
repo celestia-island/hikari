@@ -93,10 +93,10 @@
     93> | navigation/tabs | TabProps, TabPanelProps | 待处理 |
     94> | navigation/menu | MenuItemProps, etc. | 待处理 |
     95> | navigation/sidebar | SidebarProps, etc. | 待处理 |
-    96> | display/tag | TagProps | 待处理 |
-    97> | display/calendar | CalendarProps | 待处理 |
-    98> | display/timeline | TimelineProps, TimelineItemProps | 待处理 |
-    99> | display/qrcode | QRCodeProps | 待处理 |
+    96> | display/tag | TagProps | ✅ 已完成 |
+    97> | display/calendar | CalendarProps | ✅ 已完成 |
+    98> | display/timeline | TimelineProps, TimelineItemProps | ✅ 已完成 |
+    99> | display/qrcode | QRCodeProps | ✅ 已完成 |
     100> | entry/number_input | NumberInputProps | 待处理 |
     101> | entry/search | SearchProps | 待处理 |
     102> | entry/transfer | TransferProps | 待处理 |

@@ -14,38 +14,34 @@ use crate::{
 
 pub struct NumberInputComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct NumberInputProps {
-    #[props(default = 0)]
+    #[default(0)]
     pub value: i64,
 
+    #[default(EventHandler::new(|_| {}))]
     pub on_change: EventHandler<i64>,
 
-    #[props(default)]
     pub min: Option<i64>,
 
-    #[props(default)]
     pub max: Option<i64>,
 
-    #[props(default = 1)]
+    #[default(1)]
     pub step: i64,
 
-    #[props(default = false)]
+    #[default(false)]
     pub disabled: bool,
 
-    #[props(default)]
     pub size: NumberInputSize,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub style: String,
 
-    #[props(default = true)]
+    #[default(true)]
     pub glow: bool,
 
-    #[props(default = GlowIntensity::Soft)]
+    #[default(GlowIntensity::Soft)]
     pub glow_intensity: GlowIntensity,
 }
 

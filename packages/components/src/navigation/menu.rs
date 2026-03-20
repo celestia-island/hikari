@@ -1,15 +1,15 @@
 // hi-components/src/navigation/menu.rs
 // Menu component with Arknights + FUI styling
 
-use crate::style_builder::{CssProperty, StyleStringBuilder};
 use crate::prelude::*;
+use crate::style_builder::{CssProperty, StyleStringBuilder};
 use hikari_palette::classes::{ClassesBuilder, MenuClass};
 
 use crate::{
-    GlowBlur, GlowColor, GlowIntensity,
     basic::{Arrow, ArrowDirection},
     feedback::Glow,
     styled::StyledComponent,
+    GlowBlur, GlowColor, GlowIntensity,
 };
 
 #[derive(Clone, Default)]
@@ -54,49 +54,31 @@ impl MenuItemHeight {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct MenuItemProps {
-    #[props(default)]
+    #[default("".to_string())]
     pub item_key: String,
 
-    #[props(default)]
+    #[default(false)]
     pub disabled: bool,
 
-    #[props(default)]
     pub icon: Option<Element>,
 
-    #[props(default)]
+    #[default(VNode::empty())]
     pub children: Element,
 
-    #[props(default)]
+    #[default("".to_string())]
     pub class: String,
 
-    #[props(default)]
+    #[default(0)]
     pub level: u32,
 
-    #[props(default)]
     pub height: MenuItemHeight,
 
     pub onclick: Option<EventHandler<MouseEvent>>,
 
-    #[props(default)]
+    #[default(false)]
     pub glow: bool,
-}
-
-impl Default for MenuItemProps {
-    fn default() -> Self {
-        Self {
-            item_key: String::default(),
-            disabled: false,
-            icon: None,
-            children: VNode::empty(),
-            class: String::default(),
-            level: 0,
-            height: MenuItemHeight::Default,
-            onclick: None,
-            glow: false,
-        }
-    }
 }
 
 #[derive(Clone, PartialEq, Props)]

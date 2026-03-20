@@ -25,30 +25,27 @@ pub enum MarkdownEditorSize {
     Large,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct MarkdownEditorProps {
-    #[props(default)]
+    #[default(String::default())]
     pub value: String,
 
-    #[props(default)]
+    #[default(String::default())]
     pub placeholder: String,
 
-    #[props(default)]
     pub mode: MarkdownEditorMode,
 
-    #[props(default)]
     pub size: MarkdownEditorSize,
 
-    #[props(default = true)]
+    #[default(true)]
     pub toolbar: bool,
 
-    #[props(default)]
+    #[default(false)]
     pub line_numbers: bool,
 
-    #[props(default)]
     pub height: Option<String>,
 
-    #[props(default)]
+    #[default(String::default())]
     pub class: String,
 
     pub on_change: Option<EventHandler<String>>,

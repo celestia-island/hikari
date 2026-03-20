@@ -8,18 +8,18 @@ use crate::styled::StyledComponent;
 
 pub struct DragComponent;
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct DragTreeNodeData {
-    #[props(default)]
+    #[default(String::default())]
     pub item_key: String,
 
-    #[props(default)]
+    #[default(String::default())]
     pub title: String,
 
-    #[props(default)]
+    #[default(Vec::new())]
     pub node_children: Vec<DragTreeNodeData>,
 
-    #[props(default)]
+    #[default(false)]
     pub disabled: bool,
 }
 
@@ -98,7 +98,12 @@ pub fn DragDropTree(props: DragDropTreeProps) -> Element {
 
 #[define_props]
 pub struct RenderDragNodeProps {
-    #[default(DragTreeNodeData::default())]
+    #[default(DragTreeNodeData {
+        item_key: String::default(),
+        title: String::default(),
+        node_children: Vec::new(),
+        disabled: false,
+    })]
     pub node: DragTreeNodeData,
 
     #[default(0)]

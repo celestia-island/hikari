@@ -17,38 +17,24 @@ pub enum AudioPlayerSize {
 }
 
 ///
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct AudioPlayerProps {
     pub src: String,
-
-    #[props(default)]
     pub title: Option<String>,
-
-    #[props(default)]
     pub artist: Option<String>,
-
-    #[props(default)]
     pub cover: Option<String>,
-
-    #[props(default)]
+    #[default(false)]
     pub autoplay: bool,
-
-    #[props(default = true)]
+    #[default(true)]
     pub controls: bool,
-
-    #[props(default)]
+    #[default(false)]
     pub loop_: bool,
-
-    #[props(default)]
+    #[default(false)]
     pub muted: bool,
-
-    #[props(default)]
     pub size: AudioPlayerSize,
-
-    #[props(default)]
+    #[default(String::default())]
     pub class: String,
-
-    #[props(default)]
+    #[default(String::default())]
     pub style: String,
 }
 

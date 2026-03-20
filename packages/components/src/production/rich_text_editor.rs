@@ -13,24 +13,23 @@ use crate::styled::StyledComponent;
 
 pub struct RichTextEditorComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct RichTextEditorProps {
-    #[props(default)]
+    #[default("".to_string())]
     pub content: String,
 
-    #[props(default)]
+    #[default("".to_string())]
     pub placeholder: String,
 
-    #[props(default = true)]
+    #[default(true)]
     pub toolbar: bool,
 
-    #[props(default)]
     pub height: Option<String>,
 
-    #[props(default)]
+    #[default("".to_string())]
     pub class: String,
 
-    #[props(default)]
+    #[default("".to_string())]
     pub style: String,
 }
 

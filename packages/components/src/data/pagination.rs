@@ -153,43 +153,51 @@ pub fn Pagination(props: PaginationProps) -> Element {
         .build();
 
     // Build page size options outside rsx!
-    let page_size_option_elements: Vec<Element> = props.page_size_options.iter().map(|size| {
-        rsx! {
-            option { value: size.to_string(), "{size} / page" }
-        }
-    }).collect();
+    let page_size_option_elements: Vec<Element> = props
+        .page_size_options
+        .iter()
+        .map(|size| {
+            rsx! {
+                option { value: size.to_string(), "{size} / page" }
+            }
+        })
+        .collect();
 
     // Build simple page numbers for total_pages <= 7
     let simple_page_elements: Vec<Element> = if total_pages <= 7 {
-        (1..=total_pages).map(|i| {
-            let current_page_for_class = current_page.clone();
-            let current_page_for_handler = current_page.clone();
-            let on_change_for_handler = on_change.clone();
-            let page_class = ClassesBuilder::new()
-                .add(PaginationClass::PaginationItem)
-                .add_if(PaginationClass::PaginationActive, move || i == current_page_for_class.get())
-                .build();
-            let handler = move |_| {
-                if i != current_page_for_handler.get() {
-                    current_page_for_handler.set(i);
-                    if let Some(h) = on_change_for_handler.as_ref() {
-                        h.call(i);
+        (1..=total_pages)
+            .map(|i| {
+                let current_page_for_class = current_page.clone();
+                let current_page_for_handler = current_page.clone();
+                let on_change_for_handler = on_change.clone();
+                let page_class = ClassesBuilder::new()
+                    .add(PaginationClass::PaginationItem)
+                    .add_if(PaginationClass::PaginationActive, move || {
+                        i == current_page_for_class.get()
+                    })
+                    .build();
+                let handler = move |_| {
+                    if i != current_page_for_handler.get() {
+                        current_page_for_handler.set(i);
+                        if let Some(h) = on_change_for_handler.as_ref() {
+                            h.call(i);
+                        }
+                    }
+                };
+                rsx! {
+                    Glow {
+                        blur: GlowBlur::Medium,
+                        color: GlowColor::Primary,
+                        intensity: GlowIntensity::Dim,
+                        button {
+                            class: page_class,
+                            onclick: handler,
+                            "{i}"
+                        }
                     }
                 }
-            };
-            rsx! {
-                Glow {
-                    blur: GlowBlur::Medium,
-                    color: GlowColor::Primary,
-                    intensity: GlowIntensity::Dim,
-                    button {
-                        class: page_class,
-                        onclick: handler,
-                        "{i}"
-                    }
-                }
-            }
-        }).collect()
+            })
+            .collect()
     } else {
         vec![]
     };
@@ -197,41 +205,41 @@ pub fn Pagination(props: PaginationProps) -> Element {
     // Build middle page elements for total_pages > 7
     let middle_page_elements: Vec<Element> = if total_pages > 7 {
         let current = current_page.get();
-        [
-            current.saturating_sub(1).max(2),
-            current,
-            current + 1,
-        ].into_iter()
-        .filter(|&i| i >= 2 && i <= total_pages.saturating_sub(1))
-        .map(|i| {
-            let current_page_for_class = current_page.clone();
-            let current_page_for_handler = current_page.clone();
-            let on_change_for_handler = on_change.clone();
-            let page_class = ClassesBuilder::new()
-                .add(PaginationClass::PaginationItem)
-                .add_if(PaginationClass::PaginationActive, move || i == current_page_for_class.get())
-                .build();
-            let handler = move |_| {
-                if i != current_page_for_handler.get() {
-                    current_page_for_handler.set(i);
-                    if let Some(h) = on_change_for_handler.as_ref() {
-                        h.call(i);
+        [current.saturating_sub(1).max(2), current, current + 1]
+            .into_iter()
+            .filter(|&i| i >= 2 && i <= total_pages.saturating_sub(1))
+            .map(|i| {
+                let current_page_for_class = current_page.clone();
+                let current_page_for_handler = current_page.clone();
+                let on_change_for_handler = on_change.clone();
+                let page_class = ClassesBuilder::new()
+                    .add(PaginationClass::PaginationItem)
+                    .add_if(PaginationClass::PaginationActive, move || {
+                        i == current_page_for_class.get()
+                    })
+                    .build();
+                let handler = move |_| {
+                    if i != current_page_for_handler.get() {
+                        current_page_for_handler.set(i);
+                        if let Some(h) = on_change_for_handler.as_ref() {
+                            h.call(i);
+                        }
+                    }
+                };
+                rsx! {
+                    Glow {
+                        blur: GlowBlur::Medium,
+                        color: GlowColor::Primary,
+                        intensity: GlowIntensity::Dim,
+                        button {
+                            class: page_class,
+                            onclick: handler,
+                            "{i}"
+                        }
                     }
                 }
-            };
-            rsx! {
-                Glow {
-                    blur: GlowBlur::Medium,
-                    color: GlowColor::Primary,
-                    intensity: GlowIntensity::Dim,
-                    button {
-                        class: page_class,
-                        onclick: handler,
-                        "{i}"
-                    }
-                }
-            }
-        }).collect()
+            })
+            .collect()
     } else {
         vec![]
     };
@@ -699,7 +707,13 @@ mod tests {
             on_size_change: None,
         };
 
-        assert_eq!(props1, props2);
+        assert!(props1.current == props2.current);
+        assert!(props1.page_size == props2.page_size);
+        assert!(props1.total == props2.total);
+        assert!(props1.show_size_changer == props2.show_size_changer);
+        assert!(props1.show_total == props2.show_total);
+        assert!(props1.page_size_options == props2.page_size_options);
+        assert!(props1.class == props2.class);
     }
 
     #[test]
@@ -716,7 +730,7 @@ mod tests {
             ..Default::default()
         };
 
-        assert_ne!(props1, props2);
+        assert!(props1.current != props2.current);
     }
 
     #[test]

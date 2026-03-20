@@ -133,11 +133,11 @@ pub fn Alert(props: AlertProps) -> Element {
                         variant: IconButtonVariant::Ghost,
                         class: "hi-alert-close".to_string(),
                         glow: false,
-                        onclick: move |e| {
+                        onclick: Some(EventHandler::new(move |e| {
                             if let Some(handler) = on_close_handler.as_ref() {
                                 handler(e);
                             }
-                        },
+                        })),
                     }
                 }
             }

@@ -15,47 +15,30 @@ use crate::{
 
 pub struct PaginationComponent;
 
-#[derive(Clone, PartialEq, Props, Debug)]
+#[define_props]
 pub struct PaginationProps {
-    #[props(default = 1)]
+    #[default(1)]
     pub current: u32,
 
     pub total: u32,
 
-    #[props(default = 10)]
+    #[default(10)]
     pub page_size: u32,
 
-    #[props(default = false)]
+    #[default(false)]
     pub show_size_changer: bool,
 
-    #[props(default = false)]
+    #[default(false)]
     pub show_total: bool,
 
-    #[props(default)]
+    #[default(vec![10, 20, 50, 100])]
     pub page_size_options: Vec<u32>,
 
-    #[props(default)]
     pub class: String,
 
     pub on_change: Option<EventHandler<u32>>,
 
     pub on_size_change: Option<EventHandler<u32>>,
-}
-
-impl Default for PaginationProps {
-    fn default() -> Self {
-        Self {
-            current: 1,
-            total: 0,
-            page_size: 10,
-            show_size_changer: false,
-            show_total: false,
-            page_size_options: vec![10, 20, 50, 100],
-            class: String::default(),
-            on_change: None,
-            on_size_change: None,
-        }
-    }
 }
 
 #[component]

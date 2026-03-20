@@ -15,71 +15,36 @@ pub enum TabPosition {
     Left,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct TabPaneProps {
-    #[props(default)]
     pub item_key: String,
 
-    #[props(default)]
     pub tab: String,
 
-    #[props(default)]
+    #[default(false)]
     pub disabled: bool,
 
-    #[props(default)]
     pub icon: Option<Element>,
 
-    #[props(default)]
     pub children: Element,
 
-    #[props(default)]
     pub class: String,
 }
 
-impl Default for TabPaneProps {
-    fn default() -> Self {
-        Self {
-            item_key: String::default(),
-            tab: String::default(),
-            disabled: false,
-            icon: None,
-            children: VNode::empty(),
-            class: String::default(),
-        }
-    }
-}
-
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct TabsProps {
-    #[props(default)]
     pub default_active: String,
 
-    #[props(default)]
     pub tab_position: TabPosition,
 
-    #[props(default)]
+    #[default(true)]
     pub animated: bool,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub children: Element,
 
     pub on_change: Option<EventHandler<String>>,
-}
-
-impl Default for TabsProps {
-    fn default() -> Self {
-        Self {
-            default_active: String::default(),
-            tab_position: Default::default(),
-            animated: true,
-            class: String::default(),
-            children: VNode::empty(),
-            on_change: None,
-        }
-    }
 }
 
 ///

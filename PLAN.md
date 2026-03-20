@@ -112,6 +112,27 @@
 
 ## Phase 4: 文档更新
 
-- [ ] 更新 `docs/en-US/guides/02-classesbuilder-system.md`
-- [ ] 更新 `docs/en-US/guides/03-stylestringbuilder-system.md`
-- [ ] 添加迁移指南
+### 状态: ✅ 完成
+
+#### 已完成的工作
+
+- [x] 创建 `docs/en-US/guides/07-migration-guide.md`
+  - Phase 2：CSS 基础设施迁移到 tairitsu-style
+  - Phase 3：Props 宏迁移到 #[define_props]
+  - 架构决策和理由
+  - 完整的迁移结果
+
+- [x] 更新 `docs/en-US/guides/02-classesbuilder-system.md`
+  - 添加 Tairitsu 关系部分
+  - 解释为什么 ClassesBuilder 保留在 hikari-palette
+  - 添加架构图
+  - 添加最佳实践部分
+
+- [x] 更新 `docs/en-US/guides/03-stylestringbuilder-system.md`
+  - 添加 Phase 2 迁移部分
+  - 记录所有 403 个 CSS 属性
+  - 列出完整的属性类别
+  - 添加升级指南
+  - 包含性能影响分析
+
+- [x] 创建 `docs/zh-CHS/guides/07-migration-guide.md`（中文版本）

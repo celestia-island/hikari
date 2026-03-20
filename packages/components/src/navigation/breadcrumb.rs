@@ -8,55 +8,27 @@ use crate::styled::StyledComponent;
 
 pub struct BreadcrumbComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct BreadcrumbItemProps {
-    #[props(default)]
     pub item_key: String,
 
-    #[props(default)]
     pub href: Option<String>,
 
-    #[props(default)]
     pub children: Element,
 
-    #[props(default)]
     pub class: String,
 
     pub onclick: Option<EventHandler<MouseEvent>>,
 }
 
-impl Default for BreadcrumbItemProps {
-    fn default() -> Self {
-        Self {
-            item_key: String::default(),
-            href: None,
-            children: VNode::empty(),
-            class: String::default(),
-            onclick: None,
-        }
-    }
-}
-
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct BreadcrumbProps {
-    #[props(default)]
+    #[default("/".to_string())]
     pub separator: String,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub children: Element,
-}
-
-impl Default for BreadcrumbProps {
-    fn default() -> Self {
-        Self {
-            separator: "/".to_string(),
-            class: String::default(),
-            children: VNode::empty(),
-        }
-    }
 }
 
 #[component]

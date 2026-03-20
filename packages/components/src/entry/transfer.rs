@@ -15,11 +15,14 @@ pub struct SelectChangeEvent {
     pub keys: Vec<String>,
 }
 
-#[derive(Clone, PartialEq, Debug, Props, Default)]
+#[derive(Debug)]
+#[define_props]
 pub struct TransferItem {
+    #[default("".to_string())]
     pub item_key: String,
+    #[default("".to_string())]
     pub label: String,
-    #[props(default)]
+    #[default(false)]
     pub disabled: bool,
 }
 
@@ -67,7 +70,8 @@ pub fn Transfer(props: TransferProps) -> Element {
             .filter(|item| !target_keys_source.contains(&item.item_key))
             .cloned()
             .collect::<Vec<_>>()
-    }).read();
+    })
+    .read();
 
     let data_target = props.data.clone();
     let target_keys_target = props.target_keys.clone();
@@ -78,7 +82,8 @@ pub fn Transfer(props: TransferProps) -> Element {
             .filter(|item| target_keys_target.contains(&item.item_key))
             .cloned()
             .collect::<Vec<_>>()
-    }).read();
+    })
+    .read();
 
     let handle_to_target = {
         let source_selected = props.source_selected_keys.clone();
@@ -189,16 +194,11 @@ pub fn Transfer(props: TransferProps) -> Element {
 
 #[component]
 fn TransferPanel(
-    #[props(default)]
-    title: Option<String>,
-    #[props(default)]
-    items: Option<Vec<TransferItem>>,
-    #[props(default)]
-    selected_keys: Option<Vec<String>>,
-    #[props(default)]
-    show_search: Option<bool>,
-    #[props(default)]
-    on_select: Option<EventHandler<Vec<String>>>,
+    #[props(default)] title: Option<String>,
+    #[props(default)] items: Option<Vec<TransferItem>>,
+    #[props(default)] selected_keys: Option<Vec<String>>,
+    #[props(default)] show_search: Option<bool>,
+    #[props(default)] on_select: Option<EventHandler<Vec<String>>>,
 ) -> Element {
     let title = title.unwrap_or_default();
     let items = items.unwrap_or_default();
@@ -224,7 +224,8 @@ fn TransferPanel(
             })
             .cloned()
             .collect::<Vec<_>>()
-    }).read();
+    })
+    .read();
 
     // Clone for handle_toggle_all
     let on_select_for_toggle = on_select.clone();

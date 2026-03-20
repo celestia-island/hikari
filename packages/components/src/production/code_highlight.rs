@@ -13,9 +13,9 @@ use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use gloo::timers::callback::Timeout;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use wasm_bindgen::prelude::*;
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use js_sys::Promise;
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use wasm_bindgen::prelude::*;
 
 use crate::styled::StyledComponent;
 
@@ -54,26 +54,26 @@ fn copy_to_clipboard(text: &str) -> bool {
 
 pub struct CodeHighlightComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CodeHighlightProps {
-    #[props(default)]
+    #[default("".to_string())]
     pub language: String,
 
+    #[default("".to_string())]
     pub code: String,
 
-    #[props(default = true)]
+    #[default(true)]
     pub line_numbers: bool,
 
-    #[props(default = true)]
+    #[default(true)]
     pub copyable: bool,
 
-    #[props(default)]
     pub max_height: Option<String>,
 
-    #[props(default)]
+    #[default("".to_string())]
     pub class: String,
 
-    #[props(default)]
+    #[default("".to_string())]
     pub style: String,
 }
 
@@ -131,11 +131,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         }
     };
 
-    let button_text = if copied.read() {
-        "已复制"
-    } else {
-        "复制"
-    };
+    let button_text = if copied.read() { "已复制" } else { "复制" };
 
     let language_class = format!("language-{}", language);
 
@@ -145,7 +141,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
             VNode::Element(
                 VElement::new("div")
                     .class("hi-code-highlight-line-number")
-                    .child(VNode::Text(VText::new(&i.to_string())))
+                    .child(VNode::Text(VText::new(&i.to_string()))),
             )
         })
         .collect();

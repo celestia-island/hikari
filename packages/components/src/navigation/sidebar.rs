@@ -18,26 +18,16 @@ use crate::{
 
 pub struct SidebarComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct SidebarProps {
-    #[props(default)]
+    #[default("".to_string())]
     pub active_id: String,
 
-    #[props(default)]
+    #[default("".to_string())]
     pub class: String,
 
-    #[props(default)]
+    #[default(VNode::empty())]
     pub children: Element,
-}
-
-impl Default for SidebarProps {
-    fn default() -> Self {
-        Self {
-            active_id: String::default(),
-            class: String::default(),
-            children: VNode::empty(),
-        }
-    }
 }
 
 ///
@@ -76,36 +66,24 @@ impl StyledComponent for SidebarComponent {
 }
 
 ///
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct SidebarSectionProps {
+    #[default("".to_string())]
     pub id: String,
 
+    #[default("".to_string())]
     pub title: String,
 
-    #[props(default)]
     pub secondary_title: Option<String>,
 
-    #[props(default)]
+    #[default(false)]
     pub default_expanded: bool,
 
-    #[props(default)]
+    #[default("".to_string())]
     pub class: String,
 
-    #[props(default)]
+    #[default(VNode::empty())]
     pub children: Element,
-}
-
-impl Default for SidebarSectionProps {
-    fn default() -> Self {
-        Self {
-            id: String::default(),
-            title: String::default(),
-            secondary_title: None,
-            default_expanded: false,
-            class: String::default(),
-            children: VNode::empty(),
-        }
-    }
 }
 
 #[component]
@@ -122,7 +100,9 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
     let is_expanded_for_arrow = is_expanded.clone();
     let arrow_classes = ClassesBuilder::new()
         .add(SidebarClass::SectionArrow)
-        .add_if(SidebarClass::SectionArrowRotated, move || is_expanded_for_arrow.get())
+        .add_if(SidebarClass::SectionArrowRotated, move || {
+            is_expanded_for_arrow.get()
+        })
         .build();
 
     let header_class = SidebarClass::SectionHeader.as_class();
@@ -188,25 +168,24 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
 }
 
 ///
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct SidebarItemProps {
+    #[default("".to_string())]
     pub id: String,
 
-    #[props(default)]
+    #[default("".to_string())]
     pub label: String,
 
-    #[props(default)]
     pub secondary_label: Option<String>,
 
-    #[props(default)]
+    #[default(false)]
     pub default_expanded: bool,
 
-    #[props(default)]
+    #[default("".to_string())]
     pub class: String,
 
     pub content: Option<Element>,
 
-    #[props(default)]
     pub items: Option<Element>,
 }
 
@@ -226,7 +205,9 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
     let is_expanded_for_arrow = is_expanded.clone();
     let arrow_classes = ClassesBuilder::new()
         .add(SidebarClass::ItemArrow)
-        .add_if(SidebarClass::ItemArrowRotated, move || is_expanded_for_arrow.get())
+        .add_if(SidebarClass::ItemArrowRotated, move || {
+            is_expanded_for_arrow.get()
+        })
         .build();
 
     let header_class = SidebarClass::ItemHeader.as_class();
@@ -305,29 +286,18 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
 }
 
 ///
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct SidebarLeafProps {
+    #[default("".to_string())]
     pub id: String,
 
-    #[props(default)]
     pub secondary_label: Option<String>,
 
-    #[props(default)]
+    #[default("".to_string())]
     pub class: String,
 
-    #[props(default)]
+    #[default(VNode::empty())]
     pub children: Element,
-}
-
-impl Default for SidebarLeafProps {
-    fn default() -> Self {
-        Self {
-            id: String::default(),
-            secondary_label: None,
-            class: String::default(),
-            children: VNode::empty(),
-        }
-    }
 }
 
 #[component]

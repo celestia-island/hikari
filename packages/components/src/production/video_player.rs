@@ -14,29 +14,29 @@ use crate::styled::StyledComponent;
 pub struct VideoPlayerComponent;
 
 ///
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct VideoPlayerProps {
     pub src: String,
 
-    #[props(default)]
+    #[default(String::default())]
     pub poster: String,
 
-    #[props(default)]
+    #[default(false)]
     pub autoplay: bool,
 
-    #[props(default = true)]
+    #[default(true)]
     pub controls: bool,
 
-    #[props(default)]
+    #[default(false)]
     pub loop_: bool,
 
-    #[props(default)]
+    #[default(false)]
     pub muted: bool,
 
-    #[props(default)]
+    #[default(String::default())]
     pub class: String,
 
-    #[props(default)]
+    #[default(String::default())]
     pub style: String,
 }
 

@@ -171,9 +171,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                         glow_intensity: GlowIntensity::Soft,
                         glow_blur: GlowBlur::None,
                         glow_color: GlowColor::Ghost,
-                        onclick: move |e| {
-                            onclick_handler(e);
-                        },
+                        onclick: Some(onclick_handler.clone()),
                         icon_color: icon_color.clone(),
                     }
                 }

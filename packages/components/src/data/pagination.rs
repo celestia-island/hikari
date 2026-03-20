@@ -329,12 +329,12 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         size: IconButtonSize::Medium,
                         glow: true,
                         glow_color: GlowColor::Ghost,
-                        onclick: move |_| {
+                        onclick: Some(EventHandler::new(move |_| {
                             if let Ok(page) = jump_to_for_button.get().parse::<u32>()
                                 && page >= 1 && page <= total_pages {
                                     handle_modal_jump(page);
                                 }
-                        },
+                        })),
                     }
                 }
 
@@ -398,12 +398,12 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         size: IconButtonSize::Medium,
                         glow: true,
                         glow_color: GlowColor::Ghost,
-                        onclick: move |_| {
+                        onclick: Some(EventHandler::new(move |_| {
                             if let Ok(page) = jump_to_for_button.get().parse::<u32>()
                                 && page >= 1 && page <= total_pages {
                                     handle_modal_jump(page);
                                 }
-                        },
+                        })),
                     }
                 }
 

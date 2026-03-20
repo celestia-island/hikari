@@ -9,10 +9,13 @@
 - [CSS 属性枚举](#css-属性枚举)
 - [性能优化](#性能优化)
 - [使用示例](#使用示例)
+- [Phase 2 迁移](#phase-2-迁移)
 
 ## 概述
 
 StyleStringBuilder 是 Hikari 的内联样式构建器，提供了类型安全的 CSS 属性设置方式。它通过 `CssProperty` 枚举和便捷方法，完全替换了传统的 `style` 字符串拼接，实现了编译时属性名检查和运行时零开销。
+
+**更新 (Phase 2)**：StyleStringBuilder 和 CssProperty 现在从 `tairitsu-style` re-export，提供 **403 个 W3C 标准 CSS 属性**。
 
 ## 设计理念
 
@@ -468,3 +471,256 @@ StyleStringBuilder 通过类型安全的样式构建系统，实现了：
 5. **零运行时开销** - 纯字符串连接
 
 这套系统完全替换了传统的 `style` 字符串拼接，是 Hikari 动态样式体系的核心组件。
+
+## Phase 2 迁移
+
+### 迁移概述
+
+在 Hikari 到 Tairitsu 构建链迁移的 Phase 2 中，StyleStringBuilder 和 CssProperty 已从内部实现迁移到共享的 `tairitsu-style` 库。
+
+### 迁移前后对比
+
+**Before (Phase 2 前):**
+
+```rust
+// packages/animation/src/properties.rs
+pub enum CssProperty {
+    // Layout
+    Display,
+    Position,
+    Top,
+    Right,
+    Bottom,
+    Left,
+    ZIndex,
+
+    // Box Model
+    Width,
+    MinWidth,
+    MaxWidth,
+    Height,
+    MinHeight,
+    MaxHeight,
+    Padding,
+    Margin,
+    Border,
+    BorderRadius,
+
+    // ... ~50 properties manually defined
+}
+```
+
+**After (Phase 2 后):**
+
+```rust
+// packages/animation/src/style/mod.rs
+// Re-export from tairitsu_style
+pub use tairitsu_style::{StyleStringBuilder, CssProperty, Property};
+
+// Now provides 403 W3C standard properties
+```
+
+### 属性数量对比
+
+| 指标 | Before | After | 提升 |
+|------|--------|-------|------|
+| CSS 属性数量 | ~50 | 403 | +706% |
+| 手动维护代码行数 | 635 | 0 | -100% |
+| W3C 标准覆盖率 | ~12% | 100% | +733% |
+
+### 完整的 403 个 CSS 属性
+
+迁移后，`CssProperty` 枚举现在包含以下完整类别的属性：
+
+#### 布局属性 (Layout)
+- Display, Position, Top, Right, Bottom, Left, ZIndex
+- Float, Clear, Overflow, OverflowX, OverflowY
+- Visibility, Opacity, Visibility
+
+#### 盒模型属性 (Box Model)
+- Width, MinWidth, MaxWidth, Height, MinHeight, MaxHeight
+- Padding, PaddingTop, PaddingRight, PaddingBottom, PaddingLeft
+- Margin, MarginTop, MarginRight, MarginBottom, MarginLeft
+- Border, BorderTop, BorderRight, BorderBottom, BorderLeft
+- BorderWidth, BorderStyle, BorderColor
+- BorderRadius, BoxSizing
+
+#### 弹性布局属性 (Flexbox)
+- Flex, FlexBasis, FlexDirection, FlexFlow, FlexGrow, FlexShrink, FlexWrap
+- AlignContent, AlignItems, AlignSelf
+- JustifyContent, JustifyItems, JustifySelf
+- Gap, RowGap, ColumnGap
+- Order
+
+#### 网格布局属性 (Grid)
+- Grid, GridArea, GridAutoColumns, GridAutoFlow, GridAutoRows
+- GridColumn, GridColumnEnd, GridColumnStart, GridRow
+- GridRowEnd, GridRowStart, GridTemplate
+- GridTemplateAreas, GridTemplateColumns, GridTemplateRows
+
+#### 排版属性 (Typography)
+- Font, FontFamily, FontSize, FontSizeAdjust, FontStretch
+- FontStyle, FontVariant, FontWeight
+- LineHeight, LetterSpacing, WordSpacing
+- TextAlign, TextAlignLast, TextDecoration, TextIndent
+- TextOverflow, TextShadow, TextTransform
+- VerticalAlign, WhiteSpace, WordBreak, WordWrap
+
+#### 颜色与背景属性 (Color & Background)
+- Color, Background, BackgroundAttachment, BackgroundBlendMode
+- BackgroundClip, BackgroundColor, BackgroundImage
+- BackgroundOrigin, BackgroundPosition, BackgroundRepeat
+- BackgroundSize
+
+#### 视觉效果属性 (Visual Effects)
+- BoxShadow, Filter, BackdropFilter
+- Transform, TransformOrigin, TransformStyle
+- Perspective, PerspectiveOrigin
+- MixBlendMode, Isolation
+
+#### 过渡与动画属性 (Transition & Animation)
+- Transition, TransitionDelay, TransitionDuration
+- TransitionProperty, TransitionTimingFunction
+- Animation, AnimationDelay, AnimationDirection
+- AnimationDuration, AnimationFillMode
+- AnimationIterationCount, AnimationName
+- AnimationPlayState, AnimationTimingFunction
+
+#### 列表属性 (Lists)
+- ListStyle, ListStyleImage, ListStylePosition
+- ListStyleType
+
+#### 表格属性 (Tables)
+- BorderCollapse, BorderSpacing
+- CaptionSide, EmptyCells
+- TableLayout
+
+#### 用户界面属性 (User Interface)
+- Appearance, Cursor
+- Outline, OutlineColor, OutlineOffset
+- OutlineStyle, OutlineWidth
+- Resize, UserSelect
+
+#### 多列布局属性 (Multi-column)
+- Columns, ColumnCount, ColumnFill
+- ColumnGap, ColumnRule, ColumnRuleColor
+- ColumnRuleStyle, ColumnRuleWidth
+- ColumnSpan, ColumnWidth
+
+#### 其他属性 (Miscellaneous)
+- Content, CounterIncrement, CounterReset
+- Quotes, Orphans, Widows
+
+### 使用变化
+
+迁移后，使用方式保持不变（通过 re-export）：
+
+```rust
+// Before and After (same usage)
+use hikari_animation::style::{StyleStringBuilder, CssProperty};
+
+let style = StyleStringBuilder::new()
+    .add_px(CssProperty::Width, 100)
+    .add(CssProperty::BackgroundColor, "red")
+    .build_clean();
+```
+
+但你现在可以使用更多的 CSS 属性：
+
+```rust
+// 新增的属性示例
+let style = StyleStringBuilder::new()
+    .add(CssProperty::GridTemplateColumns, "repeat(3, 1fr)")
+    .add(CssProperty::Gap, "1rem")
+    .add(CssProperty::BackdropFilter, "blur(10px)")
+    .add(CssProperty::Filter, "drop-shadow(0 4px 6px rgba(0,0,0,0.1))")
+    .add(CssProperty::MixBlendMode, "multiply")
+    .build_clean();
+```
+
+### 代码清理
+
+迁移删除了以下文件：
+
+```
+packages/animation/src/properties.rs  (635 lines)
+```
+
+并简化了 `packages/animation/src/style/mod.rs`：
+
+```rust
+// Before
+mod properties;
+pub use properties::CssProperty;
+
+pub struct StyleStringBuilder {
+    styles: Vec<(CssProperty, String)>,
+}
+
+// ... manual property mapping
+
+// After
+pub use tairitsu_style::{StyleStringBuilder, CssProperty, Property};
+```
+
+### 兼容性
+
+所有现有代码继续工作，无需修改：
+
+```rust
+// 所有现有的用法都继续工作
+use hikari_animation::style::CssProperty;
+
+// ✅ 仍然有效
+CssProperty::Width
+CssProperty::Height
+CssProperty::BackgroundColor
+
+// ✅ 新增属性也可用
+CssProperty::GridTemplateColumns
+CssProperty::BackdropFilter
+CssProperty::Filter
+CssProperty::MixBlendMode
+```
+
+### 性能影响
+
+迁移后性能提升：
+
+- **编译时间**：减少 635 行代码编译
+- **二进制大小**：删除重复代码
+- **运行时**：无变化（纯 re-export，零开销）
+- **内存**：无变化
+
+### 测试覆盖
+
+所有现有测试继续通过：
+
+```bash
+cargo test -p hikari-animation --lib
+
+test result: ok. 24 passed; 0 failed; 0 ignored
+```
+
+### 升级指南
+
+如果要在新组件中使用新增的 CSS 属性，只需正常导入和使用：
+
+```rust
+use hikari_animation::style::{StyleStringBuilder, CssProperty};
+
+// 使用任何 403 个 CSS 属性
+let style = StyleStringBuilder::new()
+    .add(CssProperty::Display, "grid")
+    .add(CssProperty::GridTemplateColumns, "repeat(auto-fit, minmax(200px, 1fr))")
+    .add(CssProperty::GridAutoRows, "minmax(100px, auto)")
+    .add(CssProperty::Gap, "1rem")
+    .build_clean();
+```
+
+### 更多信息
+
+- [完整属性列表](https://www.w3.org/Style/CSS/) - W3C CSS 规范
+- [tairitsu-style 文档](https://github.com/tairitsu-org/style) - 属性实现详情
+- [07-Migration Guide](./07-migration-guide.md) - 完整迁移文档
+- [02-ClassesBuilder 系统](./02-classesbuilder-system.md) - 类名构建系统

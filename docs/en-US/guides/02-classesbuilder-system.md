@@ -9,10 +9,13 @@
 - [扩展机制](#扩展机制)
 - [性能优化](#性能优化)
 - [使用示例](#使用示例)
+- [与 Tairitsu 的关系](#与-tairitsu-的关系)
 
 ## 概述
 
 ClassesBuilder 是 Hikari 的工具类生成器，提供了类型安全的 CSS 类名构建方式。它通过枚举驱动的工具类系统，完全替换了传统的字符串拼接方式，实现了编译时类型检查和运行时零开销。
+
+**重要提示**：ClassesBuilder 和 UtilityClass trait 保留在 `hikari-palette` 包中，不迁移到 `tairitsu-style`。这是由于两者设计目标不同导致的架构决策（详见[与 Tairitsu 的关系](#与-tairitsu-的关系)）。
 
 ## 设计理念
 
@@ -552,3 +555,123 @@ ClassesBuilder 通过类型安全的工具类系统，实现了：
 5. **与 SCSS 对应** - 枚举与 `.hi-*` 类一一对应
 
 这套系统完全替换了传统的字符串拼接方式，是 Hikari 样式体系的基础组件。
+
+## 与 Tairitsu 的关系
+
+### 为什么 ClassesBuilder 不迁移到 tairitsu-style？
+
+在 Hikari 到 Tairitsu 构建链迁移（Phase 2）中，我们做出了**保留 ClassesBuilder 在 hikari-palette**的架构决策。原因如下：
+
+#### 1. 设计目标不同
+
+| 特性 | tairitsu-style | hikari-palette |
+|------|---------------|----------------|
+| **目标** | Tailwind 风格工具类 | Hikari 组件专用类 |
+| **命名** | 连字符 (e.g., `flex`, `items-center`) | 枚举 (e.g., `Display::Flex`) |
+| **前缀** | 无或可配置 | 固定 `hi-` 前缀 |
+| **API** | 字符串驱动 | 类型安全枚举 |
+
+#### 2. API 不兼容
+
+```rust
+// tairitsu-style (Tailwind 风格)
+let classes = "flex items-center gap-4";
+
+// hikari-palette (类型安全枚举)
+let classes = ClassesBuilder::new()
+    .add(Display::Flex)
+    .add(AlignItems::Center)
+    .add(Gap::Gap4)
+    .build();
+```
+
+#### 3. 组件耦合
+
+Hikari 有 18 个组件类枚举文件（Button, Table, Card 等），这些枚举与 `hi-` 前缀样式系统紧密耦合，迁移成本高且收益低。
+
+#### 4. 架构优势
+
+保留分离的架构提供了：
+
+- **灵活性**：Hikari 可以独立演进其类系统
+- **类型安全**：枚举驱动的系统提供更强的编译时保证
+- **组件特化**：针对 Hikari 组件优化的类命名
+- **兼容性**：不破坏现有组件代码
+
+### 迁移内容
+
+Phase 2 仅迁移了 **StyleStringBuilder 和 CssProperty** 到 tairitsu-style：
+
+```rust
+// hikari-animation/src/style/mod.rs
+pub use tairitsu_style::{StyleStringBuilder, CssProperty, Property};
+```
+
+这提供了：
+- **403 个 W3C 标准 CSS 属性**
+- **统一的属性命名规范**
+- **减少 635 行重复代码**
+
+### 完整架构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     hikari-animation                        │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ re-export from tairitsu_style:                      │   │
+│  │ - StyleStringBuilder (内联样式构建器)                 │   │
+│  │ - CssProperty (403 W3C CSS 属性)                    │   │
+│  │ - Property                                           │   │
+│  └─────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ hikari-specific (web-sys integration):              │   │
+│  │ - StyleBuilder (HtmlElement-based)                   │   │
+│  │ - AttributeBuilder                                   │   │
+│  │ - set_style, get_style, etc.                        │   │
+│  └─────────────────────────────────────────────────────┘   │
+│└─────────────────────────────────────────────────────────────┘
+│
+│                     hikari-palette                          │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ hikari component class system (RETAINED):           │   │
+│  │ - ClassesBuilder (accepts impl UtilityClass)         │   │
+│  │ - UtilityClass trait (hi- prefix)                    │   │
+│  │ - 18 component class enums (Button, Table, etc.)     │   │
+│  └─────────────────────────────────────────────────────┘   │
+│└─────────────────────────────────────────────────────────────┘
+```
+
+### 最佳实践
+
+**使用 ClassesBuilder:**
+- 静态布局和组件类
+- 编译时已知的类名
+- 需要类型安全的场景
+
+**使用 StyleStringBuilder:**
+- 动态计算的内联样式
+- 需要精确像素值控制的场景
+- 覆盖全局样式的场景
+
+```rust
+// 最佳实践：组合使用
+let classes = ClassesBuilder::new()
+    .add(Button::Button)
+    .add(Button::ButtonPrimary)
+    .build();
+
+let style = StyleStringBuilder::new()
+    .add_px(CssProperty::Width, computed_width)
+    .add(CssProperty::Opacity, "0.8")
+    .build_clean();
+
+rsx! {
+    button { class: "{classes}", style: "{style}",
+        "Click me"
+    }
+}
+```
+
+### 更多信息
+
+有关完整迁移详情，请参阅 [07-Migration Guide](./07-migration-guide.md)。

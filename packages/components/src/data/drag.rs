@@ -44,37 +44,21 @@ pub struct DropEvent {
     pub position: DropPosition,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct DragDropTreeProps {
-    #[props(default)]
     pub data: Vec<DragTreeNodeData>,
 
-    #[props(default)]
+    #[default(true)]
     pub draggable: bool,
 
-    #[props(default)]
+    #[default(true)]
     pub drop_allowed: bool,
 
     pub allow_drag: Option<EventHandler<(String, bool)>>,
     pub allow_drop: Option<EventHandler<(DropTarget, bool)>>,
     pub on_drop: Option<EventHandler<DropEvent>>,
 
-    #[props(default)]
     pub class: String,
-}
-
-impl Default for DragDropTreeProps {
-    fn default() -> Self {
-        Self {
-            data: Vec::default(),
-            draggable: true,
-            drop_allowed: true,
-            allow_drag: None,
-            allow_drop: None,
-            on_drop: None,
-            class: String::default(),
-        }
-    }
 }
 
 #[component]
@@ -112,35 +96,29 @@ pub fn DragDropTree(props: DragDropTreeProps) -> Element {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct RenderDragNodeProps {
+    #[default(DragTreeNodeData::default())]
     pub node: DragTreeNodeData,
+
+    #[default(0)]
     pub depth: usize,
+
+    #[default(true)]
     pub draggable: bool,
+
+    #[default(true)]
     pub drop_allowed: bool,
+
     pub allow_drag: Option<EventHandler<(String, bool)>>,
     pub allow_drop: Option<EventHandler<(DropTarget, bool)>>,
+    #[default(Signal::new(None))]
     pub dragged_key: Signal<Option<String>>,
+    #[default(Signal::new(None))]
     pub drop_target: Signal<Option<DropTarget>>,
+    #[default(Signal::new(None))]
     pub drag_over_key: Signal<Option<String>>,
     pub on_drop: Option<EventHandler<DropEvent>>,
-}
-
-impl Default for RenderDragNodeProps {
-    fn default() -> Self {
-        Self {
-            node: DragTreeNodeData::default(),
-            depth: 0,
-            draggable: true,
-            drop_allowed: true,
-            allow_drag: None,
-            allow_drop: None,
-            dragged_key: Signal::new(None),
-            drop_target: Signal::new(None),
-            drag_over_key: Signal::new(None),
-            on_drop: None,
-        }
-    }
 }
 
 #[component]

@@ -30,42 +30,19 @@ fn get_current_date() -> (i32, u32) {
 
 pub struct CalendarComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CalendarProps {
-    #[props(default = 2026)]
+    #[default(2026)]
     pub default_year: i32,
-
-    #[props(default = 1)]
+    #[default(1)]
     pub default_month: u32,
-
-    #[props(default)]
     pub on_date_select: Option<EventHandler<(i32, u32, u32)>>,
-
-    #[props(default = 1970)]
+    #[default(1970)]
     pub min_year: i32,
-
-    #[props(default = 2100)]
+    #[default(2100)]
     pub max_year: i32,
-
-    #[props(default)]
     pub class: String,
-
-    #[props(default)]
     pub style: String,
-}
-
-impl Default for CalendarProps {
-    fn default() -> Self {
-        Self {
-            default_year: 2026,
-            default_month: 1,
-            on_date_select: None,
-            min_year: 1970,
-            max_year: 2100,
-            class: String::default(),
-            style: String::default(),
-        }
-    }
 }
 
 fn is_leap_year(year: i32) -> bool {

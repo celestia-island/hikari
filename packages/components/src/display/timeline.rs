@@ -20,33 +20,14 @@ pub enum TimelinePosition {
     Right,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct TimelineProps {
-    #[props(default)]
     pub position: TimelinePosition,
-
-    #[props(default = true)]
+    #[default(true)]
     pub line: bool,
-
-    #[props(default)]
     pub class: String,
-
-    #[props(default)]
     pub style: String,
-
     pub children: Element,
-}
-
-impl Default for TimelineProps {
-    fn default() -> Self {
-        Self {
-            position: Default::default(),
-            line: true,
-            class: String::default(),
-            style: String::default(),
-            children: VNode::empty(),
-        }
-    }
 }
 
 #[component]
@@ -73,49 +54,17 @@ pub fn Timeline(props: TimelineProps) -> Element {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct TimelineItemProps {
-    #[props(default)]
     pub position: TimelinePosition,
-
-    #[props(default)]
     pub time: String,
-
-    #[props(default)]
     pub title: String,
-
-    #[props(default)]
     pub icon: Option<Element>,
-
-    #[props(default)]
     pub color: String,
-
-    #[props(default)]
     pub last: bool,
-
-    #[props(default)]
     pub class: String,
-
-    #[props(default)]
     pub style: String,
-
     pub children: Element,
-}
-
-impl Default for TimelineItemProps {
-    fn default() -> Self {
-        Self {
-            position: Default::default(),
-            time: String::default(),
-            title: String::default(),
-            icon: Some(VNode::empty()),
-            color: String::default(),
-            last: false,
-            class: String::default(),
-            style: String::default(),
-            children: VNode::empty(),
-        }
-    }
 }
 
 #[component]

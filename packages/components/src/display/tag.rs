@@ -23,37 +23,14 @@ pub enum TagVariant {
     Info,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct TagProps {
-    #[props(default)]
     pub variant: TagVariant,
-
-    #[props(default)]
     pub closable: bool,
-
-    #[props(default)]
     pub on_close: Option<EventHandler<MouseEvent>>,
-
-    #[props(default)]
     pub class: String,
-
-    #[props(default)]
     pub style: String,
-
     pub children: Element,
-}
-
-impl Default for TagProps {
-    fn default() -> Self {
-        Self {
-            variant: Default::default(),
-            closable: false,
-            on_close: None,
-            class: String::default(),
-            style: String::default(),
-            children: VNode::empty(),
-        }
-    }
 }
 
 #[component]

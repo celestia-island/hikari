@@ -19,37 +19,22 @@ pub struct VirtualTreeNodeData {
     pub disabled: bool,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct VirtualTreeProps {
-    #[props(default)]
     pub data: Vec<VirtualTreeNodeData>,
 
-    #[props(default)]
+    #[default("400px".to_string())]
     pub height: String,
 
-    #[props(default)]
+    #[default(32)]
     pub item_height: u32,
 
-    #[props(default)]
+    #[default(5)]
     pub overscan: u32,
 
-    #[props(default)]
     pub class: String,
 
     pub on_scroll: Option<EventHandler<f64>>,
-}
-
-impl Default for VirtualTreeProps {
-    fn default() -> Self {
-        Self {
-            data: Vec::default(),
-            height: String::from("400px"),
-            item_height: 32,
-            overscan: 5,
-            class: String::default(),
-            on_scroll: None,
-        }
-    }
 }
 
 #[component]

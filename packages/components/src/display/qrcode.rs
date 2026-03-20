@@ -16,29 +16,19 @@ use crate::styled::StyledComponent;
 pub struct QRCodeComponent;
 
 ///
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct QRCodeProps {
     pub value: String,
-
-    #[props(default = 200)]
+    #[default(200)]
     pub size: u32,
-
-    #[props(default = String::from("#000000"))]
+    #[default(String::from("#000000"))]
     pub color: String,
-
-    #[props(default = String::from("#ffffff"))]
+    #[default(String::from("#ffffff"))]
     pub background: String,
-
-    #[props(default)]
     pub title: Option<String>,
-
-    #[props(default)]
     pub class: String,
-
-    #[props(default)]
     pub style: String,
-
-    #[props(default = String::from("medium"))]
+    #[default(String::from("medium"))]
     pub error_correction: String,
 }
 

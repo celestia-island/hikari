@@ -4,7 +4,7 @@
 use anyhow::Result;
 use std::{env, fs, path::Path};
 
-use tairitsu_packager::styles::ScssCompiler;
+use tairitsu_packager::styles::{ScssCompiler, CompilerOptions};
 
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=src/styles");
@@ -31,8 +31,20 @@ fn main() -> Result<()> {
 
     println!("   Found {} SCSS file(s)", scss_files.len());
 
-    // Create compiler with default options (minify enabled)
-    let compiler = ScssCompiler::new();
+    // Create compiler with load_paths to support theme variable/mixin imports
+    // Components SCSS files use @use '../../../../theme/styles/variables.scss' as vars;
+    // We need to add the theme styles directory to load_paths
+    let theme_styles_dir = manifest_dir.join("../theme/styles");
+    let components_styles_dir = manifest_dir.join("src/styles");
+
+    let compiler = ScssCompiler::with_options(CompilerOptions {
+        minify: true,
+        source_map: false,
+        load_paths: vec![
+            theme_styles_dir,
+            components_styles_dir,
+        ],
+    });
 
     // Compile each SCSS file
     for scss_path in scss_files {

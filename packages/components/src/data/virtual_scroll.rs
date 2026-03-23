@@ -2,7 +2,7 @@
 // Virtual scroll component for large tree data sets
 
 use crate::prelude::*;
-use hikari_palette::classes::{ClassesBuilder, TreeClass};
+use hikari_palette::classes::{ClassesBuilder, VirtualScrollClass};
 
 use crate::styled::StyledComponent;
 
@@ -105,8 +105,8 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
     // Pre-build item elements outside rsx!
     let item_elements: Vec<Element> = items_data.into_iter().map(|(id, title, disabled, idx, depth)| {
         let node_classes = ClassesBuilder::new()
-            .add(TreeClass::VirtualTree)
-            .add_if(TreeClass::NodeDisabled, || disabled)
+            .add(VirtualScrollClass::VirtualTree)
+            .add_if(VirtualScrollClass::NodeDisabled, || disabled)
             .build();
 
         let item_height = props.item_height;

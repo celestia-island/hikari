@@ -17,12 +17,12 @@ pub enum TabsClass {
 impl UtilityClass for TabsClass {
     fn as_suffix(&self) -> &'static str {
         match self {
-            TabsClass::TabsTab => "tabs-tab",
-            TabsClass::TabActive => "tabs-tab-active",
-            TabsClass::TabDisabled => "tabs-tab-disabled",
-            TabsClass::TabsTabpane => "tabs-tabpane",
-            TabsClass::TabpaneActive => "tabs-tabpane-active",
-            TabsClass::TabpaneInactive => "tabs-tabpane-inactive",
+            TabsClass::TabsTab => "tab",
+            TabsClass::TabActive => "tab-active",
+            TabsClass::TabDisabled => "tab-disabled",
+            TabsClass::TabsTabpane => "tab-panel",
+            TabsClass::TabpaneActive => "tab-panel-active",
+            TabsClass::TabpaneInactive => "tab-panel-inactive",
         }
     }
 }

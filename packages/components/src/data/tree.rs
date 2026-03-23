@@ -7,6 +7,7 @@ use crate::{
     data::node::{TreeNode, TreeNodeData, TreeNodeProps},
     styled::StyledComponent,
 };
+use hikari_palette::classes::{ClassesBuilder, TreeClassNew};
 
 pub struct TreeComponent;
 
@@ -76,16 +77,27 @@ pub fn Tree(props: TreeProps) -> Element {
         })
         .collect();
 
+    // Use TreeClassNew for tree container classes
+    let container_classes = ClassesBuilder::new()
+        .add(TreeClassNew::TreeContainer)
+        .add_raw(&props.class)
+        .build();
+
+    let tree_classes = ClassesBuilder::new()
+        .add(TreeClassNew::Tree)
+        .add_raw(line_class)
+        .build();
+
     rsx! {
         div {
-            class: format!("hi-tree-container {}", props.class),
+            class: container_classes,
             tabindex: 0,
             role: "tree",
             aria_multiselectable: "false",
             onkeydown: handle_keydown,
 
             ul {
-                class: format!("hi-tree {line_class}"),
+                class: tree_classes,
                 role: "treegroup",
 
                 ..tree_nodes

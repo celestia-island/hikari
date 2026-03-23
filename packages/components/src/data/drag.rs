@@ -2,7 +2,7 @@
 // Drag and drop component for tree node reordering
 
 use crate::prelude::*;
-use hikari_palette::classes::{ClassesBuilder, TreeClass};
+use hikari_palette::classes::{ClassesBuilder, DragDropTreeClass};
 
 use crate::styled::StyledComponent;
 
@@ -140,10 +140,10 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
     let is_drag_over = props.drag_over_key.read().as_ref() == Some(&item_key_1);
 
     let drag_node_classes = ClassesBuilder::new()
-        .add(TreeClass::DragNode)
-        .add_if(TreeClass::Dragging, || is_dragging)
-        .add_if(TreeClass::DragOver, || is_drag_over)
-        .add_if(TreeClass::NodeDisabled, || disabled)
+        .add(DragDropTreeClass::DragNode)
+        .add_if(DragDropTreeClass::Dragging, || is_dragging)
+        .add_if(DragDropTreeClass::DragOver, || is_drag_over)
+        .add_if(DragDropTreeClass::NodeDisabled, || disabled)
         .build();
 
     let dragged_key_for_start = props.dragged_key.clone();

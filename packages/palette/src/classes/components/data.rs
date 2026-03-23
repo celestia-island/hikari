@@ -314,22 +314,36 @@ impl UtilityClass for TreeLabelClass {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DragDropTreeClass {
     DragDropTree,
+    DragNode,
+    Dragging,
+    DragOver,
+    NodeDisabled,
 }
 
 impl UtilityClass for DragDropTreeClass {
     fn as_suffix(&self) -> &'static str {
-        "drag-drop-tree"
+        match self {
+            DragDropTreeClass::DragDropTree => "drag-drop-tree",
+            DragDropTreeClass::DragNode => "drag-node",
+            DragDropTreeClass::Dragging => "drag-node-dragging",
+            DragDropTreeClass::DragOver => "drag-node-drag-over",
+            DragDropTreeClass::NodeDisabled => "drag-node-disabled",
+        }
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum VirtualScrollClass {
     VirtualTree,
+    NodeDisabled,
 }
 
 impl UtilityClass for VirtualScrollClass {
     fn as_suffix(&self) -> &'static str {
-        "virtual-tree"
+        match self {
+            VirtualScrollClass::VirtualTree => "virtual-tree",
+            VirtualScrollClass::NodeDisabled => "tree-node-disabled",
+        }
     }
 }
 

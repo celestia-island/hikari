@@ -4,6 +4,7 @@
 use crate::prelude::*;
 
 use crate::styled::StyledComponent;
+use hikari_palette::classes::{ClassesBuilder, CollapseClass};
 
 pub struct CollapseComponent;
 
@@ -73,6 +74,19 @@ pub fn Collapse(props: CollapseProps) -> Element {
         }
     };
 
+    // Use CollapseClass for the content area
+    let content_classes = if is_expanded.read() {
+        ClassesBuilder::new()
+            .add(CollapseClass::CollapseContent)
+            .add(CollapseClass::Expanded)
+            .build()
+    } else {
+        ClassesBuilder::new()
+            .add(CollapseClass::CollapseContent)
+            .add(CollapseClass::Collapsed)
+            .build()
+    };
+
     rsx! {
         div {
             class: format!("hi-collapse {}", props.class),
@@ -98,8 +112,7 @@ pub fn Collapse(props: CollapseProps) -> Element {
             }
 
             div {
-                class: "hi-collapse-content",
-                class: if is_expanded.read() { "hi-collapse-expanded" } else { "" },
+                class: content_classes,
                 style: format!(
                     "max-height: {}; overflow: hidden; opacity: {}; {};",
                     max_height, opacity, animation_style

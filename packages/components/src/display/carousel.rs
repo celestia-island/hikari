@@ -106,10 +106,6 @@ pub fn Carousel(props: CarouselProps) -> Element {
         *is_paused_for_toggle.write() = !is_paused_for_toggle.get();
     };
 
-    // Note: Autoplay functionality temporarily disabled until async runtime integration
-    // TODO: Implement use_interval or spawn_local for autoplay
-    let _ = (props.autoplay, is_paused.get());
-
     // Autoplay implementation using platform::set_timeout
     let autoplay_interval = props.autoplay;
     let autoplay_index = current_index.clone();

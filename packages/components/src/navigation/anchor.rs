@@ -28,8 +28,6 @@ use crate::prelude::*;
 use hikari_palette::classes::{
     AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass,
 };
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use wasm_bindgen::JsCast;
 
 #[derive(Clone, Debug, PartialEq, Props)]
 pub struct AnchorItem {
@@ -54,47 +52,42 @@ pub fn Anchor(
     let mut active_anchor = use_signal(String::new);
 
     // Build anchor links
-    let anchor_links: Vec<Element> = items.iter().map(|item| {
-        let href = item.href.clone();
-        let title = item.title.clone();
-        let active_anchor_for_click = active_anchor.clone();
-        let active_anchor_for_check = active_anchor.clone();
-        let is_active = active_anchor_for_check.read() == href;
-        let btn_class = ClassesBuilder::new()
-            .add(AnchorClass::Link)
-            .add_if(AnchorClass::Active, move || is_active)
-            .build();
+    let anchor_links: Vec<Element> = items
+        .iter()
+        .map(|item| {
+            let href = item.href.clone();
+            let title = item.title.clone();
+            let active_anchor_for_click = active_anchor.clone();
+            let active_anchor_for_check = active_anchor.clone();
+            let is_active = active_anchor_for_check.read() == href;
+            let btn_class = ClassesBuilder::new()
+                .add(AnchorClass::Link)
+                .add_if(AnchorClass::Active, move || is_active)
+                .build();
 
-        rsx! {
-            button {
-                class: btn_class,
+            rsx! {
+                button {
+                    class: btn_class,
                 onclick: move |_| {
                     active_anchor_for_click.set(href.clone());
 
                     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                     {
-                        use web_sys::window;
                         let target_id = href.trim_start_matches('#');
-                        if let Some(window) = window() {
-                            if let Some(document) = window.document() {
-                                if let Some(element) = document.get_element_by_id(target_id) {
-                                    if let Some(html_el) = element.dyn_ref::<web_sys::HtmlElement>() {
-                                        let rect = html_el.get_bounding_client_rect();
-                                        let scroll_y = platform::get_scroll_y();
-                                        platform::scroll_to_with_options(
-                                            rect.top() - offset as f64 - scroll_y,
-                                            "smooth"
-                                        );
-                                    }
-                                }
-                            }
+                        if let Some(rect) = platform::get_element_rect_by_id(target_id) {
+                            let scroll_y = platform::get_scroll_y();
+                            platform::scroll_to_with_options(
+                                rect.y - offset as f64 - scroll_y,
+                                "smooth"
+                            );
                         }
                     }
                 },
-                "{title}"
+                    "{title}"
+                }
             }
-        }
-    }).collect();
+        })
+        .collect();
 
     // Position class
     let position_class = match position.as_str() {
@@ -125,8 +118,6 @@ pub fn Anchor(
 ///
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> Signal<String> {
-    use wasm_bindgen::closure::Closure;
-
     let active_anchor = use_signal(|| String::new());
     let active_anchor_for_effect = active_anchor.clone();
 
@@ -134,31 +125,20 @@ pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> Signal<String> {
         let items = anchor_items.clone();
         let anchor = active_anchor_for_effect.clone();
 
-        let listener = Closure::wrap(Box::new(move |_event: web_sys::Event| {
-            if let Some(window) = web_sys::window() {
-                if let Some(document) = window.document() {
-                    let scroll_y = platform::get_scroll_y();
+        platform::on_scroll(move || {
+            let scroll_y = platform::get_scroll_y();
 
-                    for item in &items {
-                        let target_id = item.href.trim_start_matches('#');
-                        if let Some(element) = document.get_element_by_id(target_id) {
-                            let rect = element.get_bounding_client_rect();
-                            if rect.top() <= scroll_y + 100.0 && rect.bottom() >= scroll_y {
-                                anchor.set(item.href.clone());
-                            }
-                        }
+            for item in &items {
+                let target_id = item.href.trim_start_matches('#');
+                if let Some(rect) = platform::get_element_rect_by_id(target_id) {
+                    let top = rect.y;
+                    let bottom = rect.y + rect.height;
+                    if top <= scroll_y + 100.0 && bottom >= scroll_y {
+                        anchor.set(item.href.clone());
                     }
                 }
             }
-        }) as Box<dyn FnMut(_)>);
-
-        if let Some(window) = web_sys::window() {
-            window
-                .add_event_listener_with_callback("scroll", listener.as_ref().unchecked_ref())
-                .ok();
-        }
-
-        listener.forget();
+        });
     });
 
     active_anchor

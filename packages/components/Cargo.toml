@@ -106,14 +106,14 @@ chrono = { workspace = true }
 # Browser WASM-specific dependencies (not for WASI)
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4"
 js-sys = "0.3"
 web-sys = { version = "0.3", features = [
     "Window", "Document", "Element", "HtmlElement",
     "HtmlCanvasElement", "CanvasRenderingContext2d",
     "MutationObserver", "MutationObserverInit", "ResizeObserver",
+    "ScrollToOptions", "ScrollBehavior",
+    "CssStyleDeclaration",
 ] }
-gloo = { version = "0.11", features = ["futures", "timers"] }
 
 [build-dependencies]
 tairitsu-packager = { path = "../../../tairitsu/packages/packager" }

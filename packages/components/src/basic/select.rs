@@ -1,6 +1,8 @@
 // hi-components/src/basic/select.rs
 // Custom Select component with Portal-based dropdown and FUI styling
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use crate::platform;
 use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
@@ -9,8 +11,8 @@ use wasm_bindgen::JsCast;
 use crate::{
     feedback::{Glow, GlowProps},
     portal::{
-        PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
-        use_portal,
+        generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy,
+        TriggerPlacement,
     },
     styled::StyledComponent,
 };
@@ -153,18 +155,11 @@ pub fn Select(props: SelectProps) -> Element {
                     if let Some(web_event) = e.downcast::<web_sys::MouseEvent>() {
                         if let Some(target) = web_event.target() {
                             if let Some(element) = target.dyn_ref::<web_sys::Element>() {
-                                let trigger_el = element
-                                    .closest(".hi-select-trigger")
-                                    .ok()
-                                    .flatten()
-                                    .unwrap_or_else(|| element.clone());
-                                if let Some(html_el) = trigger_el.dyn_ref::<web_sys::HtmlElement>()
-                                {
-                                    let rect = html_el.get_bounding_client_rect();
-                                    Some((rect.x(), rect.y(), rect.width(), rect.height()))
-                                } else {
-                                    None
-                                }
+                                platform::get_bounding_rect_by_class_impl(
+                                    "hi-select-trigger",
+                                    element,
+                                )
+                                .map(|rect| (rect.x, rect.y, rect.width, rect.height))
                             } else {
                                 None
                             }

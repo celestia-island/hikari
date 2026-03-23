@@ -11,7 +11,7 @@ use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use gloo::timers::callback::Timeout;
+use crate::platform;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use js_sys::Promise;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
@@ -168,10 +168,10 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                                 {
                                     if copy_to_clipboard(&code_for_copy) {
                                         copied.set(true);
-                                        let mut copied_signal = copied;
-                                        Timeout::new(2000, move || {
+                                        let copied_signal = copied;
+                                        platform::set_timeout(move || {
                                             copied_signal.set(false);
-                                        }).forget();
+                                        }, 2000);
                                     }
                                 }
                                 #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]

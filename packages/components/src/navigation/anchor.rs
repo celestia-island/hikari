@@ -22,14 +22,14 @@
 //! }
 //! ```
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use crate::platform;
 use crate::prelude::*;
 use hikari_palette::classes::{
     AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass,
 };
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::JsCast;
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use wasm_bindgen::closure::Closure;
 
 #[derive(Clone, Debug, PartialEq, Props)]
 pub struct AnchorItem {
@@ -43,14 +43,11 @@ pub struct AnchorItem {
 pub fn Anchor(
     items: Vec<AnchorItem>,
 
-    #[props(default = "right".to_string())]
-    position: String,
+    #[props(default = "right".to_string())] position: String,
 
-    #[props(default = 20)]
-    offset: i32,
+    #[props(default = 20)] offset: i32,
 
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 
     children: Element,
 ) -> Element {
@@ -74,21 +71,21 @@ pub fn Anchor(
                 onclick: move |_| {
                     active_anchor_for_click.set(href.clone());
 
-                    // Remove '#' from href
-                    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-                    let target_id = href.trim_start_matches('#');
-
                     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                     {
                         use web_sys::window;
+                        let target_id = href.trim_start_matches('#');
                         if let Some(window) = window() {
                             if let Some(document) = window.document() {
                                 if let Some(element) = document.get_element_by_id(target_id) {
-                                    let rect = element.get_bounding_client_rect();
-                                    let scroll_options = web_sys::ScrollToOptions::new();
-                                    scroll_options.set_top(rect.top() - offset as f64 - window.scroll_y().unwrap_or(0.0));
-                                    scroll_options.set_behavior(web_sys::ScrollBehavior::Smooth);
-                                    window.scroll_to_with_scroll_to_options(&scroll_options);
+                                    if let Some(html_el) = element.dyn_ref::<web_sys::HtmlElement>() {
+                                        let rect = html_el.get_bounding_client_rect();
+                                        let scroll_y = platform::get_scroll_y();
+                                        platform::scroll_to_with_options(
+                                            rect.top() - offset as f64 - scroll_y,
+                                            "smooth"
+                                        );
+                                    }
                                 }
                             }
                         }
@@ -128,6 +125,8 @@ pub fn Anchor(
 ///
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> Signal<String> {
+    use wasm_bindgen::closure::Closure;
+
     let active_anchor = use_signal(|| String::new());
 
     use_effect(move || {
@@ -137,14 +136,12 @@ pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> Signal<String> {
         let listener = Closure::wrap(Box::new(move |_event: web_sys::Event| {
             if let Some(window) = web_sys::window() {
                 if let Some(document) = window.document() {
-                    let scroll_y = window.scroll_y().unwrap_or(0.0);
+                    let scroll_y = platform::get_scroll_y();
 
-                    // Find which section is currently visible
                     for item in &items {
                         let target_id = item.href.trim_start_matches('#');
                         if let Some(element) = document.get_element_by_id(target_id) {
                             let rect = element.get_bounding_client_rect();
-                            // Check if element is in viewport
                             if rect.top() <= scroll_y + 100.0 && rect.bottom() >= scroll_y {
                                 anchor.set(item.href.clone());
                             }
@@ -160,7 +157,6 @@ pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> Signal<String> {
                 .ok();
         }
 
-        // Cleanup listener on unmount
         listener.forget();
     });
 

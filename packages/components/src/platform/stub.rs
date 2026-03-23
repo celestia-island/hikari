@@ -19,3 +19,9 @@ pub fn inner_height() -> i32 {
 pub fn set_timeout(_callback: impl FnOnce() + 'static, _ms: i32) -> i32 {
     0
 }
+
+pub fn get_scroll_y() -> f64 {
+    0.0
+}
+
+pub fn scroll_to_with_options(_top: f64, _behavior: &str) {}

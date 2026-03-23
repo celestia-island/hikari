@@ -16,7 +16,16 @@ tairitsu-vdom = { path = "../../../tairitsu/packages/vdom" }
 tairitsu-hooks = { path = "../../../tairitsu/packages/hooks" }
 tairitsu-style = { path = "../../../tairitsu/packages/style" }
 
+# WASM dependencies (for wasm feature)
+wasm-bindgen = { version = "0.2", optional = true }
+web-sys = { version = "0.3", optional = true, features = [
+    "Window", "Document", "Element", "HtmlElement",
+    "console", "DomRect", "MouseEvent",
+    "CssStyleDeclaration", "Performance", "MediaQueryList",
+] }
+js-sys = { version = "0.3", optional = true }
+
 [features]
 default = []
-wasm = []
-dioxus = []
+wasm = ["dep:wasm-bindgen", "dep:web-sys", "dep:js-sys"]
+dioxus = ["wasm"]

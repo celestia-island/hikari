@@ -2,14 +2,15 @@
 // Unified glow effect component with mouse-following spotlight and acrylic blur
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use crate::platform::{get_element_by_class_upward, log, set_style_property};
+use crate::platform::{
+    element_from_point, get_bounding_client_rect, get_element_by_class_upward, log,
+    set_style_property,
+};
 use crate::prelude::*;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::style_builder::StyleBuilder;
 use hikari_palette::classes::{ClassesBuilder, GlowClass};
 use tairitsu_vdom::IntoAttrValue;
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use wasm_bindgen::JsCast;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowBlur {
@@ -148,20 +149,20 @@ pub fn Glow(props: GlowProps) -> Element {
         );
 
         let onmousemove_handler = move |event: MouseEvent| {
-            let client_x = event.client_x as f64;
-            let client_y = event.client_y as f64;
+            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+            {
+                let client_x = event.client_x;
+                let client_y = event.client_y;
 
-            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
-                if let Some(target) = web_event.target() {
-                    if let Some(target_el) = target.dyn_ref::<web_sys::Element>() {
-                        if let Some(wrapper) =
-                            get_element_by_class_upward("hi-glow-wrapper", target_el)
-                        {
-                            let rect = wrapper.get_bounding_client_rect();
-                            let relative_x = client_x - rect.left();
-                            let relative_y = client_y - rect.top();
-                            let width = rect.width();
-                            let height = rect.height();
+                if let Some(target_el) = element_from_point(client_x, client_y) {
+                    if let Some(wrapper) =
+                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                    {
+                        if let Some(rect) = get_bounding_client_rect(&wrapper) {
+                            let relative_x = client_x as f64 - rect.x;
+                            let relative_y = client_y as f64 - rect.y;
+                            let width = rect.width;
+                            let height = rect.height;
 
                             if width > 0.0 && height > 0.0 {
                                 let percent_x = ((relative_x / width) * 100.0).clamp(0.0, 100.0);
@@ -181,49 +182,41 @@ pub fn Glow(props: GlowProps) -> Element {
                     }
                 }
             }
+            let _ = event;
         };
 
-        let onmouseenter_handler = move |event: MouseEvent| {
-            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+        let onmouseenter_handler = move |_event: MouseEvent| {
+            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+            {
                 log("Glow: mouseenter");
-                if let Some(target) = web_event.current_target() {
-                    if let Some(wrapper) = target.dyn_ref::<web_sys::HtmlElement>() {
-                        set_style_property(wrapper, "--glow-intensity-scale", "0.5");
+                if let Some(target_el) = element_from_point(0, 0) {
+                    if let Some(wrapper) =
+                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                    {
+                        set_style_property(&wrapper, "--glow-intensity-scale", "0.5");
                     }
                 }
             }
         };
 
-        let onmouseleave_handler = move |event: MouseEvent| {
-            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+        let onmouseleave_handler = move |_event: MouseEvent| {
+            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+            {
                 log("Glow: mouseleave");
-                if let Some(target) = web_event.current_target() {
-                    if let Some(wrapper) = target.dyn_ref::<web_sys::HtmlElement>() {
-                        set_style_property(wrapper, "--glow-intensity-scale", "0");
-                    }
-                }
             }
         };
 
-        let onmousedown_handler = move |event: MouseEvent| {
-            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+        let onmousedown_handler = move |_event: MouseEvent| {
+            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+            {
                 log("Glow: mousedown");
-                if let Some(target) = web_event.current_target() {
-                    if let Some(wrapper) = target.dyn_ref::<web_sys::HtmlElement>() {
-                        set_style_property(wrapper, "--glow-intensity-scale", "1.0");
-                    }
-                }
             }
         };
 
-        let onmouseup_handler = move |event: MouseEvent| {
-            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
+        let onmouseup_handler = move |_event: MouseEvent| {
+            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+            {
                 log("Glow: mouseup");
-                if let Some(target) = web_event.current_target() {
-                    if let Some(wrapper) = target.dyn_ref::<web_sys::HtmlElement>() {
-                        set_style_property(wrapper, "--glow-intensity-scale", "0.5");
-                    }
-                }
             }
         };
 

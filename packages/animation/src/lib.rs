@@ -103,7 +103,7 @@ pub mod hooks;
 #[cfg(feature = "dioxus")]
 pub mod provider;
 
-#[cfg(feature = "dioxus")]
+#[cfg(any(feature = "wasm", feature = "dioxus"))]
 pub mod global_manager;
 
 // Re-export Dioxus-specific items
@@ -119,7 +119,11 @@ pub use provider::{
 };
 
 // Re-export transition presets for convenience (only available with wasm/dioxus feature)
-#[cfg(all(any(feature = "wasm", feature = "dioxus"), target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(all(
+    any(feature = "wasm", feature = "dioxus"),
+    target_arch = "wasm32",
+    target_os = "unknown"
+))]
 pub use presets::transition::{
     bounce_in, fade_in, fade_out, rotate_in, rotate_out, shake, slide_in, slide_out, zoom_in,
     zoom_out, SlideDirection,

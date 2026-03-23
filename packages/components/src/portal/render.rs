@@ -2,7 +2,7 @@
 // Portal rendering components
 
 use crate::prelude::*;
-use crate::platform::{inner_height, inner_width, log};
+use crate::platform::{inner_height, inner_width, log, element_from_point, element_closest};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform::set_timeout;
 use hikari_palette::classes::{
@@ -10,7 +10,7 @@ use hikari_palette::classes::{
     UtilityClass,
 };
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use wasm_bindgen::{JsCast, closure::Closure};
+use wasm_bindgen::closure::Closure;
 
 use super::provider::PortalContext;
 use crate::{
@@ -480,14 +480,9 @@ fn DropdownPortalEntry(
                     if close_on_select {
                         #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                         {
-                            if let Some(web_event) = e.downcast::<web_sys::MouseEvent>() {
-                                if let Some(target) = web_event.target() {
-                                    if let Some(elem) = target.dyn_ref::<web_sys::Element>() {
-                                        let is_menu_item = elem.closest(".hi-menu-item").ok();
-                                        if is_menu_item.is_some() {
-                                            close_dropdown_for_content.call(e);
-                                        }
-                                    }
+                            if let Some(target_el) = element_from_point(e.client_x, e.client_y) {
+                                if element_closest(&target_el, ".hi-menu-item").is_some() {
+                                    close_dropdown_for_content.call(e);
                                 }
                             }
                         }
@@ -779,16 +774,11 @@ fn PopoverPortalEntry(
                     if close_on_select {
                         #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                         {
-                            if let Some(web_event) = e.downcast::<web_sys::MouseEvent>() {
-                                if let Some(target) = web_event.target() {
-                                    if let Some(elem) = target.dyn_ref::<web_sys::Element>() {
-                                        let is_menu_item = elem.closest(".hi-menu-item").ok();
-                                        if is_menu_item.is_some() {
-                                            close_popover_for_content.call(e);
-                                            if let Some(handler) = on_close_for_content.as_ref() {
-                                                handler.call(());
-                                            }
-                                        }
+                            if let Some(target_el) = element_from_point(e.client_x, e.client_y) {
+                                if element_closest(&target_el, ".hi-menu-item").is_some() {
+                                    close_popover_for_content.call(e);
+                                    if let Some(handler) = on_close_for_content.as_ref() {
+                                        handler.call(());
                                     }
                                 }
                             }

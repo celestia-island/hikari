@@ -1,6 +1,6 @@
 //! Dynamic value types for animation system
 
-use super::super::{context::AnimationContext, state::AnimationState as StructAnimationState};
+use super::super::{context::AnimationContext, state::AnimationDataStore as StructAnimationState};
 
 /// Simple callback type for dynamic values
 pub type AnimationCallback = dyn Fn(&AnimationContext) -> String + 'static;

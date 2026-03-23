@@ -7,7 +7,7 @@ use super::{
     super::style::{CssProperty, StyleBuilder},
     value::DynamicValue,
 };
-use crate::{context::AnimationContext, state::AnimationState as StructAnimationState};
+use crate::{context::AnimationContext, state::AnimationDataStore as StructAnimationState};
 
 /// Enhanced animation action that can be applied to an element
 ///

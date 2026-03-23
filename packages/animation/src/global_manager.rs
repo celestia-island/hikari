@@ -54,9 +54,9 @@ pub fn init_global_animation_manager() {
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub fn create_animation_callback(
     _element: web_sys::HtmlElement,
-    _state: crate::state::AnimationState,
+    _state: crate::state::AnimationDataStore,
     _actions: Vec<crate::builder::AnimationAction>,
-    _f: impl Fn(&crate::context::AnimationContext, &mut crate::state::AnimationState) + 'static,
+    _f: impl Fn(&crate::context::AnimationContext, &mut crate::state::AnimationDataStore) + 'static,
 ) -> Box<dyn Fn()> {
     Box::new(|| {
         web_sys::console::log_1(&"Animation callback executed (simplified)".into());

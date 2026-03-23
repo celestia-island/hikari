@@ -23,6 +23,14 @@ pub enum InputSize {
     Large,
 }
 
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum InputStatus {
+    #[default]
+    Default,
+    Error,
+    Success,
+}
+
 impl IntoAttrValue for InputSize {
     fn into_attr_value(self) -> Option<String> {
         Some(match self {
@@ -83,6 +91,8 @@ pub struct InputProps {
     pub animation_id: Option<String>,
 
     pub css_vars: Option<Vec<(&'static str, String)>>,
+
+    pub status: InputStatus,
 }
 
 ///
@@ -110,6 +120,8 @@ pub fn Input(props: InputProps) -> Element {
     let input_classes = ClassesBuilder::new()
         .add(InputClass::Input)
         .add_if(InputClass::InputDisabled, || props.disabled)
+        .add_if(InputClass::InputError, || matches!(props.status, InputStatus::Error))
+        .add_if(InputClass::InputSuccess, || matches!(props.status, InputStatus::Success))
         .build();
 
     let mut css_vars_string = String::new();

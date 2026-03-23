@@ -14,6 +14,14 @@ pub enum TextareaSize {
     Large,
 }
 
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum TextareaStatus {
+    #[default]
+    Default,
+    Error,
+    Success,
+}
+
 #[define_props]
 pub struct TextareaProps {
     #[default]
@@ -42,6 +50,8 @@ pub struct TextareaProps {
 
     #[default]
     pub class: String,
+
+    pub status: TextareaStatus,
 }
 
 ///
@@ -60,6 +70,8 @@ pub fn Textarea(props: TextareaProps) -> Element {
         .add(InputClass::Input)
         .add(size_class)
         .add_if(InputClass::InputDisabled, || props.disabled)
+        .add_if(InputClass::InputError, || matches!(props.status, TextareaStatus::Error))
+        .add_if(InputClass::InputSuccess, || matches!(props.status, TextareaStatus::Success))
         .add_raw(&props.class)
         .build();
 

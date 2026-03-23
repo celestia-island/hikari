@@ -311,3 +311,62 @@ pub fn draw_qrcode_on_canvas(
         }
     }
 }
+
+pub fn element_from_point(x: i32, y: i32) -> Option<Element> {
+    web_sys::window()
+        .and_then(|w| w.document())
+        .and_then(|doc| doc.element_from_point(x as f64, y as f64))
+}
+
+pub fn get_target_element_from_event(client_x: i32, client_y: i32) -> Option<Element> {
+    element_from_point(client_x, client_y)
+}
+
+pub fn element_closest(element: &Element, selector: &str) -> Option<Element> {
+    element.closest(selector).ok().flatten()
+}
+
+pub fn get_bounding_client_rect(element: &Element) -> Option<DomRect> {
+    let html_el = element.dyn_ref::<HtmlElement>()?;
+    let rect = html_el.get_bounding_client_rect();
+    Some(DomRect {
+        x: rect.x(),
+        y: rect.y(),
+        width: rect.width(),
+        height: rect.height(),
+    })
+}
+
+pub fn get_scroll_top_from_point(x: i32, y: i32) -> f64 {
+    element_from_point(x, y)
+        .and_then(|el| el.dyn_ref::<HtmlElement>().map(|h| h.scroll_top() as f64))
+        .unwrap_or(0.0)
+}
+
+pub fn query_selector_all(selector: &str) -> Vec<Element> {
+    web_sys::window()
+        .and_then(|w| w.document())
+        .and_then(|doc| doc.query_selector_all(selector).ok())
+        .map(|list| (0..list.length()).filter_map(|i| list.item(i)).collect())
+        .unwrap_or_default()
+}
+
+pub fn get_scroll_top_by_selector(selector: &str) -> f64 {
+    web_sys::window()
+        .and_then(|w| w.document())
+        .and_then(|doc| doc.query_selector(selector).ok().flatten())
+        .and_then(|el| el.dyn_ref::<HtmlElement>().map(|h| h.scroll_top() as f64))
+        .unwrap_or(0.0)
+}
+
+pub fn request_animation_frame(callback: impl FnOnce() + 'static) {
+    use wasm_bindgen::closure::Closure;
+
+    let window = match web_sys::window() {
+        Some(w) => w,
+        None => return,
+    };
+
+    let callback = Closure::once_into_js(callback);
+    let _ = window.request_animation_frame(callback.as_ref().unchecked_ref());
+}

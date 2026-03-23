@@ -49,7 +49,7 @@ use web_sys::HtmlElement;
 use super::{
     super::{
         context::AnimationContext,
-        state::AnimationState as StructAnimationState,
+        state::AnimationDataStore as StructAnimationState,
         style::{CssProperty, StyleBuilder},
     },
     action::AnimationAction,

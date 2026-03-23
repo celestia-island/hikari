@@ -65,3 +65,33 @@ impl Default for MutationObserverOptions {
 pub fn now_timestamp() -> f64 {
     0.0
 }
+
+pub fn element_from_point(_x: i32, _y: i32) -> Option<()> {
+    None
+}
+
+pub fn get_target_element_from_event(_client_x: i32, _client_y: i32) -> Option<()> {
+    None
+}
+
+pub fn element_closest<T>(_element: &T, _selector: &str) -> Option<()> {
+    None
+}
+
+pub fn get_bounding_client_rect<T>(_element: &T) -> Option<tairitsu_vdom::platform::DomRect> {
+    None
+}
+
+pub fn get_scroll_top_from_point(_x: i32, _y: i32) -> f64 {
+    0.0
+}
+
+pub fn query_selector_all(_selector: &str) -> Vec<()> {
+    Vec::new()
+}
+
+pub fn get_scroll_top_by_selector(_selector: &str) -> f64 {
+    0.0
+}
+
+pub fn request_animation_frame(_callback: impl FnOnce() + 'static) {}

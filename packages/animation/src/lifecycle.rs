@@ -13,7 +13,7 @@ use std::{collections::HashMap, rc::Weak};
 use wasm_bindgen::JsValue;
 use web_sys::HtmlElement;
 
-use super::{builder::AnimationBuilder, state::AnimationState};
+use super::{builder::AnimationBuilder, state::AnimationDataStore as AnimationState};
 
 /// Callback types for animation lifecycle events
 pub enum LifecycleCallback {

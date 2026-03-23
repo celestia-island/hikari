@@ -85,7 +85,7 @@ auto_complete = []
 # Hikari design system
 hikari-palette = { path = "../palette" }
 hikari-theme = { path = "../theme" }
-hikari-animation = { path = "../animation", default-features = false }
+hikari-animation = { path = "../animation", default-features = false, features = ["wasm"] }
 hikari-icons = { path = "../icons", default-features = false, features = ["tairitsu"] }
 
 # Tairitsu framework (replaces Dioxus)
@@ -113,6 +113,11 @@ web-sys = { version = "0.3", features = [
     "MutationObserver", "MutationObserverInit", "ResizeObserver",
     "ScrollToOptions", "ScrollBehavior",
     "CssStyleDeclaration",
+    "console",
+    "MouseEvent", "Event", "NodeList",
+    "DomRect",
+    "DomTokenList",
+    "EventTarget",
 ] }
 
 [build-dependencies]

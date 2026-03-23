@@ -141,27 +141,16 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
             div {
                 class: "hi-virtual-tree-viewport",
                 style: "position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto;",
-                onscroll: move |e: Event| {
+                onscroll: move |_e: Event| {
                     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                     {
-                        use wasm_bindgen::JsCast;
-                        if let Some(web_event) = e.downcast::<web_sys::Event>() {
-                            if let Some(target) = web_event.current_target() {
-                                if let Some(element) = target.dyn_ref::<web_sys::Element>() {
-                                    let scroll_top = element.scroll_top() as f64;
-                                    scroll_position_for_onscroll.set(scroll_top);
+                        use crate::platform::get_scroll_top_by_selector;
+                        let scroll_top = get_scroll_top_by_selector(".hi-virtual-tree-viewport");
+                        scroll_position_for_onscroll.set(scroll_top);
 
-                                    if let Some(handler) = on_scroll_handler.as_ref() {
-                                        handler.call(scroll_top);
-                                    }
-                                    return;
-                                }
-                            }
+                        if let Some(handler) = on_scroll_handler.as_ref() {
+                            handler.call(scroll_top);
                         }
-                    }
-                    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-                    {
-                        let _ = e;
                     }
                 },
 

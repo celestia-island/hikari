@@ -25,3 +25,5 @@ pub fn get_scroll_y() -> f64 {
 }
 
 pub fn scroll_to_with_options(_top: f64, _behavior: &str) {}
+
+pub fn on_resize(_callback: impl FnMut() + 'static) {}

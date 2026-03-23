@@ -11,9 +11,7 @@
 
 use crate::prelude::*;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use crate::platform::{inner_width as platform_inner_width, inner_height as platform_inner_height};
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use wasm_bindgen::prelude::*;
+use crate::platform::{inner_width as platform_inner_width, on_resize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Breakpoint {
@@ -66,18 +64,10 @@ pub fn use_screen_size() -> Signal<ScreenSize> {
 
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     use_effect(move || {
-        let window = web_sys::window().expect("no window");
         let mut screen_size = screen_size;
-
-        let closure = Closure::wrap(Box::new(move || {
+        on_resize(move || {
             screen_size.set(get_screen_size_from_window());
-        }) as Box<dyn FnMut()>);
-
-        window
-            .add_event_listener_with_callback("resize", closure.as_ref().unchecked_ref())
-            .expect("failed to add resize listener");
-
-        closure.forget();
+        });
     });
 
     screen_size
@@ -114,18 +104,10 @@ pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> Signal
 
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     use_effect(move || {
-        let window = web_sys::window().expect("no window");
         let mut matches = matches;
-
-        let closure = Closure::wrap(Box::new(move || {
+        on_resize(move || {
             matches.set(check_media_query(min_width, max_width));
-        }) as Box<dyn FnMut()>);
-
-        window
-            .add_event_listener_with_callback("resize", closure.as_ref().unchecked_ref())
-            .expect("failed to add resize listener");
-
-        closure.forget();
+        });
     });
 
     matches

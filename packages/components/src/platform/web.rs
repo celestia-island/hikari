@@ -124,3 +124,20 @@ pub fn scroll_to_with_options(top: f64, behavior: &str) {
         window.scroll_to_with_scroll_to_options(&options);
     }
 }
+
+pub fn on_resize(callback: impl FnMut() + 'static) {
+    use wasm_bindgen::closure::Closure;
+
+    let window = match web_sys::window() {
+        Some(w) => w,
+        None => return,
+    };
+
+    let closure = Closure::wrap(Box::new(callback) as Box<dyn FnMut()>);
+
+    window
+        .add_event_listener_with_callback("resize", closure.as_ref().unchecked_ref())
+        .expect("failed to add resize listener");
+
+    closure.forget();
+}

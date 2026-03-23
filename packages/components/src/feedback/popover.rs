@@ -3,11 +3,9 @@
 
 use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, Display, Position};
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use wasm_bindgen::JsCast;
 
 use crate::{
-    portal::{PortalEntry, generate_portal_id, use_portal},
+    portal::{generate_portal_id, use_portal, PortalEntry},
     styled::StyledComponent,
 };
 
@@ -28,9 +26,7 @@ pub enum PopoverAbsolutePosition {
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum PopoverPositioning {
-    Relative {
-        preferred: Vec<PopoverPlacement>,
-    },
+    Relative { preferred: Vec<PopoverPlacement> },
     Absolute(PopoverAbsolutePosition),
 }
 

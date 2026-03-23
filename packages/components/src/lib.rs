@@ -19,6 +19,7 @@ pub mod utils;
 pub mod styled;
 pub mod style_builder;
 pub mod layout;
+pub mod platform;
 #[cfg(target_arch = "wasm32")]
 pub mod scripts;
 

@@ -65,9 +65,9 @@
 //! }
 //! ```
 
+use crate::prelude::*;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use hikari_animation::global_manager::init_global_animation_manager;
-use crate::prelude::*;
 use hikari_palette::*;
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
@@ -196,14 +196,20 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     use_effect(|| {
-        // Use wasm_bindgen_futures for async in WASM (browser only)
-        wasm_bindgen_futures::spawn_local(async move {
-            gloo::timers::future::TimeoutFuture::new(50).await;
+        use wasm_bindgen::JsCast;
 
+        let closure = wasm_bindgen::closure::Closure::once(Box::new(|| {
             init_global_animation_manager();
-
             init_scrollbars();
-        });
+        }) as Box<dyn FnOnce()>);
+
+        if let Some(window) = web_sys::window() {
+            let _ = window.set_timeout_with_callback_and_timeout_and_arguments_0(
+                closure.as_ref().unchecked_ref(),
+                50,
+            );
+            closure.forget();
+        }
     });
 
     let primary_override = props.primary.clone();
@@ -287,8 +293,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 ///
 ///
 pub fn use_theme() -> ThemeContext {
-    let ctx = use_context::<ThemeContext>()
-        .expect("ThemeContext not found");
+    let ctx = use_context::<ThemeContext>().expect("ThemeContext not found");
     ctx.get().clone()
 }
 
@@ -416,11 +421,9 @@ mod tests {
             palette.background.hex()
         );
 
-        assert!(
-            component_palette
-                .selection_background
-                .contains("linear-gradient")
-        );
+        assert!(component_palette
+            .selection_background
+            .contains("linear-gradient"));
     }
 
     #[test]
@@ -436,11 +439,9 @@ mod tests {
         assert!(component_palette.selection_border.contains("255, 255, 255"));
 
         assert!(component_palette.selection_background.contains("rgba"));
-        assert!(
-            component_palette
-                .selection_background
-                .contains("linear-gradient")
-        );
+        assert!(component_palette
+            .selection_background
+            .contains("linear-gradient"));
 
         let css_vars = component_palette.css_variables();
         assert!(css_vars.contains("--hi-component-selection-icon:"));

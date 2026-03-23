@@ -66,13 +66,10 @@ pub fn get_default_theme() -> &'static str {
 pub fn prefers_dark_mode() -> bool {
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
-        use gloo::utils::window;
-
-        window()
-            .match_media("(prefers-color-scheme: dark)")
-            .ok()
+        web_sys::window()
+            .and_then(|w| w.match_media("(prefers-color-scheme: dark)").ok())
             .flatten()
-            .map(|mql| mql.matches.get())
+            .map(|mql| mql.matches())
             .unwrap_or(false)
     }
 

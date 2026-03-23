@@ -20,7 +20,7 @@ impl FormComponentsTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/form", base_url);
+        let test_url = format!("{}/#/components/layer2/form", base_url);
 
         driver
             .goto(&test_url)
@@ -66,7 +66,7 @@ impl FormComponentsTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/select", base_url);
+        let test_url = format!("{}/#/components/layer2/select", base_url);
 
         driver
             .goto(&test_url)
@@ -120,7 +120,7 @@ impl FormComponentsTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/checkbox", base_url);
+        let test_url = format!("{}/#/components/layer2/checkbox", base_url);
 
         driver
             .goto(&test_url)
@@ -172,7 +172,7 @@ impl FormComponentsTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/radio", base_url);
+        let test_url = format!("{}/#/components/layer2/radio", base_url);
 
         driver
             .goto(&test_url)
@@ -224,7 +224,7 @@ impl FormComponentsTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/switch", base_url);
+        let test_url = format!("{}/#/components/layer2/switch", base_url);
 
         driver
             .goto(&test_url)
@@ -277,7 +277,7 @@ impl FormComponentsTests {
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
         // Carousel is demonstrated in layer2/navigation page
-        let test_url = format!("{}/components/layer2/navigation", base_url);
+        let test_url = format!("{}/#/components/layer2/navigation", base_url);
 
         driver
             .goto(&test_url)
@@ -428,7 +428,7 @@ impl FormComponentsTests {
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
         // Stepper is demonstrated in layer2/navigation page
-        let test_url = format!("{}/components/layer2/navigation", base_url);
+        let test_url = format!("{}/#/components/layer2/navigation", base_url);
 
         driver
             .goto(&test_url)

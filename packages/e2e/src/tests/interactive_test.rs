@@ -133,7 +133,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer1/basic", base_url);
+        let test_url = format!("{}/#/components/layer1", base_url);
 
         // Step 1: Navigate to page
         driver
@@ -225,7 +225,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer1/basic", base_url);
+        let test_url = format!("{}/#/components/layer1", base_url);
 
         // Navigate
         driver
@@ -313,7 +313,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/data", base_url);
+        let test_url = format!("{}/#/components/layer2/data", base_url);
 
         // Navigate
         driver
@@ -720,7 +720,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer1/feedback", base_url);
+        let test_url = format!("{}/#/components/layer1/feedback", base_url);
 
         // Navigate
         driver
@@ -815,7 +815,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/navigation", base_url);
+        let test_url = format!("{}/#/components/layer2/navigation", base_url);
 
         // Navigate
         driver
@@ -911,7 +911,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer1/basic", base_url);
+        let test_url = format!("{}/#/components/layer1", base_url);
 
         // Navigate
         driver
@@ -1002,7 +1002,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/data", base_url);
+        let test_url = format!("{}/#/components/layer2/data", base_url);
 
         // Navigate
         driver
@@ -1095,7 +1095,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/data", base_url);
+        let test_url = format!("{}/#/components/layer2/data", base_url);
 
         // Navigate
         driver
@@ -1186,7 +1186,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/navigation", base_url);
+        let test_url = format!("{}/#/components/layer2/navigation", base_url);
 
         // Navigate
         driver
@@ -1281,7 +1281,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/data", base_url);
+        let test_url = format!("{}/#/components/layer2/data", base_url);
 
         // Navigate
         driver
@@ -1374,7 +1374,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/feedback", base_url);
+        let test_url = format!("{}/#/components/layer2/feedback", base_url);
 
         // Navigate
         driver
@@ -1471,7 +1471,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/feedback", base_url);
+        let test_url = format!("{}/#/components/layer2/feedback", base_url);
 
         // Navigate
         driver
@@ -1559,7 +1559,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/feedback", base_url);
+        let test_url = format!("{}/#/components/layer2/feedback", base_url);
 
         // Navigate
         driver
@@ -1659,7 +1659,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/navigation", base_url);
+        let test_url = format!("{}/#/components/layer2/navigation", base_url);
 
         // Navigate
         driver
@@ -1752,7 +1752,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/navigation", base_url);
+        let test_url = format!("{}/#/components/layer2/navigation", base_url);
 
         // Navigate
         driver
@@ -1845,7 +1845,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/extra/timeline", base_url);
+        let test_url = format!("{}/#/components/extra/timeline", base_url);
 
         // Navigate
         driver
@@ -1941,7 +1941,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/extra/user_guide", base_url);
+        let test_url = format!("{}/#/components/extra/user_guide", base_url);
 
         // Navigate
         driver
@@ -2037,7 +2037,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/extra/zoom_controls", base_url);
+        let test_url = format!("{}/#/components/extra/zoom_controls", base_url);
 
         // Navigate
         driver
@@ -2136,7 +2136,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/extra/collapsible", base_url);
+        let test_url = format!("{}/#/components/extra/collapsible", base_url);
 
         // Navigate
         driver
@@ -2232,7 +2232,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer3/media", base_url);
+        let test_url = format!("{}/#/components/layer3/media", base_url);
 
         // Navigate
         driver
@@ -2331,7 +2331,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer3/rich_text", base_url);
+        let test_url = format!("{}/#/components/layer3/rich_text", base_url);
 
         // Navigate
         driver
@@ -2434,7 +2434,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer3/code", base_url);
+        let test_url = format!("{}/#/components/layer3/code", base_url);
 
         // Navigate
         driver
@@ -2537,7 +2537,7 @@ impl InteractiveTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer3/drag", base_url);
+        let test_url = format!("{}/#/components/layer3/drag", base_url);
 
         // Navigate
         driver

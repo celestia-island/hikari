@@ -28,7 +28,7 @@ impl AdvancedComponentsTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/demos/layer3/video", base_url);
+        let test_url = format!("{}/#/demos/layer3/video", base_url);
 
         driver
             .goto(&test_url)
@@ -78,7 +78,7 @@ impl AdvancedComponentsTests {
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
         // AudioWaveform demo is in the video demo page
-        let test_url = format!("{}/demos/layer3/video", base_url);
+        let test_url = format!("{}/#/demos/layer3/video", base_url);
 
         driver
             .goto(&test_url)
@@ -128,7 +128,7 @@ impl AdvancedComponentsTests {
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
         // RichTextEditor is in the editor overview page
-        let test_url = format!("{}/components/layer3/editor", base_url);
+        let test_url = format!("{}/#/components/layer3/editor", base_url);
 
         driver
             .goto(&test_url)
@@ -178,7 +178,7 @@ impl AdvancedComponentsTests {
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
         // DragLayer is demonstrated in the layer3/visualization page
-        let test_url = format!("{}/components/layer3/visualization", base_url);
+        let test_url = format!("{}/#/components/layer3/visualization", base_url);
 
         driver
             .goto(&test_url)
@@ -231,7 +231,7 @@ impl AdvancedComponentsTests {
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
         // Collapsible is in components/extra/collapsible page
-        let test_url = format!("{}/components/extra/collapsible", base_url);
+        let test_url = format!("{}/#/components/extra/collapsible", base_url);
 
         driver
             .goto(&test_url)
@@ -286,7 +286,7 @@ impl AdvancedComponentsTests {
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
         // ZoomControls is in components/extra/zoom_controls page
-        let test_url = format!("{}/components/extra/zoom_controls", base_url);
+        let test_url = format!("{}/#/components/extra/zoom_controls", base_url);
 
         driver
             .goto(&test_url)
@@ -336,7 +336,7 @@ impl AdvancedComponentsTests {
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
         // UserGuide is in components/extra/user_guide page
-        let test_url = format!("{}/components/extra/user_guide", base_url);
+        let test_url = format!("{}/#/components/extra/user_guide", base_url);
 
         driver
             .goto(&test_url)
@@ -456,7 +456,7 @@ impl AdvancedComponentsTests {
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
         // Timeline is in components/extra/timeline page
-        let test_url = format!("{}/components/extra/timeline", base_url);
+        let test_url = format!("{}/#/components/extra/timeline", base_url);
 
         driver
             .goto(&test_url)

@@ -19,9 +19,17 @@ tairitsu-style = { path = "../../../tairitsu/packages/style" }
 # WASM dependencies (for wasm feature)
 wasm-bindgen = { version = "0.2", optional = true }
 web-sys = { version = "0.3", optional = true, features = [
-    "Window", "Document", "Element", "HtmlElement",
-    "console", "DomRect", "MouseEvent",
-    "CssStyleDeclaration", "Performance", "MediaQueryList",
+    "Window",
+    "Document",
+    "Element",
+    "HtmlElement",
+    "console",
+    "DomRect",
+    "MouseEvent",
+    "CssStyleDeclaration",
+    "Performance",
+    "MediaQueryList",
+    "DomTokenList",
 ] }
 js-sys = { version = "0.3", optional = true }
 

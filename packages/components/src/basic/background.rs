@@ -11,6 +11,7 @@ use crate::prelude::*;
 use hikari_palette::{墨色, 月白, 粉红, 靛蓝};
 
 use crate::styled::StyledComponent;
+use hikari_palette::classes::{BackgroundClass, UtilityClass};
 
 pub struct BackgroundComponent;
 
@@ -40,7 +41,7 @@ pub fn Background(props: BackgroundProps) -> Element {
 
     rsx! {
         div {
-            class: "hi-background",
+            class: BackgroundClass::Background.as_class(),
             {props.children}
         }
     }
@@ -64,7 +65,7 @@ fn start_gradient_animation() -> Box<dyn FnOnce()> {
         None => return Box::new(|| {}),
     };
 
-    let background_element = match document.query_selector(".hi-background").ok().flatten() {
+    let background_element = match document.query_selector(&format!(".{}", BackgroundClass::Background.as_class())).ok().flatten() {
         Some(el) => el,
         None => return Box::new(|| {}),
     };

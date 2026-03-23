@@ -39,3 +39,38 @@ pub fn ScrollbarContainer(
         }
     }
 }
+
+pub struct ScrollbarContainerComponent;
+
+impl crate::styled::StyledComponent for ScrollbarContainerComponent {
+    fn styles() -> &'static str {
+        r#"
+.custom-scrollbar-wrapper-vdom {
+  position: relative;
+  display: flex;
+}
+
+.custom-scrollbar-content-vdom {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
+}
+
+.custom-scrollbar-content-vdom::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.custom-scrollbar-content-vdom {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+"#
+    }
+
+    fn name() -> &'static str {
+        "scrollbar"
+    }
+}

@@ -2,14 +2,15 @@
 // Portal rendering components
 
 use crate::prelude::*;
-use crate::platform::{inner_height, inner_width, log, element_from_point, element_closest};
+use crate::platform::{inner_height, inner_width, log};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use crate::platform::{set_timeout, request_animation_frame};
+use crate::platform::{set_timeout, request_animation_frame, element_from_point, element_closest};
 use hikari_palette::classes::{
     ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass, TooltipClass,
     UtilityClass,
 };
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use super::provider::use_portal;
 use crate::{
     feedback::PopoverPlacement,

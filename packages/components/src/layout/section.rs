@@ -124,3 +124,56 @@ pub fn Spacer(
         }
     }
 }
+
+pub struct SectionComponent;
+
+impl crate::styled::StyledComponent for SectionComponent {
+    fn styles() -> &'static str {
+        r#"
+.hi-section {
+  margin-bottom: 2rem;
+}
+
+.hi-section-sm {
+  margin-bottom: 1rem;
+}
+
+.hi-section-md {
+  margin-bottom: 2rem;
+}
+
+.hi-section-lg {
+  margin-bottom: 3rem;
+}
+
+.hi-section-header {
+  margin-bottom: 1rem;
+}
+
+.hi-section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--hi-color-text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.hi-section-description {
+  font-size: 0.875rem;
+  color: var(--hi-color-text-secondary);
+  margin: 0;
+}
+
+.hi-section-body {
+  /* Content styles */
+}
+
+.hi-spacer {
+  display: block;
+}
+"#
+    }
+
+    fn name() -> &'static str {
+        "section"
+    }
+}

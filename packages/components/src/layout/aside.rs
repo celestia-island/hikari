@@ -116,3 +116,65 @@ pub fn Aside(
         }
     }
 }
+
+pub struct AsideComponent;
+
+impl crate::styled::StyledComponent for AsideComponent {
+    fn styles() -> &'static str {
+        r#"
+.hi-aside {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: transparent;
+  border-right: 1px solid var(--hi-color-border);
+  overflow: hidden;
+  position: relative;
+  padding: 0;
+}
+
+.hi-aside-sm {
+  width: 200px;
+}
+
+.hi-aside-md {
+  width: 260px;
+}
+
+.hi-aside-lg {
+  width: 320px;
+}
+
+.hi-aside-light {
+  background: var(--hi-surface);
+}
+
+.hi-aside-dark {
+  background: var(--hi-card-bg);
+}
+
+.hi-aside-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 0 0 0.5rem;
+  scroll-behavior: smooth;
+  position: relative;
+}
+
+.hi-aside-rtl {
+  direction: rtl;
+}
+
+@media print {
+  .hi-aside {
+    display: none;
+  }
+}
+"#
+    }
+
+    fn name() -> &'static str {
+        "aside"
+    }
+}

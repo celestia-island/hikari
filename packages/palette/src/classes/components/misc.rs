@@ -43,3 +43,16 @@ impl UtilityClass for PortalClass {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum BackgroundClass {
+    Background,
+}
+
+impl UtilityClass for BackgroundClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            BackgroundClass::Background => "background",
+        }
+    }
+}

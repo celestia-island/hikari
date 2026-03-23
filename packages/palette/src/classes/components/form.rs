@@ -403,3 +403,38 @@ impl UtilityClass for TransferClass {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AvatarClass {
+    Avatar,
+    AvatarXs,
+    AvatarSm,
+    AvatarMd,
+    AvatarLg,
+    AvatarXl,
+    AvatarCircular,
+    AvatarRounded,
+    AvatarSquare,
+    AvatarFallback,
+    AvatarIcon,
+    AvatarImg,
+}
+
+impl UtilityClass for AvatarClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            AvatarClass::Avatar => "avatar",
+            AvatarClass::AvatarXs => "avatar-xs",
+            AvatarClass::AvatarSm => "avatar-sm",
+            AvatarClass::AvatarMd => "avatar-md",
+            AvatarClass::AvatarLg => "avatar-lg",
+            AvatarClass::AvatarXl => "avatar-xl",
+            AvatarClass::AvatarCircular => "avatar-circular",
+            AvatarClass::AvatarRounded => "avatar-rounded",
+            AvatarClass::AvatarSquare => "avatar-square",
+            AvatarClass::AvatarFallback => "avatar-fallback",
+            AvatarClass::AvatarIcon => "avatar-icon",
+            AvatarClass::AvatarImg => "avatar-img",
+        }
+    }
+}

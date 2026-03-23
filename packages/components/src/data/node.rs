@@ -14,7 +14,7 @@ pub struct TreeNodeData {
     pub disabled: bool,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct TreeNodeProps {
     pub node_key: String,
 
@@ -22,25 +22,25 @@ pub struct TreeNodeProps {
 
     pub node_children: Option<Vec<TreeNodeData>>,
 
-    #[props(default)]
+    #[default]
     pub icon: Option<Element>,
 
-    #[props(default)]
+    #[default]
     pub disabled: bool,
 
-    #[props(default)]
+    #[default]
     pub expanded: bool,
 
-    #[props(default)]
+    #[default]
     pub selected: bool,
 
-    #[props(default)]
+    #[default]
     pub level: usize,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    #[props(default)]
+    #[default]
     pub onclick: Option<EventHandler<MouseEvent>>,
 }
 

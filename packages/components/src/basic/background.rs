@@ -17,9 +17,9 @@ pub struct BackgroundComponent;
 
 ///
 ///
-#[derive(Clone, Props, PartialEq, Default)]
+#[define_props]
 pub struct BackgroundProps {
-    #[props(default)]
+    #[default]
     pub children: Element,
 }
 

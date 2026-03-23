@@ -2,7 +2,7 @@
 // Skeleton component with Arknights + FUI styling
 
 use crate::prelude::*;
-use hikari_palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, Padding};
+use hikari_palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, Padding, SkeletonClass};
 use tairitsu_vdom::IntoAttrValue;
 
 use crate::styled::StyledComponent;
@@ -38,54 +38,35 @@ impl IntoAttrValue for SkeletonVariant {
     }
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct SkeletonProps {
-    #[props(default)]
+    #[default]
     pub variant: SkeletonVariant,
 
-    #[props(default)]
+    #[default]
     pub size: SkeletonSize,
 
-    #[props(default)]
+    #[default]
     pub width: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub height: Option<String>,
 
-    #[props(default = true)]
+    #[default(true)]
     pub animation: bool,
 
-    #[props(default)]
+    #[default]
     pub rows: Option<u32>,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    #[props(default)]
+    #[default]
     pub style: String,
 }
 
 #[component]
 pub fn Skeleton(props: SkeletonProps) -> Element {
-    let variant_class = match props.variant {
-        SkeletonVariant::Text => "hi-skeleton-text",
-        SkeletonVariant::Circular => "hi-skeleton-circular",
-        SkeletonVariant::Rectangular => "hi-skeleton-rectangular",
-        SkeletonVariant::Rounded => "hi-skeleton-rounded",
-    };
-
-    let size_class = match props.size {
-        SkeletonSize::Small => "hi-skeleton-sm",
-        SkeletonSize::Medium => "hi-skeleton-md",
-        SkeletonSize::Large => "hi-skeleton-lg",
-    };
-
-    let animation_class = if props.animation {
-        "hi-skeleton-animated"
-    } else {
-        ""
-    };
-
     let mut style = props.style.clone();
     if let Some(w) = &props.width {
         style = format!("{} width: {};", style, w);
@@ -94,13 +75,45 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
         style = format!("{} height: {};", style, h);
     }
 
-    let classes = ClassesBuilder::new()
-        .add_raw("hi-skeleton")
-        .add_raw(variant_class)
-        .add_raw(size_class)
-        .add_raw(animation_class)
-        .add_raw(&props.class)
-        .build();
+    let mut builder = ClassesBuilder::new()
+        .add(SkeletonClass::Skeleton)
+        .add_raw(&props.class);
+
+    // Add variant class
+    match props.variant {
+        SkeletonVariant::Text => {
+            builder = builder.add(SkeletonClass::Text);
+        }
+        SkeletonVariant::Circular => {
+            builder = builder.add_raw("hi-skeleton-circular");
+        }
+        SkeletonVariant::Rectangular => {
+            builder = builder.add(SkeletonClass::Rect);
+        }
+        SkeletonVariant::Rounded => {
+            builder = builder.add_raw("hi-skeleton-rounded");
+        }
+    }
+
+    // Add size class
+    match props.size {
+        SkeletonSize::Small => {
+            builder = builder.add_raw("hi-skeleton-sm");
+        }
+        SkeletonSize::Medium => {
+            builder = builder.add_raw("hi-skeleton-md");
+        }
+        SkeletonSize::Large => {
+            builder = builder.add_raw("hi-skeleton-lg");
+        }
+    }
+
+    // Add animation class
+    if props.animation {
+        builder = builder.add(SkeletonClass::Active);
+    }
+
+    let classes = builder.build();
 
     if props.rows.is_some() && props.rows.unwrap() > 1 {
         let rows = props.rows.unwrap();
@@ -139,34 +152,35 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
     }
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct SkeletonCardProps {
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    #[props(default)]
+    #[default]
     pub style: String,
 
-    #[props(default = true)]
+    #[default(true)]
     pub show_header: bool,
 
-    #[props(default = true)]
+    #[default(true)]
     pub show_avatar: bool,
 
-    #[props(default = 3)]
+    #[default(3)]
     pub rows: u32,
 }
 
 #[component]
 pub fn SkeletonCard(props: SkeletonCardProps) -> Element {
-    let container_classes = ClassesBuilder::new()
+    let mut builder = ClassesBuilder::new()
         .add(Display::Flex)
         .add(FlexDirection::Column)
         .add(Gap::Gap4)
         .add(Padding::P4)
         .add_raw("hi-skeleton-card")
-        .add_raw(&props.class)
-        .build();
+        .add_raw(&props.class);
+
+    let container_classes = builder.build();
 
     let rows = props.rows;
     let content_rows: Vec<VNode> = (0..rows)

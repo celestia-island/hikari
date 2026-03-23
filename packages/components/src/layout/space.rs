@@ -17,33 +17,21 @@ impl Default for SpaceDirection {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct SpaceProps {
-    #[props(default = 1)]
+    #[default(1)]
     pub size: u8,
 
-    #[props(default)]
+    #[default]
     pub direction: SpaceDirection,
 
-    #[props(default = false)]
+    #[default(false)]
     pub wrap: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
     pub children: Element,
-}
-
-impl Default for SpaceProps {
-    fn default() -> Self {
-        Self {
-            size: 1,
-            direction: SpaceDirection::Horizontal,
-            wrap: false,
-            class: String::new(),
-            children: VNode::empty(),
-        }
-    }
 }
 
 ///

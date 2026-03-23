@@ -752,10 +752,13 @@ fn PopoverPortalEntry(
         VNode::empty()
     };
 
+    let title_classes = ClassesBuilder::new().add(PopoverClass::Title).build();
+    let content_classes = ClassesBuilder::new().add(PopoverClass::Content).build();
+
     // Build title element outside rsx!
     let title_el = if title.is_some() {
         rsx! {
-            div { class: "hi-popover-title", "{title.as_ref().unwrap().clone()}" }
+            div { class: title_classes, "{title.as_ref().unwrap().clone()}" }
         }
     } else {
         VNode::empty()
@@ -774,7 +777,7 @@ fn PopoverPortalEntry(
             {title_el}
 
             div {
-                class: "hi-popover-content",
+                class: content_classes,
                 onclick: move |e: MouseEvent| {
                     e.stop_propagation();
 

@@ -15,21 +15,21 @@ pub struct DragItem {
     pub item_type: String,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct DragLayerProps {
-    #[props(default)]
+    #[default]
     pub drag_item: Option<DragItem>,
 
-    #[props(default)]
+    #[default]
     pub position: (i32, i32),
 
-    #[props(default)]
+    #[default]
     pub is_dragging: bool,
 
-    #[props(default)]
+    #[default]
     pub show_drop_zones: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 }
 

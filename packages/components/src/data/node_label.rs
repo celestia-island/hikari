@@ -3,14 +3,14 @@
 
 use crate::prelude::*;
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct TreeNodeLabelProps {
     pub label: String,
 
-    #[props(default)]
+    #[default]
     pub icon: Option<Element>,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 }
 

@@ -24,30 +24,19 @@ pub enum StepperDirection {
     Vertical,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct StepperProps {
-    #[props(default)]
+    #[default]
     pub current: usize,
 
-    #[props(default = 5)]
+    #[default(5)]
     pub total: usize,
 
-    #[props(default)]
+    #[default]
     pub direction: StepperDirection,
 
-    #[props(default)]
+    #[default]
     pub class: String,
-}
-
-impl Default for StepperProps {
-    fn default() -> Self {
-        Self {
-            current: 0,
-            total: 5,
-            direction: StepperDirection::default(),
-            class: String::default(),
-        }
-    }
 }
 
 ///

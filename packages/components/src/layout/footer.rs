@@ -4,12 +4,12 @@
 use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, components::Footer as FooterClass};
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct FooterProps {
-    #[props(default)]
+    #[default]
     pub children: Element,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 }
 

@@ -8,36 +8,23 @@ use hikari_palette::classes::{ClassesBuilder, CollapseClass};
 
 pub struct CollapseComponent;
 
-#[derive(Clone, PartialEq, Props, Debug)]
+#[define_props]
 pub struct CollapseProps {
-    #[props(default)]
+    #[default]
     pub expanded: bool,
 
-    #[props(default)]
+    #[default(200)]
     pub duration: u64,
 
-    #[props(default)]
+    #[default(true)]
     pub animated: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
     pub children: Element,
 
     pub on_expand: Option<EventHandler<bool>>,
-}
-
-impl Default for CollapseProps {
-    fn default() -> Self {
-        Self {
-            expanded: false,
-            duration: 200,
-            animated: true,
-            class: String::default(),
-            children: VNode::empty(),
-            on_expand: None,
-        }
-    }
 }
 
 #[component]

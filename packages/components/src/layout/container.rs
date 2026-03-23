@@ -15,24 +15,24 @@ pub enum ContainerSize {
     Xl,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct ContainerProps {
-    #[props(default)]
+    #[default]
     pub children: Element,
 
-    #[props(default)]
+    #[default]
     pub size: ContainerSize,
 
-    #[props(default)]
+    #[default]
     pub max_width: Option<String>,
 
-    #[props(default = false)]
+    #[default(false)]
     pub center: bool,
 
-    #[props(default)]
+    #[default]
     pub rtl: Option<bool>,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 }
 

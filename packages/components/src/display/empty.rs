@@ -15,24 +15,24 @@ pub struct EmptyComponent;
 ///
 ///
 ///
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct EmptyProps {
-    #[props(default)]
+    #[default]
     pub image: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub title: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub description: String,
 
-    #[props(default)]
+    #[default]
     pub action: Option<Element>,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    #[props(default)]
+    #[default]
     pub style: String,
 }
 

@@ -36,39 +36,39 @@ pub struct ColumnDef {
     pub class: String,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct ColumnProps {
-    #[props(default)]
+    #[default]
     pub column_key: String,
 
-    #[props(default)]
+    #[default]
     pub title: String,
 
-    #[props(default)]
+    #[default]
     pub width: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub min_width: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub max_width: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub align: ColumnAlign,
 
-    #[props(default)]
+    #[default]
     pub fixed: bool,
 
-    #[props(default)]
+    #[default]
     pub sortable: bool,
 
-    #[props(default)]
+    #[default]
     pub filterable: bool,
 
-    #[props(default)]
+    #[default]
     pub resizable: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 }
 

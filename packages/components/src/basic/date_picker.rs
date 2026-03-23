@@ -8,41 +8,41 @@ use crate::styled::StyledComponent;
 
 pub struct DatePickerComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct DatePickerProps {
-    #[props(default)]
+    #[default]
     pub value: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub min: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub max: Option<String>,
 
-    #[props(default = "YYYY-MM-DD".to_string())]
+    #[default("YYYY-MM-DD".to_string())]
     pub format: String,
 
-    #[props(default)]
+    #[default]
     pub placeholder: Option<String>,
 
-    #[props(default = false)]
+    #[default(false)]
     pub disabled: bool,
 
-    #[props(default = false)]
+    #[default(false)]
     pub readonly: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    #[props(default)]
+    #[default]
     pub style: String,
 
     pub on_change: Option<EventHandler<String>>,
 
-    #[props(default)]
+    #[default]
     pub on_focus: Option<EventHandler<FocusEvent>>,
 
-    #[props(default)]
+    #[default]
     pub on_blur: Option<EventHandler<FocusEvent>>,
 }
 

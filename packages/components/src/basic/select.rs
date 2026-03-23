@@ -25,33 +25,36 @@ pub enum SelectSize {
     Lg,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct SelectOption {
+    #[default]
     pub label: String,
+
+    #[default]
     pub value: String,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct SelectProps {
-    #[props(default)]
+    #[default]
     pub options: Vec<SelectOption>,
 
-    #[props(default)]
+    #[default]
     pub placeholder: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub size: SelectSize,
 
-    #[props(default)]
+    #[default]
     pub disabled: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    #[props(default)]
+    #[default]
     pub value: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub on_change: Option<EventHandler<String>>,
 }
 

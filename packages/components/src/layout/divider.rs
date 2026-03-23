@@ -21,24 +21,24 @@ pub enum DividerType {
     Dotted,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct DividerProps {
-    #[props(default)]
+    #[default]
     pub text: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub orientation: DividerOrientation,
 
-    #[props(default)]
+    #[default]
     pub divider_type: DividerType,
 
-    #[props(default = "center".to_string())]
+    #[default("center".to_string())]
     pub text_align: String,
 
-    #[props(default)]
+    #[default]
     pub rtl: Option<bool>,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 }
 

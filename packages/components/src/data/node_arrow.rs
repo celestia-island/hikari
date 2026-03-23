@@ -44,7 +44,7 @@ pub fn TreeNodeArrow(props: TreeNodeArrowProps) -> Element {
             if props.expanded {
                 "hi-tree-node-arrow-expanded"
             } else {
-{ "" }
+                { "" }
             },
             props.class
         );
@@ -65,10 +65,7 @@ pub fn TreeNodeArrow(props: TreeNodeArrowProps) -> Element {
                     e.stop_propagation();
                     handler.call(e);
                 },
-                Arrow {
-                    direction,
-                    size: 14,
-                }
+                Arrow { direction, size: 14 }
             }
         }
     }

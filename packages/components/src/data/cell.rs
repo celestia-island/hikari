@@ -181,7 +181,9 @@ mod tests {
     #[test]
     fn test_cell_props_clone() {
         let render = create_cell_renderer(|_, _, _| {
-            rsx! { span { "rendered" } }
+            rsx! {
+                span { "rendered" }
+            }
         });
         let props = CellProps {
             value: "test".to_string(),
@@ -197,7 +199,9 @@ mod tests {
     #[test]
     fn test_cell_props_partial_eq() {
         let render = create_cell_renderer(|_, _, _| {
-            rsx! { span { "rendered" } }
+            rsx! {
+                span { "rendered" }
+            }
         });
 
         let props1 = CellProps {
@@ -273,7 +277,9 @@ mod tests {
     #[test]
     fn test_cell_renderer_creation() {
         let renderer = create_cell_renderer(|_, _, _| {
-            rsx! { span { "test" } }
+            rsx! {
+                span { "test" }
+            }
         });
         assert!(Rc::strong_count(&renderer) > 0);
     }

@@ -310,6 +310,23 @@ pub fn draw_qrcode_on_canvas(
     }
 }
 
+pub fn draw_qrcode_on_canvas_by_id(
+    canvas_id: &str,
+    matrix: &[Vec<bool>],
+    modules: usize,
+    color: &str,
+    background: &str,
+) -> bool {
+    let Some(element) = get_element_by_id(canvas_id) else {
+        return false;
+    };
+    let Some(canvas) = element.dyn_ref::<HtmlCanvasElement>() else {
+        return false;
+    };
+    draw_qrcode_on_canvas(canvas, matrix, modules, color, background);
+    true
+}
+
 pub fn element_from_point(x: i32, y: i32) -> Option<Element> {
     web_sys::window()
         .and_then(|w| w.document())
@@ -341,6 +358,12 @@ pub fn get_scroll_top_from_point(x: i32, y: i32) -> f64 {
         .unwrap_or(0.0)
 }
 
+pub fn query_selector(selector: &str) -> Option<Element> {
+    web_sys::window()
+        .and_then(|w| w.document())
+        .and_then(|doc| doc.query_selector(selector).ok().flatten())
+}
+
 pub fn query_selector_all(selector: &str) -> Vec<Element> {
     web_sys::window()
         .and_then(|w| w.document())
@@ -352,6 +375,16 @@ pub fn query_selector_all(selector: &str) -> Vec<Element> {
                 .collect()
         })
         .unwrap_or_default()
+}
+
+pub fn get_element_by_id(id: &str) -> Option<Element> {
+    web_sys::window()
+        .and_then(|w| w.document())
+        .and_then(|doc| doc.get_element_by_id(id))
+}
+
+pub fn get_element_rect_by_id(id: &str) -> Option<DomRect> {
+    get_element_by_id(id).and_then(|el| get_bounding_client_rect(&el))
 }
 
 pub fn get_scroll_top_by_selector(selector: &str) -> f64 {
@@ -372,4 +405,35 @@ pub fn request_animation_frame(callback: impl FnOnce() + 'static) {
 
     let callback = Closure::once_into_js(callback);
     let _ = window.request_animation_frame(callback.as_ref().unchecked_ref());
+}
+
+pub fn request_animation_frame_with_timestamp(callback: impl FnOnce(f64) + 'static) -> i32 {
+    use wasm_bindgen::closure::Closure;
+
+    let window = match web_sys::window() {
+        Some(w) => w,
+        None => return 0,
+    };
+
+    let callback = Closure::once_into_js(callback);
+    window
+        .request_animation_frame(callback.as_ref().unchecked_ref())
+        .unwrap_or(0)
+}
+
+pub fn on_scroll(callback: impl FnMut() + 'static) {
+    use wasm_bindgen::closure::Closure;
+
+    let window = match web_sys::window() {
+        Some(w) => w,
+        None => return,
+    };
+
+    let closure = Closure::wrap(Box::new(callback) as Box<dyn FnMut()>);
+
+    window
+        .add_event_listener_with_callback("scroll", closure.as_ref().unchecked_ref())
+        .expect("failed to add scroll listener");
+
+    closure.forget();
 }

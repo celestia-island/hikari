@@ -86,8 +86,20 @@ pub fn get_scroll_top_from_point(_x: i32, _y: i32) -> f64 {
     0.0
 }
 
+pub fn query_selector(_selector: &str) -> Option<()> {
+    None
+}
+
 pub fn query_selector_all(_selector: &str) -> Vec<()> {
     Vec::new()
+}
+
+pub fn get_element_by_id(_id: &str) -> Option<()> {
+    None
+}
+
+pub fn get_element_rect_by_id(_id: &str) -> Option<tairitsu_vdom::platform::DomRect> {
+    None
 }
 
 pub fn get_scroll_top_by_selector(_selector: &str) -> f64 {
@@ -95,3 +107,19 @@ pub fn get_scroll_top_by_selector(_selector: &str) -> f64 {
 }
 
 pub fn request_animation_frame(_callback: impl FnOnce() + 'static) {}
+
+pub fn request_animation_frame_with_timestamp(_callback: impl FnOnce(f64) + 'static) -> i32 {
+    0
+}
+
+pub fn on_scroll(_callback: impl FnMut() + 'static) {}
+
+pub fn draw_qrcode_on_canvas_by_id(
+    _canvas_id: &str,
+    _matrix: &[Vec<bool>],
+    _modules: usize,
+    _color: &str,
+    _background: &str,
+) -> bool {
+    false
+}

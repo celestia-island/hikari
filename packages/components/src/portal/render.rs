@@ -4,13 +4,11 @@
 use crate::prelude::*;
 use crate::platform::{inner_height, inner_width, log, element_from_point, element_closest};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use crate::platform::set_timeout;
+use crate::platform::{set_timeout, request_animation_frame};
 use hikari_palette::classes::{
     ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass, TooltipClass,
     UtilityClass,
 };
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use wasm_bindgen::{closure::Closure, JsCast};
 
 use super::provider::use_portal;
 use crate::{
@@ -69,13 +67,10 @@ fn use_animated_portal_entry(
             log(&format!("{} use_effect triggered, state: {:?}", name, state));
             if state == ModalAnimationState::Appearing {
                 let anim_state_clone = internal_animation_state_for_effect.clone();
-                let callback = Closure::once_into_js(move || {
+                request_animation_frame(move || {
                     anim_state_clone.set(ModalAnimationState::Visible);
                     log(&format!("{} set to visible via requestAnimationFrame", name));
                 });
-                let _ = web_sys::window()
-                    .unwrap()
-                    .request_animation_frame(callback.unchecked_ref());
             } else if state == ModalAnimationState::Disappearing {
                 let id = id_for_close.clone();
                 log(&format!("{} setTimeout scheduled for removing entry: {}", name, id));

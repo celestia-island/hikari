@@ -196,20 +196,13 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     use_effect(|| {
-        use wasm_bindgen::JsCast;
-
-        let closure = wasm_bindgen::closure::Closure::once(Box::new(|| {
-            init_global_animation_manager();
-            init_scrollbars();
-        }) as Box<dyn FnOnce()>);
-
-        if let Some(window) = web_sys::window() {
-            let _ = window.set_timeout_with_callback_and_timeout_and_arguments_0(
-                closure.as_ref().unchecked_ref(),
-                50,
-            );
-            closure.forget();
-        }
+        crate::platform::set_timeout(
+            || {
+                init_global_animation_manager();
+                init_scrollbars();
+            },
+            50,
+        );
     });
 
     let primary_override = props.primary.clone();

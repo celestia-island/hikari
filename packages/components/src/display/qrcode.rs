@@ -86,20 +86,14 @@ pub fn QRCode(props: QRCodeProps) -> Element {
             }
 
             if let Some((matrix, modules)) = &qr_matrix_for_effect {
-                let elements =
-                    crate::platform::query_selector_all(&format!("#{}", canvas_id_for_effect));
-                if let Some(element) = elements.first() {
-                    use wasm_bindgen::JsCast;
-                    if let Some(canvas) = element.dyn_ref::<web_sys::HtmlCanvasElement>() {
-                        crate::platform::draw_qrcode_on_canvas(
-                            canvas,
-                            matrix,
-                            *modules,
-                            &color_for_effect,
-                            &background_for_effect,
-                        );
-                        drawn_for_effect.set(true);
-                    }
+                if crate::platform::draw_qrcode_on_canvas_by_id(
+                    &canvas_id_for_effect,
+                    matrix,
+                    *modules,
+                    &color_for_effect,
+                    &background_for_effect,
+                ) {
+                    drawn_for_effect.set(true);
                 }
             }
         });

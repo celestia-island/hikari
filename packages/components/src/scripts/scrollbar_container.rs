@@ -41,7 +41,7 @@ mod wasm_impl {
         state: RefCell<ScrollbarAnimationState>,
         scrollbar_id: String,
         timer_manager: TimerManager,
-        scroll_hover_timer: RefCell<Option<crate::animation::TimerId>>,
+        scroll_hover_timer: RefCell<Option<hikari_animation::TimerId>>,
         is_mouse_over: RefCell<bool>,
     }
 

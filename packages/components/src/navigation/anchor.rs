@@ -128,10 +128,11 @@ pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> Signal<String> {
     use wasm_bindgen::closure::Closure;
 
     let active_anchor = use_signal(|| String::new());
+    let active_anchor_for_effect = active_anchor.clone();
 
     use_effect(move || {
         let items = anchor_items.clone();
-        let mut anchor = active_anchor.clone();
+        let anchor = active_anchor_for_effect.clone();
 
         let listener = Closure::wrap(Box::new(move |_event: web_sys::Event| {
             if let Some(window) = web_sys::window() {

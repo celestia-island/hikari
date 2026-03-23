@@ -7,8 +7,6 @@ use crate::platform::{
     set_style_property,
 };
 use crate::prelude::*;
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use crate::style_builder::StyleBuilder;
 use hikari_palette::classes::{ClassesBuilder, GlowClass};
 use tairitsu_vdom::IntoAttrValue;
 

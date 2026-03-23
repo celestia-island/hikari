@@ -13,8 +13,6 @@ use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use js_sys::Promise;
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::prelude::*;
 
 use crate::styled::StyledComponent;
@@ -163,12 +161,13 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                         class: button_class,
                         onclick: {
                             let code_for_copy = code_for_copy.clone();
+                            let copied_for_timeout = copied.clone();
                             move |_| {
                                 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                                 {
                                     if copy_to_clipboard(&code_for_copy) {
                                         copied.set(true);
-                                        let copied_signal = copied;
+                                        let copied_signal = copied_for_timeout.clone();
                                         platform::set_timeout(move || {
                                             copied_signal.set(false);
                                         }, 2000);

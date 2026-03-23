@@ -5,8 +5,6 @@
 use crate::platform;
 use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, Display, Position, SelectClass};
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use wasm_bindgen::JsCast;
 
 use crate::{
     feedback::{Glow, GlowProps},
@@ -152,20 +150,11 @@ pub fn Select(props: SelectProps) -> Element {
             let trigger_rect_opt = {
                 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                 {
-                    if let Some(web_event) = e.downcast::<web_sys::MouseEvent>() {
-                        if let Some(target) = web_event.target() {
-                            if let Some(element) = target.dyn_ref::<web_sys::Element>() {
-                                platform::get_bounding_rect_by_class_impl(
-                                    "hi-select-trigger",
-                                    element,
-                                )
-                                .map(|rect| (rect.x, rect.y, rect.width, rect.height))
-                            } else {
-                                None
-                            }
-                        } else {
-                            None
-                        }
+                    if let Some(target_el) =
+                        platform::get_target_element_from_event(e.client_x, e.client_y)
+                    {
+                        platform::get_bounding_rect_by_class_impl("hi-select-trigger", &target_el)
+                            .map(|rect| (rect.x, rect.y, rect.width, rect.height))
                     } else {
                         None
                     }

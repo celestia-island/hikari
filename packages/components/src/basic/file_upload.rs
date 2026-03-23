@@ -77,6 +77,10 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
     }
     let drag_classes = drag_builder.build();
 
+    let on_files_for_drop = props.on_files.clone();
+    let on_files_for_change = props.on_files.clone();
+    let on_error_for_drop = props.on_error.clone();
+
     let upload_status_for_drag_over = upload_status.clone();
     let on_drag_over = move |e: DragEvent| {
         e.prevent_default();
@@ -103,14 +107,12 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
                 let mut errors = Vec::new();
 
                 for file_name in file_list {
-                    // Note: For proper file size validation, we need FileData
-                    // For now, just collect file names
                     selected_files.push(file_name.clone());
                 }
 
-                if !errors.is_empty() && props.on_error.is_some() {
+                if !errors.is_empty() && on_error_for_drop.is_some() {
                     for error in errors {
-                        if let Some(handler) = props.on_error.as_ref() {
+                        if let Some(handler) = on_error_for_drop.as_ref() {
                             handler.call(error);
                         }
                     }
@@ -119,7 +121,7 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
                 if !selected_files.is_empty() {
                     files_for_drop.set(selected_files.clone());
 
-                    if let Some(handler) = props.on_files.as_ref() {
+                    if let Some(handler) = on_files_for_drop.as_ref() {
                         handler.call(selected_files);
                     }
 
@@ -134,40 +136,21 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
     let on_change = move |e: ChangeEvent| {
         #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
         {
-            let file_list = e.data.as_any().downcast_ref::<FormData>()
-                .map(|fd| fd.files.clone())
-                .unwrap_or_default();
-
-            let mut selected_files = Vec::new();
-            let mut errors = Vec::new();
-
-            for file_data in file_list {
-                let size = file_data.size() as usize;
-
-                if size > props.max_size {
-                    errors.push(format!(
-                        "File '{}' is too large (max: {} bytes)",
-                        file_data.name(),
-                        props.max_size
-                    ));
-                    continue;
-                }
-
-                selected_files.push(file_data.name());
+            let file_value = e.value;
+            if file_value.is_empty() {
+                return;
             }
 
-            if !errors.is_empty() && props.on_error.is_some() {
-                for error in errors {
-                    if let Some(handler) = props.on_error.as_ref() {
-                        handler.call(error);
-                    }
-                }
-            }
+            let selected_files: Vec<String> = file_value
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect();
 
             if !selected_files.is_empty() {
                 files_for_change.set(selected_files.clone());
 
-                if let Some(handler) = props.on_files.as_ref() {
+                if let Some(handler) = on_files_for_change.as_ref() {
                     handler.call(selected_files);
                 }
 
@@ -175,7 +158,7 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
             }
         }
 
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
         {
             let _ = e;
         }

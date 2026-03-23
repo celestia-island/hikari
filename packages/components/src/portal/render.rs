@@ -10,9 +10,9 @@ use hikari_palette::classes::{
     UtilityClass,
 };
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use wasm_bindgen::closure::Closure;
+use wasm_bindgen::{closure::Closure, JsCast};
 
-use super::provider::PortalContext;
+use super::provider::use_portal;
 use crate::{
     feedback::PopoverPlacement,
     modal::{MaskMode, ModalPosition},
@@ -34,8 +34,6 @@ fn use_animated_portal_entry(
     Callback<MouseEvent>,
     Signal<(String, String)>,
 ) {
-    #[cfg_attr(not(all(target_arch = "wasm32", target_os = "unknown")), allow(unused_variables))]
-    let context = use_context::<PortalContext>();
     #[cfg_attr(not(all(target_arch = "wasm32", target_os = "unknown")), allow(unused_variables))]
     let id_for_close = id.clone();
     let internal_animation_state = use_signal(|| initial_state);
@@ -64,33 +62,33 @@ fn use_animated_portal_entry(
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
         let internal_animation_state_for_effect = internal_animation_state.clone();
-        use_effect(use_reactive(
-            (&internal_animation_state_for_effect,),
-            move |(anim_state,)| {
-                let state = *anim_state.read();
-                log(&format!("{} use_effect triggered, state: {:?}", name, state));
-                if state == ModalAnimationState::Appearing {
-                    let anim_state_clone = anim_state.clone();
-                    let callback = Closure::once_into_js(move || {
-                        anim_state_clone.set(ModalAnimationState::Visible);
-                        log(&format!("{} set to visible via requestAnimationFrame", name));
-                    });
-                    let _ = web_sys::window()
-                        .unwrap()
-                        .request_animation_frame(callback.unchecked_ref());
-                } else if state == ModalAnimationState::Disappearing {
-                    let id = id_for_close.clone();
-                    log(&format!("{} setTimeout scheduled for removing entry: {}", name, id));
-                    set_timeout(
-                        move || {
-                            log(&format!("{} removing entry after timeout: {}", name, id));
-                            context.remove_entry.call(id.clone());
-                        },
-                        200,
-                    );
-                }
-            },
-        ));
+        let portal = use_portal();
+        let remove_entry_for_effect = portal.remove_entry.clone();
+        use_effect(move || {
+            let state = internal_animation_state_for_effect.get();
+            log(&format!("{} use_effect triggered, state: {:?}", name, state));
+            if state == ModalAnimationState::Appearing {
+                let anim_state_clone = internal_animation_state_for_effect.clone();
+                let callback = Closure::once_into_js(move || {
+                    anim_state_clone.set(ModalAnimationState::Visible);
+                    log(&format!("{} set to visible via requestAnimationFrame", name));
+                });
+                let _ = web_sys::window()
+                    .unwrap()
+                    .request_animation_frame(callback.unchecked_ref());
+            } else if state == ModalAnimationState::Disappearing {
+                let id = id_for_close.clone();
+                log(&format!("{} setTimeout scheduled for removing entry: {}", name, id));
+                let remove_entry = remove_entry_for_effect.clone();
+                set_timeout(
+                    move || {
+                        log(&format!("{} removing entry after timeout: {}", name, id));
+                        remove_entry.call(id.clone());
+                    },
+                    200,
+                );
+            }
+        });
     }
 
     (

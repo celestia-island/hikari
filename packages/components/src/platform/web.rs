@@ -251,13 +251,11 @@ pub fn now_timestamp() -> f64 {
 use web_sys::HtmlCanvasElement;
 
 pub fn get_canvas_context(canvas: &HtmlCanvasElement) -> Option<CanvasContext> {
-    canvas
-        .get_context("2d")
-        .ok()
-        .flatten()
-        .map(|ctx| CanvasContext {
-            inner: ctx.dyn_into::<web_sys::CanvasRenderingContext2d>().ok()?,
-        })
+    canvas.get_context("2d").ok().flatten().and_then(|ctx| {
+        ctx.dyn_into::<web_sys::CanvasRenderingContext2d>()
+            .ok()
+            .map(|inner| CanvasContext { inner })
+    })
 }
 
 pub struct CanvasContext {
@@ -315,7 +313,7 @@ pub fn draw_qrcode_on_canvas(
 pub fn element_from_point(x: i32, y: i32) -> Option<Element> {
     web_sys::window()
         .and_then(|w| w.document())
-        .and_then(|doc| doc.element_from_point(x as f64, y as f64))
+        .and_then(|doc| doc.element_from_point(x as f32, y as f32))
 }
 
 pub fn get_target_element_from_event(client_x: i32, client_y: i32) -> Option<Element> {
@@ -347,7 +345,12 @@ pub fn query_selector_all(selector: &str) -> Vec<Element> {
     web_sys::window()
         .and_then(|w| w.document())
         .and_then(|doc| doc.query_selector_all(selector).ok())
-        .map(|list| (0..list.length()).filter_map(|i| list.item(i)).collect())
+        .map(|list| {
+            (0..list.length())
+                .filter_map(|i| list.item(i))
+                .filter_map(|node| node.dyn_into::<Element>().ok())
+                .collect()
+        })
         .unwrap_or_default()
 }
 

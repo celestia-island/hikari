@@ -148,7 +148,7 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
 
     let dragged_key_for_start = props.dragged_key.clone();
     let allow_drag_for_start = props.allow_drag.clone();
-    let ondragstart = move |e: DragEvent| {
+    let ondragstart = move |mut e: DragEvent| {
         e.prevent_default();
 
         let key = item_key_2.clone();
@@ -164,8 +164,8 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
 
             #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
-                if let Some(data_transfer) = &e.data_transfer {
-                    let _ = data_transfer.set_data("text/plain", &key);
+                if let Some(ref mut data_transfer) = e.data_transfer {
+                    data_transfer.set_data("text/plain", &key);
                 }
             }
         }

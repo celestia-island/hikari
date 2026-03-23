@@ -70,6 +70,41 @@ pub fn QRCode(props: QRCodeProps) -> Element {
         (matrix, width)
     });
 
+    let canvas_id = format!("qrcode-canvas-{}", crate::platform::now_timestamp() as u64);
+
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+    {
+        let canvas_id_for_effect = canvas_id.clone();
+        let drawn_for_effect = drawn.clone();
+        let qr_matrix_for_effect = qr_matrix.clone();
+        let color_for_effect = color.clone();
+        let background_for_effect = background.clone();
+
+        use_effect(move || {
+            if drawn_for_effect.get() {
+                return;
+            }
+
+            if let Some((matrix, modules)) = &qr_matrix_for_effect {
+                let elements =
+                    crate::platform::query_selector_all(&format!("#{}", canvas_id_for_effect));
+                if let Some(element) = elements.first() {
+                    use wasm_bindgen::JsCast;
+                    if let Some(canvas) = element.dyn_ref::<web_sys::HtmlCanvasElement>() {
+                        crate::platform::draw_qrcode_on_canvas(
+                            canvas,
+                            matrix,
+                            *modules,
+                            &color_for_effect,
+                            &background_for_effect,
+                        );
+                        drawn_for_effect.set(true);
+                    }
+                }
+            }
+        });
+    }
+
     rsx! {
         div {
             class: container_classes,
@@ -87,34 +122,10 @@ pub fn QRCode(props: QRCodeProps) -> Element {
                 style: "width: {size_px}; height: {size_px};",
 
                 canvas {
+                    id: canvas_id,
                     class: QRCodeClass::Image.as_class(),
                     width: size,
                     height: size,
-
-                    onmounted: move |evt| {
-                        if drawn.get() { return; }
-
-                        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-                        {
-                            use wasm_bindgen::JsCast;
-                            if let Some(canvas) = evt.data().downcast::<web_sys::HtmlCanvasElement>() {
-                                if let Some((matrix, modules)) = &qr_matrix {
-                                    crate::platform::draw_qrcode_on_canvas(
-                                        canvas,
-                                        matrix,
-                                        *modules,
-                                        &color,
-                                        &background,
-                                    );
-                                    drawn.set(true);
-                                }
-                            }
-                        }
-                        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-                        {
-                            let _ = evt;
-                        }
-                    },
                 }
             }
         }

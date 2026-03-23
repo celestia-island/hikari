@@ -41,9 +41,43 @@ graph TB
 ```
 
 **原则：**
-1. **组件层** → 使用 Platform API，不直接使用 web-sys
+1. **组件层** → 使用 Platform API，不直接使用 web-sys ✅
 2. **Platform 抽象层** → 可以使用 web-sys（作为实现细节）
 3. **未来** → Platform 抽象层可切换到 WIT bindings
+
+---
+
+## 完成状态
+
+| Phase | 任务 | 状态 |
+|-------|------|------|
+| 1 | 组件层迁移到 Platform API | ✅ 完成 |
+| 2 | 清理直接 web-sys 使用 | ✅ 完成 |
+| 3 | Platform API 扩展 | ✅ 完成 |
+
+---
+
+## 已完成的迁移
+
+### 组件层 → Platform API
+
+| 文件 | 原用法 | 迁移后 |
+|------|--------|--------|
+| `theme/provider.rs` | `Closure::once` + `web_sys::window()` | `platform::set_timeout` |
+| `navigation/anchor.rs` | `web_sys::window()` + `document` | `platform::get_element_rect_by_id` |
+| `display/qrcode.rs` | `dyn_ref::<HtmlCanvasElement>()` | `platform::draw_qrcode_on_canvas_by_id` |
+| `portal/render.rs` | `Closure::once_into_js` + `request_animation_frame` | `platform::request_animation_frame` |
+
+### 新增 Platform API
+
+| 函数 | 用途 |
+|------|------|
+| `query_selector` | 查询单个元素 |
+| `get_element_by_id` | 根据 ID 获取元素 |
+| `get_element_rect_by_id` | 获取元素边界矩形 |
+| `on_scroll` | 滚动事件监听 |
+| `draw_qrcode_on_canvas_by_id` | 在 Canvas 上绘制 QR 码 |
+| `request_animation_frame` | 请求动画帧 |
 
 ---
 
@@ -56,8 +90,6 @@ graph TB
 | `wasm-bindgen` | 保留 | Platform 抽象层实现需要 |
 | `web-sys` | 保留 | Platform 抽象层实现需要 |
 | `js-sys` | 保留 | Date.now() 等基础功能 |
-
-**保留原因：** Platform 抽象层 (`platform/web.rs`) 必须使用 web-sys 实现 DOM 操作。
 
 ### hikari-animation/Cargo.toml
 
@@ -73,8 +105,6 @@ graph TB
 |---------|------|------|
 | `dynamic-fetch` | web-sys (console) | 保留 |
 
-**保留原因：** 仅在动态获取图标时需要控制台日志。
-
 ### hikari-extra-components/Cargo.toml
 
 | 依赖 | 状态 |
@@ -83,122 +113,123 @@ graph TB
 
 ---
 
-## 源码 web-sys 使用分析
+## 保留 web-sys 的文件（合理架构设计）
 
-### 分类 A：Platform 抽象层（保留）
-
-这些文件是 Platform 抽象层的实现，**必须**使用 web-sys：
-
-| 文件 | 用途 | 操作 |
-|------|------|------|
-| `platform/web.rs` | Platform API 实现 | **保留** |
-
-### 分类 B：动画实现层（保留）
-
-这些文件实现动画效果，需要直接操作 DOM：
-
-| 文件 | 用途 | 操作 |
-|------|------|------|
-| `portal/animation/dropdown_animation.rs` | Dropdown 动画状态机 | **保留** |
-| `basic/background.rs` | 渐变背景动画 | **保留** |
-
-### 分类 C：纯 WASM 脚本（保留）
-
-这些是独立的 WASM 脚本，不参与 VDOM 渲染：
-
-| 文件 | 用途 | 操作 |
-|------|------|------|
-| `scripts/scrollbar_container.rs` | 自定义滚动条脚本 | **保留** |
-
-### 分类 D：可迁移到 Platform API（待评估）
-
-这些文件使用 web-sys 但可以通过 Platform API 重构：
-
-| 文件 | 当前用法 | 迁移方案 |
-|------|----------|----------|
-| `theme/provider.rs:199-213` | `set_timeout` + Closure | → `platform::set_timeout` |
-| `navigation/anchor.rs:76,128` | `window()` + `scroll_to` | → `platform::scroll_to_with_options` |
-| `portal/render.rs:13` | `Closure` for Portal | 需评估 |
-| `production/code_highlight.rs:16` | `wasm_bindgen::prelude` | 需评估 |
-| `display/qrcode.rs:92` | `JsCast` for canvas | → `platform::draw_qrcode_on_canvas` |
-
----
-
-## 迁移检查清单
-
-### Phase 1：已完成的迁移 ✅
-
-- [x] TimerId 路径修复 (`scrollbar_container.rs`)
-- [x] ChangeEvent.data → value (`file_upload.rs`)
-- [x] MouseEvent downcast → Platform API (`select.rs`)
-- [x] onmounted → use_effect + query_selector_all (`qrcode.rs`, `search.rs`)
-- [x] use_reactive → use_effect (`portal/render.rs`)
-- [x] Signal 嵌套闭包克隆 (`hooks.rs`, `anchor.rs`)
-- [x] DragEvent 可变引用 (`drag.rs`)
-
-### Phase 2：待处理的迁移
-
-#### 2.1 theme/provider.rs
-
-**当前代码：**
-```rust
-use wasm_bindgen::JsCast;
-let closure = wasm_bindgen::closure::Closure::once(Box::new(|| {
-    init_global_animation_manager();
-    init_scrollbars();
-}) as Box<dyn FnOnce()>);
-window.set_timeout_with_callback_and_timeout_and_arguments_0(...);
-```
-
-**迁移到：**
-```rust
-use crate::platform;
-platform::set_timeout(|| {
-    init_global_animation_manager();
-    init_scrollbars();
-}, 50);
-```
-
-#### 2.2 navigation/anchor.rs
-
-**当前代码：**
-```rust
-use web_sys::window;
-use wasm_bindgen::closure::Closure;
-window().unwrap().scroll_to_with_scroll_to_options(&options);
-```
-
-**迁移到：**
-```rust
-use crate::platform;
-platform::scroll_to_with_options(top, behavior);
-```
-
-#### 2.3 display/qrcode.rs
-
-**当前代码：**
-```rust
-use wasm_bindgen::JsCast;
-canvas.dyn_ref::<HtmlCanvasElement>()...
-```
-
-**迁移到：**
-```rust
-use crate::platform;
-platform::draw_qrcode_on_canvas(canvas, matrix, modules, color, background);
-```
-
-### Phase 3：保持现状的文件
-
-以下文件使用 web-sys 是合理的架构设计，**不需要迁移**：
+### 分类 A：Platform 抽象层（必须保留）
 
 | 文件 | 原因 |
 |------|------|
-| `platform/web.rs` | Platform 抽象层实现 |
-| `portal/animation/*.rs` | 动画底层实现 |
-| `scripts/scrollbar_container.rs` | 纯 WASM 脚本 |
-| `basic/background.rs` | 底层动画实现 |
-| `animation/src/*.rs` | 动画核心库 |
+| `platform/web.rs` | Platform API 实现 |
+
+### 分类 B：动画实现层（保留）
+
+| 文件 | 原因 |
+|------|------|
+| `portal/animation/dropdown_animation.rs` | 动画状态机 |
+| `basic/background.rs` | 渐变背景动画 |
+
+### 分类 C：纯 WASM 脚本（保留）
+
+| 文件 | 原因 |
+|------|------|
+| `scripts/scrollbar_container.rs` | 自定义滚动条脚本 |
+
+### 分类 D：JS 互操作（保留）
+
+| 文件 | 原因 |
+|------|------|
+| `production/code_highlight.rs` | `#[wasm_bindgen(inline_js)]` 剪贴板 API |
+
+### 分类 E：动画核心库（保留）
+
+| 文件 | 原因 |
+|------|------|
+| `animation/src/*.rs` | 动画系统核心，需要直接 DOM 操作 |
+
+---
+
+## Platform 抽象层 API 清单
+
+### DOM 查询
+
+| API | 功能 |
+|-----|------|
+| `query_selector` | 查询单个元素 |
+| `query_selector_all` | 查询所有匹配元素 |
+| `get_element_by_id` | 根据 ID 获取元素 |
+| `get_element_rect_by_id` | 获取元素边界矩形 |
+| `element_from_point` | 根据坐标获取元素 |
+| `element_closest` | 查找最近的匹配祖先元素 |
+| `get_target_element_from_event` | 从事件坐标获取目标元素 |
+
+### 滚动
+
+| API | 功能 |
+|-----|------|
+| `get_scroll_y` | 获取垂直滚动位置 |
+| `scroll_to_with_options` | 平滑滚动到指定位置 |
+| `get_scroll_top_by_selector` | 根据选择器获取滚动位置 |
+| `get_scroll_top_from_point` | 根据坐标获取滚动位置 |
+
+### 尺寸
+
+| API | 功能 |
+|-----|------|
+| `inner_width` | 窗口宽度 |
+| `inner_height` | 窗口高度 |
+| `get_bounding_client_rect` | 获取元素边界矩形 |
+| `get_bounding_rect_by_class_impl` | 根据类名获取边界矩形 |
+
+### 定时器与动画
+
+| API | 功能 |
+|-----|------|
+| `set_timeout` | 延时执行 |
+| `request_animation_frame` | 请求动画帧 |
+| `request_animation_frame_with_timestamp` | 带时间戳的动画帧请求 |
+
+### 事件监听
+
+| API | 功能 |
+|-----|------|
+| `on_resize` | 窗口大小变化监听 |
+| `on_scroll` | 滚动事件监听 |
+
+### Observer
+
+| API | 功能 |
+|-----|------|
+| `create_resize_observer` | 创建 ResizeObserver |
+| `observe_resize` | 观察元素大小变化 |
+| `disconnect_resize` | 断开 ResizeObserver |
+| `create_mutation_observer` | 创建 MutationObserver |
+| `observe_mutations` | 观察 DOM 变化 |
+| `disconnect_mutation` | 断开 MutationObserver |
+
+### Canvas
+
+| API | 功能 |
+|-----|------|
+| `get_canvas_context` | 获取 Canvas 2D 上下文 |
+| `draw_qrcode_on_canvas` | 在 Canvas 上绘制 QR 码 |
+| `draw_qrcode_on_canvas_by_id` | 根据 ID 绘制 QR 码 |
+
+### 样式
+
+| API | 功能 |
+|-----|------|
+| `set_style_property` | 设置 CSS 属性 |
+| `get_computed_style_value` | 获取计算样式 |
+| `get_inline_style_value` | 获取内联样式 |
+
+### 日志
+
+| API | 功能 |
+|-----|------|
+| `log` | 控制台日志 |
+| `log_warn` | 控制台警告 |
+| `log_error` | 控制台错误 |
+| `now_timestamp` | 当前时间戳 |
 
 ---
 
@@ -231,27 +262,14 @@ platform::draw_qrcode_on_canvas(canvas, matrix, modules, color, background);
 # 构建 hikari-components
 cargo build -p hikari-components --target wasm32-unknown-unknown
 
-# 搜索剩余的 web-sys 直接使用
-grep -rn "use web_sys" packages/components/src/ --include="*.rs"
-grep -rn "use wasm_bindgen" packages/components/src/ --include="*.rs"
-
-# 搜索 animation 包
-grep -rn "use web_sys" packages/animation/src/ --include="*.rs"
+# 搜索组件层剩余的 web-sys 直接使用（应该只有保留的文件）
+grep -rn "use web_sys\|use wasm_bindgen" packages/components/src/ --include="*.rs" | \
+  grep -v "platform/web.rs" | \
+  grep -v "scripts/scrollbar" | \
+  grep -v "portal/animation" | \
+  grep -v "basic/background" | \
+  grep -v "code_highlight"
 ```
-
----
-
-## 执行顺序
-
-1. **Phase 2.1** - 迁移 `theme/provider.rs`
-2. **Phase 2.2** - 迁移 `navigation/anchor.rs`
-3. **Phase 2.3** - 迁移 `display/qrcode.rs`
-4. **验证** - 运行构建和测试
-
-每个 Phase 完成后：
-1. 运行 `cargo build` 验证编译
-2. 提交到 dev 分支
-3. 更新此文档
 
 ---
 
@@ -259,11 +277,13 @@ grep -rn "use web_sys" packages/animation/src/ --include="*.rs"
 
 | 项目 | 状态 | 说明 |
 |------|------|------|
-| hikari-components | ✅ 可编译 | 部分 web-sys 使用合理 |
-| hikari-animation | ✅ 可编译 | 动画系统需要 web-sys |
-| hikari-icons | ✅ 可编译 | 仅 dynamic-fetch 需要 |
+| hikari-components | ✅ 完成 | 组件层已迁移到 Platform API |
+| hikari-animation | ✅ 正常 | 动画系统保留 web-sys（合理） |
+| hikari-icons | ✅ 正常 | 仅 dynamic-fetch 需要 |
 | hikari-extra-components | ✅ 清洁 | 无 web-sys 依赖 |
 | tairitsu-* | ✅ 正常 | 双后端架构 |
 
-**核心结论：** 当前 web-sys/wasm-bindgen 使用大部分是合理的架构设计。
-只有少数组件层的直接 web-sys 使用可以迁移到 Platform API。
+**核心结论：** 
+- 组件层已完全迁移到 Platform API
+- 保留的 web-sys/wasm-bindgen 使用都是合理的架构设计
+- Platform 抽象层为未来迁移到 WIT bindings 做好了准备

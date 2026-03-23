@@ -17,3 +17,6 @@ yuuka = { workspace = true }
 
 # For TOML parsing
 toml = "^0.8"
+
+# Tairitsu i18n (re-exported)
+tairitsu-i18n = { path = "../../../tairitsu/packages/i18n" }

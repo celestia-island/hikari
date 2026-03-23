@@ -4,7 +4,8 @@
 
 use anyhow::{Context, Result};
 
-use crate::keys::*;
+// Use the re-exported I18nKeys from tairitsu_i18n
+pub use tairitsu_i18n::I18nKeys;
 
 /// Load TOML file for a specific language
 pub fn load_toml(toml_content: &'static str) -> Result<I18nKeys> {

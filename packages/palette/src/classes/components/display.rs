@@ -78,6 +78,7 @@ impl UtilityClass for CardClass {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub enum SpotlightClass {
     Spotlight,
     SpotlightWrapper,
@@ -192,6 +193,7 @@ impl UtilityClass for TagClass {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub enum DescriptionListClass {
     List,
     Term,

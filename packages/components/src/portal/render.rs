@@ -14,7 +14,7 @@ use hikari_palette::classes::{
 use super::provider::use_portal;
 use crate::{
     feedback::PopoverPlacement,
-    modal::{MaskMode, ModalPosition},
+    modal::{MaskMode, ModalPosition, ModalSize},
     portal::{
         positioning::calculate_position,
         types::{
@@ -117,6 +117,7 @@ pub fn PortalRender(#[props(default)] entries: Option<Signal<Vec<PortalEntry>>>)
                     mask_mode,
                     closable,
                     mask_closable,
+                    size,
                     children,
                     animation_state,
                 } => rsx! {
@@ -128,6 +129,7 @@ pub fn PortalRender(#[props(default)] entries: Option<Signal<Vec<PortalEntry>>>)
                         mask_mode: *mask_mode,
                         closable: *closable,
                         mask_closable: *mask_closable,
+                        size: *size,
                         children: children.clone(),
                         animation_state: *animation_state,
                     }
@@ -225,6 +227,7 @@ fn ModalPortalEntry(
     #[props(default)] mask_mode: MaskMode,
     #[props(default)] closable: bool,
     #[props(default)] mask_closable: bool,
+    #[props(default)] size: ModalSize,
     #[props(default)] children: Element,
     #[props(default)] animation_state: ModalAnimationState,
 ) -> Element {
@@ -244,7 +247,17 @@ fn ModalPortalEntry(
         ClassesBuilder::new().add(ModalClass::Overlay).build()
     };
 
-    let modal_classes = ClassesBuilder::new().add(ModalClass::Modal).build();
+    let size_class = match size {
+        ModalSize::Sm => ModalClass::Sm,
+        ModalSize::Md => ModalClass::Md,
+        ModalSize::Lg => ModalClass::Lg,
+        ModalSize::Xl => ModalClass::Xl,
+    };
+
+    let modal_classes = ClassesBuilder::new()
+        .add(ModalClass::Modal)
+        .add(size_class)
+        .build();
 
     let modal_style = use_memo(move || {
         let (opacity, scale) = computed_opacity_scale.read().clone();

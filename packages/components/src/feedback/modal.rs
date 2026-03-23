@@ -39,6 +39,15 @@ pub enum MaskMode {
     Transparent,
 }
 
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum ModalSize {
+    #[default]
+    Md,
+    Sm,
+    Lg,
+    Xl,
+}
+
 #[derive(Clone, PartialEq)]
 pub struct ModalConfig {
     pub id: String,
@@ -46,6 +55,7 @@ pub struct ModalConfig {
     pub mask_mode: MaskMode,
     pub closable: bool,
     pub mask_closable: bool,
+    pub size: ModalSize,
     pub class: String,
 }
 
@@ -57,6 +67,7 @@ impl Default for ModalConfig {
             mask_mode: MaskMode::Opaque,
             closable: true,
             mask_closable: true,
+            size: ModalSize::Md,
             class: String::new(),
         }
     }
@@ -78,6 +89,7 @@ pub fn use_modal(initial_config: ModalConfig) -> ModalController {
                 mask_mode: current_cfg.mask_mode,
                 closable: current_cfg.closable,
                 mask_closable: current_cfg.mask_closable,
+                size: current_cfg.size,
                 children: content.children,
                 animation_state: crate::portal::ModalAnimationState::Appearing,
             };

@@ -22,9 +22,18 @@ pub enum AlertVariant {
     Error,
 }
 
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum AlertSize {
+    #[default]
+    Md,
+    Sm,
+    Lg,
+}
+
 #[define_props]
 pub struct AlertProps {
     pub variant: AlertVariant,
+    pub size: AlertSize,
     pub title: Option<String>,
     pub description: Option<String>,
     pub closable: bool,
@@ -42,6 +51,12 @@ pub fn Alert(props: AlertProps) -> Element {
         AlertVariant::Error => AlertClass::AlertError,
     };
 
+    let size_class = match props.size {
+        AlertSize::Sm => AlertClass::Sm,
+        AlertSize::Md => AlertClass::Md,
+        AlertSize::Lg => AlertClass::Lg,
+    };
+
     let glow_color = match props.variant {
         AlertVariant::Info => GlowColor::Info,
         AlertVariant::Success => GlowColor::Success,
@@ -52,6 +67,7 @@ pub fn Alert(props: AlertProps) -> Element {
     let alert_classes = ClassesBuilder::new()
         .add(AlertClass::Alert)
         .add(variant_class)
+        .add(size_class)
         .add_raw(&props.class)
         .build();
 

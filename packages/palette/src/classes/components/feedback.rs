@@ -101,6 +101,9 @@ pub enum AlertClass {
     AlertTitle,
     AlertDescription,
     AlertClose,
+    Sm,
+    Md,
+    Lg,
 }
 
 impl UtilityClass for AlertClass {
@@ -117,6 +120,9 @@ impl UtilityClass for AlertClass {
             AlertClass::AlertTitle => "alert-title",
             AlertClass::AlertDescription => "alert-description",
             AlertClass::AlertClose => "alert-close",
+            AlertClass::Sm => "alert-sm",
+            AlertClass::Md => "alert-md",
+            AlertClass::Lg => "alert-lg",
         }
     }
 }
@@ -130,6 +136,10 @@ pub enum ModalClass {
     Title,
     Close,
     Body,
+    Sm,
+    Md,
+    Lg,
+    Xl,
 }
 
 impl UtilityClass for ModalClass {
@@ -142,6 +152,10 @@ impl UtilityClass for ModalClass {
             ModalClass::Title => "modal-title",
             ModalClass::Close => "modal-close",
             ModalClass::Body => "modal-body",
+            ModalClass::Sm => "modal-sm",
+            ModalClass::Md => "modal-md",
+            ModalClass::Lg => "modal-lg",
+            ModalClass::Xl => "modal-xl",
         }
     }
 }

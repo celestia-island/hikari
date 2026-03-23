@@ -5,7 +5,7 @@ use crate::prelude::*;
 
 use crate::{
     feedback::PopoverPlacement,
-    modal::{MaskMode, ModalPosition},
+    modal::{MaskMode, ModalPosition, ModalSize},
 };
 
 pub static PORTAL_ID_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
@@ -58,6 +58,7 @@ pub enum PortalEntry {
         mask_mode: MaskMode,
         closable: bool,
         mask_closable: bool,
+        size: ModalSize,
         children: Element,
         animation_state: ModalAnimationState,
     },

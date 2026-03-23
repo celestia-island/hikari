@@ -566,18 +566,18 @@ transfer.scss     tree.scss         virtual-scroll.scss
 
 | Palette 枚举 | 定义文件 | 对应组件 | 状态 |
 |-------------|---------|---------|------|
-| `SkeletonClass` | `feedback.rs` | `display/skeleton.rs` — 组件仅用 utility class 未导入专用枚举 | 待处理 |
+| ~~`SkeletonClass`~~ | `feedback.rs` | ~~`display/skeleton.rs` — 组件仅用 utility class 未导入专用枚举~~ | ✅ 已修复（已导入） |
 | ~~`DropdownClass`~~ | `feedback.rs` | ~~无对应组件~~ | ✅ 已被使用 |
-| `PopoverClass` | `feedback.rs` | `feedback/popover.rs` — 组件未导入此枚举 | 待处理 |
-| `SpotlightClass` | `display.rs` | 无对应组件（Card spotlight 子功能） | 待处理 |
-| `DescriptionListClass` | `display.rs` | 无对应组件 | 待处理 |
+| ~~`PopoverClass`~~ | `feedback.rs` | ~~`feedback/popover.rs` — 组件未导入此枚举~~ | ✅ 已修复（已导入） |
+| `SpotlightClass` | `display.rs` | 无对应组件（Card spotlight 子功能） | ✅ 已添加 #[allow(dead_code)] |
+| `DescriptionListClass` | `display.rs` | 无对应组件 | ✅ 已添加 #[allow(dead_code)] |
 | ~~`RowClass`~~ | `layout.rs` | ~~无对应组件~~ | ✅ 已被使用 |
 | ~~`TreeClassNew`~~ | `data.rs` | ~~无对应组件使用~~ | ✅ 已被使用 |
-| ~~`TreeLabelClass`~~ | `data.rs` | ~~无对应组件使用~~ | ✅ 已被使用 |
+| `TreeLabelClass` | `data.rs` | 无对应组件使用 | ✅ 已添加 #[allow(dead_code)] |
 | ~~`DragDropTreeClass`~~ | `data.rs` | ~~无对应组件使用~~ | ✅ 已被使用 |
 | ~~`VirtualScrollClass`~~ | `data.rs` | ~~`data/virtual_scroll.rs` 导入的是 `TreeClass` 非此枚举~~ | ✅ 已被使用 |
-| `SelectionClass` (旧) | `data.rs` | 已被 `SelectionClassNew` 替代 | 待处理 |
-| `TableHeaderClass` | `data.rs` | 无直接导入组件 | 待处理 |
+| `SelectionClass` (旧) | `data.rs` | 已被 `SelectionClassNew` 替代 | 可考虑移除 |
+| `TableHeaderClass` | `data.rs` | 无直接导入组件 | ✅ 已添加 #[allow(dead_code)] |
 
 #### ❌ 既无 StyledComponent 也无 SCSS
 
@@ -606,10 +606,9 @@ transfer.scss     tree.scss         virtual-scroll.scss
 
 | Props 风格 | 组件数 | 占比 |
 |-----------|:------:|:----:|
-| 🆕 `#[define_props]` | 34 | 47% |
-| 🏚️ `#[derive(Props)]` | 27 | 37% |
-| 裸 `#[component]` | 10 | 14% |
-| 🔀 混合 | 1 | 1% |
+| 🆕 `#[define_props]` | 66+ | 92% |
+| 🏚️ `#[derive(Props)]` | ~6 | 8% (特殊场景) |
+| 裸 `#[component]` | 若干 | - (简单组件) |
 | **合计** | **72** | 100% |
 
 ### i18n 使用统计

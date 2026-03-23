@@ -3,12 +3,12 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use crate::prelude::*;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use wasm_bindgen::{JsCast, closure::Closure};
+use crate::platform::set_timeout;
+use crate::prelude::*;
 
 use crate::{
-    portal::{PortalEntry, use_portal},
+    portal::{use_portal, PortalEntry},
     styled::StyledComponent,
 };
 
@@ -97,15 +97,12 @@ pub fn use_modal(initial_config: ModalConfig) -> ModalController {
             {
                 let remove = remove_entry.clone();
                 let id_timeout = id.clone();
-                let callback = Closure::once_into_js(move || {
-                    remove.call(id_timeout.clone());
-                });
-                let _ = web_sys::window()
-                    .unwrap()
-                    .set_timeout_with_callback_and_timeout_and_arguments_0(
-                        callback.as_ref().unchecked_ref(),
-                        200,
-                    );
+                set_timeout(
+                    move || {
+                        remove.call(id_timeout);
+                    },
+                    200,
+                );
             }
 
             #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]

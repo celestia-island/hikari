@@ -106,3 +106,21 @@ pub fn get_inline_style_value(element: &HtmlElement, property: &str) -> Option<S
 pub fn set_style_property(element: &HtmlElement, name: &str, value: &str) {
     let _ = element.style().set_property(name, value);
 }
+
+pub fn get_scroll_y() -> f64 {
+    web_sys::window()
+        .and_then(|w| w.scroll_y().ok())
+        .unwrap_or(0.0)
+}
+
+pub fn scroll_to_with_options(top: f64, behavior: &str) {
+    if let Some(window) = web_sys::window() {
+        let options = web_sys::ScrollToOptions::new();
+        options.set_top(top);
+        options.set_behavior(match behavior {
+            "smooth" => web_sys::ScrollBehavior::Smooth,
+            _ => web_sys::ScrollBehavior::Auto,
+        });
+        window.scroll_to_with_scroll_to_options(&options);
+    }
+}

@@ -66,6 +66,7 @@ pub fn use_screen_size() -> Signal<ScreenSize> {
     {
         let screen_size = screen_size.clone();
         use_effect(move || {
+            let screen_size = screen_size.clone();
             on_resize(move || {
                 screen_size.set(get_screen_size_from_window());
             });
@@ -106,10 +107,11 @@ pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> Signal
 
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
-        let matches_for_resize = matches.clone();
+        let matches = matches.clone();
         use_effect(move || {
+            let matches = matches.clone();
             on_resize(move || {
-                matches_for_resize.set(check_media_query(min_width, max_width));
+                matches.set(check_media_query(min_width, max_width));
             });
         });
     }

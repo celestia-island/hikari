@@ -110,6 +110,38 @@ pub fn Carousel(props: CarouselProps) -> Element {
     // TODO: Implement use_interval or spawn_local for autoplay
     let _ = (props.autoplay, is_paused.get());
 
+    // Autoplay implementation using platform::set_timeout
+    let autoplay_interval = props.autoplay;
+    let autoplay_index = current_index.clone();
+    let autoplay_paused = is_paused.clone();
+    let autoplay_total = total;
+    let autoplay_infinite = props.infinite;
+
+    use_effect(move || {
+        if autoplay_interval == 0 || autoplay_paused.get() || autoplay_total == 0 {
+            return;
+        }
+
+        let index_for_timer = autoplay_index.clone();
+        let total_for_timer = autoplay_total;
+        let infinite_for_timer = autoplay_infinite;
+
+        crate::platform::set_timeout(
+            move || {
+                let current = index_for_timer.get();
+                let next = if infinite_for_timer {
+                    (current + 1) % total_for_timer
+                } else if current + 1 < total_for_timer {
+                    current + 1
+                } else {
+                    return;
+                };
+                index_for_timer.set(next);
+            },
+            autoplay_interval as i32,
+        );
+    });
+
     let track_transform = format!(
         "transform: translateX(-{}%);",
         current_index.get() as f64 * 100.0
@@ -118,8 +150,12 @@ pub fn Carousel(props: CarouselProps) -> Element {
     let indicator_classes = ClassesBuilder::new()
         .add(CarouselClass::Indicators)
         .add(match props.indicator_position {
-            CarouselIndicatorPosition::Bottom | CarouselIndicatorPosition::Top => CarouselClass::IndicatorsDots,
-            CarouselIndicatorPosition::Left | CarouselIndicatorPosition::Right => CarouselClass::IndicatorsHidden,
+            CarouselIndicatorPosition::Bottom | CarouselIndicatorPosition::Top => {
+                CarouselClass::IndicatorsDots
+            }
+            CarouselIndicatorPosition::Left | CarouselIndicatorPosition::Right => {
+                CarouselClass::IndicatorsHidden
+            }
         })
         .add(match props.indicator_type {
             CarouselIndicatorType::Dots => CarouselClass::IndicatorsDots,
@@ -146,7 +182,9 @@ pub fn Carousel(props: CarouselProps) -> Element {
             let current_index_for_add_if = current_index_in_map.clone();
             let dot_classes = ClassesBuilder::new()
                 .add(CarouselClass::Dot)
-                .add_if(CarouselClass::DotActive, move || i == current_index_for_add_if.get())
+                .add_if(CarouselClass::DotActive, move || {
+                    i == current_index_for_add_if.get()
+                })
                 .build();
 
             let idx_signal = current_index_in_map.clone();

@@ -9,6 +9,7 @@
 | tairitsu-vdom | ✅ 清洁 | 无 web-sys 依赖 |
 | tairitsu-hooks | ✅ 清洁 | css_var.rs 未启用（无 web feature） |
 | tairitsu-style | ✅ 清洁 | 无 web-sys 依赖 |
+| tairitsu-web | ✅ 正常 | 双后端架构（web-sys + WIT） |
 
 ---
 
@@ -33,72 +34,71 @@
 
 ---
 
-## Hikari Web-Sys 使用分析
+## 已完成的修复
 
-### ✅ 组件层（已迁移到 Platform API）
+### 1. Hikari 组件层迁移到 Platform API
 
-| 文件 | 原用法 | 现状 |
-|------|--------|------|
-| `theme/provider.rs` | `Closure::once` + `set_timeout` | → `platform::set_timeout` |
-| `navigation/anchor.rs` | `web_sys::window()` + `scroll_to` | → `platform::scroll_to_with_options` |
-| `display/qrcode.rs` | `dyn_ref::<HtmlCanvasElement>()` | → `platform::draw_qrcode_on_canvas_by_id` |
-| `portal/render.rs` | `Closure::once_into_js` + `request_animation_frame` | → `platform::request_animation_frame` |
+| 文件 | 原用法 | 迁移后 |
+|------|--------|--------|
+| `theme/provider.rs` | `Closure::once` + `web_sys::window()` | `platform::set_timeout` |
+| `navigation/anchor.rs` | `web_sys::window()` + `document` | `platform::get_element_rect_by_id` |
+| `display/qrcode.rs` | `dyn_ref::<HtmlCanvasElement>()` | `platform::draw_qrcode_on_canvas_by_id` |
+| `portal/render.rs` | `Closure::once_into_js` + `request_animation_frame` | `platform::request_animation_frame` |
 
-### ✅ Platform 抽象层（合理保留）
+### 2. 新增 Platform API
 
-| 文件 | 用途 | 原因 |
-|------|------|------|
-| `platform/web.rs` | Platform API 实现 | 必须使用 web-sys 实现 DOM 操作 |
+| 函数 | 用途 |
+|------|------|
+| `query_selector` | 查询单个元素 |
+| `get_element_by_id` | 根据 ID 获取元素 |
+| `get_element_rect_by_id` | 获取元素边界矩形 |
+| `on_scroll` | 滚动事件监听 |
+| `draw_qrcode_on_canvas_by_id` | 在 Canvas 上绘制 QR 码 |
+| `request_animation_frame` | 请求动画帧 |
 
-### ✅ 纯 WASM 脚本（合理保留）
+### 3. Tairitsu WIT 文件修复
 
-| 文件 | 用途 | 原因 |
-|------|------|------|
-| `scripts/scrollbar_container.rs` | 自定义滚动条 | `#[wasm_bindgen]` 导出 JS 函数，直接 DOM 操作 |
+**问题：** `record dom-rect` 在 WIT 文件顶层定义，导致 wit-bindgen 编译错误。
 
-### ✅ 动画实现层（合理保留）
+**修复：** 将 `record` 移动到 `interface types` 内部：
 
-| 文件 | 用途 | 原因 |
-|------|------|------|
-| `portal/animation/dropdown_animation.rs` | Dropdown 动画 | 直接操作 DOM 样式 |
-| `basic/background.rs` | 渐变背景动画 | 复杂的 requestAnimationFrame 动画循环 |
+```wit
+// 修复前（错误）
+package tairitsu-browser:full@0.2.0;
+record dom-rect { ... }  // 顶层 record 不允许
 
-### ✅ JS 互操作（合理保留）
-
-| 文件 | 用途 | 原因 |
-|------|------|------|
-| `production/code_highlight.rs` | 剪贴板 API | `#[wasm_bindgen(inline_js)]` 调用 navigator.clipboard |
-
-### ✅ 动画核心库（合理保留）
-
-| 文件 | 用途 | 原因 |
-|------|------|------|
-| `animation/src/*.rs` | 动画系统核心 | 直接操作 HtmlElement 样式 |
+// 修复后（正确）
+package tairitsu-browser:full@0.2.0;
+interface types {
+    record dom-rect { ... }  // 在 interface 内部
+}
+```
 
 ---
 
-## Tairitsu Web-Sys 使用分析
+## 保留 Web-Sys 的文件（合理架构设计）
 
-### ✅ tairitsu-vdom（清洁）
+### Hikari Components
 
-无 web-sys/wasm-bindgen 依赖。
-
-### ✅ tairitsu-hooks（清洁）
-
-| 文件 | 状态 | 说明 |
+| 分类 | 文件 | 原因 |
 |------|------|------|
-| `css_var.rs` | 未启用 | `#[cfg(feature = "web")]` 但无 `web` feature |
+| Platform 层 | `platform/web.rs` | Platform API 实现 |
+| 纯脚本 | `scripts/scrollbar_container.rs` | `#[wasm_bindgen]` 导出 JS 函数 |
+| 动画层 | `portal/animation/*.rs` | 直接操作 DOM 样式 |
+| 动画层 | `basic/background.rs` | 复杂 requestAnimationFrame 动画 |
+| JS 互操作 | `production/code_highlight.rs` | `#[wasm_bindgen(inline_js)]` |
 
-### ✅ tairitsu-style（清洁）
+### Hikari Animation
 
-无 web-sys/wasm-bindgen 依赖。
+| 文件 | 原因 |
+|------|------|
+| `animation/src/*.rs` | 动画系统核心，需要直接操作 HtmlElement |
 
-### ✅ tairitsu-web（双后端架构）
+### Tairitsu Web
 
-| 模块 | 用途 | 状态 |
-|------|------|------|
-| `platform.rs` | WebPlatform (web-sys 后端) | 保留 |
-| `wit_platform.rs` | WitPlatform (WIT bindings 后端) | 保留 |
+| 模块 | 原因 |
+|------|------|
+| `wit_platform.rs` | WIT bindings 后端（可选 feature） |
 
 ---
 
@@ -144,19 +144,18 @@
 ## 验证命令
 
 ```bash
-# 构建 hikari-components
+# 构建 hikari-components (wasm32-unknown target)
 cargo build -p hikari-components --target wasm32-unknown-unknown
 
-# 构建 tairitsu 核心
+# 构建 tairitsu 核心（无 web-sys）
 cargo build -p tairitsu-vdom -p tairitsu-hooks -p tairitsu-style
 
-# 检查组件层 web-sys 使用（应只剩保留的文件）
-grep -rn "use web_sys\|use wasm_bindgen" packages/components/src/ --include="*.rs" | \
-  grep -v "platform/web.rs" | \
-  grep -v "scripts/scrollbar" | \
-  grep -v "portal/animation" | \
-  grep -v "basic/background" | \
-  grep -v "code_highlight"
+# 构建 tairitsu-web 默认（web-sys 后端）
+cargo build -p tairitsu-web
+
+# 构建 tairitsu-web WIT 后端（需要在 tairitsu 目录）
+cd /mnt/sdb1/tairitsu
+cargo build -p tairitsu-web --features wit-bindings
 ```
 
 ---
@@ -165,10 +164,14 @@ grep -rn "use web_sys\|use wasm_bindgen" packages/components/src/ --include="*.r
 
 **所有 web-sys/wasm-bindgen 使用都是合理的架构设计：**
 
-1. **组件层** - 已完全迁移到 Platform API ✅
-2. **Platform 抽象层** - 必须使用 web-sys 实现 DOM 操作 ✅
-3. **纯 WASM 脚本** - 需要 `#[wasm_bindgen]` 导出 JS 函数 ✅
-4. **动画系统** - 需要直接操作 DOM 元素样式 ✅
-5. **JS 互操作** - 需要调用浏览器原生 API ✅
+1. **组件层** → 已完全迁移到 Platform API ✅
+2. **Platform 抽象层** → 必须使用 web-sys 实现 ✅
+3. **纯 WASM 脚本** → 需要 `#[wasm_bindgen]` 导出 JS 函数 ✅
+4. **动画系统** → 需要直接操作 DOM 元素样式 ✅
+5. **Tairitsu 核心** → 无 web-sys 依赖，跨平台 ✅
+6. **WIT 绑定** → 已修复语法问题，可正常编译 ✅
 
-**Tairitsu 核心（vdom/hooks/style）无 web-sys 依赖，可在任何平台运行。**
+**架构优势：**
+- 组件层完全解耦 web-sys，可切换到 WIT bindings
+- Tairitsu 核心库（vdom/hooks/style）无任何 web-sys 依赖
+- 双后端设计支持渐进式迁移

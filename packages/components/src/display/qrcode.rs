@@ -6,10 +6,6 @@ use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, FlexDirection, Padding, QRCodeClass, UtilityClass,
 };
 use qrcode::{Color, QrCode};
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use wasm_bindgen::JsCast;
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use web_sys::{self, CanvasRenderingContext2d};
 
 use crate::styled::StyledComponent;
 
@@ -100,37 +96,19 @@ pub fn QRCode(props: QRCodeProps) -> Element {
 
                         #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                         {
-                            if let Some(canvas) = evt.data().downcast::<web_sys::HtmlCanvasElement>()
-                                && let Ok(Some(ctx)) = canvas.get_context("2d")
-                                    && let Ok(ctx) = ctx.dyn_into::<CanvasRenderingContext2d>() {
-                                        let canvas_size = size as f64;
-
-                                        ctx.set_fill_style_str(&background);
-                                        ctx.fill_rect(0.0, 0.0, canvas_size, canvas_size);
-
-                                        if let Some((matrix, modules)) = &qr_matrix {
-                                            let cell_size = canvas_size / *modules as f64;
-                                            let gap = cell_size * 0.02;
-                                            let cell_with_gap = cell_size - gap;
-
-                                            ctx.set_fill_style_str(&color);
-
-                                            for y in 0..*modules {
-                                                for x in 0..*modules {
-                                                    if matrix[y][x] {
-                                                        ctx.fill_rect(
-                                                            x as f64 * cell_size + gap / 2.0,
-                                                            y as f64 * cell_size + gap / 2.0,
-                                                            cell_with_gap,
-                                                            cell_with_gap,
-                                                        );
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        drawn.set(true);
-                                    }
+                            use wasm_bindgen::JsCast;
+                            if let Some(canvas) = evt.data().downcast::<web_sys::HtmlCanvasElement>() {
+                                if let Some((matrix, modules)) = &qr_matrix {
+                                    crate::platform::draw_qrcode_on_canvas(
+                                        canvas,
+                                        matrix,
+                                        *modules,
+                                        &color,
+                                        &background,
+                                    );
+                                    drawn.set(true);
+                                }
+                            }
                         }
                         #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
                         {

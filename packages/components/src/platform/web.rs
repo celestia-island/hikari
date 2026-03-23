@@ -141,3 +141,173 @@ pub fn on_resize(callback: impl FnMut() + 'static) {
 
     closure.forget();
 }
+
+use std::sync::atomic::{AtomicU64, Ordering};
+static OBSERVER_ID_COUNTER: AtomicU64 = AtomicU64::new(1);
+
+pub fn create_resize_observer(callback: impl FnMut() + 'static) -> u64 {
+    use wasm_bindgen::closure::Closure;
+    use web_sys::ResizeObserver;
+
+    let closure = Closure::wrap(Box::new(callback) as Box<dyn FnMut()>);
+    let observer = ResizeObserver::new(closure.as_ref().unchecked_ref()).unwrap();
+    closure.forget();
+
+    let id = OBSERVER_ID_COUNTER.fetch_add(1, Ordering::SeqCst);
+    RESIZE_OBSERVERS.with(|map| map.borrow_mut().insert(id, observer));
+    id
+}
+
+pub fn observe_resize(observer_id: u64, element: &Element) {
+    RESIZE_OBSERVERS.with(|map| {
+        if let Some(observer) = map.borrow().get(&observer_id) {
+            observer.observe(element);
+        }
+    });
+}
+
+pub fn disconnect_resize(observer_id: u64) {
+    RESIZE_OBSERVERS.with(|map| {
+        if let Some(observer) = map.borrow().get(&observer_id) {
+            observer.disconnect();
+        }
+        map.borrow_mut().remove(&observer_id);
+    });
+}
+
+use std::cell::RefCell;
+use std::collections::HashMap;
+
+thread_local! {
+    static RESIZE_OBSERVERS: RefCell<HashMap<u64, web_sys::ResizeObserver>> = RefCell::new(HashMap::new());
+    static MUTATION_OBSERVERS: RefCell<HashMap<u64, web_sys::MutationObserver>> = RefCell::new(HashMap::new());
+}
+
+pub fn create_mutation_observer(callback: impl FnMut() + 'static) -> u64 {
+    use wasm_bindgen::closure::Closure;
+    use web_sys::MutationObserver;
+
+    let closure = Closure::wrap(Box::new(callback) as Box<dyn FnMut()>);
+    let observer = MutationObserver::new(closure.as_ref().unchecked_ref()).unwrap();
+    closure.forget();
+
+    let id = OBSERVER_ID_COUNTER.fetch_add(1, Ordering::SeqCst);
+    MUTATION_OBSERVERS.with(|map| map.borrow_mut().insert(id, observer));
+    id
+}
+
+pub fn observe_mutations(observer_id: u64, element: &Element, options: &MutationObserverOptions) {
+    MUTATION_OBSERVERS.with(|map| {
+        if let Some(observer) = map.borrow().get(&observer_id) {
+            let init = web_sys::MutationObserverInit::new();
+            if options.child_list {
+                init.set_child_list(true);
+            }
+            if options.attributes {
+                init.set_attributes(true);
+            }
+            if options.character_data {
+                init.set_character_data(true);
+            }
+            if let Some(ref subtree) = options.subtree {
+                init.set_subtree(*subtree);
+            }
+            observer.observe_with_options(element, &init).unwrap();
+        }
+    });
+}
+
+pub fn disconnect_mutation(observer_id: u64) {
+    MUTATION_OBSERVERS.with(|map| {
+        if let Some(observer) = map.borrow().get(&observer_id) {
+            observer.disconnect();
+        }
+        map.borrow_mut().remove(&observer_id);
+    });
+}
+
+pub struct MutationObserverOptions {
+    pub child_list: bool,
+    pub attributes: bool,
+    pub character_data: bool,
+    pub subtree: Option<bool>,
+}
+
+impl Default for MutationObserverOptions {
+    fn default() -> Self {
+        Self {
+            child_list: true,
+            attributes: false,
+            character_data: false,
+            subtree: Some(true),
+        }
+    }
+}
+
+pub fn now_timestamp() -> f64 {
+    js_sys::Date::now()
+}
+
+use web_sys::HtmlCanvasElement;
+
+pub fn get_canvas_context(canvas: &HtmlCanvasElement) -> Option<CanvasContext> {
+    canvas
+        .get_context("2d")
+        .ok()
+        .flatten()
+        .map(|ctx| CanvasContext {
+            inner: ctx.dyn_into::<web_sys::CanvasRenderingContext2d>().ok()?,
+        })
+}
+
+pub struct CanvasContext {
+    inner: web_sys::CanvasRenderingContext2d,
+}
+
+impl CanvasContext {
+    pub fn set_fill_style(&self, color: &str) {
+        self.inner.set_fill_style_str(color);
+    }
+
+    pub fn fill_rect(&self, x: f64, y: f64, width: f64, height: f64) {
+        self.inner.fill_rect(x, y, width, height);
+    }
+
+    pub fn clear_rect(&self, x: f64, y: f64, width: f64, height: f64) {
+        self.inner.clear_rect(x, y, width, height);
+    }
+}
+
+pub fn draw_qrcode_on_canvas(
+    canvas: &HtmlCanvasElement,
+    matrix: &[Vec<bool>],
+    modules: usize,
+    color: &str,
+    background: &str,
+) {
+    let Some(ctx) = get_canvas_context(canvas) else {
+        return;
+    };
+
+    let canvas_size = canvas.width() as f64;
+    let cell_size = canvas_size / modules as f64;
+    let gap = cell_size * 0.02;
+    let cell_with_gap = cell_size - gap;
+
+    ctx.set_fill_style(background);
+    ctx.fill_rect(0.0, 0.0, canvas_size, canvas_size);
+
+    ctx.set_fill_style(color);
+    for y in 0..modules {
+        for x in 0..modules {
+            if matrix[y][x] {
+                ctx.fill_rect(
+                    x as f64 * cell_size + gap / 2.0,
+                    y as f64 * cell_size + gap / 2.0,
+                    cell_with_gap,
+                    cell_with_gap,
+                );
+            }
+        }
+    }
+}

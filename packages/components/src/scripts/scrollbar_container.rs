@@ -26,9 +26,7 @@ mod wasm_impl {
         TimerManager,
         style::{AttributeBuilder, CssProperty, StyleBuilder},
     };
-    use js_sys::Date;
     use wasm_bindgen::{JsCast, prelude::*};
-    use web_sys::{MutationObserver, MutationObserverInit, ResizeObserver};
 
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     enum ScrollbarAnimationState {
@@ -50,7 +48,7 @@ mod wasm_impl {
     impl ScrollbarAnimator {
         fn new(track: web_sys::Element) -> Self {
             // Generate unique ID using timestamp
-            let scrollbar_id = format!("scrollbar-{}", js_sys::Date::now());
+            let scrollbar_id = format!("scrollbar-{}", crate::platform::now_timestamp());
 
             hikari_animation::register_scrollbar(scrollbar_id.clone(), track.into());
 

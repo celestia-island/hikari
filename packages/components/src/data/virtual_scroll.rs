@@ -84,15 +84,23 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
 
     // Pre-compute items_data outside rsx!
     let flattened_for_items = flattened_items.clone();
-    let items_data: Vec<_> = visible_items.read().iter().map(|(item, depth)| {
-        let idx = {
-            let items = flattened_for_items.read();
-            items.iter()
-                .position(|(n, _)| n.id == item.id)
-                .unwrap_or(0)
-        };
-        (item.id.clone(), item.title.clone(), item.disabled, idx, *depth)
-    }).collect();
+    let items_data: Vec<_> = visible_items
+        .read()
+        .iter()
+        .map(|(item, depth)| {
+            let idx = {
+                let items = flattened_for_items.read();
+                items.iter().position(|(n, _)| n.id == item.id).unwrap_or(0)
+            };
+            (
+                item.id.clone(),
+                item.title.clone(),
+                item.disabled,
+                idx,
+                *depth,
+            )
+        })
+        .collect();
 
     // Pre-build item elements outside rsx!
     let item_elements: Vec<Element> = items_data.into_iter().map(|(id, title, disabled, idx, depth)| {
@@ -133,14 +141,27 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
             div {
                 class: "hi-virtual-tree-viewport",
                 style: "position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto;",
-                onscroll: move |_e: Event| {
-                    // TODO: Get scroll position from element via JS interop
-                    // For now, use a placeholder value
-                    let scroll_top: f64 = 0.0;
-                    scroll_position_for_onscroll.set(scroll_top);
+                onscroll: move |e: Event| {
+                    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+                    {
+                        use wasm_bindgen::JsCast;
+                        if let Some(web_event) = e.downcast::<web_sys::Event>() {
+                            if let Some(target) = web_event.current_target() {
+                                if let Some(element) = target.dyn_ref::<web_sys::Element>() {
+                                    let scroll_top = element.scroll_top() as f64;
+                                    scroll_position_for_onscroll.set(scroll_top);
 
-                    if let Some(handler) = on_scroll_handler.as_ref() {
-                        handler.call(scroll_top);
+                                    if let Some(handler) = on_scroll_handler.as_ref() {
+                                        handler.call(scroll_top);
+                                    }
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+                    {
+                        let _ = e;
                     }
                 },
 

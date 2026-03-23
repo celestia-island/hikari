@@ -69,21 +69,4 @@ pub use tairitsu_hooks::{
 
 pub use tairitsu_macros::{rsx, component};
 
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
 
-///
-#[deprecated(note = "Utility classes are now managed by the CSS bundle. Use CSS classes directly.")]
-pub fn get_utility_classes() -> &'static str {
-    "" // Utility classes are now in the SCSS bundle
-}

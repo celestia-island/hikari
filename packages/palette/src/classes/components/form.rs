@@ -29,6 +29,8 @@ pub enum InputClass {
     InputDisabled,
     InputPrefix,
     InputSuffix,
+    InputError,
+    InputSuccess,
 }
 
 impl UtilityClass for InputClass {
@@ -42,6 +44,8 @@ impl UtilityClass for InputClass {
             InputClass::InputDisabled => "input-disabled",
             InputClass::InputPrefix => "input-prefix",
             InputClass::InputSuffix => "input-suffix",
+            InputClass::InputError => "input-error",
+            InputClass::InputSuccess => "input-success",
         }
     }
 }

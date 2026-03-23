@@ -2,30 +2,14 @@
 // Calendar component with Arknights + FUI styling
 
 use crate::prelude::*;
+use chrono::{Datelike, Local};
 use hikari_palette::classes::{CalendarClass, ClassesBuilder, UtilityClass};
 
 use crate::styled::StyledComponent;
 
 fn get_current_date() -> (i32, u32) {
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-    {
-        use js_sys::Date;
-        let date = Date::new_0();
-        let year = date.get_full_year() as i32;
-        let month = (date.get_month() + 1) as u32;
-        (year, month)
-    }
-    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-    {
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default();
-        let days = now.as_secs() / 86400;
-        let years = days / 365;
-        let remaining_days = days % 365;
-        let month = (remaining_days / 30 + 1).min(12) as u32;
-        ((1970 + years as i32), month)
-    }
+    let now = Local::now();
+    (now.year(), now.month())
 }
 
 pub struct CalendarComponent;
@@ -76,8 +60,18 @@ fn first_day_of_month(year: i32, month: u32) -> u32 {
 }
 
 const MONTH_NAMES: [&str; 12] = [
-    "一月", "二月", "三月", "四月", "五月", "六月",
-    "七月", "八月", "九月", "十月", "十一月", "十二月",
+    "一月",
+    "二月",
+    "三月",
+    "四月",
+    "五月",
+    "六月",
+    "七月",
+    "八月",
+    "九月",
+    "十月",
+    "十一月",
+    "十二月",
 ];
 
 const WEEKDAY_NAMES: [&str; 7] = ["日", "一", "二", "三", "四", "五", "六"];
@@ -119,18 +113,14 @@ pub fn Calendar(props: CalendarProps) -> Element {
             VNode::Element(
                 VElement::new("div")
                     .class(weekday_class.clone())
-                    .child(VNode::Text(VText::new(weekday)))
+                    .child(VNode::Text(VText::new(weekday))),
             )
         })
         .collect();
 
     // Build empty cells for days before the 1st
     let empty_cells: Vec<VNode> = (0..first_day)
-        .map(|_| {
-            VNode::Element(
-                VElement::new("div").class(day_cell_class.clone())
-            )
-        })
+        .map(|_| VNode::Element(VElement::new("div").class(day_cell_class.clone())))
         .collect();
 
     // Build day cells
@@ -163,8 +153,8 @@ pub fn Calendar(props: CalendarProps) -> Element {
                     .child(VNode::Element(
                         VElement::new("div")
                             .class(inner_class)
-                            .child(VNode::Text(VText::new(&day.to_string())))
-                    ))
+                            .child(VNode::Text(VText::new(&day.to_string()))),
+                    )),
             )
         })
         .collect();
@@ -185,7 +175,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
                     *cm_prev.write() = nm;
                 }
             })
-            .child(VNode::Text(VText::new("‹")))
+            .child(VNode::Text(VText::new("‹"))),
     );
 
     let cy_prev2 = current_year.clone();
@@ -201,7 +191,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
                     *cm_prev2.write() = nm;
                 }
             })
-            .child(VNode::Text(VText::new("◀")))
+            .child(VNode::Text(VText::new("◀"))),
     );
 
     let cy_today = current_year.clone();
@@ -216,7 +206,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
                     *cm_today.write() = today_month;
                 }
             })
-            .child(VNode::Text(VText::new("今天")))
+            .child(VNode::Text(VText::new("今天"))),
     );
 
     let cy_next = current_year.clone();
@@ -233,7 +223,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
                     *cm_next.write() = nm;
                 }
             })
-            .child(VNode::Text(VText::new("▶")))
+            .child(VNode::Text(VText::new("▶"))),
     );
 
     let cy_next2 = current_year.clone();
@@ -250,7 +240,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
                     *cm_next2.write() = nm;
                 }
             })
-            .child(VNode::Text(VText::new("›")))
+            .child(VNode::Text(VText::new("›"))),
     );
 
     let title_text = format!("{}年 {}", year, MONTH_NAMES[(month - 1) as usize]);

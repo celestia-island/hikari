@@ -81,99 +81,66 @@ pub struct MenuItemProps {
     pub glow: bool,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct SubMenuProps {
-    #[props(default)]
+    #[default]
     pub item_key: String,
 
-    #[props(default)]
+    #[default]
     pub title: String,
 
-    #[props(default)]
+    #[default]
     pub icon: Option<Element>,
 
-    #[props(default)]
+    #[default]
     pub disabled: bool,
 
-    #[props(default)]
+    #[default]
     pub default_expanded: bool,
 
-    #[props(default)]
+    #[default]
     pub level: u32,
 
-    #[props(default)]
+    #[default]
     pub height: MenuItemHeight,
 
-    #[props(default)]
+    #[default]
     pub children: Element,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 }
 
-impl Default for SubMenuProps {
-    fn default() -> Self {
-        Self {
-            item_key: String::default(),
-            title: String::default(),
-            icon: None,
-            disabled: false,
-            default_expanded: false,
-            level: 0,
-            height: MenuItemHeight::Default,
-            children: VNode::empty(),
-            class: String::default(),
-        }
-    }
-}
-
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct MenuProps {
-    #[props(default)]
+    #[default]
     pub default_active: String,
 
-    #[props(default)]
+    #[default]
     pub inline: bool,
 
-    #[props(default)]
+    #[default]
     pub mode: MenuMode,
 
-    #[props(default)]
+    #[default]
     pub compact: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    #[props(default)]
+    #[default]
     pub children: Element,
 
     pub on_select: Option<EventHandler<String>>,
 
-    #[props(default)]
+    #[default]
     pub in_popover: bool,
 
-    #[props(default)]
+    #[default]
     pub glow: bool,
 
-    #[props(default)]
+    #[default]
     pub request_close: Option<Callback<()>>,
-}
-
-impl Default for MenuProps {
-    fn default() -> Self {
-        Self {
-            default_active: String::default(),
-            inline: false,
-            mode: Default::default(),
-            compact: false,
-            class: String::default(),
-            children: VNode::empty(),
-            on_select: None,
-            in_popover: false,
-            glow: false,
-            request_close: None,
-        }
-    }
 }
 
 ///

@@ -5,7 +5,7 @@ use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, Display, Position};
 
 use crate::{
-    portal::{generate_portal_id, use_portal, PortalEntry},
+    portal::{PortalEntry, generate_portal_id, use_portal},
     styled::StyledComponent,
 };
 
@@ -189,11 +189,7 @@ pub fn Popover(props: PopoverProps) -> Element {
         .build();
 
     rsx! {
-        div {
-            class: container_classes,
-            onclick: handle_trigger_click,
-            { props.trigger }
-        }
+        div { class: container_classes, onclick: handle_trigger_click, {props.trigger} }
     }
 }
 

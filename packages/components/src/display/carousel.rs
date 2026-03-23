@@ -25,46 +25,31 @@ pub enum CarouselIndicatorType {
     Hidden,
 }
 
-#[derive(Props, Clone, PartialEq, Debug)]
+#[define_props]
 pub struct CarouselProps {
-    #[props(default)]
+    #[default]
     pub children: Element,
 
-    #[props(default = 5000)]
+    #[default(5000)]
     pub autoplay: u64,
 
-    #[props(default = true)]
+    #[default(true)]
     pub show_arrows: bool,
 
-    #[props(default = CarouselIndicatorPosition::Bottom)]
+    #[default(CarouselIndicatorPosition::Bottom)]
     pub indicator_position: CarouselIndicatorPosition,
 
-    #[props(default = CarouselIndicatorType::Dots)]
+    #[default(CarouselIndicatorType::Dots)]
     pub indicator_type: CarouselIndicatorType,
 
-    #[props(default = true)]
+    #[default(true)]
     pub show_pause: bool,
 
-    #[props(default = false)]
+    #[default(false)]
     pub infinite: bool,
 
-    #[props(default = false)]
+    #[default(false)]
     pub initial_paused: bool,
-}
-
-impl Default for CarouselProps {
-    fn default() -> Self {
-        Self {
-            children: VNode::empty(),
-            autoplay: 5000,
-            show_arrows: true,
-            indicator_position: CarouselIndicatorPosition::Bottom,
-            indicator_type: CarouselIndicatorType::Dots,
-            show_pause: true,
-            infinite: false,
-            initial_paused: false,
-        }
-    }
 }
 
 #[component]

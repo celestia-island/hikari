@@ -91,39 +91,39 @@ impl InputWrapperItem {
     }
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct InputWrapperProps {
-    #[props(default)]
+    #[default]
     pub left: Vec<InputWrapperItem>,
 
-    #[props(default)]
+    #[default]
     pub right: Vec<InputWrapperItem>,
 
-    #[props(default)]
+    #[default]
     pub input: Option<Element>,
 
-    #[props(default)]
+    #[default]
     pub size: InputWrapperSize,
 
-    #[props(default = false)]
+    #[default(false)]
     pub disabled: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    #[props(default)]
+    #[default]
     pub style: String,
 
-    #[props(default = true)]
+    #[default(true)]
     pub glow: bool,
 
-    #[props(default)]
+    #[default]
     pub glow_blur: GlowBlur,
 
-    #[props(default)]
+    #[default]
     pub glow_intensity: GlowIntensity,
 
-    #[props(default)]
+    #[default]
     pub glow_color: GlowColor,
 }
 

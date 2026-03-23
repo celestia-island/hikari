@@ -11,29 +11,29 @@ use hikari_palette::classes::{ClassesBuilder, TreeClassNew};
 
 pub struct TreeComponent;
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct TreeProps {
     pub data: Vec<TreeNodeData>,
 
-    #[props(default)]
+    #[default]
     pub default_expanded_keys: Vec<String>,
 
-    #[props(default)]
+    #[default]
     pub default_selected_keys: Vec<String>,
 
-    #[props(default)]
+    #[default]
     pub checkable: bool,
 
-    #[props(default)]
+    #[default]
     pub show_line: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    #[props(default)]
+    #[default]
     pub on_select: Option<EventHandler<String>>,
 
-    #[props(default)]
+    #[default]
     pub on_expand: Option<EventHandler<String>>,
 }
 

@@ -17,33 +17,33 @@ pub enum FormFieldStatus {
     Success,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct FormFieldProps {
-    #[props(default)]
+    #[default]
     pub label: String,
 
-    #[props(default = false)]
+    #[default(false)]
     pub required: bool,
 
-    #[props(default)]
+    #[default]
     pub help_text: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub error_message: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub status: FormFieldStatus,
 
-    #[props(default = true)]
+    #[default(true)]
     pub show_status: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    #[props(default)]
+    #[default]
     pub style: String,
 
-    #[props(default)]
+    #[default]
     pub children: Element,
 }
 

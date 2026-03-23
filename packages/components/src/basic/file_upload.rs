@@ -18,33 +18,33 @@ pub enum FileUploadStatus {
     Error,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct FileUploadProps {
-    #[props(default = false)]
+    #[default(false)]
     pub multiple: bool,
 
-    #[props(default)]
+    #[default]
     pub accept: String,
 
-    #[props(default = 10485760)] // 10MB default
+    #[default(10485760)] // 10MB default
     pub max_size: usize,
 
-    #[props(default = true)]
+    #[default(true)]
     pub show_preview: bool,
 
-    #[props(default = "Click or drag file to upload".to_string())]
+    #[default("Click or drag file to upload".to_string())]
     pub upload_text: String,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    #[props(default)]
+    #[default]
     pub style: String,
 
-    #[props(default)]
+    #[default]
     pub on_files: Option<EventHandler<Vec<String>>>,
 
-    #[props(default)]
+    #[default]
     pub on_error: Option<EventHandler<String>>,
 }
 

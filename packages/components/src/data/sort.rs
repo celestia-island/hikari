@@ -58,18 +58,18 @@ impl SortConfig {
     }
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct SortProps {
-    #[props(default)]
+    #[default]
     pub column: String,
 
-    #[props(default)]
+    #[default]
     pub direction: SortDirection,
 
-    #[props(default)]
+    #[default]
     pub columns: Vec<ColumnDef>,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
     pub on_sort_change: Option<EventHandler<SortConfig>>,

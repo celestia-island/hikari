@@ -1,0 +1,92 @@
+// Popover Component Styles
+// Floating content container with optional title
+
+// Base popover container
+.hi-popover {
+    position: absolute;
+    z-index: 1000;
+    background-color: var(--hi-surface, #ffffff);
+    border: 1px solid var(--hi-border, rgba(0, 0, 0, 0.1));
+    border-radius: 8px;
+    box-shadow: var(--hi-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+    padding: 12px 16px;
+    min-width: 180px;
+    max-width: 350px;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    animation: hi-popover-fade-in 0.2s ease-out;
+}
+
+@keyframes hi-popover-fade-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+// Popover title
+.hi-popover-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--hi-text-primary, #333);
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--hi-border, rgba(0, 0, 0, 0.1));
+}
+
+// Popover content
+.hi-popover-content {
+    font-size: 14px;
+    color: var(--hi-text-secondary, #666);
+    line-height: 1.5;
+
+    // Reset margins for direct children
+    > *:first-child {
+        margin-top: 0;
+    }
+
+    > *:last-child {
+        margin-bottom: 0;
+    }
+}
+
+// Dark theme adjustments
+[data-theme="dark"] .hi-popover,
+[data-theme="tairitsu"] .hi-popover {
+    background-color: rgba(0, 0, 0, 0.9);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .hi-popover-title,
+[data-theme="tairitsu"] .hi-popover-title {
+    color: var(--hi-text-primary, #e0e0e0);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .hi-popover-content,
+[data-theme="tairitsu"] .hi-popover-content {
+    color: var(--hi-text-secondary, #b0b0b0);
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+    .hi-popover {
+        border-width: 2px;
+        border-color: var(--hi-color-border, #000);
+    }
+
+    .hi-popover-title {
+        border-bottom-width: 2px;
+    }
+}
+
+// Accessibility: respect prefers-reduced-motion
+@media (prefers-reduced-motion: reduce) {
+    .hi-popover {
+        transition: opacity 0.1s ease;
+        animation: none;
+    }
+}

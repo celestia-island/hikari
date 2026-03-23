@@ -23,17 +23,17 @@ impl FilterOption {
     }
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct FilterProps {
     pub column: String,
 
-    #[props(default)]
+    #[default]
     pub filters: Vec<FilterOption>,
 
-    #[props(default)]
+    #[default]
     pub selected_values: Vec<String>,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
     pub on_filter_change: Option<EventHandler<Vec<String>>>,

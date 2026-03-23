@@ -106,51 +106,51 @@ pub struct ThemeContext {
     pub set_theme: Callback<String>,
 }
 
-#[derive(Clone, Props, PartialEq)]
+#[define_props]
 pub struct ThemeProviderProps {
-    #[props(default = "hikari".to_string())]
+    #[default("hikari".to_string())]
     pub palette: String,
 
-    #[props(default = "ltr".to_string())]
+    #[default("ltr".to_string())]
     pub direction: String,
 
-    #[props(default)]
+    #[default]
     pub primary: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub secondary: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub accent: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub success: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub warning: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub danger: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub background: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub surface: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub border: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub text_primary: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub text_secondary: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub component_overrides: ComponentOverrides,
 
-    children: Element,
+    pub children: Element,
 }
 
 ///

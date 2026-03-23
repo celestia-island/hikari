@@ -9,27 +9,27 @@ use crate::styled::StyledComponent;
 
 pub struct ZoomControlsComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct ZoomControlsProps {
-    #[props(default = 100)]
+    #[default(100)]
     pub zoom: u32,
 
-    #[props(default = 25)]
+    #[default(25)]
     pub min_zoom: u32,
 
-    #[props(default = 400)]
+    #[default(400)]
     pub max_zoom: u32,
 
-    #[props(default = 25)]
+    #[default(25)]
     pub step: u32,
 
-    #[props(default = true)]
+    #[default(true)]
     pub show_percentage: bool,
 
-    #[props(default = false)]
+    #[default(false)]
     pub show_slider: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
     pub on_zoom_change: Option<EventHandler<u32>>,

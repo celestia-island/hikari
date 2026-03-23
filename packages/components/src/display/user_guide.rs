@@ -37,23 +37,23 @@ pub enum GuidePlacement {
     Right,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct UserGuideProps {
     pub steps: Vec<GuideStep>,
 
-    #[props(default)]
+    #[default]
     pub current: usize,
 
-    #[props(default = true)]
+    #[default(true)]
     pub visible: bool,
 
-    #[props(default = true)]
+    #[default(true)]
     pub show_progress: bool,
 
-    #[props(default = true)]
+    #[default(true)]
     pub skippable: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
     pub on_step_change: Option<EventHandler<usize>>,

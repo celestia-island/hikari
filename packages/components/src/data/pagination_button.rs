@@ -44,7 +44,10 @@ pub enum PaginationButtonContent {
         size: u32,
     },
 
-    Text { text: String, font_size: u32 },
+    Text {
+        text: String,
+        font_size: u32,
+    },
 
     Ellipsis,
 }
@@ -69,10 +72,7 @@ pub fn PaginationButton(props: PaginationButtonProps) -> Element {
                 style: "display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; cursor: pointer; user-select: none;",
                 onclick: props.onclick,
 
-                Arrow {
-                    direction: direction,
-                    size: size,
-                }
+                Arrow { direction, size }
             }
         },
         PaginationButtonContent::Text { text, font_size: _ } => rsx! {
@@ -100,7 +100,7 @@ pub fn PaginationButton(props: PaginationButtonProps) -> Element {
                 blur: props.glow_blur,
                 color: props.glow_color,
                 intensity: props.glow_intensity,
-                { button_element }
+                {button_element}
             }
         }
     } else {

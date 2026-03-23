@@ -35,20 +35,21 @@ pub enum StepsDirection {
     Vertical,
 }
 
-#[derive(Clone, PartialEq, Props, Debug, Default)]
+#[define_props]
+#[derive(Debug)]
 pub struct StepData {
     pub title: String,
 
-    #[props(default)]
+    #[default]
     pub description: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub icon: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub status: StepStatus,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 }
 
@@ -58,23 +59,23 @@ impl IntoAttrValue for StepData {
     }
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct StepsProps {
-    #[props(default = 0)]
+    #[default(0)]
     pub current: usize,
 
-    #[props(default)]
+    #[default]
     pub direction: StepsDirection,
 
     pub steps: Vec<StepData>,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    #[props(default)]
+    #[default]
     pub style: String,
 
-    #[props(default)]
+    #[default]
     pub on_change: Option<Callback<usize, ()>>,
 }
 
@@ -177,19 +178,25 @@ pub fn Steps(props: StepsProps) -> Element {
 }
 
 /// Internal component for rendering individual step items
-#[derive(Clone, PartialEq, Props, Debug, Default)]
+#[define_props]
+#[derive(Debug)]
 struct StepItemProps {
-    #[props(default)]
+    #[default]
     index: usize,
-    #[props(default)]
+
+    #[default]
     step: StepData,
-    #[props(default)]
+
+    #[default]
     step_classes: String,
-    #[props(default)]
+
+    #[default]
     is_clickable: bool,
-    #[props(default)]
+
+    #[default]
     step_status: StepStatus,
-    #[props(default)]
+
+    #[default]
     icon_class: String,
     #[props(default)]
     number_class: String,

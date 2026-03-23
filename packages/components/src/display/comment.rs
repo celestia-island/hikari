@@ -12,29 +12,29 @@ pub struct CommentComponent;
 ///
 ///
 ///
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct CommentProps {
-    #[props(default)]
+    #[default]
     pub author: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub avatar: Option<String>,
 
     pub content: String,
 
-    #[props(default)]
+    #[default]
     pub datetime: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub actions: Option<Element>,
 
-    #[props(default)]
+    #[default]
     pub nested: Option<Element>,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    #[props(default)]
+    #[default]
     pub style: String,
 }
 

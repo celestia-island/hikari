@@ -3,6 +3,7 @@
 
 use crate::style_builder::{CssProperty, StyleStringBuilder};
 use crate::prelude::*;
+use hikari_palette::classes::{AvatarClass, ClassesBuilder, UtilityClass};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum AvatarSize {
@@ -108,11 +109,10 @@ pub fn Avatar(
         .add(CssProperty::ObjectFit, "cover")
         .build_clean();
 
-    let base_class = if class.is_empty() {
-        "hi-avatar".to_string()
-    } else {
-        format!("hi-avatar {}", class)
-    };
+    let base_class = ClassesBuilder::new()
+        .add(AvatarClass::Avatar)
+        .add_raw(&class)
+        .build();
 
     let fallback_text = fallback.clone().unwrap_or_else(|| {
         alt.chars()
@@ -131,7 +131,7 @@ pub fn Avatar(
     let fallback_content = if is_icon_mode {
         rsx! {
             svg {
-                class: "hi-avatar-icon",
+                class: AvatarClass::AvatarIcon.as_class(),
                 width: icon_size,
                 height: icon_size,
                 view_box: "0 0 24 24",
@@ -144,7 +144,7 @@ pub fn Avatar(
     } else if is_initial_mode {
         rsx! {
             span {
-                class: "hi-avatar-fallback",
+                class: AvatarClass::AvatarFallback.as_class(),
                 style: "font-size: {font_size};",
                 "{fallback_text}"
             }
@@ -152,7 +152,7 @@ pub fn Avatar(
     } else {
         rsx! {
             span {
-                class: "hi-avatar-fallback",
+                class: AvatarClass::AvatarFallback.as_class(),
                 style: "font-size: {font_size};",
                 "{fallback_text}"
             }
@@ -163,7 +163,7 @@ pub fn Avatar(
     let inner_content = if has_src {
         rsx! {
             img {
-                class: "hi-avatar-img",
+                class: AvatarClass::AvatarImg.as_class(),
                 src: src_val.unwrap_or_default(),
                 alt: alt.clone(),
                 style: img_style,

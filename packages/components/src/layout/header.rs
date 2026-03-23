@@ -119,3 +119,90 @@ pub fn Header(
         }
     }
 }
+
+pub struct HeaderComponent;
+
+impl crate::styled::StyledComponent for HeaderComponent {
+    fn styles() -> &'static str {
+        r#"
+.hi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: 64px;
+  min-height: 64px;
+  padding: 0 1rem;
+  margin: 0;
+  border-radius: 0;
+  background: var(--hi-surface);
+  backdrop-filter: blur(4px);
+  border-bottom: 1px solid var(--hi-border);
+  box-shadow: 0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.05));
+  position: relative;
+}
+
+.hi-header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.hi-header-transparent {
+  background: transparent;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: none;
+  border-bottom: 1px solid transparent;
+}
+
+.hi-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.hi-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.hi-header-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .hi-header-toggle {
+    display: inline-flex;
+  }
+
+  .hi-header {
+    padding: 0 0.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .hi-header {
+    padding: 0 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hi-header {
+    padding: 0 1rem;
+  }
+}
+"#
+    }
+
+    fn name() -> &'static str {
+        "header"
+    }
+}

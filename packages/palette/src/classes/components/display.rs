@@ -9,15 +9,36 @@ pub enum CardClass {
     Card,
     CardHoverable,
     CardBordered,
+    CardFlat,
     CardHeader,
+    CardHeaderLeft,
+    CardHeaderAvatar,
+    CardHeaderAction,
     CardTitle,
     CardSubtitle,
     CardExtra,
     CardBody,
+    CardFooter,
     CardMedia,
+    CardCover,
     CardActions,
     CardActionsNoSpacing,
     CardSpotlightWrapper,
+    // Size variants
+    CardSm,
+    CardMd,
+    CardLg,
+    // Grid variants
+    CardGrid,
+    CardGrid2,
+    CardGrid3,
+    CardGrid4,
+    // States
+    CardLoading,
+    CardGlow,
+    // Animations
+    CardAnimateIn,
+    CardStagger,
 }
 
 impl UtilityClass for CardClass {
@@ -26,15 +47,32 @@ impl UtilityClass for CardClass {
             CardClass::Card => "card",
             CardClass::CardHoverable => "card-hoverable",
             CardClass::CardBordered => "card-bordered",
+            CardClass::CardFlat => "card-flat",
             CardClass::CardHeader => "card-header",
+            CardClass::CardHeaderLeft => "card-header-left",
+            CardClass::CardHeaderAvatar => "card-header-avatar",
+            CardClass::CardHeaderAction => "card-header-action",
             CardClass::CardTitle => "card-title",
             CardClass::CardSubtitle => "card-subtitle",
             CardClass::CardExtra => "card-extra",
             CardClass::CardBody => "card-body",
+            CardClass::CardFooter => "card-footer",
             CardClass::CardMedia => "card-media",
+            CardClass::CardCover => "card-cover",
             CardClass::CardActions => "card-actions",
             CardClass::CardActionsNoSpacing => "card-actions-no-spacing",
             CardClass::CardSpotlightWrapper => "card-spotlight-wrapper",
+            CardClass::CardSm => "card-sm",
+            CardClass::CardMd => "card-md",
+            CardClass::CardLg => "card-lg",
+            CardClass::CardGrid => "card-grid",
+            CardClass::CardGrid2 => "card-grid-2",
+            CardClass::CardGrid3 => "card-grid-3",
+            CardClass::CardGrid4 => "card-grid-4",
+            CardClass::CardLoading => "card-loading",
+            CardClass::CardGlow => "card-glow",
+            CardClass::CardAnimateIn => "card-animate-in",
+            CardClass::CardStagger => "card-stagger",
         }
     }
 }
@@ -208,6 +246,29 @@ impl UtilityClass for QRCodeClass {
             QRCodeClass::Title => "qrcode-title",
             QRCodeClass::Wrapper => "qrcode-wrapper",
             QRCodeClass::Image => "qrcode-image",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ImageClass {
+    ImageContainer,
+    Image,
+    Logo,
+    ImagePlaceholder,
+    ImageSkeleton,
+    ImageIconPlaceholder,
+}
+
+impl UtilityClass for ImageClass {
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            ImageClass::ImageContainer => "image-container",
+            ImageClass::Image => "image",
+            ImageClass::Logo => "logo",
+            ImageClass::ImagePlaceholder => "image-placeholder",
+            ImageClass::ImageSkeleton => "image-skeleton",
+            ImageClass::ImageIconPlaceholder => "image-icon-placeholder",
         }
     }
 }

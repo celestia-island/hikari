@@ -199,3 +199,85 @@ pub fn Row(
         }
     }
 }
+
+pub struct GridComponent;
+
+impl crate::styled::StyledComponent for GridComponent {
+    fn styles() -> &'static str {
+        r#"
+.hi-grid {
+  display: grid;
+}
+
+.hi-grid-gap-sm {
+  gap: 0.5rem;
+}
+
+.hi-grid-gap-md {
+  gap: 1rem;
+}
+
+.hi-grid-gap-lg {
+  gap: 1.5rem;
+}
+
+.hi-col {
+  min-width: 0;
+}
+
+.hi-row {
+  display: flex;
+}
+
+.hi-row-gap-sm {
+  gap: 0.5rem;
+}
+
+.hi-row-gap-md {
+  gap: 1rem;
+}
+
+.hi-row-gap-lg {
+  gap: 1.5rem;
+}
+
+.col-responsive {
+  grid-column: span 12;
+}
+
+@media (min-width: 768px) {
+  .md\:col-span-1 { grid-column: span 1 !important; }
+  .md\:col-span-2 { grid-column: span 2 !important; }
+  .md\:col-span-3 { grid-column: span 3 !important; }
+  .md\:col-span-4 { grid-column: span 4 !important; }
+  .md\:col-span-5 { grid-column: span 5 !important; }
+  .md\:col-span-6 { grid-column: span 6 !important; }
+  .md\:col-span-7 { grid-column: span 7 !important; }
+  .md\:col-span-8 { grid-column: span 8 !important; }
+  .md\:col-span-9 { grid-column: span 9 !important; }
+  .md\:col-span-10 { grid-column: span 10 !important; }
+  .md\:col-span-11 { grid-column: span 11 !important; }
+  .md\:col-span-12 { grid-column: span 12 !important; }
+}
+
+@media (min-width: 1024px) {
+  .lg\:col-span-1 { grid-column: span 1 !important; }
+  .lg\:col-span-2 { grid-column: span 2 !important; }
+  .lg\:col-span-3 { grid-column: span 3 !important; }
+  .lg\:col-span-4 { grid-column: span 4 !important; }
+  .lg\:col-span-5 { grid-column: span 5 !important; }
+  .lg\:col-span-6 { grid-column: span 6 !important; }
+  .lg\:col-span-7 { grid-column: span 7 !important; }
+  .lg\:col-span-8 { grid-column: span 8 !important; }
+  .lg\:col-span-9 { grid-column: span 9 !important; }
+  .lg\:col-span-10 { grid-column: span 10 !important; }
+  .lg\:col-span-11 { grid-column: span 11 !important; }
+  .lg\:col-span-12 { grid-column: span 12 !important; }
+}
+"#
+    }
+
+    fn name() -> &'static str {
+        "grid"
+    }
+}

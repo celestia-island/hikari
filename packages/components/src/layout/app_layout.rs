@@ -121,3 +121,111 @@ pub fn Layout(
         }
     }
 }
+
+pub struct LayoutComponent;
+
+impl crate::styled::StyledComponent for LayoutComponent {
+    fn styles() -> &'static str {
+        r#"
+.hi-layout {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: transparent;
+  overflow: hidden;
+}
+
+.hi-layout-body {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  height: calc(100vh - 60px);
+  overflow: hidden;
+  position: relative;
+}
+
+.hi-layout-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.hi-layout-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0;
+  background: transparent;
+}
+
+.hi-layout-light {
+  background-color: transparent;
+}
+
+.hi-layout-has-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.hi-layout-has-sidebar .hi-layout-body > aside,
+.hi-layout-has-sidebar .hi-layout-body > .hi-aside {
+  width: 260px;
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.hi-layout-has-sidebar .hi-layout-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.hi-layout-overlay-open {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(23, 89, 168, 0.3);
+  backdrop-filter: blur(4px);
+  z-index: 199;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media print {
+  .hi-layout {
+    background: white;
+  }
+
+  .hi-layout-header,
+  .hi-layout-footer,
+  .hi-layout-aside {
+    display: none;
+  }
+
+  .hi-layout-content {
+    background: white;
+    box-shadow: none;
+  }
+}
+"#
+    }
+
+    fn name() -> &'static str {
+        "app_layout"
+    }
+}

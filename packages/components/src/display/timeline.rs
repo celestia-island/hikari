@@ -42,11 +42,7 @@ pub fn Timeline(props: TimelineProps) -> Element {
         .build();
 
     rsx! {
-        div {
-            class: timeline_classes,
-            style: props.style,
-            {props.children}
-        }
+        div { class: timeline_classes, style: props.style, {props.children} }
     }
 }
 
@@ -88,35 +84,24 @@ pub fn TimelineItem(props: TimelineItemProps) -> Element {
     };
 
     rsx! {
-        div {
-            class: item_classes,
-            style: props.style,
+        div { class: item_classes, style: props.style,
 
             // Timeline dot
-            div {
-                class: TimelineClass::Dot.as_class(),
-                style: dot_style,
+            div { class: TimelineClass::Dot.as_class(), style: dot_style,
                 if let Some(icon) = props.icon {
-                    { icon }
+                    {icon}
                 }
             }
 
             // Timeline content
-            div {
-                class: TimelineClass::Content.as_class(),
+            div { class: TimelineClass::Content.as_class(),
 
                 if !props.time.is_empty() {
-                    div {
-                        class: TimelineClass::Time.as_class(),
-                        "{props.time}"
-                    }
+                    div { class: TimelineClass::Time.as_class(), "{props.time}" }
                 }
 
                 if !props.title.is_empty() {
-                    div {
-                        class: TimelineClass::Title.as_class(),
-                        "{props.title}"
-                    }
+                    div { class: TimelineClass::Title.as_class(), "{props.title}" }
                 }
 
                 {props.children}

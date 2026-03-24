@@ -77,10 +77,8 @@ pub fn PortalProvider(children: Element) -> Element {
     });
 
     rsx! {
-        children
-        PortalRender {
-            entries: Some(entries_for_render),
-        }
+        children {}
+        PortalRender { entries: Some(entries_for_render) }
     }
 }
 

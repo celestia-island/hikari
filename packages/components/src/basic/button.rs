@@ -177,7 +177,7 @@ pub fn Button(props: ButtonProps) -> Element {
             style: style_attr,
             "data-button-animation": animation_attr,
             "data-animation-id": props.animation_id,
-            disabled: disabled,
+            disabled,
             onclick: move |e| {
                 if let Some(handler) = props.onclick.as_ref() {
                     handler(e);
@@ -189,21 +189,13 @@ pub fn Button(props: ButtonProps) -> Element {
             }
 
             if let Some(icon) = props.icon {
-                span {
-                    class: "hi-button-icon",
-                    "data-button-icon": "true",
-                    { icon }
-                }
+                span { class: "hi-button-icon", "data-button-icon": "true", {icon} }
             }
 
-            { props.children }
+            {props.children}
 
             if let Some(suffix) = props.suffix {
-                span {
-                    class: "hi-button-suffix",
-                    "data-button-suffix": "true",
-                    { suffix }
-                }
+                span { class: "hi-button-suffix", "data-button-suffix": "true", {suffix} }
             }
         }
     };
@@ -227,7 +219,7 @@ pub fn Button(props: ButtonProps) -> Element {
                 blur: props.glow_blur,
                 color: glow_color,
                 intensity: props.glow_intensity,
-                { button_content }
+                {button_content}
             }
         }
     } else {

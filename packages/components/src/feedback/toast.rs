@@ -111,12 +111,9 @@ pub fn Toast(props: ToastProps) -> Element {
             blur: GlowBlur::Medium,
             color: glow_color,
             intensity: GlowIntensity::Soft,
-            div {
-                class: toast_classes,
+            div { class: toast_classes,
 
-                div { class: ToastClass::ToastIconWrapper.as_class(),
-                    { default_icon }
-                }
+                div { class: ToastClass::ToastIconWrapper.as_class(), {default_icon} }
 
                 div { class: ToastClass::ToastContent.as_class(),
 
@@ -135,11 +132,13 @@ pub fn Toast(props: ToastProps) -> Element {
                         class: "hi-toast-close".to_string(),
                         icon_color: Some("var(--hi-color-white-100)".to_string()),
                         glow: false,
-                        onclick: Some(EventHandler::new(move |e| {
-                            if let Some(handler) = props.on_close.as_ref() {
-                                handler(e);
-                            }
-                        })),
+                        onclick: Some(
+                            EventHandler::new(move |e| {
+                                if let Some(handler) = props.on_close.as_ref() {
+                                    handler(e);
+                                }
+                            }),
+                        ),
                     }
                 }
             }

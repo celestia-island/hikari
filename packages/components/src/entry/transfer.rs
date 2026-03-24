@@ -162,10 +162,7 @@ pub fn Transfer(props: TransferProps) -> Element {
                     disabled: props.source_selected_keys.is_empty() || props.disabled,
                     onclick: handle_to_target,
 
-                    Icon {
-                        icon: MdiIcon::ChevronRight,
-                        size: 16,
-                    }
+                    Icon { icon: MdiIcon::ChevronRight, size: 16 }
                 }
 
                 if !props.one_way {
@@ -174,10 +171,7 @@ pub fn Transfer(props: TransferProps) -> Element {
                         disabled: props.target_selected_keys.is_empty() || props.disabled,
                         onclick: handle_to_source,
 
-                        Icon {
-                            icon: MdiIcon::ChevronLeft,
-                            size: 16,
-                        }
+                        Icon { icon: MdiIcon::ChevronLeft, size: 16 }
                     }
                 }
             }
@@ -304,9 +298,7 @@ fn TransferPanel(
                         disabled: item_disabled,
                     }
 
-                    span { class: TransferClass::ItemLabel.as_class(),
-                        "{label}"
-                    }
+                    span { class: TransferClass::ItemLabel.as_class(), "{label}" }
                 }
             }
         })
@@ -332,9 +324,7 @@ fn TransferPanel(
     // Pre-compute empty state - use items directly since filtered_items is already computed
     let empty_state = if items.is_empty() {
         rsx! {
-            li { class: TransferClass::PanelEmpty.as_class(),
-                "No items"
-            }
+            li { class: TransferClass::PanelEmpty.as_class(), "No items" }
         }
     } else {
         VNode::empty()
@@ -356,16 +346,12 @@ fn TransferPanel(
                     onchange: handle_toggle_all,
                 }
                 span { class: TransferClass::PanelTitle.as_class(), "{title}" }
-                span { class: TransferClass::PanelCount.as_class(),
-                    "{items.len()}"
-                }
+                span { class: TransferClass::PanelCount.as_class(), "{items.len()}" }
             }
 
             {search_section}
 
-            ul { class: TransferClass::PanelList.as_class(),
-                ..list_children
-            }
+            ul { class: TransferClass::PanelList.as_class(), ..list_children }
         }
     }
 }

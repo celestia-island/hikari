@@ -56,13 +56,11 @@ pub fn RadioButton(props: RadioButtonProps) -> Element {
                 name: radio_name,
                 value: "{props.value}",
                 checked: is_checked,
-                disabled: disabled,
+                disabled,
                 onchange: handle_change,
             }
             div { class: "hi-radio-indicator",
-                div {
-                    class: "hi-radio-dot",
-                }
+                div { class: "hi-radio-dot" }
             }
             span { class: "hi-radio-text", {props.children} }
         }

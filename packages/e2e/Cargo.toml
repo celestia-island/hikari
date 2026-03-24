@@ -56,4 +56,8 @@ path = "src/bin/test_all_pages.rs"
 name = "hikari-browser-debug"
 path = "src/bin/browser_debug.rs"
 
+[[bin]]
+name = "run-ssr-e2e"
+path = "src/bin/run_ssr_e2e.rs"
+
 [dev-dependencies]

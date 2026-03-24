@@ -6,6 +6,7 @@ pub mod basic_components;
 pub mod data_components;
 pub mod form_components;
 pub mod interactive_test;
+pub mod ssr_tests;
 pub mod visual_quality;
 
 use anyhow::Result;

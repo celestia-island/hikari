@@ -79,21 +79,13 @@ pub fn top_nav() -> VNode {
                     }
                 }
                 // Brand
-                a { href: "/", class: "hi-header-brand",
-                    "Hikari"
-                }
+                a { href: "/", class: "hi-header-brand", "Hikari" }
             }
             div { class: "hi-header-right",
                 nav { class: "hi-header-nav",
-                    a { href: "/components", class: "hikari-topnav__link",
-                        "Components"
-                    }
-                    a { href: "/system", class: "hikari-topnav__link",
-                        "System"
-                    }
-                    a { href: "/demos", class: "hikari-topnav__link",
-                        "Demos"
-                    }
+                    a { href: "/components", class: "hikari-topnav__link", "Components" }
+                    a { href: "/system", class: "hikari-topnav__link", "System" }
+                    a { href: "/demos", class: "hikari-topnav__link", "Demos" }
                 }
             }
         }

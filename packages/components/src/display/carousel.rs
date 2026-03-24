@@ -25,6 +25,7 @@ pub enum CarouselIndicatorType {
 }
 
 #[define_props]
+#[derive(Debug)]
 pub struct CarouselProps {
     #[default]
     pub children: Element,

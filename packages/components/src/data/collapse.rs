@@ -8,6 +8,7 @@ use crate::{prelude::*, styled::StyledComponent};
 pub struct CollapseComponent;
 
 #[define_props]
+#[derive(Debug)]
 pub struct CollapseProps {
     #[default]
     pub expanded: bool,

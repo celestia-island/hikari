@@ -4,7 +4,6 @@
 use anyhow::Result;
 use scraper::{Html, Selector};
 use thirtyfour::WebDriver;
-use tracing::info;
 
 use crate::html_assertions::HtmlAssertions;
 
@@ -45,7 +44,7 @@ impl SsrTestHelper {
 
     /// Check if page has valid SSR structure
     pub fn validate_ssr_structure(html: &str) -> Result<SsrValidationResult> {
-        let assertions = HtmlAssertions::from_str(html);
+        let _assertions = HtmlAssertions::from_str(html);
         let mut result = SsrValidationResult::default();
 
         // Check DOCTYPE

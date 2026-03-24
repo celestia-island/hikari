@@ -153,7 +153,7 @@ impl BasicComponentsTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/#/components/layer1", base_url);
+        let test_url = format!("{}/components/layer1", base_url);
 
         driver
             .goto(&test_url)
@@ -255,7 +255,7 @@ impl BasicComponentsTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/#/components/layer1", base_url);
+        let test_url = format!("{}/components/layer1", base_url);
 
         driver
             .goto(&test_url)
@@ -308,7 +308,7 @@ impl BasicComponentsTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/#/components/layer1", base_url);
+        let test_url = format!("{}/components/layer1", base_url);
 
         driver
             .goto(&test_url)
@@ -354,7 +354,7 @@ impl BasicComponentsTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/#/components/layer1", base_url);
+        let test_url = format!("{}/components/layer1", base_url);
 
         driver
             .goto(&test_url)

@@ -98,7 +98,7 @@ impl VisualQualityTests {
         let load_start = Instant::now();
 
         driver
-            .goto(&format!("{}/#/demos/animation", base_url))
+            .goto(&format!("{}/demos/animation", base_url))
             .await?;
         tokio::time::sleep(Duration::from_millis(8000)).await;
 
@@ -209,7 +209,7 @@ impl VisualQualityTests {
         info!("Testing form controls quality...");
 
         driver
-            .goto(&format!("{}/#/demos/layer1/form", base_url))
+            .goto(&format!("{}/demos/layer1/form", base_url))
             .await?;
         tokio::time::sleep(Duration::from_millis(8000)).await;
 
@@ -302,7 +302,7 @@ impl VisualQualityTests {
         info!("Testing animation controls quality...");
 
         driver
-            .goto(&format!("{}/#/demos/animation", base_url))
+            .goto(&format!("{}/demos/animation", base_url))
             .await?;
         tokio::time::sleep(Duration::from_millis(8000)).await;
 
@@ -396,7 +396,7 @@ impl VisualQualityTests {
         info!("Testing dashboard quality...");
 
         driver
-            .goto(&format!("{}/#/demos/layer2/dashboard", base_url))
+            .goto(&format!("{}/demos/layer2/dashboard", base_url))
             .await?;
         tokio::time::sleep(Duration::from_millis(8000)).await;
 
@@ -477,7 +477,7 @@ impl VisualQualityTests {
         info!("Testing entry components quality...");
 
         driver
-            .goto(&format!("{}/#/components/entry/cascader", base_url))
+            .goto(&format!("{}/components/entry/cascader", base_url))
             .await?;
         tokio::time::sleep(Duration::from_millis(15000)).await;
 
@@ -543,7 +543,7 @@ impl VisualQualityTests {
         info!("Testing extra components quality...");
 
         driver
-            .goto(&format!("{}/#/components/extra/collapsible", base_url))
+            .goto(&format!("{}/components/extra/collapsible", base_url))
             .await?;
         tokio::time::sleep(Duration::from_millis(15000)).await;
 
@@ -611,7 +611,7 @@ impl VisualQualityTests {
         info!("Testing layer 3 components quality...");
 
         driver
-            .goto(&format!("{}/#/components/layer3/overview", base_url))
+            .goto(&format!("{}/components/layer3/overview", base_url))
             .await?;
         tokio::time::sleep(Duration::from_millis(8000)).await;
 
@@ -707,7 +707,7 @@ impl VisualQualityTests {
         info!("Testing system pages quality...");
 
         driver
-            .goto(&format!("{}/#/system/palette", base_url))
+            .goto(&format!("{}/system/palette", base_url))
             .await?;
         tokio::time::sleep(Duration::from_millis(8000)).await;
 
@@ -1005,46 +1005,46 @@ impl VisualQualityTests {
 
         const ALL_ROUTES: &[(&str, &str)] = &[
             // Home & Demos (7)
-            ("/#/", "home"),
-            ("/#/components", "components"),
-            ("/#/demos", "demos"),
-            ("/#/demos/animation", "demos_animation"),
-            ("/#/demos/layer1/form", "demos_layer1_form"),
-            ("/#/demos/layer2/dashboard", "demos_layer2_dashboard"),
-            ("/#/demos/layer3/video", "demos_layer3_video"),
+            ("/", "home"),
+            ("/components", "components"),
+            ("/demos", "demos"),
+            ("/demos/animation", "demos_animation"),
+            ("/demos/layer1/form", "demos_layer1_form"),
+            ("/demos/layer2/dashboard", "demos_layer2_dashboard"),
+            ("/demos/layer3/video", "demos_layer3_video"),
             // Layer 1 Components (5)
-            ("/#/components/layer1", "layer1_basic"),
-            ("/#/components/layer1/form", "layer1_form"),
-            ("/#/components/layer1/switch", "layer1_switch"),
-            ("/#/components/layer1/feedback", "layer1_feedback"),
-            ("/#/components/layer1/display", "layer1_display"),
+            ("/components/layer1", "layer1_basic"),
+            ("/components/layer1/form", "layer1_form"),
+            ("/components/layer1/switch", "layer1_switch"),
+            ("/components/layer1/feedback", "layer1_feedback"),
+            ("/components/layer1/display", "layer1_display"),
             // Entry Components (4)
-            ("/#/components/entry/cascader", "entry_cascader"),
-            ("/#/components/entry/transfer", "entry_transfer"),
-            ("/#/components/entry/number_input", "entry_number_input"),
-            ("/#/components/entry/search", "entry_search"),
+            ("/components/entry/cascader", "entry_cascader"),
+            ("/components/entry/transfer", "entry_transfer"),
+            ("/components/entry/number_input", "entry_number_input"),
+            ("/components/entry/search", "entry_search"),
             // Layer 2 Components (5)
-            ("/#/components/layer2", "layer2"),
-            ("/#/components/layer2/navigation", "layer2_navigation"),
-            ("/#/components/layer2/data", "layer2_data"),
-            ("/#/components/layer2/form", "layer2_form"),
-            ("/#/components/layer2/feedback", "layer2_feedback"),
+            ("/components/layer2", "layer2"),
+            ("/components/layer2/navigation", "layer2_navigation"),
+            ("/components/layer2/data", "layer2_data"),
+            ("/components/layer2/form", "layer2_form"),
+            ("/components/layer2/feedback", "layer2_feedback"),
             // Layer 3 Components (4)
-            ("/#/components/layer3/overview", "layer3_overview"),
-            ("/#/components/layer3/media", "layer3_media"),
-            ("/#/components/layer3/editor", "layer3_editor"),
-            ("/#/components/layer3/visualization", "layer3_visualization"),
+            ("/components/layer3/overview", "layer3_overview"),
+            ("/components/layer3/media", "layer3_media"),
+            ("/components/layer3/editor", "layer3_editor"),
+            ("/components/layer3/visualization", "layer3_visualization"),
             // Extra Components (4)
-            ("/#/components/extra/collapsible", "extra_collapsible"),
-            ("/#/components/extra/timeline", "extra_timeline"),
-            ("/#/components/extra/user_guide", "extra_user_guide"),
-            ("/#/components/extra/zoom_controls", "extra_zoom_controls"),
+            ("/components/extra/collapsible", "extra_collapsible"),
+            ("/components/extra/timeline", "extra_timeline"),
+            ("/components/extra/user_guide", "extra_user_guide"),
+            ("/components/extra/zoom_controls", "extra_zoom_controls"),
             // System Pages (5)
-            ("/#/system", "system"),
-            ("/#/system/css", "system_css"),
-            ("/#/system/icons", "system_icons"),
-            ("/#/system/palette", "system_palette"),
-            ("/#/system/animations", "system_animations"),
+            ("/system", "system"),
+            ("/system/css", "system_css"),
+            ("/system/icons", "system_icons"),
+            ("/system/palette", "system_palette"),
+            ("/system/animations", "system_animations"),
         ];
 
         let mut results = vec![];

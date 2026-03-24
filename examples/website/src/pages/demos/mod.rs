@@ -14,13 +14,13 @@ fn render_overview() -> VNode {
             }
             div { class: "page-section",
                 div { class: "card-grid",
-                    a { href: "#/demos/form", class: "card card--link",
+                    a { href: "/demos/form", class: "card card--link",
                         h3 { class: "card__title", "Form Demo" }
                         p { class: "card__body",
                             "Registration form with validation, input types, switches, and a submit flow."
                         }
                     }
-                    a { href: "#/demos/dashboard", class: "card card--link",
+                    a { href: "/demos/dashboard", class: "card card--link",
                         h3 { class: "card__title", "Dashboard Demo" }
                         p { class: "card__body",
                             "Data dashboard with stats cards, a simple data table, and navigation tabs."

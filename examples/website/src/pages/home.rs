@@ -18,10 +18,10 @@ pub fn render() -> VNode {
                         "Built with a reactive virtual DOM, compiled to WebAssembly. Hikari provides a rich set of components from basic primitives to complex data visualisations."
                     }
                     div { class: "page-hero__actions",
-                        a { href: "#/components", class: "hi-btn hi-btn--primary hi-btn--lg",
+                        a { href: "/components", class: "hi-btn hi-btn--primary hi-btn--lg",
                             "Explore Components"
                         }
-                        a { href: "#/system", class: "hi-btn hi-btn--secondary hi-btn--lg",
+                        a { href: "/system", class: "hi-btn hi-btn--secondary hi-btn--lg",
                             "Design System"
                         }
                     }

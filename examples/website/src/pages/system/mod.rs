@@ -16,29 +16,29 @@ fn render_overview() -> VNode {
             }
             div { class: "page-section",
                 div { class: "card-grid",
-                    a { href: "#/system/palette", class: "card card--link",
+                    a { href: "/system/palette", class: "card card--link",
                         h3 { class: "card__title", "Color Palette" }
                         p { class: "card__body",
                             "500+ traditional Chinese colors with rich historical context."
                         }
                     }
-                    a { href: "#/system/css", class: "card card--link",
+                    a { href: "/system/css", class: "card card--link",
                         h3 { class: "card__title", "CSS Utilities" }
                         p { class: "card__body",
                             "Type-safe utility classes inspired by Tailwind CSS."
                         }
                     }
-                    a { href: "#/system/icons", class: "card card--link",
+                    a { href: "/system/icons", class: "card card--link",
                         h3 { class: "card__title", "Icons" }
                         p { class: "card__body", "Material Design Icons and custom Hikari icon set." }
                     }
-                    a { href: "#/system/animations", class: "card card--link",
+                    a { href: "/system/animations", class: "card card--link",
                         h3 { class: "card__title", "Animations" }
                         p { class: "card__body",
                             "Spring-physics animation system with preset transitions."
                         }
                     }
-                    a { href: "#/system/i18n", class: "card card--link",
+                    a { href: "/system/i18n", class: "card card--link",
                         h3 { class: "card__title", "i18n" }
                         p { class: "card__body",
                             "Multi-language support: en-US, zh-CHS, zh-CHT, ja-JP, ko-KR, fr-FR, es-ES, ru-RU."

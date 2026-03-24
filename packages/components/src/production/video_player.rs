@@ -49,9 +49,7 @@ pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
     let video_classes = ClassesBuilder::new().add(VideoPlayerClass::Video).build();
 
     rsx! {
-        div {
-            class: container_classes,
-            style: props.style,
+        div { class: container_classes, style: props.style,
 
             video {
                 class: video_classes,
@@ -62,7 +60,7 @@ pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
                 r#loop: props.loop_,
                 muted: props.muted,
 
-                // Your browser does not support the video tag.
+            // Your browser does not support the video tag.
             }
         }
     }

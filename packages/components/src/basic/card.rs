@@ -55,12 +55,16 @@ pub fn Card(props: CardProps) -> Element {
 
     // Build title element
     let title_el = props.title.as_ref().map(|title| {
-        rsx! { div { class: CardClass::CardTitle.as_class(), "{title}" } }
+        rsx! {
+            div { class: CardClass::CardTitle.as_class(), "{title}" }
+        }
     });
 
     // Build extra element
     let extra_el = props.extra.as_ref().map(|extra| {
-        rsx! { div { class: CardClass::CardExtra.as_class(), {extra.clone()} } }
+        rsx! {
+            div { class: CardClass::CardExtra.as_class(), {extra.clone()} }
+        }
     });
 
     let header = if has_title || has_extra {
@@ -144,28 +148,36 @@ pub fn CardHeader(props: CardHeaderProps) -> Element {
     // Build conditional sections
     let avatar_el = if has_avatar {
         let avatar = props.avatar.clone().unwrap();
-        Some(rsx! { div { class: "hi-card-header-avatar", {avatar} } })
+        Some(rsx! {
+            div { class: "hi-card-header-avatar", {avatar} }
+        })
     } else {
         None
     };
 
     let title_el = if has_title {
         let title = props.title.clone().unwrap();
-        Some(rsx! { div { class: CardClass::CardTitle.as_class(), "{title}" } })
+        Some(rsx! {
+            div { class: CardClass::CardTitle.as_class(), "{title}" }
+        })
     } else {
         None
     };
 
     let subtitle_el = if has_subtitle {
         let subtitle = props.subtitle.clone().unwrap();
-        Some(rsx! { div { class: CardClass::CardSubtitle.as_class(), "{subtitle}" } })
+        Some(rsx! {
+            div { class: CardClass::CardSubtitle.as_class(), "{subtitle}" }
+        })
     } else {
         None
     };
 
     let action_el = if has_action {
         let action = props.action.clone().unwrap();
-        Some(rsx! { div { class: "hi-card-header-action", {action} } })
+        Some(rsx! {
+            div { class: "hi-card-header-action", {action} }
+        })
     } else {
         None
     };

@@ -5,9 +5,9 @@ use hikari_palette::classes::{ClassesBuilder, TooltipClass, UtilityClass};
 
 #[cfg(target_arch = "wasm32")]
 use crate::portal::{PortalEntry, TriggerPlacement};
-use crate::prelude::*;
 use crate::{
     portal::provider::{generate_portal_id, use_portal},
+    prelude::*,
     styled::StyledComponent,
 };
 

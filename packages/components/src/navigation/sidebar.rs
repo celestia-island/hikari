@@ -47,7 +47,7 @@ pub fn Sidebar(props: SidebarProps) -> Element {
             role: "navigation",
             "aria-label": "Sidebar navigation",
 
-            { props.children }
+            {props.children}
         }
     }
 }
@@ -115,9 +115,7 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
     };
 
     rsx! {
-        div {
-            class: section_classes,
-            "data-id": props.id,
+        div { class: section_classes, "data-id": props.id,
 
             // Section header (clickable to toggle) - wrapped with Glow
             Glow {
@@ -129,24 +127,16 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
                     onclick: handle_click,
                     aria_expanded: expanded_attr,
 
-                    div {
-                        class: title_group_class,
+                    div { class: title_group_class,
 
-                        span {
-                            class: title_primary_class,
-                            "{props.title}"
-                        }
+                        span { class: title_primary_class, "{props.title}" }
 
                         if let Some(secondary) = &props.secondary_title {
-                            span {
-                                class: title_secondary_class,
-                                "{secondary}"
-                            }
+                            span { class: title_secondary_class, "{secondary}" }
                         }
                     }
 
-                    div {
-                        class: arrow_classes,
+                    div { class: arrow_classes,
                         Icon { icon: MdiIcon::ChevronDown }
                     }
                 }
@@ -216,9 +206,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
     let is_expanded_for_click = is_expanded.clone();
 
     rsx! {
-        div {
-            class: {item_classes},
-            "data-id": props.id,
+        div { class: {item_classes}, "data-id": props.id,
 
             // Item header (always visible)
             // Make entire header clickable when it has nested items
@@ -240,8 +228,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
 
                     // Custom content slot - user provides Link or other content
                     // If content is provided, use it; otherwise render labels
-                    div {
-                        class: {content_class},
+                    div { class: {content_class},
                         if let Some(content) = &props.content {
                             {content.clone()}
                         } else {
@@ -254,17 +241,17 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
 
                     // Expand/collapse arrow (only if has items)
                     // Visual indicator only - onclick is on the parent header
-                    {if has_items {
-                        rsx! {
-                            div {
-                                class: arrow_classes.clone(),
-                                aria_expanded: expanded_attr,
-                                Icon { icon: MdiIcon::ChevronRight }
+                    {
+                        if has_items {
+                            rsx! {
+                                div { class: arrow_classes.clone(), aria_expanded: expanded_attr,
+                                    Icon { icon: MdiIcon::ChevronRight }
+                                }
                             }
+                        } else {
+                            VNode::empty()
                         }
-                    } else {
-                        VNode::empty()
-                    }}
+                    }
                 }
             }
 
@@ -308,13 +295,10 @@ pub fn SidebarLeaf(props: SidebarLeafProps) -> Element {
     let secondary_class = SidebarClass::ItemSecondary.as_class();
 
     rsx! {
-        div {
-            class: leaf_classes,
-            "data-id": props.id,
+        div { class: leaf_classes, "data-id": props.id,
 
-            div {
-                class: leaf_content_class,
-                { props.children }
+            div { class: leaf_content_class,
+                {props.children}
                 if let Some(secondary) = &props.secondary_label {
                     span { class: secondary_class, "{secondary}" }
                 }

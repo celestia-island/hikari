@@ -197,7 +197,7 @@ pub fn IconButton(props: IconButtonProps) -> Element {
                 blur: props.glow_blur,
                 color: glow_color,
                 intensity: props.glow_intensity,
-                { button_content }
+                {button_content}
             }
         }
     } else {

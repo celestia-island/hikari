@@ -15,6 +15,7 @@ use crate::platform::{element_closest, element_from_point, request_animation_fra
 use crate::{
     feedback::PopoverPlacement,
     modal::{MaskMode, ModalPosition, ModalSize},
+    platform::{inner_height, inner_width, log},
     portal::{
         positioning::calculate_position,
         types::{
@@ -22,9 +23,6 @@ use crate::{
             ToastPosition, TriggerPlacement,
         },
     },
-};
-use crate::{
-    platform::{inner_height, inner_width, log},
     prelude::*,
 };
 
@@ -614,7 +612,18 @@ fn PopoverPortalEntry(
             placement: PopoverPlacement,
             params: &PlacementParams,
         ) -> Option<(PopoverPlacement, f64, f64)> {
-            let PlacementParams { tx, ty, tw, th, popover_w, popover_h, vw, vh, offset, padding } = *params;
+            let PlacementParams {
+                tx,
+                ty,
+                tw,
+                th,
+                popover_w,
+                popover_h,
+                vw,
+                vh,
+                offset,
+                padding,
+            } = *params;
             let x = tx + tw / 2.0;
             let y = ty + th / 2.0;
 

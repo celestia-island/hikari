@@ -163,9 +163,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
     let wrapper_class = AutoCompleteClass::Wrapper.as_class();
 
     rsx! {
-        div {
-            class: wrapper_class,
-            style: "position: relative; {props.style}",
+        div { class: wrapper_class, style: "position: relative; {props.style}",
 
             input {
                 class: input_classes,

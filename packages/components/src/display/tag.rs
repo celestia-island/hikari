@@ -53,11 +53,9 @@ pub fn Tag(props: TagProps) -> Element {
         .build();
 
     rsx! {
-        span {
-            class: tag_classes,
-            style: props.style,
+        span { class: tag_classes, style: props.style,
 
-            { props.children }
+            {props.children}
 
             if props.closable {
                 button {

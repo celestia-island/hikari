@@ -136,8 +136,7 @@ pub fn Search(props: SearchProps) -> Element {
     let portal_for_onkeydown = portal.clone();
 
     let input_element = rsx! {
-        div {
-            class: "hi-search-input-container",
+        div { class: "hi-search-input-container",
             input {
                 r#type: "search",
                 value: "{current_value}",
@@ -162,8 +161,7 @@ pub fn Search(props: SearchProps) -> Element {
                         let value_signal_for_dropdown = value_signal_for_onfocus.clone();
 
                         let dropdown_content = rsx! {
-                            div {
-                                class: "hi-search-suggestions-dropdown",
+                            div { class: "hi-search-suggestions-dropdown",
                                 for suggestion in suggestions_for_dropdown.iter() {
                                     {
                                         let suggestion_value = suggestion.clone();
@@ -202,16 +200,18 @@ pub fn Search(props: SearchProps) -> Element {
                             }
                         };
 
-                        portal_for_onfocus.add_entry.call(PortalEntry::Dropdown {
-                            id: new_id,
-                            strategy: PortalPositionStrategy::TriggerBased {
-                                placement: TriggerPlacement::BottomLeft,
-                            },
-                            mask_mode: PortalMaskMode::Transparent,
-                            children: dropdown_content,
-                            trigger_rect: trigger_rect_opt,
-                            close_on_select: true,
-                        });
+                        portal_for_onfocus
+                            .add_entry
+                            .call(PortalEntry::Dropdown {
+                                id: new_id,
+                                strategy: PortalPositionStrategy::TriggerBased {
+                                    placement: TriggerPlacement::BottomLeft,
+                                },
+                                mask_mode: PortalMaskMode::Transparent,
+                                children: dropdown_content,
+                                trigger_rect: trigger_rect_opt,
+                                close_on_select: true,
+                            });
                     }
                 },
                 oninput: move |e: InputEvent| {
@@ -232,12 +232,9 @@ pub fn Search(props: SearchProps) -> Element {
     };
 
     rsx! {
-        div {
-            class: wrapper_classes,
-            style: props.style,
+        div { class: wrapper_classes, style: props.style,
 
-            div {
-                class: "hi-search-input-wrapper",
+            div { class: "hi-search-input-wrapper",
 
                 InputWrapper {
                     left: left_items,

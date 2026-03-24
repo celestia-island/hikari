@@ -145,14 +145,12 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
                     };
                     on_change_for_input.call(constrained_val);
                 }
-            }
+            },
         }
     };
 
     rsx! {
-        div {
-            class: wrapper_classes,
-            style: props.style,
+        div { class: wrapper_classes, style: props.style,
 
             InputWrapper {
                 left: left_items,

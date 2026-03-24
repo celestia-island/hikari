@@ -52,9 +52,7 @@ pub fn AudioPlayer(props: AudioPlayerProps) -> Element {
         .build();
 
     rsx! {
-        div {
-            class: container_classes,
-            style: props.style,
+        div { class: container_classes, style: props.style,
 
             // Cover and info section
             div { class: AudioPlayerClass::Header.as_class(),

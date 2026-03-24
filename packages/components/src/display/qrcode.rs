@@ -99,15 +99,10 @@ pub fn QRCode(props: QRCodeProps) -> Element {
     }
 
     rsx! {
-        div {
-            class: container_classes,
-            style: props.style,
+        div { class: container_classes, style: props.style,
 
             if let Some(ref title) = props.title {
-                h4 {
-                    class: QRCodeClass::Title.as_class(),
-                    "{title}"
-                }
+                h4 { class: QRCodeClass::Title.as_class(), "{title}" }
             }
 
             div {

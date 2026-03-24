@@ -2,146 +2,101 @@
 
 ## Overview
 
-This document describes the SSR (Server-Side Rendering) E2E test framework for the Hikari website. These tests are designed to validate that the website works correctly with SSR, including proper HTML structure, content visibility without JavaScript, and client-side hydration.
+This document describes the SSR (Server-Side Rendering) E2E test framework for the Hikari website. The framework has two layers:
+
+1. **Fixture unit tests** — validate the `HtmlAssertions` and `SsrTestHelper` utilities against a fixture HTML document that defines the expected SSR output structure. No browser or server required.
+2. **E2E browser tests** — navigate a live dev-server with Chrome WebDriver and validate the actual runtime behavior.
 
 ## Test Structure
 
-The SSR E2E tests are located in `/mnt/sdb1/hikari/packages/e2e/src/tests/ssr_tests.rs` and include:
+### Layer 1: Fixture Unit Tests (no browser)
 
-### 1. HTML Structure Tests (`test_e2e_html_structure`)
-Validates that SSR output contains correct elements:
+Located in `src/tests/ssr_tests.rs` — `SsrTests::test_fixture_*()` methods:
+
+| Test | What it validates |
+|------|-------------------|
+| `test_fixture_html_structure` | Expected SSR HTML contains `<html>`, `<head>`, `<body>`, meta tags, `#hikari-app` |
+| `test_fixture_has_all_pages` | All 5 page sections (`#page-home`, `#page-components`, etc.) are present |
+| `test_fixture_css_classes_present` | Required CSS classes (`hi-layout`, `hi-btn`, etc.) are in the fixture |
+| `test_fixture_no_js_required` | Critical text content is inline in the HTML (no JS needed) |
+
+These tests define the **design contract** for SSR output. When real `tairitsu_ssr::render_to_html()` is available, its output should satisfy these same assertions.
+
+### Layer 2: E2E Browser Tests (requires WebDriver)
+
+Located in `src/tests/ssr_tests.rs` — `SsrTests::test_e2e_*()` methods:
+
+#### `test_e2e_html_structure`
+Navigates to the live server and validates the DOM structure received by the browser.
+
+#### `test_e2e_no_js_visibility`
+Uses a plain HTTP client (`reqwest`) to fetch the raw server response **without executing JavaScript**. This is the definitive no-JS test: exactly what a search-engine crawler or a JS-disabled browser receives.
+
+Checks performed on raw HTML:
 - Root `#hikari-app` element exists
-- Layout classes are present
-- Header, navigation, and sidebar are rendered
-- Main content area exists
-- All page elements are present
+- `hi-` component classes are present
+- Header/navigation is present
+- Main content area has meaningful text
+- At least one `.hikari-page` exists
 
-### 2. No-JS Visibility Tests (`test_e2e_no_js_visibility`)
-Verifies that content is visible without JavaScript:
-- Root element exists without JS
-- Component classes are present
-- Navigation is visible
-- Main content has text
-- Page content is rendered
+#### `test_e2e_hydration`
+Verifies interactive features work after client-side WASM hydration.
 
-### 3. Hydration Tests (`test_e2e_hydration`)
-Confirms interactive features work after client-side hydration:
-- JavaScript runtime is available
-- Hikari app element is mounted
-- Interactive buttons are clickable
-- History API (router) is functional
-- No visible hydration errors
-
-### 4. SEO Metadata Tests (`test_e2e_seo_metadata`)
-Checks proper SEO elements:
-- Title tag exists and is not empty
-- Meta description (optional)
-- Semantic HTML elements (`main`, `nav`)
-- Proper heading structure
+#### `test_e2e_seo_metadata` (planned)
+Checks SEO metadata: title tag, meta description, semantic HTML elements.
 
 ## Running the Tests
 
-### Unit Tests (No Browser Required)
-
-Run the SSR unit tests that test against sample HTML:
+### Fixture Tests (no browser required)
 
 ```bash
-cargo test -p hikari-e2e --lib ssr
+cargo test -p hikari-e2e --lib
 ```
 
-### E2E Tests (Requires Browser)
-
-Run the full E2E tests with WebDriver:
+### E2E Tests (requires browser + server)
 
 ```bash
-# Start the dev server first
-cd examples/website
-npm run dev
+# Start the dev server
+just dev
 
-# In another terminal, start WebDriver
+# In another terminal, start ChromeDriver
 chromedriver --port=4444
 
-# Run the E2E tests
-cargo run -p hikari-e2e --bin run_ssr_e2e
+# Set server URL and run
+WEBSITE_BASE_URL=http://localhost:3000 cargo run -p hikari-e2e --bin run-ssr-e2e
 ```
 
-### Programmatic Usage
+## Helper Utilities
 
-You can also run the tests programmatically:
-
-```rust
-use hikari_e2e::{run_ssr_e2e_tests, SsrTests};
-use thirtyfour::{prelude::*, WebDriver};
-
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    let caps = DesiredCapabilities::chrome();
-    let driver = WebDriver::new("http://localhost:4444", caps).await?;
-
-    // Run all SSR E2E tests
-    let results = run_ssr_e2e_tests(&driver).await?;
-
-    // Process results...
-    driver.quit().await?;
-    Ok(())
-}
-```
-
-## Test Helpers
-
-The framework includes helper utilities in `ssr_helpers.rs`:
+### `SsrTestHelper` (`ssr_helpers.rs`)
 
 ```rust
 use hikari_e2e::{SsrTestHelper, SsrValidationResult};
 
-// Create helper
 let helper = SsrTestHelper::new();
-
-// Navigate and get HTML
-let html = helper.navigate_and_get_html(&driver, "/").await?;
-
-// Validate SSR structure
-let validation = SsrTestHelper::validate_ssr_structure(&html)?;
-if validation.is_valid() {
-    println!("SSR structure is valid!");
-}
-
-// Check for rendered content
-let has_content = SsrTestHelper::has_rendered_content(&html, ".hi-layout-content")?;
-
-// Count elements
-let count = SsrTestHelper::count_elements(&html, ".hi-button")?;
+let result = SsrTestHelper::validate_ssr_structure(&html)?;
+assert!(result.has_doctype);
+assert!(result.has_hikari_app);
 ```
 
-## Current Status
+### `HtmlAssertions` (`html_assertions.rs`)
 
-The SSR E2E test framework is ready to use. However, the actual E2E tests may fail until tairitsu-ssr bugs are fixed. The framework is designed to:
+```rust
+use hikari_e2e::HtmlAssertions;
 
-1. Work immediately with the existing sample HTML unit tests
-2. Be ready to run E2E tests once SSR is functional
-3. Provide clear feedback on what's working and what's not
+let assertions = HtmlAssertions::new(html);
+assertions.assert_exists("#hikari-app")?;
+assertions.assert_has_class("#hikari-app", "hi-layout")?;
+assertions.assert_text_contains(".page-hero__title", "Hikari")?;
+```
 
-## Test Coverage
+### `compare_visuals` (`interactive_test.rs`)
 
-The current test suite covers:
+Compares two screenshot files byte-by-byte. Returns `before_after_match: Some(true)` when the files are identical, `Some(false)` when they differ, and `None` when files cannot be read.
 
-- **Routes tested**: `/`, `/components/layer1`, `/components/layer2`, `/components/layer3`
-- **Per-route tests**: 4 test categories (HTML structure, No-JS, Hydration, SEO)
-- **Total test cases**: 4 routes × 4 tests = 16 test cases
+```rust
+use hikari_e2e::compare_visuals;
 
-## Notes
-
-- Tests use Chrome DevTools Protocol (CDP) for JavaScript control when available
-- Fallback methods are provided when CDP is not available
-- Screenshots are saved to `./screenshots/ssr/` for debugging
-- Test results include detailed information about passed/failed checks
-
-## Future Enhancements
-
-Potential additions to the SSR test suite:
-
-- Performance testing (SSR render time)
-- Accessibility testing (ARIA attributes)
-- Internationalization (i18n) support
-- More comprehensive hydration checks
-- Visual regression testing
+let analysis = compare_visuals(before_path, after_path, "Button", "click").await?;
+// analysis.before_after_match: Some(true) = unchanged, Some(false) = changed
+```

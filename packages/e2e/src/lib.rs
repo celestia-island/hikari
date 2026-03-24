@@ -150,8 +150,15 @@ pub fn run_ssr_tests() -> anyhow::Result<Vec<tests::ssr_tests::SsrTestResult>> {
         match &result.status {
             tests::ssr_tests::SsrTestStatus::Success => info!("  Status: ✅ PASSED"),
             tests::ssr_tests::SsrTestStatus::Failure(msg) => info!("  Status: ❌ FAILED - {}", msg),
-            tests::ssr_tests::SsrTestStatus::PartialSuccess { passed_tests, failed_tests } => {
-                info!("  Status: ⚠️  PARTIAL - {} passed, {} failed", passed_tests.len(), failed_tests.len());
+            tests::ssr_tests::SsrTestStatus::PartialSuccess {
+                passed_tests,
+                failed_tests,
+            } => {
+                info!(
+                    "  Status: ⚠️  PARTIAL - {} passed, {} failed",
+                    passed_tests.len(),
+                    failed_tests.len()
+                );
             }
             tests::ssr_tests::SsrTestStatus::Error(msg) => {
                 error!("  Status: ⚠️  ERROR - {}", msg)
@@ -188,8 +195,15 @@ pub async fn run_ssr_e2e_tests(
         match &result.status {
             tests::ssr_tests::SsrTestStatus::Success => info!("  Status: ✅ PASSED"),
             tests::ssr_tests::SsrTestStatus::Failure(msg) => info!("  Status: ❌ FAILED - {}", msg),
-            tests::ssr_tests::SsrTestStatus::PartialSuccess { passed_tests, failed_tests } => {
-                info!("  Status: ⚠️  PARTIAL - {} passed, {} failed", passed_tests.len(), failed_tests.len());
+            tests::ssr_tests::SsrTestStatus::PartialSuccess {
+                passed_tests,
+                failed_tests,
+            } => {
+                info!(
+                    "  Status: ⚠️  PARTIAL - {} passed, {} failed",
+                    passed_tests.len(),
+                    failed_tests.len()
+                );
             }
             tests::ssr_tests::SsrTestStatus::Error(msg) => {
                 error!("  Status: ⚠️  ERROR - {}", msg)
@@ -206,7 +220,11 @@ pub async fn run_ssr_e2e_tests(
     info!("  3. Hydration - Confirms interactive features work after hydration");
     info!("  4. SEO Metadata - Checks proper meta tags and semantic HTML");
     info!("========================");
-    info!("Total: {} routes × 4 tests = {} test cases", results.len(), results.len() * 4);
+    info!(
+        "Total: {} routes × 4 tests = {} test cases",
+        results.len(),
+        results.len() * 4
+    );
 
     Ok(results)
 }

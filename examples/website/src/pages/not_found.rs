@@ -13,7 +13,7 @@ pub fn render() -> VNode {
                 p { class: "page-hero__subtitle",
                     "Page not found"
                 }
-                a { href: "#/", class: "hi-btn hi-btn--primary",
+                a { href: "/", class: "hi-btn hi-btn--primary",
                     "Go Home"
                 }
             }

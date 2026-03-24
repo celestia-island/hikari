@@ -1,10 +1,9 @@
 // hi-components/src/basic/checkbox.rs
 // Checkbox component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{CheckboxClass, ClassesBuilder};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 #[define_props]
 pub struct CheckboxProps {

@@ -1,10 +1,9 @@
 // packages/components/src/navigation/steps.rs
 // Steps component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, StepsClass, UtilityClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct StepsComponent;
 
@@ -149,31 +148,29 @@ pub fn Steps(props: StepsProps) -> Element {
     let title_class = StepsClass::Title.as_class();
     let description_class = StepsClass::Description.as_class();
 
-    let step_elements: Vec<Element> = step_items.into_iter().map(|item| {
-        rsx! {
-            StepItem {
-                index: item.index,
-                step: item.step,
-                step_classes: item.step_classes,
-                is_clickable: item.is_clickable,
-                step_status: item.step_status,
-                icon_class: icon_class.clone(),
-                number_class: number_class.clone(),
-                content_class: content_class.clone(),
-                title_class: title_class.clone(),
-                description_class: description_class.clone(),
-                on_change: props.on_change.clone(),
+    let step_elements: Vec<Element> = step_items
+        .into_iter()
+        .map(|item| {
+            rsx! {
+                StepItem {
+                    index: item.index,
+                    step: item.step,
+                    step_classes: item.step_classes,
+                    is_clickable: item.is_clickable,
+                    step_status: item.step_status,
+                    icon_class: icon_class.clone(),
+                    number_class: number_class.clone(),
+                    content_class: content_class.clone(),
+                    title_class: title_class.clone(),
+                    description_class: description_class.clone(),
+                    on_change: props.on_change.clone(),
+                }
             }
-        }
-    }).collect();
+        })
+        .collect();
 
     rsx! {
-        div {
-            class: wrapper_classes,
-            style: props.style,
-
-            ..step_elements
-        }
+        div { class: wrapper_classes, style: props.style, ..step_elements }
     }
 }
 
@@ -244,14 +241,26 @@ fn StepItem(props: StepItemProps) -> Element {
                 stroke: "currentColor",
                 stroke_width: "2",
                 circle { cx: "12", cy: "12", r: "10" }
-                line { x1: "12", y1: "8", x2: "12", y2: "12" }
-                line { x1: "12", y1: "16", x2: "12.01", y2: "16" }
+                line {
+                    x1: "12",
+                    y1: "8",
+                    x2: "12",
+                    y2: "12",
+                }
+                line {
+                    x1: "12",
+                    y1: "16",
+                    x2: "12.01",
+                    y2: "16",
+                }
             }
         },
     };
 
     let desc_el = if let Some(ref desc) = step_description {
-        rsx! { div { class: props.description_class, "{desc}" } }
+        rsx! {
+            div { class: props.description_class, "{desc}" }
+        }
     } else {
         VNode::empty()
     };
@@ -268,14 +277,10 @@ fn StepItem(props: StepItemProps) -> Element {
             },
 
             // Step indicator
-            div {
-                class: props.icon_class,
-                {icon_el}
-            }
+            div { class: props.icon_class, {icon_el} }
 
             // Step content
-            div {
-                class: props.content_class,
+            div { class: props.content_class,
                 div { class: props.title_class, step_title }
                 {desc_el}
             }

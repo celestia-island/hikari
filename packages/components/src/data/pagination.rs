@@ -1,7 +1,6 @@
 // hi-components/src/data/pagination.rs
 // Pagination component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, PaginationClass};
 
@@ -10,6 +9,7 @@ use crate::{
     feedback::{
         Glow, GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning,
     },
+    prelude::*,
     styled::StyledComponent,
 };
 

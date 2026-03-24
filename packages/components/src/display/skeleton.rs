@@ -1,11 +1,12 @@
 // packages/components/src/display/skeleton.rs
 // Skeleton component with Arknights + FUI styling
 
-use crate::prelude::*;
-use hikari_palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, Padding, SkeletonClass};
+use hikari_palette::classes::{
+    ClassesBuilder, Display, FlexDirection, Gap, Padding, SkeletonClass,
+};
 use tairitsu_vdom::IntoAttrValue;
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct SkeletonComponent;
 
@@ -118,7 +119,13 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
     if props.rows.is_some() && props.rows.unwrap() > 1 {
         let rows = props.rows.unwrap();
         let row_styles: Vec<String> = (0..rows)
-            .map(|i| if i == rows - 1 { "width: 60%;".to_string() } else { String::new() })
+            .map(|i| {
+                if i == rows - 1 {
+                    "width: 60%;".to_string()
+                } else {
+                    String::new()
+                }
+            })
             .collect();
 
         let children: Vec<VNode> = (0..rows)
@@ -126,11 +133,7 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
                 let row_style = row_styles[i as usize].clone();
                 let classes = classes.clone();
                 rsx! {
-                    div {
-                        key: i,
-                        class: classes,
-                        style: row_style,
-                    }
+                    div { key: i, class: classes, style: row_style }
                 }
             })
             .collect();
@@ -139,16 +142,13 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
             div {
                 class: "hi-skeleton-group",
                 style: "display: flex; flex-direction: column; gap: 0.5rem;",
-                ..children
+                ..children,
             }
         };
     }
 
     rsx! {
-        div {
-            class: classes,
-            style: style,
-        }
+        div { class: classes, style }
     }
 }
 
@@ -196,9 +196,7 @@ pub fn SkeletonCard(props: SkeletonCardProps) -> Element {
         .collect();
 
     rsx! {
-        div {
-            class: container_classes,
-            style: props.style,
+        div { class: container_classes, style: props.style,
 
             if props.show_header {
                 div {
@@ -213,8 +211,7 @@ pub fn SkeletonCard(props: SkeletonCardProps) -> Element {
                         }
                     }
 
-                    div {
-                        style: "flex: 1;",
+                    div { style: "flex: 1;",
                         Skeleton {
                             variant: SkeletonVariant::Text,
                             width: Some("40%".to_string()),
@@ -233,7 +230,7 @@ pub fn SkeletonCard(props: SkeletonCardProps) -> Element {
             div {
                 class: "hi-skeleton-card-content",
                 style: "display: flex; flex-direction: column; gap: 0.5rem;",
-                ..content_rows
+                ..content_rows,
             }
         }
     }
@@ -289,7 +286,7 @@ pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
                 div {
                     class: "hi-skeleton-table-row",
                     style: "display: flex; gap: 1rem; padding: 0.75rem 1rem;",
-                    ..cells
+                    ..cells,
                 }
             }
         })
@@ -299,14 +296,13 @@ pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
         div {
             class: "hi-skeleton-table {props.class}",
             style: props.style,
+            ..table_rows,
 
             div {
                 class: "hi-skeleton-table-header",
                 style: "display: flex; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--hi-color-border);",
-                ..header_cells
+                ..header_cells,
             }
-
-            ..table_rows
         }
     }
 }

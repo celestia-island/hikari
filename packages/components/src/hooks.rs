@@ -9,9 +9,9 @@
 //! - **Tablet**: 641-1023px
 //! - **Desktop**: ≥1024px
 
-use crate::prelude::*;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform::{inner_width as platform_inner_width, on_resize};
+use crate::prelude::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Breakpoint {

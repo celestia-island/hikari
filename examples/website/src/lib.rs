@@ -2,13 +2,14 @@
 //!
 //! Built with Tairitsu framework, compiled to wasm32-wasip2.
 
-use anyhow::Result;
-use tairitsu_web::WitPlatform;
-use tracing::error;
-
 mod app;
 mod components;
 mod pages;
+
+use anyhow::Result;
+
+use tairitsu_web::WitPlatform;
+use tracing::error;
 
 fn run_app() -> Result<()> {
     let platform = WitPlatform::new()?;

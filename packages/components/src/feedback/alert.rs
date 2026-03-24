@@ -1,13 +1,13 @@
 // hi-components/src/feedback/alert.rs
 // Alert component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{AlertClass, ClassesBuilder, UtilityClass};
 
 use crate::{
     basic::{IconButton, IconButtonSize, IconButtonVariant},
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    prelude::*,
     styled::StyledComponent,
 };
 
@@ -122,13 +122,10 @@ pub fn Alert(props: AlertProps) -> Element {
             blur: GlowBlur::Light,
             color: glow_color,
             intensity: GlowIntensity::Soft,
-            div {
-                class: alert_classes,
+            div { class: alert_classes,
 
                 if icon.is_some() {
-                    div { class: icon_wrapper_class,
-                        { icon.unwrap().clone() }
-                    }
+                    div { class: icon_wrapper_class, {icon.unwrap().clone()} }
                 }
 
                 div { class: content_class,
@@ -149,11 +146,13 @@ pub fn Alert(props: AlertProps) -> Element {
                         variant: IconButtonVariant::Ghost,
                         class: "hi-alert-close".to_string(),
                         glow: false,
-                        onclick: Some(EventHandler::new(move |e| {
-                            if let Some(handler) = on_close_handler.as_ref() {
-                                handler(e);
-                            }
-                        })),
+                        onclick: Some(
+                            EventHandler::new(move |e| {
+                                if let Some(handler) = on_close_handler.as_ref() {
+                                    handler(e);
+                                }
+                            }),
+                        ),
                     }
                 }
             }

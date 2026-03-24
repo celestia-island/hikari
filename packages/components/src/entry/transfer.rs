@@ -1,11 +1,10 @@
 // hi-components/src/entry/transfer.rs
 // Transfer component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, TransferClass, UtilityClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct TransferComponent;
 

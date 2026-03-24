@@ -1,13 +1,13 @@
 // hi-components/src/data/tree.rs
 // Tree component for hierarchical data display
 
-use crate::prelude::*;
+use hikari_palette::classes::{ClassesBuilder, TreeClassNew};
 
 use crate::{
     data::node::{TreeNode, TreeNodeData, TreeNodeProps},
+    prelude::*,
     styled::StyledComponent,
 };
-use hikari_palette::classes::{ClassesBuilder, TreeClassNew};
 
 pub struct TreeComponent;
 
@@ -96,12 +96,7 @@ pub fn Tree(props: TreeProps) -> Element {
             aria_multiselectable: "false",
             onkeydown: handle_keydown,
 
-            ul {
-                class: tree_classes,
-                role: "treegroup",
-
-                ..tree_nodes
-            }
+            ul { class: tree_classes, role: "treegroup", ..tree_nodes }
         }
     }
 }

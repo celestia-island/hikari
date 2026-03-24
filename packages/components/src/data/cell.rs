@@ -3,10 +3,10 @@
 
 use std::rc::Rc;
 
-use crate::prelude::*;
 use hikari_palette::classes::{CellClass, ClassesBuilder};
 
 use super::column::ColumnDef;
+use crate::prelude::*;
 
 #[derive(Clone, Props, Default)]
 pub struct CellProps {

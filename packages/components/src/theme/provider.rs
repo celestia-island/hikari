@@ -65,14 +65,13 @@
 //! }
 //! ```
 
-use crate::prelude::*;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use hikari_animation::global_manager::init_global_animation_manager;
 use hikari_palette::*;
 
+use crate::prelude::*;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::scripts::scrollbar_container::init_all as init_scrollbars;
-
 use crate::theme::{
     css::{ComponentOverrides, ComponentPalette, PaletteOverrides, ThemePalette},
     registry::{get_default_theme, get_registered_theme},
@@ -414,9 +413,11 @@ mod tests {
             palette.background.hex()
         );
 
-        assert!(component_palette
-            .selection_background
-            .contains("linear-gradient"));
+        assert!(
+            component_palette
+                .selection_background
+                .contains("linear-gradient")
+        );
     }
 
     #[test]
@@ -432,9 +433,11 @@ mod tests {
         assert!(component_palette.selection_border.contains("255, 255, 255"));
 
         assert!(component_palette.selection_background.contains("rgba"));
-        assert!(component_palette
-            .selection_background
-            .contains("linear-gradient"));
+        assert!(
+            component_palette
+                .selection_background
+                .contains("linear-gradient")
+        );
 
         let css_vars = component_palette.css_variables();
         assert!(css_vars.contains("--hi-component-selection-icon:"));

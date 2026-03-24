@@ -1,8 +1,9 @@
 // hi-components/src/layout/space.rs
 // Space component for adding spacing
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, SpaceClass};
+
+use crate::prelude::*;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum SpaceDirection {
@@ -67,13 +68,11 @@ pub fn Space(props: SpaceProps) -> Element {
     };
 
     rsx! {
-        div {
-            class: space_classes,
-            style: style,
+        div { class: space_classes, style,
             if props.wrap {
-                div { { props.children } }
+                div { {props.children} }
             } else {
-                { props.children }
+                {props.children}
             }
         }
     }

@@ -31,7 +31,9 @@ fn main() {
             eprintln!("❌ BUILD ERROR: Failed to build icons");
             eprintln!("   Error: {}", e);
             eprintln!();
-            eprintln!("   Solution: Run 'python scripts/icons/fetch_mdi_icons.py' to download icons");
+            eprintln!(
+                "   Solution: Run 'python scripts/icons/fetch_mdi_icons.py' to download icons"
+            );
             std::process::exit(1);
         }
     }

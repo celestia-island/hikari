@@ -1,10 +1,9 @@
 // hi-components/src/data/virtual_scroll.rs
 // Virtual scroll component for large tree data sets
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, VirtualScrollClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct VirtualScrollComponent;
 
@@ -134,9 +133,7 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
             class: format!("hi-virtual-tree {}", props.class),
             style: "position: relative; overflow: hidden; height: {props.height};",
 
-            div {
-                style: "position: absolute; top: 0; left: 0; right: 0; height: {total_height}px; pointer-events: none;",
-            }
+            div { style: "position: absolute; top: 0; left: 0; right: 0; height: {total_height}px; pointer-events: none;" }
 
             div {
                 class: "hi-virtual-tree-viewport",
@@ -156,8 +153,7 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
 
                 div {
                     style: "position: relative; height: {total_height}px;",
-
-                    ..item_elements
+                    ..item_elements,
                 }
             }
         }

@@ -1,11 +1,10 @@
 // packages/components/src/display/user_guide.rs
 // UserGuide component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_icons::{Icon, IconProps, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, UserGuideClass, UtilityClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct UserGuideComponent;
 
@@ -125,13 +124,21 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
 
     // Pre-compute values needed in rsx! blocks
     let counter_text = format!("{} / {}", current_step + 1, total_steps);
-    let next_btn_class = format!("{} {}", UserGuideClass::NavButton.as_class(), UserGuideClass::PrimaryButton.as_class());
+    let next_btn_class = format!(
+        "{} {}",
+        UserGuideClass::NavButton.as_class(),
+        UserGuideClass::PrimaryButton.as_class()
+    );
 
     // Pre-build progress dots as Vec<VNode>
     let progress_dots: Vec<VNode> = (0..total_steps)
         .map(|i| {
             let dot_class = if i == current_step {
-                format!("{} {}", UserGuideClass::ProgressDot.as_class(), UserGuideClass::ProgressDotActive.as_class())
+                format!(
+                    "{} {}",
+                    UserGuideClass::ProgressDot.as_class(),
+                    UserGuideClass::ProgressDotActive.as_class()
+                )
             } else {
                 UserGuideClass::ProgressDot.as_class()
             };
@@ -148,9 +155,7 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
 
     let progress_section = if props.show_progress && total_steps > 1 {
         rsx! {
-            div { class: {UserGuideClass::Progress.as_class()},
-                {VNode::Fragment(progress_dots)}
-            }
+            div { class: {UserGuideClass::Progress.as_class()}, {VNode::Fragment(progress_dots)} }
         }
     } else {
         VNode::empty()
@@ -165,20 +170,14 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
             div { class: {UserGuideClass::Content.as_class()},
                 // Header with step counter
                 div { class: {UserGuideClass::Header.as_class()},
-                    span { class: {UserGuideClass::Title.as_class()},
-                        "{step.title.clone()}"
-                    }
+                    span { class: {UserGuideClass::Title.as_class()}, "{step.title.clone()}" }
                     if props.show_progress {
-                        span { class: {UserGuideClass::Counter.as_class()},
-                            "{counter_text.clone()}"
-                        }
+                        span { class: {UserGuideClass::Counter.as_class()}, "{counter_text.clone()}" }
                     }
                 }
 
                 // Description
-                div { class: {UserGuideClass::Description.as_class()},
-                    "{step.description.clone()}"
-                }
+                div { class: {UserGuideClass::Description.as_class()}, "{step.description.clone()}" }
 
                 // Footer with controls
                 div { class: {UserGuideClass::Footer.as_class()},
@@ -197,7 +196,7 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
                             button {
                                 class: {UserGuideClass::NavButton.as_class()},
                                 onclick: handle_prev,
-                                Icon { icon: MdiIcon::ChevronLeft, size: 18, }
+                                Icon { icon: MdiIcon::ChevronLeft, size: 18 }
                             }
                         }
 

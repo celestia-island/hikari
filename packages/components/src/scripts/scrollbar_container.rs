@@ -20,6 +20,7 @@
 // WASM-specific implementation (browser WASM only, not WASI)
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 mod wasm_impl {
+
     use std::{cell::RefCell, rc::Rc};
 
     use hikari_animation::{
@@ -187,7 +188,9 @@ mod wasm_impl {
             scroll_top = html_el.scroll_top();
         }
 
-        let _ = container.class_list().remove_1("custom-scrollbar-container");
+        let _ = container
+            .class_list()
+            .remove_1("custom-scrollbar-container");
 
         if let Ok(Some(wrapper)) = container.query_selector(".custom-scrollbar-wrapper") {
             let wrapper_node = wrapper.dyn_into::<web_sys::Node>().ok();
@@ -441,7 +444,8 @@ mod wasm_impl {
             update_scrollbar(&content_layer_resize, &track_resize, &thumb_resize);
         }) as Box<dyn FnMut()>);
 
-        let _ = window.add_event_listener_with_callback("resize", closure_resize.as_ref().unchecked_ref());
+        let _ = window
+            .add_event_listener_with_callback("resize", closure_resize.as_ref().unchecked_ref());
         closure_resize.forget();
 
         // Hover animation setup

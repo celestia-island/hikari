@@ -1,12 +1,11 @@
 // hi-components/src/layout/flex.rs
 // FlexBox component for flexible layouts
 
-use crate::prelude::*;
 use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, Flex as FlexUtil, FlexDirection, FlexWrap, JustifyContent,
 };
 
-use crate::{styled::StyledComponent, theme::use_layout_direction};
+use crate::{prelude::*, styled::StyledComponent, theme::use_layout_direction};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum Direction {

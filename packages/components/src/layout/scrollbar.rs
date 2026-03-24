@@ -14,14 +14,11 @@ use crate::prelude::*;
 pub fn ScrollbarContainer(
     children: Element,
 
-    #[props(default = "100%".to_string())]
-    height: String,
+    #[props(default = "100%".to_string())] height: String,
 
-    #[props(default = "100%".to_string())]
-    width: String,
+    #[props(default = "100%".to_string())] width: String,
 
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     rsx! {
         div {
@@ -34,7 +31,7 @@ pub fn ScrollbarContainer(
                 style: "flex: 1; overflow-y: auto; overflow-x: hidden; min-width: 0;",
                 "data-custom-scrollbar": "content",
 
-                { children }
+                {children}
             }
         }
     }

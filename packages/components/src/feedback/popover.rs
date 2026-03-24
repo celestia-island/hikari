@@ -1,11 +1,11 @@
 // hi-components/src/feedback/popover.rs
 // Popover component with smart positioning via Portal system
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, Display, Position};
 
 use crate::{
     portal::{PortalEntry, generate_portal_id, use_portal},
+    prelude::*,
     styled::StyledComponent,
 };
 

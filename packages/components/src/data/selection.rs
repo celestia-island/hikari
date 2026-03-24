@@ -1,10 +1,9 @@
 // hi-components/src/data/selection.rs
 // Selection component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, SelectionClassNew, UtilityClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct SelectionComponent;
 
@@ -107,7 +106,8 @@ pub fn Selection(props: SelectionProps) -> Element {
 
     // Clone signal for is_row_selected
     let selected_for_is_row = selected.clone();
-    let is_row_selected = move |key: &str| -> bool { selected_for_is_row.get().iter().any(|k| k == key) };
+    let is_row_selected =
+        move |key: &str| -> bool { selected_for_is_row.get().iter().any(|k| k == key) };
 
     let get_input_type = || match props.selection_type {
         SelectionType::Checkbox => "checkbox",
@@ -172,12 +172,8 @@ pub fn Selection(props: SelectionProps) -> Element {
                         input {
                             class: {SelectionClassNew::SelectionCheckbox.as_class()},
                             r#type: get_input_type(),
-                            checked: checked,
-                            name: if selection_type == SelectionType::Radio {
-                                "hi-selection-radio-group"
-                            } else {
-                                ""
-                            },
+                            checked,
+                            name: if selection_type == SelectionType::Radio { "hi-selection-radio-group" } else { "" },
                             onchange: handle_change,
                         }
                         "{key}"
@@ -190,7 +186,7 @@ pub fn Selection(props: SelectionProps) -> Element {
     rsx! {
         div { class: {container_classes},
 
-            div { class: {column_classes},
+            div { class: {column_classes}, ..selection_items,
 
                 if is_checkbox_type {
                     div { class: {SelectionClassNew::SelectionHeader.as_class()},
@@ -204,8 +200,6 @@ pub fn Selection(props: SelectionProps) -> Element {
                         }
                     }
                 }
-
-                ..selection_items
             }
         }
     }
@@ -256,7 +250,11 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
     let is_radio = props.selection_type == SelectionType::Radio;
     let show_checkbox_icon = is_checkbox && is_selected;
     let show_radio_dot = is_radio && is_selected;
-    let input_name = if is_radio { "hi-selection-radio-group" } else { "" };
+    let input_name = if is_radio {
+        "hi-selection-radio-group"
+    } else {
+        ""
+    };
 
     rsx! {
         div { class: {container_classes},
@@ -269,8 +267,7 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
                     onchange: handle_change,
                 }
 
-                span {
-                    class: {custom_classes},
+                span { class: {custom_classes},
 
                     if show_checkbox_icon {
                         svg {
@@ -282,7 +279,7 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
                             path {
                                 stroke_linecap: "round",
                                 stroke_linejoin: "round",
-                                d: "M4.5 12.75l6 6 9-13.5"
+                                d: "M4.5 12.75l6 6 9-13.5",
                             }
                         }
                     }

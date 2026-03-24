@@ -5,8 +5,7 @@
 
 use tairitsu_vdom::{VElement, VNode};
 
-use crate::components;
-use crate::pages::{components as comp_pages, demos as demo_pages, home, not_found, system as sys_pages};
+use crate::{components, pages::{components as comp_pages, demos as demo_pages, home, not_found, system as sys_pages}};
 
 /// Render the full application VNode tree.
 pub fn render() -> VNode {

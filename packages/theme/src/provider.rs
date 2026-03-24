@@ -8,9 +8,10 @@
 //! - `"hikari"` - Light theme (光)
 //! - `"tairitsu"` - Dark theme (tairitsu)
 
-use crate::prelude::*;
-
-use crate::context::{LayoutDirection, ThemeContext};
+use crate::{
+    context::{LayoutDirection, ThemeContext},
+    prelude::*,
+};
 
 /// Theme Provider Props
 #[derive(Debug, Clone)]
@@ -74,7 +75,11 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> VNode {
     let _context = ThemeContext {
         palette: props.initial_palette.clone(),
         colors,
-        direction: if dir == "rtl" { LayoutDirection::Rtl } else { LayoutDirection::Ltr },
+        direction: if dir == "rtl" {
+            LayoutDirection::Rtl
+        } else {
+            LayoutDirection::Ltr
+        },
         set_theme: Callback::new(|_| {}),
     };
 

@@ -35,14 +35,7 @@
 //! ```
 
 // Re-export tairitsu_i18n for unified API
-pub use tairitsu_i18n::{
-    Language,
-    I18nKeys,
-    I18nContext,
-    provide_i18n,
-    use_i18n,
-    TextDirection,
-};
+pub use tairitsu_i18n::{I18nContext, I18nKeys, Language, TextDirection, provide_i18n, use_i18n};
 
 // Hikari-specific modules
 pub mod loader;

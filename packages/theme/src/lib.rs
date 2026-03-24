@@ -201,9 +201,9 @@
 //! }
 //! ```
 
-pub mod prelude;
 pub mod assets;
 pub mod context;
+pub mod prelude;
 pub mod provider;
 pub mod style_provider;
 

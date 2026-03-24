@@ -1,8 +1,9 @@
 // hi-components/src/layout/footer.rs
 // Footer component for application footer
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, components::Footer as FooterClass};
+
+use crate::prelude::*;
 
 #[define_props]
 pub struct FooterProps {
@@ -24,10 +25,7 @@ pub fn Footer(props: FooterProps) -> Element {
         .build();
 
     rsx! {
-        footer {
-            class: footer_classes,
-            { props.children }
-        }
+        footer { class: footer_classes, {props.children} }
     }
 }
 

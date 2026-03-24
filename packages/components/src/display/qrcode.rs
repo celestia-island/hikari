@@ -1,13 +1,12 @@
 // packages/components/src/display/qrcode.rs
 // QRCode component using Canvas for rendering
 
-use crate::prelude::*;
 use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, FlexDirection, Padding, QRCodeClass, UtilityClass,
 };
 use qrcode::{Color, QrCode};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct QRCodeComponent;
 

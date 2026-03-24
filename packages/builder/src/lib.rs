@@ -9,6 +9,6 @@
 pub mod icons;
 
 pub use icons::{
-    build_icons, build_selected_icons, scan_available_icons, IconConfig, IconConfigBuilder,
-    IconSelection, MdiStyle,
+    IconConfig, IconConfigBuilder, IconSelection, MdiStyle, build_icons, build_selected_icons,
+    scan_available_icons,
 };

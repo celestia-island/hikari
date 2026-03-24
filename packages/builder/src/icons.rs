@@ -262,8 +262,7 @@ fn read_svg_content(workspace_root: &Path, icon_name: &str) -> Result<String> {
         return Err(anyhow!("SVG file not found: {:?}", svg_path));
     }
 
-    fs::read_to_string(&svg_path)
-        .with_context(|| format!("Failed to read SVG: {:?}", svg_path))
+    fs::read_to_string(&svg_path).with_context(|| format!("Failed to read SVG: {:?}", svg_path))
 }
 
 /// Generate Rust code for selected icons

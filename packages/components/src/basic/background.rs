@@ -4,14 +4,13 @@
 //! Automatically adapts to theme changes via global theme provider registry.
 //! Includes a 60-second rotating gradient animation with configurable breathing.
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use crate::style_builder::StyleBuilder;
-use crate::prelude::*;
+use hikari_palette::classes::{BackgroundClass, UtilityClass};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use hikari_palette::{墨色, 月白, 粉红, 靛蓝};
 
-use crate::styled::StyledComponent;
-use hikari_palette::classes::{BackgroundClass, UtilityClass};
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use crate::style_builder::StyleBuilder;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct BackgroundComponent;
 
@@ -40,10 +39,7 @@ pub fn Background(props: BackgroundProps) -> Element {
     }
 
     rsx! {
-        div {
-            class: BackgroundClass::Background.as_class(),
-            {props.children}
-        }
+        div { class: BackgroundClass::Background.as_class(), {props.children} }
     }
 }
 
@@ -65,7 +61,11 @@ fn start_gradient_animation() -> Box<dyn FnOnce()> {
         None => return Box::new(|| {}),
     };
 
-    let background_element = match document.query_selector(&format!(".{}", BackgroundClass::Background.as_class())).ok().flatten() {
+    let background_element = match document
+        .query_selector(&format!(".{}", BackgroundClass::Background.as_class()))
+        .ok()
+        .flatten()
+    {
         Some(el) => el,
         None => return Box::new(|| {}),
     };

@@ -1,10 +1,9 @@
 // hi-components/src/basic/radio_group.rs
 // RadioGroup component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, RadioClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 #[derive(Clone)]
 pub struct RadioContext {
@@ -96,7 +95,11 @@ pub fn RadioGroup(props: RadioGroupProps) -> Element {
 
     let name: &'static str = Box::leak(props.name.clone().into_boxed_str());
     let disabled = props.disabled;
-    let on_change = props.on_change.as_ref().map(|h| h.clone()).unwrap_or_else(|| EventHandler::new(|_| {}));
+    let on_change = props
+        .on_change
+        .as_ref()
+        .map(|h| h.clone())
+        .unwrap_or_else(|| EventHandler::new(|_| {}));
 
     let _ctx = use_context_provider(move || RadioContext {
         name,

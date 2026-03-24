@@ -1,15 +1,15 @@
 // hi-components/src/navigation/menu.rs
 // Menu component with Arknights + FUI styling
 
-use crate::prelude::*;
-use crate::style_builder::{CssProperty, StyleStringBuilder};
 use hikari_palette::classes::{ClassesBuilder, MenuClass};
 
 use crate::{
+    GlowBlur, GlowColor, GlowIntensity,
     basic::{Arrow, ArrowDirection},
     feedback::Glow,
+    prelude::*,
+    style_builder::{CssProperty, StyleStringBuilder},
     styled::StyledComponent,
-    GlowBlur, GlowColor, GlowIntensity,
 };
 
 #[derive(Clone, Default)]
@@ -183,12 +183,7 @@ pub fn Menu(props: MenuProps) -> Element {
     });
 
     rsx! {
-        ul {
-            class: menu_classes,
-            role: "menu",
-
-            { props.children }
-        }
+        ul { class: menu_classes, role: "menu", {props.children} }
     }
 }
 
@@ -247,10 +242,10 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
 
             div { class: "hi-menu-item-inner",
                 if let Some(icon) = props.icon {
-                    span { class: "hi-menu-item-icon", { icon } }
+                    span { class: "hi-menu-item-icon", {icon} }
                 }
 
-                span { class: "hi-menu-item-content", { props.children } }
+                span { class: "hi-menu-item-content", {props.children} }
             }
         }
     };
@@ -266,7 +261,7 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
                     blur: GlowBlur::Light,
                     color: GlowColor::Ghost,
                     intensity: GlowIntensity::Soft,
-                    children: item_content
+                    children: item_content,
                 }
             }
         }
@@ -305,41 +300,39 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
 
     let is_open_for_click = is_open.clone();
     let title_content = rsx! {
-       div {
-           class: "{props.height.as_str()} hi-menu-submenu-title",
-           aria_disabled: props.disabled.to_string(),
-           onclick: move |_e| {
-               if !props.disabled {
-                   is_open_for_click.set(!is_open_for_click.get());
-               }
-           },
+        div {
+            class: "{props.height.as_str()} hi-menu-submenu-title",
+            aria_disabled: props.disabled.to_string(),
+            onclick: move |_e| {
+                if !props.disabled {
+                    is_open_for_click.set(!is_open_for_click.get());
+                }
+            },
 
-           div { class: "hi-menu-submenu-title-inner",
-               if let Some(icon) = props.icon {
-                   span { class: "hi-menu-item-icon", { icon } }
-               }
+            div { class: "hi-menu-submenu-title-inner",
+                if let Some(icon) = props.icon {
+                    span { class: "hi-menu-item-icon", {icon} }
+                }
 
-                 span { class: "hi-menu-item-content", "{props.title}" }
+                span { class: "hi-menu-item-content", "{props.title}" }
 
-                  Arrow {
-                     direction: if is_open.read() { ArrowDirection::Down } else { ArrowDirection::Right },
-                     size: 14,
-                     class: if is_open.read() { "hi-menu-item-arrow hi-menu-submenu-arrow-open".to_string() } else { "hi-menu-item-arrow".to_string() },
-                  }
-             }
-         }
+                Arrow {
+                    direction: if is_open.read() { ArrowDirection::Down } else { ArrowDirection::Right },
+                    size: 14,
+                    class: if is_open.read() { "hi-menu-item-arrow hi-menu-submenu-arrow-open".to_string() } else { "hi-menu-item-arrow".to_string() },
+                }
+            }
+        }
     };
 
     let wrapper_class = format!("hi-menu-item-wrapper {}", props.height.as_str());
     let title_with_glow = rsx! {
-        div {
-            class: wrapper_class,
-            style: "width: 100%; position: relative;",
+        div { class: wrapper_class, style: "width: 100%; position: relative;",
             Glow {
                 blur: GlowBlur::Medium,
                 color: GlowColor::Ghost,
                 intensity: GlowIntensity::Dim,
-                children: title_content
+                children: title_content,
             }
         }
     };
@@ -350,7 +343,7 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
             role: "none",
             "data-key": props.item_key,
 
-            { title_with_glow }
+            {title_with_glow}
 
             ul {
                 class: list_classes,
@@ -358,7 +351,7 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
                 role: "menu",
                 "aria-hidden": "{!is_open.get()}",
 
-                { props.children }
+                {props.children}
             }
         }
     }

@@ -1,10 +1,9 @@
 // hi-components/src/navigation/stepper.rs
 // Stepper component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, StepperClass, UtilityClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct StepperComponent;
 
@@ -58,54 +57,49 @@ pub fn Stepper(props: StepperProps) -> Element {
     let connector_vertical_class = StepperClass::StepConnectorVertical.as_class();
 
     rsx! {
-        div {
-            class: stepper_classes,
+        div { class: stepper_classes,
             for index in 0..props.total {
                 {
                     let step_classes = ClassesBuilder::new()
                         .add(StepperClass::Step)
-                        .add(if index < props.current {
-                            StepperClass::StepPending
-                        } else if index == props.current {
-                            StepperClass::StepActive
-                        } else {
-                            StepperClass::StepFinished
-                        })
+                        .add(
+                            if index < props.current {
+                                StepperClass::StepPending
+                            } else if index == props.current {
+                                StepperClass::StepActive
+                            } else {
+                                StepperClass::StepFinished
+                            },
+                        )
                         .build();
-
                     let step_number = index + 1;
-
                     rsx! {
-                        div {
-                            class: {step_classes},
+                        div { class: {step_classes},
 
                             // Step number
-                            div {
-                                class: step_number_class.clone(),
-                                "{step_number}"
-                            }
+                            div { class: step_number_class.clone(), "{step_number}" }
 
                             // Connector line (except for last step in horizontal mode)
-                            {if index < props.total - 1 && props.direction == StepperDirection::Horizontal {
-                                rsx! {
-                                    div {
-                                        class: connector_class.clone(),
+                            {
+                                if index < props.total - 1 && props.direction == StepperDirection::Horizontal {
+                                    rsx! {
+                                        div { class: connector_class.clone() }
                                     }
+                                } else {
+                                    VNode::empty()
                                 }
-                            } else {
-                                VNode::empty()
-                            }}
+                            }
 
                             // Vertical connector line
-                            {if props.direction == StepperDirection::Vertical && index < props.total - 1 {
-                                rsx! {
-                                    div {
-                                        class: connector_vertical_class.clone(),
+                            {
+                                if props.direction == StepperDirection::Vertical && index < props.total - 1 {
+                                    rsx! {
+                                        div { class: connector_vertical_class.clone() }
                                     }
+                                } else {
+                                    VNode::empty()
                                 }
-                            } else {
-                                VNode::empty()
-                            }}
+                            }
                         }
                     }
                 }

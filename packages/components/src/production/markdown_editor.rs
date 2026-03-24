@@ -1,11 +1,10 @@
 // packages/components/src/production/markdown_editor.rs
 // MarkdownEditor component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, MarkdownEditorClass, UtilityClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct MarkdownEditorComponent;
 

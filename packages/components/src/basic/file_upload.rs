@@ -1,10 +1,9 @@
 // packages/components/src/basic/file_upload.rs
 // FileUpload component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, FileUploadClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct FileUploadComponent;
 

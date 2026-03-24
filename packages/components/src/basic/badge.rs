@@ -1,10 +1,9 @@
 // hi-components/src/basic/badge.rs
 // Badge component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{BadgeClass, ClassesBuilder, Display};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct BadgeComponent;
 

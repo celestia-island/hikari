@@ -1,10 +1,11 @@
 // hi-components/src/navigation/breadcrumb.rs
 // Breadcrumb component with Arknights + FUI styling
 
-use crate::prelude::*;
-use hikari_palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, components::BreadcrumbClass};
+use hikari_palette::classes::{
+    ClassesBuilder, Display, FlexDirection, Gap, components::BreadcrumbClass,
+};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct BreadcrumbComponent;
 

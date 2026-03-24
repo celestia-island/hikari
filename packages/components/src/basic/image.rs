@@ -1,9 +1,12 @@
 // hikari-components/src/basic/image.rs
 //! Image component with configurable sizing and fit modes
 
-use crate::style_builder::{CssProperty, StyleStringBuilder};
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, ImageClass, UtilityClass};
+
+use crate::{
+    prelude::*,
+    style_builder::{CssProperty, StyleStringBuilder},
+};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum ImageFit {
@@ -97,8 +100,10 @@ pub fn Image(
 
     let show_placeholder = !loaded.read() || has_error.read();
     let placeholder_type = placeholder;
-    let show_skeleton = show_placeholder && show_loading && placeholder_type == ImagePlaceholder::Skeleton;
-    let show_icon_placeholder = show_placeholder && show_loading && placeholder_type == ImagePlaceholder::Icon;
+    let show_skeleton =
+        show_placeholder && show_loading && placeholder_type == ImagePlaceholder::Skeleton;
+    let show_icon_placeholder =
+        show_placeholder && show_loading && placeholder_type == ImagePlaceholder::Icon;
 
     let handle_load = move |_| {
         loaded.set(true);
@@ -116,7 +121,7 @@ pub fn Image(
                     .add(ImageClass::ImagePlaceholder)
                     .add(ImageClass::ImageSkeleton)
                     .build(),
-                style: "width: 100%; height: 100%; min-height: 100px;"
+                style: "width: 100%; height: 100%; min-height: 100px;",
             }
         })
     } else if show_icon_placeholder {
@@ -140,7 +145,7 @@ pub fn Image(
                         width: "18",
                         height: "18",
                         rx: "2",
-                        ry: "2"
+                        ry: "2",
                     }
                     circle { cx: "8.5", cy: "8.5", r: "1.5" }
                     polyline { points: "21 15 16 10 5 21" }
@@ -162,7 +167,7 @@ pub fn Image(
                 class: classes,
                 src,
                 alt,
-                style: style,
+                style,
                 onload: handle_load,
                 onerror: handle_error,
             }

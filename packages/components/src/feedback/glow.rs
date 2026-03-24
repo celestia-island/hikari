@@ -1,14 +1,15 @@
 // hi-components/src/feedback/glow.rs
 // Unified glow effect component with mouse-following spotlight and acrylic blur
 
+use hikari_palette::classes::{ClassesBuilder, GlowClass};
+use tairitsu_vdom::IntoAttrValue;
+
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform::{
     element_from_point, get_bounding_client_rect, get_element_by_class_upward, log,
     set_style_property,
 };
 use crate::prelude::*;
-use hikari_palette::classes::{ClassesBuilder, GlowClass};
-use tairitsu_vdom::IntoAttrValue;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowBlur {

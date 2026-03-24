@@ -25,10 +25,9 @@
 //! }
 //! ```
 
-use crate::prelude::*;
 use hikari_palette::{ClassesBuilder, UtilityClass, classes::components::*};
 
-use crate::theme::use_layout_direction;
+use crate::{prelude::*, theme::use_layout_direction};
 
 ///
 ///
@@ -36,32 +35,23 @@ use crate::theme::use_layout_direction;
 pub fn Aside(
     children: Element,
 
-    #[props(optional)]
-    header: Option<Element>,
+    #[props(optional)] header: Option<Element>,
 
-    #[props(optional)]
-    footer: Option<Element>,
+    #[props(optional)] footer: Option<Element>,
 
-    #[props(default = "md".to_string())]
-    width: String,
+    #[props(default = "md".to_string())] width: String,
 
-    #[props(default = "white".to_string())]
-    variant: String,
+    #[props(default = "white".to_string())] variant: String,
 
-    #[props(default = true)]
-    collapsible: bool,
+    #[props(default = true)] collapsible: bool,
 
-    #[props(default = false)]
-    initial_open: bool,
+    #[props(default = false)] initial_open: bool,
 
-    #[props(default)]
-    rtl: Option<bool>,
+    #[props(default)] rtl: Option<bool>,
 
-    #[props(default)]
-    on_close: Option<EventHandler<MouseEvent>>,
+    #[props(default)] on_close: Option<EventHandler<MouseEvent>>,
 
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     let is_open = use_signal(|| initial_open);
     let layout_direction = use_layout_direction();
@@ -98,17 +88,13 @@ pub fn Aside(
     let footer_class = "hi-layout-aside-footer".to_string();
 
     rsx! {
-        aside {
-            class: classes,
+        aside { class: classes,
 
             if let Some(header_content) = header {
                 div { class: header_class, {header_content} }
             }
 
-            div {
-                class: content_class,
-                { children }
-            }
+            div { class: content_class, {children} }
 
             if let Some(footer_content) = footer {
                 div { class: footer_class, {footer_content} }

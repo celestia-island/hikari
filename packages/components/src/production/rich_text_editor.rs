@@ -6,10 +6,9 @@
 // contenteditable, execCommand support, etc., consider integrating
 // with libraries like ProseMirror, Tiptap, or Quill.
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, RichTextEditorClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct RichTextEditorComponent;
 

@@ -7,12 +7,12 @@
 // - Fully customizable through props and classes
 // - Styles via SCSS with CSS variables for theming
 
-use crate::prelude::*;
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, SidebarClass, UtilityClass};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    prelude::*,
     styled::StyledComponent,
 };
 

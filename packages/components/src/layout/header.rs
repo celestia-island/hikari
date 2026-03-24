@@ -16,10 +16,9 @@
 //! }
 //! ```
 
-use crate::prelude::*;
 use hikari_palette::{ClassesBuilder, classes::*};
 
-use crate::theme::use_layout_direction;
+use crate::{prelude::*, theme::use_layout_direction};
 
 ///
 ///
@@ -27,22 +26,17 @@ use crate::theme::use_layout_direction;
 pub fn Header(
     children: Element,
 
-    #[props(default = true)]
-    bordered: bool,
+    #[props(default = true)] bordered: bool,
 
-    #[props(default = false)]
-    show_menu_toggle: bool,
+    #[props(default = false)] show_menu_toggle: bool,
 
     on_menu_toggle: Option<EventHandler<MouseEvent>>,
 
-    #[props(default)]
-    rtl: Option<bool>,
+    #[props(default)] rtl: Option<bool>,
 
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 
-    #[props(default)]
-    right_content: Option<Element>,
+    #[props(default)] right_content: Option<Element>,
 ) -> Element {
     let layout_direction = use_layout_direction();
     let is_rtl = rtl.unwrap_or_else(|| layout_direction.is_rtl());
@@ -75,11 +69,9 @@ pub fn Header(
     };
 
     rsx! {
-        header {
-            class: header_classes,
+        header { class: header_classes,
 
-            div {
-                class: left_class,
+            div { class: left_class,
 
                 if show_menu_toggle {
                     button {
@@ -104,17 +96,11 @@ pub fn Header(
                     }
                 }
 
-                div {
-                    class: content_classes,
-                    { children }
-                }
+                div { class: content_classes, {children} }
             }
 
             if let Some(right) = right_content {
-                div {
-                    class: right_class,
-                    { right }
-                }
+                div { class: right_class, {right} }
             }
         }
     }

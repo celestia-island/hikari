@@ -10,17 +10,13 @@ use crate::prelude::*;
 pub fn Content(
     children: Element,
 
-    #[props(default = "var(--hi-background, #f5f5f5)".to_string())]
-    background_color: String,
+    #[props(default = "var(--hi-background, #f5f5f5)".to_string())] background_color: String,
 
-    #[props(default = "p-6 lg:p-10".to_string())]
-    padding: String,
+    #[props(default = "p-6 lg:p-10".to_string())] padding: String,
 
-    #[props(default = true)]
-    scrollable: bool,
+    #[props(default = true)] scrollable: bool,
 
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     rsx! {
         div {

@@ -1,13 +1,13 @@
 // hi-components/src/feedback/toast.rs
 // Toast component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, ToastClass, UtilityClass};
 
 use crate::{
     basic::{IconButton, IconButtonSize, IconButtonVariant},
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    prelude::*,
     styled::StyledComponent,
 };
 

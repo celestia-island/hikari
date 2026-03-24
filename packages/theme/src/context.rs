@@ -94,8 +94,7 @@ impl Default for ThemeContext {
 ///
 /// Panics if called outside of a ThemeProvider.
 pub fn use_theme() -> ThemeContext {
-    let ctx = use_context::<ThemeContext>()
-        .expect("ThemeContext not found");
+    let ctx = use_context::<ThemeContext>().expect("ThemeContext not found");
     ctx.get().clone()
 }
 

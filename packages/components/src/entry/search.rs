@@ -3,7 +3,6 @@
 // Features: Embedded icons/buttons, unified input styling, Glow effects
 // Uses InputWrapper for consistent layout and Portal system for dropdown suggestions
 
-use crate::prelude::*;
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, SearchClass};
 
@@ -11,9 +10,10 @@ use crate::{
     basic::{InputWrapper, InputWrapperItem, InputWrapperSize},
     feedback::{GlowBlur, GlowColor, GlowIntensity},
     portal::{
-        generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy,
-        TriggerPlacement,
+        PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
+        use_portal,
     },
+    prelude::*,
     styled::StyledComponent,
 };
 

@@ -6,10 +6,9 @@
 // For custom video controls, consider extending this component or
 // using libraries like Video.js or Plyr.
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, VideoPlayerClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct VideoPlayerComponent;
 

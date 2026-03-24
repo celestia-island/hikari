@@ -1,17 +1,17 @@
 // hi-components/src/basic/select.rs
 // Custom Select component with Portal-based dropdown and FUI styling
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use crate::platform;
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use crate::platform;
 use crate::{
     feedback::{Glow, GlowProps},
     portal::{
-        generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy,
-        TriggerPlacement,
+        PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
+        use_portal,
     },
+    prelude::*,
     styled::StyledComponent,
 };
 

@@ -1,10 +1,9 @@
 // hi-components/src/feedback/spin.rs
 // Spin component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, SpinClass, UtilityClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SpinSize {

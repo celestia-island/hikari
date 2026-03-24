@@ -1,10 +1,9 @@
 // display/carousel.rs
 // Carousel component - Image/content slider with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{CarouselClass, ClassesBuilder, UtilityClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct CarouselComponent;
 
@@ -183,8 +182,7 @@ pub fn Carousel(props: CarouselProps) -> Element {
         .collect();
 
     rsx! {
-        div {
-            class: CarouselClass::Container.as_class(),
+        div { class: CarouselClass::Container.as_class(),
 
             // Track
             div {
@@ -212,10 +210,7 @@ pub fn Carousel(props: CarouselProps) -> Element {
 
             // Indicator dots
             if props.indicator_type != CarouselIndicatorType::Hidden && total > 1 {
-                div {
-                    class: indicator_classes,
-                    ..dot_elements
-                }
+                div { class: indicator_classes, ..dot_elements }
             }
 
             // Pause button
@@ -224,7 +219,11 @@ pub fn Carousel(props: CarouselProps) -> Element {
                     class: CarouselClass::Pause.as_class(),
                     onclick: toggle_pause,
                     aria_label: if is_paused.get() { "Play" } else { "Pause" },
-                    if is_paused.get() { "▶" } else { "⏸" }
+                    if is_paused.get() {
+                        "▶"
+                    } else {
+                        "⏸"
+                    }
                 }
             }
         }

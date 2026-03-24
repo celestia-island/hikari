@@ -7,37 +7,37 @@
 
 // Core modules
 pub mod basic;
-pub mod display;
-pub mod feedback;
-pub mod navigation;
 pub mod data;
+pub mod display;
 pub mod entry;
-pub mod production;
-pub mod portal;
+pub mod feedback;
 pub mod hooks;
-pub mod utils;
-pub mod styled;
-pub mod style_builder;
 pub mod layout;
+pub mod navigation;
 pub mod platform;
+pub mod portal;
+pub mod production;
 #[cfg(target_arch = "wasm32")]
 pub mod scripts;
+pub mod style_builder;
+pub mod styled;
+pub mod utils;
 
 // Prelude module
 pub mod prelude;
 
 // Re-export StyledComponent and StyleRegistry
-pub use styled::{StyledComponent, StyleRegistry};
+pub use styled::{StyleRegistry, StyledComponent};
 
 // Re-exports
 pub use basic::*;
-pub use display::*;
-pub use feedback::*;
-pub use navigation::*;
 pub use data::*;
+pub use display::*;
 pub use entry::*;
-pub use production::*;
+pub use feedback::*;
 pub use layout::*;
+pub use navigation::*;
+pub use production::*;
 
 // Theme system
 pub mod theme;
@@ -55,18 +55,15 @@ pub use portal::{
 
 // Re-export tairitsu prelude for convenience
 pub use tairitsu_vdom::{
-    VNode, VElement, VText, Classes, Style,
-    Signal, batch, create_effect,
-    EventData, MouseEvent, KeyboardEvent, InputEvent, FocusEvent, ChangeEvent,
-    ElementHandle, EventHandle, Platform,
+    ChangeEvent, Classes, ElementHandle, EventData, EventHandle, FocusEvent, InputEvent,
+    KeyboardEvent, MouseEvent, Platform, Signal, Style, VElement, VNode, VText, batch,
+    create_effect,
 };
 
 pub use tairitsu_hooks::{
-    use_signal, use_state, use_effect, use_ref, use_context,
-    provide_context, consume_context, Context, UseRef,
-    use_animation, use_simple_animation, AnimationConfig, AnimationDirection, AnimationState, EasingFunction,
+    AnimationConfig, AnimationDirection, AnimationState, Context, EasingFunction, UseRef,
+    consume_context, provide_context, use_animation, use_context, use_effect, use_ref, use_signal,
+    use_simple_animation, use_state,
 };
 
-pub use tairitsu_macros::{rsx, component};
-
-
+pub use tairitsu_macros::{component, rsx};

@@ -1,11 +1,13 @@
 // hi-components/src/feedback/drawer.rs
 // Drawer component with Arknights + FUI styling
 
-use crate::style_builder::{CssProperty, StyleStringBuilder};
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, DrawerClass, UtilityClass};
 
-use crate::styled::StyledComponent;
+use crate::{
+    prelude::*,
+    style_builder::{CssProperty, StyleStringBuilder},
+    styled::StyledComponent,
+};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DrawerPlacement {

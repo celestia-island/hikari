@@ -1,11 +1,10 @@
 // hi-components/src/portal/types.rs
 // Type definitions for the portal system
 
-use crate::prelude::*;
-
 use crate::{
     feedback::PopoverPlacement,
     modal::{MaskMode, ModalPosition, ModalSize},
+    prelude::*,
 };
 
 pub static PORTAL_ID_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
@@ -19,7 +18,9 @@ pub enum PortalPositionStrategy {
 
 impl Default for PortalPositionStrategy {
     fn default() -> Self {
-        PortalPositionStrategy::TriggerBased { placement: TriggerPlacement::default() }
+        PortalPositionStrategy::TriggerBased {
+            placement: TriggerPlacement::default(),
+        }
     }
 }
 

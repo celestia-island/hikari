@@ -1,10 +1,9 @@
 // packages/components/src/basic/form_field.rs
 // FormField component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, FormFieldClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct FormFieldComponent;
 
@@ -74,7 +73,9 @@ pub fn FormField(props: FormFieldProps) -> Element {
     // Build label element conditionally
     let label_el = if has_label {
         let required_marker = if props.required {
-            rsx! { span { class: "hi-form-field-required", " *" } }
+            rsx! {
+                span { class: "hi-form-field-required", " *" }
+            }
         } else {
             VNode::empty()
         };
@@ -102,9 +103,7 @@ pub fn FormField(props: FormFieldProps) -> Element {
     };
 
     rsx! {
-        div {
-            class: full_classes,
-            style: props.style,
+        div { class: full_classes, style: props.style,
 
             // Label
             {label_el.unwrap_or_else(VNode::empty)}

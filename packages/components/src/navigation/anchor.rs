@@ -22,12 +22,13 @@
 //! }
 //! ```
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use crate::platform;
-use crate::prelude::*;
 use hikari_palette::classes::{
     AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass,
 };
+
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use crate::platform;
+use crate::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Props)]
 pub struct AnchorItem {

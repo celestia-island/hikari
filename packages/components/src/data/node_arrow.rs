@@ -1,9 +1,10 @@
 // hi-components/src/data/node_arrow.rs
 // TreeNodeArrow component - expand/collapse arrow for tree nodes
 
-use crate::prelude::*;
-
-use crate::basic::{Arrow, ArrowDirection};
+use crate::{
+    basic::{Arrow, ArrowDirection},
+    prelude::*,
+};
 
 #[derive(Clone, PartialEq, Props)]
 pub struct TreeNodeArrowProps {

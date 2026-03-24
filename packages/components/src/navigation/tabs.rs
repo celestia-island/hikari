@@ -1,9 +1,7 @@
 // hi-components/src/navigation/tabs.rs
 // Tabs component with Arknights + FUI styling
 
-use crate::prelude::*;
-
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct TabsComponent;
 #[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]

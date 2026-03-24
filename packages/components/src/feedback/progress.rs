@@ -1,10 +1,9 @@
 // packages/components/src/feedback/progress.rs
 // Progress component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, ProgressClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct ProgressComponent;
 

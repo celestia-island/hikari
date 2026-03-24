@@ -3,10 +3,11 @@
 
 use std::sync::atomic::Ordering;
 
-use crate::prelude::*;
-
 use super::render::{PortalRender, PortalRenderProps};
-use crate::portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry};
+use crate::{
+    portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry},
+    prelude::*,
+};
 
 #[derive(Clone)]
 pub struct PortalContext {
@@ -82,8 +83,7 @@ pub fn PortalProvider(children: Element) -> Element {
 }
 
 pub fn use_portal() -> PortalContext {
-    let ctx = use_context::<PortalContext>()
-        .expect("PortalContext not found");
+    let ctx = use_context::<PortalContext>().expect("PortalContext not found");
     ctx.get().clone()
 }
 

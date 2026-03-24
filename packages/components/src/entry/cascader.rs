@@ -1,11 +1,10 @@
 // hi-components/src/entry/cascader.rs
 // Cascader component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{CascaderClass, ClassesBuilder, UtilityClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct CascaderComponent;
 
@@ -156,7 +155,8 @@ pub fn Cascader(props: CascaderProps) -> Element {
             .clone()
             .unwrap_or_else(|| "Please select".to_string())
     } else {
-        selected_values_for_display.get()
+        selected_values_for_display
+            .get()
             .iter()
             .filter_map(|v| find_option_by_value(&props.options, v))
             .map(|opt| opt.label.clone())
@@ -232,8 +232,7 @@ fn CascaderMenus(
     options: Vec<CascaderOption>,
     selected_values: Vec<String>,
     active_level: usize,
-    #[props(default)]
-    on_select: Option<EventHandler<String>>,
+    #[props(default)] on_select: Option<EventHandler<String>>,
 ) -> Element {
     let mut level = 0;
     let mut current_options = Some(options);
@@ -256,7 +255,11 @@ fn CascaderMenus(
                 let opt_value = opt.value.clone();
                 let opt_label = opt.label.clone();
                 let opt_disabled = opt.disabled;
-                let has_children = opt.children.as_ref().map(|c| !c.is_empty()).unwrap_or(false);
+                let has_children = opt
+                    .children
+                    .as_ref()
+                    .map(|c| !c.is_empty())
+                    .unwrap_or(false);
                 let is_selected = selected_at_level.as_ref() == Some(&opt_value);
                 let handler_for_item = on_select.clone();
 

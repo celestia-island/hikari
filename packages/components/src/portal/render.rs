@@ -1,10 +1,6 @@
 // hi-components/src/portal/render.rs
 // Portal rendering components
 
-use crate::prelude::*;
-use crate::platform::{inner_height, inner_width, log};
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use crate::platform::{set_timeout, request_animation_frame, element_from_point, element_closest};
 use hikari_palette::classes::{
     ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass, TooltipClass,
     UtilityClass,
@@ -12,6 +8,8 @@ use hikari_palette::classes::{
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use super::provider::use_portal;
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use crate::platform::{element_closest, element_from_point, request_animation_frame, set_timeout};
 use crate::{
     feedback::PopoverPlacement,
     modal::{MaskMode, ModalPosition, ModalSize},
@@ -23,6 +21,10 @@ use crate::{
         },
     },
 };
+use crate::{
+    platform::{inner_height, inner_width, log},
+    prelude::*,
+};
 
 fn use_animated_portal_entry(
     id: String,
@@ -33,7 +35,10 @@ fn use_animated_portal_entry(
     Callback<MouseEvent>,
     Signal<(String, String)>,
 ) {
-    #[cfg_attr(not(all(target_arch = "wasm32", target_os = "unknown")), allow(unused_variables))]
+    #[cfg_attr(
+        not(all(target_arch = "wasm32", target_os = "unknown")),
+        allow(unused_variables)
+    )]
     let id_for_close = id.clone();
     let internal_animation_state = use_signal(|| initial_state);
 
@@ -56,7 +61,8 @@ fn use_animated_portal_entry(
             ModalAnimationState::Disappearing => ("0".to_string(), "0.95".to_string()),
         };
         (opacity, scale)
-    }).value();
+    })
+    .value();
 
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
@@ -65,16 +71,25 @@ fn use_animated_portal_entry(
         let remove_entry_for_effect = portal.remove_entry.clone();
         use_effect(move || {
             let state = internal_animation_state_for_effect.get();
-            log(&format!("{} use_effect triggered, state: {:?}", name, state));
+            log(&format!(
+                "{} use_effect triggered, state: {:?}",
+                name, state
+            ));
             if state == ModalAnimationState::Appearing {
                 let anim_state_clone = internal_animation_state_for_effect.clone();
                 request_animation_frame(move || {
                     anim_state_clone.set(ModalAnimationState::Visible);
-                    log(&format!("{} set to visible via requestAnimationFrame", name));
+                    log(&format!(
+                        "{} set to visible via requestAnimationFrame",
+                        name
+                    ));
                 });
             } else if state == ModalAnimationState::Disappearing {
                 let id = id_for_close.clone();
-                log(&format!("{} setTimeout scheduled for removing entry: {}", name, id));
+                log(&format!(
+                    "{} setTimeout scheduled for removing entry: {}",
+                    name, id
+                ));
                 let remove_entry = remove_entry_for_effect.clone();
                 set_timeout(
                     move || {
@@ -98,7 +113,11 @@ fn use_animated_portal_entry(
 pub fn PortalRender(#[props(default)] entries: Option<Signal<Vec<PortalEntry>>>) -> Element {
     let entries = match entries {
         Some(signal) => signal.read(),
-        None => return rsx! { div {} },
+        None => {
+            return rsx! {
+                div {}
+            };
+        }
     };
 
     let portal_classes = ClassesBuilder::new().add(PortalClass::PortalRoot).build();
@@ -152,7 +171,11 @@ pub fn PortalRender(#[props(default)] entries: Option<Signal<Vec<PortalEntry>>>)
                         close_on_select: *close_on_select,
                     }
                 },
-                PortalEntry::Toast { id, position, children } => rsx! {
+                PortalEntry::Toast {
+                    id,
+                    position,
+                    children,
+                } => rsx! {
                     ToastPortalEntry {
                         z_index,
                         id: id.clone(),
@@ -174,19 +197,19 @@ pub fn PortalRender(#[props(default)] entries: Option<Signal<Vec<PortalEntry>>>)
                     children,
                 } => rsx! {
                     PopoverPortalEntry {
-                    z_index,
-                    id: id.clone(),
-                    trigger_rect: *trigger_rect,
-                    preferred_placements: preferred_placements.clone(),
-                    offset: *offset,
-                    width: width.clone(),
-                    title: title.clone(),
-                    close_on_click_outside: *close_on_click_outside,
-                    close_on_select: *close_on_select,
-                    on_close: on_close.clone(),
-                    close_requested: Some(close_requested.clone()),
-                    children: children.clone(),
-                }
+                        z_index,
+                        id: id.clone(),
+                        trigger_rect: *trigger_rect,
+                        preferred_placements: preferred_placements.clone(),
+                        offset: *offset,
+                        width: width.clone(),
+                        title: title.clone(),
+                        close_on_click_outside: *close_on_click_outside,
+                        close_on_select: *close_on_select,
+                        on_close: on_close.clone(),
+                        close_requested: Some(close_requested.clone()),
+                        children: children.clone(),
+                    }
                 },
                 PortalEntry::Tooltip {
                     id,
@@ -212,8 +235,7 @@ pub fn PortalRender(#[props(default)] entries: Option<Signal<Vec<PortalEntry>>>)
         div {
             class: portal_classes,
             style: "position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 9999;",
-
-            ..entry_elements
+            ..entry_elements,
         }
     }
 }
@@ -289,9 +311,7 @@ fn ModalPortalEntry(
     // Build close button outside rsx!
     let close_button = if closable {
         rsx! {
-            button {
-                class: close_classes,
-                onclick: button_close,
+            button { class: close_classes, onclick: button_close,
                 svg {
                     view_box: "0 0 24 24",
                     fill: "none",
@@ -738,7 +758,10 @@ fn PopoverPortalEntry(
         }
     };
 
-    let backdrop_style = format!("position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: {}; background: transparent; pointer-events: auto;", backdrop_z_index);
+    let backdrop_style = format!(
+        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: {}; background: transparent; pointer-events: auto;",
+        backdrop_z_index
+    );
 
     let backdrop = if close_on_click_outside {
         rsx! {
@@ -879,7 +902,11 @@ fn TooltipPortalEntry(
         .add(TooltipClass::TooltipVisible)
         .build();
 
-    let tooltip_style = format!("{} z-index: {}; pointer-events: none;", position_style.read(), z_index);
+    let tooltip_style = format!(
+        "{} z-index: {}; pointer-events: none;",
+        position_style.read(),
+        z_index
+    );
 
     // Build arrow element outside rsx!
     let arrow_el = if arrow {
@@ -891,9 +918,7 @@ fn TooltipPortalEntry(
     };
 
     rsx! {
-        div {
-            class: tooltip_classes,
-            style: tooltip_style,
+        div { class: tooltip_classes, style: tooltip_style,
 
             div { class: TooltipClass::TooltipContent.as_class(), "{content}" }
 

@@ -17,10 +17,9 @@
 //! }
 //! ```
 
-use crate::prelude::*;
 use hikari_palette::{ClassesBuilder, classes::components::*};
 
-use crate::theme::use_layout_direction;
+use crate::{prelude::*, theme::use_layout_direction};
 
 ///
 ///
@@ -28,14 +27,11 @@ use crate::theme::use_layout_direction;
 pub fn Grid(
     children: Element,
 
-    #[props(default = 12)]
-    columns: u8,
+    #[props(default = 12)] columns: u8,
 
-    #[props(default = "md".to_string())]
-    gap: String,
+    #[props(default = "md".to_string())] gap: String,
 
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     let gap_class = match gap.as_str() {
         "sm" => GridClass::GapSm,
@@ -53,7 +49,7 @@ pub fn Grid(
         div {
             class: classes,
             style: format!("grid-template-columns: repeat({columns}, minmax(0, 1fr));"),
-            { children }
+            {children}
         }
     }
 }
@@ -64,23 +60,17 @@ pub fn Grid(
 pub fn Col(
     children: Element,
 
-    #[props(default)]
-    span: Option<u8>,
+    #[props(default)] span: Option<u8>,
 
-    #[props(default)]
-    span_sm: Option<u8>,
+    #[props(default)] span_sm: Option<u8>,
 
-    #[props(default)]
-    span_md: Option<u8>,
+    #[props(default)] span_md: Option<u8>,
 
-    #[props(default)]
-    span_lg: Option<u8>,
+    #[props(default)] span_lg: Option<u8>,
 
-    #[props(default)]
-    offset: Option<u8>,
+    #[props(default)] offset: Option<u8>,
 
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     // Build responsive grid-column style
     let mut style_parts = Vec::new();
@@ -114,11 +104,7 @@ pub fn Col(
         .build();
 
     rsx! {
-        div {
-            class: classes,
-            style: style,
-            { children }
-        }
+        div { class: classes, style, {children} }
     }
 }
 
@@ -128,26 +114,19 @@ pub fn Col(
 pub fn Row(
     children: Element,
 
-    #[props(default = "md".to_string())]
-    gap: String,
+    #[props(default = "md".to_string())] gap: String,
 
-    #[props(default = true)]
-    wrap: bool,
+    #[props(default = true)] wrap: bool,
 
-    #[props(default = "start".to_string())]
-    justify: String,
+    #[props(default = "start".to_string())] justify: String,
 
-    #[props(default = "center".to_string())]
-    align: String,
+    #[props(default = "center".to_string())] align: String,
 
-    #[props(default)]
-    rtl: Option<bool>,
+    #[props(default)] rtl: Option<bool>,
 
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 
-    #[props(default)]
-    style: String,
+    #[props(default)] style: String,
 ) -> Element {
     let layout_direction = use_layout_direction();
     let is_rtl = rtl.unwrap_or_else(|| layout_direction.is_rtl());
@@ -194,8 +173,10 @@ pub fn Row(
     rsx! {
         div {
             class: classes,
-            style: format!("display: flex; {direction_style} {justify_style} {align_style} {wrap_style} {style}"),
-            { children }
+            style: format!(
+                "display: flex; {direction_style} {justify_style} {align_style} {wrap_style} {style}",
+            ),
+            {children}
         }
     }
 }

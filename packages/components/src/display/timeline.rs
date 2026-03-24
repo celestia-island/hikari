@@ -1,10 +1,9 @@
 // packages/components/src/display/timeline.rs
 // Timeline component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, TimelineClass, UtilityClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct TimelineComponent;
 

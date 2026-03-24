@@ -1,10 +1,9 @@
 // hi-components/src/basic/textarea.rs
 // Textarea component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, InputClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TextareaSize {
@@ -70,8 +69,12 @@ pub fn Textarea(props: TextareaProps) -> Element {
         .add(InputClass::Input)
         .add(size_class)
         .add_if(InputClass::InputDisabled, || props.disabled)
-        .add_if(InputClass::InputError, || matches!(props.status, TextareaStatus::Error))
-        .add_if(InputClass::InputSuccess, || matches!(props.status, TextareaStatus::Success))
+        .add_if(InputClass::InputError, || {
+            matches!(props.status, TextareaStatus::Error)
+        })
+        .add_if(InputClass::InputSuccess, || {
+            matches!(props.status, TextareaStatus::Success)
+        })
         .add_raw(&props.class)
         .build();
 
@@ -88,7 +91,7 @@ pub fn Textarea(props: TextareaProps) -> Element {
                 if let Some(handler) = props.oninput.as_ref() {
                     handler.call(e.data.clone());
                 }
-            }
+            },
         }
     }
 }

@@ -706,7 +706,9 @@ impl VisualQualityTests {
 
         info!("Testing system pages quality...");
 
-        driver.goto(&format!("{}/#/system/palette", base_url)).await?;
+        driver
+            .goto(&format!("{}/#/system/palette", base_url))
+            .await?;
         tokio::time::sleep(Duration::from_millis(8000)).await;
 
         match driver.find(By::Css("h1, .page-title")).await {

@@ -4,7 +4,7 @@
 use anyhow::Result;
 use std::{env, fs, path::Path};
 
-use tairitsu_packager::styles::{ScssCompiler, CompilerOptions};
+use tairitsu_packager::styles::{CompilerOptions, ScssCompiler};
 
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=src/styles");
@@ -40,10 +40,7 @@ fn main() -> Result<()> {
     let compiler = ScssCompiler::with_options(CompilerOptions {
         minify: true,
         source_map: false,
-        load_paths: vec![
-            theme_styles_dir,
-            components_styles_dir,
-        ],
+        load_paths: vec![theme_styles_dir, components_styles_dir],
     });
 
     // Compile each SCSS file
@@ -76,7 +73,12 @@ fn discover_scss_files(dir: &Path) -> Vec<std::path::PathBuf> {
     files
 }
 
-fn compile_scss(compiler: &ScssCompiler, full_path: &Path, output_dir: &Path, relative_path: &str) -> Result<()> {
+fn compile_scss(
+    compiler: &ScssCompiler,
+    full_path: &Path,
+    output_dir: &Path,
+    relative_path: &str,
+) -> Result<()> {
     // Get filename without extension
     let css_name = full_path
         .file_name()

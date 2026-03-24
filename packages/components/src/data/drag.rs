@@ -1,10 +1,9 @@
 // hi-components/src/data/drag.rs
 // Drag and drop component for tree node reordering
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, DragDropTreeClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct DragComponent;
 
@@ -68,14 +67,10 @@ pub fn DragDropTree(props: DragDropTreeProps) -> Element {
     let drag_over_key = use_signal(|| Option::<String>::None);
 
     rsx! {
-        div {
-            class: format!("hi-drag-drop-tree {}", props.class),
+        div { class: format!("hi-drag-drop-tree {}", props.class),
 
             if drop_target.read().is_some() {
-                div {
-                    class: "hi-drop-indicator",
-                    id: "drop-indicator",
-                }
+                div { class: "hi-drop-indicator", id: "drop-indicator" }
             }
 
             for node in &props.data {
@@ -251,45 +246,31 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
         div {
             class: drag_node_classes,
             draggable: props.draggable && !disabled,
-            ondragstart: ondragstart,
-            ondragend: ondragend,
-            ondragover: ondragover,
-            ondragleave: ondragleave,
-            ondrop: ondrop,
+            ondragstart,
+            ondragend,
+            ondragover,
+            ondragleave,
+            ondrop,
 
-            div {
-                class: "hi-drag-handle",
+            div { class: "hi-drag-handle",
 
                 if props.draggable && !props.node.disabled {
-                    span {
-                        class: "hi-drag-handle-icon",
-                        "⋮⋮"
-                    }
+                    span { class: "hi-drag-handle-icon", "⋮⋮" }
                 }
 
-                div {
-                    class: "hi-node-content",
-                    "{node_title}"
-                }
+                div { class: "hi-node-content", "{node_title}" }
 
                 if is_dragging {
-                    div {
-                        class: "hi-drag-ghost",
-                        key: "drag-ghost",
-                    }
+                    div { class: "hi-drag-ghost", key: "drag-ghost" }
                 }
             }
 
             if is_drag_over && props.drop_allowed {
-                div {
-                    class: "hi-drop-line",
-                    key: "drop-line",
-                }
+                div { class: "hi-drop-line", key: "drop-line" }
             }
 
             if !props.node.node_children.is_empty() {
-                div {
-                    class: "hi-node-children",
+                div { class: "hi-node-children",
 
                     for child in &props.node.node_children {
                         RenderDragNode {

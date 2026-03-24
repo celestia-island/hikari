@@ -1,10 +1,9 @@
 // hi-components/src/basic/switch.rs
 // Switch component with Glow effect and content variants
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, SwitchClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 #[define_props]
 pub struct SwitchProps {

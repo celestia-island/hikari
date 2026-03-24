@@ -1,10 +1,9 @@
 // hi-components/src/layout/divider.rs
 // Divider component for visual separation
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, DividerClass};
 
-use crate::theme::use_layout_direction;
+use crate::{prelude::*, theme::use_layout_direction};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DividerOrientation {
@@ -93,13 +92,11 @@ pub fn Divider(props: DividerProps) -> Element {
             _ => "text-align: center;",
         }
     } else {
-{ "" }
+        { "" }
     };
 
     rsx! {
-        div {
-            class: divider_classes,
-            style: text_align_style,
+        div { class: divider_classes, style: text_align_style,
             if let Some(label) = props.text {
                 span { class: "hi-divider-text", "{label}" }
             }

@@ -2,13 +2,13 @@
 // NumberInput component with Arknights + FUI styling
 // Uses InputWrapper for consistent layout
 
-use crate::prelude::*;
 use hikari_icons::MdiIcon;
 use hikari_palette::classes::{ClassesBuilder, Display, NumberInputClass};
 
 use crate::{
     basic::{InputWrapper, InputWrapperItem, InputWrapperSize},
     feedback::{GlowBlur, GlowColor, GlowIntensity},
+    prelude::*,
     styled::StyledComponent,
 };
 

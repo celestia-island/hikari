@@ -7,14 +7,13 @@
 // or highlight.js. For built-in Rust-based highlighting, consider
 // integrating with syntect.
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
-
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use crate::platform;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::prelude::*;
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use crate::platform;
+use crate::prelude::*;
 use crate::styled::StyledComponent;
 
 // Helper function to copy text to clipboard (WASM only)

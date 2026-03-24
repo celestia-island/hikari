@@ -1,10 +1,9 @@
 // hi-components/src/data/collapse.rs
 // Animated collapse/expand component for tree nodes
 
-use crate::prelude::*;
-
-use crate::styled::StyledComponent;
 use hikari_palette::classes::{ClassesBuilder, CollapseClass};
+
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct CollapseComponent;
 
@@ -75,8 +74,7 @@ pub fn Collapse(props: CollapseProps) -> Element {
     };
 
     rsx! {
-        div {
-            class: format!("hi-collapse {}", props.class),
+        div { class: format!("hi-collapse {}", props.class),
 
             div {
                 class: "hi-collapse-header",
@@ -87,28 +85,25 @@ pub fn Collapse(props: CollapseProps) -> Element {
                     class: "hi-collapse-arrow",
                     style: format!(
                         "display: inline-block; transition: transform {}ms ease-in-out; transform: rotate({});",
-                        props.duration, arrow_rotation
+                        props.duration,
+                        arrow_rotation,
                     ),
                     "›"
                 }
 
-                span {
-                    class: "hi-collapse-header-content",
-                    { props.children.clone() }
-                }
+                span { class: "hi-collapse-header-content", {props.children.clone()} }
             }
 
             div {
                 class: content_classes,
                 style: format!(
                     "max-height: {}; overflow: hidden; opacity: {}; {};",
-                    max_height, opacity, animation_style
+                    max_height,
+                    opacity,
+                    animation_style,
                 ),
 
-                div {
-                    class: "hi-collapse-inner",
-                    { props.children.clone() }
-                }
+                div { class: "hi-collapse-inner", {props.children.clone()} }
             }
         }
     }

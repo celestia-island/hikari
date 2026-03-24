@@ -1,11 +1,10 @@
 // hi-components/src/basic/arrow.rs
 // Arrow indicator component with rotation support
 
-use crate::prelude::*;
 use hikari_icons::{Icon, IconProps, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, components::ArrowClass};
 
-use crate::StyledComponent;
+use crate::{StyledComponent, prelude::*};
 
 pub struct ArrowComponent;
 
@@ -36,14 +35,11 @@ impl IntoAttrValue for ArrowDirection {
 ///
 #[component]
 pub fn Arrow(
-    #[props(default)]
-    direction: ArrowDirection,
+    #[props(default)] direction: ArrowDirection,
 
-    #[props(default = 16)]
-    size: u32,
+    #[props(default = 16)] size: u32,
 
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     // Determine direction class
     let direction_class = match direction {

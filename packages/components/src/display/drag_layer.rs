@@ -1,10 +1,9 @@
 // packages/components/src/display/drag_layer.rs
 // DragLayer component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, DragLayerClass, UtilityClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct DragLayerComponent;
 
@@ -48,8 +47,7 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
         .build();
 
     rsx! {
-        div {
-            class: container_classes,
+        div { class: container_classes,
 
             // Drop zone overlay
             if props.show_drop_zones {
@@ -69,12 +67,8 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
                     style: "left: {x}px; top: {y}px;",
 
                     div { class: DragLayerClass::DragPreviewContent.as_class(),
-                        span { class: DragLayerClass::DragPreviewLabel.as_class(),
-                            "{item.label}"
-                        }
-                        span { class: DragLayerClass::DragPreviewType.as_class(),
-                            "{item.item_type}"
-                        }
+                        span { class: DragLayerClass::DragPreviewLabel.as_class(), "{item.label}" }
+                        span { class: DragLayerClass::DragPreviewType.as_class(), "{item.item_type}" }
                     }
                 }
             }

@@ -5,11 +5,11 @@
 // - Layer2: Component variables (input-vars.scss)
 // - Custom: Runtime overrides via text_color, border_color, animation_id
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, InputClass, UtilityClass};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
+    prelude::*,
     styled::StyledComponent,
 };
 
@@ -120,8 +120,12 @@ pub fn Input(props: InputProps) -> Element {
     let input_classes = ClassesBuilder::new()
         .add(InputClass::Input)
         .add_if(InputClass::InputDisabled, || props.disabled)
-        .add_if(InputClass::InputError, || matches!(props.status, InputStatus::Error))
-        .add_if(InputClass::InputSuccess, || matches!(props.status, InputStatus::Success))
+        .add_if(InputClass::InputError, || {
+            matches!(props.status, InputStatus::Error)
+        })
+        .add_if(InputClass::InputSuccess, || {
+            matches!(props.status, InputStatus::Success)
+        })
         .build();
 
     let mut css_vars_string = String::new();
@@ -162,7 +166,7 @@ pub fn Input(props: InputProps) -> Element {
             "data-animation-id": props.animation_id,
 
             if let Some(icon) = props.prefix_icon {
-                span { class: InputClass::InputPrefix.as_class(), { icon } }
+                span { class: InputClass::InputPrefix.as_class(), {icon} }
             }
 
             input {
@@ -196,7 +200,7 @@ pub fn Input(props: InputProps) -> Element {
             }
 
             if let Some(icon) = props.suffix_icon {
-                span { class: InputClass::InputSuffix.as_class(), { icon } }
+                span { class: InputClass::InputSuffix.as_class(), {icon} }
             }
         }
     };
@@ -207,7 +211,7 @@ pub fn Input(props: InputProps) -> Element {
                 blur: props.glow_blur,
                 color: props.glow_color,
                 intensity: props.glow_intensity,
-                { input_content }
+                {input_content}
             }
         }
     } else {

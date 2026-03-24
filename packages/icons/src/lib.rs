@@ -27,9 +27,8 @@ pub mod mdi_minimal;
 
 #[cfg(feature = "dioxus")]
 use dioxus::prelude::*;
-
 #[cfg(feature = "tairitsu")]
-use tairitsu_macros::{rsx, define_props};
+use tairitsu_macros::{define_props, rsx};
 #[cfg(feature = "tairitsu")]
 use tairitsu_vdom::VNode as Element;
 

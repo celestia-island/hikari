@@ -3,12 +3,7 @@
 
 use std::collections::HashMap;
 
-use crate::node_graph::{
-    connection::{Connection, ConnectionId},
-    history::{HistoryAction, HistoryState},
-    node::{Node, NodeId, NodeState, NodeType, PortPosition},
-    serialization::SerializedNodeGraph,
-};
+use crate::node_graph::{ connection::{Connection, ConnectionId}, history::{HistoryAction, HistoryState}, node::{Node, NodeId, NodeState, NodeType, PortPosition}, serialization::SerializedNodeGraph, };
 
 /// Node graph state
 ///

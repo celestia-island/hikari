@@ -18,16 +18,15 @@ pub struct TreeNodeLabelProps {
 pub fn TreeNodeLabel(props: TreeNodeLabelProps) -> Element {
     // Build icon and label separately, then combine
     let icon_el = if let Some(icon) = &props.icon {
-        rsx! { span { class: "hi-tree-node-icon", {icon.clone()} } }
+        rsx! {
+            span { class: "hi-tree-node-icon", {icon.clone()} }
+        }
     } else {
         VNode::empty()
     };
 
     let label_el = rsx! {
-        span {
-            class: format!("hi-tree-node-label {}", props.class),
-            "{props.label}"
-        }
+        span { class: format!("hi-tree-node-label {}", props.class), "{props.label}" }
     };
 
     VNode::Fragment(vec![icon_el, label_el])

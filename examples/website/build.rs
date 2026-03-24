@@ -4,10 +4,7 @@
 //! checking the staged `public/` directory and optionally running auxiliary
 //! generation scripts when they exist.
 
-use std::{
-    path::{Path, absolute as path_absolute},
-    process::Command,
-};
+use std::{path::{Path, absolute as path_absolute}, process::Command};
 
 fn main() {
     println!("cargo:warning=🏗️  website build starting...");

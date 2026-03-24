@@ -1,12 +1,12 @@
 // hi-components/src/data/pagination_button.rs
 // Unified pagination button component with consistent structure
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, PaginationClass};
 
 use crate::{
     basic::{Arrow, ArrowDirection},
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    prelude::*,
     styled::StyledComponent,
 };
 

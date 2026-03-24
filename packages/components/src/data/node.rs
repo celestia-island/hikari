@@ -1,10 +1,12 @@
 // hi-components/src/data/node.rs
 // TreeNode component for tree data structures
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, TreeNodeClass};
 
-use crate::data::{TreeNodeArrow, TreeNodeContent, TreeNodeLabel};
+use crate::{
+    data::{TreeNodeArrow, TreeNodeContent, TreeNodeLabel},
+    prelude::*,
+};
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct TreeNodeData {
@@ -125,14 +127,11 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
                         if !props.disabled {
                             is_expanded_for_arrow.set(!is_expanded_for_arrow.get());
                         }
-                    })
+                    }),
                 }
 
                 // Node label with optional icon
-                TreeNodeLabel {
-                    label: props.label.clone(),
-                    icon: props.icon.clone(),
-                }
+                TreeNodeLabel { label: props.label.clone(), icon: props.icon.clone() }
             }
 
             // Render children if expanded
@@ -140,8 +139,7 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
                 ul {
                     class: "hi-tree-node-children",
                     role: "group",
-
-                    ..child_nodes
+                    ..child_nodes,
                 }
             }
         }

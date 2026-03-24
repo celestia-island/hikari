@@ -16,8 +16,9 @@
 //! }
 //! ```
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, SectionClass, UtilityClass};
+
+use crate::prelude::*;
 
 ///
 ///
@@ -25,17 +26,13 @@ use hikari_palette::classes::{ClassesBuilder, SectionClass, UtilityClass};
 pub fn Section(
     children: Element,
 
-    #[props(optional)]
-    title: Option<String>,
+    #[props(optional)] title: Option<String>,
 
-    #[props(optional)]
-    description: Option<String>,
+    #[props(optional)] description: Option<String>,
 
-    #[props(default = "md".to_string())]
-    size: String,
+    #[props(default = "md".to_string())] size: String,
 
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     let size_class = match size.as_str() {
         "sm" => SectionClass::SectionSm,
@@ -52,33 +49,22 @@ pub fn Section(
     let section_classes_str = section_classes.as_str();
 
     rsx! {
-        section {
-            class: section_classes_str,
+        section { class: section_classes_str,
 
             // Optional header
             if title.is_some() || description.is_some() {
-                div {
-                    class: SectionClass::SectionHeader.as_class(),
+                div { class: SectionClass::SectionHeader.as_class(),
                     if let Some(t) = title {
-                        h2 {
-                            class: SectionClass::SectionTitle.as_class(),
-                            "{t}"
-                        }
+                        h2 { class: SectionClass::SectionTitle.as_class(), "{t}" }
                     }
                     if let Some(d) = description {
-                        p {
-                            class: SectionClass::SectionDescription.as_class(),
-                            "{d}"
-                        }
+                        p { class: SectionClass::SectionDescription.as_class(), "{d}" }
                     }
                 }
             }
 
             // Section content
-            div {
-                class: SectionClass::SectionBody.as_class(),
-                { children }
-            }
+            div { class: SectionClass::SectionBody.as_class(), {children} }
         }
     }
 }
@@ -87,14 +73,11 @@ pub fn Section(
 ///
 #[component]
 pub fn Spacer(
-    #[props(default = "vertical".to_string())]
-    orientation: String,
+    #[props(default = "vertical".to_string())] orientation: String,
 
-    #[props(default = "md".to_string())]
-    size: String,
+    #[props(default = "md".to_string())] size: String,
 
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     let size_value = match size.as_str() {
         "xs" => "0.5rem",
@@ -118,10 +101,7 @@ pub fn Spacer(
     let classes_str = classes.as_str();
 
     rsx! {
-        div {
-            class: classes_str,
-            style: style,
-        }
+        div { class: classes_str, style }
     }
 }
 

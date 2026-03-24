@@ -1,13 +1,12 @@
 // packages/components/src/display/empty.rs
 // Empty state component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, EmptyClass, FlexDirection, Gap, JustifyContent, Padding,
     TextAlign, UtilityClass,
 };
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct EmptyComponent;
 
@@ -51,38 +50,26 @@ pub fn Empty(props: EmptyProps) -> Element {
         .build();
 
     rsx! {
-        div {
-            class: container_classes,
-            style: props.style,
+        div { class: container_classes, style: props.style,
 
             if let Some(ref image) = props.image {
-                div {
-                    class: EmptyClass::Image.as_class(),
+                div { class: EmptyClass::Image.as_class(),
                     img {
                         src: image,
                         alt: "Empty state",
-                        class: "{EmptyClass::Img.as_class()}"
+                        class: "{EmptyClass::Img.as_class()}",
                     }
                 }
             }
 
             if let Some(ref title) = props.title {
-                h3 {
-                    class: EmptyClass::Title.as_class(),
-                    "{title}"
-                }
+                h3 { class: EmptyClass::Title.as_class(), "{title}" }
             }
 
-            p {
-                class: EmptyClass::Description.as_class(),
-                "{props.description}"
-            }
+            p { class: EmptyClass::Description.as_class(), "{props.description}" }
 
             if let Some(action) = props.action {
-                div {
-                    class: EmptyClass::Action.as_class(),
-                    { action }
-                }
+                div { class: EmptyClass::Action.as_class(), {action} }
             }
         }
     }

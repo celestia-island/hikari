@@ -1,11 +1,10 @@
 // hi-components/src/data/sort.rs
 // Sort component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, SortClass, UtilityClass};
 
 pub use super::column::ColumnDef;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct SortComponent;
 
@@ -90,55 +89,65 @@ pub fn Sort(props: SortProps) -> Element {
         .build();
 
     // Build sort buttons using VElement directly
-    let mut children: Vec<VNode> = props.columns.iter().filter(|column| column.sortable).map(|column| {
-        let column_key = column.column_key.clone();
-        let is_active = props.column == column.column_key && props.direction != SortDirection::None;
-        let column_title = column.title.clone();
-        let direction_icon = if is_active { props.direction.icon().to_string() } else { "⇅".to_string() };
+    let mut children: Vec<VNode> = props
+        .columns
+        .iter()
+        .filter(|column| column.sortable)
+        .map(|column| {
+            let column_key = column.column_key.clone();
+            let is_active =
+                props.column == column.column_key && props.direction != SortDirection::None;
+            let column_title = column.title.clone();
+            let direction_icon = if is_active {
+                props.direction.icon().to_string()
+            } else {
+                "⇅".to_string()
+            };
 
-        // Clone captured variables for this iteration
-        let sort_column = current_column.clone();
-        let sort_direction = current_direction;
-        let sort_handler = on_sort_handler.clone();
-        let col_key = column_key.clone();
+            // Clone captured variables for this iteration
+            let sort_column = current_column.clone();
+            let sort_direction = current_direction;
+            let sort_handler = on_sort_handler.clone();
+            let col_key = column_key.clone();
 
-        let button_classes = ClassesBuilder::new()
-            .add(SortClass::SortButton)
-            .add_if(SortClass::SortActive, || is_active)
-            .build();
+            let button_classes = ClassesBuilder::new()
+                .add(SortClass::SortButton)
+                .add_if(SortClass::SortActive, || is_active)
+                .build();
 
-        let title_class = SortClass::SortTitle.as_class();
-        let indicator_class = SortClass::SortIndicator.as_class();
+            let title_class = SortClass::SortTitle.as_class();
+            let indicator_class = SortClass::SortIndicator.as_class();
 
-        VNode::Element(
-            VElement::new("button")
-                .class(button_classes)
-                .on_event("click", move |_e: Box<dyn EventData>| {
-                    let new_direction = if sort_column == col_key {
-                        sort_direction.toggle()
-                    } else {
-                        SortDirection::Ascending
-                    };
+            VNode::Element(
+                VElement::new("button")
+                    .class(button_classes)
+                    .on_event("click", move |_e: Box<dyn EventData>| {
+                        let new_direction = if sort_column == col_key {
+                            sort_direction.toggle()
+                        } else {
+                            SortDirection::Ascending
+                        };
 
-                    if let Some(handler) = sort_handler.as_ref() {
-                        handler.call(SortConfig {
-                            column: col_key.clone(),
-                            direction: new_direction,
-                        });
-                    }
-                })
-                .child(VNode::Element(
-                    VElement::new("span")
-                        .class(title_class)
-                        .child(VNode::Text(VText::new(&column_title)))
-                ))
-                .child(VNode::Element(
-                    VElement::new("span")
-                        .class(indicator_class)
-                        .child(VNode::Text(VText::new(&direction_icon)))
-                ))
-        )
-    }).collect();
+                        if let Some(handler) = sort_handler.as_ref() {
+                            handler.call(SortConfig {
+                                column: col_key.clone(),
+                                direction: new_direction,
+                            });
+                        }
+                    })
+                    .child(VNode::Element(
+                        VElement::new("span")
+                            .class(title_class)
+                            .child(VNode::Text(VText::new(&column_title))),
+                    ))
+                    .child(VNode::Element(
+                        VElement::new("span")
+                            .class(indicator_class)
+                            .child(VNode::Text(VText::new(&direction_icon))),
+                    )),
+            )
+        })
+        .collect();
 
     // Add clear button if there's an active sort
     if has_active_sort {
@@ -162,7 +171,7 @@ pub fn Sort(props: SortProps) -> Element {
                 .child(VNode::Element(
                     VElement::new("span")
                         .class(text_class)
-                        .child(VNode::Text(VText::new("Clear")))
+                        .child(VNode::Text(VText::new("Clear"))),
                 ))
                 .child(VNode::Element(
                     VElement::new("svg")
@@ -176,9 +185,9 @@ pub fn Sort(props: SortProps) -> Element {
                             VElement::new("path")
                                 .attr("stroke-linecap", "round")
                                 .attr("stroke-linejoin", "round")
-                                .attr("d", "M6 18L18 6M6 6l12 12")
-                        ))
-                ))
+                                .attr("d", "M6 18L18 6M6 6l12 12"),
+                        )),
+                )),
         );
         children.push(clear_button);
     }
@@ -186,7 +195,7 @@ pub fn Sort(props: SortProps) -> Element {
     VNode::Element(
         VElement::new("div")
             .class(container_classes)
-            .children(children)
+            .children(children),
     )
 }
 

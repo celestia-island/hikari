@@ -34,36 +34,29 @@
 //! }
 //! ```
 
-use crate::prelude::*;
 use hikari_palette::classes::{
     AppLayoutClass, ClassesBuilder, UtilityClass, components::Layout as LayoutClass,
 };
 
-use crate::basic::Background;
+use crate::{basic::Background, prelude::*};
 
 ///
 ///
 #[component]
 pub fn Layout(
-    #[props(optional)]
-    header: Option<Element>,
+    #[props(optional)] header: Option<Element>,
 
-    #[props(optional)]
-    aside: Option<Element>,
+    #[props(optional)] aside: Option<Element>,
 
-    #[props(optional)]
-    footer: Option<Element>,
+    #[props(optional)] footer: Option<Element>,
 
     children: Element,
 
-    #[props(default = true)]
-    glassmorphism: bool,
+    #[props(default = true)] glassmorphism: bool,
 
-    #[props(default = "var(--hi-background, #f8fafc)".to_string())]
-    background_color: String,
+    #[props(default = "var(--hi-background, #f8fafc)".to_string())] background_color: String,
 
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     let mut is_drawer_open = use_signal(|| false);
 
@@ -82,8 +75,7 @@ pub fn Layout(
         // Global gradient background (fixed, behind everything)
         Background {}
 
-        div {
-            class: layout_classes,
+        div { class: layout_classes,
 
             // Header (if provided) - full width at top
             if let Some(header_content) = header {

@@ -8,13 +8,13 @@
 // 3. Multiple icons should use consistent spacing (4px gap)
 // 4. Icon sizes: Small(24px), Medium(32px), Large(40px)
 
-use crate::prelude::*;
 use hikari_icons::MdiIcon;
 use hikari_palette::classes::{ClassesBuilder, InputWrapperClass, UtilityClass};
 
 use crate::{
     basic::{IconButton, IconButtonProps},
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
+    prelude::*,
     styled::StyledComponent,
 };
 
@@ -46,7 +46,9 @@ pub enum InputWrapperItem {
         disabled: bool,
         icon_color: Option<String>,
     },
-    Icon { icon: MdiIcon },
+    Icon {
+        icon: MdiIcon,
+    },
     Custom(Element),
 }
 
@@ -196,41 +198,36 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
     };
 
     let content = rsx! {
-        div {
-            class: wrapper_classes,
-            style: props.style,
+        div { class: wrapper_classes, style: props.style,
 
             // Left section
             if !props.left.is_empty() {
-                div {
-                    class: InputWrapperClass::LeftSection.as_class(),
-                    for (i, item) in props.left.iter().enumerate() {
+                div { class: InputWrapperClass::LeftSection.as_class(),
+                    for (i , item) in props.left.iter().enumerate() {
                         div {
                             key: i,
                             class: InputWrapperClass::SideItem.as_class(),
-                            { render_item(item) }
+                            {render_item(item)}
                         }
                     }
                 }
             }
 
             // Input section
-            div {
-                class: InputWrapperClass::InputSection.as_class(),
+            div { class: InputWrapperClass::InputSection.as_class(),
                 if let Some(input) = props.input.as_ref() {
-                    { input.clone() }
+                    {input.clone()}
                 }
             }
 
             // Right section
             if !props.right.is_empty() {
-                div {
-                    class: InputWrapperClass::RightSection.as_class(),
-                    for (i, item) in props.right.iter().enumerate() {
+                div { class: InputWrapperClass::RightSection.as_class(),
+                    for (i , item) in props.right.iter().enumerate() {
                         div {
                             key: i,
                             class: InputWrapperClass::SideItem.as_class(),
-                            { render_item(item) }
+                            {render_item(item)}
                         }
                     }
                 }
@@ -245,7 +242,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                 blur: props.glow_blur,
                 color: props.glow_color,
                 intensity: props.glow_intensity,
-                { content }
+                {content}
             }
         }
     } else {

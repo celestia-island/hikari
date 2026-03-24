@@ -1,11 +1,10 @@
 // packages/components/src/display/zoom_controls.rs
 // ZoomControls component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, UtilityClass, ZoomControlsClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct ZoomControlsComponent;
 
@@ -88,16 +87,11 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
     let can_zoom_out = zoom.get() > props.min_zoom;
 
     rsx! {
-        div {
-            class: container_classes,
+        div { class: container_classes,
 
             // Zoom out button
             button {
-                class: if can_zoom_out {
-                    "{ZoomControlsClass::Button.as_class()}"
-                } else {
-                    "{ZoomControlsClass::Button.as_class()} {ZoomControlsClass::ButtonDisabled.as_class()}"
-                },
+                class: if can_zoom_out { "{ZoomControlsClass::Button.as_class()}" } else { "{ZoomControlsClass::Button.as_class()} {ZoomControlsClass::ButtonDisabled.as_class()}" },
                 disabled: !can_zoom_out,
                 onclick: handle_zoom_out,
                 Icon { icon: MdiIcon::Minus, size: 18 }
@@ -105,18 +99,12 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
 
             // Zoom percentage display
             if props.show_percentage {
-                div { class: ZoomControlsClass::Percentage.as_class(),
-                    "{zoom.get()}%"
-                }
+                div { class: ZoomControlsClass::Percentage.as_class(), "{zoom.get()}%" }
             }
 
             // Zoom in button
             button {
-                class: if can_zoom_in {
-                    "{ZoomControlsClass::Button.as_class()}"
-                } else {
-                    "{ZoomControlsClass::Button.as_class()} {ZoomControlsClass::ButtonDisabled.as_class()}"
-                },
+                class: if can_zoom_in { "{ZoomControlsClass::Button.as_class()}" } else { "{ZoomControlsClass::Button.as_class()} {ZoomControlsClass::ButtonDisabled.as_class()}" },
                 disabled: !can_zoom_in,
                 onclick: handle_zoom_in,
                 Icon { icon: MdiIcon::MagnifyPlus, size: 18 }

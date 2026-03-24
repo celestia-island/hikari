@@ -1,10 +1,9 @@
 // packages/components/src/basic/date_picker.rs
 // DatePicker component with Arknights + FUI styling
 
-use crate::prelude::*;
 use hikari_palette::classes::{ClassesBuilder, DatePickerClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct DatePickerComponent;
 
@@ -66,9 +65,7 @@ pub fn DatePicker(props: DatePickerProps) -> Element {
     let display_value = props.value.clone().unwrap_or_default();
 
     rsx! {
-        div {
-            class: wrapper_classes,
-            style: props.style,
+        div { class: wrapper_classes, style: props.style,
 
             input {
                 class: input_classes,
@@ -104,10 +101,32 @@ pub fn DatePicker(props: DatePickerProps) -> Element {
                 fill: "none",
                 stroke: "currentColor",
                 stroke_width: "2",
-                rect { x: "3", y: "4", width: "18", height: "18", rx: "2", ry: "2" }
-                line { x1: "16", y1: "2", x2: "16", y2: "6" }
-                line { x1: "8", y1: "2", x2: "8", y2: "6" }
-                line { x1: "3", y1: "10", x2: "21", y2: "10" }
+                rect {
+                    x: "3",
+                    y: "4",
+                    width: "18",
+                    height: "18",
+                    rx: "2",
+                    ry: "2",
+                }
+                line {
+                    x1: "16",
+                    y1: "2",
+                    x2: "16",
+                    y2: "6",
+                }
+                line {
+                    x1: "8",
+                    y1: "2",
+                    x2: "8",
+                    y2: "6",
+                }
+                line {
+                    x1: "3",
+                    y1: "10",
+                    x2: "21",
+                    y2: "10",
+                }
             }
         }
     }

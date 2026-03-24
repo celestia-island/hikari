@@ -5,10 +5,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform::set_timeout;
-use crate::prelude::*;
-
 use crate::{
-    portal::{use_portal, PortalEntry},
+    portal::{PortalEntry, use_portal},
+    prelude::*,
     styled::StyledComponent,
 };
 

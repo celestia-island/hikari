@@ -1,9 +1,7 @@
 // packages/components/src/basic/canvas.rs
 // Canvas component with requestAnimationFrame integration
 
-use crate::prelude::*;
-
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct CanvasComponent;
 
@@ -18,10 +16,8 @@ pub enum CanvasMode {
 pub fn Canvas(
     width: u32,
     height: u32,
-    #[props(default)]
-    class: String,
-    #[props(default)]
-    style: String,
+    #[props(default)] class: String,
+    #[props(default)] style: String,
 ) -> Element {
     let class_str = if class.is_empty() {
         "hi-canvas".to_string()

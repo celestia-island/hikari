@@ -1,9 +1,12 @@
 // hikari-components/src/basic/avatar.rs
 //! Avatar component for user profile images
 
-use crate::style_builder::{CssProperty, StyleStringBuilder};
-use crate::prelude::*;
 use hikari_palette::classes::{AvatarClass, ClassesBuilder, UtilityClass};
+
+use crate::{
+    prelude::*,
+    style_builder::{CssProperty, StyleStringBuilder},
+};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum AvatarSize {
@@ -136,9 +139,7 @@ pub fn Avatar(
                 height: icon_size,
                 view_box: "0 0 24 24",
                 fill: "currentColor",
-                path {
-                    d: "M12 4a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4z"
-                }
+                path { d: "M12 4a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4z" }
             }
         }
     } else if is_initial_mode {
@@ -174,10 +175,6 @@ pub fn Avatar(
     };
 
     rsx! {
-        div {
-            class: base_class,
-            style: container_style,
-            {inner_content}
-        }
+        div { class: base_class, style: container_style, {inner_content} }
     }
 }

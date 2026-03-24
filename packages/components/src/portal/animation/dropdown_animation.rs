@@ -13,11 +13,12 @@
 use std::{cell::RefCell, rc::Rc};
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use crate::style_builder::{CssProperty, StyleBuilder};
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::prelude::*;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use web_sys;
+
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use crate::style_builder::{CssProperty, StyleBuilder};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DropdownAnimationState {

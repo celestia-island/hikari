@@ -1,13 +1,21 @@
 // hikari-e2e/src/tests/ssr_tests.rs
 // SSR (Server-Side Rendering) E2E tests for Hikari website
 //
-// This test suite validates:
-// 1. HTML structure correctness - SSR output contains proper elements
-// 2. No-JS functionality - Content visible without JavaScript
-// 3. Hydration - Interactive features work after client-side hydration
+// This test suite has two layers:
 //
-// NOTE: These tests are designed to work once tairitsu-ssr bugs are fixed.
-//       They may fail until SSR is fully functional.
+// 1. **Fixture-based unit tests** (no browser required) — `test_fixture_*()` methods:
+//    These validate the `HtmlAssertions` utility against a fixture HTML document that
+//    represents the *expected* SSR output structure. They test that our assertion helpers
+//    work correctly and that the fixture HTML matches the design contract.
+//    Run with: `cargo test -p hikari-e2e --lib ssr`
+//
+// 2. **E2E browser tests** — `test_e2e_*()` methods:
+//    These navigate a live dev-server with Chrome WebDriver and validate the actual
+//    runtime behavior. Require a running server + WebDriver.
+//
+// 3. **No-JS HTTP tests** — `test_e2e_no_js_visibility()`:
+//    Uses a plain HTTP client (reqwest) to fetch the raw server response, bypassing
+//    the browser's JavaScript engine entirely. This is the definitive SSR content test.
 
 use anyhow::Result;
 use scraper::{Html, Selector};
@@ -15,11 +23,12 @@ use std::{
     path::PathBuf,
     time::{Duration, Instant},
 };
+use reqwest;
 use thirtyfour::{By, WebDriver};
 use tracing::{error, info, warn};
 
-use crate::html_assertions::HtmlAssertions;
 use crate::Test;
+use crate::html_assertions::HtmlAssertions;
 
 /// SSR-specific test result with additional metadata
 #[derive(Debug, Clone)]
@@ -37,7 +46,10 @@ pub struct SsrTestResult {
 #[derive(Debug, Clone)]
 pub enum SsrTestStatus {
     Success,
-    PartialSuccess { passed_tests: Vec<String>, failed_tests: Vec<String> },
+    PartialSuccess {
+        passed_tests: Vec<String>,
+        failed_tests: Vec<String>,
+    },
     Failure(String),
     Error(String),
 }
@@ -108,9 +120,17 @@ impl SsrTestResult {
 pub struct SsrTests;
 
 impl SsrTests {
-    /// Sample HTML output simulating SSR-rendered Hikari app
-    /// In production, this would come from tairitsu_ssr::render_to_html()
-    fn get_sample_ssr_html() -> String {
+    /// Fixture HTML representing the *expected* SSR output of the Hikari website.
+    ///
+    /// This fixture defines the design contract: the elements, class names,
+    /// and overall structure that `tairitsu_ssr::render_to_html()` must produce.
+    /// The fixture-based unit tests (`test_fixture_*`) validate:
+    ///   1. The `HtmlAssertions` utility works correctly on this structure.
+    ///   2. The fixture itself satisfies the design contract.
+    ///
+    /// When real SSR is available, golden-file tests should fetch actual output
+    /// and compare against this fixture (or replace it entirely).
+    fn expected_ssr_fixture_html() -> String {
         r#"<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -228,10 +248,12 @@ impl SsrTests {
     }
 
     /// Test 1: Verify SSR output HTML structure
-    pub fn test_ssr_html_structure() -> Result<SsrTestResult> {
-        info!("Testing SSR HTML structure");
+    /// Fixture test 1: Validates `HtmlAssertions` utility against the expected SSR output fixture.
+    /// Checks that the fixture HTML contains the required top-level document structure.
+    pub fn test_fixture_html_structure() -> Result<SsrTestResult> {
+        info!("[fixture] Validating HTML structure in expected SSR fixture");
 
-        let html = Self::get_sample_ssr_html();
+        let html = Self::expected_ssr_fixture_html();
         let assertions = HtmlAssertions::new(html);
 
         // Verify basic HTML structure
@@ -259,16 +281,17 @@ impl SsrTests {
             .map_err(|e| anyhow::anyhow!("Hikari app root not found: {}", e))?;
 
         Ok(SsrTestResult::success(
-            "test_ssr_html_structure",
-            "HTML structure contains all required elements: html, head, body, meta tags, and app root",
+            "test_fixture_html_structure",
+            "Fixture HTML structure contains all required elements: html, head, body, meta tags, and app root",
         ))
     }
 
-    /// Test 2: Verify all pages are rendered
-    pub fn test_ssr_has_all_pages() -> Result<SsrTestResult> {
-        info!("Testing SSR has all pages rendered");
+    /// Fixture test 2: Validates `HtmlAssertions` utility against the expected SSR output fixture.
+    /// Checks that all page sections are present in the fixture HTML.
+    pub fn test_fixture_has_all_pages() -> Result<SsrTestResult> {
+        info!("[fixture] Validating all pages present in expected SSR fixture");
 
-        let html = Self::get_sample_ssr_html();
+        let html = Self::expected_ssr_fixture_html();
         let assertions = HtmlAssertions::new(html);
 
         // Verify all expected pages exist
@@ -292,16 +315,17 @@ impl SsrTests {
             .map_err(|e| anyhow::anyhow!("Expected 5 pages with .hikari-page class: {}", e))?;
 
         Ok(SsrTestResult::success(
-            "test_ssr_has_all_pages",
-            "All 5 pages (home, components, system, demos, 404) are rendered in the HTML",
+            "test_fixture_has_all_pages",
+            "Fixture HTML contains all 5 pages (home, components, system, demos, 404)",
         ))
     }
 
-    /// Test 3: Verify CSS classes are present
-    pub fn test_ssr_css_classes_present() -> Result<SsrTestResult> {
-        info!("Testing SSR CSS classes presence");
+    /// Fixture test 3: Validates `HtmlAssertions` utility against the expected SSR output fixture.
+    /// Checks that all required CSS classes are present in the fixture HTML.
+    pub fn test_fixture_css_classes_present() -> Result<SsrTestResult> {
+        info!("[fixture] Validating CSS class names in expected SSR fixture");
 
-        let html = Self::get_sample_ssr_html();
+        let html = Self::expected_ssr_fixture_html();
         let assertions = HtmlAssertions::new(html);
 
         // Verify layout classes
@@ -348,16 +372,18 @@ impl SsrTests {
             .map_err(|e| anyhow::anyhow!("Expected 3 nav links: {}", e))?;
 
         Ok(SsrTestResult::success(
-            "test_ssr_css_classes_present",
-            "All required CSS classes are present: layout, buttons, hero, cards, navigation",
+            "test_fixture_css_classes_present",
+            "Fixture HTML contains all required CSS classes: layout, buttons, hero, cards, navigation",
         ))
     }
 
-    /// Test 4: Verify content is visible without JavaScript
-    pub fn test_ssr_no_js_required() -> Result<SsrTestResult> {
-        info!("Testing SSR no JavaScript required");
+    /// Fixture test 4: Validates `HtmlAssertions` utility against the expected SSR output fixture.
+    /// Checks that all critical content exists directly in the fixture HTML
+    /// (i.e. would be visible without JavaScript).
+    pub fn test_fixture_no_js_required() -> Result<SsrTestResult> {
+        info!("[fixture] Validating no-JS content presence in expected SSR fixture");
 
-        let html = Self::get_sample_ssr_html();
+        let html = Self::expected_ssr_fixture_html();
         let assertions = HtmlAssertions::new(html);
 
         // Verify important content is in HTML (not loaded via JS)
@@ -390,48 +416,61 @@ impl SsrTests {
             .map_err(|e| anyhow::anyhow!("Components nav link not in HTML: {}", e))?;
 
         Ok(SsrTestResult::success(
-            "test_ssr_no_js_required",
-            "All critical content is present in HTML without requiring JavaScript execution",
+            "test_fixture_no_js_required",
+            "Fixture HTML contains all critical content inline (would be visible without JS)",
         ))
     }
 
-    /// Run all SSR tests
+    /// Run all fixture-based unit tests (no browser required).
+    /// These validate the `HtmlAssertions` utility and the expected SSR output fixture.
     pub fn run_all() -> Vec<SsrTestResult> {
         let mut results = vec![];
 
-        // Test 1: HTML structure
-        match Self::test_ssr_html_structure() {
+        // Fixture test 1: HTML structure
+        match Self::test_fixture_html_structure() {
             Ok(result) => results.push(result),
             Err(e) => {
-                tracing::error!("SSR HTML structure test failed: {}", e);
-                results.push(SsrTestResult::error("test_ssr_html_structure", &e.to_string()));
+                tracing::error!("Fixture HTML structure test failed: {}", e);
+                results.push(SsrTestResult::error(
+                    "test_fixture_html_structure",
+                    &e.to_string(),
+                ));
             }
         }
 
-        // Test 2: All pages rendered
-        match Self::test_ssr_has_all_pages() {
+        // Fixture test 2: All pages rendered
+        match Self::test_fixture_has_all_pages() {
             Ok(result) => results.push(result),
             Err(e) => {
-                tracing::error!("SSR pages test failed: {}", e);
-                results.push(SsrTestResult::error("test_ssr_has_all_pages", &e.to_string()));
+                tracing::error!("Fixture pages test failed: {}", e);
+                results.push(SsrTestResult::error(
+                    "test_fixture_has_all_pages",
+                    &e.to_string(),
+                ));
             }
         }
 
-        // Test 3: CSS classes
-        match Self::test_ssr_css_classes_present() {
+        // Fixture test 3: CSS classes
+        match Self::test_fixture_css_classes_present() {
             Ok(result) => results.push(result),
             Err(e) => {
-                tracing::error!("SSR CSS classes test failed: {}", e);
-                results.push(SsrTestResult::error("test_ssr_css_classes_present", &e.to_string()));
+                tracing::error!("Fixture CSS classes test failed: {}", e);
+                results.push(SsrTestResult::error(
+                    "test_fixture_css_classes_present",
+                    &e.to_string(),
+                ));
             }
         }
 
-        // Test 4: No JS required
-        match Self::test_ssr_no_js_required() {
+        // Fixture test 4: No JS required
+        match Self::test_fixture_no_js_required() {
             Ok(result) => results.push(result),
             Err(e) => {
-                tracing::error!("SSR no-JS test failed: {}", e);
-                results.push(SsrTestResult::error("test_ssr_no_js_required", &e.to_string()));
+                tracing::error!("Fixture no-JS test failed: {}", e);
+                results.push(SsrTestResult::error(
+                    "test_fixture_no_js_required",
+                    &e.to_string(),
+                ));
             }
         }
 
@@ -452,8 +491,8 @@ impl SsrTests {
         test_type: &str,
         _status: &str,
     ) -> Result<String> {
-        let screenshots_dir =
-            std::env::var("E2E_SCREENSHOTS_DIR").unwrap_or_else(|_| "./screenshots/ssr".to_string());
+        let screenshots_dir = std::env::var("E2E_SCREENSHOTS_DIR")
+            .unwrap_or_else(|_| "./screenshots/ssr".to_string());
 
         std::fs::create_dir_all(&screenshots_dir)
             .map_err(|e| anyhow::anyhow!("Failed to create screenshots directory: {}", e))?;
@@ -463,7 +502,12 @@ impl SsrTests {
         let filepath = PathBuf::from(&screenshots_dir).join(&filename);
 
         let screenshot_data = driver.screenshot_as_png().await.map_err(|e| {
-            anyhow::anyhow!("Failed to take screenshot for {} {}: {}", test_name, test_type, e)
+            anyhow::anyhow!(
+                "Failed to take screenshot for {} {}: {}",
+                test_name,
+                test_type,
+                e
+            )
         })?;
 
         std::fs::write(&filepath, screenshot_data)
@@ -480,45 +524,6 @@ impl SsrTests {
             .source()
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get page source: {}", e))
-    }
-
-    /// Disable JavaScript using Chrome DevTools Protocol
-    async fn disable_javascript(driver: &WebDriver) -> Result<()> {
-        // Note: thirtyfour doesn't directly expose CDP in the standard API
-        // For now, we'll use a workaround by setting a flag
-        // In production, you might need to use the CDP extension or configure
-        // the browser capabilities to disable JS
-
-        info!("Attempting to disable JavaScript (note: may not work in all browsers)");
-
-        // Set a marker for the test
-        let _ = driver
-            .execute(
-                "window.__SSR_TEST_NO_JS__ = true; console.log('SSR Test: JS disable requested');",
-                Vec::new(),
-            )
-            .await;
-
-        // In a real implementation, you would use CDP here
-        // For now, we'll note that JS disabling is best-effort
-        info!("JavaScript disable marker set (actual JS disabling requires CDP)");
-
-        Ok(())
-    }
-
-    /// Enable JavaScript back
-    async fn enable_javascript(driver: &WebDriver) -> Result<()> {
-        info!("Re-enabling JavaScript");
-
-        // Clear the marker
-        let _ = driver
-            .execute(
-                "window.__SSR_TEST_NO_JS__ = false;",
-                Vec::new(),
-            )
-            .await;
-
-        Ok(())
     }
 
     /// E2E Test 1: HTML Structure Validation
@@ -630,7 +635,10 @@ impl SsrTests {
             Ok(SsrTestResult {
                 test_name,
                 status: SsrTestStatus::Success,
-                message: format!("HTML structure validation passed ({} checks)", checks_passed.len()),
+                message: format!(
+                    "HTML structure validation passed ({} checks)",
+                    checks_passed.len()
+                ),
                 duration_ms: duration,
                 html_structure_passed: true,
                 no_js_passed: false,
@@ -659,7 +667,11 @@ impl SsrTests {
     }
 
     /// E2E Test 2: No-JS Content Visibility
-    /// Verifies that content is visible without JavaScript
+    ///
+    /// Uses a plain HTTP client (reqwest) to fetch the raw server response
+    /// without executing JavaScript. This is the definitive SSR content test:
+    /// whatever the server sends is what a user without JS (or a search-engine
+    /// crawler) will see.
     pub async fn test_e2e_no_js_visibility(
         &self,
         driver: &WebDriver,
@@ -668,87 +680,76 @@ impl SsrTests {
         let start = Instant::now();
         let test_name = format!("No_JS_{}", path.replace('/', "_"));
 
-        info!("Testing E2E no-JS visibility for path: {}", path);
+        info!("Testing no-JS content visibility for path: {} (via HTTP fetch)", path);
 
         let url = format!("{}{}", Self::base_url(), path);
 
-        // Disable JavaScript first
-        Self::disable_javascript(driver).await?;
-        tokio::time::sleep(Duration::from_millis(200)).await;
+        // Fetch the raw HTML from the server using a plain HTTP client.
+        // The browser's JS engine is never involved — this is exactly what
+        // a search-engine crawler or a user with JS disabled would receive.
+        let http_client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(10))
+            .build()
+            .map_err(|e| anyhow::anyhow!("Failed to build HTTP client: {}", e))?;
 
-        // Navigate with JS disabled
-        driver
-            .goto(&url)
+        let raw_html = http_client
+            .get(&url)
+            .header("Accept", "text/html")
+            .send()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", url, e))?;
+            .map_err(|e| anyhow::anyhow!("HTTP fetch failed for {}: {}", url, e))?
+            .text()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to read response body: {}", e))?;
 
-        tokio::time::sleep(Duration::from_millis(500)).await;
+        info!("Fetched {} bytes of raw HTML from {}", raw_html.len(), url);
 
-        // Get HTML without JS
-        let html_no_js = Self::get_page_html(driver).await?;
-        let assertions = HtmlAssertions::from_str(&html_no_js);
-
+        let assertions = HtmlAssertions::from_str(&raw_html);
         let mut checks_passed = vec![];
         let mut checks_failed = vec![];
 
-        // Check 1: Root element exists without JS
+        // Check 1: Root element exists in raw server HTML
         match assertions.assert_exists("#hikari-app") {
-            Ok(_) => checks_passed.push("Root element without JS".to_string()),
-            Err(e) => {
-                checks_failed.push(format!("Root element without JS: {}", e));
-            }
+            Ok(_) => checks_passed.push("Root element in raw HTML".to_string()),
+            Err(e) => checks_failed.push(format!("Root element in raw HTML: {}", e)),
         }
 
-        // Check 2: Content is rendered (not empty)
-        if html_no_js.contains("hi-") {
-            checks_passed.push("Component classes present".to_string());
+        // Check 2: Component classes present in raw HTML
+        if raw_html.contains("hi-") {
+            checks_passed.push("Component classes present in raw HTML".to_string());
         } else {
-            checks_failed.push("No component classes found".to_string());
+            checks_failed.push("No component classes found in raw HTML".to_string());
         }
 
-        // Check 3: Navigation is visible
+        // Check 3: Navigation is in raw HTML
         match assertions.assert_exists(".hi-layout-header") {
-            Ok(_) => checks_passed.push("Navigation visible without JS".to_string()),
-            Err(e) => {
-                checks_failed.push(format!("Navigation without JS: {}", e));
-            }
+            Ok(_) => checks_passed.push("Navigation in raw HTML".to_string()),
+            Err(e) => checks_failed.push(format!("Navigation in raw HTML: {}", e)),
         }
 
-        // Check 4: Main content has content
-        let main_content_selector = ".hi-layout-content";
-        match Selector::parse(main_content_selector) {
-            Ok(sel) => {
-                let parsed = Html::parse_document(&html_no_js);
-                if let Some(element) = parsed.select(&sel).next() {
-                    let text = element.text().collect::<String>();
-                    if text.trim().len() > 10 {
-                        checks_passed.push("Main content has text".to_string());
-                    } else {
-                        checks_failed.push("Main content is empty".to_string());
-                    }
+        // Check 4: Main content area has meaningful text
+        if let Ok(sel) = Selector::parse(".hi-layout-content") {
+            let parsed = Html::parse_document(&raw_html);
+            if let Some(element) = parsed.select(&sel).next() {
+                let text = element.text().collect::<String>();
+                if text.trim().len() > 10 {
+                    checks_passed.push("Main content has text in raw HTML".to_string());
+                } else {
+                    checks_failed.push("Main content is empty in raw HTML".to_string());
                 }
-            }
-            Err(_) => {
-                checks_failed.push("Failed to parse main content selector".to_string());
+            } else {
+                checks_failed.push("Main content area not found in raw HTML".to_string());
             }
         }
 
-        // Check 5: At least one page is visible
+        // Check 5: At least one page element exists in raw HTML
         match assertions.assert_exists(".hikari-page") {
-            Ok(_) => checks_passed.push("Page content rendered without JS".to_string()),
-            Err(e) => {
-                checks_failed.push(format!("Page content without JS: {}", e));
-            }
+            Ok(_) => checks_passed.push("Page elements in raw HTML".to_string()),
+            Err(e) => checks_failed.push(format!("Page elements in raw HTML: {}", e)),
         }
 
-        // Take screenshot without JS
-        let screenshot = Self::take_screenshot(driver, &test_name, "no-js", "done")
-            .await
-            .unwrap_or_default();
-
-        // Re-enable JavaScript for subsequent tests
-        Self::enable_javascript(driver).await?;
-        tokio::time::sleep(Duration::from_millis(200)).await;
+        // Take a browser screenshot for visual record (separate from the HTML check)
+        let screenshot = Self::take_screenshot_after_navigate(driver, &url, &test_name).await;
 
         let duration = start.elapsed().as_millis() as u64;
 
@@ -756,12 +757,15 @@ impl SsrTests {
             Ok(SsrTestResult {
                 test_name,
                 status: SsrTestStatus::Success,
-                message: format!("No-JS visibility passed ({} checks)", checks_passed.len()),
+                message: format!(
+                    "No-JS (HTTP) visibility passed ({} checks on raw server HTML)",
+                    checks_passed.len()
+                ),
                 duration_ms: duration,
                 html_structure_passed: false,
                 no_js_passed: true,
                 hydration_passed: false,
-                screenshot_path: Some(screenshot),
+                screenshot_path: screenshot,
             })
         } else {
             Ok(SsrTestResult {
@@ -771,7 +775,7 @@ impl SsrTests {
                     failed_tests: checks_failed.clone(),
                 },
                 message: format!(
-                    "No-JS visibility: {} passed, {} failed",
+                    "No-JS (HTTP): {} passed, {} failed",
                     checks_passed.len(),
                     checks_failed.len()
                 ),
@@ -779,9 +783,26 @@ impl SsrTests {
                 html_structure_passed: false,
                 no_js_passed: false,
                 hydration_passed: false,
-                screenshot_path: Some(screenshot),
+                screenshot_path: screenshot,
             })
         }
+    }
+
+    /// Navigate the browser to a URL and take a screenshot for visual record.
+    /// Returns the screenshot path on success, or logs and returns None on error.
+    async fn take_screenshot_after_navigate(
+        driver: &WebDriver,
+        url: &str,
+        test_name: &str,
+    ) -> Option<String> {
+        if let Err(e) = driver.goto(url).await {
+            warn!("Could not navigate browser to {} for screenshot: {}", url, e);
+            return None;
+        }
+        tokio::time::sleep(Duration::from_millis(400)).await;
+        Self::take_screenshot(driver, test_name, "no-js", "done")
+            .await
+            .ok()
     }
 
     /// E2E Test 3: Hydration Functionality
@@ -902,10 +923,8 @@ impl SsrTests {
                 if elements.is_empty() {
                     checks_passed.push("No visible hydration errors".to_string());
                 } else {
-                    checks_failed.push(format!(
-                        "Found {} potential error elements",
-                        elements.len()
-                    ));
+                    checks_failed
+                        .push(format!("Found {} potential error elements", elements.len()));
                 }
             }
             Err(_) => {
@@ -1087,11 +1106,7 @@ impl SsrTests {
     }
 
     /// Test a specific route with all SSR E2E checks
-    pub async fn test_e2e_route(
-        &self,
-        driver: &WebDriver,
-        path: &str,
-    ) -> Result<SsrTestResult> {
+    pub async fn test_e2e_route(&self, driver: &WebDriver, path: &str) -> Result<SsrTestResult> {
         info!("Running full E2E SSR test suite for route: {}", path);
 
         let mut all_results = vec![];
@@ -1148,15 +1163,9 @@ impl SsrTests {
             .filter(|r| matches!(r.status, SsrTestStatus::Success))
             .count();
 
-        let html_passed = all_results
-            .iter()
-            .any(|r| r.html_structure_passed);
-        let no_js_passed = all_results
-            .iter()
-            .any(|r| r.no_js_passed);
-        let hydration_passed = all_results
-            .iter()
-            .any(|r| r.hydration_passed);
+        let html_passed = all_results.iter().any(|r| r.html_structure_passed);
+        let no_js_passed = all_results.iter().any(|r| r.no_js_passed);
+        let hydration_passed = all_results.iter().any(|r| r.hydration_passed);
 
         let status = if passed == total_tests {
             SsrTestStatus::Success
@@ -1175,15 +1184,20 @@ impl SsrTests {
             message: format!("SSR E2E tests for {}: {} passed", path, passed),
             duration_ms: 0,
             html_structure_passed: html_passed,
-            no_js_passed: no_js_passed,
-            hydration_passed: hydration_passed,
+            no_js_passed,
+            hydration_passed,
             screenshot_path: None,
         })
     }
 
     /// Test all critical routes
     pub async fn test_e2e_all_routes(&self, driver: &WebDriver) -> Result<Vec<SsrTestResult>> {
-        let routes = vec!["/", "/components/layer1", "/components/layer2", "/components/layer3"];
+        let routes = vec![
+            "/",
+            "/components/layer1",
+            "/components/layer2",
+            "/components/layer3",
+        ];
 
         let mut results = vec![];
 
@@ -1212,14 +1226,11 @@ impl Test for SsrTests {
 
     fn setup(&self) -> Result<()> {
         info!("Setting up SSR E2E test suite");
-        info!("This suite tests:");
-        info!("  1. HTML structure correctness");
-        info!("  2. Content visibility without JavaScript");
-        info!("  3. Client-side hydration functionality");
-        info!("  4. SEO metadata generation");
+        info!("This suite has two layers:");
+        info!("  Unit (fixture): validate HtmlAssertions against expected SSR output fixture");
+        info!("  E2E (browser):  navigate a live server and check actual DOM / HTTP response");
         info!("");
-        info!("NOTE: These tests require tairitsu-ssr to be fully functional.");
-        info!("      Failures are expected until SSR bugs are fixed.");
+        info!("E2E tests require a running dev server (WEBSITE_BASE_URL) and WebDriver.");
         Ok(())
     }
 
@@ -1291,40 +1302,42 @@ impl Test for SsrTests {
 mod tests {
     use super::*;
 
+    /// Verifies the `HtmlAssertions` utility can detect correct HTML structure
+    /// in the expected SSR output fixture.
     #[test]
-    fn test_ssr_html_structure_passes() {
-        let result = SsrTests::test_ssr_html_structure();
+    fn test_fixture_html_structure_passes() {
+        let result = SsrTests::test_fixture_html_structure();
         assert!(result.is_ok());
         let result = result.unwrap();
         assert!(matches!(result.status, SsrTestStatus::Success));
     }
 
     #[test]
-    fn test_ssr_has_all_pages_passes() {
-        let result = SsrTests::test_ssr_has_all_pages();
+    fn test_fixture_has_all_pages_passes() {
+        let result = SsrTests::test_fixture_has_all_pages();
         assert!(result.is_ok());
         let result = result.unwrap();
         assert!(matches!(result.status, SsrTestStatus::Success));
     }
 
     #[test]
-    fn test_ssr_css_classes_present_passes() {
-        let result = SsrTests::test_ssr_css_classes_present();
+    fn test_fixture_css_classes_present_passes() {
+        let result = SsrTests::test_fixture_css_classes_present();
         assert!(result.is_ok());
         let result = result.unwrap();
         assert!(matches!(result.status, SsrTestStatus::Success));
     }
 
     #[test]
-    fn test_ssr_no_js_required_passes() {
-        let result = SsrTests::test_ssr_no_js_required();
+    fn test_fixture_no_js_required_passes() {
+        let result = SsrTests::test_fixture_no_js_required();
         assert!(result.is_ok());
         let result = result.unwrap();
         assert!(matches!(result.status, SsrTestStatus::Success));
     }
 
     #[test]
-    fn test_run_all_ssr_tests() {
+    fn test_run_all_fixture_tests() {
         let results = SsrTests::run_all();
         assert_eq!(results.len(), 4);
         for result in &results {

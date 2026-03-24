@@ -1,10 +1,9 @@
 // hikari-e2e/src/bin/run_ssr_e2e.rs
 // Binary to run SSR E2E tests
 
-use hikari_e2e::{run_ssr_e2e_tests, SsrTests};
+use hikari_e2e::run_ssr_e2e_tests;
 use thirtyfour::prelude::*;
 use tracing::info;
-use tracing_subscriber;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -17,8 +16,8 @@ async fn main() -> anyhow::Result<()> {
     info!("================================");
 
     // Get base URL from environment or use default
-    let base_url = std::env::var("WEBSITE_BASE_URL")
-        .unwrap_or_else(|_| "http://localhost:3000".to_string());
+    let base_url =
+        std::env::var("WEBSITE_BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
     info!("Testing against: {}", base_url);
     info!("Make sure the dev server is running!");
     println!();
@@ -47,7 +46,12 @@ async fn main() -> anyhow::Result<()> {
     let total = results.len();
     let passed = results
         .iter()
-        .filter(|r| matches!(r.status, hikari_e2e::tests::ssr_tests::SsrTestStatus::Success))
+        .filter(|r| {
+            matches!(
+                r.status,
+                hikari_e2e::tests::ssr_tests::SsrTestStatus::Success
+            )
+        })
         .count();
     let partial = results
         .iter()

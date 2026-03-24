@@ -11,13 +11,15 @@ use std::{
 use thirtyfour::{By, WebDriver};
 use tracing::{info, warn};
 
-/// Visual analysis result from MCP
+/// Visual analysis result for screenshot comparison
+/// `before_after_match` is `Some(true)` if screenshots are identical, `Some(false)` if they differ,
+/// and `None` when no before/after comparison was performed (e.g., single capture).
 #[derive(Debug, Clone)]
 pub struct VisualAnalysis {
     pub screenshot_before: String,
     pub screenshot_after: String,
     pub analysis_result: String,
-    pub before_after_match: bool,
+    pub before_after_match: Option<bool>,
     pub details: String,
 }
 
@@ -2646,7 +2648,9 @@ impl InteractiveTests {
     }
 }
 
-/// Perform visual analysis comparison between two screenshots
+/// Compare two screenshot files byte-by-byte.
+/// Returns `Some(true)` if the files are identical, `Some(false)` if they differ,
+/// or `None` if either file cannot be read.
 pub async fn compare_visuals(
     before_path: &str,
     after_path: &str,
@@ -2654,28 +2658,45 @@ pub async fn compare_visuals(
     step_name: &str,
 ) -> Result<VisualAnalysis> {
     info!(
-        "Performing visual analysis for {} - {}",
+        "Performing visual comparison for {} - {}",
         component_name, step_name
     );
 
-    // In a real implementation, this would call MCP visual analysis tools
-    // For now, we provide a placeholder that can be integrated later
+    let before_bytes = std::fs::read(before_path).ok();
+    let after_bytes = std::fs::read(after_path).ok();
+
+    let before_after_match = match (&before_bytes, &after_bytes) {
+        (Some(b), Some(a)) => Some(b == a),
+        _ => {
+            warn!(
+                "Cannot compare screenshots: before='{}' after='{}'",
+                before_path, after_path
+            );
+            None
+        }
+    };
+
+    let match_desc = match before_after_match {
+        Some(true) => "identical (no visual change)",
+        Some(false) => "differ (visual change detected)",
+        None => "comparison unavailable (file read error)",
+    };
 
     let analysis = VisualAnalysis {
         screenshot_before: before_path.to_string(),
         screenshot_after: after_path.to_string(),
         analysis_result: format!(
-            "Visual comparison for {} - {}: Screenshots captured at {} and {}",
-            component_name, step_name, before_path, after_path
+            "Visual comparison for {} - {}: screenshots {}",
+            component_name, step_name, match_desc
         ),
-        before_after_match: true, // Placeholder: assume match for now
+        before_after_match,
         details: format!(
-            "Expected behavior: Component {} should respond to {} interaction with visual feedback",
-            component_name, step_name
+            "Component {} responded to {} interaction; screenshots are {}",
+            component_name, step_name, match_desc
         ),
     };
 
-    info!("Visual analysis result: {}", analysis.analysis_result);
+    info!("Visual analysis: {}", analysis.analysis_result);
     Ok(analysis)
 }
 
@@ -2706,13 +2727,13 @@ pub async fn analyze_test_step(
 
     info!("Screenshot saved: {}", filepath.display());
 
-    // Placeholder for visual analysis
+    // Single-step capture: no before/after comparison is performed.
     let analysis = VisualAnalysis {
         screenshot_before: String::new(),
         screenshot_after: filepath.to_string_lossy().to_string(),
         analysis_result: format!("Screenshot captured for {} - {}", component_name, step_name),
-        before_after_match: true,
-        details: "Visual feedback captured".to_string(),
+        before_after_match: None,
+        details: "Single-step screenshot; no before/after comparison".to_string(),
     };
 
     Ok((filepath.to_string_lossy().to_string(), analysis))

@@ -15,8 +15,8 @@ pub struct SsrTestHelper {
 impl SsrTestHelper {
     /// Create a new SSR test helper
     pub fn new() -> Self {
-        let base_url =
-            std::env::var("WEBSITE_BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
+        let base_url = std::env::var("WEBSITE_BASE_URL")
+            .unwrap_or_else(|_| "http://localhost:3000".to_string());
         Self { base_url }
     }
 
@@ -45,27 +45,41 @@ impl SsrTestHelper {
     /// Check if page has valid SSR structure
     pub fn validate_ssr_structure(html: &str) -> Result<SsrValidationResult> {
         let _assertions = HtmlAssertions::from_str(html);
-        let mut result = SsrValidationResult::default();
-
-        // Check DOCTYPE
-        result.has_doctype = html.starts_with("<!DOCTYPE html>") || html.starts_with("<!doctype html>");
-
-        // Check basic HTML structure
         let parsed = Html::parse_document(html);
 
-        // Check for root elements
-        result.has_html_tag = parsed.select(&Selector::parse("html").unwrap()).next().is_some();
-        result.has_head_tag = parsed.select(&Selector::parse("head").unwrap()).next().is_some();
-        result.has_body_tag = parsed.select(&Selector::parse("body").unwrap()).next().is_some();
-
-        // Check for Hikari app root
-        result.has_hikari_app = parsed
+        let has_doctype =
+            html.starts_with("<!DOCTYPE html>") || html.starts_with("<!doctype html>");
+        let has_html_tag = parsed
+            .select(&Selector::parse("html").unwrap())
+            .next()
+            .is_some();
+        let has_head_tag = parsed
+            .select(&Selector::parse("head").unwrap())
+            .next()
+            .is_some();
+        let has_body_tag = parsed
+            .select(&Selector::parse("body").unwrap())
+            .next()
+            .is_some();
+        let has_hikari_app = parsed
             .select(&Selector::parse("#hikari-app").unwrap())
             .next()
             .is_some();
 
+        let mut result = SsrValidationResult {
+            has_doctype,
+            has_html_tag,
+            has_head_tag,
+            has_body_tag,
+            has_hikari_app,
+            ..Default::default()
+        };
+
         // Check for layout classes
-        if let Some(app) = parsed.select(&Selector::parse("#hikari-app").unwrap()).next() {
+        if let Some(app) = parsed
+            .select(&Selector::parse("#hikari-app").unwrap())
+            .next()
+        {
             let class = app.value().attr("class").unwrap_or("");
             result.has_layout_class = class.contains("hi-layout");
         }
@@ -77,8 +91,14 @@ impl SsrTestHelper {
             .is_some();
 
         // Check for semantic HTML
-        result.has_main_tag = parsed.select(&Selector::parse("main").unwrap()).next().is_some();
-        result.has_nav_tag = parsed.select(&Selector::parse("nav").unwrap()).next().is_some();
+        result.has_main_tag = parsed
+            .select(&Selector::parse("main").unwrap())
+            .next()
+            .is_some();
+        result.has_nav_tag = parsed
+            .select(&Selector::parse("nav").unwrap())
+            .next()
+            .is_some();
 
         Ok(result)
     }

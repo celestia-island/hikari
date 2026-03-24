@@ -37,16 +37,8 @@ fn main() -> Result<()> {
     
     // Check if tairitsu_ssr is available
     info!("\nChecking tairitsu-ssr availability...");
-    
-    // Try to dynamically load tairitsu_ssr if it's available
-    #[cfg(feature = "direct-ssr")]
-    {
-        info!("Direct SSR feature enabled, will test rendering");
-    } else {
-        info!("Direct SSR feature not enabled");
-        info!("Note: For actual SSR testing, you need to build with 'direct-ssr' feature");
-        info!("      or run tests with the browser automation setup");
-    }
+    info!("Direct SSR feature not enabled at compile time.");
+    info!("For actual SSR rendering tests, use the browser automation setup or");
     
     info!("\n==========================================");
     info!("Direct SSR test completed");

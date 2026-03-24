@@ -8,7 +8,10 @@
 
 use tairitsu_vdom::{VElement, VNode};
 
-use crate::{components, pages::{components as comp_pages, demos as demo_pages, home, not_found, system as sys_pages}};
+use crate::{
+    components,
+    pages::{components as comp_pages, demos as demo_pages, home, not_found, system as sys_pages},
+};
 
 /// Render the full application VNode tree.
 pub fn render() -> VNode {
@@ -27,29 +30,27 @@ pub fn render() -> VNode {
             // Header bar (top, full-width, sticky)
             .child(components::top_nav())
             // Body: aside + main content area
-            .child(
-                VNode::Element(
-                    VElement::new("div")
-                        .class("hi-layout-body")
-                        // Mobile overlay backdrop
-                        .child(VNode::Element(
-                            VElement::new("div")
-                                .attr("id", "drawer-overlay")
-                                .class("hi-layout-overlay"),
-                        ))
-                        // Sidebar / Aside (drawer)
-                        .child(components::sidebar())
-                        // Main content wrapper
-                        .child(VNode::Element(
-                            VElement::new("div")
-                                .class("hi-layout-main")
-                                .child(VNode::Element(
-                                    VElement::new("main")
-                                        .class("hi-layout-content")
-                                        .children(content),
-                                )),
-                        )),
-                ),
-            ),
+            .child(VNode::Element(
+                VElement::new("div")
+                    .class("hi-layout-body")
+                    // Mobile overlay backdrop
+                    .child(VNode::Element(
+                        VElement::new("div")
+                            .attr("id", "drawer-overlay")
+                            .class("hi-layout-overlay"),
+                    ))
+                    // Sidebar / Aside (drawer)
+                    .child(components::sidebar())
+                    // Main content wrapper
+                    .child(VNode::Element(
+                        VElement::new("div")
+                            .class("hi-layout-main")
+                            .child(VNode::Element(
+                                VElement::new("main")
+                                    .class("hi-layout-content")
+                                    .children(content),
+                            )),
+                    )),
+            )),
     )
 }

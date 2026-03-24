@@ -97,8 +97,7 @@ pub fn RadioGroup(props: RadioGroupProps) -> Element {
     let disabled = props.disabled;
     let on_change = props
         .on_change
-        .as_ref()
-        .map(|h| h.clone())
+        .clone()
         .unwrap_or_else(|| EventHandler::new(|_| {}));
 
     let _ctx = use_context_provider(move || RadioContext {

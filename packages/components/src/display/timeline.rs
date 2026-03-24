@@ -7,10 +7,7 @@ use crate::{prelude::*, styled::StyledComponent};
 
 pub struct TimelineComponent;
 
-///
-///
-///
-///
+/// Timeline position determining item placement
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TimelinePosition {
     #[default]

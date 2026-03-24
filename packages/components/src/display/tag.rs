@@ -9,10 +9,7 @@ use crate::{prelude::*, styled::StyledComponent};
 
 pub struct TagComponent;
 
-///
-///
-///
-///
+/// Tag variant determining visual style
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TagVariant {
     #[default]

@@ -49,7 +49,7 @@ pub enum InputWrapperItem {
     Icon {
         icon: MdiIcon,
     },
-    Custom(Element),
+    Custom(Box<Element>),
 }
 
 impl InputWrapperItem {
@@ -89,7 +89,7 @@ impl InputWrapperItem {
     }
 
     pub fn custom(element: Element) -> Self {
-        Self::Custom(element)
+        Self::Custom(Box::new(element))
     }
 }
 
@@ -193,7 +193,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
                     }
                 }
             }
-            InputWrapperItem::Custom(element) => element.clone(),
+            InputWrapperItem::Custom(element) => element.as_ref().clone(),
         }
     };
 

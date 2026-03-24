@@ -16,12 +16,7 @@ static THEME_REGISTRY: once_cell::sync::Lazy<RwLock<ThemeRegistry>> =
         RwLock::new(registry)
     });
 
-///
-///
-///
-///
-///
-///
+/// Registers a custom theme with the given name
 pub fn register_theme(name: &str, palette: Palette) {
     let mut registry = THEME_REGISTRY
         .write()
@@ -29,9 +24,7 @@ pub fn register_theme(name: &str, palette: Palette) {
     registry.insert(name.to_string(), palette);
 }
 
-///
-///
-///
+/// Gets a registered theme by name
 pub fn get_registered_theme(name: &str) -> Option<Palette> {
     let registry = THEME_REGISTRY
         .read()
@@ -39,9 +32,7 @@ pub fn get_registered_theme(name: &str) -> Option<Palette> {
     registry.get(name).cloned()
 }
 
-///
-///
-///
+/// Returns the default theme name
 pub fn get_default_theme() -> &'static str {
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
@@ -58,11 +49,7 @@ pub fn get_default_theme() -> &'static str {
     }
 }
 
-///
-///
-///
-///
-///
+/// Returns true if the system prefers dark mode
 pub fn prefers_dark_mode() -> bool {
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {

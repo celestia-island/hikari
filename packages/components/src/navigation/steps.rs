@@ -1,6 +1,8 @@
 // packages/components/src/navigation/steps.rs
 // Steps component with Arknights + FUI styling
 
+#![expect(clippy::needless_update)]
+
 use hikari_palette::classes::{ClassesBuilder, StepsClass, UtilityClass};
 
 use crate::{prelude::*, styled::StyledComponent};
@@ -269,10 +271,8 @@ fn StepItem(props: StepItemProps) -> Element {
         div {
             class: props.step_classes,
             onclick: move |_e| {
-                if is_clickable {
-                    if let Some(handler) = on_change.as_ref() {
-                        handler.call(index);
-                    }
+                if is_clickable && let Some(handler) = on_change.as_ref() {
+                    handler.call(index);
                 }
             },
 

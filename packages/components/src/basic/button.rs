@@ -25,7 +25,7 @@ pub enum ButtonAnimation {
 
 pub struct ButtonComponent;
 
-///
+/// Button variant determining visual style
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ButtonVariant {
     #[default]
@@ -37,7 +37,7 @@ pub enum ButtonVariant {
     Success,
 }
 
-///
+/// Button size preset
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ButtonSize {
     #[default]
@@ -46,7 +46,7 @@ pub enum ButtonSize {
     Large,
 }
 
-///
+/// Button width preset
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ButtonWidth {
     #[default]
@@ -83,16 +83,9 @@ pub struct ButtonProps {
     pub onclick: Option<EventHandler<MouseEvent>>,
 }
 
+/// Button component
 ///
-///
-///
-///
-///
-///
-///
-///
-///
-///
+/// A clickable button with support for icons, loading states, animations, and glow effects.
 #[component]
 pub fn Button(props: ButtonProps) -> Element {
     let variant_class = match props.variant {

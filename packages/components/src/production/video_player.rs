@@ -12,7 +12,7 @@ use crate::{prelude::*, styled::StyledComponent};
 
 pub struct VideoPlayerComponent;
 
-///
+/// Props for the VideoPlayer component
 #[define_props]
 pub struct VideoPlayerProps {
     pub src: String,

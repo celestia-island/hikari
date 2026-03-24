@@ -10,10 +10,7 @@ use crate::{prelude::*, styled::StyledComponent};
 
 pub struct EmptyComponent;
 
-///
-///
-///
-///
+/// Props for the Empty component
 #[define_props]
 pub struct EmptyProps {
     #[default]

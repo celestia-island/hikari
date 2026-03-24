@@ -56,11 +56,9 @@ impl std::fmt::Debug for CellProps {
     }
 }
 
+/// Table cell component
 ///
-///
-///
-///
-///
+/// Renders a single table cell with support for custom rendering and alignment.
 #[component]
 pub fn Cell(props: CellProps) -> Element {
     let align_class = match props.column.align {
@@ -108,9 +106,9 @@ pub fn Cell(props: CellProps) -> Element {
 
 pub type CellRenderer = Rc<dyn Fn(&str, usize, usize) -> Element>;
 
+/// Creates a cell renderer from a closure
 ///
-///
-///
+/// This function wraps a closure in an Rc for use as a cell renderer.
 pub fn create_cell_renderer<F>(f: F) -> CellRenderer
 where
     F: Fn(&str, usize, usize) -> Element + 'static,

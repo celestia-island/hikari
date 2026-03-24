@@ -1,6 +1,8 @@
 // hi-components/src/feedback/alert.rs
 // Alert component with Arknights + FUI styling
 
+#![expect(clippy::needless_update)]
+
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{AlertClass, ClassesBuilder, UtilityClass};
 

@@ -153,21 +153,12 @@ pub struct ThemeProviderProps {
 }
 
 ///
+/// Theme provider component
 ///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-#[component]
+/// Provides hierarchical theme management across the application.
+/// Child providers can override parent theme settings.
+#[allow(non_snake_case)]
+#[allow(unused_braces)]
 pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
     let current_palette = use_signal(|| props.palette.clone());
     let current_theme_name = use_signal(|| props.palette.clone());
@@ -217,8 +208,9 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
     let text_secondary_override = props.text_secondary.clone();
     let component_overrides = props.component_overrides.clone();
 
+    let theme_name_for_memo = current_theme_name.clone();
     let css_vars = use_memo(move || {
-        let theme_name = current_theme_name.read();
+        let theme_name = theme_name_for_memo.read();
 
         let base_palette = match get_registered_theme(&theme_name) {
             Some(palette) => palette,
@@ -255,41 +247,27 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
         )
     });
 
+    let theme_name = current_theme_name.read();
     let dir = current_direction.read().as_str();
 
     rsx! {
         div {
             class: "hi-theme-provider",
-            "data-theme": "{current_theme_name.read()}",
-            dir: "{dir}",
+            "data-theme": theme_name,
+            dir: dir,
             style: css_vars,
             {props.children}
         }
     }
 }
 
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
+/// Hook to access the current theme context
 pub fn use_theme() -> ThemeContext {
     let ctx = use_context::<ThemeContext>().expect("ThemeContext not found");
     ctx.get().clone()
 }
 
-///
+/// Hook to access the current layout direction
 pub fn use_layout_direction() -> LayoutDirection {
     try_consume_context::<ThemeContext>()
         .map(|ctx| ctx.get().direction.get())

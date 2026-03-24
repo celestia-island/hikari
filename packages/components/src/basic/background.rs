@@ -14,21 +14,17 @@ use crate::{prelude::*, styled::StyledComponent};
 
 pub struct BackgroundComponent;
 
-///
-///
+/// Props for the Background component
 #[define_props]
 pub struct BackgroundProps {
     #[default]
     pub children: Element,
 }
 
+/// Background component with gradient animation
 ///
-///
-///
-///
-///
-///
-///
+/// Renders a full-screen gradient background with breathing color effects.
+/// The gradient automatically rotates and adjusts colors based on the current theme.
 #[component]
 pub fn Background(props: BackgroundProps) -> Element {
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
@@ -43,7 +39,9 @@ pub fn Background(props: BackgroundProps) -> Element {
     }
 }
 
+/// Starts the gradient animation for the background
 ///
+/// Returns a cleanup function that stops the animation when called.
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 fn start_gradient_animation() -> Box<dyn FnOnce()> {
     use std::cell::RefCell;

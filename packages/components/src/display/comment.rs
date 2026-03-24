@@ -7,10 +7,7 @@ use crate::{prelude::*, styled::StyledComponent};
 
 pub struct CommentComponent;
 
-///
-///
-///
-///
+/// Props for the Comment component
 #[define_props]
 pub struct CommentProps {
     #[default]

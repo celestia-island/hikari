@@ -5,6 +5,8 @@
 // - Layer2: Component variables (icon-button-vars.scss)
 // - Custom: Runtime overrides via icon_color, animation_id
 
+#![expect(clippy::needless_update)]
+
 use hikari_icons::{Icon, IconProps, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, components::ButtonClass};
 
@@ -55,7 +57,7 @@ impl IntoAttrValue for IconButtonVariant {
     }
 }
 
-///
+/// Props for the IconButton component
 #[define_props]
 pub struct IconButtonProps {
     #[default(MdiIcon::Help)]
@@ -93,16 +95,10 @@ pub struct IconButtonProps {
     pub onclick: Option<EventHandler<MouseEvent>>,
 }
 
+/// Icon button component
 ///
-///
-///
-///
-///
-///
-///
-///
-///
-///
+/// A square button that displays only an icon. Supports different sizes, variants,
+/// and glow effects.
 #[component]
 pub fn IconButton(props: IconButtonProps) -> Element {
     let icon_size = 14;
@@ -186,7 +182,6 @@ pub fn IconButton(props: IconButtonProps) -> Element {
                     handler(e);
                 }
             },
-
             Icon {
                 icon: props.icon,
                 size: icon_size,

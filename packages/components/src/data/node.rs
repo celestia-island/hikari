@@ -1,6 +1,8 @@
 // hi-components/src/data/node.rs
 // TreeNode component for tree data structures
 
+#![expect(clippy::needless_update)]
+
 use hikari_palette::classes::{ClassesBuilder, TreeNodeClass};
 
 use crate::{
@@ -139,7 +141,7 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
                 ul {
                     class: "hi-tree-node-children",
                     role: "group",
-                    ..child_nodes,
+                    ..child_nodes
                 }
             }
         }

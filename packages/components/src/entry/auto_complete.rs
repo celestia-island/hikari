@@ -7,11 +7,7 @@ use crate::{prelude::*, styled::StyledComponent};
 
 pub struct AutoCompleteComponent;
 
-///
-///
-///
-///
-///
+/// Props for the AutoComplete component
 #[define_props]
 pub struct AutoCompleteProps {
     pub value: String,

@@ -1,6 +1,8 @@
 // hi-components/src/entry/cascader.rs
 // Cascader component with Arknights + FUI styling
 
+#![expect(clippy::needless_update)]
+
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{CascaderClass, ClassesBuilder, UtilityClass};
 
@@ -187,18 +189,15 @@ pub fn Cascader(props: CascaderProps) -> Element {
                 tabindex: 0,
 
                 div { class: CascaderClass::Display.as_class(),
-                    div { class: CascaderClass::Text.as_class(),
-                        "{display_text}"
-                    }
+                    div { class: CascaderClass::Text.as_class(), "{display_text}" }
 
-                    if props.allow_clear && !selected_values_for_clear_check.get().is_empty() && !props.disabled {
+                    if props.allow_clear && !selected_values_for_clear_check.get().is_empty()
+                        && !props.disabled
+                    {
                         div {
                             class: CascaderClass::Clear.as_class(),
                             onclick: handle_clear,
-                            Icon {
-                                icon: MdiIcon::Close,
-                                size: 14,
-                            }
+                            Icon { icon: MdiIcon::Close, size: 14 }
                         }
                     }
 
@@ -288,17 +287,15 @@ fn CascaderMenus(
                         class: item_class,
 
                         onclick: move |_| {
-                            if !opt_disabled {
-                                if let Some(handler) = handler_for_item.as_ref() {
-                                    handler.call(opt_value.clone());
-                                }
+                            if !opt_disabled && let Some(handler) = handler_for_item.as_ref() {
+                                handler.call(opt_value.clone());
                             }
                         },
 
                         "{opt_label}"
 
                         if let Some(icon) = arrow_icon {
-                            { icon }
+                            {icon}
                         }
                     }
                 }
@@ -309,9 +306,7 @@ fn CascaderMenus(
             div {
                 class: CascaderClass::Menu.as_class(),
                 key: format!("menu-{}", level),
-                ul { class: CascaderClass::MenuList.as_class(),
-                    ..menu_items
-                }
+                ul { class: CascaderClass::MenuList.as_class(), ..menu_items }
             }
         });
 

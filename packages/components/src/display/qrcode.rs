@@ -10,7 +10,7 @@ use crate::{prelude::*, styled::StyledComponent};
 
 pub struct QRCodeComponent;
 
-///
+/// Props for the QRCode component
 #[define_props]
 pub struct QRCodeProps {
     pub value: String,

@@ -3,6 +3,8 @@
 // Features: Embedded icons/buttons, unified input styling, Glow effects
 // Uses InputWrapper for consistent layout and Portal system for dropdown suggestions
 
+#![expect(clippy::needless_update)]
+
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, SearchClass};
 
@@ -43,7 +45,7 @@ pub struct SearchProps {
 #[component]
 pub fn Search(props: SearchProps) -> Element {
     let mut value_signal = use_signal(|| props.value.clone());
-    let mut dropdown_id = use_signal(|| String::new());
+    let mut dropdown_id = use_signal(String::new);
     #[allow(unused_mut)]
     let mut container_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
     let portal = use_portal();

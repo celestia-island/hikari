@@ -15,7 +15,7 @@ pub enum AudioPlayerSize {
     Large,
 }
 
-///
+/// Props for the AudioPlayer component
 #[define_props]
 pub struct AudioPlayerProps {
     pub src: String,

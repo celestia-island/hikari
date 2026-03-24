@@ -48,7 +48,7 @@ pub struct TooltipProps {
 #[component]
 pub fn Tooltip(props: TooltipProps) -> Element {
     let portal = use_portal();
-    let tooltip_id = use_signal(|| generate_portal_id());
+    let tooltip_id = use_signal(generate_portal_id);
     #[allow(unused_mut)]
     let mut trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
 

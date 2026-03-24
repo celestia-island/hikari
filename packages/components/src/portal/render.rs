@@ -1,6 +1,8 @@
 // hi-components/src/portal/render.rs
 // Portal rendering components
 
+#![expect(clippy::needless_update)]
+
 use hikari_palette::classes::{
     ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass, TooltipClass,
     UtilityClass,
@@ -168,7 +170,7 @@ pub fn PortalRender(#[props(default)] entries: Option<Signal<Vec<PortalEntry>>>)
                         mask_mode: *mask_mode,
                         children: children.clone(),
                         trigger_rect: *trigger_rect,
-                        close_on_select: *close_on_select,
+                        close_on_select: *close_on_select
                     }
                 },
                 PortalEntry::Toast {
@@ -180,7 +182,7 @@ pub fn PortalRender(#[props(default)] entries: Option<Signal<Vec<PortalEntry>>>)
                         z_index,
                         id: id.clone(),
                         position: *position,
-                        children: children.clone(),
+                        children: children.clone()
                     }
                 },
                 PortalEntry::Popover {
@@ -208,7 +210,7 @@ pub fn PortalRender(#[props(default)] entries: Option<Signal<Vec<PortalEntry>>>)
                         close_on_select: *close_on_select,
                         on_close: on_close.clone(),
                         close_requested: Some(close_requested.clone()),
-                        children: children.clone(),
+                        children: children.clone()
                     }
                 },
                 PortalEntry::Tooltip {
@@ -224,7 +226,7 @@ pub fn PortalRender(#[props(default)] entries: Option<Signal<Vec<PortalEntry>>>)
                         trigger_rect: *trigger_rect,
                         placement: *placement,
                         content: content.clone(),
-                        arrow: *arrow,
+                        arrow: *arrow
                     }
                 },
             }
@@ -595,8 +597,7 @@ fn PopoverPortalEntry(
     let viewport_height = use_signal(|| inner_height() as f64);
 
     let position_state = use_signal(|| {
-        fn check_placement(
-            placement: PopoverPlacement,
+        struct PlacementParams {
             tx: f64,
             ty: f64,
             tw: f64,
@@ -607,7 +608,13 @@ fn PopoverPortalEntry(
             vh: f64,
             offset: f64,
             padding: f64,
+        }
+
+        fn check_placement(
+            placement: PopoverPlacement,
+            params: &PlacementParams,
         ) -> Option<(PopoverPlacement, f64, f64)> {
+            let PlacementParams { tx, ty, tw, th, popover_w, popover_h, vw, vh, offset, padding } = *params;
             let x = tx + tw / 2.0;
             let y = ty + th / 2.0;
 
@@ -657,21 +664,21 @@ fn PopoverPortalEntry(
 
         if let Some((tx, ty, tw, th)) = trigger_rect {
             let trigger_center_x = tx + tw / 2.0;
+            let params = PlacementParams {
+                tx,
+                ty,
+                tw,
+                th,
+                popover_w: POPOVER_W,
+                popover_h: POPOVER_H,
+                vw: get_viewport_width(),
+                vh: viewport_height.get(),
+                offset,
+                padding: PADDING,
+            };
 
             for placement in &preferred_placements {
-                if let Some(result) = check_placement(
-                    *placement,
-                    tx,
-                    ty,
-                    tw,
-                    th,
-                    POPOVER_W,
-                    POPOVER_H,
-                    get_viewport_width(),
-                    viewport_height.get(),
-                    offset,
-                    PADDING,
-                ) {
+                if let Some(result) = check_placement(*placement, &params) {
                     return result;
                 }
             }
@@ -684,19 +691,7 @@ fn PopoverPortalEntry(
             ];
             for placement in default_order {
                 if !preferred_placements.contains(&placement)
-                    && let Some(result) = check_placement(
-                        placement,
-                        tx,
-                        ty,
-                        tw,
-                        th,
-                        POPOVER_W,
-                        POPOVER_H,
-                        get_viewport_width(),
-                        viewport_height.get(),
-                        offset,
-                        PADDING,
-                    )
+                    && let Some(result) = check_placement(placement, &params)
                 {
                     return result;
                 }

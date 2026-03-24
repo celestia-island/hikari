@@ -30,13 +30,10 @@ pub struct SidebarProps {
     pub children: Element,
 }
 
+/// Sidebar navigation component
 ///
-///
-///
-///
-///
-///
-///
+/// A multi-level sidebar navigation component with support for
+/// nested sections, items, and leaf nodes.
 #[component]
 pub fn Sidebar(props: SidebarProps) -> Element {
     let nav_classes = ClassesBuilder::new()
@@ -65,7 +62,7 @@ impl StyledComponent for SidebarComponent {
     }
 }
 
-///
+/// Props for the SidebarSection component
 #[define_props]
 pub struct SidebarSectionProps {
     #[default("".to_string())]
@@ -167,7 +164,7 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
     }
 }
 
-///
+/// Props for the SidebarItem component
 #[define_props]
 pub struct SidebarItemProps {
     #[default("".to_string())]
@@ -285,7 +282,7 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
     }
 }
 
-///
+/// Props for the SidebarLeaf component
 #[define_props]
 pub struct SidebarLeafProps {
     #[default("".to_string())]

@@ -54,7 +54,7 @@ pub enum NumberInputSize {
 }
 
 impl NumberInputSize {
-    fn to_wrapper_size(&self) -> InputWrapperSize {
+    fn to_wrapper_size(self) -> InputWrapperSize {
         match self {
             NumberInputSize::Small => InputWrapperSize::Small,
             NumberInputSize::Medium => InputWrapperSize::Medium,

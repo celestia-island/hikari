@@ -1,6 +1,8 @@
 // hi-components/src/entry/transfer.rs
 // Transfer component with Arknights + FUI styling
 
+#![expect(clippy::needless_update)]
+
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, TransferClass, UtilityClass};
 
@@ -172,10 +174,10 @@ pub fn Transfer(props: TransferProps) -> Element {
                         disabled: props.target_selected_keys.is_empty() || props.disabled,
                         onclick: handle_to_source,
 
-                    Icon {
-                        icon: MdiIcon::ChevronLeft,
-                        size: 16,
-                    }
+                        Icon {
+                            icon: MdiIcon::ChevronLeft,
+                            size: 16,
+                        }
                     }
                 }
             }

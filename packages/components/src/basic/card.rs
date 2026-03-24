@@ -54,18 +54,14 @@ pub fn Card(props: CardProps) -> Element {
     };
 
     // Build title element
-    let title_el = if let Some(title) = &props.title {
-        Some(rsx! { div { class: CardClass::CardTitle.as_class(), "{title}" } })
-    } else {
-        None
-    };
+    let title_el = props.title.as_ref().map(|title| {
+        rsx! { div { class: CardClass::CardTitle.as_class(), "{title}" } }
+    });
 
     // Build extra element
-    let extra_el = if let Some(extra) = &props.extra {
-        Some(rsx! { div { class: CardClass::CardExtra.as_class(), {extra.clone()} } })
-    } else {
-        None
-    };
+    let extra_el = props.extra.as_ref().map(|extra| {
+        rsx! { div { class: CardClass::CardExtra.as_class(), {extra.clone()} } }
+    });
 
     let header = if has_title || has_extra {
         Some(rsx! {

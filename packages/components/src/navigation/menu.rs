@@ -1,6 +1,8 @@
 // hi-components/src/navigation/menu.rs
 // Menu component with Arknights + FUI styling
 
+#![expect(clippy::needless_update)]
+
 use hikari_palette::classes::{ClassesBuilder, MenuClass};
 
 use crate::{
@@ -231,10 +233,8 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
                     // Request close if in popover mode
                     if let Some(ctx) = &menu_context_for_click {
                         let ctx_val = ctx.get();
-                        if ctx_val.in_popover {
-                            if let Some(close_cb) = &ctx_val.request_close {
-                                close_cb.call(());
-                            }
+                        if let Some(close_cb) = &ctx_val.request_close {
+                            close_cb.call(());
                         }
                     }
                 }

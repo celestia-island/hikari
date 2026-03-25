@@ -93,6 +93,43 @@ impl IntoAttrValue for GlowIntensity {
     }
 }
 
+/// Glow animation presets for continuous animation effects
+///
+/// These presets add continuous animation effects to the glow component:
+/// - **None**: No animation (default)
+/// - **Pulse**: Heartbeat-like pulsing glow (2s cycle)
+/// - **Breathe**: Slow, smooth intensity variation (4s cycle)
+/// - **Shimmer**: Moving light spot across the element (3s cycle)
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum GlowPreset {
+    #[default]
+    None,
+    Pulse,
+    Breathe,
+    Shimmer,
+}
+
+impl std::fmt::Display for GlowPreset {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GlowPreset::None => write!(f, ""),
+            GlowPreset::Pulse => write!(f, "pulse"),
+            GlowPreset::Breathe => write!(f, "breathe"),
+            GlowPreset::Shimmer => write!(f, "shimmer"),
+        }
+    }
+}
+
+impl IntoAttrValue for GlowPreset {
+    fn into_attr_value(self) -> Option<String> {
+        if self == GlowPreset::None {
+            None
+        } else {
+            Some(self.to_string())
+        }
+    }
+}
+
 #[define_props]
 pub struct GlowProps {
     pub children: Element,
@@ -100,6 +137,7 @@ pub struct GlowProps {
     pub color: GlowColor,
     pub intensity: GlowIntensity,
     pub active_intensity: Option<GlowIntensity>,
+    pub preset: GlowPreset,
     pub class: String,
     pub block: bool,
     #[default("100".to_string())]
@@ -127,6 +165,7 @@ pub fn Glow(props: GlowProps) -> Element {
         .add(blur_class)
         .add(intensity_class)
         .add_raw(&props.class)
+        .add_raw(&props.preset.to_string())
         .build();
 
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]

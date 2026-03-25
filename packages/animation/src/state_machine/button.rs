@@ -67,8 +67,7 @@
 /// - **Active**: Mouse button is currently pressed down
 /// - **Focused**: Button has keyboard focus (Tab navigation)
 /// - **Disabled**: Button is non-interactive due to `disabled` prop
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
-#[derive(Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash, Default)]
 pub enum ButtonState {
     #[default]
     Idle,
@@ -77,7 +76,6 @@ pub enum ButtonState {
     Focused,
     Disabled,
 }
-
 
 /// User interaction events that trigger state transitions
 ///

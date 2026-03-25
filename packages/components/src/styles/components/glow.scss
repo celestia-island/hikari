@@ -139,3 +139,78 @@
 .hi-glow-wrapper .hi-input-wrapper:hover {
   // No hover effect - handled by glow overlay
 }
+
+// ============================================
+// Glow Animation Presets
+// ============================================
+//
+// These presets add continuous animation effects to the glow component.
+// They are activated by adding the corresponding class to the wrapper.
+//
+// Note: Preset animations pause during mouse interaction to maintain performance.
+
+// Pulse animation - heartbeat-like pulsing glow
+@keyframes glow-pulse {
+  0%, 100% {
+    --glow-intensity-scale: 0.5;
+  }
+  50% {
+    --glow-intensity-scale: 1.0;
+  }
+}
+
+.hi-glow-wrapper.pulse::before {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+// Breathe animation - slow, smooth intensity variation
+@keyframes glow-breathe {
+  0%, 100% {
+    --glow-intensity-scale: 0.3;
+  }
+  50% {
+    --glow-intensity-scale: 1.0;
+  }
+}
+
+.hi-glow-wrapper.breathe::before {
+  animation: glow-breathe 4s ease-in-out infinite;
+}
+
+// Shimmer animation - moving light spot across the element
+@keyframes glow-shimmer {
+  0% {
+    --glow-x: 20%;
+    --glow-y: 50%;
+  }
+  25% {
+    --glow-x: 50%;
+    --glow-y: 80%;
+  }
+  50% {
+    --glow-x: 80%;
+    --glow-y: 50%;
+  }
+  75% {
+    --glow-x: 50%;
+    --glow-y: 20%;
+  }
+  100% {
+    --glow-x: 20%;
+    --glow-y: 50%;
+  }
+}
+
+.hi-glow-wrapper.shimmer::before {
+  animation: glow-shimmer 3s linear infinite;
+}
+
+// Pause preset animations during mouse interaction
+.hi-glow-wrapper.pulse:has(:hover)::before,
+.hi-glow-wrapper.pulse:has(:active)::before,
+.hi-glow-wrapper.breathe:has(:hover)::before,
+.hi-glow-wrapper.breathe:has(:active)::before,
+.hi-glow-wrapper.shimmer:has(:hover)::before,
+.hi-glow-wrapper.shimmer:has(:active)::before {
+  animation-play-state: paused;
+}

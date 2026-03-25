@@ -68,7 +68,9 @@
 /// - **Focused**: Button has keyboard focus (Tab navigation)
 /// - **Disabled**: Button is non-interactive due to `disabled` prop
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[derive(Default)]
 pub enum ButtonState {
+    #[default]
     Idle,
     Hover,
     Active,
@@ -76,11 +78,6 @@ pub enum ButtonState {
     Disabled,
 }
 
-impl Default for ButtonState {
-    fn default() -> Self {
-        ButtonState::Idle
-    }
-}
 
 /// User interaction events that trigger state transitions
 ///

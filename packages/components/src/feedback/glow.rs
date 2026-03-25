@@ -184,11 +184,13 @@ pub fn Glow(props: GlowProps) -> Element {
             let _ = event;
         };
 
-        let onmouseenter_handler = move |_event: MouseEvent| {
+        let onmouseenter_handler = move |event: MouseEvent| {
             #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
-                log("Glow: mouseenter");
-                if let Some(target_el) = element_from_point(0, 0) {
+                let client_x = event.client_x;
+                let client_y = event.client_y;
+
+                if let Some(target_el) = element_from_point(client_x, client_y) {
                     if let Some(wrapper) =
                         get_element_by_class_upward("hi-glow-wrapper", &target_el)
                     {
@@ -196,27 +198,58 @@ pub fn Glow(props: GlowProps) -> Element {
                     }
                 }
             }
+            let _ = event;
         };
 
-        let onmouseleave_handler = move |_event: MouseEvent| {
+        let onmouseleave_handler = move |event: MouseEvent| {
             #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
-                log("Glow: mouseleave");
+                let client_x = event.client_x;
+                let client_y = event.client_y;
+
+                if let Some(target_el) = element_from_point(client_x, client_y) {
+                    if let Some(wrapper) =
+                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                    {
+                        set_style_property(&wrapper, "--glow-intensity-scale", "0");
+                    }
+                }
             }
+            let _ = event;
         };
 
-        let onmousedown_handler = move |_event: MouseEvent| {
+        let onmousedown_handler = move |event: MouseEvent| {
             #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
-                log("Glow: mousedown");
+                let client_x = event.client_x;
+                let client_y = event.client_y;
+
+                if let Some(target_el) = element_from_point(client_x, client_y) {
+                    if let Some(wrapper) =
+                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                    {
+                        set_style_property(&wrapper, "--glow-intensity-scale", "1.0");
+                    }
+                }
             }
+            let _ = event;
         };
 
-        let onmouseup_handler = move |_event: MouseEvent| {
+        let onmouseup_handler = move |event: MouseEvent| {
             #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
-                log("Glow: mouseup");
+                let client_x = event.client_x;
+                let client_y = event.client_y;
+
+                if let Some(target_el) = element_from_point(client_x, client_y) {
+                    if let Some(wrapper) =
+                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                    {
+                        set_style_property(&wrapper, "--glow-intensity-scale", "0.5");
+                    }
+                }
             }
+            let _ = event;
         };
 
         rsx! {

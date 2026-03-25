@@ -21,6 +21,7 @@ pub struct StyleConfig {
 
 /// Style context for accessing configuration
 #[derive(Clone)]
+#[derive(Default)]
 pub struct StyleContext {
     /// Current configuration
     pub config: StyleConfig,
@@ -180,13 +181,6 @@ pub fn use_component_class(component_name: &str, base_class: &str) -> String {
     }
 }
 
-impl Default for StyleContext {
-    fn default() -> Self {
-        Self {
-            config: StyleConfig::default(),
-        }
-    }
-}
 
 impl Default for StyleConfig {
     fn default() -> Self {

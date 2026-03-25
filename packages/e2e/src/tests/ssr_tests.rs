@@ -18,12 +18,12 @@
 //    the browser's JavaScript engine entirely. This is the definitive SSR content test.
 
 use anyhow::Result;
+use reqwest;
 use scraper::{Html, Selector};
 use std::{
     path::PathBuf,
     time::{Duration, Instant},
 };
-use reqwest;
 use thirtyfour::{By, WebDriver};
 use tracing::{error, info, warn};
 
@@ -680,7 +680,10 @@ impl SsrTests {
         let start = Instant::now();
         let test_name = format!("No_JS_{}", path.replace('/', "_"));
 
-        info!("Testing no-JS content visibility for path: {} (via HTTP fetch)", path);
+        info!(
+            "Testing no-JS content visibility for path: {} (via HTTP fetch)",
+            path
+        );
 
         let url = format!("{}{}", Self::base_url(), path);
 
@@ -796,7 +799,10 @@ impl SsrTests {
         test_name: &str,
     ) -> Option<String> {
         if let Err(e) = driver.goto(url).await {
-            warn!("Could not navigate browser to {} for screenshot: {}", url, e);
+            warn!(
+                "Could not navigate browser to {} for screenshot: {}",
+                url, e
+            );
             return None;
         }
         tokio::time::sleep(Duration::from_millis(400)).await;

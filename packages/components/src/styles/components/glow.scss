@@ -6,18 +6,21 @@
 // Hikari Glow Component - Single Glow Color System
 // ============================================
 //
-// IMPORTANT: All glow states are controlled by AnimationBuilder via inline styles.
-// CSS does NOT provide any default hover/active/focus behavior.
-// The --glow-intensity-scale variable is set inline:
+// Glow states are controlled by both JavaScript (via AnimationBuilder) and CSS:
+// - JavaScript: Sets --glow-intensity-scale inline for precise control
+// - CSS: Provides fallback :hover and :active states for robustness
+//
+// The --glow-intensity-scale variable controls glow visibility:
 // - Idle: 0 (no glow)
-// - Hover: 0.5 (subtle glow)  
+// - Hover: 0.5 (subtle glow)
 // - Focus: 0.7 (medium glow)
 // - Active: 1.0 (intense glow)
 //
-// CSS only provides:
+// CSS provides:
 // 1. Base structure (::before pseudo-element)
 // 2. Intensity classes (dim/soft/bright) for base opacity multiplier
 // 3. Transition timing
+// 4. Fallback :hover and :active states
 
 // Base glow wrapper styles
 .hi-glow-wrapper,
@@ -51,11 +54,55 @@
     transition: opacity 100ms ease-out;
   }
 
+  // CSS hover state - fallback when JavaScript events fail
+  &:hover {
+    --glow-intensity-scale: 0.5;
+  }
+
+  // CSS active state - fallback when JavaScript events fail
+  &:active {
+    --glow-intensity-scale: 1.0;
+  }
+
   // Ensure children (links, buttons) are always clickable
   > * {
     pointer-events: auto;
     position: relative;
     z-index: 1;
+  }
+}
+
+// ============================================
+// Glow Blur Levels (Backdrop Blur Effect)
+// ============================================
+
+// These classes control the backdrop blur intensity for the glow effect
+// None: No blur (default, for crisp glow edges)
+.hi-glow-blur-none {
+  // No additional blur effect
+}
+
+// Light: Subtle blur (2px) for soft glow edges
+.hi-glow-blur-light {
+  &::before {
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+}
+
+// Medium: Medium blur (4px) for balanced glow effect
+.hi-glow-blur-medium {
+  &::before {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+}
+
+// Heavy: Heavy blur (8px) for intense glow diffusion
+.hi-glow-blur-heavy {
+  &::before {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 }
 

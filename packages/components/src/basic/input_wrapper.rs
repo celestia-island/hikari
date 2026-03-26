@@ -119,7 +119,7 @@ pub struct InputWrapperProps {
     #[default(true)]
     pub glow: bool,
 
-    #[default]
+    #[default(GlowBlur::Light)]
     pub glow_blur: GlowBlur,
 
     #[default]

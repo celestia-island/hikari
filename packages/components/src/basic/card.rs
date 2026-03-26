@@ -3,7 +3,8 @@
 
 use hikari_palette::classes::{CardClass, ClassesBuilder, UtilityClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+#[allow(unused_imports)]
+use crate::{platform::*, prelude::*, styled::StyledComponent};
 
 pub struct CardComponent;
 
@@ -88,11 +89,40 @@ pub fn Card(props: CardProps) -> Element {
         body,
     ]);
 
-    // Unified version for all targets
-    // Note: Glow effect with mouse tracking requires element refs which will be added later
+    // Mouse tracking handler for glow effect
+    let mousemove_handler = move |event: MouseEvent| {
+        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+        {
+            if !props.glow {
+                return;
+            }
+
+            let client_x = event.client_x;
+            let client_y = event.client_y;
+
+            if let Some(target_el) = element_from_point(client_x, client_y) {
+                if let Some(card_el) = get_element_by_class_upward("hi-card", &target_el) {
+                    if let Some(glow_el) = card_el.query_selector(".hi-card-glow").ok().flatten() {
+                        if let Some(rect) = get_bounding_client_rect(&card_el) {
+                            let percent_x = ((client_x as f64 - rect.x) / rect.width * 100.0).clamp(0.0, 100.0);
+                            let percent_y = ((client_y as f64 - rect.y) / rect.height * 100.0).clamp(0.0, 100.0);
+
+                            if let Some(html_el) = glow_el.dyn_ref::<web_sys::HtmlElement>() {
+                                set_style_property(html_el, "--glow-x", &format!("{:.1}%", percent_x));
+                                set_style_property(html_el, "--glow-y", &format!("{:.1}%", percent_y));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        let _ = event;
+    };
+
     rsx! {
         div {
             class: card_classes,
+            onmousemove: mousemove_handler,
             onclick: move |e| {
                 if let Some(handler) = props.onclick.as_ref() {
                     handler.call(e);

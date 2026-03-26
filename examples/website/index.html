@@ -31,8 +31,42 @@
         }
     </style>
 
-    <!-- Hikari Complete Bundle (Utility Classes + Component Styles) -->
-    <link rel="stylesheet" href="/styles/bundle.css">
+    <!-- Theme switcher script -->
+    <script src="/theme.js"></script>
+    <style>
+        /* Theme toggle button styles */
+        .hi-theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            margin-left: 8px;
+            padding: 0;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--hi-color-text-primary, #475569);
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .hi-theme-toggle:hover {
+            background-color: var(--hi-color-bg-tertiary, #f1f5f9);
+        }
+        .hi-theme-toggle:focus-visible {
+            outline: 2px solid var(--hi-color-border-focus, #4a9eff);
+            outline-offset: 2px;
+        }
+        .hi-theme-toggle svg {
+            width: 20px;
+            height: 20px;
+        }
+        .theme-icon-sun { display: none; }
+        .theme-icon-moon { display: block; }
+        /* In dark mode, show sun icon by default (will be overridden by JS) */
+        [data-theme="tairitsu"] .theme-icon-sun { display: block; }
+        [data-theme="tairitsu"] .theme-icon-moon { display: none; }
+    </style>
 </head>
 <body>
     <div id="loading">Loading Hikari UI...</div>

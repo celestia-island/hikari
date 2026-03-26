@@ -220,7 +220,7 @@ pub fn Search(props: SearchProps) -> Element {
                     on_search_for_oninput.call(new_value);
                 },
                 onkeydown: move |e: KeyboardEvent| {
-                    if e.key_code() == Key::Escape {
+                    if e.get_key() == Key::Escape {
                         let id = dropdown_id_for_onkeydown.get();
                         if !id.is_empty() {
                             portal_for_onkeydown.remove_entry.call(id);

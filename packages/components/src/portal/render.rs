@@ -25,13 +25,14 @@ use crate::{
     },
     prelude::*,
 };
+use tairitsu_hooks::ReactiveSignal;
 
 fn use_animated_portal_entry(
     id: String,
     initial_state: ModalAnimationState,
     name: &'static str,
 ) -> (
-    Signal<ModalAnimationState>,
+    ReactiveSignal<ModalAnimationState>,
     Callback<MouseEvent>,
     Signal<(String, String)>,
 ) {
@@ -110,7 +111,7 @@ fn use_animated_portal_entry(
 }
 
 #[component]
-pub fn PortalRender(#[props(default)] entries: Option<Signal<Vec<PortalEntry>>>) -> Element {
+pub fn PortalRender(#[props(default)] entries: Option<ReactiveSignal<Vec<PortalEntry>>>) -> Element {
     let entries = match entries {
         Some(signal) => signal.read(),
         None => {
@@ -567,7 +568,7 @@ fn PopoverPortalEntry(
     #[props(default)] close_on_click_outside: bool,
     #[props(default)] close_on_select: bool,
     #[props(default)] on_close: Option<Callback<()>>,
-    #[props(default)] close_requested: Option<Signal<bool>>,
+    #[props(default)] close_requested: Option<ReactiveSignal<bool>>,
     #[props(default)] children: Element,
 ) -> Element {
     let (mut animation_state, close_popover, computed_opacity_scale) =

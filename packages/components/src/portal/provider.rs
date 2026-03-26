@@ -10,10 +10,11 @@ use crate::{
     portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry},
     prelude::*,
 };
+use tairitsu_hooks::ReactiveSignal;
 
 #[derive(Clone)]
 pub struct PortalContext {
-    pub entries: Signal<Vec<PortalEntry>>,
+    pub entries: ReactiveSignal<Vec<PortalEntry>>,
     pub add_entry: Callback<PortalEntry>,
     pub remove_entry: Callback<String>,
     pub clear_all: Callback<()>,

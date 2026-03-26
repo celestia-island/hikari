@@ -4,6 +4,7 @@
 #![expect(clippy::needless_update)]
 
 use hikari_palette::classes::{ClassesBuilder, DragDropTreeClass};
+use tairitsu_hooks::ReactiveSignal;
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -83,9 +84,9 @@ pub fn DragDropTree(props: DragDropTreeProps) -> Element {
                     drop_allowed: props.drop_allowed,
                     allow_drag: props.allow_drag.clone(),
                     allow_drop: props.allow_drop.clone(),
-                    dragged_key: dragged_key.clone(),
-                    drop_target: drop_target.clone(),
-                    drag_over_key: drag_over_key.clone(),
+                    dragged_key: Some(dragged_key.clone()),
+                    drop_target: Some(drop_target.clone()),
+                    drag_over_key: Some(drag_over_key.clone()),
                     on_drop: props.on_drop.clone(),
                 }
             }
@@ -93,34 +94,59 @@ pub fn DragDropTree(props: DragDropTreeProps) -> Element {
     }
 }
 
-#[define_props]
+#[derive(Clone, Props)]
 pub struct RenderDragNodeProps {
-    #[default(DragTreeNodeData {
-        item_key: String::default(),
-        title: String::default(),
-        node_children: Vec::new(),
-        disabled: false,
-    })]
+    #[props(default)]
     pub node: DragTreeNodeData,
 
-    #[default(0)]
+    #[props(default = 0)]
     pub depth: usize,
 
-    #[default(true)]
+    #[props(default = true)]
     pub draggable: bool,
 
-    #[default(true)]
+    #[props(default = true)]
     pub drop_allowed: bool,
 
+    #[props(default)]
     pub allow_drag: Option<EventHandler<(String, bool)>>,
+
+    #[props(default)]
     pub allow_drop: Option<EventHandler<(DropTarget, bool)>>,
-    #[default(Signal::new(None))]
-    pub dragged_key: Signal<Option<String>>,
-    #[default(Signal::new(None))]
-    pub drop_target: Signal<Option<DropTarget>>,
-    #[default(Signal::new(None))]
-    pub drag_over_key: Signal<Option<String>>,
+
+    #[props(default)]
+    pub dragged_key: Option<ReactiveSignal<Option<String>>>,
+
+    #[props(default)]
+    pub drop_target: Option<ReactiveSignal<Option<DropTarget>>>,
+
+    #[props(default)]
+    pub drag_over_key: Option<ReactiveSignal<Option<String>>>,
+
+    #[props(default)]
     pub on_drop: Option<EventHandler<DropEvent>>,
+}
+
+impl Default for RenderDragNodeProps {
+    fn default() -> Self {
+        Self {
+            node: DragTreeNodeData {
+                item_key: String::default(),
+                title: String::default(),
+                node_children: Vec::new(),
+                disabled: false,
+            },
+            depth: 0,
+            draggable: true,
+            drop_allowed: true,
+            allow_drag: None,
+            allow_drop: None,
+            dragged_key: None,
+            drop_target: None,
+            drag_over_key: None,
+            on_drop: None,
+        }
+    }
 }
 
 #[component]
@@ -132,9 +158,9 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
     let disabled = props.node.disabled;
     let node_title = props.node.title.clone();
 
-    let is_dragging = props.dragged_key.read().as_ref() == Some(&item_key_1);
+    let is_dragging = props.dragged_key.as_ref().unwrap().read().as_ref() == Some(&item_key_1);
 
-    let is_drag_over = props.drag_over_key.read().as_ref() == Some(&item_key_1);
+    let is_drag_over = props.drag_over_key.as_ref().unwrap().read().as_ref() == Some(&item_key_1);
 
     let drag_node_classes = ClassesBuilder::new()
         .add(DragDropTreeClass::DragNode)
@@ -143,7 +169,7 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
         .add_if(DragDropTreeClass::NodeDisabled, || disabled)
         .build();
 
-    let dragged_key_for_start = props.dragged_key.clone();
+    let dragged_key_for_start = props.dragged_key.clone().unwrap();
     let allow_drag_for_start = props.allow_drag.clone();
     let ondragstart = move |mut e: DragEvent| {
         e.prevent_default();
@@ -168,17 +194,17 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
         }
     };
 
-    let dragged_key_for_end = props.dragged_key.clone();
-    let drag_over_key_for_end = props.drag_over_key.clone();
-    let drop_target_for_end = props.drop_target.clone();
+    let dragged_key_for_end = props.dragged_key.clone().unwrap();
+    let drag_over_key_for_end = props.drag_over_key.clone().unwrap();
+    let drop_target_for_end = props.drop_target.clone().unwrap();
     let ondragend = move |_: DragEvent| {
         dragged_key_for_end.set(None);
         drag_over_key_for_end.set(None);
         drop_target_for_end.set(None);
     };
 
-    let dragged_key_for_over = props.dragged_key.clone();
-    let drag_over_key_for_over = props.drag_over_key.clone();
+    let dragged_key_for_over = props.dragged_key.clone().unwrap();
+    let drag_over_key_for_over = props.drag_over_key.clone().unwrap();
     let ondragover = move |e: DragEvent| {
         e.prevent_default();
         e.stop_propagation();
@@ -197,14 +223,14 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
         }
     };
 
-    let drag_over_key_for_leave = props.drag_over_key.clone();
+    let drag_over_key_for_leave = props.drag_over_key.clone().unwrap();
     let ondragleave = move |_: DragEvent| {
         drag_over_key_for_leave.set(None);
     };
 
-    let dragged_key_for_drop = props.dragged_key.clone();
-    let drag_over_key_for_drop = props.drag_over_key.clone();
-    let drop_target_for_drop = props.drop_target.clone();
+    let dragged_key_for_drop = props.dragged_key.clone().unwrap();
+    let drag_over_key_for_drop = props.drag_over_key.clone().unwrap();
+    let drop_target_for_drop = props.drop_target.clone().unwrap();
     let allow_drop_for_drop = props.allow_drop.clone();
     let on_drop_for_drop = props.on_drop.clone();
     let ondrop = move |e: DragEvent| {
@@ -282,9 +308,9 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
                             drop_allowed: props.drop_allowed,
                             allow_drag: props.allow_drag.clone(),
                             allow_drop: props.allow_drop.clone(),
-                            dragged_key: props.dragged_key.clone(),
-                            drop_target: props.drop_target.clone(),
-                            drag_over_key: props.drag_over_key.clone(),
+                            dragged_key: Some(props.dragged_key.clone().unwrap()),
+                            drop_target: Some(props.drop_target.clone().unwrap()),
+                            drag_over_key: Some(props.drag_over_key.clone().unwrap()),
                             on_drop: props.on_drop.clone(),
                         }
                     }

@@ -70,6 +70,7 @@ use hikari_animation::global_manager::init_global_animation_manager;
 use hikari_palette::*;
 
 use crate::prelude::*;
+use tairitsu_hooks::ReactiveSignal;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::scripts::scrollbar_container::init_all as init_scrollbars;
 use crate::theme::{
@@ -97,11 +98,11 @@ impl LayoutDirection {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct ThemeContext {
-    pub palette: Signal<String>,
-    pub theme_name: Signal<String>,
-    pub direction: Signal<LayoutDirection>,
+    pub palette: ReactiveSignal<String>,
+    pub theme_name: ReactiveSignal<String>,
+    pub direction: ReactiveSignal<LayoutDirection>,
     pub set_theme: Callback<String>,
 }
 
@@ -270,7 +271,7 @@ pub fn use_theme() -> ThemeContext {
 /// Hook to access the current layout direction
 pub fn use_layout_direction() -> LayoutDirection {
     try_consume_context::<ThemeContext>()
-        .map(|ctx| ctx.get().direction.get())
+        .map(|ctx| ctx.get().direction.read())
         .unwrap_or_default()
 }
 

@@ -10,6 +10,7 @@ use crate::{
     prelude::*,
     styled::StyledComponent,
 };
+use tairitsu_hooks::ReactiveSignal;
 
 static MODAL_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -138,7 +139,7 @@ pub struct ModalContent {
 
 #[derive(Clone)]
 pub struct ModalController {
-    pub config: Signal<ModalConfig>,
+    pub config: ReactiveSignal<ModalConfig>,
     pub open: Callback<ModalContent>,
     pub close: Callback<()>,
 }

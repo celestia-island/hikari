@@ -7,6 +7,7 @@ use hikari_palette::classes::{
 use qrcode::{Color, QrCode};
 
 use crate::{prelude::*, styled::StyledComponent};
+use tairitsu_hooks::ReactiveSignal;
 
 pub struct QRCodeComponent;
 
@@ -45,7 +46,7 @@ pub fn QRCode(props: QRCodeProps) -> Element {
     let background = props.background.clone();
     let ec_level = props.error_correction.clone();
 
-    let drawn: Signal<bool> = use_signal(|| false);
+    let drawn: ReactiveSignal<bool> = use_signal(|| false);
 
     // Generate QR code matrix
     let qr_result = QrCode::with_error_correction_level(

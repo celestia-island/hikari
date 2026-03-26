@@ -2,13 +2,14 @@
 // RadioGroup component with Arknights + FUI styling
 
 use hikari_palette::classes::{ClassesBuilder, RadioClass};
+use tairitsu_hooks::ReactiveSignal;
 
 use crate::{prelude::*, styled::StyledComponent};
 
 #[derive(Clone)]
 pub struct RadioContext {
     pub name: &'static str,
-    pub selected_value: Signal<String>,
+    pub selected_value: ReactiveSignal<String>,
     pub on_change: EventHandler<String>,
     pub disabled: bool,
 }

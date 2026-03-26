@@ -6,6 +6,7 @@ use crate::{
     modal::{MaskMode, ModalPosition, ModalSize},
     prelude::*,
 };
+use tairitsu_hooks::ReactiveSignal;
 
 pub static PORTAL_ID_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
@@ -50,7 +51,7 @@ pub enum ModalAnimationState {
     Disappearing,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, Debug)]
 pub enum PortalEntry {
     Modal {
         id: String,
@@ -86,7 +87,7 @@ pub enum PortalEntry {
         close_on_click_outside: bool,
         close_on_select: bool,
         on_close: Option<Callback<()>>,
-        close_requested: Signal<bool>,
+        close_requested: ReactiveSignal<bool>,
         children: Element,
     },
     Tooltip {

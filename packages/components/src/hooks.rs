@@ -12,6 +12,7 @@
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform::{inner_width as platform_inner_width, on_resize};
 use crate::prelude::*;
+use tairitsu_hooks::ReactiveSignal;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Breakpoint {
@@ -59,7 +60,7 @@ impl ScreenSize {
     }
 }
 
-pub fn use_screen_size() -> Signal<ScreenSize> {
+pub fn use_screen_size() -> ReactiveSignal<ScreenSize> {
     let screen_size = use_signal(get_screen_size_from_window);
 
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
@@ -102,7 +103,7 @@ fn get_screen_size_from_window() -> ScreenSize {
     }
 }
 
-pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> Signal<bool> {
+pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> ReactiveSignal<bool> {
     let matches = use_signal(|| check_media_query(min_width, max_width));
 
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]

@@ -94,7 +94,7 @@ pub fn top_nav() -> VNode {
                     "aria-label": "Toggle language",
                     "title": "Switch language",
                     "data-lang": "en",
-                    txt("EN")
+                    "EN"
                 }
                 // Theme toggle button
                 button {

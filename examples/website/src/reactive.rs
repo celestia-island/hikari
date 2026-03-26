@@ -299,10 +299,7 @@ impl InteractiveComponentBuilder {
                     r#type: "button",
                     "Click me!"
                 }
-                div {
-                    class: "hi-counter-display",
-                    { count_text }
-                }
+                div { class: "hi-counter-display", {count_text} }
             }
         }
     }
@@ -329,10 +326,7 @@ impl InteractiveComponentBuilder {
                     placeholder: &placeholder,
                     value: &value,
                 }
-                div {
-                    class: "hi-input-display",
-                    { value_text }
-                }
+                div { class: "hi-input-display", {value_text} }
             }
         }
     }

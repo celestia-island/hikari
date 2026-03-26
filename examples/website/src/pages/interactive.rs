@@ -100,7 +100,11 @@ pub fn render() -> VNode {
                     }
                     // Input 2 - with initial value
                     {
-                        let (_id, vnode) = interactive_input("Hello, World!", "Enter text...", Some("Greeting"));
+                        let (_id, vnode) = interactive_input(
+                            "Hello, World!",
+                            "Enter text...",
+                            Some("Greeting"),
+                        );
                         vnode
                     }
                 }
@@ -126,9 +130,7 @@ pub fn render() -> VNode {
                     li { "Each component instance has isolated state" }
                     li { "State is cleared when you explicitly reset it" }
                 }
-                p {
-                    "Open your browser's developer console and use the global API:"
-                }
+                p { "Open your browser's developer console and use the global API:" }
                 div { class: "code-example",
                     pre { class: "hi-code-block",
                         code { class: "hi-code-content",

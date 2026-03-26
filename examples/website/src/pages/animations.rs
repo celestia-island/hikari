@@ -12,8 +12,8 @@ fn txt(s: &str) -> VNode {
 }
 
 // Import UI components at module level for use in functions
-use crate::ui::{self, Button, Card, Input};
 use crate::animation::AnimationId;
+use crate::ui::{self, Button, Card, Input};
 
 /// Render the animation examples page
 pub fn render() -> VNode {

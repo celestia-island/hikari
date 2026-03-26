@@ -3,9 +3,9 @@
 //! Supports standard Markdown elements and custom `_hikari_component` code blocks
 //! for embedding interactive components.
 
+use crate::reactive::{button_counter, interactive_input, switch};
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 use tairitsu_vdom::{VElement, VNode, VText};
-use crate::reactive::{switch, button_counter, interactive_input};
 
 /// Component types that can be embedded in markdown via `_hikari_component` code blocks.
 #[derive(Debug, Clone, PartialEq)]
@@ -338,11 +338,9 @@ fn parse_component_path(path: &str) -> ComponentType {
     let parts: Vec<&str> = path.split('.').collect();
     match parts.as_slice() {
         [layer, name] => ComponentType::Layer(layer.to_string(), name.to_string(), None),
-        [layer, name, id] => ComponentType::Layer(
-            layer.to_string(),
-            name.to_string(),
-            Some(id.to_string()),
-        ),
+        [layer, name, id] => {
+            ComponentType::Layer(layer.to_string(), name.to_string(), Some(id.to_string()))
+        }
         [category, demo, name] => ComponentType::Demo(
             category.to_string(),
             demo.to_string(),
@@ -363,18 +361,12 @@ fn render_heading(level: u32, children: Vec<VNode>) -> VNode {
         _ => "h6",
     };
 
-    VNode::Element(
-        VElement::new(tag)
-            .children(children),
-    )
+    VNode::Element(VElement::new(tag).children(children))
 }
 
 /// Render plain text as a paragraph.
 fn render_text(text: &str) -> VNode {
-    VNode::Element(
-        VElement::new("p")
-            .child(VNode::Text(VText::new(text))),
-    )
+    VNode::Element(VElement::new("p").child(VNode::Text(VText::new(text))))
 }
 
 /// Render inline code.
@@ -398,17 +390,15 @@ fn render_code_block(block_type: ComponentType) -> VNode {
         ComponentType::Interactive(ref comp_type, ref params) => {
             render_interactive_component(comp_type, params)
         }
-        ComponentType::Code(ref content) => {
-            VNode::Element(
-                VElement::new("pre")
-                    .class("hi-code-block")
-                    .child(VNode::Element(
-                        VElement::new("code")
-                            .class("hi-code-content")
-                            .child(VNode::Text(VText::new(content))),
-                    )),
-            )
-        }
+        ComponentType::Code(ref content) => VNode::Element(
+            VElement::new("pre")
+                .class("hi-code-block")
+                .child(VNode::Element(
+                    VElement::new("code")
+                        .class("hi-code-content")
+                        .child(VNode::Text(VText::new(content))),
+                )),
+        ),
     }
 }
 
@@ -495,19 +485,12 @@ fn render_list(items: Vec<String>) -> VNode {
         ));
     }
 
-    VNode::Element(
-        VElement::new("ul")
-            .class("hi-list")
-            .children(li_elements),
-    )
+    VNode::Element(VElement::new("ul").class("hi-list").children(li_elements))
 }
 
 /// Render a horizontal rule.
 fn render_horizontal_rule() -> VNode {
-    VNode::Element(
-        VElement::new("hr")
-            .class("hi-hr"),
-    )
+    VNode::Element(VElement::new("hr").class("hi-hr"))
 }
 
 /// Render HTML content.
@@ -521,11 +504,7 @@ fn render_html(html: &str) -> VNode {
 
 /// Render a link.
 fn render_link(url: &str, _title: &str, children: Vec<VNode>) -> VNode {
-    VNode::Element(
-        VElement::new("a")
-            .attr("href", url)
-            .children(children),
-    )
+    VNode::Element(VElement::new("a").attr("href", url).children(children))
 }
 
 /// Render an image.
@@ -543,8 +522,7 @@ fn render_table(headers: Vec<String>, rows: Vec<Vec<String>>) -> VNode {
     let mut header_cells: Vec<VNode> = Vec::new();
     for header in headers {
         header_cells.push(VNode::Element(
-            VElement::new("th")
-                .child(VNode::Text(VText::new(&header))),
+            VElement::new("th").child(VNode::Text(VText::new(&header))),
         ));
     }
 
@@ -553,28 +531,17 @@ fn render_table(headers: Vec<String>, rows: Vec<Vec<String>>) -> VNode {
         let mut cells: Vec<VNode> = Vec::new();
         for cell in row {
             cells.push(VNode::Element(
-                VElement::new("td")
-                    .child(VNode::Text(VText::new(&cell))),
+                VElement::new("td").child(VNode::Text(VText::new(&cell))),
             ));
         }
-        row_elements.push(VNode::Element(
-            VElement::new("tr")
-                .children(cells),
-        ));
+        row_elements.push(VNode::Element(VElement::new("tr").children(cells)));
     }
 
     let thead = VNode::Element(
-        VElement::new("thead")
-            .child(VNode::Element(
-                VElement::new("tr")
-                    .children(header_cells),
-            )),
+        VElement::new("thead").child(VNode::Element(VElement::new("tr").children(header_cells))),
     );
 
-    let tbody = VNode::Element(
-        VElement::new("tbody")
-            .children(row_elements),
-    );
+    let tbody = VNode::Element(VElement::new("tbody").children(row_elements));
 
     VNode::Element(
         VElement::new("table")
@@ -590,14 +557,18 @@ fn render_interactive_component(comp_type: &str, params: &InteractiveParams) -> 
 
     match comp_type {
         "switch" => {
-            let checked = params.initial.as_deref()
+            let checked = params
+                .initial
+                .as_deref()
                 .and_then(|v| v.parse::<bool>().ok())
                 .unwrap_or(false);
             let (_id, vnode) = switch(checked, label);
             vnode
         }
         "button-counter" | "counter" => {
-            let count = params.initial.as_deref()
+            let count = params
+                .initial
+                .as_deref()
                 .and_then(|v| v.parse::<u32>().ok())
                 .unwrap_or(0);
             let (_id, vnode) = button_counter(count, label);
@@ -609,15 +580,13 @@ fn render_interactive_component(comp_type: &str, params: &InteractiveParams) -> 
             let (_id, vnode) = interactive_input(value, placeholder, label);
             vnode
         }
-        _ => {
-            VNode::Element(
-                VElement::new("div")
-                    .class("hi-interactive-error")
-                    .child(VNode::Text(VText::new(&format!(
-                        "Unknown interactive component: {}",
-                        comp_type
-                    )))),
-            )
-        }
+        _ => VNode::Element(
+            VElement::new("div")
+                .class("hi-interactive-error")
+                .child(VNode::Text(VText::new(&format!(
+                    "Unknown interactive component: {}",
+                    comp_type
+                )))),
+        ),
     }
 }

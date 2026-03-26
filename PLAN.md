@@ -1,75 +1,83 @@
-# Hikari 组件库迁移计划
+# Hikari Website 一比一复刻计划
 
-> Legacy (Dioxus) → Current (Tairitsu) 实际效果差距分析与修复方案
+> 目标：完全复刻 legacy 版本的功能和结构
 >
 > Legacy 版本位置: `/mnt/sdb1/hikari-legacy` (master 分支)
 > 当前版本位置: `/mnt/sdb1/hikari` (dev 分支)
 
 ---
 
-## ✅ 已完成的修复
+## Legacy 版本架构分析（已完成）
 
-### Phase A: ThemeProvider 集成 ✅
+### 核心系统
+1. **路由系统**: Dioxus Router，所有路由在 `app.rs` 中定义
+2. **国际化**: 9种语言，TOML 格式，编译时嵌入
+3. **主题系统**: ThemeProvider 组件，CSS 变量驱动
+4. **Markdown 解析**: pulldown-cmark，`_hikari_component` 标记转组件示例
+5. **Portal 系统**: PortalProvider 组件
+6. **动画系统**: AnimationBuilder 状态机
 
-**问题**: 当前版本没有使用 ThemeProvider，导致所有 CSS 变量未被设置
-
-**修复**:
-- 创建 `examples/website/src/theme.rs` 模块
-- 生成主题 CSS 变量并应用到根元素
-- 添加 `data-theme` 属性标识当前主题
-
-### Phase B: Glow 颜色系统 ✅
-
-**问题**: `button_glow_color()` 返回对比色而非主题色
-
-**修复**:
-```rust
-// 修改前
-color.glow_contrast_dynamic_rgba()  // rgba(0,0,0,0.6)
-
-// 修改后
-color.rgba(0.5)  // 主题色半透明
+### 页面结构
 ```
-
-**效果**:
-- Hikari Primary (粉红) → 粉红色 glow
-- Tairitsu Primary (深蓝) → 深蓝色 glow
-
-### Phase C: 布局结构 ✅
-
-**修复**: 修正 sidebar 内容容器类名
-- `hi-aside-content` → `hi-layout-aside-content`
-
----
-
-## 主题色定义
-
-### Hikari (白天模式)
-```rust
-primary: 牡丹粉红,    // (238, 162, 164) - 粉红色
-secondary: 苍翠,      // (81, 154, 115) - 绿色
-background: 月白,     // (214, 236, 240) - 浅白色
-```
-
-### Tairitsu (暗黑模式)
-```rust
-primary: 鷃蓝,        // (20, 74, 116) - 深蓝色
-secondary: 姜黄,      // (255, 199, 115) - 黄色
-background: 墨色,     // (80, 97, 109) - 深色
+App
+├── I18nProviderWrapper
+│   ├── ThemeProvider
+│   │   └── PortalProvider
+│   │       └── Router
+│   │           └── Layout
+│   │               ├── Header
+│   │               ├── Sidebar
+│   │               ├── BreadcrumbNav
+│   │               └── DynamicDocPage / 页面组件
 ```
 
 ---
 
-## 涉及组件 (24个) - 全部完成
+## 一比一复刻任务清单
 
-| 组件 | 状态 |
-|------|------|
-| Button, IconButton, Input, InputWrapper | ✅ |
-| Select, Alert, Toast | ✅ |
-| Card | ✅ |
-| Switch, Checkbox, RadioGroup, Slider | ✅ |
-| Badge, Avatar | ✅ |
-| Menu, Sidebar, Tabs | ✅ |
-| Table, Tree, Tag | ✅ |
-| Timeline, Calendar | ✅ |
-| Modal, Scrollbar | ✅ |
+### Phase 1: 核心框架迁移
+- [ ] 路由系统（Dioxus Router → Tairitsu）
+- [ ] 国际化上下文（I18nProvider + ReactiveI18nContext）
+- [ ] 主题上下文（ThemeProvider）
+- [ ] Portal 系统（PortalProvider）
+
+### Phase 2: 页面组件迁移
+- [ ] Layout 组件
+- [ ] Header 组件（包含主题切换、语言切换）
+- [ ] Sidebar 组件
+- [ ] BreadcrumbNav 组件
+- [ ] DynamicDocPage 组件
+- [ ] Container 组件
+
+### Phase 3: Markdown 解析系统
+- [ ] pulldown-cmark 解析器集成
+- [ ] `_hikari_component` 代码块处理
+- [ ] 组件注册表（registry.rs）
+- [ ] 动态组件渲染
+
+### Phase 4: 翻译文件迁移
+- [ ] TOML 翻译文件转换
+- [ ] 9种语言支持
+- [ ] 编译时嵌入
+
+### Phase 5: 组件示例迁移
+- [ ] Layer 1 组件示例
+- [ ] Layer 2 组件示例
+- [ ] Layer 3 组件示例
+- [ ] Demo 页面
+
+---
+
+## 当前状态
+
+### 已完成
+- [x] Glow 颜色系统修复
+- [x] 主题 CSS 变量生成
+- [x] Legacy 版本架构分析
+
+### 进行中
+- [ ] 核心框架迁移
+
+### 待开始
+- [ ] Markdown 解析系统
+- [ ] 组件示例迁移

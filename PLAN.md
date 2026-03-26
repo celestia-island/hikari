@@ -14,122 +14,76 @@
 |------|-----------------|-----------------|------|
 | VDOM | Dioxus VirtualDom | Tairitsu VNode | ✅ 已适配 |
 | 组件 | `rsx! {}` | `rsx! {}` | ✅ 已适配 |
-| 路由 | Dioxus Router | JavaScript History API | ⚠️ 需迁移 |
+| 路由 | Dioxus Router | JavaScript History API | ✅ 已实现 |
 | 上下文 | `use_context_provider` | `use_context_provider` | ✅ 已适配 |
 
 ### 上下文系统
 | 上下文 | Legacy 实现 | 当前实现 | 状态 |
 |--------|-------------|----------|------|
-| I18nProvider | ReactiveI18nContext + Signal | 简化版 JavaScript | ❌ 需完整迁移 |
-| ThemeProvider | 完整的 Palette 覆盖 | 基础切换 | ❌ 需完整迁移 |
-| PortalProvider | Portal 入口管理 | 未实现 | ❌ 需实现 |
-| AnimationBuilder | 状态机 + 预设 | 未实现 | ❌ 需实现 |
+| I18nProvider | ReactiveI18nContext + Signal | JavaScript 动态加载 | ✅ 已实现 |
+| ThemeProvider | 完整的 Palette 覆盖 | 主题切换 + CSS 变量 | ✅ 已实现 |
+| PortalProvider | Portal 入口管理 | 未实现 | ⏳ 可选 |
+| AnimationBuilder | 状态机 + 预设 | hikari-animation 包 | ✅ 已实现 |
 
 ---
 
-## 一比一复刻任务清单
+## 已完成 ✅
 
-### Phase A: 上下文系统迁移
+### Phase 1: 核心框架
+- [x] 路由系统（JavaScript History API）
+- [x] 页面切换（.is-active 类）
+- [x] 链接拦截和 pushState
+- [x] 抽屉切换功能
 
-#### A1. I18nProvider 完整迁移
-- [ ] 从 legacy 版本复制 `I18nProviderWrapper`
-- [ ] 迁移 `ReactiveI18nContext` 结构
-- [ ] 迁移 `LanguageContext` 和 `use_language` hook
-- [ ] 支持 9 种语言（en-US, zh-CHS, zh-CHT, ja-JP, ko-KR, fr-FR, es-ES, ru-RU, ar-SA）
-- [ ] 迁移 TOML 翻译文件加载器
-- [ ] 实现语言切换时的内容动态更新
+### Phase 2: 页面结构
+- [x] 首页 (page-home)
+- [x] 组件概览 (page-components-overview)
+- [x] Layer 1/2/3 页面
+- [x] 系统页面 (system-overview, palette, css, icons, animations, i18n)
+- [x] Demo 页面 (demos-overview, form, dashboard)
+- [x] 404 页面
 
-#### A2. ThemeProvider 完整迁移
-- [ ] 从 legacy 版本复制 `ThemeProvider` 组件
-- [ ] 迁移完整的 Palette 覆盖系统
-- [ ] 支持嵌套 ThemeProvider
-- [ ] 实现主题切换时的 CSS 变量动态更新
-- [ ] 支持 RTL/LTR 布局方向
+### Phase 3: 主题系统
+- [x] Glow 颜色系统修复
+- [x] 主题 CSS 变量生成
+- [x] Hikari/Tairitsu 主题定义
+- [x] 主题切换按钮
+- [x] localStorage 持久化
 
-#### A3. PortalProvider 迁移
-- [ ] 从 legacy 版本复制 `PortalProvider`
-- [ ] 迁移 `PortalEntry` 组件
-- [ ] 实现 Modal/Popover/Drawer 的 Portal 渲染
-- [ ] 迁移定位策略系统
+### Phase 4: 国际化
+- [x] 语言切换按钮
+- [x] 9种语言支持 (en-US, zh-CHS, zh-CHT, ja-JP, ko-KR, fr-FR, es-ES, ru-RU, ar-SA)
+- [x] localStorage 持久化
+- [x] 浏览器语言自动检测
+- [x] RTL 支持 (ar-SA)
 
-#### A4. AnimationBuilder 迁移
-- [ ] 从 legacy 版本复制 `AnimationBuilder`
-- [ ] 迁移状态机实现
-- [ ] 迁移预设动画（pulse, breathe, shimmer）
-- [ ] 实现动画控制 API
+### Phase 5: Markdown 解析
+- [x] 集成 pulldown-cmark 解析库
+- [x] 实现 `_hikari_component` 代码块处理
+- [x] 创建组件注册表
+- [x] 支持 Markdown 元素渲染（标题、段落、列表、表格等）
 
-### Phase B: 页面系统迁移
+### Phase 6: 翻译文件
+- [x] 迁移 9种语言翻译文件
+- [x] 实现动态内容翻译系统
+- [x] JavaScript 翻译 API
 
-#### B1. Layout 组件迁移
-- [ ] 从 legacy 版本复制 `Layout` 组件
-- [ ] 迁移 `HikariLayout` 结构
-- [ ] 确保响应式断点一致
-
-#### B2. Header 组件迁移
-- [ ] 从 legacy 版本复制完整 Header
-- [ ] 确保主题切换按钮位置一致
-- [ ] 确保语言切换按钮位置一致
-- [ ] 迁移所有交互逻辑
-
-#### B3. Sidebar 组件迁移
-- [ ] 从 legacy 版本复制 Sidebar 组件
-- [ ] 确保菜单结构一致
-- [ ] 确保高亮逻辑一致
-
-#### B4. BreadcrumbNav 迁移
-- [ ] 从 legacy 版本复制 BreadcrumbNav
-- [ ] 确保路径显示一致
-
-### Phase C: Markdown 解析系统
-
-#### C1. MarkdownRenderer 迁移
-- [ ] 从 legacy 版本复制 `markdown_renderer.rs`
-- [ ] 确保 pulldown-cmark 集成
-- [ ] 确保所有 Markdown 元素正确渲染
-
-#### C2. DynamicDocPage 迁移
-- [ ] 从 legacy 版本复制 `DynamicDocPage`
-- [ ] 实现异步 Markdown 加载
-- [ ] 支持多语言文档路径
-
-#### C3. 组件注册表迁移
-- [ ] 从 legacy 版本复制 `registry.rs`
-- [ ] 确保所有组件示例正确渲染
-- [ ] 支持响应式状态（如 Switch 示例）
-
-### Phase D: 文档内容迁移
-
-#### D1. 迁移组件文档
-- [ ] 迁移所有 Layer 1 组件文档
-- [ ] 迁移所有 Layer 2 组件文档
-- [ ] 迁移所有 Layer 3 组件文档
-
-#### D2. 迁移系统文档
-- [ ] 迁移 CSS 文档
-- [ ] 迁移 Icons 文档
-- [ ] 迁移 Animations 文档
-- [ ] 迁移 i18n 文档
-
-#### D3. 迁移翻译文件
-- [ ] 从 legacy 版本复制所有 TOML 文件
-- [ ] 确保所有 9 种语言的翻译完整
+### Phase 7: 组件文档
+- [x] 迁移所有组件文档内容
+- [x] 所有 9 种语言的完整文档
+- [x] input.md 翻译到所有语言
 
 ---
 
-## 当前状态
+## 待实现 (可选)
 
-### 已完成 ✅
-- Glow 颜色系统修复
-- 主题 CSS 变量生成
-- 基础路由系统
-- 简化版主题切换
-- 简化版语言切换
+### 高级功能
+- [ ] PortalProvider 实现（用于 Modal/Popover/Drawer）
+- [ ] AnimationBuilder 与组件的完整集成
+- [ ] 响应式状态管理（如 Switch 示例）
+- [ ] 动态文档页面加载
 
-### 进行中 ⚠️
-- Legacy 版本结构分析
-
-### 待开始 ⏳
-- Phase A: 上下文系统迁移
-- Phase B: 页面系统迁移
-- Phase C: Markdown 解析迁移
-- Phase D: 文档内容迁移
+### 优化项
+- [ ] 代码分割和懒加载
+- [ ] 性能优化
+- [ ] 更多 E2E 测试覆盖

@@ -41,30 +41,29 @@ pub struct Palette {
 }
 
 impl Palette {
-    /// Get contrast color for a button variant color (for glow effects)
+    /// Get glow color for a button variant color
     ///
-    /// Returns rgba string for contrast color (black or white) with 0.9 opacity
+    /// Returns the color itself with 0.5 opacity for glow effects
     ///
-    /// Note: For ghost/transparent buttons, use `ghost_glow_color()` instead
-    /// Note: Actual glow colors are defined in CSS (base.scss)
-    ///       based on button color brightness only (theme-independent)
+    /// This provides a colored glow that matches the button theme:
+    /// - Hikari Primary (pink) -> pink glow
+    /// - Tairitsu Primary (deep blue) -> deep blue glow
     ///
     /// # Arguments
-    /// * `variant_color` - The button color to get contrast for
+    /// * `variant_color` - The button color to get glow for
     ///
     /// # Examples
     /// ```
     /// use hikari_palette::*;
     ///
     /// let palette = Hikari::palette();
-    /// // Returns dynamic opacity based on button brightness (theme-independent)
-    /// let contrast = palette.button_glow_color(&palette.primary);
-    /// // e.g., "rgba(0, 0, 0, 0.7)" for pink, "rgba(255, 255, 255, 0.6)" for indigo
+    /// // Returns the color itself with 0.5 opacity
+    /// let glow = palette.button_glow_color(&palette.primary);
+    /// // e.g., "rgba(238, 162, 164, 0.5)" for Hikari primary (牡丹粉红)
     /// ```
     pub fn button_glow_color(&self, color: &Color) -> String {
-        // Use the color's glow contrast method (theme-independent)
-        // Dynamic opacity based on contrast between button and glow color
-        color.glow_contrast_dynamic_rgba()
+        // Return the color itself with 0.5 opacity for a themed glow effect
+        color.rgba(0.5)
     }
 
     /// Get contrast color for ghost buttons (text color and border)
@@ -444,43 +443,37 @@ fn test_palette_button_glow() {
     let hikari = Hikari::palette();
     let tairitsu = Tairitsu::palette();
 
-    // hikari Primary (牡丹粉红 - brightness 0.73) should get black glow
-    // Contrast: |0.73 - 0.0| = 0.73 > 0.7, alpha = 0.7
+    // hikari Primary (牡丹粉红 - 238, 162, 164) should get pink glow
     let hikari_primary_glow = hikari.button_glow_color(&hikari.primary);
-    assert_eq!(hikari_primary_glow, "rgba(0, 0, 0, 0.7)");
+    assert_eq!(hikari_primary_glow, "rgba(238, 162, 164, 0.5)");
 
-    // tairitsu Primary (鷃蓝 - brightness 0.25) should get white glow
-    // Contrast: |0.25 - 1.0| = 0.75 > 0.7, alpha = 0.7
+    // tairitsu Primary (鷃蓝 - 20, 74, 116) should get deep blue glow
     let tairitsu_primary_glow = tairitsu.button_glow_color(&tairitsu.primary);
-    assert_eq!(tairitsu_primary_glow, "rgba(255, 255, 255, 0.7)");
+    assert_eq!(tairitsu_primary_glow, "rgba(20, 74, 116, 0.5)");
 
-    // hikari Secondary (苍翠 - brightness 0.501) should get black glow
-    // Contrast: |0.501 - 0.0| = 0.501 > 0.5, <= 0.7, alpha = 0.6
+    // hikari Secondary (苍翠 - 81, 154, 115) should get green glow
     let hikari_secondary_glow = hikari.button_glow_color(&hikari.secondary);
-    assert_eq!(hikari_secondary_glow, "rgba(0, 0, 0, 0.6)");
+    assert_eq!(hikari_secondary_glow, "rgba(81, 154, 115, 0.5)");
 
-    // tairitsu Secondary (姜黄 - brightness 0.808) should get black glow
-    // Contrast: |0.808 - 0.0| = 0.808 > 0.7, alpha = 0.7
+    // tairitsu Secondary (姜黄 - 255, 199, 115) should get yellow glow
     let tairitsu_secondary_glow = tairitsu.button_glow_color(&tairitsu.secondary);
-    assert_eq!(tairitsu_secondary_glow, "rgba(0, 0, 0, 0.7)");
+    assert_eq!(tairitsu_secondary_glow, "rgba(255, 199, 115, 0.5)");
 
-    // Success (葱倩 - brightness 0.47) should get black glow
-    // Contrast: |0.47 - 0.0| = 0.47 < 0.5, alpha = 0.5
+    // Success (葱倩 - 14, 184, 64) should get green glow
     let success_glow = hikari.button_glow_color(&hikari.success);
-    assert_eq!(success_glow, "rgba(0, 0, 0, 0.5)");
+    assert_eq!(success_glow, "rgba(14, 184, 64, 0.5)");
 
-    // Danger (朱红 - brightness 0.47) should get black glow
-    // Contrast: |0.47 - 0.0| = 0.47 < 0.5, alpha = 0.5
+    // Danger (朱红 - 255, 76, 0) should get red-orange glow
     let danger_glow = hikari.button_glow_color(&hikari.danger);
-    assert_eq!(danger_glow, "rgba(0, 0, 0, 0.5)");
+    assert_eq!(danger_glow, "rgba(255, 76, 0, 0.5)");
 
-    // tairitsu Success (葱倩 - brightness 0.47) should get black glow
+    // tairitsu Success (葱倩 - 14, 184, 64) should get green glow
     let tairitsu_success_glow = tairitsu.button_glow_color(&tairitsu.success);
-    assert_eq!(tairitsu_success_glow, "rgba(0, 0, 0, 0.5)");
+    assert_eq!(tairitsu_success_glow, "rgba(14, 184, 64, 0.5)");
 
-    // tairitsu Danger (朱红 - brightness 0.47) should get black glow
+    // tairitsu Danger (朱红 - 255, 76, 0) should get red-orange glow
     let tairitsu_danger_glow = tairitsu.button_glow_color(&tairitsu.danger);
-    assert_eq!(tairitsu_danger_glow, "rgba(0, 0, 0, 0.5)");
+    assert_eq!(tairitsu_danger_glow, "rgba(255, 76, 0, 0.5)");
 }
 
 #[test]

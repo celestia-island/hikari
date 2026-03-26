@@ -5,6 +5,7 @@
 mod app;
 mod components;
 mod pages;
+mod theme;
 
 use anyhow::Result;
 

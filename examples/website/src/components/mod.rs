@@ -96,7 +96,7 @@ pub fn top_nav() -> VNode {
 ///
 /// Matches the structure produced by `hikari_components::layout::Aside`:
 ///   <aside class="hi-aside hi-aside-drawer hi-aside-lg hi-aside-light">
-///     <div class="hi-aside-content"> … links … </div>
+///     <div class="hi-layout-aside-content"> … links … </div>
 ///   </aside>
 pub fn sidebar() -> VNode {
     let mut sections: Vec<VNode> = Vec::new();
@@ -139,7 +139,7 @@ pub fn sidebar() -> VNode {
             .class("hi-aside hi-aside-drawer hi-aside-lg hi-aside-light")
             .child(VNode::Element(
                 VElement::new("div")
-                    .class("hi-aside-content")
+                    .class("hi-layout-aside-content")
                     .children(sections),
             )),
     )

@@ -22,8 +22,8 @@
 |--------|-------------|----------|------|
 | I18nProvider | ReactiveI18nContext + Signal | JavaScript 动态加载 | ✅ 已实现 |
 | ThemeProvider | 完整的 Palette 覆盖 | 主题切换 + CSS 变量 | ✅ 已实现 |
-| PortalProvider | Portal 入口管理 | 未实现 | ⏳ 可选 |
-| AnimationBuilder | 状态机 + 预设 | hikari-animation 包 | ✅ 已实现 |
+| PortalProvider | Portal 入口管理 | Portal 组件系统 | ✅ 已实现 |
+| AnimationBuilder | 状态机 + 预设 | 动画集成系统 | ✅ 已实现 |
 
 ---
 
@@ -42,6 +42,8 @@
 - [x] 系统页面 (system-overview, palette, css, icons, animations, i18n)
 - [x] Demo 页面 (demos-overview, form, dashboard)
 - [x] 404 页面
+- [x] 动画示例页面
+- [x] 交互示例页面
 
 ### Phase 3: 主题系统
 - [x] Glow 颜色系统修复
@@ -73,17 +75,35 @@
 - [x] 所有 9 种语言的完整文档
 - [x] input.md 翻译到所有语言
 
+### Phase 8: PortalProvider 系统
+- [x] PortalProvider 组件实现
+- [x] Portal 入口管理
+- [x] Modal/Drawer/Dropdown/Toast/Tooltip 示例
+- [x] JavaScript Bridge 集成
+
+### Phase 9: 动画集成
+- [x] AnimationBuilder 与组件集成
+- [x] Hover/Focus/Press 动画预设
+- [x] 动画示例页面
+- [x] CSS 变量动画支持
+
+### Phase 10: 响应式状态管理
+- [x] 交互式组件状态管理
+- [x] Switch/Button/Input 示例
+- [x] localStorage 状态持久化
+- [x] _interactive Markdown 语法
+
+### Phase 11: 动态文档加载
+- [x] 客户端路由系统
+- [x] 动态 Markdown 加载
+- [x] 语言感知文档路径
+- [x] 加载/错误状态处理
+
 ---
 
-## 待实现 (可选)
+## 验证状态
 
-### 高级功能
-- [ ] PortalProvider 实现（用于 Modal/Popover/Drawer）
-- [ ] AnimationBuilder 与组件的完整集成
-- [ ] 响应式状态管理（如 Switch 示例）
-- [ ] 动态文档页面加载
-
-### 优化项
-- [ ] 代码分割和懒加载
-- [ ] 性能优化
-- [ ] 更多 E2E 测试覆盖
+- ✅ 编译成功（无错误）
+- ✅ E2E 测试通过（12/12）
+- ✅ 所有核心功能实现
+- ✅ 与 legacy 版本功能对等

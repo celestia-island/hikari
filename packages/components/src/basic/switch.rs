@@ -118,37 +118,68 @@ pub fn Switch(props: SwitchProps) -> Element {
         Some(SwitchContent::Icon(icon)) => {
             let icon_svg = match icon {
                 SwitchIcon::Check => rsx! {
-                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round", stroke_linejoin: "round",
+                    svg {
+                        view_box: "0 0 24 24",
+                        fill: "none",
+                        stroke: "currentColor",
+                        stroke_width: "3",
+                        stroke_linecap: "round",
+                        stroke_linejoin: "round",
                         path { d: "M20 6L9 17l-5-5" }
                     }
                 },
                 SwitchIcon::Close => rsx! {
-                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round",
+                    svg {
+                        view_box: "0 0 24 24",
+                        fill: "none",
+                        stroke: "currentColor",
+                        stroke_width: "3",
+                        stroke_linecap: "round",
                         path { d: "M18 6L6 18M6 6l12 12" }
                     }
                 },
                 SwitchIcon::Plus => rsx! {
-                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round",
+                    svg {
+                        view_box: "0 0 24 24",
+                        fill: "none",
+                        stroke: "currentColor",
+                        stroke_width: "3",
+                        stroke_linecap: "round",
                         path { d: "M12 5v14M5 12h14" }
                     }
                 },
                 SwitchIcon::Minus => rsx! {
-                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round",
+                    svg {
+                        view_box: "0 0 24 24",
+                        fill: "none",
+                        stroke: "currentColor",
+                        stroke_width: "3",
+                        stroke_linecap: "round",
                         path { d: "M5 12h14" }
                     }
                 },
                 SwitchIcon::Custom(path) => rsx! {
-                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "2", stroke_linecap: "round", stroke_linejoin: "round",
+                    svg {
+                        view_box: "0 0 24 24",
+                        fill: "none",
+                        stroke: "currentColor",
+                        stroke_width: "2",
+                        stroke_linecap: "round",
+                        stroke_linejoin: "round",
                         path { d: "{path}" }
                     }
                 },
             };
-            rsx! { span { class: "hi-switch-thumb-icon", {icon_svg} } }
+            rsx! {
+                span { class: "hi-switch-thumb-icon", {icon_svg} }
+            }
         }
         Some(SwitchContent::Image(src)) => rsx! {
-            img { class: "hi-switch-thumb-image", src: src, alt: "" }
+            img { class: "hi-switch-thumb-image", src, alt: "" }
         },
-        None => rsx! { div { class: "hi-switch-thumb-dot" } },
+        None => rsx! {
+            div { class: "hi-switch-thumb-dot" }
+        },
     };
 
     rsx! {

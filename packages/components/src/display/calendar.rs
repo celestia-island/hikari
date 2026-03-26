@@ -250,34 +250,20 @@ pub fn Calendar(props: CalendarProps) -> Element {
     all_day_cells.extend(day_cells);
 
     rsx! {
-        div {
-            class: calendar_classes,
-            style: props.style,
-            div {
-                class: cal_class,
-                div {
-                    class: header_class,
-                    div {
-                        class: nav_class,
+        div { class: calendar_classes, style: props.style,
+            div { class: cal_class,
+                div { class: header_class,
+                    div { class: nav_class,
                         {prev_btn}
                         {prev_btn2}
                         {today_btn}
                         {next_btn}
                         {next_btn2}
                     }
-                    div {
-                        class: title_class,
-                        "{title_text}"
-                    }
+                    div { class: title_class, "{title_text}" }
                 }
-                div {
-                    class: weekdays_class,
-                    ..weekday_headers
-                }
-                div {
-                    class: grid_class,
-                    ..all_day_cells
-                }
+                div { class: weekdays_class, ..weekday_headers }
+                div { class: grid_class, ..all_day_cells }
             }
         }
     }

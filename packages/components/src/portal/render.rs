@@ -111,7 +111,9 @@ fn use_animated_portal_entry(
 }
 
 #[component]
-pub fn PortalRender(#[props(default)] entries: Option<ReactiveSignal<Vec<PortalEntry>>>) -> Element {
+pub fn PortalRender(
+    #[props(default)] entries: Option<ReactiveSignal<Vec<PortalEntry>>>,
+) -> Element {
     let entries = match entries {
         Some(signal) => signal.read(),
         None => {
@@ -169,7 +171,7 @@ pub fn PortalRender(#[props(default)] entries: Option<ReactiveSignal<Vec<PortalE
                         mask_mode: *mask_mode,
                         children: children.clone(),
                         trigger_rect: *trigger_rect,
-                        close_on_select: *close_on_select
+                        close_on_select: *close_on_select,
                     }
                 },
                 PortalEntry::Toast {
@@ -181,7 +183,7 @@ pub fn PortalRender(#[props(default)] entries: Option<ReactiveSignal<Vec<PortalE
                         z_index,
                         id: id.clone(),
                         position: *position,
-                        children: children.clone()
+                        children: children.clone(),
                     }
                 },
                 PortalEntry::Popover {
@@ -209,7 +211,7 @@ pub fn PortalRender(#[props(default)] entries: Option<ReactiveSignal<Vec<PortalE
                         close_on_select: *close_on_select,
                         on_close: on_close.clone(),
                         close_requested: Some(close_requested.clone()),
-                        children: children.clone()
+                        children: children.clone(),
                     }
                 },
                 PortalEntry::Tooltip {
@@ -225,7 +227,7 @@ pub fn PortalRender(#[props(default)] entries: Option<ReactiveSignal<Vec<PortalE
                         trigger_rect: *trigger_rect,
                         placement: *placement,
                         content: content.clone(),
-                        arrow: *arrow
+                        arrow: *arrow,
                     }
                 },
             }

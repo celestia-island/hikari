@@ -70,13 +70,13 @@ use hikari_animation::global_manager::init_global_animation_manager;
 use hikari_palette::*;
 
 use crate::prelude::*;
-use tairitsu_hooks::ReactiveSignal;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::scripts::scrollbar_container::init_all as init_scrollbars;
 use crate::theme::{
     css::{ComponentOverrides, ComponentPalette, PaletteOverrides, ThemePalette},
     registry::{get_default_theme, get_registered_theme},
 };
+use tairitsu_hooks::ReactiveSignal;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum LayoutDirection {
@@ -255,7 +255,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
         div {
             class: "hi-theme-provider",
             "data-theme": theme_name,
-            dir: dir,
+            dir,
             style: css_vars,
             {props.children}
         }

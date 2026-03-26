@@ -81,18 +81,11 @@ pub fn Tabs(props: TabsProps) -> Element {
     };
 
     rsx! {
-        div {
-            class: format!("hi-tabs {position_class} {animated_class} {}", props.class),
+        div { class: format!("hi-tabs {position_class} {animated_class} {}", props.class),
 
-            div {
-                class: "hi-tabs-nav",
+            div { class: "hi-tabs-nav",
 
-                div {
-                    class: "hi-tabs-nav-list",
-                    role: "tablist",
-
-                    { props.children.clone() }
-                }
+                div { class: "hi-tabs-nav-list", role: "tablist", {props.children.clone()} }
 
                 div {
                     class: "hi-tabs-ink-bar",
@@ -100,12 +93,7 @@ pub fn Tabs(props: TabsProps) -> Element {
                 }
             }
 
-            div {
-                class: "hi-tabs-content",
-                role: "tabpanel",
-
-                { props.children }
-            }
+            div { class: "hi-tabs-content", role: "tabpanel", {props.children} }
         }
     }
 }
@@ -179,11 +167,7 @@ pub fn TabPane(props: TabPaneProps) -> Element {
             "data-key": item_key,
             "aria-hidden": aria_hidden_val,
 
-            {if is_active {
-                props.children
-            } else {
-                VNode::empty()
-            }}
+            {if is_active { props.children } else { VNode::empty() }}
         }
     };
 

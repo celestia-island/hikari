@@ -57,14 +57,8 @@ pub fn Slider(props: SliderProps) -> Element {
     rsx! {
         div { class: slider_classes,
             div { class: "hi-slider-rail" }
-            div {
-                class: "hi-slider-track",
-                style: "width: {percent}%;",
-            }
-            div {
-                class: "hi-slider-handle",
-                style: "left: {percent}%;",
-            }
+            div { class: "hi-slider-track", style: "width: {percent}%;" }
+            div { class: "hi-slider-handle", style: "left: {percent}%;" }
             input {
                 r#type: "range",
                 class: "hi-slider-input",
@@ -80,7 +74,7 @@ pub fn Slider(props: SliderProps) -> Element {
                             handler.call(constrained);
                         }
                     }
-                }
+                },
             }
         }
     }

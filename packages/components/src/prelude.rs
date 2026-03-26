@@ -18,9 +18,14 @@ pub use tairitsu_hooks::{
     AnimationConfig,
     AnimationDirection,
     AnimationState,
+    // Interaction state machine for animated components
+    ButtonStateMachine,
     // Context type from tairitsu
     Context,
     EasingFunction,
+    InteractionCallback,
+    InteractionEvent,
+    InteractionState,
     // Memo type
     Memo,
     UseRef,
@@ -35,6 +40,7 @@ pub use tairitsu_hooks::{
     // try_consume_context is use_context (returns Option)
     use_context as try_consume_context,
     use_effect,
+    use_interaction_state,
     // Dioxus compatibility
     use_memo,
     use_ref,

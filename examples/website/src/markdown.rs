@@ -82,8 +82,8 @@ fn parse_markdown(markdown: &str) -> Vec<VNode> {
 
     // Table parsing state
     let mut in_table = false;
-    let mut in_table_head = false;
-    let mut in_table_row = false;
+    let mut _in_table_head = false;
+    let mut _in_table_row = false;
     let mut in_table_cell = false;
     let mut table_headers: Vec<String> = Vec::new();
     let mut table_rows: Vec<Vec<String>> = Vec::new();
@@ -164,11 +164,11 @@ fn parse_markdown(markdown: &str) -> Vec<VNode> {
                     table_rows.clear();
                 }
                 Tag::TableHead => {
-                    in_table_head = true;
+                    _in_table_head = true;
                     current_row.clear();
                 }
                 Tag::TableRow => {
-                    in_table_row = true;
+                    _in_table_row = true;
                     current_row.clear();
                 }
                 Tag::TableCell => {
@@ -235,12 +235,12 @@ fn parse_markdown(markdown: &str) -> Vec<VNode> {
                     }
                 }
                 TagEnd::TableHead => {
-                    in_table_head = false;
+                    _in_table_head = false;
                     table_headers = current_row.clone();
                     current_row.clear();
                 }
                 TagEnd::TableRow => {
-                    in_table_row = false;
+                    _in_table_row = false;
                     if !current_row.is_empty() {
                         table_rows.push(current_row.clone());
                     }

@@ -105,19 +105,19 @@ impl Portal {
 
         // Add custom classes
         for class in &props.classes {
-            portal_element = portal_element.class(class);
+            portal_element = portal_element.class(class.as_str());
         }
 
         // Add inline styles
         if !props.style.is_empty() {
-            portal_element = portal_element.style(&props.style);
+            portal_element = portal_element.style(props.style.as_str());
         } else {
             // Default portal styles
             let default_style = format!(
                 "position: fixed; pointer-events: auto; z-index: {};",
                 props.z_index
             );
-            portal_element = portal_element.style(&default_style);
+            portal_element = portal_element.style(default_style.as_str());
         }
 
         // Add container selector if specified
@@ -305,7 +305,7 @@ impl Portal {
             VElement::new("script")
                 .attr("type", "module")
                 .attr("data-portal-init", &id)
-                .child(VNode::Text(VText::new(format!(
+                .child(VNode::Text(VText::new(&format!(
                     r#"
                     (function() {{
                         const portalEl = document.querySelector('[data-portal-id="{}"]');
@@ -386,98 +386,100 @@ pub struct PortalJs;
 impl PortalJs {
     /// Get the initialization script for portal management
     pub fn init_script() -> VNode {
-        VNode::Element(
-            VElement::new("script")
-                .attr("type", "module")
-                .child(VNode::Text(VText::new(format!(
-                    r#"
-                    (function() {{
-                        'use strict';
+        let script_content = format!(
+            r#"
+            (function() {{
+                'use strict';
 
-                        // Ensure portal container exists
-                        function ensurePortalContainer() {{
-                            let container = document.getElementById('{}');
-                            if (!container) {{
-                                container = document.createElement('div');
-                                container.id = '{}';
-                                container.style.position = 'fixed';
-                                container.style.top = '0';
-                                container.style.left = '0';
-                                container.style.right = '0';
-                                container.style.bottom = '0';
-                                container.style.pointerEvents = 'none';
-                                container.style.zIndex = '9999';
-                                document.body.appendChild(container);
-                            }}
-                            return container;
+                // Ensure portal container exists
+                function ensurePortalContainer() {{
+                    let container = document.getElementById('{}');
+                    if (!container) {{
+                        container = document.createElement('div');
+                        container.id = '{}';
+                        container.style.position = 'fixed';
+                        container.style.top = '0';
+                        container.style.left = '0';
+                        container.style.right = '0';
+                        container.style.bottom = '0';
+                        container.style.pointerEvents = 'none';
+                        container.style.zIndex = '9999';
+                        document.body.appendChild(container);
+                    }}
+                    return container;
+                }}
+
+                // Move all portals to their containers
+                function movePortalsToContainers() {{
+                    const container = ensurePortalContainer();
+                    const portals = document.querySelectorAll('[data-portal-id]');
+                    portals.forEach(function(portal) {{
+                        const customContainer = portal.getAttribute('data-portal-container');
+                        const target = customContainer
+                            ? document.querySelector(customContainer)
+                            : container;
+                        if (target && portal.parentElement !== target) {{
+                            target.appendChild(portal);
                         }}
+                    }});
+                }}
 
-                        // Move all portals to their containers
-                        function movePortalsToContainers() {{
-                            const container = ensurePortalContainer();
-                            const portals = document.querySelectorAll('[data-portal-id]');
-                            portals.forEach(function(portal) {{
-                                const customContainer = portal.getAttribute('data-portal-container');
-                                const target = customContainer
-                                    ? document.querySelector(customContainer)
-                                    : container;
-                                if (target && portal.parentElement !== target) {{
-                                    target.appendChild(portal);
-                                }}
-                            }});
-                        }}
+                // Initialize on DOM ready
+                if (document.readyState === 'loading') {{
+                    document.addEventListener('DOMContentLoaded', movePortalsToContainers);
+                }} else {{
+                    movePortalsToContainers();
+                }}
 
-                        // Initialize on DOM ready
-                        if (document.readyState === 'loading') {{
-                            document.addEventListener('DOMContentLoaded', movePortalsToContainers);
-                        }} else {{
-                            movePortalsToContainers();
-                        }}
+                // Re-run after WASM hydration
+                setTimeout(movePortalsToContainers, 100);
+                setTimeout(movePortalsToContainers, 500);
 
-                        // Re-run after WASM hydration
-                        setTimeout(movePortalsToContainers, 100);
-                        setTimeout(movePortalsToContainers, 500);
-
-                        // Watch for dynamically added portals
-                        const observer = new MutationObserver(function(mutations) {{
-                            let shouldMove = false;
-                            for (const mutation of mutations) {{
-                                if (mutation.addedNodes.length > 0) {{
-                                    for (const node of mutation.addedNodes) {{
-                                        if (node.nodeType === 1) {{
-                                            const el = node as Element;
-                                            if (el.hasAttribute && el.hasAttribute('data-portal-id')) {{
-                                                shouldMove = true;
-                                                break;
-                                            }}
-                                            if (el.querySelector && el.querySelector('[data-portal-id]')) {{
-                                                shouldMove = true;
-                                                break;
-                                            }}
-                                        }}
+                // Watch for dynamically added portals
+                const observer = new MutationObserver(function(mutations) {{
+                    let shouldMove = false;
+                    for (const mutation of mutations) {{
+                        if (mutation.addedNodes.length > 0) {{
+                            for (const node of mutation.addedNodes) {{
+                                if (node.nodeType === 1) {{
+                                    const el = node as Element;
+                                    if (el.hasAttribute && el.hasAttribute('data-portal-id')) {{
+                                        shouldMove = true;
+                                        break;
+                                    }}
+                                    if (el.querySelector && el.querySelector('[data-portal-id]')) {{
+                                        shouldMove = true;
+                                        break;
                                     }}
                                 }}
                             }}
-                            if (shouldMove) {{
-                                movePortalsToContainers();
-                            }}
-                        }});
+                        }}
+                    }}
+                    if (shouldMove) {{
+                        movePortalsToContainers();
+                    }}
+                }});
 
-                        observer.observe(document.body, {{
-                            childList: true,
-                            subtree: true
-                        }});
+                observer.observe(document.body, {{
+                    childList: true,
+                    subtree: true
+                }});
 
-                        // Expose portal API
-                        window.hikariPortal = {{
-                            ensureContainer: ensurePortalContainer,
-                            movePortals: movePortalsToContainers,
-                            getContainer: function() {{ return document.getElementById('{}'); }}
-                        }};
-                    }})();
-                    "#,
-                    PORTAL_CONTAINER_ID, PORTAL_CONTAINER_ID, PORTAL_CONTAINER_ID
-                )))),
+                // Expose portal API
+                window.hikariPortal = {{
+                    ensureContainer: ensurePortalContainer,
+                    movePortals: movePortalsToContainers,
+                    getContainer: function() {{ return document.getElementById('{}'); }}
+                }};
+            }})();
+            "#,
+            PORTAL_CONTAINER_ID, PORTAL_CONTAINER_ID, PORTAL_CONTAINER_ID
+        );
+
+        VNode::Element(
+            VElement::new("script")
+                .attr("type", "module")
+                .child(VNode::Text(VText::new(&script_content))),
         )
     }
 }

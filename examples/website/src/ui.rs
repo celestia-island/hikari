@@ -21,7 +21,9 @@ impl Button {
 
     /// Set button text
     pub fn text(mut self, text: impl Into<String>) -> Self {
-        self.element = self.element.text(text);
+        use tairitsu_vdom::VText;
+        let text_str = text.into();
+        self.element = self.element.child(VNode::Text(VText::new(&text_str)));
         self
     }
 
@@ -55,13 +57,16 @@ impl Button {
 
     /// Add custom class
     pub fn class(mut self, class: impl Into<String>) -> Self {
-        self.element = self.element.class(class);
+        let class_str = class.into();
+        self.element = self.element.class(class_str.as_str());
         self
     }
 
     /// Add custom attribute
     pub fn attr(mut self, name: impl Into<String>, value: impl Into<String>) -> Self {
-        self.element = self.element.attr(name, value);
+        let name_str = name.into();
+        let value_str = value.into();
+        self.element = self.element.attr(&name_str, &value_str);
         self
     }
 
@@ -136,13 +141,15 @@ impl Input {
 
     /// Set placeholder
     pub fn placeholder(mut self, placeholder: impl Into<String>) -> Self {
-        self.element = self.element.attr("placeholder", placeholder);
+        let placeholder_str = placeholder.into();
+        self.element = self.element.attr("placeholder", &placeholder_str);
         self
     }
 
     /// Set value
     pub fn value(mut self, value: impl Into<String>) -> Self {
-        self.element = self.element.attr("value", value);
+        let value_str = value.into();
+        self.element = self.element.attr("value", &value_str);
         self
     }
 
@@ -172,13 +179,16 @@ impl Input {
 
     /// Add custom class
     pub fn class(mut self, class: impl Into<String>) -> Self {
-        self.element = self.element.class(class);
+        let class_str = class.into();
+        self.element = self.element.class(class_str.as_str());
         self
     }
 
     /// Add custom attribute
     pub fn attr(mut self, name: impl Into<String>, value: impl Into<String>) -> Self {
-        self.element = self.element.attr(name, value);
+        let name_str = name.into();
+        let value_str = value.into();
+        self.element = self.element.attr(&name_str, &value_str);
         self
     }
 
@@ -235,9 +245,10 @@ impl Card {
 
     /// Set card as clickable (adds link behavior)
     pub fn clickable(mut self, href: impl Into<String>) -> Self {
+        let href_str = href.into();
         self.element = VElement::new("a")
             .class("card card--link")
-            .attr("href", href);
+            .attr("href", &href_str);
         self
     }
 
@@ -252,10 +263,11 @@ impl Card {
     /// Set card title
     pub fn title(mut self, title: impl Into<String>) -> Self {
         use tairitsu_vdom::VText;
+        let title_str = title.into();
         self.element = self.element.child(VNode::Element(
             VElement::new("h3")
                 .class("card__title")
-                .child(VNode::Text(VText::new(title))),
+                .child(VNode::Text(VText::new(&title_str))),
         ));
         self
     }
@@ -263,10 +275,11 @@ impl Card {
     /// Set card body content
     pub fn body(mut self, content: impl Into<String>) -> Self {
         use tairitsu_vdom::VText;
+        let content_str = content.into();
         self.element = self.element.child(VNode::Element(
             VElement::new("p")
                 .class("card__body")
-                .child(VNode::Text(VText::new(content))),
+                .child(VNode::Text(VText::new(&content_str))),
         ));
         self
     }
@@ -279,13 +292,16 @@ impl Card {
 
     /// Add custom class
     pub fn class(mut self, class: impl Into<String>) -> Self {
-        self.element = self.element.class(class);
+        let class_str = class.into();
+        self.element = self.element.class(class_str.as_str());
         self
     }
 
     /// Add custom attribute
     pub fn attr(mut self, name: impl Into<String>, value: impl Into<String>) -> Self {
-        self.element = self.element.attr(name, value);
+        let name_str = name.into();
+        let value_str = value.into();
+        self.element = self.element.attr(&name_str, &value_str);
         self
     }
 

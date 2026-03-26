@@ -217,7 +217,7 @@ impl InteractiveComponentBuilder {
 
         // Add custom classes
         for class in &self.classes {
-            element = element.class(class);
+            element = element.class(class.as_str());
         }
 
         // Add initial state as data attributes
@@ -286,6 +286,8 @@ impl InteractiveComponentBuilder {
             0
         };
 
+        let count_text = VNode::Text(VText::new(&format!("Count: {}", count)));
+
         rsx! {
             div {
                 class: "hi-button-counter hi-interactive-counter",
@@ -299,7 +301,7 @@ impl InteractiveComponentBuilder {
                 }
                 div {
                     class: "hi-counter-display",
-                    { format!("Count: {}", count) }
+                    { count_text }
                 }
             }
         }
@@ -314,6 +316,7 @@ impl InteractiveComponentBuilder {
         };
 
         let display_value = if value.is_empty() { "(empty)" } else { &value };
+        let value_text = VNode::Text(VText::new(&format!("Value: {}", display_value)));
 
         rsx! {
             div {
@@ -328,7 +331,7 @@ impl InteractiveComponentBuilder {
                 }
                 div {
                     class: "hi-input-display",
-                    { format!("Value: {}", display_value) }
+                    { value_text }
                 }
             }
         }
@@ -337,18 +340,23 @@ impl InteractiveComponentBuilder {
 
 /// Convenience function to create a switch component.
 pub fn switch(checked: bool, label: Option<&str>) -> (String, VNode) {
+    let label_str = label.unwrap_or("Toggle").to_string();
     InteractiveComponentBuilder::new("switch")
         .initial_state(ComponentState::switch(checked))
-        .label(label.unwrap_or("Toggle"))
+        .label(label_str)
         .build()
 }
 
 /// Convenience function to create a button counter component.
 pub fn button_counter(initial_count: u32, label: Option<&str>) -> (String, VNode) {
-    InteractiveComponentBuilder::new("button-counter")
-        .initial_state(ComponentState::button_counter(initial_count))
-        .label(label)
-        .build()
+    let builder = InteractiveComponentBuilder::new("button-counter")
+        .initial_state(ComponentState::button_counter(initial_count));
+    let builder = if let Some(label_str) = label {
+        builder.label(label_str.to_string())
+    } else {
+        builder
+    };
+    builder.build()
 }
 
 /// Convenience function to create an input component.
@@ -357,10 +365,14 @@ pub fn interactive_input(
     placeholder: &str,
     label: Option<&str>,
 ) -> (String, VNode) {
-    InteractiveComponentBuilder::new("input")
-        .initial_state(ComponentState::input(value.to_string(), placeholder.to_string()))
-        .label(label)
-        .build()
+    let builder = InteractiveComponentBuilder::new("input")
+        .initial_state(ComponentState::input(value.to_string(), placeholder.to_string()));
+    let builder = if let Some(label_str) = label {
+        builder.label(label_str.to_string())
+    } else {
+        builder
+    };
+    builder.build()
 }
 
 /// Get the global reactive state manager.

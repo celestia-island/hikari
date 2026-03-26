@@ -4,10 +4,10 @@
 //! modals, drawers, and other overlay components.
 
 use tairitsu_macros::rsx;
-use tairitsu_vdom::{VElement, VNode, VText};
+use tairitsu_vdom::VNode;
 
 use crate::components::portal::{
-    dropdown_portal, modal_portal, portal, toast_portal, Placement, Portal, PortalProps,
+    dropdown_portal, modal_portal, portal, toast_portal, Portal, PortalProps,
     ToastPosition,
 };
 
@@ -211,7 +211,7 @@ pub fn example_drawer() -> VNode {
         }
     };
 
-    portal(drawer_id, VNode::Fragment(drawer_content))
+    portal(drawer_id, drawer_content)
 }
 
 /// Example: Popover with Portal
@@ -237,7 +237,7 @@ pub fn example_popover() -> VNode {
     };
 
     // Position popover above the trigger
-    let style = if let Some((x, y, width, height)) = trigger_rect {
+    let style = if let Some((x, y, _width, _height)) = trigger_rect {
         format!(
             "position: fixed; left: {}px; bottom: {}px; pointer-events: auto; z-index: 10000;",
             x, y

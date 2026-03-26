@@ -3,8 +3,6 @@
 //! Fetches markdown content from /docs/{lang}/{path}.md and renders it
 //! with proper loading states, error handling, and language fallback support.
 
-use crate::markdown::render_markdown;
-use tairitsu_macros::rsx;
 use tairitsu_vdom::{VElement, VNode, VText};
 
 /// Supported languages for documentation.
@@ -41,7 +39,7 @@ pub enum DocLoadState {
 pub fn DocPage(
     doc_path: String,
     language: String,
-    title: Option<String>,
+    _title: Option<String>,
 ) -> VNode {
     // For now, we'll render a placeholder that will be populated by JavaScript
     // In a full implementation, this would use Rust's async capabilities

@@ -4,14 +4,16 @@
 //! including hover effects, focus animations, and state transitions.
 
 use tairitsu_macros::rsx;
-use tairitsu_vdom::{VElement, VNode};
-use crate::animation::AnimationId;
-use crate::ui::{self, Button, Card, Input};
+use tairitsu_vdom::VNode;
 
 fn txt(s: &str) -> VNode {
     use tairitsu_vdom::VText;
     VNode::Text(VText::new(s))
 }
+
+// Import UI components at module level for use in functions
+use crate::ui::{self, Button, Card, Input};
+use crate::animation::AnimationId;
 
 /// Render the animation examples page
 pub fn render() -> VNode {
@@ -34,39 +36,39 @@ pub fn render() -> VNode {
                     // Hover scale button
                     div { class: "demo-item",
                         div { class: "demo-item__label", "Hover Scale" }
-                        Button::new()
+                        { Button::new()
                             .text("Hover Me")
                             .animation(AnimationId::HoverScale)
-                            .build()
+                            .build() }
                     }
 
                     // Hover glow button
                     div { class: "demo-item",
                         div { class: "demo-item__label", "Hover Glow" }
-                        Button::new()
+                        { Button::new()
                             .text("Hover Me")
                             .animation(AnimationId::HoverGlow)
-                            .build()
+                            .build() }
                     }
 
                     // Hover lift card
                     div { class: "demo-item",
                         div { class: "demo-item__label", "Hover Lift" }
-                        Card::new()
+                        { Card::new()
                             .title("Hover Card")
                             .body("This card lifts up on hover")
                             .animation(AnimationId::HoverLift)
-                            .build()
+                            .build() }
                     }
 
                     // Hover shine button
                     div { class: "demo-item",
                         div { class: "demo-item__label", "Hover Shine" }
-                        Button::new()
+                        { Button::new()
                             .text("Hover Me")
                             .animation(AnimationId::HoverShine)
                             .variant(ui::ButtonVariant::Secondary)
-                            .build()
+                            .build() }
                     }
                 }
             }
@@ -80,28 +82,28 @@ pub fn render() -> VNode {
                     // Focus pulse input
                     div { class: "demo-item-inline",
                         div { class: "demo-item__label", "Focus Pulse" }
-                        Input::new()
+                        { Input::new()
                             .placeholder("Focus me...")
                             .animation(AnimationId::FocusPulse)
-                            .build()
+                            .build() }
                     }
 
                     // Focus glow input
                     div { class: "demo-item-inline",
                         div { class: "demo-item__label", "Focus Glow" }
-                        Input::new()
+                        { Input::new()
                             .placeholder("Focus me...")
                             .animation(AnimationId::FocusGlow)
-                            .build()
+                            .build() }
                     }
 
                     // Focus border input
                     div { class: "demo-item-inline",
                         div { class: "demo-item__label", "Focus Border" }
-                        Input::new()
+                        { Input::new()
                             .placeholder("Focus me...")
                             .animation(AnimationId::FocusBorder)
-                            .build()
+                            .build() }
                     }
                 }
             }
@@ -115,20 +117,20 @@ pub fn render() -> VNode {
                     // Press scale button
                     div { class: "demo-item-inline",
                         div { class: "demo-item__label", "Press Scale" }
-                        Button::new()
+                        { Button::new()
                             .text("Press Me")
                             .animation(AnimationId::PressScale)
-                            .build()
+                            .build() }
                     }
 
                     // Press glow button
                     div { class: "demo-item-inline",
                         div { class: "demo-item__label", "Press Glow" }
-                        Button::new()
+                        { Button::new()
                             .text("Press Me")
                             .animation(AnimationId::PressGlow)
                             .variant(ui::ButtonVariant::Danger)
-                            .build()
+                            .build() }
                     }
                 }
             }
@@ -179,19 +181,19 @@ pub fn render() -> VNode {
                 div { class: "demo-form",
                     div { class: "demo-form__field",
                         label { class: "demo-form__label", "Name" }
-                        Input::new()
+                        { Input::new()
                             .placeholder("Enter your name")
                             .animation(AnimationId::FocusGlow)
-                            .build()
+                            .build() }
                     }
 
                     div { class: "demo-form__field",
                         label { class: "demo-form__label", "Email" }
-                        Input::new()
+                        { Input::new()
                             .input_type(ui::InputType::Email)
                             .placeholder("Enter your email")
                             .animation(AnimationId::FocusPulse)
-                            .build()
+                            .build() }
                     }
 
                     div { class: "demo-form__field",
@@ -204,16 +206,16 @@ pub fn render() -> VNode {
                     }
 
                     div { class: "demo-form__actions",
-                        Button::new()
+                        { Button::new()
                             .text("Cancel")
                             .variant(ui::ButtonVariant::Ghost)
                             .animation(AnimationId::HoverScale)
-                            .build()
-                        Button::new()
+                            .build() }
+                        { Button::new()
                             .text("Submit")
                             .variant(ui::ButtonVariant::Primary)
                             .animation(AnimationId::HoverGlow)
-                            .build()
+                            .build() }
                     }
                 }
             }

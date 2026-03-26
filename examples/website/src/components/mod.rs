@@ -87,6 +87,15 @@ pub fn top_nav() -> VNode {
                     a { href: "/system", class: "hikari-topnav__link", "System" }
                     a { href: "/demos", class: "hikari-topnav__link", "Demos" }
                 }
+                // Language toggle button
+                button {
+                    class: "hi-header-icon hi-lang-toggle",
+                    id: "lang-toggle",
+                    "aria-label": "Toggle language",
+                    "title": "Switch language",
+                    "data-lang": "en",
+                    txt("EN")
+                }
                 // Theme toggle button
                 button {
                     class: "hi-header-icon hi-theme-toggle",

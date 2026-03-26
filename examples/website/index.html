@@ -31,8 +31,9 @@
         }
     </style>
 
-    <!-- Theme switcher script -->
+    <!-- Theme and language switcher scripts -->
     <script src="/theme.js"></script>
+    <script src="/lang.js"></script>
     <style>
         /* Theme toggle button styles */
         .hi-theme-toggle {
@@ -66,6 +67,33 @@
         /* In dark mode, show sun icon by default (will be overridden by JS) */
         [data-theme="tairitsu"] .theme-icon-sun { display: block; }
         [data-theme="tairitsu"] .theme-icon-moon { display: none; }
+
+        /* Language toggle button styles */
+        .hi-lang-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 50px;
+            height: 36px;
+            margin-left: 8px;
+            padding: 0 8px;
+            background: transparent;
+            border: 1px solid var(--hi-color-border-primary, #e2e8f0);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--hi-color-text-primary, #475569);
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .hi-lang-toggle:hover {
+            background-color: var(--hi-color-bg-tertiary, #f1f5f9);
+            border-color: var(--hi-color-border-secondary, #cbd5e1);
+        }
+        .hi-lang-toggle:focus-visible {
+            outline: 2px solid var(--hi-color-border-focus, #4a9eff);
+            outline-offset: 2px;
+        }
     </style>
 </head>
 <body>

@@ -3,6 +3,9 @@
 //! Uses hikari-components CSS class names (hi-header, hi-aside, etc.)
 //! so the bundle.css styles apply correctly for the drawer/header/aside layout.
 
+pub mod portal;
+pub mod portal_examples;
+
 use tairitsu_macros::rsx;
 use tairitsu_vdom::{VElement, VNode, VText};
 
@@ -31,6 +34,13 @@ const NAV: &[NavSection] = &[
             ("Icons", "/system/icons"),
             ("Animations", "/system/animations"),
             ("i18n", "/system/i18n"),
+        ],
+    },
+    NavSection {
+        label: "Interactive",
+        items: &[
+            ("Examples", "/interactive"),
+            ("Animation Demo", "/animations"),
         ],
     },
     NavSection {
@@ -85,6 +95,7 @@ pub fn top_nav() -> VNode {
                 nav { class: "hi-header-nav",
                     a { href: "/components", class: "hikari-topnav__link", "Components" }
                     a { href: "/system", class: "hikari-topnav__link", "System" }
+                    a { href: "/interactive", class: "hikari-topnav__link", "Interactive" }
                     a { href: "/demos", class: "hikari-topnav__link", "Demos" }
                 }
                 // Language toggle button

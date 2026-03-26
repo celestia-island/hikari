@@ -5,6 +5,7 @@
 
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 use tairitsu_vdom::{VElement, VNode, VText};
+use crate::reactive::{switch, button_counter, interactive_input};
 
 /// Component types that can be embedded in markdown via `_hikari_component` code blocks.
 #[derive(Debug, Clone, PartialEq)]
@@ -13,8 +14,48 @@ pub enum ComponentType {
     Layer(String, String, Option<String>),
     /// A demo component: (category, demo_name, optional_variant_id)
     Demo(String, String, Option<String>),
+    /// Interactive component: (component_type, params)
+    Interactive(String, InteractiveParams),
     /// Plain code block (content)
     Code(String),
+}
+
+/// Parameters for interactive components.
+#[derive(Debug, Clone, PartialEq)]
+pub struct InteractiveParams {
+    /// Label for the component
+    pub label: Option<String>,
+    /// Initial value/state
+    pub initial: Option<String>,
+    /// Placeholder text (for inputs)
+    pub placeholder: Option<String>,
+}
+
+impl InteractiveParams {
+    /// Parse params from a string like "label:My Label|initial:true|placeholder:Type here"
+    pub fn parse(input: &str) -> Self {
+        let mut label = None;
+        let mut initial = None;
+        let mut placeholder = None;
+
+        for part in input.split('|') {
+            let mut kv = part.splitn(2, ':');
+            if let (Some(key), Some(value)) = (kv.next(), kv.next()) {
+                match key.trim() {
+                    "label" => label = Some(value.trim().to_string()),
+                    "initial" => initial = Some(value.trim().to_string()),
+                    "placeholder" => placeholder = Some(value.trim().to_string()),
+                    _ => {}
+                }
+            }
+        }
+
+        Self {
+            label,
+            initial,
+            placeholder,
+        }
+    }
 }
 
 /// Render markdown content to VNode tree wrapped in a markdown content container.
@@ -278,6 +319,15 @@ fn parse_code_block(language: &str, content: &str) -> ComponentType {
     if language.starts_with("_inner_hikari") || language.starts_with("_hikari_component") {
         let path = content.trim();
         parse_component_path(path)
+    } else if language.starts_with("_interactive") {
+        // Parse interactive component syntax: _interactive component_name|params
+        let parts: Vec<&str> = language.splitn(2, '_').collect();
+        let remaining = parts.get(1).unwrap_or(&"");
+        let comp_parts: Vec<&str> = remaining.splitn(2, ' ').collect();
+        let component_type = comp_parts.first().map(|s| s.trim()).unwrap_or("");
+        let params_str = comp_parts.get(1).unwrap_or(&"");
+        let params = InteractiveParams::parse(params_str);
+        ComponentType::Interactive(component_type.to_string(), params)
     } else {
         ComponentType::Code(content.to_string())
     }
@@ -344,6 +394,9 @@ fn render_code_block(block_type: ComponentType) -> VNode {
         }
         ComponentType::Demo(ref category, ref name, ref component_id) => {
             render_demo_component(category, name, component_id.as_deref())
+        }
+        ComponentType::Interactive(ref comp_type, ref params) => {
+            render_interactive_component(comp_type, params)
         }
         ComponentType::Code(ref content) => {
             VNode::Element(
@@ -529,4 +582,42 @@ fn render_table(headers: Vec<String>, rows: Vec<Vec<String>>) -> VNode {
             .child(thead)
             .child(tbody),
     )
+}
+
+/// Render an interactive component with the given type and parameters.
+fn render_interactive_component(comp_type: &str, params: &InteractiveParams) -> VNode {
+    let label = params.label.as_deref();
+
+    match comp_type {
+        "switch" => {
+            let checked = params.initial.as_deref()
+                .and_then(|v| v.parse::<bool>().ok())
+                .unwrap_or(false);
+            let (_id, vnode) = switch(checked, label);
+            vnode
+        }
+        "button-counter" | "counter" => {
+            let count = params.initial.as_deref()
+                .and_then(|v| v.parse::<u32>().ok())
+                .unwrap_or(0);
+            let (_id, vnode) = button_counter(count, label);
+            vnode
+        }
+        "input" => {
+            let value = params.initial.as_deref().unwrap_or("");
+            let placeholder = params.placeholder.as_deref().unwrap_or("Enter text...");
+            let (_id, vnode) = interactive_input(value, placeholder, label);
+            vnode
+        }
+        _ => {
+            VNode::Element(
+                VElement::new("div")
+                    .class("hi-interactive-error")
+                    .child(VNode::Text(VText::new(&format!(
+                        "Unknown interactive component: {}",
+                        comp_type
+                    )))),
+            )
+        }
+    }
 }

@@ -2,11 +2,16 @@
 //!
 //! Built with Tairitsu framework, compiled to wasm32-wasip2.
 
+mod animation;
 mod app;
 mod components;
+mod dynamic_docs;
 mod markdown;
 mod pages;
+mod reactive;
+mod routing;
 mod theme;
+mod ui;
 
 use anyhow::Result;
 

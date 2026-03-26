@@ -24,6 +24,7 @@ tairitsu-web = { path = "../../../tairitsu/packages/web", features = [
 # Hikari design system (pure Rust, no Dioxus)
 hikari-palette = { path = "../../packages/palette" }
 hikari-components = { path = "../../packages/components", default-features = false }
+hikari-animation = { path = "../../packages/animation", default-features = false }
 
 # Markdown rendering
 pulldown-cmark = "0.12"
@@ -56,6 +57,7 @@ title = "Hikari"
 head = """
 <link rel="stylesheet" href="/styles/bundle.css">
 <link rel="stylesheet" href="/styles/spa.css">
+<link rel="stylesheet" href="/styles/animations.css">
 <script>
 (() => {
   const ROUTES = {
@@ -74,6 +76,7 @@ head = """
     '/demos': 'demos-overview',
     '/demos/form': 'demos-form',
     '/demos/dashboard': 'demos-dashboard',
+    '/animations': 'animations',
   };
 
   function getRouteId() {
@@ -187,3 +190,7 @@ output = "styles/bundle.css"
 [[package.metadata.tairitsu.scss.entries]]
 entry = "src/styles/spa.scss"
 output = "styles/spa.css"
+
+[[package.metadata.tairitsu.scss.entries]]
+entry = "src/styles/animations.scss"
+output = "styles/animations.css"

@@ -1,0 +1,321 @@
+// Hikari Animation System
+// Integrates with hikari-animation package for component animations
+
+// ── Configuration ─────────────────────────────────────────────────────────────
+
+$animation-duration-fast: 100ms;
+$animation-duration-normal: 200ms;
+$animation-duration-slow: 300ms;
+$animation-easing-default: ease-out;
+$animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+// ── Hover Animations ───────────────────────────────────────────────────────────
+
+// Hover Scale - Subtle grow effect on hover
+.hikari-anim--hover-scale {
+  transition: transform $animation-duration-normal $animation-easing-default;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+// Hover Glow - Glow intensifies on hover
+.hikari-anim--hover-glow {
+  --glow-intensity: 0.3;
+  --glow-spread: 10px;
+  transition: box-shadow $animation-duration-slow $animation-easing-default;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: var(--glow-intensity);
+    filter: blur(var(--glow-spread));
+    transition: all $animation-duration-slow $animation-easing-default;
+    pointer-events: none;
+  }
+
+  &:hover::before {
+    --glow-intensity: 0.6;
+    --glow-spread: 20px;
+  }
+}
+
+// Hover Lift - Element lifts up with shadow on hover
+.hikari-anim--hover-lift {
+  transition:
+    transform 250ms $animation-easing-bounce,
+    box-shadow 250ms $animation-easing-default;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// Hover Shine - Sweeping light effect on hover
+.hikari-anim--hover-shine {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transition: left 600ms $animation-easing-default;
+    pointer-events: none;
+  }
+
+  &:hover::after {
+    left: 150%;
+  }
+}
+
+// ── Focus Animations ───────────────────────────────────────────────────────────
+
+// Focus Pulse - Subtle pulse animation when focused
+@keyframes focus-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.1);
+  }
+}
+
+.hikari-anim--focus-pulse {
+  &:focus {
+    animation: focus-pulse 2s ease-in-out infinite;
+  }
+}
+
+// Focus Glow - Blue glow appears on focus
+.hikari-anim--focus-glow {
+  transition: box-shadow $animation-duration-normal $animation-easing-default;
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+    outline: none;
+  }
+}
+
+// Focus Border - Border animates on focus
+.hikari-anim--focus-border {
+  position: relative;
+  transition: border-color $animation-duration-normal $animation-easing-default;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border: 2px solid transparent;
+    border-radius: inherit;
+    transition: border-color $animation-duration-normal $animation-easing-default;
+    pointer-events: none;
+  }
+
+  &:focus::after {
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+}
+
+// ── State Transition Animations ───────────────────────────────────────────────
+
+// Press Scale - Shrink on press (active state)
+.hikari-anim--press-scale {
+  transition: transform $animation-duration-fast $animation-easing-default;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// Press Glow - Glow intensifies on press
+.hikari-anim--press-glow {
+  --press-glow-opacity: 0;
+  transition: box-shadow $animation-duration-fast $animation-easing-default;
+
+  &:active {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  }
+}
+
+// ── Continuous Animations ─────────────────────────────────────────────────────
+
+// Breathing - Subtle breathe effect
+@keyframes breathing {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 0.95;
+  }
+}
+
+.hikari-anim--breathing {
+  animation: breathing 3s ease-in-out infinite;
+}
+
+// Pulse - Continuous pulse animation
+.hikari-anim--pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+// Shimmer - Continuous shimmer effect
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.hikari-anim--shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+
+// ── Animation Demo Layout ──────────────────────────────────────────────────────
+
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.demo-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  align-items: flex-start;
+}
+
+.demo-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.demo-item-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 150px;
+}
+
+.demo-item__label {
+  font-size: 0.75rem;
+  color: var(--hi-color-text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.demo-form {
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem;
+  background: var(--hi-color-surface, #ffffff);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  &__label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--hi-color-text-primary, #111827);
+  }
+
+  &__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+  }
+}
+
+.code-block {
+  background: var(--hi-color-background, #f9fafb);
+  border: 1px solid var(--hi-color-border, #e5e7eb);
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--hi-color-text-primary, #111827);
+
+  code {
+    background: none;
+    padding: 0;
+  }
+}
+
+// ── Page Section Styles ───────────────────────────────────────────────────────
+
+.page-section {
+  padding: 2rem 0;
+  border-bottom: 1px solid var(--hi-color-border, #e5e7eb);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--hi-color-text-primary, #111827);
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.75rem;
+    color: var(--hi-color-text-primary, #111827);
+  }
+
+  p {
+    color: var(--hi-color-text-secondary, #6b7280);
+    margin-bottom: 1rem;
+  }
+
+  > div {
+    margin-bottom: 1rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}

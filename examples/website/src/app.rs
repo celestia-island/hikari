@@ -9,8 +9,9 @@
 use tairitsu_vdom::{VElement, VNode};
 
 use crate::{
-    components,
-    pages::{components as comp_pages, demos as demo_pages, home, not_found, system as sys_pages},
+    components::{self, portal::PortalJs},
+    pages::{animations, components as comp_pages, demos as demo_pages, home, interactive, not_found, system as sys_pages},
+    routing,
     theme,
 };
 
@@ -21,13 +22,18 @@ pub fn render() -> VNode {
     content.extend(comp_pages::render_all());
     content.extend(sys_pages::render_all());
     content.extend(demo_pages::render_all());
+    content.push(animations::render());
+    content.push(interactive::render());
     content.push(not_found::render());
 
     // Get theme CSS variables Style for Hikari (light) theme
     let theme_style = theme::hikari_style();
 
-    // Outer layout wrapper — matches hikari-components Layout component
-    VNode::Element(
+    // Initialize portal JavaScript
+    let portal_init = PortalJs::init_script();
+
+    // Create app content
+    let app_content = VNode::Element(
         VElement::new("div")
             .attr("id", "hikari-app")
             .attr("data-theme", "hikari")
@@ -57,6 +63,11 @@ pub fn render() -> VNode {
                                     .children(content),
                             )),
                     )),
-            )),
-    )
+            ))
+            // Documentation router script for dynamic doc loading
+            .child(routing::render_doc_router_script()),
+    );
+
+    // Wrap everything in PortalProvider
+    components::portal::PortalProvider::render(vec![app_content, portal_init])
 }

@@ -7,77 +7,66 @@
 
 ---
 
-## Legacy 版本架构分析（已完成）
+## 架构对比
 
-### 核心系统
-1. **路由系统**: Dioxus Router，所有路由在 `app.rs` 中定义
-2. **国际化**: 9种语言，TOML 格式，编译时嵌入
-3. **主题系统**: ThemeProvider 组件，CSS 变量驱动
-4. **Markdown 解析**: pulldown-cmark，`_hikari_component` 标记转组件示例
-5. **Portal 系统**: PortalProvider 组件
-6. **动画系统**: AnimationBuilder 状态机
+### Legacy 版本 (Dioxus)
+- 框架: Dioxus
+- 路由: Dioxus Router (Rust 端)
+- 渲染: 条件渲染单个页面
+- 国际化: I18nProvider + ReactiveI18nContext
+- Markdown: pulldown-cmark + `_hikari_component`
 
-### 页面结构
-```
-App
-├── I18nProviderWrapper
-│   ├── ThemeProvider
-│   │   └── PortalProvider
-│   │       └── Router
-│   │           └── Layout
-│   │               ├── Header
-│   │               ├── Sidebar
-│   │               ├── BreadcrumbNav
-│   │               └── DynamicDocPage / 页面组件
-```
+### 当前版本 (Tairitsu)
+- 框架: Tairitsu VDOM
+- 路由: JavaScript History API (在 Cargo.toml 中定义)
+- 渲染: 一次性渲染所有页面，CSS 控制显示
+- 国际化: 待实现
+- Markdown: 待实现
 
 ---
 
-## 一比一复刻任务清单
+## 已完成
 
-### Phase 1: 核心框架迁移
-- [ ] 路由系统（Dioxus Router → Tairitsu）
-- [ ] 国际化上下文（I18nProvider + ReactiveI18nContext）
-- [ ] 主题上下文（ThemeProvider）
-- [ ] Portal 系统（PortalProvider）
+### Phase 1: 路由系统 ✅
+- [x] JavaScript 路由逻辑（在 Cargo.toml head 中定义）
+- [x] 页面切换通过 `.is-active` 类控制
+- [x] 链接拦截和 pushState
+- [x] 侧边栏 `.sidebar-link` 类和高亮
+- [x] 抽屉切换功能
 
-### Phase 2: 页面组件迁移
-- [ ] Layout 组件
-- [ ] Header 组件（包含主题切换、语言切换）
-- [ ] Sidebar 组件
-- [ ] BreadcrumbNav 组件
-- [ ] DynamicDocPage 组件
-- [ ] Container 组件
-
-### Phase 3: Markdown 解析系统
-- [ ] pulldown-cmark 解析器集成
-- [ ] `_hikari_component` 代码块处理
-- [ ] 组件注册表（registry.rs）
-- [ ] 动态组件渲染
-
-### Phase 4: 翻译文件迁移
-- [ ] TOML 翻译文件转换
-- [ ] 9种语言支持
-- [ ] 编译时嵌入
-
-### Phase 5: 组件示例迁移
-- [ ] Layer 1 组件示例
-- [ ] Layer 2 组件示例
-- [ ] Layer 3 组件示例
-- [ ] Demo 页面
-
----
-
-## 当前状态
-
-### 已完成
+### Phase 2: 主题系统 ✅
 - [x] Glow 颜色系统修复
 - [x] 主题 CSS 变量生成
-- [x] Legacy 版本架构分析
+- [x] Hikari/Tairitsu 主题定义
 
-### 进行中
-- [ ] 核心框架迁移
+### Phase 3: 页面结构 ✅
+- [x] 首页 (page-home)
+- [x] 组件概览 (page-components-overview)
+- [x] Layer 1/2/3 页面
+- [x] 系统页面 (system-overview, palette, css, icons, animations, i18n)
+- [x] Demo 页面 (demos-overview, form, dashboard)
+- [x] 404 页面
 
-### 待开始
-- [ ] Markdown 解析系统
-- [ ] 组件示例迁移
+---
+
+## 待实现
+
+### Phase 4: 主题切换功能
+- [ ] 添加主题切换按钮到 Header
+- [ ] 实现亮色/暗色主题切换
+- [ ] 保存主题偏好到 localStorage
+
+### Phase 5: 国际化系统
+- [ ] 创建翻译文件加载器
+- [ ] 实现语言切换功能
+- [ ] 迁移 9 种语言翻译文件
+
+### Phase 6: Markdown 解析
+- [ ] 集成 Markdown 解析库
+- [ ] 实现 `_hikari_component` 代码块处理
+- [ ] 创建组件注册表
+
+### Phase 7: 组件文档迁移
+- [ ] 迁移组件文档内容
+- [ ] 添加代码示例
+- [ ] 实现 API 文档

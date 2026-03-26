@@ -349,13 +349,13 @@
 
  :root {
   // Theme Colors (fallback to Hikari light theme)
-  --hi-primary: #FFC0CB;     // 粉红
-  --hi-secondary: #FF4C00;   // 朱红
-  --hi-accent: #F59E0B;      // 姜黄
-  --hi-success: #10B981;     // 葱倩
-  --hi-warning: #FBBF24;     // 鹅黄
-  --hi-danger: #EF4444;      // 朱红
-  --hi-info: #FFC0CB;        // 粉红
+  --hi-primary: #4a9eff;     // 蓝色
+  --hi-secondary: #8b5cf6;   // 紫色
+  --hi-accent: #f472b6;      // 粉色
+  --hi-success: #10b981;     // 绿色
+  --hi-warning: #f59e0b;     // 橙色
+  --hi-danger: #ef4444;      // 红色
+  --hi-info: #3b82f6;        // 蓝色
 
   // Surface & Background Colors
   --hi-background: #E0F0E9;  // 素
@@ -476,13 +476,13 @@
 // Dark theme specific overrides
 [data-theme="tairitsu"] {
   // Theme Colors
-  --hi-primary: #065279;     // 靛蓝
-  --hi-secondary: #4B5CC4;   // 宝蓝
-  --hi-accent: #F59E0B;      // 姜黄
-  --hi-success: #10B981;     // 葱倩
-  --hi-warning: #FBBF24;     // 鹅黄
-  --hi-danger: #EF4444;      // 朱红
-  --hi-info: #065279;        // 靛蓝
+  --hi-primary: #ff6b9d;     // 粉色
+  --hi-secondary: #c084fc;   // 紫色
+  --hi-accent: #f472b6;      // 粉色
+  --hi-success: #a78bfa;     // 紫色
+  --hi-warning: #fbbf24;     // 橙色
+  --hi-danger: #f87171;      // 红色
+  --hi-info: #60a5fa;        // 蓝色
 
   // Surface & Background Colors
   --hi-background: #4A4266;  // 黛

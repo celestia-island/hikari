@@ -2,106 +2,134 @@
 
 > 目标：完全复刻 legacy 版本的功能和结构
 >
-> Legacy 版本位置: `/mnt/sdb1/hikari-legacy` (master 分支)
-> 当前版本位置: `/mnt/sdb1/hikari` (dev 分支)
+> Legacy 版本位置: `/mnt/sdb1/hikari-legacy` (Dioxus 框架)
+> 当前版本位置: `/mnt/sdb1/hikari` (Tairitsu 框架)
 
 ---
 
-## 研究准则
+## 核心差异分析
 
-### 1. Legacy 版本先测试
-```bash
-# 编译 legacy 版本
-cd /mnt/sdb1/hikari-legacy
-just serve
+### 框架层
+| 特性 | Legacy (Dioxus) | 当前 (Tairitsu) | 状态 |
+|------|-----------------|-----------------|------|
+| VDOM | Dioxus VirtualDom | Tairitsu VNode | ✅ 已适配 |
+| 组件 | `rsx! {}` | `rsx! {}` | ✅ 已适配 |
+| 路由 | Dioxus Router | JavaScript History API | ⚠️ 需迁移 |
+| 上下文 | `use_context_provider` | `use_context_provider` | ✅ 已适配 |
 
-# 访问 http://localhost:3000
-# 使用浏览器开发者工具查看生成的 HTML 结构
-```
-
-### 2. HTML 结构分析
-```python
-# /tmp/analyze_html.py
-from bs4 import BeautifulSoup
-import json
-
-with open('/tmp/legacy.html') as f:
-    soup = BeautifulSoup(f.read(), 'html.parser')
-
-# 分析关键元素
-print("=== HTML 结构 ===")
-print(f"Root: {soup.find('div', id='hikari-app')}")
-
-print("\n=== CSS 类 ===")
-for class_name in soup.find_all(class_=True):
-    print(f".{class_name}")
-
-print("\n=== 组件实例 ===")
-for component in soup.find_all(attrs={'data-component': True}):
-    print(f"{component['data-component']}: {component.name}")
-```
-
-### 3. 对比分析
-- HTML 结构对比
-- CSS 类名对比
-- JavaScript 行为对比
-- 路由系统对比
+### 上下文系统
+| 上下文 | Legacy 实现 | 当前实现 | 状态 |
+|--------|-------------|----------|------|
+| I18nProvider | ReactiveI18nContext + Signal | 简化版 JavaScript | ❌ 需完整迁移 |
+| ThemeProvider | 完整的 Palette 覆盖 | 基础切换 | ❌ 需完整迁移 |
+| PortalProvider | Portal 入口管理 | 未实现 | ❌ 需实现 |
+| AnimationBuilder | 状态机 + 预设 | 未实现 | ❌ 需实现 |
 
 ---
 
-## Legacy 版本核心功能（必须复刻）
+## 一比一复刻任务清单
 
-### 1. 框架层
-- [ ] Dioxus 框架 → Tairitsu VDOM 迁移
-- [ ] Dioxus Router → 路由系统迁移
-- [ ] Signal 响应式系统 → Tairitsu Signal 迁移
+### Phase A: 上下文系统迁移
 
-### 2. 上下文系统
-- [ ] I18nProvider - 国际化上下文
-- [ ] ThemeProvider - 主题上下文
-- [ ] PortalProvider - Portal 上下文
-- [ ] AnimationBuilder - 动画上下文
+#### A1. I18nProvider 完整迁移
+- [ ] 从 legacy 版本复制 `I18nProviderWrapper`
+- [ ] 迁移 `ReactiveI18nContext` 结构
+- [ ] 迁移 `LanguageContext` 和 `use_language` hook
+- [ ] 支持 9 种语言（en-US, zh-CHS, zh-CHT, ja-JP, ko-KR, fr-FR, es-ES, ru-RU, ar-SA）
+- [ ] 迁移 TOML 翻译文件加载器
+- [ ] 实现语言切换时的内容动态更新
 
-### 3. 页面系统
-- [ ] Layout 组件
-- [ ] Header 组件（主题切换、语言切换）
-- [ ] Sidebar 组件
-- [ ] BreadcrumbNav 组件
-- [ ] DynamicDocPage 组件
-- [ ] Container 组件
+#### A2. ThemeProvider 完整迁移
+- [ ] 从 legacy 版本复制 `ThemeProvider` 组件
+- [ ] 迁移完整的 Palette 覆盖系统
+- [ ] 支持嵌套 ThemeProvider
+- [ ] 实现主题切换时的 CSS 变量动态更新
+- [ ] 支持 RTL/LTR 布局方向
 
-### 4. Markdown 解析
-- [ ] pulldown-cmark 解析器集成
-- [ ] `_hikari_component` 代码块处理
-- [ ] 组件注册表（registry.rs）
-- [ ] 动态组件渲染
+#### A3. PortalProvider 迁移
+- [ ] 从 legacy 版本复制 `PortalProvider`
+- [ ] 迁移 `PortalEntry` 组件
+- [ ] 实现 Modal/Popover/Drawer 的 Portal 渲染
+- [ ] 迁移定位策略系统
 
-### 5. 国际化
-- [ ] 9种语言支持
-- [ ] TOML 翻译文件
-- [ ] 语言切换功能
-- [ ] URL 路径前缀（/:lang）
+#### A4. AnimationBuilder 迁移
+- [ ] 从 legacy 版本复制 `AnimationBuilder`
+- [ ] 迁移状态机实现
+- [ ] 迁移预设动画（pulse, breathe, shimmer）
+- [ ] 实现动画控制 API
 
-### 6. 动画系统
-- [ ] AnimationBuilder 状态机
-- [ ] 动画预设（pulse, breathe, shimmer）
-- [ ] 交互动画
+### Phase B: 页面系统迁移
+
+#### B1. Layout 组件迁移
+- [ ] 从 legacy 版本复制 `Layout` 组件
+- [ ] 迁移 `HikariLayout` 结构
+- [ ] 确保响应式断点一致
+
+#### B2. Header 组件迁移
+- [ ] 从 legacy 版本复制完整 Header
+- [ ] 确保主题切换按钮位置一致
+- [ ] 确保语言切换按钮位置一致
+- [ ] 迁移所有交互逻辑
+
+#### B3. Sidebar 组件迁移
+- [ ] 从 legacy 版本复制 Sidebar 组件
+- [ ] 确保菜单结构一致
+- [ ] 确保高亮逻辑一致
+
+#### B4. BreadcrumbNav 迁移
+- [ ] 从 legacy 版本复制 BreadcrumbNav
+- [ ] 确保路径显示一致
+
+### Phase C: Markdown 解析系统
+
+#### C1. MarkdownRenderer 迁移
+- [ ] 从 legacy 版本复制 `markdown_renderer.rs`
+- [ ] 确保 pulldown-cmark 集成
+- [ ] 确保所有 Markdown 元素正确渲染
+
+#### C2. DynamicDocPage 迁移
+- [ ] 从 legacy 版本复制 `DynamicDocPage`
+- [ ] 实现异步 Markdown 加载
+- [ ] 支持多语言文档路径
+
+#### C3. 组件注册表迁移
+- [ ] 从 legacy 版本复制 `registry.rs`
+- [ ] 确保所有组件示例正确渲染
+- [ ] 支持响应式状态（如 Switch 示例）
+
+### Phase D: 文档内容迁移
+
+#### D1. 迁移组件文档
+- [ ] 迁移所有 Layer 1 组件文档
+- [ ] 迁移所有 Layer 2 组件文档
+- [ ] 迁移所有 Layer 3 组件文档
+
+#### D2. 迁移系统文档
+- [ ] 迁移 CSS 文档
+- [ ] 迁移 Icons 文档
+- [ ] 迁移 Animations 文档
+- [ ] 迁移 i18n 文档
+
+#### D3. 迁移翻译文件
+- [ ] 从 legacy 版本复制所有 TOML 文件
+- [ ] 确保所有 9 种语言的翻译完整
 
 ---
 
 ## 当前状态
 
-### 已完成
-- [x] Glow 颜色系统修复
-- [x] 主题 CSS 变量生成
-- [x] 基础路由系统（JavaScript）
-- [x] 主题切换按钮（简化版）
-- [x] 语言切换按钮（简化版）
+### 已完成 ✅
+- Glow 颜色系统修复
+- 主题 CSS 变量生成
+- 基础路由系统
+- 简化版主题切换
+- 简化版语言切换
 
-### 待完成
-- [ ] 完整的 I18nProvider 迁移
-- [ ] 完整的 ThemeProvider 迁移
-- [ ] Markdown 解析系统
-- [ ] 组件注册表
-- [ ] 动画上下文
-- [ ] 9种语言支持
+### 进行中 ⚠️
+- Legacy 版本结构分析
+
+### 待开始 ⏳
+- Phase A: 上下文系统迁移
+- Phase B: 页面系统迁移
+- Phase C: Markdown 解析迁移
+- Phase D: 文档内容迁移

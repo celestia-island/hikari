@@ -6,8 +6,7 @@ use tairitsu_vdom::IntoAttrValue;
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform::{
-    element_from_point, get_bounding_client_rect, get_element_by_class_upward, log,
-    set_style_property,
+    element_from_point, get_bounding_client_rect, get_element_by_class_upward, set_style_property,
 };
 use crate::prelude::*;
 
@@ -130,6 +129,17 @@ impl IntoAttrValue for GlowPreset {
     }
 }
 
+/// Get the target intensity scale for a given interaction state
+fn get_intensity_for_state(state: InteractionState) -> f32 {
+    match state {
+        InteractionState::Idle => 0.0,
+        InteractionState::Hover => 0.5,
+        InteractionState::Active => 1.0,
+        InteractionState::Focused => 0.3,
+        InteractionState::Disabled => 0.0,
+    }
+}
+
 #[define_props]
 pub struct GlowProps {
     pub children: Element,
@@ -169,23 +179,27 @@ pub fn Glow(props: GlowProps) -> Element {
         .build();
 
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-    let glow_color = match props.color {
-        GlowColor::Ghost => "var(--hi-ghost-glow, rgba(128, 128, 128, 0.5))",
-        GlowColor::Primary => "var(--hi-glow-button-primary)",
-        GlowColor::Secondary => "var(--hi-glow-button-secondary)",
-        GlowColor::Danger => "var(--hi-glow-button-danger)",
-        GlowColor::Success => "var(--hi-glow-button-success)",
-        GlowColor::Warning => "var(--hi-glow-button-warning)",
-        GlowColor::Info => "var(--hi-glow-button-info)",
-    };
-
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
+        let glow_color = match props.color {
+            GlowColor::Ghost => "var(--hi-ghost-glow, rgba(128, 128, 128, 0.5))",
+            GlowColor::Primary => "var(--hi-glow-button-primary)",
+            GlowColor::Secondary => "var(--hi-glow-button-secondary)",
+            GlowColor::Danger => "var(--hi-glow-button-danger)",
+            GlowColor::Success => "var(--hi-glow-button-success)",
+            GlowColor::Warning => "var(--hi-glow-button-warning)",
+            GlowColor::Info => "var(--hi-glow-button-info)",
+        };
+
         let initial_style = format!(
             "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: {}; --glow-intensity-scale: 0; --glow-spread-scale: 1.0;",
             glow_color,
         );
 
+        // 交互状态管理 (方案 B: 使用 ButtonStateMachine)
+        let (state, on_event) = use_interaction_state();
+        let state_clone = state.clone();
+
+        // 鼠标移动处理 - 更新光标位置
         let onmousemove_handler = move |event: MouseEvent| {
             #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
@@ -193,8 +207,7 @@ pub fn Glow(props: GlowProps) -> Element {
                 let client_y = event.client_y;
 
                 if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) =
-                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                    if let Some(wrapper) = get_element_by_class_upward("hi-glow-wrapper", &target_el)
                     {
                         if let Some(rect) = get_bounding_client_rect(&wrapper) {
                             let relative_x = client_x as f64 - rect.x;
@@ -205,16 +218,8 @@ pub fn Glow(props: GlowProps) -> Element {
                             if width > 0.0 && height > 0.0 {
                                 let percent_x = ((relative_x / width) * 100.0).clamp(0.0, 100.0);
                                 let percent_y = ((relative_y / height) * 100.0).clamp(0.0, 100.0);
-                                set_style_property(
-                                    &wrapper,
-                                    "--glow-x",
-                                    &format!("{:.1}%", percent_x),
-                                );
-                                set_style_property(
-                                    &wrapper,
-                                    "--glow-y",
-                                    &format!("{:.1}%", percent_y),
-                                );
+                                set_style_property(&wrapper, "--glow-x", &format!("{:.1}%", percent_x));
+                                set_style_property(&wrapper, "--glow-y", &format!("{:.1}%", percent_y));
                             }
                         }
                     }
@@ -223,15 +228,15 @@ pub fn Glow(props: GlowProps) -> Element {
             let _ = event;
         };
 
+        // MouseEnter: 转换到 Hover 状态，设置强度 0.5
         let onmouseenter_handler = move |event: MouseEvent| {
+            on_event(InteractionEvent::MouseEnter);
             #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
                 let client_x = event.client_x;
                 let client_y = event.client_y;
-
                 if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) =
-                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                    if let Some(wrapper) = get_element_by_class_upward("hi-glow-wrapper", &target_el)
                     {
                         set_style_property(&wrapper, "--glow-intensity-scale", "0.5");
                     }
@@ -240,15 +245,15 @@ pub fn Glow(props: GlowProps) -> Element {
             let _ = event;
         };
 
+        // MouseLeave: 转换到 Idle 状态，设置强度 0
         let onmouseleave_handler = move |event: MouseEvent| {
+            on_event(InteractionEvent::MouseLeave);
             #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
                 let client_x = event.client_x;
                 let client_y = event.client_y;
-
                 if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) =
-                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                    if let Some(wrapper) = get_element_by_class_upward("hi-glow-wrapper", &target_el)
                     {
                         set_style_property(&wrapper, "--glow-intensity-scale", "0");
                     }
@@ -257,15 +262,15 @@ pub fn Glow(props: GlowProps) -> Element {
             let _ = event;
         };
 
+        // MouseDown: 转换到 Active 状态，设置强度 1.0
         let onmousedown_handler = move |event: MouseEvent| {
+            on_event(InteractionEvent::MouseDown);
             #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
                 let client_x = event.client_x;
                 let client_y = event.client_y;
-
                 if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) =
-                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                    if let Some(wrapper) = get_element_by_class_upward("hi-glow-wrapper", &target_el)
                     {
                         set_style_property(&wrapper, "--glow-intensity-scale", "1.0");
                     }
@@ -274,17 +279,18 @@ pub fn Glow(props: GlowProps) -> Element {
             let _ = event;
         };
 
+        // MouseUp: 根据当前状态恢复强度
         let onmouseup_handler = move |event: MouseEvent| {
+            on_event(InteractionEvent::MouseUp);
             #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
             {
                 let client_x = event.client_x;
                 let client_y = event.client_y;
-
                 if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) =
-                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                    if let Some(wrapper) = get_element_by_class_upward("hi-glow-wrapper", &target_el)
                     {
-                        set_style_property(&wrapper, "--glow-intensity-scale", "0.5");
+                        let target = get_intensity_for_state(*state_clone.borrow());
+                        set_style_property(&wrapper, "--glow-intensity-scale", &target.to_string());
                     }
                 }
             }

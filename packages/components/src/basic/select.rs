@@ -242,16 +242,23 @@ pub fn Select(props: SelectProps) -> Element {
     rsx! {
         div { class: wrapper_classes,
 
-            div { class: trigger_classes, onclick: handle_trigger_click,
+            Glow {
+                block: true,
+                blur: crate::GlowBlur::Light,
+                intensity: crate::GlowIntensity::Soft,
+                color: crate::GlowColor::Primary,
 
-                span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
-                    "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"请选择\".to_string()) }}"
-                }
+                div { class: trigger_classes, onclick: handle_trigger_click,
 
-                // Chevron arrow
-                span {
-                    class: "hi-select-arrow",
-                    dangerous_inner_html: r#"<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>"#,
+                    span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
+                        "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"请选择\".to_string()) }}"
+                    }
+
+                    // Chevron arrow
+                    span {
+                        class: "hi-select-arrow",
+                        dangerous_inner_html: r#"<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>"#,
+                    }
                 }
             }
         }

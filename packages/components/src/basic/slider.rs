@@ -146,6 +146,16 @@ impl StyledComponent for SliderComponent {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
+.hi-slider-handle:focus-visible {
+    outline: 2px solid var(--hi-color-primary, #1890ff);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.2);
+}
+
+.hi-slider-handle:active {
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
 .hi-slider-input {
     position: absolute;
     width: 100%;
@@ -194,6 +204,12 @@ impl StyledComponent for SliderComponent {
 
 [data-theme="dark"] .hi-slider-disabled .hi-slider-handle {
     background-color: var(--hi-text-disabled, #555);
+}
+
+[data-theme="dark"] .hi-slider-handle:focus-visible {
+    outline: 2px solid var(--hi-color-primary, #1890ff);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.3);
 }
 "#
     }

@@ -101,6 +101,7 @@ pub fn Switch(props: SwitchProps) -> Element {
         .add_if(SwitchClass::Disabled, || props.disabled)
         .add_raw(variant_class)
         .add_raw(color_class)
+        .add_raw("hi-switch-glow")
         .add_raw(&props.class)
         .build();
 

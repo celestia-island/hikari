@@ -564,7 +564,7 @@ mod wasm_impl {
         init(".hi-sidebar");
         init(".sidebar-nav");
         init(".showcase-table-container");
-        init(".custom-scrollbar-content-vdom");
+        init(".custom-scrollbar-container-vdom");
     }
 }
 

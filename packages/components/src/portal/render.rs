@@ -337,10 +337,16 @@ fn ModalPortalEntry(
         VNode::empty()
     };
 
+    // Compute overlay style based on mask mode
+    let overlay_style = format!(
+        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; z-index: {};",
+        z_index
+    );
+
     rsx! {
         div {
             class: overlay_classes,
-            style: "position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: auto; display: flex; align-items: center; justify-content: center; z-index: {z_index};",
+            style: overlay_style,
             onclick: move |e: MouseEvent| {
                 if mask_closable && mask_mode == MaskMode::Opaque {
                     e.stop_propagation();

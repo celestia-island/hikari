@@ -124,6 +124,7 @@ pub fn Alert(props: AlertProps) -> Element {
             blur: GlowBlur::Light,
             color: glow_color,
             intensity: GlowIntensity::Soft,
+            block: true,
             div { class: alert_classes,
 
                 if icon.is_some() {

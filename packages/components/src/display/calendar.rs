@@ -328,7 +328,7 @@ impl StyledComponent for CalendarComponent {
     background-color: var(--hi-color-primary);
     color: white;
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 8px var(--hi-color-primary-glow);
+    box-shadow: 0 0 8px var(--hi-glow-button-primary);
 }
 
 .hi-calendar-nav-button:disabled {
@@ -392,7 +392,7 @@ impl StyledComponent for CalendarComponent {
 .hi-calendar-day.hi-calendar-day-selected {
     background-color: var(--hi-color-primary);
     color: white;
-    box-shadow: 0 0 12px var(--hi-color-primary-glow);
+    box-shadow: 0 0 12px var(--hi-glow-button-primary);
 }
 
 .hi-calendar-day-today {

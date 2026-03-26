@@ -178,7 +178,7 @@ impl StyledComponent for TimelineComponent {
     background-color: var(--hi-color-primary);
     border: 3px solid var(--hi-color-bg-container);
     box-shadow: 0 0 0 2px var(--hi-color-primary),
-                0 0 8px var(--hi-color-primary-glow);
+                0 0 8px var(--hi-glow-button-primary);
     flex-shrink: 0;
     z-index: 1;
     transition: all 0.3s ease;
@@ -187,7 +187,7 @@ impl StyledComponent for TimelineComponent {
 .hi-timeline-dot:hover {
     transform: scale(1.2);
     box-shadow: 0 0 0 2px var(--hi-color-primary),
-                0 0 16px var(--hi-color-primary-glow);
+                0 0 16px var(--hi-glow-button-primary);
 }
 
 .hi-timeline-content {
@@ -202,7 +202,7 @@ impl StyledComponent for TimelineComponent {
 .hi-timeline-content:hover {
     border-color: var(--hi-color-primary);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1),
-                0 0 8px var(--hi-color-primary-glow);
+                0 0 8px var(--hi-glow-button-primary);
 }
 
 .hi-timeline-time {

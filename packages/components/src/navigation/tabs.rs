@@ -122,11 +122,11 @@ impl StyledComponent for TabsComponent {
 
 #[component]
 pub fn TabPane(props: TabPaneProps) -> Element {
-    use hikari_palette::classes::{ClassesBuilder, components::TabsClass};
+    use hikari_palette::classes::{ClassesBuilder, components::TabsClass, UtilityClass};
 
     let active_key = use_context::<Signal<String>>().expect("TabsContext not found");
     let item_key = props.item_key.clone();
-    let is_active = active_key.get().get() == item_key;
+    let is_active = *active_key.get().read() == item_key;
 
     let tab_classes = ClassesBuilder::new()
         .add(TabsClass::TabsTab)
@@ -140,7 +140,19 @@ pub fn TabPane(props: TabPaneProps) -> Element {
         .add_if(TabsClass::TabpaneInactive, || !is_active)
         .build();
 
+    let tab_icon_class = TabsClass::TabsTabIcon.as_class();
+    let tab_label_class = TabsClass::TabsTabLabel.as_class();
+
     let aria_hidden_val = (!is_active).to_string();
+
+    // Get on_change handler from parent Tabs component
+    // We need to access it through context or callback
+    let item_key_for_click = item_key.clone();
+    let onclick_handler = move |_| {
+        if !props.disabled {
+            active_key.get().set(item_key_for_click.clone());
+        }
+    };
 
     // Tab and TabPane need to be rendered together
     let tab_el = rsx! {
@@ -150,12 +162,13 @@ pub fn TabPane(props: TabPaneProps) -> Element {
             "data-key": item_key.clone(),
             "aria-selected": is_active,
             "aria-disabled": props.disabled,
+            onclick: onclick_handler,
 
             if let Some(icon) = props.icon {
-                span { class: "hi-tabs-tab-icon", {icon} }
+                span { class: tab_icon_class, {icon} }
             }
 
-            span { class: "hi-tabs-tab-label", "{props.tab}" }
+            span { class: tab_label_class, "{props.tab}" }
         }
     };
 

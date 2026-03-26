@@ -12,6 +12,8 @@ pub enum TabsClass {
     TabsTabpane,
     TabpaneActive,
     TabpaneInactive,
+    TabsTabIcon,
+    TabsTabLabel,
 }
 
 impl UtilityClass for TabsClass {
@@ -23,6 +25,8 @@ impl UtilityClass for TabsClass {
             TabsClass::TabsTabpane => "tab-panel",
             TabsClass::TabpaneActive => "tab-panel-active",
             TabsClass::TabpaneInactive => "tab-panel-inactive",
+            TabsClass::TabsTabIcon => "tabs-tab-icon",
+            TabsClass::TabsTabLabel => "tabs-tab-label",
         }
     }
 }

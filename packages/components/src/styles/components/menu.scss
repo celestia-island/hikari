@@ -770,6 +770,21 @@ aside .hi-menu {
 }
 
 // ============================================
+// Hover state
+// ============================================
+
+.hi-menu-item:hover {
+  background: var(--hi-primary);
+  border-color: var(--hi-primary);
+  color: var(--hi-color-text-primary);
+
+  .hi-menu-item-icon {
+    color: var(--hi-color-primary);
+    filter: drop-shadow(0 0 4px var(--hi-primary));
+  }
+}
+
+// ============================================
 // Focus state
 // ============================================
 

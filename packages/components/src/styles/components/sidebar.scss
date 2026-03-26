@@ -67,15 +67,16 @@
   // Transition
   transition: all vars.$hikari-duration-fast ease;
 
-  // Hover state - border glow
-  &:hover {
-    background: transparent;
-    border-color: var(--hi-color-text-primary);
-    --hi-glow-transparent: false;
-    --hi-glow-bg-color: var(--hi-color-text-primary);
-    box-shadow:
-      0 0 12px var(--hi-glow-color),
-      inset 0 0 4px var(--hi-glow-color);
+  // Hover state is handled by Glow component
+  // The Glow wrapper already handles mouse events and updates --glow-intensity-scale
+  // We just need to ensure the glow is visible when hovering
+}
+
+// Hover state for Glow wrapper around section header
+.hi-glow-wrapper:has(.hi-sidebar-section-header) {
+  &:hover,
+  &[data-glow-hover="true"] {
+    --glow-intensity-scale: 0.5;
   }
 }
 
@@ -187,15 +188,14 @@
   // Transition
   transition: all vars.$hikari-duration-fast ease;
 
-  // Hover effect for all items - border glow
-  &:hover {
-    background: transparent;
-    border-color: var(--hi-color-text-primary);
-    --hi-glow-transparent: false;
-    --hi-glow-bg-color: var(--hi-color-text-primary);
-    box-shadow:
-      0 0 12px var(--hi-glow-color),
-      inset 0 0 4px var(--hi-glow-color);
+  // Hover state is handled by Glow component
+}
+
+// Hover state for Glow wrapper around item header
+.hi-glow-wrapper:has(.hi-sidebar-item-header) {
+  &:hover,
+  &[data-glow-hover="true"] {
+    --glow-intensity-scale: 0.5;
   }
 }
 
@@ -333,15 +333,10 @@
     padding-left: 2.5rem;
   }
 
-  // Hover state - border glow
+  // Hover state - subtle background change
   &:hover {
-    background: transparent;
-    border-color: var(--hi-color-text-primary);
-    --hi-glow-transparent: false;
-    --hi-glow-bg-color: var(--hi-color-text-primary);
-    box-shadow:
-      0 0 12px var(--hi-glow-color),
-      inset 0 0 4px var(--hi-glow-color);
+    color: var(--hi-color-text-primary);
+    background: var(--hi-primary);
   }
 
   // Active state

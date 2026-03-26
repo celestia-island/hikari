@@ -111,6 +111,7 @@ pub fn Toast(props: ToastProps) -> Element {
             blur: GlowBlur::Medium,
             color: glow_color,
             intensity: GlowIntensity::Soft,
+            block: true,
             div { class: toast_classes,
 
                 div { class: ToastClass::ToastIconWrapper.as_class(), {default_icon} }

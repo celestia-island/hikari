@@ -6,6 +6,7 @@ mod animation;
 mod app;
 mod components;
 mod dynamic_docs;
+mod js;
 mod markdown;
 mod pages;
 mod reactive;

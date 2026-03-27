@@ -72,32 +72,29 @@ pub fn QRCode(props: QRCodeProps) -> Element {
 
     let canvas_id = format!("qrcode-canvas-{}", crate::platform::now_timestamp() as u64);
 
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-    {
-        let canvas_id_for_effect = canvas_id.clone();
-        let drawn_for_effect = drawn.clone();
-        let qr_matrix_for_effect = qr_matrix.clone();
-        let color_for_effect = color.clone();
-        let background_for_effect = background.clone();
+    let canvas_id_for_effect = canvas_id.clone();
+    let drawn_for_effect = drawn.clone();
+    let qr_matrix_for_effect = qr_matrix.clone();
+    let color_for_effect = color.clone();
+    let background_for_effect = background.clone();
 
-        use_effect(move || {
-            if drawn_for_effect.get() {
-                return;
-            }
+    use_effect(move || {
+        if drawn_for_effect.get() {
+            return;
+        }
 
-            if let Some((matrix, modules)) = &qr_matrix_for_effect {
-                if crate::platform::draw_qrcode_on_canvas_by_id(
-                    &canvas_id_for_effect,
-                    matrix,
-                    *modules,
-                    &color_for_effect,
-                    &background_for_effect,
-                ) {
-                    drawn_for_effect.set(true);
-                }
+        if let Some((matrix, modules)) = &qr_matrix_for_effect {
+            if crate::platform::draw_qrcode_on_canvas_by_id(
+                &canvas_id_for_effect,
+                matrix,
+                *modules,
+                &color_for_effect,
+                &background_for_effect,
+            ) {
+                drawn_for_effect.set(true);
             }
-        });
-    }
+        }
+    });
 
     rsx! {
         div { class: container_classes, style: props.style,

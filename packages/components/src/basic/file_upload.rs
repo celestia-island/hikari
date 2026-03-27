@@ -51,11 +51,7 @@ pub struct FileUploadProps {
 pub fn FileUpload(props: FileUploadProps) -> Element {
     let upload_status = use_signal(|| FileUploadStatus::Idle);
 
-    #[cfg(target_arch = "wasm32")]
     let files = use_signal(|| Vec::<String>::new());
-
-    #[cfg(not(target_arch = "wasm32"))]
-    let files = use_signal(Vec::<String>::new);
 
     let wrapper_classes = ClassesBuilder::new()
         .add(FileUploadClass::FileUploadWrapper)
@@ -97,35 +93,32 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
         e.prevent_default();
         upload_status_for_drop.set(FileUploadStatus::Idle);
 
-        #[cfg(target_arch = "wasm32")]
-        {
-            if let Some(data_transfer) = &e.data_transfer {
-                let file_list = &data_transfer.files;
+        if let Some(data_transfer) = &e.data_transfer {
+            let file_list = &data_transfer.files;
 
-                let mut selected_files = Vec::new();
-                let mut errors = Vec::new();
+            let mut selected_files = Vec::new();
+            let mut errors = Vec::new();
 
-                for file_name in file_list {
-                    selected_files.push(file_name.clone());
-                }
+            for file_name in file_list {
+                selected_files.push(file_name.clone());
+            }
 
-                if !errors.is_empty() && on_error_for_drop.is_some() {
-                    for error in errors {
-                        if let Some(handler) = on_error_for_drop.as_ref() {
-                            handler.call(error);
-                        }
+            if !errors.is_empty() && on_error_for_drop.is_some() {
+                for error in errors {
+                    if let Some(handler) = on_error_for_drop.as_ref() {
+                        handler.call(error);
                     }
                 }
+            }
 
-                if !selected_files.is_empty() {
-                    files_for_drop.set(selected_files.clone());
+            if !selected_files.is_empty() {
+                files_for_drop.set(selected_files.clone());
 
-                    if let Some(handler) = on_files_for_drop.as_ref() {
-                        handler.call(selected_files);
-                    }
-
-                    upload_status_for_drop.set(FileUploadStatus::Success);
+                if let Some(handler) = on_files_for_drop.as_ref() {
+                    handler.call(selected_files);
                 }
+
+                upload_status_for_drop.set(FileUploadStatus::Success);
             }
         }
     };
@@ -133,33 +126,25 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
     let upload_status_for_change = upload_status.clone();
     let files_for_change = files.clone();
     let on_change = move |e: ChangeEvent| {
-        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-        {
-            let file_value = e.value;
-            if file_value.is_empty() {
-                return;
-            }
-
-            let selected_files: Vec<String> = file_value
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect();
-
-            if !selected_files.is_empty() {
-                files_for_change.set(selected_files.clone());
-
-                if let Some(handler) = on_files_for_change.as_ref() {
-                    handler.call(selected_files);
-                }
-
-                upload_status_for_change.set(FileUploadStatus::Success);
-            }
+        let file_value = e.value;
+        if file_value.is_empty() {
+            return;
         }
 
-        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-        {
-            let _ = e;
+        let selected_files: Vec<String> = file_value
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect();
+
+        if !selected_files.is_empty() {
+            files_for_change.set(selected_files.clone());
+
+            if let Some(handler) = on_files_for_change.as_ref() {
+                handler.call(selected_files);
+            }
+
+            upload_status_for_change.set(FileUploadStatus::Success);
         }
     };
 

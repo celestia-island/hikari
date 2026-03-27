@@ -17,7 +17,6 @@ pub mod navigation;
 pub mod platform;
 pub mod portal;
 pub mod production;
-#[cfg(target_arch = "wasm32")]
 pub mod scripts;
 pub mod style_builder;
 pub mod styled;

@@ -3,7 +3,6 @@
 
 use hikari_palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform;
 use crate::{
     feedback::{Glow, GlowProps},
@@ -150,23 +149,13 @@ pub fn Select(props: SelectProps) -> Element {
             dropdown_id_for_click.set(id.clone());
 
             // Get trigger rect for positioning
-            let trigger_rect_opt = {
-                #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-                {
-                    if let Some(target_el) =
-                        platform::get_target_element_from_event(e.client_x, e.client_y)
-                    {
-                        platform::get_bounding_rect_by_class_impl("hi-select-trigger", &target_el)
-                            .map(|rect| (rect.x, rect.y, rect.width, rect.height))
-                    } else {
-                        None
-                    }
-                }
-
-                #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-                {
-                    None::<(f64, f64, f64, f64)>
-                }
+            let trigger_rect_opt = if let Some(target_el) =
+                platform::get_target_element_from_event(e.client_x, e.client_y)
+            {
+                platform::get_bounding_rect_by_class_impl("hi-select-trigger", &target_el)
+                    .map(|rect| (rect.x, rect.y, rect.width, rect.height))
+            } else {
+                None
             };
 
             let opts = options_for_menu.clone();

@@ -6,7 +6,6 @@ mod tests {
 
 use super::*;
 
-    #[cfg(target_arch = "wasm32")]
     #[test]
     fn test_background_animation_setup() {
         use crate::prelude::*;

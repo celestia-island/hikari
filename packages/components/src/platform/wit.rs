@@ -243,3 +243,8 @@ pub fn draw_qrcode_on_canvas_by_id(
 ) -> bool {
     false
 }
+
+/// Get bounding rect by class within element (placeholder)
+pub fn get_bounding_rect_by_class_impl<T>(_class: &str, _element: &T) -> Option<DomRect> {
+    None
+}

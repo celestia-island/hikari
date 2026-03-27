@@ -3,7 +3,6 @@
 
 use hikari_palette::classes::{ClassesBuilder, TooltipClass, UtilityClass};
 
-#[cfg(target_arch = "wasm32")]
 use crate::portal::{PortalEntry, TriggerPlacement};
 use crate::{
     portal::provider::{generate_portal_id, use_portal},
@@ -23,7 +22,6 @@ pub enum TooltipPlacement {
 }
 
 impl TooltipPlacement {
-    #[cfg(target_arch = "wasm32")]
     fn to_trigger_placement(&self) -> TriggerPlacement {
         match self {
             TooltipPlacement::Top => TriggerPlacement::Top,
@@ -63,28 +61,20 @@ pub fn Tooltip(props: TooltipProps) -> Element {
         let portal_add_entry = portal.add_entry.clone();
         let content = props.content.clone();
         let arrow = props.arrow;
-        #[cfg(target_arch = "wasm32")]
         let placement = props.placement.to_trigger_placement();
         move |event: MouseEvent| {
-            #[cfg(target_arch = "wasm32")]
-            {
-                // Use clientX/clientY from MouseEvent to approximate trigger position
-                // For precise element bounds, a ref-based approach would be needed
-                let rect_tuple = (event.client_x as f64, event.client_y as f64, 100.0, 30.0);
-                trigger_rect.set(Some(rect_tuple));
+            // Use clientX/clientY from MouseEvent to approximate trigger position
+            // For precise element bounds, a ref-based approach would be needed
+            let rect_tuple = (event.client_x as f64, event.client_y as f64, 100.0, 30.0);
+            trigger_rect.set(Some(rect_tuple));
 
-                portal_add_entry(PortalEntry::Tooltip {
-                    id: tooltip_id.get(),
-                    trigger_rect: Some(rect_tuple),
-                    placement,
-                    content: content.clone(),
-                    arrow,
-                });
-            }
-            #[cfg(not(target_arch = "wasm32"))]
-            {
-                let _ = (&tooltip_id, &trigger_rect, &event, &content, arrow);
-            }
+            portal_add_entry(PortalEntry::Tooltip {
+                id: tooltip_id.get(),
+                trigger_rect: Some(rect_tuple),
+                placement,
+                content: content.clone(),
+                arrow,
+            });
         }
     };
 

@@ -26,9 +26,9 @@ use hikari_palette::classes::{
     AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass,
 };
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform;
 use crate::prelude::*;
+use tairitsu_hooks::ReactiveSignal;
 
 #[derive(Clone, Debug, PartialEq, Props)]
 pub struct AnchorItem {
@@ -72,16 +72,13 @@ pub fn Anchor(
                 onclick: move |_| {
                     active_anchor_for_click.set(href.clone());
 
-                    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-                    {
-                        let target_id = href.trim_start_matches('#');
-                        if let Some(rect) = platform::get_element_rect_by_id(target_id) {
-                            let scroll_y = platform::get_scroll_y();
-                            platform::scroll_to_with_options(
-                                rect.y - offset as f64 - scroll_y,
-                                "smooth"
-                            );
-                        }
+                    let target_id = href.trim_start_matches('#');
+                    if let Some(rect) = platform::get_element_rect_by_id(target_id) {
+                        let scroll_y = platform::get_scroll_y();
+                        platform::scroll_to_with_options(
+                            rect.y - offset as f64 - scroll_y,
+                            "smooth"
+                        );
                     }
                 },
                     "{title}"
@@ -117,8 +114,7 @@ pub fn Anchor(
 }
 
 ///
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> Signal<String> {
+pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> ReactiveSignal<String> {
     let active_anchor = use_signal(|| String::new());
     let active_anchor_for_effect = active_anchor.clone();
 

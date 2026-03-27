@@ -17,9 +17,7 @@ pub enum SpinSize {
 pub enum SpinTip {
     #[default]
     None,
-    #[cfg(target_arch = "wasm32")]
     Loading,
-    #[cfg(target_arch = "wasm32")]
     Success,
 }
 
@@ -64,9 +62,7 @@ pub fn Spin(props: SpinProps) -> Element {
     } else {
         match props.tip {
             SpinTip::None => String::new(),
-            #[cfg(target_arch = "wasm32")]
             SpinTip::Loading => "加载中...".to_string(),
-            #[cfg(target_arch = "wasm32")]
             SpinTip::Success => "加载成功".to_string(),
         }
     };

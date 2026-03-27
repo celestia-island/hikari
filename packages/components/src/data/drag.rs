@@ -185,11 +185,8 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
         if can_drag {
             dragged_key_for_start.set(Some(key.clone()));
 
-            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-            {
-                if let Some(ref mut data_transfer) = e.data_transfer {
-                    data_transfer.set_data("text/plain", &key);
-                }
+            if let Some(ref mut data_transfer) = e.data_transfer {
+                data_transfer.set_data("text/plain", &key);
             }
         }
     };
@@ -213,12 +210,9 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
             let key = item_key_3.clone();
             drag_over_key_for_over.set(Some(key));
 
-            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-            {
-                if let Some(data_transfer) = &e.data_transfer {
-                    // Note: drop_effect uses builder pattern, skip for now
-                    let _ = data_transfer;
-                }
+            if let Some(data_transfer) = &e.data_transfer {
+                // Note: drop_effect uses builder pattern, skip for now
+                let _ = data_transfer;
             }
         }
     };

@@ -8,9 +8,7 @@ use hikari_palette::classes::{
     UtilityClass,
 };
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use super::provider::use_portal;
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform::{element_closest, element_from_point, request_animation_frame, set_timeout};
 use crate::{
     feedback::PopoverPlacement,
@@ -65,43 +63,40 @@ fn use_animated_portal_entry(
     })
     .value();
 
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-    {
-        let internal_animation_state_for_effect = internal_animation_state.clone();
-        let portal = use_portal();
-        let remove_entry_for_effect = portal.remove_entry.clone();
-        use_effect(move || {
-            let state = internal_animation_state_for_effect.get();
-            log(&format!(
-                "{} use_effect triggered, state: {:?}",
-                name, state
-            ));
-            if state == ModalAnimationState::Appearing {
-                let anim_state_clone = internal_animation_state_for_effect.clone();
-                request_animation_frame(move || {
-                    anim_state_clone.set(ModalAnimationState::Visible);
-                    log(&format!(
-                        "{} set to visible via requestAnimationFrame",
-                        name
-                    ));
-                });
-            } else if state == ModalAnimationState::Disappearing {
-                let id = id_for_close.clone();
+    let internal_animation_state_for_effect = internal_animation_state.clone();
+    let portal = use_portal();
+    let remove_entry_for_effect = portal.remove_entry.clone();
+    use_effect(move || {
+        let state = internal_animation_state_for_effect.get();
+        log(&format!(
+            "{} use_effect triggered, state: {:?}",
+            name, state
+        ));
+        if state == ModalAnimationState::Appearing {
+            let anim_state_clone = internal_animation_state_for_effect.clone();
+            request_animation_frame(move || {
+                anim_state_clone.set(ModalAnimationState::Visible);
                 log(&format!(
-                    "{} setTimeout scheduled for removing entry: {}",
-                    name, id
+                    "{} set to visible via requestAnimationFrame",
+                    name
                 ));
-                let remove_entry = remove_entry_for_effect.clone();
-                set_timeout(
-                    move || {
-                        log(&format!("{} removing entry after timeout: {}", name, id));
-                        remove_entry.call(id.clone());
-                    },
-                    200,
-                );
-            }
-        });
-    }
+            });
+        } else if state == ModalAnimationState::Disappearing {
+            let id = id_for_close.clone();
+            log(&format!(
+                "{} setTimeout scheduled for removing entry: {}",
+                name, id
+            ));
+            let remove_entry = remove_entry_for_effect.clone();
+            set_timeout(
+                move || {
+                    log(&format!("{} removing entry after timeout: {}", name, id));
+                    remove_entry.call(id.clone());
+                },
+                200,
+            );
+        }
+    });
 
     (
         internal_animation_state.clone(),
@@ -514,16 +509,11 @@ fn DropdownPortalEntry(
                 onclick: move |e: MouseEvent| {
                     e.stop_propagation();
                     if close_on_select {
-                        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-                        {
-                            if let Some(target_el) = element_from_point(e.client_x, e.client_y) {
-                                if element_closest(&target_el, ".hi-menu-item").is_some() {
-                                    close_dropdown_for_content.call(e);
-                                }
+                        if let Some(target_el) = element_from_point(e.client_x, e.client_y) {
+                            if element_closest(&target_el, ".hi-menu-item").is_some() {
+                                close_dropdown_for_content.call(e);
                             }
-                        }
-                        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-                        {
+                        } else {
                             close_dropdown_for_content.call(e);
                         }
                     }
@@ -818,19 +808,14 @@ fn PopoverPortalEntry(
                     e.stop_propagation();
 
                     if close_on_select {
-                        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-                        {
-                            if let Some(target_el) = element_from_point(e.client_x, e.client_y) {
-                                if element_closest(&target_el, ".hi-menu-item").is_some() {
-                                    close_popover_for_content.call(e);
-                                    if let Some(handler) = on_close_for_content.as_ref() {
-                                        handler.call(());
-                                    }
+                        if let Some(target_el) = element_from_point(e.client_x, e.client_y) {
+                            if element_closest(&target_el, ".hi-menu-item").is_some() {
+                                close_popover_for_content.call(e);
+                                if let Some(handler) = on_close_for_content.as_ref() {
+                                    handler.call(());
                                 }
                             }
-                        }
-                        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-                        {
+                        } else {
                             close_popover_for_content.call(e);
                             if let Some(handler) = on_close_for_content.as_ref() {
                                 handler.call(());

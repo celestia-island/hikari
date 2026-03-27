@@ -3,7 +3,6 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform::set_timeout;
 use crate::{
     portal::{PortalEntry, use_portal},
@@ -105,22 +104,14 @@ pub fn use_modal(initial_config: ModalConfig) -> ModalController {
             let id = cfg.read().id.clone();
             start_close.call(id.clone());
 
-            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-            {
-                let remove = remove_entry.clone();
-                let id_timeout = id.clone();
-                set_timeout(
-                    move || {
-                        remove.call(id_timeout);
-                    },
-                    200,
-                );
-            }
-
-            #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-            {
-                remove_entry.call(id);
-            }
+            let remove = remove_entry.clone();
+            let id_timeout = id.clone();
+            set_timeout(
+                move || {
+                    remove.call(id_timeout);
+                },
+                200,
+            );
         })
     };
 

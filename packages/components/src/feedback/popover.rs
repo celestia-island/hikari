@@ -84,9 +84,6 @@ pub fn Popover(props: PopoverProps) -> Element {
 
     let close_requested = use_signal(|| false);
 
-    #[cfg(target_arch = "wasm32")]
-    let trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
-    #[cfg(not(target_arch = "wasm32"))]
     let trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
 
     let portal = use_portal();
@@ -146,17 +143,14 @@ pub fn Popover(props: PopoverProps) -> Element {
                 popover_id.set(id.clone());
                 close_requested.set(false);
 
-                #[cfg(target_arch = "wasm32")]
-                {
-                    if let Some(drag_event) = e.as_any().downcast_ref::<MouseEvent>() {
-                        // Use client coordinates for approximate positioning
-                        trigger_rect.set(Some((
-                            drag_event.client_x as f64,
-                            drag_event.client_y as f64,
-                            100.0,
-                            30.0,
-                        )));
-                    }
+                if let Some(drag_event) = e.as_any().downcast_ref::<MouseEvent>() {
+                    // Use client coordinates for approximate positioning
+                    trigger_rect.set(Some((
+                        drag_event.client_x as f64,
+                        drag_event.client_y as f64,
+                        100.0,
+                        30.0,
+                    )));
                 }
 
                 portal.add_entry.call(PortalEntry::Popover {

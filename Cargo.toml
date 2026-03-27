@@ -7,7 +7,6 @@ members = [
     "packages/extra-components",
     "packages/icons",
     "packages/builder",
-    "packages/e2e",
     "packages/i18n",
 ]
 
@@ -16,6 +15,7 @@ resolver = "2"
 exclude = [
     "examples/*",
     "examples/demo",
+    "packages/e2e",  # E2E testing package - not needed for wasm builds
 ]
 
 [workspace.package]

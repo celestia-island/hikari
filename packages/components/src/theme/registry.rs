@@ -33,35 +33,17 @@ pub fn get_registered_theme(name: &str) -> Option<Palette> {
 }
 
 /// Returns the default theme name
+/// Uses platform layer to detect dark mode preference
 pub fn get_default_theme() -> &'static str {
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-    {
-        if prefers_dark_mode() {
-            "tairitsu"
-        } else {
-            "hikari"
-        }
-    }
-
-    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-    {
+    if crate::platform::prefers_dark_mode() {
+        "tairitsu"
+    } else {
         "hikari"
     }
 }
 
 /// Returns true if the system prefers dark mode
+/// Delegates to platform layer for unified WASI implementation
 pub fn prefers_dark_mode() -> bool {
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-    {
-        web_sys::window()
-            .and_then(|w| w.match_media("(prefers-color-scheme: dark)").ok())
-            .flatten()
-            .map(|mql| mql.matches())
-            .unwrap_or(false)
-    }
-
-    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-    {
-        false
-    }
+    crate::platform::prefers_dark_mode()
 }

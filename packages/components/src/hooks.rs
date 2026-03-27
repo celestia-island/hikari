@@ -9,7 +9,6 @@
 //! - **Tablet**: 641-1023px
 //! - **Desktop**: ≥1024px
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform::{inner_width as platform_inner_width, on_resize};
 use crate::prelude::*;
 use tairitsu_hooks::ReactiveSignal;
@@ -63,16 +62,13 @@ impl ScreenSize {
 pub fn use_screen_size() -> ReactiveSignal<ScreenSize> {
     let screen_size = use_signal(get_screen_size_from_window);
 
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-    {
-        let screen_size = screen_size.clone();
-        use_effect(move || {
-            let screen_size = screen_size.clone();
-            on_resize(move || {
-                screen_size.set(get_screen_size_from_window());
-            });
+    let screen_size_clone = screen_size.clone();
+    use_effect(move || {
+        let screen_size = screen_size_clone.clone();
+        on_resize(move || {
+            screen_size.set(get_screen_size_from_window());
         });
-    }
+    });
 
     screen_size
 }
@@ -88,62 +84,44 @@ pub fn use_is_desktop() -> Signal<bool> {
 }
 
 fn get_screen_size_from_window() -> ScreenSize {
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-    {
-        let width = platform_inner_width() as u32;
-        match width {
-            0..=640 => ScreenSize::Mobile,
-            641..=1023 => ScreenSize::Tablet,
-            1024.. => ScreenSize::Desktop,
-        }
-    }
-    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-    {
-        ScreenSize::Desktop
+    let width = platform_inner_width() as u32;
+    match width {
+        0..=640 => ScreenSize::Mobile,
+        641..=1023 => ScreenSize::Tablet,
+        1024.. => ScreenSize::Desktop,
     }
 }
 
 pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> ReactiveSignal<bool> {
     let matches = use_signal(|| check_media_query(min_width, max_width));
 
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-    {
-        let matches = matches.clone();
-        use_effect(move || {
-            let matches = matches.clone();
-            on_resize(move || {
-                matches.set(check_media_query(min_width, max_width));
-            });
+    let matches_clone = matches.clone();
+    use_effect(move || {
+        let matches = matches_clone.clone();
+        on_resize(move || {
+            matches.set(check_media_query(min_width, max_width));
         });
-    }
+    });
 
     matches
 }
 
 fn check_media_query(min_width: Option<u32>, max_width: Option<u32>) -> bool {
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+    let width = platform_inner_width() as u32;
+
+    if let Some(min) = min_width
+        && width < min
     {
-        let width = platform_inner_width() as u32;
-
-        if let Some(min) = min_width
-            && width < min
-        {
-            return false;
-        }
-
-        if let Some(max) = max_width
-            && width > max
-        {
-            return false;
-        }
-
-        true
+        return false;
     }
-    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+
+    if let Some(max) = max_width
+        && width > max
     {
-        let _ = (min_width, max_width);
-        false
+        return false;
     }
+
+    true
 }
 
 #[cfg(test)]

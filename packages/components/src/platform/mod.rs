@@ -1,14 +1,8 @@
 //! Platform abstraction layer for components
 //!
-//! This module provides platform-agnostic APIs for DOM operations,
-//! abstracting over web_sys and future Platform implementations.
+//! This module provides unified platform APIs using tairitsu's WIT infrastructure.
+//! No platform-specific conditional compilation - WASI works everywhere.
 
-#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-pub mod stub;
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-pub mod web;
+mod wit;
 
-#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-pub use stub::*;
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-pub use web::*;
+pub use wit::*;

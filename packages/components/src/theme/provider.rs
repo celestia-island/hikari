@@ -65,13 +65,9 @@
 //! }
 //! ```
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use hikari_animation::global_manager::init_global_animation_manager;
 use hikari_palette::*;
 
 use crate::prelude::*;
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use crate::scripts::scrollbar_container::init_all as init_scrollbars;
 use crate::theme::{
     css::{ComponentOverrides, ComponentPalette, PaletteOverrides, ThemePalette},
     registry::{get_default_theme, get_registered_theme},
@@ -183,17 +179,6 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
         theme_name: theme_name_for_context,
         direction: direction_for_context,
         set_theme,
-    });
-
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-    use_effect(|| {
-        crate::platform::set_timeout(
-            || {
-                init_global_animation_manager();
-                init_scrollbars();
-            },
-            50,
-        );
     });
 
     let primary_override = props.primary.clone();

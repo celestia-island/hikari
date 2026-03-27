@@ -2,9 +2,8 @@
 // Card component with Arknights + FUI styling
 
 use hikari_palette::classes::{CardClass, ClassesBuilder, UtilityClass};
-
-#[allow(unused_imports)]
-use crate::{platform::*, prelude::*, styled::StyledComponent};
+use crate::style_builder::StyleStringBuilder;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct CardComponent;
 
@@ -42,12 +41,37 @@ pub fn Card(props: CardProps) -> Element {
     let has_title = props.title.is_some();
     let has_extra = props.extra.is_some();
 
+    // Glow effect state
+    let glow_style = use_signal(|| {
+        StyleStringBuilder::new()
+            .add_var("glow-x", "50%")
+            .add_var("glow-y", "50%")
+            .add_var("hi-glow-color", "var(--hi-glow-button-primary)")
+            .build()
+    });
+
+    // Mouse tracking handler for glow effect
+    let glow_style_clone = glow_style.clone();
+    let mousemove_handler = move |event: MouseEvent| {
+        if props.glow {
+            // Get the card element's bounds using the event target
+            // For now, we use a simplified approach that updates the glow position
+            // based on mouse position relative to the viewport
+            let new_style = StyleStringBuilder::new()
+                .add_var("glow-x", &format!("{}px", event.client_x))
+                .add_var("glow-y", &format!("{}px", event.client_y))
+                .add_var("hi-glow-color", "var(--hi-glow-button-primary)")
+                .build();
+            glow_style_clone.set(new_style);
+        }
+    };
+
     // Build the card content as a fragment
     let glow_overlay = if props.glow {
         Some(rsx! {
             div {
                 class: "hi-card-glow hi-glow-dim",
-                style: "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: var(--hi-glow-button-primary);",
+                style: "{glow_style}",
             }
         })
     } else {
@@ -88,36 +112,6 @@ pub fn Card(props: CardProps) -> Element {
         header.unwrap_or_else(VNode::empty),
         body,
     ]);
-
-    // Mouse tracking handler for glow effect
-    let mousemove_handler = move |event: MouseEvent| {
-        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-        {
-            if !props.glow {
-                return;
-            }
-
-            let client_x = event.client_x;
-            let client_y = event.client_y;
-
-            if let Some(target_el) = element_from_point(client_x, client_y) {
-                if let Some(card_el) = get_element_by_class_upward("hi-card", &target_el) {
-                    if let Some(glow_el) = card_el.query_selector(".hi-card-glow").ok().flatten() {
-                        if let Some(rect) = get_bounding_client_rect(&card_el) {
-                            let percent_x = ((client_x as f64 - rect.x) / rect.width * 100.0).clamp(0.0, 100.0);
-                            let percent_y = ((client_y as f64 - rect.y) / rect.height * 100.0).clamp(0.0, 100.0);
-
-                            if let Some(html_el) = glow_el.dyn_ref::<web_sys::HtmlElement>() {
-                                set_style_property(html_el, "--glow-x", &format!("{:.1}%", percent_x));
-                                set_style_property(html_el, "--glow-y", &format!("{:.1}%", percent_y));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        let _ = event;
-    };
 
     rsx! {
         div {

@@ -7,45 +7,13 @@
 // or highlight.js. For built-in Rust-based highlighting, consider
 // integrating with syntect.
 
-use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use wasm_bindgen::prelude::*;
-
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform;
 use crate::{prelude::*, styled::StyledComponent};
+use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
 
-// Helper function to copy text to clipboard (WASM only)
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-#[wasm_bindgen(inline_js = r#"
-export function copyToClipboard(text) {
-    if (navigator.clipboard && window.isSecureContext) {
-        return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
-    } else {
-        // Fallback to execCommand
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'absolute';
-        textarea.style.left = '-9999px';
-        document.body.appendChild(textarea);
-        textarea.focus();
-        textarea.select();
-        const success = document.execCommand('copy');
-        document.body.removeChild(textarea);
-        return Promise.resolve(success);
-    }
-}
-"#)]
-#[allow(unsafe)]
-unsafe extern "C" {
-    fn copyToClipboard(text: &str) -> js_sys::Promise;
-}
-
-// WASM implementation
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+// Copy text to clipboard using platform layer
 fn copy_to_clipboard(text: &str) -> bool {
-    let _promise = copyToClipboard(text);
-    true
+    platform::copy_to_clipboard(text)
 }
 
 pub struct CodeHighlightComponent;
@@ -143,16 +111,11 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         .collect();
 
     rsx! {
-        div {
-            class: container_classes,
+        div { class: container_classes,
 
-            div {
-                class: header_classes,
+            div { class: header_classes,
 
-                div {
-                    class: language_classes,
-                    language
-                }
+                div { class: language_classes, language }
 
                 if props.copyable {
                     button {
@@ -161,45 +124,31 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                             let code_for_copy = code_for_copy.clone();
                             let copied_for_timeout = copied.clone();
                             move |_| {
-                                #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-                                {
-                                    if copy_to_clipboard(&code_for_copy) {
-                                        copied.set(true);
-                                        let copied_signal = copied_for_timeout.clone();
-                                        platform::set_timeout(move || {
+                                if copy_to_clipboard(&code_for_copy) {
+                                    copied.set(true);
+                                    let copied_signal = copied_for_timeout.clone();
+                                    platform::set_timeout(
+                                        move || {
                                             copied_signal.set(false);
-                                        }, 2000);
-                                    }
-                                }
-                                #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-                                {
-                                    let _ = code_for_copy;
-                                    let _ = copied;
+                                        },
+                                        2000,
+                                    );
                                 }
                             }
                         },
-                        button_text
+                        button_text,
                     }
                 }
             }
 
-            div {
-                class: content_classes,
-                style: max_height_style,
+            div { class: content_classes, style: max_height_style,
 
                 if props.line_numbers {
-                    div {
-                        class: line_classes,
-                        ..line_number_nodes
-                    }
+                    div { class: line_classes, ..line_number_nodes }
                 }
 
-                pre {
-                    class: code_classes,
-                    code {
-                        class: language_class,
-                        code
-                    }
+                pre { class: code_classes,
+                    code { class: language_class, code }
                 }
             }
         }

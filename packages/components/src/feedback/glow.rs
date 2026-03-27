@@ -4,12 +4,13 @@
 // Animation architecture:
 // - Uses CSS variables updated via mouse events for position tracking
 // - CSS transitions provide smooth interpolation between positions
-// - Platform-agnostic: works on both wasm32-unknown-unknown and wasm32-wasip2
-// - Uses platform abstraction layer for DOM operations where needed
+// - WASI-compatible: single implementation for both browser and server
+// - Server environments stub out mouse-related APIs automatically
 
 use hikari_palette::classes::{ClassesBuilder, GlowClass};
 use tairitsu_vdom::IntoAttrValue;
 use crate::prelude::*;
+use crate::style_builder::StyleStringBuilder;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowBlur {
@@ -196,246 +197,157 @@ pub fn Glow(props: GlowProps) -> Element {
     // Animation state
     let glow_state = use_signal(|| GlowState::default());
 
-    // Dynamic style signal for CSS variable updates
+    // Build initial style using StyleStringBuilder
     let glow_style = use_signal(|| {
-        format!(
-            "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: {}; --glow-opacity: {}; --glow-intensity-scale: 0;",
-            glow_color, base_opacity
-        )
+        StyleStringBuilder::new()
+            .add_var("glow-x", "50%")
+            .add_var("glow-y", "50%")
+            .add_var("hi-glow-color", glow_color)
+            .add_var("glow-opacity", &base_opacity.to_string())
+            .add_var("glow-intensity-scale", "0")
+            .build()
     });
 
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-    {
-        use tairitsu_hooks::use_element_ref;
-        use web_sys::{Element, HtmlElement};
+    // Helper function to build style string from state
+    let build_style = |interaction_level: f32, opacity: f32| -> String {
+        StyleStringBuilder::new()
+            .add_var("glow-x", "50%")
+            .add_var("glow-y", "50%")
+            .add_var("glow-intensity-scale", &interaction_level.to_string())
+            .add_var("glow-opacity", &format!("{:.3}", opacity))
+            .build()
+    };
 
-        // Get element reference for bounds calculation
-        let element_ref = use_element_ref::<Element>();
+    // Clone values for event handlers
+    let base_opacity_clone = base_opacity;
+    let active_opacity_clone = active_opacity;
 
-        // Mouse move handler - update position and style
-        let onmousemove_handler = {
-            let state = glow_state.clone();
-            let style = glow_style.clone();
-            let element_ref = element_ref.clone();
+    // Mouse move handler - update interaction level and style
+    let onmousemove_handler = {
+        let state = glow_state.clone();
+        let style = glow_style.clone();
 
-            move |event: MouseEvent| {
-                let new_state = GlowState {
-                    mouse_x: event.client_x() as f64,
-                    mouse_y: event.client_y() as f64,
-                    is_inside: true,
-                    interaction_level: state.read().interaction_level,
-                };
-                state.set(new_state);
+        move |event: MouseEvent| {
+            let current = state.read();
+            let new_state = GlowState {
+                mouse_x: event.client_x as f64,
+                mouse_y: event.client_y as f64,
+                is_inside: true,
+                interaction_level: current.interaction_level,
+            };
+            state.set(new_state);
 
-                // Calculate relative position as percentage
-                let (percent_x, percent_y) = if let Some(el) = element_ref.get() {
-                    if let Ok(html_el) = el.clone().dyn_into::<HtmlElement>() {
-                        let rect = html_el.get_bounding_client_rect();
-                        if rect.width() > 0.0 && rect.height() > 0.0 {
-                            let rel_x = event.client_x() as f64 - rect.x();
-                            let rel_y = event.client_y() as f64 - rect.y();
-                            let px = ((rel_x / rect.width()) * 100.0).clamp(0.0, 100.0);
-                            let py = ((rel_y / rect.height()) * 100.0).clamp(0.0, 100.0);
-                            (px, py)
-                        } else {
-                            (50.0, 50.0)
-                        }
-                    } else {
-                        (50.0, 50.0)
-                    }
-                } else {
-                    (50.0, 50.0)
-                };
+            // Calculate current opacity based on interaction level
+            let current_opacity = base_opacity_clone
+                + (active_opacity_clone.unwrap_or(base_opacity_clone) - base_opacity_clone)
+                    * new_state.interaction_level;
 
-                // Calculate current opacity
-                let current_opacity = base_opacity
-                    + (active_opacity.unwrap_or(base_opacity) - base_opacity) * state.read().interaction_level;
-
-                // Update CSS variables
-                let current_style = format!(
-                    "--glow-x: {:.1}%; --glow-y: {:.1}%; --glow-intensity-scale: {}; --glow-opacity: {:.3};",
-                    percent_x,
-                    percent_y,
-                    state.read().interaction_level,
-                    current_opacity
-                );
-                style.set(current_style);
-            }
-        };
-
-        // Mouse enter handler
-        let onmouseenter_handler = {
-            let state = glow_state.clone();
-            move |_: MouseEvent| {
-                let mut s = *state.read();
-                s.interaction_level = 0.5;
-                state.set(s);
-            }
-        };
-
-        // Mouse leave handler
-        let onmouseleave_handler = {
-            let state = glow_state.clone();
-            let style = glow_style.clone();
-
-            move |_: MouseEvent| {
-                let mut s = *state.read();
-                s.is_inside = false;
-                s.interaction_level = 0.0;
-                state.set(s);
-
-                // Reset to center position
-                let current_style = format!(
-                    "--glow-x: 50%; --glow-y: 50%; --glow-intensity-scale: 0; --glow-opacity: {:.3};",
-                    base_opacity
-                );
-                style.set(current_style);
-            }
-        };
-
-        // Mouse down handler
-        let onmousedown_handler = {
-            let state = glow_state.clone();
-            move |_: MouseEvent| {
-                let mut s = *state.read();
-                s.interaction_level = 1.0;
-                state.set(s);
-            }
-        };
-
-        // Mouse up handler
-        let onmouseup_handler = {
-            let state = glow_state.clone();
-            move |_: MouseEvent| {
-                let mut s = *state.read();
-                if s.is_inside {
-                    s.interaction_level = 0.5;
-                } else {
-                    s.interaction_level = 0.0;
-                }
-                state.set(s);
-            }
-        };
-
-        rsx! {
-            div {
-                class: glow_classes,
-                "data-glow": "true",
-                style: "{glow_style}",
-                ref_: element_ref,
-                onmousemove: onmousemove_handler,
-                onmouseenter: onmouseenter_handler,
-                onmouseleave: onmouseleave_handler,
-                onmousedown: onmousedown_handler,
-                onmouseup: onmouseup_handler,
-                {props.children}
-            }
+            // Update style using StyleStringBuilder
+            let new_style = build_style(new_state.interaction_level, current_opacity);
+            style.set(new_style);
         }
-    }
+    };
 
-    // WASI/wasip2 target - simplified version without element bounds
-    #[cfg(all(target_arch = "wasm32", not(target_os = "unknown")))]
-    {
-        // Mouse move handler - update style without position calculation
-        let onmousemove_handler = {
-            let state = glow_state.clone();
-            let style = glow_style.clone();
+    // Mouse enter handler
+    let onmouseenter_handler = {
+        let state = glow_state.clone();
+        let style = glow_style.clone();
+        let base_op = base_opacity_clone;
 
-            move |event: MouseEvent| {
-                let new_state = GlowState {
-                    mouse_x: event.client_x() as f64,
-                    mouse_y: event.client_y() as f64,
-                    is_inside: true,
-                    interaction_level: state.read().interaction_level,
-                };
-                state.set(new_state);
+        move |_: MouseEvent| {
+            let current = state.read();
+            let new_state = GlowState {
+                interaction_level: 0.5,
+                ..current
+            };
+            state.set(new_state);
 
-                // For WASI, use a simplified approach - center the glow
-                // TODO: Implement proper position calculation using WIT bindings
-                let current_opacity = base_opacity
-                    + (active_opacity.unwrap_or(base_opacity) - base_opacity) * state.read().interaction_level;
-
-                let current_style = format!(
-                    "--glow-x: 50%; --glow-y: 50%; --glow-intensity-scale: {}; --glow-opacity: {:.3};",
-                    state.read().interaction_level,
-                    current_opacity
-                );
-                style.set(current_style);
-            }
-        };
-
-        // Mouse enter handler
-        let onmouseenter_handler = {
-            let state = glow_state.clone();
-            move |_: MouseEvent| {
-                let mut s = *state.read();
-                s.interaction_level = 0.5;
-                state.set(s);
-            }
-        };
-
-        // Mouse leave handler
-        let onmouseleave_handler = {
-            let state = glow_state.clone();
-            let style = glow_style.clone();
-
-            move |_: MouseEvent| {
-                let mut s = *state.read();
-                s.is_inside = false;
-                s.interaction_level = 0.0;
-                state.set(s);
-
-                let current_style = format!(
-                    "--glow-x: 50%; --glow-y: 50%; --glow-intensity-scale: 0; --glow-opacity: {:.3};",
-                    base_opacity
-                );
-                style.set(current_style);
-            }
-        };
-
-        // Mouse down handler
-        let onmousedown_handler = {
-            let state = glow_state.clone();
-            move |_: MouseEvent| {
-                let mut s = *state.read();
-                s.interaction_level = 1.0;
-                state.set(s);
-            }
-        };
-
-        // Mouse up handler
-        let onmouseup_handler = {
-            let state = glow_state.clone();
-            move |_: MouseEvent| {
-                let mut s = *state.read();
-                if s.is_inside {
-                    s.interaction_level = 0.5;
-                } else {
-                    s.interaction_level = 0.0;
-                }
-                state.set(s);
-            }
-        };
-
-        rsx! {
-            div {
-                class: glow_classes,
-                "data-glow": "true",
-                style: "{glow_style}",
-                onmousemove: onmousemove_handler,
-                onmouseenter: onmouseenter_handler,
-                onmouseleave: onmouseleave_handler,
-                onmousedown: onmousedown_handler,
-                onmouseup: onmouseup_handler,
-                {props.children}
-            }
+            let current_opacity = base_op
+                + (active_opacity_clone.unwrap_or(base_op) - base_op) * new_state.interaction_level;
+            let new_style = build_style(new_state.interaction_level, current_opacity);
+            style.set(new_style);
         }
-    }
+    };
 
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        rsx! {
-            div { class: glow_classes, "data-glow": "true", {props.children} }
+    // Mouse leave handler
+    let onmouseleave_handler = {
+        let state = glow_state.clone();
+        let style = glow_style.clone();
+        let base_op = base_opacity_clone;
+
+        move |_: MouseEvent| {
+            let current = state.read();
+            let new_state = GlowState {
+                is_inside: false,
+                interaction_level: 0.0,
+                ..current
+            };
+            state.set(new_state);
+
+            // Reset to base opacity
+            let new_style = build_style(0.0, base_op);
+            style.set(new_style);
+        }
+    };
+
+    // Mouse down handler
+    let onmousedown_handler = {
+        let state = glow_state.clone();
+        let style = glow_style.clone();
+        let base_op = base_opacity_clone;
+
+        move |_: MouseEvent| {
+            let current = state.read();
+            let new_state = GlowState {
+                interaction_level: 1.0,
+                ..current
+            };
+            state.set(new_state);
+
+            let current_opacity = base_op
+                + (active_opacity_clone.unwrap_or(base_op) - base_op) * new_state.interaction_level;
+            let new_style = build_style(new_state.interaction_level, current_opacity);
+            style.set(new_style);
+        }
+    };
+
+    // Mouse up handler
+    let onmouseup_handler = {
+        let state = glow_state.clone();
+        let style = glow_style.clone();
+        let base_op = base_opacity_clone;
+
+        move |_: MouseEvent| {
+            let current = state.read();
+            let interaction_level = if current.is_inside {
+                0.5
+            } else {
+                0.0
+            };
+            let new_state = GlowState {
+                interaction_level,
+                ..current
+            };
+            state.set(new_state);
+
+            let current_opacity = base_op
+                + (active_opacity_clone.unwrap_or(base_op) - base_op) * new_state.interaction_level;
+            let new_style = build_style(new_state.interaction_level, current_opacity);
+            style.set(new_style);
+        }
+    };
+
+    rsx! {
+        div {
+            class: glow_classes,
+            "data-glow": "true",
+            style: "{glow_style}",
+            onmousemove: onmousemove_handler,
+            onmouseenter: onmouseenter_handler,
+            onmouseleave: onmouseleave_handler,
+            onmousedown: onmousedown_handler,
+            onmouseup: onmouseup_handler,
+            {props.children}
         }
     }
 }

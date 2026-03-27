@@ -4,6 +4,6 @@
 pub mod dropdown_animation;
 
 pub use dropdown_animation::{
-    DropdownAnimationState, DropdownEvent, DropdownRenderContext,
-    dropdown_get_styles, dropdown_transition,
+    DropdownAnimationState, DropdownEvent, DropdownRenderContext, dropdown_get_styles,
+    dropdown_transition,
 };

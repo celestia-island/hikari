@@ -69,18 +69,18 @@ pub fn Anchor(
             rsx! {
                 button {
                     class: btn_class,
-                onclick: move |_| {
-                    active_anchor_for_click.set(href.clone());
+                    onclick: move |_| {
+                        active_anchor_for_click.set(href.clone());
 
-                    let target_id = href.trim_start_matches('#');
-                    if let Some(rect) = platform::get_element_rect_by_id(target_id) {
-                        let scroll_y = platform::get_scroll_y();
-                        platform::scroll_to_with_options(
-                            rect.y - offset as f64 - scroll_y,
-                            "smooth"
-                        );
-                    }
-                },
+                        let target_id = href.trim_start_matches('#');
+                        if let Some(rect) = platform::get_element_rect_by_id(target_id) {
+                            let scroll_y = platform::get_scroll_y();
+                            platform::scroll_to_with_options(
+                                rect.y - offset as f64 - scroll_y,
+                                "smooth",
+                            );
+                        }
+                    },
                     "{title}"
                 }
             }
@@ -105,10 +105,8 @@ pub fn Anchor(
     let wrapper_class = AnchorClass::Wrapper.as_class();
     rsx! {
         div { class: wrapper_class,
-            div { class: anchor_classes,
-                ..anchor_links
-            }
-            { children }
+            div { class: anchor_classes, ..anchor_links }
+            {children}
         }
     }
 }

@@ -71,9 +71,7 @@ pub fn Spin(props: SpinProps) -> Element {
         div { class: spin_classes,
             div { class: "{SpinClass::Spinner.as_class()}" }
             if !tip_text.is_empty() {
-                div { class: SpinClass::Tip.as_class(),
-                    "{tip_text}"
-                }
+                div { class: SpinClass::Tip.as_class(), "{tip_text}" }
             }
         }
     }

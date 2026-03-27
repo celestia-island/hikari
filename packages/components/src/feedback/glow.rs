@@ -6,6 +6,26 @@
 // - CSS transitions provide smooth interpolation between positions
 // - WASI-compatible: single implementation for both browser and server
 // - Server environments stub out mouse-related APIs automatically
+//
+// # CSS Value Type Integration
+//
+// This component can use the type-safe CSS value system from tairitsu-css-values:
+//
+// ```rust
+// use hikari_components::style_builder::{StyleStringBuilder, CssLength};
+//
+// // Type-safe approach (recommended for new code):
+// let style = StyleStringBuilder::new()
+//     .add_var_with_length("glow-x", CssLength::percent(50))
+//     .add_var_with_length("glow-y", CssLength::percent(50))
+//     .build();
+//
+// // Traditional string approach (still supported):
+// let style = StyleStringBuilder::new()
+//     .add_var("glow-x", "50%")
+//     .add_var("glow-y", "50%")
+//     .build();
+// ```
 
 use hikari_palette::classes::{ClassesBuilder, GlowClass};
 use tairitsu_vdom::IntoAttrValue;

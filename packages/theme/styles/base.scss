@@ -17,22 +17,22 @@
 
 :root {
     // 默认浅色主题（作为 fallback）
-    --hi-color-background: #D6ECF0;  // 月白
-    --hi-color-surface: #F0F4F8;  // 更亮的白色
-    --hi-color-border: #C4D8DA;
+    --hi-color-background: #ffffff;  // 纯白
+    --hi-color-surface: #f8fafc;  // 浅灰
+    --hi-color-border: #e2e8f0;  // 边框灰
 
     // 文字颜色
     --hi-color-text-primary: rgba(0, 0, 0, 0.9);
     --hi-color-text-secondary: rgba(0, 0, 0, 0.6);
 
-    // 主题色（与调色板一致）
-    --hi-color-primary: #EEA2A4;  // 牡丹粉红 (brightness 0.725 → 黑色文字)
-    --hi-color-secondary: #519A73;  // 苍翠 (brightness 0.501 → 黑色文字)
-    --hi-color-accent: #F7B500;  // 姜黄
-    --hi-color-success: #0EB840;  // 葱倩 (brightness 0.469 → 白色文字)
-    --hi-color-warning: #EED677;  // 鹅黄 (brightness 0.825 → 黑色文字)
-    --hi-color-danger: #FF4C00;  // 朱红 (brightness 0.474 → 白色文字)
-    --hi-color-info: #6ABED6;  // 魁卵青
+    // 主题色（通过 CSS 变量引用）
+    --hi-color-primary: #4a9eff;  // 蓝色
+    --hi-color-secondary: #8b5cf6;  // 紫色
+    --hi-color-accent: #f472b6;  // 粉色
+    --hi-color-success: #10b981;  // 绿色
+    --hi-color-warning: #f59e0b;  // 橙色
+    --hi-color-danger: #ef4444;  // 红色
+    --hi-color-info: #3b82f6;  // 蓝色
 
     // 黑色透明度变体
     --hi-color-black-100: rgba(0, 0, 0, 1.0);

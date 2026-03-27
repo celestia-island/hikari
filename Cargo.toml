@@ -21,7 +21,7 @@ exclude = [
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-authors = ["Hikari Contributors"]
+authors = ["langyo <langyo.china@gmail.com>"]
 license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
@@ -39,7 +39,12 @@ yuuka = "^0.6"
 chrono = { version = "^0.4", features = ["serde", "unstable-locales"] }
 serde = { version = "^1", features = ["derive"] }
 serde_json = { version = "^1" }
-uuid = { version = "^1", features = ["v7", "fast-rng", "macro-diagnostics", "serde"] }
+uuid = { version = "^1", features = [
+    "v7",
+    "fast-rng",
+    "macro-diagnostics",
+    "serde",
+] }
 
 # =================================================================
 # Async runtime

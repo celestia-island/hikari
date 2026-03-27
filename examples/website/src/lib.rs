@@ -26,7 +26,7 @@ fn run_app() -> Result<()> {
     Ok(())
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn tairitsu_component_bootstrap() {
     if let Err(err) = run_app() {
         error!("website failed to start: {err}");

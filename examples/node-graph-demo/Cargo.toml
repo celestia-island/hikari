@@ -2,6 +2,9 @@
 name = "node-graph-demo"
 version = "0.1.0"
 edition = "2021"
+authors = ["langyo <langyo.china@gmail.com>"]
+license = "MIT OR Apache-2.0"
+publish = false
 
 [dependencies]
 dioxus = { version = "0.7", features = ["web"] }

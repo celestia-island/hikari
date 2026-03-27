@@ -11,7 +11,7 @@
 // - Layer2: Component variables (button-vars.scss)
 // - Custom: Runtime overrides via AnimationBuilder
 //
-// NOTE: Hover effects are handled by Glow wrapper, not here
+// NOTE: Primary hover effects are handled by CSS (not Glow wrapper)
 // ============================================
 
 // Base button styles
@@ -55,7 +55,10 @@
   background-color: var(--hi-button-bg);
   backdrop-filter: var(--hi-button-bg-blur);
 
-  // No transform - controlled by AnimationBuilder via Glow wrapper
+  // Active state - scale down effect
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
 
   // Focus state - only outline, no color changes
   &:focus-visible {
@@ -63,7 +66,7 @@
     border-width: var(--hi-button-border-width-focus);
     outline: none;
     color: var(--hi-button-text-color);
-    
+
     .hikari-icon {
       color: var(--hi-button-icon-color);
     }
@@ -85,63 +88,165 @@
 }
 
 // ============================================
-// Variant: Primary
+// Variant: Primary (Pink glow accent)
 // ============================================
 
 .hi-button-primary {
-  background: var(--hi-button-bg);
-  color: var(--hi-button-text-color);
-  border-color: var(--hi-button-border-color);
+  background: linear-gradient(135deg, var(--hi-color-primary), var(--hi-color-primary-dark));
+  color: var(--hi-color-text-on-primary, #ffffff);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--hi-button-primary-hover), var(--hi-color-primary-dark));
+    box-shadow: var(--hi-glow-button-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-primary);
+    outline-offset: 2px;
+  }
+
+  &:active:not(:disabled) {
+    box-shadow:
+      0 0 4px var(--hi-color-primary),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: scale(0.98);
+  }
 }
 
 // ============================================
-// Variant: Secondary
+// Variant: Secondary (Blue accent)
 // ============================================
 
 .hi-button-secondary {
-  background: var(--hi-button-bg);
-  color: var(--hi-button-text-color);
-  border-color: var(--hi-button-border-color);
+  background: linear-gradient(135deg, var(--hi-color-secondary), var(--hi-color-secondary-dark));
+  color: var(--hi-color-text-on-secondary, #ffffff);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--hi-button-secondary-hover), var(--hi-color-secondary-dark));
+    box-shadow: var(--hi-glow-button-secondary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-secondary);
+    outline-offset: 2px;
+  }
+
+  &:active:not(:disabled) {
+    box-shadow:
+      0 0 4px var(--hi-color-secondary),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: scale(0.98);
+  }
 }
 
 // ============================================
-// Variant: Ghost
+// Variant: Ghost (Transparent with theme color border)
 // ============================================
 
 .hi-button-ghost {
-  background-color: var(--hi-button-bg);
-  color: var(--hi-button-text-color);
-  border-color: var(--hi-button-border-color);
+  background-color: transparent;
+  color: var(--hi-ghost-text);
+  border: 1px solid var(--hi-ghost-border);
+  --hi-glow-transparent: true;
+  --hi-glow-bg-color: transparent;
+  --hi-glow-color: var(--hi-ghost-glow);
+
+  &:hover:not(:disabled) {
+    box-shadow: var(--hi-ghost-glow);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hi-ghost-border);
+    outline-offset: 2px;
+  }
+
+  &:active:not(:disabled) {
+    box-shadow: 0 0 4px var(--hi-ghost-glow);
+    transform: scale(0.98);
+  }
 }
 
 // ============================================
-// Variant: Borderless
+// Variant: Borderless (No border, minimal styling)
 // ============================================
 
 .hi-button-borderless {
-  background-color: var(--hi-button-bg);
-  color: var(--hi-button-text-color);
+  background-color: transparent;
+  color: var(--hi-ghost-text);
   border: none;
+  --hi-glow-transparent: true;
+  --hi-glow-bg-color: transparent;
+  --hi-glow-color: var(--hi-ghost-glow);
+
+  &:hover:not(:disabled) {
+    box-shadow: var(--hi-ghost-glow);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hi-ghost-border);
+    outline-offset: 2px;
+  }
+
+  &:active:not(:disabled) {
+    box-shadow: 0 0 4px var(--hi-ghost-glow);
+    transform: scale(0.98);
+  }
 }
 
 // ============================================
-// Variant: Danger
+// Variant: Danger (Red glow accent)
 // ============================================
 
 .hi-button-danger {
-  background: var(--hi-button-bg);
-  color: var(--hi-button-text-color);
-  border-color: var(--hi-button-border-color);
+  background: linear-gradient(135deg, var(--hi-color-danger), var(--hi-color-danger-dark));
+  color: var(--hi-color-text-on-danger, #ffffff);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--hi-button-danger-hover), var(--hi-color-danger-dark));
+    box-shadow: var(--hi-glow-button-danger);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-danger);
+    outline-offset: 2px;
+  }
+
+  &:active:not(:disabled) {
+    box-shadow:
+      0 0 4px var(--hi-color-danger),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: scale(0.98);
+  }
 }
 
 // ============================================
-// Variant: Success
+// Variant: Success (Green glow accent)
 // ============================================
 
 .hi-button-success {
-  background: var(--hi-button-bg);
-  color: var(--hi-button-text-color);
-  border-color: var(--hi-button-border-color);
+  background: linear-gradient(135deg, var(--hi-color-success), var(--hi-color-success-dark));
+  color: var(--hi-color-text-on-success, #ffffff);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--hi-button-success-hover), var(--hi-color-success-dark));
+    box-shadow: var(--hi-glow-button-success);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-success);
+    outline-offset: 2px;
+  }
+
+  &:active:not(:disabled) {
+    box-shadow:
+      0 0 4px var(--hi-color-success),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: scale(0.98);
+  }
 }
 
 // ============================================

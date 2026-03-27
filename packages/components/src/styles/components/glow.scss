@@ -6,20 +6,16 @@
 // Hikari Glow Component - Single Glow Color System
 // ============================================
 //
-// Glow states are controlled by both JavaScript (via AnimationBuilder) and CSS:
-// - JavaScript: Sets --glow-intensity-scale inline for precise control
-// - CSS: Provides fallback :hover and :active states for robustness
-//
-// The --glow-intensity-scale variable controls glow visibility:
-// - Idle: 0 (no glow)
-// - Hover: 0.5 (subtle glow)
-// - Focus: 0.7 (medium glow)
-// - Active: 1.0 (intense glow)
+// Glow states are controlled by CSS variables updated via mouse events:
+// - --glow-x, --glow-y: Position of glow center (percentage, 0-100%)
+// - --glow-intensity-scale: Visibility level (0 = hidden, 0.5 = hover, 1.0 = active)
+// - --glow-opacity: Direct opacity control (overrides calculated value)
+// - --hi-glow-color: Glow color
 //
 // CSS provides:
 // 1. Base structure (::before pseudo-element)
 // 2. Intensity classes (dim/soft/bright) for base opacity multiplier
-// 3. Transition timing
+// 3. Smooth transitions for position and opacity
 // 4. Fallback :hover and :active states
 
 // Base glow wrapper styles
@@ -39,19 +35,25 @@
     pointer-events: none;
     z-index: 2;
     border-radius: inherit;
-    // Use inline style value directly, no fallback
-    // AnimationBuilder controls this via --glow-intensity-scale
-    opacity: calc(var(--glow-base-opacity, 1) * var(--glow-intensity-scale));
+
+    // Use inline style value for opacity
+    // If --glow-opacity is set, use it directly; otherwise calculate from intensity-scale
+    opacity: var(--glow-opacity, calc(var(--glow-base-opacity, 1) * var(--glow-intensity-scale)));
 
     // Use radial-gradient for acrylic spotlight effect
+    // Position is controlled by --glow-x and --glow-y (percentage values)
     background: radial-gradient(
       circle at var(--glow-x, 50%) var(--glow-y, 50%),
       var(--hi-glow-color) 0%,
       transparent calc(var(--glow-spread, 1.5) * 100%)
     );
 
-    // Transition for smooth state changes
-    transition: opacity 100ms ease-out;
+    // Smooth transitions for position and opacity changes
+    // Position transition uses a shorter duration for responsive feel
+    // Opacity transition is slightly longer for smooth fading
+    transition:
+      opacity 150ms ease-out,
+      background-position 100ms ease-out;
   }
 
   // CSS hover state - fallback when JavaScript events fail
@@ -163,23 +165,22 @@
 }
 
 // ============================================
-// Button Enhancement (Managed by AnimationBuilder)
+// Button Enhancement
 // ============================================
 
-// Remove transform translateY from button hover when wrapped in glow
+// When button is wrapped in glow, let the button handle its own hover effects
+// The glow wrapper adds the mouse-following spotlight effect on top
 .hi-glow-wrapper .hi-button:hover {
-  transform: none;
+  // Keep button's own transform and effects
 }
 
-// Default: No box-shadow - controlled by AnimationBuilder via CSS variables
-// The glow wrapper handles all visual feedback through --glow-intensity-scale
 .hi-glow-wrapper .hi-button:focus-visible {
-  box-shadow: none;
+  // Combine button outline with glow effect
+  outline-offset: 2px;
 }
 
 .hi-glow-wrapper .hi-button:active:not(:disabled) {
-  box-shadow: none;
-  transform: none;
+  // Let button handle its own active state
 }
 
 // Input hover enhancement

@@ -1,13 +1,14 @@
 // hi-components/src/feedback/glow.rs
 // Unified glow effect component with mouse-following spotlight and acrylic blur
+//
+// Animation architecture:
+// - Uses CSS variables updated via mouse events for position tracking
+// - CSS transitions provide smooth interpolation between positions
+// - Platform-agnostic: works on both wasm32-unknown-unknown and wasm32-wasip2
+// - Uses platform abstraction layer for DOM operations where needed
 
 use hikari_palette::classes::{ClassesBuilder, GlowClass};
 use tairitsu_vdom::IntoAttrValue;
-
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use crate::platform::{
-    element_from_point, get_bounding_client_rect, get_element_by_class_upward, set_style_property,
-};
 use crate::prelude::*;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -93,12 +94,6 @@ impl IntoAttrValue for GlowIntensity {
 }
 
 /// Glow animation presets for continuous animation effects
-///
-/// These presets add continuous animation effects to the glow component:
-/// - **None**: No animation (default)
-/// - **Pulse**: Heartbeat-like pulsing glow (2s cycle)
-/// - **Breathe**: Slow, smooth intensity variation (4s cycle)
-/// - **Shimmer**: Moving light spot across the element (3s cycle)
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowPreset {
     #[default]
@@ -129,17 +124,6 @@ impl IntoAttrValue for GlowPreset {
     }
 }
 
-/// Get the target intensity scale for a given interaction state
-fn get_intensity_for_state(state: InteractionState) -> f32 {
-    match state {
-        InteractionState::Idle => 0.0,
-        InteractionState::Hover => 0.5,
-        InteractionState::Active => 1.0,
-        InteractionState::Focused => 0.3,
-        InteractionState::Disabled => 0.0,
-    }
-}
-
 #[define_props]
 pub struct GlowProps {
     pub children: Element,
@@ -152,6 +136,24 @@ pub struct GlowProps {
     pub block: bool,
     #[default("100".to_string())]
     pub transition_duration: String,
+}
+
+/// Get opacity value for intensity level
+fn get_opacity_for_intensity(intensity: GlowIntensity) -> f32 {
+    match intensity {
+        GlowIntensity::Dim => 0.07,
+        GlowIntensity::Soft => 0.15,
+        GlowIntensity::Bright => 0.30,
+    }
+}
+
+/// Animation state for glow effect
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+struct GlowState {
+    mouse_x: f64,
+    mouse_y: f64,
+    is_inside: bool,
+    interaction_level: f32, // 0 = idle, 0.5 = hover, 1.0 = active
 }
 
 #[component]
@@ -178,130 +180,149 @@ pub fn Glow(props: GlowProps) -> Element {
         .add_raw(&props.preset.to_string())
         .build();
 
+    let glow_color = match props.color {
+        GlowColor::Ghost => "var(--hi-ghost-glow, rgba(128, 128, 128, 0.5))",
+        GlowColor::Primary => "var(--hi-glow-button-primary)",
+        GlowColor::Secondary => "var(--hi-glow-button-secondary)",
+        GlowColor::Danger => "var(--hi-glow-button-danger)",
+        GlowColor::Success => "var(--hi-glow-button-success)",
+        GlowColor::Warning => "var(--hi-glow-button-warning)",
+        GlowColor::Info => "var(--hi-glow-button-info)",
+    };
+
+    let base_opacity = get_opacity_for_intensity(props.intensity);
+    let active_opacity = props.active_intensity.map(get_opacity_for_intensity);
+
+    // Animation state
+    let glow_state = use_signal(|| GlowState::default());
+
+    // Dynamic style signal for CSS variable updates
+    let glow_style = use_signal(|| {
+        format!(
+            "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: {}; --glow-opacity: {}; --glow-intensity-scale: 0;",
+            glow_color, base_opacity
+        )
+    });
+
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
-        let glow_color = match props.color {
-            GlowColor::Ghost => "var(--hi-ghost-glow, rgba(128, 128, 128, 0.5))",
-            GlowColor::Primary => "var(--hi-glow-button-primary)",
-            GlowColor::Secondary => "var(--hi-glow-button-secondary)",
-            GlowColor::Danger => "var(--hi-glow-button-danger)",
-            GlowColor::Success => "var(--hi-glow-button-success)",
-            GlowColor::Warning => "var(--hi-glow-button-warning)",
-            GlowColor::Info => "var(--hi-glow-button-info)",
-        };
+        use tairitsu_hooks::use_element_ref;
+        use web_sys::{Element, HtmlElement};
 
-        let initial_style = format!(
-            "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: {}; --glow-intensity-scale: 0; --glow-spread-scale: 1.0;",
-            glow_color,
-        );
+        // Get element reference for bounds calculation
+        let element_ref = use_element_ref::<Element>();
 
-        // 交互状态管理 (方案 B: 使用 ButtonStateMachine)
-        let (state, on_event) = use_interaction_state();
-        let state_clone = state.clone();
+        // Mouse move handler - update position and style
+        let onmousemove_handler = {
+            let state = glow_state.clone();
+            let style = glow_style.clone();
+            let element_ref = element_ref.clone();
 
-        // 鼠标移动处理 - 更新光标位置
-        let onmousemove_handler = move |event: MouseEvent| {
-            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-            {
-                let client_x = event.client_x;
-                let client_y = event.client_y;
+            move |event: MouseEvent| {
+                let new_state = GlowState {
+                    mouse_x: event.client_x() as f64,
+                    mouse_y: event.client_y() as f64,
+                    is_inside: true,
+                    interaction_level: state.read().interaction_level,
+                };
+                state.set(new_state);
 
-                if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) = get_element_by_class_upward("hi-glow-wrapper", &target_el)
-                    {
-                        if let Some(rect) = get_bounding_client_rect(&wrapper) {
-                            let relative_x = client_x as f64 - rect.x;
-                            let relative_y = client_y as f64 - rect.y;
-                            let width = rect.width;
-                            let height = rect.height;
-
-                            if width > 0.0 && height > 0.0 {
-                                let percent_x = ((relative_x / width) * 100.0).clamp(0.0, 100.0);
-                                let percent_y = ((relative_y / height) * 100.0).clamp(0.0, 100.0);
-                                set_style_property(&wrapper, "--glow-x", &format!("{:.1}%", percent_x));
-                                set_style_property(&wrapper, "--glow-y", &format!("{:.1}%", percent_y));
-                            }
+                // Calculate relative position as percentage
+                let (percent_x, percent_y) = if let Some(el) = element_ref.get() {
+                    if let Ok(html_el) = el.clone().dyn_into::<HtmlElement>() {
+                        let rect = html_el.get_bounding_client_rect();
+                        if rect.width() > 0.0 && rect.height() > 0.0 {
+                            let rel_x = event.client_x() as f64 - rect.x();
+                            let rel_y = event.client_y() as f64 - rect.y();
+                            let px = ((rel_x / rect.width()) * 100.0).clamp(0.0, 100.0);
+                            let py = ((rel_y / rect.height()) * 100.0).clamp(0.0, 100.0);
+                            (px, py)
+                        } else {
+                            (50.0, 50.0)
                         }
+                    } else {
+                        (50.0, 50.0)
                     }
-                }
+                } else {
+                    (50.0, 50.0)
+                };
+
+                // Calculate current opacity
+                let current_opacity = base_opacity
+                    + (active_opacity.unwrap_or(base_opacity) - base_opacity) * state.read().interaction_level;
+
+                // Update CSS variables
+                let current_style = format!(
+                    "--glow-x: {:.1}%; --glow-y: {:.1}%; --glow-intensity-scale: {}; --glow-opacity: {:.3};",
+                    percent_x,
+                    percent_y,
+                    state.read().interaction_level,
+                    current_opacity
+                );
+                style.set(current_style);
             }
-            let _ = event;
         };
 
-        // MouseEnter: 转换到 Hover 状态，设置强度 0.5
-        let onmouseenter_handler = move |event: MouseEvent| {
-            on_event(InteractionEvent::MouseEnter);
-            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-            {
-                let client_x = event.client_x;
-                let client_y = event.client_y;
-                if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) = get_element_by_class_upward("hi-glow-wrapper", &target_el)
-                    {
-                        set_style_property(&wrapper, "--glow-intensity-scale", "0.5");
-                    }
-                }
+        // Mouse enter handler
+        let onmouseenter_handler = {
+            let state = glow_state.clone();
+            move |_: MouseEvent| {
+                let mut s = *state.read();
+                s.interaction_level = 0.5;
+                state.set(s);
             }
-            let _ = event;
         };
 
-        // MouseLeave: 转换到 Idle 状态，设置强度 0
-        let onmouseleave_handler = move |event: MouseEvent| {
-            on_event(InteractionEvent::MouseLeave);
-            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-            {
-                let client_x = event.client_x;
-                let client_y = event.client_y;
-                if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) = get_element_by_class_upward("hi-glow-wrapper", &target_el)
-                    {
-                        set_style_property(&wrapper, "--glow-intensity-scale", "0");
-                    }
-                }
+        // Mouse leave handler
+        let onmouseleave_handler = {
+            let state = glow_state.clone();
+            let style = glow_style.clone();
+
+            move |_: MouseEvent| {
+                let mut s = *state.read();
+                s.is_inside = false;
+                s.interaction_level = 0.0;
+                state.set(s);
+
+                // Reset to center position
+                let current_style = format!(
+                    "--glow-x: 50%; --glow-y: 50%; --glow-intensity-scale: 0; --glow-opacity: {:.3};",
+                    base_opacity
+                );
+                style.set(current_style);
             }
-            let _ = event;
         };
 
-        // MouseDown: 转换到 Active 状态，设置强度 1.0
-        let onmousedown_handler = move |event: MouseEvent| {
-            on_event(InteractionEvent::MouseDown);
-            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-            {
-                let client_x = event.client_x;
-                let client_y = event.client_y;
-                if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) = get_element_by_class_upward("hi-glow-wrapper", &target_el)
-                    {
-                        set_style_property(&wrapper, "--glow-intensity-scale", "1.0");
-                    }
-                }
+        // Mouse down handler
+        let onmousedown_handler = {
+            let state = glow_state.clone();
+            move |_: MouseEvent| {
+                let mut s = *state.read();
+                s.interaction_level = 1.0;
+                state.set(s);
             }
-            let _ = event;
         };
 
-        // MouseUp: 根据当前状态恢复强度
-        let onmouseup_handler = move |event: MouseEvent| {
-            on_event(InteractionEvent::MouseUp);
-            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-            {
-                let client_x = event.client_x;
-                let client_y = event.client_y;
-                if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) = get_element_by_class_upward("hi-glow-wrapper", &target_el)
-                    {
-                        let target = get_intensity_for_state(*state_clone.borrow());
-                        set_style_property(&wrapper, "--glow-intensity-scale", &target.to_string());
-                    }
+        // Mouse up handler
+        let onmouseup_handler = {
+            let state = glow_state.clone();
+            move |_: MouseEvent| {
+                let mut s = *state.read();
+                if s.is_inside {
+                    s.interaction_level = 0.5;
+                } else {
+                    s.interaction_level = 0.0;
                 }
+                state.set(s);
             }
-            let _ = event;
         };
 
         rsx! {
             div {
                 class: glow_classes,
                 "data-glow": "true",
-                style: initial_style,
+                style: "{glow_style}",
+                ref_: element_ref,
                 onmousemove: onmousemove_handler,
                 onmouseenter: onmouseenter_handler,
                 onmouseleave: onmouseleave_handler,
@@ -312,7 +333,106 @@ pub fn Glow(props: GlowProps) -> Element {
         }
     }
 
-    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+    // WASI/wasip2 target - simplified version without element bounds
+    #[cfg(all(target_arch = "wasm32", not(target_os = "unknown")))]
+    {
+        // Mouse move handler - update style without position calculation
+        let onmousemove_handler = {
+            let state = glow_state.clone();
+            let style = glow_style.clone();
+
+            move |event: MouseEvent| {
+                let new_state = GlowState {
+                    mouse_x: event.client_x() as f64,
+                    mouse_y: event.client_y() as f64,
+                    is_inside: true,
+                    interaction_level: state.read().interaction_level,
+                };
+                state.set(new_state);
+
+                // For WASI, use a simplified approach - center the glow
+                // TODO: Implement proper position calculation using WIT bindings
+                let current_opacity = base_opacity
+                    + (active_opacity.unwrap_or(base_opacity) - base_opacity) * state.read().interaction_level;
+
+                let current_style = format!(
+                    "--glow-x: 50%; --glow-y: 50%; --glow-intensity-scale: {}; --glow-opacity: {:.3};",
+                    state.read().interaction_level,
+                    current_opacity
+                );
+                style.set(current_style);
+            }
+        };
+
+        // Mouse enter handler
+        let onmouseenter_handler = {
+            let state = glow_state.clone();
+            move |_: MouseEvent| {
+                let mut s = *state.read();
+                s.interaction_level = 0.5;
+                state.set(s);
+            }
+        };
+
+        // Mouse leave handler
+        let onmouseleave_handler = {
+            let state = glow_state.clone();
+            let style = glow_style.clone();
+
+            move |_: MouseEvent| {
+                let mut s = *state.read();
+                s.is_inside = false;
+                s.interaction_level = 0.0;
+                state.set(s);
+
+                let current_style = format!(
+                    "--glow-x: 50%; --glow-y: 50%; --glow-intensity-scale: 0; --glow-opacity: {:.3};",
+                    base_opacity
+                );
+                style.set(current_style);
+            }
+        };
+
+        // Mouse down handler
+        let onmousedown_handler = {
+            let state = glow_state.clone();
+            move |_: MouseEvent| {
+                let mut s = *state.read();
+                s.interaction_level = 1.0;
+                state.set(s);
+            }
+        };
+
+        // Mouse up handler
+        let onmouseup_handler = {
+            let state = glow_state.clone();
+            move |_: MouseEvent| {
+                let mut s = *state.read();
+                if s.is_inside {
+                    s.interaction_level = 0.5;
+                } else {
+                    s.interaction_level = 0.0;
+                }
+                state.set(s);
+            }
+        };
+
+        rsx! {
+            div {
+                class: glow_classes,
+                "data-glow": "true",
+                style: "{glow_style}",
+                onmousemove: onmousemove_handler,
+                onmouseenter: onmouseenter_handler,
+                onmouseleave: onmouseleave_handler,
+                onmousedown: onmousedown_handler,
+                onmouseup: onmouseup_handler,
+                {props.children}
+            }
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
     {
         rsx! {
             div { class: glow_classes, "data-glow": "true", {props.children} }

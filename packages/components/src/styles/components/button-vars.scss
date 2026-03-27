@@ -116,17 +116,17 @@
 .hi-button-primary {
   --hi-button-text-color: var(--hi-color-text-on-primary);
   --hi-button-text-color-active: var(--hi-color-text-on-primary);
-  
+
   --hi-button-icon-color: var(--hi-color-text-on-primary);
   --hi-button-icon-color-active: var(--hi-color-text-on-primary);
-  
+
   --hi-button-bg: var(--hi-color-primary);
   --hi-button-bg-active: var(--hi-color-primary-dark);
-  
+
   --hi-button-border-color: transparent;
   --hi-button-border-color-focus: var(--hi-color-primary);
-  
-  --hi-button-glow: var(--hi-glow-color);
+
+  --hi-button-glow: var(--hi-glow-button-primary);
 }
 
 // ============================================
@@ -136,17 +136,17 @@
 .hi-button-secondary {
   --hi-button-text-color: var(--hi-color-text-on-secondary);
   --hi-button-text-color-active: var(--hi-color-text-on-secondary);
-  
+
   --hi-button-icon-color: var(--hi-color-text-on-secondary);
   --hi-button-icon-color-active: var(--hi-color-text-on-secondary);
-  
+
   --hi-button-bg: var(--hi-color-secondary);
   --hi-button-bg-active: var(--hi-color-secondary-dark);
-  
+
   --hi-button-border-color: transparent;
   --hi-button-border-color-focus: var(--hi-color-secondary);
-  
-  --hi-button-glow: var(--hi-glow-color);
+
+  --hi-button-glow: var(--hi-glow-button-secondary);
 }
 
 // ============================================
@@ -154,19 +154,39 @@
 // ============================================
 
 .hi-button-ghost {
-  --hi-button-text-color: var(--hi-color-text-secondary);
-  --hi-button-text-color-active: var(--hi-color-text-secondary);
-  
-  --hi-button-icon-color: var(--hi-color-text-secondary);
-  --hi-button-icon-color-active: var(--hi-color-text-secondary);
-  
+  --hi-button-text-color: var(--hi-ghost-text);
+  --hi-button-text-color-active: var(--hi-ghost-text);
+
+  --hi-button-icon-color: var(--hi-ghost-text);
+  --hi-button-icon-color-active: var(--hi-ghost-text);
+
   --hi-button-bg: transparent;
   --hi-button-bg-active: var(--hi-bg-surface-dark);
-  
-  --hi-button-border-color: var(--hi-border-color);
-  --hi-button-border-color-focus: var(--hi-border-color-focus);
-  
-  --hi-button-glow: var(--hi-glow-color);
+
+  --hi-button-border-color: var(--hi-ghost-border);
+  --hi-button-border-color-focus: var(--hi-ghost-border);
+
+  --hi-button-glow: var(--hi-ghost-glow);
+}
+
+// ============================================
+// Borderless Variant Variables
+// ============================================
+
+.hi-button-borderless {
+  --hi-button-text-color: var(--hi-ghost-text);
+  --hi-button-text-color-active: var(--hi-ghost-text);
+
+  --hi-button-icon-color: var(--hi-ghost-text);
+  --hi-button-icon-color-active: var(--hi-ghost-text);
+
+  --hi-button-bg: transparent;
+  --hi-button-bg-active: var(--hi-bg-surface-dark);
+
+  --hi-button-border-color: transparent;
+  --hi-button-border-color-focus: var(--hi-ghost-border);
+
+  --hi-button-glow: var(--hi-ghost-glow);
 }
 
 // ============================================
@@ -176,17 +196,17 @@
 .hi-button-danger {
   --hi-button-text-color: var(--hi-color-text-on-danger, #ffffff);
   --hi-button-text-color-active: var(--hi-color-text-on-danger, #ffffff);
-  
+
   --hi-button-icon-color: var(--hi-color-text-on-danger, #ffffff);
   --hi-button-icon-color-active: var(--hi-color-text-on-danger, #ffffff);
-  
+
   --hi-button-bg: var(--hi-color-danger);
   --hi-button-bg-active: var(--hi-color-danger-dark);
-  
+
   --hi-button-border-color: transparent;
   --hi-button-border-color-focus: var(--hi-color-danger);
-  
-  --hi-button-glow: var(--hi-glow-color);
+
+  --hi-button-glow: var(--hi-glow-button-danger);
 }
 
 // ============================================
@@ -196,17 +216,17 @@
 .hi-button-success {
   --hi-button-text-color: var(--hi-color-text-on-success, #ffffff);
   --hi-button-text-color-active: var(--hi-color-text-on-success, #ffffff);
-  
+
   --hi-button-icon-color: var(--hi-color-text-on-success, #ffffff);
   --hi-button-icon-color-active: var(--hi-color-text-on-success, #ffffff);
-  
+
   --hi-button-bg: var(--hi-color-success);
   --hi-button-bg-active: var(--hi-color-success-dark);
-  
+
   --hi-button-border-color: transparent;
   --hi-button-border-color-focus: var(--hi-color-success);
-  
-  --hi-button-glow: var(--hi-glow-color);
+
+  --hi-button-glow: var(--hi-glow-button-success);
 }
 
 // ============================================

@@ -171,7 +171,7 @@
 //!
 //! - **Portal Layer**: Fixed-position `div` with `z-index: 9999` at root
 //! - **Event Propagation**: Click events handled with proper stopPropagation
-//! - **WASM Support**: Full WASM support with `#[cfg(target_arch = "wasm32")]`
+//! - **Platform Support**: Works on all platforms via tairitsu's WASI-compatible platform layer
 //! - **Performance**: Signals for reactive updates, minimal re-renders
 //!
 //! See the `calculate_position` function for detailed positioning algorithm documentation.

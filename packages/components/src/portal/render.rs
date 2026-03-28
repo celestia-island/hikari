@@ -34,10 +34,6 @@ fn use_animated_portal_entry(
     Callback<MouseEvent>,
     Signal<(String, String)>,
 ) {
-    #[cfg_attr(
-        not(all(target_arch = "wasm32", target_os = "unknown")),
-        allow(unused_variables)
-    )]
     let id_for_close = id.clone();
     let internal_animation_state = use_signal(|| initial_state);
 

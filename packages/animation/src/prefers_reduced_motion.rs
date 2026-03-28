@@ -2,13 +2,17 @@
 //!
 //! Provides functions to detect and monitor the user's system preference
 //! for reduced motion.
+//!
+//! Note: In WASI unified environment, these functions are feature-gated
+//! rather than architecture-gated, allowing the same code to work on
+//! both client and server.
 
 /// Detect system prefers-reduced-motion setting
 ///
 /// # Platform Support
-/// - WASM: Uses `window.matchMedia('(prefers-reduced-motion: reduce)')`
-/// - Non-WASM: Always returns false
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+/// - With `wasm` feature: Uses browser's matchMedia API
+/// - Without `wasm` feature: Always returns false
+#[cfg(feature = "wasm")]
 pub fn prefers_reduced_motion() -> bool {
     web_sys::window()
         .and_then(|w| w.match_media("(prefers-reduced-motion: reduce)").ok())
@@ -17,7 +21,8 @@ pub fn prefers_reduced_motion() -> bool {
         .unwrap_or(false)
 }
 
-#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+/// Detect system prefers-reduced-motion setting (non-WASM version)
+#[cfg(not(feature = "wasm"))]
 pub fn prefers_reduced_motion() -> bool {
     false
 }
@@ -27,9 +32,9 @@ pub fn prefers_reduced_motion() -> bool {
 /// Sets up a listener that calls the callback when the system preference changes.
 ///
 /// # Platform Support
-/// - WASM: Uses MediaQueryList.onchange
-/// - Non-WASM: No-op
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+/// - With `wasm` feature: Uses MediaQueryList.onchange
+/// - Without `wasm` feature: No-op
+#[cfg(feature = "wasm")]
 pub fn watch_prefers_reduced_motion(callback: impl Fn(bool) + 'static) {
     use wasm_bindgen::JsCast;
 
@@ -47,7 +52,8 @@ pub fn watch_prefers_reduced_motion(callback: impl Fn(bool) + 'static) {
     }
 }
 
-#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+/// Watch for prefers-reduced-motion changes (non-WASM version)
+#[cfg(not(feature = "wasm"))]
 pub fn watch_prefers_reduced_motion(_callback: impl Fn(bool) + 'static) {
-    // No-op on non-WASM platforms
+    // No-op when wasm feature is not enabled
 }

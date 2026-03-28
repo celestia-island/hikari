@@ -26,7 +26,6 @@ tairitsu-web = { path = "../../../tairitsu/packages/web", features = [
 # Hikari design system (pure Rust, no Dioxus)
 hikari-palette = { path = "../../packages/palette" }
 hikari-components = { path = "../../packages/components", default-features = false }
-hikari-animation = { path = "../../packages/animation", default-features = false }
 
 # Markdown rendering
 pulldown-cmark = "0.12"

@@ -7,23 +7,26 @@
 //! - Temporary visual feedback
 //! - Debouncing and throttling
 //! - requestAnimationFrame-based animations
+//!
+//! This module uses the tairitsu-vdom Platform trait for cross-platform
+//! timer support, working consistently in both WASM and server environments.
 
 use std::{cell::RefCell, rc::Rc, time::Duration};
 
-use wasm_bindgen::{prelude::*, JsCast};
+use tairitsu_vdom::Platform;
 
 /// Timer ID for tracking scheduled timers
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct TimerId(u32);
+pub struct TimerId(i32);
 
 impl TimerId {
     /// Create a new timer ID from raw value
-    pub fn new(id: u32) -> Self {
+    pub fn new(id: i32) -> Self {
         Self(id)
     }
 
     /// Get raw timer ID
-    pub fn as_u32(&self) -> u32 {
+    pub fn as_i32(&self) -> i32 {
         self.0
     }
 }
@@ -52,15 +55,21 @@ pub type FrameCallback = Rc<RefCell<dyn FnMut(f64)>>;
 
 /// Timer manager for scheduling and cancelling delayed callbacks
 ///
+/// Uses the Platform trait for cross-platform timer support.
+///
 /// # Example
 /// ```ignore
 /// use animation::TimerManager;
+/// use tairitsu_vdom::Platform;
+/// use std::rc::Rc;
+/// use std::cell::RefCell;
 ///
-/// let manager = TimerManager::new();
+/// let platform = Rc::new(RefCell::new(/* platform implementation */));
+/// let manager = TimerManager::new(platform);
 ///
 /// // Schedule a callback
 /// let callback = Rc::new(|| {
-///     web_sys::console::log_1(&"Timer fired!".into());
+///     println!("Timer fired!");
 /// });
 ///
 /// let id = manager.set_timeout(callback, Duration::from_millis(500));
@@ -68,21 +77,14 @@ pub type FrameCallback = Rc<RefCell<dyn FnMut(f64)>>;
 /// // Cancel if needed
 /// manager.clear_timeout(id);
 /// ```
-#[derive(Clone)]
-pub struct TimerManager {
-    next_id: Rc<RefCell<u32>>,
-    timers: Rc<RefCell<std::collections::HashMap<TimerId, i32>>>,
-    animation_frames: Rc<RefCell<std::collections::HashMap<FrameId, i32>>>,
+pub struct TimerManager<P: Platform> {
+    platform: Rc<RefCell<P>>,
 }
 
-impl TimerManager {
-    /// Create a new timer manager
-    pub fn new() -> Self {
-        Self {
-            next_id: Rc::new(RefCell::new(0)),
-            timers: Rc::new(RefCell::new(std::collections::HashMap::new())),
-            animation_frames: Rc::new(RefCell::new(std::collections::HashMap::new())),
-        }
+impl<P: Platform> TimerManager<P> {
+    /// Create a new timer manager with the given platform
+    pub fn new(platform: Rc<RefCell<P>>) -> Self {
+        Self { platform }
     }
 
     /// Schedule a one-shot callback
@@ -94,43 +96,11 @@ impl TimerManager {
     /// # Returns
     /// Timer ID that can be used to cancel the timer
     pub fn set_timeout(&self, callback: TimerCallback, delay: Duration) -> TimerId {
-        let window = match web_sys::window() {
-            Some(w) => w,
-            None => return TimerId(0),
-        };
-
-        // Generate unique timer ID
-        let id = {
-            let mut next_id = self.next_id.borrow_mut();
-            let id = TimerId(*next_id);
-            *next_id = next_id.wrapping_add(1);
-            id
-        };
-
-        // Schedule timeout
-        let callback_clone = callback.clone();
-        let callback_js = Closure::wrap(Box::new(move || {
-            callback_clone();
-        }) as Box<dyn FnMut()>);
-
-        let handle = window.set_timeout_with_callback_and_timeout_and_arguments_0(
-            callback_js.as_ref().unchecked_ref(),
-            delay.as_millis() as i32,
-        );
-
-        match handle {
-            Ok(handle) => {
-                self.timers.borrow_mut().insert(id, handle);
-                // Successfully scheduled, closure will be owned by browser
-                callback_js.forget();
-            }
-            Err(_) => {
-                // Failed to schedule, need to manually drop closure
-                callback_js.forget();
-            }
-        }
-
-        id
+        let handle = self
+            .platform
+            .borrow_mut()
+            .set_timeout(Box::new(|| callback()), delay.as_millis() as i32);
+        TimerId(handle)
     }
 
     /// Cancel a scheduled timer
@@ -138,14 +108,7 @@ impl TimerManager {
     /// # Arguments
     /// * `id` - Timer ID returned by `set_timeout`
     pub fn clear_timeout(&self, id: TimerId) {
-        let window = match web_sys::window() {
-            Some(w) => w,
-            None => return,
-        };
-
-        if let Some(handle) = self.timers.borrow_mut().remove(&id) {
-            window.clear_timeout_with_handle(handle);
-        }
+        self.platform.borrow_mut().clear_timeout(id.0);
     }
 
     /// Schedule an interval callback
@@ -156,41 +119,26 @@ impl TimerManager {
     ///
     /// # Returns
     /// Timer ID that can be used to cancel the interval
+    ///
+    /// Note: This implementation re-schedules the callback after each execution.
+    /// For true interval behavior, consider using platform-specific interval APIs.
     pub fn set_interval(&self, callback: TimerCallback, interval: Duration) -> TimerId {
-        let window = match web_sys::window() {
-            Some(w) => w,
-            None => return TimerId(0),
-        };
+        let callback_clone = callback.clone();
+        let platform = Rc::clone(&self.platform);
 
-        // Generate unique timer ID
-        let id = {
-            let mut next_id = self.next_id.borrow_mut();
-            let id = TimerId(*next_id);
-            *next_id = next_id.wrapping_add(1);
-            id
-        };
-
-        // Schedule interval
-        let callback_js = Closure::wrap(Box::new(move || {
-            callback();
-        }) as Box<dyn FnMut()>);
-
-        let handle = window.set_interval_with_callback_and_timeout_and_arguments_0(
-            callback_js.as_ref().unchecked_ref(),
-            interval.as_millis() as i32,
+        let id = self.set_timeout(
+            Rc::new(move || {
+                callback_clone();
+                // Re-schedule
+                let callback_clone2 = callback_clone.clone();
+                let platform_clone = Rc::clone(&platform);
+                let manager = TimerManager {
+                    platform: platform_clone,
+                };
+                manager.set_timeout(callback_clone2, interval);
+            }),
+            interval,
         );
-
-        match handle {
-            Ok(handle) => {
-                self.timers.borrow_mut().insert(id, handle);
-                // Successfully scheduled, closure will be owned by browser
-                callback_js.forget();
-            }
-            Err(_) => {
-                // Failed to schedule, need to manually drop closure
-                callback_js.forget();
-            }
-        }
 
         id
     }
@@ -200,21 +148,7 @@ impl TimerManager {
     /// # Arguments
     /// * `id` - Timer ID returned by `set_interval`
     pub fn clear_interval(&self, id: TimerId) {
-        self.clear_timeout(id); // Same implementation
-    }
-
-    /// Clear all active timers
-    pub fn clear_all(&self) {
-        let window = match web_sys::window() {
-            Some(w) => w,
-            None => return,
-        };
-
-        let mut timers = self.timers.borrow_mut();
-        for (_id, handle) in timers.iter() {
-            window.clear_timeout_with_handle(*handle);
-        }
-        timers.clear();
+        self.clear_timeout(id);
     }
 
     /// Schedule a requestAnimationFrame callback
@@ -232,7 +166,7 @@ impl TimerManager {
     /// ```ignore
     /// use animation::TimerManager;
     ///
-    /// let manager = TimerManager::new();
+    /// let manager = TimerManager::new(platform);
     ///
     /// let callback = Rc::new(RefCell::new(move |timestamp| {
     ///     let angle = (timestamp / 100.0) % 360.0;
@@ -245,41 +179,15 @@ impl TimerManager {
     /// manager.cancel_animation_frame(id);
     /// ```
     pub fn request_animation_frame(&self, callback: FrameCallback) -> FrameId {
-        let window = match web_sys::window() {
-            Some(w) => w,
-            None => return FrameId(0),
-        };
-
-        // Generate unique frame ID
-        let id = {
-            let mut next_id = self.next_id.borrow_mut();
-            let id = FrameId(*next_id);
-            *next_id = next_id.wrapping_add(1);
-            id
-        };
-
-        // Schedule requestAnimationFrame
-        let callback_clone = callback.clone();
-        let callback_js = Closure::wrap(Box::new(move |timestamp: f64| {
-            if let Ok(mut cb) = callback_clone.try_borrow_mut() {
-                cb(timestamp);
-            }
-        }) as Box<dyn FnMut(f64)>);
-
-        let handle = window.request_animation_frame(callback_js.as_ref().unchecked_ref());
-
-        match handle {
-            Ok(handle) => {
-                let mut frames = self.animation_frames.borrow_mut();
-                frames.insert(id, handle);
-                callback_js.forget();
-            }
-            Err(_) => {
-                callback_js.forget();
-            }
-        }
-
-        id
+        let handle = self
+            .platform
+            .borrow_mut()
+            .request_animation_frame(Box::new(|timestamp| {
+                if let Ok(mut cb) = callback.try_borrow_mut() {
+                    cb(timestamp);
+                }
+            }));
+        FrameId(handle)
     }
 
     /// Cancel a requestAnimationFrame callback
@@ -288,34 +196,15 @@ impl TimerManager {
     ///
     /// * `id` - Frame ID returned by `request_animation_frame`
     pub fn cancel_animation_frame(&self, id: FrameId) {
-        let window = match web_sys::window() {
-            Some(w) => w,
-            None => return,
-        };
-
-        if let Some(handle) = self.animation_frames.borrow_mut().remove(&id) {
-            let _ = window.cancel_animation_frame(handle);
-        }
-    }
-
-    /// Clear all active animation frames
-    pub fn clear_all_animation_frames(&self) {
-        let window = match web_sys::window() {
-            Some(w) => w,
-            None => return,
-        };
-
-        let mut frames = self.animation_frames.borrow_mut();
-        for (_id, handle) in frames.iter() {
-            let _ = window.cancel_animation_frame(*handle);
-        }
-        frames.clear();
+        self.platform.borrow_mut().cancel_animation_frame(id.0);
     }
 }
 
-impl Default for TimerManager {
-    fn default() -> Self {
-        Self::new()
+impl<P: Platform> Clone for TimerManager<P> {
+    fn clone(&self) -> Self {
+        Self {
+            platform: Rc::clone(&self.platform),
+        }
     }
 }
 
@@ -325,7 +214,7 @@ impl Default for TimerManager {
 /// ```ignore
 /// use animation::{TimerManager, debounce};
 ///
-/// let manager = TimerManager::new();
+/// let manager = TimerManager::new(platform);
 /// let debounced = debounce(manager.clone(), Duration::from_millis(300), || {
 ///     // This will only fire 300ms after the last call
 /// });
@@ -333,8 +222,8 @@ impl Default for TimerManager {
 /// debounced(); // Will fire in 300ms
 /// debounced(); // Resets timer, will fire in 300ms from now
 /// ```
-pub fn debounce(
-    manager: TimerManager,
+pub fn debounce<P: Platform + 'static>(
+    manager: TimerManager<P>,
     delay: Duration,
     callback: TimerCallback,
 ) -> Rc<RefCell<dyn Fn()>> {
@@ -373,7 +262,7 @@ pub fn debounce(
 /// ```ignore
 /// use animation::{TimerManager, throttle};
 ///
-/// let manager = TimerManager::new();
+/// let manager = TimerManager::new(platform);
 /// let throttled = throttle(manager, Duration::from_millis(100), || {
 ///     // This will fire at most once every 100ms
 /// });
@@ -381,8 +270,8 @@ pub fn debounce(
 /// throttled(); // Fires immediately
 /// throttled(); // Ignored (within throttle period)
 /// ```
-pub fn throttle(
-    _manager: TimerManager,
+pub fn throttle<P: Platform + 'static>(
+    manager: TimerManager<P>,
     interval: Duration,
     callback: TimerCallback,
 ) -> Rc<RefCell<dyn Fn()>> {
@@ -403,6 +292,7 @@ pub fn throttle(
         }
 
         state_ref.last_call = Some(now);
+        drop(state_ref);
         callback();
     }));
 

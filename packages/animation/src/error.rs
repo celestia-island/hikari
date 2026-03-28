@@ -3,7 +3,7 @@
 //! Comprehensive error handling for animation system operations.
 //! All functions return `anyhow::Result<T>` for consistent error handling.
 
-use anyhow::{Context, Result as AnyhowResult};
+use anyhow::Result as AnyhowResult;
 
 /// Animation error type for state machine operations
 #[derive(Debug, Clone, PartialEq)]
@@ -56,7 +56,7 @@ impl std::error::Error for AnimationError {}
 
 /// Convenience function to convert AnimationError to anyhow::Error
 pub fn to_anyhow(err: AnimationError) -> anyhow::Error {
-    err.context("Animation operation failed").into()
+    anyhow::anyhow!("Animation operation failed: {}", err)
 }
 
 /// Type alias for animation results using anyhow

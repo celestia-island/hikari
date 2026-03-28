@@ -7,65 +7,30 @@ use tairitsu_vdom::platform::DomRect;
 
 /// Log a message to the console
 pub fn log(message: &str) {
-    #[cfg(target_family = "wasm")]
-    {
-        // Use WASI stdout/stderr or no-op for now
-        let _ = message;
-    }
-    #[cfg(not(target_family = "wasm"))]
-    {
-        eprintln!("{}", message);
-    }
+    // Use WASI stdout/stderr or platform logging
+    eprintln!("{}", message);
 }
 
 /// Log a warning message
 pub fn log_warn(message: &str) {
-    #[cfg(target_family = "wasm")]
-    {
-        let _ = message;
-    }
-    #[cfg(not(target_family = "wasm"))]
-    {
-        eprintln!("WARNING: {}", message);
-    }
+    eprintln!("WARNING: {}", message);
 }
 
 /// Log an error message
 pub fn log_error(message: &str) {
-    #[cfg(target_family = "wasm")]
-    {
-        let _ = message;
-    }
-    #[cfg(not(target_family = "wasm"))]
-    {
-        eprintln!("ERROR: {}", message);
-    }
+    eprintln!("ERROR: {}", message);
 }
 
 /// Get the window inner width
 pub fn inner_width() -> i32 {
-    #[cfg(target_family = "wasm")]
-    {
-        // Use tairitsu's WIT bindings when available
-        // For now, return a default value
-        1024
-    }
-    #[cfg(not(target_family = "wasm"))]
-    {
-        1024
-    }
+    // Use tairitsu's WIT bindings when available
+    // For now, return a default value
+    1024
 }
 
 /// Get the window inner height
 pub fn inner_height() -> i32 {
-    #[cfg(target_family = "wasm")]
-    {
-        768
-    }
-    #[cfg(not(target_family = "wasm"))]
-    {
-        768
-    }
+    768
 }
 
 /// Set a timeout callback
@@ -127,49 +92,25 @@ impl Default for MutationObserverOptions {
 
 /// Copy text to clipboard
 pub fn copy_to_clipboard(_text: &str) -> bool {
-    #[cfg(target_family = "wasm")]
-    {
-        // Use WIT bindings when available
-        // For now, return true as a stub
-        true
-    }
-    #[cfg(not(target_family = "wasm"))]
-    {
-        // Server-side: clipboard not available
-        false
-    }
+    // Use WIT bindings when available
+    // For now, return false as a stub
+    false
 }
 
 /// Returns true if the system prefers dark mode
 pub fn prefers_dark_mode() -> bool {
-    #[cfg(target_family = "wasm")]
-    {
-        // Use WIT bindings when available
-        // For now, default to light mode
-        false
-    }
-    #[cfg(not(target_family = "wasm"))]
-    {
-        // Server-side: default to light mode
-        false
-    }
+    // Use WIT bindings when available
+    // For now, default to light mode
+    false
 }
 
 /// Get current timestamp
 pub fn now_timestamp() -> f64 {
-    #[cfg(target_family = "wasm")]
-    {
-        // For WASI, use a simple counter or WIT binding
-        0.0
-    }
-    #[cfg(not(target_family = "wasm"))]
-    {
-        use std::time::SystemTime;
-        SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs_f64()
-    }
+    use std::time::SystemTime;
+    SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs_f64()
 }
 
 /// Get element at point (placeholder)

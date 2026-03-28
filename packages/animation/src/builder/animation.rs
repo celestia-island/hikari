@@ -55,7 +55,7 @@ use super::{
     action::AnimationAction,
     value::DynamicValue,
 };
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(feature = "wasm")]
 use crate::global_manager::global_animation_manager;
 
 /// Enhanced builder for creating complex animations
@@ -409,7 +409,7 @@ pub fn new_animation_builder(elements: &HashMap<String, JsValue>) -> AnimationBu
 }
 
 /// Helper function to start animation with global manager
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(feature = "wasm")]
 pub fn start_animation_with_global_manager(
     elements: &HashMap<String, JsValue>,
     actions: &HashMap<String, Vec<AnimationAction>>,
@@ -491,7 +491,7 @@ pub fn start_animation_with_global_manager(
     })
 }
 
-#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+#[cfg(not(feature = "wasm"))]
 pub fn start_animation_with_global_manager(
     _elements: &HashMap<String, JsValue>,
     _actions: &HashMap<String, Vec<AnimationAction>>,

@@ -50,10 +50,15 @@
 pub use tairitsu_style::{CssProperty, Property, StyleStringBuilder};
 
 // DOM manipulation utilities (web-sys specific)
+// Only available when wasm feature is enabled
+#[cfg(feature = "wasm")]
 mod builder;
+#[cfg(feature = "wasm")]
 mod helpers;
 
+#[cfg(feature = "wasm")]
 pub use builder::{AttributeBuilder, StyleBuilder};
+#[cfg(feature = "wasm")]
 pub use helpers::{get_style, remove_style, set_style, set_styles};
 
 #[cfg(test)]
@@ -93,9 +98,10 @@ mod tests {
         for prop in props {
             let name = prop.as_str();
             // All property names should contain only lowercase letters, numbers, and hyphens
-            assert!(name
-                .chars()
-                .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-'));
+            assert!(
+                name.chars()
+                    .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
+            );
             // Property names should not be empty
             assert!(!name.is_empty());
         }

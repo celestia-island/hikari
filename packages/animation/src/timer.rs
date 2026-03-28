@@ -127,7 +127,9 @@ impl<P: Platform> TimerManager<P> {
         let callback_clone = callback.clone();
         let platform = Rc::clone(&self.platform);
 
-        let id = self.set_timeout(
+        
+
+        self.set_timeout(
             Rc::new(move || {
                 callback_clone();
                 // Re-schedule
@@ -139,9 +141,7 @@ impl<P: Platform> TimerManager<P> {
                 manager.set_timeout(callback_clone2, interval);
             }),
             interval,
-        );
-
-        id
+        )
     }
 
     /// Cancel a scheduled interval
@@ -236,7 +236,9 @@ pub fn debounce<P: Platform + 'static>(
     let state = Rc::new(RefCell::new(DebounceState { timer_id: None }));
     let state_clone = state.clone();
 
-    let debounced = Rc::new(RefCell::new(move || {
+    
+
+    (Rc::new(RefCell::new(move || {
         // Cancel existing timer
         if let Some(timer_id) = state_clone.borrow_mut().timer_id.take() {
             manager.clear_timeout(timer_id);
@@ -253,9 +255,7 @@ pub fn debounce<P: Platform + 'static>(
             delay,
         );
         state_clone.borrow_mut().timer_id = Some(timer_id);
-    }));
-
-    debounced
+    }))) as _
 }
 
 /// Throttle utility - only call function once per delay period
@@ -283,20 +283,19 @@ pub fn throttle<P: Platform + 'static>(
 
     let state = Rc::new(RefCell::new(ThrottleState { last_call: None }));
 
-    let throttled = Rc::new(RefCell::new(move || {
+    
+
+    (Rc::new(RefCell::new(move || {
         let now = js_sys::Date::now();
         let mut state_ref = state.borrow_mut();
 
-        if let Some(last_time) = state_ref.last_call {
-            if now - last_time < interval.as_millis() as f64 {
+        if let Some(last_time) = state_ref.last_call
+            && now - last_time < interval.as_millis() as f64 {
                 return; // Throttled
             }
-        }
 
         state_ref.last_call = Some(now);
         drop(state_ref);
         callback();
-    }));
-
-    throttled
+    }))) as _
 }

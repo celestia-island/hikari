@@ -36,7 +36,7 @@ struct ThemeCache {
 /// Returns: (color1, color2) as hex strings
 pub fn get_theme_colors() -> (String, String) {
     thread_local! {
-        static THEME_CACHE: RefCell<Option<ThemeCache>> = RefCell::new(None);
+        static THEME_CACHE: RefCell<Option<ThemeCache>> = const { RefCell::new(None) };
     }
 
     let document = match web_sys::window().and_then(|w| w.document()) {
@@ -57,24 +57,23 @@ pub fn get_theme_colors() -> (String, String) {
 
     // Check cache first
     let colors = THEME_CACHE.with_borrow(|cache| {
-        if let Some(cached) = cache.as_ref() {
-            if cached.last_theme == current_theme {
+        if let Some(cached) = cache.as_ref()
+            && cached.last_theme == current_theme {
                 // Cache hit - return cached colors
                 return cached.colors.clone();
             }
-        }
         // Cache miss or theme changed
-        let new_colors = match current_theme.as_str() {
+        
+        match current_theme.as_str() {
             "tairitsu" => (墨色.hex(), 靛蓝.hex()),
             _ => (月白.hex(), 粉红.hex()),
-        };
-        new_colors
+        }
     });
 
     // Update cache if needed
     THEME_CACHE.with_borrow_mut(|cache| {
         let needs_update = cache.as_ref()
-            .map_or(true, |c| c.last_theme != current_theme);
+            .is_none_or(|c| c.last_theme != current_theme);
         if needs_update {
             *cache = Some(ThemeCache {
                 last_theme: current_theme,

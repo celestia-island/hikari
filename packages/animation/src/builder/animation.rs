@@ -288,8 +288,8 @@ impl<'a> AnimationBuilder<'a> {
             let mut needs_update = false;
 
             for (element_name, js_value) in &elements {
-                if let Some(element_actions) = actions.get(element_name) {
-                    if let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
+                if let Some(element_actions) = actions.get(element_name)
+                    && let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
                         let ctx = AnimationContext::new_with_timing(
                             &element,
                             previous_time,
@@ -300,8 +300,8 @@ impl<'a> AnimationBuilder<'a> {
                         let element_cache = cached_ref.entry(element_name.clone()).or_default();
 
                         for action in element_actions {
-                            if let AnimationAction::Style(prop, value) = action {
-                                if matches!(
+                            if let AnimationAction::Style(prop, value) = action
+                                && matches!(
                                     value,
                                     DynamicValue::Dynamic(_) | DynamicValue::StatefulDynamic(_)
                                 ) {
@@ -319,7 +319,6 @@ impl<'a> AnimationBuilder<'a> {
                                         needs_update = true;
                                     }
                                 }
-                            }
                         }
 
                         if needs_update && !new_styles.is_empty() {
@@ -331,7 +330,6 @@ impl<'a> AnimationBuilder<'a> {
                             needs_update = false;
                         }
                     }
-                }
             }
             drop(cached_ref);
 
@@ -354,8 +352,8 @@ impl<'a> AnimationBuilder<'a> {
 
     fn apply_internal(self, _is_transition: bool) {
         for (element_name, actions) in self.actions {
-            if let Some(js_value) = self.elements.get(&element_name) {
-                if let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
+            if let Some(js_value) = self.elements.get(&element_name)
+                && let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
                     let ctx = AnimationContext::new(&element);
                     let mut state = self.initial_state.clone();
                     let builder = StyleBuilder::new(&element);
@@ -378,14 +376,13 @@ impl<'a> AnimationBuilder<'a> {
                         builder.apply();
                     }
                 }
-            }
         }
     }
 
     fn apply_with_transition_internal(self, duration: &str, easing: &str, _is_transition: bool) {
         for element_name in self.actions.keys() {
-            if let Some(js_value) = self.elements.get(element_name) {
-                if let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
+            if let Some(js_value) = self.elements.get(element_name)
+                && let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
                     StyleBuilder::new(&element)
                         .add(
                             CssProperty::Transition,
@@ -393,7 +390,6 @@ impl<'a> AnimationBuilder<'a> {
                         )
                         .apply();
                 }
-            }
         }
 
         self.apply();

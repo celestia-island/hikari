@@ -5,6 +5,12 @@
 /// Global animation manager (no global state - just functions)
 pub struct GlobalAnimationManager;
 
+impl Default for GlobalAnimationManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GlobalAnimationManager {
     /// Create a new global animation manager
     pub fn new() -> Self {

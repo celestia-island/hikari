@@ -154,7 +154,7 @@ pub fn zoom_out(_element_id: &str, duration_ms: u64) -> String {
 /// # Returns
 /// CSS cubic-bezier curve string for elastic bounce effect
 pub fn bounce_in(_element_id: &str, _duration_ms: u64) -> String {
-    format!("cubic-bezier(0.68, -0.55, 0.265, 1.55)")
+    "cubic-bezier(0.68, -0.55, 0.265, 1.55)".to_string()
 }
 
 /// Shake animation preset

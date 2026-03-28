@@ -45,8 +45,8 @@ pub fn update_scrollbar_width(id: String, width: f64) {
     unsafe {
         let scrollbars_ptr = &raw const SCROLLBARS;
 
-        if let Some(scrollbars) = &*scrollbars_ptr {
-            if let Some(track) = scrollbars.get(&id) {
+        if let Some(scrollbars) = &*scrollbars_ptr
+            && let Some(track) = scrollbars.get(&id) {
                 // Use StyleBuilder (consistent with AnimationBuilder architecture)
                 StyleBuilder::new(track)
                     .add(
@@ -56,6 +56,5 @@ pub fn update_scrollbar_width(id: String, width: f64) {
                     .add(CssProperty::Width, &format!("{}px", width))
                     .apply();
             }
-        }
     }
 }

@@ -442,7 +442,7 @@ impl PortalJs {
                         if (mutation.addedNodes.length > 0) {{
                             for (const node of mutation.addedNodes) {{
                                 if (node.nodeType === 1) {{
-                                    const el = node as Element;
+                                    const el = node;
                                     if (el.hasAttribute && el.hasAttribute('data-portal-id')) {{
                                         shouldMove = true;
                                         break;

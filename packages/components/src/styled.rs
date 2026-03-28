@@ -7,7 +7,7 @@
 use std::collections::HashMap;
 
 // Re-export type-safe CSS value types for convenient use in components
-pub use tairitsu_css_values::{CssLength, CssExpression, CssBinOp, LengthUnit};
+pub use tairitsu_css_values::{CssBinOp, CssExpression, CssLength, LengthUnit};
 
 /// Registry for managing component CSS styles
 #[derive(Default, Clone)]

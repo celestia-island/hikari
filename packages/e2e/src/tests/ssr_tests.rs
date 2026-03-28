@@ -27,8 +27,8 @@ use std::{
 use thirtyfour::{By, WebDriver};
 use tracing::{error, info, warn};
 
-use crate::Test;
 use crate::html_assertions::HtmlAssertions;
+use crate::Test;
 
 /// SSR-specific test result with additional metadata
 #[derive(Debug, Clone)]

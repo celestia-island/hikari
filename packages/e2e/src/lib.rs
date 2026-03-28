@@ -8,17 +8,17 @@ pub mod tests;
 pub use html_assertions::HtmlAssertions;
 pub use ssr_helpers::{SsrTestHelper, SsrValidationResult};
 pub use tests::{
-    Test,
     advanced_components::AdvancedComponentsTests,
     basic_components::{BasicComponentsTests, TestResult, TestStatus},
     data_components::DataComponentsTests,
     form_components::FormComponentsTests,
     interactive_test::{
-        InteractionStep, InteractiveTestResult, InteractiveTests, TestStep, VisualAnalysis,
-        analyze_test_step, compare_visuals,
+        analyze_test_step, compare_visuals, InteractionStep, InteractiveTestResult,
+        InteractiveTests, TestStep, VisualAnalysis,
     },
     ssr_tests::{SsrTestResult, SsrTestStatus, SsrTests},
     visual_quality::{VisualCheck, VisualCheckType, VisualQualityTest, VisualQualityTests},
+    Test,
 };
 use thirtyfour::WebDriver;
 use tracing::{error, info};

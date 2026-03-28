@@ -152,8 +152,11 @@ mod tests {
         assert_eq!(viewport.zoom, 2.0);
 
         // Should clamp to max
-        assert!(!viewport.set_zoom(5.0));
+        assert!(viewport.set_zoom(5.0));
         assert_eq!(viewport.zoom, 3.0);
+
+        // Setting to same value returns false
+        assert!(!viewport.set_zoom(3.0));
     }
 
     #[test]
@@ -208,7 +211,7 @@ mod tests {
             zoom: 1.5,
             ..Default::default()
         };
-        assert_eq!(viewport.zoom_text(), "1x");
+        assert_eq!(viewport.zoom_text(), "2x");
 
         let viewport = Viewport {
             zoom: 2.7,

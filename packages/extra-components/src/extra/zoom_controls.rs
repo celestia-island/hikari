@@ -225,10 +225,10 @@ mod tests {
     fn test_zoom_in() {
         let mut state = ZoomControlsState::new();
         assert!(state.zoom_in());
-        assert_eq!(state.zoom, 1.1);
+        assert!((state.zoom - 1.1).abs() < 0.001);
 
         assert!(state.zoom_in());
-        assert_eq!(state.zoom, 1.2);
+        assert!((state.zoom - 1.2).abs() < 0.001);
     }
 
     #[test]
@@ -296,16 +296,23 @@ mod tests {
         let mut state = ZoomControlsState::new();
 
         // Plus key
-        assert_eq!(state.handle_key("+", false), Some(1.1));
-        assert_eq!(state.handle_key("=", false), Some(1.2));
+        let zoom = state.handle_key("+", false).unwrap();
+        assert!((zoom - 1.1).abs() < 0.001);
+
+        let zoom = state.handle_key("=", false).unwrap();
+        assert!((zoom - 1.2).abs() < 0.001);
 
         // Minus key
-        assert_eq!(state.handle_key("-", false), Some(1.1));
-        assert_eq!(state.handle_key("_", false), Some(1.0));
+        let zoom = state.handle_key("-", false).unwrap();
+        assert!((zoom - 1.1).abs() < 0.001);
+
+        let zoom = state.handle_key("_", false).unwrap();
+        assert!((zoom - 1.0).abs() < 0.001);
 
         // Zero key resets
         state.set_zoom(1.5);
-        assert_eq!(state.handle_key("0", false), Some(1.0));
+        let zoom = state.handle_key("0", false).unwrap();
+        assert!((zoom - 1.0).abs() < 0.001);
 
         // Unknown key returns None
         assert_eq!(state.handle_key("a", false), None);

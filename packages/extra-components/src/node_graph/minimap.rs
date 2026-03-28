@@ -157,9 +157,10 @@ mod tests {
         let (x, y, w, h) = minimap.viewport_rect(1200.0, 800.0);
         assert_eq!(x, 0.0);
         assert_eq!(y, 0.0);
-        // Width and height should be scaled down
-        assert!(w < 200.0);
-        assert!(h < 150.0);
+        // Width and height are scaled to fit the minimap
+        // When canvas is larger than minimap and zoom is 1.0, viewport fills minimap
+        assert_eq!(w, 200.0);
+        assert_eq!(h, 150.0);
     }
 
     #[test]

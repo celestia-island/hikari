@@ -7,18 +7,19 @@ license.workspace = true
 
 [dependencies]
 # Core dependencies
-serde = { version = "^1", features = ["derive"] }
-serde_json = "^1"
 slotmap = "1.0"
-once_cell = "1.17"
-js-sys = "0.3"
 anyhow = "1"
 
 # Color utilities (local package)
 hikari-palette = { path = "../palette" }
 
-# WASM dependencies (via tairitsu WIT bindings)
-wasm-bindgen = "0.2"
+# Tairitsu framework integration
+tairitsu-vdom = { path = "../../../tairitsu/packages/vdom" }
+tairitsu-style = { path = "../../../tairitsu/packages/style" }
+tairitsu-web = { path = "../../../tairitsu/packages/web" }
+
+# Legacy WASM dependencies (optional, for backward compatibility)
+wasm-bindgen = { version = "0.2", optional = true }
 web-sys = { version = "0.3", features = [
     "Window",
     "Document",
@@ -31,8 +32,9 @@ web-sys = { version = "0.3", features = [
     "Performance",
     "MediaQueryList",
     "DomTokenList",
-] }
+], optional = true }
+js-sys = { version = "0.3", optional = true }
 
-# Tairitsu framework integration
-tairitsu-vdom = { path = "../../../tairitsu/packages/vdom" }
-tairitsu-style = { path = "../../../tairitsu/packages/style" }
+[features]
+default = []
+legacy = ["wasm-bindgen", "web-sys", "js-sys"]

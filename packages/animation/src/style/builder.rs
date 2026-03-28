@@ -1,41 +1,50 @@
 //! Style and attribute builders for DOM manipulation
+//!
+//! Note: These builders are maintained for backward compatibility.
+//! New code should use the Platform trait directly or the
+//! AnimationBuilder for complex animations.
 
-use web_sys::HtmlElement;
+use std::rc::Rc;
+use std::cell::RefCell;
+use tairitsu_vdom::Platform;
 
 use super::{CssProperty, Property, StyleStringBuilder};
 
 /// Builder for applying multiple CSS properties atomically
 ///
 /// Provides a fluent interface for setting multiple styles at once
-/// on a web-sys HtmlElement.
+/// using the Platform trait.
 ///
 /// # Example
 ///
 /// ```ignore
-/// StyleBuilder::new(&element)
+/// StyleBuilder::new(&platform, &element)
 ///     .add(CssProperty::Position, "relative")
 ///     .add(CssProperty::Top, "0")
 ///     .add(CssProperty::Left, "0")
 ///     .apply();
 /// ```
-pub struct StyleBuilder<'a> {
-    element: &'a HtmlElement,
+pub struct StyleBuilder<'a, P: Platform> {
+    platform: &'a Rc<RefCell<P>>,
+    element: &'a P::Element,
     properties: Vec<(Property, String)>,
 }
 
-impl<'a> Clone for StyleBuilder<'a> {
+impl<'a, P: Platform> Clone for StyleBuilder<'a, P> {
     fn clone(&self) -> Self {
         Self {
+            platform: self.platform,
             element: self.element,
             properties: self.properties.clone(),
         }
     }
 }
 
-impl<'a> StyleBuilder<'a> {
+impl<'a, P: Platform> StyleBuilder<'a, P> {
     /// Create a new StyleBuilder for the given element
-    pub fn new(element: &'a HtmlElement) -> Self {
+    pub fn new(platform: &'a Rc<RefCell<P>>, element: &'a P::Element) -> Self {
         Self {
+            platform,
             element,
             properties: Vec::new(),
         }
@@ -73,48 +82,21 @@ impl<'a> StyleBuilder<'a> {
 
     /// Apply all accumulated properties to the element
     ///
-    /// **Optimized**: Uses CSSOM batch updates to minimize reflows.
-    /// All properties are set in a single pass to reduce DOM access.
+    /// **Optimized**: Uses batch updates to minimize DOM access.
+    /// All properties are set in a single pass.
     pub fn apply(self) {
         if self.properties.is_empty() {
             return;
         }
 
-        let style = self.element.style();
-
         // Batch update all properties to minimize DOM access
         for (property, value) in self.properties {
-            let _ = style.set_property(property.as_str(), &value);
+            let _ = self.platform.borrow_mut().set_style(
+                self.element,
+                property.as_str(),
+                &value,
+            );
         }
-    }
-
-    /// Apply only changed properties, skipping duplicates
-    ///
-    /// **Performance optimization**: Compares with current element styles
-    /// and only updates properties that have actually changed.
-    ///
-    /// Returns number of properties actually updated.
-    pub fn apply_smart(self) -> usize {
-        if self.properties.is_empty() {
-            return 0;
-        }
-
-        let style = self.element.style();
-
-        let mut updated = 0;
-        for (property, value) in self.properties {
-            let property_name = property.as_str();
-
-            // Get current value
-            let current_value = style.get_property_value(property_name).unwrap_or_default();
-
-            // Only update if value changed
-            if current_value != value && style.set_property(property_name, &value).is_ok() {
-                updated += 1;
-            }
-        }
-
-        updated
     }
 
     /// Build the style as a CSS string (for Dioxus style attribute)
@@ -161,30 +143,33 @@ enum AttributeValue {
 /// # Example
 ///
 /// ```ignore
-/// AttributeBuilder::new(&element)
+/// AttributeBuilder::new(&platform, &element)
 ///     .add("data-id", "123")
 ///     .add("aria-label", "Close button")
 ///     .add_bool("disabled", true)
 ///     .apply();
 /// ```
-pub struct AttributeBuilder<'a> {
-    element: &'a HtmlElement,
+pub struct AttributeBuilder<'a, P: Platform> {
+    platform: &'a Rc<RefCell<P>>,
+    element: &'a P::Element,
     attributes: Vec<(String, AttributeValue)>,
 }
 
-impl<'a> Clone for AttributeBuilder<'a> {
+impl<'a, P: Platform> Clone for AttributeBuilder<'a, P> {
     fn clone(&self) -> Self {
         Self {
+            platform: self.platform,
             element: self.element,
             attributes: self.attributes.clone(),
         }
     }
 }
 
-impl<'a> AttributeBuilder<'a> {
+impl<'a, P: Platform> AttributeBuilder<'a, P> {
     /// Create a new AttributeBuilder for given element
-    pub fn new(element: &'a HtmlElement) -> Self {
+    pub fn new(platform: &'a Rc<RefCell<P>>, element: &'a P::Element) -> Self {
         Self {
+            platform,
             element,
             attributes: Vec::new(),
         }
@@ -195,7 +180,7 @@ impl<'a> AttributeBuilder<'a> {
     /// # Example
     ///
     /// ```ignore
-    /// AttributeBuilder::new(&element)
+    /// AttributeBuilder::new(&platform, &element)
     ///     .add("data-id", "123")
     ///     .add("aria-label", "Close");
     /// ```
@@ -210,7 +195,7 @@ impl<'a> AttributeBuilder<'a> {
     /// # Example
     ///
     /// ```ignore
-    /// AttributeBuilder::new(&element)
+    /// AttributeBuilder::new(&platform, &element)
     ///     .add_bool("disabled", true)
     ///     .add_bool("checked", false);
     /// ```
@@ -225,7 +210,7 @@ impl<'a> AttributeBuilder<'a> {
     /// # Example
     ///
     /// ```ignore
-    /// AttributeBuilder::new(&element)
+    /// AttributeBuilder::new(&platform, &element)
     ///     .add_data("custom-scrollbar", "wrapper")
     ///     .add_data("id", "123");
     /// ```
@@ -244,13 +229,24 @@ impl<'a> AttributeBuilder<'a> {
         for (name, value) in self.attributes {
             match value {
                 AttributeValue::String(v) => {
-                    let _ = self.element.set_attribute(&name, &v);
+                    let _ = self.platform.borrow_mut().set_attribute(
+                        self.element,
+                        &name,
+                        &v,
+                    );
                 }
                 AttributeValue::Bool(v) => {
                     if v {
-                        let _ = self.element.set_attribute(&name, "");
+                        let _ = self.platform.borrow_mut().set_attribute(
+                            self.element,
+                            &name,
+                            "",
+                        );
                     } else {
-                        let _ = self.element.remove_attribute(&name);
+                        let _ = self.platform.borrow_mut().remove_attribute(
+                            self.element,
+                            &name,
+                        );
                     }
                 }
             }

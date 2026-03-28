@@ -10,6 +10,6 @@ mod action;
 mod animation;
 mod value;
 
-pub use action::{apply_actions, get_html_element, AnimationAction};
-pub use animation::{new_animation_builder, start_animation_with_global_manager, AnimationBuilder};
-pub use value::{AnimationCallback, DynamicValue, MousemoveHolder, StatefulCallback, VoidCallback};
+pub use action::{apply_actions, AnimationAction};
+pub use animation::{new_animation_builder, AnimationBuilder};
+pub use value::{AnimationCallback, DynamicValue, StatefulCallback, VoidCallback};

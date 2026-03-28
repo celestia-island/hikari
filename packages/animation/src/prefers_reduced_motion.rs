@@ -4,36 +4,53 @@
 //! for reduced motion.
 //!
 //! In WASI unified environment, uses tairitsu's browser API access via
-//! web-sys bindings.
+//! Platform trait and WIT bindings.
+
+use std::{cell::RefCell, rc::Rc};
+
+use tairitsu_vdom::Platform;
 
 /// Detect system prefers-reduced-motion setting
 ///
-/// Uses browser's matchMedia API to detect the user's preference.
-pub fn prefers_reduced_motion() -> bool {
-    web_sys::window()
-        .and_then(|w| w.match_media("(prefers-reduced-motion: reduce)").ok())
-        .flatten()
-        .map(|mql| mql.matches())
-        .unwrap_or(false)
+/// This is a placeholder implementation. In a real WIT environment,
+/// this would need to be implemented via a media query interface.
+///
+/// Returns false by default (no preference detected).
+pub fn prefers_reduced_motion<P: Platform>(_platform: &Rc<RefCell<P>>) -> bool {
+    // WIT bindings don't currently expose matchMedia API
+    // This would need to be added to the WIT interface
+    false
 }
 
 /// Watch for prefers-reduced-motion changes
 ///
-/// Sets up a listener that calls the callback when the system preference changes.
-/// Uses MediaQueryList.onchange to monitor changes.
-pub fn watch_prefers_reduced_motion(callback: impl Fn(bool) + 'static) {
-    use wasm_bindgen::JsCast;
+/// This is a placeholder implementation. In a real WIT environment,
+/// this would set up a listener that calls the callback when the system preference changes.
+///
+/// # Arguments
+///
+/// * `callback` - Function to call when preference changes
+pub fn watch_prefers_reduced_motion<P: Platform>(
+    _platform: &Rc<RefCell<P>>,
+    _callback: impl Fn(bool) + 'static,
+) {
+    // WIT bindings don't currently expose MediaQueryList API
+    // This would need to be added to the WIT interface
+    // For now, this is a no-op
+}
 
-    if let Some(mql) = web_sys::window()
-        .and_then(|w| w.match_media("(prefers-reduced-motion: reduce)").ok())
-        .flatten()
-    {
-        let closure: wasm_bindgen::closure::Closure<dyn FnMut()> =
-            wasm_bindgen::closure::Closure::new(move || {
-                callback(prefers_reduced_motion());
-            });
-
-        mql.set_onchange(Some(closure.as_ref().unchecked_ref()));
-        closure.forget();
-    }
+/// Check if reduced motion should be applied
+///
+/// This is a convenience function that checks both the system preference
+/// and any application-level override.
+///
+/// # Arguments
+///
+/// * `platform` - Platform reference
+/// * `enabled_override` - Optional application-level override (Some(true) = always enabled)
+pub fn should_reduce_motion<P: Platform>(
+    platform: &Rc<RefCell<P>>,
+    enabled_override: Option<bool>,
+) -> bool {
+    enabled_override.unwrap_or_else(|| prefers_reduced_motion(platform))
 }

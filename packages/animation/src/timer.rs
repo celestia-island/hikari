@@ -286,7 +286,11 @@ pub fn throttle<P: Platform + 'static>(
     
 
     (Rc::new(RefCell::new(move || {
-        let now = js_sys::Date::now();
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as f64;
         let mut state_ref = state.borrow_mut();
 
         if let Some(last_time) = state_ref.last_call

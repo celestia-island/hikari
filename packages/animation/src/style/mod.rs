@@ -4,35 +4,30 @@
 //! reducing boilerplate and catching property name typos at compile time.
 //!
 //! This module re-exports core types from `tairitsu_style` and provides
-//! additional DOM manipulation utilities for web-sys integration.
+//! additional DOM manipulation utilities for Platform-based integration.
 //!
 //! # Example
 //!
 //! ```ignore
 //! use animation::style::*;
-//! use wasm_bindgen::JsCast;
+//! use std::rc::Rc;
+//! use std::cell::RefCell;
 //!
-//! let element = web_sys::window()
-//!     .unwrap()
-//!     .document()
-//!     .unwrap()
-//!     .get_element_by_id("my-element")
-//!     .unwrap()
-//!     .dyn_into::<web_sys::HtmlElement>()
-//!     .unwrap();
+//! let platform = Rc::new(RefCell::new(/* your platform impl */));
+//! let element = /* your element handle */;
 //!
 //! // Set a single property
-//! set_style(&element, CssProperty::Width, "100px");
+//! set_style(&platform, &element, CssProperty::Width, "100px");
 //!
 //! // Set multiple properties at once
-//! set_styles(&element, &[
+//! set_styles(&platform, &element, &[
 //!     (CssProperty::Display, "flex"),
 //!     (CssProperty::FlexDirection, "column"),
 //!     (CssProperty::Gap, "1rem"),
 //! ]);
 //!
 //! // Using the builder pattern for more complex scenarios
-//! StyleBuilder::new(&element)
+//! StyleBuilder::new(&platform, &element)
 //!     .add(CssProperty::Position, "relative")
 //!     .add(CssProperty::Top, "0")
 //!     .add(CssProperty::Left, "0")
@@ -49,7 +44,7 @@
 // Re-export core types from tairitsu_style
 pub use tairitsu_style::{CssProperty, Property, StyleStringBuilder};
 
-// DOM manipulation utilities (web-sys specific)
+// DOM manipulation utilities (Platform-based)
 mod builder;
 mod helpers;
 

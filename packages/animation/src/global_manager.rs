@@ -1,6 +1,8 @@
 //! Global animation manager (very simplified version)
 //!
-//! Provides a simple global animation loop for WASM only.
+//! Provides a simple global animation loop for WASI environments.
+
+use tairitsu_vdom::Platform;
 
 /// Global animation manager (no global state - just functions)
 pub struct GlobalAnimationManager;
@@ -19,22 +21,22 @@ impl GlobalAnimationManager {
 
     /// Start the global animation loop (no-op for now)
     pub fn start(&self) {
-        web_sys::console::log_1(&"🎬 Global animation manager started (simplified)".into());
+        eprintln!("🎬 Global animation manager started (simplified)");
     }
 
     /// Stop the global animation loop (no-op for now)
     pub fn stop(&self) {
-        web_sys::console::log_1(&"🛑 Global animation manager stopped".into());
+        eprintln!("🛑 Global animation manager stopped");
     }
 
     /// Register an animation callback (just log for now)
     pub fn register(&self, _name: String, _callback: Box<dyn Fn()>) {
-        web_sys::console::log_1(&"✅ Animation callback registered (simplified)".into());
+        eprintln!("✅ Animation callback registered (simplified)");
     }
 
     /// Unregister an animation callback (just log for now)
     pub fn unregister(&self, _name: &str) {
-        web_sys::console::log_1(&"🛑 Animation callback unregistered".into());
+        eprintln!("🛑 Animation callback unregistered");
     }
 }
 
@@ -47,18 +49,18 @@ pub fn global_animation_manager() -> &'static GlobalAnimationManager {
 
 /// Initialize the global animation manager
 pub fn init_global_animation_manager() {
-    web_sys::console::log_1(&"🎬 Initializing global animation manager".into());
+    eprintln!("🎬 Initializing global animation manager");
     global_animation_manager().start();
 }
 
 /// Create an animation callback (simplified)
-pub fn create_animation_callback(
-    _element: web_sys::HtmlElement,
+pub fn create_animation_callback<P: Platform>(
+    _element: P::Element,
     _state: crate::state::AnimationDataStore,
-    _actions: Vec<crate::builder::AnimationAction>,
-    _f: impl Fn(&crate::context::AnimationContext, &mut crate::state::AnimationDataStore) + 'static,
+    _actions: Vec<crate::builder::AnimationAction<P>>,
+    _f: impl Fn(&crate::context::AnimationContext<P>, &mut crate::state::AnimationDataStore) + 'static,
 ) -> Box<dyn Fn()> {
     Box::new(|| {
-        web_sys::console::log_1(&"Animation callback executed (simplified)".into());
+        eprintln!("Animation callback executed (simplified)");
     })
 }

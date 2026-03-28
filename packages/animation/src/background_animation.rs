@@ -6,7 +6,7 @@
 use std::cell::RefCell;
 
 use hikari_palette::color_math::{adjust_lightness_hex, adjust_saturation_hex};
-use hikari_palette::{墨色, 月白, 粉红, 靛蓝};
+use hikari_palette::{月白, 粉红};
 
 /// Background render context (carries render parameters)
 #[derive(Clone, Debug)]
@@ -28,10 +28,11 @@ struct ThemeCache {
     colors: (String, String),
 }
 
-/// Get theme colors from document with caching
+/// Get theme colors with caching
 ///
-/// Performance: Uses thread_local cache to avoid repeated DOM queries.
-/// Only queries DOM when theme has changed.
+/// Note: In WIT/WASI environments, we can't directly query DOM attributes
+/// without a Platform instance. This function returns default colors.
+/// For theme-aware behavior, use the Platform-based variant instead.
 ///
 /// Returns: (color1, color2) as hex strings
 pub fn get_theme_colors() -> (String, String) {
@@ -39,35 +40,16 @@ pub fn get_theme_colors() -> (String, String) {
         static THEME_CACHE: RefCell<Option<ThemeCache>> = const { RefCell::new(None) };
     }
 
-    let document = match web_sys::window().and_then(|w| w.document()) {
-        Some(doc) => doc,
-        None => return (月白.hex(), 粉红.hex()),
-    };
-
-    // Get current theme from DOM
-    let current_theme = match document
-        .query_selector(".hi-theme-provider[data-theme]")
-        .ok()
-        .flatten()
-        .and_then(|el| el.get_attribute("data-theme"))
-    {
-        Some(t) => t,
-        None => "hikari".to_string(),
-    };
-
-    // Check cache first
+    // Use default colors for now
+    let current_theme = "hikari".to_string();
     let colors = THEME_CACHE.with_borrow(|cache| {
         if let Some(cached) = cache.as_ref()
             && cached.last_theme == current_theme {
-                // Cache hit - return cached colors
-                return cached.colors.clone();
-            }
-        // Cache miss or theme changed
-        
-        match current_theme.as_str() {
-            "tairitsu" => (墨色.hex(), 靛蓝.hex()),
-            _ => (月白.hex(), 粉红.hex()),
+            // Cache hit - return cached colors
+            return cached.colors.clone();
         }
+        // Cache miss or theme changed
+        (月白.hex(), 粉红.hex())
     });
 
     // Update cache if needed
@@ -89,7 +71,7 @@ pub fn get_theme_colors() -> (String, String) {
 ///
 /// Returns render context with rotating center position and breathing color effects.
 pub fn calculate_background_context(timestamp: f64) -> BackgroundRenderContext {
-    // Get theme colors from document (cached)
+    // Get theme colors (cached)
     let (color1, color2) = get_theme_colors();
 
     // Rotation period: 60 seconds (60000ms)

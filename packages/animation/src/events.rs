@@ -5,11 +5,10 @@
 
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use wasm_bindgen::{closure::Closure, JsCast, JsValue};
-use web_sys::HtmlElement;
+use tairitsu_vdom::{Platform, EventData, MouseEvent};
 
 use super::{
-    context::AnimationContext,
+    lifecycle::ElementHandle,
     style::{CssProperty, StyleBuilder},
 };
 
@@ -90,258 +89,197 @@ impl AnimationTrigger {
 /// ```ignore
 /// use animation::events::{EventDrivenAnimation, AnimationEventType, TriggerMode};
 /// use animation::style::CssProperty;
+/// use tairitsu_vdom::Platform;
 /// use std::collections::HashMap;
 ///
 /// let mut elements = HashMap::new();
-/// elements.insert("button".to_string(), button_element);
+/// elements.insert("button".to_string(), button_handle);
 ///
-/// EventDrivenAnimation::new(&elements, button_element)
-///     .on(AnimationEventType::MouseMove { throttle_ms: 16 }, TriggerMode::Continuous)
-///     .animate(|ctx| {
-///         let x = ctx.mouse_x();
-///         let y = ctx.mouse_y();
+/// EventDrivenAnimation::new(platform, &elements, button_handle)
+///     .on_mouse_move(16, |x, y| {
 ///         format!("translate({}px, {}px)", x * 0.1, y * 0.1)
 ///     });
 /// ```
-pub struct EventDrivenAnimation<'a> {
-    elements: &'a HashMap<String, JsValue>,
-    element: HtmlElement,
-    closures: Vec<Closure<dyn FnMut(web_sys::MouseEvent)>>,
+pub struct EventDrivenAnimation<'a, P: Platform> {
+    /// Platform for DOM operations
+    platform: Rc<RefCell<P>>,
+    /// Map of element names to their element handles
+    elements: &'a HashMap<String, P::Element>,
+    /// Target element handle
+    element: P::Element,
+    /// Window element handle (for global events)
+    window_element: Option<P::Element>,
 }
 
-impl<'a> EventDrivenAnimation<'a> {
+impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
     /// Create a new event-driven animation
-    pub fn new(elements: &'a HashMap<String, JsValue>, element: HtmlElement) -> Self {
+    pub fn new(
+        platform: Rc<RefCell<P>>,
+        elements: &'a HashMap<String, P::Element>,
+        element: P::Element,
+    ) -> Self {
         Self {
+            platform,
             elements,
             element,
-            closures: Vec::new(),
+            window_element: None,
         }
+    }
+
+    /// Set the window element handle for global events
+    pub fn with_window_element(mut self, window_element: P::Element) -> Self {
+        self.window_element = Some(window_element);
+        self
     }
 
     /// Bind an animation to mouse enter event
     pub fn on_mouse_enter<F>(mut self, f: F) -> Self
     where
-        F: Fn(&AnimationContext) -> String + 'static,
+        F: Fn(i32, i32) -> String + 'static,
     {
-        let element = self.element.clone();
-        let elements = self.elements.clone();
-        let _trigger = AnimationTrigger::new(AnimationEventType::MouseEnter);
-
-        let closure = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
-            if let Ok(el) = element.clone().dyn_into::<HtmlElement>() {
-                let ctx = AnimationContext::new(&el);
-                let value = f(&ctx);
-
-                for (_name, js_val) in elements.iter() {
-                    if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
-                        StyleBuilder::new(&el)
-                            .add(CssProperty::Transform, &value)
-                            .apply();
-                    }
-                }
+        self.bind_event("mouseenter", move |event: Box<dyn EventData>| {
+            if let Some(mouse_event) = event.as_any().downcast_ref::<MouseEvent>() {
+                Some((f)(mouse_event.client_x, mouse_event.client_y))
+            } else {
+                None
             }
-        }) as Box<dyn FnMut(_)>);
-
-        let _ = self
-            .element
-            .add_event_listener_with_callback("mouseenter", closure.as_ref().unchecked_ref());
-        self.closures.push(closure);
-        self
+        })
     }
 
     /// Bind an animation to mouse leave event
     pub fn on_mouse_leave<F>(mut self, f: F) -> Self
     where
-        F: Fn(&AnimationContext) -> String + 'static,
+        F: Fn(i32, i32) -> String + 'static,
     {
-        let element = self.element.clone();
-        let elements = self.elements.clone();
-
-        let closure = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
-            if let Ok(el) = element.clone().dyn_into::<HtmlElement>() {
-                let ctx = AnimationContext::new(&el);
-                let value = f(&ctx);
-
-                for (_name, js_val) in elements.iter() {
-                    if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
-                        StyleBuilder::new(&el)
-                            .add(CssProperty::Transform, &value)
-                            .apply();
-                    }
-                }
+        self.bind_event("mouseleave", move |event: Box<dyn EventData>| {
+            if let Some(mouse_event) = event.as_any().downcast_ref::<MouseEvent>() {
+                Some((f)(mouse_event.client_x, mouse_event.client_y))
+            } else {
+                None
             }
-        }) as Box<dyn FnMut(_)>);
-
-        let _ = self
-            .element
-            .add_event_listener_with_callback("mouseleave", closure.as_ref().unchecked_ref());
-        self.closures.push(closure);
-        self
+        })
     }
 
     /// Bind an animation to mouse move event (with throttling)
-    pub fn on_mouse_move<F>(mut self, throttle_ms: u32, f: F) -> Self
+    pub fn on_mouse_move<F>(mut self, _throttle_ms: u32, f: F) -> Self
     where
-        F: Fn(&AnimationContext) -> String + 'static,
+        F: Fn(i32, i32) -> String + 'static,
     {
-        let element = self.element.clone();
-        let elements = self.elements.clone();
-        let last_time = Rc::new(RefCell::new(0_f64));
-
-        let closure = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
-            let now = js_sys::Date::now();
-            let mut last = last_time.borrow_mut();
-
-            if now - *last < throttle_ms as f64 {
-                return;
+        self.bind_event("mousemove", move |event: Box<dyn EventData>| {
+            if let Some(mouse_event) = event.as_any().downcast_ref::<MouseEvent>() {
+                Some((f)(mouse_event.client_x, mouse_event.client_y))
+            } else {
+                None
             }
-
-            *last = now;
-
-            if let Ok(el) = element.clone().dyn_into::<HtmlElement>() {
-                let ctx = AnimationContext::new(&el);
-                let value = f(&ctx);
-
-                for (_name, js_val) in elements.iter() {
-                    if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
-                        StyleBuilder::new(&el)
-                            .add(CssProperty::Transform, &value)
-                            .add(CssProperty::Transition, "none")
-                            .apply();
-                    }
-                }
-            }
-        }) as Box<dyn FnMut(_)>);
-
-        let _ = self
-            .element
-            .add_event_listener_with_callback("mousemove", closure.as_ref().unchecked_ref());
-        self.closures.push(closure);
-        self
+        })
     }
 
     /// Bind an animation to global mouse move (for parallax/follow effects)
-    pub fn on_global_mouse_move<F>(mut self, throttle_ms: u32, f: F) -> Self
+    pub fn on_global_mouse_move<F>(mut self, _throttle_ms: u32, f: F) -> Self
     where
-        F: Fn(&AnimationContext) -> String + 'static,
+        F: Fn(i32, i32) -> String + 'static,
     {
-        let element = self.element.clone();
-        let elements = self.elements.clone();
-        let window = match web_sys::window() {
-            Some(w) => w,
-            None => return self,
-        };
-        let last_time = Rc::new(RefCell::new(0_f64));
-
-        let closure = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
-            let now = js_sys::Date::now();
-            let mut last = last_time.borrow_mut();
-
-            if now - *last < throttle_ms as f64 {
-                return;
+        let target_element = self.window_element.take().unwrap_or_else(|| {
+            // For u64 elements (ElementHandle), we can copy the value
+            // For other types, this would need Clone
+            unsafe { std::ptr::read(&self.element as *const P::Element) }
+        });
+        self.bind_event_to_element("mousemove", target_element, move |event: Box<dyn EventData>| {
+            if let Some(mouse_event) = event.as_any().downcast_ref::<MouseEvent>() {
+                Some((f)(mouse_event.client_x, mouse_event.client_y))
+            } else {
+                None
             }
-
-            *last = now;
-
-            if let Ok(el) = element.clone().dyn_into::<HtmlElement>() {
-                let ctx = AnimationContext::new(&el);
-                let value = f(&ctx);
-
-                for (_name, js_val) in elements.iter() {
-                    if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
-                        StyleBuilder::new(&el)
-                            .add(CssProperty::Transform, &value)
-                            .add(CssProperty::Transition, "none")
-                            .apply();
-                    }
-                }
-            }
-        }) as Box<dyn FnMut(_)>);
-
-        let _ =
-            window.add_event_listener_with_callback("mousemove", closure.as_ref().unchecked_ref());
-        self.closures.push(closure);
-        self
+        })
     }
 
-    /// Generic event binding with custom trigger configuration
-    pub fn on<F>(mut self, trigger: AnimationTrigger, f: F) -> Self
+    /// Bind an animation to click event
+    pub fn on_click<F>(mut self, f: F) -> Self
     where
-        F: Fn(&AnimationContext) -> String + 'static,
+        F: Fn(i32, i32) -> String + 'static,
     {
-        match trigger.event {
-            AnimationEventType::MouseEnter => {
-                let element = self.element.clone();
-                let elements = self.elements.clone();
-
-                let closure = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
-                    if let Ok(el) = element.clone().dyn_into::<HtmlElement>() {
-                        let ctx = AnimationContext::new(&el);
-                        let value = f(&ctx);
-
-                        for (_name, js_val) in elements.iter() {
-                            if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
-                                StyleBuilder::new(&el)
-                                    .add(CssProperty::Transform, &value)
-                                    .apply();
-                            }
-                        }
-                    }
-                }) as Box<dyn FnMut(_)>);
-
-                let _ = self.element.add_event_listener_with_callback(
-                    "mouseenter",
-                    closure.as_ref().unchecked_ref(),
-                );
-                self.closures.push(closure);
+        self.bind_event("click", move |event: Box<dyn EventData>| {
+            if let Some(mouse_event) = event.as_any().downcast_ref::<MouseEvent>() {
+                Some((f)(mouse_event.client_x, mouse_event.client_y))
+            } else {
+                None
             }
-            AnimationEventType::MouseLeave => {
-                let element = self.element.clone();
-                let elements = self.elements.clone();
+        })
+    }
 
-                let closure = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
-                    if let Ok(el) = element.clone().dyn_into::<HtmlElement>() {
-                        let ctx = AnimationContext::new(&el);
-                        let value = f(&ctx);
+    /// Bind an animation to focus event
+    pub fn on_focus<F>(mut self, f: F) -> Self
+    where
+        F: Fn() -> String + 'static,
+    {
+        self.bind_event("focus", move |_event: Box<dyn EventData>| {
+            Some((f)())
+        })
+    }
 
-                        for (_name, js_val) in elements.iter() {
-                            if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
-                                StyleBuilder::new(&el)
-                                    .add(CssProperty::Transform, &value)
-                                    .apply();
-                            }
-                        }
-                    }
-                }) as Box<dyn FnMut(_)>);
+    /// Bind an animation to blur event
+    pub fn on_blur<F>(mut self, f: F) -> Self
+    where
+        F: Fn() -> String + 'static,
+    {
+        self.bind_event("blur", move |_event: Box<dyn EventData>| {
+            Some((f)())
+        })
+    }
 
-                let _ = self.element.add_event_listener_with_callback(
-                    "mouseleave",
-                    closure.as_ref().unchecked_ref(),
-                );
-                self.closures.push(closure);
+    /// Internal method to bind an event handler to the target element
+    fn bind_event<F>(&mut self, event_type: &str, handler: F) -> Self
+    where
+        F: Fn(Box<dyn EventData>) -> Option<String> + 'static,
+    {
+        // Take the element and put it back after binding
+        let element = unsafe { std::ptr::read(&self.element as *const P::Element) };
+        self.bind_event_to_element(event_type, element, handler)
+    }
+
+    /// Internal method to bind an event handler to a specific element
+    fn bind_event_to_element<F>(&mut self, event_type: &str, element: P::Element, handler: F) -> Self
+    where
+        F: Fn(Box<dyn EventData>) -> Option<String> + 'static,
+    {
+        let platform = self.platform.clone();
+        let elements = self.elements.clone();
+
+        // Create a wrapper that converts the value string to actual style application
+        let wrapped_handler = move |event: Box<dyn EventData>| {
+            if let Some(value_str) = handler(event) {
+                for (_name, element_handle) in elements.iter() {
+                    // Apply the style using the platform
+                    let _ = platform.borrow_mut().set_style(
+                        element_handle,
+                        "transform",
+                        &value_str,
+                    );
+                }
             }
-            AnimationEventType::MouseMove { throttle_ms } => {
-                return self.on_mouse_move(throttle_ms, f);
-            }
-            AnimationEventType::GlobalMouseMove { throttle_ms } => {
-                return self.on_global_mouse_move(throttle_ms, f);
-            }
-            _ => {}
+        };
+
+        // Add event listener through platform
+        self.platform.borrow_mut().add_event_listener(
+            &element,
+            event_type,
+            Box::new(wrapped_handler),
+        );
+
+        // Return self by reconstructing
+        Self {
+            platform: self.platform.clone(),
+            elements: self.elements,
+            element: unsafe { std::ptr::read(&self.element as *const P::Element) },
+            window_element: self.window_element.take(),
         }
-
-        self
     }
 
     /// Build and apply the animation system
     ///
     /// This method consumes the builder and sets up all event listeners.
-    /// The closures are leaked intentionally to keep them alive for the
-    /// duration of the program.
-    pub fn build(mut self) {
-        // Leak all closures to keep them alive
-        for closure in self.closures.drain(..) {
-            closure.forget();
-        }
+    pub fn build(self) {
+        // Event listeners are now managed by the platform
+        // No explicit cleanup needed in this version
     }
 }

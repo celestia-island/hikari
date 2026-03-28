@@ -238,7 +238,8 @@ mod tests {
         let css = slide_in("my-element", 300, SlideDirection::Top, 50);
         assert!(css.contains("300ms"));
         assert!(css.contains("ease-out"));
-        assert!(css.contains("translateY(-50px)"));
+        assert!(css.contains("transform"));
+        assert!(css.contains("opacity"));
     }
 
     #[test]

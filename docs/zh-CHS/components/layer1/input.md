@@ -123,10 +123,3 @@ AnimationBuilder::new()
 | --hi-input-padding-x | 水平内边距 | 0.75rem |
 | --hi-input-padding-y | 垂直内边距 | 0.5rem |
 | --hi-input-font-size | 字体大小 | var(--hi-font-size-sm) |
-
-## 相关文档
-
-- [设计系统概述](../../design-system/overview.md)
-- [Layer1 基础层级](../../design-system/layer1.md)
-- [Layer2 组件层级](../../design-system/layer2.md)
-- [Custom 自定义层级](../../design-system/custom.md)

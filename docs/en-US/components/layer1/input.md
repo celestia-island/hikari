@@ -126,7 +126,7 @@ AnimationBuilder::new()
 
 ## Related Documentation
 
-- [Design System Overview](../../design-system/overview.md)
-- [Layer1 Base Layer](../../design-system/layer1.md)
-- [Layer2 Component Layer](../../design-system/layer2.md)
-- [Custom Custom Layer](../../design-system/custom.md)
+- [Design System Overview](../../design/overview.md)
+- [Layer1 Base Layer](../../design/layer1.md)
+- [Layer2 Component Layer](../../design/layer2.md)
+- [Custom Custom Layer](../../design/custom.md)

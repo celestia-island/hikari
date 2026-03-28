@@ -123,10 +123,3 @@ AnimationBuilder::new()
 | --hi-input-padding-x | Горизонтальный отступ | 0.75rem |
 | --hi-input-padding-y | Вертикальный отступ | 0.5rem |
 | --hi-input-font-size | Размер шрифта | var(--hi-font-size-sm) |
-
-## Связанная документация
-
-- [Обзор системы дизайна](../../design-system/overview.md)
-- [Layer1 Базовый уровень](../../design-system/layer1.md)
-- [Layer2 Уровень компонента](../../design-system/layer2.md)
-- [Custom Пользовательский уровень](../../design-system/custom.md)

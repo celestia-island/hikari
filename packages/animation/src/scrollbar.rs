@@ -6,8 +6,8 @@
 
 #![allow(unused_imports)]
 
-use std::collections::HashMap;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 use tairitsu_vdom::Platform;
 
@@ -53,12 +53,7 @@ impl<P: Platform> ScrollbarRegistry<P> {
     /// * `id` - Unique identifier for scrollbar
     /// * `width` - Target width in pixels (e.g., 4.0 or 8.0)
     /// * `platform` - Platform reference for DOM operations
-    pub fn update_width(
-        &mut self,
-        id: &str,
-        width: f64,
-        platform: &Rc<RefCell<P>>,
-    ) {
+    pub fn update_width(&mut self, id: &str, width: f64, platform: &Rc<RefCell<P>>) {
         if let Some(track_handle) = self.scrollbars.get(id) {
             // Apply transition and width via Platform trait
             let _ = platform.borrow_mut().set_style(
@@ -66,11 +61,9 @@ impl<P: Platform> ScrollbarRegistry<P> {
                 "transition",
                 "width 300ms cubic-bezier(0.25, 0.1, 0.25, 1)",
             );
-            let _ = platform.borrow_mut().set_style(
-                track_handle,
-                "width",
-                &format!("{}px", width),
-            );
+            let _ = platform
+                .borrow_mut()
+                .set_style(track_handle, "width", &format!("{}px", width));
         }
     }
 
@@ -86,7 +79,6 @@ impl<P: Platform> ScrollbarRegistry<P> {
 
 /// Legacy functions for backward compatibility
 /// These use a global registry (not recommended for new code)
-
 use std::sync::Mutex;
 
 // Global registry for legacy API
@@ -128,18 +120,17 @@ pub fn update_scrollbar_width<P: Platform<Element = u64>>(
 ) {
     let registry = LEGACY_REGISTRY.lock().unwrap();
     if let Some(scrollbars) = registry.as_ref()
-        && let Some(&track_handle) = scrollbars.get(&id) {
+        && let Some(&track_handle) = scrollbars.get(&id)
+    {
         // For u64 elements, we can directly use the handle
         let _ = platform.borrow_mut().set_style(
             &track_handle,
             "transition",
             "width 300ms cubic-bezier(0.25, 0.1, 0.25, 1)",
         );
-        let _ = platform.borrow_mut().set_style(
-            &track_handle,
-            "width",
-            &format!("{}px", width),
-        );
+        let _ = platform
+            .borrow_mut()
+            .set_style(&track_handle, "width", &format!("{}px", width));
     }
 }
 

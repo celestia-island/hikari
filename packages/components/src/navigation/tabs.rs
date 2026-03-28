@@ -110,7 +110,7 @@ impl StyledComponent for TabsComponent {
 
 #[component]
 pub fn TabPane(props: TabPaneProps) -> Element {
-    use hikari_palette::classes::{ClassesBuilder, components::TabsClass, UtilityClass};
+    use hikari_palette::classes::{ClassesBuilder, UtilityClass, components::TabsClass};
 
     let active_key = use_context::<Signal<String>>().expect("TabsContext not found");
     let item_key = props.item_key.clone();

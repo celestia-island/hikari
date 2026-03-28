@@ -36,7 +36,7 @@ use tairitsu_vdom::VNode as Element;
 pub use mdi_minimal::MdiIcon;
 
 // Re-export icon data types
-pub use generated::mdi_selected::{get, IconData, PathData, SvgElem};
+pub use generated::mdi_selected::{IconData, PathData, SvgElem, get};
 
 // StyleStringBuilder for building styles
 #[cfg(feature = "dioxus")]

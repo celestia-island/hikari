@@ -4,9 +4,9 @@
 //! Automatically adapts to theme changes via global theme provider registry.
 //! Includes a 60-second rotating gradient animation with configurable breathing.
 
-use hikari_palette::classes::{BackgroundClass, UtilityClass};
 use crate::style_builder::StyleStringBuilder;
 use crate::{platform, prelude::*, styled::StyledComponent};
+use hikari_palette::classes::{BackgroundClass, UtilityClass};
 
 pub struct BackgroundComponent;
 

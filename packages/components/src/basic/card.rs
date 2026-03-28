@@ -1,9 +1,9 @@
 // hi-components/src/basic/card.rs
 // Card component with Arknights + FUI styling
 
-use hikari_palette::classes::{CardClass, ClassesBuilder, UtilityClass};
 use crate::style_builder::StyleStringBuilder;
 use crate::{prelude::*, styled::StyledComponent};
+use hikari_palette::classes::{CardClass, ClassesBuilder, UtilityClass};
 
 pub struct CardComponent;
 

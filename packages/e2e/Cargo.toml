@@ -1,9 +1,9 @@
 [package]
 name = "hikari-e2e"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
+version = "0.1.0"
+edition = "2021"
+authors = ["celestia-island"]
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 # Selenium WebDriver for E2E testing

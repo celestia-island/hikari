@@ -44,7 +44,8 @@ pub fn get_theme_colors() -> (String, String) {
     let current_theme = "hikari".to_string();
     let colors = THEME_CACHE.with_borrow(|cache| {
         if let Some(cached) = cache.as_ref()
-            && cached.last_theme == current_theme {
+            && cached.last_theme == current_theme
+        {
             // Cache hit - return cached colors
             return cached.colors.clone();
         }
@@ -54,8 +55,7 @@ pub fn get_theme_colors() -> (String, String) {
 
     // Update cache if needed
     THEME_CACHE.with_borrow_mut(|cache| {
-        let needs_update = cache.as_ref()
-            .is_none_or(|c| c.last_theme != current_theme);
+        let needs_update = cache.as_ref().is_none_or(|c| c.last_theme != current_theme);
         if needs_update {
             *cache = Some(ThemeCache {
                 last_theme: current_theme,

@@ -3,8 +3,8 @@
 //! Note: These functions are maintained for backward compatibility.
 //! New code should use the Platform trait directly.
 
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::rc::Rc;
 use tairitsu_vdom::Platform;
 
 use super::CssProperty;
@@ -30,7 +30,9 @@ pub fn set_style<P: Platform>(
     property: CssProperty,
     value: &str,
 ) {
-    let _ = platform.borrow_mut().set_style(element, property.as_str(), value);
+    let _ = platform
+        .borrow_mut()
+        .set_style(element, property.as_str(), value);
 }
 
 /// Set multiple CSS properties on an element at once
@@ -59,7 +61,9 @@ pub fn set_styles<P: Platform>(
     properties: &[(CssProperty, &str)],
 ) {
     for (property, value) in properties {
-        let _ = platform.borrow_mut().set_style(element, property.as_str(), value);
+        let _ = platform
+            .borrow_mut()
+            .set_style(element, property.as_str(), value);
     }
 }
 
@@ -84,7 +88,9 @@ pub fn remove_style<P: Platform>(
     element: &P::Element,
     property: CssProperty,
 ) {
-    let _ = platform.borrow_mut().set_style(element, property.as_str(), "");
+    let _ = platform
+        .borrow_mut()
+        .set_style(element, property.as_str(), "");
 }
 
 /// Get the computed value of a CSS property

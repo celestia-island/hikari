@@ -7,7 +7,8 @@ use tairitsu_vdom::Platform;
 pub type AnimationCallback<P> = dyn Fn(&AnimationContext<P>) -> String + 'static;
 
 /// Callback type with state access
-pub type StatefulCallback<P> = dyn Fn(&AnimationContext<P>, &mut StructAnimationState) -> String + 'static;
+pub type StatefulCallback<P> =
+    dyn Fn(&AnimationContext<P>, &mut StructAnimationState) -> String + 'static;
 
 /// Callback type without return value
 pub type VoidCallback<P> = dyn Fn(&AnimationContext<P>) + 'static;

@@ -168,10 +168,3 @@ AnimationBuilder::new()
 | --hi-icon-button-size | 按钮尺寸 | 40px |
 | --hi-icon-button-icon-size | 图标尺寸 | var(--hi-icon-size-sm) |
 | --hi-icon-button-radius | 圆角 | var(--hi-radius-md) |
-
-## 相关文档
-
-- [设计系统概述](../../design-system/overview.md)
-- [Layer1 基础层级](../../design-system/layer1.md)
-- [Layer2 组件层级](../../design-system/layer2.md)
-- [Custom 自定义层级](../../design-system/custom.md)

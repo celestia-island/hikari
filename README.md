@@ -24,11 +24,11 @@
   </a>
   <!-- Rust -->
   <a href="https://www.rust-lang.org/">
-    <img src="https://img.shields.io/badge/rust-1.52+-orange.svg" alt="Rust 1.52+">
+    <img src="https://img.shields.io/badge/rust-1.82+-orange.svg" alt="Rust 1.82+">
   </a>
-  <!-- Dioxus -->
-  <a href="https://dioxuslabs.com/">
-    <img src="https://img.shields.io/badge/dioxus-0.7-blue.svg" alt="Dioxus 0.7">
+  <!-- Tairitsu -->
+  <a href="https://github.com/TairitsuMC/tairitsu">
+    <img src="https://img.shields.io/badge/tairitsu-0.3-blue.svg" alt="Tairitsu 0.3">
   </a>
 </div>
 
@@ -56,7 +56,7 @@
 
 > A modern Rust UI framework blending traditional Chinese aesthetics with futuristic sci-fi design
 
-**Hikari** (光 - "Light") is a comprehensive UI framework built with [Dioxus](https://dioxuslabs.com/), featuring a unique design system inspired by Arknights' clean aesthetics, FUI (Futuristic User Interface) elements, and a rich palette of traditional Chinese colors. The name "Hikari" comes from the rhythm game [Arcaea](https://arcaea.lowiro.com/).
+**Hikari** (光 - "Light") is a comprehensive UI framework built with [Tairitsu](https://github.com/TairitsuMC/tairitsu), featuring a unique design system inspired by Arknights' clean aesthetics, FUI (Futuristic User Interface) elements, and a rich palette of traditional Chinese colors. The name "Hikari" comes from the rhythm game [Arcaea](https://arcaea.lowiro.com/).
 
 ## Vision
 
@@ -70,10 +70,10 @@ The result is a UI framework that feels both ancient and futuristic, professiona
 
 ## Tech Stack
 
-- **Frontend**: Dioxus 0.7 (WebAssembly)
+- **Frontend**: Tairitsu 0.3 (WebAssembly, WASI unified environment)
 - **Styling**: Grass (SCSS compiler) + SCSS
 - **Server**: Axum 0.8 (optional SSR support)
-- **Language**: Rust 1.52+
+- **Language**: Rust 1.82+
 - **Build System**: Justfile
 - **Tooling**: Python 3.11+ (formatting and linting)
 
@@ -134,24 +134,23 @@ hikari-components = "0.1.0"
 ### Basic Usage
 
 ```rust
-use dioxus::prelude::*;
+use tairitsu_macros::rsx;
+use tairitsu_vdom::{Component, Node, Platform};
 use hikari_theme::ThemeProvider;
 use hikari_components::Button;
 
-fn app() -> Element {
+fn app() -> Node {
     rsx! {
-        ThemeProvider { palette: "arknights".to_string(),
-            div { class: "container",
-                h1 { "Welcome to Hikari" }
-                p { "A fusion of tradition and technology" }
+        <ThemeProvider palette="arknights".to_string()>
+            <div class="container">
+                <h1>"Welcome to Hikari"</h1>
+                <p>"A fusion of tradition and technology"</p>
 
-                Button {
-                    variant: ButtonVariant::Primary,
-                    onclick: |_| println!("Clicked!"),
+                <Button variant={ButtonVariant::Primary}>
                     "Get Started"
-                }
-            }
-        }
+                </Button>
+            </div>
+        </ThemeProvider>
     }
 }
 ```
@@ -322,7 +321,7 @@ Each color carries historical significance, adding cultural depth to your applic
 
 ### Prerequisites
 
-- Rust 1.52+
+- Rust 1.82+
 - Python 3.11+ (for tooling scripts)
 - Just (command runner)
 
@@ -385,10 +384,9 @@ You may choose either license for your use.
 
 Inspired by and built upon:
 
-- [Dioxus](https://dioxuslabs.com/) - The Rust UI framework
+- [Tairitsu](https://github.com/TairitsuMC/tairitsu) - The Rust UI framework with WASI support
 - [Arknights](https://www.arknights.global/) - Design language inspiration
 - [ChineseColors](https://github.com/zhaoolee/ChineseColors) - Traditional color palette
-- [tairitsu](https://github.com/TairitsuMC/tairitsu) - Architecture patterns
 - [akasha](https://github.com/TairitsuMC/akasha) - Node graph system reference
 
 ## Name

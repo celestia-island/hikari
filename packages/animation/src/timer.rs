@@ -127,8 +127,6 @@ impl<P: Platform> TimerManager<P> {
         let callback_clone = callback.clone();
         let platform = Rc::clone(&self.platform);
 
-        
-
         self.set_timeout(
             Rc::new(move || {
                 callback_clone();
@@ -181,14 +179,14 @@ impl<P: Platform> TimerManager<P> {
     /// ```
     pub fn request_animation_frame(&self, callback: FrameCallback) -> FrameId {
         let callback_clone = callback.clone();
-        let handle = self
-            .platform
-            .borrow_mut()
-            .request_animation_frame(Box::new(move |timestamp| {
-                if let Ok(mut cb) = callback_clone.try_borrow_mut() {
-                    cb(timestamp);
-                }
-            }));
+        let handle =
+            self.platform
+                .borrow_mut()
+                .request_animation_frame(Box::new(move |timestamp| {
+                    if let Ok(mut cb) = callback_clone.try_borrow_mut() {
+                        cb(timestamp);
+                    }
+                }));
         FrameId(handle)
     }
 
@@ -236,8 +234,6 @@ pub fn debounce<P: Platform + 'static>(
     let state = Rc::new(RefCell::new(DebounceState { timer_id: None }));
     let state_clone = state.clone();
 
-    
-
     (Rc::new(RefCell::new(move || {
         // Cancel existing timer
         if let Some(timer_id) = state_clone.borrow_mut().timer_id.take() {
@@ -283,8 +279,6 @@ pub fn throttle<P: Platform + 'static>(
 
     let state = Rc::new(RefCell::new(ThrottleState { last_call: None }));
 
-    
-
     (Rc::new(RefCell::new(move || {
         use std::time::{SystemTime, UNIX_EPOCH};
         let now = SystemTime::now()
@@ -294,9 +288,10 @@ pub fn throttle<P: Platform + 'static>(
         let mut state_ref = state.borrow_mut();
 
         if let Some(last_time) = state_ref.last_call
-            && now - last_time < interval.as_millis() as f64 {
-                return; // Throttled
-            }
+            && now - last_time < interval.as_millis() as f64
+        {
+            return; // Throttled
+        }
 
         state_ref.last_call = Some(now);
         drop(state_ref);

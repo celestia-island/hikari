@@ -123,10 +123,3 @@ AnimationBuilder::new()
 | --hi-input-padding-x | 水平パディング | 0.75rem |
 | --hi-input-padding-y | 垂直パディング | 0.5rem |
 | --hi-input-font-size | フォントサイズ | var(--hi-font-size-sm) |
-
-## 関連ドキュメント
-
-- [デザインシステム概要](../../design-system/overview.md)
-- [Layer1 ベースレイヤー](../../design-system/layer1.md)
-- [Layer2 コンポーネントレイヤー](../../design-system/layer2.md)
-- [Custom カスタムレイヤー](../../design-system/custom.md)

@@ -123,10 +123,3 @@ AnimationBuilder::new()
 | --hi-input-padding-x | الحشو الأفقي | 0.75rem |
 | --hi-input-padding-y | الحشو العمودي | 0.5rem |
 | --hi-input-font-size | حجم الخط | var(--hi-font-size-sm) |
-
-## الوثائق ذات الصلة
-
-- [نظرة عامة على نظام التصميم](../../design-system/overview.md)
-- [Layer1 المستوى الأساسي](../../design-system/layer1.md)
-- [Layer2 مستوى المكون](../../design-system/layer2.md)
-- [Custom المستوى المخصص](../../design-system/custom.md)

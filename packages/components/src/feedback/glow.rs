@@ -27,10 +27,10 @@
 //     .build();
 // ```
 
-use hikari_palette::classes::{ClassesBuilder, GlowClass};
-use tairitsu_vdom::IntoAttrValue;
 use crate::prelude::*;
 use crate::style_builder::StyleStringBuilder;
+use hikari_palette::classes::{ClassesBuilder, GlowClass};
+use tairitsu_vdom::IntoAttrValue;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowBlur {
@@ -339,11 +339,7 @@ pub fn Glow(props: GlowProps) -> Element {
 
         move |_: MouseEvent| {
             let current = state.read();
-            let interaction_level = if current.is_inside {
-                0.5
-            } else {
-                0.0
-            };
+            let interaction_level = if current.is_inside { 0.5 } else { 0.0 };
             let new_state = GlowState {
                 interaction_level,
                 ..current

@@ -4,7 +4,7 @@
 
 use std::path::PathBuf;
 
-use hikari_builder::icons::{auto_discovery, IconConfig, IconSelection, MdiStyle};
+use hikari_builder::icons::{IconConfig, IconSelection, MdiStyle, auto_discovery};
 
 fn main() {
     println!("cargo:warning=🎨 hikari-icons: Building icons...");

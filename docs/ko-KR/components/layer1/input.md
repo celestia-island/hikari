@@ -123,10 +123,3 @@ AnimationBuilder::new()
 | --hi-input-padding-x | 수평 패딩 | 0.75rem |
 | --hi-input-padding-y | 수직 패딩 | 0.5rem |
 | --hi-input-font-size | 글꼴 크기 | var(--hi-font-size-sm) |
-
-## 관련 문서
-
-- [디자인 시스템 개요](../../design-system/overview.md)
-- [Layer1 기본 계층](../../design-system/layer1.md)
-- [Layer2 컴포넌트 계층](../../design-system/layer2.md)
-- [Custom 사용자 정의 계층](../../design-system/custom.md)

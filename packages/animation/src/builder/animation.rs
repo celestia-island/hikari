@@ -48,9 +48,8 @@ use tairitsu_vdom::Platform;
 
 use super::{
     super::{
-        context::AnimationContext,
-        state::AnimationDataStore as StructAnimationState,
-        style::{CssProperty, StyleBuilder},
+        context::AnimationContext, state::AnimationDataStore as StructAnimationState,
+        style::CssProperty,
     },
     action::AnimationAction,
     value::DynamicValue,

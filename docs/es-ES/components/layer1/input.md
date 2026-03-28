@@ -123,10 +123,3 @@ AnimationBuilder::new()
 | --hi-input-padding-x | Relleno horizontal | 0.75rem |
 | --hi-input-padding-y | Relleno vertical | 0.5rem |
 | --hi-input-font-size | Tamaño de fuente | var(--hi-font-size-sm) |
-
-## Documentación relacionada
-
-- [Resumen del sistema de diseño](../../design-system/overview.md)
-- [Layer1 Nivel base](../../design-system/layer1.md)
-- [Layer2 Nivel de componente](../../design-system/layer2.md)
-- [Custom Nivel personalizado](../../design-system/custom.md)

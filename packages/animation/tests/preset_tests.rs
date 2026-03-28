@@ -3,8 +3,8 @@
 // Only available on browser WASM (wasm32-unknown-unknown)
 
 use hikari_animation::presets::transition::{
-    bounce_in, fade_in, fade_out, rotate_in, rotate_out, shake, slide_in, slide_out, zoom_in,
-    zoom_out, SlideDirection,
+    SlideDirection, bounce_in, fade_in, fade_out, rotate_in, rotate_out, shake, slide_in,
+    slide_out, zoom_in, zoom_out,
 };
 
 #[test]

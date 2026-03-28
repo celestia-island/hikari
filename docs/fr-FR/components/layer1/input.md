@@ -123,10 +123,3 @@ AnimationBuilder::new()
 | --hi-input-padding-x | Padding horizontal | 0.75rem |
 | --hi-input-padding-y | Padding vertical | 0.5rem |
 | --hi-input-font-size | Taille de la police | var(--hi-font-size-sm) |
-
-## Documentation connexe
-
-- [Vue d'ensemble du système de conception](../../design-system/overview.md)
-- [Layer1 Niveau de base](../../design-system/layer1.md)
-- [Layer2 Niveau composant](../../design-system/layer2.md)
-- [Custom Niveau personnalisé](../../design-system/custom.md)

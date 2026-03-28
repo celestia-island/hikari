@@ -377,6 +377,7 @@ pub struct AnimationContextLegacy {
 
 #[deprecated(note = "Use AnimationContext::new with platform instead")]
 #[doc(hidden)]
+#[allow(deprecated)]
 impl AnimationContextLegacy {
     pub fn new() -> Self {
         Self { _private: () }

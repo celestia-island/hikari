@@ -4,8 +4,8 @@
 //! New code should use the Platform trait directly or the
 //! AnimationBuilder for complex animations.
 
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::rc::Rc;
 use tairitsu_vdom::Platform;
 
 use super::{CssProperty, Property, StyleStringBuilder};
@@ -91,11 +91,10 @@ impl<'a, P: Platform> StyleBuilder<'a, P> {
 
         // Batch update all properties to minimize DOM access
         for (property, value) in self.properties {
-            let _ = self.platform.borrow_mut().set_style(
-                self.element,
-                property.as_str(),
-                &value,
-            );
+            let _ = self
+                .platform
+                .borrow_mut()
+                .set_style(self.element, property.as_str(), &value);
         }
     }
 
@@ -229,24 +228,22 @@ impl<'a, P: Platform> AttributeBuilder<'a, P> {
         for (name, value) in self.attributes {
             match value {
                 AttributeValue::String(v) => {
-                    let _ = self.platform.borrow_mut().set_attribute(
-                        self.element,
-                        &name,
-                        &v,
-                    );
+                    let _ = self
+                        .platform
+                        .borrow_mut()
+                        .set_attribute(self.element, &name, &v);
                 }
                 AttributeValue::Bool(v) => {
                     if v {
-                        let _ = self.platform.borrow_mut().set_attribute(
-                            self.element,
-                            &name,
-                            "",
-                        );
+                        let _ = self
+                            .platform
+                            .borrow_mut()
+                            .set_attribute(self.element, &name, "");
                     } else {
-                        let _ = self.platform.borrow_mut().remove_attribute(
-                            self.element,
-                            &name,
-                        );
+                        let _ = self
+                            .platform
+                            .borrow_mut()
+                            .remove_attribute(self.element, &name);
                     }
                 }
             }

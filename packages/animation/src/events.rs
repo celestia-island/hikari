@@ -5,12 +5,9 @@
 
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use tairitsu_vdom::{Platform, EventData, MouseEvent};
+use tairitsu_vdom::{EventData, MouseEvent, Platform};
 
-use super::{
-    lifecycle::ElementHandle,
-    style::{CssProperty, StyleBuilder},
-};
+use super::lifecycle::ElementHandle;
 
 /// Trigger mode for event-driven animations
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -184,13 +181,17 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
             // For other types, this would need Clone
             unsafe { std::ptr::read(&self.element as *const P::Element) }
         });
-        self.bind_event_to_element("mousemove", target_element, move |event: Box<dyn EventData>| {
-            if let Some(mouse_event) = event.as_any().downcast_ref::<MouseEvent>() {
-                Some((f)(mouse_event.client_x, mouse_event.client_y))
-            } else {
-                None
-            }
-        })
+        self.bind_event_to_element(
+            "mousemove",
+            target_element,
+            move |event: Box<dyn EventData>| {
+                if let Some(mouse_event) = event.as_any().downcast_ref::<MouseEvent>() {
+                    Some((f)(mouse_event.client_x, mouse_event.client_y))
+                } else {
+                    None
+                }
+            },
+        )
     }
 
     /// Bind an animation to click event
@@ -212,9 +213,7 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
     where
         F: Fn() -> String + 'static,
     {
-        self.bind_event("focus", move |_event: Box<dyn EventData>| {
-            Some((f)())
-        })
+        self.bind_event("focus", move |_event: Box<dyn EventData>| Some((f)()))
     }
 
     /// Bind an animation to blur event
@@ -222,9 +221,7 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
     where
         F: Fn() -> String + 'static,
     {
-        self.bind_event("blur", move |_event: Box<dyn EventData>| {
-            Some((f)())
-        })
+        self.bind_event("blur", move |_event: Box<dyn EventData>| Some((f)()))
     }
 
     /// Internal method to bind an event handler to the target element
@@ -238,7 +235,12 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
     }
 
     /// Internal method to bind an event handler to a specific element
-    fn bind_event_to_element<F>(&mut self, event_type: &str, element: P::Element, handler: F) -> Self
+    fn bind_event_to_element<F>(
+        &mut self,
+        event_type: &str,
+        element: P::Element,
+        handler: F,
+    ) -> Self
     where
         F: Fn(Box<dyn EventData>) -> Option<String> + 'static,
     {
@@ -250,11 +252,10 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
             if let Some(value_str) = handler(event) {
                 for (_name, element_handle) in elements.iter() {
                     // Apply the style using the platform
-                    let _ = platform.borrow_mut().set_style(
-                        element_handle,
-                        "transform",
-                        &value_str,
-                    );
+                    let _ =
+                        platform
+                            .borrow_mut()
+                            .set_style(element_handle, "transform", &value_str);
                 }
             }
         };

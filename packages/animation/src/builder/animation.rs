@@ -44,7 +44,7 @@
 
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use tairitsu_vdom::{Platform, EventData, MouseEvent};
+use tairitsu_vdom::Platform;
 
 use super::{
     super::{
@@ -253,7 +253,6 @@ impl<'a, P: Platform> AnimationBuilder<'a, P> {
         let should_stop_clone = should_stop.clone();
 
         let timing = Rc::new(RefCell::new((0.0, 0.0, 0.0)));
-        const THROTTLE_MS: f64 = 16.67;
 
         let cached_values: Rc<RefCell<HashMap<String, HashMap<CssProperty, String>>>> =
             Rc::new(RefCell::new(HashMap::new()));
@@ -301,21 +300,22 @@ impl<'a, P: Platform> AnimationBuilder<'a, P> {
                                 && matches!(
                                     value,
                                     DynamicValue::Dynamic(_) | DynamicValue::StatefulDynamic(_)
-                                ) {
-                                    let new_value = value.evaluate(&ctx, &mut state);
+                                )
+                            {
+                                let new_value = value.evaluate(&ctx, &mut state);
 
-                                    if let Some(old_value) = element_cache.get(prop) {
-                                        if old_value != &new_value {
-                                            new_styles.push((*prop, new_value.clone()));
-                                            element_cache.insert(*prop, new_value);
-                                            needs_update = true;
-                                        }
-                                    } else {
+                                if let Some(old_value) = element_cache.get(prop) {
+                                    if old_value != &new_value {
                                         new_styles.push((*prop, new_value.clone()));
                                         element_cache.insert(*prop, new_value);
                                         needs_update = true;
                                     }
+                                } else {
+                                    new_styles.push((*prop, new_value.clone()));
+                                    element_cache.insert(*prop, new_value);
+                                    needs_update = true;
                                 }
+                            }
                         }
 
                         if needs_update && !new_styles.is_empty() {
@@ -344,7 +344,9 @@ impl<'a, P: Platform> AnimationBuilder<'a, P> {
                             let inner_callback = Box::new(move |_inner_ts: f64| {
                                 // Continue the loop
                             });
-                            let id = platform.borrow_mut().request_animation_frame(inner_callback);
+                            let id = platform
+                                .borrow_mut()
+                                .request_animation_frame(inner_callback);
                             // Note: We're not tracking RAF IDs properly in this simplified version
                             let _ = id;
                         }
@@ -355,7 +357,9 @@ impl<'a, P: Platform> AnimationBuilder<'a, P> {
             }
         });
 
-        let id = platform.borrow_mut().request_animation_frame(initial_callback);
+        let id = platform
+            .borrow_mut()
+            .request_animation_frame(initial_callback);
         *raf_id.borrow_mut() = Some(id);
 
         Box::new(move || {

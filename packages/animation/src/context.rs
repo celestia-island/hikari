@@ -6,10 +6,10 @@
 //! This module uses the tairitsu-vdom Platform trait for cross-platform
 //! browser API access, working consistently in both WASM and server environments.
 
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::rc::Rc;
 
-use tairitsu_vdom::{Platform, DomRect};
+use tairitsu_vdom::{DomRect, Platform};
 
 /// Context for computing dynamic animation values
 ///
@@ -358,7 +358,10 @@ impl<P: Platform> AnimationContext<P> {
 
     /// Refresh the cached bounding rect from the platform
     pub fn refresh_bounding_rect(&mut self) {
-        self.bounding_rect = self.platform.borrow_mut().get_bounding_client_rect(&self.element);
+        self.bounding_rect = self
+            .platform
+            .borrow_mut()
+            .get_bounding_client_rect(&self.element);
     }
 }
 

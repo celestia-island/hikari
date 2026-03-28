@@ -32,7 +32,7 @@ struct AnimationEntry {
     stop_fn: Box<dyn FnOnce()>,
     cleanup_fn: Option<Box<dyn FnOnce()>>,
     callbacks: Vec<LifecycleCallback>,
-    target_element: Option<ElementHandle>,
+    _target_element: Option<ElementHandle>, // Reserved for future element lifecycle monitoring
     created_at: std::time::Instant,
 }
 
@@ -100,7 +100,7 @@ impl AnimationRegistry {
                 stop_fn,
                 cleanup_fn,
                 callbacks: Vec::new(),
-                target_element,
+                _target_element: target_element,
                 created_at: std::time::Instant::now(),
             },
         );
@@ -129,7 +129,7 @@ impl AnimationRegistry {
                 stop_fn,
                 cleanup_fn: None,
                 callbacks,
-                target_element,
+                _target_element: target_element,
                 created_at: std::time::Instant::now(),
             },
         );

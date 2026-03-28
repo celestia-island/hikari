@@ -67,6 +67,7 @@ pub struct DomRect {
 ### 事件监听器
 
 **之前** (web-sys):
+
 ```rust
 let closure = Closure::wrap(Box::new(move |_event: web_sys::MouseEvent| {
     // 处理事件
@@ -76,6 +77,7 @@ closure.forget();
 ```
 
 **之后** (tairitsu-vdom):
+
 ```rust
 platform.add_event_listener(
     &element,
@@ -91,6 +93,7 @@ platform.add_event_listener(
 ### RAF 动画循环
 
 **之前** (wasm-bindgen):
+
 ```rust
 let f = Rc::new(RefCell::new(None::<js_sys::Function>));
 let animation_closure = Closure::wrap(Box::new(move || {
@@ -101,6 +104,7 @@ let callback: &js_sys::Function = animation_closure.as_ref().unchecked_ref();
 ```
 
 **之后** (tairitsu-vdom):
+
 ```rust
 let platform = Rc::clone(&self.platform);
 let callback = Box::new(move |timestamp: f64| {

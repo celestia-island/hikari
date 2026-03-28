@@ -3,8 +3,12 @@
 //! Provides functions to detect and monitor the user's system preference
 //! for reduced motion.
 //!
-//! In WASI unified environment, uses tairitsu's browser API access via
-//! Platform trait and WIT bindings.
+//! In WASI unified environment, this module currently provides a default
+//! implementation. The tairitsu WIT interface does not currently expose
+//! the `matchMedia` API needed for `prefers-reduced-motion` detection.
+//!
+//! When the WIT interface adds this capability, this module can be updated
+//! to use it.
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -12,20 +16,21 @@ use tairitsu_vdom::Platform;
 
 /// Detect system prefers-reduced-motion setting
 ///
-/// This is a placeholder implementation. In a real WIT environment,
-/// this would need to be implemented via a media query interface.
+/// Currently returns false (no preference detected) as the WIT interface
+/// does not expose the matchMedia API.
 ///
-/// Returns false by default (no preference detected).
+/// When available, this should use: `window.matchMedia("(prefers-reduced-motion: reduce)").matches()`
 pub fn prefers_reduced_motion<P: Platform>(_platform: &Rc<RefCell<P>>) -> bool {
-    // WIT bindings don't currently expose matchMedia API
-    // This would need to be added to the WIT interface
+    // Default implementation: no reduced motion preference detected
+    // TODO: Update when WIT interface adds matchMedia support
     false
 }
 
 /// Watch for prefers-reduced-motion changes
 ///
-/// This is a placeholder implementation. In a real WIT environment,
-/// this would set up a listener that calls the callback when the system preference changes.
+/// Currently a no-op as the WIT interface does not expose the MediaQueryList API.
+///
+/// When available, this should use: `window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", callback)`
 ///
 /// # Arguments
 ///
@@ -34,9 +39,8 @@ pub fn watch_prefers_reduced_motion<P: Platform>(
     _platform: &Rc<RefCell<P>>,
     _callback: impl Fn(bool) + 'static,
 ) {
-    // WIT bindings don't currently expose MediaQueryList API
-    // This would need to be added to the WIT interface
-    // For now, this is a no-op
+    // Default implementation: no-op
+    // TODO: Update when WIT interface adds MediaQueryList event listener support
 }
 
 /// Check if reduced motion should be applied

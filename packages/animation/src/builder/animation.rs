@@ -55,7 +55,6 @@ use super::{
     action::AnimationAction,
     value::DynamicValue,
 };
-#[cfg(feature = "wasm")]
 use crate::global_manager::global_animation_manager;
 
 /// Enhanced builder for creating complex animations
@@ -409,7 +408,6 @@ pub fn new_animation_builder(elements: &HashMap<String, JsValue>) -> AnimationBu
 }
 
 /// Helper function to start animation with global manager
-#[cfg(feature = "wasm")]
 pub fn start_animation_with_global_manager(
     elements: &HashMap<String, JsValue>,
     actions: &HashMap<String, Vec<AnimationAction>>,
@@ -488,16 +486,5 @@ pub fn start_animation_with_global_manager(
         let stop_msg = format!("🛑 Stopping animation: {}", animation_name_final);
         web_sys::console::log_2(&stop_msg.into(), &animation_name_final.clone().into());
         global_animation_manager().unregister(&animation_name_final);
-    })
-}
-
-#[cfg(not(feature = "wasm"))]
-pub fn start_animation_with_global_manager(
-    _elements: &HashMap<String, JsValue>,
-    _actions: &HashMap<String, Vec<AnimationAction>>,
-    _initial_state: StructAnimationState,
-) -> Box<dyn FnOnce()> {
-    Box::new(|| {
-        web_sys::console::log_1(&"Animation not available on this platform".into());
     })
 }

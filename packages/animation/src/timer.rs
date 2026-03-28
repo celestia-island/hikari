@@ -96,10 +96,11 @@ impl<P: Platform> TimerManager<P> {
     /// # Returns
     /// Timer ID that can be used to cancel the timer
     pub fn set_timeout(&self, callback: TimerCallback, delay: Duration) -> TimerId {
+        let callback_clone = callback.clone();
         let handle = self
             .platform
             .borrow_mut()
-            .set_timeout(Box::new(|| callback()), delay.as_millis() as i32);
+            .set_timeout(Box::new(move || callback_clone()), delay.as_millis() as i32);
         TimerId(handle)
     }
 
@@ -179,11 +180,12 @@ impl<P: Platform> TimerManager<P> {
     /// manager.cancel_animation_frame(id);
     /// ```
     pub fn request_animation_frame(&self, callback: FrameCallback) -> FrameId {
+        let callback_clone = callback.clone();
         let handle = self
             .platform
             .borrow_mut()
-            .request_animation_frame(Box::new(|timestamp| {
-                if let Ok(mut cb) = callback.try_borrow_mut() {
+            .request_animation_frame(Box::new(move |timestamp| {
+                if let Ok(mut cb) = callback_clone.try_borrow_mut() {
                     cb(timestamp);
                 }
             }));
@@ -271,7 +273,7 @@ pub fn debounce<P: Platform + 'static>(
 /// throttled(); // Ignored (within throttle period)
 /// ```
 pub fn throttle<P: Platform + 'static>(
-    manager: TimerManager<P>,
+    _manager: TimerManager<P>,
     interval: Duration,
     callback: TimerCallback,
 ) -> Rc<RefCell<dyn Fn()>> {

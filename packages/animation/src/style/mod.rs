@@ -50,15 +50,10 @@
 pub use tairitsu_style::{CssProperty, Property, StyleStringBuilder};
 
 // DOM manipulation utilities (web-sys specific)
-// Only available when wasm feature is enabled
-#[cfg(feature = "wasm")]
 mod builder;
-#[cfg(feature = "wasm")]
 mod helpers;
 
-#[cfg(feature = "wasm")]
 pub use builder::{AttributeBuilder, StyleBuilder};
-#[cfg(feature = "wasm")]
 pub use helpers::{get_style, remove_style, set_style, set_styles};
 
 #[cfg(test)]

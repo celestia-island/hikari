@@ -29,9 +29,11 @@
 //! - **Framework Agnostic**: Core works without any specific UI framework
 //! - **Reduced Motion**: Automatic prefers-reduced-motion detection
 //!
-//! ## Feature Flags
+//! ## Platform Support
 //!
-//! - `wasm` - Enable WASM/browser API support (web-sys, wasm-bindgen)
+//! This animation system is built for WASI unified environments, using tairitsu-vdom
+//! for cross-platform browser API access. It works consistently across different
+//! deployment targets.
 
 // Pure Rust modules (no external dependencies required)
 pub mod breathing;
@@ -57,46 +59,26 @@ pub use state_machine::*;
 pub use timeline::*;
 pub use tween::*;
 
-// Modules that use browser APIs (require wasm feature)
-#[cfg(feature = "wasm")]
+// Modules that use browser APIs via tairitsu
 pub mod background_animation;
-#[cfg(feature = "wasm")]
 pub mod builder;
-#[cfg(feature = "wasm")]
 pub mod context;
-#[cfg(feature = "wasm")]
 pub mod events;
-#[cfg(feature = "wasm")]
 pub mod global_manager;
-#[cfg(feature = "wasm")]
 pub mod lifecycle;
-#[cfg(feature = "wasm")]
 pub mod prefers_reduced_motion;
-#[cfg(feature = "wasm")]
 pub mod scrollbar;
-#[cfg(feature = "wasm")]
 pub mod style;
-#[cfg(feature = "wasm")]
 pub mod timer;
 
-// Re-export wasm-specific items
-#[cfg(feature = "wasm")]
+// Re-export browser API modules
 pub use background_animation::*;
-#[cfg(feature = "wasm")]
 pub use builder::*;
-#[cfg(feature = "wasm")]
 pub use context::AnimationContext;
-#[cfg(feature = "wasm")]
 pub use events::*;
-#[cfg(feature = "wasm")]
 pub use global_manager::*;
-#[cfg(feature = "wasm")]
 pub use lifecycle::*;
-#[cfg(feature = "wasm")]
 pub use prefers_reduced_motion::*;
-#[cfg(feature = "wasm")]
 pub use scrollbar::*;
-#[cfg(feature = "wasm")]
 pub use style::*;
-#[cfg(feature = "wasm")]
 pub use timer::*;

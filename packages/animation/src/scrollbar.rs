@@ -1,17 +1,18 @@
 // animation/src/scrollbar.rs
 // Scrollbar animation system using StyleBuilder
+//
+// In WASI unified environment, scrollbar registration is handled via
+// tairitsu's WIT interface rather than wasm_bindgen exports.
 
 #![allow(unused_imports)]
 
 use std::collections::HashMap;
 
-use wasm_bindgen::{prelude::wasm_bindgen, JsCast, JsValue};
 use web_sys::HtmlElement;
 
 use super::style::{CssProperty, StyleBuilder};
 
 /// Store all scrollbar elements for animation updates
-#[cfg(feature = "wasm")]
 static mut SCROLLBARS: Option<HashMap<String, HtmlElement>> = None;
 
 /// Register a scrollbar element for animation
@@ -20,17 +21,7 @@ static mut SCROLLBARS: Option<HashMap<String, HtmlElement>> = None;
 ///
 /// * `id` - Unique identifier for this scrollbar
 /// * `track` - The scrollbar track element
-#[cfg(feature = "wasm")]
-#[wasm_bindgen(js_name = registerScrollbar)]
-pub fn register_scrollbar(id: String, track: JsValue) {
-    let track_element = match track.dyn_into::<HtmlElement>() {
-        Ok(el) => el,
-        Err(_) => {
-            web_sys::console::error_1(&"❌ Invalid track element for scrollbar".into());
-            return;
-        }
-    };
-
+pub fn register_scrollbar(id: String, track: HtmlElement) {
     unsafe {
         let scrollbars_ptr = &raw mut SCROLLBARS;
 
@@ -39,7 +30,7 @@ pub fn register_scrollbar(id: String, track: JsValue) {
         }
 
         if let Some(scrollbars) = &mut *scrollbars_ptr {
-            scrollbars.insert(id, track_element);
+            scrollbars.insert(id, track);
         }
     }
 }
@@ -50,8 +41,6 @@ pub fn register_scrollbar(id: String, track: JsValue) {
 ///
 /// * `id` - Unique identifier for scrollbar
 /// * `width` - Target width in pixels (e.g., 4.0 or 8.0)
-#[cfg(feature = "wasm")]
-#[wasm_bindgen(js_name = updateScrollbarWidth)]
 pub fn update_scrollbar_width(id: String, width: f64) {
     unsafe {
         let scrollbars_ptr = &raw const SCROLLBARS;
@@ -70,9 +59,3 @@ pub fn update_scrollbar_width(id: String, width: f64) {
         }
     }
 }
-
-#[cfg(not(feature = "wasm"))]
-pub fn register_scrollbar(_id: String, _track: JsValue) {}
-
-#[cfg(not(feature = "wasm"))]
-pub fn update_scrollbar_width(_id: String, _width: f64) {}

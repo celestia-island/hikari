@@ -10,7 +10,6 @@ pub enum SlideDirection {
     Right,
 }
 
-#[cfg(feature = "wasm")]
 /// Fade in animation preset
 ///
 /// Creates a fade-in animation from opacity 0 to 1.
@@ -34,7 +33,6 @@ pub fn fade_in(_element_id: &str, duration_ms: u64) -> String {
     format!("opacity 0ms ease-out, opacity {}ms ease-out", duration_ms)
 }
 
-#[cfg(feature = "wasm")]
 /// Fade out animation preset
 ///
 /// Creates a fade-out animation from opacity 1 to 0.
@@ -49,7 +47,6 @@ pub fn fade_out(_element_id: &str, duration_ms: u64) -> String {
     format!("opacity 0ms ease-in, opacity {}ms ease-in", duration_ms)
 }
 
-#[cfg(feature = "wasm")]
 /// Slide in animation preset
 ///
 /// Creates a slide-in animation from a specified direction.
@@ -81,7 +78,6 @@ pub fn slide_in(
     )
 }
 
-#[cfg(feature = "wasm")]
 /// Slide out animation preset
 ///
 /// Creates a slide-out animation to a specified direction.
@@ -113,7 +109,6 @@ pub fn slide_out(
     )
 }
 
-#[cfg(feature = "wasm")]
 /// Zoom in animation preset
 ///
 /// Creates a zoom-in animation from scale 0 to 1.
@@ -131,7 +126,6 @@ pub fn zoom_in(_element_id: &str, duration_ms: u64) -> String {
     )
 }
 
-#[cfg(feature = "wasm")]
 /// Zoom out animation preset
 ///
 /// Creates a zoom-out animation from scale 1 to 0.
@@ -149,7 +143,6 @@ pub fn zoom_out(_element_id: &str, duration_ms: u64) -> String {
     )
 }
 
-#[cfg(feature = "wasm")]
 /// Bounce in animation preset
 ///
 /// Creates a bounce-in animation with elastic effect.
@@ -164,7 +157,6 @@ pub fn bounce_in(_element_id: &str, _duration_ms: u64) -> String {
     format!("cubic-bezier(0.68, -0.55, 0.265, 1.55)")
 }
 
-#[cfg(feature = "wasm")]
 /// Shake animation preset
 ///
 /// Creates a shake animation for attention.
@@ -190,7 +182,6 @@ pub fn shake(element_id: &str, duration_ms: u64) -> String {
     format!("{}; {}", keyframes, animation)
 }
 
-#[cfg(feature = "wasm")]
 /// Rotate in animation preset
 ///
 /// Creates a rotation fade-in animation.
@@ -206,7 +197,6 @@ pub fn rotate_in(_element_id: &str, duration_ms: u64, _degrees: i32) -> String {
     format!("transform {}ms ease-out", duration_ms)
 }
 
-#[cfg(feature = "wasm")]
 /// Rotate out animation preset
 ///
 /// Creates a rotation fade-out animation.
@@ -222,7 +212,7 @@ pub fn rotate_out(_element_id: &str, duration_ms: u64, _degrees: i32) -> String 
     format!("transform {}ms ease-in", duration_ms)
 }
 
-#[cfg(all(test, feature = "wasm"))]
+#[cfg(test)]
 mod tests {
     use super::*;
 

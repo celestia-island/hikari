@@ -249,3 +249,50 @@ pub fn blend_colors(color1: Color, color2: Color, ratio: f64) -> Color {
     let b = (color1.rgb.2 as f64 * (1.0 - t) + color2.rgb.2 as f64 * t).round() as u8;
     Color::from_rgb(r, g, b)
 }
+
+/// Parse a hex string to RGB values
+fn parse_hex(hex: &str) -> Option<(u8, u8, u8)> {
+    let hex = hex.trim_start_matches('#');
+
+    if hex.len() != 6 {
+        return None;
+    }
+
+    let r = u8::from_str_radix(&hex[0..2], 16).ok()?;
+    let g = u8::from_str_radix(&hex[2..4], 16).ok()?;
+    let b = u8::from_str_radix(&hex[4..6], 16).ok()?;
+
+    Some((r, g, b))
+}
+
+/// Adjust saturation of a hex color string
+///
+/// # Arguments
+///
+/// * `hex` - Hex color string (with or without #)
+/// * `factor` - Saturation factor (1.0 = no change, >1.0 = more saturated, <1.0 = less saturated)
+///
+/// # Returns
+///
+/// Adjusted hex color string
+pub fn adjust_saturation_hex(hex: &str, factor: f64) -> String {
+    let (r, g, b) = parse_hex(hex).unwrap_or((0, 0, 0));
+    let color = Color::from_rgb(r, g, b);
+    color.adjust_saturation(factor).hex()
+}
+
+/// Adjust lightness of a hex color string
+///
+/// # Arguments
+///
+/// * `hex` - Hex color string (with or without #)
+/// * `factor` - Lightness factor (1.0 = no change, >1.0 = lighter, <1.0 = darker)
+///
+/// # Returns
+///
+/// Adjusted hex color string
+pub fn adjust_lightness_hex(hex: &str, factor: f64) -> String {
+    let (r, g, b) = parse_hex(hex).unwrap_or((0, 0, 0));
+    let color = Color::from_rgb(r, g, b);
+    color.adjust_lightness(factor).hex()
+}

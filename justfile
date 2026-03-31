@@ -130,7 +130,7 @@ clean:
 # Run E2E screenshots in parallel
 e2e-parallel:
     @echo "  →  Running E2E tests..."
-    @./scripts/run_parallel_screenshots.sh
+    @python3 scripts/run_parallel_screenshots.py
     @echo "  ✓  Screenshots saved to: target/e2e_screenshots/"
 
 # Test specific route

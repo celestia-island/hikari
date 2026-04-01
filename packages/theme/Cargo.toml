@@ -10,7 +10,7 @@ doctest = false
 
 [features]
 default = ["scss"]
-scss = []  # SCSS compilation
+scss = []          # SCSS compilation
 
 [dependencies]
 # Hikari palette
@@ -22,5 +22,5 @@ tairitsu-hooks = { path = "../../../tairitsu/packages/hooks" }
 tairitsu-macros = { path = "../../../tairitsu/packages/macros" }
 
 [build-dependencies]
-tairitsu-packager = { path = "../../../tairitsu/packages/packager" }
+tairitsu-packager = { path = "../../../tairitsu/packages/packager", default-features = false }
 anyhow = "^1"

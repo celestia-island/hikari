@@ -16,7 +16,13 @@ hikari-palette = { path = "../palette" }
 # Tairitsu framework integration
 tairitsu-vdom = { path = "../../../tairitsu/packages/vdom" }
 tairitsu-style = { path = "../../../tairitsu/packages/style" }
-tairitsu-web = { path = "../../../tairitsu/packages/web" }
+tairitsu-web = { path = "../../../tairitsu/packages/web", default-features = false, features = [
+    "vdom",
+    "hooks",
+    "macros",
+    "style",
+    "wit-bindings",
+] }
 
 # Legacy WASM dependencies (optional, for backward compatibility)
 wasm-bindgen = { version = "0.2", optional = true }

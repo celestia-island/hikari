@@ -17,5 +17,5 @@ quick-xml = { version = "0.35", features = ["serialize"] }
 regex = "^1"
 
 [build-dependencies]
-tairitsu-packager = { path = "../../../tairitsu/packages/packager" }
+tairitsu-packager = { path = "../../../tairitsu/packages/packager", default-features = false }
 anyhow = "^1"

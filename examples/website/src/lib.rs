@@ -19,16 +19,14 @@ use anyhow::Result;
 use tairitsu_web::WitPlatform;
 use tracing::error;
 
-fn run_app() -> Result<()> {
-    let platform = WitPlatform::new()?;
+fn run_app() {
+    let platform = WitPlatform::new().expect("WitPlatform init failed");
     let vnode = app::render();
-    platform.mount_vnode_to_app(&vnode)?;
-    Ok(())
+    // Mount the VNode to #app element
+    let _ = platform.mount_vnode_to_app(&vnode);
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn tairitsu_component_bootstrap() {
-    if let Err(err) = run_app() {
-        error!("website failed to start: {err}");
-    }
+    run_app();
 }

@@ -140,5 +140,5 @@ qrcode = "0.14"
 chrono = { workspace = true }
 
 [build-dependencies]
-tairitsu-packager = { path = "../../../tairitsu/packages/packager" }
+tairitsu-packager = { path = "../../../tairitsu/packages/packager", default-features = false }
 anyhow = "^1"

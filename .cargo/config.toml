@@ -1,0 +1,8 @@
+[build]
+target = "wasm32-wasip2"
+
+[unstable]
+build-std = ["std", "panic_abort", "core", "alloc"]
+
+[target.wasm32-wasip2]
+rustflags = ["--cfg", "tokio_unstable"]

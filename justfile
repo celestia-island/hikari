@@ -8,8 +8,8 @@
 # Main tasks:
 #   just build           - Build everything (Release)
 #   just build-dev       - Build everything (Debug)
-#   just dev             - Development mode (build and start website)
-#   just dev-by-agent    - Start dev server and exit when ready (for AI agent)
+#   just dev             - Development mode (daemon with hot-reload)
+#   just dev-stop        - Stop development daemon
 #   just fmt             - Format code
 #   just clippy          - Run Clippy checks
 #   just clean           - Clean build artifacts
@@ -73,13 +73,13 @@ build-website: (check-tairitsu-packager)
 check-port *force="":
     @{{py}} scripts/utils/clean_process_linux.py {{force}} 2>/dev/null || true
 
-# Development mode for website
+# Development mode for website (daemon with hot-reload)
 dev *force="": (check-port force) (check-tairitsu-packager)
-    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch
+    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch --daemon --force
 
-# Start dev server (no watch, for AI agent)
-dev-by-agent: (check-tairitsu-packager)
-    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000
+# Stop development daemon
+dev-stop:
+    tairitsu dev --daemon --shutdown
 
 # Alias for dev
 serve: dev
@@ -92,6 +92,8 @@ watch-dev:
     @just dev
 
 run: dev
+
+stop: dev-stop
 
 # ============================================================================
 # Code quality

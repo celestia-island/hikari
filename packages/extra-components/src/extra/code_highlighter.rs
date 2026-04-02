@@ -1,0 +1,523 @@
+//! CodeHighlighter - Framework Agnostic State Model
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum Language {
+    #[default]
+    Rust,
+    JavaScript,
+    TypeScript,
+    Python,
+    Go,
+    Java,
+    Cpp,
+    Html,
+    Css,
+    Json,
+    Yaml,
+    Markdown,
+    Plain,
+}
+
+impl Language {
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            Language::Rust => "Rust",
+            Language::JavaScript => "JavaScript",
+            Language::TypeScript => "TypeScript",
+            Language::Python => "Python",
+            Language::Go => "Go",
+            Language::Java => "Java",
+            Language::Cpp => "C++",
+            Language::Html => "HTML",
+            Language::Css => "CSS",
+            Language::Json => "JSON",
+            Language::Yaml => "YAML",
+            Language::Markdown => "Markdown",
+            Language::Plain => "Plain Text",
+        }
+    }
+
+    pub fn class_name(&self) -> &'static str {
+        match self {
+            Language::Rust => "language-rust",
+            Language::JavaScript => "language-javascript",
+            Language::TypeScript => "language-typescript",
+            Language::Python => "language-python",
+            Language::Go => "language-go",
+            Language::Java => "language-java",
+            Language::Cpp => "language-cpp",
+            Language::Html => "language-html",
+            Language::Css => "language-css",
+            Language::Json => "language-json",
+            Language::Yaml => "language-yaml",
+            Language::Markdown => "language-markdown",
+            Language::Plain => "language-plain",
+        }
+    }
+}
+
+/// State model for a code highlighter
+///
+/// ## Example
+///
+/// ```rust
+/// use hikari_extra_components::extra::{CodeHighlighterState, Language};
+///
+/// let state = CodeHighlighterState::new(
+///     r#"fn main() { println!("Hello"); }"#.to_string(),
+///     Language::Rust,
+/// );
+///
+/// assert_eq!(state.line_count(), 1);
+/// assert!(state.show_line_numbers);
+/// ```
+#[derive(Clone, PartialEq, Debug)]
+pub struct CodeHighlighterState {
+    pub code: String,
+    pub language: Language,
+    pub show_line_numbers: bool,
+    pub show_language: bool,
+    pub show_copy: bool,
+    pub wrap: bool,
+    pub copied: bool,
+    pub class: String,
+    pub style: String,
+}
+
+impl CodeHighlighterState {
+    pub fn new(code: String, language: Language) -> Self {
+        Self {
+            code,
+            language,
+            show_line_numbers: true,
+            show_language: true,
+            show_copy: true,
+            wrap: true,
+            copied: false,
+            class: String::new(),
+            style: String::new(),
+        }
+    }
+
+    pub fn with_show_line_numbers(mut self, show: bool) -> Self {
+        self.show_line_numbers = show;
+        self
+    }
+
+    pub fn with_show_language(mut self, show: bool) -> Self {
+        self.show_language = show;
+        self
+    }
+
+    pub fn with_show_copy(mut self, show: bool) -> Self {
+        self.show_copy = show;
+        self
+    }
+
+    pub fn with_wrap(mut self, wrap: bool) -> Self {
+        self.wrap = wrap;
+        self
+    }
+
+    pub fn with_class(mut self, class: impl Into<String>) -> Self {
+        self.class = class.into();
+        self
+    }
+
+    pub fn with_style(mut self, style: impl Into<String>) -> Self {
+        self.style = style.into();
+        self
+    }
+
+    pub fn line_count(&self) -> usize {
+        self.code.lines().count().max(1)
+    }
+
+    pub fn line_numbers(&self) -> Vec<String> {
+        (1..=self.line_count()).map(|n| n.to_string()).collect()
+    }
+
+    pub fn lines(&self) -> Vec<&str> {
+        let lines: Vec<&str> = self.code.lines().collect();
+        if lines.is_empty() && !self.code.is_empty() {
+            vec![self.code.as_str()]
+        } else {
+            lines
+        }
+    }
+
+    pub fn mark_copied(&mut self) {
+        self.copied = true;
+    }
+
+    pub fn reset_copied(&mut self) {
+        self.copied = false;
+    }
+
+    pub fn container_class(&self) -> String {
+        let mut classes = String::from("hi-code-highlighter");
+        classes.push(' ');
+        classes.push_str(self.language.class_name());
+        if self.wrap {
+            classes.push_str(" hi-code-wrap");
+        }
+        if self.copied {
+            classes.push_str(" hi-code-copied");
+        }
+        if !self.class.is_empty() {
+            classes.push(' ');
+            classes.push_str(&self.class);
+        }
+        classes
+    }
+
+    pub fn copy_button_text(&self) -> &'static str {
+        if self.copied {
+            "✓"
+        } else {
+            "📋"
+        }
+    }
+}
+
+impl Default for CodeHighlighterState {
+    fn default() -> Self {
+        Self::new(String::new(), Language::default())
+    }
+}
+
+/// Event emitted when copy is triggered
+#[derive(Clone, PartialEq, Debug)]
+pub struct CodeHighlighterCopyEvent {
+    pub code: String,
+    pub language: Language,
+}
+
+pub struct CodeHighlighterComponent;
+
+impl CodeHighlighterComponent {
+    pub fn styles() -> &'static str {
+        r#"
+.hi-code-highlighter {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background-color: var(--hi-color-code-background, #1e1e1e);
+  border: 1px solid var(--hi-color-border, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.hi-code-highlighter-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: var(--hi-color-code-header, #2a2a2a);
+  border-bottom: 1px solid var(--hi-color-border, #e0e0e0);
+}
+
+.hi-code-highlighter-language {
+  display: flex;
+  align-items: center;
+}
+
+.hi-code-highlighter-language-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  background-color: var(--hi-color-primary, #00A0E9);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.hi-code-highlighter-language-label:hover {
+  opacity: 0.9;
+}
+
+.hi-code-highlighter-copy {
+  background: none;
+  border: 1px solid var(--hi-color-border, #e0e0e0);
+  border-radius: 4px;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.hi-code-highlighter-copy:hover {
+  background-color: rgba(0, 160, 233, 0.1);
+  border-color: var(--hi-color-primary, #00A0E9);
+}
+
+.hi-code-highlighter-copy:active {
+  transform: scale(0.95);
+}
+
+.hi-code-highlighter-content {
+  flex: 1;
+  padding: 1rem;
+  overflow-x: auto;
+  color: var(--hi-color-code-text, #d4d4d4);
+}
+
+.hi-code-highlighter-line {
+  display: flex;
+  align-items: flex-start;
+  min-height: 1.6em;
+}
+
+.hi-code-highlighter-line span {
+  white-space: pre;
+  word-break: break-word;
+}
+
+.hi-code-highlighter-wrap {
+  .hi-code-highlighter-content {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
+.hi-code-highlighter-line-numbers {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0.75rem;
+  background-color: var(--hi-color-code-line-numbers, #252525);
+  border-right: 1px solid var(--hi-color-border, #e0e0e0);
+  user-select: none;
+}
+
+.hi-code-highlighter-line-number {
+  font-size: 0.75rem;
+  color: var(--hi-color-text-secondary, #666);
+  text-align: right;
+  min-height: 1.6em;
+}
+
+.hi-code-highlighter.language-rust {
+  .hi-code-highlighter-content {
+    .hi-code-highlighter-line:nth-child(1n) {
+      opacity: 1;
+    }
+  }
+}
+
+.hi-code-highlighter-language-label {
+  box-shadow: 0 0 10px rgba(0, 160, 233, 0.2);
+}
+
+.hi-code-highlighter-copy:hover {
+  box-shadow: 0 0 15px rgba(0, 160, 233, 0.1);
+}
+
+[data-theme="hikari"] {
+  .hi-code-highlighter {
+    background-color: #1e1e1e;
+    border-color: #e0e0e0;
+  }
+
+  .hi-code-highlighter-container {
+    background-color: #2a2a2a;
+    border-bottom-color: #e0e0e0;
+  }
+
+  .hi-code-highlighter-language-label {
+    background-color: #00A0E9;
+  }
+
+  .hi-code-highlighter-line-numbers {
+    background-color: #252525;
+    border-right-color: #e0e0e0;
+  }
+
+  .hi-code-highlighter-content {
+    color: #d4d4d4;
+  }
+
+  .hi-code-highlighter-line-number {
+    color: #666;
+  }
+}
+
+[data-theme="tairitsu"] {
+  .hi-code-highlighter {
+    background-color: #0d0d0d;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .hi-code-highlighter-container {
+    background-color: #1a1a1a;
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .hi-code-highlighter-language-label {
+    background-color: #1a237e;
+  }
+
+  .hi-code-highlighter-line-numbers {
+    background-color: #141414;
+    border-right-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .hi-code-highlighter-content {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .hi-code-highlighter-line-number {
+    color: rgba(255, 255, 255, 0.6);
+  }
+}
+
+.hi-code-highlighter.hi-code-copied {
+  .hi-code-highlighter-content {
+    opacity: 0.6;
+  }
+}
+
+.hi-code-highlighter-copy-icon {
+  transition: all 0.2s ease;
+}
+
+@keyframes copy-success {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+.hi-code-highlighter-copied .hi-code-highlighter-copy-icon {
+  animation: copy-success 0.3s ease;
+  color: #4caf50;
+}
+"#
+    }
+
+    pub fn name() -> &'static str {
+        "code_highlighter"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_language_display_name() {
+        assert_eq!(Language::Rust.display_name(), "Rust");
+        assert_eq!(Language::Python.display_name(), "Python");
+        assert_eq!(Language::Plain.display_name(), "Plain Text");
+        assert_eq!(Language::Cpp.display_name(), "C++");
+    }
+
+    #[test]
+    fn test_language_class_name() {
+        assert_eq!(Language::Rust.class_name(), "language-rust");
+        assert_eq!(Language::Python.class_name(), "language-python");
+        assert_eq!(Language::Plain.class_name(), "language-plain");
+        assert_eq!(Language::TypeScript.class_name(), "language-typescript");
+    }
+
+    #[test]
+    fn test_state_new() {
+        let state = CodeHighlighterState::new("fn main() {}".to_string(), Language::Rust);
+        assert_eq!(state.code, "fn main() {}");
+        assert_eq!(state.language, Language::Rust);
+        assert!(state.show_line_numbers);
+        assert!(state.show_language);
+        assert!(state.show_copy);
+        assert!(state.wrap);
+        assert!(!state.copied);
+    }
+
+    #[test]
+    fn test_line_count() {
+        let state = CodeHighlighterState::new("line1\nline2\nline3".to_string(), Language::Rust);
+        assert_eq!(state.line_count(), 3);
+
+        let empty = CodeHighlighterState::new(String::new(), Language::Rust);
+        assert_eq!(empty.line_count(), 1);
+    }
+
+    #[test]
+    fn test_line_numbers() {
+        let state = CodeHighlighterState::new("a\nb\nc".to_string(), Language::Rust);
+        let nums = state.line_numbers();
+        assert_eq!(nums, vec!["1", "2", "3"]);
+    }
+
+    #[test]
+    fn test_lines() {
+        let state = CodeHighlighterState::new("a\nb\nc".to_string(), Language::Rust);
+        assert_eq!(state.lines(), vec!["a", "b", "c"]);
+    }
+
+    #[test]
+    fn test_copied_state() {
+        let mut state = CodeHighlighterState::default();
+        assert!(!state.copied);
+        assert_eq!(state.copy_button_text(), "📋");
+
+        state.mark_copied();
+        assert!(state.copied);
+        assert_eq!(state.copy_button_text(), "✓");
+
+        state.reset_copied();
+        assert!(!state.copied);
+    }
+
+    #[test]
+    fn test_container_class() {
+        let state = CodeHighlighterState::new("code".to_string(), Language::Rust);
+        let cls = state.container_class();
+        assert!(cls.contains("hi-code-highlighter"));
+        assert!(cls.contains("language-rust"));
+        assert!(cls.contains("hi-code-wrap"));
+    }
+
+    #[test]
+    fn test_container_class_with_custom_class() {
+        let state =
+            CodeHighlighterState::new("code".to_string(), Language::Python).with_class("my-class");
+        let cls = state.container_class();
+        assert!(cls.contains("language-python"));
+        assert!(cls.contains("my-class"));
+    }
+
+    #[test]
+    fn test_builder_pattern() {
+        let state = CodeHighlighterState::new("fn main() {}".to_string(), Language::Rust)
+            .with_show_line_numbers(false)
+            .with_show_copy(false)
+            .with_wrap(false)
+            .with_class("custom");
+
+        assert!(!state.show_line_numbers);
+        assert!(!state.show_copy);
+        assert!(!state.wrap);
+        assert_eq!(state.class, "custom");
+    }
+
+    #[test]
+    fn test_component_name() {
+        assert_eq!(CodeHighlighterComponent::name(), "code_highlighter");
+    }
+
+    #[test]
+    fn test_copy_event() {
+        let event = CodeHighlighterCopyEvent {
+            code: "fn main() {}".to_string(),
+            language: Language::Rust,
+        };
+        assert_eq!(event.code, "fn main() {}");
+        assert_eq!(event.language, Language::Rust);
+    }
+}

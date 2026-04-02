@@ -123,6 +123,16 @@ Current 使用**通用蓝紫色系**：
 
 **注意**：如发现 tairitsu platform 层缺少上述接口，需写入 `../tairitsu/PLAN.md`。
 
+### 缺失 Platform API 记录
+
+| 组件 | 缺失 API | 用途 | 优先级 |
+|------|---------|------|--------|
+| `AudioWaveform` | `AudioContext` (Web Audio API) | 创建音频上下文，用于解码和分析音频 | P1 |
+| `AudioWaveform` | `AnalyserNode` (Web Audio API) | 实时频域/时域数据分析，生成波形可视化 | P1 |
+| `AudioWaveform` | `createMediaElementSource` | 将 `<audio>` 元素连接到分析图 | P1 |
+| `AudioWaveform` | `MediaElementAudioSourceNode` | 桥接 HTML 音频元素与 Web Audio API | P2 |
+| `AudioWaveform` | `AudioContext.resume()` | 恢复被浏览器自动挂起的音频上下文 | P2 |
+
 ---
 
 ## 五、SCSS/CSS 差异汇总

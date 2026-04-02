@@ -22,6 +22,7 @@
 //! - [`ZoomControls`] - Zoom state and controls
 //! - [`Timeline`] - Timeline event model
 //! - [`UserGuide`] - User onboarding guide state
+//! - [`AudioWaveformState`] - Audio waveform visualization state
 //!
 //! ### Node Graph
 //! - [`NodeGraphState`] - Node graph canvas state

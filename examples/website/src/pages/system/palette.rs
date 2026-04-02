@@ -1,6 +1,6 @@
 //! Color palette showcase page — renders all primary theme colors using hikari-palette.
 
-use hikari_palette::{Hikari, Tairitsu, default_theme};
+use hikari_palette::{default_theme, Hikari, Tairitsu};
 use tairitsu_vdom::{VElement, VNode, VText};
 
 fn txt(s: &str) -> VNode {
@@ -20,9 +20,7 @@ fn color_swatch(name: &str, hex: &str, is_dark: bool) -> VNode {
             .class("color-swatch")
             .attr("style", &style_val)
             .child(VNode::Element(
-                VElement::new("span")
-                    .class(text_class)
-                    .child(txt(name)),
+                VElement::new("span").class(text_class).child(txt(name)),
             ))
             .child(VNode::Element(
                 VElement::new("span")
@@ -35,16 +33,32 @@ fn color_swatch(name: &str, hex: &str, is_dark: bool) -> VNode {
 fn theme_section(title: &str, palette: &hikari_palette::Palette) -> VNode {
     let colors: Vec<(&str, String, bool)> = vec![
         ("primary", palette.primary.hex(), palette.primary.is_dark()),
-        ("secondary", palette.secondary.hex(), palette.secondary.is_dark()),
+        (
+            "secondary",
+            palette.secondary.hex(),
+            palette.secondary.is_dark(),
+        ),
         ("accent", palette.accent.hex(), palette.accent.is_dark()),
         ("success", palette.success.hex(), palette.success.is_dark()),
         ("warning", palette.warning.hex(), palette.warning.is_dark()),
         ("danger", palette.danger.hex(), palette.danger.is_dark()),
-        ("background", palette.background.hex(), palette.background.is_dark()),
+        (
+            "background",
+            palette.background.hex(),
+            palette.background.is_dark(),
+        ),
         ("surface", palette.surface.hex(), palette.surface.is_dark()),
         ("border", palette.border.hex(), palette.border.is_dark()),
-        ("text-primary", palette.text_primary.hex(), palette.text_primary.is_dark()),
-        ("text-secondary", palette.text_secondary.hex(), palette.text_secondary.is_dark()),
+        (
+            "text-primary",
+            palette.text_primary.hex(),
+            palette.text_primary.is_dark(),
+        ),
+        (
+            "text-secondary",
+            palette.text_secondary.hex(),
+            palette.text_secondary.is_dark(),
+        ),
     ];
 
     let swatches: Vec<VNode> = colors
@@ -86,11 +100,9 @@ pub fn render() -> VNode {
                             .child(txt("Color Palette")),
                     ))
                     .child(VNode::Element(
-                        VElement::new("p")
-                            .class("page-header__subtitle")
-                            .child(txt(
-                                "500+ traditional Chinese colors powering three official themes.",
-                            )),
+                        VElement::new("p").class("page-header__subtitle").child(txt(
+                            "500+ traditional Chinese colors powering three official themes.",
+                        )),
                     )),
             ))
             .child(VNode::Element(

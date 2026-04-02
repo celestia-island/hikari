@@ -242,6 +242,11 @@ fn render_i18n() -> VNode {
                                 span { class: "hi-tag hi-tag--success", "Complete" }
                             }
                         }
+                        tr {
+                            td { "ar-SA" }
+                            td { "Arabic (Saudi Arabia)" }
+                            td { span { class: "hi-tag hi-tag--success", "Complete" } }
+                        }
                     }
                 }
             }

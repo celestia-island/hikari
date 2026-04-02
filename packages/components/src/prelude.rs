@@ -4,10 +4,10 @@
 
 // Re-export tairitsu core types
 pub use tairitsu_vdom::{
-    Callback, ChangeEvent, Classes, DataTransfer, DragEvent, ElementHandle, EventData, EventHandle,
-    EventHandler, FileData, FocusEvent, FormData, FormEvent, InputEvent, IntoAttrValue, Key,
-    KeyboardEvent, MouseData, MouseEvent, Signal, Style, VElement, VNode, VNode as Element, VText,
-    batch, create_effect,
+    batch, create_effect, AnimationEvent, Callback, ChangeEvent, Classes, DataTransfer, DragEvent,
+    ElementHandle, EventData, EventHandle, EventHandler, FileData, FocusEvent, FormData, FormEvent,
+    InputEvent, IntoAttrValue, Key, KeyboardEvent, MouseData, MouseEvent, Signal, Style, VElement,
+    VNode, VNode as Element, VText,
 };
 
 // Re-export Event as a type alias for Dioxus compatibility
@@ -15,20 +15,6 @@ pub use tairitsu_vdom::Event;
 
 // Re-export tairitsu hooks
 pub use tairitsu_hooks::{
-    AnimationConfig,
-    AnimationDirection,
-    AnimationState,
-    // Interaction state machine for animated components
-    ButtonStateMachine,
-    // Context type from tairitsu
-    Context,
-    EasingFunction,
-    InteractionCallback,
-    InteractionEvent,
-    InteractionState,
-    // Memo type
-    Memo,
-    UseRef,
     provide_context,
     // Dioxus compatibility alias
     provide_context as use_context_provider,
@@ -47,10 +33,24 @@ pub use tairitsu_hooks::{
     use_signal,
     use_simple_animation,
     use_state,
+    AnimationConfig,
+    AnimationDirection,
+    AnimationState,
+    // Interaction state machine for animated components
+    ButtonStateMachine,
+    // Context type from tairitsu
+    Context,
+    EasingFunction,
+    InteractionCallback,
+    InteractionEvent,
+    InteractionState,
+    // Memo type
+    Memo,
+    UseRef,
 };
 
 // Re-export tairitsu macros
-pub use tairitsu_macros::{Props, component, define_props, rsx};
+pub use tairitsu_macros::{component, define_props, rsx, Props};
 
 pub use tairitsu_macros::component as derive_props;
 

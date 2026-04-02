@@ -1,5 +1,5 @@
 // packages/components/src/display/qrcode.rs
-// QRCode component using Canvas for rendering
+// QRCode component using inline SVG for rendering
 
 use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, FlexDirection, Padding, QRCodeClass, UtilityClass,
@@ -7,11 +7,9 @@ use hikari_palette::classes::{
 use qrcode::{Color, QrCode};
 
 use crate::{prelude::*, styled::StyledComponent};
-use tairitsu_hooks::ReactiveSignal;
 
 pub struct QRCodeComponent;
 
-/// Props for the QRCode component
 #[define_props]
 pub struct QRCodeProps {
     pub value: String,
@@ -28,6 +26,22 @@ pub struct QRCodeProps {
     pub error_correction: String,
 }
 
+fn build_svg(matrix: &[Vec<bool>], modules: usize, color: &str, background: &str) -> String {
+    let mut rects = String::with_capacity(modules * modules * 32);
+    for y in 0..modules {
+        for x in 0..modules {
+            if matrix[y][x] {
+                rects.push_str(&format!(
+                    "<rect x=\"{x}\" y=\"{y}\" width=\"1\" height=\"1\" fill=\"{color}\"/>"
+                ));
+            }
+        }
+    }
+    format!(
+        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {modules} {modules}" width="100%" height="100%" shape-rendering="crispEdges"><rect width="{modules}" height="{modules}" fill="{background}"/>{rects}</svg>"#
+    )
+}
+
 #[component]
 pub fn QRCode(props: QRCodeProps) -> Element {
     let container_classes = ClassesBuilder::new()
@@ -39,16 +53,12 @@ pub fn QRCode(props: QRCodeProps) -> Element {
         .add_raw(&props.class)
         .build();
 
-    let size = props.size;
     let size_px = format!("{}px", props.size);
     let value = props.value.clone();
     let color = props.color.clone();
     let background = props.background.clone();
     let ec_level = props.error_correction.clone();
 
-    let drawn: ReactiveSignal<bool> = use_signal(|| false);
-
-    // Generate QR code matrix
     let qr_result = QrCode::with_error_correction_level(
         &value,
         match ec_level.as_str() {
@@ -59,7 +69,7 @@ pub fn QRCode(props: QRCodeProps) -> Element {
         },
     );
 
-    let qr_matrix: Option<(Vec<Vec<bool>>, usize)> = qr_result.ok().map(|code| {
+    let svg_html = qr_result.ok().map(|code| {
         let width = code.width();
         let mut matrix = vec![vec![false; width]; width];
         for y in 0..width {
@@ -67,33 +77,7 @@ pub fn QRCode(props: QRCodeProps) -> Element {
                 matrix[y][x] = code[(x, y)] == Color::Dark;
             }
         }
-        (matrix, width)
-    });
-
-    let canvas_id = format!("qrcode-canvas-{}", crate::platform::now_timestamp() as u64);
-
-    let canvas_id_for_effect = canvas_id.clone();
-    let drawn_for_effect = drawn.clone();
-    let qr_matrix_for_effect = qr_matrix.clone();
-    let color_for_effect = color.clone();
-    let background_for_effect = background.clone();
-
-    use_effect(move || {
-        if drawn_for_effect.get() {
-            return;
-        }
-
-        if let Some((matrix, modules)) = &qr_matrix_for_effect {
-            if crate::platform::draw_qrcode_on_canvas_by_id(
-                &canvas_id_for_effect,
-                matrix,
-                *modules,
-                &color_for_effect,
-                &background_for_effect,
-            ) {
-                drawn_for_effect.set(true);
-            }
-        }
+        build_svg(&matrix, width, &color, &background)
     });
 
     rsx! {
@@ -107,11 +91,11 @@ pub fn QRCode(props: QRCodeProps) -> Element {
                 class: QRCodeClass::Wrapper.as_class(),
                 style: "width: {size_px}; height: {size_px};",
 
-                canvas {
-                    id: canvas_id,
-                    class: QRCodeClass::Image.as_class(),
-                    width: size,
-                    height: size,
+                if let Some(ref svg) = svg_html {
+                    div {
+                        class: QRCodeClass::Image.as_class(),
+                        dangerous_inner_html: svg,
+                    }
                 }
             }
         }

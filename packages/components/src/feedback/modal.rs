@@ -3,9 +3,8 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use crate::platform::set_timeout;
 use crate::{
-    portal::{PortalEntry, use_portal},
+    portal::{use_portal, PortalEntry},
     prelude::*,
     styled::StyledComponent,
 };
@@ -97,21 +96,11 @@ pub fn use_modal(initial_config: ModalConfig) -> ModalController {
     };
 
     let close = {
-        let remove_entry = portal.remove_entry;
         let start_close = portal.start_close_animation;
         let cfg = config.clone();
         Callback::new(move |_| {
             let id = cfg.read().id.clone();
             start_close.call(id.clone());
-
-            let remove = remove_entry.clone();
-            let id_timeout = id.clone();
-            set_timeout(
-                move || {
-                    remove.call(id_timeout);
-                },
-                200,
-            );
         })
     };
 

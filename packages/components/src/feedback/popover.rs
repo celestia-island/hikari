@@ -5,7 +5,7 @@ use hikari_palette::classes::{ClassesBuilder, Display, Position};
 
 use crate::{
     platform,
-    portal::{PortalEntry, generate_portal_id, use_portal},
+    portal::{generate_portal_id, use_portal, PortalEntry},
     prelude::*,
     styled::StyledComponent,
 };
@@ -149,23 +149,10 @@ pub fn Popover(props: PopoverProps) -> Element {
                 {
                     platform::get_bounding_rect_by_class_impl("hi-popover-trigger", &target_el)
                         .map(|rect| (rect.x, rect.y, rect.width, rect.height))
-                        .unwrap_or_else(|| {
-                            (
-                                e.client_x as f64 - 50.0,
-                                e.client_y as f64 - 15.0,
-                                100.0,
-                                30.0,
-                            )
-                        })
                 } else {
-                    (
-                        e.client_x as f64 - 50.0,
-                        e.client_y as f64 - 15.0,
-                        100.0,
-                        30.0,
-                    )
+                    None
                 };
-                trigger_rect.set(Some(rect_tuple));
+                trigger_rect.set(rect_tuple);
 
                 portal.add_entry.call(PortalEntry::Popover {
                     id,
@@ -277,6 +264,13 @@ impl StyledComponent for PopoverComponent {
   bottom: 0;
   z-index: 1049;
   background: transparent;
+}
+
+.hi-popover-fallback-center {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 "#
     }

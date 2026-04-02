@@ -7,8 +7,8 @@ use crate::platform;
 use crate::{
     feedback::{Glow, GlowProps},
     portal::{
-        PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
-        use_portal,
+        generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy,
+        TriggerPlacement,
     },
     prelude::*,
     styled::StyledComponent,
@@ -171,7 +171,7 @@ pub fn Select(props: SelectProps) -> Element {
                 div {
                     class: "hi-select-dropdown",
                     // Match trigger width via inline style if we have the rect
-                    style: if let Some((_, _, w, _)) = trigger_rect_opt { format!("width: {w}px;") } else { String::new() },
+                    style: if let Some((_, _, w, _)) = trigger_rect_opt { format!("width: {w}px;") } else { "min-width: 100%;".to_string() },
 
                     for opt in opts.iter() {
                         {

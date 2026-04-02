@@ -69,27 +69,14 @@ pub fn Tooltip(props: TooltipProps) -> Element {
             {
                 platform::get_bounding_rect_by_class_impl("hi-tooltip-trigger", &target_el)
                     .map(|rect| (rect.x, rect.y, rect.width, rect.height))
-                    .unwrap_or_else(|| {
-                        (
-                            event.client_x as f64 - 50.0,
-                            event.client_y as f64 - 15.0,
-                            100.0,
-                            30.0,
-                        )
-                    })
             } else {
-                (
-                    event.client_x as f64 - 50.0,
-                    event.client_y as f64 - 15.0,
-                    100.0,
-                    30.0,
-                )
+                None
             };
-            trigger_rect.set(Some(rect_tuple));
+            trigger_rect.set(rect_tuple);
 
             portal_add_entry(PortalEntry::Tooltip {
                 id: tooltip_id.get(),
-                trigger_rect: Some(rect_tuple),
+                trigger_rect: rect_tuple,
                 placement,
                 content: content.clone(),
                 arrow,

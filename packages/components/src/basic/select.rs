@@ -7,8 +7,8 @@ use crate::platform;
 use crate::{
     feedback::{Glow, GlowProps},
     portal::{
-        PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
-        use_portal,
+        generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy,
+        TriggerPlacement,
     },
     prelude::*,
     styled::StyledComponent,
@@ -55,6 +55,9 @@ pub struct SelectProps {
 
     #[default]
     pub on_change: Option<EventHandler<String>>,
+
+    #[default(false)]
+    pub glow: bool,
 }
 
 ///
@@ -162,6 +165,7 @@ pub fn Select(props: SelectProps) -> Element {
             let portal_inner = portal_remove.clone();
             let id_inner = id.clone();
             let internal_value_clone2 = internal_value_for_click.clone();
+            let glow_for_options = props.glow;
 
             let menu_content = rsx! {
                 div {
@@ -190,14 +194,23 @@ pub fn Select(props: SelectProps) -> Element {
                                 portal_close.call(id_close.clone());
                             });
 
-                            rsx! {
-                                Glow {
-                                    block: true,
-                                    blur: crate::GlowBlur::Light,
-                                    intensity: crate::GlowIntensity::Soft,
+                            let option_classes = if is_selected { "hi-select-option hi-select-option-selected" } else { "hi-select-option" };
 
+                            rsx! {
+                                if glow_for_options {
+                                    Glow {
+                                        block: true,
+                                        blur: crate::GlowBlur::Light,
+                                        intensity: crate::GlowIntensity::Soft,
+                                        div {
+                                            class: option_classes,
+                                            onclick: click_handler,
+                                            "{label}"
+                                        }
+                                    }
+                                } else {
                                     div {
-                                        class: if is_selected { "hi-select-option hi-select-option-selected" } else { "hi-select-option" },
+                                        class: option_classes,
                                         onclick: click_handler,
                                         "{label}"
                                     }
@@ -230,20 +243,31 @@ pub fn Select(props: SelectProps) -> Element {
 
     rsx! {
         div { class: wrapper_classes,
+            if props.glow {
+                Glow {
+                    block: true,
+                    blur: crate::GlowBlur::Light,
+                    intensity: crate::GlowIntensity::Soft,
+                    color: crate::GlowColor::Primary,
+                    div { class: trigger_classes, onclick: handle_trigger_click,
 
-            Glow {
-                block: true,
-                blur: crate::GlowBlur::Light,
-                intensity: crate::GlowIntensity::Soft,
-                color: crate::GlowColor::Primary,
+                        span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
+                            "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"请选择\".to_string()) }}"
+                        }
 
+                        span {
+                            class: "hi-select-arrow",
+                            dangerous_inner_html: r#"<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>"#,
+                        }
+                    }
+                }
+            } else {
                 div { class: trigger_classes, onclick: handle_trigger_click,
 
                     span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
                         "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"请选择\".to_string()) }}"
                     }
 
-                    // Chevron arrow
                     span {
                         class: "hi-select-arrow",
                         dangerous_inner_html: r#"<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>"#,

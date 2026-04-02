@@ -353,24 +353,24 @@
   // ============================================
 
   // 主题色（调色板颜色，通过 CSS 变量引用）
-  --hi-color-primary: #4a9eff;
-  --hi-color-secondary: #8b5cf6;
-  --hi-color-accent: #f472b6;
-  --hi-color-success: #10b981;
-  --hi-color-warning: #f59e0b;
-  --hi-color-danger: #ef4444;
+  --hi-color-primary: #EEA2A4;
+  --hi-color-secondary: #519A73;
+  --hi-color-accent: #FFC773;
+  --hi-color-success: #0EB840;
+  --hi-color-warning: #FFF143;
+  --hi-color-danger: #FF4C00;
   --hi-color-info: #3b82f6;
 
   // ============================================
   // 背景颜色（纯黑白灰）
   // ============================================
 
-  --hi-color-background: #ffffff;
-  --hi-color-surface: #f8fafc;
-  --hi-color-surface-secondary: #f1f5f9;
-  --hi-color-surface-tertiary: #e2e8f0;
-  --hi-color-border: #e2e8f0;
-  --hi-color-border-secondary: #e2e8f0;
+  --hi-color-background: #D6ECF0;
+  --hi-color-surface: #E0F0E9;
+  --hi-color-surface-secondary: #CCDDD5;
+  --hi-color-surface-tertiary: #B8CABF;
+  --hi-color-border: #C5D5CB;
+  --hi-color-border-secondary: #B8CABF;
 
   // ============================================
   // 文字颜色
@@ -495,33 +495,33 @@
   // 主题色（被 ThemeProvider 覆盖）
   // ============================================
 
-  --hi-color-primary: #ff6b9d;
-  --hi-color-secondary: #c084fc;
-  --hi-color-accent: #f472b6;
-  --hi-color-success: #a78bfa;
-  --hi-color-warning: #fbbf24;
-  --hi-color-danger: #f87171;
+  --hi-color-primary: #144A74;
+  --hi-color-secondary: #FFC773;
+  --hi-color-accent: #FFC773;
+  --hi-color-success: #0EB840;
+  --hi-color-warning: #FFF143;
+  --hi-color-danger: #FF4C00;
   --hi-color-info: #60a5fa;
 
   // ============================================
   // 背景颜色（纯黑白灰）
   // ============================================
 
-  --hi-color-background: #0f0f1a;
-  --hi-color-surface: #1a1a2e;
-  --hi-color-surface-secondary: #252540;
-  --hi-color-surface-tertiary: #2d2d4a;
-  --hi-color-border: #3a3a5a;
-  --hi-color-border-secondary: #4a4a6a;
+  --hi-color-background: #50616D;
+  --hi-color-surface: #4A4266;
+  --hi-color-surface-secondary: #3E3856;
+  --hi-color-surface-tertiary: #333048;
+  --hi-color-border: #4A4266;
+  --hi-color-border-secondary: #3E3856;
 
   // ============================================
   // 文字颜色
   // ============================================
 
-  --hi-color-text-primary: #f0f0f5;
-  --hi-color-text-secondary: #c0c0d0;
-  --hi-color-text-tertiary: #8080a0;
-  --hi-color-text-disabled: #505070;
+  --hi-color-text-primary: #F2F2F2;
+  --hi-color-text-secondary: #D9D9D9;
+  --hi-color-text-tertiary: #A0A0A0;
+  --hi-color-text-disabled: #707070;
 
   // ============================================
   // 按钮颜色更新

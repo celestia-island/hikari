@@ -12,9 +12,8 @@
   align-items: center;
   justify-content: center;
 
-  // Default: inherit color from parent element
-  // This allows buttons and other containers to control icon color
-  color: inherit;
+  // Default: inherit text color from theme
+  color: var(--hi-color-text-primary);
 
   // SVG inherits color; fill/stroke controlled by each icon's inline attributes
   svg {

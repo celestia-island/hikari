@@ -1,27 +1,27 @@
 use hikari_palette::*;
 
 #[test]
-fn test_hikari_glow_colors_are_themed() {
+fn test_hikari_glow_colors_are_contrast() {
     let hikari = Hikari::palette();
 
-    // Primary should return pink glow (牡丹粉红 - 238, 162, 164)
+    // Primary (牡丹粉红, brightness ~0.725) → black glow for contrast
     let primary_glow = hikari.button_glow_color(&hikari.primary);
-    assert_eq!(primary_glow, "rgba(238, 162, 164, 0.5)");
+    assert_eq!(primary_glow, "rgba(0, 0, 0, 0.7)");
 
-    // Secondary should return green glow (苍翠 - 81, 154, 115)
+    // Secondary (苍翠, brightness ~0.501) → black glow for contrast
     let secondary_glow = hikari.button_glow_color(&hikari.secondary);
-    assert_eq!(secondary_glow, "rgba(81, 154, 115, 0.5)");
+    assert_eq!(secondary_glow, "rgba(0, 0, 0, 0.6)");
 }
 
 #[test]
-fn test_tairitsu_glow_colors_are_themed() {
+fn test_tairitsu_glow_colors_are_contrast() {
     let tairitsu = Tairitsu::palette();
 
-    // Primary should return deep blue glow (鷃蓝 - 20, 74, 116)
+    // Primary (鷃蓝, brightness ~0.297) → white glow for contrast on dark
     let primary_glow = tairitsu.button_glow_color(&tairitsu.primary);
-    assert_eq!(primary_glow, "rgba(20, 74, 116, 0.5)");
+    assert_eq!(primary_glow, "rgba(255, 255, 255, 0.7)");
 
-    // Secondary should return yellow glow (姜黄 - 255, 199, 115)
+    // Secondary (姜黄, brightness ~0.841) → black glow for contrast
     let secondary_glow = tairitsu.button_glow_color(&tairitsu.secondary);
-    assert_eq!(secondary_glow, "rgba(255, 199, 115, 0.5)");
+    assert_eq!(secondary_glow, "rgba(0, 0, 0, 0.7)");
 }

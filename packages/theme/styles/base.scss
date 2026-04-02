@@ -18,8 +18,8 @@
 :root {
     // 默认浅色主题（作为 fallback）
     --hi-color-background: #D6ECF0;  // 月白
-    --hi-color-surface: #E0F0E9;  // 素
-    --hi-color-border: #C5D5CB;  // 素（深）
+    --hi-color-surface: #F0F4F8;  // 更亮的白色
+    --hi-color-border: #C4D8DA;  // 素（深）
 
     // 文字颜色
     --hi-color-text-primary: rgba(0, 0, 0, 0.9);
@@ -28,11 +28,11 @@
     // 主题色（通过 CSS 变量引用）
     --hi-color-primary: #EEA2A4;  // 牡丹粉红
     --hi-color-secondary: #519A73;  // 苍翠
-    --hi-color-accent: #FFC773;  // 姜黄
+    --hi-color-accent: #F7B500;  // 姜黄
     --hi-color-success: #0EB840;  // 葱倩
-    --hi-color-warning: #FFF143;  // 鹅黄
+    --hi-color-warning: #EED677;  // 鹅黄
     --hi-color-danger: #FF4C00;  // 朱红
-    --hi-color-info: #3b82f6;  // 蓝色
+    --hi-color-info: #6ABED6;  // 蓝色
 
     // 黑色透明度变体
     --hi-color-black-100: rgba(0, 0, 0, 1.0);
@@ -185,7 +185,7 @@
     --hi-card-bg-light: rgba(255, 255, 255, 0.95);
 
     // Overlay遮罩色（反色）- 使用调色板变量，95%透明度
-    --hi-overlay-color: var(--hi-color-black-95);
+    --hi-overlay-color: rgba(0, 0, 0, 0.5);
 
     // 滚动条颜色
     --hi-scrollbar-thumb-hover: var(--hi-glow-color);
@@ -399,8 +399,8 @@ textarea {
 @media (prefers-color-scheme: dark) {
     :root {
         // 暗黑模式背景色
-        --hi-color-background: #50616D;  // 墨色
-        --hi-color-surface: #4A4266;  // 黛
+        --hi-color-background: #0F172A;
+        --hi-color-surface: #1E293B;
 
         // 暗黑模式文字色
         --hi-color-text-primary: rgba(255, 255, 255, 0.9);
@@ -420,7 +420,7 @@ textarea {
         --hi-glow-button-info: rgba(106, 190, 214, 0.8);
 
         // 暗黑模式Overlay遮罩色（淡白色）- 使用调色板变量，95%透明度
-        --hi-overlay-color: var(--hi-color-white-95);
+        --hi-overlay-color: rgba(255, 255, 255, 0.5);
 
         // 暗黑模式Card背景色（黑色半透明）
         --hi-card-bg-light: rgba(0, 0, 0, 0.95);

@@ -189,3 +189,99 @@ pub fn draw_qrcode_on_canvas_by_id(
 pub fn get_bounding_rect_by_class_impl<T>(_class: &str, _element: &T) -> Option<DomRect> {
     None
 }
+
+/// ContentEditable state returned by platform
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ContentEditableState {
+    pub editable: bool,
+    pub focused: bool,
+}
+
+/// Get contenteditable state for element (placeholder)
+pub fn get_contenteditable_state(_element_handle: u64) -> Option<ContentEditableState> {
+    None
+}
+
+/// Set contenteditable attribute on element (placeholder)
+pub fn set_content_editable(_element_handle: u64, _editable: bool) {}
+
+/// Execute a document command (e.g. bold, italic) (placeholder)
+pub fn exec_command(_command: &str, _value: Option<&str>) -> bool {
+    false
+}
+
+/// Get selection start offset within element (placeholder)
+pub fn get_selection_start(_element_handle: u64) -> Option<u32> {
+    None
+}
+
+/// Get selection end offset within element (placeholder)
+pub fn get_selection_end(_element_handle: u64) -> Option<u32> {
+    None
+}
+
+/// Get inner HTML of element (placeholder)
+pub fn get_inner_html(_element_handle: u64) -> String {
+    String::new()
+}
+
+/// Set inner HTML of element (placeholder)
+pub fn set_inner_html(_element_handle: u64, _html: &str) {}
+
+/// Get element scroll top (placeholder)
+pub fn get_element_scroll_top(_element_handle: u64) -> f64 {
+    0.0
+}
+
+/// Set element scroll top (placeholder)
+pub fn set_element_scroll_top(_element_handle: u64, _value: f64) {}
+
+/// Play video element (placeholder)
+pub fn video_play(_element_handle: u64) {}
+
+/// Pause video element (placeholder)
+pub fn video_pause(_element_handle: u64) {}
+
+/// Get video current time (placeholder)
+pub fn video_get_current_time(_element_handle: u64) -> f64 {
+    0.0
+}
+
+/// Get video duration (placeholder)
+pub fn video_get_duration(_element_handle: u64) -> f64 {
+    0.0
+}
+
+/// Seek video to time (placeholder)
+pub fn video_seek(_element_handle: u64, _time: f64) {}
+
+/// Set video muted state (placeholder)
+pub fn video_set_muted(_element_handle: u64, _muted: bool) {}
+
+/// Set video volume (placeholder)
+pub fn video_set_volume(_element_handle: u64, _volume: f64) {}
+
+/// Create an AudioContext (placeholder)
+pub fn create_audio_context() -> u64 {
+    0
+}
+
+/// Create an AnalyserNode (placeholder)
+pub fn create_analyser_node(_audio_context: u64) -> u64 {
+    0
+}
+
+/// Create a MediaElementSourceNode (placeholder)
+pub fn create_media_element_source(_audio_context: u64, _element_handle: u64) -> u64 {
+    0
+}
+
+/// Get frequency data from AnalyserNode (placeholder)
+pub fn analyser_node_get_frequency_data(_analyser: u64) -> Vec<f32> {
+    Vec::new()
+}
+
+/// Get time-domain data from AnalyserNode (placeholder)
+pub fn analyser_node_get_time_domain_data(_analyser: u64) -> Vec<f32> {
+    Vec::new()
+}

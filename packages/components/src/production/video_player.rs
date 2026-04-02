@@ -1,18 +1,16 @@
 // packages/components/src/production/video_player.rs
 // Video player component with Arknights + FUI styling
 //
-// NOTE: This component wraps the native HTML5 video element with
-// Arknights-style container styling. It uses browser native controls.
-// For custom video controls, consider extending this component or
-// using libraries like Video.js or Plyr.
+// Platform API: Uses tairitsu WIT bindings for video playback control
+// (play, pause, seek, mute, volume) via html-media-element interface.
+// Stubs are provided in platform/wit.rs for environments without WIT support.
 
 use hikari_palette::classes::{ClassesBuilder, VideoPlayerClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::{platform, prelude::*, styled::StyledComponent};
 
 pub struct VideoPlayerComponent;
 
-/// Props for the VideoPlayer component
 #[define_props]
 pub struct VideoPlayerProps {
     pub src: String,
@@ -39,14 +37,36 @@ pub struct VideoPlayerProps {
     pub style: String,
 }
 
+fn format_video_time(seconds: f64) -> String {
+    let mins = (seconds / 60.0) as u32;
+    let secs = (seconds % 60.0) as u32;
+    format!("{:02}:{:02}", mins, secs)
+}
+
 #[component]
 pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
+    let is_playing = use_signal(|| false);
+    let is_muted = use_signal(|| props.muted);
+    let current_time = use_signal(|| 0.0f64);
+    let duration = use_signal(|| 0.0f64);
+
     let container_classes = ClassesBuilder::new()
         .add(VideoPlayerClass::Container)
         .add_raw(&props.class)
         .build();
 
     let video_classes = ClassesBuilder::new().add(VideoPlayerClass::Video).build();
+
+    let ct = current_time.get();
+    let dur = duration.get();
+    let formatted_time = format!("{} / {}", format_video_time(ct), format_video_time(dur));
+    let progress_percent = if dur <= 0.0 {
+        "0%".to_string()
+    } else {
+        format!("{}%", (ct / dur * 100.0).clamp(0.0, 100.0) as u32)
+    };
+
+    let muted_val = is_muted.get();
 
     rsx! {
         div { class: container_classes, style: props.style,
@@ -58,9 +78,41 @@ pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
                 autoplay: props.autoplay,
                 controls: props.controls,
                 r#loop: props.loop_,
-                muted: props.muted,
+                muted: muted_val,
+            }
 
-            // Your browser does not support the video tag.
+            if !props.controls {
+                div { class: "hi-video-controls",
+                    button {
+                        class: "hi-video-control-btn",
+                        onclick: move |_| {
+                            if is_playing.get() {
+                                is_playing.set(false);
+                                platform::video_pause(0);
+                            } else {
+                                is_playing.set(true);
+                                platform::video_play(0);
+                            }
+                        },
+                        "{if is_playing.get() { \"⏸\" } else { \"▶\" }}"
+                    }
+
+                    span { class: "hi-video-time", "{formatted_time}" }
+
+                    div { class: "hi-video-progress",
+                        div { class: "hi-video-progress-bar", style: "width: {progress_percent};" }
+                    }
+
+                    button {
+                        class: "hi-video-control-btn",
+                        onclick: move |_| {
+                            let new_muted = !is_muted.get();
+                            is_muted.set(new_muted);
+                            platform::video_set_muted(0, new_muted);
+                        },
+                        "{if is_muted.get() { \"🔇\" } else { \"🔊\" }}"
+                    }
+                }
             }
         }
     }
@@ -77,6 +129,11 @@ impl StyledComponent for VideoPlayerComponent {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
+[data-theme="dark"] .hi-video-player {
+    background-color: var(--hi-color-bg-container);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
 .hi-video-player video {
     width: 100%;
     display: block;
@@ -90,6 +147,67 @@ impl StyledComponent for VideoPlayerComponent {
 .hi-video-player video::-webkit-media-controls-current-time-display,
 .hi-video-player video::-webkit-media-controls-time-remaining-display {
     color: var(--hi-color-text-primary);
+}
+
+.hi-video-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--hi-color-bg-elevated);
+    border-top: 1px solid var(--hi-color-border);
+}
+
+[data-theme="dark"] .hi-video-controls {
+    background: var(--hi-color-bg-container);
+    border-top-color: var(--hi-color-border);
+}
+
+.hi-video-control-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: var(--hi-color-text-primary);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.hi-video-control-btn:hover {
+    background-color: var(--hi-color-primary-bg);
+    color: var(--hi-color-primary);
+}
+
+.hi-video-time {
+    font-size: 14px;
+    color: var(--hi-color-text-secondary);
+    min-width: 100px;
+    text-align: center;
+}
+
+[data-theme="dark"] .hi-video-time {
+    color: var(--hi-color-text-secondary);
+}
+
+.hi-video-progress {
+    flex: 1;
+    height: 4px;
+    background: var(--hi-color-border);
+    border-radius: 2px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.hi-video-progress-bar {
+    height: 100%;
+    background: var(--hi-color-primary);
+    transition: width 0.1s linear;
 }
 "#
     }

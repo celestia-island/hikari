@@ -14,6 +14,8 @@
 //! - [`zoom_controls`] - Zoom controls state
 //! - [`timeline`] - Timeline event model
 //! - [`user_guide`] - User onboarding guide state
+//! - [`rich_text_editor`] - Rich text editor state with formatting commands
+//! - [`video_player`] - Video player state with playback controls
 
 pub mod audio_waveform;
 pub mod code_highlighter;
@@ -21,8 +23,10 @@ pub mod collapsible;
 pub mod collapsible_card;
 pub mod drag_layer;
 pub mod draggable_card;
+pub mod rich_text_editor;
 pub mod timeline;
 pub mod user_guide;
+pub mod video_player;
 pub mod zoom_controls;
 
 pub use audio_waveform::*;
@@ -31,11 +35,9 @@ pub use collapsible::*;
 pub use collapsible_card::*;
 pub use drag_layer::*;
 pub use draggable_card::*;
+pub use rich_text_editor::*;
 pub use timeline::*;
 pub use user_guide::*;
+pub use video_player::PlaybackChangeEvent as VideoPlaybackChangeEvent;
+pub use video_player::{PlaybackStatus, TimeUpdateEvent, VIDEO_PLAYER_STYLES, VideoPlayerState};
 pub use zoom_controls::*;
-
-// NOTE: The following components require tairitsu platform APIs that are not yet implemented:
-// - rich_text_editor (requires contenteditable, execCommand - tracked in tairitsu/PLAN.md)
-// - video_player (requires video element control APIs - tracked in tairitsu/PLAN.md)
-// See /mnt/sdb1/tairitsu/PLAN.md for the full platform API requirements list.

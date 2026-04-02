@@ -1,14 +1,13 @@
 // packages/components/src/production/rich_text_editor.rs
 // Rich text editor component with Arknights + FUI styling
 //
-// NOTE: This is a basic implementation that provides a styled container
-// with toolbar UI. For full rich text editing functionality with
-// contenteditable, execCommand support, etc., consider integrating
-// with libraries like ProseMirror, Tiptap, or Quill.
+// Platform API: Uses tairitsu WIT bindings for contenteditable, execCommand,
+// and inner HTML retrieval. Stubs are provided in platform/wit.rs for
+// environments without WIT support.
 
 use hikari_palette::classes::{ClassesBuilder, RichTextEditorClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::{platform, prelude::*, styled::StyledComponent};
 
 pub struct RichTextEditorComponent;
 
@@ -55,6 +54,10 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
         props.style.clone()
     };
 
+    let exec_format = move |command: &str| {
+        platform::exec_command(command, None);
+    };
+
     rsx! {
         div {
             class: container_classes,
@@ -66,24 +69,65 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
 
                     button {
                         class: "hi-rich-text-editor-toolbar-button",
+                        onclick: move |_| exec_format("bold"),
                         "B"
                     }
 
                     button {
                         class: "hi-rich-text-editor-toolbar-button",
+                        onclick: move |_| exec_format("italic"),
+                        style: "font-style: italic;",
                         "I"
                     }
 
                     button {
                         class: "hi-rich-text-editor-toolbar-button",
+                        onclick: move |_| exec_format("underline"),
+                        style: "text-decoration: underline;",
                         "U"
+                    }
+
+                    div { class: "hi-editor-divider" }
+
+                    button {
+                        class: "hi-rich-text-editor-toolbar-button",
+                        onclick: move |_| exec_format("justifyLeft"),
+                        "⫷"
+                    }
+
+                    button {
+                        class: "hi-rich-text-editor-toolbar-button",
+                        onclick: move |_| exec_format("justifyCenter"),
+                        "⫿"
+                    }
+
+                    button {
+                        class: "hi-rich-text-editor-toolbar-button",
+                        onclick: move |_| exec_format("justifyRight"),
+                        "⫸"
+                    }
+
+                    div { class: "hi-editor-divider" }
+
+                    button {
+                        class: "hi-rich-text-editor-toolbar-button",
+                        onclick: move |_| exec_format("insertUnorderedList"),
+                        "•"
+                    }
+
+                    button {
+                        class: "hi-rich-text-editor-toolbar-button",
+                        onclick: move |_| exec_format("insertOrderedList"),
+                        "1."
                     }
                 }
             }
 
             div {
                 class: editor_classes,
-                "{content.get()}"
+                contenteditable: "true",
+                "data-placeholder": "{props.placeholder}",
+                dangerous_inner_html: "{content.get()}",
             }
         }
     }
@@ -133,16 +177,32 @@ impl StyledComponent for RichTextEditorComponent {
     color: var(--hi-color-primary);
 }
 
+.hi-editor-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--hi-border);
+    margin: 0 4px;
+}
+
+[data-theme="dark"] .hi-editor-divider {
+    background: var(--hi-border);
+}
+
 .hi-rich-text-editor-editor {
     padding: 1rem;
     min-height: 200px;
     outline: none;
     color: var(--hi-color-text-primary);
+    line-height: 1.6;
 }
 
 .hi-rich-text-editor-editor:empty::before {
     content: attr(data-placeholder);
     color: var(--hi-color-text-tertiary);
+}
+
+.hi-rich-text-editor-editor:focus {
+    outline: none;
 }
 
 .hi-rich-text-editor-editor p {

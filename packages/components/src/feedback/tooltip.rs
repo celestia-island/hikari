@@ -5,6 +5,7 @@ use hikari_palette::classes::{ClassesBuilder, TooltipClass, UtilityClass};
 
 use crate::portal::{PortalEntry, TriggerPlacement};
 use crate::{
+    platform,
     portal::provider::{generate_portal_id, use_portal},
     prelude::*,
     styled::StyledComponent,
@@ -63,9 +64,27 @@ pub fn Tooltip(props: TooltipProps) -> Element {
         let arrow = props.arrow;
         let placement = props.placement.to_trigger_placement();
         move |event: MouseEvent| {
-            // Use clientX/clientY from MouseEvent to approximate trigger position
-            // For precise element bounds, a ref-based approach would be needed
-            let rect_tuple = (event.client_x as f64, event.client_y as f64, 100.0, 30.0);
+            let rect_tuple = if let Some(target_el) =
+                platform::get_target_element_from_event(event.client_x, event.client_y)
+            {
+                platform::get_bounding_rect_by_class_impl("hi-tooltip-trigger", &target_el)
+                    .map(|rect| (rect.x, rect.y, rect.width, rect.height))
+                    .unwrap_or_else(|| {
+                        (
+                            event.client_x as f64 - 50.0,
+                            event.client_y as f64 - 15.0,
+                            100.0,
+                            30.0,
+                        )
+                    })
+            } else {
+                (
+                    event.client_x as f64 - 50.0,
+                    event.client_y as f64 - 15.0,
+                    100.0,
+                    30.0,
+                )
+            };
             trigger_rect.set(Some(rect_tuple));
 
             portal_add_entry(PortalEntry::Tooltip {

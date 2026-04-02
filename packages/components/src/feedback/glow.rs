@@ -228,15 +228,27 @@ pub fn Glow(props: GlowProps) -> Element {
             .build()
     });
 
-    // Helper function to build style string from state
-    let build_style = |interaction_level: f32, opacity: f32| -> String {
-        StyleStringBuilder::new()
-            .add_var("glow-x", "50%")
-            .add_var("glow-y", "50%")
-            .add_var("glow-intensity-scale", &interaction_level.to_string())
-            .add_var("glow-opacity", &format!("{:.3}", opacity))
-            .build()
-    };
+    let build_style =
+        |interaction_level: f32, opacity: f32, glow_x: &str, glow_y: &str| -> String {
+            StyleStringBuilder::new()
+                .add_var("glow-x", glow_x)
+                .add_var("glow-y", glow_y)
+                .add_var("glow-intensity-scale", &interaction_level.to_string())
+                .add_var("glow-opacity", &format!("{:.3}", opacity))
+                .build()
+        };
+
+    fn calc_glow_percent(event: &MouseEvent) -> (String, String) {
+        if let Some(target) = event.target {
+            let rect = tairitsu_vdom::get_bounding_client_rect(target);
+            if rect.width > 0.0 && rect.height > 0.0 {
+                let px = (event.offset_x as f64 / rect.width * 100.0).clamp(0.0, 100.0);
+                let py = (event.offset_y as f64 / rect.height * 100.0).clamp(0.0, 100.0);
+                return (format!("{:.1}%", px), format!("{:.1}%", py));
+            }
+        }
+        ("50%".to_string(), "50%".to_string())
+    }
 
     // Clone values for event handlers
     let base_opacity_clone = base_opacity;
@@ -248,22 +260,27 @@ pub fn Glow(props: GlowProps) -> Element {
         let style = glow_style.clone();
 
         move |event: MouseEvent| {
+            let (glow_x, glow_y) = calc_glow_percent(&event);
+
             let current = state.read();
             let new_state = GlowState {
-                mouse_x: event.client_x as f64,
-                mouse_y: event.client_y as f64,
+                mouse_x: event.offset_x as f64,
+                mouse_y: event.offset_y as f64,
                 is_inside: true,
                 interaction_level: current.interaction_level,
             };
             state.set(new_state);
 
-            // Calculate current opacity based on interaction level
             let current_opacity = base_opacity_clone
-                + (active_opacity_clone.unwrap_or(base_opacity_clone) - base_opacity_clone)
+                + (active_opacity_clone.unwrap_or(base_opacity_clone * 2.0) - base_opacity_clone)
                     * new_state.interaction_level;
 
-            // Update style using StyleStringBuilder
-            let new_style = build_style(new_state.interaction_level, current_opacity);
+            let new_style = build_style(
+                new_state.interaction_level,
+                current_opacity,
+                &glow_x,
+                &glow_y,
+            );
             style.set(new_style);
         }
     };
@@ -274,26 +291,34 @@ pub fn Glow(props: GlowProps) -> Element {
         let style = glow_style.clone();
         let base_op = base_opacity_clone;
 
-        move |_: MouseEvent| {
+        move |event: MouseEvent| {
+            let (glow_x, glow_y) = calc_glow_percent(&event);
+
             let current = state.read();
             let new_state = GlowState {
+                mouse_x: event.offset_x as f64,
+                mouse_y: event.offset_y as f64,
                 interaction_level: 0.5,
-                ..current
+                is_inside: true,
             };
             state.set(new_state);
 
             let current_opacity = base_op
-                + (active_opacity_clone.unwrap_or(base_op) - base_op) * new_state.interaction_level;
-            let new_style = build_style(new_state.interaction_level, current_opacity);
+                + (active_opacity_clone.unwrap_or(base_op * 2.0) - base_op)
+                    * new_state.interaction_level;
+            let new_style = build_style(
+                new_state.interaction_level,
+                current_opacity,
+                &glow_x,
+                &glow_y,
+            );
             style.set(new_style);
         }
     };
-
     // Mouse leave handler
     let onmouseleave_handler = {
         let state = glow_state.clone();
         let style = glow_style.clone();
-        let base_op = base_opacity_clone;
 
         move |_: MouseEvent| {
             let current = state.read();
@@ -304,8 +329,7 @@ pub fn Glow(props: GlowProps) -> Element {
             };
             state.set(new_state);
 
-            // Reset to base opacity
-            let new_style = build_style(0.0, base_op);
+            let new_style = build_style(0.0, 0.0, "50%", "50%");
             style.set(new_style);
         }
     };
@@ -325,8 +349,9 @@ pub fn Glow(props: GlowProps) -> Element {
             state.set(new_state);
 
             let current_opacity = base_op
-                + (active_opacity_clone.unwrap_or(base_op) - base_op) * new_state.interaction_level;
-            let new_style = build_style(new_state.interaction_level, current_opacity);
+                + (active_opacity_clone.unwrap_or(base_op * 2.0) - base_op)
+                    * new_state.interaction_level;
+            let new_style = build_style(new_state.interaction_level, current_opacity, "50%", "50%");
             style.set(new_style);
         }
     };
@@ -347,8 +372,9 @@ pub fn Glow(props: GlowProps) -> Element {
             state.set(new_state);
 
             let current_opacity = base_op
-                + (active_opacity_clone.unwrap_or(base_op) - base_op) * new_state.interaction_level;
-            let new_style = build_style(new_state.interaction_level, current_opacity);
+                + (active_opacity_clone.unwrap_or(base_op * 2.0) - base_op)
+                    * new_state.interaction_level;
+            let new_style = build_style(new_state.interaction_level, current_opacity, "50%", "50%");
             style.set(new_style);
         }
     };

@@ -4,7 +4,8 @@
 use hikari_palette::classes::{ClassesBuilder, Display, Position};
 
 use crate::{
-    portal::{PortalEntry, generate_portal_id, use_portal},
+    platform,
+    portal::{generate_portal_id, use_portal, PortalEntry},
     prelude::*,
     styled::StyledComponent,
 };
@@ -143,15 +144,28 @@ pub fn Popover(props: PopoverProps) -> Element {
                 popover_id.set(id.clone());
                 close_requested.set(false);
 
-                if let Some(drag_event) = e.as_any().downcast_ref::<MouseEvent>() {
-                    // Use client coordinates for approximate positioning
-                    trigger_rect.set(Some((
-                        drag_event.client_x as f64,
-                        drag_event.client_y as f64,
+                let rect_tuple = if let Some(target_el) =
+                    platform::get_target_element_from_event(e.client_x, e.client_y)
+                {
+                    platform::get_bounding_rect_by_class_impl("hi-popover-trigger", &target_el)
+                        .map(|rect| (rect.x, rect.y, rect.width, rect.height))
+                        .unwrap_or_else(|| {
+                            (
+                                e.client_x as f64 - 50.0,
+                                e.client_y as f64 - 15.0,
+                                100.0,
+                                30.0,
+                            )
+                        })
+                } else {
+                    (
+                        e.client_x as f64 - 50.0,
+                        e.client_y as f64 - 15.0,
                         100.0,
                         30.0,
-                    )));
-                }
+                    )
+                };
+                trigger_rect.set(Some(rect_tuple));
 
                 portal.add_entry.call(PortalEntry::Popover {
                     id,
@@ -179,6 +193,7 @@ pub fn Popover(props: PopoverProps) -> Element {
     let container_classes = ClassesBuilder::new()
         .add(Position::Relative)
         .add(Display::InlineBlock)
+        .add_raw("hi-popover-trigger")
         .add_raw(&props.class)
         .build();
 

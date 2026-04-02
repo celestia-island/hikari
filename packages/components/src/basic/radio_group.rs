@@ -43,7 +43,11 @@ pub fn RadioButton(props: RadioButtonProps) -> Element {
     let handle_change = {
         let value = props.value.clone();
         let on_change = props.on_change;
+        let group_on_change = ctx.on_change.clone();
+        let group_selected_value = ctx.selected_value.clone();
         move |_| {
+            group_selected_value.set(value.clone());
+            group_on_change.call(value.clone());
             if let Some(handler) = on_change.as_ref() {
                 handler.call(value.clone());
             }

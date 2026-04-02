@@ -113,11 +113,12 @@ impl StyleRegistry {
     #[cfg(feature = "feedback")]
     pub fn register_feedback_components(&mut self) {
         use crate::feedback::{
-            alert::AlertComponent, drawer::DrawerComponent, modal::ModalComponent,
-            popover::PopoverComponent, progress::ProgressComponent, spin::SpinComponent,
-            toast::ToastComponent, tooltip::TooltipComponent,
+            alert::AlertComponent, drawer::DrawerComponent, glow::GlowComponent,
+            modal::ModalComponent, popover::PopoverComponent, progress::ProgressComponent,
+            spin::SpinComponent, toast::ToastComponent, tooltip::TooltipComponent,
         };
         AlertComponent::register(self);
+        GlowComponent::register(self);
         ToastComponent::register(self);
         TooltipComponent::register(self);
         ModalComponent::register(self);

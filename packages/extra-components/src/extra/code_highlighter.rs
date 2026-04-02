@@ -172,7 +172,11 @@ impl CodeHighlighterState {
     }
 
     pub fn copy_button_text(&self) -> &'static str {
-        if self.copied { "✓" } else { "📋" }
+        if self.copied {
+            "✓"
+        } else {
+            "📋"
+        }
     }
 }
 

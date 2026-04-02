@@ -35,8 +35,7 @@ pub use timeline::*;
 pub use user_guide::*;
 pub use zoom_controls::*;
 
-// NOTE: The following modules have been removed as they were heavily dependent on Dioxus/wasm-bindgen:
-// - video_player (requires HTML5 video element APIs)
-// - rich_text_editor (requires contenteditable APIs)
-//
-// These can be re-implemented as framework-specific components in your application layer.
+// NOTE: The following components require tairitsu platform APIs that are not yet implemented:
+// - rich_text_editor (requires contenteditable, execCommand - tracked in tairitsu/PLAN.md)
+// - video_player (requires video element control APIs - tracked in tairitsu/PLAN.md)
+// See /mnt/sdb1/tairitsu/PLAN.md for the full platform API requirements list.

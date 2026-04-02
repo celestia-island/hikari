@@ -73,13 +73,17 @@ build-website: (check-tairitsu-packager)
 check-port *force="":
     @{{py}} scripts/utils/clean_process_linux.py {{force}} 2>/dev/null || true
 
-# Development mode for website (daemon with hot-reload)
+# Development mode for website (blocking foreground with hot-reload)
 dev *force="": (check-port force) (check-tairitsu-packager)
+    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch --tty
+
+# Start dev daemon (non-blocking, prints status then exits; for AI agents)
+dev-daemon *force="": (check-port force) (check-tairitsu-packager)
     cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch --daemon --force
 
 # Stop development daemon
 dev-stop:
-    tairitsu dev --daemon --shutdown
+    cd examples/website && tairitsu dev --daemon --shutdown
 
 # Alias for dev
 serve: dev

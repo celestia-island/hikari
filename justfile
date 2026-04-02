@@ -8,8 +8,9 @@
 # Main tasks:
 #   just build           - Build everything (Release)
 #   just build-dev       - Build everything (Debug)
-#   just dev             - Development mode (daemon with hot-reload)
-#   just dev-stop        - Stop development daemon
+#   just dev             - Blocking foreground dev server (hot-reload)
+#   just dev --daemon    - Start/restart daemon (non-blocking, for AI agents)
+#   just dev --daemon stop - Stop daemon
 #   just fmt             - Format code
 #   just clippy          - Run Clippy checks
 #   just clean           - Clean build artifacts
@@ -69,21 +70,12 @@ build-website: (check-tairitsu-packager)
 # Development
 # ============================================================================
 
-# Check if port 3000 is occupied
-check-port *force="":
-    @{{py}} scripts/utils/clean_process_linux.py {{force}} 2>/dev/null || true
-
-# Development mode for website (blocking foreground with hot-reload)
-dev *force="": (check-port force) (check-tairitsu-packager)
-    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch --tty
-
-# Start dev daemon (non-blocking, prints status then exits; for AI agents)
-dev-daemon *force="": (check-port force) (check-tairitsu-packager)
-    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch --daemon --force
-
-# Stop development daemon
-dev-stop:
-    cd examples/website && tairitsu dev --daemon --shutdown
+# Development mode for website
+#   just dev             - Blocking foreground with hot-reload
+#   just dev --daemon    - Start/restart daemon (non-blocking)
+#   just dev --daemon stop - Stop daemon
+dev *args="": (check-tairitsu-packager)
+    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch {{ if args == "--daemon stop" { "--daemon --shutdown" } else if args != "" { "--daemon --force" } else { "--tty" } }}
 
 # Alias for dev
 serve: dev
@@ -96,8 +88,6 @@ watch-dev:
     @just dev
 
 run: dev
-
-stop: dev-stop
 
 # ============================================================================
 # Code quality

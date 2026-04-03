@@ -1,137 +1,9 @@
 //! Component documentation pages.
 
+pub mod overview;
+
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
-
-fn page_header(title: &str, subtitle: &str) -> VNode {
-    use tairitsu_vdom::{VElement, VText};
-    VNode::Element(
-        VElement::new("div")
-            .class("page-header")
-            .child(VNode::Element(
-                VElement::new("h1")
-                    .class("page-header__title")
-                    .child(VNode::Text(VText::new(title))),
-            ))
-            .child(VNode::Element(
-                VElement::new("p")
-                    .class("page-header__subtitle")
-                    .child(VNode::Text(VText::new(subtitle))),
-            )),
-    )
-}
-
-fn component_ref_card(name: &str, description: &str, layer: &str) -> VNode {
-    use tairitsu_vdom::{VElement, VText};
-    VNode::Element(
-        VElement::new("div")
-            .class("component-card")
-            .child(VNode::Element(
-                VElement::new("span")
-                    .class("component-card__tag")
-                    .child(VNode::Text(VText::new(layer))),
-            ))
-            .child(VNode::Element(
-                VElement::new("h3")
-                    .class("component-card__name")
-                    .child(VNode::Text(VText::new(name))),
-            ))
-            .child(VNode::Element(
-                VElement::new("p")
-                    .class("component-card__desc")
-                    .child(VNode::Text(VText::new(description))),
-            )),
-    )
-}
-
-/// Render the components overview page.
-fn render_overview() -> VNode {
-    use tairitsu_vdom::{VElement, VNode};
-
-    let layer1_components: &[(&str, &str)] = &[
-        (
-            "Button",
-            "Primary action trigger with variants: primary, secondary, danger, ghost.",
-        ),
-        (
-            "Input",
-            "Text entry field with validation states and placeholder support.",
-        ),
-        ("Switch", "Boolean toggle control."),
-        (
-            "Avatar",
-            "User or entity representation with image and initials fallback.",
-        ),
-        ("Tag", "Compact label for categorisation or status display."),
-        ("Image", "Responsive image with lazy loading and fallback."),
-        (
-            "Empty",
-            "Empty state placeholder with configurable icon and message.",
-        ),
-        (
-            "Comment",
-            "User comment display with author, time, and content.",
-        ),
-        (
-            "Number Input",
-            "Numeric field with increment / decrement controls.",
-        ),
-        ("Search", "Search input with instant filtering support."),
-    ];
-
-    let layer2_components: &[(&str, &str)] = &[
-        (
-            "Navigation",
-            "Tabs, breadcrumbs, steps, and menu components.",
-        ),
-        (
-            "Data",
-            "Tables, lists, and data grids with sorting / filtering.",
-        ),
-        (
-            "Form",
-            "Form builder with validation, layout, and submission handling.",
-        ),
-        (
-            "Feedback",
-            "Toast notifications, alerts, progress bars, and spinners.",
-        ),
-        ("Cascader", "Hierarchical multi-level select picker."),
-        (
-            "Transfer",
-            "Dual-panel transfer widget for moving items between lists.",
-        ),
-        ("Collapsible", "Accordion / collapse panels with animation."),
-        ("Timeline", "Chronological event display."),
-        ("Tree", "Hierarchical tree view with expand / collapse."),
-        ("Pagination", "Page navigation control."),
-    ];
-
-    let mut cards: Vec<VNode> = Vec::new();
-    for (name, desc) in layer1_components {
-        cards.push(component_ref_card(name, desc, "Layer 1"));
-    }
-    for (name, desc) in layer2_components {
-        cards.push(component_ref_card(name, desc, "Layer 2"));
-    }
-
-    VNode::Element(
-        VElement::new("div")
-            .attr("id", "page-components-overview")
-            .class("hikari-page")
-            .child(page_header(
-                "Components",
-                "Hikari components, organised in three layers of abstraction.",
-            ))
-            .child(VNode::Element(
-                VElement::new("div")
-                    .class("page-section")
-                    .child(VNode::Element(
-                        VElement::new("div").class("component-grid").children(cards),
-                    )),
-            )),
-    )
-}
 
 fn render_layer1() -> VNode {
     rsx! {
@@ -565,7 +437,7 @@ fn render_layer3() -> VNode {
 /// Returns all component pages as a Vec for inclusion in the full page tree.
 pub fn render_all() -> Vec<VNode> {
     vec![
-        render_overview(),
+        overview::render(),
         render_layer1(),
         render_layer2(),
         render_layer3(),

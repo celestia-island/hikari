@@ -104,12 +104,20 @@ head = """
       window.scrollTo(0, 0);
     }
     // Highlight active sidebar link
-    document.querySelectorAll('.sidebar-link').forEach(function(link) {
+    document.querySelectorAll('.hi-sidebar-item').forEach(function(link) {
       link.classList.remove('is-active');
     });
     var currentPath = location.pathname || '/';
-    var activeLink = document.querySelector('.sidebar-link[href="' + currentPath + '"]');
-    if (activeLink) { activeLink.classList.add('is-active'); }
+    var activeLink = document.querySelector('.hi-sidebar-item[href="' + currentPath + '"]');
+    if (activeLink) {
+      activeLink.classList.add('is-active');
+      // Auto-expand parent details so active item is visible
+      var parent = activeLink.closest('details:not([open])');
+      while (parent) {
+        parent.setAttribute('open', '');
+        parent = parent.parentElement ? parent.parentElement.closest('details:not([open])') : null;
+      }
+    }
     // Highlight active topnav link
     document.querySelectorAll('.hikari-topnav__link').forEach(function(link) {
       link.classList.remove('is-active');

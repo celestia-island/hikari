@@ -17,6 +17,7 @@
 | D4 | i18n 系统 | **恢复 Rust 侧 i18n** |
 | D5 | CSS 颜色差异 | **全部回退到 legacy 值** |
 | D6 | Website 复刻深度 | **完整 1:1 复刻** |
+| D7 | CSS 动画回退 | **不使用 CSS 回退，保留 platform API 调用** |
 
 ---
 
@@ -24,58 +25,47 @@
 
 ### Phase 1: CSS 颜色回退 ✅
 
-- `base.scss`: 9 个颜色变量回退 (surface, border, accent, warning, info, overlay, dark mode)
+- `base.scss`: 9 个颜色变量回退
 - `icon.scss`: `color: inherit` → `var(--hi-color-text-primary)`
-- `icon_button.scss`: 默认尺寸 40px → 28px, ghost 文字色回退
-- `number_input.scss`: 恢复 174 行自包含版 (was 39 行 InputWrapper 委托)
-- `palette/themes.rs`: `button_glow_color()` 恢复 `glow_contrast_dynamic_rgba()`
+- `icon_button.scss`: 默认尺寸回退
+- `number_input.scss`: 恢复自包含版
+- `palette/themes.rs`: `button_glow_color()` 恢复
 
 ### Phase 2: 组件核心修复 ✅
 
-- **QRCode**: Canvas+platform stub → inline SVG 渲染 (零平台依赖)
-- **Tabs**: 恢复完整文档注释 + TabsContext + on_change 回调传播
-- **NumberInput**: 恢复自包含渲染 (inline SVG +/- 按钮, 匹配 SCSS)
-- **Modal**: set_timeout stub → CSS animation + animationend 事件
-- **Select**: platform rect 返回 None 时 CSS `min-width: 100%` 回退
-- **Popover**: platform rect 返回 None 时 viewport 居中回退
-- **Tooltip**: 传递 None trigger_rect 到渲染层
-- **Portal**: CSS keyframes + animationend 替代 JS timeouts
+- **QRCode**: Canvas+platform stub → inline SVG 渲染
+- **Tabs**: 恢复 TabsContext + on_change 回调
+- **NumberInput**: 恢复自包含渲染
+- **Modal**: requestAnimationFrame + set_timeout via platform API
+- **Select**: platform rect 调用，无 CSS 回退
+- **Popover**: platform rect 调用，无 CSS 回退
+- **Tooltip**: platform rect 调用，无 CSS 回退
+- **Portal**: inline opacity/scale style，通过 platform API 驱动
 
 ### Phase 3: Extra Components 渲染层 ✅
 
-17 个 extra 组件全部补渲染函数:
-- Collapsible, CollapsibleCard, DragLayer, DraggableCard
-- Timeline, UserGuide, ZoomControls
-- CodeHighlighter, RichTextEditor, VideoPlayer, AudioWaveform
-- NodeGraph Canvas, Node, Connection, Port, Minimap, Viewport
-
-- 修复 3 个 SCSS 前缀不匹配 (`.hikari-` → `.hi-`)
-- 创建 4 个缺失 SCSS 文件 (user_guide, audio_waveform, video_player, rich_text_editor)
+17 个 extra 组件全部补渲染函数 + 修复 SCSS 前缀 + 创建 4 个缺失 SCSS 文件
 
 ### Phase 4: Animation Package 恢复 ✅
 
-- AnimationProvider: `provide_context`/`consume_context` 模式
-- Tween hook: `UseTween` 无 Dioxus 依赖
-- 10 个 transition presets 已无 `#[cfg]` 限制 (纯字符串生成)
-- `hooks/animation_frame` 已被 `tairitsu_hooks::use_animation` 替代
-- `hooks/animated_value` 已被 `tairitsu_hooks::use_animation` 替代
-- `glow.rs` 延迟 (需 Platform trait 扩展)
+- AnimationProvider + Tween hook + 10 个 transition presets
+- 恢复 3 个 animation hooks: use_animated_value/use_transition, use_animation_frame, use_timeout/use_interval
+- glow.rs 由 feedback/glow.rs 完全替代（407 行，含状态机）
 
 ### Phase 5: Website 1:1 复刻 ✅
 
-- 恢复 5 个 SCSS 文件 (home, pages, aside_footer, showcase, code_block)
-- Sidebar 升级为 3 层导航 (details/summary 折叠, 图标, 活跃状态)
-- 组件概览页: 24 个组件卡片 (Layer 1/2/3)
-- Video demo 页面 (VideoPlayer + AudioWaveform)
-- Animation demo: 9 个交互式预设 (Glow/Neon/Tech/Transition)
+- 5 个 SCSS 文件 + 3 层导航 + 24 组件卡片 + Video demo + Animation demo
 
 ### Phase 6: Scrollbar + Platform + 清理 ✅
 
-- ScrollbarContainer: 479 行实现 (状态机, feature gate, 平台 API 集成)
-- ThemeProvider: `provide_context` 实际激活
-- StyleProvider: `provide_context`/`consume_context` 实际激活
-- 350 个测试全部通过, 0 失败
-- 剩余 4 个 TODO 均为合法外部依赖 (tairitsu_css_values, WIT matchMedia)
+- ScrollbarContainer: 479 行实现 (feature gate)
+- ThemeProvider/StyleProvider: provide_context 实际激活
+- Divider 组件: 完整实现 + 测试
+- ProcessorNode/OutputNode: 真实 handle_input/get_output (Mutex)
+- modal.rs: 消除 unreachable!()，使用穷举 match
+- render_markdown_simple: 修复损坏的 bold/italic/code 解析
+- 移除所有 CSS 动画回退 (portal keyframes, popover fade-in, center-viewport fallback)
+- 移除 element_from_point always-close 回退
 
 ---
 
@@ -86,8 +76,10 @@
 | tairitsu WIT: matchMedia | prefers_reduced_motion | 等待 tairitsu |
 | tairitsu WIT: ResizeObserver | ScrollbarContainer | 等待 tairitsu |
 | tairitsu WIT: MutationObserver | ScrollbarContainer | 等待 tairitsu |
-| tairitsu WIT: set_timeout | Modal 动画 (已用 CSS 替代) | 已解决 |
-| tairitsu WIT: get_bounding_client_rect | Select/Popover/Tooltip (已用 CSS 回退) | 已解决 |
+| tairitsu WIT: set_timeout | Modal/Portal 动画 | platform API 已就绪，stub 返回 0 |
+| tairitsu WIT: get_bounding_client_rect | Select/Popover/Tooltip | platform API 已就绪，stub 返回 None |
+| tairitsu WIT: request_animation_frame | Portal 动画 | platform API 已就绪，stub 为 no-op |
+| tairitsu WIT: element_from_point | Dropdown/Popover 点击检测 | platform API 已就绪，stub 返回 None |
 | tairitsu WIT: video/audio API | VideoPlayer/AudioWaveform | 等待 tairitsu |
 | tairitsu WIT: exec_command | RichTextEditor | 等待 tairitsu |
 | tairitsu-css-values crate | CSS 值类型安全 | 等待发布 |
@@ -98,10 +90,9 @@
 
 | 指标 | 值 |
 |------|-----|
-| 总提交数 | 7 |
-| 总测试数 | 350 (全部通过) |
-| 新增渲染函数 | 17 (extra-components) |
+| 总测试数 | 359 (全部通过) |
+| 总提交数 | 10 |
+| 新增渲染函数 | 17 (extra-components) + 1 (Divider) |
+| 恢复 animation hooks | 3 (animated_value, animation_frame, continuous) |
 | 修复 SCSS 文件 | 3 (前缀) + 4 (新建) + 5 (website) |
-| 恢复组件功能 | QRCode, Tabs, NumberInput, Modal, Select, Popover, Tooltip, ScrollbarContainer |
-| 恢复 Animation 模块 | provider, hooks/tween |
-| 剩余合法 TODO | 4 (外部依赖) |
+| 剩余合法 TODO | 4 (2x tairitsu_css_values, 2x WIT matchMedia) |

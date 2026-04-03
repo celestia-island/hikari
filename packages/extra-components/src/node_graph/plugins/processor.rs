@@ -101,10 +101,10 @@ impl ProcessorNode {
         let b = inputs.get(&self.input_port_b).cloned();
         drop(inputs);
 
-        if let (Some(a_val), Some(b_val)) = (a, b) {
-            if let Ok(result) = self.compute(a_val, b_val) {
-                *self.output.lock().unwrap() = Some(result);
-            }
+        if let (Some(a_val), Some(b_val)) = (a, b)
+            && let Ok(result) = self.compute(a_val, b_val)
+        {
+            *self.output.lock().unwrap() = Some(result);
         }
     }
 }

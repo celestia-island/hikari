@@ -9,7 +9,7 @@ use std::rc::Rc;
 pub fn use_timeout(duration_ms: u64, callback: impl Fn() + Clone + 'static) -> impl Fn() {
     let fired = Rc::new(RefCell::new(false));
 
-    let trigger = move || {
+    move || {
         if *fired.borrow() {
             return;
         }
@@ -17,10 +17,8 @@ pub fn use_timeout(duration_ms: u64, callback: impl Fn() + Clone + 'static) -> i
 
         let cb = callback.clone();
         let platform = tairitsu_web::BrowserPlatform::new();
-        platform.set_timeout(move || cb(), duration_ms as u32);
-    };
-
-    trigger
+        platform.set_timeout(cb, duration_ms as u32);
+    }
 }
 
 pub fn use_interval(duration_ms: u64, callback: impl Fn() + 'static) {

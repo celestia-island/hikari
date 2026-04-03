@@ -54,26 +54,26 @@ pub fn Card(props: CardProps) -> Element {
     // Mouse tracking handler for glow effect
     let glow_style_clone = glow_style.clone();
     let mousemove_handler = move |event: MouseEvent| {
-        if props.glow {
-            if let Some(target) = event.target {
-                let rect = get_bounding_client_rect(target);
-                let pct_x = if rect.width > 0.0 {
-                    (event.offset_x as f64 / rect.width * 100.0).clamp(0.0, 100.0)
-                } else {
-                    50.0
-                };
-                let pct_y = if rect.height > 0.0 {
-                    (event.offset_y as f64 / rect.height * 100.0).clamp(0.0, 100.0)
-                } else {
-                    50.0
-                };
-                let new_style = StyleStringBuilder::new()
-                    .add_var("glow-x", &format!("{}%", pct_x))
-                    .add_var("glow-y", &format!("{}%", pct_y))
-                    .add_var("hi-glow-color", "var(--hi-glow-button-primary)")
-                    .build();
-                glow_style_clone.set(new_style);
-            }
+        if props.glow
+            && let Some(target) = event.target
+        {
+            let rect = get_bounding_client_rect(target);
+            let pct_x = if rect.width > 0.0 {
+                (event.offset_x as f64 / rect.width * 100.0).clamp(0.0, 100.0)
+            } else {
+                50.0
+            };
+            let pct_y = if rect.height > 0.0 {
+                (event.offset_y as f64 / rect.height * 100.0).clamp(0.0, 100.0)
+            } else {
+                50.0
+            };
+            let new_style = StyleStringBuilder::new()
+                .add_var("glow-x", &format!("{}%", pct_x))
+                .add_var("glow-y", &format!("{}%", pct_y))
+                .add_var("hi-glow-color", "var(--hi-glow-button-primary)")
+                .build();
+            glow_style_clone.set(new_style);
         }
     };
 

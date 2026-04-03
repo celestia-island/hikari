@@ -4,7 +4,7 @@
 
 use std::path::PathBuf;
 
-use hikari_builder::icons::{IconConfig, IconSelection, MdiStyle, auto_discovery};
+use hikari_builder::icons::{auto_discovery, IconConfig, IconSelection, MdiStyle};
 
 fn main() {
     println!("cargo:warning=🎨 hikari-icons: Building icons...");
@@ -63,7 +63,6 @@ fn build_icons(workspace_root: &std::path::Path) -> anyhow::Result<()> {
         selection: icon_selection,
         styles: vec![MdiStyle::Filled, MdiStyle::Outline],
         output_file: "src/generated/mdi_selected.rs".into(),
-        ..Default::default()
     };
 
     hikari_builder::icons::build_selected_icons(&config)
@@ -76,12 +75,11 @@ fn find_workspace_root() -> PathBuf {
 
     loop {
         let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists() {
-            if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
-                if content.contains("[workspace]") {
-                    return current;
-                }
-            }
+        if cargo_toml.exists()
+            && let Ok(content) = std::fs::read_to_string(&cargo_toml)
+            && content.contains("[workspace]")
+        {
+            return current;
         }
 
         match current.parent() {

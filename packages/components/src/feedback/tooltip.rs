@@ -23,7 +23,7 @@ pub enum TooltipPlacement {
 }
 
 impl TooltipPlacement {
-    fn to_trigger_placement(&self) -> TriggerPlacement {
+    fn to_trigger_placement(self) -> TriggerPlacement {
         match self {
             TooltipPlacement::Top => TriggerPlacement::Top,
             TooltipPlacement::Bottom => TriggerPlacement::Bottom,

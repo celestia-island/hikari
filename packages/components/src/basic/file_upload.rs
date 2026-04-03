@@ -51,7 +51,7 @@ pub struct FileUploadProps {
 pub fn FileUpload(props: FileUploadProps) -> Element {
     let upload_status = use_signal(|| FileUploadStatus::Idle);
 
-    let files = use_signal(|| Vec::<String>::new());
+    let files = use_signal(Vec::<String>::new);
 
     let wrapper_classes = ClassesBuilder::new()
         .add(FileUploadClass::FileUploadWrapper)

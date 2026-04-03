@@ -319,7 +319,7 @@ impl<'a, P: Platform> AnimationBuilder<'a, P> {
 
                         if needs_update && !new_styles.is_empty() {
                             for (prop, value_str) in &new_styles {
-                                let _ = platform.borrow_mut().set_style(
+                                platform.borrow_mut().set_style(
                                     element_handle,
                                     prop.as_str(),
                                     value_str,
@@ -380,7 +380,7 @@ impl<'a, P: Platform> AnimationBuilder<'a, P> {
                     match action {
                         AnimationAction::Style(prop, value) => {
                             let value_str = value.evaluate(&ctx, &mut state);
-                            let _ = self.platform.borrow_mut().set_style(
+                            self.platform.borrow_mut().set_style(
                                 element_handle,
                                 prop.as_str(),
                                 &value_str,
@@ -389,7 +389,7 @@ impl<'a, P: Platform> AnimationBuilder<'a, P> {
                         AnimationAction::Class(class) => {
                             // Note: set_class is not directly available in Platform trait
                             // This would need to be implemented via set_attribute
-                            let _ = self.platform.borrow_mut().set_attribute(
+                            self.platform.borrow_mut().set_attribute(
                                 element_handle,
                                 "class",
                                 class,
@@ -404,7 +404,7 @@ impl<'a, P: Platform> AnimationBuilder<'a, P> {
     fn apply_with_transition_internal(self, duration: &str, easing: &str, _is_transition: bool) {
         for element_name in self.actions.keys() {
             if let Some(element_handle) = self.elements.get(element_name) {
-                let _ = self.platform.borrow_mut().set_style(
+                self.platform.borrow_mut().set_style(
                     element_handle,
                     "transition",
                     &format!("all {} {}", duration, easing),

@@ -28,9 +28,9 @@ pub struct QRCodeProps {
 
 fn build_svg(matrix: &[Vec<bool>], modules: usize, color: &str, background: &str) -> String {
     let mut rects = String::with_capacity(modules * modules * 32);
-    for y in 0..modules {
-        for x in 0..modules {
-            if matrix[y][x] {
+    for (y, row) in matrix.iter().enumerate().take(modules) {
+        for (x, &cell) in row.iter().enumerate().take(modules) {
+            if cell {
                 rects.push_str(&format!(
                     "<rect x=\"{x}\" y=\"{y}\" width=\"1\" height=\"1\" fill=\"{color}\"/>"
                 ));

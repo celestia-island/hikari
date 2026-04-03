@@ -24,7 +24,7 @@ pub struct BackgroundProps {
 #[component]
 pub fn Background(props: BackgroundProps) -> Element {
     // Animation state using CSS variables
-    let animation_style = use_signal(|| String::new());
+    let animation_style = use_signal(String::new);
 
     use_effect(move || {
         // Start the gradient animation using platform layer

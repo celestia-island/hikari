@@ -6,8 +6,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use tairitsu_vdom::platform::Platform;
-
 use crate::provider::try_use_animation_config;
 
 pub fn use_animated_value<T: Clone + 'static>(initial: T) -> tairitsu_hooks::ReactiveSignal<T> {

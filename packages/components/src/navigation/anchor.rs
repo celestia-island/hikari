@@ -111,9 +111,8 @@ pub fn Anchor(
     }
 }
 
-///
 pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> ReactiveSignal<String> {
-    let active_anchor = use_signal(|| String::new());
+    let active_anchor = use_signal(String::new);
     let active_anchor_for_effect = active_anchor.clone();
 
     use_effect(move || {

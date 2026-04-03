@@ -91,8 +91,7 @@ impl<'a, P: Platform> StyleBuilder<'a, P> {
 
         // Batch update all properties to minimize DOM access
         for (property, value) in self.properties {
-            let _ = self
-                .platform
+            self.platform
                 .borrow_mut()
                 .set_style(self.element, property.as_str(), &value);
         }
@@ -228,20 +227,17 @@ impl<'a, P: Platform> AttributeBuilder<'a, P> {
         for (name, value) in self.attributes {
             match value {
                 AttributeValue::String(v) => {
-                    let _ = self
-                        .platform
+                    self.platform
                         .borrow_mut()
                         .set_attribute(self.element, &name, &v);
                 }
                 AttributeValue::Bool(v) => {
                     if v {
-                        let _ = self
-                            .platform
+                        self.platform
                             .borrow_mut()
                             .set_attribute(self.element, &name, "");
                     } else {
-                        let _ = self
-                            .platform
+                        self.platform
                             .borrow_mut()
                             .remove_attribute(self.element, &name);
                     }

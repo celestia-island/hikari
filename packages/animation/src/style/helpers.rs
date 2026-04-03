@@ -30,7 +30,7 @@ pub fn set_style<P: Platform>(
     property: CssProperty,
     value: &str,
 ) {
-    let _ = platform
+    platform
         .borrow_mut()
         .set_style(element, property.as_str(), value);
 }
@@ -61,7 +61,7 @@ pub fn set_styles<P: Platform>(
     properties: &[(CssProperty, &str)],
 ) {
     for (property, value) in properties {
-        let _ = platform
+        platform
             .borrow_mut()
             .set_style(element, property.as_str(), value);
     }
@@ -88,7 +88,7 @@ pub fn remove_style<P: Platform>(
     element: &P::Element,
     property: CssProperty,
 ) {
-    let _ = platform
+    platform
         .borrow_mut()
         .set_style(element, property.as_str(), "");
 }

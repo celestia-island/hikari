@@ -140,11 +140,10 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
         F: Fn(i32, i32) -> String + 'static,
     {
         self.bind_event("mouseenter", move |event: Box<dyn EventData>| {
-            if let Some(mouse_event) = event.as_any().downcast_ref::<MouseEvent>() {
-                Some((f)(mouse_event.client_x, mouse_event.client_y))
-            } else {
-                None
-            }
+            event
+                .as_any()
+                .downcast_ref::<MouseEvent>()
+                .map(|mouse_event| (f)(mouse_event.client_x, mouse_event.client_y))
         })
     }
 
@@ -154,11 +153,10 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
         F: Fn(i32, i32) -> String + 'static,
     {
         self.bind_event("mouseleave", move |event: Box<dyn EventData>| {
-            if let Some(mouse_event) = event.as_any().downcast_ref::<MouseEvent>() {
-                Some((f)(mouse_event.client_x, mouse_event.client_y))
-            } else {
-                None
-            }
+            event
+                .as_any()
+                .downcast_ref::<MouseEvent>()
+                .map(|mouse_event| (f)(mouse_event.client_x, mouse_event.client_y))
         })
     }
 
@@ -168,11 +166,10 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
         F: Fn(i32, i32) -> String + 'static,
     {
         self.bind_event("mousemove", move |event: Box<dyn EventData>| {
-            if let Some(mouse_event) = event.as_any().downcast_ref::<MouseEvent>() {
-                Some((f)(mouse_event.client_x, mouse_event.client_y))
-            } else {
-                None
-            }
+            event
+                .as_any()
+                .downcast_ref::<MouseEvent>()
+                .map(|mouse_event| (f)(mouse_event.client_x, mouse_event.client_y))
         })
     }
 
@@ -195,7 +192,7 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
                     if let Some(mouse_event) = event.as_any().downcast_ref::<MouseEvent>() {
                         let value_str = (f)(mouse_event.client_x, mouse_event.client_y);
                         for (_name, element_handle) in elements.iter() {
-                            let _ = platform.borrow_mut().set_style(
+                            platform.borrow_mut().set_style(
                                 element_handle,
                                 "transform",
                                 &value_str,
@@ -208,11 +205,9 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
                     "mousemove",
                     Box::new(wrapped_handler),
                 );
-                // Restore the window element
                 self.window_element = Some(window_elem);
             }
         } else {
-            // Fall back to the main element if no window element is set
             let platform = self.platform.clone();
             let elements = self.elements.clone();
             let element = self.element.clone();
@@ -220,11 +215,9 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
                 if let Some(mouse_event) = event.as_any().downcast_ref::<MouseEvent>() {
                     let value_str = (f)(mouse_event.client_x, mouse_event.client_y);
                     for (_name, element_handle) in elements.iter() {
-                        let _ = platform.borrow_mut().set_style(
-                            element_handle,
-                            "transform",
-                            &value_str,
-                        );
+                        platform
+                            .borrow_mut()
+                            .set_style(element_handle, "transform", &value_str);
                     }
                 }
             };
@@ -243,11 +236,10 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
         F: Fn(i32, i32) -> String + 'static,
     {
         self.bind_event("click", move |event: Box<dyn EventData>| {
-            if let Some(mouse_event) = event.as_any().downcast_ref::<MouseEvent>() {
-                Some((f)(mouse_event.client_x, mouse_event.client_y))
-            } else {
-                None
-            }
+            event
+                .as_any()
+                .downcast_ref::<MouseEvent>()
+                .map(|mouse_event| (f)(mouse_event.client_x, mouse_event.client_y))
         })
     }
 
@@ -281,10 +273,9 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
             if let Some(value_str) = handler(event) {
                 for (_name, element_handle) in elements.iter() {
                     // Apply the style using the platform
-                    let _ =
-                        platform
-                            .borrow_mut()
-                            .set_style(element_handle, "transform", &value_str);
+                    platform
+                        .borrow_mut()
+                        .set_style(element_handle, "transform", &value_str);
                 }
             }
         };

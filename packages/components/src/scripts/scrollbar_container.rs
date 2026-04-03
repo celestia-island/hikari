@@ -24,7 +24,6 @@
 
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::time::Duration;
 
 use crate::platform;
 
@@ -33,6 +32,7 @@ use crate::platform;
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)]
 enum ScrollbarAnimationState {
     Idle,
     Active,
@@ -40,6 +40,7 @@ enum ScrollbarAnimationState {
     ScrollHover,
 }
 
+#[allow(dead_code)]
 struct ScrollbarAnimator {
     state: Rc<RefCell<ScrollbarAnimationState>>,
     track_handle: u64,
@@ -47,6 +48,7 @@ struct ScrollbarAnimator {
     is_mouse_over: Rc<RefCell<bool>>,
 }
 
+#[allow(dead_code)]
 impl ScrollbarAnimator {
     fn new(track_handle: u64) -> Self {
         Self {
@@ -150,6 +152,7 @@ impl Clone for ScrollbarAnimator {
 // Selectors
 // ---------------------------------------------------------------------------
 
+#[allow(dead_code)]
 const SCROLLBAR_SELECTORS: &[&str] = &[
     ".hi-aside-content",
     ".hi-layout-aside-content",
@@ -168,9 +171,13 @@ const SCROLLBAR_SELECTORS: &[&str] = &[
 // Scrollbar layout constants
 // ---------------------------------------------------------------------------
 
+#[allow(dead_code)]
 const TRACK_DEFAULT_WIDTH: f64 = 4.0;
+#[allow(dead_code)]
 const TRACK_EXPANDED_WIDTH: f64 = 8.0;
+#[allow(dead_code)]
 const THUMB_MIN_HEIGHT: f64 = 20.0;
+#[allow(dead_code)]
 const SCROLL_HOVER_DURATION_MS: i32 = 500;
 
 // ---------------------------------------------------------------------------

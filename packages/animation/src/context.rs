@@ -148,7 +148,7 @@ impl<P: Platform> AnimationContext<P> {
 
     /// Get element bounding rectangle
     pub fn bounding_rect(&self) -> DomRect {
-        self.bounding_rect.clone()
+        self.bounding_rect
     }
 
     // ===== Element Position =====
@@ -371,6 +371,7 @@ impl<P: Platform> AnimationContext<P> {
 
 #[deprecated(note = "Use AnimationContext::new with platform instead")]
 #[doc(hidden)]
+#[derive(Default)]
 pub struct AnimationContextLegacy {
     _private: (),
 }
@@ -380,6 +381,6 @@ pub struct AnimationContextLegacy {
 #[allow(deprecated)]
 impl AnimationContextLegacy {
     pub fn new() -> Self {
-        Self { _private: () }
+        Self::default()
     }
 }

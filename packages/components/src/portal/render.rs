@@ -78,7 +78,7 @@ fn use_animated_portal_entry(
                 name, state
             ));
             if state == ModalAnimationState::Appearing {
-                let mut anim_state = anim_state_for_effect.clone();
+                let anim_state = anim_state_for_effect.clone();
                 request_animation_frame(move || {
                     anim_state.set(ModalAnimationState::Visible);
                     log(&format!(
@@ -513,12 +513,11 @@ fn DropdownPortalEntry(
                 style: content_style.read(),
                 onclick: move |e: MouseEvent| {
                     e.stop_propagation();
-                    if close_on_select {
-                        if let Some(target_el) = element_from_point(e.client_x, e.client_y) {
-                            if element_closest(&target_el, ".hi-menu-item").is_some() {
-                                close_dropdown_for_content.call(e);
-                            }
-                        }
+                    if close_on_select
+                        && let Some(target_el) = element_from_point(e.client_x, e.client_y)
+                        && element_closest(&target_el, ".hi-menu-item").is_some()
+                    {
+                        close_dropdown_for_content.call(e);
                     }
                 },
 
@@ -816,14 +815,13 @@ fn PopoverPortalEntry(
                 onclick: move |e: MouseEvent| {
                     e.stop_propagation();
 
-                    if close_on_select {
-                        if let Some(target_el) = element_from_point(e.client_x, e.client_y) {
-                            if element_closest(&target_el, ".hi-menu-item").is_some() {
-                                close_popover_for_content.call(e);
-                                if let Some(handler) = on_close_for_content.as_ref() {
-                                    handler.call(());
-                                }
-                            }
+                    if close_on_select
+                        && let Some(target_el) = element_from_point(e.client_x, e.client_y)
+                        && element_closest(&target_el, ".hi-menu-item").is_some()
+                    {
+                        close_popover_for_content.call(e);
+                        if let Some(handler) = on_close_for_content.as_ref() {
+                            handler.call(());
                         }
                     }
                 },

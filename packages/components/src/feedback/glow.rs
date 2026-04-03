@@ -215,7 +215,7 @@ pub fn Glow(props: GlowProps) -> Element {
     let active_opacity = props.active_intensity.map(get_opacity_for_intensity);
 
     // Animation state
-    let glow_state = use_signal(|| GlowState::default());
+    let glow_state = use_signal(GlowState::default);
 
     // Build initial style using StyleStringBuilder
     let glow_style = use_signal(|| {

@@ -56,12 +56,12 @@ impl<P: Platform> ScrollbarRegistry<P> {
     pub fn update_width(&mut self, id: &str, width: f64, platform: &Rc<RefCell<P>>) {
         if let Some(track_handle) = self.scrollbars.get(id) {
             // Apply transition and width via Platform trait
-            let _ = platform.borrow_mut().set_style(
+            platform.borrow_mut().set_style(
                 track_handle,
                 "transition",
                 "width 300ms cubic-bezier(0.25, 0.1, 0.25, 1)",
             );
-            let _ = platform
+            platform
                 .borrow_mut()
                 .set_style(track_handle, "width", &format!("{}px", width));
         }
@@ -123,12 +123,12 @@ pub fn update_scrollbar_width<P: Platform<Element = u64>>(
         && let Some(&track_handle) = scrollbars.get(&id)
     {
         // For u64 elements, we can directly use the handle
-        let _ = platform.borrow_mut().set_style(
+        platform.borrow_mut().set_style(
             &track_handle,
             "transition",
             "width 300ms cubic-bezier(0.25, 0.1, 0.25, 1)",
         );
-        let _ = platform
+        platform
             .borrow_mut()
             .set_style(&track_handle, "width", &format!("{}px", width));
     }

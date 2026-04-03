@@ -75,13 +75,13 @@ pub fn apply_actions<P: Platform>(
         match action {
             AnimationAction::Style(prop, value) => {
                 let value_str = value.evaluate(ctx, state);
-                let _ = platform
+                platform
                     .borrow_mut()
                     .set_style(element, prop.as_str(), &value_str);
             }
             AnimationAction::Class(class) => {
                 // Use set_attribute to add class (simplified approach)
-                let _ = platform.borrow_mut().set_attribute(element, "class", class);
+                platform.borrow_mut().set_attribute(element, "class", class);
             }
         }
     }

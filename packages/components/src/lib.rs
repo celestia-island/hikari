@@ -29,14 +29,15 @@ pub mod prelude;
 pub use styled::{StyleRegistry, StyledComponent};
 
 // Re-exports
+#[allow(ambiguous_glob_reexports)]
 pub use basic::*;
 pub use data::*;
 pub use display::*;
 pub use entry::*;
 pub use feedback::*;
+#[allow(ambiguous_glob_reexports)]
 pub use layout::*;
 pub use navigation::*;
-pub use production::*;
 
 // Theme system
 pub mod theme;

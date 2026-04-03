@@ -47,3 +47,7 @@ impl Default for CollapsibleCardState {
         Self::new(String::new())
     }
 }
+
+pub fn render_collapsible_card(state: &CollapsibleCardState) -> tairitsu_vdom::VNode {
+    super::collapsible::render_collapsible(&state.inner)
+}

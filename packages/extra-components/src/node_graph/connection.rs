@@ -176,6 +176,60 @@ impl ConnectionLine {
     }
 }
 
+use tairitsu_vdom::svg::SafeSvg;
+use tairitsu_vdom::{VElement, VNode};
+
+pub fn render_connection(connection: &Connection) -> VNode {
+    let stroke_color = if connection.selected {
+        "var(--hi-color-primary, #6366f1)"
+    } else {
+        "var(--hi-color-connection, #94a3b8)"
+    };
+
+    let svg_content = format!(
+        r#"<svg xmlns="http://www.w3.org/2000/svg" class="{}" style="overflow:visible;"><defs><marker id="arrowhead-{}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="{}"/></marker></defs><path d="" stroke="{}" stroke-width="2" fill="none" marker-end="url(#arrowhead-{})"/></svg>"#,
+        connection.class_string(),
+        connection.id,
+        stroke_color,
+        stroke_color,
+        connection.id,
+    );
+
+    VNode::Element(
+        VElement::new("div")
+            .class("hi-connection-container")
+            .key(&connection.id)
+            .safe_svg(SafeSvg::new(&svg_content)),
+    )
+}
+
+pub fn render_connection_line(line: &ConnectionLine) -> VNode {
+    let path_data = line.path_data();
+    let stroke_color = if line.selected {
+        "var(--hi-color-primary, #6366f1)"
+    } else {
+        "var(--hi-color-connection, #94a3b8)"
+    };
+    let stroke_width = if line.selected { "2.5" } else { "2" };
+    let class = if line.selected {
+        "hi-connection hi-connection-selected"
+    } else {
+        "hi-connection"
+    };
+
+    let svg_content = format!(
+        r#"<svg xmlns="http://www.w3.org/2000/svg" class="{}" style="overflow:visible;"><defs><marker id="arrowhead-{}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="{}"/></marker></defs><path d="{}" stroke="{}" stroke-width="{}" fill="none" marker-end="url(#arrowhead-{})"/></svg>"#,
+        class, line.id, stroke_color, path_data, stroke_color, stroke_width, line.id,
+    );
+
+    VNode::Element(
+        VElement::new("div")
+            .class("hi-connection-container")
+            .key(&line.id)
+            .safe_svg(SafeSvg::new(&svg_content)),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

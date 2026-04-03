@@ -1,5 +1,7 @@
 //! CodeHighlighter - Framework Agnostic State Model
 
+use tairitsu_vdom::{VElement, VNode, VText};
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum Language {
     #[default]
@@ -172,7 +174,11 @@ impl CodeHighlighterState {
     }
 
     pub fn copy_button_text(&self) -> &'static str {
-        if self.copied { "✓" } else { "📋" }
+        if self.copied {
+            "✓"
+        } else {
+            "📋"
+        }
     }
 }
 
@@ -187,6 +193,94 @@ impl Default for CodeHighlighterState {
 pub struct CodeHighlighterCopyEvent {
     pub code: String,
     pub language: Language,
+}
+
+pub fn render_code_highlighter(state: &CodeHighlighterState) -> VNode {
+    let lines = state.lines();
+    let line_numbers = state.line_numbers();
+
+    let mut container = VElement::new("div")
+        .class(state.container_class())
+        .attr_opt(
+            "style",
+            if state.style.is_empty() {
+                None
+            } else {
+                Some(state.style.clone())
+            },
+        );
+
+    // Header
+    let mut header = VElement::new("div").class("hi-code-highlighter-container");
+
+    if state.show_language {
+        let lang_div = VElement::new("div")
+            .class("hi-code-highlighter-language")
+            .child(VNode::Element(
+                VElement::new("span")
+                    .class("hi-code-highlighter-language-label")
+                    .child(VNode::Text(VText::new(state.language.display_name()))),
+            ));
+        header = header.child(VNode::Element(lang_div));
+    }
+
+    if state.show_copy {
+        // NOTE: clipboard copy is handled by the caller via state.copied.
+        // platform::copy_to_clipboard is a stub (returns false) until WIT is implemented.
+        // The caller should call copy_to_clipboard and toggle state.copied on success.
+        let copy_btn = VElement::new("button")
+            .class("hi-code-highlighter-copy")
+            .child(VNode::Element(
+                VElement::new("span")
+                    .class("hi-code-highlighter-copy-icon")
+                    .child(VNode::Text(VText::new(state.copy_button_text()))),
+            ));
+        header = header.child(VNode::Element(copy_btn));
+    }
+
+    container = container.child(VNode::Element(header));
+
+    // Code body: line numbers + content side by side
+    let mut code_body = VElement::new("div").class(state.container_class());
+
+    if state.show_line_numbers && !lines.is_empty() {
+        let mut nums_div = VElement::new("div").class("hi-code-highlighter-line-numbers");
+
+        let num_nodes: Vec<VNode> = line_numbers
+            .iter()
+            .map(|n| {
+                VNode::Element(
+                    VElement::new("div")
+                        .class("hi-code-highlighter-line-number")
+                        .child(VNode::Text(VText::new(n))),
+                )
+            })
+            .collect();
+
+        nums_div = nums_div.children(num_nodes);
+        code_body = code_body.child(VNode::Element(nums_div));
+    }
+
+    // Content div with code lines
+    let mut content_div = VElement::new("div").class("hi-code-highlighter-content");
+
+    let line_nodes: Vec<VNode> = lines
+        .iter()
+        .map(|line| {
+            VNode::Element(
+                VElement::new("div")
+                    .class("hi-code-highlighter-line")
+                    .child(VNode::Text(VText::new(line))),
+            )
+        })
+        .collect();
+
+    content_div = content_div.children(line_nodes);
+    code_body = code_body.child(VNode::Element(content_div));
+
+    container = container.child(VNode::Element(code_body));
+
+    VNode::Element(container)
 }
 
 pub struct CodeHighlighterComponent;

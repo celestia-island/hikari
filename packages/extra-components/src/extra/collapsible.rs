@@ -122,6 +122,71 @@ impl Default for CollapsibleState {
     }
 }
 
+pub fn render_collapsible(state: &CollapsibleState) -> tairitsu_vdom::VNode {
+    use tairitsu_vdom::{VElement, VNode, VText};
+
+    let mut header_children: Vec<VNode> = Vec::new();
+
+    header_children.push(VNode::Element(
+        VElement::new("h3")
+            .class("hi-collapsible-title")
+            .child(VNode::Text(VText::new(&state.title))),
+    ));
+
+    if state.collapsible {
+        let toggle_icon = if state.expanded { "▾" } else { "▸" };
+        header_children.push(VNode::Element(
+            VElement::new("button")
+                .class("hi-collapsible-toggle")
+                .attr(
+                    "aria-label",
+                    if state.expanded { "Collapse" } else { "Expand" },
+                )
+                .attr(
+                    "aria-expanded",
+                    if state.expanded { "true" } else { "false" },
+                )
+                .child(VNode::Text(VText::new(toggle_icon))),
+        ));
+    }
+
+    let mut container_children: Vec<VNode> = Vec::new();
+
+    container_children.push(VNode::Element(
+        VElement::new("div")
+            .class("hi-collapsible-header")
+            .children(header_children),
+    ));
+
+    if state.expanded {
+        container_children.push(VNode::Element(
+            VElement::new("div")
+                .class("hi-collapsible-content")
+                .child(VNode::Element(
+                    VElement::new("div").class("hi-collapsible-body"),
+                )),
+        ));
+    }
+
+    let position_class = state.position_class();
+    let state_class = state.state_class();
+
+    let container_class = if state.class.is_empty() {
+        format!("hi-collapsible {} {}", position_class, state_class)
+    } else {
+        format!(
+            "hi-collapsible {} {} {}",
+            position_class, state_class, state.class
+        )
+    };
+
+    VNode::Element(
+        VElement::new("div")
+            .class(container_class)
+            .children(container_children),
+    )
+}
+
 /// Event emitted when the collapse state changes
 #[derive(Clone, PartialEq, Debug)]
 pub struct CollapsibleChangeEvent {

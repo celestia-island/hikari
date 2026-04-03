@@ -11,6 +11,7 @@
 //! Content retrieval uses `platform::get_inner_html` / `platform::set_content_editable`.
 
 use serde::{Deserialize, Serialize};
+use tairitsu_vdom::{VElement, VNode, VText};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
 pub enum EditorMode {
@@ -292,6 +293,170 @@ pub const RICH_TEXT_EDITOR_STYLES: &str = r#"
   cursor: not-allowed;
 }
 "#;
+
+pub fn render_rich_text_editor(state: &RichTextEditorState) -> VNode {
+    let mut container_children: Vec<VNode> = Vec::new();
+
+    if state.show_toolbar {
+        let mut toolbar = VElement::new("div").class("hi-editor-toolbar");
+
+        let bold_active = if state.is_bold() {
+            "hi-editor-tool-btn hi-editor-tool-btn--active"
+        } else {
+            "hi-editor-tool-btn"
+        };
+        let italic_active = if state.is_italic() {
+            "hi-editor-tool-btn hi-editor-tool-btn--active"
+        } else {
+            "hi-editor-tool-btn"
+        };
+        let underline_active = if state.is_underline() {
+            "hi-editor-tool-btn hi-editor-tool-btn--active"
+        } else {
+            "hi-editor-tool-btn"
+        };
+        let strike_active = if state.active_formats.contains(&TextFormat::Strikethrough) {
+            "hi-editor-tool-btn hi-editor-tool-btn--active"
+        } else {
+            "hi-editor-tool-btn"
+        };
+
+        toolbar = toolbar.child(VNode::Element(
+            VElement::new("span")
+                .class(bold_active)
+                .attr(
+                    "data-command",
+                    RichTextEditorState::format_command(TextFormat::Bold),
+                )
+                .child(VNode::Text(VText::new("B"))),
+        ));
+        toolbar = toolbar.child(VNode::Element(
+            VElement::new("span")
+                .class(italic_active)
+                .attr(
+                    "data-command",
+                    RichTextEditorState::format_command(TextFormat::Italic),
+                )
+                .child(VNode::Text(VText::new("I"))),
+        ));
+        toolbar = toolbar.child(VNode::Element(
+            VElement::new("span")
+                .class(underline_active)
+                .attr(
+                    "data-command",
+                    RichTextEditorState::format_command(TextFormat::Underline),
+                )
+                .child(VNode::Text(VText::new("U"))),
+        ));
+        toolbar = toolbar.child(VNode::Element(
+            VElement::new("span")
+                .class(strike_active)
+                .attr(
+                    "data-command",
+                    RichTextEditorState::format_command(TextFormat::Strikethrough),
+                )
+                .child(VNode::Text(VText::new("S"))),
+        ));
+
+        toolbar = toolbar.child(VNode::Element(
+            VElement::new("div").class("hi-editor-divider"),
+        ));
+
+        let align_left = if state.alignment == TextAlignment::Left {
+            "hi-editor-tool-btn hi-editor-tool-btn--active"
+        } else {
+            "hi-editor-tool-btn"
+        };
+        let align_center = if state.alignment == TextAlignment::Center {
+            "hi-editor-tool-btn hi-editor-tool-btn--active"
+        } else {
+            "hi-editor-tool-btn"
+        };
+        let align_right = if state.alignment == TextAlignment::Right {
+            "hi-editor-tool-btn hi-editor-tool-btn--active"
+        } else {
+            "hi-editor-tool-btn"
+        };
+
+        toolbar = toolbar.child(VNode::Element(
+            VElement::new("span")
+                .class(align_left)
+                .attr(
+                    "data-command",
+                    RichTextEditorState::alignment_command(TextAlignment::Left),
+                )
+                .child(VNode::Text(VText::new("Left"))),
+        ));
+        toolbar = toolbar.child(VNode::Element(
+            VElement::new("span")
+                .class(align_center)
+                .attr(
+                    "data-command",
+                    RichTextEditorState::alignment_command(TextAlignment::Center),
+                )
+                .child(VNode::Text(VText::new("Center"))),
+        ));
+        toolbar = toolbar.child(VNode::Element(
+            VElement::new("span")
+                .class(align_right)
+                .attr(
+                    "data-command",
+                    RichTextEditorState::alignment_command(TextAlignment::Right),
+                )
+                .child(VNode::Text(VText::new("Right"))),
+        ));
+
+        toolbar = toolbar.child(VNode::Element(
+            VElement::new("div").class("hi-editor-divider"),
+        ));
+
+        toolbar = toolbar.child(VNode::Element(
+            VElement::new("span")
+                .class("hi-editor-tool-btn")
+                .attr(
+                    "data-command",
+                    RichTextEditorState::list_command(ListType::Ordered),
+                )
+                .child(VNode::Text(VText::new("OL"))),
+        ));
+        toolbar = toolbar.child(VNode::Element(
+            VElement::new("span")
+                .class("hi-editor-tool-btn")
+                .attr(
+                    "data-command",
+                    RichTextEditorState::list_command(ListType::Unordered),
+                )
+                .child(VNode::Text(VText::new("UL"))),
+        ));
+
+        container_children.push(VNode::Element(toolbar));
+    }
+
+    let content_class = format!("{} {}", state.editor_class_string(), state.class_string());
+    let mut content = VElement::new("div")
+        .class(content_class)
+        .attr(
+            "data-contenteditable",
+            if state.readonly { "false" } else { "true" },
+        )
+        .attr("data-placeholder", state.placeholder_attr());
+
+    if !state.content.is_empty() {
+        content = content.attr("dangerous_inner_html", &state.content);
+    }
+
+    if !state.height_style().is_empty() {
+        content = content.attr("style", state.height_style());
+    }
+
+    container_children.push(VNode::Element(content));
+
+    VNode::Element(
+        VElement::new("div")
+            .class(state.class_string())
+            .children(container_children),
+    )
+}
 
 #[cfg(test)]
 mod tests {

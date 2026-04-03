@@ -5,6 +5,8 @@
 //! Previously a Dioxus component with modal overlay.
 //! Now provides a pure state model for user onboarding guides.
 
+use tairitsu_vdom::VNode;
+
 /// Guide position on screen
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum GuidePosition {
@@ -255,6 +257,131 @@ impl UserGuideState {
             GuidePosition::BottomRight => "hi-user-guide-position-bottom-right",
         }
     }
+}
+
+pub fn render_user_guide(state: &UserGuideState) -> VNode {
+    use tairitsu_vdom::{VElement, VText};
+
+    if !state.visible || state.steps.is_empty() {
+        return VNode::empty();
+    }
+
+    let current_step = state.current_step.min(state.steps.len() - 1);
+    let total_steps = state.steps.len();
+    let is_last = state.is_last_step();
+    let is_first = state.is_first_step();
+    let step = &state.steps[current_step];
+
+    let content_class = format!("hi-user-guide-content {}", state.position_class());
+
+    let header_children = {
+        let mut children: Vec<VNode> = Vec::new();
+
+        if state.allow_close {
+            children.push(VNode::Element(
+                VElement::new("button")
+                    .class("hi-user-guide-close")
+                    .child(VNode::Text(VText::new("\u{00d7}"))),
+            ));
+        }
+
+        children.push(VNode::Element(
+            VElement::new("h3")
+                .class("hi-user-guide-title")
+                .child(VNode::Text(VText::new(&state.title))),
+        ));
+
+        let badge_text = format!("{}/{}", current_step + 1, total_steps);
+        children.push(VNode::Element(
+            VElement::new("span")
+                .class("hi-user-guide-badge")
+                .child(VNode::Text(VText::new(&badge_text))),
+        ));
+
+        children
+    };
+
+    let step_body = {
+        let mut children: Vec<VNode> = Vec::new();
+
+        if !step.icon.is_empty() {
+            children.push(VNode::Element(
+                VElement::new("div")
+                    .class("hi-user-guide-icon")
+                    .child(VNode::Text(VText::new(&step.icon))),
+            ));
+        }
+
+        if !step.title.is_empty() {
+            children.push(VNode::Element(
+                VElement::new("h4")
+                    .class("hi-user-guide-step-title")
+                    .child(VNode::Text(VText::new(&step.title))),
+            ));
+        }
+
+        if !step.description.is_empty() {
+            children.push(VNode::Element(
+                VElement::new("p")
+                    .class("hi-user-guide-step-description")
+                    .child(VNode::Text(VText::new(&step.description))),
+            ));
+        }
+
+        VNode::Fragment(children)
+    };
+
+    let nav_children = {
+        let mut children: Vec<VNode> = Vec::new();
+
+        if state.allow_skip && !is_last {
+            children.push(VNode::Element(
+                VElement::new("button")
+                    .class("hi-user-guide-skip")
+                    .child(VNode::Text(VText::new("Skip"))),
+            ));
+        }
+
+        if !is_first {
+            children.push(VNode::Element(
+                VElement::new("button")
+                    .class("hi-user-guide-previous")
+                    .child(VNode::Text(VText::new("Previous"))),
+            ));
+        }
+
+        let next_label = if is_last { "Finish" } else { "Next" };
+        children.push(VNode::Element(
+            VElement::new("button")
+                .class("hi-user-guide-next")
+                .child(VNode::Text(VText::new(next_label))),
+        ));
+
+        children
+    };
+
+    let content_children: Vec<VNode> = vec![
+        VNode::Element(
+            VElement::new("div")
+                .class("hi-user-guide-header")
+                .children(header_children),
+        ),
+        step_body,
+        VNode::Element(
+            VElement::new("div")
+                .class("hi-user-guide-navigation")
+                .children(nav_children),
+        ),
+    ];
+
+    VNode::Fragment(vec![
+        VNode::Element(VElement::new("div").class("hi-user-guide-backdrop")),
+        VNode::Element(
+            VElement::new("div")
+                .class(content_class)
+                .children(content_children),
+        ),
+    ])
 }
 
 /// Events emitted by the user guide

@@ -16,6 +16,7 @@
 //! or generated synthetically via `AudioWaveformState::generate_synth_waveform()`.
 
 use serde::{Deserialize, Serialize};
+use tairitsu_vdom::{VElement, VNode, VText};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
 pub enum WaveformColor {
@@ -219,6 +220,96 @@ fn format_time(seconds: f64) -> String {
     let mins = (seconds / 60.0) as u32;
     let secs = (seconds % 60.0) as u32;
     format!("{:02}:{:02}", mins, secs)
+}
+
+pub fn render_audio_waveform(state: &AudioWaveformState) -> VNode {
+    let mut container_children: Vec<VNode> = Vec::new();
+
+    container_children.push(VNode::Element(
+        VElement::new("audio")
+            .attr("src", &state.src)
+            .attr("preload", "metadata"),
+    ));
+
+    let bars = state.waveform_bars();
+    let mut bars_container = VElement::new("div").class("hi-waveform-bars");
+
+    if !bars.is_empty() {
+        let bar_nodes: Vec<VNode> = bars
+            .iter()
+            .map(|(_i, amplitude)| {
+                VNode::Element(
+                    VElement::new("div")
+                        .class("hi-waveform-bar")
+                        .attr("style", state.bar_style(*amplitude)),
+                )
+            })
+            .collect();
+        bars_container = bars_container.children(bar_nodes);
+    } else {
+        let placeholder_count = state.bar_count.min(20);
+        let placeholder_bars: Vec<VNode> = (0..placeholder_count)
+            .map(|i| {
+                let h = 20.0 + (i as f32 * 0.8).sin().abs() * 40.0;
+                let style = format!("height: {}px; opacity: 0.3;", h);
+                VNode::Element(
+                    VElement::new("div")
+                        .class("hi-waveform-bar hi-waveform-bar--placeholder")
+                        .attr("style", style),
+                )
+            })
+            .collect();
+        bars_container = bars_container.children(placeholder_bars);
+    }
+
+    container_children.push(VNode::Element(
+        VElement::new("div")
+            .class("hi-waveform-container")
+            .child(VNode::Element(bars_container)),
+    ));
+
+    if state.show_controls {
+        let play_label = if state.is_playing { "Pause" } else { "Play" };
+        let play_icon = if state.is_playing { "Pause" } else { "Play" };
+        let progress_width = format!("{}%", state.progress_percent());
+        let time_display = format!(
+            "{} / {}",
+            state.formatted_current_time(),
+            state.formatted_duration()
+        );
+
+        let controls = VElement::new("div")
+            .class("hi-audio-controls")
+            .child(VNode::Element(
+                VElement::new("button")
+                    .class("hi-audio-control-btn")
+                    .attr("aria-label", play_label)
+                    .attr("data-action", "toggle-play")
+                    .child(VNode::Text(VText::new(play_icon))),
+            ))
+            .child(VNode::Element(
+                VElement::new("div")
+                    .class("hi-audio-progress")
+                    .child(VNode::Element(
+                        VElement::new("div")
+                            .class("hi-audio-progress-bar")
+                            .attr("style", format!("width: {};", progress_width)),
+                    )),
+            ))
+            .child(VNode::Element(
+                VElement::new("span")
+                    .class("hi-audio-time")
+                    .child(VNode::Text(VText::new(&time_display))),
+            ));
+
+        container_children.push(VNode::Element(controls));
+    }
+
+    VNode::Element(
+        VElement::new("div")
+            .class(state.class_string())
+            .children(container_children),
+    )
 }
 
 pub const AUDIO_WAVEFORM_STYLES: &str = r#"

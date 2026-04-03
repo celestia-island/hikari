@@ -132,6 +132,68 @@ impl Default for ViewportConfig {
     }
 }
 
+use tairitsu_vdom::{VElement, VNode, VText};
+
+pub fn render_viewport(viewport: &Viewport) -> VNode {
+    let mut children: Vec<VNode> = Vec::new();
+
+    let zoom_in = VNode::Element(
+        VElement::new("button")
+            .class("hi-zoom-button hi-zoom-in")
+            .attr("aria-label", "Zoom in")
+            .attr("title", "Zoom in")
+            .attr(
+                "disabled",
+                if viewport.can_zoom_in() {
+                    "false"
+                } else {
+                    "true"
+                },
+            )
+            .child(VNode::Text(VText::new("+"))),
+    );
+    children.push(zoom_in);
+
+    let zoom_out = VNode::Element(
+        VElement::new("button")
+            .class("hi-zoom-button hi-zoom-out")
+            .attr("aria-label", "Zoom out")
+            .attr("title", "Zoom out")
+            .attr(
+                "disabled",
+                if viewport.can_zoom_out() {
+                    "false"
+                } else {
+                    "true"
+                },
+            )
+            .child(VNode::Text(VText::new("-"))),
+    );
+    children.push(zoom_out);
+
+    let reset = VNode::Element(
+        VElement::new("button")
+            .class("hi-zoom-button hi-zoom-reset")
+            .attr("aria-label", "Reset view")
+            .attr("title", "Reset view")
+            .child(VNode::Text(VText::new("Reset"))),
+    );
+    children.push(reset);
+
+    let display = VNode::Element(
+        VElement::new("div")
+            .class("hi-zoom-display")
+            .child(VNode::Text(VText::new(&viewport.zoom_text()))),
+    );
+    children.push(display);
+
+    VNode::Element(
+        VElement::new("div")
+            .class("hi-zoom-controls")
+            .children(children),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -256,6 +256,44 @@ impl From<NodeState> for Node {
     }
 }
 
+use tairitsu_vdom::{VElement, VNode, VText};
+
+use super::port::{Port, PortType};
+
+pub fn render_node(node: &Node) -> VNode {
+    let mut children: Vec<VNode> = Vec::new();
+
+    let header = VNode::Element(
+        VElement::new("div")
+            .class("hi-node-header")
+            .child(VNode::Text(VText::new(&node.title))),
+    );
+    children.push(header);
+
+    let mut body = VElement::new("div").class("hi-node-body");
+
+    for np in &node.ports {
+        let is_input = matches!(np.position, PortPosition::Left | PortPosition::Top);
+        let port_type = if is_input {
+            PortType::Input
+        } else {
+            PortType::Output
+        };
+        let p = Port::new(np.port_id.clone(), port_type, np.label.clone());
+        body = body.child(super::port::render_port(&p));
+    }
+
+    children.push(VNode::Element(body));
+
+    VNode::Element(
+        VElement::new("div")
+            .class(node.class_string())
+            .style(node.position_style())
+            .attr("data-node-id", &node.id)
+            .children(children),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

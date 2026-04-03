@@ -90,8 +90,16 @@ impl Port {
         format!(
             "hi-node-graph-port hi-node-port-{} {} {}",
             self.port_type.as_str(),
-            if self.disabled { "hi-port-disabled" } else { "" },
-            if self.connected { "hi-port-connected" } else { "" }
+            if self.disabled {
+                "hi-port-disabled"
+            } else {
+                ""
+            },
+            if self.connected {
+                "hi-port-connected"
+            } else {
+                ""
+            }
         )
     }
 
@@ -110,6 +118,25 @@ pub enum PortEvent {
     DisconnectRequested(PortId),
     /// Port hovered
     Hover(PortId),
+}
+
+use tairitsu_vdom::{VElement, VNode, VText};
+
+pub fn render_port(port: &Port) -> VNode {
+    VNode::Element(
+        VElement::new("div")
+            .class(port.class_string())
+            .attr("data-port-id", &port.port_id)
+            .attr("data-port-type", port.port_type.as_str())
+            .child(VNode::Element(
+                VElement::new("div").class("hi-node-port-dot"),
+            ))
+            .child(VNode::Element(
+                VElement::new("span")
+                    .class("hi-node-port-label")
+                    .child(VNode::Text(VText::new(&port.label))),
+            )),
+    )
 }
 
 #[cfg(test)]

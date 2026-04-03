@@ -5,6 +5,8 @@
 //! Previously a Dioxus component with keyboard event handling.
 //! Now provides a pure state model for zoom functionality.
 
+use tairitsu_vdom::{VElement, VNode, VText};
+
 /// Position of the zoom controls
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum ZoomPosition {
@@ -197,6 +199,82 @@ impl Default for ZoomControlsState {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Render zoom controls as a [`VNode`] tree.
+///
+/// Produces a container with zoom-out, display, zoom-in, reset, and optional fit buttons.
+/// Event listeners (onclick) are **not** attached — the caller must wire up interactions
+/// through platform-specific APIs and then call the state mutation methods.
+pub fn render_zoom_controls(state: &ZoomControlsState) -> VNode {
+    let mut children: Vec<VNode> = Vec::with_capacity(5);
+
+    let zoom_out = VNode::Element(
+        VElement::new("button")
+            .class("hi-zoom-button hi-zoom-out")
+            .attr("aria-label", "Zoom out")
+            .attr("title", "Zoom out (-)")
+            .attr(
+                "disabled",
+                if state.can_zoom_out() {
+                    "false"
+                } else {
+                    "true"
+                },
+            )
+            .child(VNode::Text(VText::new("\u{25C0}"))),
+    );
+    children.push(zoom_out);
+
+    let display = VNode::Element(
+        VElement::new("div")
+            .class("hi-zoom-display")
+            .child(VNode::Text(VText::new(&format!(
+                "{}%",
+                state.zoom_percent()
+            )))),
+    );
+    children.push(display);
+
+    let zoom_in = VNode::Element(
+        VElement::new("button")
+            .class("hi-zoom-button hi-zoom-in")
+            .attr("aria-label", "Zoom in")
+            .attr("title", "Zoom in (+)")
+            .attr(
+                "disabled",
+                if state.can_zoom_in() { "false" } else { "true" },
+            )
+            .child(VNode::Text(VText::new("\u{25B6}"))),
+    );
+    children.push(zoom_in);
+
+    let reset = VNode::Element(
+        VElement::new("button")
+            .class("hi-zoom-button hi-zoom-reset")
+            .attr("aria-label", "Reset zoom")
+            .attr("title", "Reset to 100% (0)")
+            .child(VNode::Text(VText::new("100%"))),
+    );
+    children.push(reset);
+
+    if state.show_fit {
+        let fit = VNode::Element(
+            VElement::new("button")
+                .class("hi-zoom-button hi-zoom-fit")
+                .attr("aria-label", "Fit to screen")
+                .attr("title", "Fit to screen")
+                .child(VNode::Text(VText::new("\u{25A1}"))),
+        );
+        children.push(fit);
+    }
+
+    VNode::Element(
+        VElement::new("div")
+            .class(state.class_string())
+            .attr("tabindex", "0")
+            .children(children),
+    )
 }
 
 /// Event emitted when zoom changes

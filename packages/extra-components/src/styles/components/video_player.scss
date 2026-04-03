@@ -1,0 +1,109 @@
+// hikari-extra-components/styles/components/video_player.scss
+// Video player component styles with Arknights design + FUI glow
+
+// ============================================
+// Video Player Container
+// ============================================
+
+.hi-video-player {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+// ============================================
+// Video Container
+// ============================================
+
+.hi-video-container {
+    position: relative;
+    background: var(--hi-surface);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .hi-video-container {
+    background: var(--hi-background);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+// ============================================
+// Video Title
+// ============================================
+
+.hi-video-title {
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--hi-text-primary);
+    border-bottom: 1px solid var(--hi-border);
+}
+
+[data-theme="dark"] .hi-video-title {
+    color: var(--hi-text-primary);
+    border-bottom-color: var(--hi-border);
+}
+
+// ============================================
+// Video Wrapper & Element
+// ============================================
+
+.hi-video-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.hi-video-element {
+    width: 100%;
+    display: block;
+    background-color: #000;
+}
+
+// ============================================
+// Video Controls
+// ============================================
+
+.hi-video-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--hi-surface);
+    border-top: 1px solid var(--hi-border);
+}
+
+[data-theme="dark"] .hi-video-controls {
+    background: var(--hi-background);
+    border-top-color: var(--hi-border);
+}
+
+.hi-video-time {
+    font-size: 14px;
+    color: var(--hi-text-secondary);
+    min-width: 100px;
+    text-align: center;
+}
+
+[data-theme="dark"] .hi-video-time {
+    color: var(--hi-text-secondary);
+}
+
+// ============================================
+// Video Progress
+// ============================================
+
+.hi-video-progress {
+    flex: 1;
+    height: 4px;
+    background: var(--hi-border);
+    border-radius: 2px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.hi-video-progress-bar {
+    height: 100%;
+    background: var(--hi-color-primary);
+    transition: width 0.1s linear;
+}

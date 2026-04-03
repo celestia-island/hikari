@@ -12,6 +12,7 @@
 //! (tairitsu WIT bindings via `html-media-element` interface).
 
 use serde::{Deserialize, Serialize};
+use tairitsu_vdom::{VElement, VNode, VText};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
 pub enum PlaybackStatus {
@@ -205,6 +206,78 @@ fn format_time(seconds: f64) -> String {
     let mins = (seconds / 60.0) as u32;
     let secs = (seconds % 60.0) as u32;
     format!("{:02}:{:02}", mins, secs)
+}
+
+pub fn render_video_player(state: &VideoPlayerState) -> VNode {
+    let mut container_children: Vec<VNode> = Vec::new();
+
+    if let Some(title) = &state.title {
+        container_children.push(VNode::Element(
+            VElement::new("div")
+                .class("hi-video-title")
+                .child(VNode::Text(VText::new(title.as_str()))),
+        ));
+    }
+
+    let mut video = VElement::new("video")
+        .class("hi-video-element")
+        .attr("src", &state.src);
+
+    if !state.poster.is_empty() {
+        video = video.attr("poster", &state.poster);
+    }
+
+    if state.autoplay {
+        video = video.attr("autoplay", "");
+    }
+    if state.loop_playback {
+        video = video.attr("loop", "");
+    }
+    if state.is_muted {
+        video = video.attr("muted", "");
+    }
+
+    container_children.push(VNode::Element(
+        VElement::new("div")
+            .class("hi-video-wrapper")
+            .child(VNode::Element(video)),
+    ));
+
+    if state.show_controls {
+        let play_label = if state.is_playing { "Pause" } else { "Play" };
+        let play_icon = if state.is_playing { "Pause" } else { "Play" };
+        let mute_icon = if state.is_muted { "Unmute" } else { "Mute" };
+
+        let controls = VElement::new("div")
+            .class("hi-video-controls")
+            .child(VNode::Element(
+                VElement::new("button")
+                    .class("hi-video-control-btn")
+                    .attr("aria-label", play_label)
+                    .attr("data-action", "toggle-play")
+                    .child(VNode::Text(VText::new(play_icon))),
+            ))
+            .child(VNode::Element(
+                VElement::new("span")
+                    .class("hi-video-time")
+                    .child(VNode::Text(VText::new(&state.formatted_progress()))),
+            ))
+            .child(VNode::Element(
+                VElement::new("button")
+                    .class("hi-video-control-btn")
+                    .attr("aria-label", if state.is_muted { "Unmute" } else { "Mute" })
+                    .attr("data-action", "toggle-mute")
+                    .child(VNode::Text(VText::new(mute_icon))),
+            ));
+
+        container_children.push(VNode::Element(controls));
+    }
+
+    VNode::Element(
+        VElement::new("div")
+            .class(state.class_string())
+            .children(container_children),
+    )
 }
 
 pub const VIDEO_PLAYER_STYLES: &str = r#"

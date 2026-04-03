@@ -43,3 +43,10 @@ impl Default for DraggableCardState {
         Self::new()
     }
 }
+
+pub fn render_draggable_card(
+    state: &DraggableCardState,
+    content: tairitsu_vdom::VNode,
+) -> tairitsu_vdom::VNode {
+    super::drag_layer::render_drag_layer(&state.inner, content)
+}

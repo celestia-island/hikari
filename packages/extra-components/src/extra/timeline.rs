@@ -239,6 +239,81 @@ impl Default for TimelineState {
     }
 }
 
+pub fn render_timeline(state: &TimelineState) -> tairitsu_vdom::VNode {
+    use tairitsu_vdom::{VElement, VNode, VText};
+
+    let mut item_nodes: Vec<VNode> = Vec::with_capacity(state.items.len());
+
+    for item in &state.items {
+        let mut dot_children: Vec<VNode> = Vec::new();
+        if !item.icon.is_empty() {
+            dot_children.push(VNode::Element(
+                VElement::new("span")
+                    .class("hi-timeline-icon")
+                    .child(VNode::Text(VText::new(&item.icon))),
+            ));
+        }
+
+        let mut content_children: Vec<VNode> = Vec::new();
+
+        let mut header_children: Vec<VNode> = Vec::new();
+        header_children.push(VNode::Element(
+            VElement::new("h4")
+                .class("hi-timeline-title")
+                .child(VNode::Text(VText::new(&item.title))),
+        ));
+        if !item.time.is_empty() {
+            header_children.push(VNode::Element(
+                VElement::new("span")
+                    .class("hi-timeline-time")
+                    .child(VNode::Text(VText::new(&item.time))),
+            ));
+        }
+
+        content_children.push(VNode::Element(
+            VElement::new("div")
+                .class("hi-timeline-header")
+                .children(header_children),
+        ));
+
+        if item.expanded && !item.description.is_empty() {
+            content_children.push(VNode::Element(
+                VElement::new("div")
+                    .class("hi-timeline-description hi-timeline-description-expanded")
+                    .child(VNode::Element(
+                        VElement::new("p").child(VNode::Text(VText::new(&item.description))),
+                    )),
+            ));
+        }
+
+        let item_class = format!("hi-timeline-item {}", item.status_class());
+        let dot_class = format!("hi-timeline-dot {}", item.dot_status_class());
+
+        let item_node = VNode::Element(
+            VElement::new("div")
+                .class(item_class)
+                .child(VNode::Element(
+                    VElement::new("div").class(dot_class).children(dot_children),
+                ))
+                .child(VNode::Element(
+                    VElement::new("div")
+                        .class("hi-timeline-content")
+                        .children(content_children),
+                )),
+        );
+
+        item_nodes.push(item_node);
+    }
+
+    let container_class = format!("hi-timeline {}", state.class_string());
+
+    VNode::Element(
+        VElement::new("div")
+            .class(container_class)
+            .children(item_nodes),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

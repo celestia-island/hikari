@@ -3,7 +3,15 @@
 
 use std::collections::HashMap;
 
-use crate::node_graph::{ connection::{Connection, ConnectionId}, history::{HistoryAction, HistoryState}, node::{Node, NodeId, NodeState, NodeType, PortPosition}, serialization::SerializedNodeGraph, };
+use tairitsu_vdom::svg::SafeSvg;
+use tairitsu_vdom::{VElement, VNode};
+
+use crate::node_graph::{
+    connection::{Connection, ConnectionId},
+    history::{HistoryAction, HistoryState},
+    node::{Node, NodeId, NodeState, NodeType, PortPosition},
+    serialization::SerializedNodeGraph,
+};
 
 /// Node graph state
 ///
@@ -241,7 +249,11 @@ impl NodeGraphCanvasConfig {
 #[derive(Clone, PartialEq, Debug)]
 pub enum NodeGraphEvent {
     /// A node was added
-    NodeAdded { id: String, node_type: NodeType, position: (f64, f64) },
+    NodeAdded {
+        id: String,
+        node_type: NodeType,
+        position: (f64, f64),
+    },
 
     /// A node was selected
     NodeSelected(String),
@@ -253,7 +265,13 @@ pub enum NodeGraphEvent {
     NodeDeleted(String),
 
     /// A connection was created
-    ConnectionCreated { id: ConnectionId, from_node: String, from_port: String, to_node: String, to_port: String },
+    ConnectionCreated {
+        id: ConnectionId,
+        from_node: String,
+        from_port: String,
+        to_node: String,
+        to_port: String,
+    },
 
     /// A connection was deleted
     ConnectionDeleted(ConnectionId),
@@ -275,6 +293,71 @@ pub enum NodeGraphEvent {
 
     /// Load requested
     Load,
+}
+
+pub fn render_node_graph_canvas(state: &NodeGraphState, config: &NodeGraphCanvasConfig) -> VNode {
+    let mut children: Vec<VNode> = Vec::new();
+
+    let mut svg_parts = String::new();
+    svg_parts.push_str(&format!(
+        r#"<svg xmlns="http://www.w3.org/2000/svg" class="hi-node-graph-svg" width="{}" height="{}" style="position:absolute;top:0;left:0;">"#,
+        config.width, config.height,
+    ));
+
+    svg_parts.push_str(&format!(
+        r#"<defs><pattern id="hi-node-grid" width="{}" height="{}" patternUnits="userSpaceOnUse"><path d="M {} 0 L 0 0 0 {}" fill="none" stroke="var(--hi-color-grid, #e2e8f0)" stroke-width="0.5"/></pattern></defs>"#,
+        config.grid_size, config.grid_size, config.grid_size, config.grid_size,
+    ));
+    svg_parts.push_str(r#"<rect width="100%" height="100%" fill="url(#hi-node-grid)"/>"#);
+
+    svg_parts.push_str(r#"<g class="hi-node-graph-connections">"#);
+    for connection in &state.connections {
+        svg_parts.push_str(&format!(
+            r#"<path class="{}" d="" stroke="var(--hi-color-connection, #94a3b8)" stroke-width="2" fill="none"/>"#,
+            connection.class_string(),
+        ));
+    }
+    svg_parts.push_str("</g>");
+
+    svg_parts.push_str("</svg>");
+
+    children.push(VNode::Element(
+        VElement::new("div")
+            .class("hi-node-graph-svg-layer")
+            .safe_svg(SafeSvg::new(&svg_parts)),
+    ));
+
+    let mut nodes_children: Vec<VNode> = Vec::new();
+    for node_state in state.nodes.values() {
+        let node = Node::from(node_state.clone());
+        nodes_children.push(crate::node_graph::node::render_node(&node));
+    }
+
+    children.push(VNode::Element(
+        VElement::new("div")
+            .class("hi-node-graph-nodes")
+            .style(state.transform_style())
+            .children(nodes_children),
+    ));
+
+    if config.show_minimap {
+        children.push(VNode::Element(
+            VElement::new("div").class("hi-node-graph-minimap-container"),
+        ));
+    }
+
+    if config.show_controls {
+        children.push(crate::node_graph::viewport::render_viewport(
+            &crate::node_graph::viewport::Viewport::new(),
+        ));
+    }
+
+    VNode::Element(
+        VElement::new("div")
+            .class("hi-node-graph-canvas")
+            .style(config.container_style())
+            .children(children),
+    )
 }
 
 #[cfg(test)]

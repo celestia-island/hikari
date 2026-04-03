@@ -128,6 +128,72 @@ impl NodeGraphMinimap {
     }
 }
 
+use tairitsu_vdom::svg::SafeSvg;
+use tairitsu_vdom::{VElement, VNode};
+
+pub fn render_minimap(minimap: &NodeGraphMinimap) -> VNode {
+    if !minimap.visible {
+        return VNode::Element(
+            VElement::new("div").class("hi-node-graph-minimap hi-minimap-hidden"),
+        );
+    }
+
+    let canvas_w = 1200.0;
+    let canvas_h = 800.0;
+    let scale_x = minimap.width / canvas_w;
+    let scale_y = minimap.height / canvas_h;
+
+    let mut svg_parts = String::new();
+    svg_parts.push_str(&format!(
+        r#"<svg xmlns="http://www.w3.org/2000/svg" class="hi-node-graph-minimap" width="{}" height="{}">"#,
+        minimap.width,
+        minimap.height,
+    ));
+
+    svg_parts.push_str(
+        r#"<rect width="100%" height="100%" fill="var(--hi-color-minimap-bg, #f8fafc)" rx="4"/>"#,
+    );
+
+    svg_parts.push_str(r#"<g class="hi-minimap-connections">"#);
+    for conn in &minimap.connections {
+        svg_parts.push_str(&format!(
+            r#"<line x1="{}" y1="{}" x2="{}" y2="{}" stroke="var(--hi-color-connection, #94a3b8)" stroke-width="1"/>"#,
+            conn.from.0 * scale_x,
+            conn.from.1 * scale_y,
+            conn.to.0 * scale_x,
+            conn.to.1 * scale_y,
+        ));
+    }
+    svg_parts.push_str("</g>");
+
+    svg_parts.push_str(r#"<g class="hi-minimap-nodes">"#);
+    for node in &minimap.nodes {
+        svg_parts.push_str(&format!(
+            r#"<rect x="{}" y="{}" width="{}" height="{}" fill="var(--hi-color-node, #6366f1)" rx="2"/>"#,
+            node.position.0 * scale_x,
+            node.position.1 * scale_y,
+            node.size.0 * scale_x,
+            node.size.1 * scale_y,
+        ));
+    }
+    svg_parts.push_str("</g>");
+
+    let (vp_x, vp_y, vp_w, vp_h) = minimap.viewport_rect(canvas_w, canvas_h);
+    svg_parts.push_str(&format!(
+        r#"<rect x="{}" y="{}" width="{}" height="{}" fill="none" stroke="var(--hi-color-primary, #6366f1)" stroke-width="1.5" rx="1"/>"#,
+        vp_x, vp_y, vp_w, vp_h,
+    ));
+
+    svg_parts.push_str("</svg>");
+
+    VNode::Element(
+        VElement::new("div")
+            .class("hi-node-graph-minimap-container")
+            .style(minimap.container_style())
+            .safe_svg(SafeSvg::new(&svg_parts)),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

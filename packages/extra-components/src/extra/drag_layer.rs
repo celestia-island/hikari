@@ -5,6 +5,8 @@
 //! Previously a Dioxus component with mouse event handling.
 //! Now provides a pure state model for drag and drop functionality.
 
+use tairitsu_vdom::{VElement, VNode};
+
 /// Constraints for drag boundaries
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct DragConstraints {
@@ -282,6 +284,25 @@ impl Default for DragLayerState {
     }
 }
 
+/// Render a drag layer as a [`VNode`] tree.
+///
+/// The returned element uses [`DragLayerState::class_string`] for classes and
+/// [`DragLayerState::position_style`] for inline positioning.
+///
+/// Mouse event listeners (mousedown / mousemove / mouseup) are **not** attached —
+/// they require platform-specific APIs.  The caller should listen for pointer
+/// events on the rendered element and drive the state through
+/// [`DragLayerState::start_drag`], [`DragLayerState::update_drag`], and
+/// [`DragLayerState::end_drag`].
+pub fn render_drag_layer(state: &DragLayerState, content: VNode) -> VNode {
+    VNode::Element(
+        VElement::new("div")
+            .class(state.class_string())
+            .style(state.position_style())
+            .child(content),
+    )
+}
+
 /// Events emitted by the drag layer
 #[derive(Clone, PartialEq, Debug)]
 pub enum DragLayerEvent {
@@ -344,11 +365,11 @@ mod tests {
 
         state.start_drag(100.0, 100.0);
         state.update_drag(-50.0, -50.0); // Try to go negative
-        // delta = -150, new position = 100 - 150 = -50, constrained to 0
+                                         // delta = -150, new position = 100 - 150 = -50, constrained to 0
         assert_eq!(state.position, (0.0, 0.0)); // Should be constrained to 0
 
         state.update_drag(300.0, 300.0); // Try to go beyond bounds
-        // delta = 200, new position = 0 + 200 = 200, constrained to 200
+                                         // delta = 200, new position = 0 + 200 = 200, constrained to 200
         assert_eq!(state.position, (200.0, 200.0)); // Should be constrained to 200
     }
 

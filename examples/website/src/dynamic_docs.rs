@@ -36,11 +36,7 @@ pub enum DocLoadState {
 /// * `doc_path` - The documentation path (e.g., "components/layer1/button")
 /// * `language` - The language code (e.g., "en-US", "zh-CHS")
 /// * `title` - Optional page title
-pub fn DocPage(
-    doc_path: String,
-    language: String,
-    _title: Option<String>,
-) -> VNode {
+pub fn DocPage(doc_path: String, language: String, _title: Option<String>) -> VNode {
     // For now, we'll render a placeholder that will be populated by JavaScript
     // In a full implementation, this would use Rust's async capabilities
     // or JavaScript interop to fetch and render the content
@@ -73,8 +69,7 @@ fn render_loading_indicator() -> VNode {
         VElement::new("div")
             .class("hi-doc-loading")
             .child(VNode::Element(
-                VElement::new("div")
-                    .class("hi-doc-loading__spinner"),
+                VElement::new("div").class("hi-doc-loading__spinner"),
             ))
             .child(VNode::Element(
                 VElement::new("div")
@@ -139,8 +134,8 @@ pub fn render_doc_not_found(doc_path: &str, language: &str) -> VNode {
                 VElement::new("p")
                     .class("hi-doc-not-found__hint")
                     .child(VNode::Text(VText::new(
-                        "This page may be under development or the translation is not yet available.",
-                    ))),
+                    "This page may be under development or the translation is not yet available.",
+                ))),
             )),
     )
 }
@@ -405,7 +400,8 @@ pub fn doc_loader_js() -> String {
         init: initDocPages
     };
 })();
-"#.to_string()
+"#
+    .to_string()
 }
 
 /// Render the documentation loader script.

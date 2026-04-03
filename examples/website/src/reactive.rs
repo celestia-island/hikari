@@ -7,7 +7,7 @@
 //! - Clean state isolation between examples
 
 use std::collections::HashMap;
-use std::sync::{Arc, RwLock, OnceLock};
+use std::sync::{Arc, OnceLock, RwLock};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::{VElement, VNode, VText};
 
@@ -16,7 +16,9 @@ static REACTIVE_STATE: OnceLock<Arc<RwLock<ReactiveState>>> = OnceLock::new();
 
 /// Get or initialize the global reactive state manager.
 fn get_global_state_locked() -> Arc<RwLock<ReactiveState>> {
-    REACTIVE_STATE.get_or_init(|| Arc::new(RwLock::new(ReactiveState::new()))).clone()
+    REACTIVE_STATE
+        .get_or_init(|| Arc::new(RwLock::new(ReactiveState::new())))
+        .clone()
 }
 
 /// Reactive state container managing all interactive component instances.
@@ -189,9 +191,7 @@ impl InteractiveComponentBuilder {
     /// Build the component, registering it with the global state manager.
     pub fn build(self) -> (String, VNode) {
         let global_state = get_global_state_locked();
-        let mut state = global_state
-            .write()
-            .unwrap_or_else(|e| e.into_inner());
+        let mut state = global_state.write().unwrap_or_else(|e| e.into_inner());
 
         let instance_id = state.generate_instance_id(&self.component_type);
 
@@ -306,11 +306,12 @@ impl InteractiveComponentBuilder {
 
     /// Render an input component.
     fn render_input(&self, instance_id: &str) -> VNode {
-        let (value, placeholder) = if let ComponentState::Input { value, placeholder } = &self.initial_state {
-            (value.clone(), placeholder.clone())
-        } else {
-            (String::new(), "Enter text...".to_string())
-        };
+        let (value, placeholder) =
+            if let ComponentState::Input { value, placeholder } = &self.initial_state {
+                (value.clone(), placeholder.clone())
+            } else {
+                (String::new(), "Enter text...".to_string())
+            };
 
         let display_value = if value.is_empty() { "(empty)" } else { &value };
         let value_text = VNode::Text(VText::new(&format!("Value: {}", display_value)));
@@ -354,13 +355,11 @@ pub fn button_counter(initial_count: u32, label: Option<&str>) -> (String, VNode
 }
 
 /// Convenience function to create an input component.
-pub fn interactive_input(
-    value: &str,
-    placeholder: &str,
-    label: Option<&str>,
-) -> (String, VNode) {
-    let builder = InteractiveComponentBuilder::new("input")
-        .initial_state(ComponentState::input(value.to_string(), placeholder.to_string()));
+pub fn interactive_input(value: &str, placeholder: &str, label: Option<&str>) -> (String, VNode) {
+    let builder = InteractiveComponentBuilder::new("input").initial_state(ComponentState::input(
+        value.to_string(),
+        placeholder.to_string(),
+    ));
     let builder = if let Some(label_str) = label {
         builder.label(label_str.to_string())
     } else {

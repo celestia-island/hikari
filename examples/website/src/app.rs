@@ -11,9 +11,11 @@ use tairitsu_vdom::{VElement, VNode, VText};
 use crate::{
     components::{self, portal::PortalJs},
     js,
-    pages::{animations, components as comp_pages, demos as demo_pages, home, interactive, not_found, system as sys_pages},
-    routing,
-    theme,
+    pages::{
+        animations, components as comp_pages, demos as demo_pages, home, interactive, not_found,
+        system as sys_pages,
+    },
+    routing, theme,
 };
 
 /// Render the full application VNode tree.

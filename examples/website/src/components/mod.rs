@@ -3,6 +3,11 @@
 //! Uses hikari-components CSS class names (hi-header, hi-aside, etc.)
 //! so the bundle.css styles apply correctly for the drawer/header/aside layout.
 
+pub mod code_block;
+pub mod doc_components;
+pub mod dynamic_markdown;
+pub mod markdown_renderer;
+pub mod page_layout;
 pub mod portal;
 pub mod portal_examples;
 

@@ -3,7 +3,7 @@
 //! Provides a generic documentation page that loads markdown content
 //! dynamically based on the current route and language.
 
-use crate::dynamic_docs::{DocPage, render_doc_loader_script};
+use crate::dynamic_docs::{render_doc_loader_script, DocPage};
 use tairitsu_vdom::{VElement, VNode, VText};
 
 /// Documentation page with routing support.
@@ -55,18 +55,19 @@ pub fn DocumentationPage(doc_path: String, language: String, title: Option<Strin
                     .child(VNode::Element(
                         VElement::new("p")
                             .class("page-header__subtitle")
-                            .child(VNode::Text(VText::new(&format!("Documentation from: {}", doc_path)))),
+                            .child(VNode::Text(VText::new(&format!(
+                                "Documentation from: {}",
+                                doc_path
+                            )))),
                     )),
             ))
             // Dynamic content area
             .child(VNode::Element(
-                VElement::new("div")
-                    .class("page-section")
-                    .child(DocPage(
-                        doc_path.clone(),
-                        language.clone(),
-                        Some(page_title.clone()),
-                    )),
+                VElement::new("div").class("page-section").child(DocPage(
+                    doc_path.clone(),
+                    language.clone(),
+                    Some(page_title.clone()),
+                )),
             ))
             // Doc loader script
             .child(render_doc_loader_script()),
@@ -91,11 +92,18 @@ pub fn ComponentDocPage(component_path: String, language: String, layer: u8) -> 
         _ => "Components",
     };
 
-    let title = format!("Layer {} — {}", layer, component_path.split('/').last().unwrap_or("Component"));
+    let title = format!(
+        "Layer {} — {}",
+        layer,
+        component_path.split('/').last().unwrap_or("Component")
+    );
 
     VNode::Element(
         VElement::new("div")
-            .attr("id", &format!("page-component-{}", component_path.replace('/', "-")))
+            .attr(
+                "id",
+                &format!("page-component-{}", component_path.replace('/', "-")),
+            )
             .attr("data-component-path", &component_path)
             .attr("data-layer", &layer.to_string())
             .attr("data-language", &language)
@@ -142,7 +150,10 @@ pub fn ComponentDocPage(component_path: String, language: String, layer: u8) -> 
                         VElement::new("a")
                             .attr("href", &format!("/components/layer{}", layer))
                             .class("component-doc-nav__link component-doc-nav__link--back")
-                            .child(VNode::Text(VText::new(&format!("← Back to Layer {}", layer)))),
+                            .child(VNode::Text(VText::new(&format!(
+                                "← Back to Layer {}",
+                                layer
+                            )))),
                     )),
             ))
             // Doc loader script
@@ -275,7 +286,9 @@ pub fn GuideDocPage(guide_path: String, language: String) -> VNode {
                     .child(VNode::Element(
                         VElement::new("div")
                             .class("guide-toc__content")
-                            .child(VNode::Text(VText::new("Table of contents will be generated from document headers."))),
+                            .child(VNode::Text(VText::new(
+                                "Table of contents will be generated from document headers.",
+                            ))),
                     )),
             ))
             // Doc loader script
@@ -292,11 +305,7 @@ pub fn GuideDocPage(guide_path: String, language: String) -> VNode {
 /// * `category` - Category name (e.g., "components", "system")
 /// * `items` - List of documentation items with titles and paths
 /// * `language` - The language code
-pub fn DocIndexPage(
-    category: String,
-    items: Vec<(String, String)>,
-    language: String,
-) -> VNode {
+pub fn DocIndexPage(category: String, items: Vec<(String, String)>, language: String) -> VNode {
     let category_title = category
         .chars()
         .enumerate()
@@ -347,7 +356,9 @@ pub fn DocIndexPage(
                     .child(VNode::Element(
                         VElement::new("p")
                             .class("page-header__subtitle")
-                            .child(VNode::Text(VText::new("Browse all available documentation in this category."))),
+                            .child(VNode::Text(VText::new(
+                                "Browse all available documentation in this category.",
+                            ))),
                     )),
             ))
             // Index grid

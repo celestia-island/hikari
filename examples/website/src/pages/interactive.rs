@@ -2,9 +2,9 @@
 //!
 //! Demonstrates the reactive state management system with live interactive examples.
 
+use crate::reactive::{button_counter, interactive_input, switch};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
-use crate::reactive::{switch, button_counter, interactive_input};
 
 /// Render the interactive examples page.
 pub fn render() -> VNode {

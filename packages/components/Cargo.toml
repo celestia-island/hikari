@@ -20,6 +20,9 @@ default = [
     "production",
 ]
 
+# Enable full custom scrollbar implementation (requires platform DOM APIs)
+native-scrollbars = []
+
 # Component groups (shortcuts) - enable multiple components at once
 basic = [
     "button",

@@ -9,11 +9,13 @@ use hikari_palette::classes::{
 };
 
 use super::provider::use_portal;
-use crate::platform::{element_closest, element_from_point};
+use crate::platform::{
+    element_closest, element_from_point, inner_height, inner_width, log, request_animation_frame,
+    set_timeout,
+};
 use crate::{
     feedback::PopoverPlacement,
     modal::{MaskMode, ModalPosition, ModalSize},
-    platform::{inner_height, inner_width, log},
     portal::{
         positioning::calculate_position,
         types::{
@@ -32,9 +34,9 @@ fn use_animated_portal_entry(
 ) -> (
     ReactiveSignal<ModalAnimationState>,
     Callback<MouseEvent>,
-    Callback<AnimationEvent>,
-    Signal<String>,
+    Signal<(String, String)>,
 ) {
+    let portal = use_portal();
     let id_for_close = id.clone();
     let internal_animation_state = use_signal(|| initial_state);
 
@@ -47,48 +49,68 @@ fn use_animated_portal_entry(
         })
     };
 
-    let animation_state_for_class = internal_animation_state.clone();
-    let animation_class = use_memo(move || {
-        let state = animation_state_for_class.read();
-        match state {
-            ModalAnimationState::Appearing => "hi-portal-entering".to_string(),
-            ModalAnimationState::Visible => String::new(),
-            ModalAnimationState::Disappearing => "hi-portal-closing".to_string(),
-        }
-    })
-    .value();
+    let computed_opacity_scale = {
+        let anim_state = internal_animation_state.clone();
+        use_memo(move || {
+            let state = anim_state.read();
+            log(&format!(
+                "{} use_memo triggered, state: {:?}",
+                name, state
+            ));
+            let (opacity, scale) = match state {
+                ModalAnimationState::Appearing => ("0".to_string(), "0.95".to_string()),
+                ModalAnimationState::Visible => ("1".to_string(), "1".to_string()),
+                ModalAnimationState::Disappearing => ("0".to_string(), "0.95".to_string()),
+            };
+            (opacity, scale)
+        })
+        .value()
+    };
 
-    let animation_state_for_end = internal_animation_state.clone();
-    let portal = use_portal();
-    let remove_entry = portal.remove_entry.clone();
-    let animationend_handler = Callback::new(move |_e: AnimationEvent| {
-        let state = animation_state_for_end.get();
-        log(&format!(
-            "{} animationend, state: {:?}",
-            name, state
-        ));
-        match state {
-            ModalAnimationState::Appearing => {
-                animation_state_for_end.set(ModalAnimationState::Visible);
+    let anim_state_for_effect = internal_animation_state.clone();
+    let id_for_timeout = id_for_close.clone();
+    let remove_entry_for_timeout = portal.remove_entry.clone();
+    {
+        use_effect(move || {
+            let state = anim_state_for_effect.get();
+            log(&format!(
+                "{} use_effect triggered, state: {:?}",
+                name, state
+            ));
+            if state == ModalAnimationState::Appearing {
+                let mut anim_state = anim_state_for_effect.clone();
+                request_animation_frame(move || {
+                    anim_state.set(ModalAnimationState::Visible);
+                    log(&format!(
+                        "{} set to visible via requestAnimationFrame",
+                        name
+                    ));
+                });
+            } else if state == ModalAnimationState::Disappearing {
+                let id = id_for_timeout.clone();
                 log(&format!(
-                    "{} set to visible via animationend",
-                    name
+                    "{} setTimeout scheduled for removing entry: {}",
+                    name, id
                 ));
+                let remove = remove_entry_for_timeout.clone();
+                set_timeout(
+                    move || {
+                        log(&format!(
+                            "{} removing entry after timeout: {}",
+                            name, id
+                        ));
+                        remove.call(id);
+                    },
+                    200,
+                );
             }
-            ModalAnimationState::Disappearing => {
-                let id = id_for_close.clone();
-                log(&format!("{} removing entry after animationend: {}", name, id));
-                remove_entry.call(id);
-            }
-            ModalAnimationState::Visible => {}
-        }
-    });
+        });
+    }
 
     (
         internal_animation_state.clone(),
         close_callback,
-        animationend_handler,
-        animation_class,
+        computed_opacity_scale,
     )
 }
 
@@ -239,10 +261,9 @@ fn ModalPortalEntry(
     #[props(default)] animation_state: ModalAnimationState,
 ) -> Element {
     let _internal_animation_state = use_signal(|| animation_state);
-    let (_, button_close, animationend_handler, animation_class) =
+    let (_, button_close, computed_opacity_scale) =
         use_animated_portal_entry(id.clone(), animation_state, "Modal");
 
-    // Clone button_close for the overlay click handler
     let button_close_for_overlay = button_close.clone();
 
     let overlay_classes = if mask_mode == MaskMode::Transparent {
@@ -266,7 +287,15 @@ fn ModalPortalEntry(
         .add(size_class)
         .build();
 
-    let anim_class_str = animation_class.read().clone();
+    let modal_style = use_memo(move || {
+        let (opacity, scale) = computed_opacity_scale.read().clone();
+        let style = format!(
+            "opacity: {}; transform: scale({}); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;",
+            opacity, scale
+        );
+        log(&format!("Modal style computed: {}", style));
+        style
+    });
 
     let header_classes = ClassesBuilder::new().add(ModalClass::Header).build();
 
@@ -276,7 +305,6 @@ fn ModalPortalEntry(
 
     let body_classes = ClassesBuilder::new().add(ModalClass::Body).build();
 
-    // Build title element outside rsx!
     let title_el = if title.is_some() {
         rsx! {
             h3 { class: title_classes, "{title.as_ref().unwrap().clone()}" }
@@ -285,7 +313,6 @@ fn ModalPortalEntry(
         VNode::empty()
     };
 
-    // Build close button outside rsx!
     let close_button = if closable {
         rsx! {
             button { class: close_classes, onclick: button_close,
@@ -313,9 +340,8 @@ fn ModalPortalEntry(
         VNode::empty()
     };
 
-    // Compute overlay style based on mask mode
     let overlay_style = format!(
-        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; z-index: {};",
+        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; z-index: {}; pointer-events: auto;",
         z_index
     );
 
@@ -331,8 +357,8 @@ fn ModalPortalEntry(
             },
 
             div {
-                class: "{modal_classes} {anim_class_str}",
-                onanimationend: animationend_handler,
+                class: modal_classes,
+                style: modal_style.read(),
                 onclick: |e: MouseEvent| {
                     e.stop_propagation();
                 },
@@ -359,7 +385,7 @@ fn DropdownPortalEntry(
     #[props(default)] close_on_select: bool,
 ) -> Element {
     let _internal_animation_state = use_signal(|| ModalAnimationState::Appearing);
-    let (_, close_dropdown, animationend_handler, animation_class) =
+    let (_, close_dropdown, computed_opacity_scale) =
         use_animated_portal_entry(id.clone(), ModalAnimationState::Appearing, "Dropdown");
 
     // Clone close_dropdown for multiple handlers
@@ -448,10 +474,9 @@ fn DropdownPortalEntry(
         z_index
     );
 
-    let anim_class_str = animation_class.read().clone();
-
     let content_style = use_memo(move || {
         let pos = _position_style.read();
+        let (opacity, scale) = computed_opacity_scale.read().clone();
 
         let transform_origin = match &strategy {
             PortalPositionStrategy::TriggerBased { placement } => match placement {
@@ -467,8 +492,8 @@ fn DropdownPortalEntry(
         };
 
         let style = format!(
-            "{} transform-origin: {};",
-            pos, transform_origin
+            "{} transform-origin: {}; opacity: {}; transform: scale({}); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;",
+            pos, transform_origin, opacity, scale
         );
         log(&format!("Dropdown style computed: {}", style));
         style
@@ -484,9 +509,8 @@ fn DropdownPortalEntry(
             },
 
             div {
-                class: "{dropdown_classes} {anim_class_str}",
+                class: dropdown_classes,
                 style: content_style.read(),
-                onanimationend: animationend_handler,
                 onclick: move |e: MouseEvent| {
                     e.stop_propagation();
                     if close_on_select {
@@ -494,8 +518,6 @@ fn DropdownPortalEntry(
                             if element_closest(&target_el, ".hi-menu-item").is_some() {
                                 close_dropdown_for_content.call(e);
                             }
-                        } else {
-                            close_dropdown_for_content.call(e);
                         }
                     }
                 },
@@ -550,7 +572,7 @@ fn PopoverPortalEntry(
     #[props(default)] close_requested: Option<ReactiveSignal<bool>>,
     #[props(default)] children: Element,
 ) -> Element {
-    let (mut animation_state, close_popover, animationend_handler, animation_class) =
+    let (mut animation_state, close_popover, computed_opacity_scale) =
         use_animated_portal_entry(id.clone(), ModalAnimationState::Appearing, "Popover");
 
     // Create a default signal if none provided
@@ -692,22 +714,10 @@ fn PopoverPortalEntry(
         }
     });
 
-    let (popover_style, popover_classes) = if trigger_rect.is_none() {
-        let anim_class_str = animation_class.read().clone();
-        let width_style = width.as_deref().unwrap_or("auto");
-        let classes = ClassesBuilder::new()
-            .add(PopoverClass::Popover)
-            .build();
-        (
-            format!(
-                "position: fixed; top: 50%; left: 50%; z-index: {}; width: {}; transform: translate(-50%, -50%); transform-origin: center center; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10); backdrop-filter: blur(12px); padding: 4px 0;",
-                z_index, width_style
-            ),
-            classes,
-        )
-    } else {
+    let popover_style = if let Some((placement, x, y)) = trigger_rect.map(|_| {
         let (placement, x, y) = position_state.get();
-
+        (placement, x, y)
+    }) {
         let (position_style, transform_origin, translate_transform) = match placement {
             PopoverPlacement::Bottom => (
                 format!("position: fixed; left: {}px; top: {}px;", x, y),
@@ -735,16 +745,15 @@ fn PopoverPortalEntry(
             ),
         };
 
-        let anim_class_str = animation_class.read().clone();
         let width_style = width.as_deref().unwrap_or("auto");
-        let classes = ClassesBuilder::new().add(PopoverClass::Popover).build();
-
-        (
-            format!(
-                "{} z-index: {}; width: {}; transform: {}; transform-origin: {}; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10); backdrop-filter: blur(12px); padding: 4px 0;",
-                position_style, z_index, width_style, translate_transform, transform_origin
-            ),
-            classes,
+        format!(
+            "{} z-index: {}; width: {}; transform: {}; transform-origin: {}; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10); backdrop-filter: blur(12px); padding: 4px 0; opacity: {}; transition: opacity 0.2s ease-in-out;",
+            position_style, z_index, width_style, translate_transform, transform_origin, computed_opacity_scale.read().0
+        )
+    } else {
+        format!(
+            "position: fixed; z-index: {}; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10); backdrop-filter: blur(12px); padding: 4px 0; opacity: {}; transition: opacity 0.2s ease-in-out;",
+            z_index, computed_opacity_scale.read().0
         )
     };
 
@@ -779,6 +788,7 @@ fn PopoverPortalEntry(
 
     let title_classes = ClassesBuilder::new().add(PopoverClass::Title).build();
     let content_classes = ClassesBuilder::new().add(PopoverClass::Content).build();
+    let popover_classes = ClassesBuilder::new().add(PopoverClass::Popover).build();
 
     // Build title element outside rsx!
     let title_el = if title.is_some() {
@@ -795,9 +805,8 @@ fn PopoverPortalEntry(
 
     let popover_content = rsx! {
         div {
-            class: "{popover_classes} {anim_class_str}",
+            class: "{popover_classes}",
             style: popover_style,
-            onanimationend: animationend_handler,
             "data-open": "true",
 
             {title_el}
@@ -814,11 +823,6 @@ fn PopoverPortalEntry(
                                 if let Some(handler) = on_close_for_content.as_ref() {
                                     handler.call(());
                                 }
-                            }
-                        } else {
-                            close_popover_for_content.call(e);
-                            if let Some(handler) = on_close_for_content.as_ref() {
-                                handler.call(());
                             }
                         }
                     }
@@ -882,7 +886,7 @@ fn TooltipPortalEntry(
                 x_clamped, y_clamped
             )
         } else {
-            "position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);".to_string()
+            String::new()
         }
     });
 

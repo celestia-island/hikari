@@ -221,17 +221,6 @@ impl StyledComponent for PopoverComponent {
   opacity: 0.35;
 }
 
-@keyframes hi-popover-enter {
-  from {
-    opacity: 0;
-    transform: scaleY(0.95) translateX(-50%);
-  }
-  to {
-    opacity: 1;
-    transform: scaleY(1) translateX(-50%);
-  }
-}
-
 [data-theme="dark"] .hi-popover {
   background: var(--hi-color-surface);
   border-color: var(--hi-color-border);
@@ -264,13 +253,6 @@ impl StyledComponent for PopoverComponent {
   bottom: 0;
   z-index: 1049;
   background: transparent;
-}
-
-.hi-popover-fallback-center {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
 }
 "#
     }

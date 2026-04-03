@@ -106,7 +106,6 @@ impl Default for StyleProviderProps {
 /// ```
 #[allow(non_snake_case)]
 pub fn StyleProvider(props: StyleProviderProps) -> VNode {
-    // Create style context (simplified - full implementation would use provide_context)
     let context = StyleContext {
         config: StyleConfig {
             class_prefix: props.class_prefix,
@@ -115,8 +114,7 @@ pub fn StyleProvider(props: StyleProviderProps) -> VNode {
         },
     };
 
-    // TODO: Implement proper context provider with tairitsu-hooks
-    // use_context_provider(move || context);
+    provide_context(context.clone());
 
     let css_vars = format!("--hi-style-class-prefix: {};", context.config.class_prefix);
     let extra_classes_str = context.config.extra_classes.join(" ");
@@ -137,18 +135,14 @@ pub fn StyleProvider(props: StyleProviderProps) -> VNode {
 ///
 /// Panics if called outside of a StyleProvider.
 pub fn use_style() -> StyleContext {
-    // TODO: Implement with tairitsu-hooks context
-    // use_context::<StyleContext>()
-    StyleContext::default()
+    consume_context()
 }
 
 /// Hook: Try to get style configuration context
 ///
 /// Returns None if called outside of a StyleProvider.
 pub fn try_use_style() -> Option<StyleContext> {
-    // TODO: Implement with tairitsu-hooks context
-    // try_consume_context::<StyleContext>()
-    None
+    use_context::<StyleContext>().map(|ctx| ctx.get().clone())
 }
 
 /// Hook: Get the complete class name for a component

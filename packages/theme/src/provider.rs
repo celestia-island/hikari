@@ -72,7 +72,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> VNode {
     };
 
     // Create theme context
-    let _context = ThemeContext {
+    let context = ThemeContext {
         palette: props.initial_palette.clone(),
         colors,
         direction: if dir == "rtl" {
@@ -83,8 +83,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> VNode {
         set_theme: Callback::new(|_| {}),
     };
 
-    // Provide context to children (simplified - full implementation would use provide_context)
-    // TODO: Implement proper context provider with tairitsu-hooks
+    provide_context(context);
 
     rsx! {
         div {

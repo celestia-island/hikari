@@ -28,6 +28,7 @@ pub fn router_js() -> String {
         '/demos': 'page-demos',
         '/demos/form': 'page-demos-form',
         '/demos/dashboard': 'page-demos-dashboard',
+        '/demos/video': 'page-demos-video',
         '/components/layer1/button': 'page-components-layer1',
         '/components/layer1/avatar': 'page-components-layer1',
         '/components/layer1/input': 'page-components-layer1',

@@ -140,12 +140,7 @@ impl Portal {
     /// * `x` - X coordinate in pixels
     /// * `y` - Y coordinate in pixels
     /// * `children` - The content to render
-    pub fn render_at(
-        id: impl Into<String>,
-        x: f64,
-        y: f64,
-        children: VNode,
-    ) -> VNode {
+    pub fn render_at(id: impl Into<String>, x: f64, y: f64, children: VNode) -> VNode {
         let style = format!(
             "position: fixed; left: {}px; top: {}px; pointer-events: auto; z-index: 10000;",
             x, y

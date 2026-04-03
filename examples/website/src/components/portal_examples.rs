@@ -7,8 +7,7 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 use crate::components::portal::{
-    dropdown_portal, modal_portal, portal, toast_portal, Portal, PortalProps,
-    ToastPosition,
+    dropdown_portal, modal_portal, portal, toast_portal, Portal, PortalProps, ToastPosition,
 };
 
 /// Example: Simple Modal with Portal
@@ -272,7 +271,8 @@ pub fn example_tooltip() -> VNode {
         }
     };
 
-    let style = "position: fixed; left: 50%; top: 50%; pointer-events: none; z-index: 10001;".to_string();
+    let style =
+        "position: fixed; left: 50%; top: 50%; pointer-events: none; z-index: 10001;".to_string();
 
     Portal::render(
         tooltip_id,
@@ -337,11 +337,7 @@ pub fn example_confirm_dialog() -> VNode {
 ///
 /// This function demonstrates rendering multiple portals simultaneously.
 pub fn example_multiple_portals() -> VNode {
-    VNode::Fragment(vec![
-        example_modal(),
-        example_toast(),
-        example_dropdown(),
-    ])
+    VNode::Fragment(vec![example_modal(), example_toast(), example_dropdown()])
 }
 
 /// Example: Interactive Demo Page

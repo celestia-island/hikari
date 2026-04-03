@@ -1,5 +1,7 @@
 //! Demo pages showcasing Hikari component compositions.
 
+pub mod video_demo;
+
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
@@ -24,6 +26,12 @@ fn render_overview() -> VNode {
                         h3 { class: "card__title", "Dashboard Demo" }
                         p { class: "card__body",
                             "Data dashboard with stats cards, a simple data table, and navigation tabs."
+                        }
+                    }
+                    a { href: "/demos/video", class: "card card--link",
+                        h3 { class: "card__title", "Video & Audio Demo" }
+                        p { class: "card__body",
+                            "Video player and audio waveform visualization components."
                         }
                     }
                 }
@@ -198,5 +206,6 @@ pub fn render_all() -> Vec<VNode> {
         render_overview(),
         render_form_demo(),
         render_dashboard_demo(),
+        video_demo::render(),
     ]
 }

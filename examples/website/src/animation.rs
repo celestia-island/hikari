@@ -32,6 +32,21 @@ pub enum AnimationId {
     Pulse,
     Shimmer,
 
+    // Neon effects
+    NeonFlicker,
+    NeonBuzz,
+    NeonScanline,
+
+    // Tech effects
+    TechGlitch,
+    TechTyping,
+    TechDataFlow,
+
+    // Transition effects
+    TransitionFadeSlideIn,
+    TransitionScaleBlurIn,
+    TransitionRotateZoomIn,
+
     // Custom animation (uses data-animation-config attribute)
     Custom,
 }
@@ -52,6 +67,15 @@ impl AnimationId {
             "breathing" => Some(Self::Breathing),
             "pulse" => Some(Self::Pulse),
             "shimmer" => Some(Self::Shimmer),
+            "neon-flicker" => Some(Self::NeonFlicker),
+            "neon-buzz" => Some(Self::NeonBuzz),
+            "neon-scanline" => Some(Self::NeonScanline),
+            "tech-glitch" => Some(Self::TechGlitch),
+            "tech-typing" => Some(Self::TechTyping),
+            "tech-data-flow" => Some(Self::TechDataFlow),
+            "transition-fade-slide-in" => Some(Self::TransitionFadeSlideIn),
+            "transition-scale-blur-in" => Some(Self::TransitionScaleBlurIn),
+            "transition-rotate-zoom-in" => Some(Self::TransitionRotateZoomIn),
             "custom" => Some(Self::Custom),
             _ => None,
         }
@@ -72,6 +96,15 @@ impl AnimationId {
             Self::Breathing => "hikari-anim--breathing",
             Self::Pulse => "hikari-anim--pulse",
             Self::Shimmer => "hikari-anim--shimmer",
+            Self::NeonFlicker => "hikari-anim--neon-flicker",
+            Self::NeonBuzz => "hikari-anim--neon-buzz",
+            Self::NeonScanline => "hikari-anim--neon-scanline",
+            Self::TechGlitch => "hikari-anim--tech-glitch",
+            Self::TechTyping => "hikari-anim--tech-typing",
+            Self::TechDataFlow => "hikari-anim--tech-data-flow",
+            Self::TransitionFadeSlideIn => "hikari-anim--transition-fade-slide-in",
+            Self::TransitionScaleBlurIn => "hikari-anim--transition-scale-blur-in",
+            Self::TransitionRotateZoomIn => "hikari-anim--transition-rotate-zoom-in",
             Self::Custom => "hikari-anim--custom",
         }
     }
@@ -91,6 +124,15 @@ impl AnimationId {
             Self::Breathing => "breathing",
             Self::Pulse => "pulse",
             Self::Shimmer => "shimmer",
+            Self::NeonFlicker => "neon-flicker",
+            Self::NeonBuzz => "neon-buzz",
+            Self::NeonScanline => "neon-scanline",
+            Self::TechGlitch => "tech-glitch",
+            Self::TechTyping => "tech-typing",
+            Self::TechDataFlow => "tech-data-flow",
+            Self::TransitionFadeSlideIn => "transition-fade-slide-in",
+            Self::TransitionScaleBlurIn => "transition-scale-blur-in",
+            Self::TransitionRotateZoomIn => "transition-rotate-zoom-in",
             Self::Custom => "custom",
         }
     }

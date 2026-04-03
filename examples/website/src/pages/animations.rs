@@ -1,7 +1,8 @@
 //! Animation examples page
 //!
 //! Demonstrates various animation capabilities of the hikari-animation system
-//! including hover effects, focus animations, and state transitions.
+//! including hover effects, focus animations, state transitions, and interactive
+//! preset demos for glow, neon, tech, and transition effects.
 
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
@@ -261,6 +262,260 @@ let button = Button::new()
 }"# }
                 }
             }
+
+            // ── Interactive Preset Demos ─────────────────────────────────────
+
+            div { class: "page-section preset-demo-section",
+                h2 { "Preset Demos" }
+                p { "Interactive animation presets from the Hikari animation system. Click to start/stop each effect." }
+
+                // Glow Effects
+                h3 { "Glow Effects" }
+                p { class: "preset-demo-subtitle",
+                    "FUI-inspired glow animations: pulse, breathe, and shimmer."
+                }
+                div { class: "preset-demo-controls",
+                    button {
+                        class: "preset-demo-btn preset-demo-btn--primary",
+                        "data-anim-group": "glow",
+                        "data-anim-class": "hikari-anim--pulse",
+                        "data-anim-target": "glow-target",
+                        r#type: "button",
+                        "Pulse"
+                    }
+                    button {
+                        class: "preset-demo-btn preset-demo-btn--secondary",
+                        "data-anim-group": "glow",
+                        "data-anim-class": "hikari-anim--breathing",
+                        "data-anim-target": "glow-target",
+                        r#type: "button",
+                        "Breathe"
+                    }
+                    button {
+                        class: "preset-demo-btn preset-demo-btn--ghost",
+                        "data-anim-group": "glow",
+                        "data-anim-class": "hikari-anim--shimmer",
+                        "data-anim-target": "glow-target",
+                        r#type: "button",
+                        "Shimmer"
+                    }
+                }
+                div { id: "glow-target",
+                    class: "preset-demo-target preset-demo-target--glow",
+                    "Glow Element"
+                }
+            }
+
+            div { class: "page-section preset-demo-section",
+                // Neon Effects
+                h3 { "Neon Effects" }
+                p { class: "preset-demo-subtitle",
+                    "Retro neon sign effects: flicker, buzz, and scanline."
+                }
+                div { class: "preset-demo-controls",
+                    button {
+                        class: "preset-demo-btn preset-demo-btn--primary",
+                        "data-anim-group": "neon",
+                        "data-anim-class": "hikari-anim--neon-flicker",
+                        "data-anim-target": "neon-target",
+                        r#type: "button",
+                        "Flicker"
+                    }
+                    button {
+                        class: "preset-demo-btn preset-demo-btn--secondary",
+                        "data-anim-group": "neon",
+                        "data-anim-class": "hikari-anim--neon-buzz",
+                        "data-anim-target": "neon-target",
+                        r#type: "button",
+                        "Buzz"
+                    }
+                    button {
+                        class: "preset-demo-btn preset-demo-btn--ghost",
+                        "data-anim-group": "neon",
+                        "data-anim-class": "hikari-anim--neon-scanline",
+                        "data-anim-target": "neon-target",
+                        r#type: "button",
+                        "Scanline"
+                    }
+                }
+                div { id: "neon-target",
+                    class: "preset-demo-target preset-demo-target--neon",
+                    "Neon Element"
+                }
+            }
+
+            div { class: "page-section preset-demo-section",
+                // Tech Effects
+                h3 { "Tech Effects" }
+                p { class: "preset-demo-subtitle",
+                    "Cyberpunk-inspired tech effects: glitch, typing, and data flow."
+                }
+                div { class: "preset-demo-controls",
+                    button {
+                        class: "preset-demo-btn preset-demo-btn--primary",
+                        "data-anim-group": "tech",
+                        "data-anim-class": "hikari-anim--tech-glitch",
+                        "data-anim-target": "tech-target",
+                        r#type: "button",
+                        "Glitch"
+                    }
+                    button {
+                        class: "preset-demo-btn preset-demo-btn--secondary",
+                        "data-anim-group": "tech",
+                        "data-anim-class": "hikari-anim--tech-typing",
+                        "data-anim-target": "tech-target",
+                        r#type: "button",
+                        "Typing"
+                    }
+                    button {
+                        class: "preset-demo-btn preset-demo-btn--ghost",
+                        "data-anim-group": "tech",
+                        "data-anim-class": "hikari-anim--tech-data-flow",
+                        "data-anim-target": "tech-target",
+                        r#type: "button",
+                        "Data Flow"
+                    }
+                }
+                div { id: "tech-target",
+                    class: "preset-demo-target preset-demo-target--tech",
+                    "Tech Element"
+                }
+            }
+
+            div { class: "page-section preset-demo-section",
+                // Transition Effects
+                h3 { "Transition Effects" }
+                p { class: "preset-demo-subtitle",
+                    "Entrance transition animations: fade+slide, scale+blur, and rotate+zoom."
+                }
+                div { class: "preset-demo-controls",
+                    button {
+                        class: "preset-demo-btn preset-demo-btn--primary",
+                        "data-anim-group": "transition",
+                        "data-anim-class": "hikari-anim--transition-fade-slide-in",
+                        "data-anim-target": "transition-target",
+                        r#type: "button",
+                        "Fade + Slide"
+                    }
+                    button {
+                        class: "preset-demo-btn preset-demo-btn--secondary",
+                        "data-anim-group": "transition",
+                        "data-anim-class": "hikari-anim--transition-scale-blur-in",
+                        "data-anim-target": "transition-target",
+                        r#type: "button",
+                        "Scale + Blur"
+                    }
+                    button {
+                        class: "preset-demo-btn preset-demo-btn--ghost",
+                        "data-anim-group": "transition",
+                        "data-anim-class": "hikari-anim--transition-rotate-zoom-in",
+                        "data-anim-target": "transition-target",
+                        r#type: "button",
+                        "Rotate + Zoom"
+                    }
+                }
+                div { id: "transition-target",
+                    class: "preset-demo-target preset-demo-target--transition",
+                    "Transition Element"
+                }
+            }
+
+            // Preset demo toggle script
+            { preset_demo_js() }
         }
     }
 }
+
+fn preset_demo_js() -> VNode {
+    use tairitsu_vdom::{VElement, VText};
+    VNode::Element(
+        VElement::new("script")
+            .attr("type", "module")
+            .child(VNode::Text(VText::new(PRESET_DEMO_JS))),
+    )
+}
+
+const PRESET_DEMO_JS: &str = r#"
+(function() {
+    'use strict';
+
+    var activeAnimations = {};
+
+    function clearGroupAnimations(group) {
+        if (activeAnimations[group]) {
+            var target = document.getElementById(activeAnimations[group].targetId);
+            if (target) {
+                target.classList.remove(activeAnimations[group].animClass);
+                // Reset inline styles that might have been set
+                target.style.animationPlayState = '';
+            }
+            delete activeAnimations[group];
+        }
+        // Update all buttons in the group
+        var btns = document.querySelectorAll('[data-anim-group="' + group + '"]');
+        btns.forEach(function(btn) {
+            btn.classList.remove('is-active');
+            var originalText = btn.getAttribute('data-anim-label') || btn.textContent;
+            btn.textContent = originalText;
+        });
+    }
+
+    function handlePresetDemoClick(e) {
+        var btn = e.target.closest('[data-anim-group]');
+        if (!btn) return;
+
+        var group = btn.getAttribute('data-anim-group');
+        var animClass = btn.getAttribute('data-anim-class');
+        var targetId = btn.getAttribute('data-anim-target');
+        var label = btn.getAttribute('data-anim-label') || btn.textContent;
+
+        if (activeAnimations[group] && activeAnimations[group].animClass === animClass) {
+            // Stop this animation
+            clearGroupAnimations(group);
+            return;
+        }
+
+        // Clear any existing animation in this group
+        clearGroupAnimations(group);
+
+        // Start the new animation
+        var target = document.getElementById(targetId);
+        if (target) {
+            // For transition effects, remove and re-add class to replay
+            target.classList.remove(animClass);
+            // Force reflow to restart animation
+            void target.offsetWidth;
+            target.classList.add(animClass);
+        }
+
+        activeAnimations[group] = {
+            animClass: animClass,
+            targetId: targetId,
+        };
+
+        btn.classList.add('is-active');
+    }
+
+    // Store original labels
+    function storeOriginalLabels() {
+        var btns = document.querySelectorAll('[data-anim-group]');
+        btns.forEach(function(btn) {
+            if (!btn.getAttribute('data-anim-label')) {
+                btn.setAttribute('data-anim-label', btn.textContent);
+            }
+        });
+    }
+
+    function init() {
+        storeOriginalLabels();
+        document.addEventListener('click', handlePresetDemoClick);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+    setTimeout(init, 200);
+})();
+"#;

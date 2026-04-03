@@ -49,6 +49,7 @@ const NAV: &[NavSection] = &[
             ("Overview", "/demos"),
             ("Form Demo", "/demos/form"),
             ("Dashboard", "/demos/dashboard"),
+            ("Video & Audio", "/demos/video"),
         ],
     },
 ];

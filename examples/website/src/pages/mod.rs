@@ -1,5 +1,3 @@
-//! Page render functions, organised by route group.
-
 pub mod animations;
 pub mod components;
 pub mod demos;

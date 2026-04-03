@@ -16,7 +16,10 @@ fn txt(s: &str) -> VNode {
 use crate::animation::AnimationId;
 use crate::ui::{self, Button, Card, Input};
 
-/// Render the animation examples page
+pub fn render_animation_demo() -> VNode {
+    render()
+}
+
 pub fn render() -> VNode {
     rsx! {
         div { id: "page-animations", class: "hikari-page",

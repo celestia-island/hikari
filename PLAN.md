@@ -51,58 +51,25 @@
 
 ---
 
-## Phase 7: Extra Components 渲染层补全
+## Phase 7: Extra Components 渲染层补全 ✅
 
-### 7A: 平台 API 依赖类（等 WIT，添加 data-* hooks）
+### 7A: 平台 API 依赖类 ✅
 
-| # | 文件 | 缺失的渲染 | 依赖的 WIT 接口 | 行动 |
-|---|------|-----------|----------------|------|
-| 1 | `extra/code_highlighter.rs` | clipboard copy `onclick` + setTimeout 自动重置 | `navigator.clipboard.writeText`, `window.setTimeout` | ✅ 已有 `data-*` 属性 + platform stub，保持现状 |
-| 2 | `extra/rich_text_editor.rs` | `contenteditable` + `document.execCommand()` + `oninput` | `document.execCommand`, `element.inner_html` | ✅ 已有 `data-command` + `data-contenteditable`，保持现状 |
-| 3 | `extra/video_player.rs` | Fullscreen 按钮 + 所有 onclick handler + timeupdate 事件 | `element.request_fullscreen`, `html-media-element` | ⚠️ 需补：Fullscreen 按钮 DOM + progress bar DOM + `data-action` 属性 |
-| 4 | `extra/audio_waveform.rs` | Web Audio API 实时分析 (AudioContext, AnalyserNode) | `AudioContext`, `AnalyserNode`, `MediaElementSourceNode` | ✅ 已有合成波形 fallback，保持现状 |
+| # | 文件 | 状态 |
+|---|------|------|
+| 1 | `extra/code_highlighter.rs` | ✅ `data-*` 属性 + platform stub |
+| 2 | `extra/rich_text_editor.rs` | ✅ `data-command` + `data-contenteditable` |
+| 3 | `extra/video_player.rs` | ✅ Fullscreen + progress bar + `data-action` |
+| 4 | `extra/audio_waveform.rs` | ✅ 合成波形 fallback |
 
-### 7B: 结构性简化类（直接补全，无平台 API 依赖）
+### 7B: 结构性简化类 ✅
 
-| # | 文件 | 缺失的渲染 | 估计工作量 |
-|---|------|-----------|-----------|
-| 5 | `node_graph/canvas.rs` | Connection Bezier path 数据（`d=""` 空属性）、Minimap 内容、Undo/Redo/Save/Load 按钮、键盘快捷键 | **大** — connection math 已存在于 `connection.rs`，需接入 canvas render；minimap render 已存在于 `minimap.rs`，需接入 canvas render |
-| 6 | `node_graph/node.rs` | Minimized icon "..."、条件隐藏 body/ports、children slot、独立 `div.hi-node-ports` 容器 | **中** — 纯 DOM 结构调整 |
-| 7 | `node_graph/plugins/input_node.rs` | `render_node()` 中 `<input>` 元素 + `oninput` handler | **中** — 需要 trait 恢复 `render_node()` 或改用 `display_value()` 驱动 canvas 渲染 |
-| 8 | `node_graph/plugins/constant.rs` | `render_node()` 中值显示 `div` | **小** — `display_value()` 已返回值字符串 |
-| 9 | `node_graph/plugins/output_node.rs` | `render_node()` 中状态显示 `div` | **小** — `display_value()` 已返回值字符串 |
-| 10 | `node_graph/plugins/processor.rs` | `render_node()` 中操作符号显示 `div` | **小** — `label()` 已返回操作符号 |
-
-#### 7B 详细实施计划
-
-**Task 7B-1: Canvas render 补全** (`canvas.rs`)
-- [ ] 将 `connection.rs` 中的 `ConnectionLine` Bezier path 计算接入 canvas render，填充 `d=""` 属性
-- [ ] 将 `minimap.rs` 中的 `render_minimap()` 接入 canvas，填充空的 minimap container
-- [ ] 添加 Undo/Redo 按钮渲染（调用 `history.can_undo()`/`can_redo()` 状态）
-- [ ] 添加 Save/Load 按钮渲染
-- [ ] 添加 `tabindex` + `onkeydown` 键盘事件处理（+/-/0/Ctrl+Z/Ctrl+Y/箭头键）
-- [ ] 添加 children overlay layer
-- [ ] 验证：所有 12 个现有 canvas 测试通过 + 新增 render 验证测试
-
-**Task 7B-2: Node render 补全** (`node.rs`)
-- [ ] 添加 minimized icon "..." 条件渲染
-- [ ] 条件隐藏 body/ports 当 minimized 时
-- [ ] 将 ports 从 body 内移到独立 `div.hi-node-ports` 容器
-- [ ] 添加 children slot 支持（通过 `NodeState` 新增 `children: Option<VNode>` 字段）
-- [ ] 在 header 中用 `span.hi-node-title` 包裹 title
-- [ ] 验证：所有 6 个现有 node 测试通过
-
-**Task 7B-3: Plugin render 补全** (plugins/)
-- [ ] 选项 A（推荐）：在 `NodePlugin` trait 恢复 `fn render_node(&self, ...) -> VNode` 默认方法，使用 `label()` + `display_value()` + `default_ports()` 自动生成标准 DOM
-- [ ] 选项 B：保持 data-only trait，在 canvas render 中直接调用 `label()`/`display_value()` 生成 plugin DOM
-- [ ] 为 InputNode 添加特殊的 `<input>` 渲染分支（使用 `data-node-type="input"` + `data-port-id` 属性）
-- [ ] 验证：所有 plugin 测试通过
-
-**Task 7B-4: Video Player DOM 补全** (`video_player.rs`)
-- [ ] 添加 Fullscreen 按钮 DOM（`data-action="toggle-fullscreen"`）
-- [ ] 添加 progress bar DOM 元素（`div.hi-video-progress > div.hi-video-progress-bar`）
-- [ ] 为所有按钮添加 `data-action` 属性（已有 play/mute，需确认 fullscreen）
-- [ ] 验证：现有测试通过
+| # | 文件 | 状态 |
+|---|------|------|
+| 5 | `node_graph/canvas.rs` | ✅ Bezier paths + minimap + undo/redo/save/load controls |
+| 6 | `node_graph/node.rs` | ✅ Minimized icon + conditional body + separate ports |
+| 7 | `node_graph/plugins/*` | ✅ `render_body()` default method + InputNode override |
+| 8 | `extra/video_player.rs` | ✅ Fullscreen button + progress bar |
 
 ---
 

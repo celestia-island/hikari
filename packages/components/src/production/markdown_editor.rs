@@ -384,41 +384,75 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 fn render_markdown_simple(markdown: &str) -> String {
     let mut html = markdown.to_string();
 
-    // Escape HTML
     html = html.replace('&', "&amp;");
     html = html.replace('<', "&lt;");
     html = html.replace('>', "&gt;");
 
-    // Headers
-    html = html.replace("\n### ", "\n<h3>");
-    html = html.replace("\n## ", "\n<h2>");
-    html = html.replace("\n# ", "\n<h1>");
+    let mut result = String::new();
+    let mut in_bold = false;
+    let mut in_italic = false;
+    let mut in_code = false;
+    let mut chars = html.chars().peekable();
 
-    // Bold
-    html = html
-        .replace("**", "<strong>")
-        .replacen("<strong>", "</strong>", 1);
-    while html.contains("<strong>") {
-        html = html.replacen("<strong>", "</strong>", 1);
+    while let Some(c) = chars.next() {
+        if c == '*' && chars.peek() == Some(&'*') && !in_code {
+            chars.next();
+            if in_bold {
+                result.push_str("</strong>");
+            } else {
+                result.push_str("<strong>");
+            }
+            in_bold = !in_bold;
+        } else if c == '*' && !in_bold && !in_code {
+            if in_italic {
+                result.push_str("</em>");
+            } else {
+                result.push_str("<em>");
+            }
+            in_italic = !in_italic;
+        } else if c == '`' && !in_bold && !in_italic {
+            if in_code {
+                result.push_str("</code>");
+            } else {
+                result.push_str("<code>");
+            }
+            in_code = !in_code;
+        } else if c == '\n' {
+            result.push_str("<br>");
+        } else {
+            result.push(c);
+        }
     }
 
-    // Italic
-    html = html.replace("*", "<em>").replacen("<em>", "</em>", 1);
-    while html.contains("<em>") {
-        html = html.replacen("<em>", "</em>", 1);
+    if in_bold {
+        result.push_str("</strong>");
+    }
+    if in_italic {
+        result.push_str("</em>");
+    }
+    if in_code {
+        result.push_str("</code>");
     }
 
-    // Code
-    html = html.replace("`", "<code>").replacen("<code>", "</code>", 1);
-    while html.contains("<code>") {
-        html = html.replacen("<code>", "</code>", 1);
+    let lines: Vec<&str> = result.split("<br>").collect();
+    let mut processed = Vec::new();
+    for line in lines {
+        let trimmed = line.trim_start_matches(' ');
+        if let Some(rest) = trimmed.strip_prefix("### ") {
+            processed.push(format!("<h3>{}</h3>", rest));
+        } else if let Some(rest) = trimmed.strip_prefix("## ") {
+            processed.push(format!("<h2>{}</h2>", rest));
+        } else if let Some(rest) = trimmed.strip_prefix("# ") {
+            processed.push(format!("<h1>{}</h1>", rest));
+        } else {
+            processed.push(line.to_string());
+        }
     }
 
-    // Line breaks
-    html = html.replace("\n", "<br>");
-
-    // Wrap in paragraph
-    format!("<div class=\"markdown-content\">{}</div>", html)
+    format!(
+        "<div class=\"markdown-content\">{}</div>",
+        processed.join("<br>")
+    )
 }
 
 impl StyledComponent for MarkdownEditorComponent {

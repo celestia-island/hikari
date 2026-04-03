@@ -15,6 +15,7 @@ hikari-palette = { path = "../palette" }
 
 # Tairitsu framework integration
 tairitsu-vdom = { path = "../../../tairitsu/packages/vdom" }
+tairitsu-hooks = { path = "../../../tairitsu/packages/hooks" }
 tairitsu-style = { path = "../../../tairitsu/packages/style" }
 tairitsu-web = { path = "../../../tairitsu/packages/web", default-features = false, features = [
     "vdom",

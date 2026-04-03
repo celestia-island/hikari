@@ -65,8 +65,10 @@ pub mod builder;
 pub mod context;
 pub mod events;
 pub mod global_manager;
+pub mod hooks;
 pub mod lifecycle;
 pub mod prefers_reduced_motion;
+pub mod provider;
 pub mod scrollbar;
 pub mod style;
 pub mod timer;
@@ -77,8 +79,14 @@ pub use builder::*;
 pub use context::AnimationContext;
 pub use events::*;
 pub use global_manager::*;
+pub use hooks::tween::{UseTween, use_animation_engine, use_tween};
 pub use lifecycle::*;
 pub use prefers_reduced_motion::*;
+pub use provider::{
+    AnimationProviderContext, init_animation_provider, try_use_animation_config,
+    use_animation_config, use_animation_duration_scale, use_animation_enabled,
+    use_animation_reduced_motion,
+};
 pub use scrollbar::*;
 pub use style::*;
 pub use timer::*;

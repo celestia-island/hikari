@@ -6,6 +6,8 @@ use crate::node_graph::{
     value::NodeValue,
 };
 
+use tairitsu_vdom::{VElement, VNode};
+
 /// Input node plugin
 ///
 /// Provides input values from user interaction or external sources.
@@ -117,6 +119,22 @@ impl NodePlugin for InputNode {
         } else {
             None
         }
+    }
+
+    fn render_body(&self) -> VNode {
+        let value_str = self.default_value.to_display_string();
+        VNode::Element(
+            VElement::new("div")
+                .class("hi-node-input hi-node-body")
+                .attr("data-node-type", "input")
+                .child(VNode::Element(
+                    VElement::new("input")
+                        .attr("data-node-input", "true")
+                        .attr("type", &self.input_type)
+                        .attr("placeholder", "Enter value...")
+                        .attr("value", &value_str),
+                )),
+        )
     }
 }
 

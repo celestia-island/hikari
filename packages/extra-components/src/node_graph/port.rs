@@ -45,6 +45,7 @@ pub struct Port {
     pub disabled: bool,
     pub connected: bool,
     pub data_type: String,
+    pub port_position_name: Option<String>,
 }
 
 impl Port {
@@ -58,6 +59,7 @@ impl Port {
             disabled: false,
             connected: false,
             data_type: "any".to_string(),
+            port_position_name: None,
         }
     }
 
@@ -85,11 +87,21 @@ impl Port {
         self
     }
 
+    pub fn with_port_position_name(mut self, name: &str) -> Self {
+        self.port_position_name = Some(name.to_string());
+        self
+    }
+
     /// Get the CSS class string
     pub fn class_string(&self) -> String {
+        let pos_class = match &self.port_position_name {
+            Some(name) => format!("hi-node-port-{}", name),
+            None => String::new(),
+        };
         format!(
-            "hi-node-graph-port hi-node-port-{} {} {}",
+            "hi-node-port hi-node-port-{} {} {} {}",
             self.port_type.as_str(),
+            pos_class,
             if self.disabled {
                 "hi-port-disabled"
             } else {
@@ -184,9 +196,20 @@ mod tests {
             .with_connected(true);
 
         let class = port.class_string();
+        assert!(class.contains("hi-node-port"));
         assert!(class.contains("hi-node-port-input"));
         assert!(class.contains("hi-port-disabled"));
         assert!(class.contains("hi-port-connected"));
+    }
+
+    #[test]
+    fn test_port_class_string_with_position() {
+        let port = Port::new("port1".to_string(), PortType::Input, "Data".to_string())
+            .with_port_position_name("left");
+
+        let class = port.class_string();
+        assert!(class.contains("hi-node-port-input"));
+        assert!(class.contains("hi-node-port-left"));
     }
 
     #[test]

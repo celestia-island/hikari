@@ -248,6 +248,8 @@ pub fn render_video_player(state: &VideoPlayerState) -> VNode {
         let play_icon = if state.is_playing { "Pause" } else { "Play" };
         let mute_icon = if state.is_muted { "Unmute" } else { "Mute" };
 
+        let progress_style = format!("width: {}%;", state.progress_percent());
+
         let controls = VElement::new("div")
             .class("hi-video-controls")
             .child(VNode::Element(
@@ -256,6 +258,15 @@ pub fn render_video_player(state: &VideoPlayerState) -> VNode {
                     .attr("aria-label", play_label)
                     .attr("data-action", "toggle-play")
                     .child(VNode::Text(VText::new(play_icon))),
+            ))
+            .child(VNode::Element(
+                VElement::new("div")
+                    .class("hi-video-progress")
+                    .child(VNode::Element(
+                        VElement::new("div")
+                            .class("hi-video-progress-bar")
+                            .style(progress_style.as_str()),
+                    )),
             ))
             .child(VNode::Element(
                 VElement::new("span")
@@ -268,6 +279,13 @@ pub fn render_video_player(state: &VideoPlayerState) -> VNode {
                     .attr("aria-label", if state.is_muted { "Unmute" } else { "Mute" })
                     .attr("data-action", "toggle-mute")
                     .child(VNode::Text(VText::new(mute_icon))),
+            ))
+            .child(VNode::Element(
+                VElement::new("button")
+                    .class("hi-video-control-btn")
+                    .attr("aria-label", "Fullscreen")
+                    .attr("data-action", "toggle-fullscreen")
+                    .child(VNode::Text(VText::new("Fullscreen"))),
             ));
 
         container_children.push(VNode::Element(controls));

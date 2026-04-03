@@ -3,6 +3,8 @@
 
 use std::collections::HashMap;
 
+use tairitsu_vdom::{VElement, VNode, VText};
+
 pub type NodeId = String;
 pub type PortId = String;
 
@@ -141,6 +143,32 @@ pub trait NodePlugin: Send + Sync {
     fn default_ports(&self) -> Vec<NodePort> {
         Vec::new()
     }
+
+    /// Render the node body as a VNode
+    fn render_body(&self) -> VNode {
+        let type_name = self.node_type().name.clone();
+        let mut body = VElement::new("div")
+            .class("hi-node-body")
+            .attr("data-node-type", &type_name);
+
+        if let Some(value) = self.display_value() {
+            let value_class = format!("hi-node-{}-value", type_name);
+            body = body.child(VNode::Element(
+                VElement::new("div")
+                    .class(value_class)
+                    .child(VNode::Text(VText::new(&value))),
+            ));
+        } else {
+            let label = self.label();
+            body = body.child(VNode::Element(
+                VElement::new("div")
+                    .class("hi-node-label")
+                    .child(VNode::Text(VText::new(&label))),
+            ));
+        }
+
+        VNode::Element(body)
+    }
 }
 
 /// Simple node data structure for rendering
@@ -256,34 +284,49 @@ impl From<NodeState> for Node {
     }
 }
 
-use tairitsu_vdom::{VElement, VNode, VText};
-
 use super::port::{Port, PortType};
 
 pub fn render_node(node: &Node) -> VNode {
     let mut children: Vec<VNode> = Vec::new();
 
-    let header = VNode::Element(
-        VElement::new("div")
-            .class("hi-node-header")
-            .child(VNode::Text(VText::new(&node.title))),
-    );
-    children.push(header);
+    let mut header = VElement::new("div")
+        .class("hi-node-header")
+        .child(VNode::Element(
+            VElement::new("span")
+                .class("hi-node-title")
+                .child(VNode::Text(VText::new(&node.title))),
+        ));
 
-    let mut body = VElement::new("div").class("hi-node-body");
-
-    for np in &node.ports {
-        let is_input = matches!(np.position, PortPosition::Left | PortPosition::Top);
-        let port_type = if is_input {
-            PortType::Input
-        } else {
-            PortType::Output
-        };
-        let p = Port::new(np.port_id.clone(), port_type, np.label.clone());
-        body = body.child(super::port::render_port(&p));
+    if node.minimized {
+        header = header.child(VNode::Element(
+            VElement::new("span")
+                .class("hi-node-minimized-icon")
+                .child(VNode::Text(VText::new("⋯"))),
+        ));
     }
 
-    children.push(VNode::Element(body));
+    children.push(VNode::Element(header));
+
+    if !node.minimized {
+        let body = VElement::new("div").class("hi-node-body");
+        children.push(VNode::Element(body));
+
+        let mut ports = VElement::new("div").class("hi-node-ports");
+
+        for np in &node.ports {
+            let is_input = matches!(np.position, PortPosition::Left | PortPosition::Top);
+            let port_type = if is_input {
+                PortType::Input
+            } else {
+                PortType::Output
+            };
+            let p = Port::new(np.port_id.clone(), port_type, np.label.clone())
+                .with_port_position_name(np.position.name());
+            ports = ports.child(super::port::render_port(&p));
+        }
+
+        children.push(VNode::Element(ports));
+    }
 
     VNode::Element(
         VElement::new("div")

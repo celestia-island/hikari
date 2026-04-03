@@ -4,11 +4,12 @@
 use std::collections::HashMap;
 
 use tairitsu_vdom::svg::SafeSvg;
-use tairitsu_vdom::{VElement, VNode};
+use tairitsu_vdom::{VElement, VNode, VText};
 
 use crate::node_graph::{
-    connection::{Connection, ConnectionId},
+    connection::{Connection, ConnectionId, ConnectionLine},
     history::{HistoryAction, HistoryState},
+    minimap::{MinimapConnection, MinimapNode, NodeGraphMinimap},
     node::{Node, NodeId, NodeState, NodeType, PortPosition},
     serialization::SerializedNodeGraph,
 };
@@ -296,6 +297,14 @@ pub enum NodeGraphEvent {
 }
 
 pub fn render_node_graph_canvas(state: &NodeGraphState, config: &NodeGraphCanvasConfig) -> VNode {
+    render_node_graph_canvas_with_history(state, config, &HistoryState::new())
+}
+
+pub fn render_node_graph_canvas_with_history(
+    state: &NodeGraphState,
+    config: &NodeGraphCanvasConfig,
+    history: &HistoryState,
+) -> VNode {
     let mut children: Vec<VNode> = Vec::new();
 
     let mut svg_parts = String::new();
@@ -312,9 +321,29 @@ pub fn render_node_graph_canvas(state: &NodeGraphState, config: &NodeGraphCanvas
 
     svg_parts.push_str(r#"<g class="hi-node-graph-connections">"#);
     for connection in &state.connections {
+        let from_pos = state
+            .calculate_port_position(
+                &connection.from_node,
+                &connection.from_port,
+                PortPosition::Right,
+            )
+            .unwrap_or((0.0, 0.0));
+        let to_pos = state
+            .calculate_port_position(&connection.to_node, &connection.to_port, PortPosition::Left)
+            .unwrap_or((0.0, 0.0));
+
+        let path_data = connection.svg_path_data(from_pos, to_pos);
+        let stroke_color = if connection.selected {
+            "var(--hi-color-primary, #6366f1)"
+        } else {
+            "var(--hi-color-connection, #94a3b8)"
+        };
+
         svg_parts.push_str(&format!(
-            r#"<path class="{}" d="" stroke="var(--hi-color-connection, #94a3b8)" stroke-width="2" fill="none"/>"#,
+            r#"<path class="{}" d="{}" stroke="{}" stroke-width="2" fill="none"/>"#,
             connection.class_string(),
+            path_data,
+            stroke_color,
         ));
     }
     svg_parts.push_str("</g>");
@@ -340,15 +369,19 @@ pub fn render_node_graph_canvas(state: &NodeGraphState, config: &NodeGraphCanvas
             .children(nodes_children),
     ));
 
+    children.push(VNode::Element(
+        VElement::new("div").class("hi-node-graph-overlay-layer"),
+    ));
+
     if config.show_minimap {
-        children.push(VNode::Element(
-            VElement::new("div").class("hi-node-graph-minimap-container"),
-        ));
+        let minimap = build_minimap_state(state, config);
+        children.push(crate::node_graph::minimap::render_minimap(&minimap));
     }
 
     if config.show_controls {
-        children.push(crate::node_graph::viewport::render_viewport(
+        children.push(render_controls(
             &crate::node_graph::viewport::Viewport::new(),
+            history,
         ));
     }
 
@@ -356,6 +389,114 @@ pub fn render_node_graph_canvas(state: &NodeGraphState, config: &NodeGraphCanvas
         VElement::new("div")
             .class("hi-node-graph-canvas")
             .style(config.container_style())
+            .children(children),
+    )
+}
+
+fn build_minimap_state(state: &NodeGraphState, config: &NodeGraphCanvasConfig) -> NodeGraphMinimap {
+    let mut minimap = NodeGraphMinimap::new(200.0, 150.0);
+    minimap.update_view(state.zoom, state.pan);
+
+    let minimap_nodes: Vec<MinimapNode> = state
+        .nodes
+        .values()
+        .map(|ns| MinimapNode {
+            id: ns.id.clone(),
+            position: ns.position,
+            size: ns.size,
+        })
+        .collect();
+
+    let minimap_connections: Vec<MinimapConnection> = state
+        .connections
+        .iter()
+        .map(|conn| {
+            let from_pos = state
+                .calculate_port_position(&conn.from_node, &conn.from_port, PortPosition::Right)
+                .unwrap_or((0.0, 0.0));
+            let to_pos = state
+                .calculate_port_position(&conn.to_node, &conn.to_port, PortPosition::Left)
+                .unwrap_or((0.0, 0.0));
+            MinimapConnection {
+                id: conn.id.clone(),
+                from: from_pos,
+                to: to_pos,
+            }
+        })
+        .collect();
+
+    minimap.set_nodes(minimap_nodes);
+    minimap.set_connections(minimap_connections);
+    minimap
+}
+
+fn render_controls(
+    viewport: &crate::node_graph::viewport::Viewport,
+    history: &HistoryState,
+) -> VNode {
+    let mut children: Vec<VNode> = Vec::new();
+
+    let mut undo_redo_children: Vec<VNode> = Vec::new();
+
+    let undo_btn = VNode::Element(
+        VElement::new("button")
+            .class("hi-control-btn hi-undo-btn")
+            .attr("title", "Undo (Ctrl+Z)")
+            .attr(
+                "disabled",
+                if history.can_undo() { "false" } else { "true" },
+            )
+            .child(VNode::Text(VText::new("Undo"))),
+    );
+    undo_redo_children.push(undo_btn);
+
+    let redo_btn = VNode::Element(
+        VElement::new("button")
+            .class("hi-control-btn hi-redo-btn")
+            .attr("title", "Redo (Ctrl+Y)")
+            .attr(
+                "disabled",
+                if history.can_redo() { "false" } else { "true" },
+            )
+            .child(VNode::Text(VText::new("Redo"))),
+    );
+    undo_redo_children.push(redo_btn);
+
+    children.push(VNode::Element(
+        VElement::new("div")
+            .class("hi-controls-group hi-undo-redo-group")
+            .children(undo_redo_children),
+    ));
+
+    let mut save_load_children: Vec<VNode> = Vec::new();
+
+    let save_btn = VNode::Element(
+        VElement::new("button")
+            .class("hi-control-btn hi-save-btn")
+            .attr("title", "Save")
+            .child(VNode::Text(VText::new("Save"))),
+    );
+    save_load_children.push(save_btn);
+
+    let load_btn = VNode::Element(
+        VElement::new("button")
+            .class("hi-control-btn hi-load-btn")
+            .attr("title", "Load")
+            .child(VNode::Text(VText::new("Load"))),
+    );
+    save_load_children.push(load_btn);
+
+    children.push(VNode::Element(
+        VElement::new("div")
+            .class("hi-controls-group hi-save-load-group")
+            .children(save_load_children),
+    ));
+
+    children.push(crate::node_graph::viewport::render_viewport(viewport));
+
+    VNode::Element(
+        VElement::new("div")
+            .class("hi-node-graph-controls")
             .children(children),
     )
 }

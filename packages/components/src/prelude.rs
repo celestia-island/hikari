@@ -76,9 +76,9 @@ pub use crate::styled::{StyleRegistry, StyledComponent};
 // Basic component Props
 pub use crate::basic::{
     BackgroundProps, BadgeProps, ButtonProps, CardActionsProps, CardContentProps, CardHeaderProps,
-    CardMediaProps, CardProps, CheckboxProps, DatePickerProps, FileUploadProps, FormFieldProps,
-    IconButtonProps, InputProps, InputWrapperProps, RadioButtonProps, RadioGroupProps, SelectProps,
-    SliderProps, SwitchProps, TextareaProps,
+    CardMediaProps, CardProps, CheckboxProps, DatePickerProps, DividerProps, FileUploadProps,
+    FormFieldProps, IconButtonProps, InputProps, InputWrapperProps, RadioButtonProps,
+    RadioGroupProps, SelectProps, SliderProps, SwitchProps, TextareaProps,
 };
 
 // Feedback component Props

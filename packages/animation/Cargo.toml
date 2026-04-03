@@ -23,6 +23,7 @@ tairitsu-web = { path = "../../../tairitsu/packages/web", default-features = fal
     "macros",
     "style",
     "wit-bindings",
+    "browser",
 ] }
 
 # Legacy WASM dependencies (optional, for backward compatibility)

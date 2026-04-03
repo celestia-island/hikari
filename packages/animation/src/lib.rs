@@ -80,6 +80,10 @@ pub use context::AnimationContext;
 pub use events::*;
 pub use global_manager::*;
 pub use hooks::tween::{UseTween, use_animation_engine, use_tween};
+pub use hooks::{
+    use_animated_value, use_animation_frame, use_interval, use_timeout, use_transition,
+    use_transition_with_config, UseTransition,
+};
 pub use lifecycle::*;
 pub use prefers_reduced_motion::*;
 pub use provider::{

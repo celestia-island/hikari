@@ -136,40 +136,123 @@ pub fn calculate_position(
     const OFFSET: f64 = 16.0;
     const PADDING: f64 = 16.0;
 
+    fn mouse_pos(
+        mouse_x: Option<f64>,
+        mouse_y: Option<f64>,
+        window_width: f64,
+        window_height: f64,
+    ) -> (f64, f64) {
+        (
+            mouse_x.unwrap_or(window_width / 2.0),
+            mouse_y.unwrap_or(window_height / 2.0),
+        )
+    }
+
+    fn clamp_pos(
+        x: f64,
+        y: f64,
+        w: f64,
+        h: f64,
+        window_width: f64,
+        window_height: f64,
+    ) -> (f64, f64) {
+        let x = x.clamp(PADDING, window_width - w - PADDING);
+        let y = y.clamp(PADDING, window_height - h - PADDING);
+        (x, y)
+    }
+
     match position {
         ModalPosition::Center => (
             (window_width - modal_width) / 2.0,
             (window_height - modal_height) / 2.0,
         ),
-        _ => {
-            let mx = mouse_x.unwrap_or(window_width / 2.0);
-            let my = mouse_y.unwrap_or(window_height / 2.0);
-
-            let (mut x, mut y) = match position {
-                ModalPosition::TopLeft => (mx - OFFSET, my - OFFSET - modal_height),
-                ModalPosition::Top => (mx - modal_width / 2.0, my - OFFSET - modal_height),
-                ModalPosition::TopRight => (mx + OFFSET, my - OFFSET - modal_height),
-                ModalPosition::Right => (mx + OFFSET, my - modal_height / 2.0),
-                ModalPosition::BottomRight => (mx + OFFSET, my + OFFSET),
-                ModalPosition::Bottom => (mx - modal_width / 2.0, my + OFFSET),
-                ModalPosition::BottomLeft => (mx - OFFSET - modal_width, my + OFFSET),
-                ModalPosition::Left => (mx - OFFSET - modal_width, my - modal_height / 2.0),
-                ModalPosition::Center => unreachable!(),
-            };
-
-            if x < PADDING {
-                x = PADDING;
-            } else if x + modal_width > window_width - PADDING {
-                x = window_width - modal_width - PADDING;
-            }
-
-            if y < PADDING {
-                y = PADDING;
-            } else if y + modal_height > window_height - PADDING {
-                y = window_height - modal_height - PADDING;
-            }
-
-            (x, y)
+        ModalPosition::TopLeft => {
+            let (mx, my) = mouse_pos(mouse_x, mouse_y, window_width, window_height);
+            clamp_pos(
+                mx - OFFSET,
+                my - OFFSET - modal_height,
+                modal_width,
+                modal_height,
+                window_width,
+                window_height,
+            )
+        }
+        ModalPosition::Top => {
+            let (mx, my) = mouse_pos(mouse_x, mouse_y, window_width, window_height);
+            clamp_pos(
+                mx - modal_width / 2.0,
+                my - OFFSET - modal_height,
+                modal_width,
+                modal_height,
+                window_width,
+                window_height,
+            )
+        }
+        ModalPosition::TopRight => {
+            let (mx, my) = mouse_pos(mouse_x, mouse_y, window_width, window_height);
+            clamp_pos(
+                mx + OFFSET,
+                my - OFFSET - modal_height,
+                modal_width,
+                modal_height,
+                window_width,
+                window_height,
+            )
+        }
+        ModalPosition::Right => {
+            let (mx, my) = mouse_pos(mouse_x, mouse_y, window_width, window_height);
+            clamp_pos(
+                mx + OFFSET,
+                my - modal_height / 2.0,
+                modal_width,
+                modal_height,
+                window_width,
+                window_height,
+            )
+        }
+        ModalPosition::BottomRight => {
+            let (mx, my) = mouse_pos(mouse_x, mouse_y, window_width, window_height);
+            clamp_pos(
+                mx + OFFSET,
+                my + OFFSET,
+                modal_width,
+                modal_height,
+                window_width,
+                window_height,
+            )
+        }
+        ModalPosition::Bottom => {
+            let (mx, my) = mouse_pos(mouse_x, mouse_y, window_width, window_height);
+            clamp_pos(
+                mx - modal_width / 2.0,
+                my + OFFSET,
+                modal_width,
+                modal_height,
+                window_width,
+                window_height,
+            )
+        }
+        ModalPosition::BottomLeft => {
+            let (mx, my) = mouse_pos(mouse_x, mouse_y, window_width, window_height);
+            clamp_pos(
+                mx - OFFSET - modal_width,
+                my + OFFSET,
+                modal_width,
+                modal_height,
+                window_width,
+                window_height,
+            )
+        }
+        ModalPosition::Left => {
+            let (mx, my) = mouse_pos(mouse_x, mouse_y, window_width, window_height);
+            clamp_pos(
+                mx - OFFSET - modal_width,
+                my - modal_height / 2.0,
+                modal_width,
+                modal_height,
+                window_width,
+                window_height,
+            )
         }
     }
 }

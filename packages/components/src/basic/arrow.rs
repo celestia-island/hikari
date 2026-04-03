@@ -2,9 +2,9 @@
 // Arrow indicator component with rotation support
 
 use hikari_icons::{Icon, IconProps, MdiIcon};
-use hikari_palette::classes::{ClassesBuilder, components::ArrowClass};
+use hikari_palette::classes::{components::ArrowClass, ClassesBuilder};
 
-use crate::{StyledComponent, prelude::*};
+use crate::{prelude::*, StyledComponent};
 
 pub struct ArrowComponent;
 

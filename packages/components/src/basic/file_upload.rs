@@ -75,6 +75,7 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
     let on_files_for_drop = props.on_files.clone();
     let on_files_for_change = props.on_files.clone();
     let on_error_for_drop = props.on_error.clone();
+    let on_error_for_change = props.on_error.clone();
 
     let upload_status_for_drag_over = upload_status.clone();
     let on_drag_over = move |e: DragEvent| {
@@ -133,6 +134,7 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
 
     let upload_status_for_change = upload_status.clone();
     let files_for_change = files.clone();
+    let max_size_for_change = props.max_size;
     let on_change = move |e: ChangeEvent| {
         let file_value = e.value;
         if file_value.is_empty() {
@@ -145,11 +147,33 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
             .filter(|s| !s.is_empty())
             .collect();
 
-        if !selected_files.is_empty() {
-            files_for_change.set(selected_files.clone());
+        let mut accepted_files = Vec::new();
+        let mut errors = Vec::new();
+
+        for file_name in &selected_files {
+            if file_name.len() > max_size_for_change {
+                errors.push(format!(
+                    "File '{}' exceeds maximum size of {} bytes",
+                    file_name, max_size_for_change
+                ));
+            } else {
+                accepted_files.push(file_name.clone());
+            }
+        }
+
+        if !errors.is_empty() && on_error_for_change.is_some() {
+            for error in errors {
+                if let Some(handler) = on_error_for_change.as_ref() {
+                    handler.call(error);
+                }
+            }
+        }
+
+        if !accepted_files.is_empty() {
+            files_for_change.set(accepted_files.clone());
 
             if let Some(handler) = on_files_for_change.as_ref() {
-                handler.call(selected_files);
+                handler.call(accepted_files);
             }
 
             upload_status_for_change.set(FileUploadStatus::Success);

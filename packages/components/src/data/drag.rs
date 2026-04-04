@@ -188,6 +188,7 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
 
             if let Some(ref mut data_transfer) = e.data_transfer {
                 data_transfer.set_data("text/plain", &key);
+                data_transfer.effect_allowed = "move".to_string();
             }
         }
     };
@@ -203,11 +204,14 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
 
     let dragged_key_for_over = props.dragged_key.clone().unwrap();
     let drag_over_key_for_over = props.drag_over_key.clone().unwrap();
-    let ondragover = move |e: DragEvent| {
+    let ondragover = move |mut e: DragEvent| {
         e.prevent_default();
         e.stop_propagation();
 
         if dragged_key_for_over.read().is_some() && props.drop_allowed {
+            if let Some(ref mut data_transfer) = e.data_transfer {
+                data_transfer.drop_effect = "move".to_string();
+            }
             let key = item_key_3.clone();
             drag_over_key_for_over.set(Some(key));
         }

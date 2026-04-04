@@ -64,7 +64,9 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         .add_typed(CodeHighlightClass::CopyButton)
         .build();
 
-    let code_classes = ClassesBuilder::new().add_typed(CodeHighlightClass::Code).build();
+    let code_classes = ClassesBuilder::new()
+        .add_typed(CodeHighlightClass::Code)
+        .build();
 
     let line_classes = ClassesBuilder::new()
         .add_typed(CodeHighlightClass::LineNumbers)
@@ -198,14 +200,14 @@ impl StyledComponent for CodeHighlightComponent {
     background-color: var(--hi-color-primary);
     color: white;
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 8px var(--hi-color-primary-glow);
+    box-shadow: 0 0 8px var(--hi-glow-button-primary);
 }
 
 .hi-code-highlight-copy.hi-code-highlight-copy-copied,
 .hi-code-highlight-copy.copied {
     background-color: var(--hi-color-primary);
     color: white;
-    box-shadow: 0 0 12px var(--hi-color-primary-glow);
+    box-shadow: 0 0 12px var(--hi-glow-button-primary);
     opacity: 1;
 }
 

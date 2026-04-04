@@ -8,6 +8,7 @@
 use hikari_palette::classes::{ClassesBuilder, RichTextEditorClass};
 
 use crate::{platform, prelude::*, styled::StyledComponent};
+use tairitsu_vdom::events::InputEvent;
 
 pub struct RichTextEditorComponent;
 
@@ -29,6 +30,8 @@ pub struct RichTextEditorProps {
 
     #[default("".to_string())]
     pub style: String,
+
+    pub on_content_change: Option<EventHandler<String>>,
 }
 
 #[component]
@@ -56,6 +59,18 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
 
     let exec_format = move |command: &str| {
         platform::exec_command(command, None);
+    };
+
+    let on_change = {
+        let content = content.clone();
+        let on_content_change = props.on_content_change.clone();
+        move |_: InputEvent| {
+            let html = platform::get_inner_html(0);
+            content.set(html.clone());
+            if let Some(handler) = on_content_change.as_ref() {
+                handler.call(html);
+            }
+        }
     };
 
     rsx! {
@@ -128,6 +143,7 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
                 contenteditable: "true",
                 "data-placeholder": "{props.placeholder}",
                 dangerous_inner_html: "{content.get()}",
+                oninput: on_change,
             }
         }
     }
@@ -145,7 +161,7 @@ impl StyledComponent for RichTextEditorComponent {
 
 .hi-rich-text-editor:focus-within {
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 2px var(--hi-color-primary-glow);
+    box-shadow: 0 0 2px var(--hi-glow-button-primary);
 }
 
 .hi-rich-text-editor-toolbar {

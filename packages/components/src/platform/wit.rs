@@ -228,6 +228,9 @@ pub fn get_inner_html(_element_handle: u64) -> String {
 /// Set inner HTML of element (placeholder)
 pub fn set_inner_html(_element_handle: u64, _html: &str) {}
 
+/// Request fullscreen for an element (placeholder)
+pub fn request_fullscreen(_element_handle: u64) {}
+
 /// Get element scroll top (placeholder)
 pub fn get_element_scroll_top(_element_handle: u64) -> f64 {
     0.0

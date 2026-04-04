@@ -123,5 +123,5 @@
 
 // Focus state for accessibility
 .hi-slider:focus-within .hi-slider-handle {
-    box-shadow: 0 0 0 3px var(--hi-color-primary-glow, rgba(24, 144, 255, 0.2));
+    box-shadow: 0 0 0 3px var(--hi-glow-button-primary, rgba(24, 144, 255, 0.2));
 }

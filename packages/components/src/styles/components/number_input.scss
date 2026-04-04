@@ -12,7 +12,7 @@
 
 .hi-number-input-wrapper:focus-within {
     border-color: var(--hi-color-primary, #1890ff);
-    box-shadow: 0 0 0 2px var(--hi-color-primary-glow, rgba(24, 144, 255, 0.2));
+    box-shadow: 0 0 0 2px var(--hi-glow-button-primary, rgba(24, 144, 255, 0.2));
 }
 
 .hi-number-input-sm {
@@ -57,7 +57,7 @@
 
 .hi-number-input-btn:hover:not(:disabled) {
     color: var(--hi-color-primary, #1890ff);
-    background-color: var(--hi-color-primary-glow, rgba(24, 144, 255, 0.1));
+    background-color: var(--hi-glow-button-primary, rgba(24, 144, 255, 0.1));
 }
 
 .hi-number-input-btn:active:not(:disabled) {
@@ -148,7 +148,7 @@
 
 [data-theme="dark"] .hi-number-input-btn:hover:not(:disabled),
 [data-theme="tairitsu"] .hi-number-input-btn:hover:not(:disabled) {
-    background-color: var(--hi-color-primary-glow, rgba(24, 144, 255, 0.15));
+    background-color: var(--hi-glow-button-primary, rgba(24, 144, 255, 0.15));
     color: var(--hi-color-primary, #40a9ff);
 }
 

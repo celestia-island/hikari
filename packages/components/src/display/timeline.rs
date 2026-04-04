@@ -1,9 +1,10 @@
 // packages/components/src/display/timeline.rs
 // Timeline component with Arknights + FUI styling
 
-use hikari_palette::classes::{TypedClass, ClassesBuilder, TimelineClass};
+use hikari_palette::classes::{ClassesBuilder, TimelineClass, TypedClass};
 
 use crate::{prelude::*, styled::StyledComponent};
+use tairitsu_vdom::events::MouseEvent;
 
 pub struct TimelineComponent;
 
@@ -51,9 +52,13 @@ pub struct TimelineItemProps {
     pub position: TimelinePosition,
     pub time: String,
     pub title: String,
+    pub description: String,
     pub icon: Option<Element>,
     pub color: String,
     pub last: bool,
+    #[default(false)]
+    pub expanded: bool,
+    pub extra: Option<Element>,
     pub class: String,
     pub style: String,
     pub children: Element,
@@ -66,6 +71,20 @@ pub fn TimelineItem(props: TimelineItemProps) -> Element {
         TimelinePosition::Left => TimelineClass::Left,
         TimelinePosition::Right => TimelineClass::Right,
     };
+
+    let mut expanded = use_signal(|| props.expanded);
+    let has_description = !props.description.is_empty() || props.extra.is_some();
+
+    let toggle_expanded = {
+        let expanded = expanded.clone();
+        move |_: MouseEvent| {
+            if has_description {
+                expanded.set(!expanded.get());
+            }
+        }
+    };
+
+    let is_expanded = expanded.get();
 
     let item_classes = ClassesBuilder::new()
         .add_typed(TimelineClass::Item)
@@ -83,6 +102,20 @@ pub fn TimelineItem(props: TimelineItemProps) -> Element {
         )
     };
 
+    let header_classes = ClassesBuilder::new()
+        .add("hi-timeline-header")
+        .add_if("hi-timeline-header-clickable", has_description)
+        .build();
+
+    let description_classes = format!(
+        "hi-timeline-description {}",
+        if is_expanded {
+            "hi-timeline-description-expanded"
+        } else {
+            "hi-timeline-description-collapsed"
+        }
+    );
+
     rsx! {
         div { class: item_classes, style: props.style,
 
@@ -96,12 +129,28 @@ pub fn TimelineItem(props: TimelineItemProps) -> Element {
             // Timeline content
             div { class: TimelineClass::Content.class_name(),
 
-                if !props.time.is_empty() {
-                    div { class: TimelineClass::Time.class_name(), "{props.time}" }
+                div { class: header_classes, onclick: toggle_expanded,
+
+                    if !props.time.is_empty() {
+                        div { class: TimelineClass::Time.class_name(), "{props.time}" }
+                    }
+
+                    if !props.title.is_empty() {
+                        div { class: TimelineClass::Title.class_name(), "{props.title}" }
+                    }
                 }
 
-                if !props.title.is_empty() {
-                    div { class: TimelineClass::Title.class_name(), "{props.title}" }
+                if has_description {
+                    div { class: description_classes,
+
+                        if !props.description.is_empty() {
+                            div { class: "hi-timeline-description-text", "{props.description}" }
+                        }
+
+                        if let Some(extra) = props.extra {
+                            div { class: "hi-timeline-extra", { extra } }
+                        }
+                    }
                 }
 
                 {props.children}
@@ -217,6 +266,41 @@ impl StyledComponent for TimelineComponent {
     font-weight: 600;
     color: var(--hi-color-text-primary);
     margin-bottom: 0.5rem;
+}
+
+.hi-timeline-header {
+    cursor: default;
+}
+
+.hi-timeline-header-clickable {
+    cursor: pointer;
+}
+
+.hi-timeline-description {
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+}
+
+.hi-timeline-description-expanded {
+    max-height: 500px;
+    opacity: 1;
+    padding-top: 0.5rem;
+}
+
+.hi-timeline-description-collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+}
+
+.hi-timeline-description-text {
+    font-size: 0.875rem;
+    color: var(--hi-color-text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.hi-timeline-extra {
+    margin-top: 0.5rem;
 }
 
 .hi-timeline-last::after {

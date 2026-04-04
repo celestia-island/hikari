@@ -148,7 +148,7 @@ impl StyledComponent for StepperComponent {
 .hi-step-pending .hi-step-number {
     background-color: var(--hi-color-primary);
     color: white;
-    box-shadow: 0 0 8px var(--hi-color-primary-glow);
+    box-shadow: 0 0 8px var(--hi-glow-button-primary);
 }
 
 .hi-step-active .hi-step-number {

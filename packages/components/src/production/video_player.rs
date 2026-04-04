@@ -8,6 +8,7 @@
 use hikari_palette::classes::{ClassesBuilder, VideoPlayerClass};
 
 use crate::{platform, prelude::*, styled::StyledComponent};
+use tairitsu_vdom::events::MouseEvent;
 
 pub struct VideoPlayerComponent;
 
@@ -35,6 +36,11 @@ pub struct VideoPlayerProps {
 
     #[default(String::default())]
     pub style: String,
+
+    pub on_play: Option<EventHandler<()>>,
+    pub on_pause: Option<EventHandler<()>>,
+    pub on_time_update: Option<EventHandler<f64>>,
+    pub on_fullscreen_change: Option<EventHandler<bool>>,
 }
 
 fn format_video_time(seconds: f64) -> String {
@@ -50,12 +56,16 @@ pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
     let current_time = use_signal(|| 0.0f64);
     let duration = use_signal(|| 0.0f64);
 
+    let is_fullscreen = use_signal(|| false);
+
     let container_classes = ClassesBuilder::new()
         .add_typed(VideoPlayerClass::Container)
         .add(&props.class)
         .build();
 
-    let video_classes = ClassesBuilder::new().add_typed(VideoPlayerClass::Video).build();
+    let video_classes = ClassesBuilder::new()
+        .add_typed(VideoPlayerClass::Video)
+        .build();
 
     let ct = current_time.get();
     let dur = duration.get();
@@ -66,7 +76,7 @@ pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
         format!("{}%", (ct / dur * 100.0).clamp(0.0, 100.0) as u32)
     };
 
-    let muted_val = is_muted.get();
+    let is_fullscreen = use_signal(|| false);
 
     rsx! {
         div { class: container_classes, style: props.style,
@@ -78,7 +88,7 @@ pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
                 autoplay: props.autoplay,
                 controls: props.controls,
                 r#loop: props.loop_,
-                muted: muted_val,
+                muted: is_muted.get(),
             }
 
             if !props.controls {
@@ -89,9 +99,15 @@ pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
                             if is_playing.get() {
                                 is_playing.set(false);
                                 platform::video_pause(0);
+                                if let Some(handler) = props.on_pause.as_ref() {
+                                    handler.call(());
+                                }
                             } else {
                                 is_playing.set(true);
                                 platform::video_play(0);
+                                if let Some(handler) = props.on_play.as_ref() {
+                                    handler.call(());
+                                }
                             }
                         },
                         "{if is_playing.get() { \"⏸\" } else { \"▶\" }}"
@@ -99,7 +115,15 @@ pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
 
                     span { class: "hi-video-time", "{formatted_time}" }
 
-                    div { class: "hi-video-progress",
+                    div {
+                        class: "hi-video-progress",
+                        onclick: move |e: MouseEvent| {
+                            let dur = duration.get();
+                            if dur > 0.0 {
+                                let seek_to = dur;
+                                platform::video_seek(0, seek_to);
+                            }
+                        },
                         div { class: "hi-video-progress-bar", style: "width: {progress_percent};" }
                     }
 
@@ -111,6 +135,21 @@ pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
                             platform::video_set_muted(0, new_muted);
                         },
                         "{if is_muted.get() { \"🔇\" } else { \"🔊\" }}"
+                    }
+
+                    button {
+                        class: "hi-video-control-btn",
+                        onclick: move |_| {
+                            let new_fs = !is_fullscreen.get();
+                            is_fullscreen.set(new_fs);
+                            if new_fs {
+                                platform::request_fullscreen(0);
+                            }
+                            if let Some(handler) = props.on_fullscreen_change.as_ref() {
+                                handler.call(new_fs);
+                            }
+                        },
+                        "{if is_fullscreen.get() { \"⛶\" } else { \"⛶\" }}"
                     }
                 }
             }

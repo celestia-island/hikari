@@ -2,7 +2,7 @@
 // MarkdownEditor component with Arknights + FUI styling
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{TypedClass, ClassesBuilder, MarkdownEditorClass};
+use hikari_palette::classes::{ClassesBuilder, MarkdownEditorClass, TypedClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -469,7 +469,7 @@ impl StyledComponent for MarkdownEditorComponent {
 
 .hi-markdown-editor:focus-within {
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 0 2px var(--hi-color-primary-glow);
+    box-shadow: 0 0 0 2px var(--hi-glow-button-primary);
 }
 
 [data-theme="dark"] .hi-markdown-editor {

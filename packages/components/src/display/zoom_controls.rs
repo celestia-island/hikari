@@ -2,9 +2,10 @@
 // ZoomControls component with Arknights + FUI styling
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{TypedClass, ClassesBuilder, ZoomControlsClass};
+use hikari_palette::classes::{ClassesBuilder, TypedClass, ZoomControlsClass};
 
 use crate::{prelude::*, styled::StyledComponent};
+use tairitsu_vdom::events::KeyboardEvent;
 
 pub struct ZoomControlsComponent;
 
@@ -83,11 +84,42 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
         }
     };
 
+    let handle_keydown = {
+        let zoom = zoom.clone();
+        let on_zoom_change = props.on_zoom_change.clone();
+        let min = props.min_zoom;
+        let max = props.max_zoom;
+        let step = props.step;
+        move |e: KeyboardEvent| match e.key.as_str() {
+            "+" | "=" => {
+                let new_zoom = (zoom.get() + step).min(max);
+                zoom.set(new_zoom);
+                if let Some(handler) = on_zoom_change.as_ref() {
+                    handler.call(new_zoom);
+                }
+            }
+            "-" | "_" => {
+                let new_zoom = zoom.get().saturating_sub(step).max(min);
+                zoom.set(new_zoom);
+                if let Some(handler) = on_zoom_change.as_ref() {
+                    handler.call(new_zoom);
+                }
+            }
+            "0" => {
+                zoom.set(100);
+                if let Some(handler) = on_zoom_change.as_ref() {
+                    handler.call(100);
+                }
+            }
+            _ => {}
+        }
+    };
+
     let can_zoom_in = zoom.get() < props.max_zoom;
     let can_zoom_out = zoom.get() > props.min_zoom;
 
     rsx! {
-        div { class: container_classes,
+        div { class: container_classes, tabindex: "0", onkeydown: handle_keydown,
 
             // Zoom out button
             button {

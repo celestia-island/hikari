@@ -7,7 +7,7 @@ members = [
     "packages/extra-components",
     "packages/icons",
     "packages/builder",
-    # "packages/i18n",  # Temporarily disabled - tairitsu-i18n dependency not available
+    "packages/i18n",
 ]
 
 resolver = "2"

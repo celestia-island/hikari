@@ -2,44 +2,47 @@
 //!
 //! Internationalization (i18n) system for Hikari UI applications.
 //!
-//! This package re-exports [`tairitsu_i18n`] for a unified i18n experience.
-//! Translation files remain in the Hikari repository.
+//! Re-exports [`tairitsu_web::i18n`] for a unified i18n experience.
+//! Translation files (TOML) remain in the Hikari repository under `locales/`.
 //!
 //! ## Architecture
 //!
-//! - **[`Language`]** - Language definitions and utilities (re-exported from tairitsu_i18n)
-//! - **[`I18nKeys`]** - Language key structures (re-exported from tairitsu_i18n)
-//! - **[`I18nContext`]** - I18n context for component integration (re-exported from tairitsu_i18n)
-//! - **[`provide_i18n`]** - Provide i18n context to component tree (re-exported from tairitsu_i18n)
-//! - **[`use_i18n`]** - Consume i18n context in components (re-exported from tairitsu_i18n)
-//! - **[`loader`]** - TOML and Markdown loader (Hikari-specific)
+//! - **[`Language`]** — Type-safe locale (9 languages)
+//! - **[`I18nProvider`]** — Reactive context-based locale provider
+//! - **[`I18nState`]** — Core state: current locale + all translations
+//! - **[`provide_i18n`]** — Shorthand to provide i18n context
+//! - **[`use_locale`]** — Get current locale from context
+//! - **[`set_locale`]** — Switch locale at runtime
+//! - **[`translate`]** — Lookup key → `Option<String>`
+//! - **[`translate_or_key`]** — Lookup key → `String` (key as fallback)
+//! - **[`t!`]** — Macro: `t!("common.button.submit")` → `String`
+//! - **[`tr!`]** — Macro: `tr!("common.button.submit")` → `Option<String>`
+//! - **[`loader`]** — TOML loader (Hikari-specific)
 //!
 //! ## Quick Start
 //!
 //! ```rust,no_run
-//! use hikari_i18n::{Language, loader::load_toml, provide_i18n, use_i18n};
+//! use hikari_i18n::{Language, loader::load_toml_flat, provide_i18n, t, set_locale};
 //!
-//! // Load language keys from TOML
-//! let keys = load_toml(toml_content).unwrap();
+//! // Load translations
+//! let mut translations = std::collections::HashMap::new();
+//! translations.insert(Language::English, load_toml_flat(include_str!("../../locales/en-US/strings.toml")).unwrap());
+//! translations.insert(Language::ChineseSimplified, load_toml_flat(include_str!("../../locales/zh-CHS/strings.toml")).unwrap());
 //!
-//! // Provide i18n context
-//! provide_i18n(Language::English, keys);
+//! // Provide i18n context (call once at app root)
+//! provide_i18n(Language::English, translations);
 //!
-//! // In your component
-//! fn component() {
-//!     let i18n = use_i18n();
-//!     let submit_text = &i18n.keys.common.button.submit;
-//!     println!("Language: {}", i18n.language.native_name());
-//!     println!("Code: {}", i18n.language.code());
-//! }
+//! // Use translations
+//! let text = t!("common.button.submit"); // → "Submit"
+//! set_locale(Language::ChineseSimplified);
+//! let text = t!("common.button.submit"); // → "提交"
 //! ```
 
-// Re-export tairitsu_i18n for unified API
-pub use tairitsu_i18n::{I18nContext, I18nKeys, Language, TextDirection, provide_i18n, use_i18n};
+pub use tairitsu_web::i18n::{
+    provide_i18n, set_locale, translate, translate_or_key, use_locale, I18nProvider, I18nState,
+    Language, TextDirection,
+};
 
-// Hikari-specific modules
 pub mod loader;
-pub mod macros;
 
-// Re-export loader for convenience
 pub use loader::*;

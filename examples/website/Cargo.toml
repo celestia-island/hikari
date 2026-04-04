@@ -25,11 +25,13 @@ tairitsu-web = { path = "../../../tairitsu/packages/web", default-features = fal
   "macros",
   "style",
   "wit-bindings",
+  "i18n",
 ] }
 
 # Hikari design system (pure Rust, no Dioxus)
 hikari-palette = { path = "../../packages/palette" }
 hikari-components = { path = "../../packages/components", default-features = false }
+hikari-i18n = { path = "../../packages/i18n" }
 
 # Markdown rendering
 pulldown-cmark = "0.12"

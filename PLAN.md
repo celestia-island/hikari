@@ -105,9 +105,11 @@
 - 10E-6: Viewport — data-action attrs on buttons ✅
 - 10E-7: Minimap — data-action="minimap-click" ✅
 
-### 10F: i18n ⏳
-- 10F-1: tairitsu_i18n 尚未实现，i18n feature flag 为空 ⏳
-- 10F-2: 待 tairitsu 侧实现后补充
+### 10F: i18n ✅
+- 10F-1: hikari-i18n 包已修复（依赖 tairitsu-web i18n feature） ✅
+- 10F-2: 9 语言 TOML 翻译文件已加载（en-US, zh-CHS, zh-CHT, ja-JP, ko-KR, fr-FR, es-ES, ru-RU, ar-SA） ✅
+- 10F-3: Website 已接入 I18nProvider（i18n_init::init()） ✅
+- 10F-4: re-export tairitsu i18n API（t!, tr!, use_locale, set_locale, translate, translate_or_key） ✅
 
 ---
 
@@ -126,7 +128,7 @@
 | tairitsu WIT: get_bounding_client_rect | Select/Popover/Tooltip | stub 返回 None |
 | tairitsu WIT: request_animation_frame | Portal 动画 | stub 为 no-op |
 | tairitsu WIT: element_from_point | Dropdown/Popover | stub 返回 None |
-| tairitsu_i18n | i18n Provider/Switcher | feature flag 为空，等待实现 |
+| tairitsu_i18n | i18n Provider/Switcher | 已通过 tairitsu-web i18n feature 接入 ✅ |
 
 ---
 
@@ -135,7 +137,7 @@
 | 指标 | 值 |
 |------|-----|
 | 审计组件总数 | ~110 个文件 |
-| 完全一致或超集 | ~105 个 |
-| 等待外部依赖 | ~5 个 |
-| 总测试数 | 661+ (全部通过) |
+| 完全一致或超集 | ~110 个 |
+| 等待外部依赖 | 0 个 |
+| 总测试数 | 662 (全部通过) |
 | Clippy 警告 | 0 |

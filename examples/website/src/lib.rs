@@ -7,6 +7,7 @@ mod app;
 mod components;
 mod dynamic_docs;
 mod hooks;
+mod i18n_init;
 mod js;
 mod markdown;
 mod pages;
@@ -21,6 +22,7 @@ use tairitsu_web::WitPlatform;
 use tracing::error;
 
 fn run_app() {
+    i18n_init::init();
     let platform = WitPlatform::new().expect("WitPlatform init failed");
     let vnode = app::render();
     // Mount the VNode to #app element

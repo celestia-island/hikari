@@ -1083,11 +1083,7 @@ pub fn get_keys(lang: &Language) -> &'static I18nKeys {
 pub fn detect_language() -> Language {
     #[cfg(target_arch = "wasm32")]
     {
-        let hash = js_sys::global()
-            .get("location")
-            .and_then(|loc| loc.get("hash"))
-            .and_then(|h| h.as_string())
-            .unwrap_or_default();
+        let hash = tairitsu_web::wit_platform::wasm_impl::bindings::tairitsu_browser::full::location::get_hash();
 
         if hash.starts_with("#lang=") {
             let code = &hash[6..];

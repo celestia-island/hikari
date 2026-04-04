@@ -1,7 +1,7 @@
 // hikari-components/src/basic/image.rs
 //! Image component with configurable sizing and fit modes
 
-use hikari_palette::classes::{ClassesBuilder, ImageClass, UtilityClass};
+use hikari_palette::classes::{ClassesBuilder, ImageClass, TypedClass};
 
 use crate::{
     prelude::*,
@@ -83,8 +83,8 @@ pub fn Image(
     let style = builder.build_clean();
 
     let classes = ClassesBuilder::new()
-        .add(ImageClass::Image)
-        .add_raw(&class)
+        .add_typed(ImageClass::Image)
+        .add(&class)
         .build();
 
     let container_style = if responsive {
@@ -118,8 +118,8 @@ pub fn Image(
         Some(rsx! {
             div {
                 class: ClassesBuilder::new()
-                    .add(ImageClass::ImagePlaceholder)
-                    .add(ImageClass::ImageSkeleton)
+                    .add_typed(ImageClass::ImagePlaceholder)
+                    .add_typed(ImageClass::ImageSkeleton)
                     .build(),
                 style: "width: 100%; height: 100%; min-height: 100px;",
             }
@@ -128,8 +128,8 @@ pub fn Image(
         Some(rsx! {
             div {
                 class: ClassesBuilder::new()
-                    .add(ImageClass::ImagePlaceholder)
-                    .add(ImageClass::ImageIconPlaceholder)
+                    .add_typed(ImageClass::ImagePlaceholder)
+                    .add_typed(ImageClass::ImageIconPlaceholder)
                     .build(),
                 style: "width: 100%; height: 100%; min-height: 100px; display: flex; align-items: center; justify-content: center; background: var(--hi-color-surface);",
                 svg {
@@ -158,7 +158,7 @@ pub fn Image(
 
     rsx! {
         div {
-            class: ImageClass::ImageContainer.as_class(),
+            class: ImageClass::ImageContainer.class_name(),
             style: container_style,
 
             {placeholder_el.unwrap_or_else(VNode::empty)}
@@ -195,8 +195,8 @@ pub fn Logo(
         .build_clean();
 
     let classes = ClassesBuilder::new()
-        .add(ImageClass::Logo)
-        .add_raw(&class)
+        .add_typed(ImageClass::Logo)
+        .add(&class)
         .build();
 
     rsx! {

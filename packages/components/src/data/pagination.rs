@@ -2,7 +2,8 @@
 // Pagination component with Arknights + FUI styling
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{ClassesBuilder, PaginationClass};
+use hikari_palette::classes::PaginationClass;
+use tairitsu_style::ClassesBuilder;
 
 use crate::{
     basic::{Arrow, ArrowDirection, IconButton, IconButtonSize, Input, InputSize},
@@ -122,34 +123,34 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
     // Build container classes
     let container_classes = ClassesBuilder::new()
-        .add(PaginationClass::Pagination)
-        .add_raw(&props.class)
+        .add_typed(PaginationClass::Pagination)
+        .add(&props.class)
         .build();
 
     // Build total display classes
     let total_classes = ClassesBuilder::new()
-        .add(PaginationClass::PaginationTotal)
+        .add_typed(PaginationClass::PaginationTotal)
         .build();
 
     // Build size selector classes
     let size_selector_classes = ClassesBuilder::new()
-        .add(PaginationClass::PaginationSizer)
+        .add_typed(PaginationClass::PaginationSizer)
         .build();
 
     // Build pages container classes
     let pages_container_classes = ClassesBuilder::new()
-        .add(PaginationClass::PaginationPages)
+        .add_typed(PaginationClass::PaginationPages)
         .build();
 
     // Build navigation button classes
     let prev_classes = ClassesBuilder::new()
-        .add(PaginationClass::PaginationItem)
-        .add(PaginationClass::PaginationPrev)
+        .add_typed(PaginationClass::PaginationItem)
+        .add_typed(PaginationClass::PaginationPrev)
         .build();
 
     let next_classes = ClassesBuilder::new()
-        .add(PaginationClass::PaginationItem)
-        .add(PaginationClass::PaginationNext)
+        .add_typed(PaginationClass::PaginationItem)
+        .add_typed(PaginationClass::PaginationNext)
         .build();
 
     // Build page size options outside rsx!
@@ -171,10 +172,11 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 let current_page_for_handler = current_page.clone();
                 let on_change_for_handler = on_change.clone();
                 let page_class = ClassesBuilder::new()
-                    .add(PaginationClass::PaginationItem)
-                    .add_if(PaginationClass::PaginationActive, move || {
-                        i == current_page_for_class.get()
-                    })
+                    .add_typed(PaginationClass::PaginationItem)
+                    .add_typed_if(
+                        PaginationClass::PaginationActive,
+                        i == current_page_for_class.get(),
+                    )
                     .build();
                 let handler = move |_| {
                     if i != current_page_for_handler.get() {
@@ -213,10 +215,11 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 let current_page_for_handler = current_page.clone();
                 let on_change_for_handler = on_change.clone();
                 let page_class = ClassesBuilder::new()
-                    .add(PaginationClass::PaginationItem)
-                    .add_if(PaginationClass::PaginationActive, move || {
-                        i == current_page_for_class.get()
-                    })
+                    .add_typed(PaginationClass::PaginationItem)
+                    .add_typed_if(
+                        PaginationClass::PaginationActive,
+                        i == current_page_for_class.get(),
+                    )
                     .build();
                 let handler = move |_| {
                     if i != current_page_for_handler.get() {
@@ -455,8 +458,8 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         intensity: GlowIntensity::Dim,
                         button {
                             class: ClassesBuilder::new()
-                                .add(PaginationClass::PaginationItem)
-                                .add_if(PaginationClass::PaginationActive, || 1 == current_page.get())
+                                .add_typed(PaginationClass::PaginationItem)
+                                .add_typed_if(PaginationClass::PaginationActive, 1 == current_page.get())
                                 .build(),
                             onclick: first_page_handler,
                             "1"
@@ -478,7 +481,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                     intensity: GlowIntensity::Dim,
                                     button {
                                         class: ClassesBuilder::new()
-                                            .add(PaginationClass::PaginationItem)
+                                            .add_typed(PaginationClass::PaginationItem)
                                             .build(),
                                         Icon {
                                             icon: MdiIcon::DotsHorizontal,
@@ -510,7 +513,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                     intensity: GlowIntensity::Dim,
                                     button {
                                         class: ClassesBuilder::new()
-                                            .add(PaginationClass::PaginationItem)
+                                            .add_typed(PaginationClass::PaginationItem)
                                             .build(),
                                         Icon {
                                             icon: MdiIcon::DotsHorizontal,
@@ -532,8 +535,8 @@ pub fn Pagination(props: PaginationProps) -> Element {
                             intensity: GlowIntensity::Dim,
                         button {
                             class: ClassesBuilder::new()
-                                .add(PaginationClass::PaginationItem)
-                                .add_if(PaginationClass::PaginationActive, || total_pages == current_page.get())
+                                .add_typed(PaginationClass::PaginationItem)
+                                .add_typed_if(PaginationClass::PaginationActive, total_pages == current_page.get())
                                 .build(),
                             onclick: last_page_handler,
                             "{total_pages}"

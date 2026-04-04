@@ -1,10 +1,8 @@
 //! Media component classes (Calendar, Timeline, Audio/Video Player, etc.)
 
-use serde::{Deserialize, Serialize};
+use tairitsu_style::TypedClass;
 
-use crate::classes::UtilityClass;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CalendarClass {
     Calendar,
     CalendarHeader,
@@ -22,28 +20,28 @@ pub enum CalendarClass {
     CalendarDayDisabled,
 }
 
-impl UtilityClass for CalendarClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for CalendarClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            CalendarClass::Calendar => "calendar",
-            CalendarClass::CalendarHeader => "calendar-header",
-            CalendarClass::CalendarNav => "calendar-nav",
-            CalendarClass::CalendarNavButton => "calendar-nav-button",
-            CalendarClass::CalendarTitle => "calendar-title",
-            CalendarClass::CalendarMonthTitle => "calendar-month-title",
-            CalendarClass::CalendarWeekdays => "calendar-weekdays",
-            CalendarClass::CalendarWeekday => "calendar-weekday",
-            CalendarClass::CalendarGrid => "calendar-grid",
-            CalendarClass::CalendarDayCell => "calendar-day-cell",
-            CalendarClass::CalendarDay => "calendar-day",
-            CalendarClass::CalendarDaySelected => "calendar-day-selected",
-            CalendarClass::CalendarDayToday => "calendar-day-today",
-            CalendarClass::CalendarDayDisabled => "calendar-day-disabled",
+            CalendarClass::Calendar => "hi-calendar",
+            CalendarClass::CalendarHeader => "hi-calendar-header",
+            CalendarClass::CalendarNav => "hi-calendar-nav",
+            CalendarClass::CalendarNavButton => "hi-calendar-nav-button",
+            CalendarClass::CalendarTitle => "hi-calendar-title",
+            CalendarClass::CalendarMonthTitle => "hi-calendar-month-title",
+            CalendarClass::CalendarWeekdays => "hi-calendar-weekdays",
+            CalendarClass::CalendarWeekday => "hi-calendar-weekday",
+            CalendarClass::CalendarGrid => "hi-calendar-grid",
+            CalendarClass::CalendarDayCell => "hi-calendar-day-cell",
+            CalendarClass::CalendarDay => "hi-calendar-day",
+            CalendarClass::CalendarDaySelected => "hi-calendar-day-selected",
+            CalendarClass::CalendarDayToday => "hi-calendar-day-today",
+            CalendarClass::CalendarDayDisabled => "hi-calendar-day-disabled",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TimelineClass {
     Timeline,
     Alternate,
@@ -58,25 +56,25 @@ pub enum TimelineClass {
     Last,
 }
 
-impl UtilityClass for TimelineClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for TimelineClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            TimelineClass::Timeline => "timeline",
-            TimelineClass::Alternate => "timeline-alternate",
-            TimelineClass::Left => "timeline-left",
-            TimelineClass::Right => "timeline-right",
-            TimelineClass::NoLine => "timeline-no-line",
-            TimelineClass::Item => "timeline-item",
-            TimelineClass::Dot => "timeline-dot",
-            TimelineClass::Content => "timeline-content",
-            TimelineClass::Time => "timeline-time",
-            TimelineClass::Title => "timeline-title",
-            TimelineClass::Last => "timeline-last",
+            TimelineClass::Timeline => "hi-timeline",
+            TimelineClass::Alternate => "hi-timeline-alternate",
+            TimelineClass::Left => "hi-timeline-left",
+            TimelineClass::Right => "hi-timeline-right",
+            TimelineClass::NoLine => "hi-timeline-no-line",
+            TimelineClass::Item => "hi-timeline-item",
+            TimelineClass::Dot => "hi-timeline-dot",
+            TimelineClass::Content => "hi-timeline-content",
+            TimelineClass::Time => "hi-timeline-time",
+            TimelineClass::Title => "hi-timeline-title",
+            TimelineClass::Last => "hi-timeline-last",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CodeHighlightClass {
     Container,
     Header,
@@ -88,37 +86,47 @@ pub enum CodeHighlightClass {
     Code,
 }
 
-impl UtilityClass for CodeHighlightClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for CodeHighlightClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            CodeHighlightClass::Container => "code-highlight",
-            CodeHighlightClass::Header => "code-highlight-header",
-            CodeHighlightClass::Language => "code-highlight-language",
-            CodeHighlightClass::CopyButton => "code-highlight-copy",
-            CodeHighlightClass::Content => "code-highlight-content",
-            CodeHighlightClass::LineNumbers => "code-highlight-line-numbers",
-            CodeHighlightClass::LineNumber => "code-highlight-line-number",
-            CodeHighlightClass::Code => "code-highlight-code",
+            CodeHighlightClass::Container => "hi-code-highlight",
+            CodeHighlightClass::Header => "hi-code-highlight-header",
+            CodeHighlightClass::Language => "hi-code-highlight-language",
+            CodeHighlightClass::CopyButton => "hi-code-highlight-copy",
+            CodeHighlightClass::Content => "hi-code-highlight-content",
+            CodeHighlightClass::LineNumbers => "hi-code-highlight-line-numbers",
+            CodeHighlightClass::LineNumber => "hi-code-highlight-line-number",
+            CodeHighlightClass::Code => "hi-code-highlight-code",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VideoPlayerClass {
     Container,
     Video,
+    Controls,
+    ControlBtn,
+    Time,
+    Progress,
+    ProgressBar,
 }
 
-impl UtilityClass for VideoPlayerClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for VideoPlayerClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            VideoPlayerClass::Container => "video-player",
-            VideoPlayerClass::Video => "video-player-video",
+            VideoPlayerClass::Container => "hi-video-player",
+            VideoPlayerClass::Video => "hi-video-player-video",
+            VideoPlayerClass::Controls => "hi-video-controls",
+            VideoPlayerClass::ControlBtn => "hi-video-control-btn",
+            VideoPlayerClass::Time => "hi-video-time",
+            VideoPlayerClass::Progress => "hi-video-progress",
+            VideoPlayerClass::ProgressBar => "hi-video-progress-bar",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AudioPlayerClass {
     Container,
     Sm,
@@ -141,52 +149,54 @@ pub enum AudioPlayerClass {
     VolumeButton,
 }
 
-impl UtilityClass for AudioPlayerClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for AudioPlayerClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            AudioPlayerClass::Container => "audio-player",
-            AudioPlayerClass::Sm => "audio-player-sm",
-            AudioPlayerClass::Md => "audio-player-md",
-            AudioPlayerClass::Lg => "audio-player-lg",
-            AudioPlayerClass::Header => "audio-player-header",
-            AudioPlayerClass::Cover => "audio-player-cover",
-            AudioPlayerClass::CoverImage => "audio-player-cover-image",
-            AudioPlayerClass::Info => "audio-player-info",
-            AudioPlayerClass::Title => "audio-player-title",
-            AudioPlayerClass::Artist => "audio-player-artist",
-            AudioPlayerClass::Audio => "audio-player-audio",
-            AudioPlayerClass::Controls => "audio-player-controls",
-            AudioPlayerClass::PlayButton => "audio-player-play-button",
-            AudioPlayerClass::ProgressSection => "audio-player-progress-section",
-            AudioPlayerClass::ProgressBar => "audio-player-progress-bar",
-            AudioPlayerClass::ProgressFill => "audio-player-progress-fill",
-            AudioPlayerClass::Time => "audio-player-time",
-            AudioPlayerClass::VolumeSection => "audio-player-volume-section",
-            AudioPlayerClass::VolumeButton => "audio-player-volume-button",
+            AudioPlayerClass::Container => "hi-audio-player",
+            AudioPlayerClass::Sm => "hi-audio-player-sm",
+            AudioPlayerClass::Md => "hi-audio-player-md",
+            AudioPlayerClass::Lg => "hi-audio-player-lg",
+            AudioPlayerClass::Header => "hi-audio-player-header",
+            AudioPlayerClass::Cover => "hi-audio-player-cover",
+            AudioPlayerClass::CoverImage => "hi-audio-player-cover-image",
+            AudioPlayerClass::Info => "hi-audio-player-info",
+            AudioPlayerClass::Title => "hi-audio-player-title",
+            AudioPlayerClass::Artist => "hi-audio-player-artist",
+            AudioPlayerClass::Audio => "hi-audio-player-audio",
+            AudioPlayerClass::Controls => "hi-audio-player-controls",
+            AudioPlayerClass::PlayButton => "hi-audio-player-play-button",
+            AudioPlayerClass::ProgressSection => "hi-audio-player-progress-section",
+            AudioPlayerClass::ProgressBar => "hi-audio-player-progress-bar",
+            AudioPlayerClass::ProgressFill => "hi-audio-player-progress-fill",
+            AudioPlayerClass::Time => "hi-audio-player-time",
+            AudioPlayerClass::VolumeSection => "hi-audio-player-volume-section",
+            AudioPlayerClass::VolumeButton => "hi-audio-player-volume-button",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RichTextEditorClass {
     Container,
     Toolbar,
     ToolbarButton,
     Editor,
+    Divider,
 }
 
-impl UtilityClass for RichTextEditorClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for RichTextEditorClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            RichTextEditorClass::Container => "rich-text-editor",
-            RichTextEditorClass::Toolbar => "rich-text-editor-toolbar",
-            RichTextEditorClass::ToolbarButton => "rich-text-editor-toolbar-button",
-            RichTextEditorClass::Editor => "rich-text-editor-editor",
+            RichTextEditorClass::Container => "hi-rich-text-editor",
+            RichTextEditorClass::Toolbar => "hi-rich-text-editor-toolbar",
+            RichTextEditorClass::ToolbarButton => "hi-rich-text-editor-toolbar-button",
+            RichTextEditorClass::Editor => "hi-rich-text-editor-editor",
+            RichTextEditorClass::Divider => "hi-editor-divider",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UserGuideClass {
     Overlay,
     Container,
@@ -210,34 +220,34 @@ pub enum UserGuideClass {
     PlacementRight,
 }
 
-impl UtilityClass for UserGuideClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for UserGuideClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            UserGuideClass::Overlay => "user-guide-overlay",
-            UserGuideClass::Container => "user-guide-container",
-            UserGuideClass::Arrow => "user-guide-arrow",
-            UserGuideClass::Content => "user-guide-content",
-            UserGuideClass::Header => "user-guide-header",
-            UserGuideClass::Title => "user-guide-title",
-            UserGuideClass::Counter => "user-guide-counter",
-            UserGuideClass::Description => "user-guide-description",
-            UserGuideClass::Footer => "user-guide-footer",
-            UserGuideClass::SkipButton => "user-guide-skip-button",
-            UserGuideClass::Navigation => "user-guide-navigation",
-            UserGuideClass::NavButton => "user-guide-nav-button",
-            UserGuideClass::PrimaryButton => "user-guide-primary-button",
-            UserGuideClass::Progress => "user-guide-progress",
-            UserGuideClass::ProgressDot => "user-guide-progress-dot",
-            UserGuideClass::ProgressDotActive => "user-guide-progress-dot-active",
-            UserGuideClass::PlacementTop => "user-guide-placement-top",
-            UserGuideClass::PlacementBottom => "user-guide-placement-bottom",
-            UserGuideClass::PlacementLeft => "user-guide-placement-left",
-            UserGuideClass::PlacementRight => "user-guide-placement-right",
+            UserGuideClass::Overlay => "hi-user-guide-overlay",
+            UserGuideClass::Container => "hi-user-guide-container",
+            UserGuideClass::Arrow => "hi-user-guide-arrow",
+            UserGuideClass::Content => "hi-user-guide-content",
+            UserGuideClass::Header => "hi-user-guide-header",
+            UserGuideClass::Title => "hi-user-guide-title",
+            UserGuideClass::Counter => "hi-user-guide-counter",
+            UserGuideClass::Description => "hi-user-guide-description",
+            UserGuideClass::Footer => "hi-user-guide-footer",
+            UserGuideClass::SkipButton => "hi-user-guide-skip-button",
+            UserGuideClass::Navigation => "hi-user-guide-navigation",
+            UserGuideClass::NavButton => "hi-user-guide-nav-button",
+            UserGuideClass::PrimaryButton => "hi-user-guide-primary-button",
+            UserGuideClass::Progress => "hi-user-guide-progress",
+            UserGuideClass::ProgressDot => "hi-user-guide-progress-dot",
+            UserGuideClass::ProgressDotActive => "hi-user-guide-progress-dot-active",
+            UserGuideClass::PlacementTop => "hi-user-guide-placement-top",
+            UserGuideClass::PlacementBottom => "hi-user-guide-placement-bottom",
+            UserGuideClass::PlacementLeft => "hi-user-guide-placement-left",
+            UserGuideClass::PlacementRight => "hi-user-guide-placement-right",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MarkdownEditorClass {
     Container,
     Sm,
@@ -254,27 +264,27 @@ pub enum MarkdownEditorClass {
     SplitPane,
 }
 
-impl UtilityClass for MarkdownEditorClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for MarkdownEditorClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            MarkdownEditorClass::Container => "markdown-editor",
-            MarkdownEditorClass::Sm => "markdown-editor-sm",
-            MarkdownEditorClass::Md => "markdown-editor-md",
-            MarkdownEditorClass::Lg => "markdown-editor-lg",
-            MarkdownEditorClass::Toolbar => "markdown-editor-toolbar",
-            MarkdownEditorClass::ToolbarButton => "markdown-editor-toolbar-button",
-            MarkdownEditorClass::ToolbarButtonActive => "markdown-editor-toolbar-button-active",
-            MarkdownEditorClass::ToolbarDivider => "markdown-editor-toolbar-divider",
-            MarkdownEditorClass::Content => "markdown-editor-content",
-            MarkdownEditorClass::Textarea => "markdown-editor-textarea",
-            MarkdownEditorClass::Preview => "markdown-editor-preview",
-            MarkdownEditorClass::SplitContainer => "markdown-editor-split-container",
-            MarkdownEditorClass::SplitPane => "markdown-editor-split-pane",
+            MarkdownEditorClass::Container => "hi-markdown-editor",
+            MarkdownEditorClass::Sm => "hi-markdown-editor-sm",
+            MarkdownEditorClass::Md => "hi-markdown-editor-md",
+            MarkdownEditorClass::Lg => "hi-markdown-editor-lg",
+            MarkdownEditorClass::Toolbar => "hi-markdown-editor-toolbar",
+            MarkdownEditorClass::ToolbarButton => "hi-markdown-editor-toolbar-button",
+            MarkdownEditorClass::ToolbarButtonActive => "hi-markdown-editor-toolbar-button-active",
+            MarkdownEditorClass::ToolbarDivider => "hi-markdown-editor-toolbar-divider",
+            MarkdownEditorClass::Content => "hi-markdown-editor-content",
+            MarkdownEditorClass::Textarea => "hi-markdown-editor-textarea",
+            MarkdownEditorClass::Preview => "hi-markdown-editor-preview",
+            MarkdownEditorClass::SplitContainer => "hi-markdown-editor-split-container",
+            MarkdownEditorClass::SplitPane => "hi-markdown-editor-split-pane",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DragLayerClass {
     Container,
     DropZoneOverlay,
@@ -285,21 +295,21 @@ pub enum DragLayerClass {
     DragPreviewType,
 }
 
-impl UtilityClass for DragLayerClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for DragLayerClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            DragLayerClass::Container => "drag-layer",
-            DragLayerClass::DropZoneOverlay => "drag-layer-drop-zone-overlay",
-            DragLayerClass::DropZone => "drag-layer-drop-zone",
-            DragLayerClass::DragPreview => "drag-layer-drag-preview",
-            DragLayerClass::DragPreviewContent => "drag-layer-drag-preview-content",
-            DragLayerClass::DragPreviewLabel => "drag-layer-drag-preview-label",
-            DragLayerClass::DragPreviewType => "drag-layer-drag-preview-type",
+            DragLayerClass::Container => "hi-drag-layer",
+            DragLayerClass::DropZoneOverlay => "hi-drag-layer-drop-zone-overlay",
+            DragLayerClass::DropZone => "hi-drag-layer-drop-zone",
+            DragLayerClass::DragPreview => "hi-drag-layer-drag-preview",
+            DragLayerClass::DragPreviewContent => "hi-drag-layer-drag-preview-content",
+            DragLayerClass::DragPreviewLabel => "hi-drag-layer-drag-preview-label",
+            DragLayerClass::DragPreviewType => "hi-drag-layer-drag-preview-type",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CarouselClass {
     Container,
     Track,
@@ -315,26 +325,26 @@ pub enum CarouselClass {
     Pause,
 }
 
-impl UtilityClass for CarouselClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for CarouselClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            CarouselClass::Container => "carousel",
-            CarouselClass::Track => "carousel-track",
-            CarouselClass::Arrow => "carousel-arrow",
-            CarouselClass::ArrowPrev => "carousel-arrow-prev",
-            CarouselClass::ArrowNext => "carousel-arrow-next",
-            CarouselClass::Indicators => "carousel-indicators",
-            CarouselClass::IndicatorsDots => "carousel-indicators-dots",
-            CarouselClass::IndicatorsLine => "carousel-indicators-line",
-            CarouselClass::IndicatorsHidden => "carousel-indicators-hidden",
-            CarouselClass::Dot => "carousel-dot",
-            CarouselClass::DotActive => "carousel-dot-active",
-            CarouselClass::Pause => "carousel-pause",
+            CarouselClass::Container => "hi-carousel",
+            CarouselClass::Track => "hi-carousel-track",
+            CarouselClass::Arrow => "hi-carousel-arrow",
+            CarouselClass::ArrowPrev => "hi-carousel-arrow-prev",
+            CarouselClass::ArrowNext => "hi-carousel-arrow-next",
+            CarouselClass::Indicators => "hi-carousel-indicators",
+            CarouselClass::IndicatorsDots => "hi-carousel-indicators-dots",
+            CarouselClass::IndicatorsLine => "hi-carousel-indicators-line",
+            CarouselClass::IndicatorsHidden => "hi-carousel-indicators-hidden",
+            CarouselClass::Dot => "hi-carousel-dot",
+            CarouselClass::DotActive => "hi-carousel-dot-active",
+            CarouselClass::Pause => "hi-carousel-pause",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CommentClass {
     Container,
     Header,
@@ -347,23 +357,23 @@ pub enum CommentClass {
     Nested,
 }
 
-impl UtilityClass for CommentClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for CommentClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            CommentClass::Container => "comment",
-            CommentClass::Header => "comment-header",
-            CommentClass::Avatar => "comment-avatar",
-            CommentClass::Meta => "comment-meta",
-            CommentClass::Author => "comment-author",
-            CommentClass::Datetime => "comment-datetime",
-            CommentClass::Content => "comment-content",
-            CommentClass::Actions => "comment-actions",
-            CommentClass::Nested => "comment-nested",
+            CommentClass::Container => "hi-comment",
+            CommentClass::Header => "hi-comment-header",
+            CommentClass::Avatar => "hi-comment-avatar",
+            CommentClass::Meta => "hi-comment-meta",
+            CommentClass::Author => "hi-comment-author",
+            CommentClass::Datetime => "hi-comment-datetime",
+            CommentClass::Content => "hi-comment-content",
+            CommentClass::Actions => "hi-comment-actions",
+            CommentClass::Nested => "hi-comment-nested",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ZoomControlsClass {
     Container,
     Button,
@@ -372,14 +382,14 @@ pub enum ZoomControlsClass {
     Slider,
 }
 
-impl UtilityClass for ZoomControlsClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for ZoomControlsClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            ZoomControlsClass::Container => "zoom-controls",
-            ZoomControlsClass::Button => "zoom-controls-button",
-            ZoomControlsClass::ButtonDisabled => "zoom-controls-button-disabled",
-            ZoomControlsClass::Percentage => "zoom-controls-percentage",
-            ZoomControlsClass::Slider => "zoom-controls-slider",
+            ZoomControlsClass::Container => "hi-zoom-controls",
+            ZoomControlsClass::Button => "hi-zoom-controls-button",
+            ZoomControlsClass::ButtonDisabled => "hi-zoom-controls-button-disabled",
+            ZoomControlsClass::Percentage => "hi-zoom-controls-percentage",
+            ZoomControlsClass::Slider => "hi-zoom-controls-slider",
         }
     }
 }

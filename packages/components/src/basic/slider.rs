@@ -41,10 +41,10 @@ pub fn Slider(props: SliderProps) -> Element {
     };
 
     let slider_classes = ClassesBuilder::new()
-        .add(SliderClass::Slider)
-        .add(size_class)
-        .add_if(SliderClass::Disabled, || props.disabled)
-        .add_raw(&props.class)
+        .add_typed(SliderClass::Slider)
+        .add_typed(size_class)
+        .add_typed_if(SliderClass::Disabled, props.disabled)
+        .add(&props.class)
         .build();
 
     let percent = if props.max > props.min {

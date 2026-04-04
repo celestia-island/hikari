@@ -3,7 +3,7 @@
 
 use crate::style_builder::StyleStringBuilder;
 use crate::{prelude::*, styled::StyledComponent};
-use hikari_palette::classes::{CardClass, ClassesBuilder, UtilityClass};
+use hikari_palette::classes::{CardClass, ClassesBuilder, TypedClass};
 use tairitsu_vdom::get_bounding_client_rect;
 
 pub struct CardComponent;
@@ -33,10 +33,10 @@ pub struct CardProps {
 #[component]
 pub fn Card(props: CardProps) -> Element {
     let card_classes = ClassesBuilder::new()
-        .add(CardClass::Card)
-        .add_if(CardClass::CardHoverable, || props.hoverable)
-        .add_if(CardClass::CardBordered, || props.bordered)
-        .add_raw(&props.class)
+        .add_typed(CardClass::Card)
+        .add_typed_if(CardClass::CardHoverable, props.hoverable)
+        .add_typed_if(CardClass::CardBordered, props.bordered)
+        .add(&props.class)
         .build();
 
     let has_title = props.title.is_some();
@@ -92,20 +92,20 @@ pub fn Card(props: CardProps) -> Element {
     // Build title element
     let title_el = props.title.as_ref().map(|title| {
         rsx! {
-            div { class: CardClass::CardTitle.as_class(), "{title}" }
+            div { class: CardClass::CardTitle.class_name(), "{title}" }
         }
     });
 
     // Build extra element
     let extra_el = props.extra.as_ref().map(|extra| {
         rsx! {
-            div { class: CardClass::CardExtra.as_class(), {extra.clone()} }
+            div { class: CardClass::CardExtra.class_name(), {extra.clone()} }
         }
     });
 
     let header = if has_title || has_extra {
         Some(rsx! {
-            div { class: CardClass::CardHeader.as_class(),
+            div { class: CardClass::CardHeader.class_name(),
                 {title_el.unwrap_or_else(VNode::empty)}
                 {extra_el.unwrap_or_else(VNode::empty)}
             }
@@ -115,7 +115,7 @@ pub fn Card(props: CardProps) -> Element {
     };
 
     let body = rsx! {
-        div { class: CardClass::CardBody.as_class(), {props.children} }
+        div { class: CardClass::CardBody.class_name(), {props.children} }
     };
 
     let content = VNode::Fragment(vec![
@@ -171,8 +171,8 @@ pub struct CardHeaderProps {
 #[component]
 pub fn CardHeader(props: CardHeaderProps) -> Element {
     let classes = ClassesBuilder::new()
-        .add(CardClass::CardHeader)
-        .add_raw(&props.class)
+        .add_typed(CardClass::CardHeader)
+        .add(&props.class)
         .build();
 
     let has_avatar = props.avatar.is_some();
@@ -193,7 +193,7 @@ pub fn CardHeader(props: CardHeaderProps) -> Element {
     let title_el = if has_title {
         let title = props.title.clone().unwrap();
         Some(rsx! {
-            div { class: CardClass::CardTitle.as_class(), "{title}" }
+            div { class: CardClass::CardTitle.class_name(), "{title}" }
         })
     } else {
         None
@@ -202,7 +202,7 @@ pub fn CardHeader(props: CardHeaderProps) -> Element {
     let subtitle_el = if has_subtitle {
         let subtitle = props.subtitle.clone().unwrap();
         Some(rsx! {
-            div { class: CardClass::CardSubtitle.as_class(), "{subtitle}" }
+            div { class: CardClass::CardSubtitle.class_name(), "{subtitle}" }
         })
     } else {
         None
@@ -250,8 +250,8 @@ pub struct CardContentProps {
 #[component]
 pub fn CardContent(props: CardContentProps) -> Element {
     let classes = ClassesBuilder::new()
-        .add(CardClass::CardBody)
-        .add_raw(&props.class)
+        .add_typed(CardClass::CardBody)
+        .add(&props.class)
         .build();
 
     rsx! {
@@ -278,9 +278,9 @@ pub struct CardActionsProps {
 #[component]
 pub fn CardActions(props: CardActionsProps) -> Element {
     let classes = ClassesBuilder::new()
-        .add(CardClass::CardActions)
-        .add_if(CardClass::CardActionsNoSpacing, || props.disable_spacing)
-        .add_raw(&props.class)
+        .add_typed(CardClass::CardActions)
+        .add_typed_if(CardClass::CardActionsNoSpacing, props.disable_spacing)
+        .add(&props.class)
         .build();
 
     rsx! {
@@ -315,8 +315,8 @@ pub fn CardMedia(props: CardMediaProps) -> Element {
     };
 
     let classes = ClassesBuilder::new()
-        .add(CardClass::CardMedia)
-        .add_raw(&props.class)
+        .add_typed(CardClass::CardMedia)
+        .add(&props.class)
         .build();
 
     rsx! {

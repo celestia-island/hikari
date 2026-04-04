@@ -1,8 +1,8 @@
 // packages/components/src/display/qrcode.rs
 // QRCode component using inline SVG for rendering
 
-use hikari_palette::classes::{
-    AlignItems, ClassesBuilder, Display, FlexDirection, Padding, QRCodeClass, UtilityClass,
+use hikari_palette::classes::{TypedClass, 
+    AlignItems, ClassesBuilder, Display, FlexDirection, Padding, QRCodeClass,
 };
 use qrcode::{Color, QrCode};
 
@@ -45,12 +45,12 @@ fn build_svg(matrix: &[Vec<bool>], modules: usize, color: &str, background: &str
 #[component]
 pub fn QRCode(props: QRCodeProps) -> Element {
     let container_classes = ClassesBuilder::new()
-        .add(Display::Flex)
-        .add(FlexDirection::Column)
-        .add(AlignItems::Center)
-        .add(Padding::P4)
-        .add(QRCodeClass::Container)
-        .add_raw(&props.class)
+        .add_typed(Display::Flex)
+        .add_typed(FlexDirection::Column)
+        .add_typed(AlignItems::Center)
+        .add_typed(Padding::P4)
+        .add_typed(QRCodeClass::Container)
+        .add(&props.class)
         .build();
 
     let size_px = format!("{}px", props.size);
@@ -84,16 +84,16 @@ pub fn QRCode(props: QRCodeProps) -> Element {
         div { class: container_classes, style: props.style,
 
             if let Some(ref title) = props.title {
-                h4 { class: QRCodeClass::Title.as_class(), "{title}" }
+                h4 { class: QRCodeClass::Title.class_name(), "{title}" }
             }
 
             div {
-                class: QRCodeClass::Wrapper.as_class(),
+                class: QRCodeClass::Wrapper.class_name(),
                 style: "width: {size_px}; height: {size_px};",
 
                 if let Some(ref svg) = svg_html {
                     div {
-                        class: QRCodeClass::Image.as_class(),
+                        class: QRCodeClass::Image.class_name(),
                         dangerous_inner_html: svg,
                     }
                 }

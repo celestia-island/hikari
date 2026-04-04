@@ -139,7 +139,7 @@ pub fn render_viewport(viewport: &Viewport) -> VNode {
 
     let zoom_in = VNode::Element(
         VElement::new("button")
-            .class("hi-zoom-button hi-zoom-in")
+            .class("hi-viewport-button")
             .attr("aria-label", "Zoom in")
             .attr("title", "Zoom in")
             .attr(
@@ -150,7 +150,11 @@ pub fn render_viewport(viewport: &Viewport) -> VNode {
                     "true"
                 },
             )
-            .child(VNode::Text(VText::new("+"))),
+            .child(VNode::Element(
+                VElement::new("span")
+                    .class("hi-viewport-icon")
+                    .child(VNode::Text(VText::new("+"))),
+            )),
     );
     children.push(zoom_in);
 
@@ -189,7 +193,7 @@ pub fn render_viewport(viewport: &Viewport) -> VNode {
 
     VNode::Element(
         VElement::new("div")
-            .class("hi-zoom-controls")
+            .class("hi-node-viewport-controls")
             .children(children),
     )
 }

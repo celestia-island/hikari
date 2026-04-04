@@ -1,7 +1,7 @@
 // hi-components/src/feedback/drawer.rs
 // Drawer component with Arknights + FUI styling
 
-use hikari_palette::classes::{ClassesBuilder, DrawerClass, UtilityClass};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, DrawerClass};
 
 use crate::{
     prelude::*,
@@ -106,16 +106,16 @@ pub fn Drawer(props: DrawerProps) -> Element {
     });
 
     let drawer_classes = ClassesBuilder::new()
-        .add(DrawerClass::Drawer)
-        .add(placement_class)
-        .add_raw(&props.class)
+        .add_typed(DrawerClass::Drawer)
+        .add_typed(placement_class)
+        .add(&props.class)
         .build();
 
     rsx! {
         if props.open {
             // Mask overlay
             div {
-                class: DrawerClass::Mask.as_class(),
+                class: DrawerClass::Mask.class_name(),
                 style: mask_style,
                 onclick: handle_mask_click,
             }
@@ -127,10 +127,10 @@ pub fn Drawer(props: DrawerProps) -> Element {
 
                 // Header
                 if let Some(title) = props.title {
-                    div { class: DrawerClass::Header.as_class(),
-                        div { class: DrawerClass::Title.as_class(), "{title}" }
+                    div { class: DrawerClass::Header.class_name(),
+                        div { class: DrawerClass::Title.class_name(), "{title}" }
                         button {
-                            class: DrawerClass::Close.as_class(),
+                            class: DrawerClass::Close.class_name(),
                             onclick: move |e| {
                                 if let Some(handler) = on_close.as_ref() {
                                     handler.call(e);
@@ -149,13 +149,13 @@ pub fn Drawer(props: DrawerProps) -> Element {
                 }
 
                 // Body
-                div { class: DrawerClass::Body.as_class(),
+                div { class: DrawerClass::Body.class_name(),
                     { props.children }
                 }
 
                 // Footer
                 if let Some(footer) = props.footer {
-                    div { class: DrawerClass::Footer.as_class(),
+                    div { class: DrawerClass::Footer.class_name(),
                         { footer }
                     }
                 }

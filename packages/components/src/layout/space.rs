@@ -42,10 +42,10 @@ pub fn Space(props: SpaceProps) -> Element {
     };
 
     let space_classes = ClassesBuilder::new()
-        .add(SpaceClass::Space)
-        .add(direction_class)
-        .add_if(SpaceClass::Wrap, || props.wrap)
-        .add_raw(&props.class)
+        .add_typed(SpaceClass::Space)
+        .add_typed(direction_class)
+        .add_typed_if(SpaceClass::Wrap, props.wrap)
+        .add(&props.class)
         .build();
 
     let size_px = props.size * 8;

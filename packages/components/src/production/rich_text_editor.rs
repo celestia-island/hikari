@@ -36,16 +36,16 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
     let content = use_signal(|| props.content.clone());
 
     let container_classes = ClassesBuilder::new()
-        .add(RichTextEditorClass::Container)
-        .add_raw(&props.class)
+        .add_typed(RichTextEditorClass::Container)
+        .add(&props.class)
         .build();
 
     let toolbar_classes = ClassesBuilder::new()
-        .add(RichTextEditorClass::Toolbar)
+        .add_typed(RichTextEditorClass::Toolbar)
         .build();
 
     let editor_classes = ClassesBuilder::new()
-        .add(RichTextEditorClass::Editor)
+        .add_typed(RichTextEditorClass::Editor)
         .build();
 
     let height_style = if let Some(ref h) = props.height {

@@ -22,9 +22,7 @@
 //! }
 //! ```
 
-use hikari_palette::classes::{
-    AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass,
-};
+use hikari_palette::classes::{TypedClass, AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding};
 
 use crate::platform;
 use crate::prelude::*;
@@ -62,8 +60,8 @@ pub fn Anchor(
             let active_anchor_for_check = active_anchor.clone();
             let is_active = active_anchor_for_check.read() == href;
             let btn_class = ClassesBuilder::new()
-                .add(AnchorClass::Link)
-                .add_if(AnchorClass::Active, move || is_active)
+                .add_typed(AnchorClass::Link)
+                .add_typed_if(AnchorClass::Active, is_active)
                 .build();
 
             rsx! {
@@ -94,15 +92,15 @@ pub fn Anchor(
     };
 
     let anchor_classes = ClassesBuilder::new()
-        .add(Display::Flex)
-        .add(FlexDirection::Column)
-        .add(Gap::Gap2)
-        .add(Padding::P3)
-        .add(position_class)
-        .add_raw(&class)
+        .add_typed(Display::Flex)
+        .add_typed(FlexDirection::Column)
+        .add_typed(Gap::Gap2)
+        .add_typed(Padding::P3)
+        .add_typed(position_class)
+        .add(&class)
         .build();
 
-    let wrapper_class = AnchorClass::Wrapper.as_class();
+    let wrapper_class = AnchorClass::Wrapper.class_name();
     rsx! {
         div { class: wrapper_class,
             div { class: anchor_classes, ..anchor_links }

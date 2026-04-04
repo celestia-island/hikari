@@ -62,15 +62,15 @@ pub fn Container(props: ContainerProps) -> Element {
     };
 
     let mut builder = ClassesBuilder::new()
-        .add(ContainerClass::Container)
-        .add(size_class)
-        .add_if(ContainerClass::Centered, || props.center);
+        .add_typed(ContainerClass::Container)
+        .add_typed(size_class)
+        .add_typed_if(ContainerClass::Centered, props.center);
 
     if is_rtl {
-        builder = builder.add_raw("hi-container-rtl");
+        builder = builder.add_typed(ContainerClass::Rtl);
     }
 
-    let container_classes = builder.add_raw(&props.class).build();
+    let container_classes = builder.add(&props.class).build();
 
     let max_width = props
         .max_width
@@ -79,7 +79,9 @@ pub fn Container(props: ContainerProps) -> Element {
     let center_style = if props.center {
         "margin-inline-start: auto; margin-inline-end: auto;"
     } else {
-        { "" }
+        {
+            ""
+        }
     };
 
     rsx! {

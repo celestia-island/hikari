@@ -3,7 +3,7 @@
 
 use chrono::{Datelike, Local};
 
-use hikari_palette::classes::{CalendarClass, ClassesBuilder, UtilityClass};
+use hikari_palette::classes::{CalendarClass, ClassesBuilder, TypedClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -89,21 +89,21 @@ pub fn Calendar(props: CalendarProps) -> Element {
     let days_count = days_in_month(year, month);
     let first_day = first_day_of_month(year, month);
 
-    let cal_class = CalendarClass::Calendar.as_class();
-    let header_class = CalendarClass::CalendarHeader.as_class();
-    let nav_class = CalendarClass::CalendarNav.as_class();
-    let nav_btn_class = CalendarClass::CalendarNavButton.as_class();
-    let title_class = CalendarClass::CalendarTitle.as_class();
-    let weekdays_class = CalendarClass::CalendarWeekdays.as_class();
-    let weekday_class = CalendarClass::CalendarWeekday.as_class();
-    let grid_class = CalendarClass::CalendarGrid.as_class();
-    let day_cell_class = CalendarClass::CalendarDayCell.as_class();
-    let day_class = CalendarClass::CalendarDay.as_class();
-    let selected_day_class = CalendarClass::CalendarDaySelected.as_class();
+    let cal_class = CalendarClass::Calendar.class_name();
+    let header_class = CalendarClass::CalendarHeader.class_name();
+    let nav_class = CalendarClass::CalendarNav.class_name();
+    let nav_btn_class = CalendarClass::CalendarNavButton.class_name();
+    let title_class = CalendarClass::CalendarTitle.class_name();
+    let weekdays_class = CalendarClass::CalendarWeekdays.class_name();
+    let weekday_class = CalendarClass::CalendarWeekday.class_name();
+    let grid_class = CalendarClass::CalendarGrid.class_name();
+    let day_cell_class = CalendarClass::CalendarDayCell.class_name();
+    let day_class = CalendarClass::CalendarDay.class_name();
+    let selected_day_class = CalendarClass::CalendarDaySelected.class_name();
 
     let calendar_classes = ClassesBuilder::new()
-        .add(CalendarClass::Calendar)
-        .add_raw(&props.class)
+        .add_typed(CalendarClass::Calendar)
+        .add(&props.class)
         .build();
 
     // Build weekday headers outside rsx!
@@ -129,9 +129,9 @@ pub fn Calendar(props: CalendarProps) -> Element {
             let is_selected = day == sel_day;
             let day_cell_cls = day_cell_class.clone();
             let inner_class = if is_selected {
-                format!("{} {}", day_class.clone(), selected_day_class.clone())
+                format!("{} {}", day_class, selected_day_class)
             } else {
-                day_class.clone()
+                day_class.to_string()
             };
 
             let cy = current_year.clone();

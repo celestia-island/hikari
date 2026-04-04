@@ -47,11 +47,11 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
     };
 
     let checkbox_classes = ClassesBuilder::new()
-        .add(CheckboxClass::Checkbox)
-        .add(size_class)
-        .add_if(CheckboxClass::Checked, || props.checked)
-        .add_if(CheckboxClass::Disabled, || props.disabled)
-        .add_raw(&props.class)
+        .add_typed(CheckboxClass::Checkbox)
+        .add_typed(size_class)
+        .add_typed_if(CheckboxClass::Checked, props.checked)
+        .add_typed_if(CheckboxClass::Disabled, props.disabled)
+        .add(&props.class)
         .build();
 
     // Track previous checked state to detect changes

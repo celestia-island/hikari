@@ -49,7 +49,7 @@ pub fn Divider(props: DividerProps) -> Element {
         DividerTextPosition::Right => "hi-divider-text-right",
     };
 
-    let base_classes = ClassesBuilder::new().add(Display::Flex).build();
+    let base_classes = ClassesBuilder::new().add_typed(Display::Flex).build();
 
     let divider_classes = format!(
         "hi-divider {} {} {} {}",

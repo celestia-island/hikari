@@ -61,14 +61,14 @@ pub fn Divider(props: DividerProps) -> Element {
     };
 
     let mut builder = ClassesBuilder::new()
-        .add(DividerClass::Divider)
-        .add(orientation_class)
-        .add(type_class)
-        .add_if(DividerClass::WithText, || props.text.is_some())
-        .add_raw(&props.class);
+        .add_typed(DividerClass::Divider)
+        .add_typed(orientation_class)
+        .add_typed(type_class)
+        .add_typed_if(DividerClass::WithText, props.text.is_some())
+        .add(&props.class);
 
     if is_rtl {
-        builder = builder.add_raw("hi-divider-rtl");
+        builder = builder.add_typed(DividerClass::Rtl);
     }
 
     let divider_classes = builder.build();
@@ -92,7 +92,9 @@ pub fn Divider(props: DividerProps) -> Element {
             _ => "text-align: center;",
         }
     } else {
-        { "" }
+        {
+            ""
+        }
     };
 
     rsx! {

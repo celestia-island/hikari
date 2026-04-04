@@ -1,7 +1,7 @@
 // packages/components/src/display/drag_layer.rs
 // DragLayer component with Arknights + FUI styling
 
-use hikari_palette::classes::{ClassesBuilder, DragLayerClass, UtilityClass};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, DragLayerClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -42,8 +42,8 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
     let (x, y) = props.position;
 
     let container_classes = ClassesBuilder::new()
-        .add(DragLayerClass::Container)
-        .add_raw(&props.class)
+        .add_typed(DragLayerClass::Container)
+        .add(&props.class)
         .build();
 
     rsx! {
@@ -51,9 +51,9 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
 
             // Drop zone overlay
             if props.show_drop_zones {
-                div { class: DragLayerClass::DropZoneOverlay.as_class(),
+                div { class: DragLayerClass::DropZoneOverlay.class_name(),
                     div {
-                        class: DragLayerClass::DropZone.as_class(),
+                        class: DragLayerClass::DropZone.class_name(),
                         style: "top: 50%; left: 50%; transform: translate(-50%, -50%);",
                         "Drop here"
                     }
@@ -63,12 +63,12 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
             // Drag preview
             if let Some(ref item) = props.drag_item {
                 div {
-                    class: DragLayerClass::DragPreview.as_class(),
+                    class: DragLayerClass::DragPreview.class_name(),
                     style: "left: {x}px; top: {y}px;",
 
-                    div { class: DragLayerClass::DragPreviewContent.as_class(),
-                        span { class: DragLayerClass::DragPreviewLabel.as_class(), "{item.label}" }
-                        span { class: DragLayerClass::DragPreviewType.as_class(), "{item.item_type}" }
+                    div { class: DragLayerClass::DragPreviewContent.class_name(),
+                        span { class: DragLayerClass::DragPreviewLabel.class_name(), "{item.label}" }
+                        span { class: DragLayerClass::DragPreviewType.class_name(), "{item.item_type}" }
                     }
                 }
             }

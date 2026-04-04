@@ -36,8 +36,8 @@ pub fn RadioButton(props: RadioButtonProps) -> Element {
     let on_change = ctx.on_change.clone();
 
     let radio_classes = ClassesBuilder::new()
-        .add(RadioClass::Label)
-        .add_raw(&props.class)
+        .add_typed(RadioClass::Label)
+        .add(&props.class)
         .build();
 
     let handle_change = {
@@ -116,9 +116,9 @@ pub fn RadioGroup(props: RadioGroupProps) -> Element {
     };
 
     let group_classes = ClassesBuilder::new()
-        .add(RadioClass::RadioGroup)
-        .add(direction_class)
-        .add_raw(&props.class)
+        .add_typed(RadioClass::RadioGroup)
+        .add_typed(direction_class)
+        .add(&props.class)
         .build();
 
     rsx! {

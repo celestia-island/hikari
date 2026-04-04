@@ -1,7 +1,7 @@
 // packages/components/src/entry/auto_complete.rs
 // AutoComplete component with Arknights + FUI styling
 
-use hikari_palette::classes::{AutoCompleteClass, ClassesBuilder, UtilityClass};
+use hikari_palette::classes::{TypedClass, AutoCompleteClass, ClassesBuilder};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -154,13 +154,13 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
         }
     };
 
-    let input_classes = ClassesBuilder::new().add(AutoCompleteClass::Input).build();
+    let input_classes = ClassesBuilder::new().add_typed(AutoCompleteClass::Input).build();
 
     let is_open_value = is_open.read();
     let focused_index_value = focused_index.read();
     let options_arr = filtered_options.read().clone();
 
-    let wrapper_class = AutoCompleteClass::Wrapper.as_class();
+    let wrapper_class = AutoCompleteClass::Wrapper.class_name();
 
     rsx! {
         div { class: wrapper_class, style: "position: relative; {props.style}",
@@ -179,7 +179,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
 
             if props.allow_clear && !props.value.is_empty() && !props.disabled {
                 button {
-                    class: AutoCompleteClass::Clear.as_class(),
+                    class: AutoCompleteClass::Clear.class_name(),
                     onclick: handle_clear,
                     r#type: "button",
                     "×"
@@ -189,16 +189,16 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
             if is_open_value && !options_arr.is_empty() {
                 div {
                     class: ClassesBuilder::new()
-                        .add(AutoCompleteClass::Dropdown)
-                        .add(AutoCompleteClass::Show)
-                        .add_raw(&props.class)
+                        .add_typed(AutoCompleteClass::Dropdown)
+                        .add_typed(AutoCompleteClass::Show)
+                        .add(&props.class)
                         .build(),
 
                     for index in 0..options_arr.len() {
                         div {
                             class: ClassesBuilder::new()
-                                .add(AutoCompleteClass::Option)
-                                .add_if(AutoCompleteClass::OptionFocused, || index == focused_index_value)
+                                .add_typed(AutoCompleteClass::Option)
+                                .add_typed_if(AutoCompleteClass::OptionFocused, index == focused_index_value)
                                 .build(),
                             onclick: {
                                 let handle_option_click_for_click = handle_option_click.clone();

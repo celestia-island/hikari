@@ -1,7 +1,7 @@
 // packages/components/src/display/timeline.rs
 // Timeline component with Arknights + FUI styling
 
-use hikari_palette::classes::{ClassesBuilder, TimelineClass, UtilityClass};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, TimelineClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -35,10 +35,10 @@ pub fn Timeline(props: TimelineProps) -> Element {
     };
 
     let timeline_classes = ClassesBuilder::new()
-        .add(TimelineClass::Timeline)
-        .add(position_class)
-        .add_if(TimelineClass::NoLine, || !props.line)
-        .add_raw(&props.class)
+        .add_typed(TimelineClass::Timeline)
+        .add_typed(position_class)
+        .add_typed_if(TimelineClass::NoLine, !props.line)
+        .add(&props.class)
         .build();
 
     rsx! {
@@ -68,10 +68,10 @@ pub fn TimelineItem(props: TimelineItemProps) -> Element {
     };
 
     let item_classes = ClassesBuilder::new()
-        .add(TimelineClass::Item)
-        .add(position_class)
-        .add_if(TimelineClass::Last, || props.last)
-        .add_raw(&props.class)
+        .add_typed(TimelineClass::Item)
+        .add_typed(position_class)
+        .add_typed_if(TimelineClass::Last, props.last)
+        .add(&props.class)
         .build();
 
     let dot_style = if props.color.is_empty() {
@@ -87,21 +87,21 @@ pub fn TimelineItem(props: TimelineItemProps) -> Element {
         div { class: item_classes, style: props.style,
 
             // Timeline dot
-            div { class: TimelineClass::Dot.as_class(), style: dot_style,
+            div { class: TimelineClass::Dot.class_name(), style: dot_style,
                 if let Some(icon) = props.icon {
                     {icon}
                 }
             }
 
             // Timeline content
-            div { class: TimelineClass::Content.as_class(),
+            div { class: TimelineClass::Content.class_name(),
 
                 if !props.time.is_empty() {
-                    div { class: TimelineClass::Time.as_class(), "{props.time}" }
+                    div { class: TimelineClass::Time.class_name(), "{props.time}" }
                 }
 
                 if !props.title.is_empty() {
-                    div { class: TimelineClass::Title.as_class(), "{props.title}" }
+                    div { class: TimelineClass::Title.class_name(), "{props.title}" }
                 }
 
                 {props.children}

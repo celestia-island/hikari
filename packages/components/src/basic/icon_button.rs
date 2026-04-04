@@ -118,23 +118,23 @@ pub fn IconButton(props: IconButtonProps) -> Element {
     };
 
     let mut builder = ClassesBuilder::new()
-        .add(ButtonClass::Button)
-        .add(ButtonClass::IconButton)
-        .add(variant_class);
+        .add_typed(ButtonClass::Button)
+        .add_typed(ButtonClass::IconButton)
+        .add_typed(variant_class);
 
     if let Some(size) = size_class {
-        builder = builder.add(size);
+        builder = builder.add_typed(size);
     }
 
     if props.disabled {
-        builder = builder.add(ButtonClass::Disabled);
+        builder = builder.add_typed(ButtonClass::Disabled);
     }
 
-    let button_classes = builder.add_raw(&props.class).build();
+    let button_classes = builder.add(&props.class).build();
 
     let icon_classes = ClassesBuilder::new()
-        .add(ButtonClass::IconButtonIcon)
-        .add_if(ButtonClass::IconButtonDisabled, || props.disabled)
+        .add_typed(ButtonClass::IconButtonIcon)
+        .add_typed_if(ButtonClass::IconButtonDisabled, props.disabled)
         .build();
 
     let mut css_vars_string = String::new();

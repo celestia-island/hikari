@@ -161,3 +161,6 @@ pub use classes::*;
 pub use color_math::*;
 pub use colors::*;
 pub use themes::*;
+
+pub use tairitsu_style::ClassesBuilder;
+pub use tairitsu_style::TypedClass;

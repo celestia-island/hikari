@@ -3,8 +3,9 @@
 
 #![expect(clippy::needless_update)]
 
-use hikari_palette::classes::{ClassesBuilder, DragDropTreeClass};
+use hikari_palette::classes::DragDropTreeClass;
 use tairitsu_hooks::ReactiveSignal;
+use tairitsu_style::ClassesBuilder;
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -163,10 +164,10 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
     let is_drag_over = props.drag_over_key.as_ref().unwrap().read().as_ref() == Some(&item_key_1);
 
     let drag_node_classes = ClassesBuilder::new()
-        .add(DragDropTreeClass::DragNode)
-        .add_if(DragDropTreeClass::Dragging, || is_dragging)
-        .add_if(DragDropTreeClass::DragOver, || is_drag_over)
-        .add_if(DragDropTreeClass::NodeDisabled, || disabled)
+        .add_typed(DragDropTreeClass::DragNode)
+        .add_typed_if(DragDropTreeClass::Dragging, is_dragging)
+        .add_typed_if(DragDropTreeClass::DragOver, is_drag_over)
+        .add_typed_if(DragDropTreeClass::NodeDisabled, disabled)
         .build();
 
     let dragged_key_for_start = props.dragged_key.clone().unwrap();

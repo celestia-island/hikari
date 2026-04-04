@@ -66,16 +66,18 @@ pub fn Textarea(props: TextareaProps) -> Element {
     };
 
     let textarea_classes = ClassesBuilder::new()
-        .add(InputClass::Input)
-        .add(size_class)
-        .add_if(InputClass::InputDisabled, || props.disabled)
-        .add_if(InputClass::InputError, || {
-            matches!(props.status, TextareaStatus::Error)
-        })
-        .add_if(InputClass::InputSuccess, || {
-            matches!(props.status, TextareaStatus::Success)
-        })
-        .add_raw(&props.class)
+        .add_typed(InputClass::Input)
+        .add_typed(size_class)
+        .add_typed_if(InputClass::InputDisabled, props.disabled)
+        .add_typed_if(
+            InputClass::InputError,
+            matches!(props.status, TextareaStatus::Error),
+        )
+        .add_typed_if(
+            InputClass::InputSuccess,
+            matches!(props.status, TextareaStatus::Success),
+        )
+        .add(&props.class)
         .build();
 
     rsx! {

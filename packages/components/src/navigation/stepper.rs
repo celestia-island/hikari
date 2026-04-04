@@ -1,7 +1,7 @@
 // hi-components/src/navigation/stepper.rs
 // Stepper component with Arknights + FUI styling
 
-use hikari_palette::classes::{ClassesBuilder, StepperClass, UtilityClass};
+use hikari_palette::classes::{ClassesBuilder, StepperClass, TypedClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -47,22 +47,22 @@ pub fn Stepper(props: StepperProps) -> Element {
     };
 
     let stepper_classes = ClassesBuilder::new()
-        .add(StepperClass::Stepper)
-        .add(direction_class)
-        .add_raw(&props.class)
+        .add_typed(StepperClass::Stepper)
+        .add_typed(direction_class)
+        .add(&props.class)
         .build();
 
-    let step_number_class = StepperClass::StepNumber.as_class();
-    let connector_class = StepperClass::StepConnector.as_class();
-    let connector_vertical_class = StepperClass::StepConnectorVertical.as_class();
+    let step_number_class = StepperClass::StepNumber.class_name();
+    let connector_class = StepperClass::StepConnector.class_name();
+    let connector_vertical_class = StepperClass::StepConnectorVertical.class_name();
 
     rsx! {
         div { class: stepper_classes,
             for index in 0..props.total {
                 {
                     let step_classes = ClassesBuilder::new()
-                        .add(StepperClass::Step)
-                        .add(
+                        .add_typed(StepperClass::Step)
+                        .add_typed(
                             if index < props.current {
                                 StepperClass::StepPending
                             } else if index == props.current {

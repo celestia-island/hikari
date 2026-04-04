@@ -5,7 +5,7 @@
 // - Layer2: Component variables (input-vars.scss)
 // - Custom: Runtime overrides via text_color, border_color, animation_id
 
-use hikari_palette::classes::{ClassesBuilder, InputClass, UtilityClass};
+use hikari_palette::classes::{ClassesBuilder, InputClass, TypedClass};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
@@ -108,24 +108,26 @@ pub struct InputProps {
 #[component]
 pub fn Input(props: InputProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
-        .add(InputClass::InputWrapper)
-        .add(match props.size {
+        .add_typed(InputClass::InputWrapper)
+        .add_typed(match props.size {
             InputSize::Small => InputClass::InputSm,
             InputSize::Medium => InputClass::InputMd,
             InputSize::Large => InputClass::InputLg,
         })
-        .add_raw(&props.class)
+        .add(&props.class)
         .build();
 
     let input_classes = ClassesBuilder::new()
-        .add(InputClass::Input)
-        .add_if(InputClass::InputDisabled, || props.disabled)
-        .add_if(InputClass::InputError, || {
-            matches!(props.status, InputStatus::Error)
-        })
-        .add_if(InputClass::InputSuccess, || {
-            matches!(props.status, InputStatus::Success)
-        })
+        .add_typed(InputClass::Input)
+        .add_typed_if(InputClass::InputDisabled, props.disabled)
+        .add_typed_if(
+            InputClass::InputError,
+            matches!(props.status, InputStatus::Error),
+        )
+        .add_typed_if(
+            InputClass::InputSuccess,
+            matches!(props.status, InputStatus::Success),
+        )
         .build();
 
     let mut css_vars_string = String::new();
@@ -166,7 +168,7 @@ pub fn Input(props: InputProps) -> Element {
             "data-animation-id": props.animation_id,
 
             if let Some(icon) = props.prefix_icon {
-                span { class: InputClass::InputPrefix.as_class(), {icon} }
+                span { class: InputClass::InputPrefix.class_name(), {icon} }
             }
 
             input {
@@ -200,7 +202,7 @@ pub fn Input(props: InputProps) -> Element {
             }
 
             if let Some(icon) = props.suffix_icon {
-                span { class: InputClass::InputSuffix.as_class(), {icon} }
+                span { class: InputClass::InputSuffix.class_name(), {icon} }
             }
         }
     };

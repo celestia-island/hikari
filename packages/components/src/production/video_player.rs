@@ -51,11 +51,11 @@ pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
     let duration = use_signal(|| 0.0f64);
 
     let container_classes = ClassesBuilder::new()
-        .add(VideoPlayerClass::Container)
-        .add_raw(&props.class)
+        .add_typed(VideoPlayerClass::Container)
+        .add(&props.class)
         .build();
 
-    let video_classes = ClassesBuilder::new().add(VideoPlayerClass::Video).build();
+    let video_classes = ClassesBuilder::new().add_typed(VideoPlayerClass::Video).build();
 
     let ct = current_time.get();
     let dur = duration.get();

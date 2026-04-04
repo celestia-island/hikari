@@ -54,8 +54,8 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
     let files = use_signal(Vec::<String>::new);
 
     let wrapper_classes = ClassesBuilder::new()
-        .add(FileUploadClass::FileUploadWrapper)
-        .add_raw(&props.class)
+        .add_typed(FileUploadClass::FileUploadWrapper)
+        .add(&props.class)
         .build();
 
     let status_class = match upload_status.get() {
@@ -66,9 +66,9 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
         _ => None,
     };
 
-    let mut drag_builder = ClassesBuilder::new().add(FileUploadClass::FileUpload);
+    let mut drag_builder = ClassesBuilder::new().add_typed(FileUploadClass::FileUpload);
     if let Some(class) = status_class {
-        drag_builder = drag_builder.add(class);
+        drag_builder = drag_builder.add_typed(class);
     }
     let drag_classes = drag_builder.build();
 
@@ -89,6 +89,7 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
 
     let upload_status_for_drop = upload_status.clone();
     let files_for_drop = files.clone();
+    let max_size_for_drop = props.max_size;
     let on_drop = move |e: DragEvent| {
         e.prevent_default();
         upload_status_for_drop.set(FileUploadStatus::Idle);
@@ -100,7 +101,14 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
             let mut errors = Vec::new();
 
             for file_name in file_list {
-                selected_files.push(file_name.clone());
+                if file_name.len() > max_size_for_drop {
+                    errors.push(format!(
+                        "File '{}' exceeds maximum size of {} bytes",
+                        file_name, max_size_for_drop
+                    ));
+                } else {
+                    selected_files.push(file_name.clone());
+                }
             }
 
             if !errors.is_empty() && on_error_for_drop.is_some() {

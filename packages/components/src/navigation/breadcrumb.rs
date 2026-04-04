@@ -35,11 +35,11 @@ pub struct BreadcrumbProps {
 #[component]
 pub fn Breadcrumb(props: BreadcrumbProps) -> Element {
     let classes = ClassesBuilder::new()
-        .add(BreadcrumbClass::Breadcrumb)
-        .add(Display::Flex)
-        .add(FlexDirection::Row)
-        .add(Gap::Gap2)
-        .add_raw(&props.class)
+        .add_typed(BreadcrumbClass::Breadcrumb)
+        .add_typed(Display::Flex)
+        .add_typed(FlexDirection::Row)
+        .add_typed(Gap::Gap2)
+        .add(&props.class)
         .build();
 
     rsx! {
@@ -65,11 +65,11 @@ impl StyledComponent for BreadcrumbComponent {
 #[component]
 pub fn BreadcrumbItem(props: BreadcrumbItemProps) -> Element {
     let classes = ClassesBuilder::new()
-        .add(BreadcrumbClass::BreadcrumbItem)
-        .add(Display::Flex)
-        .add(FlexDirection::Row)
-        .add(Gap::Gap2)
-        .add_raw(&props.class)
+        .add_typed(BreadcrumbClass::BreadcrumbItem)
+        .add_typed(Display::Flex)
+        .add_typed(FlexDirection::Row)
+        .add_typed(Gap::Gap2)
+        .add(&props.class)
         .build();
 
     rsx! {

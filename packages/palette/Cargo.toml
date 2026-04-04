@@ -10,6 +10,7 @@ doctest = false
 
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
+tairitsu-style = { path = "../../../tairitsu/packages/style" }
 yuuka = "0.6"
 
 [features]

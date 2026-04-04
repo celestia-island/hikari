@@ -1,7 +1,7 @@
 // hi-components/src/feedback/popover.rs
 // Popover component with smart positioning via Portal system
 
-use hikari_palette::classes::{ClassesBuilder, Display, Position};
+use hikari_palette::classes::{ClassesBuilder, Display, PopoverClass, Position};
 
 use crate::{
     platform,
@@ -178,10 +178,10 @@ pub fn Popover(props: PopoverProps) -> Element {
     };
 
     let container_classes = ClassesBuilder::new()
-        .add(Position::Relative)
-        .add(Display::InlineBlock)
-        .add_raw("hi-popover-trigger")
-        .add_raw(&props.class)
+        .add_typed(Position::Relative)
+        .add_typed(Display::InlineBlock)
+        .add_typed(PopoverClass::Trigger)
+        .add(&props.class)
         .build();
 
     rsx! {

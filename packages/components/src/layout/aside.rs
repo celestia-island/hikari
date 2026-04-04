@@ -25,7 +25,7 @@
 //! }
 //! ```
 
-use hikari_palette::{ClassesBuilder, UtilityClass, classes::components::*};
+use hikari_palette::{classes::components::*, ClassesBuilder, TypedClass};
 
 use crate::{prelude::*, theme::use_layout_direction};
 
@@ -69,21 +69,21 @@ pub fn Aside(
     };
 
     let mut builder = ClassesBuilder::new()
-        .add(AsideClass::Aside)
-        .add(AsideClass::Drawer)
-        .add(width_class)
-        .add(variant_class);
+        .add_typed(AsideClass::Aside)
+        .add_typed(AsideClass::Drawer)
+        .add_typed(width_class)
+        .add_typed(variant_class);
 
     if is_rtl {
-        builder = builder.add_raw("hi-aside-rtl");
+        builder = builder.add_typed(AsideClass::Rtl);
     }
 
     if is_open.read() {
-        builder = builder.add(AsideClass::DrawerOpen);
+        builder = builder.add_typed(AsideClass::DrawerOpen);
     }
 
-    let classes = builder.add_raw(&class).build();
-    let content_class = AsideClass::Content.as_class();
+    let classes = builder.add(&class).build();
+    let content_class = AsideClass::Content.class_name();
     let header_class = "hi-layout-aside-header".to_string();
     let footer_class = "hi-layout-aside-footer".to_string();
 

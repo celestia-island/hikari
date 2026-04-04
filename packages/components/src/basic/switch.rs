@@ -98,14 +98,14 @@ pub fn Switch(props: SwitchProps) -> Element {
     };
 
     let switch_classes = ClassesBuilder::new()
-        .add(SwitchClass::Switch)
-        .add(size_class)
-        .add_if(SwitchClass::Checked, || props.checked)
-        .add_if(SwitchClass::Disabled, || props.disabled)
-        .add_raw(variant_class)
-        .add_raw(color_class)
-        .add_if_raw("hi-switch-glow", || props.glow)
-        .add_raw(&props.class)
+        .add_typed(SwitchClass::Switch)
+        .add_typed(size_class)
+        .add_typed_if(SwitchClass::Checked, props.checked)
+        .add_typed_if(SwitchClass::Disabled, props.disabled)
+        .add(variant_class)
+        .add(color_class)
+        .add_typed_if(SwitchClass::Glow, props.glow)
+        .add(&props.class)
         .build();
 
     let thumb_content = if props.checked {

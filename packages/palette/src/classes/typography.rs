@@ -1,13 +1,8 @@
-//! Typography utility classes
-//!
-//! Font size, weight, alignment, and other text utilities.
+//! Typography utility classes.
 
-use serde::{Deserialize, Serialize};
+use tairitsu_style::TypedClass;
 
-use super::UtilityClass;
-
-/// Font size utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FontSize {
     Xs,
     Sm,
@@ -19,23 +14,22 @@ pub enum FontSize {
     X4xl,
 }
 
-impl UtilityClass for FontSize {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for FontSize {
+    fn class_name(&self) -> &'static str {
         match self {
-            FontSize::Xs => "text-xs",
-            FontSize::Sm => "text-sm",
-            FontSize::Base => "text-base",
-            FontSize::Lg => "text-lg",
-            FontSize::Xl => "text-xl",
-            FontSize::X2xl => "text-2xl",
-            FontSize::X3xl => "text-3xl",
-            FontSize::X4xl => "text-4xl",
+            Self::Xs => "hi-text-xs",
+            Self::Sm => "hi-text-sm",
+            Self::Base => "hi-text-base",
+            Self::Lg => "hi-text-lg",
+            Self::Xl => "hi-text-xl",
+            Self::X2xl => "hi-text-2xl",
+            Self::X3xl => "hi-text-3xl",
+            Self::X4xl => "hi-text-4xl",
         }
     }
 }
 
-/// Font weight utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FontWeight {
     Normal,
     Medium,
@@ -43,49 +37,47 @@ pub enum FontWeight {
     Bold,
 }
 
-impl UtilityClass for FontWeight {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for FontWeight {
+    fn class_name(&self) -> &'static str {
         match self {
-            FontWeight::Normal => "font-normal",
-            FontWeight::Medium => "font-medium",
-            FontWeight::Semibold => "font-semibold",
-            FontWeight::Bold => "font-bold",
+            Self::Normal => "hi-font-normal",
+            Self::Medium => "hi-font-medium",
+            Self::Semibold => "hi-font-semibold",
+            Self::Bold => "hi-font-bold",
         }
     }
 }
 
-/// Text alignment
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TextAlign {
     Left,
     Center,
     Right,
 }
 
-impl UtilityClass for TextAlign {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for TextAlign {
+    fn class_name(&self) -> &'static str {
         match self {
-            TextAlign::Left => "text-left",
-            TextAlign::Center => "text-center",
-            TextAlign::Right => "text-right",
+            Self::Left => "hi-text-left",
+            Self::Center => "hi-text-center",
+            Self::Right => "hi-text-right",
         }
     }
 }
 
-/// Text transform
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TextTransform {
     Uppercase,
     Lowercase,
     Capitalize,
 }
 
-impl UtilityClass for TextTransform {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for TextTransform {
+    fn class_name(&self) -> &'static str {
         match self {
-            TextTransform::Uppercase => "uppercase",
-            TextTransform::Lowercase => "lowercase",
-            TextTransform::Capitalize => "capitalize",
+            Self::Uppercase => "hi-uppercase",
+            Self::Lowercase => "hi-lowercase",
+            Self::Capitalize => "hi-capitalize",
         }
     }
 }

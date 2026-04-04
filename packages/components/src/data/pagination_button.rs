@@ -1,7 +1,8 @@
 // hi-components/src/data/pagination_button.rs
 // Unified pagination button component with consistent structure
 
-use hikari_palette::classes::{ClassesBuilder, PaginationClass};
+use hikari_palette::classes::PaginationClass;
+use tairitsu_style::ClassesBuilder;
 
 use crate::{
     basic::{Arrow, ArrowDirection},
@@ -55,11 +56,10 @@ pub enum PaginationButtonContent {
 #[component]
 pub fn PaginationButton(props: PaginationButtonProps) -> Element {
     // Build base classes
-    let mut builder = ClassesBuilder::new().add(PaginationClass::PaginationItem);
+    let mut builder = ClassesBuilder::new().add_typed(PaginationClass::PaginationItem);
 
-    // Add active state class
     if props.active {
-        builder = builder.add(PaginationClass::PaginationActive);
+        builder = builder.add_typed(PaginationClass::PaginationActive);
     }
 
     let button_classes = builder.build();

@@ -2,7 +2,7 @@
 // ZoomControls component with Arknights + FUI styling
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{ClassesBuilder, UtilityClass, ZoomControlsClass};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, ZoomControlsClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -40,8 +40,8 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
     let zoom = use_signal(|| props.zoom);
 
     let container_classes = ClassesBuilder::new()
-        .add(ZoomControlsClass::Container)
-        .add_raw(&props.class)
+        .add_typed(ZoomControlsClass::Container)
+        .add(&props.class)
         .build();
 
     let handle_zoom_in = {
@@ -91,7 +91,7 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
 
             // Zoom out button
             button {
-                class: if can_zoom_out { "{ZoomControlsClass::Button.as_class()}" } else { "{ZoomControlsClass::Button.as_class()} {ZoomControlsClass::ButtonDisabled.as_class()}" },
+                class: if can_zoom_out { "{ZoomControlsClass::Button.class_name()}" } else { "{ZoomControlsClass::Button.class_name()} {ZoomControlsClass::ButtonDisabled.class_name()}" },
                 disabled: !can_zoom_out,
                 onclick: handle_zoom_out,
                 Icon { icon: MdiIcon::Minus, size: 18 }
@@ -99,12 +99,12 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
 
             // Zoom percentage display
             if props.show_percentage {
-                div { class: ZoomControlsClass::Percentage.as_class(), "{zoom.get()}%" }
+                div { class: ZoomControlsClass::Percentage.class_name(), "{zoom.get()}%" }
             }
 
             // Zoom in button
             button {
-                class: if can_zoom_in { "{ZoomControlsClass::Button.as_class()}" } else { "{ZoomControlsClass::Button.as_class()} {ZoomControlsClass::ButtonDisabled.as_class()}" },
+                class: if can_zoom_in { "{ZoomControlsClass::Button.class_name()}" } else { "{ZoomControlsClass::Button.class_name()} {ZoomControlsClass::ButtonDisabled.class_name()}" },
                 disabled: !can_zoom_in,
                 onclick: handle_zoom_in,
                 Icon { icon: MdiIcon::MagnifyPlus, size: 18 }
@@ -112,7 +112,7 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
 
             // Reset button
             button {
-                class: ZoomControlsClass::Button.as_class(),
+                class: ZoomControlsClass::Button.class_name(),
                 onclick: handle_reset,
                 title: "Reset to 100%",
                 Icon { icon: MdiIcon::Magnify, size: 18 }

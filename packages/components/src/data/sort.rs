@@ -1,7 +1,9 @@
 // hi-components/src/data/sort.rs
 // Sort component with Arknights + FUI styling
 
-use hikari_palette::classes::{ClassesBuilder, SortClass, UtilityClass};
+use hikari_palette::classes::SortClass;
+use hikari_palette::TypedClass;
+use tairitsu_style::ClassesBuilder;
 
 pub use super::column::ColumnDef;
 use crate::{prelude::*, styled::StyledComponent};
@@ -84,8 +86,8 @@ pub fn Sort(props: SortProps) -> Element {
     let has_active_sort = props.direction != SortDirection::None;
 
     let container_classes = ClassesBuilder::new()
-        .add(SortClass::Sort)
-        .add_raw(&props.class)
+        .add_typed(SortClass::Sort)
+        .add(&props.class)
         .build();
 
     // Build sort buttons using VElement directly
@@ -111,12 +113,12 @@ pub fn Sort(props: SortProps) -> Element {
             let col_key = column_key.clone();
 
             let button_classes = ClassesBuilder::new()
-                .add(SortClass::SortButton)
-                .add_if(SortClass::SortActive, || is_active)
+                .add_typed(SortClass::SortButton)
+                .add_typed_if(SortClass::SortActive, is_active)
                 .build();
 
-            let title_class = SortClass::SortTitle.as_class();
-            let indicator_class = SortClass::SortIndicator.as_class();
+            let title_class = SortClass::SortTitle.class_name();
+            let indicator_class = SortClass::SortIndicator.class_name();
 
             VNode::Element(
                 VElement::new("button")
@@ -151,9 +153,9 @@ pub fn Sort(props: SortProps) -> Element {
 
     // Add clear button if there's an active sort
     if has_active_sort {
-        let clear_class = SortClass::SortClear.as_class();
-        let text_class = SortClass::SortClearText.as_class();
-        let icon_class = SortClass::SortClearIcon.as_class();
+        let clear_class = SortClass::SortClear.class_name();
+        let text_class = SortClass::SortClearText.class_name();
+        let icon_class = SortClass::SortClearIcon.class_name();
 
         let sort_handler = on_sort_handler.clone();
 

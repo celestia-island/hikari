@@ -25,8 +25,13 @@ pub fn ScrollbarContainer(
             class: format!("custom-scrollbar-container-vdom {}", class),
             style: "position: relative; display: flex; width: {width}; height: {height}; overflow: hidden;",
 
-            // Content area - will be wrapped by the script
-            {children}
+            div {
+                class: "custom-scrollbar-content-vdom",
+                "data-custom-scrollbar": "content",
+                style: "overflow-y: auto; overflow-x: hidden; flex: 1; min-width: 0; -ms-overflow-style: none; scrollbar-width: none;",
+
+                {children}
+            }
         }
     }
 }

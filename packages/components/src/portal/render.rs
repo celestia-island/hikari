@@ -3,9 +3,8 @@
 
 #![expect(clippy::needless_update)]
 
-use hikari_palette::classes::{
+use hikari_palette::classes::{TypedClass, 
     ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass, TooltipClass,
-    UtilityClass,
 };
 
 use super::provider::use_portal;
@@ -127,7 +126,7 @@ pub fn PortalRender(
         }
     };
 
-    let portal_classes = ClassesBuilder::new().add(PortalClass::PortalRoot).build();
+    let portal_classes = ClassesBuilder::new().add_typed(PortalClass::PortalRoot).build();
 
     // Pre-collect all portal entry elements
     let entry_elements: Vec<Element> = entries
@@ -268,11 +267,11 @@ fn ModalPortalEntry(
 
     let overlay_classes = if mask_mode == MaskMode::Transparent {
         ClassesBuilder::new()
-            .add(ModalClass::Overlay)
-            .add(ModalClass::OverlayTransparent)
+            .add_typed(ModalClass::Overlay)
+            .add_typed(ModalClass::OverlayTransparent)
             .build()
     } else {
-        ClassesBuilder::new().add(ModalClass::Overlay).build()
+        ClassesBuilder::new().add_typed(ModalClass::Overlay).build()
     };
 
     let size_class = match size {
@@ -283,8 +282,8 @@ fn ModalPortalEntry(
     };
 
     let modal_classes = ClassesBuilder::new()
-        .add(ModalClass::Modal)
-        .add(size_class)
+        .add_typed(ModalClass::Modal)
+        .add_typed(size_class)
         .build();
 
     let modal_style = use_memo(move || {
@@ -297,13 +296,13 @@ fn ModalPortalEntry(
         style
     });
 
-    let header_classes = ClassesBuilder::new().add(ModalClass::Header).build();
+    let header_classes = ClassesBuilder::new().add_typed(ModalClass::Header).build();
 
-    let title_classes = ClassesBuilder::new().add(ModalClass::Title).build();
+    let title_classes = ClassesBuilder::new().add_typed(ModalClass::Title).build();
 
-    let close_classes = ClassesBuilder::new().add(ModalClass::Close).build();
+    let close_classes = ClassesBuilder::new().add_typed(ModalClass::Close).build();
 
-    let body_classes = ClassesBuilder::new().add(ModalClass::Body).build();
+    let body_classes = ClassesBuilder::new().add_typed(ModalClass::Body).build();
 
     let title_el = if title.is_some() {
         rsx! {
@@ -459,15 +458,15 @@ fn DropdownPortalEntry(
 
     let overlay_classes = if mask_mode == PortalMaskMode::Dimmed {
         ClassesBuilder::new()
-            .add(DropdownClass::Overlay)
-            .add(DropdownClass::OverlayDimmed)
+            .add_typed(DropdownClass::Overlay)
+            .add_typed(DropdownClass::OverlayDimmed)
             .build()
     } else {
-        ClassesBuilder::new().add(DropdownClass::Overlay).build()
+        ClassesBuilder::new().add_typed(DropdownClass::Overlay).build()
     };
 
     let dropdown_classes =
-        use_memo(move || ClassesBuilder::new().add(DropdownClass::Dropdown).build());
+        use_memo(move || ClassesBuilder::new().add_typed(DropdownClass::Dropdown).build());
 
     let overlay_style = format!(
         "position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: auto; z-index: {};",
@@ -785,9 +784,9 @@ fn PopoverPortalEntry(
         VNode::empty()
     };
 
-    let title_classes = ClassesBuilder::new().add(PopoverClass::Title).build();
-    let content_classes = ClassesBuilder::new().add(PopoverClass::Content).build();
-    let popover_classes = ClassesBuilder::new().add(PopoverClass::Popover).build();
+    let title_classes = ClassesBuilder::new().add_typed(PopoverClass::Title).build();
+    let content_classes = ClassesBuilder::new().add_typed(PopoverClass::Content).build();
+    let popover_classes = ClassesBuilder::new().add_typed(PopoverClass::Popover).build();
 
     // Build title element outside rsx!
     let title_el = if title.is_some() {
@@ -897,9 +896,9 @@ fn TooltipPortalEntry(
     };
 
     let tooltip_classes = ClassesBuilder::new()
-        .add(TooltipClass::Tooltip)
-        .add(placement_class)
-        .add(TooltipClass::TooltipVisible)
+        .add_typed(TooltipClass::Tooltip)
+        .add_typed(placement_class)
+        .add_typed(TooltipClass::TooltipVisible)
         .build();
 
     let tooltip_style = format!(
@@ -920,7 +919,7 @@ fn TooltipPortalEntry(
     rsx! {
         div { class: tooltip_classes, style: tooltip_style,
 
-            div { class: TooltipClass::TooltipContent.as_class(), "{content}" }
+            div { class: TooltipClass::TooltipContent.class_name(), "{content}" }
 
             {arrow_el}
         }

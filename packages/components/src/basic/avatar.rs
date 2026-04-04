@@ -1,7 +1,7 @@
 // hikari-components/src/basic/avatar.rs
 //! Avatar component for user profile images
 
-use hikari_palette::classes::{AvatarClass, ClassesBuilder, UtilityClass};
+use hikari_palette::classes::{AvatarClass, ClassesBuilder, TypedClass};
 
 use crate::{
     prelude::*,
@@ -113,8 +113,8 @@ pub fn Avatar(
         .build_clean();
 
     let base_class = ClassesBuilder::new()
-        .add(AvatarClass::Avatar)
-        .add_raw(&class)
+        .add_typed(AvatarClass::Avatar)
+        .add(&class)
         .build();
 
     let fallback_text = fallback.clone().unwrap_or_else(|| {
@@ -134,7 +134,7 @@ pub fn Avatar(
     let fallback_content = if is_icon_mode {
         rsx! {
             svg {
-                class: AvatarClass::AvatarIcon.as_class(),
+                class: AvatarClass::AvatarIcon.class_name(),
                 width: icon_size,
                 height: icon_size,
                 view_box: "0 0 24 24",
@@ -145,7 +145,7 @@ pub fn Avatar(
     } else {
         rsx! {
             span {
-                class: AvatarClass::AvatarFallback.as_class(),
+                class: AvatarClass::AvatarFallback.class_name(),
                 style: "font-size: {font_size};",
                 "{fallback_text}"
             }
@@ -156,7 +156,7 @@ pub fn Avatar(
     let inner_content = if has_src {
         rsx! {
             img {
-                class: AvatarClass::AvatarImg.as_class(),
+                class: AvatarClass::AvatarImg.class_name(),
                 src: src_val.unwrap_or_default(),
                 alt: alt.clone(),
                 style: img_style,

@@ -16,7 +16,7 @@
 //! }
 //! ```
 
-use hikari_palette::classes::{ClassesBuilder, SectionClass, UtilityClass};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, SectionClass};
 
 use crate::prelude::*;
 
@@ -41,9 +41,9 @@ pub fn Section(
     };
 
     let section_classes = ClassesBuilder::new()
-        .add(SectionClass::Section)
-        .add(size_class)
-        .add_raw(&class)
+        .add_typed(SectionClass::Section)
+        .add_typed(size_class)
+        .add(&class)
         .build();
 
     let section_classes_str = section_classes.as_str();
@@ -53,18 +53,18 @@ pub fn Section(
 
             // Optional header
             if title.is_some() || description.is_some() {
-                div { class: SectionClass::SectionHeader.as_class(),
+                div { class: SectionClass::SectionHeader.class_name(),
                     if let Some(t) = title {
-                        h2 { class: SectionClass::SectionTitle.as_class(), "{t}" }
+                        h2 { class: SectionClass::SectionTitle.class_name(), "{t}" }
                     }
                     if let Some(d) = description {
-                        p { class: SectionClass::SectionDescription.as_class(), "{d}" }
+                        p { class: SectionClass::SectionDescription.class_name(), "{d}" }
                     }
                 }
             }
 
             // Section content
-            div { class: SectionClass::SectionBody.as_class(), {children} }
+            div { class: SectionClass::SectionBody.class_name(), {children} }
         }
     }
 }
@@ -94,8 +94,8 @@ pub fn Spacer(
     };
 
     let classes = ClassesBuilder::new()
-        .add(SectionClass::Spacer)
-        .add_raw(&class)
+        .add_typed(SectionClass::Spacer)
+        .add(&class)
         .build();
 
     let classes_str = classes.as_str();

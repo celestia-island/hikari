@@ -1,7 +1,7 @@
 // display/carousel.rs
 // Carousel component - Image/content slider with Arknights + FUI styling
 
-use hikari_palette::classes::{CarouselClass, ClassesBuilder, UtilityClass};
+use hikari_palette::classes::{TypedClass, CarouselClass, ClassesBuilder};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -129,8 +129,8 @@ pub fn Carousel(props: CarouselProps) -> Element {
     );
 
     let indicator_classes = ClassesBuilder::new()
-        .add(CarouselClass::Indicators)
-        .add(match props.indicator_position {
+        .add_typed(CarouselClass::Indicators)
+        .add_typed(match props.indicator_position {
             CarouselIndicatorPosition::Bottom | CarouselIndicatorPosition::Top => {
                 CarouselClass::IndicatorsDots
             }
@@ -138,7 +138,7 @@ pub fn Carousel(props: CarouselProps) -> Element {
                 CarouselClass::IndicatorsHidden
             }
         })
-        .add(match props.indicator_type {
+        .add_typed(match props.indicator_type {
             CarouselIndicatorType::Dots => CarouselClass::IndicatorsDots,
             CarouselIndicatorType::Line => CarouselClass::IndicatorsLine,
             CarouselIndicatorType::Hidden => CarouselClass::IndicatorsHidden,
@@ -146,13 +146,13 @@ pub fn Carousel(props: CarouselProps) -> Element {
         .build();
 
     let prev_arrow_classes = ClassesBuilder::new()
-        .add(CarouselClass::Arrow)
-        .add(CarouselClass::ArrowPrev)
+        .add_typed(CarouselClass::Arrow)
+        .add_typed(CarouselClass::ArrowPrev)
         .build();
 
     let next_arrow_classes = ClassesBuilder::new()
-        .add(CarouselClass::Arrow)
-        .add(CarouselClass::ArrowNext)
+        .add_typed(CarouselClass::Arrow)
+        .add_typed(CarouselClass::ArrowNext)
         .build();
 
     // Pre-compute dot elements
@@ -162,8 +162,8 @@ pub fn Carousel(props: CarouselProps) -> Element {
             let current_index_in_map = current_index_for_dots.clone();
             let current_index_for_add_if = current_index_in_map.clone();
             let dot_classes = ClassesBuilder::new()
-                .add(CarouselClass::Dot)
-                .add_if(CarouselClass::DotActive, move || {
+                .add_typed(CarouselClass::Dot)
+                .add_typed_if(CarouselClass::DotActive, {
                     i == current_index_for_add_if.get()
                 })
                 .build();
@@ -183,11 +183,11 @@ pub fn Carousel(props: CarouselProps) -> Element {
         .collect();
 
     rsx! {
-        div { class: CarouselClass::Container.as_class(),
+        div { class: CarouselClass::Container.class_name(),
 
             // Track
             div {
-                class: CarouselClass::Track.as_class(),
+                class: CarouselClass::Track.class_name(),
                 style: track_transform,
                 {props.children}
             }
@@ -217,7 +217,7 @@ pub fn Carousel(props: CarouselProps) -> Element {
             // Pause button
             if props.show_pause && props.autoplay > 0 && total > 1 {
                 button {
-                    class: CarouselClass::Pause.as_class(),
+                    class: CarouselClass::Pause.class_name(),
                     onclick: toggle_pause,
                     aria_label: if is_paused.get() { "Play" } else { "Pause" },
                     if is_paused.get() {

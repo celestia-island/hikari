@@ -1,13 +1,8 @@
-//! Sizing utility classes
-//!
-//! Width, height, and other sizing utilities.
+//! Sizing utility classes.
 
-use serde::{Deserialize, Serialize};
+use tairitsu_style::TypedClass;
 
-use super::UtilityClass;
-
-/// Width utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Width {
     Full,
     Screen,
@@ -20,24 +15,23 @@ pub enum Width {
     W64,
 }
 
-impl UtilityClass for Width {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Width {
+    fn class_name(&self) -> &'static str {
         match self {
-            Width::Full => "w-full",
-            Width::Screen => "w-screen",
-            Width::Auto => "w-auto",
-            Width::W6 => "w-6",
-            Width::W8 => "w-8",
-            Width::W12 => "w-12",
-            Width::W16 => "w-16",
-            Width::W24 => "w-24",
-            Width::W64 => "w-64",
+            Self::Full => "hi-w-full",
+            Self::Screen => "hi-w-screen",
+            Self::Auto => "hi-w-auto",
+            Self::W6 => "hi-w-6",
+            Self::W8 => "hi-w-8",
+            Self::W12 => "hi-w-12",
+            Self::W16 => "hi-w-16",
+            Self::W24 => "hi-w-24",
+            Self::W64 => "hi-w-64",
         }
     }
 }
 
-/// Height utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Height {
     Full,
     Screen,
@@ -48,36 +42,34 @@ pub enum Height {
     H12,
 }
 
-impl UtilityClass for Height {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Height {
+    fn class_name(&self) -> &'static str {
         match self {
-            Height::Full => "h-full",
-            Height::Screen => "h-screen",
-            Height::Auto => "h-auto",
-            Height::H6 => "h-6",
-            Height::H8 => "h-8",
-            Height::H10 => "h-10",
-            Height::H12 => "h-12",
+            Self::Full => "hi-h-full",
+            Self::Screen => "hi-h-screen",
+            Self::Auto => "hi-h-auto",
+            Self::H6 => "hi-h-6",
+            Self::H8 => "hi-h-8",
+            Self::H10 => "hi-h-10",
+            Self::H12 => "hi-h-12",
         }
     }
 }
 
-/// Min-width utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MinWidth {
     MinW0,
 }
 
-impl UtilityClass for MinWidth {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for MinWidth {
+    fn class_name(&self) -> &'static str {
         match self {
-            MinWidth::MinW0 => "min-w-0",
+            Self::MinW0 => "hi-min-w-0",
         }
     }
 }
 
-/// Max-width utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MaxWidth {
     MaxWFull,
     MaxW2xl,
@@ -86,20 +78,19 @@ pub enum MaxWidth {
     MaxWLogo,
 }
 
-impl UtilityClass for MaxWidth {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for MaxWidth {
+    fn class_name(&self) -> &'static str {
         match self {
-            MaxWidth::MaxWFull => "max-w-full",
-            MaxWidth::MaxW2xl => "max-w-2xl",
-            MaxWidth::MaxW3xl => "max-w-3xl",
-            MaxWidth::MaxW4xl => "max-w-4xl",
-            MaxWidth::MaxWLogo => "max-w-logo",
+            Self::MaxWFull => "hi-max-w-full",
+            Self::MaxW2xl => "hi-max-w-2xl",
+            Self::MaxW3xl => "hi-max-w-3xl",
+            Self::MaxW4xl => "hi-max-w-4xl",
+            Self::MaxWLogo => "hi-max-w-logo",
         }
     }
 }
 
-/// Object-fit utilities for images
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ObjectFit {
     Contain,
     Cover,
@@ -108,14 +99,14 @@ pub enum ObjectFit {
     ScaleDown,
 }
 
-impl UtilityClass for ObjectFit {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for ObjectFit {
+    fn class_name(&self) -> &'static str {
         match self {
-            ObjectFit::Contain => "object-contain",
-            ObjectFit::Cover => "object-cover",
-            ObjectFit::Fill => "object-fill",
-            ObjectFit::None => "object-none",
-            ObjectFit::ScaleDown => "object-scale-down",
+            Self::Contain => "hi-object-contain",
+            Self::Cover => "hi-object-cover",
+            Self::Fill => "hi-object-fill",
+            Self::None => "hi-object-none",
+            Self::ScaleDown => "hi-object-scale-down",
         }
     }
 }

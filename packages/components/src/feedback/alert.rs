@@ -4,7 +4,7 @@
 #![expect(clippy::needless_update)]
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{AlertClass, ClassesBuilder, UtilityClass};
+use hikari_palette::classes::{TypedClass, AlertClass, ClassesBuilder};
 
 use crate::{
     basic::{IconButton, IconButtonSize, IconButtonVariant},
@@ -67,17 +67,17 @@ pub fn Alert(props: AlertProps) -> Element {
     };
 
     let alert_classes = ClassesBuilder::new()
-        .add(AlertClass::Alert)
-        .add(variant_class)
-        .add(size_class)
-        .add_raw(&props.class)
+        .add_typed(AlertClass::Alert)
+        .add_typed(variant_class)
+        .add_typed(size_class)
+        .add(&props.class)
         .build();
 
     let default_icon: Option<Element> = match props.variant {
         AlertVariant::Info => Some(rsx! {
             Icon {
                 icon: MdiIcon::Information,
-                class: AlertClass::AlertIcon.as_class().to_string(),
+                class: AlertClass::AlertIcon.class_name().to_string(),
                 size: 20,
                 color: "var(--hi-color-primary)".to_string(),
             }
@@ -85,7 +85,7 @@ pub fn Alert(props: AlertProps) -> Element {
         AlertVariant::Success => Some(rsx! {
             Icon {
                 icon: MdiIcon::Check,
-                class: AlertClass::AlertIcon.as_class().to_string(),
+                class: AlertClass::AlertIcon.class_name().to_string(),
                 size: 20,
                 color: "var(--hi-color-success)".to_string(),
             }
@@ -93,7 +93,7 @@ pub fn Alert(props: AlertProps) -> Element {
         AlertVariant::Warning => Some(rsx! {
             Icon {
                 icon: MdiIcon::AlertTriangle,
-                class: AlertClass::AlertIcon.as_class().to_string(),
+                class: AlertClass::AlertIcon.class_name().to_string(),
                 size: 20,
                 color: "var(--hi-color-warning)".to_string(),
             }
@@ -101,7 +101,7 @@ pub fn Alert(props: AlertProps) -> Element {
         AlertVariant::Error => Some(rsx! {
             Icon {
                 icon: MdiIcon::Alert,
-                class: AlertClass::AlertIcon.as_class().to_string(),
+                class: AlertClass::AlertIcon.class_name().to_string(),
                 size: 20,
                 color: "var(--hi-color-danger)".to_string(),
             }
@@ -110,10 +110,10 @@ pub fn Alert(props: AlertProps) -> Element {
 
     let icon = props.icon.as_ref().or(default_icon.as_ref());
 
-    let icon_wrapper_class = AlertClass::AlertIconWrapper.as_class();
-    let content_class = AlertClass::AlertContent.as_class();
-    let title_class = AlertClass::AlertTitle.as_class();
-    let description_class = AlertClass::AlertDescription.as_class();
+    let icon_wrapper_class = AlertClass::AlertIconWrapper.class_name();
+    let content_class = AlertClass::AlertContent.class_name();
+    let title_class = AlertClass::AlertTitle.class_name();
+    let description_class = AlertClass::AlertDescription.class_name();
 
     // Pre-compute onclick handler for closable button
     let on_close_handler = props.on_close.clone();

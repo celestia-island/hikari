@@ -2,7 +2,7 @@
 // UserGuide component with Arknights + FUI styling
 
 use hikari_icons::{Icon, IconProps, MdiIcon};
-use hikari_palette::classes::{ClassesBuilder, UserGuideClass, UtilityClass};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, UserGuideClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -84,9 +84,9 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     };
 
     let container_classes = ClassesBuilder::new()
-        .add(UserGuideClass::Container)
-        .add(placement_class)
-        .add_raw(&props.class)
+        .add_typed(UserGuideClass::Container)
+        .add_typed(placement_class)
+        .add(&props.class)
         .build();
 
     let handle_next = {
@@ -126,8 +126,8 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     let counter_text = format!("{} / {}", current_step + 1, total_steps);
     let next_btn_class = format!(
         "{} {}",
-        UserGuideClass::NavButton.as_class(),
-        UserGuideClass::PrimaryButton.as_class()
+        UserGuideClass::NavButton.class_name(),
+        UserGuideClass::PrimaryButton.class_name()
     );
 
     // Pre-build progress dots as Vec<VNode>
@@ -136,11 +136,11 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
             let dot_class = if i == current_step {
                 format!(
                     "{} {}",
-                    UserGuideClass::ProgressDot.as_class(),
-                    UserGuideClass::ProgressDotActive.as_class()
+                    UserGuideClass::ProgressDot.class_name(),
+                    UserGuideClass::ProgressDotActive.class_name()
                 )
             } else {
-                UserGuideClass::ProgressDot.as_class()
+                UserGuideClass::ProgressDot.class_name().to_string()
             };
             rsx! {
                 div { class: dot_class }
@@ -150,12 +150,12 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
 
     // Build overlay and guide separately, then combine as fragment
     let overlay = rsx! {
-        div { class: {UserGuideClass::Overlay.as_class()} }
+        div { class: {UserGuideClass::Overlay.class_name()} }
     };
 
     let progress_section = if props.show_progress && total_steps > 1 {
         rsx! {
-            div { class: {UserGuideClass::Progress.as_class()}, {VNode::Fragment(progress_dots)} }
+            div { class: {UserGuideClass::Progress.class_name()}, {VNode::Fragment(progress_dots)} }
         }
     } else {
         VNode::empty()
@@ -164,37 +164,37 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     let guide_tooltip = rsx! {
         div { class: container_classes,
             // Arrow
-            div { class: {UserGuideClass::Arrow.as_class()} }
+            div { class: {UserGuideClass::Arrow.class_name()} }
 
             // Content
-            div { class: {UserGuideClass::Content.as_class()},
+            div { class: {UserGuideClass::Content.class_name()},
                 // Header with step counter
-                div { class: {UserGuideClass::Header.as_class()},
-                    span { class: {UserGuideClass::Title.as_class()}, "{step.title.clone()}" }
+                div { class: {UserGuideClass::Header.class_name()},
+                    span { class: {UserGuideClass::Title.class_name()}, "{step.title.clone()}" }
                     if props.show_progress {
-                        span { class: {UserGuideClass::Counter.as_class()}, "{counter_text.clone()}" }
+                        span { class: {UserGuideClass::Counter.class_name()}, "{counter_text.clone()}" }
                     }
                 }
 
                 // Description
-                div { class: {UserGuideClass::Description.as_class()}, "{step.description.clone()}" }
+                div { class: {UserGuideClass::Description.class_name()}, "{step.description.clone()}" }
 
                 // Footer with controls
-                div { class: {UserGuideClass::Footer.as_class()},
+                div { class: {UserGuideClass::Footer.class_name()},
                     // Skip button
                     if props.skippable {
                         button {
-                            class: {UserGuideClass::SkipButton.as_class()},
+                            class: {UserGuideClass::SkipButton.class_name()},
                             onclick: handle_skip,
                             "Skip"
                         }
                     }
 
                     // Navigation
-                    div { class: {UserGuideClass::Navigation.as_class()},
+                    div { class: {UserGuideClass::Navigation.class_name()},
                         if !is_first_step {
                             button {
-                                class: {UserGuideClass::NavButton.as_class()},
+                                class: {UserGuideClass::NavButton.class_name()},
                                 onclick: handle_prev,
                                 Icon { icon: MdiIcon::ChevronLeft, size: 18 }
                             }

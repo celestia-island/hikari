@@ -16,7 +16,7 @@
 //! }
 //! ```
 
-use hikari_palette::{ClassesBuilder, classes::*};
+use hikari_palette::{classes::*, ClassesBuilder};
 
 use crate::{prelude::*, theme::use_layout_direction};
 
@@ -42,23 +42,20 @@ pub fn Header(
     let is_rtl = rtl.unwrap_or_else(|| layout_direction.is_rtl());
 
     let content_classes = ClassesBuilder::new()
-        .add(Display::Flex)
-        .add(AlignItems::Center)
-        .add(Gap::Gap3)
-        .add(MinWidth::MinW0)
-        .add(Flex::Shrink0)
+        .add_typed(Display::Flex)
+        .add_typed(AlignItems::Center)
+        .add_typed(Gap::Gap3)
+        .add_typed(MinWidth::MinW0)
+        .add_typed(Flex::Shrink0)
         .build();
 
-    let mut header_builder = ClassesBuilder::new()
-        .add(components::Header::Header)
-        .add(components::Header::Sticky)
-        .add(components::Header::Md)
-        .add_if(components::Header::Transparent, || !bordered)
-        .add_raw(&class);
-
-    if is_rtl {
-        header_builder = header_builder.add_raw("hi-header-rtl");
-    }
+    let header_builder = ClassesBuilder::new()
+        .add_typed(components::Header::Header)
+        .add_typed(components::Header::Sticky)
+        .add_typed(components::Header::Md)
+        .add_typed_if(components::Header::Transparent, !bordered)
+        .add_typed_if(components::Header::Rtl, is_rtl)
+        .add(&class);
 
     let header_classes = header_builder.build();
 

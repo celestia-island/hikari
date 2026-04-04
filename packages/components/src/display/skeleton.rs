@@ -2,7 +2,8 @@
 // Skeleton component with Arknights + FUI styling
 
 use hikari_palette::classes::{
-    ClassesBuilder, Display, FlexDirection, Gap, Padding, SkeletonClass,
+    components::SkeletonDisplayClass, ClassesBuilder, Display, FlexDirection, Gap, Padding,
+    SkeletonClass,
 };
 use tairitsu_vdom::IntoAttrValue;
 
@@ -77,41 +78,38 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
     }
 
     let mut builder = ClassesBuilder::new()
-        .add(SkeletonClass::Skeleton)
-        .add_raw(&props.class);
+        .add_typed(SkeletonClass::Skeleton)
+        .add(&props.class);
 
-    // Add variant class
     match props.variant {
         SkeletonVariant::Text => {
-            builder = builder.add(SkeletonClass::Text);
+            builder = builder.add_typed(SkeletonClass::Text);
         }
         SkeletonVariant::Circular => {
-            builder = builder.add_raw("hi-skeleton-circular");
+            builder = builder.add_typed(SkeletonDisplayClass::Circular);
         }
         SkeletonVariant::Rectangular => {
-            builder = builder.add(SkeletonClass::Rect);
+            builder = builder.add_typed(SkeletonClass::Rect);
         }
         SkeletonVariant::Rounded => {
-            builder = builder.add_raw("hi-skeleton-rounded");
+            builder = builder.add_typed(SkeletonDisplayClass::Rounded);
         }
     }
 
-    // Add size class
     match props.size {
         SkeletonSize::Small => {
-            builder = builder.add_raw("hi-skeleton-sm");
+            builder = builder.add_typed(SkeletonDisplayClass::Sm);
         }
         SkeletonSize::Medium => {
-            builder = builder.add_raw("hi-skeleton-md");
+            builder = builder.add_typed(SkeletonDisplayClass::Md);
         }
         SkeletonSize::Large => {
-            builder = builder.add_raw("hi-skeleton-lg");
+            builder = builder.add_typed(SkeletonDisplayClass::Lg);
         }
     }
 
-    // Add animation class
     if props.animation {
-        builder = builder.add(SkeletonClass::Active);
+        builder = builder.add_typed(SkeletonClass::Active);
     }
 
     let classes = builder.build();
@@ -173,12 +171,12 @@ pub struct SkeletonCardProps {
 #[component]
 pub fn SkeletonCard(props: SkeletonCardProps) -> Element {
     let mut builder = ClassesBuilder::new()
-        .add(Display::Flex)
-        .add(FlexDirection::Column)
-        .add(Gap::Gap4)
-        .add(Padding::P4)
-        .add_raw("hi-skeleton-card")
-        .add_raw(&props.class);
+        .add_typed(Display::Flex)
+        .add_typed(FlexDirection::Column)
+        .add_typed(Gap::Gap4)
+        .add_typed(Padding::P4)
+        .add_typed(SkeletonDisplayClass::Card)
+        .add(&props.class);
 
     let container_classes = builder.build();
 
@@ -296,13 +294,14 @@ pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
         div {
             class: "hi-skeleton-table {props.class}",
             style: props.style,
-            ..table_rows,
 
             div {
                 class: "hi-skeleton-table-header",
                 style: "display: flex; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--hi-color-border);",
                 ..header_cells,
             }
+
+            ..table_rows,
         }
     }
 }

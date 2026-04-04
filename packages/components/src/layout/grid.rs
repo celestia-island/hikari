@@ -40,9 +40,9 @@ pub fn Grid(
     };
 
     let classes = ClassesBuilder::new()
-        .add(GridClass::Grid)
-        .add(gap_class)
-        .add_raw(&class)
+        .add_typed(GridClass::Grid)
+        .add_typed(gap_class)
+        .add(&class)
         .build();
 
     rsx! {
@@ -98,9 +98,9 @@ pub fn Col(
     );
 
     let classes = ClassesBuilder::new()
-        .add(GridClass::Col)
-        .add_raw(&responsive_class)
-        .add_raw(&class)
+        .add_typed(GridClass::Col)
+        .add(&responsive_class)
+        .add(&class)
         .build();
 
     rsx! {
@@ -165,9 +165,9 @@ pub fn Row(
     };
 
     let classes = ClassesBuilder::new()
-        .add(RowClass::Row)
-        .add(gap_class)
-        .add_raw(&class)
+        .add_typed(RowClass::Row)
+        .add_typed(gap_class)
+        .add(&class)
         .build();
 
     rsx! {

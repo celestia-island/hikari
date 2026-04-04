@@ -114,11 +114,11 @@ pub fn Select(props: SelectProps) -> Element {
 
     let open_for_classes = open.clone();
     let trigger_classes = ClassesBuilder::new()
-        .add(SelectClass::SelectTrigger)
-        .add(size_class)
-        .add_if(SelectClass::Disabled, || props.disabled)
-        .add_if(SelectClass::Open, move || open_for_classes.get())
-        .add_raw(&props.class)
+        .add_typed(SelectClass::SelectTrigger)
+        .add_typed(size_class)
+        .add_typed_if(SelectClass::Disabled, props.disabled)
+        .add_typed_if(SelectClass::Open, open_for_classes.get())
+        .add(&props.class)
         .build();
 
     // Build the options menu for sharing in the click handler
@@ -237,8 +237,8 @@ pub fn Select(props: SelectProps) -> Element {
     };
 
     let wrapper_classes = ClassesBuilder::new()
-        .add(Position::Relative)
-        .add(Display::InlineBlock)
+        .add_typed(Position::Relative)
+        .add_typed(Display::InlineBlock)
         .build();
 
     rsx! {

@@ -51,8 +51,8 @@ pub fn Search(props: SearchProps) -> Element {
     let portal = use_portal();
 
     let wrapper_classes = ClassesBuilder::new()
-        .add(SearchClass::Wrapper)
-        .add_raw(&props.class)
+        .add_typed(SearchClass::Wrapper)
+        .add(&props.class)
         .build();
 
     let current_value = value_signal.get();

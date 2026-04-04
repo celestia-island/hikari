@@ -48,12 +48,12 @@ pub struct DatePickerProps {
 #[component]
 pub fn DatePicker(props: DatePickerProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
-        .add(DatePickerClass::DatePickerWrapper)
-        .add_raw(&props.class)
+        .add_typed(DatePickerClass::DatePickerWrapper)
+        .add(&props.class)
         .build();
 
     let input_classes = ClassesBuilder::new()
-        .add(DatePickerClass::DatePicker)
+        .add_typed(DatePickerClass::DatePicker)
         .build();
 
     let disabled_class = if props.disabled {

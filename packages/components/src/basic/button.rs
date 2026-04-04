@@ -120,15 +120,15 @@ pub fn Button(props: ButtonProps) -> Element {
     };
 
     let classes = ClassesBuilder::new()
-        .add(ButtonClass::Button)
-        .add(variant_class)
-        .add(size_class)
-        .add(width_class)
-        .add_if(ButtonClass::Loading, || props.loading)
-        .add_if(ButtonClass::Block, || props.block)
-        .add(justify_content)
-        .add_if(ButtonClass::SpaceBetween, || has_both_sides)
-        .add_raw(&props.class)
+        .add_typed(ButtonClass::Button)
+        .add_typed(variant_class)
+        .add_typed(size_class)
+        .add_typed(width_class)
+        .add_typed_if(ButtonClass::Loading, props.loading)
+        .add_typed_if(ButtonClass::Block, props.block)
+        .add_typed(justify_content)
+        .add_typed_if(ButtonClass::SpaceBetween, has_both_sides)
+        .add(&props.class)
         .build();
 
     let animation_attr = match props.animation {

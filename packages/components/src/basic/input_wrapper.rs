@@ -9,7 +9,7 @@
 // 4. Icon sizes: Small(24px), Medium(32px), Large(40px)
 
 use hikari_icons::MdiIcon;
-use hikari_palette::classes::{ClassesBuilder, InputWrapperClass, UtilityClass};
+use hikari_palette::classes::{ClassesBuilder, InputWrapperClass, TypedClass};
 
 use crate::{
     basic::{IconButton, IconButtonProps},
@@ -140,14 +140,14 @@ pub struct InputWrapperProps {
 #[component]
 pub fn InputWrapper(props: InputWrapperProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
-        .add(InputWrapperClass::Wrapper)
-        .add(match props.size {
+        .add_typed(InputWrapperClass::Wrapper)
+        .add_typed(match props.size {
             InputWrapperSize::Small => InputWrapperClass::SizeSm,
             InputWrapperSize::Medium => InputWrapperClass::SizeMd,
             InputWrapperSize::Large => InputWrapperClass::SizeLg,
         })
-        .add_if(InputWrapperClass::Disabled, || props.disabled)
-        .add_raw(&props.class)
+        .add_typed_if(InputWrapperClass::Disabled, props.disabled)
+        .add(&props.class)
         .build();
 
     let icon_button_size = props.size.icon_button_size();
@@ -202,11 +202,11 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
 
             // Left section
             if !props.left.is_empty() {
-                div { class: InputWrapperClass::LeftSection.as_class(),
+                div { class: InputWrapperClass::LeftSection.class_name(),
                     for (i , item) in props.left.iter().enumerate() {
                         div {
                             key: i,
-                            class: InputWrapperClass::SideItem.as_class(),
+                            class: InputWrapperClass::SideItem.class_name(),
                             {render_item(item)}
                         }
                     }
@@ -214,7 +214,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
             }
 
             // Input section
-            div { class: InputWrapperClass::InputSection.as_class(),
+            div { class: InputWrapperClass::InputSection.class_name(),
                 if let Some(input) = props.input.as_ref() {
                     {input.clone()}
                 }
@@ -222,11 +222,11 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
 
             // Right section
             if !props.right.is_empty() {
-                div { class: InputWrapperClass::RightSection.as_class(),
+                div { class: InputWrapperClass::RightSection.class_name(),
                     for (i , item) in props.right.iter().enumerate() {
                         div {
                             key: i,
-                            class: InputWrapperClass::SideItem.as_class(),
+                            class: InputWrapperClass::SideItem.class_name(),
                             {render_item(item)}
                         }
                     }

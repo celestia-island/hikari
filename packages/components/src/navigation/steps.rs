@@ -3,7 +3,7 @@
 
 #![expect(clippy::needless_update)]
 
-use hikari_palette::classes::{ClassesBuilder, StepsClass, UtilityClass};
+use hikari_palette::classes::{ClassesBuilder, StepsClass, TypedClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -101,9 +101,9 @@ pub fn Steps(props: StepsProps) -> Element {
     };
 
     let wrapper_classes = ClassesBuilder::new()
-        .add(StepsClass::Wrapper)
-        .add(direction_class)
-        .add_raw(&props.class)
+        .add_typed(StepsClass::Wrapper)
+        .add_typed(direction_class)
+        .add(&props.class)
         .build();
 
     let step_items: Vec<_> = props
@@ -127,9 +127,9 @@ pub fn Steps(props: StepsProps) -> Element {
             };
 
             let step_classes = ClassesBuilder::new()
-                .add(StepsClass::Item)
-                .add(status_class)
-                .add_raw(&step.class)
+                .add_typed(StepsClass::Item)
+                .add_typed(status_class)
+                .add(&step.class)
                 .build();
 
             let is_clickable = props.on_change.is_some();
@@ -144,11 +144,11 @@ pub fn Steps(props: StepsProps) -> Element {
         })
         .collect();
 
-    let icon_class = StepsClass::Icon.as_class();
-    let number_class = StepsClass::Number.as_class();
-    let content_class = StepsClass::Content.as_class();
-    let title_class = StepsClass::Title.as_class();
-    let description_class = StepsClass::Description.as_class();
+    let icon_class = StepsClass::Icon.class_name().to_string();
+    let number_class = StepsClass::Number.class_name().to_string();
+    let content_class = StepsClass::Content.class_name().to_string();
+    let title_class = StepsClass::Title.class_name().to_string();
+    let description_class = StepsClass::Description.class_name().to_string();
 
     let step_elements: Vec<Element> = step_items
         .into_iter()

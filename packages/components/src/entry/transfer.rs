@@ -4,7 +4,7 @@
 #![expect(clippy::needless_update)]
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{ClassesBuilder, TransferClass, UtilityClass};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, TransferClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -141,8 +141,8 @@ pub fn Transfer(props: TransferProps) -> Element {
     });
 
     let container_classes = ClassesBuilder::new()
-        .add(TransferClass::Transfer)
-        .add_raw(&props.class)
+        .add_typed(TransferClass::Transfer)
+        .add(&props.class)
         .build();
 
     rsx! {
@@ -156,9 +156,9 @@ pub fn Transfer(props: TransferProps) -> Element {
                 on_select: Some(handle_source_select),
             }
 
-            div { class: TransferClass::Operations.as_class(),
+            div { class: TransferClass::Operations.class_name(),
                 button {
-                    class: TransferClass::Operation.as_class(),
+                    class: TransferClass::Operation.class_name(),
                     disabled: props.source_selected_keys.is_empty() || props.disabled,
                     onclick: handle_to_target,
 
@@ -167,7 +167,7 @@ pub fn Transfer(props: TransferProps) -> Element {
 
                 if !props.one_way {
                     button {
-                        class: TransferClass::Operation.as_class(),
+                        class: TransferClass::Operation.class_name(),
                         disabled: props.target_selected_keys.is_empty() || props.disabled,
                         onclick: handle_to_source,
 
@@ -274,9 +274,9 @@ fn TransferPanel(
                 li {
                     key: item_key.clone(),
                     class: ClassesBuilder::new()
-                        .add(TransferClass::PanelItem)
-                        .add_if(TransferClass::PanelItemSelected, || is_selected)
-                        .add_if(TransferClass::PanelItemDisabled, || item_disabled)
+                        .add_typed(TransferClass::PanelItem)
+                        .add_typed_if(TransferClass::PanelItemSelected, is_selected)
+                        .add_typed_if(TransferClass::PanelItemDisabled, item_disabled)
                         .build(),
 
                     onclick: move |_| {
@@ -292,13 +292,13 @@ fn TransferPanel(
                     },
 
                     input {
-                        class: TransferClass::ItemCheckbox.as_class(),
+                        class: TransferClass::ItemCheckbox.class_name(),
                         r#type: "checkbox",
                         checked: is_selected,
                         disabled: item_disabled,
                     }
 
-                    span { class: TransferClass::ItemLabel.as_class(), "{label}" }
+                    span { class: TransferClass::ItemLabel.class_name(), "{label}" }
                 }
             }
         })
@@ -307,9 +307,9 @@ fn TransferPanel(
     // Pre-compute search section
     let search_section = if show_search {
         rsx! {
-            div { class: TransferClass::PanelSearch.as_class(),
+            div { class: TransferClass::PanelSearch.class_name(),
                 input {
-                    class: TransferClass::PanelInput.as_class(),
+                    class: TransferClass::PanelInput.class_name(),
                     r#type: "text",
                     placeholder: "Search...",
                     value: "{search_text_value}",
@@ -324,7 +324,7 @@ fn TransferPanel(
     // Pre-compute empty state - use items directly since filtered_items is already computed
     let empty_state = if items.is_empty() {
         rsx! {
-            li { class: TransferClass::PanelEmpty.as_class(), "No items" }
+            li { class: TransferClass::PanelEmpty.class_name(), "No items" }
         }
     } else {
         VNode::empty()
@@ -337,21 +337,21 @@ fn TransferPanel(
     }
 
     rsx! {
-        div { class: TransferClass::Panel.as_class(),
-            div { class: TransferClass::PanelHeader.as_class(),
+        div { class: TransferClass::Panel.class_name(),
+            div { class: TransferClass::PanelHeader.class_name(),
                 input {
-                    class: TransferClass::PanelCheckbox.as_class(),
+                    class: TransferClass::PanelCheckbox.class_name(),
                     r#type: "checkbox",
                     checked: is_all_selected,
                     onchange: handle_toggle_all,
                 }
-                span { class: TransferClass::PanelTitle.as_class(), "{title}" }
-                span { class: TransferClass::PanelCount.as_class(), "{items.len()}" }
+                span { class: TransferClass::PanelTitle.class_name(), "{title}" }
+                span { class: TransferClass::PanelCount.class_name(), "{items.len()}" }
             }
 
             {search_section}
 
-            ul { class: TransferClass::PanelList.as_class(), ..list_children }
+            ul { class: TransferClass::PanelList.class_name(), ..list_children }
         }
     }
 }

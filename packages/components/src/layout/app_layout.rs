@@ -34,8 +34,8 @@
 //! }
 //! ```
 
-use hikari_palette::classes::{
-    AppLayoutClass, ClassesBuilder, UtilityClass, components::Layout as LayoutClass,
+use hikari_palette::classes::{TypedClass, 
+    AppLayoutClass, ClassesBuilder, components::Layout as LayoutClass,
 };
 
 use crate::{basic::Background, prelude::*};
@@ -61,14 +61,14 @@ pub fn Layout(
     let mut is_drawer_open = use_signal(|| false);
 
     let layout_classes = ClassesBuilder::new()
-        .add(LayoutClass::Layout)
-        .add(LayoutClass::Light)
-        .add_if(LayoutClass::HasSidebar, || aside.is_some())
-        .add_raw(&class)
+        .add_typed(LayoutClass::Layout)
+        .add_typed(LayoutClass::Light)
+        .add_typed_if(LayoutClass::HasSidebar, aside.is_some())
+        .add(&class)
         .build();
 
     let overlay_classes = ClassesBuilder::new()
-        .add_if(LayoutClass::OverlayOpen, || is_drawer_open.read())
+        .add_typed_if(LayoutClass::OverlayOpen, is_drawer_open.read())
         .build();
 
     rsx! {
@@ -83,7 +83,7 @@ pub fn Layout(
             }
 
             // Body container with Aside and Main
-            div { class: AppLayoutClass::Body.as_class(),
+            div { class: AppLayoutClass::Body.class_name(),
 
                 // Mobile overlay (backdrop) with blur effect
                 if aside.is_some() {
@@ -99,10 +99,10 @@ pub fn Layout(
                 }
 
                 // Main content area
-                div { class: AppLayoutClass::Main.as_class(),
+                div { class: AppLayoutClass::Main.class_name(),
 
                     // Main content with refined scroll
-                    main { class: AppLayoutClass::Content.as_class(), {children} }
+                    main { class: AppLayoutClass::Content.class_name(), {children} }
                 }
             }
 

@@ -1,7 +1,7 @@
 // hi-components/src/feedback/spin.rs
 // Spin component with Arknights + FUI styling
 
-use hikari_palette::classes::{ClassesBuilder, SpinClass, UtilityClass};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, SpinClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -51,10 +51,10 @@ pub fn Spin(props: SpinProps) -> Element {
     };
 
     let spin_classes = ClassesBuilder::new()
-        .add(SpinClass::Spin)
-        .add(size_class)
-        .add_if(SpinClass::Stopped, || !props.spinning)
-        .add_raw(&props.class)
+        .add_typed(SpinClass::Spin)
+        .add_typed(size_class)
+        .add_typed_if(SpinClass::Stopped, !props.spinning)
+        .add(&props.class)
         .build();
 
     let tip_text = if let Some(custom) = props.custom_tip {
@@ -69,9 +69,9 @@ pub fn Spin(props: SpinProps) -> Element {
 
     rsx! {
         div { class: spin_classes,
-            div { class: "{SpinClass::Spinner.as_class()}" }
+            div { class: "{SpinClass::Spinner.class_name()}" }
             if !tip_text.is_empty() {
-                div { class: SpinClass::Tip.as_class(), "{tip_text}" }
+                div { class: SpinClass::Tip.class_name(), "{tip_text}" }
             }
         }
     }

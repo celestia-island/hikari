@@ -45,8 +45,8 @@ pub fn Progress(props: ProgressProps) -> Element {
     let percentage = (props.value / props.max * 100.0).clamp(0.0, 100.0);
 
     let wrapper_classes = ClassesBuilder::new()
-        .add(ProgressClass::Wrapper)
-        .add_raw(&props.class)
+        .add_typed(ProgressClass::Wrapper)
+        .add(&props.class)
         .build();
 
     let status_class = match props.status {

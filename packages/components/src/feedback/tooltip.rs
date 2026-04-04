@@ -1,7 +1,7 @@
 // hi-components/src/feedback/tooltip.rs
 // Tooltip component with Arknights + FUI styling - Portal-based rendering with animation
 
-use hikari_palette::classes::{ClassesBuilder, TooltipClass, UtilityClass};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, TooltipClass};
 
 use crate::portal::{PortalEntry, TriggerPlacement};
 use crate::{
@@ -52,8 +52,8 @@ pub fn Tooltip(props: TooltipProps) -> Element {
     let mut trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
 
     let wrapper_classes = ClassesBuilder::new()
-        .add(TooltipClass::TooltipWrapper)
-        .add_raw(&props.class)
+        .add_typed(TooltipClass::TooltipWrapper)
+        .add(&props.class)
         .build();
 
     let handle_mouse_enter = {
@@ -94,7 +94,7 @@ pub fn Tooltip(props: TooltipProps) -> Element {
         div { class: wrapper_classes,
 
             div {
-                class: TooltipClass::TooltipTrigger.as_class(),
+                class: TooltipClass::TooltipTrigger.class_name(),
                 onmouseenter: handle_mouse_enter,
                 onmouseleave: handle_mouse_leave,
                 {props.children}

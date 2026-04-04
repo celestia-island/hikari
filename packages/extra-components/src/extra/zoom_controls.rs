@@ -211,7 +211,7 @@ pub fn render_zoom_controls(state: &ZoomControlsState) -> VNode {
 
     let zoom_out = VNode::Element(
         VElement::new("button")
-            .class("hi-zoom-button hi-zoom-out")
+            .class("hi-zoom-btn hi-zoom-out")
             .attr("aria-label", "Zoom out")
             .attr("title", "Zoom out (-)")
             .attr(
@@ -228,7 +228,7 @@ pub fn render_zoom_controls(state: &ZoomControlsState) -> VNode {
 
     let display = VNode::Element(
         VElement::new("div")
-            .class("hi-zoom-display")
+            .class("hi-zoom-level")
             .child(VNode::Text(VText::new(&format!(
                 "{}%",
                 state.zoom_percent()
@@ -238,7 +238,7 @@ pub fn render_zoom_controls(state: &ZoomControlsState) -> VNode {
 
     let zoom_in = VNode::Element(
         VElement::new("button")
-            .class("hi-zoom-button hi-zoom-in")
+            .class("hi-zoom-btn hi-zoom-in")
             .attr("aria-label", "Zoom in")
             .attr("title", "Zoom in (+)")
             .attr(
@@ -251,7 +251,7 @@ pub fn render_zoom_controls(state: &ZoomControlsState) -> VNode {
 
     let reset = VNode::Element(
         VElement::new("button")
-            .class("hi-zoom-button hi-zoom-reset")
+            .class("hi-zoom-btn hi-zoom-reset")
             .attr("aria-label", "Reset zoom")
             .attr("title", "Reset to 100% (0)")
             .child(VNode::Text(VText::new("100%"))),
@@ -261,7 +261,7 @@ pub fn render_zoom_controls(state: &ZoomControlsState) -> VNode {
     if state.show_fit {
         let fit = VNode::Element(
             VElement::new("button")
-                .class("hi-zoom-button hi-zoom-fit")
+                .class("hi-zoom-btn hi-zoom-fit")
                 .attr("aria-label", "Fit to screen")
                 .attr("title", "Fit to screen")
                 .child(VNode::Text(VText::new("\u{25A1}"))),

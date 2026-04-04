@@ -1,9 +1,7 @@
 // packages/components/src/display/tag.rs
 // Tag component with Arknights + FUI styling
 
-use hikari_palette::classes::{
-    AlignItems, ClassesBuilder, Display, Flex, Gap, TagClass, UtilityClass,
-};
+use hikari_palette::classes::{TypedClass, AlignItems, ClassesBuilder, Display, Flex, Gap, TagClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -43,13 +41,13 @@ pub fn Tag(props: TagProps) -> Element {
     };
 
     let tag_classes = ClassesBuilder::new()
-        .add(Display::InlineFlex)
-        .add(Flex::Flex1)
-        .add(AlignItems::Center)
-        .add(Gap::Gap2)
-        .add(TagClass::Tag)
-        .add(variant_class)
-        .add_raw(&props.class)
+        .add_typed(Display::InlineFlex)
+        .add_typed(Flex::Flex1)
+        .add_typed(AlignItems::Center)
+        .add_typed(Gap::Gap2)
+        .add_typed(TagClass::Tag)
+        .add_typed(variant_class)
+        .add(&props.class)
         .build();
 
     rsx! {
@@ -59,7 +57,7 @@ pub fn Tag(props: TagProps) -> Element {
 
             if props.closable {
                 button {
-                    class: TagClass::Close.as_class(),
+                    class: TagClass::Close.class_name(),
                     onclick: move |e| {
                         if let Some(ref on_close) = props.on_close {
                             on_close.call(e);

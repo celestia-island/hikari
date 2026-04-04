@@ -1,7 +1,8 @@
 // hi-components/src/data/collapse.rs
 // Animated collapse/expand component for tree nodes
 
-use hikari_palette::classes::{ClassesBuilder, CollapseClass};
+use hikari_palette::classes::CollapseClass;
+use tairitsu_style::ClassesBuilder;
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -64,13 +65,13 @@ pub fn Collapse(props: CollapseProps) -> Element {
     // Use CollapseClass for the content area
     let content_classes = if is_expanded.read() {
         ClassesBuilder::new()
-            .add(CollapseClass::CollapseContent)
-            .add(CollapseClass::Expanded)
+            .add_typed(CollapseClass::CollapseContent)
+            .add_typed(CollapseClass::Expanded)
             .build()
     } else {
         ClassesBuilder::new()
-            .add(CollapseClass::CollapseContent)
-            .add(CollapseClass::Collapsed)
+            .add_typed(CollapseClass::CollapseContent)
+            .add_typed(CollapseClass::Collapsed)
             .build()
     };
 

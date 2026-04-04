@@ -1,10 +1,8 @@
 //! Feedback component classes (Modal, Toast, Alert, etc.)
 
-use serde::{Deserialize, Serialize};
+use tairitsu_style::TypedClass;
 
-use crate::classes::UtilityClass;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ToastClass {
     Toast,
     ToastInfo,
@@ -23,33 +21,35 @@ pub enum ToastClass {
     ToastTitle,
     ToastMessage,
     ToastClose,
+    GlowWrapper,
 }
 
-impl UtilityClass for ToastClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for ToastClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            ToastClass::Toast => "toast",
-            ToastClass::ToastInfo => "toast-info",
-            ToastClass::ToastSuccess => "toast-success",
-            ToastClass::ToastWarning => "toast-warning",
-            ToastClass::ToastError => "toast-error",
-            ToastClass::ToastTopRight => "toast-top-right",
-            ToastClass::ToastTopCenter => "toast-top-center",
-            ToastClass::ToastTopLeft => "toast-top-left",
-            ToastClass::ToastBottomRight => "toast-bottom-right",
-            ToastClass::ToastBottomCenter => "toast-bottom-center",
-            ToastClass::ToastBottomLeft => "toast-bottom-left",
-            ToastClass::ToastIconWrapper => "toast-icon-wrapper",
-            ToastClass::ToastIcon => "toast-icon",
-            ToastClass::ToastContent => "toast-content",
-            ToastClass::ToastTitle => "toast-title",
-            ToastClass::ToastMessage => "toast-message",
-            ToastClass::ToastClose => "toast-close",
+            ToastClass::Toast => "hi-toast",
+            ToastClass::ToastInfo => "hi-toast-info",
+            ToastClass::ToastSuccess => "hi-toast-success",
+            ToastClass::ToastWarning => "hi-toast-warning",
+            ToastClass::ToastError => "hi-toast-error",
+            ToastClass::ToastTopRight => "hi-toast-top-right",
+            ToastClass::ToastTopCenter => "hi-toast-top-center",
+            ToastClass::ToastTopLeft => "hi-toast-top-left",
+            ToastClass::ToastBottomRight => "hi-toast-bottom-right",
+            ToastClass::ToastBottomCenter => "hi-toast-bottom-center",
+            ToastClass::ToastBottomLeft => "hi-toast-bottom-left",
+            ToastClass::ToastIconWrapper => "hi-toast-icon-wrapper",
+            ToastClass::ToastIcon => "hi-toast-icon",
+            ToastClass::ToastContent => "hi-toast-content",
+            ToastClass::ToastTitle => "hi-toast-title",
+            ToastClass::ToastMessage => "hi-toast-message",
+            ToastClass::ToastClose => "hi-toast-close",
+            ToastClass::GlowWrapper => "hi-toast-glow-wrapper",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TooltipClass {
     Tooltip,
     TooltipWrapper,
@@ -67,28 +67,28 @@ pub enum TooltipClass {
     TooltipArrowRight,
 }
 
-impl UtilityClass for TooltipClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for TooltipClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            TooltipClass::Tooltip => "tooltip",
-            TooltipClass::TooltipWrapper => "tooltip-wrapper",
-            TooltipClass::TooltipTrigger => "tooltip-trigger",
-            TooltipClass::TooltipVisible => "tooltip-visible",
-            TooltipClass::TooltipTop => "tooltip-top",
-            TooltipClass::TooltipBottom => "tooltip-bottom",
-            TooltipClass::TooltipLeft => "tooltip-left",
-            TooltipClass::TooltipRight => "tooltip-right",
-            TooltipClass::TooltipContent => "tooltip-content",
-            TooltipClass::TooltipArrow => "tooltip-arrow",
-            TooltipClass::TooltipArrowTop => "tooltip-arrow-top",
-            TooltipClass::TooltipArrowBottom => "tooltip-arrow-bottom",
-            TooltipClass::TooltipArrowLeft => "tooltip-arrow-left",
-            TooltipClass::TooltipArrowRight => "tooltip-arrow-right",
+            TooltipClass::Tooltip => "hi-tooltip",
+            TooltipClass::TooltipWrapper => "hi-tooltip-wrapper",
+            TooltipClass::TooltipTrigger => "hi-tooltip-trigger",
+            TooltipClass::TooltipVisible => "hi-tooltip-visible",
+            TooltipClass::TooltipTop => "hi-tooltip-top",
+            TooltipClass::TooltipBottom => "hi-tooltip-bottom",
+            TooltipClass::TooltipLeft => "hi-tooltip-left",
+            TooltipClass::TooltipRight => "hi-tooltip-right",
+            TooltipClass::TooltipContent => "hi-tooltip-content",
+            TooltipClass::TooltipArrow => "hi-tooltip-arrow",
+            TooltipClass::TooltipArrowTop => "hi-tooltip-arrow-top",
+            TooltipClass::TooltipArrowBottom => "hi-tooltip-arrow-bottom",
+            TooltipClass::TooltipArrowLeft => "hi-tooltip-arrow-left",
+            TooltipClass::TooltipArrowRight => "hi-tooltip-arrow-right",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AlertClass {
     Alert,
     AlertInfo,
@@ -104,30 +104,32 @@ pub enum AlertClass {
     Sm,
     Md,
     Lg,
+    GlowWrapper,
 }
 
-impl UtilityClass for AlertClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for AlertClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            AlertClass::Alert => "alert",
-            AlertClass::AlertInfo => "alert-info",
-            AlertClass::AlertSuccess => "alert-success",
-            AlertClass::AlertWarning => "alert-warning",
-            AlertClass::AlertError => "alert-error",
-            AlertClass::AlertIconWrapper => "alert-icon-wrapper",
-            AlertClass::AlertIcon => "alert-icon",
-            AlertClass::AlertContent => "alert-content",
-            AlertClass::AlertTitle => "alert-title",
-            AlertClass::AlertDescription => "alert-description",
-            AlertClass::AlertClose => "alert-close",
-            AlertClass::Sm => "alert-sm",
-            AlertClass::Md => "alert-md",
-            AlertClass::Lg => "alert-lg",
+            AlertClass::Alert => "hi-alert",
+            AlertClass::AlertInfo => "hi-alert-info",
+            AlertClass::AlertSuccess => "hi-alert-success",
+            AlertClass::AlertWarning => "hi-alert-warning",
+            AlertClass::AlertError => "hi-alert-error",
+            AlertClass::AlertIconWrapper => "hi-alert-icon-wrapper",
+            AlertClass::AlertIcon => "hi-alert-icon",
+            AlertClass::AlertContent => "hi-alert-content",
+            AlertClass::AlertTitle => "hi-alert-title",
+            AlertClass::AlertDescription => "hi-alert-description",
+            AlertClass::AlertClose => "hi-alert-close",
+            AlertClass::Sm => "hi-alert-sm",
+            AlertClass::Md => "hi-alert-md",
+            AlertClass::Lg => "hi-alert-lg",
+            AlertClass::GlowWrapper => "hi-alert-glow-wrapper",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ModalClass {
     Overlay,
     OverlayTransparent,
@@ -142,42 +144,42 @@ pub enum ModalClass {
     Xl,
 }
 
-impl UtilityClass for ModalClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for ModalClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            ModalClass::Overlay => "modal-overlay",
-            ModalClass::OverlayTransparent => "modal-overlay-transparent",
-            ModalClass::Modal => "modal",
-            ModalClass::Header => "modal-header",
-            ModalClass::Title => "modal-title",
-            ModalClass::Close => "modal-close",
-            ModalClass::Body => "modal-body",
-            ModalClass::Sm => "modal-sm",
-            ModalClass::Md => "modal-md",
-            ModalClass::Lg => "modal-lg",
-            ModalClass::Xl => "modal-xl",
+            ModalClass::Overlay => "hi-modal-overlay",
+            ModalClass::OverlayTransparent => "hi-modal-overlay-transparent",
+            ModalClass::Modal => "hi-modal",
+            ModalClass::Header => "hi-modal-header",
+            ModalClass::Title => "hi-modal-title",
+            ModalClass::Close => "hi-modal-close",
+            ModalClass::Body => "hi-modal-body",
+            ModalClass::Sm => "hi-modal-sm",
+            ModalClass::Md => "hi-modal-md",
+            ModalClass::Lg => "hi-modal-lg",
+            ModalClass::Xl => "hi-modal-xl",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DropdownClass {
     Overlay,
     OverlayDimmed,
     Dropdown,
 }
 
-impl UtilityClass for DropdownClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for DropdownClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            DropdownClass::Overlay => "dropdown-overlay",
-            DropdownClass::OverlayDimmed => "dropdown-overlay-dimmed",
-            DropdownClass::Dropdown => "dropdown",
+            DropdownClass::Overlay => "hi-dropdown-overlay",
+            DropdownClass::OverlayDimmed => "hi-dropdown-overlay-dimmed",
+            DropdownClass::Dropdown => "hi-dropdown",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DrawerClass {
     Drawer,
     Mask,
@@ -192,42 +194,46 @@ pub enum DrawerClass {
     Footer,
 }
 
-impl UtilityClass for DrawerClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for DrawerClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            DrawerClass::Drawer => "drawer",
-            DrawerClass::Mask => "drawer-mask",
-            DrawerClass::Right => "drawer-right",
-            DrawerClass::Left => "drawer-left",
-            DrawerClass::Top => "drawer-top",
-            DrawerClass::Bottom => "drawer-bottom",
-            DrawerClass::Header => "drawer-header",
-            DrawerClass::Title => "drawer-title",
-            DrawerClass::Close => "drawer-close",
-            DrawerClass::Body => "drawer-body",
-            DrawerClass::Footer => "drawer-footer",
+            DrawerClass::Drawer => "hi-drawer",
+            DrawerClass::Mask => "hi-drawer-mask",
+            DrawerClass::Right => "hi-drawer-right",
+            DrawerClass::Left => "hi-drawer-left",
+            DrawerClass::Top => "hi-drawer-top",
+            DrawerClass::Bottom => "hi-drawer-bottom",
+            DrawerClass::Header => "hi-drawer-header",
+            DrawerClass::Title => "hi-drawer-title",
+            DrawerClass::Close => "hi-drawer-close",
+            DrawerClass::Body => "hi-drawer-body",
+            DrawerClass::Footer => "hi-drawer-footer",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PopoverClass {
     Popover,
     Title,
     Content,
+    Trigger,
+    Backdrop,
 }
 
-impl UtilityClass for PopoverClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for PopoverClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            PopoverClass::Popover => "popover",
-            PopoverClass::Title => "popover-title",
-            PopoverClass::Content => "popover-content",
+            PopoverClass::Popover => "hi-popover",
+            PopoverClass::Title => "hi-popover-title",
+            PopoverClass::Content => "hi-popover-content",
+            PopoverClass::Trigger => "hi-popover-trigger",
+            PopoverClass::Backdrop => "hi-popover-backdrop",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ProgressClass {
     Wrapper,
     Progress,
@@ -239,26 +245,42 @@ pub enum ProgressClass {
     Success,
     Info,
     Circle,
+    Outer,
+    Inner,
+    Bg,
+    Text,
+    CircleWrapper,
+    CircleTrail,
+    CirclePath,
+    CircleText,
 }
 
-impl UtilityClass for ProgressClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for ProgressClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            ProgressClass::Wrapper => "progress-wrapper",
-            ProgressClass::Progress => "progress",
-            ProgressClass::Linear => "progress-linear",
-            ProgressClass::Circular => "progress-circular",
-            ProgressClass::Normal => "progress-normal",
-            ProgressClass::Active => "progress-active",
-            ProgressClass::Exception => "progress-exception",
-            ProgressClass::Success => "progress-success",
-            ProgressClass::Info => "progress-info",
-            ProgressClass::Circle => "progress-circle",
+            ProgressClass::Wrapper => "hi-progress-wrapper",
+            ProgressClass::Progress => "hi-progress",
+            ProgressClass::Linear => "hi-progress-linear",
+            ProgressClass::Circular => "hi-progress-circular",
+            ProgressClass::Normal => "hi-progress-normal",
+            ProgressClass::Active => "hi-progress-active",
+            ProgressClass::Exception => "hi-progress-exception",
+            ProgressClass::Success => "hi-progress-success",
+            ProgressClass::Info => "hi-progress-info",
+            ProgressClass::Circle => "hi-progress-circle",
+            ProgressClass::Outer => "hi-progress-outer",
+            ProgressClass::Inner => "hi-progress-inner",
+            ProgressClass::Bg => "hi-progress-bg",
+            ProgressClass::Text => "hi-progress-text",
+            ProgressClass::CircleWrapper => "hi-progress-circle-wrapper",
+            ProgressClass::CircleTrail => "hi-progress-circle-trail",
+            ProgressClass::CirclePath => "hi-progress-circle-path",
+            ProgressClass::CircleText => "hi-progress-circle-text",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SkeletonClass {
     Wrapper,
     Skeleton,
@@ -271,23 +293,23 @@ pub enum SkeletonClass {
     Rect,
 }
 
-impl UtilityClass for SkeletonClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for SkeletonClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            SkeletonClass::Wrapper => "skeleton-wrapper",
-            SkeletonClass::Skeleton => "skeleton",
-            SkeletonClass::Active => "skeleton-active",
-            SkeletonClass::Text => "skeleton-text",
-            SkeletonClass::Avatar => "skeleton-avatar",
-            SkeletonClass::Image => "skeleton-image",
-            SkeletonClass::Button => "skeleton-button",
-            SkeletonClass::Input => "skeleton-input",
-            SkeletonClass::Rect => "skeleton-rect",
+            SkeletonClass::Wrapper => "hi-skeleton-wrapper",
+            SkeletonClass::Skeleton => "hi-skeleton",
+            SkeletonClass::Active => "hi-skeleton-active",
+            SkeletonClass::Text => "hi-skeleton-text",
+            SkeletonClass::Avatar => "hi-skeleton-avatar",
+            SkeletonClass::Image => "hi-skeleton-image",
+            SkeletonClass::Button => "hi-skeleton-button",
+            SkeletonClass::Input => "hi-skeleton-input",
+            SkeletonClass::Rect => "hi-skeleton-rect",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SpinClass {
     Spin,
     Sm,
@@ -298,16 +320,16 @@ pub enum SpinClass {
     Tip,
 }
 
-impl UtilityClass for SpinClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for SpinClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            SpinClass::Spin => "spin",
-            SpinClass::Sm => "spin-sm",
-            SpinClass::Md => "spin-md",
-            SpinClass::Lg => "spin-lg",
-            SpinClass::Stopped => "spin-stopped",
-            SpinClass::Spinner => "spin-spinner",
-            SpinClass::Tip => "spin-tip",
+            SpinClass::Spin => "hi-spin",
+            SpinClass::Sm => "hi-spin-sm",
+            SpinClass::Md => "hi-spin-md",
+            SpinClass::Lg => "hi-spin-lg",
+            SpinClass::Stopped => "hi-spin-stopped",
+            SpinClass::Spinner => "hi-spin-spinner",
+            SpinClass::Tip => "hi-spin-tip",
         }
     }
 }

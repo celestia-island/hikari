@@ -49,8 +49,8 @@ pub struct FormFieldProps {
 #[component]
 pub fn FormField(props: FormFieldProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
-        .add(FormFieldClass::FormField)
-        .add_raw(&props.class)
+        .add_typed(FormFieldClass::FormField)
+        .add(&props.class)
         .build();
 
     let status_class = match props.status {
@@ -70,7 +70,6 @@ pub fn FormField(props: FormFieldProps) -> Element {
     let has_help = props.help_text.is_some();
     let has_error = props.error_message.is_some();
 
-    // Build label element conditionally
     let label_el = if has_label {
         let required_marker = if props.required {
             rsx! {
@@ -89,7 +88,6 @@ pub fn FormField(props: FormFieldProps) -> Element {
         None
     };
 
-    // Build help/error text conditionally
     let help_el = if has_help {
         Some(rsx! {
             div { class: "hi-form-field-help", "{props.help_text.as_ref().unwrap()}" }
@@ -97,6 +95,14 @@ pub fn FormField(props: FormFieldProps) -> Element {
     } else if props.show_status && has_error {
         Some(rsx! {
             div { class: "hi-form-field-error-msg", "{props.error_message.as_ref().unwrap()}" }
+        })
+    } else if props.show_status && props.status == FormFieldStatus::Success {
+        Some(rsx! {
+            div { class: "hi-form-field-success-msg", "Valid" }
+        })
+    } else if props.show_status && props.status == FormFieldStatus::Warning {
+        Some(rsx! {
+            div { class: "hi-form-field-warning-msg", "Warning" }
         })
     } else {
         None

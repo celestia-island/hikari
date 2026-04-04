@@ -20,8 +20,8 @@ pub struct FooterProps {
 #[component]
 pub fn Footer(props: FooterProps) -> Element {
     let footer_classes = ClassesBuilder::new()
-        .add(FooterClass::Footer)
-        .add_raw(&props.class)
+        .add_typed(FooterClass::Footer)
+        .add(&props.class)
         .build();
 
     rsx! {

@@ -74,14 +74,14 @@ pub fn Badge(props: BadgeProps) -> Element {
 
     if is_standalone {
         let mut builder = ClassesBuilder::new()
-            .add(BadgeClass::Badge)
-            .add(Display::InlineFlex);
+            .add_typed(BadgeClass::Badge)
+            .add_typed(Display::InlineFlex);
 
         if let Some(vc) = variant_class {
-            builder = builder.add(vc);
+            builder = builder.add_typed(vc);
         }
 
-        let badge_classes = builder.add_raw(&props.class).build();
+        let badge_classes = builder.add(&props.class).build();
 
         rsx! {
             span { class: badge_classes,
@@ -90,11 +90,11 @@ pub fn Badge(props: BadgeProps) -> Element {
         }
     } else {
         let mut builder = ClassesBuilder::new()
-            .add(BadgeClass::Badge)
-            .add(BadgeClass::Dot);
+            .add_typed(BadgeClass::Badge)
+            .add_typed(BadgeClass::Dot);
 
         if let Some(vc) = variant_class {
-            builder = builder.add(vc);
+            builder = builder.add_typed(vc);
         }
 
         let badge_classes = builder.build();

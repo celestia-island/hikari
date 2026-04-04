@@ -48,30 +48,30 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
     let line_count = lines.len();
 
     let container_classes = ClassesBuilder::new()
-        .add(CodeHighlightClass::Container)
-        .add_raw(&props.class)
+        .add_typed(CodeHighlightClass::Container)
+        .add(&props.class)
         .build();
 
     let header_classes = ClassesBuilder::new()
-        .add(CodeHighlightClass::Header)
+        .add_typed(CodeHighlightClass::Header)
         .build();
 
     let language_classes = ClassesBuilder::new()
-        .add(CodeHighlightClass::Language)
+        .add_typed(CodeHighlightClass::Language)
         .build();
 
     let copy_classes = ClassesBuilder::new()
-        .add(CodeHighlightClass::CopyButton)
+        .add_typed(CodeHighlightClass::CopyButton)
         .build();
 
-    let code_classes = ClassesBuilder::new().add(CodeHighlightClass::Code).build();
+    let code_classes = ClassesBuilder::new().add_typed(CodeHighlightClass::Code).build();
 
     let line_classes = ClassesBuilder::new()
-        .add(CodeHighlightClass::LineNumbers)
+        .add_typed(CodeHighlightClass::LineNumbers)
         .build();
 
     let content_classes = ClassesBuilder::new()
-        .add(CodeHighlightClass::Content)
+        .add_typed(CodeHighlightClass::Content)
         .build();
 
     let max_height_style = if let Some(ref height) = props.max_height {

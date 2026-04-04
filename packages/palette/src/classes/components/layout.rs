@@ -1,10 +1,8 @@
 //! Layout component classes (Layout, Aside, Grid, Row, Container, etc.)
 
-use serde::{Deserialize, Serialize};
+use tairitsu_style::TypedClass;
 
-use crate::classes::UtilityClass;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Layout {
     Layout,
     Light,
@@ -13,19 +11,19 @@ pub enum Layout {
     OverlayOpen,
 }
 
-impl UtilityClass for Layout {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Layout {
+    fn class_name(&self) -> &'static str {
         match self {
-            Layout::Layout => "layout",
-            Layout::Light => "layout-light",
-            Layout::Dark => "layout-dark",
-            Layout::HasSidebar => "layout-has-sidebar",
-            Layout::OverlayOpen => "layout-overlay-open",
+            Layout::Layout => "hi-layout",
+            Layout::Light => "hi-layout-light",
+            Layout::Dark => "hi-layout-dark",
+            Layout::HasSidebar => "hi-layout-has-sidebar",
+            Layout::OverlayOpen => "hi-layout-overlay-open",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AsideClass {
     Aside,
     Drawer,
@@ -36,25 +34,27 @@ pub enum AsideClass {
     Dark,
     Content,
     DrawerOpen,
+    Rtl,
 }
 
-impl UtilityClass for AsideClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for AsideClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            AsideClass::Aside => "aside",
-            AsideClass::Drawer => "aside-drawer",
-            AsideClass::Sm => "aside-sm",
-            AsideClass::Md => "aside-md",
-            AsideClass::Lg => "aside-lg",
-            AsideClass::Light => "aside-light",
-            AsideClass::Dark => "aside-dark",
-            AsideClass::Content => "aside-content",
-            AsideClass::DrawerOpen => "aside-drawer-open",
+            AsideClass::Aside => "hi-aside",
+            AsideClass::Drawer => "hi-aside-drawer",
+            AsideClass::Sm => "hi-aside-sm",
+            AsideClass::Md => "hi-aside-md",
+            AsideClass::Lg => "hi-aside-lg",
+            AsideClass::Light => "hi-aside-light",
+            AsideClass::Dark => "hi-aside-dark",
+            AsideClass::Content => "hi-aside-content",
+            AsideClass::DrawerOpen => "hi-aside-drawer-open",
+            AsideClass::Rtl => "hi-aside-rtl",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GridClass {
     Grid,
     GapSm,
@@ -63,19 +63,19 @@ pub enum GridClass {
     Col,
 }
 
-impl UtilityClass for GridClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for GridClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            GridClass::Grid => "grid",
-            GridClass::GapSm => "grid-gap-sm",
-            GridClass::GapMd => "grid-gap-md",
-            GridClass::GapLg => "grid-gap-lg",
-            GridClass::Col => "col",
+            GridClass::Grid => "hi-grid",
+            GridClass::GapSm => "hi-grid-gap-sm",
+            GridClass::GapMd => "hi-grid-gap-md",
+            GridClass::GapLg => "hi-grid-gap-lg",
+            GridClass::Col => "hi-col",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RowClass {
     Row,
     GapSm,
@@ -83,18 +83,18 @@ pub enum RowClass {
     GapLg,
 }
 
-impl UtilityClass for RowClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for RowClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            RowClass::Row => "row",
-            RowClass::GapSm => "row-gap-sm",
-            RowClass::GapMd => "row-gap-md",
-            RowClass::GapLg => "row-gap-lg",
+            RowClass::Row => "hi-row",
+            RowClass::GapSm => "hi-row-gap-sm",
+            RowClass::GapMd => "hi-row-gap-md",
+            RowClass::GapLg => "hi-row-gap-lg",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ContainerClass {
     Container,
     Sm,
@@ -103,53 +103,59 @@ pub enum ContainerClass {
     Xl,
     Xxl,
     Centered,
+    Rtl,
 }
 
-impl UtilityClass for ContainerClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for ContainerClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            ContainerClass::Container => "container",
-            ContainerClass::Sm => "container-sm",
-            ContainerClass::Md => "container-md",
-            ContainerClass::Lg => "container-lg",
-            ContainerClass::Xl => "container-xl",
-            ContainerClass::Xxl => "container-xxl",
-            ContainerClass::Centered => "container-centered",
+            ContainerClass::Container => "hi-container",
+            ContainerClass::Sm => "hi-container-sm",
+            ContainerClass::Md => "hi-container-md",
+            ContainerClass::Lg => "hi-container-lg",
+            ContainerClass::Xl => "hi-container-xl",
+            ContainerClass::Xxl => "hi-container-xxl",
+            ContainerClass::Centered => "hi-container-centered",
+            ContainerClass::Rtl => "hi-container-rtl",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Footer {
     Footer,
 }
 
-impl UtilityClass for Footer {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Footer {
+    fn class_name(&self) -> &'static str {
         match self {
-            Footer::Footer => "footer",
+            Footer::Footer => "hi-footer",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AppLayoutClass {
     Body,
     Main,
     Content,
+    AsideHeader,
+    AsideFooter,
 }
 
-impl UtilityClass for AppLayoutClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for AppLayoutClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            AppLayoutClass::Body => "layout-body",
-            AppLayoutClass::Main => "layout-main",
-            AppLayoutClass::Content => "layout-content",
+            AppLayoutClass::Body => "hi-layout-body",
+            AppLayoutClass::Main => "hi-layout-main",
+            AppLayoutClass::Content => "hi-layout-content",
+            AppLayoutClass::AsideHeader => "hi-layout-aside-header",
+            AppLayoutClass::AsideFooter => "hi-layout-aside-footer",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SectionClass {
     Section,
     SectionSm,
@@ -162,23 +168,23 @@ pub enum SectionClass {
     Spacer,
 }
 
-impl UtilityClass for SectionClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for SectionClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            SectionClass::Section => "section",
-            SectionClass::SectionSm => "section-sm",
-            SectionClass::SectionMd => "section-md",
-            SectionClass::SectionLg => "section-lg",
-            SectionClass::SectionHeader => "section-header",
-            SectionClass::SectionTitle => "section-title",
-            SectionClass::SectionDescription => "section-description",
-            SectionClass::SectionBody => "section-body",
-            SectionClass::Spacer => "spacer",
+            SectionClass::Section => "hi-section",
+            SectionClass::SectionSm => "hi-section-sm",
+            SectionClass::SectionMd => "hi-section-md",
+            SectionClass::SectionLg => "hi-section-lg",
+            SectionClass::SectionHeader => "hi-section-header",
+            SectionClass::SectionTitle => "hi-section-title",
+            SectionClass::SectionDescription => "hi-section-description",
+            SectionClass::SectionBody => "hi-section-body",
+            SectionClass::Spacer => "hi-spacer",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SpaceClass {
     Space,
     Horizontal,
@@ -186,18 +192,18 @@ pub enum SpaceClass {
     Wrap,
 }
 
-impl UtilityClass for SpaceClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for SpaceClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            SpaceClass::Space => "space",
-            SpaceClass::Horizontal => "space-horizontal",
-            SpaceClass::Vertical => "space-vertical",
-            SpaceClass::Wrap => "space-wrap",
+            SpaceClass::Space => "hi-space",
+            SpaceClass::Horizontal => "hi-space-horizontal",
+            SpaceClass::Vertical => "hi-space-vertical",
+            SpaceClass::Wrap => "hi-space-wrap",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DividerClass {
     Divider,
     Horizontal,
@@ -206,18 +212,30 @@ pub enum DividerClass {
     Dashed,
     Dotted,
     WithText,
+    TextCenter,
+    TextLeft,
+    TextRight,
+    Line,
+    DividerText,
+    Rtl,
 }
 
-impl UtilityClass for DividerClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for DividerClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            DividerClass::Divider => "divider",
-            DividerClass::Horizontal => "divider-horizontal",
-            DividerClass::Vertical => "divider-vertical",
-            DividerClass::Solid => "divider-solid",
-            DividerClass::Dashed => "divider-dashed",
-            DividerClass::Dotted => "divider-dotted",
-            DividerClass::WithText => "divider-with-text",
+            DividerClass::Divider => "hi-divider",
+            DividerClass::Horizontal => "hi-divider-horizontal",
+            DividerClass::Vertical => "hi-divider-vertical",
+            DividerClass::Solid => "hi-divider-solid",
+            DividerClass::Dashed => "hi-divider-dashed",
+            DividerClass::Dotted => "hi-divider-dotted",
+            DividerClass::WithText => "hi-divider-with-text",
+            DividerClass::TextCenter => "hi-divider-text-center",
+            DividerClass::TextLeft => "hi-divider-text-left",
+            DividerClass::TextRight => "hi-divider-text-right",
+            DividerClass::Line => "hi-divider-line",
+            DividerClass::DividerText => "hi-divider-text",
+            DividerClass::Rtl => "hi-divider-rtl",
         }
     }
 }

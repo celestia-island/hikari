@@ -58,20 +58,17 @@ pub fn Arrow(
     };
 
     // Build classes
-    let mut builder = ClassesBuilder::new().add(ArrowClass::Arrow);
+    let mut builder = ClassesBuilder::new().add_typed(ArrowClass::Arrow);
 
-    // Add direction class
     if let Some(dir) = direction_class {
-        builder = builder.add(dir);
+        builder = builder.add_typed(dir);
     }
 
-    // Add size class
     if let Some(sz) = size_class {
-        builder = builder.add(sz);
+        builder = builder.add_typed(sz);
     }
 
-    // Add user custom class
-    builder = builder.add_raw(&class);
+    builder = builder.add(&class);
 
     let classes = builder.build();
 

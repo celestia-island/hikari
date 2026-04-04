@@ -1,75 +1,67 @@
-//! Transition utility classes
-//!
-//! Animation and transition utilities.
+//! Transition utility classes.
 
-use serde::{Deserialize, Serialize};
+use tairitsu_style::TypedClass;
 
-use super::UtilityClass;
-
-/// Transition property utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Transition {
     All,
     Colors,
     Transform,
 }
 
-impl UtilityClass for Transition {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Transition {
+    fn class_name(&self) -> &'static str {
         match self {
-            Transition::All => "transition-all",
-            Transition::Colors => "transition-colors",
-            Transition::Transform => "transition-transform",
+            Self::All => "hi-transition-all",
+            Self::Colors => "hi-transition-colors",
+            Self::Transform => "hi-transition-transform",
         }
     }
 }
 
-/// Transition duration utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Duration {
     D150,
     D300,
     D500,
 }
 
-impl UtilityClass for Duration {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Duration {
+    fn class_name(&self) -> &'static str {
         match self {
-            Duration::D150 => "duration-150",
-            Duration::D300 => "duration-300",
-            Duration::D500 => "duration-500",
+            Self::D150 => "hi-duration-150",
+            Self::D300 => "hi-duration-300",
+            Self::D500 => "hi-duration-500",
         }
     }
 }
 
-/// Transition timing function utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Ease {
     InOut,
 }
 
-impl UtilityClass for Ease {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Ease {
+    fn class_name(&self) -> &'static str {
         match self {
-            Ease::InOut => "ease-in-out",
+            Self::InOut => "hi-ease-in-out",
         }
     }
 }
 
-/// Transform utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Transform {
     TranslateX0,
     TranslateXFull,
     TranslateY0,
 }
 
-impl UtilityClass for Transform {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Transform {
+    fn class_name(&self) -> &'static str {
         match self {
-            Transform::TranslateX0 => "translate-x-0",
-            Transform::TranslateXFull => "translate-x-full",
-            Transform::TranslateY0 => "translate-y-0",
+            Self::TranslateX0 => "hi-translate-x-0",
+            Self::TranslateXFull => "hi-translate-x-full",
+            Self::TranslateY0 => "hi-translate-y-0",
         }
     }
 }

@@ -1,13 +1,8 @@
-//! Effects utility classes
-//!
-//! Shadow, opacity, border radius, and other visual effects.
+//! Effects utility classes.
 
-use serde::{Deserialize, Serialize};
+use tairitsu_style::TypedClass;
 
-use super::UtilityClass;
-
-/// Border radius utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BorderRadius {
     None,
     Sm,
@@ -17,99 +12,94 @@ pub enum BorderRadius {
     Full,
 }
 
-impl UtilityClass for BorderRadius {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for BorderRadius {
+    fn class_name(&self) -> &'static str {
         match self {
-            BorderRadius::None => "rounded-none",
-            BorderRadius::Sm => "rounded-sm",
-            BorderRadius::Rounded => "rounded",
-            BorderRadius::Lg => "rounded-lg",
-            BorderRadius::Xl => "rounded-xl",
-            BorderRadius::Full => "rounded-full",
+            Self::None => "hi-rounded-none",
+            Self::Sm => "hi-rounded-sm",
+            Self::Rounded => "hi-rounded",
+            Self::Lg => "hi-rounded-lg",
+            Self::Xl => "hi-rounded-xl",
+            Self::Full => "hi-rounded-full",
         }
     }
 }
 
-/// Shadow utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Shadow {
     Md,
     Lg,
 }
 
-impl UtilityClass for Shadow {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Shadow {
+    fn class_name(&self) -> &'static str {
         match self {
-            Shadow::Md => "shadow-md",
-            Shadow::Lg => "shadow-lg",
+            Self::Md => "hi-shadow-md",
+            Self::Lg => "hi-shadow-lg",
         }
     }
 }
 
-/// Opacity utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Opacity {
     O0,
     O50,
     O100,
 }
 
-impl UtilityClass for Opacity {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Opacity {
+    fn class_name(&self) -> &'static str {
         match self {
-            Opacity::O0 => "opacity-0",
-            Opacity::O50 => "opacity-50",
-            Opacity::O100 => "opacity-100",
+            Self::O0 => "hi-opacity-0",
+            Self::O50 => "hi-opacity-50",
+            Self::O100 => "hi-opacity-100",
         }
     }
 }
 
-/// Cursor utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Cursor {
     Pointer,
     NotAllowed,
 }
 
-impl UtilityClass for Cursor {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Cursor {
+    fn class_name(&self) -> &'static str {
         match self {
-            Cursor::Pointer => "cursor-pointer",
-            Cursor::NotAllowed => "cursor-not-allowed",
+            Self::Pointer => "hi-cursor-pointer",
+            Self::NotAllowed => "hi-cursor-not-allowed",
         }
     }
 }
 
-/// Pointer events utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PointerEvents {
     None,
     Auto,
 }
 
-impl UtilityClass for PointerEvents {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for PointerEvents {
+    fn class_name(&self) -> &'static str {
         match self {
-            PointerEvents::None => "pointer-events-none",
-            PointerEvents::Auto => "pointer-events-auto",
+            Self::None => "hi-pointer-events-none",
+            Self::Auto => "hi-pointer-events-auto",
         }
     }
 }
 
-/// User select utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UserSelect {
     None,
     Text,
     All,
 }
 
-impl UtilityClass for UserSelect {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for UserSelect {
+    fn class_name(&self) -> &'static str {
         match self {
-            UserSelect::None => "select-none",
-            UserSelect::Text => "select-text",
-            UserSelect::All => "select-all",
+            Self::None => "hi-select-none",
+            Self::Text => "hi-select-text",
+            Self::All => "hi-select-all",
         }
     }
 }

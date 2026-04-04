@@ -1,322 +1,246 @@
-//! Display utility classes
-//!
-//! CSS display properties with `hi-` prefix.
+//! Display utility classes.
 
-use serde::{Deserialize, Serialize};
+use tairitsu_style::TypedClass;
 
-use super::UtilityClass;
-
-/// Display property values
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Display {
-    /// `display: none`
     Hidden,
-    /// `display: block`
     Block,
-    /// `display: inline-block`
     InlineBlock,
-    /// `display: flex`
     Flex,
-    /// `display: inline-flex`
     InlineFlex,
-    /// `display: grid`
     Grid,
-    /// `display: inline-grid`
     InlineGrid,
 }
 
-impl UtilityClass for Display {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Display {
+    fn class_name(&self) -> &'static str {
         match self {
-            Display::Hidden => "hidden",
-            Display::Block => "block",
-            Display::InlineBlock => "inline-block",
-            Display::Flex => "flex",
-            Display::InlineFlex => "inline-flex",
-            Display::Grid => "grid",
-            Display::InlineGrid => "inline-grid",
+            Self::Hidden => "hi-hidden",
+            Self::Block => "hi-block",
+            Self::InlineBlock => "hi-inline-block",
+            Self::Flex => "hi-flex",
+            Self::InlineFlex => "hi-inline-flex",
+            Self::Grid => "hi-grid",
+            Self::InlineGrid => "hi-inline-grid",
         }
     }
 }
 
-/// Flex direction values
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FlexDirection {
-    /// `flex-direction: row`
     Row,
-    /// `flex-direction: column`
     Column,
-    /// `flex-direction: row-reverse`
     RowReverse,
-    /// `flex-direction: column-reverse`
     ColumnReverse,
 }
 
-impl UtilityClass for FlexDirection {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for FlexDirection {
+    fn class_name(&self) -> &'static str {
         match self {
-            FlexDirection::Row => "flex-row",
-            FlexDirection::Column => "flex-col",
-            FlexDirection::RowReverse => "flex-row-reverse",
-            FlexDirection::ColumnReverse => "flex-col-reverse",
+            Self::Row => "hi-flex-row",
+            Self::Column => "hi-flex-col",
+            Self::RowReverse => "hi-flex-row-reverse",
+            Self::ColumnReverse => "hi-flex-col-reverse",
         }
     }
 }
 
-/// Flex wrap values
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FlexWrap {
-    /// `flex-wrap: wrap`
     Wrap,
-    /// `flex-wrap: nowrap`
     Nowrap,
-    /// `flex-wrap: wrap-reverse`
     WrapReverse,
 }
 
-impl UtilityClass for FlexWrap {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for FlexWrap {
+    fn class_name(&self) -> &'static str {
         match self {
-            FlexWrap::Wrap => "flex-wrap",
-            FlexWrap::Nowrap => "flex-nowrap",
-            FlexWrap::WrapReverse => "flex-wrap-reverse",
+            Self::Wrap => "hi-flex-wrap",
+            Self::Nowrap => "hi-flex-nowrap",
+            Self::WrapReverse => "hi-flex-wrap-reverse",
         }
     }
 }
 
-/// Flex shorthand utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Flex {
-    /// `flex: 1 1 0%`
     Flex1,
-    /// `flex: 1 1 auto`
     Auto,
-    /// `flex: none`
     None,
-    /// `flex-grow: 0`
     Grow0,
-    /// `flex-grow: 1`
     Grow1,
-    /// `flex-shrink: 0`
     Shrink0,
-    /// `flex-shrink: 1`
     Shrink1,
 }
 
-impl UtilityClass for Flex {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Flex {
+    fn class_name(&self) -> &'static str {
         match self {
-            Flex::Flex1 => "flex-1",
-            Flex::Auto => "flex-auto",
-            Flex::None => "flex-none",
-            Flex::Grow0 => "grow-0",
-            Flex::Grow1 => "grow-1",
-            Flex::Shrink0 => "shrink-0",
-            Flex::Shrink1 => "shrink-1",
+            Self::Flex1 => "hi-flex-1",
+            Self::Auto => "hi-flex-auto",
+            Self::None => "hi-flex-none",
+            Self::Grow0 => "hi-grow-0",
+            Self::Grow1 => "hi-grow-1",
+            Self::Shrink0 => "hi-shrink-0",
+            Self::Shrink1 => "hi-shrink-1",
         }
     }
 }
 
-/// Align items values
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AlignItems {
-    /// `align-items: flex-start`
     Start,
-    /// `align-items: flex-end`
     End,
-    /// `align-items: center`
     Center,
-    /// `align-items: stretch`
     Stretch,
-    /// `align-items: baseline`
     Baseline,
 }
 
-impl UtilityClass for AlignItems {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for AlignItems {
+    fn class_name(&self) -> &'static str {
         match self {
-            AlignItems::Start => "items-start",
-            AlignItems::End => "items-end",
-            AlignItems::Center => "items-center",
-            AlignItems::Stretch => "items-stretch",
-            AlignItems::Baseline => "items-baseline",
+            Self::Start => "hi-items-start",
+            Self::End => "hi-items-end",
+            Self::Center => "hi-items-center",
+            Self::Stretch => "hi-items-stretch",
+            Self::Baseline => "hi-items-baseline",
         }
     }
 }
 
-/// Justify content values
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JustifyContent {
-    /// `justify-content: flex-start`
     Start,
-    /// `justify-content: flex-end`
     End,
-    /// `justify-content: center`
     Center,
-    /// `justify-content: space-between`
     Between,
-    /// `justify-content: space-around`
     Around,
-    /// `justify-content: space-evenly`
     Evenly,
 }
 
-impl UtilityClass for JustifyContent {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for JustifyContent {
+    fn class_name(&self) -> &'static str {
         match self {
-            JustifyContent::Start => "justify-start",
-            JustifyContent::End => "justify-end",
-            JustifyContent::Center => "justify-center",
-            JustifyContent::Between => "justify-between",
-            JustifyContent::Around => "justify-around",
-            JustifyContent::Evenly => "justify-evenly",
+            Self::Start => "hi-justify-start",
+            Self::End => "hi-justify-end",
+            Self::Center => "hi-justify-center",
+            Self::Between => "hi-justify-between",
+            Self::Around => "hi-justify-around",
+            Self::Evenly => "hi-justify-evenly",
         }
     }
 }
 
-/// Align self values
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AlignSelf {
-    /// `align-self: flex-start`
     Start,
-    /// `align-self: flex-end`
     End,
-    /// `align-self: center`
     Center,
-    /// `align-self: stretch`
     Stretch,
-    /// `align-self: auto`
     Auto,
 }
 
-impl UtilityClass for AlignSelf {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for AlignSelf {
+    fn class_name(&self) -> &'static str {
         match self {
-            AlignSelf::Start => "self-start",
-            AlignSelf::End => "self-end",
-            AlignSelf::Center => "self-center",
-            AlignSelf::Stretch => "self-stretch",
-            AlignSelf::Auto => "self-auto",
+            Self::Start => "hi-self-start",
+            Self::End => "hi-self-end",
+            Self::Center => "hi-self-center",
+            Self::Stretch => "hi-self-stretch",
+            Self::Auto => "hi-self-auto",
         }
     }
 }
 
-/// Grid template columns utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GridCols {
-    /// 1 column
     Col1,
-    /// 2 columns
     Col2,
-    /// 3 columns
     Col3,
-    /// 4 columns
     Col4,
-    /// 5 columns
     Col5,
-    /// 6 columns
     Col6,
-    /// 12 columns
     Col12,
 }
 
-impl UtilityClass for GridCols {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for GridCols {
+    fn class_name(&self) -> &'static str {
         match self {
-            GridCols::Col1 => "grid-cols-1",
-            GridCols::Col2 => "grid-cols-2",
-            GridCols::Col3 => "grid-cols-3",
-            GridCols::Col4 => "grid-cols-4",
-            GridCols::Col5 => "grid-cols-5",
-            GridCols::Col6 => "grid-cols-6",
-            GridCols::Col12 => "grid-cols-12",
+            Self::Col1 => "hi-grid-cols-1",
+            Self::Col2 => "hi-grid-cols-2",
+            Self::Col3 => "hi-grid-cols-3",
+            Self::Col4 => "hi-grid-cols-4",
+            Self::Col5 => "hi-grid-cols-5",
+            Self::Col6 => "hi-grid-cols-6",
+            Self::Col12 => "hi-grid-cols-12",
         }
     }
 }
 
-/// Gap utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Gap {
-    /// `gap: 0`
     Gap0,
-    /// `gap: 0.25rem`
     Gap1,
-    /// `gap: 0.5rem`
     Gap2,
-    /// `gap: 0.75rem`
     Gap3,
-    /// `gap: 1rem`
     Gap4,
-    /// `gap: 1.25rem`
     Gap5,
-    /// `gap: 1.5rem`
     Gap6,
-    /// `gap: 2rem`
     Gap8,
-    /// `gap: 3rem`
     Gap12,
 }
 
-impl UtilityClass for Gap {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Gap {
+    fn class_name(&self) -> &'static str {
         match self {
-            Gap::Gap0 => "gap-0",
-            Gap::Gap1 => "gap-1",
-            Gap::Gap2 => "gap-2",
-            Gap::Gap3 => "gap-3",
-            Gap::Gap4 => "gap-4",
-            Gap::Gap5 => "gap-5",
-            Gap::Gap6 => "gap-6",
-            Gap::Gap8 => "gap-8",
-            Gap::Gap12 => "gap-12",
+            Self::Gap0 => "hi-gap-0",
+            Self::Gap1 => "hi-gap-1",
+            Self::Gap2 => "hi-gap-2",
+            Self::Gap3 => "hi-gap-3",
+            Self::Gap4 => "hi-gap-4",
+            Self::Gap5 => "hi-gap-5",
+            Self::Gap6 => "hi-gap-6",
+            Self::Gap8 => "hi-gap-8",
+            Self::Gap12 => "hi-gap-12",
         }
     }
 }
 
-/// Row gap utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RowGap {
-    /// `row-gap: 0.25rem`
     Gap1,
-    /// `row-gap: 0.5rem`
     Gap2,
-    /// `row-gap: 0.75rem`
     Gap3,
-    /// `row-gap: 1rem`
     Gap4,
 }
 
-impl UtilityClass for RowGap {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for RowGap {
+    fn class_name(&self) -> &'static str {
         match self {
-            RowGap::Gap1 => "gap-y-1",
-            RowGap::Gap2 => "gap-y-2",
-            RowGap::Gap3 => "gap-y-3",
-            RowGap::Gap4 => "gap-y-4",
+            Self::Gap1 => "hi-gap-y-1",
+            Self::Gap2 => "hi-gap-y-2",
+            Self::Gap3 => "hi-gap-y-3",
+            Self::Gap4 => "hi-gap-y-4",
         }
     }
 }
 
-/// Column gap utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ColumnGap {
-    /// `column-gap: 0.25rem`
     Gap1,
-    /// `column-gap: 0.5rem`
     Gap2,
-    /// `column-gap: 0.75rem`
     Gap3,
-    /// `column-gap: 1rem`
     Gap4,
 }
 
-impl UtilityClass for ColumnGap {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for ColumnGap {
+    fn class_name(&self) -> &'static str {
         match self {
-            ColumnGap::Gap1 => "gap-x-1",
-            ColumnGap::Gap2 => "gap-x-2",
-            ColumnGap::Gap3 => "gap-x-3",
-            ColumnGap::Gap4 => "gap-x-4",
+            Self::Gap1 => "hi-gap-x-1",
+            Self::Gap2 => "hi-gap-x-2",
+            Self::Gap3 => "hi-gap-x-3",
+            Self::Gap4 => "hi-gap-x-4",
         }
     }
 }

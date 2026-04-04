@@ -2,7 +2,7 @@
 // MarkdownEditor component with Arknights + FUI styling
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{ClassesBuilder, MarkdownEditorClass, UtilityClass};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, MarkdownEditorClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -63,9 +63,9 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
     };
 
     let container_classes = ClassesBuilder::new()
-        .add(MarkdownEditorClass::Container)
-        .add(size_class)
-        .add_raw(&props.class)
+        .add_typed(MarkdownEditorClass::Container)
+        .add_typed(size_class)
+        .add(&props.class)
         .build();
 
     let height_style = if let Some(h) = &props.height {
@@ -250,89 +250,89 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
 
             // Toolbar
             if props.toolbar {
-                div { class: MarkdownEditorClass::Toolbar.as_class(),
+                div { class: MarkdownEditorClass::Toolbar.class_name(),
                     // Format buttons
                     button {
-                        class: MarkdownEditorClass::ToolbarButton.as_class(),
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_bold,
                         title: "Bold",
                         Icon { icon: MdiIcon::FormatBold, size: 18 }
                     }
                     button {
-                        class: MarkdownEditorClass::ToolbarButton.as_class(),
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_italic,
                         title: "Italic",
                         Icon { icon: MdiIcon::FormatItalic, size: 18 }
                     }
                     button {
-                        class: MarkdownEditorClass::ToolbarButton.as_class(),
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_heading,
                         title: "Heading",
                         "H"
                     }
                     button {
-                        class: MarkdownEditorClass::ToolbarButton.as_class(),
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_code,
                         title: "Code Block",
                         Icon { icon: MdiIcon::Code, size: 18 }
                     }
                     button {
-                        class: MarkdownEditorClass::ToolbarButton.as_class(),
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_link,
                         title: "Link",
                         "🔗"
                     }
                     button {
-                        class: MarkdownEditorClass::ToolbarButton.as_class(),
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_image,
                         title: "Image",
                         Icon { icon: MdiIcon::Image, size: 18 }
                     }
                     button {
-                        class: MarkdownEditorClass::ToolbarButton.as_class(),
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_list,
                         title: "List",
                         Icon { icon: MdiIcon::FormatListBulleted, size: 18 }
                     }
                     button {
-                        class: MarkdownEditorClass::ToolbarButton.as_class(),
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_numbered,
                         title: "Numbered List",
                         Icon { icon: MdiIcon::FormatListNumbered, size: 18 }
                     }
                     button {
-                        class: MarkdownEditorClass::ToolbarButton.as_class(),
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_quote,
                         title: "Quote",
                         "\""
                     }
 
-                    div { class: "{MarkdownEditorClass::ToolbarDivider.as_class()}" }
+                    div { class: "{MarkdownEditorClass::ToolbarDivider.class_name()}" }
 
                     // Mode buttons
                     button {
                         class: if current_mode_value == MarkdownEditorMode::Edit {
-                            "{MarkdownEditorClass::ToolbarButton.as_class()} {MarkdownEditorClass::ToolbarButtonActive.as_class()}"
+                            "{MarkdownEditorClass::ToolbarButton.class_name()} {MarkdownEditorClass::ToolbarButtonActive.class_name()}"
                         } else {
-                            "{MarkdownEditorClass::ToolbarButton.as_class()}"
+                            "{MarkdownEditorClass::ToolbarButton.class_name()}"
                         },
                         onclick: set_mode_edit,
                         "Edit"
                     }
                     button {
                         class: if current_mode_value == MarkdownEditorMode::Preview {
-                            "{MarkdownEditorClass::ToolbarButton.as_class()} {MarkdownEditorClass::ToolbarButtonActive.as_class()}"
+                            "{MarkdownEditorClass::ToolbarButton.class_name()} {MarkdownEditorClass::ToolbarButtonActive.class_name()}"
                         } else {
-                            "{MarkdownEditorClass::ToolbarButton.as_class()}"
+                            "{MarkdownEditorClass::ToolbarButton.class_name()}"
                         },
                         onclick: set_mode_preview,
                         "Preview"
                     }
                     button {
                         class: if current_mode_value == MarkdownEditorMode::Split {
-                            "{MarkdownEditorClass::ToolbarButton.as_class()} {MarkdownEditorClass::ToolbarButtonActive.as_class()}"
+                            "{MarkdownEditorClass::ToolbarButton.class_name()} {MarkdownEditorClass::ToolbarButtonActive.class_name()}"
                         } else {
-                            "{MarkdownEditorClass::ToolbarButton.as_class()}"
+                            "{MarkdownEditorClass::ToolbarButton.class_name()}"
                         },
                         onclick: set_mode_split,
                         "Split"
@@ -341,18 +341,18 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
             }
 
             // Editor area
-            div { class: MarkdownEditorClass::Content.as_class(),
+            div { class: MarkdownEditorClass::Content.class_name(),
                 match current_mode_value {
                     MarkdownEditorMode::Edit => rsx! {
                         textarea {
-                            class: MarkdownEditorClass::Textarea.as_class(),
+                            class: MarkdownEditorClass::Textarea.class_name(),
                             placeholder: props.placeholder,
                             value: "{content_value}",
                             oninput: handle_input_edit,
                         }
                     },
                     MarkdownEditorMode::Preview => rsx! {
-                        div { class: MarkdownEditorClass::Preview.as_class(),
+                        div { class: MarkdownEditorClass::Preview.class_name(),
                             // Basic markdown rendering (simplified)
                             div {
                                 dangerous_inner_html: render_markdown_simple(&content_value),
@@ -360,15 +360,15 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                         }
                     },
                     MarkdownEditorMode::Split => rsx! {
-                        div { class: MarkdownEditorClass::SplitContainer.as_class(),
+                        div { class: MarkdownEditorClass::SplitContainer.class_name(),
                             textarea {
-                                class: "{MarkdownEditorClass::Textarea.as_class()} {MarkdownEditorClass::SplitPane.as_class()}",
+                                class: "{MarkdownEditorClass::Textarea.class_name()} {MarkdownEditorClass::SplitPane.class_name()}",
                                 placeholder: props.placeholder,
                                 value: "{content_value}",
                                 oninput: handle_input_split,
                             }
                             div {
-                                class: "{MarkdownEditorClass::Preview.as_class()} {MarkdownEditorClass::SplitPane.as_class()}",
+                                class: "{MarkdownEditorClass::Preview.class_name()} {MarkdownEditorClass::SplitPane.class_name()}",
                                 div {
                                     dangerous_inner_html: render_markdown_simple(&content_value),
                                 }

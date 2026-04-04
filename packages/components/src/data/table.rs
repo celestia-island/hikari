@@ -3,7 +3,9 @@
 
 use std::collections::HashMap;
 
-use hikari_palette::classes::{ClassesBuilder, TableClass, UtilityClass};
+use hikari_palette::classes::TableClass;
+use hikari_palette::TypedClass;
+use tairitsu_style::ClassesBuilder;
 
 pub use super::{
     column::{ColumnAlign, ColumnDef},
@@ -79,16 +81,16 @@ pub fn Table(props: TableProps) -> Element {
     );
 
     let table_classes = ClassesBuilder::new()
-        .add(TableClass::Table)
-        .add(match props.size {
+        .add_typed(TableClass::Table)
+        .add_typed(match props.size {
             TableSize::Small => TableClass::TableSm,
             TableSize::Medium => TableClass::TableMd,
             TableSize::Large => TableClass::TableLg,
         })
-        .add_if(TableClass::TableBordered, || props.bordered)
-        .add_if(TableClass::TableStriped, || props.striped)
-        .add_if(TableClass::TableHover, || props.hoverable)
-        .add_raw(&props.class)
+        .add_typed_if(TableClass::TableBordered, props.bordered)
+        .add_typed_if(TableClass::TableStriped, props.striped)
+        .add_typed_if(TableClass::TableHover, props.hoverable)
+        .add(&props.class)
         .build();
 
     // Clone values for use in closures
@@ -131,11 +133,11 @@ pub fn Table(props: TableProps) -> Element {
                 };
 
                 let cell_classes = ClassesBuilder::new()
-                    .add(TableClass::TableHeaderCell)
-                    .add(align_class)
-                    .add_if(TableClass::TableSortable, || column.sortable)
-                    .add_if(TableClass::TableSortActive, || is_sorted)
-                    .add_raw(&column.class)
+                    .add_typed(TableClass::TableHeaderCell)
+                    .add_typed(align_class)
+                    .add_typed_if(TableClass::TableSortable, column.sortable)
+                    .add_typed_if(TableClass::TableSortActive, is_sorted)
+                    .add(&column.class)
                     .build();
 
                 // Clone for closure
@@ -172,7 +174,7 @@ pub fn Table(props: TableProps) -> Element {
                         "{column_title}"
 
                         if !sort_icon_str.is_empty() {
-                            span { class: TableClass::TableSortIcon.as_class(),
+                            span { class: TableClass::TableSortIcon.class_name(),
                                 "{sort_icon_str}"
                             }
                         }
@@ -184,7 +186,7 @@ pub fn Table(props: TableProps) -> Element {
         Some(rsx! {
             thead {
                 tr {
-                    class: TableClass::TableHeaderRow.as_class(),
+                    class: TableClass::TableHeaderRow.class_name(),
                     ..header_cells
                 }
             }
@@ -217,8 +219,8 @@ pub fn Table(props: TableProps) -> Element {
                         };
 
                         let cell_classes = ClassesBuilder::new()
-                            .add(TableClass::TableCell)
-                            .add(align_class)
+                            .add_typed(TableClass::TableCell)
+                            .add_typed(align_class)
                             .build();
 
                         let cell_value = cell.clone();
@@ -235,7 +237,7 @@ pub fn Table(props: TableProps) -> Element {
 
                 rsx! {
                     tr {
-                        class: TableClass::TableRow.as_class(),
+                        class: TableClass::TableRow.class_name(),
                         key: "{row_index}",
                         ..cell_elements
                     }
@@ -248,11 +250,11 @@ pub fn Table(props: TableProps) -> Element {
         // Empty state
         rsx! {
             tr {
-                class: TableClass::TableRow.as_class(),
+                class: TableClass::TableRow.class_name(),
                 td {
-                    class: TableClass::TableEmpty.as_class(),
+                    class: TableClass::TableEmpty.class_name(),
                     colspan: colspan_count,
-                    div { class: TableClass::TableEmptyContent.as_class(),
+                    div { class: TableClass::TableEmptyContent.class_name(),
                         "{props.empty_text.clone()}"
                     }
                 }
@@ -261,7 +263,7 @@ pub fn Table(props: TableProps) -> Element {
     };
 
     rsx! {
-        div { class: TableClass::TableWrapper.as_class(),
+        div { class: TableClass::TableWrapper.class_name(),
             table {
                 class: table_classes,
 
@@ -269,7 +271,7 @@ pub fn Table(props: TableProps) -> Element {
 
                 // Render table body with sorted data
                 tbody {
-                    class: TableClass::TableBody.as_class(),
+                    class: TableClass::TableBody.class_name(),
                     {body_content}
                 }
             }

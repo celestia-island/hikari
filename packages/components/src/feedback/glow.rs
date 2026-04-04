@@ -193,12 +193,12 @@ pub fn Glow(props: GlowProps) -> Element {
     };
 
     let glow_classes = ClassesBuilder::new()
-        .add(GlowClass::GlowWrapper)
-        .add_if(GlowClass::GlowWrapperBlock, || props.block)
-        .add(blur_class)
-        .add(intensity_class)
-        .add_raw(&props.class)
-        .add_raw(&props.preset.to_string())
+        .add_typed(GlowClass::GlowWrapper)
+        .add_typed_if(GlowClass::GlowWrapperBlock, props.block)
+        .add_typed(blur_class)
+        .add_typed(intensity_class)
+        .add(&props.class)
+        .add(&props.preset.to_string())
         .build();
 
     let glow_color = match props.color {

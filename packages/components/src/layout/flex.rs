@@ -157,14 +157,14 @@ pub fn FlexBox(props: FlexBoxProps) -> Element {
     };
 
     let builder = ClassesBuilder::new()
-        .add(display_class)
-        .add(direction_class)
-        .add(align_class)
-        .add(justify_class)
-        .add(wrap_class)
-        .add_if(FlexUtil::Flex1, || props.flex)
-        .add_raw(gap_class)
-        .add_raw(&props.class);
+        .add_typed(display_class)
+        .add_typed(direction_class)
+        .add_typed(align_class)
+        .add_typed(justify_class)
+        .add_typed(wrap_class)
+        .add_typed_if(FlexUtil::Flex1, props.flex)
+        .add(gap_class)
+        .add(&props.class);
 
     let classes = builder.build();
 

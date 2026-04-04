@@ -56,9 +56,9 @@ impl NumberInputSize {
 #[component]
 pub fn NumberInput(props: NumberInputProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
-        .add(Display::InlineFlex)
-        .add(NumberInputClass::Wrapper)
-        .add_raw(&props.class)
+        .add_typed(Display::InlineFlex)
+        .add_typed(NumberInputClass::Wrapper)
+        .add(&props.class)
         .build();
 
     let size_class = props.size.size_class();

@@ -168,12 +168,12 @@ pub fn Menu(props: MenuProps) -> Element {
 
     let menu_classes = {
         let builder = ClassesBuilder::new()
-            .add(MenuClass::Menu)
-            .add_if(MenuClass::Inline, || props.inline)
-            .add(mode_class)
-            .add_if(MenuClass::Compact, || props.compact)
-            .add_if(MenuClass::PopoverMenu, || props.in_popover)
-            .add_raw(&props.class);
+            .add_typed(MenuClass::Menu)
+            .add_typed_if(MenuClass::Inline, props.inline)
+            .add_typed(mode_class)
+            .add_typed_if(MenuClass::Compact, props.compact)
+            .add_typed_if(MenuClass::PopoverMenu, props.in_popover)
+            .add(&props.class);
 
         builder.build()
     };
@@ -213,9 +213,9 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
     };
 
     let item_classes = ClassesBuilder::new()
-        .add(MenuClass::MenuItem)
-        .add_raw(props.height.as_str())
-        .add_raw(&props.class)
+        .add_typed(MenuClass::MenuItem)
+        .add(props.height.as_str())
+        .add(&props.class)
         .build();
 
     let menu_context_for_click = menu_context.clone();
@@ -275,12 +275,12 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
     let is_open = use_signal(|| props.default_expanded);
 
     let submenu_classes = ClassesBuilder::new()
-        .add(MenuClass::Submenu)
-        .add_if(MenuClass::SubmenuListOpen, || is_open.read())
-        .add_raw(&props.class)
+        .add_typed(MenuClass::Submenu)
+        .add_typed_if(MenuClass::SubmenuListOpen, is_open.read())
+        .add(&props.class)
         .build();
 
-    let list_classes = ClassesBuilder::new().add(MenuClass::SubmenuList).build();
+    let list_classes = ClassesBuilder::new().add_typed(MenuClass::SubmenuList).build();
 
     let is_open_for_memo = is_open.clone();
     let list_style = use_memo(move || {

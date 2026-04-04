@@ -239,7 +239,7 @@ impl StyledComponent for TabsComponent {
 /// Tab pane component
 #[component]
 pub fn TabPane(props: TabPaneProps) -> Element {
-    use hikari_palette::classes::{components::TabsClass, ClassesBuilder, UtilityClass};
+    use hikari_palette::classes::{TypedClass, components::TabsClass, ClassesBuilder};
 
     let ctx = use_context::<TabsContext>().expect("TabsContext not found");
     let ctx = ctx.get();
@@ -250,19 +250,19 @@ pub fn TabPane(props: TabPaneProps) -> Element {
     let is_active = *active_key.read() == item_key;
 
     let tab_classes = ClassesBuilder::new()
-        .add(TabsClass::TabsTab)
-        .add_if(TabsClass::TabActive, || is_active)
-        .add_if(TabsClass::TabDisabled, || props.disabled)
+        .add_typed(TabsClass::TabsTab)
+        .add_typed_if(TabsClass::TabActive, is_active)
+        .add_typed_if(TabsClass::TabDisabled, props.disabled)
         .build();
 
     let tabpane_classes = ClassesBuilder::new()
-        .add(TabsClass::TabsTabpane)
-        .add_if(TabsClass::TabpaneActive, || is_active)
-        .add_if(TabsClass::TabpaneInactive, || !is_active)
+        .add_typed(TabsClass::TabsTabpane)
+        .add_typed_if(TabsClass::TabpaneActive, is_active)
+        .add_typed_if(TabsClass::TabpaneInactive, !is_active)
         .build();
 
-    let tab_icon_class = TabsClass::TabsTabIcon.as_class();
-    let tab_label_class = TabsClass::TabsTabLabel.as_class();
+    let tab_icon_class = TabsClass::TabsTabIcon.class_name();
+    let tab_label_class = TabsClass::TabsTabLabel.class_name();
 
     let aria_hidden_val = (!is_active).to_string();
 

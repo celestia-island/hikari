@@ -135,19 +135,35 @@ pub enum PortEvent {
 use tairitsu_vdom::{VElement, VNode, VText};
 
 pub fn render_port(port: &Port) -> VNode {
+    let mut children: Vec<VNode> = Vec::new();
+
+    children.push(VNode::Element(
+        VElement::new("div").class("hi-node-port-dot"),
+    ));
+
+    children.push(VNode::Element(
+        VElement::new("span")
+            .class("hi-node-port-label")
+            .child(VNode::Text(VText::new(&port.label))),
+    ));
+
+    if !port.disabled {
+        children.push(VNode::Element(
+            VElement::new("div")
+                .class("hi-node-port-connector")
+                .attr("data-port-id", &port.port_id)
+                .attr("data-port-type", port.port_type.as_str())
+                .attr("data-action", "port-connect"),
+        ));
+    }
+
     VNode::Element(
         VElement::new("div")
             .class(port.class_string())
             .attr("data-port-id", &port.port_id)
             .attr("data-port-type", port.port_type.as_str())
-            .child(VNode::Element(
-                VElement::new("div").class("hi-node-port-dot"),
-            ))
-            .child(VNode::Element(
-                VElement::new("span")
-                    .class("hi-node-port-label")
-                    .child(VNode::Text(VText::new(&port.label))),
-            )),
+            .style(port.position_style())
+            .children(children),
     )
 }
 

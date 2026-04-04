@@ -77,13 +77,13 @@ pub fn Stepper(props: StepperProps) -> Element {
                         div { class: {step_classes},
 
                             // Step number
-                            div { class: step_number_class.clone(), "{step_number}" }
+                            div { class: step_number_class, "{step_number}" }
 
                             // Connector line (except for last step in horizontal mode)
                             {
                                 if index < props.total - 1 && props.direction == StepperDirection::Horizontal {
                                     rsx! {
-                                        div { class: connector_class.clone() }
+                                        div { class: connector_class }
                                     }
                                 } else {
                                     VNode::empty()
@@ -94,7 +94,7 @@ pub fn Stepper(props: StepperProps) -> Element {
                             {
                                 if props.direction == StepperDirection::Vertical && index < props.total - 1 {
                                     rsx! {
-                                        div { class: connector_vertical_class.clone() }
+                                        div { class: connector_vertical_class }
                                     }
                                 } else {
                                     VNode::empty()

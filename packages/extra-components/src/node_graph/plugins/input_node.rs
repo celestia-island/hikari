@@ -130,6 +130,7 @@ impl NodePlugin for InputNode {
                 .child(VNode::Element(
                     VElement::new("input")
                         .attr("data-node-input", "true")
+                        .attr("data-action", "node-input-change")
                         .attr("type", &self.input_type)
                         .attr("placeholder", "Enter value...")
                         .attr("value", &value_str),

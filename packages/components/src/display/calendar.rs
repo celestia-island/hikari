@@ -112,7 +112,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
         .map(|weekday| {
             VNode::Element(
                 VElement::new("div")
-                    .class(weekday_class.clone())
+                    .class(weekday_class)
                     .child(VNode::Text(VText::new(weekday))),
             )
         })
@@ -120,14 +120,14 @@ pub fn Calendar(props: CalendarProps) -> Element {
 
     // Build empty cells for days before the 1st
     let empty_cells: Vec<VNode> = (0..first_day)
-        .map(|_| VNode::Element(VElement::new("div").class(day_cell_class.clone())))
+        .map(|_| VNode::Element(VElement::new("div").class(day_cell_class)))
         .collect();
 
     // Build day cells
     let day_cells: Vec<VNode> = (1..=days_count)
         .map(|day| {
             let is_selected = day == sel_day;
-            let day_cell_cls = day_cell_class.clone();
+            let day_cell_cls = day_cell_class;
             let inner_class = if is_selected {
                 format!("{} {}", day_class, selected_day_class)
             } else {
@@ -165,7 +165,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
     let min_yr = props.min_year;
     let prev_btn = VNode::Element(
         VElement::new("button")
-            .class(nav_btn_class.clone())
+            .class(nav_btn_class)
             .attr("disabled", year <= min_yr && month == 1)
             .on_event("click", move |_e: Box<dyn EventData>| {
                 let ny = if month == 1 { year - 1 } else { year };
@@ -182,7 +182,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
     let cm_prev2 = current_month.clone();
     let prev_btn2 = VNode::Element(
         VElement::new("button")
-            .class(nav_btn_class.clone())
+            .class(nav_btn_class)
             .on_event("click", move |_e: Box<dyn EventData>| {
                 let ny = if month == 1 { year - 1 } else { year };
                 let nm = if month == 1 { 12 } else { month - 1 };
@@ -198,7 +198,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
     let cm_today = current_month.clone();
     let today_btn = VNode::Element(
         VElement::new("button")
-            .class(nav_btn_class.clone())
+            .class(nav_btn_class)
             .on_event("click", move |_e: Box<dyn EventData>| {
                 let (today_year, today_month) = get_current_date();
                 if today_year >= min_yr && today_year <= props.max_year {
@@ -214,7 +214,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
     let max_yr = props.max_year;
     let next_btn = VNode::Element(
         VElement::new("button")
-            .class(nav_btn_class.clone())
+            .class(nav_btn_class)
             .on_event("click", move |_e: Box<dyn EventData>| {
                 let ny = if month == 12 { year + 1 } else { year };
                 let nm = if month == 12 { 1 } else { month + 1 };
@@ -230,7 +230,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
     let cm_next2 = current_month.clone();
     let next_btn2 = VNode::Element(
         VElement::new("button")
-            .class(nav_btn_class.clone())
+            .class(nav_btn_class)
             .attr("disabled", year >= max_yr && month == 12)
             .on_event("click", move |_e: Box<dyn EventData>| {
                 let ny = if month == 12 { year + 1 } else { year };

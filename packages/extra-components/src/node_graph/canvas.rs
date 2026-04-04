@@ -174,6 +174,132 @@ impl NodeGraphState {
         self.selected_node = None;
         self.selected_connection = None;
     }
+
+    pub fn undo(&mut self, history: &mut HistoryState) -> Option<NodeGraphEvent> {
+        let action = history.undo()?;
+        match action {
+            HistoryAction::NodeAdd { id, .. } => {
+                let removed = self.remove_node(&id);
+                if removed.is_some() {
+                    Some(NodeGraphEvent::NodeDeleted(id))
+                } else {
+                    None
+                }
+            }
+            HistoryAction::NodeDelete {
+                id,
+                state: node_state,
+            } => {
+                let mut ns = NodeState::new(id.clone());
+                ns.position = node_state.position;
+                ns.size = node_state.size;
+                ns.minimized = node_state.minimized;
+                ns.selected = false;
+                self.nodes.insert(id.clone(), ns);
+                Some(NodeGraphEvent::NodeAdded {
+                    id,
+                    node_type: NodeType::new("custom", ""),
+                    position: node_state.position,
+                })
+            }
+            HistoryAction::NodeMove { id, from, to } => {
+                self.update_node_position(&id, from.0, from.1);
+                Some(NodeGraphEvent::NodeMoved { id, to: from })
+            }
+            HistoryAction::ConnectionAdd {
+                id,
+                state: conn_state,
+            } => {
+                self.remove_connection(&id);
+                Some(NodeGraphEvent::ConnectionDeleted(id))
+            }
+            HistoryAction::ConnectionDelete {
+                id,
+                state: conn_state,
+            } => {
+                let conn = Connection::new(
+                    &conn_state.from_node,
+                    &conn_state.from_port,
+                    &conn_state.to_node,
+                    &conn_state.to_port,
+                );
+                self.connections.push(conn);
+                Some(NodeGraphEvent::ConnectionCreated {
+                    id,
+                    from_node: conn_state.from_node,
+                    from_port: conn_state.from_port,
+                    to_node: conn_state.to_node,
+                    to_port: conn_state.to_port,
+                })
+            }
+        }
+    }
+
+    pub fn redo(&mut self, history: &mut HistoryState) -> Option<NodeGraphEvent> {
+        let action = history.redo()?;
+        match action {
+            HistoryAction::NodeAdd {
+                id,
+                node_type,
+                position,
+            } => {
+                let ns = NodeState::new(id.clone()).with_position(position.0, position.1);
+                self.nodes.insert(id.clone(), ns);
+                Some(NodeGraphEvent::NodeAdded {
+                    id,
+                    node_type: NodeType::new("custom", &node_type),
+                    position,
+                })
+            }
+            HistoryAction::NodeDelete { id, state: _ } => {
+                self.remove_node(&id);
+                Some(NodeGraphEvent::NodeDeleted(id))
+            }
+            HistoryAction::NodeMove { id, from: _, to } => {
+                self.update_node_position(&id, to.0, to.1);
+                Some(NodeGraphEvent::NodeMoved { id, to })
+            }
+            HistoryAction::ConnectionAdd {
+                id,
+                from_node,
+                from_port,
+                to_node,
+                to_port,
+            } => {
+                let conn = Connection::new(&from_node, &from_port, &to_node, &to_port);
+                self.connections.push(conn);
+                Some(NodeGraphEvent::ConnectionCreated {
+                    id,
+                    from_node,
+                    from_port,
+                    to_node,
+                    to_port,
+                })
+            }
+            HistoryAction::ConnectionDelete { id, state: _ } => {
+                self.remove_connection(&id);
+                Some(NodeGraphEvent::ConnectionDeleted(id))
+            }
+        }
+    }
+
+    pub fn save(&self) -> Result<String, serde_json::Error> {
+        let serialized = SerializedNodeGraph::from_state(&self.nodes, &self.connections);
+        serialized.to_json()
+    }
+
+    pub fn load(&mut self, json: &str) -> Result<(), String> {
+        let serialized = SerializedNodeGraph::from_json(json)
+            .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+        let (nodes, connections) = serialized
+            .to_state()
+            .map_err(|e| format!("Failed to convert state: {}", e))?;
+        self.nodes = nodes;
+        self.connections = connections;
+        self.selected_node = None;
+        self.selected_connection = None;
+        Ok(())
+    }
 }
 
 /// Node graph canvas configuration
@@ -340,10 +466,11 @@ pub fn render_node_graph_canvas_with_history(
         };
 
         svg_parts.push_str(&format!(
-            r#"<path class="{}" d="{}" stroke="{}" stroke-width="2" fill="none"/>"#,
+            r#"<path class="{}" d="{}" stroke="{}" stroke-width="2" fill="none" pointer-events="stroke" data-connection-id="{}"/>"#,
             connection.class_string(),
             path_data,
             stroke_color,
+            connection.id,
         ));
     }
     svg_parts.push_str("</g>");
@@ -388,6 +515,8 @@ pub fn render_node_graph_canvas_with_history(
     VNode::Element(
         VElement::new("div")
             .class("hi-node-graph-canvas")
+            .attr("tabindex", "0")
+            .attr("data-action", "node-graph-canvas")
             .style(config.container_style())
             .children(children),
     )
@@ -442,6 +571,7 @@ fn render_controls(
         VElement::new("button")
             .class("hi-control-btn hi-undo-btn")
             .attr("title", "Undo (Ctrl+Z)")
+            .attr("data-action", "undo")
             .attr(
                 "disabled",
                 if history.can_undo() { "false" } else { "true" },
@@ -454,6 +584,7 @@ fn render_controls(
         VElement::new("button")
             .class("hi-control-btn hi-redo-btn")
             .attr("title", "Redo (Ctrl+Y)")
+            .attr("data-action", "redo")
             .attr(
                 "disabled",
                 if history.can_redo() { "false" } else { "true" },
@@ -474,6 +605,7 @@ fn render_controls(
         VElement::new("button")
             .class("hi-control-btn hi-save-btn")
             .attr("title", "Save")
+            .attr("data-action", "save")
             .child(VNode::Text(VText::new("Save"))),
     );
     save_load_children.push(save_btn);
@@ -482,6 +614,7 @@ fn render_controls(
         VElement::new("button")
             .class("hi-control-btn hi-load-btn")
             .attr("title", "Load")
+            .attr("data-action", "load")
             .child(VNode::Text(VText::new("Load"))),
     );
     save_load_children.push(load_btn);

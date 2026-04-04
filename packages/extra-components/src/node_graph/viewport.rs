@@ -140,6 +140,7 @@ pub fn render_viewport(viewport: &Viewport) -> VNode {
             .class("hi-viewport-button")
             .attr("aria-label", "Zoom in")
             .attr("title", "Zoom in")
+            .attr("data-action", "viewport-zoom-in")
             .attr(
                 "disabled",
                 if viewport.can_zoom_in() {
@@ -166,6 +167,7 @@ pub fn render_viewport(viewport: &Viewport) -> VNode {
             .class("hi-viewport-button")
             .attr("aria-label", "Zoom out")
             .attr("title", "Zoom out")
+            .attr("data-action", "viewport-zoom-out")
             .attr(
                 "disabled",
                 if viewport.can_zoom_out() {
@@ -194,6 +196,7 @@ pub fn render_viewport(viewport: &Viewport) -> VNode {
             .class("hi-viewport-reset")
             .attr("aria-label", "Reset view")
             .attr("title", "Reset view")
+            .attr("data-action", "viewport-reset")
             .child(VNode::Text(VText::new("Reset"))),
     );
 

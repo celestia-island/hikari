@@ -265,6 +265,7 @@ pub fn render_audio_waveform(state: &AudioWaveformState) -> VNode {
     container_children.push(VNode::Element(
         VElement::new("div")
             .class("hi-waveform-container")
+            .attr("data-action", "waveform-click")
             .child(VNode::Element(bars_container)),
     ));
 
@@ -290,6 +291,7 @@ pub fn render_audio_waveform(state: &AudioWaveformState) -> VNode {
             .child(VNode::Element(
                 VElement::new("div")
                     .class("hi-audio-progress")
+                    .attr("data-action", "audio-seek")
                     .child(VNode::Element(
                         VElement::new("div")
                             .class("hi-audio-progress-bar")

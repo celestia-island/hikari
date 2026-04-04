@@ -295,12 +295,16 @@ impl Default for DragLayerState {
 /// [`DragLayerState::start_drag`], [`DragLayerState::update_drag`], and
 /// [`DragLayerState::end_drag`].
 pub fn render_drag_layer(state: &DragLayerState, content: VNode) -> VNode {
-    VNode::Element(
-        VElement::new("div")
-            .class(state.class_string())
-            .style(state.position_style())
-            .child(content),
-    )
+    let mut el = VElement::new("div")
+        .class(state.class_string())
+        .style(state.position_style())
+        .attr("data-action", "drag-start");
+
+    if state.is_dragging {
+        el = el.attr("data-dragging", "true");
+    }
+
+    VNode::Element(el.child(content))
 }
 
 /// Events emitted by the drag layer

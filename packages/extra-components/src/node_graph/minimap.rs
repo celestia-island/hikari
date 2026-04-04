@@ -189,6 +189,7 @@ pub fn render_minimap(minimap: &NodeGraphMinimap) -> VNode {
     VNode::Element(
         VElement::new("div")
             .class("hi-node-graph-minimap-container")
+            .attr("data-action", "minimap-click")
             .style(minimap.container_style())
             .safe_svg(SafeSvg::new(&svg_parts)),
     )

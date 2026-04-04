@@ -1,10 +1,11 @@
 // packages/components/src/display/user_guide.rs
 // UserGuide component with Arknights + FUI styling
 
-use hikari_icons::{Icon, IconProps, MdiIcon};
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{TypedClass, ClassesBuilder, UserGuideClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::{basic::IconButton, prelude::*, styled::StyledComponent};
+use tairitsu_vdom::events::MouseEvent;
 
 pub struct UserGuideComponent;
 
@@ -106,11 +107,11 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
 
     let handle_prev = {
         let on_step_change = props.on_step_change.clone();
-        move |_| {
+        EventHandler::new(move |_: MouseEvent| {
             if !is_first_step && let Some(handler) = on_step_change.as_ref() {
                 handler.call(current_step - 1);
             }
-        }
+        })
     };
 
     let handle_skip = {
@@ -193,10 +194,11 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
                     // Navigation
                     div { class: {UserGuideClass::Navigation.class_name()},
                         if !is_first_step {
-                            button {
-                                class: {UserGuideClass::NavButton.class_name()},
-                                onclick: handle_prev,
-                                Icon { icon: MdiIcon::ChevronLeft, size: 18 }
+                            IconButton {
+                                icon: MdiIcon::ChevronLeft,
+                                size: crate::basic::IconButtonSize::Small,
+                                variant: crate::basic::IconButtonVariant::Ghost,
+                                onclick: Some(handle_prev),
                             }
                         }
 

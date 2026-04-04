@@ -210,11 +210,6 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
         if dragged_key_for_over.read().is_some() && props.drop_allowed {
             let key = item_key_3.clone();
             drag_over_key_for_over.set(Some(key));
-
-            if let Some(data_transfer) = &e.data_transfer {
-                // Note: drop_effect uses builder pattern, skip for now
-                let _ = data_transfer;
-            }
         }
     };
 

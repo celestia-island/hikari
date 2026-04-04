@@ -4,7 +4,7 @@
 #![expect(clippy::needless_update)]
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{TypedClass, ClassesBuilder, TransferClass};
+use hikari_palette::classes::{ClassesBuilder, TransferClass, TypedClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -321,8 +321,8 @@ fn TransferPanel(
         VNode::empty()
     };
 
-    // Pre-compute empty state - use items directly since filtered_items is already computed
-    let empty_state = if items.is_empty() {
+    // Pre-compute empty state - use filtered_items for accurate empty detection
+    let empty_state = if filtered_items.is_empty() {
         rsx! {
             li { class: TransferClass::PanelEmpty.class_name(), "No items" }
         }
@@ -332,7 +332,7 @@ fn TransferPanel(
 
     // Combine item nodes with empty state into a single Vec
     let mut list_children = item_nodes;
-    if items.is_empty() {
+    if filtered_items.is_empty() {
         list_children.push(empty_state);
     }
 

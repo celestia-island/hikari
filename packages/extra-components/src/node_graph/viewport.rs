@@ -135,8 +135,6 @@ impl Default for ViewportConfig {
 use tairitsu_vdom::{VElement, VNode, VText};
 
 pub fn render_viewport(viewport: &Viewport) -> VNode {
-    let mut children: Vec<VNode> = Vec::new();
-
     let zoom_in = VNode::Element(
         VElement::new("button")
             .class("hi-viewport-button")
@@ -156,11 +154,16 @@ pub fn render_viewport(viewport: &Viewport) -> VNode {
                     .child(VNode::Text(VText::new("+"))),
             )),
     );
-    children.push(zoom_in);
+
+    let zoom_level = VNode::Element(
+        VElement::new("span")
+            .class("hi-viewport-zoom-level")
+            .child(VNode::Text(VText::new(&viewport.zoom_text()))),
+    );
 
     let zoom_out = VNode::Element(
         VElement::new("button")
-            .class("hi-zoom-button hi-zoom-out")
+            .class("hi-viewport-button")
             .attr("aria-label", "Zoom out")
             .attr("title", "Zoom out")
             .attr(
@@ -171,30 +174,34 @@ pub fn render_viewport(viewport: &Viewport) -> VNode {
                     "true"
                 },
             )
-            .child(VNode::Text(VText::new("-"))),
+            .child(VNode::Element(
+                VElement::new("span")
+                    .class("hi-viewport-icon")
+                    .child(VNode::Text(VText::new("-"))),
+            )),
     );
-    children.push(zoom_out);
+
+    let zoom_wrapper = VNode::Element(
+        VElement::new("div")
+            .class("hi-viewport-zoom")
+            .child(zoom_in)
+            .child(zoom_level)
+            .child(zoom_out),
+    );
 
     let reset = VNode::Element(
         VElement::new("button")
-            .class("hi-zoom-button hi-zoom-reset")
+            .class("hi-viewport-reset")
             .attr("aria-label", "Reset view")
             .attr("title", "Reset view")
             .child(VNode::Text(VText::new("Reset"))),
     );
-    children.push(reset);
-
-    let display = VNode::Element(
-        VElement::new("div")
-            .class("hi-zoom-display")
-            .child(VNode::Text(VText::new(&viewport.zoom_text()))),
-    );
-    children.push(display);
 
     VNode::Element(
         VElement::new("div")
             .class("hi-node-viewport-controls")
-            .children(children),
+            .child(zoom_wrapper)
+            .child(reset),
     )
 }
 

@@ -188,7 +188,7 @@ pub fn Selection(props: SelectionProps) -> Element {
     rsx! {
         div { class: {container_classes},
 
-            div { class: {column_classes}, ..selection_items,
+            div { class: {column_classes},
 
                 if is_checkbox_type {
                     div { class: {SelectionClassNew::SelectionHeader.class_name()},
@@ -202,6 +202,7 @@ pub fn Selection(props: SelectionProps) -> Element {
                         }
                     }
                 }
+                ..selection_items,
             }
         }
     }

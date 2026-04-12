@@ -1,7 +1,7 @@
 // packages/components/src/entry/auto_complete.rs
 // AutoComplete component with Arknights + FUI styling
 
-use hikari_palette::classes::{TypedClass, AutoCompleteClass, ClassesBuilder};
+use hikari_palette::classes::{AutoCompleteClass, ClassesBuilder, TypedClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -154,7 +154,9 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
         }
     };
 
-    let input_classes = ClassesBuilder::new().add_typed(AutoCompleteClass::Input).build();
+    let input_classes = ClassesBuilder::new()
+        .add_typed(AutoCompleteClass::Input)
+        .build();
 
     let is_open_value = is_open.read();
     let focused_index_value = focused_index.read();
@@ -242,7 +244,7 @@ impl StyledComponent for AutoCompleteComponent {
 
 .hi-autocomplete-input:focus {
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 2px rgba(238, 162, 164, 0.1);
 }
 
 .hi-autocomplete-input:disabled {

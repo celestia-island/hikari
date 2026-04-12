@@ -8,33 +8,33 @@
 // 1. Color System
 // ============================================
 
-// Text Colors
+// Text Colors (Light theme defaults — matching legacy hikari)
 :root {
-  --hi-color-text-primary: #ffffff;
-  --hi-color-text-secondary: rgba(255, 255, 255, 0.7);
-  --hi-color-text-disabled: rgba(255, 255, 255, 0.3);
-  --hi-color-text-on-primary: #ffffff;
-  --hi-color-text-on-secondary: #ffffff;
+  --hi-color-text-primary: rgba(0, 0, 0, 0.9);
+  --hi-color-text-secondary: rgba(0, 0, 0, 0.6);
+  --hi-color-text-disabled: rgba(0, 0, 0, 0.3);
+  --hi-color-text-on-primary: rgba(0, 0, 0, 0.9);
+  --hi-color-text-on-secondary: rgba(0, 0, 0, 0.9);
 
   // Icon Colors
   --hi-icon-color: var(--hi-color-text-primary);
   --hi-icon-color-secondary: var(--hi-color-text-secondary);
   --hi-icon-color-disabled: var(--hi-color-text-disabled);
 
-  // Background Colors
-  --hi-bg-surface: rgba(30, 30, 30, 0.8);
-  --hi-bg-surface-dark: rgba(20, 20, 20, 0.9);
-  --hi-bg-overlay: rgba(0, 0, 0, 0.6);
+  // Background Colors (Light theme defaults)
+  --hi-bg-surface: rgba(255, 255, 255, 0.9);
+  --hi-bg-surface-dark: rgba(245, 245, 245, 0.95);
+  --hi-bg-overlay: rgba(0, 0, 0, 0.5);
   --hi-bg-transparent: transparent;
 
-  // Border Colors
-  --hi-border-color: rgba(255, 255, 255, 0.1);
+  // Border Colors (Light theme defaults)
+  --hi-border-color: rgba(0, 0, 0, 0.1);
   --hi-border-color-focus: var(--hi-color-primary);
-  --hi-border-color-disabled: rgba(255, 255, 255, 0.05);
+  --hi-border-color-disabled: rgba(0, 0, 0, 0.05);
 
   // Shadow Colors
   --hi-shadow-color: rgba(0, 0, 0, 0.1);
-  --hi-glow-color: rgba(255, 79, 0, 0.5);
+  --hi-glow-color: rgba(255, 255, 255, 0.5);
 
   // ============================================
   // 2. Border Radius System
@@ -183,8 +183,8 @@
 // ============================================
 
 [data-theme="light"] {
-  --hi-color-text-primary: #1a1a1a;
-  --hi-color-text-secondary: rgba(0, 0, 0, 0.7);
+  --hi-color-text-primary: rgba(0, 0, 0, 0.9);
+  --hi-color-text-secondary: rgba(0, 0, 0, 0.6);
   --hi-color-text-disabled: rgba(0, 0, 0, 0.3);
   
   --hi-bg-surface: rgba(255, 255, 255, 0.9);

@@ -135,7 +135,7 @@
 
       // Glow effect
       border-radius: vars.$hikari-radius-fui-sm;
-      background: linear-gradient(135deg, var(--hi-primary), rgba(59, 130, 246, 0.2));
+      background: linear-gradient(135deg, var(--hi-primary), rgba(238, 162, 164, 0.2));
       --hi-glow-transparent: false;
       --hi-glow-bg-color: var(--hi-primary);
       box-shadow:
@@ -630,6 +630,7 @@
   margin-top: vars.$hikari-spacing-md;
   padding-top: vars.$hikari-spacing-lg;
   padding-bottom: vars.$hikari-spacing-lg;
+  min-height: 88px;
 
   // Transition
   // DISABLED - migrated to JS animation
@@ -820,16 +821,16 @@
   background: var(--hi-card-bg);
 }
 
-// Light variant
+// Light variant (mint-tinted surface to match legacy)
 .hi-aside-light {
-  background: var(--hi-surface);
+  background: var(--hi-aside-surface, var(--hi-surface));
 
   &::before {
     background: linear-gradient(
       180deg,
       transparent 0%,
       var(--hi-color-primary) 20%,
-      rgba(59, 130, 246, 0.6) 50%,
+      rgba(238, 162, 164, 0.6) 50%,
       var(--hi-color-primary) 80%,
       transparent 100%
     );
@@ -839,14 +840,14 @@
     color: var(--hi-color-text-primary);
 
     &.hi-aside-menu-item-active {
-      background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+      background: linear-gradient(90deg, rgba(238, 162, 164, 0.15), rgba(238, 162, 164, 0.05));
     }
   }
 }
 
 // Primary variant
 .hi-aside-primary {
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9));
+  background: linear-gradient(180deg, rgba(238, 162, 164, 0.9), rgba(216, 139, 142, 0.9));
   border-color: var(--hi-white-20, rgba(255, 255, 255, 0.2));
 
   &::before {

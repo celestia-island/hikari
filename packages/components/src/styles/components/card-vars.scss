@@ -26,7 +26,7 @@
   
   // Border Colors
   --hi-card-border-color: rgba(226, 232, 240, 0.8);
-  --hi-card-border-color-hover: rgba(59, 130, 246, 0.3);
+  --hi-card-border-color-hover: rgba(238, 162, 164, 0.3);
   --hi-card-divider-color: var(--hi-color-border);
   
   // Shadow
@@ -136,5 +136,5 @@
 // ============================================
 
 .hi-card-hoverable {
-  --hi-card-border-color-hover: rgba(59, 130, 246, 0.3);
+  --hi-card-border-color-hover: rgba(238, 162, 164, 0.3);
 }

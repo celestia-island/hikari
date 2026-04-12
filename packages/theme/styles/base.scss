@@ -16,17 +16,17 @@
 // ============================================
 
 :root {
-    // 默认浅色主题（作为 fallback）
-    --hi-color-background: #D6ECF0;  // 月白
-    --hi-color-surface: #F0F4F8;  // 更亮的白色
-    --hi-color-border: #C4D8DA;  // 素（深）
+    // 默认浅色主题（作为 fallback）— matching legacy computed styles
+    --hi-color-background: #E0F0E9;  // warm mint-cream
+    --hi-color-surface: rgba(255, 255, 255, 0.7);
+    --hi-color-border: #C4D8DA;
 
-    // 文字颜色
-    --hi-color-text-primary: rgba(0, 0, 0, 0.9);
-    --hi-color-text-secondary: rgba(0, 0, 0, 0.6);
+    // 文字颜色 — slate gray like legacy
+    --hi-color-text-primary: #50616D;
+    --hi-color-text-secondary: rgba(80, 97, 109, 0.65);
 
     // 主题色（通过 CSS 变量引用）
-    --hi-color-primary: #EEA2A4;  // 牡丹粉红
+    --hi-color-primary: #FFC0CB;  // pink (matching legacy)
     --hi-color-secondary: #519A73;  // 苍翠
     --hi-color-accent: #F7B500;  // 姜黄
     --hi-color-success: #0EB840;  // 葱倩
@@ -100,17 +100,17 @@
     // ============================================
 
     // 通用文字颜色
-    --hi-color-text-primary: rgba(0, 0, 0, 0.9);
-    --hi-color-text-secondary: rgba(0, 0, 0, 0.6);
+    --hi-color-text-primary: #50616D;
+    --hi-color-text-secondary: rgba(80, 97, 109, 0.65);
 
     // 主题色上的文字颜色（根据亮度动态计算，反色原则）
-    // primary: 牡丹粉红 (0.725) → 黑色
-    // secondary: 苍翠 (0.501) → 黑色
-    // success: 葱倩 (0.469) → 白色
-    // warning: 鹅黄 (0.825) → 黑色
-    // danger: 朱红 (0.474) → 白色
-    --hi-color-text-on-primary: rgba(0, 0, 0, 0.9);
-    --hi-color-text-on-secondary: rgba(0, 0, 0, 0.9);
+    // primary: pink (0.8) → dark
+    // secondary: 苍翠 (0.501) → dark
+    // success: 葱倩 (0.469) → white
+    // warning: 鹅黄 (0.825) → dark
+    // danger: 朱红 (0.474) → white
+    --hi-color-text-on-primary: #ffffff;
+    --hi-color-text-on-secondary: #ffffff;
     --hi-color-text-on-success: var(--hi-color-white-100);
     --hi-color-text-on-warning: rgba(0, 0, 0, 0.9);
     --hi-color-text-on-danger: var(--hi-color-white-100);
@@ -120,11 +120,11 @@
     // 4. 按钮颜色（基于基础色）
     // ============================================
 
-    // Primary 按钮渐变（基于 --hi-color-primary 牡丹粉红）
+    // Primary 按钮渐变（基于 --hi-color-primary pink）
     --hi-button-primary: var(--hi-color-primary);
-    --hi-button-primary-hover: rgba(238, 162, 164, 0.8);
-    --hi-button-primary-light: #F4C4C5;
-    --hi-button-primary-dark: #D88B8E;
+    --hi-button-primary-hover: rgba(255, 192, 203, 0.85);
+    --hi-button-primary-light: #FFE4E9;
+    --hi-button-primary-dark: #FF9AA9;
 
     // Secondary 按钮渐变（基于 --hi-color-secondary 苍翠）
     --hi-button-secondary: var(--hi-color-secondary);
@@ -197,8 +197,8 @@
     // 5. Ghost 按钮颜色（基于文字色）
     // ============================================
 
-    // Ghost 文字和边框（白天模式使用灰色）
-    --hi-ghost-text: var(--hi-color-text-primary);
+    // Ghost 文字和边框（白天模式使用 slate gray）
+    --hi-ghost-text: #50616D;
     --hi-ghost-border: var(--hi-color-gray-30);
     --hi-ghost-glow: var(--hi-glow-gray-50);
 
@@ -232,7 +232,7 @@
     --hi-glow-color: var(--hi-glow-white-50);
 
     // Glow 按钮颜色（基于主题色，用于按钮 glow 效果）
-    --hi-glow-button-primary: rgba(255, 179, 167, 0.6);
+    --hi-glow-button-primary: rgba(255, 192, 203, 0.6);
     --hi-glow-button-secondary: rgba(6, 82, 121, 0.6);
     --hi-glow-button-success: rgba(92, 191, 145, 0.6);
     --hi-glow-button-danger: rgba(232, 90, 79, 0.6);
@@ -288,7 +288,7 @@ body {
     font-family: $hikari-font-family-sans;
     font-size: $hikari-font-size-base;
     line-height: 1.5;
-    color: var(--hi-color-text-primary);
+    color: #50616D;
     background-color: var(--hi-color-background);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -330,11 +330,11 @@ h6 {
 }
 
 p, span, div, label {
-    color: var(--hi-color-text-primary);
+    color: #50616D;
 }
 
 a {
-    color: var(--hi-color-text-primary);
+    color: #50616D;
     text-decoration: none;
     transition: color $hikari-transition-fast;
 

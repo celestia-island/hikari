@@ -169,7 +169,7 @@ pub fn render_minimap(minimap: &NodeGraphMinimap) -> VNode {
     svg_parts.push_str(r#"<g class="hi-minimap-nodes">"#);
     for node in &minimap.nodes {
         svg_parts.push_str(&format!(
-            r#"<rect x="{}" y="{}" width="{}" height="{}" fill="var(--hi-color-node, #6366f1)" rx="2"/>"#,
+            r#"<rect x="{}" y="{}" width="{}" height="{}" fill="var(--hi-color-node, #EEA2A4)" rx="2"/>"#,
             node.position.0 * scale_x,
             node.position.1 * scale_y,
             node.size.0 * scale_x,
@@ -180,7 +180,7 @@ pub fn render_minimap(minimap: &NodeGraphMinimap) -> VNode {
 
     let (vp_x, vp_y, vp_w, vp_h) = minimap.viewport_rect(canvas_w, canvas_h);
     svg_parts.push_str(&format!(
-        r#"<rect x="{}" y="{}" width="{}" height="{}" fill="none" stroke="var(--hi-color-primary, #6366f1)" stroke-width="1.5" rx="1"/>"#,
+        r#"<rect x="{}" y="{}" width="{}" height="{}" fill="none" stroke="var(--hi-color-primary, #EEA2A4)" stroke-width="1.5" rx="1"/>"#,
         vp_x, vp_y, vp_w, vp_h,
     ));
 

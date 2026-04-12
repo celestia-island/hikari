@@ -29,8 +29,8 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 
-  // Ensure content stays above background
-  > * {
+  // Ensure content stays above background (but not .hi-background which needs position:fixed)
+  > *:not(.hi-background) {
     position: relative;
     z-index: 1;
   }

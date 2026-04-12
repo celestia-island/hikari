@@ -88,10 +88,10 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 // Focus Pulse - Subtle pulse animation when focused
 @keyframes focus-pulse {
   0%, 100% {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 0 3px rgba(238, 162, 164, 0.3);
   }
   50% {
-    box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 5px rgba(238, 162, 164, 0.1);
   }
 }
 
@@ -106,7 +106,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   transition: box-shadow $animation-duration-normal $animation-easing-default;
 
   &:focus {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 3px rgba(238, 162, 164, 0.5);
     outline: none;
   }
 }
@@ -127,7 +127,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   &:focus::after {
-    border-color: rgba(59, 130, 246, 0.5);
+    border-color: rgba(238, 162, 164, 0.5);
   }
 }
 
@@ -572,7 +572,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   &:hover {
     border-color: var(--hi-color-primary, #3b82f6);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+    box-shadow: 0 0 0 2px rgba(238, 162, 164, 0.15);
   }
 
   &.is-active {

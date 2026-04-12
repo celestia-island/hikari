@@ -181,9 +181,9 @@ use tairitsu_vdom::{VElement, VNode};
 
 pub fn render_connection(connection: &Connection) -> VNode {
     let stroke_color = if connection.selected {
-        "var(--hi-color-primary, #6366f1)"
+        "var(--hi-color-primary, #EEA2A4)"
     } else {
-        "var(--hi-color-connection, #94a3b8)"
+        "var(--hi-color-connection, rgba(0,0,0,0.3))"
     };
 
     let svg_content = format!(
@@ -206,9 +206,9 @@ pub fn render_connection(connection: &Connection) -> VNode {
 pub fn render_connection_line(line: &ConnectionLine) -> VNode {
     let path_data = line.path_data();
     let stroke_color = if line.selected {
-        "var(--hi-color-primary, #6366f1)"
+        "var(--hi-color-primary, #EEA2A4)"
     } else {
-        "var(--hi-color-connection, #94a3b8)"
+        "var(--hi-color-connection, rgba(0,0,0,0.3))"
     };
     let stroke_width = if line.selected { "2.5" } else { "2" };
     let class = if line.selected {

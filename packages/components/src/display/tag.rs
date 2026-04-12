@@ -1,7 +1,9 @@
 // packages/components/src/display/tag.rs
 // Tag component with Arknights + FUI styling
 
-use hikari_palette::classes::{TypedClass, AlignItems, ClassesBuilder, Display, Flex, Gap, TagClass};
+use hikari_palette::classes::{
+    AlignItems, ClassesBuilder, Display, Flex, Gap, TagClass, TypedClass,
+};
 
 use crate::{prelude::*, styled::StyledComponent};
 
@@ -97,14 +99,14 @@ impl StyledComponent for TagComponent {
 }
 
 .hi-tag-primary {
-    background-color: rgba(59, 130, 246, 0.1);
+    background-color: rgba(238, 162, 164, 0.1);
     color: var(--hi-color-primary);
-    border-color: rgba(59, 130, 246, 0.3);
+    border-color: rgba(238, 162, 164, 0.3);
 }
 
 .hi-tag-primary:hover {
-    background-color: rgba(59, 130, 246, 0.2);
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+    background-color: rgba(238, 162, 164, 0.2);
+    box-shadow: 0 0 8px rgba(238, 162, 164, 0.3);
 }
 
 .hi-tag-success {

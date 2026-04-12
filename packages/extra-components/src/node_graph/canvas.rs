@@ -460,7 +460,7 @@ pub fn render_node_graph_canvas_with_history(
 
         let path_data = connection.svg_path_data(from_pos, to_pos);
         let stroke_color = if connection.selected {
-            "var(--hi-color-primary, #6366f1)"
+            "var(--hi-color-primary, #EEA2A4)"
         } else {
             "var(--hi-color-connection, #94a3b8)"
         };

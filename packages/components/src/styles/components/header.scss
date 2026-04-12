@@ -29,12 +29,12 @@
   // Appearance - 移除圆角
   border-radius: 0;
 
-  // Semi-transparent surface background (theme-aware)
-  background: var(--hi-surface);
+  // Semi-transparent surface background (theme-aware, mint-tinted for legacy match)
+  background: var(--hi-header-surface, var(--hi-surface));
   backdrop-filter: blur(4px);
 
-  // Simple border
-  border-bottom: 1px solid var(--hi-border);
+  // Simple border (mint-tinted to match legacy)
+  border-bottom: 1px solid var(--hi-color-background, var(--hi-border));
   box-shadow: 0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.05));
 
   // Transitions - smooth GSAP-style easing
@@ -130,7 +130,7 @@
 
     // Glow effect
     border-radius: vars.$hikari-radius-fui-sm;
-    background: linear-gradient(135deg, var(--hi-primary), rgba(59, 130, 246, 0.2));
+    background: linear-gradient(135deg, var(--hi-primary), rgba(238, 162, 164, 0.2));
     --hi-glow-transparent: false;
     --hi-glow-bg-color: var(--hi-primary);
     box-shadow:
@@ -641,7 +641,7 @@
 
 // Primary variant
 .hi-header-primary {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9));
+  background: linear-gradient(135deg, rgba(238, 162, 164, 0.9), rgba(216, 139, 142, 0.9));
 
   &::before {
     background: linear-gradient(

@@ -1,6 +1,7 @@
+use super::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use hikari_icons::generated::mdi_selected::get;
 use hikari_icons::MdiIcon;
-use tairitsu_vdom::{get_bounding_client_rect, set_style, VElement, VNode, VText};
+use tairitsu_vdom::{VElement, VNode, VText};
 
 struct NavItem {
     label: &'static str,
@@ -297,47 +298,6 @@ fn icon_el(icon: MdiIcon) -> VNode {
     )
 }
 
-fn glow_wrap(children: VNode) -> VNode {
-    let onmousemove = move |e: std::boxed::Box<dyn tairitsu_vdom::EventData>| {
-        if let Some(me) = e.as_any().downcast_ref::<tairitsu_vdom::MouseEvent>() {
-            if let Some(target) = me.target {
-                let rect = get_bounding_client_rect(target);
-                if rect.width > 0.0 && rect.height > 0.0 {
-                    let px = (me.offset_x as f64 / rect.width * 100.0).clamp(0.0, 100.0);
-                    let py = (me.offset_y as f64 / rect.height * 100.0).clamp(0.0, 100.0);
-                    set_style(target, "--glow-x", &format!("{:.1}%", px));
-                    set_style(target, "--glow-y", &format!("{:.1}%", py));
-                }
-            }
-        }
-    };
-    let onmouseenter = move |e: std::boxed::Box<dyn tairitsu_vdom::EventData>| {
-        if let Some(me) = e.as_any().downcast_ref::<tairitsu_vdom::MouseEvent>() {
-            if let Some(target) = me.target {
-                set_style(target, "--glow-intensity", "1");
-            }
-        }
-    };
-    let onmouseleave = move |e: std::boxed::Box<dyn tairitsu_vdom::EventData>| {
-        if let Some(me) = e.as_any().downcast_ref::<tairitsu_vdom::MouseEvent>() {
-            if let Some(target) = me.target {
-                set_style(target, "--glow-x", "50%");
-                set_style(target, "--glow-y", "50%");
-                set_style(target, "--glow-intensity", "0");
-            }
-        }
-    };
-    VNode::Element(
-        VElement::new("div")
-            .class("hi-glow-wrapper hi-glow-blur-medium hi-glow-soft")
-            .attr("style", "--glow-x:50%;--glow-y:50%;--glow-intensity:0;")
-            .on_event("mousemove", onmousemove)
-            .on_event("mouseenter", onmouseenter)
-            .on_event("mouseleave", onmouseleave)
-            .child(children),
-    )
-}
-
 fn menu_item(href: &str, label: &str, icon: MdiIcon) -> VNode {
     let inner = VNode::Element(
         VElement::new("a")
@@ -350,11 +310,18 @@ fn menu_item(href: &str, label: &str, icon: MdiIcon) -> VNode {
                     .child(txt(label)),
             )),
     );
-    glow_wrap(VNode::Element(
-        VElement::new("li")
-            .class("hi-menu-item hi-menu-height-compact")
-            .child(inner),
-    ))
+    glow_wrap(
+        VNode::Element(
+            VElement::new("li")
+                .class("hi-menu-item hi-menu-height-compact")
+                .child(inner),
+        ),
+        GlowConfig {
+            intensity: GlowIntensity::Dim,
+            color: GlowColor::Primary,
+            ..Default::default()
+        },
+    )
 }
 
 fn submenu_title(label: &str, _level: u32) -> VNode {
@@ -397,11 +364,18 @@ fn plain_menu_item(href: &str, label: &str, _level: u32) -> VNode {
                     .child(txt(label)),
             )),
     );
-    glow_wrap(VNode::Element(
-        VElement::new("li")
-            .class(format!("hi-menu-item hi-menu-height-compact"))
-            .child(inner),
-    ))
+    glow_wrap(
+        VNode::Element(
+            VElement::new("li")
+                .class(format!("hi-menu-item hi-menu-height-compact"))
+                .child(inner),
+        ),
+        GlowConfig {
+            intensity: GlowIntensity::Dim,
+            color: GlowColor::Primary,
+            ..Default::default()
+        },
+    )
 }
 
 pub fn render() -> VNode {

@@ -635,6 +635,92 @@ aside .hi-menu {
   height: 13px;
 }
 
+// ── GlowWrapper — mouse-following spotlight effect ─────────────────────
+
+.hi-glow-wrapper,
+.hi-glow-wrapper-block {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    background: radial-gradient(
+      circle at var(--glow-x, 50%) var(--glow-y, 50%),
+      var(--hi-glow-color, rgba(245, 169, 169, 0.35)) 0%,
+      transparent calc(var(--glow-spread, 1.6) * 100%)
+    );
+  }
+
+  &:hover::before,
+  &[data-glow-visible="1"]::before {
+    opacity: var(--glow-opacity, 0.15);
+  }
+
+  > * {
+    pointer-events: auto;
+    position: relative;
+    z-index: 1;
+  }
+}
+
+.hi-glow-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  align-self: flex-start;
+  border-radius: 8px;
+  overflow: visible;
+}
+
+.hi-glow-wrapper-block {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border-radius: 12px;
+  overflow: visible;
+}
+
+// Intensity levels
+.hi-glow-dim {
+  --glow-opacity: 0.07;
+  --glow-spread: 2.4;
+}
+.hi-glow-soft {
+  --glow-opacity: 0.15;
+  --glow-spread: 1.6;
+}
+.hi-glow-bright {
+  --glow-opacity: 0.30;
+  --glow-spread: 1.3;
+}
+
+// Button enhancements inside glow wrapper
+.hi-glow-wrapper .hi-btn:hover {
+  transform: none;
+}
+.hi-glow-wrapper .hi-btn:focus-visible {
+  box-shadow: 0 0 0 2px currentColor, 0 0 12px var(--hi-glow-color, rgba(245,169,169,0.35));
+}
+.hi-glow-wrapper .hi-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+// Menu item glow (sidebar)
+.hi-glow-wrapper .hi-menu-item-inner:hover {
+  background: transparent;
+}
+.hi-glow-wrapper .hi-menu-item-inner.is-active,
+.hi-glow-wrapper .hi-menu-item-inner:active {
+  background: transparent;
+}
+
 // ── Demo row for component pages ───────────────────────────────────────
 
 .demo-row {

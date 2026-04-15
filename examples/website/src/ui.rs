@@ -4,11 +4,13 @@
 //! that integrate seamlessly with the hikari-animation system.
 
 use crate::animation::{animation_attrs, AnimationId};
+use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use tairitsu_vdom::{VElement, VNode};
 
 /// Button component with animation support
 pub struct Button {
     element: VElement,
+    glow: Option<GlowConfig>,
 }
 
 impl Button {
@@ -16,6 +18,7 @@ impl Button {
     pub fn new() -> Self {
         Self {
             element: VElement::new("button").class("hi-btn hi-btn--primary"),
+            glow: None,
         }
     }
 
@@ -70,9 +73,24 @@ impl Button {
         self
     }
 
+    /// Enable mouse-following glow effect
+    pub fn glow(mut self, intensity: GlowIntensity, color: GlowColor) -> Self {
+        self.glow = Some(GlowConfig {
+            intensity,
+            color,
+            ..Default::default()
+        });
+        self
+    }
+
     /// Build into VNode
     pub fn build(self) -> VNode {
-        VNode::Element(self.element)
+        let node = VNode::Element(self.element);
+        if let Some(config) = self.glow {
+            glow_wrap(node, config)
+        } else {
+            node
+        }
     }
 }
 
@@ -123,6 +141,7 @@ impl ButtonSize {
 /// Input component with animation support
 pub struct Input {
     element: VElement,
+    glow: Option<GlowConfig>,
 }
 
 impl Input {
@@ -130,6 +149,7 @@ impl Input {
     pub fn new() -> Self {
         Self {
             element: VElement::new("input").class("hi-input"),
+            glow: None,
         }
     }
 
@@ -192,9 +212,24 @@ impl Input {
         self
     }
 
+    /// Enable mouse-following glow effect
+    pub fn glow(mut self, intensity: GlowIntensity, color: GlowColor) -> Self {
+        self.glow = Some(GlowConfig {
+            intensity,
+            color,
+            ..Default::default()
+        });
+        self
+    }
+
     /// Build into VNode
     pub fn build(self) -> VNode {
-        VNode::Element(self.element)
+        let node = VNode::Element(self.element);
+        if let Some(config) = self.glow {
+            glow_wrap(node, config)
+        } else {
+            node
+        }
     }
 }
 
@@ -233,6 +268,7 @@ impl InputType {
 /// Card component with animation support
 pub struct Card {
     element: VElement,
+    glow: Option<GlowConfig>,
 }
 
 impl Card {
@@ -240,6 +276,7 @@ impl Card {
     pub fn new() -> Self {
         Self {
             element: VElement::new("div").class("card"),
+            glow: None,
         }
     }
 
@@ -305,9 +342,25 @@ impl Card {
         self
     }
 
+    /// Enable mouse-following glow effect (block mode for cards)
+    pub fn glow(mut self, intensity: GlowIntensity, color: GlowColor) -> Self {
+        self.glow = Some(GlowConfig {
+            intensity,
+            color,
+            block: true,
+            ..Default::default()
+        });
+        self
+    }
+
     /// Build into VNode
     pub fn build(self) -> VNode {
-        VNode::Element(self.element)
+        let node = VNode::Element(self.element);
+        if let Some(config) = self.glow {
+            glow_wrap(node, config)
+        } else {
+            node
+        }
     }
 }
 
@@ -322,6 +375,7 @@ pub fn button_hover_scale(text: impl Into<String>) -> VNode {
     Button::new()
         .text(text)
         .animation(AnimationId::HoverScale)
+        .glow(GlowIntensity::Soft, GlowColor::Primary)
         .build()
 }
 
@@ -330,6 +384,7 @@ pub fn button_hover_glow(text: impl Into<String>) -> VNode {
     Button::new()
         .text(text)
         .animation(AnimationId::HoverGlow)
+        .glow(GlowIntensity::Bright, GlowColor::Primary)
         .build()
 }
 
@@ -338,6 +393,7 @@ pub fn input_focus_glow(placeholder: impl Into<String>) -> VNode {
     Input::new()
         .placeholder(placeholder)
         .animation(AnimationId::FocusGlow)
+        .glow(GlowIntensity::Soft, GlowColor::Ghost)
         .build()
 }
 
@@ -347,5 +403,6 @@ pub fn card_hover_lift(title: impl Into<String>, body: impl Into<String>) -> VNo
         .title(title)
         .body(body)
         .animation(AnimationId::HoverLift)
+        .glow(GlowIntensity::Dim, GlowColor::Primary)
         .build()
 }

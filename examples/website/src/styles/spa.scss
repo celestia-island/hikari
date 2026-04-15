@@ -663,72 +663,11 @@ aside .hi-menu {
 }
 
 // ── GlowWrapper — mouse-following spotlight effect ─────────────────────
-// Uses ::before pseudo-element with radial-gradient positioned by
-// CSS custom properties (--glow-x, --glow-y) set via JS on mousemove.
-// CRITICAL: spread must be < 1.0 so gradient reaches transparent WITHIN bounds.
+// The entire glow system (intensity classes, ::before gradient, hover/active
+// opacity scaling) is defined in bundle.css which mirrors the legacy theme.
+// Only add overrides here for things bundle.css does NOT cover.
 
-.hi-glow-wrapper,
-.hi-glow-wrapper-block {
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 1;
-    border-radius: inherit;
-    opacity: 0;
-    transition: opacity 0.25s ease;
-    background: radial-gradient(
-      circle at var(--glow-x, 50%) var(--glow-y, 50%),
-      var(--hi-glow-color, rgba(245, 169, 169, 0.10)) 0%,
-      transparent calc(var(--glow-spread, 0.5) * 100%)
-    );
-  }
-
-  &:hover::before {
-    opacity: var(--glow-opacity, 1);
-  }
-
-  > * {
-    position: relative;
-    z-index: 2;
-  }
-}
-
-.hi-glow-wrapper {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  align-self: flex-start;
-  border-radius: 8px;
-}
-
-.hi-glow-wrapper-block {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  border-radius: 12px;
-}
-
-// Intensity levels — spread < 1.0 for true spotlight fade within bounds
-.hi-glow-dim {
-  --glow-opacity: 0.35;
-  --glow-spread: 0.55;
-}
-.hi-glow-soft {
-  --glow-opacity: 0.5;
-  --glow-spread: 0.45;
-}
-.hi-glow-bright {
-  --glow-opacity: 0.8;
-  --glow-spread: 0.35;
-}
-
-// Button enhancements inside glow wrapper
+// Button enhancements inside glow wrapper (bundle.css uses .hi-button, we use .hi-btn)
 .hi-glow-wrapper .hi-btn:hover {
   transform: none;
 }

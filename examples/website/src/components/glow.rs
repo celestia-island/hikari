@@ -21,30 +21,16 @@ pub enum GlowColor {
 impl GlowColor {
     fn css_var(&self) -> &'static str {
         match self {
-            Self::Primary => "var(--hi-glow-button-primary, rgba(245,169,169,0.10))",
-            Self::Ghost => "var(--hi-ghost-glow, rgba(128,128,128,0.06))",
-            Self::Secondary => "var(--hi-glow-button-secondary, rgba(81,154,115,0.08))",
-            Self::Danger => "var(--hi-glow-button-danger, rgba(239,68,68,0.08))",
-            Self::Success => "var(--hi-glow-button-success, rgba(34,197,94,0.08))",
+            Self::Primary => "var(--hi-glow-button-primary, rgba(255,192,203,0.6))",
+            Self::Ghost => "var(--hi-ghost-glow, rgba(128,128,128,0.5))",
+            Self::Secondary => "var(--hi-glow-button-secondary, rgba(6,82,121,0.6))",
+            Self::Danger => "var(--hi-glow-button-danger, rgba(239,68,68,0.6))",
+            Self::Success => "var(--hi-glow-button-success, rgba(34,197,94,0.6))",
         }
     }
 }
 
 impl GlowIntensity {
-    fn opacity(&self) -> f32 {
-        match self {
-            Self::Dim => 0.35,
-            Self::Soft => 0.50,
-            Self::Bright => 0.80,
-        }
-    }
-    fn spread(&self) -> f32 {
-        match self {
-            Self::Dim => 0.55,
-            Self::Soft => 0.45,
-            Self::Bright => 0.35,
-        }
-    }
     fn class_name(&self) -> &'static str {
         match self {
             Self::Dim => "hi-glow-dim",
@@ -73,14 +59,10 @@ impl Default for GlowConfig {
 }
 
 pub fn glow_wrap(children: VNode, config: GlowConfig) -> VNode {
-    let opacity = config.intensity.opacity();
-    let spread = config.intensity.spread();
     let intensity_class = config.intensity.class_name();
     let color_var = config.color.css_var();
 
-    let initial_style = format!(
-        "--glow-x:50%;--glow-y:50%;--glow-opacity:{opacity};--glow-spread:{spread};--hi-glow-color:{color_var};"
-    );
+    let initial_style = format!("--glow-x:50%;--glow-y:50%;--hi-glow-color:{color_var};");
 
     let block_class = if config.block {
         " hi-glow-wrapper-block"

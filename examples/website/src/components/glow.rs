@@ -1,9 +1,4 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
-use tairitsu_vdom::{
-    get_bounding_client_rect, request_animation_frame, set_style, VElement, VNode,
-};
+use tairitsu_vdom::{get_bounding_client_rect, set_style, VElement, VNode};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum GlowIntensity {
@@ -77,18 +72,10 @@ impl Default for GlowConfig {
     }
 }
 
-struct GlowState {
-    element: u64,
-    mouse_x: f64,
-    mouse_y: f64,
-    active: bool,
-}
-
 pub fn glow_wrap(children: VNode, config: GlowConfig) -> VNode {
-    let intensity = config.intensity;
-    let opacity = intensity.opacity();
-    let spread = intensity.spread();
-    let intensity_class = intensity.class_name();
+    let opacity = config.intensity.opacity();
+    let spread = config.intensity.spread();
+    let intensity_class = config.intensity.class_name();
     let color_var = config.color.css_var();
 
     let initial_style = format!(
@@ -107,69 +94,27 @@ pub fn glow_wrap(children: VNode, config: GlowConfig) -> VNode {
     };
     let classes = format!("hi-glow-wrapper{block_class} {intensity_class}{extra}");
 
-    let state: Rc<RefCell<Option<GlowState>>> = Rc::new(RefCell::new(None));
-
-    let onmouseenter = {
-        let state = Rc::clone(&state);
-        move |e: std::boxed::Box<dyn tairitsu_vdom::EventData>| {
-            if let Some(me) = e.as_any().downcast_ref::<tairitsu_vdom::MouseEvent>() {
-                let elem = me.current_target.or(me.target);
-                if let Some(target) = elem {
-                    let mut s = state.borrow_mut();
-                    *s = Some(GlowState {
-                        element: target,
-                        mouse_x: 50.0,
-                        mouse_y: 50.0,
-                        active: true,
-                    });
-                    let rect = get_bounding_client_rect(target);
-                    if rect.width > 0.0 && rect.height > 0.0 {
-                        let px = (me.offset_x as f64 / rect.width * 100.0).clamp(0.0, 100.0);
-                        let py = (me.offset_y as f64 / rect.height * 100.0).clamp(0.0, 100.0);
-                        (*s).as_mut().unwrap().mouse_x = px;
-                        (*s).as_mut().unwrap().mouse_y = py;
-                    }
-                    drop(s);
-                    start_glow_loop(Rc::clone(&state));
+    let onmousemove = move |e: std::boxed::Box<dyn tairitsu_vdom::EventData>| {
+        if let Some(me) = e.as_any().downcast_ref::<tairitsu_vdom::MouseEvent>() {
+            let elem = me.current_target.or(me.target);
+            if let Some(target) = elem {
+                let rect = get_bounding_client_rect(target);
+                if rect.width > 0.0 && rect.height > 0.0 {
+                    let px = (me.offset_x as f64 / rect.width * 100.0).clamp(0.0, 100.0);
+                    let py = (me.offset_y as f64 / rect.height * 100.0).clamp(0.0, 100.0);
+                    set_style(target, "--glow-x", &format!("{:.1}%", px));
+                    set_style(target, "--glow-y", &format!("{:.1}%", py));
                 }
             }
         }
     };
 
-    let onmousemove = {
-        let state = Rc::clone(&state);
-        move |e: std::boxed::Box<dyn tairitsu_vdom::EventData>| {
-            if let Some(me) = e.as_any().downcast_ref::<tairitsu_vdom::MouseEvent>() {
-                let elem = me.current_target.or(me.target);
-                if let Some(target) = elem {
-                    let mut s = state.borrow_mut();
-                    if let Some(ref mut gs) = *s {
-                        gs.element = target;
-                        let rect = get_bounding_client_rect(target);
-                        if rect.width > 0.0 && rect.height > 0.0 {
-                            let px = (me.offset_x as f64 / rect.width * 100.0).clamp(0.0, 100.0);
-                            let py = (me.offset_y as f64 / rect.height * 100.0).clamp(0.0, 100.0);
-                            gs.mouse_x = px;
-                            gs.mouse_y = py;
-                        }
-                    }
-                }
-            }
-        }
-    };
-
-    let onmouseleave = {
-        let state = Rc::clone(&state);
-        move |e: std::boxed::Box<dyn tairitsu_vdom::EventData>| {
-            if let Some(me) = e.as_any().downcast_ref::<tairitsu_vdom::MouseEvent>() {
-                let elem = me.current_target.or(me.target);
-                if let Some(target) = elem {
-                    if let Some(ref mut gs) = *state.borrow_mut() {
-                        gs.active = false;
-                    }
-                    set_style(target, "--glow-x", "50%");
-                    set_style(target, "--glow-y", "50%");
-                }
+    let onmouseleave = move |e: std::boxed::Box<dyn tairitsu_vdom::EventData>| {
+        if let Some(me) = e.as_any().downcast_ref::<tairitsu_vdom::MouseEvent>() {
+            let elem = me.current_target.or(me.target);
+            if let Some(target) = elem {
+                set_style(target, "--glow-x", "50%");
+                set_style(target, "--glow-y", "50%");
             }
         }
     };
@@ -179,27 +124,8 @@ pub fn glow_wrap(children: VNode, config: GlowConfig) -> VNode {
             .class(classes)
             .attr("data-glow", "true")
             .attr("style", &initial_style)
-            .on_event("mouseenter", onmouseenter)
             .on_event("mousemove", onmousemove)
             .on_event("mouseleave", onmouseleave)
             .child(children),
     )
-}
-
-fn start_glow_loop(state: Rc<RefCell<Option<GlowState>>>) {
-    request_animation_frame(Box::new(move |_timestamp| {
-        let (element, x, y, still_active) = {
-            let s = state.borrow();
-            match s.as_ref() {
-                Some(gs) => (gs.element, gs.mouse_x, gs.mouse_y, gs.active),
-                None => return,
-            }
-        };
-
-        if still_active {
-            set_style(element, "--glow-x", &format!("{:.1}%", x));
-            set_style(element, "--glow-y", &format!("{:.1}%", y));
-            start_glow_loop(state);
-        }
-    }));
 }

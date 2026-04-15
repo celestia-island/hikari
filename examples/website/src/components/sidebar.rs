@@ -293,7 +293,6 @@ fn icon_el(icon: MdiIcon) -> VNode {
     VNode::Element(
         VElement::new("span")
             .class("hi-menu-item-icon hikari-icon")
-            .attr("style", "width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;")
             .inner_html(svg_str),
     )
 }

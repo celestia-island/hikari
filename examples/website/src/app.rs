@@ -40,7 +40,7 @@ pub fn render() -> VNode {
         VElement::new("div")
             .attr("id", "hikari-app")
             .attr("data-theme", "hikari")
-            .class("hi-layout hi-layout-light hi-layout-has-sidebar")
+            .class("hi-layout hi-layout-light hi-layout-has-sidebar hi-ambient-bg")
             .style(theme_style)
             // Header bar (top, full-width, sticky)
             .child(components::top_nav())

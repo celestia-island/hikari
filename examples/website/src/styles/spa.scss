@@ -1,6 +1,20 @@
 // SPA Page Routing Styles
 // Used for History API client-side routing
 
+// ── Global Background (applied to entire page) ─────────────────────────
+
+body,
+#hikari-app {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 182, 193, 0.25) 0%,
+    rgba(255, 192, 203, 0.15) 30%,
+    rgba(224, 240, 233, 0.10) 60%,
+    rgba(255, 218, 185, 0.08) 100%
+  );
+  min-height: 100vh;
+}
+
 // ── Button Component Styles ──────────────────────────────────────────────────
 
 .hi-btn {
@@ -115,13 +129,6 @@
 .page-hero {
   text-align: center;
   padding: 3.5rem 2rem 4rem;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 182, 193, 0.4) 0%,
-    rgba(255, 192, 203, 0.25) 30%,
-    rgba(224, 240, 233, 0.15) 70%,
-    rgba(255, 218, 185, 0.1) 100%
-  );
   border-radius: 0;
   margin-bottom: 0;
 }
@@ -129,6 +136,9 @@
 .page-hero__inner {
   max-width: 640px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .page-hero__logo {
@@ -136,6 +146,7 @@
   height: 80px;
   margin-bottom: 1rem;
   object-fit: contain;
+  display: block;
 }
 
 .page-hero__title {
@@ -545,7 +556,7 @@ aside .hi-menu {
 .hi-submenu-list {
   list-style: none;
   margin: 0;
-  padding: 0 0 0 0.5rem;
+  padding: 0 0 0 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.0625rem;
@@ -572,7 +583,7 @@ aside .hi-menu {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.28rem 0.6rem 0.28rem 1.25rem;
+  padding: 0.28rem 0.6rem 0.28rem 1.5rem;
   font-size: 0.8125rem;
   font-weight: 400;
   color: var(--hi-color-text-secondary, #6b7280);
@@ -640,26 +651,31 @@ aside .hi-menu {
 .hi-glow-wrapper,
 .hi-glow-wrapper-block {
   position: relative;
+  overflow: hidden;
 
   &::before {
     content: '';
     position: absolute;
-    inset: 0;
+    inset: -20%;
+    width: 140%;
+    height: 140%;
     pointer-events: none;
-    z-index: 2;
+    z-index: 0;
     border-radius: inherit;
     opacity: 0;
-    transition: opacity 0.3s ease-in-out;
+    transition: opacity 0.35s ease-out;
     background: radial-gradient(
       circle at var(--glow-x, 50%) var(--glow-y, 50%),
-      var(--hi-glow-color, rgba(245, 169, 169, 0.35)) 0%,
-      transparent calc(var(--glow-spread, 1.6) * 100%)
+      var(--hi-glow-color, rgba(245, 169, 169, 0.12)) 0%,
+      transparent 60%
     );
+    filter: blur(8px);
+    transform: translateZ(0);
   }
 
   &:hover::before,
   &[data-glow-visible="1"]::before {
-    opacity: var(--glow-opacity, 0.15);
+    opacity: var(--glow-opacity, 1);
   }
 
   > * {
@@ -676,7 +692,6 @@ aside .hi-menu {
   flex-shrink: 0;
   align-self: flex-start;
   border-radius: 8px;
-  overflow: visible;
 }
 
 .hi-glow-wrapper-block {
@@ -684,21 +699,17 @@ aside .hi-menu {
   flex-direction: column;
   width: 100%;
   border-radius: 12px;
-  overflow: visible;
 }
 
-// Intensity levels
+// Intensity levels — opacity now directly controls visibility
 .hi-glow-dim {
-  --glow-opacity: 0.07;
-  --glow-spread: 2.4;
+  --glow-opacity: 0.35;
 }
 .hi-glow-soft {
-  --glow-opacity: 0.15;
-  --glow-spread: 1.6;
+  --glow-opacity: 0.55;
 }
 .hi-glow-bright {
-  --glow-opacity: 0.30;
-  --glow-spread: 1.3;
+  --glow-opacity: 0.80;
 }
 
 // Button enhancements inside glow wrapper

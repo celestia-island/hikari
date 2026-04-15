@@ -29,11 +29,11 @@ pub enum GlowColor {
 impl GlowColor {
     fn css_var(&self) -> &'static str {
         match self {
-            Self::Primary => "var(--hi-glow-button-primary, rgba(245,169,169,0.35))",
-            Self::Ghost => "var(--hi-ghost-glow, rgba(128,128,128,0.3))",
-            Self::Secondary => "var(--hi-glow-button-secondary, rgba(81,154,115,0.3))",
-            Self::Danger => "var(--hi-glow-button-danger, rgba(239,68,68,0.3))",
-            Self::Success => "var(--hi-glow-button-success, rgba(34,197,94,0.3))",
+            Self::Primary => "var(--hi-glow-button-primary, rgba(245,169,169,0.10))",
+            Self::Ghost => "var(--hi-ghost-glow, rgba(128,128,128,0.08))",
+            Self::Secondary => "var(--hi-glow-button-secondary, rgba(81,154,115,0.08))",
+            Self::Danger => "var(--hi-glow-button-danger, rgba(239,68,68,0.08))",
+            Self::Success => "var(--hi-glow-button-success, rgba(34,197,94,0.08))",
         }
     }
 }

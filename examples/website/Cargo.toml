@@ -32,6 +32,7 @@ tairitsu-web = { path = "../../../tairitsu/packages/web", default-features = fal
 hikari-palette = { path = "../../packages/palette" }
 hikari-components = { path = "../../packages/components", default-features = false }
 hikari-i18n = { path = "../../packages/i18n" }
+hikari-icons = { path = "../../packages/icons", features = ["tairitsu"] }
 
 # Markdown rendering
 pulldown-cmark = "0.12"
@@ -127,6 +128,34 @@ head = """
         link.classList.add('is-active');
       }
     });
+    // Update breadcrumb
+    var bcCurrent = document.getElementById('breadcrumb-current');
+    if (bcCurrent) {
+      var pathParts = currentPath.substring(1).split('/');
+      var labels = [];
+      if (pathParts[0] === 'components') {
+        labels.push('Components');
+        if (pathParts[1]) {
+          var layerNum = pathParts[1].replace('layer', 'Layer ');
+          labels.push(layerNum);
+        }
+      } else if (pathParts[0] === 'system') {
+        labels.push('System');
+        if (pathParts[1]) {
+          labels.push(pathParts[1].charAt(0).toUpperCase() + pathParts[1].slice(1));
+        }
+      } else if (pathParts[0] === 'demos') {
+        labels.push('Demos');
+        if (pathParts[1]) {
+          labels.push(pathParts[1].charAt(0).toUpperCase() + pathParts[1].slice(1));
+        }
+      } else if (currentPath === '/' || !pathParts[0]) {
+        labels.push('Home');
+      } else {
+        labels.push(pathParts.map(function(s) { return s.charAt(0).toUpperCase() + s.slice(1); }).join(' '));
+      }
+      bcCurrent.textContent = labels.length > 0 ? labels[labels.length - 1] : 'Home';
+    }
   }
 
   // Intercept clicks on internal links for SPA navigation (History API)

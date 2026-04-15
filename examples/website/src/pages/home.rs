@@ -8,21 +8,26 @@ pub fn render() -> VNode {
         div { id: "page-home", class: "hikari-page",
             section { class: "page-hero",
                 div { class: "page-hero__inner",
-                    h1 { class: "page-hero__title", "Hikari" }
-                    p { class: "page-hero__subtitle", "A comprehensive Rust UI component library" }
-                    p { class: "page-hero__desc",
-                        "Built with a reactive virtual DOM, compiled to WebAssembly. Hikari provides a rich set of components from basic primitives to complex data visualisations."
+                    img {
+                        class: "page-hero__logo",
+                        src: "/images/logo.png",
+                        alt: "Hikari Logo",
+                        width: "80"
                     }
+                    h1 { class: "page-hero__title", "Hikari" }
+                    p { class: "page-hero__subtitle", "A modern Rust UI component library for Tairitsu." }
+                    p { class: "page-hero__tagline", "There is no shame in wanting to feel happy." }
                     div { class: "page-hero__actions",
                         a {
                             href: "/components",
                             class: "hi-btn hi-btn--primary hi-btn--lg",
-                            "Explore Components"
+                            "Explore Components ",
+                            span { class: "btn-arrow", "→" }
                         }
                         a {
                             href: "/system",
                             class: "hi-btn hi-btn--secondary hi-btn--lg",
-                            "Design System"
+                            "View Documentation"
                         }
                     }
                 }
@@ -48,6 +53,12 @@ pub fn render() -> VNode {
                             "Ships as a wasm32-wasip2 component. Rendered with the Tairitsu virtual DOM — no JavaScript framework required."
                         }
                     }
+                }
+            }
+            section { class: "page-section",
+                h2 { class: "page-section__title", "Demos" }
+                p { class: "page-section__desc",
+                    "Complete application examples showcasing Hikari components in realistic scenarios."
                 }
             }
         }

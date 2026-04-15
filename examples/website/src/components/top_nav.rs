@@ -21,8 +21,13 @@ pub fn render() -> VNode {
                     }
                 }
                 a { href: "/", class: "hi-header-brand",
-                    span { class: "hi-header-logo", "H" }
-                    span { class: "hi-header-title", "Hikari UI" }
+                    img {
+                        class: "hi-header-logo-img",
+                        src: "/images/logo.png",
+                        alt: "Hikari",
+                        width: "28",
+                        height: "28"
+                    }
                 }
             }
             div { class: "hi-header-right",

@@ -63,6 +63,7 @@ pub fn render() -> VNode {
                             .child(VNode::Element(
                                 VElement::new("main")
                                     .class("hi-layout-content")
+                                    .child(components::breadcrumb::render())
                                     .children(content),
                             )),
                     )),

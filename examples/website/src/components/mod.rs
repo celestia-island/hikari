@@ -4,6 +4,7 @@
 //! so the bundle.css styles apply correctly for the drawer/header/aside layout.
 
 pub mod aside_footer;
+pub mod breadcrumb;
 pub mod code_block;
 pub mod doc_components;
 pub mod dynamic_markdown;
@@ -18,6 +19,7 @@ pub mod top_nav;
 pub mod registry;
 
 pub use aside_footer::render as aside_footer;
+pub use breadcrumb::render as breadcrumb;
 pub use layout::render as layout;
 pub use registry::render_component_demo;
 pub use sidebar::render as sidebar;

@@ -1,21 +1,21 @@
+use hikari_icons::generated::mdi_selected::get;
+use hikari_icons::MdiIcon;
 use tairitsu_vdom::{get_bounding_client_rect, set_style, VElement, VNode, VText};
 
 struct NavItem {
     label: &'static str,
-    icon: &'static str,
+    icon: MdiIcon,
     href: &'static str,
 }
 
 struct NavSubcategory {
     label: &'static str,
-    icon: &'static str,
     href: &'static str,
     items: &'static [NavItem],
 }
 
 struct NavCategory {
     label: &'static str,
-    icon: &'static str,
     default_open: bool,
     subcategories: &'static [NavSubcategory],
 }
@@ -23,187 +23,181 @@ struct NavCategory {
 const NAV_CATEGORIES: &[NavCategory] = &[
     NavCategory {
         label: "Overview",
-        icon: "\u{2302}",
         default_open: true,
         subcategories: &[NavSubcategory {
             label: "Home",
-            icon: "\u{2302}",
             href: "/",
             items: &[],
         }],
     },
     NavCategory {
         label: "Components",
-        icon: "\u{229E}",
         default_open: true,
         subcategories: &[
             NavSubcategory {
-                label: "Layer 1 \u{2014} Base",
-                icon: "\u{25C9}",
+                label: "Layer 1 — Base",
                 href: "/components/layer1",
                 items: &[
                     NavItem {
                         label: "Button",
-                        icon: "\u{25C9}",
+                        icon: MdiIcon::Cursor,
                         href: "/components/layer1/button",
                     },
                     NavItem {
                         label: "Form",
-                        icon: "\u{25A2}",
+                        icon: MdiIcon::TextBoxEdit,
                         href: "/components/layer1/form",
                     },
                     NavItem {
                         label: "Number Input",
-                        icon: "#",
+                        icon: MdiIcon::FormatListNumbered,
                         href: "/components/layer1/number-input",
                     },
                     NavItem {
                         label: "Search",
-                        icon: "\u{2315}",
+                        icon: MdiIcon::Magnify,
                         href: "/components/layer1/search",
                     },
                     NavItem {
                         label: "Switch",
-                        icon: "\u{25D1}",
+                        icon: MdiIcon::ToggleSwitch,
                         href: "/components/layer1/switch",
                     },
                     NavItem {
                         label: "Feedback",
-                        icon: "\u{26A0}",
+                        icon: MdiIcon::Alert,
                         href: "/components/layer1/feedback",
                     },
                     NavItem {
                         label: "Display",
-                        icon: "\u{25FB}",
+                        icon: MdiIcon::Image,
                         href: "/components/layer1/display",
                     },
                     NavItem {
                         label: "Avatar",
-                        icon: "\u{25CB}",
+                        icon: MdiIcon::Account,
                         href: "/components/layer1/avatar",
                     },
                     NavItem {
                         label: "Image",
-                        icon: "\u{25A6}",
+                        icon: MdiIcon::Image,
                         href: "/components/layer1/image",
                     },
                     NavItem {
                         label: "Tag",
-                        icon: "\u{25C7}",
+                        icon: MdiIcon::Star,
                         href: "/components/layer1/tag",
                     },
                     NavItem {
                         label: "Empty",
-                        icon: "\u{25A1}",
+                        icon: MdiIcon::ViewDashboard,
                         href: "/components/layer1/empty",
                     },
                     NavItem {
                         label: "Comment",
-                        icon: "\u{270E}",
+                        icon: MdiIcon::Chat,
                         href: "/components/layer1/comment",
                     },
                     NavItem {
                         label: "Description List",
-                        icon: "\u{2261}",
+                        icon: MdiIcon::FormatListBulleted,
                         href: "/components/layer1/description-list",
                     },
                 ],
             },
             NavSubcategory {
-                label: "Layer 2 \u{2014} Composed",
-                icon: "\u{25C8}",
+                label: "Layer 2 — Composed",
                 href: "/components/layer2",
                 items: &[
                     NavItem {
                         label: "Navigation",
-                        icon: "\u{25C8}",
+                        icon: MdiIcon::FormatListBulleted,
                         href: "/components/layer2/navigation",
                     },
                     NavItem {
                         label: "Collapsible",
-                        icon: "\u{2194}",
+                        icon: MdiIcon::ArrowExpandHorizontal,
                         href: "/components/layer2/collapsible",
                     },
                     NavItem {
                         label: "Data",
-                        icon: "\u{25C7}",
+                        icon: MdiIcon::Graph,
                         href: "/components/layer2/data",
                     },
                     NavItem {
                         label: "Table",
-                        icon: "\u{229E}",
+                        icon: MdiIcon::Table,
                         href: "/components/layer2/table",
                     },
                     NavItem {
                         label: "Tree",
-                        icon: "\u{2142}",
+                        icon: MdiIcon::SourceBranch,
                         href: "/components/layer2/tree",
                     },
                     NavItem {
                         label: "Pagination",
-                        icon: "\u{2039}\u{203A}",
+                        icon: MdiIcon::ChevronLeft,
                         href: "/components/layer2/pagination",
                     },
                     NavItem {
                         label: "QRCode",
-                        icon: "\u{25A3}",
+                        icon: MdiIcon::ViewDashboard,
                         href: "/components/layer2/qrcode",
                     },
                     NavItem {
                         label: "Timeline",
-                        icon: "\u{25E0}",
+                        icon: MdiIcon::ChartTimeline,
                         href: "/components/layer2/timeline",
                     },
                     NavItem {
                         label: "Form",
-                        icon: "\u{25A2}",
+                        icon: MdiIcon::TextBoxEdit,
                         href: "/components/layer2/form",
                     },
                     NavItem {
                         label: "Cascader",
-                        icon: "\u{25BE}",
+                        icon: MdiIcon::ChevronDown,
                         href: "/components/layer2/cascader",
                     },
                     NavItem {
                         label: "Transfer",
-                        icon: "\u{21C4}",
+                        icon: MdiIcon::SwapHorizontal,
                         href: "/components/layer2/transfer",
                     },
                     NavItem {
                         label: "Feedback",
-                        icon: "\u{26A0}",
+                        icon: MdiIcon::Bell,
                         href: "/components/layer2/feedback",
                     },
                 ],
             },
             NavSubcategory {
-                label: "Layer 3 \u{2014} Complex",
-                icon: "\u{25C7}",
+                label: "Layer 3 — Complex",
                 href: "/components/layer3",
                 items: &[
                     NavItem {
                         label: "Media",
-                        icon: "\u{25B6}",
+                        icon: MdiIcon::Play,
                         href: "/components/layer3/media",
                     },
                     NavItem {
                         label: "Editor",
-                        icon: "\u{270E}",
+                        icon: MdiIcon::FormatBold,
                         href: "/components/layer3/editor",
                     },
                     NavItem {
                         label: "Visualization",
-                        icon: "\u{25C7}",
+                        icon: MdiIcon::CubeOutline,
                         href: "/components/layer3/visualization",
                     },
                     NavItem {
                         label: "User Guide",
-                        icon: "\u{25D0}",
+                        icon: MdiIcon::BookOpen,
                         href: "/components/layer3/user-guide",
                     },
                     NavItem {
                         label: "Zoom Controls",
-                        icon: "\u{2295}",
+                        icon: MdiIcon::MagnifyPlus,
                         href: "/components/layer3/zoom-controls",
                     },
                 ],
@@ -212,48 +206,40 @@ const NAV_CATEGORIES: &[NavCategory] = &[
     },
     NavCategory {
         label: "System",
-        icon: "\u{2699}",
         default_open: false,
         subcategories: &[
             NavSubcategory {
                 label: "Overview",
-                icon: "\u{25C9}",
                 href: "/system",
                 items: &[],
             },
             NavSubcategory {
                 label: "CSS Utilities",
-                icon: "\u{2261}",
                 href: "/system/css",
                 items: &[],
             },
             NavSubcategory {
                 label: "Icons",
-                icon: "\u{2726}",
                 href: "/system/icons",
                 items: &[],
             },
             NavSubcategory {
                 label: "Color Palette",
-                icon: "\u{25C8}",
                 href: "/system/palette",
                 items: &[],
             },
             NavSubcategory {
                 label: "Animations",
-                icon: "\u{21BB}",
                 href: "/system/animations",
                 items: &[],
             },
             NavSubcategory {
                 label: "i18n",
-                icon: "\u{2603}",
                 href: "/system/i18n",
                 items: &[],
             },
             NavSubcategory {
                 label: "Animation Demo",
-                icon: "\u{25B6}",
                 href: "/animations",
                 items: &[],
             },
@@ -261,26 +247,24 @@ const NAV_CATEGORIES: &[NavCategory] = &[
     },
     NavCategory {
         label: "Demos",
-        icon: "\u{25A3}",
         default_open: false,
         subcategories: &[NavSubcategory {
             label: "All Demos",
-            icon: "\u{25A3}",
             href: "/demos",
             items: &[
                 NavItem {
                     label: "Form Demo",
-                    icon: "\u{25A2}",
+                    icon: MdiIcon::TextBoxEdit,
                     href: "/demos/form",
                 },
                 NavItem {
                     label: "Dashboard",
-                    icon: "\u{229E}",
+                    icon: MdiIcon::ViewColumn,
                     href: "/demos/dashboard",
                 },
                 NavItem {
                     label: "Video & Audio",
-                    icon: "\u{25B6}",
+                    icon: MdiIcon::Play,
                     href: "/demos/video",
                 },
             ],
@@ -290,6 +274,27 @@ const NAV_CATEGORIES: &[NavCategory] = &[
 
 fn txt(s: &str) -> VNode {
     VNode::Text(VText::new(s))
+}
+
+fn icon_el(icon: MdiIcon) -> VNode {
+    let icon_name = icon.to_string();
+    let svg_str = get(&icon_name)
+        .map(|data| {
+            format!(
+                r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{}" width="14" height="14"><path fill="currentColor" d="{}"/></svg>"#,
+                data.view_box.as_deref().unwrap_or("0 0 24 24"),
+                data.path.as_deref().unwrap_or("")
+            )
+        })
+        .unwrap_or_else(|| String::from(
+            r#"<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>"#
+        ));
+    VNode::Element(
+        VElement::new("span")
+            .class("hi-menu-item-icon hikari-icon")
+            .attr("style", "width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;")
+            .inner_html(svg_str),
+    )
 }
 
 fn glow_wrap(children: VNode) -> VNode {
@@ -333,69 +338,79 @@ fn glow_wrap(children: VNode) -> VNode {
     )
 }
 
-fn nav_link(href: &str, label: &str, icon: &str, extra_class: &str) -> VNode {
-    let icon_node = VNode::Element(
-        VElement::new("span")
-            .class("hi-sidebar-icon")
-            .child(txt(icon)),
+fn menu_item(href: &str, label: &str, icon: MdiIcon) -> VNode {
+    let inner = VNode::Element(
+        VElement::new("a")
+            .attr("href", href)
+            .class("hi-menu-item-inner")
+            .child(icon_el(icon))
+            .child(VNode::Element(
+                VElement::new("span")
+                    .class("hi-menu-item-content")
+                    .child(txt(label)),
+            )),
     );
-    let label_node = VNode::Element(
-        VElement::new("span")
-            .class("hi-sidebar-label")
-            .child(txt(label)),
-    );
-    let mut el = VElement::new("a")
-        .attr("href", href)
-        .class("hi-sidebar-item");
-    if !extra_class.is_empty() {
-        el = el.class(extra_class);
-    }
-    glow_wrap(VNode::Element(el.child(icon_node).child(label_node)))
+    glow_wrap(VNode::Element(
+        VElement::new("li")
+            .class("hi-menu-item hi-menu-height-compact")
+            .child(inner),
+    ))
 }
 
-fn details_open(
-    class_name: &str,
-    summary_class: &str,
-    label: &str,
-    icon: &str,
-    children: Vec<VNode>,
-    is_open: bool,
-) -> VNode {
-    let icon_node = VNode::Element(
+fn submenu_title(label: &str, _level: u32) -> VNode {
+    let arrow = VNode::Element(
         VElement::new("span")
-            .class("hi-sidebar-icon")
-            .child(txt(icon)),
+            .class("hi-menu-item-arrow")
+            .child(txt("›")),
     );
-    let label_node = VNode::Element(
-        VElement::new("span")
-            .class("hi-sidebar-label")
+    VNode::Element(
+        VElement::new("div")
+            .class(format!("hi-submenu-title hi-menu-height-compact"))
+            .child(arrow)
             .child(txt(label)),
+    )
+}
+
+fn submenu(label: &str, level: u32, children: Vec<VNode>, open: bool) -> VNode {
+    let title = submenu_title(label, level);
+    let list = VNode::Element(
+        VElement::new("ul")
+            .class("hi-submenu-list")
+            .children(children),
     );
-    let summary = VNode::Element(
-        VElement::new("summary")
-            .class(summary_class)
-            .child(icon_node)
-            .child(label_node),
-    );
-    let mut el = VElement::new("details").class(class_name);
-    if is_open {
-        el = el.attr("open", "");
+    let mut el = VElement::new("li").class("hi-submenu");
+    el = el.child(title).child(list);
+    if !open {
+        el = el.attr("data-collapsed", "");
     }
-    glow_wrap(VNode::Element(el.child(summary).children(children)))
+    VNode::Element(el)
+}
+
+fn plain_menu_item(href: &str, label: &str, _level: u32) -> VNode {
+    let inner = VNode::Element(
+        VElement::new("a")
+            .attr("href", href)
+            .class("hi-menu-item-inner")
+            .child(VNode::Element(
+                VElement::new("span")
+                    .class("hi-menu-item-content")
+                    .child(txt(label)),
+            )),
+    );
+    glow_wrap(VNode::Element(
+        VElement::new("li")
+            .class(format!("hi-menu-item hi-menu-height-compact"))
+            .child(inner),
+    ))
 }
 
 pub fn render() -> VNode {
-    let mut sections: Vec<VNode> = Vec::new();
+    let mut category_nodes: Vec<VNode> = Vec::new();
 
     for category in NAV_CATEGORIES {
         if category.subcategories.len() == 1 && category.subcategories[0].items.is_empty() {
             let sub = &category.subcategories[0];
-            sections.push(nav_link(
-                sub.href,
-                sub.label,
-                sub.icon,
-                "hi-sidebar-item--home",
-            ));
+            category_nodes.push(plain_menu_item(sub.href, sub.label, 1));
             continue;
         }
 
@@ -403,47 +418,39 @@ pub fn render() -> VNode {
 
         for subcategory in category.subcategories {
             if subcategory.items.is_empty() {
-                subcategory_nodes.push(nav_link(
-                    subcategory.href,
-                    subcategory.label,
-                    subcategory.icon,
-                    "",
-                ));
+                subcategory_nodes.push(plain_menu_item(subcategory.href, subcategory.label, 2));
             } else {
                 let item_nodes: Vec<VNode> = subcategory
                     .items
                     .iter()
-                    .map(|item| nav_link(item.href, item.label, item.icon, ""))
+                    .map(|item| menu_item(item.href, item.label, item.icon))
                     .collect();
-                subcategory_nodes.push(details_open(
-                    "hi-sidebar-subsection",
-                    "hi-sidebar-subsection-title",
-                    subcategory.label,
-                    subcategory.icon,
-                    item_nodes,
-                    true,
-                ));
+                subcategory_nodes.push(submenu(subcategory.label, 2, item_nodes, true));
             }
         }
 
-        sections.push(details_open(
-            "hi-sidebar-section",
-            "hi-sidebar-section-title",
+        category_nodes.push(submenu(
             category.label,
-            category.icon,
+            1,
             subcategory_nodes,
             category.default_open,
         ));
     }
+
+    let menu_list = VNode::Element(
+        VElement::new("ul")
+            .class("hi-menu-list")
+            .children(category_nodes),
+    );
 
     VNode::Element(
         VElement::new("aside")
             .attr("id", "hikari-aside")
             .class("hi-aside hi-aside-drawer hi-aside-lg hi-aside-light")
             .child(VNode::Element(
-                VElement::new("div")
-                    .class("hi-layout-aside-content")
-                    .children(sections),
+                VElement::new("nav")
+                    .class("hi-menu hi-menu-vertical hi-menu-compact")
+                    .child(menu_list),
             ))
             .child(super::aside_footer::render()),
     )

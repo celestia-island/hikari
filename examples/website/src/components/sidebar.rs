@@ -324,11 +324,7 @@ fn menu_item(href: &str, label: &str, icon: MdiIcon) -> VNode {
 }
 
 fn submenu_title(label: &str, _level: u32) -> VNode {
-    let arrow = VNode::Element(
-        VElement::new("span")
-            .class("hi-menu-item-arrow")
-            .child(txt("›")),
-    );
+    let arrow = icon_el(MdiIcon::ChevronRight);
     VNode::Element(
         VElement::new("div")
             .class(format!("hi-submenu-title hi-menu-height-compact"))

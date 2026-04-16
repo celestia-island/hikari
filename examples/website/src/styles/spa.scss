@@ -15,7 +15,7 @@ body,
   min-height: 100vh;
 }
 
-// ── Button Component Styles ──────────────────────────────────────────────────
+// ── Button Component Styles (legacy .hi-btn — DEPRECATED, kept for transfer button) ──
 
 .hi-btn {
   display: inline-flex;
@@ -41,39 +41,6 @@ body,
 
   &:active {
     transform: translateY(0);
-  }
-
-  &--primary {
-    background: var(--hi-color-primary, #F5A9A9);
-    color: var(--hi-color-text-on-primary, #50616D);
-    border-color: transparent;
-
-    &:hover {
-      background: var(--hi-button-primary-hover, rgba(245, 169, 169, 0.88));
-      box-shadow: 0 6px 20px rgba(245, 169, 169, 0.35);
-    }
-  }
-
-  &--secondary {
-    background: var(--hi-color-secondary, #519A73);
-    color: var(--hi-color-text-on-secondary, #fff);
-    border-color: transparent;
-
-    &:hover {
-      background: var(--hi-button-secondary-hover, rgba(81, 154, 115, 0.88));
-      box-shadow: 0 6px 20px rgba(81, 154, 115, 0.3);
-    }
-  }
-
-  &--lg {
-    padding: 0.75rem 1.75rem;
-    font-size: 1rem;
-    border-radius: 10px;
-  }
-
-  &--sm {
-    padding: 0.375rem 0.875rem;
-    font-size: 0.8125rem;
   }
 }
 
@@ -553,7 +520,7 @@ aside .hi-menu {
   padding: 0.28rem 0.6rem 0.28rem 0.85rem;
 
   &:hover {
-    background: rgba(245, 169, 169, 0.04);
+    background: rgba(0, 0, 0, 0.03);
     color: var(--hi-color-text-primary, #374151);
   }
 }
@@ -601,9 +568,9 @@ aside .hi-menu {
   border: 1px solid transparent;
   height: auto;
   min-height: 1.75rem;
+  background: transparent;
 
   &:hover {
-    background: rgba(245, 169, 169, 0.05);
     color: var(--hi-color-text-primary, #374151);
   }
 

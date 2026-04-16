@@ -77,8 +77,8 @@ pub fn render() -> VNode {
                         ))
                         .child(VNode::Element(
                             VElement::new("div").class("page-hero__actions")
-                                .child(glow_btn("/components", "hi-btn hi-btn--primary hi-btn--lg", "Explore Components ", Some("→")))
-                                .child(glow_btn("/system", "hi-btn hi-btn--secondary hi-btn--lg", "View Documentation", None)),
+                                .child(glow_btn("/components", "hi-button hi-button-primary hi-button-lg", "Explore Components ", Some("→")))
+                                .child(glow_btn("/system", "hi-button hi-button-secondary hi-button-lg", "View Documentation", None)),
                         )),
                 )),
             ))

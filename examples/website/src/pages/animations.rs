@@ -242,7 +242,7 @@ let button = Button::new()
                 h3 { "HTML Attributes" }
                 pre { class: "code-block",
                     code { r#"<!-- Add animation via data attribute -->
-<button class="hi-btn hi-btn--primary"
+<button class="hi-button hi-button-primary"
         data-animation="hover-scale">
     Hover Me
 </button>

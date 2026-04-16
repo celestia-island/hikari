@@ -54,7 +54,7 @@
   }
 
   &:active {
-    background: var(--hi-color-primary-dark, rgba(0, 160, 233, 0.2));
+    background: var(--hi-button-primary-dark, rgba(0, 160, 233, 0.2));
   }
 }
 
@@ -64,6 +64,6 @@
   font-weight: 500;
 
   &:hover {
-    background: var(--hi-color-primary-dark, #0088c7);
+    background: var(--hi-button-primary-dark, #0088c7);
   }
 }

@@ -52,25 +52,25 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
             div { class: "demo-group",
                 div { class: "demo-section__label", "Variants" }
                 div { class: "demo-row",
-                    button { class: "hi-btn hi-btn--primary", "Primary" }
-                    button { class: "hi-btn hi-btn--secondary", "Secondary" }
-                    button { class: "hi-btn hi-btn--ghost", "Ghost" }
-                    button { class: "hi-btn hi-btn--danger", "Danger" }
+                    button { class: "hi-button hi-button-primary", "Primary" }
+                    button { class: "hi-button hi-button-secondary", "Secondary" }
+                    button { class: "hi-button hi-button-ghost", "Ghost" }
+                    button { class: "hi-button hi-button-danger", "Danger" }
                 }
                 div { class: "demo-section__label", "Sizes" }
                 div { class: "demo-row",
-                    button { class: "hi-btn hi-btn--primary hi-btn--sm", "Small" }
-                    button { class: "hi-btn hi-btn--primary", "Medium" }
-                    button { class: "hi-btn hi-btn--primary hi-btn--lg", "Large" }
+                    button { class: "hi-button hi-button-primary hi-button-sm", "Small" }
+                    button { class: "hi-button hi-button-primary", "Medium" }
+                    button { class: "hi-button hi-button-primary hi-button-lg", "Large" }
                 }
                 div { class: "demo-section__label", "Disabled" }
                 div { class: "demo-row",
-                    button { class: "hi-btn hi-btn--primary", disabled: "true", "Disabled" }
-                    button { class: "hi-btn hi-btn--secondary", disabled: "true", "Disabled" }
+                    button { class: "hi-button hi-button-primary", disabled: "true", "Disabled" }
+                    button { class: "hi-button hi-button-secondary", disabled: "true", "Disabled" }
                 }
                 div { class: "demo-section__label", "With Icon" }
                 div { class: "demo-row",
-                    button { class: "hi-btn hi-btn--primary hi-icon-btn",
+                    button { class: "hi-button hi-button-primary hi-icon-btn",
                         span { class: "mdi mdi-cog" }
                         " Settings"
                     }
@@ -846,13 +846,13 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                     p { "Use data-tooltip attribute or the Tooltip component." }
                     div { class: "hi-tooltip-wrapper",
                         div { class: "hi-tooltip-trigger",
-                            button { class: "hi-btn hi-btn--primary", "Hover me" }
+                            button { class: "hi-button hi-button-primary", "Hover me" }
                         }
                         div { class: "hi-tooltip-content hi-tooltip-top", "Tooltip on top" }
                     }
                     div { class: "hi-tooltip-wrapper",
                         div { class: "hi-tooltip-trigger",
-                            button { class: "hi-btn hi-btn--secondary", "Hover me" }
+                            button { class: "hi-button hi-button-secondary", "Hover me" }
                         }
                         div { class: "hi-tooltip-content hi-tooltip-bottom", "Tooltip on bottom" }
                     }
@@ -866,7 +866,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row",
                     p { "Modal dialogs are rendered via the Portal system." }
-                    button { class: "hi-btn hi-btn--primary", "Open Modal" }
+                    button { class: "hi-button hi-button-primary", "Open Modal" }
                 }
             }
         }),
@@ -877,7 +877,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row",
                     p { "Drawer panels slide in from the edge of the viewport." }
-                    button { class: "hi-btn hi-btn--primary", "Open Drawer" }
+                    button { class: "hi-button hi-button-primary", "Open Drawer" }
                 }
             }
         }),
@@ -889,7 +889,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-row",
                     p { "Popover displays content in a floating panel near the trigger." }
                     div { class: "hi-popover-trigger",
-                        button { class: "hi-btn hi-btn--secondary", "Click me" }
+                        button { class: "hi-button hi-button-secondary", "Click me" }
                     }
                 }
             }
@@ -957,10 +957,10 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-row",
                     p { "Glow effect wraps elements with a mouse-following spotlight." }
                     div { class: "hi-glow-wrapper hi-glow-soft",
-                        button { class: "hi-btn hi-btn--primary", "Hover for glow" }
+                        button { class: "hi-button hi-button-primary", "Hover for glow" }
                     }
                     div { class: "hi-glow-wrapper hi-glow-bright",
-                        button { class: "hi-btn hi-btn--secondary", "Bright glow" }
+                        button { class: "hi-button hi-button-secondary", "Bright glow" }
                     }
                 }
             }
@@ -1019,7 +1019,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                             }
                         }
                         div { class: "hi-transfer-actions",
-                            button { class: "hi-btn", "→" }
+                            button { class: "hi-button", "→" }
                         }
                         div { class: "hi-transfer-panel",
                             div { class: "hi-transfer-header", "Selected" }
@@ -1121,8 +1121,8 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                         div { style: "font-weight: 600; margin-bottom: 8px;", "Step 1 of 3: Welcome" }
                         p { "This is a step-by-step guide to introduce new features." }
                         div { style: "display: flex; gap: 8px; margin-top: 12px;",
-                            button { class: "hi-btn hi-btn--primary hi-btn--sm", "Next" }
-                            button { class: "hi-btn hi-btn--ghost hi-btn--sm", "Skip" }
+                            button { class: "hi-button hi-button-primary hi-button-sm", "Next" }
+                            button { class: "hi-button hi-button-ghost hi-button-sm", "Skip" }
                         }
                     }
                 }

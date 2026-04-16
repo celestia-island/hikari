@@ -17,7 +17,7 @@ impl Button {
     /// Create a new button
     pub fn new() -> Self {
         Self {
-            element: VElement::new("button").class("hi-btn hi-btn--primary"),
+            element: VElement::new("button").class("hi-button hi-button-primary"),
             glow: None,
         }
     }
@@ -112,10 +112,10 @@ pub enum ButtonVariant {
 impl ButtonVariant {
     fn class_name(&self) -> &'static str {
         match self {
-            Self::Primary => "hi-btn--primary",
-            Self::Secondary => "hi-btn--secondary",
-            Self::Danger => "hi-btn--danger",
-            Self::Ghost => "hi-btn--ghost",
+            Self::Primary => "hi-button-primary",
+            Self::Secondary => "hi-button-secondary",
+            Self::Danger => "hi-button-danger",
+            Self::Ghost => "hi-button-ghost",
         }
     }
 }
@@ -131,9 +131,9 @@ pub enum ButtonSize {
 impl ButtonSize {
     fn class_name(&self) -> &'static str {
         match self {
-            Self::Small => "hi-btn--sm",
+            Self::Small => "hi-button-sm",
             Self::Medium => "",
-            Self::Large => "hi-btn--lg",
+            Self::Large => "hi-button-lg",
         }
     }
 }

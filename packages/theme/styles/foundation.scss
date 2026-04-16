@@ -92,8 +92,8 @@
   --hi-bg-solid-surface: var(--hi-color-surface);
 
   // Gradient Background
-  --hi-bg-gradient-primary: linear-gradient(135deg, var(--hi-color-primary), var(--hi-color-primary-dark));
-  --hi-bg-gradient-secondary: linear-gradient(135deg, var(--hi-color-secondary), var(--hi-color-secondary-dark));
+  --hi-bg-gradient-primary: linear-gradient(135deg, var(--hi-color-primary), var(--hi-button-primary-dark));
+  --hi-bg-gradient-secondary: linear-gradient(135deg, var(--hi-color-secondary), var(--hi-button-secondary-dark));
 
   // Blur Background
   --hi-bg-blur-sm: blur(10px);

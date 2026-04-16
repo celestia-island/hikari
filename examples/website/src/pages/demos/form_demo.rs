@@ -1,8 +1,90 @@
 use tairitsu_vdom::{VElement, VNode, VText};
 
+use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use crate::components::page_layout::{render_demo_section, render_page_container};
 
 pub fn render_form_demo() -> VNode {
+    let email_field = glow_wrap(
+        VNode::Element(
+            VElement::new("div")
+                .style("margin-bottom:1rem")
+                .child(VNode::Element(
+                    VElement::new("label")
+                        .class("hi-label")
+                        .attr("for", "demo-email")
+                        .child(VNode::Text(VText::new("Email"))),
+                ))
+                .child(VNode::Element(
+                    VElement::new("input")
+                        .attr("id", "demo-email")
+                        .class("hi-input")
+                        .attr("type", "email")
+                        .attr("placeholder", "you@example.com")
+                        .attr("required", "true"),
+                )),
+        ),
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color: GlowColor::Ghost,
+            ..Default::default()
+        },
+    );
+
+    let password_field = glow_wrap(
+        VNode::Element(
+            VElement::new("div")
+                .style("margin-bottom:1rem")
+                .child(VNode::Element(
+                    VElement::new("label")
+                        .class("hi-label")
+                        .attr("for", "demo-password")
+                        .child(VNode::Text(VText::new("Password"))),
+                ))
+                .child(VNode::Element(
+                    VElement::new("input")
+                        .attr("id", "demo-password")
+                        .class("hi-input")
+                        .attr("type", "password")
+                        .attr("placeholder", "Enter your password")
+                        .attr("required", "true"),
+                )),
+        ),
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color: GlowColor::Ghost,
+            ..Default::default()
+        },
+    );
+
+    let btn_signin = glow_wrap(
+        VNode::Element(
+            VElement::new("button")
+                .attr("type", "submit")
+                .class("hi-button hi-button-primary hi-button-lg")
+                .style("flex:1")
+                .child(VNode::Text(VText::new("Sign In"))),
+        ),
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color: GlowColor::Primary,
+            ..Default::default()
+        },
+    );
+
+    let btn_cancel = glow_wrap(
+        VNode::Element(
+            VElement::new("button")
+                .attr("type", "button")
+                .class("hi-button hi-button-secondary hi-button-lg")
+                .child(VNode::Text(VText::new("Cancel"))),
+        ),
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color: GlowColor::Secondary,
+            ..Default::default()
+        },
+    );
+
     let form_content = VNode::Element(
         VElement::new("div")
             .style("display:flex;justify-content:center;align-items:center;padding:2rem")
@@ -28,42 +110,8 @@ pub fn render_form_demo() -> VNode {
                     .child(VNode::Element(
                         VElement::new("div")
                             .style("margin-bottom:1.5rem")
-                            .child(VNode::Element(
-                                VElement::new("div")
-                                    .style("margin-bottom:1rem")
-                                    .child(VNode::Element(
-                                        VElement::new("label")
-                                            .class("hi-label")
-                                            .attr("for", "demo-email")
-                                            .child(VNode::Text(VText::new("Email"))),
-                                    ))
-                                    .child(VNode::Element(
-                                        VElement::new("input")
-                                            .attr("id", "demo-email")
-                                            .class("hi-input")
-                                            .attr("type", "email")
-                                            .attr("placeholder", "you@example.com")
-                                            .attr("required", "true"),
-                                    )),
-                            ))
-                            .child(VNode::Element(
-                                VElement::new("div")
-                                    .style("margin-bottom:1rem")
-                                    .child(VNode::Element(
-                                        VElement::new("label")
-                                            .class("hi-label")
-                                            .attr("for", "demo-password")
-                                            .child(VNode::Text(VText::new("Password"))),
-                                    ))
-                                    .child(VNode::Element(
-                                        VElement::new("input")
-                                            .attr("id", "demo-password")
-                                            .class("hi-input")
-                                            .attr("type", "password")
-                                            .attr("placeholder", "Enter your password")
-                                            .attr("required", "true"),
-                                    )),
-                            ))
+                            .child(email_field)
+                            .child(password_field)
                             .child(VNode::Element(
                                 VElement::new("div")
                                     .style("display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem")
@@ -86,19 +134,8 @@ pub fn render_form_demo() -> VNode {
                             .child(VNode::Element(
                                 VElement::new("div")
                                     .style("display:flex;gap:0.75rem")
-                                    .child(VNode::Element(
-                                        VElement::new("button")
-                                            .attr("type", "submit")
-                                            .class("hi-btn hi-btn--primary hi-btn--lg")
-                                            .style("flex:1")
-                                            .child(VNode::Text(VText::new("Sign In"))),
-                                    ))
-                                    .child(VNode::Element(
-                                        VElement::new("button")
-                                            .attr("type", "button")
-                                            .class("hi-btn hi-btn--secondary hi-btn--lg")
-                                            .child(VNode::Text(VText::new("Cancel"))),
-                                    )),
+                                    .child(btn_signin)
+                                    .child(btn_cancel),
                             )),
                     ))
                     .child(VNode::Element(

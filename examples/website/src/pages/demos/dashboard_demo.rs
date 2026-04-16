@@ -111,7 +111,7 @@ pub fn render_dashboard_demo() -> VNode {
                             ))
                             .child(VNode::Element(
                                 VElement::new("button")
-                                    .class("hi-btn hi-btn--secondary hi-btn--sm")
+                                    .class("hi-button hi-button-secondary hi-button-sm")
                                     .child(txt("Export")),
                             )),
                     ))
@@ -134,7 +134,7 @@ pub fn render_dashboard_demo() -> VNode {
                             ))
                             .child(VNode::Element(
                                 VElement::new("button")
-                                    .class("hi-btn hi-btn--secondary hi-btn--sm")
+                                    .class("hi-button hi-button-secondary hi-button-sm")
                                     .child(txt("More")),
                             )),
                     ))

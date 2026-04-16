@@ -23,7 +23,6 @@
 .hi-glow-wrapper-block {
   position: relative;
 
-  // Create dynamic glow overlay using CSS variables (spotlight effect)
   &::before {
     content: '';
     position: absolute;
@@ -34,8 +33,6 @@
     opacity: 0;
     transition: opacity 0.3s ease-in-out;
 
-    // Use radial-gradient for acrylic spotlight effect
-    // Position is controlled by --glow-x and --glow-y (percentage values)
     background: radial-gradient(
       circle at var(--glow-x, 50%) var(--glow-y, 50%),
       var(--hi-glow-color) 0%,
@@ -43,12 +40,10 @@
     );
   }
 
-  // Show glow on hover with intensity-based opacity
   &:hover::before {
     opacity: var(--glow-opacity, 0.15);
   }
 
-  // Ensure children (links, buttons) are always clickable
   > * {
     pointer-events: auto;
     position: relative;
@@ -143,10 +138,6 @@
   justify-content: center;
   flex-shrink: 0;
   align-self: flex-start;
-
-  // 统一使用 4px 圆角
-  border-radius: 4px;
-
   overflow: visible;
 }
 
@@ -155,9 +146,6 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  
-  // 统一使用 4px 圆角
-  border-radius: 4px;
   overflow: visible;
 }
 

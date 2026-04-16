@@ -9,7 +9,7 @@ pub fn render() -> VNode {
             div { class: "page-section page-section--center",
                 h1 { class: "page-hero__title", "404" }
                 p { class: "page-hero__subtitle", "Page not found" }
-                a { href: "/", class: "hi-btn hi-btn--primary", "Go Home" }
+                a { href: "/", class: "hi-button hi-button-primary", "Go Home" }
             }
         }
     }

@@ -41,13 +41,13 @@ pub fn example_modal() -> VNode {
                 class: "hi-modal-footer",
                 style: "display: flex; justify-content: flex-end; gap: 8px;",
                 button {
-                    class: "hi-btn hi-btn--secondary",
+                    class: "hi-button hi-button-secondary",
                     style: "padding: 8px 16px; border-radius: 4px; cursor: pointer;",
                     "data-modal-close": modal_id,
                     "Cancel"
                 }
                 button {
-                    class: "hi-btn hi-btn--primary",
+                    class: "hi-button hi-button-primary",
                     style: "padding: 8px 16px; border-radius: 4px; cursor: pointer;",
                     "data-modal-close": modal_id,
                     "Confirm"
@@ -315,13 +315,13 @@ pub fn example_confirm_dialog() -> VNode {
                 class: "hi-confirm-actions",
                 style: "display: flex; gap: 12px; justify-content: center;",
                 button {
-                    class: "hi-btn hi-btn--secondary",
+                    class: "hi-button hi-button-secondary",
                     style: "padding: 10px 20px; border-radius: 6px; cursor: pointer;",
                     "data-confirm-cancel": dialog_id,
                     "Cancel"
                 }
                 button {
-                    class: "hi-btn hi-btn--danger",
+                    class: "hi-button hi-button-danger",
                     style: "padding: 10px 20px; border-radius: 6px; cursor: pointer; background: #ef4444; color: white; border: none;",
                     "data-confirm-action": dialog_id,
                     "Confirm"
@@ -365,7 +365,7 @@ pub fn portal_demo_page() -> VNode {
                     h3 { style: "margin: 0 0 12px 0; font-size: 18px;", "Modal" }
                     p { style: "margin: 0 0 16px 0; color: #666;", "A centered dialog with overlay backdrop" }
                     button {
-                        class: "hi-btn hi-btn--primary",
+                        class: "hi-button hi-button-primary",
                         style: "padding: 10px 20px; border-radius: 6px; cursor: pointer;",
                         "data-portal-trigger": "modal",
                         "Open Modal"
@@ -378,7 +378,7 @@ pub fn portal_demo_page() -> VNode {
                     h3 { style: "margin: 0 0 12px 0; font-size: 18px;", "Drawer" }
                     p { style: "margin: 0 0 16px 0; color: #666;", "A slide-in panel from the right" }
                     button {
-                        class: "hi-btn hi-btn--primary",
+                        class: "hi-button hi-button-primary",
                         style: "padding: 10px 20px; border-radius: 6px; cursor: pointer;",
                         "data-portal-trigger": "drawer",
                         "Open Drawer"
@@ -391,7 +391,7 @@ pub fn portal_demo_page() -> VNode {
                     h3 { style: "margin: 0 0 12px 0; font-size: 18px;", "Dropdown" }
                     p { style: "margin: 0 0 16px 0; color: #666;", "A menu positioned below trigger" }
                     button {
-                        class: "hi-btn hi-btn--primary",
+                        class: "hi-button hi-button-primary",
                         style: "padding: 10px 20px; border-radius: 6px; cursor: pointer;",
                         "data-portal-trigger": "dropdown",
                         "Open Dropdown"
@@ -404,7 +404,7 @@ pub fn portal_demo_page() -> VNode {
                     h3 { style: "margin: 0 0 12px 0; font-size: 18px;", "Toast" }
                     p { style: "margin: 0 0 16px 0; color: #666;", "A notification in the corner" }
                     button {
-                        class: "hi-btn hi-btn--primary",
+                        class: "hi-button hi-button-primary",
                         style: "padding: 10px 20px; border-radius: 6px; cursor: pointer;",
                         "data-portal-trigger": "toast",
                         "Show Toast"
@@ -417,7 +417,7 @@ pub fn portal_demo_page() -> VNode {
                     h3 { style: "margin: 0 0 12px 0; font-size: 18px;", "Popover" }
                     p { style: "margin: 0 0 16px 0; color: #666;", "A positioned info bubble" }
                     button {
-                        class: "hi-btn hi-btn--primary",
+                        class: "hi-button hi-button-primary",
                         style: "padding: 10px 20px; border-radius: 6px; cursor: pointer;",
                         "data-portal-trigger": "popover",
                         "Show Popover"
@@ -430,7 +430,7 @@ pub fn portal_demo_page() -> VNode {
                     h3 { style: "margin: 0 0 12px 0; font-size: 18px;", "Confirm Dialog" }
                     p { style: "margin: 0 0 16px 0; color: #666;", "A confirmation before action" }
                     button {
-                        class: "hi-btn hi-btn--danger",
+                        class: "hi-button hi-button-danger",
                         style: "padding: 10px 20px; border-radius: 6px; cursor: pointer; background: #ef4444; color: white; border: none;",
                         "data-portal-trigger": "confirm",
                         "Delete Item"

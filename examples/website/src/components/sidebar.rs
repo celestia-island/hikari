@@ -317,7 +317,8 @@ fn menu_item(href: &str, label: &str, icon: MdiIcon) -> VNode {
         ),
         GlowConfig {
             intensity: GlowIntensity::Dim,
-            color: GlowColor::Primary,
+            color: GlowColor::Ghost,
+            block: true,
             ..Default::default()
         },
     )
@@ -367,7 +368,8 @@ fn plain_menu_item(href: &str, label: &str, _level: u32) -> VNode {
         ),
         GlowConfig {
             intensity: GlowIntensity::Dim,
-            color: GlowColor::Primary,
+            color: GlowColor::Ghost,
+            block: true,
             ..Default::default()
         },
     )

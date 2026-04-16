@@ -32,6 +32,22 @@ fn render_layer1() -> VNode {
             ..Default::default()
         },
     );
+    let btn_danger = glow_wrap(
+        rsx! { button { class: "hi-button hi-button-danger", "Danger" } },
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color: GlowColor::Danger,
+            ..Default::default()
+        },
+    );
+    let btn_ghost = glow_wrap(
+        rsx! { button { class: "hi-button hi-button-ghost", "Ghost" } },
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color: GlowColor::Ghost,
+            ..Default::default()
+        },
+    );
     let btn_small = glow_wrap(
         rsx! { button { class: "hi-button hi-button-primary hi-button-sm", "Small" } },
         GlowConfig {
@@ -45,6 +61,31 @@ fn render_layer1() -> VNode {
         GlowConfig {
             intensity: GlowIntensity::Soft,
             color: GlowColor::Primary,
+            ..Default::default()
+        },
+    );
+
+    let input_default = glow_wrap(
+        rsx! { input { class: "hi-input", placeholder: "Default input", r#type: "text" } },
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color: GlowColor::Ghost,
+            ..Default::default()
+        },
+    );
+    let input_error = glow_wrap(
+        rsx! { input { class: "hi-input hi-input-error", placeholder: "Error state", r#type: "text" } },
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color: GlowColor::Danger,
+            ..Default::default()
+        },
+    );
+    let input_disabled = glow_wrap(
+        rsx! { input { class: "hi-input", placeholder: "Disabled", r#type: "text", disabled: "true" } },
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color: GlowColor::Ghost,
             ..Default::default()
         },
     );
@@ -65,28 +106,17 @@ fn render_layer1() -> VNode {
                 div { class: "demo-row",
                     {btn_primary}
                     {btn_secondary}
+                    {btn_danger}
+                    {btn_ghost}
                     {btn_small}
                     {btn_large}
                 }
                 h2 { "Input" }
                 p { "Text input fields with placeholder, disabled, and error states." }
                 div { class: "demo-row",
-                    input {
-                        class: "hi-input",
-                        placeholder: "Default input",
-                        r#type: "text",
-                    }
-                    input {
-                        class: "hi-input hi-input--error",
-                        placeholder: "Error state",
-                        r#type: "text",
-                    }
-                    input {
-                        class: "hi-input",
-                        placeholder: "Disabled",
-                        r#type: "text",
-                        disabled: "true",
-                    }
+                    {input_default}
+                    {input_error}
+                    {input_disabled}
                 }
                 h2 { "Switch" }
                 p { "Boolean toggle control." }
@@ -116,16 +146,25 @@ fn render_layer1() -> VNode {
                 div { class: "demo-row",
                     form { class: "hi-form",
                         div { class: "hi-form-item",
-                            label { class: "hi-label", "Name" }
-                            input { class: "hi-input", placeholder: "Enter name", r#type: "text" }
+                            label { class: "hi-label", "Name" },
+                            {glow_wrap(
+                                rsx! { input { class: "hi-input", placeholder: "Enter name", r#type: "text" } },
+                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                            )}
                         }
                         div { class: "hi-form-item",
-                            label { class: "hi-label", "Email" }
-                            input { class: "hi-input", placeholder: "Enter email", r#type: "email" }
+                            label { class: "hi-label", "Email" },
+                            {glow_wrap(
+                                rsx! { input { class: "hi-input", placeholder: "Enter email", r#type: "email" } },
+                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                            )}
                         }
                         div { class: "hi-form-item",
-                            label { class: "hi-label", "Message" }
-                            textarea { class: "hi-textarea", placeholder: "Enter message" }
+                            label { class: "hi-label", "Message" },
+                            {glow_wrap(
+                                rsx! { textarea { class: "hi-textarea", placeholder: "Enter message" } },
+                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                            )}
                         }
                         {btn_submit}
                     }
@@ -167,18 +206,28 @@ fn render_layer1() -> VNode {
                 h2 { "Number Input" }
                 p { "Numeric field with increment and decrement controls." }
                 div { class: "demo-row",
-                    div { class: "hi-number-input",
-                        button { class: "hi-number-input__btn", "-" }
-                        input { class: "hi-number-input__input", r#type: "number", value: "0" }
-                        button { class: "hi-number-input__btn", "+" }
-                    }
+                    {glow_wrap(
+                        rsx! {
+                            div { class: "hi-number-input",
+                                button { class: "hi-number-input__btn", "-" }
+                                input { class: "hi-number-input__input", r#type: "number", value: "0" }
+                                button { class: "hi-number-input__btn", "+" }
+                            }
+                        },
+                        GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                    )}
                 }
                 h2 { "Search" }
                 p { "Search input with instant filtering support." }
                 div { class: "demo-row",
-                    div { class: "hi-search",
-                        input { class: "hi-search__input", placeholder: "Search...", r#type: "search" }
-                    }
+                    {glow_wrap(
+                        rsx! {
+                            div { class: "hi-search",
+                                input { class: "hi-search__input", placeholder: "Search...", r#type: "search" }
+                            }
+                        },
+                        GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                    )}
                 }
                 h2 { "Empty / Skeleton" }
                 p { "Empty state placeholder and content skeleton loading indicators." }
@@ -305,12 +354,18 @@ fn render_layer2() -> VNode {
                 div { class: "demo-row",
                     form { class: "hi-form",
                         div { class: "hi-form-item",
-                            label { class: "hi-label", "Username" }
-                            input { class: "hi-input", placeholder: "Enter username", r#type: "text" }
+                            label { class: "hi-label", "Username" },
+                            {glow_wrap(
+                                rsx! { input { class: "hi-input", placeholder: "Enter username", r#type: "text" } },
+                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                            )}
                         }
                         div { class: "hi-form-item",
-                            label { class: "hi-label", "Password" }
-                            input { class: "hi-input", placeholder: "Enter password", r#type: "password" }
+                            label { class: "hi-label", "Password" },
+                            {glow_wrap(
+                                rsx! { input { class: "hi-input", placeholder: "Enter password", r#type: "password" } },
+                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                            )}
                         }
                         div { class: "hi-form-item",
                             label { class: "hi-switch",
@@ -344,7 +399,7 @@ fn render_layer2() -> VNode {
                             }
                         }
                         div { class: "hi-transfer__actions",
-                            button { class: "hi-btn", "→" }
+                            button { class: "hi-button", "→" }
                         }
                         div { class: "hi-transfer__panel",
                             div { class: "hi-transfer__header", "Selected" }

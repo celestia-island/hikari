@@ -771,16 +771,18 @@ aside .hi-menu {
 
 // ============================================
 // Hover state
+// NOTE: Sidebar menu items use GlowWrapper for spotlight effect,
+//       so hover background is intentionally subtle here.
+//       The GlowWrapper provides the visual hover feedback instead.
 // ============================================
 
 .hi-menu-item:hover {
-  background: var(--hi-primary);
-  border-color: var(--hi-primary);
+  background: rgba(0, 0, 0, 0.03);
+  border-color: transparent;
   color: var(--hi-color-text-primary);
 
   .hi-menu-item-icon {
-    color: var(--hi-color-primary);
-    filter: drop-shadow(0 0 4px var(--hi-primary));
+    color: var(--hi-color-text-secondary);
   }
 }
 

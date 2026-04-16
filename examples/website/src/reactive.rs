@@ -293,7 +293,7 @@ impl InteractiveComponentBuilder {
                 class: "hi-button-counter hi-interactive-counter",
                 "data-instance-id": instance_id,
                 button {
-                    class: "hi-btn hi-btn--primary hi-counter-btn",
+                    class: "hi-button hi-button-primary hi-counter-btn",
                     "data-action": "increment",
                     "data-instance-id": instance_id,
                     r#type: "button",

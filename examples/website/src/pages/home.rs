@@ -46,6 +46,7 @@ fn glow_card(title: &str, body: &str) -> VNode {
             intensity: GlowIntensity::Dim,
             color: GlowColor::Primary,
             block: true,
+            radius: "var(--hi-card-radius, var(--hi-radius-lg, 12px))",
             ..Default::default()
         },
     )

@@ -188,6 +188,9 @@ pub fn doc_router_js() -> String {
      * Navigate to a documentation page
      */
     function navigateToDoc(path, language) {
+        // Never clobber a path that the static SPA router owns.
+        if (isHandledBySpaRouter(path)) return;
+
         const routeMatch = matchRoute(path);
         if (!routeMatch) {
             console.warn('No route match for path:', path);
@@ -234,6 +237,15 @@ pub fn doc_router_js() -> String {
      */
     function handlePopState(event) {
         const path = window.location.pathname;
+
+        // If the SPA router owns this path, let it handle it.
+        if (isHandledBySpaRouter(path)) {
+            if (window.hikariRouter && typeof window.hikariRouter.showPage === 'function') {
+                window.hikariRouter.showPage(window.hikariRouter.getPageId(path));
+            }
+            return;
+        }
+
         const language = getCurrentLanguage();
         navigateToDoc(path, language);
     }
@@ -258,11 +270,27 @@ pub fn doc_router_js() -> String {
     }
 
     /**
+     * Check if the SPA router already handles this path via its static
+     * routes map. If so we must NOT create a dynamic doc page — the
+     * static page is already rendered and the SPA router will show it.
+     */
+    function isHandledBySpaRouter(path) {
+        const clean = path.endsWith('/') ? path.slice(0, -1) : path;
+        if (window.hikariRouter && window.hikariRouter.routes) {
+            return !!window.hikariRouter.routes[clean];
+        }
+        return false;
+    }
+
+    /**
      * Initialize the router
      */
     function initRouter() {
-        // Handle current URL on load
         const path = window.location.pathname;
+
+        // Do NOT activate if the static SPA router already owns this path.
+        if (isHandledBySpaRouter(path)) return;
+
         const routeMatch = matchRoute(path);
         if (routeMatch) {
             const language = getCurrentLanguage();
@@ -294,12 +322,15 @@ pub fn doc_router_js() -> String {
     // Also initialize after WASM hydration
     setTimeout(initRouter, 200);
 
-    // Expose API globally
-    window.hikariRouter = {
+    // Expose API globally — do NOT overwrite window.hikariRouter.routes
+    // set by the SPA router; merge instead.
+    const existingRouter = window.hikariRouter || {};
+    window.hikariRouter = Object.assign({}, existingRouter, {
         navigate: navigateToDoc,
         match: matchRoute,
-        getCurrentLanguage: getCurrentLanguage
-    };
+        getCurrentLanguage: getCurrentLanguage,
+        isDocRoute: matchRoute
+    });
 })();
 "#.to_string()
 }

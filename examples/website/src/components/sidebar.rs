@@ -319,6 +319,7 @@ fn menu_item(href: &str, label: &str, icon: MdiIcon) -> VNode {
             intensity: GlowIntensity::Dim,
             color: GlowColor::Ghost,
             block: true,
+            radius: "var(--hi-radius-sm, 4px)",
             ..Default::default()
         },
     )
@@ -370,6 +371,7 @@ fn plain_menu_item(href: &str, label: &str, _level: u32) -> VNode {
             intensity: GlowIntensity::Dim,
             color: GlowColor::Ghost,
             block: true,
+            radius: "var(--hi-radius-sm, 4px)",
             ..Default::default()
         },
     )

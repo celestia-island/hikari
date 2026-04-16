@@ -10,12 +10,11 @@ use tairitsu_vdom::{VElement, VNode, VText};
 
 use crate::{
     components::{self, portal::PortalJs},
-    js,
     pages::{
         animations, components as comp_pages, demos as demo_pages, home, interactive, not_found,
         system as sys_pages,
     },
-    routing, theme,
+    theme,
 };
 
 /// Render the full application VNode tree.
@@ -67,15 +66,7 @@ pub fn render() -> VNode {
                                     .children(content),
                             )),
                     )),
-            ))
-            // SPA router script for page navigation
-            .child(VNode::Element(
-                VElement::new("script")
-                    .attr("id", "hikari-spa-router")
-                    .child(VNode::Text(VText::new(&js::router_js()))),
-            ))
-            // Documentation router script for dynamic doc loading
-            .child(routing::render_doc_router_script()),
+            )),
     );
 
     // Wrap everything in PortalProvider

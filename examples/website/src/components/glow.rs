@@ -45,6 +45,7 @@ pub struct GlowConfig {
     pub color: GlowColor,
     pub block: bool,
     pub extra_class: &'static str,
+    pub radius: &'static str,
 }
 
 impl Default for GlowConfig {
@@ -54,6 +55,7 @@ impl Default for GlowConfig {
             color: GlowColor::Primary,
             block: false,
             extra_class: "",
+            radius: "var(--hi-button-radius, var(--hi-radius-md, 8px))",
         }
     }
 }
@@ -61,8 +63,10 @@ impl Default for GlowConfig {
 pub fn glow_wrap(children: VNode, config: GlowConfig) -> VNode {
     let intensity_class = config.intensity.class_name();
     let color_var = config.color.css_var();
+    let radius = config.radius;
 
-    let init_vars = format!("--glow-x:50%;--glow-y:50%;--hi-glow-color:{color_var};");
+    let init_vars =
+        format!("--glow-x:50%;--glow-y:50%;--hi-glow-color:{color_var};--hi-glow-radius:{radius};");
 
     let block_class = if config.block {
         " hi-glow-wrapper-block"

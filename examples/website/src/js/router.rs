@@ -202,11 +202,16 @@ pub fn router_js() -> String {
     setTimeout(initRouter, 200);
 
     // Expose API globally for testing and manual navigation
+    // routes is exposed so the doc router can check if a path is
+    // already handled by the static page map and avoid clobbering it.
     window.hikariRouter = {
         navigate: navigate,
         showPage: showPage,
+        getPageId: getPageId,
         routes: routes
     };
+    // Global navigate() for packager's post-WASM SPA re-trigger
+    window.navigate = navigate;
 })();
 "#.to_string()
 }

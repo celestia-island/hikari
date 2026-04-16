@@ -348,6 +348,7 @@ impl Card {
             intensity,
             color,
             block: true,
+            radius: "var(--hi-card-radius, var(--hi-radius-lg, 12px))",
             ..Default::default()
         });
         self

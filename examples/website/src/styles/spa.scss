@@ -667,16 +667,16 @@ aside .hi-menu {
 // opacity scaling) is defined in bundle.css which mirrors the legacy theme.
 // Only add overrides here for things bundle.css does NOT cover.
 
-// Button enhancements inside glow wrapper (bundle.css uses .hi-button, we use .hi-btn)
-.hi-glow-wrapper .hi-btn:hover {
+// Button enhancements inside glow wrapper (bundle.css uses .hi-button)
+.hi-glow-wrapper .hi-button:hover {
   transform: none;
 }
-.hi-glow-wrapper .hi-btn:focus-visible {
+.hi-glow-wrapper .hi-button:focus-visible {
   box-shadow:
     0 0 0 2px currentColor,
     0 0 12px var(--hi-glow-color, rgba(245,169,169,0.35));
 }
-.hi-glow-wrapper .hi-btn:active:not(:disabled) {
+.hi-glow-wrapper .hi-button:active:not(:disabled) {
   box-shadow:
     0 0 4px currentColor,
     inset 0 1px 0 rgba(255,255,255,0.1);

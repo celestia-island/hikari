@@ -2,10 +2,53 @@
 
 pub mod overview;
 
+use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 fn render_layer1() -> VNode {
+    let btn_submit = glow_wrap(
+        rsx! { button { class: "hi-button hi-button-primary", "Submit" } },
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color: GlowColor::Primary,
+            ..Default::default()
+        },
+    );
+
+    let btn_primary = glow_wrap(
+        rsx! { button { class: "hi-button hi-button-primary", "Primary" } },
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color: GlowColor::Primary,
+            ..Default::default()
+        },
+    );
+    let btn_secondary = glow_wrap(
+        rsx! { button { class: "hi-button hi-button-secondary", "Secondary" } },
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color: GlowColor::Secondary,
+            ..Default::default()
+        },
+    );
+    let btn_small = glow_wrap(
+        rsx! { button { class: "hi-button hi-button-primary hi-button-sm", "Small" } },
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color: GlowColor::Primary,
+            ..Default::default()
+        },
+    );
+    let btn_large = glow_wrap(
+        rsx! { button { class: "hi-button hi-button-primary hi-button-lg", "Large" } },
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color: GlowColor::Primary,
+            ..Default::default()
+        },
+    );
+
     rsx! {
         div { id: "page-components-layer1", class: "hikari-page",
             div { class: "page-header",
@@ -20,10 +63,10 @@ fn render_layer1() -> VNode {
                     "The Button component supports primary, secondary, danger, and ghost variants in three sizes."
                 }
                 div { class: "demo-row",
-                    button { class: "hi-btn hi-btn--primary", "Primary" }
-                    button { class: "hi-btn hi-btn--secondary", "Secondary" }
-                    button { class: "hi-btn hi-btn--primary hi-btn--sm", "Small" }
-                    button { class: "hi-btn hi-btn--primary hi-btn--lg", "Large" }
+                    {btn_primary}
+                    {btn_secondary}
+                    {btn_small}
+                    {btn_large}
                 }
                 h2 { "Input" }
                 p { "Text input fields with placeholder, disabled, and error states." }
@@ -84,7 +127,7 @@ fn render_layer1() -> VNode {
                             label { class: "hi-label", "Message" }
                             textarea { class: "hi-textarea", placeholder: "Enter message" }
                         }
-                        button { class: "hi-btn hi-btn--primary", "Submit" }
+                        {btn_submit}
                     }
                 }
                 h2 { "Display" }
@@ -164,6 +207,15 @@ fn render_layer1() -> VNode {
 }
 
 fn render_layer2() -> VNode {
+    let btn_signin = glow_wrap(
+        rsx! { button { class: "hi-button hi-button-primary", "Sign In" } },
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color: GlowColor::Primary,
+            ..Default::default()
+        },
+    );
+
     rsx! {
         div { id: "page-components-layer2", class: "hikari-page",
             div { class: "page-header",
@@ -267,7 +319,7 @@ fn render_layer2() -> VNode {
                             }
                             span { "Remember me" }
                         }
-                        button { class: "hi-btn hi-btn--primary", "Sign In" }
+                        {btn_signin}
                     }
                 }
                 h2 { "Feedback" }

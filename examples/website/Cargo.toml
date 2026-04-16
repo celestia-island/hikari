@@ -72,39 +72,36 @@ head = """
     '': 'home',
     '/': 'home',
     '/components': 'components',
-    '/components/layer1': 'components-layer1',
-    '/components/layer1/button': 'components-layer1',
-    '/components/layer1/form': 'components-layer1',
-    '/components/layer1/number-input': 'components-layer1',
-    '/components/layer1/search': 'components-layer1',
-    '/components/layer1/switch': 'components-layer1',
-    '/components/layer1/feedback': 'components-layer1',
-    '/components/layer1/display': 'components-layer1',
-    '/components/layer1/avatar': 'components-layer1',
-    '/components/layer1/image': 'components-layer1',
-    '/components/layer1/tag': 'components-layer1',
-    '/components/layer1/empty': 'components-layer1',
-    '/components/layer1/comment': 'components-layer1',
-    '/components/layer1/description-list': 'components-layer1',
-    '/components/layer2': 'components-layer2',
-    '/components/layer2/navigation': 'components-layer2',
-    '/components/layer2/collapsible': 'components-layer2',
-    '/components/layer2/data': 'components-layer2',
-    '/components/layer2/table': 'components-layer2',
-    '/components/layer2/tree': 'components-layer2',
-    '/components/layer2/pagination': 'components-layer2',
-    '/components/layer2/qrcode': 'components-layer2',
-    '/components/layer2/timeline': 'components-layer2',
-    '/components/layer2/form': 'components-layer2',
-    '/components/layer2/cascader': 'components-layer2',
-    '/components/layer2/transfer': 'components-layer2',
-    '/components/layer2/feedback': 'components-layer2',
-    '/components/layer3': 'components-layer3',
-    '/components/layer3/media': 'components-layer3',
-    '/components/layer3/editor': 'components-layer3',
-    '/components/layer3/visualization': 'components-layer3',
-    '/components/layer3/user-guide': 'components-layer3',
-    '/components/layer3/zoom-controls': 'components-layer3',
+    '/components/layer1/button': 'component-button',
+    '/components/layer1/form': 'component-form',
+    '/components/layer1/number-input': 'component-number-input',
+    '/components/layer1/search': 'component-search',
+    '/components/layer1/switch': 'component-switch',
+    '/components/layer1/feedback': 'component-feedback',
+    '/components/layer1/display': 'component-display',
+    '/components/layer1/avatar': 'component-avatar',
+    '/components/layer1/image': 'component-image',
+    '/components/layer1/tag': 'component-tag',
+    '/components/layer1/empty': 'component-empty',
+    '/components/layer1/comment': 'component-comment',
+    '/components/layer1/description-list': 'component-description-list',
+    '/components/layer2/navigation': 'component-navigation',
+    '/components/layer2/collapsible': 'component-collapsible',
+    '/components/layer2/data': 'component-data',
+    '/components/layer2/table': 'component-table',
+    '/components/layer2/tree': 'component-tree',
+    '/components/layer2/pagination': 'component-pagination',
+    '/components/layer2/qrcode': 'component-qrcode',
+    '/components/layer2/timeline': 'component-timeline',
+    '/components/layer2/form': 'component-form-composed',
+    '/components/layer2/cascader': 'component-cascader',
+    '/components/layer2/transfer': 'component-transfer',
+    '/components/layer2/feedback': 'component-feedback-composed',
+    '/components/layer3/media': 'component-media',
+    '/components/layer3/editor': 'component-editor',
+    '/components/layer3/visualization': 'component-visualization',
+    '/components/layer3/user-guide': 'component-user-guide',
+    '/components/layer3/zoom-controls': 'component-zoom-controls',
     '/system': 'system-overview',
     '/system/palette': 'system-palette',
     '/system/css': 'system-css',
@@ -139,18 +136,19 @@ head = """
       window.scrollTo(0, 0);
     }
     // Highlight active sidebar link
-    document.querySelectorAll('.hi-sidebar-item, .hi-menu-item-inner').forEach(function(link) {
-      link.classList.remove('is-active');
+    document.querySelectorAll('.hi-sidebar-item.is-active, .hi-menu-item.is-active').forEach(function(el) {
+      el.classList.remove('is-active');
     });
     var currentPath = location.pathname || '/';
-    var activeLink = document.querySelector('.hi-sidebar-item[href="' + currentPath + '"], .hi-menu-item-inner[href="' + currentPath + '"]');
-    if (activeLink) {
-      activeLink.classList.add('is-active');
-      // Auto-expand parent details so active item is visible
-      var parent = activeLink.closest('details:not([open])');
+    var activeInner = document.querySelector('.hi-sidebar-item[href="' + currentPath + '"], .hi-menu-item-inner[href="' + currentPath + '"]');
+    if (activeInner) {
+      var activeLi = activeInner.closest('.hi-menu-item, .hi-sidebar-item');
+      if (activeLi) activeLi.classList.add('is-active');
+      // Auto-expand parent submenus so active item is visible
+      var parent = activeInner.closest('.hi-submenu[data-collapsed]');
       while (parent) {
-        parent.setAttribute('open', '');
-        parent = parent.parentElement ? parent.parentElement.closest('details:not([open])') : null;
+        parent.removeAttribute('data-collapsed');
+        parent = parent.parentElement ? parent.parentElement.closest('.hi-submenu[data-collapsed]') : null;
       }
     }
     // Highlight active topnav link

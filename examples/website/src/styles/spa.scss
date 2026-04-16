@@ -158,6 +158,9 @@ body,
 
 .page-section {
   padding: 2rem 2rem;
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .page-section__title {
@@ -418,8 +421,6 @@ body,
   &.is-active {
     font-weight: 600;
     color: var(--hi-color-primary, #F5A9A9);
-    background: rgba(245, 169, 169, 0.08);
-    box-shadow: inset 3px 0 0 var(--hi-color-primary, #F5A9A9);
   }
 
   &--home {
@@ -528,7 +529,7 @@ aside .hi-menu {
 .hi-submenu-list {
   list-style: none;
   margin: 0;
-  padding: 0 0 0 1rem;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 0.0625rem;
@@ -549,6 +550,23 @@ aside .hi-menu {
   list-style: none;
   margin: 0;
   padding: 0;
+  background: transparent;
+
+  &:focus-visible {
+    outline: none;
+    background: transparent;
+    border-color: transparent;
+  }
+
+  &:focus {
+    outline: none;
+    background: transparent;
+    border-color: transparent;
+  }
+}
+
+.hi-menu-item.is-active {
+  background: rgba(245, 169, 169, 0.08);
 }
 
 .hi-menu-item-inner {
@@ -574,12 +592,8 @@ aside .hi-menu {
     color: var(--hi-color-text-primary, #374151);
   }
 
-  &.is-active,
   &:active {
-    font-weight: 600;
     color: var(--hi-color-primary, #F5A9A9);
-    background: rgba(245, 169, 169, 0.08);
-    box-shadow: inset 3px 0 0 var(--hi-color-primary, #F5A9A9);
   }
 }
 
@@ -744,7 +758,30 @@ aside .hi-glow-wrapper {
   }
 }
 
-// ── Demo row for component pages ───────────────────────────────────────
+// ── Demo Block (component page demo sections) ───────────────────────
+
+.demo-block {
+  margin-bottom: 2.5rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.demo-block__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--hi-color-text-primary, #374151);
+  margin-bottom: 0.875rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--hi-border, #e5e7eb);
+}
+
+.demo-block__body {
+  padding: 0;
+}
+
+// ── Demo row (inner demo container) ──────────────────────────────────
 
 .demo-row {
   display: flex;
@@ -755,7 +792,55 @@ aside .hi-glow-wrapper {
   border-radius: 12px;
   border: 1px solid var(--hi-border, #e5e7eb);
   background: var(--hi-surface, rgba(255, 255, 255, 0.5));
-  margin-bottom: 1.5rem;
+}
+
+// ── API Table (component API reference) ──────────────────────────────
+
+.api-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  background-color: var(--hi-surface, rgba(255, 255, 255, 0.6));
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--hi-border, #e5e7eb);
+
+  th,
+  td {
+    padding: 0.625rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--hi-border, #e5e7eb);
+    font-size: 0.875rem;
+    vertical-align: top;
+  }
+
+  th {
+    background-color: var(--hi-surface-secondary, #f3f4f6);
+    font-weight: 600;
+    color: var(--hi-color-text-primary, #374151);
+    white-space: nowrap;
+  }
+
+  td {
+    color: var(--hi-color-text-secondary, #6b7280);
+
+    code {
+      background: rgba(245, 169, 169, 0.08);
+      padding: 0.125rem 0.375rem;
+      border-radius: 4px;
+      font-size: 0.8125rem;
+      color: var(--hi-color-text-primary, #374151);
+      font-family: "Courier New", monospace;
+    }
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:hover td {
+    background-color: rgba(245, 169, 169, 0.03);
+  }
 }
 
 // ── Markdown content styling ─────────────────────────────────────────────────

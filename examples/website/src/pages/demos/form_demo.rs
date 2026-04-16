@@ -154,13 +154,9 @@ pub fn render_form_demo() -> VNode {
     let section = render_demo_section("Login Form", form_content);
 
     render_page_container(
+        "page-demos-form",
         Some("Form Demo"),
         Some("Demonstrates how to build a complete login form using Layer 1 basic components."),
-        VNode::Element(
-            VElement::new("div")
-                .attr("id", "page-demos-form")
-                .class("hikari-page")
-                .child(section),
-        ),
+        section,
     )
 }

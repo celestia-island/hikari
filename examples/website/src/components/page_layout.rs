@@ -20,22 +20,34 @@ pub fn render_demo_section(title: &str, content: VNode) -> VNode {
 }
 
 pub fn render_page_container(
+    page_id: &str,
     title: Option<&str>,
     description: Option<&str>,
     content: VNode,
 ) -> VNode {
-    let mut children: Vec<VNode> = Vec::new();
+    let mut page_children: Vec<VNode> = Vec::new();
 
     if let Some(t) = title {
-        children.push(VNode::Element(
-            VElement::new("h1")
-                .class("text-4xl font-bold text-primary mb-2")
-                .child(txt(t)),
+        page_children.push(VNode::Element(
+            VElement::new("div")
+                .class("page-header")
+                .child(VNode::Element(
+                    VElement::new("h1")
+                        .class("page-header__title")
+                        .child(txt(t)),
+                ))
+                .child(if let Some(d) = description {
+                    VNode::Element(
+                        VElement::new("p")
+                            .class("page-header__subtitle")
+                            .child(txt(d)),
+                    )
+                } else {
+                    VNode::Text(VText::new(""))
+                }),
         ));
-    }
-
-    if let Some(d) = description {
-        children.push(VNode::Element(
+    } else if let Some(d) = description {
+        page_children.push(VNode::Element(
             VElement::new("p")
                 .class("text-secondary mb-8")
                 .style("max-width:800px;line-height:1.6")
@@ -43,12 +55,19 @@ pub fn render_page_container(
         ));
     }
 
-    children.push(content);
+    page_children.push(content);
+
+    let hikari_page = VNode::Element(
+        VElement::new("div")
+            .attr("id", page_id)
+            .class("hikari-page")
+            .children(page_children),
+    );
 
     VNode::Element(
         VElement::new("div")
             .class("p-6")
             .style("max-width:1200px;margin:0 auto;padding-left:2rem;padding-right:2rem")
-            .children(children),
+            .child(hikari_page),
     )
 }

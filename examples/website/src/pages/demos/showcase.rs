@@ -41,13 +41,9 @@ pub fn render_showcase() -> VNode {
     let content = render_demo_section("Full-composition Demos", cards_container);
 
     render_page_container(
+        "page-demos-overview",
         Some("Demos"),
         Some("Complete application examples showcasing Hikari components in realistic scenarios."),
-        VNode::Element(
-            VElement::new("div")
-                .attr("id", "page-demos-overview")
-                .class("hikari-page")
-                .child(content),
-        ),
+        content,
     )
 }

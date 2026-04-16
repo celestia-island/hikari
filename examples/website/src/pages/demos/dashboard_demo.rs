@@ -156,14 +156,10 @@ pub fn render_dashboard_demo() -> VNode {
     );
 
     render_page_container(
+        "page-demos-dashboard",
         Some("Dashboard Demo"),
         Some("Demonstrates how to build a data dashboard using Layer 2 composite components."),
-        VNode::Element(
-            VElement::new("div")
-                .attr("id", "page-demos-dashboard")
-                .class("hikari-page")
-                .child(all_sections),
-        ),
+        all_sections,
     )
 }
 

@@ -17,7 +17,9 @@ pub fn render() -> VNode {
                     div { class: "demo-block__body",
                         div { class: "hi-media-player",
                             div { class: "hi-media-player__poster",
-                                span { style: "font-size:48px;", "▶" }
+                                div { style: "width:72px;height:72px;border-radius:50%;background:rgba(245,169,169,0.25);display:flex;align-items:center;justify-content:center;",
+                                    span { style: "font-size:32px;margin-left:4px;color:white;", "▶" }
+                                }
                                 span { style: "position:absolute;bottom:12px;left:12px;color:white;font-size:13px;background:rgba(0,0,0,0.6);padding:2px 8px;border-radius:4px;", "3:42" }
                             }
                             div { class: "hi-media-player__controls",
@@ -46,7 +48,9 @@ pub fn render() -> VNode {
                     div { class: "demo-block__body",
                         div { class: "hi-audio-player",
                             div { class: "hi-audio-player__info",
-                                div { class: "hi-audio-player__art", "♫" }
+                                div { class: "hi-audio-player__art",
+                                    span { style: "font-size:22px;line-height:1;", "🎵" }
+                                }
                                 div {
                                     div { style: "font-weight:600;", "Ambient Sounds" }
                                     div { style: "font-size:13px;color:var(--hi-color-text-secondary);", "Nature Collection" }
@@ -75,6 +79,25 @@ pub fn render() -> VNode {
                                     )}
                                 }
                             }
+                        }
+                    }
+                }
+                div { class: "demo-block",
+                    h3 { class: "demo-block__title", "Mini Player" }
+                    div { class: "demo-block__body",
+                        div { style: "display:flex;align-items:center;gap:14px;padding:10px 16px;background:linear-gradient(135deg,#1e1e28 0%,#2d2d3a 100%);border-radius:10px;border:1px solid var(--hi-border,#e5e7eb);max-width:480px;",
+                            div { style: "width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#F5A9A9,#e8a5a5);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;", "🎶" }
+                            div { style: "flex:1;min-width:0;",
+                                div { style: "font-size:13px;font-weight:600;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;", "Chill Vibes" }
+                                div { class: "hi-media-player__progress",
+                                    div { class: "hi-media-player__progress__bar", style: "width:48%;" }
+                                }
+                            }
+                            span { style: "font-size:11px;color:rgba(255,255,255,0.5);font-family:monospace;white-space:nowrap;", "1:34 / 3:00" }
+                            {glow_wrap(
+                                rsx! { button { class: "hi-media-player__btn", style: "width:32px;height:32px;font-size:14px;", "▶" } },
+                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
+                            )}
                         }
                     }
                 }

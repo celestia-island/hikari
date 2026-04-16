@@ -150,6 +150,25 @@
 }
 
 // ============================================
+// Radius Matching
+// ============================================
+// Glow wrapper must match its child's border-radius.
+// Since CSS cannot "inherit upward", we set radius on common child types.
+// Components set their own --hi-*-radius tokens in button-vars.scss etc.
+
+.hi-glow-wrapper > .hi-button { border-radius: var(--hi-button-radius, var(--hi-radius-md, 8px)); }
+.hi-glow-wrapper > .hi-input,
+.hi-glow-wrapper > .hi-textarea,
+.hi-glow-wrapper > .hi-search,
+.hi-glow-wrapper > .hi-number-input { border-radius: var(--hi-input-radius, var(--hi-radius-md, 8px)); }
+.hi-glow-wrapper > li { border-radius: var(--hi-glow-radius, var(--hi-radius-sm, 4px)); }
+
+.hi-glow-wrapper-block > .hi-input,
+.hi-glow-wrapper-block > .hi-textarea,
+.hi-glow-wrapper-block > .hi-search,
+.hi-glow-wrapper-block > .hi-number-input { border-radius: var(--hi-input-radius, var(--hi-radius-md, 8px)); }
+
+// ============================================
 // Button Enhancement
 // ============================================
 

@@ -62,7 +62,7 @@ pub fn glow_wrap(children: VNode, config: GlowConfig) -> VNode {
     let intensity_class = config.intensity.class_name();
     let color_var = config.color.css_var();
 
-    let initial_style = format!("--glow-x:50%;--glow-y:50%;--hi-glow-color:{color_var};");
+    let init_vars = format!("--glow-x:50%;--glow-y:50%;--hi-glow-color:{color_var};");
 
     let block_class = if config.block {
         " hi-glow-wrapper-block"
@@ -105,7 +105,7 @@ pub fn glow_wrap(children: VNode, config: GlowConfig) -> VNode {
         VElement::new("div")
             .class(classes)
             .attr("data-glow", "true")
-            .attr("style", &initial_style)
+            .attr("style", &init_vars)
             .on_event("mousemove", onmousemove)
             .on_event("mouseleave", onmouseleave)
             .child(children),

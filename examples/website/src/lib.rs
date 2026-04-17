@@ -13,6 +13,7 @@ mod markdown;
 mod pages;
 mod reactive;
 mod routing;
+mod scrollbar_host;
 mod theme;
 mod ui;
 
@@ -25,8 +26,13 @@ fn run_app() {
     i18n_init::init();
     let platform = WitPlatform::new().expect("WitPlatform init failed");
     let vnode = app::render();
-    // Mount the VNode to #app element
     let _ = platform.mount_vnode_to_app(&vnode);
+
+    #[cfg(target_family = "wasm")]
+    {
+        let host = scrollbar_host::PlatformScrollbarHost::new(&platform);
+        hikari_components::scripts::scrollbar_container::init_all(&host);
+    }
 }
 
 #[unsafe(no_mangle)]

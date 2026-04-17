@@ -240,7 +240,7 @@ pub fn Glow(props: GlowProps) -> Element {
 
     fn calc_glow_percent(event: &MouseEvent) -> (String, String) {
         if let Some(target) = event.target {
-            let rect = tairitsu_vdom::get_bounding_client_rect(target);
+            let rect = tairitsu_vdom::get_bounding_client_rect(tairitsu_vdom::DomHandle::from_raw(target));
             if rect.width > 0.0 && rect.height > 0.0 {
                 let px = (event.offset_x as f64 / rect.width * 100.0).clamp(0.0, 100.0);
                 let py = (event.offset_y as f64 / rect.height * 100.0).clamp(0.0, 100.0);

@@ -4,7 +4,7 @@
 use crate::style_builder::StyleStringBuilder;
 use crate::{prelude::*, styled::StyledComponent};
 use hikari_palette::classes::{CardClass, ClassesBuilder, TypedClass};
-use tairitsu_vdom::get_bounding_client_rect;
+use tairitsu_vdom::{get_bounding_client_rect, DomHandle};
 
 pub struct CardComponent;
 
@@ -57,7 +57,7 @@ pub fn Card(props: CardProps) -> Element {
         if props.glow
             && let Some(target) = event.target
         {
-            let rect = get_bounding_client_rect(target);
+            let rect = get_bounding_client_rect(DomHandle::from_raw(target));
             let pct_x = if rect.width > 0.0 {
                 (event.offset_x as f64 / rect.width * 100.0).clamp(0.0, 100.0)
             } else {

@@ -84,12 +84,13 @@ pub fn glow_wrap(children: VNode, config: GlowConfig) -> VNode {
         if let Some(me) = e.as_any().downcast_ref::<tairitsu_vdom::MouseEvent>() {
             let elem = me.current_target.or(me.target);
             if let Some(target) = elem {
-                let rect = get_bounding_client_rect(target);
+                let h = tairitsu_vdom::DomHandle::from_raw(target);
+                let rect = get_bounding_client_rect(h);
                 if rect.width > 0.0 && rect.height > 0.0 {
                     let px = (me.offset_x as f64 / rect.width * 100.0).clamp(0.0, 100.0);
                     let py = (me.offset_y as f64 / rect.height * 100.0).clamp(0.0, 100.0);
-                    set_style(target, "--glow-x", &format!("{:.1}%", px));
-                    set_style(target, "--glow-y", &format!("{:.1}%", py));
+                    set_style(h, "--glow-x", &format!("{:.1}%", px));
+                    set_style(h, "--glow-y", &format!("{:.1}%", py));
                 }
             }
         }
@@ -99,8 +100,9 @@ pub fn glow_wrap(children: VNode, config: GlowConfig) -> VNode {
         if let Some(me) = e.as_any().downcast_ref::<tairitsu_vdom::MouseEvent>() {
             let elem = me.current_target.or(me.target);
             if let Some(target) = elem {
-                set_style(target, "--glow-x", "50%");
-                set_style(target, "--glow-y", "50%");
+                let h = tairitsu_vdom::DomHandle::from_raw(target);
+                set_style(h, "--glow-x", "50%");
+                set_style(h, "--glow-y", "50%");
             }
         }
     };

@@ -219,14 +219,4 @@ mod tests {
             let _ = p;
         }
     }
-
-    #[test]
-    fn test_scrollbar_container_init_no_panic() {
-        hikari_components::scripts::scrollbar_container::init(".test-selector");
-    }
-
-    #[test]
-    fn test_scrollbar_container_init_all_no_panic() {
-        hikari_components::scripts::scrollbar_container::init_all();
-    }
 }

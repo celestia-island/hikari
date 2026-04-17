@@ -201,9 +201,9 @@
     <!-- Import map (WASI preview2-shim + tairitsu-glue interfaces) is created
          dynamically by __tairitsu_glue__.js, which runs synchronously before
          any module scripts, guaranteeing a single complete import map. -->
-    <script src="/browser-glue/__tairitsu_glue__.js?v=1776430030"></script>
+    <script src="/browser-glue/__tairitsu_glue__.js?v=1776435307"></script>
     <script type="module">
-        import { instantiateWithWrapper } from '/component-wrapper-loader.js?v=1776430030';
+        import { instantiateWithWrapper } from '/component-wrapper-loader.js?v=1776435307';
 
         const appRoot = document.getElementById('app');
         const setAppStatus = (text) => {
@@ -428,145 +428,6 @@
                         rafId = null;
                     }
                 });
-            }
-        })();
-
-        // Custom scrollbar — mirrors the legacy WASM scrollbar_container logic.
-        // Creates a DOM-based scrollbar (track + thumb) alongside the scrollable
-        // content layer, hiding the native scrollbar.
-        (function initCustomScrollbars() {
-            var THUMB_MIN = 20;
-            var SELECTORS = ['.hi-aside-content'];
-
-            function updateThumb(content, track, thumb) {
-                var sh = content.scrollHeight;
-                var ch = content.clientHeight;
-                if (sh <= ch) { thumb.style.display = 'none'; track.classList.add('custom-scrollbar-hidden'); return; }
-                thumb.style.display = '';
-                track.classList.remove('custom-scrollbar-hidden');
-                var th = track.clientHeight;
-                var ideal = (ch / sh) * ch;
-                var actual = Math.max(ideal, THUMB_MIN);
-                thumb.style.height = actual + 'px';
-                var maxScroll = sh - ch;
-                var range = th - actual;
-                var top = maxScroll > 0 ? (content.scrollTop / maxScroll) * range : 0;
-                thumb.style.top = top + 'px';
-            }
-
-            function setup(container) {
-                if (container.classList.contains('custom-scrollbar-container')) return;
-                container.classList.add('custom-scrollbar-container');
-
-                var cs = window.getComputedStyle(container);
-                var pt = cs.paddingTop, pr = cs.paddingRight, pb = cs.paddingBottom;
-                container.style.padding = '0';
-
-                var wrapper = document.createElement('div');
-                wrapper.className = 'custom-scrollbar-wrapper';
-                wrapper.setAttribute('data-custom-scrollbar', 'wrapper');
-
-                var contentLayer = document.createElement('div');
-                contentLayer.className = 'custom-scrollbar-content';
-                contentLayer.setAttribute('data-custom-scrollbar', 'content');
-                contentLayer.style.paddingTop = pt;
-                contentLayer.style.paddingRight = pr;
-                contentLayer.style.paddingBottom = pb;
-
-                while (container.firstChild) contentLayer.appendChild(container.firstChild);
-                wrapper.appendChild(contentLayer);
-
-                var track = document.createElement('div');
-                track.className = 'custom-scrollbar-track';
-                track.setAttribute('data-custom-scrollbar', 'track');
-
-                var thumb = document.createElement('div');
-                thumb.className = 'custom-scrollbar-thumb';
-                thumb.setAttribute('data-custom-scrollbar', 'thumb');
-
-                track.appendChild(thumb);
-                wrapper.appendChild(track);
-                container.appendChild(wrapper);
-
-                function onUpdate() { updateThumb(contentLayer, track, thumb); }
-
-                contentLayer.addEventListener('scroll', function() {
-                    onUpdate();
-                    thumb.classList.add('custom-scrollbar-thumb--scrolling');
-                    clearTimeout(thumb._scrollTimer);
-                    thumb._scrollTimer = setTimeout(function() {
-                        thumb.classList.remove('custom-scrollbar-thumb--scrolling');
-                    }, 600);
-                });
-
-                if (window.ResizeObserver) {
-                    new ResizeObserver(onUpdate).observe(contentLayer);
-                }
-                window.addEventListener('resize', onUpdate);
-
-                // Hover expand track
-                track.addEventListener('mouseenter', function() {
-                    track.classList.add('custom-scrollbar-track--active');
-                });
-                track.addEventListener('mouseleave', function() {
-                    track.classList.remove('custom-scrollbar-track--active');
-                });
-
-                // Drag-to-scroll
-                var dragging = false, startY = 0, startScrollTop = 0, cachedThumbH = 0;
-                thumb.addEventListener('mousedown', function(e) {
-                    e.preventDefault();
-                    dragging = true;
-                    startY = e.clientY;
-                    startScrollTop = contentLayer.scrollTop;
-                    cachedThumbH = thumb.offsetHeight;
-                    document.body.style.userSelect = 'none';
-                    document.body.style.cursor = 'grabbing';
-                });
-                document.addEventListener('mousemove', function(e) {
-                    if (!dragging) return;
-                    var dy = e.clientY - startY;
-                    var th = track.clientHeight;
-                    var maxScroll = contentLayer.scrollHeight - contentLayer.clientHeight;
-                    var range = th - cachedThumbH;
-                    if (range > 0 && maxScroll > 0) {
-                        contentLayer.scrollTop = startScrollTop + (dy / range) * maxScroll;
-                    }
-                });
-                document.addEventListener('mouseup', function() {
-                    if (!dragging) return;
-                    dragging = false;
-                    document.body.style.userSelect = '';
-                    document.body.style.cursor = '';
-                });
-
-                // Click-to-jump on track
-                track.addEventListener('click', function(e) {
-                    if (e.target === thumb) return;
-                    var rect = track.getBoundingClientRect();
-                    var clickY = e.clientY - rect.top;
-                    var th = track.clientHeight;
-                    var maxScroll = contentLayer.scrollHeight - contentLayer.clientHeight;
-                    contentLayer.scrollTop = (clickY / th) * maxScroll;
-                });
-
-                onUpdate();
-            }
-
-            function initAll() {
-                SELECTORS.forEach(function(sel) {
-                    document.querySelectorAll(sel).forEach(setup);
-                });
-            }
-            initAll();
-
-            // Re-init after SPA navigation (MutationObserver for robustness)
-            if (window.MutationObserver) {
-                var debounce = null;
-                new MutationObserver(function() {
-                    clearTimeout(debounce);
-                    debounce = setTimeout(initAll, 100);
-                }).observe(document.body, { childList: true, subtree: true });
             }
         })();
 

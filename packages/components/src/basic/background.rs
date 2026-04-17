@@ -26,6 +26,7 @@ pub fn Background(props: BackgroundProps) -> Element {
 
     let theme_name_signal = theme_ctx.as_ref().map(|ctx| ctx.get().theme_name.clone());
 
+    let animation_style_rsx = animation_style.clone();
     use_effect(move || {
         let animation_style_clone = animation_style.clone();
         let theme_name_signal = theme_name_signal.clone();
@@ -37,7 +38,7 @@ pub fn Background(props: BackgroundProps) -> Element {
     rsx! {
         div {
             class: BackgroundClass::Background.class_name(),
-            style: "{animation_style}",
+            style: "{animation_style_rsx}",
             {props.children}
         }
     }

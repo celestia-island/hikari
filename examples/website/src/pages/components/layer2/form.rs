@@ -43,7 +43,7 @@ pub fn render() -> VNode {
                             div { class: "hi-form-item",
                                 label { class: "hi-label", "Password" },
                                 {glow_wrap(
-                                    rsx! { input { class: "hi-input", placeholder: "Enter password", r#type: "password" } },
+                                    rsx! { input { class: "hi-input", placeholder: "Enter password", r#type: "password", autocomplete: "current-password" } },
                                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                                 )}
                             }
@@ -73,7 +73,7 @@ pub fn render() -> VNode {
                             div { class: "hi-form-item hi-form-item--error",
                                 label { class: "hi-label", "Password" },
                                 {glow_wrap(
-                                    rsx! { input { class: "hi-input hi-input-error", placeholder: "Min 8 characters", r#type: "password" } },
+                                    rsx! { input { class: "hi-input hi-input-error", placeholder: "Min 8 characters", r#type: "password", autocomplete: "new-password" } },
                                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Danger, ..Default::default() },
                                 )}
                                 span { class: "hi-form-item__error", "Password must be at least 8 characters" }
@@ -81,7 +81,7 @@ pub fn render() -> VNode {
                             div { class: "hi-form-item",
                                 label { class: "hi-label", "Confirm Password" },
                                 {glow_wrap(
-                                    rsx! { input { class: "hi-input", placeholder: "Repeat password", r#type: "password" } },
+                                    rsx! { input { class: "hi-input", placeholder: "Repeat password", r#type: "password", autocomplete: "new-password" } },
                                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                                 )}
                             }

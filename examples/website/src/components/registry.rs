@@ -437,14 +437,14 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
         "form_field" => Some(rsx! {
             div { class: "demo-group",
                 div { class: "demo-section__label", "With Label" }
-                div { class: "demo-row-full",
+                form { class: "demo-row-full",
                     div { class: "hi-form-field",
                         label { class: "hi-form-field-label", "Username" }
                         input { class: "hi-input", placeholder: "Enter username", r#type: "text" }
                     }
                     div { class: "hi-form-field",
                         label { class: "hi-form-field-label", "Password" }
-                        input { class: "hi-input", placeholder: "Enter password", r#type: "password" }
+                        input { class: "hi-input", placeholder: "Enter password", r#type: "password", autocomplete: "new-password" }
                         div { class: "hi-form-field-help", "Must be at least 8 characters" }
                     }
                 }

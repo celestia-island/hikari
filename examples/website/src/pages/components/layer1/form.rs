@@ -28,7 +28,7 @@ pub fn render() -> VNode {
         },
     );
     let input_password = glow_wrap(
-        rsx! { input { class: "hi-input", placeholder: "Password", r#type: "password" } },
+        rsx! { input { class: "hi-input", placeholder: "Password", r#type: "password", autocomplete: "current-password" } },
         GlowConfig {
             intensity: GlowIntensity::Soft,
             color: GlowColor::Ghost,
@@ -93,42 +93,44 @@ pub fn render() -> VNode {
                 div { class: "demo-block",
                     h3 { class: "demo-block__title", "Input States" }
                     div { class: "demo-block__body",
-                        div { style: "display:flex;flex-direction:column;gap:16px;",
-                            div { class: "hi-form-item",
-                                label { class: "hi-label", "Default" }
-                                {glow_wrap(
-                                    rsx! { input { class: "hi-input", placeholder: "Default input", r#type: "text" } },
-                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
-                                )}
-                            }
-                            div { class: "hi-form-item",
-                                label { class: "hi-label", "Password" }
-                                {glow_wrap(
-                                    rsx! { input { class: "hi-input", placeholder: "Enter password", r#type: "password" } },
-                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
-                                )}
-                            }
-                            div { class: "hi-form-item",
-                                label { class: "hi-label", "Email" }
-                                {glow_wrap(
-                                    rsx! { input { class: "hi-input", placeholder: "email@example.com", r#type: "email" } },
-                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
-                                )}
-                            }
-                            div { class: "hi-form-item hi-form-item--error",
-                                label { class: "hi-label", "Username" }
-                                {glow_wrap(
-                                    rsx! { input { class: "hi-input hi-input-error", placeholder: "Error state", r#type: "text", value: "invalid-user" } },
-                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Danger, ..Default::default() },
-                                )}
-                                span { class: "hi-form-error", "Username must be 3-20 characters" }
-                            }
-                            div { class: "hi-form-item",
-                                label { class: "hi-label", "Disabled" }
-                                {glow_wrap(
-                                    rsx! { input { class: "hi-input", placeholder: "Disabled field", r#type: "text", disabled: "true" } },
-                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
-                                )}
+                        form { class: "hi-form",
+                            div { style: "display:flex;flex-direction:column;gap:16px;",
+                                div { class: "hi-form-item",
+                                    label { class: "hi-label", "Default" }
+                                    {glow_wrap(
+                                        rsx! { input { class: "hi-input", placeholder: "Default input", r#type: "text" } },
+                                        GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                                    )}
+                                }
+                                div { class: "hi-form-item",
+                                    label { class: "hi-label", "Password" }
+                                    {glow_wrap(
+                                        rsx! { input { class: "hi-input", placeholder: "Enter password", r#type: "password", autocomplete: "current-password" } },
+                                        GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                                    )}
+                                }
+                                div { class: "hi-form-item",
+                                    label { class: "hi-label", "Email" }
+                                    {glow_wrap(
+                                        rsx! { input { class: "hi-input", placeholder: "email@example.com", r#type: "email" } },
+                                        GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                                    )}
+                                }
+                                div { class: "hi-form-item hi-form-item--error",
+                                    label { class: "hi-label", "Username" }
+                                    {glow_wrap(
+                                        rsx! { input { class: "hi-input hi-input-error", placeholder: "Error state", r#type: "text", value: "invalid-user" } },
+                                        GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Danger, ..Default::default() },
+                                    )}
+                                    span { class: "hi-form-error", "Username must be 3-20 characters" }
+                                }
+                                div { class: "hi-form-item",
+                                    label { class: "hi-label", "Disabled" }
+                                    {glow_wrap(
+                                        rsx! { input { class: "hi-input", placeholder: "Disabled field", r#type: "text", disabled: "true" } },
+                                        GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                                    )}
+                                }
                             }
                         }
                     }
@@ -151,31 +153,33 @@ pub fn render() -> VNode {
                 div { class: "demo-block",
                     h3 { class: "demo-block__title", "Form Validation" }
                     div { class: "demo-block__body",
-                        div { style: "display:flex;flex-direction:column;gap:16px;max-width:480px;",
-                            div { class: "hi-form-item",
-                                label { class: "hi-form-item__label",
-                                    span { "Username" }
-                                    span { style: "color:#ef4444;margin-left:2px;", "*" }
+                        form { class: "hi-form",
+                            div { style: "display:flex;flex-direction:column;gap:16px;max-width:480px;",
+                                div { class: "hi-form-item",
+                                    label { class: "hi-form-item__label",
+                                        span { "Username" }
+                                        span { style: "color:#ef4444;margin-left:2px;", "*" }
+                                    }
+                                    input { class: "hi-input", value: "alice_chen", style: "width:100%;" }
+                                    p { style: "margin:4px 0 0;font-size:12px;color:#22c55e;display:flex;align-items:center;gap:4px;", "✓ Username is available" }
                                 }
-                                input { class: "hi-input", value: "alice_chen", style: "width:100%;" }
-                                p { style: "margin:4px 0 0;font-size:12px;color:#22c55e;display:flex;align-items:center;gap:4px;", "✓ Username is available" }
-                            }
-                            div { class: "hi-form-item",
-                                label { class: "hi-form-item__label",
-                                    span { "Email" }
-                                    span { style: "color:#ef4444;margin-left:2px;", "*" }
+                                div { class: "hi-form-item",
+                                    label { class: "hi-form-item__label",
+                                        span { "Email" }
+                                        span { style: "color:#ef4444;margin-left:2px;", "*" }
+                                    }
+                                    input { class: "hi-input", value: "invalid-email", style: "width:100%;border-color:#ef4444;background:#fef2f2;" }
+                                    p { style: "margin:4px 0 0;font-size:12px;color:#ef4444;", "Please enter a valid email address (e.g. user@example.com)" }
                                 }
-                                input { class: "hi-input", value: "invalid-email", style: "width:100%;border-color:#ef4444;background:#fef2f2;" }
-                                p { style: "margin:4px 0 0;font-size:12px;color:#ef4444;", "Please enter a valid email address (e.g. user@example.com)" }
-                            }
-                            div { class: "hi-form-item",
-                                label { class: "hi-form-item__label", "Password" }
-                                input { class: "hi-input", r#type: "password", value: "12345", style: "width:100%;border-color:#ef4444;background:#fef2f2;" }
-                                p { style: "margin:4px 0 0;font-size:12px;color:#ef4444;", "Password must be at least 8 characters" }
-                            }
-                            div { style: "display:flex;gap:12px;margin-top:8px;",
-                                button { class: "hi-button hi-button-primary", "Submit" }
-                                button { class: "hi-button hi-button-secondary", "Reset" }
+                                div { class: "hi-form-item",
+                                    label { class: "hi-form-item__label", "Password" }
+                                    input { class: "hi-input", r#type: "password", value: "12345", style: "width:100%;border-color:#ef4444;background:#fef2f2;", autocomplete: "new-password" }
+                                    p { style: "margin:4px 0 0;font-size:12px;color:#ef4444;", "Password must be at least 8 characters" }
+                                }
+                                div { style: "display:flex;gap:12px;margin-top:8px;",
+                                    button { class: "hi-button hi-button-primary", "Submit" }
+                                    button { class: "hi-button hi-button-secondary", "Reset" }
+                                }
                             }
                         }
                     }

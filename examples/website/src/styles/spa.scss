@@ -36,7 +36,6 @@ body,
 
   &:hover {
     text-decoration: none;
-    transform: translateY(-1px);
   }
 
   &:active {
@@ -191,12 +190,11 @@ body,
   border: 1px solid var(--hi-border, #e5e7eb);
   border-radius: var(--hi-card-radius, 12px);
   padding: 1.5rem;
-  transition: all 0.25s ease;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 
   &:hover {
     border-color: var(--hi-color-primary, #F5A9A9);
     box-shadow: 0 4px 16px rgba(245, 169, 169, 0.12);
-    transform: translateY(-2px);
   }
 }
 
@@ -651,6 +649,7 @@ aside .hi-menu {
 // Button enhancements inside glow wrapper (bundle.css uses .hi-button)
 .hi-glow-wrapper .hi-button:hover {
   transform: none;
+  text-decoration: none;
 }
 .hi-glow-wrapper .hi-button:focus-visible {
   box-shadow:
@@ -1599,11 +1598,19 @@ aside .hi-glow-wrapper {
   border-radius: var(--hi-radius);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
   position: relative;
   overflow: hidden;
   user-select: none;
+
+  &:hover,
+  &:focus {
+    text-decoration: none;
+  }
 
   &:focus-visible {
     outline: none;
@@ -1623,7 +1630,6 @@ aside .hi-glow-wrapper {
     &:hover {
       background: linear-gradient(135deg, var(--hi-pink-dark) 0%, #e07a7a 100%);
       box-shadow: 0 4px 12px rgba(245,169,169,0.45);
-      transform: translateY(-1px);
     }
   }
 
@@ -1636,7 +1642,6 @@ aside .hi-glow-wrapper {
       border-color: var(--hi-pink);
       color: var(--hi-pink-dark);
       background: var(--hi-pink-light);
-      transform: translateY(-1px);
     }
   }
 
@@ -1648,7 +1653,6 @@ aside .hi-glow-wrapper {
 
     &:hover {
       box-shadow: 0 4px 12px rgba(239,68,68,0.4);
-      transform: translateY(-1px);
     }
   }
 

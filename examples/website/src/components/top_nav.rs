@@ -52,7 +52,7 @@ pub fn render() -> VNode {
                     }
                 }
                 a {
-                    href: "https://github.com/celestia/hikari",
+                    href: "https://github.com/celestia-island/hikari",
                     target: "_blank",
                     class: "hi-header-github",
                     "GitHub"

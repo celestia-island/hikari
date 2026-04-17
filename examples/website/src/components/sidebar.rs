@@ -422,10 +422,14 @@ pub fn render() -> VNode {
             .attr("id", "hikari-aside")
             .class("hi-aside hi-aside-drawer hi-aside-lg hi-aside-light")
             .child(VNode::Element(
-                VElement::new("nav")
-                    .class("hi-menu hi-menu-vertical hi-menu-compact")
-                    .child(menu_list),
-            ))
-            .child(super::aside_footer::render()),
+                VElement::new("div")
+                    .class("hi-aside-content")
+                    .child(VNode::Element(
+                        VElement::new("nav")
+                            .class("hi-menu hi-menu-vertical hi-menu-compact")
+                            .child(menu_list),
+                    ))
+                    .child(super::aside_footer::render()),
+            )),
     )
 }

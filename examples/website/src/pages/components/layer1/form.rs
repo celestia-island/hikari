@@ -93,12 +93,58 @@ pub fn render() -> VNode {
                 div { class: "demo-block",
                     h3 { class: "demo-block__title", "Input States" }
                     div { class: "demo-block__body",
-                        div { style: "display:flex;flex-direction:column;gap:12px;",
-                            {input_default}
-                            {input_password}
-                            {input_email}
-                            {input_error}
-                            {input_disabled}
+                        div { style: "display:flex;flex-direction:column;gap:16px;",
+                            div { class: "hi-form-item",
+                                label { class: "hi-label", "Default" }
+                                {glow_wrap(
+                                    rsx! { input { class: "hi-input", placeholder: "Default input", r#type: "text" } },
+                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                                )}
+                            }
+                            div { class: "hi-form-item",
+                                label { class: "hi-label", "Password" }
+                                {glow_wrap(
+                                    rsx! { input { class: "hi-input", placeholder: "Enter password", r#type: "password" } },
+                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                                )}
+                            }
+                            div { class: "hi-form-item",
+                                label { class: "hi-label", "Email" }
+                                {glow_wrap(
+                                    rsx! { input { class: "hi-input", placeholder: "email@example.com", r#type: "email" } },
+                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                                )}
+                            }
+                            div { class: "hi-form-item hi-form-item--error",
+                                label { class: "hi-label", "Username" }
+                                {glow_wrap(
+                                    rsx! { input { class: "hi-input hi-input-error", placeholder: "Error state", r#type: "text", value: "invalid-user" } },
+                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Danger, ..Default::default() },
+                                )}
+                                span { class: "hi-form-error", "Username must be 3-20 characters" }
+                            }
+                            div { class: "hi-form-item",
+                                label { class: "hi-label", "Disabled" }
+                                {glow_wrap(
+                                    rsx! { input { class: "hi-input", placeholder: "Disabled field", r#type: "text", disabled: "true" } },
+                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                                )}
+                            }
+                        }
+                    }
+                }
+                div { class: "demo-block",
+                    h3 { class: "demo-block__title", "Inline Form" }
+                    div { class: "demo-block__body",
+                        form { class: "hi-form hi-form--inline",
+                            {glow_wrap(
+                                rsx! { input { class: "hi-input", placeholder: "Search...", r#type: "search" } },
+                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                            )}
+                            {glow_wrap(
+                                rsx! { button { class: "hi-button hi-button-primary hi-button-sm", "\u{1F50D} Search" } },
+                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
+                            )}
                         }
                     }
                 }

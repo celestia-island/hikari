@@ -779,6 +779,13 @@ aside .hi-glow-wrapper {
 
 .demo-block__body {
   padding: 0;
+
+  &:not(:has(.demo-row)) {
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--hi-border, #e5e7eb);
+    background: var(--hi-surface, rgba(255, 255, 255, 0.5));
+  }
 }
 
 // ── Demo row (inner demo container) ──────────────────────────────────
@@ -1597,11 +1604,12 @@ aside .hi-glow-wrapper {
   &-ghost {
     background: transparent;
     color: var(--hi-gray-600);
-    border-color: transparent;
+    border: 1.5px solid var(--hi-gray-200);
 
     &:hover {
       background: var(--hi-gray-100);
       color: var(--hi-gray-800);
+      border-color: var(--hi-gray-300);
     }
   }
 
@@ -1637,23 +1645,24 @@ aside .hi-glow-wrapper {
   line-height: 1.5;
   color: var(--hi-gray-800);
   background: white;
-  border: 1.5px solid var(--hi-gray-200);
+  border: 2px solid var(--hi-gray-300);
   border-radius: var(--hi-radius);
   transition: all 0.2s ease;
   outline: none;
   box-sizing: border-box;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
 
   &::placeholder {
     color: var(--hi-gray-400);
   }
 
   &:hover {
-    border-color: var(--hi-gray-300);
+    border-color: var(--hi-gray-400);
   }
 
   &:focus {
     border-color: var(--hi-pink);
-    box-shadow: 0 0 0 3px rgba(245,169,169,0.15);
+    box-shadow: 0 0 0 3px rgba(245,169,169,0.2), inset 0 1px 2px rgba(0,0,0,0.02);
   }
 
   &-error {
@@ -1694,10 +1703,10 @@ aside .hi-glow-wrapper {
   height: 22px;
   padding: 2px;
   border-radius: 11px;
-  background: var(--hi-gray-200);
-  border: none;
+  background: #e0e0e0;
+  border: 2px solid #d1d5db;
   cursor: pointer;
-  transition: background 0.25s ease;
+  transition: background 0.25s ease, border-color 0.25s ease;
   position: relative;
   vertical-align: middle;
 
@@ -1707,7 +1716,7 @@ aside .hi-glow-wrapper {
     height: 18px;
     border-radius: 50%;
     background: white;
-    box-shadow: var(--hi-shadow);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1);
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     position: absolute;
     left: 2px;
@@ -1715,11 +1724,49 @@ aside .hi-glow-wrapper {
   }
 }
 
+.hi-switch--sm .hi-switch__rail {
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+
+  &::after {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.hi-switch--sm .hi-switch__input:checked + .hi-switch__rail::after {
+  transform: translateX(14px);
+}
+
+.hi-switch--lg .hi-switch__rail {
+  width: 48px;
+  height: 26px;
+  border-radius: 13px;
+
+  &::after {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.hi-switch--lg .hi-switch__input:checked + .hi-switch__rail::after {
+  transform: translateX(22px);
+}
+
+.hi-switch--disabled .hi-switch__rail,
+.hi-switch--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .hi-switch__input {
   display: none;
 
   &:checked + .hi-switch__rail {
     background: linear-gradient(135deg, var(--hi-pink), var(--hi-pink-dark));
+    border-color: var(--hi-pink-dark);
 
     &::after {
       transform: translateX(18px);
@@ -2186,6 +2233,152 @@ aside .hi-glow-wrapper {
     color: var(--hi-pink-dark);
     border-bottom-color: var(--hi-pink);
     font-weight: 600;
+  }
+}
+
+// ── Pagination (.hi-pagination) ────────────────────────────────────────
+
+.hi-pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.875rem;
+
+  a,
+  span,
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: var(--hi-radius-sm);
+    text-decoration: none;
+    color: var(--hi-gray-700);
+    background: white;
+    border: 1px solid var(--hi-gray-200);
+    transition: all 0.15s ease;
+    font-size: inherit;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--hi-pink);
+      color: var(--hi-pink-dark);
+      background: var(--hi-pink-light);
+    }
+
+    &.is-active {
+      background: linear-gradient(135deg, var(--hi-pink), var(--hi-pink-dark));
+      color: white;
+      border-color: transparent;
+      font-weight: 600;
+    }
+  }
+}
+
+// ── Number Input (.hi-number-input) ───────────────────────────────────
+
+.hi-number-input {
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  max-width: 200px;
+}
+
+.hi-number-input__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--hi-gray-200);
+  border-radius: var(--hi-radius-sm);
+  background: var(--hi-gray-50);
+  color: var(--hi-gray-600);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: var(--hi-gray-100);
+    border-color: var(--hi-gray-300);
+    color: var(--hi-gray-800);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.hi-number-input__input {
+  flex: 1;
+  min-width: 0;
+  border-left: none;
+  border-right: none;
+  text-align: center;
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+  }
+}
+
+.hi-number-input--sm .hi-number-input__btn {
+  width: 28px;
+  height: 28px;
+  font-size: 0.875rem;
+}
+
+.hi-number-input--lg .hi-number-input__btn {
+  width: 38px;
+  height: 38px;
+  font-size: 1.125rem;
+}
+
+// ── Search Input (.hi-search) ─────────────────────────────────────────
+
+.hi-search {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+}
+
+.hi-search__icon {
+  position: absolute;
+  left: 12px;
+  color: var(--hi-gray-400);
+  font-size: 0.9rem;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hi-search .hi-input {
+  padding-left: 36px;
+}
+
+.hi-search__clear {
+  position: absolute;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: var(--hi-gray-200);
+  color: var(--hi-gray-500);
+  font-size: 0.7rem;
+  cursor: pointer;
+  z-index: 1;
+
+  &:hover {
+    background: var(--hi-gray-300);
+    color: var(--hi-gray-700);
   }
 }
 

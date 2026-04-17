@@ -101,6 +101,14 @@ pub fn render() -> VNode {
                                 rsx! { button { class: "hi-button hi-button-primary", "Normal" } },
                                 GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                             )}
+                            {glow_wrap(
+                                rsx! { button { class: "hi-button hi-button-primary", disabled: "true", "\u{23F7} Loading..." } },
+                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
+                            )}
+                            {glow_wrap(
+                                rsx! { button { class: "hi-button hi-button-primary", "\u{2605} Icon Button" } },
+                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
+                            )}
                             {btn_disabled}
                         }
                     }

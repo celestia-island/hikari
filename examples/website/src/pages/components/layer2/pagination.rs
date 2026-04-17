@@ -2,63 +2,22 @@ use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
+fn page_link(text: &str, href: &str, active: bool) -> VNode {
+    if active {
+        rsx! { span { class: "is-active", text } }
+    } else {
+        rsx! { a { href: href, text } }
+    }
+}
+
 pub fn render() -> VNode {
-    let pg_prev = glow_wrap(
-        rsx! { button { class: "hi-pagination__btn", "‹" } },
-        GlowConfig {
-            intensity: GlowIntensity::Soft,
-            color: GlowColor::Ghost,
-            ..Default::default()
-        },
-    );
-    let pg_1 = glow_wrap(
-        rsx! { button { class: "hi-pagination__btn hi-pagination__btn--active", "1" } },
-        GlowConfig {
-            intensity: GlowIntensity::Soft,
-            color: GlowColor::Primary,
-            ..Default::default()
-        },
-    );
-    let pg_2 = glow_wrap(
-        rsx! { button { class: "hi-pagination__btn", "2" } },
-        GlowConfig {
-            intensity: GlowIntensity::Soft,
-            color: GlowColor::Ghost,
-            ..Default::default()
-        },
-    );
-    let pg_3 = glow_wrap(
-        rsx! { button { class: "hi-pagination__btn", "3" } },
-        GlowConfig {
-            intensity: GlowIntensity::Soft,
-            color: GlowColor::Ghost,
-            ..Default::default()
-        },
-    );
-    let pg_dots = glow_wrap(
-        rsx! { button { class: "hi-pagination__btn hi-pagination__btn--dots", "…" } },
-        GlowConfig {
-            intensity: GlowIntensity::Soft,
-            color: GlowColor::Ghost,
-            ..Default::default()
-        },
-    );
-    let pg_10 = glow_wrap(
-        rsx! { button { class: "hi-pagination__btn", "10" } },
-        GlowConfig {
-            intensity: GlowIntensity::Soft,
-            color: GlowColor::Ghost,
-            ..Default::default()
-        },
-    );
-    let pg_next = glow_wrap(
-        rsx! { button { class: "hi-pagination__btn", "›" } },
-        GlowConfig {
-            intensity: GlowIntensity::Soft,
-            color: GlowColor::Ghost,
-            ..Default::default()
-        },
-    );
+    let pg_prev = rsx! { a { class: "hi-pagination__item", href: "#", "‹" } };
+    let pg_1 = rsx! { span { class: "hi-pagination__item is-active", "1" } };
+    let pg_2 = rsx! { a { class: "hi-pagination__item", href: "#", "2" } };
+    let pg_3 = rsx! { a { class: "hi-pagination__item", href: "#", "3" } };
+    let pg_next = rsx! { a { class: "hi-pagination__item", href: "#", "›" } };
+    let pg_dots = rsx! { span { class: "hi-pagination__item hi-pagination__ellipsis", "…" } };
+    let pg_10 = rsx! { a { class: "hi-pagination__item", href: "#", "10" } };
 
     rsx! {
         div { id: "page-component-pagination", class: "hikari-page",
@@ -86,26 +45,11 @@ pub fn render() -> VNode {
                     div { class: "demo-block__body",
                         div { style: "display:flex;align-items:center;gap:16px;",
                             div { class: "hi-pagination",
-                                {glow_wrap(
-                                    rsx! { button { class: "hi-pagination__btn", "‹" } },
-                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
-                                )}
-                                {glow_wrap(
-                                    rsx! { button { class: "hi-pagination__btn", "1" } },
-                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
-                                )}
-                                {glow_wrap(
-                                    rsx! { button { class: "hi-pagination__btn hi-pagination__btn--active", "2" } },
-                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
-                                )}
-                                {glow_wrap(
-                                    rsx! { button { class: "hi-pagination__btn", "3" } },
-                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
-                                )}
-                                {glow_wrap(
-                                    rsx! { button { class: "hi-pagination__btn", "›" } },
-                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
-                                )}
+                                {rsx! { a { class: "hi-pagination__item", href: "#", "‹" } }}
+                                {rsx! { a { class: "hi-pagination__item", href: "#", "1" } }}
+                                {rsx! { span { class: "hi-pagination__item is-active", "2" } }}
+                                {rsx! { a { class: "hi-pagination__item", href: "#", "3" } }}
+                                {rsx! { a { class: "hi-pagination__item", href: "#", "›" } }}
                             }
                             span { class: "hi-pagination__total", "Total: 86 items" }
                         }
@@ -115,23 +59,11 @@ pub fn render() -> VNode {
                     h3 { class: "demo-block__title", "With Ellipsis" }
                     div { class: "demo-block__body",
                         div { class: "hi-pagination",
-                            {glow_wrap(
-                                rsx! { button { class: "hi-pagination__btn", "‹" } },
-                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
-                            )}
-                            {glow_wrap(
-                                rsx! { button { class: "hi-pagination__btn hi-pagination__btn--active", "1" } },
-                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
-                            )}
+                            {rsx! { a { class: "hi-pagination__item", href: "#", "‹" } }}
+                            {rsx! { span { class: "hi-pagination__item is-active", "1" } }}
                             {pg_dots}
-                            {glow_wrap(
-                                rsx! { button { class: "hi-pagination__btn", "10" } },
-                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
-                            )}
-                            {glow_wrap(
-                                rsx! { button { class: "hi-pagination__btn", "›" } },
-                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
-                            )}
+                            {rsx! { a { class: "hi-pagination__item", href: "#", "10" } }}
+                            {rsx! { a { class: "hi-pagination__item", href: "#", "›" } }}
                         }
                     }
                 }
@@ -139,14 +71,8 @@ pub fn render() -> VNode {
                     h3 { class: "demo-block__title", "Simple Mode" }
                     div { class: "demo-block__body",
                         div { class: "hi-pagination",
-                            {glow_wrap(
-                                rsx! { button { class: "hi-pagination__btn", "‹ Previous" } },
-                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
-                            )}
-                            {glow_wrap(
-                                rsx! { button { class: "hi-pagination__btn", "Next ›" } },
-                                GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
-                            )}
+                            {rsx! { a { class: "hi-pagination__item", href: "#", "‹ Previous" } }}
+                            {rsx! { a { class: "hi-pagination__item", href: "#", "Next ›" } }}
                         }
                     }
                 }

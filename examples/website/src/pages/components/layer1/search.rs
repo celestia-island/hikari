@@ -28,7 +28,7 @@ fn make_search(
     if let Some(n) = icon_node {
         children.push(n);
     }
-    children.push(rsx! { input { class: "hi-search__input", placeholder: placeholder, r#type: "search", value: value } });
+    children.push(rsx! { input { class: "hi-input", placeholder: placeholder, r#type: "search", value: value } });
     if let Some(n) = clear_node {
         children.push(n);
     }

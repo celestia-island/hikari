@@ -110,6 +110,66 @@ pub fn render() -> VNode {
                     }
                 }
                 div { class: "demo-block",
+                    h3 { class: "demo-block__title", "Disabled Transfer" }
+                    div { class: "demo-block__body",
+                        div { class: "hi-transfer hi-transfer--disabled",
+                            div { class: "hi-transfer__panel",
+                                div { class: "hi-transfer__header",
+                                    span { "Source" }
+                                    span { class: "hi-transfer__count", "4" }
+                                }
+                                div { class: "hi-transfer__list",
+                                    label { class: "hi-transfer__item", input { r#type: "checkbox", disabled: "true" } " Option A" }
+                                    label { class: "hi-transfer__item", input { r#type: "checkbox", disabled: "true" } " Option B" }
+                                    label { class: "hi-transfer__item", input { r#type: "checkbox", checked: "true", disabled: "true" } " Option C" }
+                                }
+                            }
+                            div { class: "hi-transfer__actions",
+                                button { class: "hi-button hi-button-secondary hi-button-sm", style: "opacity:0.5;cursor:not-allowed;", "⇒" }
+                                button { class: "hi-button hi-button-secondary hi-button-sm", style: "opacity:0.5;cursor:not-allowed;", "⇐" }
+                            }
+                            div { class: "hi-transfer__panel",
+                                div { class: "hi-transfer__header",
+                                    span { "Target" }
+                                    span { class: "hi-transfer__count", "1" }
+                                }
+                                div { class: "hi-transfer__list",
+                                    label { class: "hi-transfer__item", input { r#type: "checkbox", disabled: "true", checked: "true" } " Option C" }
+                                }
+                            }
+                        }
+                    }
+                }
+                div { class: "demo-block",
+                    h3 { class: "demo-block__title", "One-Way Transfer" }
+                    div { class: "demo-block__body",
+                        div { class: "hi-transfer",
+                            div { class: "hi-transfer__panel",
+                                div { class: "hi-transfer__header",
+                                    span { "Permissions" }
+                                    span { class: "hi-transfer__count", "4" }
+                                }
+                                div { class: "hi-transfer__list",
+                                    label { class: "hi-transfer__item", input { r#type: "checkbox" } " Read" }
+                                    label { class: "hi-transfer__item", input { r#type: "checkbox" } " Write" }
+                                    label { class: "hi-transfer__item", input { r#type: "checkbox" } " Delete" }
+                                    label { class: "hi-transfer__item", input { r#type: "checkbox" } " Admin" }
+                                }
+                            }
+                            div { class: "hi-transfer__actions",
+                                {arrow_btn("\u{2192}")}
+                            }
+                            div { class: "hi-transfer__panel",
+                                div { class: "hi-transfer__header",
+                                    span { "Granted" }
+                                    span { class: "hi-transfer__count", "0" }
+                                }
+                                div { class: "hi-transfer__list" }
+                            }
+                        }
+                    }
+                }
+                div { class: "demo-block",
                     h3 { class: "demo-block__title", "API" }
                     div { class: "demo-block__body",
                         table { class: "api-table",

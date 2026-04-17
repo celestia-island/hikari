@@ -80,6 +80,49 @@ pub fn render() -> VNode {
                     }
                 }
                 div { class: "demo-block",
+                    h3 { class: "demo-block__title", "Image Avatar" }
+                    div { class: "demo-block__body",
+                        div { class: "demo-row",
+                            div { class: "hi-avatar",
+                                img { src: "https://i.pravatar.cc/150?img=1", alt: "Alice Chen", style: "width:100%;height:100%;object-fit:cover;border-radius:inherit;" }
+                            }
+                            div { class: "hi-avatar hi-avatar--lg",
+                                img { src: "https://i.pravatar.cc/150?img=2", alt: "Bob Martinez", style: "width:100%;height:100%;object-fit:cover;border-radius:inherit;" }
+                            }
+                            div { class: "hi-avatar hi-avatar--xl",
+                                img { src: "https://i.pravatar.cc/150?img=3", alt: "Carol Wu", style: "width:100%;height:100%;object-fit:cover;border-radius:inherit;" }
+                            }
+                            div { class: "hi-avatar",
+                                "F"
+                            }
+                        }
+                        p { style: "margin-top:12px;font-size:13px;color:var(--hi-color-text-secondary);", "Images fall back to initials on load error." }
+                    }
+                }
+                div { class: "demo-block",
+                    h3 { class: "demo-block__title", "Avatar with Status" }
+                    div { class: "demo-block__body",
+                        div { class: "demo-row",
+                            div { style: "position:relative;display:inline-block;",
+                                div { class: "hi-avatar hi-avatar--primary", "A" }
+                                div { style: "position:absolute;bottom:0;right:0;width:14px;height:14px;border-radius:50%;background:#22c55e;border:2px solid white;" }
+                            }
+                            div { style: "position:relative;display:inline-block;",
+                                div { class: "hi-avatar hi-avatar--danger", "R" }
+                                div { style: "position:absolute;bottom:0;right:0;width:14px;height:14px;border-radius:50%;background:#ef4444;border:2px solid white;" }
+                            }
+                            div { style: "position:relative;display:inline-block;",
+                                div { class: "hi-avatar hi-avatar--secondary", "S" }
+                                div { style: "position:absolute;bottom:0;right:0;width:14px;height:14px;border-radius:50%;background:#9ca3af;border:2px solid white;" }
+                            }
+                            div { style: "position:relative;display:inline-block;",
+                                div { class: "hi-avatar hi-avatar--warning", "Y" }
+                                div { style: "position:absolute;bottom:0;right:0;width:14px;height:14px;border-radius:50%;border:2px solid white;background:transparent;border-top:3px solid:#f59e0b;border-right:3px solid transparent;transform:rotate(45deg);" }
+                            }
+                        }
+                    }
+                }
+                div { class: "demo-block",
                     h3 { class: "demo-block__title", "API" }
                     div { class: "demo-block__body",
                         table { class: "api-table",

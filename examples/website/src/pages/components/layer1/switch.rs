@@ -96,6 +96,23 @@ pub fn render() -> VNode {
                     }
                 }
                 div { class: "demo-block",
+                    h3 { class: "demo-block__title", "Danger Variant" }
+                    div { class: "demo-block__body",
+                        div { style: "display:flex;flex-direction:column;gap:16px;",
+                            div { style: "display:flex;align-items:center;gap:16px;",
+                                div { class: "hi-switch hi-switch--danger" }
+                                span { "Auto-delete after 30 days" }
+                            }
+                            div { style: "display:flex;align-items:center;gap:16px;",
+                                div { class: "hi-switch hi-switch--danger",
+                                    input { r#type: "checkbox", checked: "true" }
+                                }
+                                span { "Auto-delete enabled (active)" }
+                            }
+                        }
+                    }
+                }
+                div { class: "demo-block",
                     h3 { class: "demo-block__title", "API" }
                     div { class: "demo-block__body",
                         table { class: "api-table",

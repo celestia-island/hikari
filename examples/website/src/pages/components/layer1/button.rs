@@ -129,6 +129,19 @@ pub fn render() -> VNode {
                     }
                 }
                 div { class: "demo-block",
+                    h3 { class: "demo-block__title", "Block Buttons" }
+                    div { class: "demo-block__body",
+                        div { style: "display:flex;flex-direction:column;gap:12px;",
+                            button { class: "hi-button hi-button-primary", style: "width:100%;", "Full Width Primary" }
+                            button { class: "hi-button hi-button-danger", style: "width:100%;", "Delete Account" }
+                            div { style: "display:flex;gap:12px;",
+                                button { class: "hi-button hi-button-secondary", style: "flex:1;", "Cancel" }
+                                button { class: "hi-button hi-button-primary", style: "flex:1;", "Confirm" }
+                            }
+                        }
+                    }
+                }
+                div { class: "demo-block",
                     h3 { class: "demo-block__title", "API" }
                     div { class: "demo-block__body",
                         table { class: "api-table",

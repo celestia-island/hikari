@@ -103,6 +103,64 @@ pub fn render() -> VNode {
                     }
                 }
                 div { class: "demo-block",
+                    h3 { class: "demo-block__title", "Read-Only Mode" }
+                    div { class: "demo-block__body",
+                        div { class: "hi-editor",
+                            div { class: "hi-editor__toolbar",
+                                {glow_wrap(
+                                    rsx! { button { class: "hi-editor__btn", "B", disabled: "true" } },
+                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                                )}
+                                {glow_wrap(
+                                    rsx! { button { class: "hi-editor__btn", "I", disabled: "true" } },
+                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                                )}
+                                {glow_wrap(
+                                    rsx! { button { class: "hi-editor__btn", "U", disabled: "true" } },
+                                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                                )}
+                             }
+                            div { class: "hi-editor__content",
+                                textarea { class: "hi-editor__textarea", readonly: "readonly",
+                                    "# Hikari UI Component Library\n\n## Features\n\n- **Glow effects** with configurable intensity\n- **30+ components** across 3 complexity layers\n- **Rust + WebAssembly** for performance\n\n```rust\nuse hikari::prelude::*;\n\nfn main() {\n    App::new().run();\n}\n```"
+                                 }
+                            }
+                        }
+                    }
+                }
+                div { class: "demo-block",
+                    h3 { class: "demo-block__title", "Compact Editor with Limits" }
+                    div { class: "demo-block__body",
+                        div { style: "max-width:500px;",
+                            div { class: "hi-editor",
+                                div { class: "hi-editor__toolbar",
+                                    {glow_wrap(
+                                        rsx! { button { class: "hi-editor__btn", "B" } },
+                                        GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                                    )}
+                                    {glow_wrap(
+                                        rsx! { button { class: "hi-editor__btn", "I" } },
+                                        GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                                    )}
+                                    {glow_wrap(
+                                        rsx! { button { class: "hi-editor__btn", "Link" } },
+                                        GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+                                    )}
+                                }
+                                div { class: "hi-editor__content",
+                                    textarea { class: "hi-editor__textarea", placeholder: "Write a short bio...", style: "height:80px;",
+                                        "Type something here..."
+                                     }
+                                }
+                                div { style: "display:flex;justify-content:space-between;padding-top:6px;font-size:12px;color:var(--hi-gray-400);",
+                                    span { "18 / 200 characters" }
+                                    span { "Markdown supported" }
+                                }
+                            }
+                        }
+                    }
+                }
+                div { class: "demo-block",
                     h3 { class: "demo-block__title", "API" }
                     div { class: "demo-block__body",
                         table { class: "api-table",

@@ -29,7 +29,7 @@ pub fn render() -> VNode {
     let num_decimal = make_num_input("3.14", "0.01", "", "", "");
     let num_range = make_num_input("50", "1", "0", "100", "");
     let num_large = make_num_input("100", "10", "", "", "hi-number-input--lg");
-    let num_disabled = make_num_input("0", "1", "", "", "");
+    let num_disabled = make_num_input("0", "1", "", "", "hi-number-input--disabled");
     let num_small = make_num_input("5", "1", "", "", "hi-number-input--sm");
 
     rsx! {

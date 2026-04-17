@@ -149,6 +149,38 @@ pub fn render() -> VNode {
                     }
                 }
                 div { class: "demo-block",
+                    h3 { class: "demo-block__title", "Form Validation" }
+                    div { class: "demo-block__body",
+                        div { style: "display:flex;flex-direction:column;gap:16px;max-width:480px;",
+                            div { class: "hi-form-item",
+                                label { class: "hi-form-item__label",
+                                    span { "Username" }
+                                    span { style: "color:#ef4444;margin-left:2px;", "*" }
+                                }
+                                input { class: "hi-input", value: "alice_chen", style: "width:100%;" }
+                                p { style: "margin:4px 0 0;font-size:12px;color:#22c55e;display:flex;align-items:center;gap:4px;", "✓ Username is available" }
+                            }
+                            div { class: "hi-form-item",
+                                label { class: "hi-form-item__label",
+                                    span { "Email" }
+                                    span { style: "color:#ef4444;margin-left:2px;", "*" }
+                                }
+                                input { class: "hi-input", value: "invalid-email", style: "width:100%;border-color:#ef4444;background:#fef2f2;" }
+                                p { style: "margin:4px 0 0;font-size:12px;color:#ef4444;", "Please enter a valid email address (e.g. user@example.com)" }
+                            }
+                            div { class: "hi-form-item",
+                                label { class: "hi-form-item__label", "Password" }
+                                input { class: "hi-input", r#type: "password", value: "12345", style: "width:100%;border-color:#ef4444;background:#fef2f2;" }
+                                p { style: "margin:4px 0 0;font-size:12px;color:#ef4444;", "Password must be at least 8 characters" }
+                            }
+                            div { style: "display:flex;gap:12px;margin-top:8px;",
+                                button { class: "hi-button hi-button-primary", "Submit" }
+                                button { class: "hi-button hi-button-secondary", "Reset" }
+                            }
+                        }
+                    }
+                }
+                div { class: "demo-block",
                     h3 { class: "demo-block__title", "API" }
                     div { class: "demo-block__body",
                         table { class: "api-table",

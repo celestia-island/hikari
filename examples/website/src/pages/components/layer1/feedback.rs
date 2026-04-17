@@ -76,6 +76,48 @@ pub fn render() -> VNode {
                     }
                 }
                 div { class: "demo-block",
+                    h3 { class: "demo-block__title", "Closable Alerts" }
+                    div { class: "demo-block__body",
+                        div { style: "display:flex;flex-direction:column;gap:12px;",
+                            div { class: "hi-alert hi-alert--info",
+                                span { style: "flex:1;", "ℹ  This alert can be dismissed." }
+                                span { style: "cursor:pointer;font-size:16px;opacity:0.6;padding:0 4px;", "×" }
+                            }
+                            div { class: "hi-alert hi-alert--success",
+                                span { style: "flex:1;", "✓  Changes saved successfully." }
+                                span { style: "cursor:pointer;font-size:16px;opacity:0.6;padding:0 4px;", "×" }
+                            }
+                        }
+                    }
+                }
+                div { class: "demo-block",
+                    h3 { class: "demo-block__title", "Indeterminate & Spinner Sizes" }
+                    div { class: "demo-block__body",
+                        div { style: "display:flex;flex-direction:column;gap:20px;",
+                            div {
+                                div { style: "margin-bottom:6px;font-size:13px;color:var(--hi-color-text-secondary);", "Loading resources..." }
+                                div { class: "hi-progress",
+                                    div { class: "hi-progress__bar", style: "width:40%;animation:hi-progress-indeterminate 1.8s ease-in-out infinite;" }
+                                }
+                            }
+                            div { style: "display:flex;align-items:center;gap:24px;",
+                                div { style: "display:flex;align-items:center;gap:10px;",
+                                    div { class: "hi-spin hi-spin--sm" }
+                                    span { style: "font-size:13px;color:var(--hi-color-text-secondary);", "Small" }
+                                }
+                                div { style: "display:flex;align-items:center;gap:10px;",
+                                    div { class: "hi-spin" }
+                                    span { style: "font-size:13px;color:var(--hi-color-text-secondary);", "Default" }
+                                }
+                                div { style: "display:flex;align-items:center;gap:10px;",
+                                    div { class: "hi-spin hi-spin--lg" }
+                                    span { style: "font-size:13px;color:var(--hi-color-text-secondary);", "Large" }
+                                }
+                            }
+                        }
+                    }
+                }
+                div { class: "demo-block",
                     h3 { class: "demo-block__title", "API" }
                     div { class: "demo-block__body",
                         table { class: "api-table",

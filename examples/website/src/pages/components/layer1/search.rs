@@ -103,6 +103,17 @@ pub fn render() -> VNode {
                     }
                 }
                 div { class: "demo-block",
+                    h3 { class: "demo-block__title", "Disabled Search" }
+                    div { class: "demo-block__body",
+                        div { class: "demo-row",
+                            div { class: "hi-search",
+                                div { class: "hi-search__icon", "🔍" }
+                                input { class: "hi-input hi-search__input", placeholder: "Search...", disabled: "true", style: "cursor:not-allowed;opacity:0.6;" }
+                            }
+                        }
+                    }
+                }
+                div { class: "demo-block",
                     h3 { class: "demo-block__title", "API" }
                     div { class: "demo-block__body",
                         table { class: "api-table",

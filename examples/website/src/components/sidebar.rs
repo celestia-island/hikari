@@ -428,8 +428,8 @@ pub fn render() -> VNode {
                         VElement::new("nav")
                             .class("hi-menu hi-menu-vertical hi-menu-compact")
                             .child(menu_list),
-                    ))
-                    .child(super::aside_footer::render()),
-            )),
+                    )),
+            ))
+            .child(super::aside_footer::render()),
     )
 }

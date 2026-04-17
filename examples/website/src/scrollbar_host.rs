@@ -52,7 +52,7 @@ impl ScrollbarHost for PlatformScrollbarHost<'_> {
             .collect()
     }
 
-    fn on_scroll(&self, el: DomHandle, cb: Box<dyn FnMut()>) {
+    fn on_scroll(&self, el: DomHandle, mut cb: Box<dyn FnMut()>) {
         let wit_el = self.el(el);
         self.platform.add_event_listener(
             &wit_el,
@@ -63,7 +63,7 @@ impl ScrollbarHost for PlatformScrollbarHost<'_> {
         );
     }
 
-    fn on_mouse_enter(&self, el: DomHandle, cb: Box<dyn FnMut()>) {
+    fn on_mouse_enter(&self, el: DomHandle, mut cb: Box<dyn FnMut()>) {
         let wit_el = self.el(el);
         self.platform.add_event_listener(
             &wit_el,
@@ -74,7 +74,7 @@ impl ScrollbarHost for PlatformScrollbarHost<'_> {
         );
     }
 
-    fn on_mouse_leave(&self, el: DomHandle, cb: Box<dyn FnMut()>) {
+    fn on_mouse_leave(&self, el: DomHandle, mut cb: Box<dyn FnMut()>) {
         let wit_el = self.el(el);
         self.platform.add_event_listener(
             &wit_el,
@@ -116,7 +116,7 @@ impl ScrollbarHost for PlatformScrollbarHost<'_> {
         setup_window_drag_listeners(self.platform);
     }
 
-    fn on_click(&self, el: DomHandle, cb: Box<dyn FnMut(f64)>) {
+    fn on_click(&self, el: DomHandle, mut cb: Box<dyn FnMut(f64)>) {
         let wit_el = self.el(el);
         self.platform.add_event_listener(
             &wit_el,
@@ -128,7 +128,7 @@ impl ScrollbarHost for PlatformScrollbarHost<'_> {
         );
     }
 
-    fn on_resize(&self, el: DomHandle, cb: Box<dyn FnMut()>) {
+    fn on_resize(&self, el: DomHandle, mut cb: Box<dyn FnMut()>) {
         let wit_el = self.el(el);
         let observer = self.platform.create_resize_observer(Box::new(move |_entries| {
             cb();
@@ -136,7 +136,7 @@ impl ScrollbarHost for PlatformScrollbarHost<'_> {
         self.platform.observe_resize(observer, &wit_el);
     }
 
-    fn on_body_mutation(&self, cb: Box<dyn FnMut()>) {
+    fn on_body_mutation(&self, mut cb: Box<dyn FnMut()>) {
         let observer = self.platform.create_mutation_observer(Box::new(move |_records| {
             cb();
         }));

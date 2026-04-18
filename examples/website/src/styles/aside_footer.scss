@@ -81,18 +81,15 @@
 
 .hi-aside-footer .hi-select-dropdown {
   display: none;
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
-  margin-bottom: 4px;
+  position: fixed;
+  z-index: 9999;
+  min-width: 120px;
   max-height: 200px;
   overflow-y: auto;
-  z-index: 1100;
   background: var(--hi-surface, #fff);
   border: 1px solid var(--hi-border, #e5e7eb);
   border-radius: 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .hi-aside-footer .hi-select-open > .hi-select-dropdown {

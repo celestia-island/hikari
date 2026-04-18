@@ -8,15 +8,24 @@ const LANG_SELECT_JS: &str = r#"(function(){
   var el=event.currentTarget;
   var trigger=el.closest('.hi-select');
   if(!trigger) return;
+  var dd=trigger.querySelector('.hi-select-dropdown');
+  if(!dd) return;
   var isOpen=trigger.classList.toggle('hi-select-open');
-  if(!isOpen) return;
+  if(isOpen){
+    var r=el.getBoundingClientRect();
+    dd.style.left=r.left+'px';
+    dd.style.top=(r.bottom+4)+'px';
+    dd.style.width=Math.max(r.width,120)+'px';
+  }
+  dd.style.display=isOpen?'block':'none';
   function close(e){
     if(!trigger.contains(e.target)){
       trigger.classList.remove('hi-select-open');
+      dd.style.display='none';
       document.removeEventListener('click',close);
     }
   }
-  setTimeout(function(){document.addEventListener('click',close)},0);
+  if(isOpen) setTimeout(function(){document.addEventListener('click',close)},0);
 })()""#;
 
 const LANG_OPTION_JS: &str = r#"(function(){

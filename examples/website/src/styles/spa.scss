@@ -1750,14 +1750,17 @@ aside .hi-glow-wrapper {
   }
 
   &-secondary {
-    background: white;
-    color: var(--hi-gray-700);
-    border-color: var(--hi-gray-200);
+    background-color: var(--hi-color-secondary, #519A73);
+    color: #ffffff;
+    border-color: var(--hi-color-secondary, #519A73);
 
     &:hover {
-      border-color: var(--hi-pink);
-      color: var(--hi-pink-dark);
-      background: var(--hi-pink-light);
+      background-color: var(--hi-button-secondary-hover, rgba(81, 154, 115, 0.8));
+      box-shadow: 0 2px 8px rgba(81, 154, 115, 0.3);
+    }
+
+    &:active {
+      background-color: var(--hi-button-secondary-dark, #3D7657);
     }
   }
 

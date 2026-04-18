@@ -375,7 +375,7 @@
   --hi-color-background: var(--hi-background);
   --hi-color-surface: var(--hi-surface);
   --hi-secondary-bg: rgba(255, 255, 255, 0.5);
-  --hi-tertiary-bg: rgba(224, 240, 233, 0.5);
+  --hi-tertiary-bg: rgba(240, 240, 244, 0.5);
 
   // Component-specific Colors (light theme defaults)
   --hi-button-bg: var(--hi-surface);
@@ -390,12 +390,12 @@
   --hi-input-text: #50616D;
   --hi-input-placeholder: rgba(80, 97, 109, 0.4);
 
-  --hi-card-bg: var(--hi-secondary);
+  --hi-card-bg: var(--hi-surface);
   --hi-card-border: var(--hi-border);
 
-  // Header & Aside surfaces (mint-tinted to match legacy computed styles)
-  --hi-header-surface: rgba(224, 240, 233, 0.7);
-  --hi-aside-surface: rgba(224, 240, 233, 0.7);
+  // Header & Aside surfaces
+  --hi-header-surface: var(--hi-surface);
+  --hi-aside-surface: var(--hi-surface);
 
   --hi-badge-bg-primary: var(--hi-primary);
   --hi-badge-bg-success: var(--hi-success);

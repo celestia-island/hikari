@@ -181,7 +181,7 @@
 
     // 背景色
     --hi-surface: var(--hi-color-surface);
-    --hi-card-bg: var(--hi-button-secondary);
+    --hi-card-bg: var(--hi-color-surface);
     --hi-card-bg-light: rgba(255, 255, 255, 0.95);
 
     // Overlay遮罩色（反色）- 使用调色板变量，95%透明度

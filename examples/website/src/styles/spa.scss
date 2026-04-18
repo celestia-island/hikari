@@ -7,12 +7,21 @@ body,
 #hikari-app {
   background: linear-gradient(
     135deg,
-    rgba(255, 182, 193, 0.25) 0%,
-    rgba(255, 192, 203, 0.15) 30%,
-    rgba(224, 240, 233, 0.10) 60%,
-    rgba(255, 218, 185, 0.08) 100%
+    #ffffff 0%,
+    #f0f0f4 100%
   );
   min-height: 100vh;
+}
+
+@media (prefers-color-scheme: dark) {
+  body,
+  #hikari-app {
+    background: linear-gradient(
+      135deg,
+      #000000 0%,
+      #1a1a2e 100%
+    );
+  }
 }
 
 // ── Button Component Styles (legacy .hi-btn — DEPRECATED, kept for transfer button) ──
@@ -364,7 +373,7 @@ body,
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 0 0 0.5rem;
+  padding: 0.5rem 0 1rem 0.5rem;
 }
 
 .hi-aside > .hi-aside-footer {

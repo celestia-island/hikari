@@ -119,12 +119,12 @@
 // ============================================
 
 .hi-button-secondary {
-  background: linear-gradient(135deg, var(--hi-color-secondary), var(--hi-button-secondary-dark));
+  background-color: var(--hi-color-secondary);
   color: var(--hi-color-text-on-secondary, #ffffff);
   border: 1px solid rgba(255, 255, 255, 0.2);
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--hi-button-secondary-hover), var(--hi-button-secondary-dark));
+    background-color: var(--hi-button-secondary-hover);
     box-shadow: var(--hi-glow-button-secondary);
   }
 
@@ -134,6 +134,7 @@
   }
 
   &:active:not(:disabled) {
+    background-color: var(--hi-button-secondary-dark);
     box-shadow:
       0 0 4px var(--hi-color-secondary),
       inset 0 1px 0 rgba(255, 255, 255, 0.1);

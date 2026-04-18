@@ -3,25 +3,20 @@
 
 // ── Global Background (applied to entire page) ─────────────────────────
 
-body,
-#hikari-app {
-  background: linear-gradient(
-    135deg,
-    #ffffff 0%,
-    #f0f0f4 100%
-  );
-  min-height: 100vh;
+:root {
+  --hi-page-bg: linear-gradient(135deg, #ffffff 0%, #f0f0f4 100%);
 }
 
 @media (prefers-color-scheme: dark) {
-  body,
-  #hikari-app {
-    background: linear-gradient(
-      135deg,
-      #000000 0%,
-      #1a1a2e 100%
-    );
+  :root {
+    --hi-page-bg: linear-gradient(135deg, #000000 0%, #1a1a2e 100%);
   }
+}
+
+body,
+#hikari-app {
+  background: var(--hi-page-bg);
+  min-height: 100vh;
 }
 
 // ── Button Component Styles (legacy .hi-btn — DEPRECATED, kept for transfer button) ──
@@ -937,7 +932,7 @@ aside .hi-glow-wrapper {
   }
 
   th {
-    background-color: var(--hi-surface-secondary, #f3f4f6);
+    background-color: var(--hi-color-surface-secondary, linear-gradient(135deg, #fff 0%, #f0f0f4 100%));
     font-weight: 600;
     color: var(--hi-color-text-primary, #374151);
     white-space: nowrap;
@@ -1031,7 +1026,7 @@ aside .hi-glow-wrapper {
 
   // Inline code
   .hi-inline-code {
-    background-color: var(--hi-color-surface-secondary, #f1f5f9);
+    background-color: var(--hi-color-surface-secondary, linear-gradient(135deg, #fff 0%, #f0f0f4 100%));
     padding: 0.2rem 0.4rem;
     border-radius: 4px;
     font-family: "Courier New", monospace;
@@ -1060,7 +1055,7 @@ aside .hi-glow-wrapper {
 
   // Inner Hikari component blocks
   .hi-inner-hikari-block {
-    background-color: var(--hi-color-surface-secondary, #f1f5f9);
+    background-color: var(--hi-color-surface-secondary, linear-gradient(135deg, #fff 0%, #f0f0f4 100%));
     border: 1px solid var(--hi-color-border, #e2e8f0);
     border-radius: 8px;
     padding: 1rem;
@@ -1112,7 +1107,7 @@ aside .hi-glow-wrapper {
 
   // Component demo blocks
   .hi-component-demo {
-    background-color: var(--hi-color-surface-secondary, #f1f5f9);
+    background-color: var(--hi-color-surface-secondary, linear-gradient(135deg, #fff 0%, #f0f0f4 100%));
     border: 1px solid var(--hi-color-border, #e2e8f0);
     border-radius: 8px;
     padding: 1.5rem;
@@ -1167,7 +1162,7 @@ aside .hi-glow-wrapper {
     }
 
     th {
-      background-color: var(--hi-color-surface-secondary, #f1f5f9);
+      background-color: var(--hi-color-surface-secondary, linear-gradient(135deg, #fff 0%, #f0f0f4 100%));
       font-weight: 600;
       color: var(--hi-color-text-primary, #0f172a);
     }
@@ -3492,3 +3487,7 @@ aside .hi-glow-wrapper {
     color: rgba(255, 255, 255, 0.8);
   }
 }
+
+// ── Aside Footer (language selector + theme toggle) ──────────────────────
+
+@import './aside_footer.scss';

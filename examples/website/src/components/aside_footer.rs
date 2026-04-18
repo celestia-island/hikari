@@ -2,11 +2,11 @@ use tairitsu_vdom::{VElement, VNode, VText};
 
 use crate::hooks::{self, Language};
 
-const THEME_TOGGLE_JS: &str = r#"(function(){var a=document.getElementById('hikari-app');if(!a)return;var t=a.getAttribute('data-theme')||'hikari';var n=t==='hikari'?'tairitsu':'hikari';a.setAttribute('data-theme',n);if(t==='hikari'){a.classList.remove('hi-layout-light');a.classList.add('hi-layout-dark')}else{a.classList.remove('hi-layout-dark');a.classList.add('hi-layout-light')}var b=this.querySelector('.hi-aside-footer__icon');if(b){b.textContent=n==='hikari'?'\u263E':'\u2600'}})()""#;
+const THEME_TOGGLE_JS: &str = r#"(function(){var el=event.currentTarget;var a=document.getElementById('hikari-app');if(!a)return;var t=a.getAttribute('data-theme')||'hikari';var n=t==='hikari'?'tairitsu':'hikari';a.setAttribute('data-theme',n);if(t==='hikari'){a.classList.remove('hi-layout-light');a.classList.add('hi-layout-dark')}else{a.classList.remove('hi-layout-dark');a.classList.add('hi-layout-light')}var b=el.querySelector('.hi-aside-footer__icon');if(b){b.textContent=n==='hikari'?'\u263E':'\u2600'}})()""#;
 
 const LANG_SELECT_JS: &str = r#"(function(){
-  var self=this;
-  var trigger=self.closest('.hi-select');
+  var el=event.currentTarget;
+  var trigger=el.closest('.hi-select');
   if(!trigger) return;
   var isOpen=trigger.classList.toggle('hi-select-open');
   if(!isOpen) return;
@@ -20,12 +20,12 @@ const LANG_SELECT_JS: &str = r#"(function(){
 })()""#;
 
 const LANG_OPTION_JS: &str = r#"(function(){
-  var val=this.getAttribute('data-value');
-  var trigger=this.closest('.hi-select');
+  var el=event.currentTarget;
+  var val=el.getAttribute('data-value');
+  var trigger=el.closest('.hi-select');
   if(trigger){
     var label=trigger.querySelector('.hi-select-value');
-    var icon=trigger.querySelector('.hi-select-arrow');
-    if(label) label.textContent=this.textContent;
+    if(label) label.textContent=el.textContent;
     trigger.classList.remove('hi-select-open');
   }
   location.hash='#lang='+val;

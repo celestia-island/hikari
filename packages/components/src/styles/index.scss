@@ -157,7 +157,7 @@
 
 // Background Color - 语义化背景色，支持主题切换
 .hi-bg-primary { background-color: var(--hi-color-primary, #7BCFA6); }
-.hi-bg-secondary { background-color: var(--hi-color-secondary, #FF4C00); }
+.hi-bg-secondary { background-color: var(--hi-color-surface-secondary, linear-gradient(135deg, #ffffff 0%, #f0f0f4 100%)); }
 .hi-bg-accent { background-color: var(--hi-color-accent, #F59E0B); }
 .hi-bg-white { background-color: var(--hi-color-surface, #FFFFFF); }
 .hi-bg-black { background-color: var(--hi-color-background, #000000); }
@@ -374,6 +374,7 @@
   --hi-color-primary: var(--hi-primary);
   --hi-color-background: var(--hi-background);
   --hi-color-surface: var(--hi-surface);
+  --hi-color-surface-secondary: var(--hi-page-bg, linear-gradient(135deg, #ffffff 0%, #f0f0f4 100%));
   --hi-secondary-bg: rgba(255, 255, 255, 0.5);
   --hi-tertiary-bg: rgba(240, 240, 244, 0.5);
 
@@ -509,6 +510,7 @@
   --hi-color-primary: var(--hi-primary);
   --hi-color-background: var(--hi-background);
   --hi-color-surface: var(--hi-surface);
+  --hi-color-surface-secondary: var(--hi-page-bg, linear-gradient(135deg, #000000 0%, #1a1a2e 100%));
 
   // Scrollbar Colors
   --hi-scrollbar-track-dark: rgba(255,255, 255, 0.25);  // White with 25% opacity

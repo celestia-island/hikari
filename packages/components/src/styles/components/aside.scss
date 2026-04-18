@@ -35,8 +35,8 @@
   background: transparent;
   border-right: 1px solid var(--hi-color-border);
 
-  // Overflow
-  overflow: hidden;
+  // Overflow — use visible so footer dropdowns can escape the aside boundary
+  overflow: visible;
 
   // Position
   position: relative;

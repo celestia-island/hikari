@@ -894,7 +894,7 @@ aside .hi-glow-wrapper {
     padding: 1rem;
     border-radius: 12px;
     border: 1px solid var(--hi-border, #e5e7eb);
-    background: var(--hi-surface, rgba(255, 255, 255, 0.5));
+    background: var(--hi-page-bg);
   }
 }
 
@@ -908,7 +908,14 @@ aside .hi-glow-wrapper {
   padding: 1.25rem;
   border-radius: 12px;
   border: 1px solid var(--hi-border, #e5e7eb);
-  background: var(--hi-surface, rgba(255, 255, 255, 0.5));
+  background: var(--hi-page-bg);
+}
+
+.demo-row-full {
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--hi-border, #e5e7eb);
+  background: var(--hi-page-bg);
 }
 
 // ── API Table (component API reference) ──────────────────────────────
@@ -917,7 +924,7 @@ aside .hi-glow-wrapper {
   width: 100%;
   border-collapse: collapse;
   margin: 0;
-  background-color: var(--hi-surface, rgba(255, 255, 255, 0.6));
+  background: var(--hi-page-bg);
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--hi-border, #e5e7eb);

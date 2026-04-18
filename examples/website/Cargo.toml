@@ -9,6 +9,13 @@ publish = false
 [workspace]
 # This is a standalone example, not part of the main workspace
 
+[profile.dev-wasm]
+inherits = "dev"
+opt-level = 2
+debug = 1
+codegen-units = 1
+strip = "debuginfo"
+
 [lib]
 name = "website"
 path = "src/lib.rs"

@@ -6,6 +6,9 @@
 //! The layout mirrors the old Dioxus-era structure:
 //!   Layout (hi-layout) → Header → Body (hi-layout-body) → Aside + Main
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use tairitsu_vdom::{VElement, VNode, VText};
 
 use crate::{
@@ -17,7 +20,6 @@ use crate::{
     theme,
 };
 
-/// Render the full application VNode tree.
 pub fn render() -> VNode {
     let mut content: Vec<VNode> = Vec::new();
     content.push(home::render());
@@ -28,34 +30,28 @@ pub fn render() -> VNode {
     content.push(interactive::render());
     content.push(not_found::render());
 
-    // Get theme CSS variables Style for Hikari (light) theme
     let theme_style = theme::hikari_style();
-
-    // Initialize portal JavaScript
     let portal_init = PortalJs::init_script();
 
-    // Create app content
+    let app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>> = Rc::new(RefCell::new(None));
+
     let app_content = VNode::Element(
         VElement::new("div")
             .attr("id", "hikari-app")
             .attr("data-theme", "hikari")
             .class("hi-layout hi-layout-light hi-layout-has-sidebar hi-ambient-bg")
             .style(theme_style)
-            // Header bar (top, full-width, sticky)
+            .ref_(app_ref.clone())
             .child(components::top_nav())
-            // Body: aside + main content area
             .child(VNode::Element(
                 VElement::new("div")
                     .class("hi-layout-body")
-                    // Mobile overlay backdrop
                     .child(VNode::Element(
                         VElement::new("div")
                             .attr("id", "drawer-overlay")
                             .class("hi-layout-overlay"),
                     ))
-                    // Sidebar / Aside (drawer)
-                    .child(components::sidebar())
-                    // Main content wrapper
+                    .child(components::sidebar(app_ref.clone()))
                     .child(VNode::Element(
                         VElement::new("div")
                             .class("hi-layout-main")
@@ -69,6 +65,5 @@ pub fn render() -> VNode {
             )),
     );
 
-    // Wrap everything in PortalProvider
     components::portal::PortalProvider::render(vec![app_content, portal_init])
 }

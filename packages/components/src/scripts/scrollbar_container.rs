@@ -109,8 +109,18 @@ impl Animator {
         dom_ops::set_style(self.track, "width", &format!("{}px", w));
     }
 
+    fn begin_scroll_hover(&self) {
+        dom_ops::set_attribute(self.track, "class", "custom-scrollbar-track");
+        dom_ops::set_attribute(self.track, "class", "custom-scrollbar-track scrollbar-scrolling");
+    }
+
+    fn end_scroll_hover(&self) {
+        dom_ops::set_attribute(self.track, "class", "custom-scrollbar-track");
+    }
+
     fn activate(&self) {
         *self.mouse_over.borrow_mut() = true;
+        self.end_scroll_hover();
         let mut s = self.state.borrow_mut();
         match *s {
             AnimState::Idle | AnimState::ScrollHover => {
@@ -133,6 +143,7 @@ impl Animator {
     }
 
     fn start_drag(&self) {
+        self.end_scroll_hover();
         *self.state.borrow_mut() = AnimState::Dragging;
         self.set_width(WIDTH_ACTIVE);
     }
@@ -148,6 +159,7 @@ impl Animator {
         }
         *self.state.borrow_mut() = AnimState::ScrollHover;
         self.set_width(WIDTH_ACTIVE);
+        self.begin_scroll_hover();
     }
 
     fn restore_after_scroll_hover(&self) {
@@ -155,6 +167,7 @@ impl Animator {
         let new = if over { AnimState::Active } else { AnimState::Idle };
         *self.state.borrow_mut() = new;
         if !over {
+            self.end_scroll_hover();
             self.set_width(WIDTH_IDLE);
         }
     }
@@ -175,6 +188,10 @@ impl Clone for Animator {
 // ---------------------------------------------------------------------------
 
 fn update_thumb(content: DomHandle, track: DomHandle, thumb: DomHandle) {
+    update_thumb_with_state(content, track, thumb, false);
+}
+
+fn update_thumb_with_state(content: DomHandle, track: DomHandle, thumb: DomHandle, preserve_scrolling_class: bool) {
     let st = dom_ops::get_scroll_top(content);
     let sh = dom_ops::get_scroll_height(content) as f64;
     let ch = dom_ops::get_client_height(content) as f64;
@@ -189,10 +206,15 @@ fn update_thumb(content: DomHandle, track: DomHandle, thumb: DomHandle) {
     let top = if max > 0.0 && movable > 0.0 { (st / max) * movable } else { 0.0 };
     dom_ops::set_style(thumb, "top", &format!("{}px", top));
 
+    // Preserve scrollbar-scrolling animation class when in scroll-hover state
     if ideal > 0.0 && ideal < ch {
-        dom_ops::class_list_remove(track, &["custom-scrollbar-hidden"]);
+        if preserve_scrolling_class {
+            dom_ops::set_attribute(track, "class", "custom-scrollbar-track scrollbar-scrolling");
+        } else {
+            dom_ops::set_attribute(track, "class", "custom-scrollbar-track");
+        }
     } else {
-        dom_ops::class_list_add(track, &["custom-scrollbar-hidden"]);
+        dom_ops::set_attribute(track, "class", "custom-scrollbar-track custom-scrollbar-hidden");
     }
 }
 
@@ -208,9 +230,9 @@ fn update_thumb_cached(content: DomHandle, track: DomHandle, thumb: DomHandle, c
     dom_ops::set_style(thumb, "top", &format!("{}px", top));
 
     if cached_h > 0.0 && cached_h < ch {
-        dom_ops::class_list_remove(track, &["custom-scrollbar-hidden"]);
+        dom_ops::set_attribute(track, "class", "custom-scrollbar-track");
     } else {
-        dom_ops::class_list_add(track, &["custom-scrollbar-hidden"]);
+        dom_ops::set_attribute(track, "class", "custom-scrollbar-track custom-scrollbar-hidden");
     }
 }
 
@@ -225,22 +247,50 @@ struct ScrollbarElements {
 }
 
 fn build_dom(container: DomHandle, saved_scroll: i32) -> Option<ScrollbarElements> {
-    dom_ops::class_list_add(container, &["custom-scrollbar-container"]);
+    dom_ops::set_attribute(container, "class", "custom-scrollbar-container");
     dom_ops::set_style(container, "position", "relative");
     dom_ops::set_style(container, "overflow", "hidden");
 
+    let pt = dom_ops::get_computed_style_value(container, "padding-top");
+    let pr = dom_ops::get_computed_style_value(container, "padding-right");
+    let pb = dom_ops::get_computed_style_value(container, "padding-bottom");
+    let pl = dom_ops::get_computed_style_value(container, "padding-left");
+
+    let has_padding = !(pt.is_empty() && pr.is_empty() && pb.is_empty() && pl.is_empty());
+    if has_padding {
+        dom_ops::set_style(container, "padding-top", "0");
+        dom_ops::set_style(container, "padding-right", "0");
+        dom_ops::set_style(container, "padding-bottom", "0");
+        dom_ops::set_style(container, "padding-left", "0");
+    }
+
     let wrapper = dom_ops::create_element("div");
-    dom_ops::class_list_add(wrapper, &["custom-scrollbar-wrapper"]);
+    dom_ops::set_attribute(wrapper, "class", "custom-scrollbar-wrapper");
     dom_ops::set_attribute(wrapper, "data-custom-scrollbar", "wrapper");
     for (k, v) in [("display", "flex"), ("flex-direction", "row"), ("width", "100%"), ("height", "100%")] {
         dom_ops::set_style(wrapper, k, v);
     }
 
     let content = dom_ops::create_element("div");
-    dom_ops::class_list_add(content, &["custom-scrollbar-content"]);
+    dom_ops::set_attribute(content, "class", "custom-scrollbar-content");
     dom_ops::set_attribute(content, "data-custom-scrollbar", "content");
     for (k, v) in [("display", "flex"), ("flex-direction", "column"), ("flex", "1"), ("min-width", "0"), ("overflow-y", "auto"), ("overflow-x", "hidden")] {
         dom_ops::set_style(content, k, v);
+    }
+
+    if has_padding {
+        if !pt.is_empty() {
+            dom_ops::set_style(content, "padding-top", &pt);
+        }
+        if !pr.is_empty() {
+            dom_ops::set_style(content, "padding-right", &pr);
+        }
+        if !pb.is_empty() {
+            dom_ops::set_style(content, "padding-bottom", &pb);
+        }
+        if !pl.is_empty() {
+            dom_ops::set_style(content, "padding-left", &pl);
+        }
     }
 
     while let Some(child) = dom_ops::first_child(container) {
@@ -248,14 +298,14 @@ fn build_dom(container: DomHandle, saved_scroll: i32) -> Option<ScrollbarElement
     }
 
     let track = dom_ops::create_element("div");
-    dom_ops::class_list_add(track, &["custom-scrollbar-track"]);
+    dom_ops::set_attribute(track, "class", "custom-scrollbar-track");
     dom_ops::set_attribute(track, "data-custom-scrollbar", "track");
     for (k, v) in [("position", "absolute"), ("top", "0"), ("right", "0"), ("bottom", "0"), ("width", "4px")] {
         dom_ops::set_style(track, k, v);
     }
 
     let thumb = dom_ops::create_element("div");
-    dom_ops::class_list_add(thumb, &["custom-scrollbar-thumb"]);
+    dom_ops::set_attribute(thumb, "class", "custom-scrollbar-thumb");
     dom_ops::set_attribute(thumb, "data-custom-scrollbar", "thumb");
     dom_ops::set_attribute(thumb, "tabindex", "0");
 
@@ -283,7 +333,7 @@ struct DragState {
 }
 
 fn setup_one(host: &dyn ScrollbarHost, container: DomHandle) {
-    if dom_ops::class_list_contains(container, "custom-scrollbar-container") {
+    if dom_ops::query_selector_on(container, ".custom-scrollbar-wrapper").is_some() {
         if dom_ops::query_selector_on(container, ".custom-scrollbar-wrapper").is_some() {
             return;
         }
@@ -305,38 +355,29 @@ fn setup_one(host: &dyn ScrollbarHost, container: DomHandle) {
 
     update_thumb(content, track, thumb);
 
-    // -- scroll --
+    // -- scroll (with re-entrancy guard to prevent stack overflow) --
     let s_anim = animator.clone();
     let s_cached = cached_h.clone();
     let s_ratio = ratio.clone();
+    let scrolling: Rc<RefCell<bool>> = Rc::new(RefCell::new(false));
 
     host.on_scroll(content, Box::new(move || {
-        let st = dom_ops::get_scroll_top(content);
-        let sh = dom_ops::get_scroll_height(content) as f64;
-        let ch = dom_ops::get_client_height(content) as f64;
-        *s_ratio.borrow_mut() = (st / (sh - ch).max(1.0)).clamp(0.0, 1.0);
+        if *scrolling.borrow() {
+            return;
+        }
+        *scrolling.borrow_mut() = true;
 
         s_anim.pulse_scroll_hover();
-        match *s_cached.borrow() {
-            Some(h) => update_thumb_cached(content, track, thumb, h),
-            None => update_thumb(content, track, thumb),
-        }
+        update_thumb_with_state(content, track, thumb, true);
+
+        *scrolling.borrow_mut() = false;
     }));
 
-    // -- resize observer --
+    // -- resize observer (no set_scroll_top to avoid scroll→resize infinite loop) --
     let r_ratio = ratio.clone();
     host.on_resize(content, Box::new(move || {
         let pct = *r_ratio.borrow();
         update_thumb(content, track, thumb);
-        if pct > 0.01 {
-            let sh = dom_ops::get_scroll_height(content) as f64;
-            let ch = dom_ops::get_client_height(content) as f64;
-            let max = (sh - ch).max(0.0);
-            if max > 1.0 {
-                dom_ops::set_scroll_top(content, (pct * max).round());
-                update_thumb(content, track, thumb);
-            }
-        }
     }));
 
     // -- track hover --
@@ -416,8 +457,11 @@ fn save_scroll(container: DomHandle) -> i32 {
 }
 
 fn cleanup(container: DomHandle) {
-    dom_ops::class_list_remove(container, &["custom-scrollbar-container"]);
-    // Move children back from content layer
+    dom_ops::set_attribute(container, "class", "");
+    dom_ops::set_style(container, "padding-top", "");
+    dom_ops::set_style(container, "padding-right", "");
+    dom_ops::set_style(container, "padding-bottom", "");
+    dom_ops::set_style(container, "padding-left", "");
     if let Some(wrapper) = dom_ops::query_selector_on(container, ".custom-scrollbar-wrapper") {
         if let Some(content) = dom_ops::query_selector_on(wrapper, ".custom-scrollbar-content") {
             while let Some(child) = dom_ops::first_child(content) {

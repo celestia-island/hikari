@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use super::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use hikari_icons::generated::mdi_selected::get;
 use hikari_icons::MdiIcon;
@@ -378,7 +381,7 @@ fn plain_menu_item(href: &str, label: &str, _level: u32) -> VNode {
     )
 }
 
-pub fn render() -> VNode {
+pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
     let mut category_nodes: Vec<VNode> = Vec::new();
 
     for category in NAV_CATEGORIES {
@@ -430,6 +433,6 @@ pub fn render() -> VNode {
                             .child(menu_list),
                     )),
             ))
-            .child(super::aside_footer::render()),
+            .child(super::aside_footer::render(app_ref)),
     )
 }

@@ -164,3 +164,219 @@ pub use themes::*;
 
 pub use tairitsu_style::ClassesBuilder;
 pub use tairitsu_style::TypedClass;
+
+#[cfg(target_family = "wasm")]
+mod wasm_export {
+    wit_bindgen::generate!({
+        path: "wit",
+        world: "palette",
+    });
+
+    pub struct PaletteExports;
+
+    fn color_to_wit(c: &crate::colors::Color) -> exports::hikari::palette::color::Color {
+        exports::hikari::palette::color::Color {
+            r: c.r(),
+            g: c.g(),
+            b: c.b(),
+            category: match c.category {
+                crate::colors::ColorCategory::Red => exports::hikari::palette::color::ColorCategory::Red,
+                crate::colors::ColorCategory::Yellow => exports::hikari::palette::color::ColorCategory::Yellow,
+                crate::colors::ColorCategory::Green => exports::hikari::palette::color::ColorCategory::Green,
+                crate::colors::ColorCategory::Blue => exports::hikari::palette::color::ColorCategory::Blue,
+                crate::colors::ColorCategory::Cyan => exports::hikari::palette::color::ColorCategory::Cyan,
+                crate::colors::ColorCategory::White => exports::hikari::palette::color::ColorCategory::White,
+                crate::colors::ColorCategory::Black => exports::hikari::palette::color::ColorCategory::Black,
+                crate::colors::ColorCategory::Gray => exports::hikari::palette::color::ColorCategory::Gray,
+                crate::colors::ColorCategory::Purple => exports::hikari::palette::color::ColorCategory::Purple,
+                crate::colors::ColorCategory::Orange => exports::hikari::palette::color::ColorCategory::Orange,
+            },
+        }
+    }
+
+    fn wit_to_color(c: &exports::hikari::palette::color::Color) -> crate::colors::Color {
+        crate::colors::Color::from_rgb(c.r, c.g, c.b)
+    }
+
+    fn palette_to_wit(p: &crate::themes::Palette) -> exports::hikari::palette::theme::Palette {
+        exports::hikari::palette::theme::Palette {
+            mode: match p.mode {
+                crate::themes::ThemeMode::Light => exports::hikari::palette::theme::ThemeMode::Light,
+                crate::themes::ThemeMode::Dark => exports::hikari::palette::theme::ThemeMode::Dark,
+            },
+            primary: color_to_wit(&p.primary),
+            secondary: color_to_wit(&p.secondary),
+            accent: color_to_wit(&p.accent),
+            success: color_to_wit(&p.success),
+            warning: color_to_wit(&p.warning),
+            danger: color_to_wit(&p.danger),
+            background: color_to_wit(&p.background),
+            surface: color_to_wit(&p.surface),
+            border: color_to_wit(&p.border),
+            text_primary: color_to_wit(&p.text_primary),
+            text_secondary: color_to_wit(&p.text_secondary),
+        }
+    }
+
+    impl exports::hikari::palette::version::Guest for PaletteExports {
+        fn get_version() -> String {
+            env!("CARGO_PKG_VERSION").to_string()
+        }
+    }
+
+    impl exports::hikari::palette::color::Guest for PaletteExports {
+        fn color_from_rgb(r: u8, g: u8, b: u8) -> exports::hikari::palette::color::Color {
+            let c = crate::colors::Color::from_rgb(r, g, b);
+            color_to_wit(&c)
+        }
+
+        fn color_hex(c: exports::hikari::palette::color::Color) -> String {
+            wit_to_color(&c).hex()
+        }
+
+        fn color_rgba(c: exports::hikari::palette::color::Color, alpha: f64) -> String {
+            wit_to_color(&c).rgba(alpha)
+        }
+
+        fn color_brightness(c: exports::hikari::palette::color::Color) -> f64 {
+            wit_to_color(&c).brightness()
+        }
+
+        fn color_is_dark(c: exports::hikari::palette::color::Color) -> bool {
+            wit_to_color(&c).is_dark()
+        }
+
+        fn color_is_light(c: exports::hikari::palette::color::Color) -> bool {
+            wit_to_color(&c).is_light()
+        }
+
+        fn color_to_hsl(c: exports::hikari::palette::color::Color) -> exports::hikari::palette::color::Hsl {
+            let hsl = wit_to_color(&c).to_hsl();
+            exports::hikari::palette::color::Hsl { h: hsl.h, s: hsl.s, l: hsl.l }
+        }
+
+        fn color_adjust_saturation(c: exports::hikari::palette::color::Color, factor: f64) -> exports::hikari::palette::color::Color {
+            let adjusted = wit_to_color(&c).adjust_saturation(factor);
+            color_to_wit(&adjusted)
+        }
+
+        fn color_adjust_lightness(c: exports::hikari::palette::color::Color, factor: f64) -> exports::hikari::palette::color::Color {
+            let adjusted = wit_to_color(&c).adjust_lightness(factor);
+            color_to_wit(&adjusted)
+        }
+
+        fn color_contrast_rgba(c: exports::hikari::palette::color::Color, alpha: f64) -> String {
+            wit_to_color(&c).contrast_rgba(alpha)
+        }
+    }
+
+    impl exports::hikari::palette::color_math::Guest for PaletteExports {
+        fn blend_colors(
+            c1: exports::hikari::palette::color::Color,
+            c2: exports::hikari::palette::color::Color,
+            ratio: f64,
+        ) -> exports::hikari::palette::color::Color {
+            let result = crate::color_math::blend_colors(wit_to_color(&c1), wit_to_color(&c2), ratio);
+            color_to_wit(&result)
+        }
+
+        fn average_colors(
+            colors: Vec<(exports::hikari::palette::color::Color, f64)>,
+        ) -> exports::hikari::palette::color::Color {
+            let native: Vec<_> = colors.iter().map(|(c, w)| (wit_to_color(c), *w)).collect();
+            let result = crate::color_math::average_colors(&native);
+            color_to_wit(&result)
+        }
+
+        fn adjust_saturation_hex(hex: String, factor: f64) -> String {
+            crate::color_math::adjust_saturation_hex(&hex, factor)
+        }
+
+        fn adjust_lightness_hex(hex: String, factor: f64) -> String {
+            crate::color_math::adjust_lightness_hex(&hex, factor)
+        }
+
+        fn hsl_to_rgb(hsl: exports::hikari::palette::color::Hsl) -> (u8, u8, u8) {
+            crate::color_math::Hsl::new(hsl.h, hsl.s, hsl.l).to_rgb()
+        }
+    }
+
+    impl exports::hikari::palette::gradient::Guest for PaletteExports {
+        fn gradient_sample(
+            stops: Vec<exports::hikari::palette::gradient::GradientStop>,
+            position: f64,
+        ) -> exports::hikari::palette::color::Color {
+            let native_stops: Vec<_> = stops.iter().map(|s| {
+                crate::color_math::GradientStop::new(s.position, wit_to_color(&s.color))
+            }).collect();
+            let gradient = crate::color_math::Gradient::new(native_stops);
+            let result = gradient.sample(position);
+            color_to_wit(&result)
+        }
+    }
+
+    impl exports::hikari::palette::theme::Guest for PaletteExports {
+        fn light_theme() -> exports::hikari::palette::theme::Palette {
+            palette_to_wit(&crate::themes::light_theme())
+        }
+
+        fn dark_theme() -> exports::hikari::palette::theme::Palette {
+            palette_to_wit(&crate::themes::dark_theme())
+        }
+
+        fn default_theme() -> exports::hikari::palette::theme::Palette {
+            palette_to_wit(&crate::themes::default_theme())
+        }
+
+        fn palette_button_glow_color(
+            p: exports::hikari::palette::theme::Palette,
+            c: exports::hikari::palette::color::Color,
+        ) -> String {
+            let native_palette = crate::themes::Palette {
+                mode: match p.mode {
+                    exports::hikari::palette::theme::ThemeMode::Light => crate::themes::ThemeMode::Light,
+                    exports::hikari::palette::theme::ThemeMode::Dark => crate::themes::ThemeMode::Dark,
+                },
+                primary: wit_to_color(&p.primary),
+                secondary: wit_to_color(&p.secondary),
+                accent: wit_to_color(&p.accent),
+                success: wit_to_color(&p.success),
+                warning: wit_to_color(&p.warning),
+                danger: wit_to_color(&p.danger),
+                background: wit_to_color(&p.background),
+                surface: wit_to_color(&p.surface),
+                border: wit_to_color(&p.border),
+                text_primary: wit_to_color(&p.text_primary),
+                text_secondary: wit_to_color(&p.text_secondary),
+            };
+            native_palette.button_glow_color(&wit_to_color(&c))
+        }
+
+        fn palette_ghost_text_color(
+            p: exports::hikari::palette::theme::Palette,
+            alpha: f64,
+        ) -> String {
+            let mode = match p.mode {
+                exports::hikari::palette::theme::ThemeMode::Light => crate::themes::ThemeMode::Light,
+                exports::hikari::palette::theme::ThemeMode::Dark => crate::themes::ThemeMode::Dark,
+            };
+            let tmp = crate::themes::Palette {
+                mode,
+                primary: wit_to_color(&p.primary),
+                secondary: wit_to_color(&p.secondary),
+                accent: wit_to_color(&p.accent),
+                success: wit_to_color(&p.success),
+                warning: wit_to_color(&p.warning),
+                danger: wit_to_color(&p.danger),
+                background: wit_to_color(&p.background),
+                surface: wit_to_color(&p.surface),
+                border: wit_to_color(&p.border),
+                text_primary: wit_to_color(&p.text_primary),
+                text_secondary: wit_to_color(&p.text_secondary),
+            };
+            tmp.ghost_text_color(alpha)
+        }
+    }
+
+    export!(PaletteExports);
+}

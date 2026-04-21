@@ -7,12 +7,16 @@ license.workspace = true
 
 [lib]
 doctest = false
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
 tairitsu-style = { path = "../../../tairitsu/packages/style" }
 yuuka = "0.6"
 
+[target.'cfg(target_family = "wasm")'.dependencies]
+wit-bindgen = "0.50"
+
 [features]
-chinese-names = []  # Include Chinese color names (disabled by default to minimize wasm size)
+chinese-names = []
 

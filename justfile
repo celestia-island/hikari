@@ -74,8 +74,8 @@ build-website: (check-tairitsu-packager)
 #   just dev             - Blocking foreground with hot-reload
 #   just dev --daemon    - Start/restart daemon (non-blocking)
 #   just dev --daemon stop - Stop daemon
-dev *args="": (check-tairitsu-packager)
-    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch {{ if args == "--daemon stop" { "--daemon --shutdown" } else if args != "" { "--daemon --force" } else { "--tty" } }}
+dev *FLAGS="": (check-tairitsu-packager)
+    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch {{FLAGS}}
 
 # Alias for dev
 serve: dev

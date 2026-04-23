@@ -1,3 +1,4 @@
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
 use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
@@ -19,79 +20,51 @@ pub fn render() -> VNode {
     let pg_dots = rsx! { span { class: "hi-pagination__item hi-pagination__ellipsis", "…" } };
     let pg_10 = rsx! { a { class: "hi-pagination__item", href: "#", "10" } };
 
-    rsx! {
-        div { id: "page-component-pagination", class: "hikari-page",
-            div { class: "page-header",
-                h1 { class: "page-header__title", "Pagination" }
-                p { class: "page-header__subtitle",
-                    "Page navigation control with total count display and quick jump support."
-                }
+    render_demo_page("page-component-pagination", "Pagination", "Page navigation control with total count display and quick jump support.", rsx! {
+        render_demo_block("Basic Pagination", rsx! {
+            div { class: "hi-pagination",
+                {pg_prev}
+                {pg_1}
+                {pg_2}
+                {pg_3}
+                {pg_next}
             }
-            div { class: "page-section",
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "Basic Pagination" }
-                    div { class: "demo-block__body",
-                        div { class: "hi-pagination",
-                            {pg_prev}
-                            {pg_1}
-                            {pg_2}
-                            {pg_3}
-                            {pg_next}
-                        }
-                    }
+        })
+        render_demo_block("With Total Count", rsx! {
+            div { style: "display:flex;align-items:center;gap:16px;",
+                div { class: "hi-pagination",
+                    {rsx! { a { class: "hi-pagination__item", href: "#", "‹" } }}
+                    {rsx! { a { class: "hi-pagination__item", href: "#", "1" } }}
+                    {rsx! { span { class: "hi-pagination__item is-active", "2" } }}
+                    {rsx! { a { class: "hi-pagination__item", href: "#", "3" } }}
+                    {rsx! { a { class: "hi-pagination__item", href: "#", "›" } }}
                 }
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "With Total Count" }
-                    div { class: "demo-block__body",
-                        div { style: "display:flex;align-items:center;gap:16px;",
-                            div { class: "hi-pagination",
-                                {rsx! { a { class: "hi-pagination__item", href: "#", "‹" } }}
-                                {rsx! { a { class: "hi-pagination__item", href: "#", "1" } }}
-                                {rsx! { span { class: "hi-pagination__item is-active", "2" } }}
-                                {rsx! { a { class: "hi-pagination__item", href: "#", "3" } }}
-                                {rsx! { a { class: "hi-pagination__item", href: "#", "›" } }}
-                            }
-                            span { class: "hi-pagination__total", "Total: 86 items" }
-                        }
-                    }
-                }
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "With Ellipsis" }
-                    div { class: "demo-block__body",
-                        div { class: "hi-pagination",
-                            {rsx! { a { class: "hi-pagination__item", href: "#", "‹" } }}
-                            {rsx! { span { class: "hi-pagination__item is-active", "1" } }}
-                            {pg_dots}
-                            {rsx! { a { class: "hi-pagination__item", href: "#", "10" } }}
-                            {rsx! { a { class: "hi-pagination__item", href: "#", "›" } }}
-                        }
-                    }
-                }
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "Simple Mode" }
-                    div { class: "demo-block__body",
-                        div { class: "hi-pagination",
-                            {rsx! { a { class: "hi-pagination__item", href: "#", "‹ Previous" } }}
-                            {rsx! { a { class: "hi-pagination__item", href: "#", "Next ›" } }}
-                        }
-                    }
-                }
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "API" }
-                    div { class: "demo-block__body",
-                        table { class: "api-table",
-                            thead { tr { th { "Property" } th { "Type" } th { "Default" } th { "Description" } } }
-                            tbody {
-                                tr { td { code { "current" } } td { code { "number" } } td { code { "1" } } td { "Current active page" } }
-                                tr { td { code { "total" } } td { code { "number" } } td { code { "-" } } td { "Total number of items" } }
-                                tr { td { code { "pageSize" } } td { code { "number" } } td { code { "10" } } td { "Items per page" } }
-                                tr { td { code { "showTotal" } } td { code { "bool" } } td { code { "false" } } td { "Show total item count" } }
-                                tr { td { code { "simple" } } td { code { "bool" } } td { code { "false" } } td { "Show only prev/next buttons" } }
-                            }
-                        }
-                    }
-                }
+                span { class: "hi-pagination__total", "Total: 86 items" }
             }
-        }
-    }
+        })
+        render_demo_block("With Ellipsis", rsx! {
+            div { class: "hi-pagination",
+                {rsx! { a { class: "hi-pagination__item", href: "#", "‹" } }}
+                {rsx! { span { class: "hi-pagination__item is-active", "1" } }}
+                {pg_dots}
+                {rsx! { a { class: "hi-pagination__item", href: "#", "10" } }}
+                {rsx! { a { class: "hi-pagination__item", href: "#", "›" } }}
+            }
+        })
+        render_demo_block("Simple Mode", rsx! {
+            div { class: "hi-pagination",
+                {rsx! { a { class: "hi-pagination__item", href: "#", "‹ Previous" } }}
+                {rsx! { a { class: "hi-pagination__item", href: "#", "Next ›" } }}
+            }
+        })
+        render_demo_block("API", rsx! {
+            {render_api_table(&[
+                ("current", "number", "1", "Current active page"),
+                ("total", "number", "-", "Total number of items"),
+                ("pageSize", "number", "10", "Items per page"),
+                ("showTotal", "bool", "false", "Show total item count"),
+                ("simple", "bool", "false", "Show only prev/next buttons"),
+            ])}
+        })
+    })
 }

@@ -1,3 +1,4 @@
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
@@ -42,92 +43,64 @@ fn make_qr_svg(size: u32) -> VNode {
 }
 
 pub fn render() -> VNode {
-    rsx! {
-        div { id: "page-component-qrcode", class: "hikari-page",
-            div { class: "page-header",
-                h1 { class: "page-header__title", "QRCode" }
-                p { class: "page-header__subtitle",
-                    "Static QR code generation placeholder for encoding URLs, text, or other data."
+    render_demo_page("page-component-qrcode", "QRCode", "Static QR code generation placeholder for encoding URLs, text, or other data.", rsx! {
+        render_demo_block("Basic QR Code", rsx! {
+            {render_demo_row(rsx! {
+                div { class: "hi-qrcode",
+                    { make_qr_svg(128) }
                 }
-            }
-            div { class: "page-section",
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "Basic QR Code" }
-                    div { class: "demo-block__body",
-                        div { class: "demo-row",
-                            div { class: "hi-qrcode",
-                                { make_qr_svg(128) }
-                            }
-                        }
+            })}
+        })
+        render_demo_block("QR Code Sizes", rsx! {
+            {render_demo_row(rsx! {
+                div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
+                    div { class: "hi-qrcode",
+                        { make_qr_svg(80) }
                     }
+                    div { style: "font-size:12px;color:var(--hi-color-text-secondary);text-align:center;margin-top:4px;", "Small" }
                 }
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "QR Code Sizes" }
-                    div { class: "demo-block__body",
-                        div { class: "demo-row", style: "align-items:flex-end;",
-                            div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
-                                div { class: "hi-qrcode",
-                                    { make_qr_svg(80) }
-                                }
-                                div { style: "font-size:12px;color:var(--hi-color-text-secondary);text-align:center;margin-top:4px;", "Small" }
-                            }
-                            div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
-                                div { class: "hi-qrcode",
-                                    { make_qr_svg(128) }
-                                }
-                                div { style: "font-size:12px;color:var(--hi-color-text-secondary);text-align:center;margin-top:4px;", "Default" }
-                            }
-                            div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
-                                div { class: "hi-qrcode",
-                                    { make_qr_svg(200) }
-                                }
-                                div { style: "font-size:12px;color:var(--hi-color-text-secondary);text-align:center;margin-top:4px;", "Large" }
-                            }
-                        }
+                div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
+                    div { class: "hi-qrcode",
+                        { make_qr_svg(128) }
                     }
+                    div { style: "font-size:12px;color:var(--hi-color-text-secondary);text-align:center;margin-top:4px;", "Default" }
                 }
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "QR Code with Label" }
-                    div { class: "demo-block__body",
-                        div { class: "demo-row",
-                            div { style: "display:flex;flex-direction:column;align-items:center;gap:8px;",
-                                div { class: "hi-qrcode",
-                                    { make_qr_svg(128) }
-                                }
-                                span { style: "font-size:13px;color:var(--hi-color-text-secondary);", "Scan to visit github.com/tairitsu/hikari" }
-                            }
-                        }
+                div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
+                    div { class: "hi-qrcode",
+                        { make_qr_svg(200) }
                     }
+                    div { style: "font-size:12px;color:var(--hi-color-text-secondary);text-align:center;margin-top:4px;", "Large" }
                 }
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "QR Code with Download" }
-                    div { class: "demo-block__body",
-                        div { class: "demo-row",
-                            div { style: "display:flex;flex-direction:column;align-items:center;gap:8px;",
-                                div { class: "hi-qrcode",
-                                    { make_qr_svg(128) }
-                                }
-                                button { class: "hi-button hi-button-secondary hi-button-sm", "Download PNG" }
-                            }
-                        }
+            })}
+        })
+        render_demo_block("QR Code with Label", rsx! {
+            {render_demo_row(rsx! {
+                div { style: "display:flex;flex-direction:column;align-items:center;gap:8px;",
+                    div { class: "hi-qrcode",
+                        { make_qr_svg(128) }
                     }
+                    span { style: "font-size:13px;color:var(--hi-color-text-secondary);", "Scan to visit github.com/tairitsu/hikari" }
                 }
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "API" }
-                    div { class: "demo-block__body",
-                        table { class: "api-table",
-                            thead { tr { th { "Property" } th { "Type" } th { "Default" } th { "Description" } } }
-                            tbody {
-                                tr { td { code { "value" } } td { code { "string" } } td { code { "-" } } td { "Data to encode in the QR code" } }
-                                tr { td { code { "size" } } td { code { "number" } } td { code { "128" } } td { "Canvas dimension in pixels" } }
-                                tr { td { code { "color" } } td { code { "string" } } td { code { "#000" } } td { "Foreground color" } }
-                                tr { td { code { "bgColor" } } td { code { "string" } } td { code { "#fff" } } td { "Background color" } }
-                                tr { td { code { "level" } } td { code { "L | M | Q | H" } } td { code { "M" } } td { "Error correction level" } }
-                            }
-                        }
+            })}
+        })
+        render_demo_block("QR Code with Download", rsx! {
+            {render_demo_row(rsx! {
+                div { style: "display:flex;flex-direction:column;align-items:center;gap:8px;",
+                    div { class: "hi-qrcode",
+                        { make_qr_svg(128) }
                     }
+                    button { class: "hi-button hi-button-secondary hi-button-sm", "Download PNG" }
                 }
-            }
-        }
-    }
+            })}
+        })
+        render_demo_block("API", rsx! {
+            {render_api_table(&[
+                ("value", "string", "-", "Data to encode in the QR code"),
+                ("size", "number", "128", "Canvas dimension in pixels"),
+                ("color", "string", "#000", "Foreground color"),
+                ("bgColor", "string", "#fff", "Background color"),
+                ("level", "L | M | Q | H", "M", "Error correction level"),
+            ])}
+        })
+    })
 }

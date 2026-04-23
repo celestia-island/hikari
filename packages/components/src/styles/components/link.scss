@@ -1,0 +1,18 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari Link Component
+// Styled anchor with hover effects
+// ============================================
+
+.hi-link {
+    color: var(--hi-color-text-primary);
+    text-decoration: none;
+    transition: color vars.$hikari-transition-fast;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}

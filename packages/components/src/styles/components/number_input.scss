@@ -5,7 +5,7 @@
     align-items: stretch;
     border-radius: 8px;
     border: 1px solid var(--hi-color-border, #d9d9d9);
-    background-color: var(--hi-color-surface, #fff);
+    background-color: transparent;
     overflow: hidden;
     transition: all 0.2s ease;
 }
@@ -37,7 +37,7 @@
     flex-shrink: 0;
     width: 32px;
     padding: 0;
-    background-color: var(--hi-color-background, #fafafa);
+    background-color: transparent;
     border: none;
     color: var(--hi-color-text-secondary, #666);
     cursor: pointer;
@@ -136,13 +136,13 @@
 
 [data-theme="dark"] .hi-number-input-wrapper,
 [data-theme="tairitsu"] .hi-number-input-wrapper {
-    background-color: var(--hi-surface, #1a1a1a);
+    background-color: transparent;
     border-color: var(--hi-border, #333);
 }
 
 [data-theme="dark"] .hi-number-input-btn,
 [data-theme="tairitsu"] .hi-number-input-btn {
-    background-color: var(--hi-surface-hover, #252525);
+    background-color: transparent;
     color: var(--hi-text-secondary, #aaa);
 }
 

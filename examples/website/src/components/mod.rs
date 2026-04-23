@@ -8,6 +8,7 @@ pub mod breadcrumb;
 pub mod code_block;
 pub mod doc_components;
 pub mod dynamic_markdown;
+pub mod demo_page;
 pub mod glow;
 pub mod layout;
 pub mod markdown_renderer;

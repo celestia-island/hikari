@@ -1,5 +1,6 @@
 use tairitsu_vdom::{VElement, VNode, VText};
 
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
 use crate::components::page_layout::{render_demo_section, render_page_container};
 
 pub fn render_showcase() -> VNode {

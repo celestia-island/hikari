@@ -1,16 +1,10 @@
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    rsx! {
-        div { id: "page-demos-video", class: "hikari-page",
-            div { class: "page-header",
-                h1 { class: "page-header__title", "Video & Audio Demo" }
-                p { class: "page-header__subtitle",
-                    "Demonstrates the full functionality of Layer 3 video player and audio waveform components."
-                }
-            }
-
+    render_demo_page("page-demos-video", "Video & Audio Demo", "Demonstrates the full functionality of Layer 3 video player and audio waveform components.",
+        rsx! {
             div { class: "page-section",
                 h2 { "VideoPlayer" }
                 p { class: "page-section__desc",
@@ -59,5 +53,5 @@ pub fn render() -> VNode {
                 }
             }
         }
-    }
+    )
 }

@@ -1,5 +1,6 @@
 //! Home page — hero section and navigation cards.
 
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
 use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use tairitsu_vdom::{VElement, VNode, VText};
 

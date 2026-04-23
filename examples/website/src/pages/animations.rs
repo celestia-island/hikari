@@ -4,33 +4,19 @@
 //! including hover effects, focus animations, state transitions, and interactive
 //! preset demos for glow, neon, tech, and transition effects.
 
-use tairitsu_macros::rsx;
-use tairitsu_vdom::VNode;
-
-fn txt(s: &str) -> VNode {
-    use tairitsu_vdom::VText;
-    VNode::Text(VText::new(s))
-}
-
-// Import UI components at module level for use in functions
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
 use crate::animation::AnimationId;
 use crate::ui::{self, Button, Card, Input};
+use tairitsu_macros::rsx;
+use tairitsu_vdom::VNode;
 
 pub fn render_animation_demo() -> VNode {
     render()
 }
 
 pub fn render() -> VNode {
-    rsx! {
-        div { id: "page-animations", class: "hikari-page",
-            // Page header
-            div { class: "page-header",
-                h1 { class: "page-header__title", "Animation Examples" }
-                p { class: "page-header__subtitle",
-                    "Interactive demonstrations of Hikari's animation system"
-                }
-            }
-
+    render_demo_page("page-animations", "Animation Examples", "Interactive demonstrations of Hikari's animation system",
+        rsx! {
             // Hover animations section
             div { class: "page-section",
                 h2 { "Hover Animations" }
@@ -82,7 +68,7 @@ pub fn render() -> VNode {
                 h2 { "Focus Animations" }
                 p { "Tab to or click on these inputs to see focus effects." }
 
-                div { class: "demo-row",
+                { render_demo_row(rsx! {
                     // Focus pulse input
                     div { class: "demo-item-inline",
                         div { class: "demo-item__label", "Focus Pulse" }
@@ -109,7 +95,7 @@ pub fn render() -> VNode {
                             .animation(AnimationId::FocusBorder)
                             .build() }
                     }
-                }
+                }) }
             }
 
             // State transition animations section
@@ -117,7 +103,7 @@ pub fn render() -> VNode {
                 h2 { "State Transitions" }
                 p { "Click and interact with these buttons to see state transitions." }
 
-                div { class: "demo-row",
+                { render_demo_row(rsx! {
                     // Press scale button
                     div { class: "demo-item-inline",
                         div { class: "demo-item__label", "Press Scale" }
@@ -136,7 +122,7 @@ pub fn render() -> VNode {
                             .variant(ui::ButtonVariant::Danger)
                             .build() }
                     }
-                }
+                }) }
             }
 
             // Continuous animations section
@@ -426,7 +412,7 @@ let button = Button::new()
             // Preset demo toggle script
             { preset_demo_js() }
         }
-    }
+    )
 }
 
 fn preset_demo_js() -> VNode {

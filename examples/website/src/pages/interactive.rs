@@ -2,21 +2,15 @@
 //!
 //! Demonstrates the reactive state management system with live interactive examples.
 
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
 use crate::reactive::{button_counter, interactive_input, switch};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 /// Render the interactive examples page.
 pub fn render() -> VNode {
-    rsx! {
-        div { id: "page-interactive", class: "hikari-page",
-            div { class: "page-header",
-                h1 { class: "page-header__title", "Interactive Examples" }
-                p { class: "page-header__subtitle",
-                    "Live reactive component demonstrations with state persistence."
-                }
-            }
-
+    render_demo_page("page-interactive", "Interactive Examples", "Live reactive component demonstrations with state persistence.",
+        rsx! {
             div { class: "page-section",
                 h2 { "Switch Component" }
                 p {
@@ -24,7 +18,7 @@ pub fn render() -> VNode {
                     "Try toggling the switches below and then navigate away and back - the state will be preserved!"
                 }
 
-                div { class: "demo-row",
+                { render_demo_row(rsx! {
                     // Switch 1 - unchecked by default
                     {
                         let (_id, vnode) = switch(false, Some("Notifications"));
@@ -40,7 +34,7 @@ pub fn render() -> VNode {
                         let (_id, vnode) = switch(false, Some("Auto-save"));
                         vnode
                     }
-                }
+                }) }
 
                 div { class: "code-example",
                     pre { class: "hi-code-block",
@@ -58,7 +52,7 @@ pub fn render() -> VNode {
                     "Each counter maintains its own independent state."
                 }
 
-                div { class: "demo-row",
+                { render_demo_row(rsx! {
                     // Counter 1 - starts at 0
                     {
                         let (_id, vnode) = button_counter(0, Some("Counter A"));
@@ -74,7 +68,7 @@ pub fn render() -> VNode {
                         let (_id, vnode) = button_counter(10, Some("Counter C"));
                         vnode
                     }
-                }
+                }) }
 
                 div { class: "code-example",
                     pre { class: "hi-code-block",
@@ -92,7 +86,7 @@ pub fn render() -> VNode {
                     "restored when you return to this page."
                 }
 
-                div { class: "demo-row",
+                { render_demo_row(rsx! {
                     // Input 1 - empty by default
                     {
                         let (_id, vnode) = interactive_input("", "Type something...", Some("Name"));
@@ -107,7 +101,7 @@ pub fn render() -> VNode {
                         );
                         vnode
                     }
-                }
+                }) }
 
                 div { class: "code-example",
                     pre { class: "hi-code-block",
@@ -155,5 +149,5 @@ pub fn render() -> VNode {
                 }
             }
         }
-    }
+    )
 }

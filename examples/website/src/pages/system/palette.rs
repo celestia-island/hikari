@@ -1,5 +1,6 @@
 //! Color palette showcase page — renders all primary theme colors using hikari-palette.
 
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
 use hikari_palette::{default_theme, Hikari, Tairitsu};
 use tairitsu_vdom::{VElement, VNode, VText};
 
@@ -87,30 +88,14 @@ pub fn render() -> VNode {
     let tairitsu = Tairitsu::palette();
     let default = default_theme();
 
-    VNode::Element(
-        VElement::new("div")
-            .attr("id", "page-system-palette")
-            .class("hikari-page")
-            .child(VNode::Element(
-                VElement::new("div")
-                    .class("page-header")
-                    .child(VNode::Element(
-                        VElement::new("h1")
-                            .class("page-header__title")
-                            .child(txt("Color Palette")),
-                    ))
-                    .child(VNode::Element(
-                        VElement::new("p").class("page-header__subtitle").child(txt(
-                            "500+ traditional Chinese colors powering three official themes.",
-                        )),
-                    )),
-            ))
-            .child(VNode::Element(
-                VElement::new("div")
-                    .class("page-section")
-                    .child(theme_section("Hikari Theme (Light)", &hikari))
-                    .child(theme_section("Tairitsu Theme (Dark)", &tairitsu))
-                    .child(theme_section("Default Theme", &default)),
-            )),
+    render_demo_page(
+        "page-system-palette",
+        "Color Palette",
+        "500+ traditional Chinese colors powering three official themes.",
+        VNode::Fragment(vec![
+            theme_section("Hikari Theme (Light)", &hikari),
+            theme_section("Tairitsu Theme (Dark)", &tairitsu),
+            theme_section("Default Theme", &default),
+        ]),
     )
 }

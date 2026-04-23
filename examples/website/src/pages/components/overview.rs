@@ -1,5 +1,6 @@
 //! Components overview page — cards for each component across all layers.
 
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
 use tairitsu_vdom::{VElement, VNode, VText};
 
 struct ComponentEntry {
@@ -7,23 +8,6 @@ struct ComponentEntry {
     title: &'static str,
     description: &'static str,
     href: &'static str,
-}
-
-fn page_header(title: &str, subtitle: &str) -> VNode {
-    VNode::Element(
-        VElement::new("div")
-            .class("page-header")
-            .child(VNode::Element(
-                VElement::new("h1")
-                    .class("page-header__title")
-                    .child(VNode::Text(VText::new(title))),
-            ))
-            .child(VNode::Element(
-                VElement::new("p")
-                    .class("page-header__subtitle")
-                    .child(VNode::Text(VText::new(subtitle))),
-            )),
-    )
 }
 
 fn component_card(entry: &ComponentEntry, layer: &str) -> VNode {
@@ -229,28 +213,14 @@ pub fn render() -> VNode {
         },
     ];
 
-    VNode::Element(
-        VElement::new("div")
-            .attr("id", "page-components")
-            .class("hikari-page")
-            .child(page_header(
-                "Components",
-                "Hikari components, organised in three layers of abstraction.",
-            ))
-            .child(layer_section(
-                "Layer 1 \u{2014} Base Components",
-                layer1,
-                "Layer 1",
-            ))
-            .child(layer_section(
-                "Layer 2 \u{2014} Composed Components",
-                layer2,
-                "Layer 2",
-            ))
-            .child(layer_section(
-                "Layer 3 \u{2014} Complex Components",
-                layer3,
-                "Layer 3",
-            )),
+    render_demo_page(
+        "page-components",
+        "Components",
+        "Hikari components, organised in three layers of abstraction.",
+        VNode::Fragment(vec![
+            layer_section("Layer 1 \u{2014} Base Components", layer1, "Layer 1"),
+            layer_section("Layer 2 \u{2014} Composed Components", layer2, "Layer 2"),
+            layer_section("Layer 3 \u{2014} Complex Components", layer3, "Layer 3"),
+        ]),
     )
 }

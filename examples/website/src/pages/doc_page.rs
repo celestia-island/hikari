@@ -3,6 +3,7 @@
 //! Provides a generic documentation page that loads markdown content
 //! dynamically based on the current route and language.
 
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_page_raw, render_demo_row};
 use crate::dynamic_docs::{render_doc_loader_script, DocPage};
 use tairitsu_vdom::{VElement, VNode, VText};
 
@@ -18,7 +19,6 @@ use tairitsu_vdom::{VElement, VNode, VText};
 /// * `title` - Optional page title (defaults to doc_path)
 pub fn DocumentationPage(doc_path: String, language: String, title: Option<String>) -> VNode {
     let page_title = title.unwrap_or_else(|| {
-        // Generate a readable title from the doc path
         doc_path
             .split('/')
             .last()
@@ -37,39 +37,24 @@ pub fn DocumentationPage(doc_path: String, language: String, title: Option<Strin
             .collect()
     });
 
+    let page_id = format!("page-doc-{}", doc_path.replace('/', "-"));
+
     VNode::Element(
         VElement::new("div")
-            .attr("id", &format!("page-doc-{}", doc_path.replace('/', "-")))
+            .attr("id", &page_id)
             .attr("data-doc-path", &doc_path)
             .attr("data-language", &language)
-            .class("hikari-page hikari-doc-page")
-            // Page header
-            .child(VNode::Element(
-                VElement::new("div")
-                    .class("page-header")
-                    .child(VNode::Element(
-                        VElement::new("h1")
-                            .class("page-header__title")
-                            .child(VNode::Text(VText::new(&page_title))),
-                    ))
-                    .child(VNode::Element(
-                        VElement::new("p")
-                            .class("page-header__subtitle")
-                            .child(VNode::Text(VText::new(&format!(
-                                "Documentation from: {}",
-                                doc_path
-                            )))),
-                    )),
-            ))
-            // Dynamic content area
-            .child(VNode::Element(
-                VElement::new("div").class("page-section").child(DocPage(
+            .class("hikari-doc-page")
+            .child(render_demo_page(
+                &page_id,
+                &page_title,
+                &format!("Documentation from: {}", doc_path),
+                DocPage(
                     doc_path.clone(),
                     language.clone(),
                     Some(page_title.clone()),
-                )),
+                ),
             ))
-            // Doc loader script
             .child(render_doc_loader_script()),
     )
 }
@@ -98,66 +83,58 @@ pub fn ComponentDocPage(component_path: String, language: String, layer: u8) -> 
         component_path.split('/').last().unwrap_or("Component")
     );
 
+    let page_id = format!("page-component-{}", component_path.replace('/', "-"));
+
     VNode::Element(
         VElement::new("div")
-            .attr(
-                "id",
-                &format!("page-component-{}", component_path.replace('/', "-")),
-            )
+            .attr("id", &page_id)
             .attr("data-component-path", &component_path)
             .attr("data-layer", &layer.to_string())
             .attr("data-language", &language)
-            .class("hikari-page hikari-component-doc-page")
-            // Page header with layer badge
+            .class("hikari-component-doc-page")
+            .child(render_demo_page_raw(
+                &page_id,
+                Some(&title),
+                VNode::Fragment(vec![
+                    VNode::Element(
+                        VElement::new("div")
+                            .class("page-section page-section--component")
+                            .child(DocPage(
+                                format!("components/{}", component_path),
+                                language.clone(),
+                                Some(title.clone()),
+                            )),
+                    ),
+                    VNode::Element(
+                        VElement::new("div")
+                            .class("component-doc-nav")
+                            .child(VNode::Element(
+                                VElement::new("a")
+                                    .attr("href", &format!("/components/layer{}", layer))
+                                    .class("component-doc-nav__link component-doc-nav__link--back")
+                                    .child(VNode::Text(VText::new(&format!(
+                                        "← Back to Layer {}",
+                                        layer
+                                    )))),
+                            )),
+                    ),
+                    render_doc_loader_script(),
+                ]),
+            ))
             .child(VNode::Element(
                 VElement::new("div")
-                    .class("page-header")
+                    .class("component-doc-badge")
                     .child(VNode::Element(
-                        VElement::new("div")
-                            .class("component-doc-badge")
-                            .child(VNode::Element(
-                                VElement::new("span")
-                                    .class("component-doc-badge__layer")
-                                    .child(VNode::Text(VText::new(&format!("Layer {}", layer)))),
-                            ))
-                            .child(VNode::Element(
-                                VElement::new("span")
-                                    .class("component-doc-badge__category")
-                                    .child(VNode::Text(VText::new(layer_name))),
-                            )),
+                        VElement::new("span")
+                            .class("component-doc-badge__layer")
+                            .child(VNode::Text(VText::new(&format!("Layer {}", layer)))),
                     ))
                     .child(VNode::Element(
-                        VElement::new("h1")
-                            .class("page-header__title")
-                            .child(VNode::Text(VText::new(&title))),
+                        VElement::new("span")
+                            .class("component-doc-badge__category")
+                            .child(VNode::Text(VText::new(layer_name))),
                     )),
-            ))
-            // Dynamic content area
-            .child(VNode::Element(
-                VElement::new("div")
-                    .class("page-section page-section--component")
-                    .child(DocPage(
-                        format!("components/{}", component_path),
-                        language.clone(),
-                        Some(title.clone()),
-                    )),
-            ))
-            // Component navigation
-            .child(VNode::Element(
-                VElement::new("div")
-                    .class("component-doc-nav")
-                    .child(VNode::Element(
-                        VElement::new("a")
-                            .attr("href", &format!("/components/layer{}", layer))
-                            .class("component-doc-nav__link component-doc-nav__link--back")
-                            .child(VNode::Text(VText::new(&format!(
-                                "← Back to Layer {}",
-                                layer
-                            )))),
-                    )),
-            ))
-            // Doc loader script
-            .child(render_doc_loader_script()),
+            )),
     )
 }
 
@@ -184,39 +161,35 @@ pub fn SystemDocPage(system_path: String, language: String) -> VNode {
         })
         .collect::<String>();
 
+    let page_id = format!("page-system-{}", system_path);
+
     VNode::Element(
         VElement::new("div")
-            .attr("id", &format!("page-system-{}", system_path))
+            .attr("id", &page_id)
             .attr("data-system-path", &system_path)
             .attr("data-language", &language)
-            .class("hikari-page hikari-system-doc-page")
-            // Page header
-            .child(VNode::Element(
-                VElement::new("div")
-                    .class("page-header")
-                    .child(VNode::Element(
-                        VElement::new("span")
-                            .class("system-doc-badge")
-                            .child(VNode::Text(VText::new("System"))),
-                    ))
-                    .child(VNode::Element(
-                        VElement::new("h1")
-                            .class("page-header__title")
-                            .child(VNode::Text(VText::new(&title))),
-                    )),
+            .class("hikari-system-doc-page")
+            .child(render_demo_page_raw(
+                &page_id,
+                Some(&title),
+                VNode::Fragment(vec![
+                    VNode::Element(
+                        VElement::new("div")
+                            .class("page-section page-section--system")
+                            .child(DocPage(
+                                format!("system/{}", system_path),
+                                language.clone(),
+                                Some(title.clone()),
+                            )),
+                    ),
+                    render_doc_loader_script(),
+                ]),
             ))
-            // Dynamic content area
             .child(VNode::Element(
-                VElement::new("div")
-                    .class("page-section page-section--system")
-                    .child(DocPage(
-                        format!("system/{}", system_path),
-                        language.clone(),
-                        Some(title.clone()),
-                    )),
-            ))
-            // Doc loader script
-            .child(render_doc_loader_script()),
+                VElement::new("span")
+                    .class("system-doc-badge")
+                    .child(VNode::Text(VText::new("System"))),
+            )),
     )
 }
 
@@ -243,56 +216,51 @@ pub fn GuideDocPage(guide_path: String, language: String) -> VNode {
         })
         .collect::<String>();
 
+    let page_id = format!("page-guide-{}", guide_path);
+
     VNode::Element(
         VElement::new("div")
-            .attr("id", &format!("page-guide-{}", guide_path))
+            .attr("id", &page_id)
             .attr("data-guide-path", &guide_path)
             .attr("data-language", &language)
-            .class("hikari-page hikari-guide-doc-page")
-            // Page header
-            .child(VNode::Element(
-                VElement::new("div")
-                    .class("page-header")
-                    .child(VNode::Element(
-                        VElement::new("span")
-                            .class("guide-doc-badge")
-                            .child(VNode::Text(VText::new("Guide"))),
-                    ))
-                    .child(VNode::Element(
-                        VElement::new("h1")
-                            .class("page-header__title")
-                            .child(VNode::Text(VText::new(&title))),
-                    )),
-            ))
-            // Dynamic content area
-            .child(VNode::Element(
-                VElement::new("div")
-                    .class("page-section page-section--guide")
-                    .child(DocPage(
-                        format!("guides/{}", guide_path),
-                        language.clone(),
-                        Some(title.clone()),
-                    )),
-            ))
-            // Table of contents placeholder
-            .child(VNode::Element(
-                VElement::new("div")
-                    .class("guide-toc")
-                    .child(VNode::Element(
-                        VElement::new("h3")
-                            .class("guide-toc__title")
-                            .child(VNode::Text(VText::new("Table of Contents"))),
-                    ))
-                    .child(VNode::Element(
+            .class("hikari-guide-doc-page")
+            .child(render_demo_page_raw(
+                &page_id,
+                Some(&title),
+                VNode::Fragment(vec![
+                    VNode::Element(
                         VElement::new("div")
-                            .class("guide-toc__content")
-                            .child(VNode::Text(VText::new(
-                                "Table of contents will be generated from document headers.",
-                            ))),
-                    )),
+                            .class("page-section page-section--guide")
+                            .child(DocPage(
+                                format!("guides/{}", guide_path),
+                                language.clone(),
+                                Some(title.clone()),
+                            )),
+                    ),
+                    VNode::Element(
+                        VElement::new("div")
+                            .class("guide-toc")
+                            .child(VNode::Element(
+                                VElement::new("h3")
+                                    .class("guide-toc__title")
+                                    .child(VNode::Text(VText::new("Table of Contents"))),
+                            ))
+                            .child(VNode::Element(
+                                VElement::new("div")
+                                    .class("guide-toc__content")
+                                    .child(VNode::Text(VText::new(
+                                        "Table of contents will be generated from document headers.",
+                                    ))),
+                            )),
+                    ),
+                    render_doc_loader_script(),
+                ]),
             ))
-            // Doc loader script
-            .child(render_doc_loader_script()),
+            .child(VNode::Element(
+                VElement::new("span")
+                    .class("guide-doc-badge")
+                    .child(VNode::Text(VText::new("Guide"))),
+            )),
     )
 }
 
@@ -338,34 +306,23 @@ pub fn DocIndexPage(category: String, items: Vec<(String, String)>, language: St
         ));
     }
 
+    let page_id = format!("page-index-{}", category);
+
     VNode::Element(
         VElement::new("div")
-            .attr("id", &format!("page-index-{}", category))
+            .attr("id", &page_id)
             .attr("data-category", &category)
             .attr("data-language", &language)
-            .class("hikari-page hikari-doc-index-page")
-            // Page header
-            .child(VNode::Element(
-                VElement::new("div")
-                    .class("page-header")
-                    .child(VNode::Element(
-                        VElement::new("h1")
-                            .class("page-header__title")
-                            .child(VNode::Text(VText::new(&category_title))),
-                    ))
-                    .child(VNode::Element(
-                        VElement::new("p")
-                            .class("page-header__subtitle")
-                            .child(VNode::Text(VText::new(
-                                "Browse all available documentation in this category.",
-                            ))),
-                    )),
+            .class("hikari-doc-index-page")
+            .child(render_demo_page(
+                &page_id,
+                &category_title,
+                "Browse all available documentation in this category.",
+                VNode::Element(
+                    VElement::new("div")
+                        .class("doc-index-grid")
+                        .children(item_nodes),
+                ),
             ))
-            // Index grid
-            .child(VNode::Element(
-                VElement::new("div")
-                    .class("doc-index-grid")
-                    .children(item_nodes),
-            )),
     )
 }

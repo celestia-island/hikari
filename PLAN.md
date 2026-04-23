@@ -118,11 +118,13 @@
 ## 当前进度
 
 - [x] Phase 0 开始：审计完成
-- [ ] P0-1: Typography 组件
-- [ ] P0-2: Link 组件
-- [ ] P0-3: DemoPage 辅助组件
-- [ ] Phase 1 Batch 1: Layer 1 重构
-- [ ] Phase 1 Batch 2: Layer 2 重构
-- [ ] Phase 1 Batch 3: Layer 3 重构
-- [ ] Phase 1 Batch 4: 页面级重构
+- [x] P0-1: Typography 组件 ✅ (commit 26fc5d2)
+- [x] P0-2: Link 组件 ✅ (commit 26fc5d2)
+- [x] P0-3: DemoPage 辅助组件 ✅ (commit 26fc5d2)
+- [x] Phase 1 Batch 1: Layer 1 全部 14 个 demo 重构 ✅
+  - number_input, button, tag, switch, empty, avatar, display, image, search, form, description_list, comment, feedback
+  - commits: e62f97a, 9d71065
+- [ ] Phase 1 Batch 2: Layer 2 重构（16 个文件）
+- [ ] Phase 1 Batch 3: Layer 3 重构（8 个文件）
+- [ ] Phase 1 Batch 4: 页面级与系统页面（12 个文件）
 - [ ] Phase 2: 清理遗留

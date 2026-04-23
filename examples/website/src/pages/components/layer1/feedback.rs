@@ -1,5 +1,29 @@
+use hikari_icons::generated::mdi_selected::get;
+use hikari_icons::MdiIcon;
 use tairitsu_macros::rsx;
-use tairitsu_vdom::VNode;
+use tairitsu_vdom::{VElement, VNode};
+
+fn icon_el(icon: MdiIcon, size: u32) -> VNode {
+    let icon_name = icon.to_string();
+    let svg_str = get(&icon_name)
+        .map(|data| {
+            format!(
+                r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{}" width="{}" height="{}"><path fill="currentColor" d="{}"/></svg>"#,
+                data.view_box.as_deref().unwrap_or("0 0 24 24"),
+                size,
+                size,
+                data.path.as_deref().unwrap_or("")
+            )
+        })
+        .unwrap_or_else(|| String::from(
+            r#"<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>"#
+        ));
+    VNode::Element(
+        VElement::new("span")
+            .class("hikari-icon")
+            .inner_html(svg_str),
+    )
+}
 
 pub fn render() -> VNode {
     rsx! {
@@ -15,10 +39,26 @@ pub fn render() -> VNode {
                     h3 { class: "demo-block__title", "Alert Variants" }
                     div { class: "demo-block__body",
                         div { style: "display:flex;flex-direction:column;gap:12px;",
-                            div { class: "hi-alert hi-alert--info", "ℹ  This is an informational alert for general notices." }
-                            div { class: "hi-alert hi-alert--success", "✓  Operation completed successfully." }
-                            div { class: "hi-alert hi-alert--danger", "✗  An error occurred. Please try again later." }
-                            div { class: "hi-alert hi-alert--warning", "⚠  Warning: Your session will expire in 5 minutes." }
+                            div { class: "hi-alert hi-alert--info",
+                                span { style: "display:flex;align-items:center;gap:8px;",
+                                    {icon_el(MdiIcon::Information, 16)}
+                                    "This is an informational alert for general notices." }
+                                }
+                            div { class: "hi-alert hi-alert--success",
+                                span { style: "display:flex;align-items:center;gap:8px;",
+                                    {icon_el(MdiIcon::Check, 16)}
+                                    "Operation completed successfully." }
+                                }
+                            div { class: "hi-alert hi-alert--danger",
+                                span { style: "display:flex;align-items:center;gap:8px;",
+                                    {icon_el(MdiIcon::Close, 16)}
+                                    "An error occurred. Please try again later." }
+                                }
+                            div { class: "hi-alert hi-alert--warning",
+                                span { style: "display:flex;align-items:center;gap:8px;",
+                                    {icon_el(MdiIcon::AlertTriangle, 16)}
+                                    "Warning: Your session will expire in 5 minutes." }
+                                }
                         }
                     }
                 }
@@ -80,8 +120,16 @@ pub fn render() -> VNode {
                     div { class: "demo-block__body",
                         div { style: "display:flex;flex-direction:column;gap:12px;",
                             div { class: "hi-alert hi-alert--info",
-                                span { style: "flex:1;", "ℹ  This alert can be dismissed." }
-                                span { style: "cursor:pointer;font-size:16px;opacity:0.6;padding:0 4px;", "×" }
+                                span { style: "display:flex;align-items:center;gap:8px;flex:1;",
+                                    {icon_el(MdiIcon::Information, 16)}
+                                    "This alert can be dismissed." }
+                                span { style: "cursor:pointer;font-size:16px;opacity:0.6;padding:0 4px;", "\u{00D7}" }
+                            }
+                            div { class: "hi-alert hi-alert--success",
+                                span { style: "display:flex;align-items:center;gap:8px;flex:1;",
+                                    {icon_el(MdiIcon::Check, 16)}
+                                    "Changes saved successfully." }
+                                span { style: "cursor:pointer;font-size:16px;opacity:0.6;padding:0 4px;", "\u{00D7}" }
                             }
                             div { class: "hi-alert hi-alert--success",
                                 span { style: "flex:1;", "✓  Changes saved successfully." }

@@ -1,5 +1,29 @@
+use hikari_icons::generated::mdi_selected::get;
+use hikari_icons::MdiIcon;
 use tairitsu_macros::rsx;
-use tairitsu_vdom::VNode;
+use tairitsu_vdom::{VElement, VNode};
+
+fn icon_el(icon: MdiIcon, size: u32) -> VNode {
+    let icon_name = icon.to_string();
+    let svg_str = get(&icon_name)
+        .map(|data| {
+            format!(
+                r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{}" width="{}" height="{}"><path fill="currentColor" d="{}"/></svg>"#,
+                data.view_box.as_deref().unwrap_or("0 0 24 24"),
+                size,
+                size,
+                data.path.as_deref().unwrap_or("")
+            )
+        })
+        .unwrap_or_else(|| String::from(
+            r#"<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>"#
+        ));
+    VNode::Element(
+        VElement::new("span")
+            .class("hikari-icon")
+            .inner_html(svg_str),
+    )
+}
 
 pub fn render() -> VNode {
     rsx! {
@@ -77,10 +101,22 @@ pub fn render() -> VNode {
                     h3 { class: "demo-block__title", "Icon Tags" }
                     div { class: "demo-block__body",
                         div { class: "demo-row",
-                            span { class: "hi-tag hi-tag--primary", "📦 Package" }
-                            span { class: "hi-tag hi-tag--success", "✅ Verified" }
-                            span { class: "hi-tag hi-tag--danger", "🚨 Critical" }
-                            span { class: "hi-tag hi-tag--warning", "⏳ Pending" }
+                            span { class: "hi-tag hi-tag--primary", style: "display:inline-flex;align-items:center;gap:4px;",
+                                {icon_el(MdiIcon::Package, 12)}
+                                "Package"
+                            }
+                            span { class: "hi-tag hi-tag--success", style: "display:inline-flex;align-items:center;gap:4px;",
+                                {icon_el(MdiIcon::CheckboxMarkedCircle, 12)}
+                                "Verified"
+                            }
+                            span { class: "hi-tag hi-tag--danger", style: "display:inline-flex;align-items:center;gap:4px;",
+                                {icon_el(MdiIcon::Alert, 12)}
+                                "Critical"
+                            }
+                            span { class: "hi-tag hi-tag--warning", style: "display:inline-flex;align-items:center;gap:4px;",
+                                {icon_el(MdiIcon::ClockOutline, 12)}
+                                "Pending"
+                            }
                         }
                     }
                 }

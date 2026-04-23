@@ -144,7 +144,7 @@ pub fn render() -> VNode {
                                 GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                             )}
                             {glow_wrap(
-                                rsx! { button { class: "hi-button hi-button-primary hi-button-sm", "\u{1F50D} Search" } },
+                                rsx! { button { class: "hi-button hi-button-primary hi-button-sm", "Search" } },
                                 GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                             )}
                         }
@@ -160,7 +160,7 @@ pub fn render() -> VNode {
                                         span { "Username" }
                                         span { style: "color:#ef4444;margin-left:2px;", "*" }
                                     }
-                                    input { class: "hi-input", value: "alice_chen", style: "width:100%;" }
+                                    input { class: "hi-input", value: "alice_chen", style: "width:100%;box-sizing:border-box;" }
                                     p { style: "margin:4px 0 0;font-size:12px;color:#22c55e;display:flex;align-items:center;gap:4px;", "✓ Username is available" }
                                 }
                                 div { class: "hi-form-item",
@@ -168,12 +168,12 @@ pub fn render() -> VNode {
                                         span { "Email" }
                                         span { style: "color:#ef4444;margin-left:2px;", "*" }
                                     }
-                                    input { class: "hi-input", value: "invalid-email", style: "width:100%;border-color:#ef4444;background:#fef2f2;" }
+                                    input { class: "hi-input", value: "invalid-email", style: "width:100%;box-sizing:border-box;border-color:#ef4444;background:#fef2f2;" }
                                     p { style: "margin:4px 0 0;font-size:12px;color:#ef4444;", "Please enter a valid email address (e.g. user@example.com)" }
                                 }
                                 div { class: "hi-form-item",
                                     label { class: "hi-form-item__label", "Password" }
-                                    input { class: "hi-input", r#type: "password", value: "12345", style: "width:100%;border-color:#ef4444;background:#fef2f2;", autocomplete: "new-password" }
+                                    input { class: "hi-input", r#type: "password", value: "12345", style: "width:100%;box-sizing:border-box;border-color:#ef4444;background:#fef2f2;", autocomplete: "new-password" }
                                     p { style: "margin:4px 0 0;font-size:12px;color:#ef4444;", "Password must be at least 8 characters" }
                                 }
                                 div { style: "display:flex;gap:12px;margin-top:8px;",

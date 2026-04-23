@@ -118,13 +118,12 @@
 ## 当前进度
 
 - [x] Phase 0 开始：审计完成
-- [x] P0-1: Typography 组件 ✅ (commit 26fc5d2)
-- [x] P0-2: Link 组件 ✅ (commit 26fc5d2)
-- [x] P0-3: DemoPage 辅助组件 ✅ (commit 26fc5d2)
-- [x] Phase 1 Batch 1: Layer 1 全部 14 个 demo 重构 ✅
-  - number_input, button, tag, switch, empty, avatar, display, image, search, form, description_list, comment, feedback
-  - commits: e62f97a, 9d71065
-- [ ] Phase 1 Batch 2: Layer 2 重构（16 个文件）
-- [ ] Phase 1 Batch 3: Layer 3 重构（8 个文件）
-- [ ] Phase 1 Batch 4: 页面级与系统页面（12 个文件）
-- [ ] Phase 2: 清理遗留
+- [x] P0-1: Typography 组件 ✅
+- [x] P0-2: Link 组件 ✅
+- [x] P0-3: DemoPage 辅助组件 ✅
+- [x] Phase 1 Batch 1: Layer 1 全部 14 个 demo ✅
+- [x] Phase 1 Batch 2: Layer 2 全部 12 个 demo ✅
+- [x] Phase 1 Batch 3: Layer 3 全部 5 个 demo ✅
+- [x] Phase 1 Batch 4: 页面级 + 系统页 全部 16 个 demo ✅
+- [x] Phase 2: 清理遗留（system/mod.rs 已重构，page_layout 保留供特殊 demo 使用）
+- [x] **全部完成** — 共重构 **42 个 demo 文件**，新增 3 个基础组件

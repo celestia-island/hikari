@@ -1,3 +1,4 @@
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
 use hikari_icons::generated::mdi_selected::get;
 use hikari_icons::MdiIcon;
 use tairitsu_macros::rsx;
@@ -26,120 +27,108 @@ fn icon_el(icon: MdiIcon, size: u32) -> VNode {
 }
 
 pub fn render() -> VNode {
-    rsx! {
-        div { id: "page-component-display", class: "hikari-page",
-            div { class: "page-header",
-                h1 { class: "page-header__title", "Display" }
-                p { class: "page-header__subtitle",
-                    "Badges, dividers, status indicators, and text styling primitives for visual presentation."
-                }
-            }
-            div { class: "page-section",
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "Badges" }
-                    div { class: "demo-block__body",
-                        div { class: "demo-row",
+    render_demo_page(
+        "page-component-display",
+        "Display",
+        "Badges, dividers, status indicators, and text styling primitives for visual presentation.",
+        rsx! {
+            {render_demo_block("Badges",
+                rsx! {
+                    render_demo_row(
+                        rsx! {
                             span { class: "hi-badge", "New" }
                             span { class: "hi-badge hi-badge--primary", "Beta" }
                             span { class: "hi-badge hi-badge--success", "Active" }
                             span { class: "hi-badge hi-badge--danger", "Offline" }
                             span { class: "hi-badge hi-badge--warning", "Pending" }
                         }
-                        div { class: "demo-row", style: "margin-top:12px;",
+                    )
+                    render_demo_row(
+                        rsx! {
                             span { class: "hi-badge hi-badge--dot", "" }
                             span { class: "hi-badge hi-badge--dot hi-badge--success", "" }
                             span { class: "hi-badge hi-badge--dot hi-badge--danger", "" }
                         }
-                    }
+                    )
                 }
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "Badge on Element" }
-                    div { class: "demo-block__body",
-                         div { class: "demo-row",
-                             div { style: "position:relative;display:inline-block;",
-                                 span { class: "hi-badge hi-badge--danger", "3" }
-                                 span { style: "font-size:20px;",
-                                     {icon_el(MdiIcon::Bell, 20)}
-                                 }
-                             }
-                             div { style: "position:relative;display:inline-block;",
-                                 span { class: "hi-badge hi-badge--dot hi-badge--success", "" }
-                                 span { style: "font-size:20px;",
-                                     {icon_el(MdiIcon::Mail, 20)}
-                                 }
-                             }
-                        }
-                    }
-                }
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "Dividers" }
-                    div { class: "demo-block__body",
-                        div { style: "display:flex;flex-direction:column;gap:16px;",
-                            div {
-                                p { "Content above the divider" }
-                                hr { class: "hi-divider" }
-                                p { "Content below the divider" }
+            )}
+            {render_demo_block("Badge on Element",
+                render_demo_row(
+                    rsx! {
+                        div { style: "position:relative;display:inline-block;",
+                            span { class: "hi-badge hi-badge--danger", "3" }
+                            span { style: "font-size:20px;",
+                                {icon_el(MdiIcon::Bell, 20)}
                             }
-                            div {
-                                p { "Section with text divider" }
-                                hr { class: "hi-divider" }
-                                div { class: "hi-divider hi-divider--with-text", "OR" }
+                        }
+                        div { style: "position:relative;display:inline-block;",
+                            span { class: "hi-badge hi-badge--dot hi-badge--success", "" }
+                            span { style: "font-size:20px;",
+                                {icon_el(MdiIcon::Mail, 20)}
                             }
                         }
                     }
-                }
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "Status Indicators" }
-                    div { class: "demo-block__body",
-                        div { style: "display:flex;flex-direction:column;gap:12px;",
-                            div { style: "display:flex;align-items:center;gap:8px;",
-                                span { class: "hi-status hi-status--online", "" }
-                                span { "Online" }
-                            }
-                            div { style: "display:flex;align-items:center;gap:8px;",
-                                span { class: "hi-status hi-status--offline", "" }
-                                span { "Offline" }
-                            }
-                            div { style: "display:flex;align-items:center;gap:8px;",
-                                span { class: "hi-status hi-status--busy", "" }
-                                span { "Busy" }
-                            }
-                            div { style: "display:flex;align-items:center;gap:8px;",
-                                span { class: "hi-status hi-status--away", "" }
-                                span { "Away" }
-                            }
+                )
+            )}
+            {render_demo_block("Dividers",
+                rsx! {
+                    div { style: "display:flex;flex-direction:column;gap:16px;",
+                        div {
+                            p { "Content above the divider" }
+                            hr { class: "hi-divider" }
+                            p { "Content below the divider" }
+                        }
+                        div {
+                            p { "Section with text divider" }
+                            hr { class: "hi-divider" }
+                            div { class: "hi-divider hi-divider--with-text", "OR" }
                         }
                     }
                 }
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "Text Styles" }
-                    div { class: "demo-block__body",
-                        div { style: "display:flex;flex-direction:column;gap:12px;",
-                            p { class: "hi-text hi-text--heading", "Heading Text" }
-                            p { class: "hi-text hi-text--subheading", "Subheading Text" }
-                            p { class: "hi-text hi-text--body", "Regular body text for paragraph content." }
-                            p { class: "hi-text hi-text--caption", "Caption or helper text with smaller font size." }
-                            p { class: "hi-text hi-text--muted", "Muted or disabled text styling." }
-                            p { class: "hi-text hi-text--code", "monospace_code_style()" }
+            )}
+            {render_demo_block("Status Indicators",
+                rsx! {
+                    div { style: "display:flex;flex-direction:column;gap:12px;",
+                        div { style: "display:flex;align-items:center;gap:8px;",
+                            span { class: "hi-status hi-status--online", "" }
+                            span { "Online" }
+                        }
+                        div { style: "display:flex;align-items:center;gap:8px;",
+                            span { class: "hi-status hi-status--offline", "" }
+                            span { "Offline" }
+                        }
+                        div { style: "display:flex;align-items:center;gap:8px;",
+                            span { class: "hi-status hi-status--busy", "" }
+                            span { "Busy" }
+                        }
+                        div { style: "display:flex;align-items:center;gap:8px;",
+                            span { class: "hi-status hi-status--away", "" }
+                            span { "Away" }
                         }
                     }
                 }
-                div { class: "demo-block",
-                    h3 { class: "demo-block__title", "API" }
-                    div { class: "demo-block__body",
-                        table { class: "api-table",
-                            thead { tr { th { "Component" } th { "Property" } th { "Type" } th { "Description" } } }
-                            tbody {
-                                tr { td { code { "Badge" } } td { code { "variant" } } td { code { "default | primary | success | danger | warning" } } td { "Badge color variant" } }
-                                tr { td { code { "Badge" } } td { code { "dot" } } td { code { "bool" } } td { "Show as a small dot indicator" } }
-                                tr { td { code { "Divider" } } td { code { "with-text" } } td { code { "string" } } td { "Center text on the divider" } }
-                                tr { td { code { "Status" } } td { code { "state" } } td { code { "online | offline | busy | away" } } td { "Status indicator color" } }
-                                tr { td { code { "Text" } } td { code { "variant" } } td { code { "heading | subheading | body | caption | muted | code" } } td { "Text style preset" } }
-                            }
-                        }
+            )}
+            {render_demo_block("Text Styles",
+                rsx! {
+                    div { style: "display:flex;flex-direction:column;gap:12px;",
+                        p { class: "hi-text hi-text--heading", "Heading Text" }
+                        p { class: "hi-text hi-text--subheading", "Subheading Text" }
+                        p { class: "hi-text hi-text--body", "Regular body text for paragraph content." }
+                        p { class: "hi-text hi-text--caption", "Caption or helper text with smaller font size." }
+                        p { class: "hi-text hi-text--muted", "Muted or disabled text styling." }
+                        p { class: "hi-text hi-text--code", "monospace_code_style()" }
                     }
                 }
-            }
-        }
-    }
+            )}
+            {render_demo_block("API",
+                render_api_table(&[
+                    ("Badge", "variant", "default | primary | success | danger | warning", "Badge color variant"),
+                    ("Badge", "dot", "bool", "Show as a small dot indicator"),
+                    ("Divider", "with-text", "string", "Center text on the divider"),
+                    ("Status", "state", "online | offline | busy | away", "Status indicator color"),
+                    ("Text", "variant", "heading | subheading | body | caption | muted | code", "Text style preset"),
+                ])
+            )}
+        },
+    )
 }

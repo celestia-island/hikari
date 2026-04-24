@@ -4,7 +4,7 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-user-guide", "User Guide", "Step-by-step interactive guide for onboarding users and feature discovery.", rsx!{
+    render_demo_page("page-component-user-guide", "User Guide", "Step-by-step interactive guide for onboarding users and feature discovery.", VNode::Fragment(vec![
         render_demo_block("Getting Started Guide", rsx!{
             div { class: "hi-user-guide",
                 div { class: "hi-user-guide__header",
@@ -56,7 +56,7 @@ pub fn render() -> VNode {
                     )}
                 }
             }
-        })
+        }),
         render_demo_block("Feature Tour", rsx!{
             div { class: "hi-user-guide",
                 div { class: "hi-user-guide__header",
@@ -91,7 +91,7 @@ pub fn render() -> VNode {
                     span { "2 of 3 completed" }
                 }
             }
-        })
+        }),
         render_demo_block("Vertical Stepper & Spotlight", rsx!{
             div { style: "display:flex;gap:32px;",
                 div { style: "flex:1;max-width:320px;",
@@ -143,15 +143,17 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        })
+        }),
         render_demo_block("API", rsx!{
-            render_api_table(&[
+            div {
+                {render_api_table(&[
                 ("steps", "GuideStep[]", "-", "Array of step objects"),
                 ("current", "number", "0", "Current active step index"),
                 ("closable", "bool", "true", "Show close button"),
                 ("showProgress", "bool", "true", "Show progress bar"),
                 ("mask", "bool", "false", "Show backdrop mask"),
-            ])
-        })
-    })
+            ])}
+            }
+        }),
+    ]))
 }

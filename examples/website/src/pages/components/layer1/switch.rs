@@ -23,25 +23,25 @@ pub fn render() -> VNode {
         "page-component-switch",
         "Switch",
         "Boolean toggle control with optional labels and size variants.",
-        rsx! {
-            {render_demo_block("Basic Switch",
+        VNode::Fragment(vec![
+            render_demo_block("Basic Switch",
                 render_demo_row(
-                    rsx! {
-                        {make_switch(false, "")}
-                        {make_switch(true, "")}
-                    }
+                    VNode::Fragment(vec![
+                        make_switch(false, ""),
+                        make_switch(true, ""),
+                    ])
                 )
-            )}
-            {render_demo_block("Switch Sizes",
+            ),
+            render_demo_block("Switch Sizes",
                 render_demo_row(
-                    rsx! {
-                        {make_switch(true, "hi-switch--sm")}
-                        {make_switch(true, "")}
-                        {make_switch(true, "hi-switch--lg")}
-                    }
+                    VNode::Fragment(vec![
+                        make_switch(true, "hi-switch--sm"),
+                        make_switch(true, ""),
+                        make_switch(true, "hi-switch--lg"),
+                    ])
                 )
-            )}
-            {render_demo_block("With Labels",
+            ),
+            render_demo_block("With Labels",
                 rsx! {
                     div { style: "display:flex;flex-direction:column;gap:16px;",
                         div { style: "display:flex;align-items:center;gap:12px;",
@@ -58,8 +58,8 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            )}
-            {render_demo_block("With Description",
+            ),
+            render_demo_block("With Description",
                 rsx! {
                     div { style: "display:flex;flex-direction:column;gap:16px;",
                         div { style: "display:flex;align-items:center;justify-content:space-between;",
@@ -78,16 +78,16 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            )}
-            {render_demo_block("Disabled",
+            ),
+            render_demo_block("Disabled",
                 render_demo_row(
-                    rsx! {
-                        {make_switch(false, "hi-switch--disabled")}
-                        {make_switch(true, "hi-switch--disabled")}
-                    }
+                    VNode::Fragment(vec![
+                        make_switch(false, "hi-switch--disabled"),
+                        make_switch(true, "hi-switch--disabled"),
+                    ])
                 )
-            )}
-            {render_demo_block("Danger Variant",
+            ),
+            render_demo_block("Danger Variant",
                 rsx! {
                     div { style: "display:flex;flex-direction:column;gap:16px;",
                         div { style: "display:flex;align-items:center;gap:16px;",
@@ -102,15 +102,15 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            )}
-            {render_demo_block("API",
+            ),
+            render_demo_block("API",
                 render_api_table(&[
                     ("checked", "bool", "false", "Controlled checked state"),
                     ("disabled", "bool", "false", "Disable the switch"),
                     ("size", "small | default | large", "default", "Switch size"),
                     ("onChange", "(checked: bool) => void", "-", "Change callback"),
                 ])
-            )}
-        },
+            ),
+        ]),
     )
 }

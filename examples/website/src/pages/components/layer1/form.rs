@@ -15,8 +15,8 @@ pub fn render() -> VNode {
         "page-component-form",
         "Form",
         "Form container for collecting and validating user input. Supports labels, various input types, and submission.",
-        rsx! {
-            {render_demo_block("Basic Form",
+        VNode::Fragment(vec![
+            render_demo_block("Basic Form",
                 rsx! {
                     form { class: "hi-form",
                         div { class: "hi-form-item",
@@ -40,8 +40,8 @@ pub fn render() -> VNode {
                         )}
                     }
                 }
-            )}
-            {render_demo_block("Input States",
+            ),
+            render_demo_block("Input States",
                 rsx! {
                     form { class: "hi-form",
                         div { style: "display:flex;flex-direction:column;gap:16px;",
@@ -72,8 +72,8 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            )}
-            {render_demo_block("Inline Form",
+            ),
+            render_demo_block("Inline Form",
                 rsx! {
                     form { class: "hi-form hi-form--inline",
                         {glow_input("Search...", "search", "", GlowColor::Ghost)}
@@ -83,8 +83,8 @@ pub fn render() -> VNode {
                         )}
                     }
                 }
-            )}
-            {render_demo_block("Form Validation",
+            ),
+            render_demo_block("Form Validation",
                 rsx! {
                     form { class: "hi-form",
                         div { style: "display:flex;flex-direction:column;gap:16px;max-width:480px;",
@@ -116,15 +116,15 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            )}
-            {render_demo_block("API",
+            ),
+            render_demo_block("API",
                 render_api_table(&[
                     ("label", "string", "-", "Field label text"),
                     ("required", "bool", "false", "Mark field as required"),
                     ("disabled", "bool", "false", "Disable the field"),
                     ("layout", "vertical | horizontal", "vertical", "Label-input alignment"),
                 ])
-            )}
-        },
+            ),
+        ]),
     )
 }

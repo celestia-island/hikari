@@ -3,7 +3,7 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-data", "Data", "Tables, lists, and data grids for displaying structured information.", rsx! {
+    render_demo_page("page-component-data", "Data", "Tables, lists, and data grids for displaying structured information.", VNode::Fragment(vec![
         render_demo_block("Striped Table", rsx! {
             table { class: "hi-table hi-table--striped",
                 thead { tr { th { "Name" } th { "Age" } th { "Role" } th { "Status" } } }
@@ -13,7 +13,7 @@ pub fn render() -> VNode {
                     tr { td { "Carol" } td { "42" } td { "Manager" } td { span { class: "hi-tag hi-tag--warning", "Away" } } }
                 }
             }
-        })
+        }),
         render_demo_block("Basic List", rsx! {
             ul { class: "hi-list",
                 li { class: "hi-list__item",
@@ -29,7 +29,7 @@ pub fn render() -> VNode {
                     div { class: "hi-list__meta", "Updated 3 days ago" }
                 }
             }
-        })
+        }),
         render_demo_block("Data List with Avatars", rsx! {
             ul { class: "hi-list",
                 li { class: "hi-list__item",
@@ -53,15 +53,17 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        })
+        }),
         render_demo_block("API", rsx! {
-            {render_api_table(&[
-                ("Table", "striped", "bool", "Alternate row background colors"),
-                ("Table", "bordered", "bool", "Show cell borders"),
-                ("Table", "compact", "bool", "Reduce cell padding"),
-                ("List", "split", "bool", "Show dividers between items"),
-                ("List", "loading", "bool", "Show loading skeleton"),
-            ])}
-        })
-    })
+            div {
+                {render_api_table(&[
+                    ("Table", "striped", "bool", "Alternate row background colors"),
+                    ("Table", "bordered", "bool", "Show cell borders"),
+                    ("Table", "compact", "bool", "Reduce cell padding"),
+                    ("List", "split", "bool", "Show dividers between items"),
+                    ("List", "loading", "bool", "Show loading skeleton"),
+                ])}
+            }
+        }),
+    ]))
 }

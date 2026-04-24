@@ -43,64 +43,74 @@ fn make_qr_svg(size: u32) -> VNode {
 }
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-qrcode", "QRCode", "Static QR code generation placeholder for encoding URLs, text, or other data.", rsx! {
+    render_demo_page("page-component-qrcode", "QRCode", "Static QR code generation placeholder for encoding URLs, text, or other data.", VNode::Fragment(vec![
         render_demo_block("Basic QR Code", rsx! {
-            {render_demo_row(rsx! {
-                div { class: "hi-qrcode",
-                    { make_qr_svg(128) }
-                }
-            })}
-        })
+            div {
+                {render_demo_row(rsx! {
+                    div { class: "hi-qrcode",
+                        { make_qr_svg(128) }
+                    }
+                })}
+            }
+        }),
         render_demo_block("QR Code Sizes", rsx! {
-            {render_demo_row(rsx! {
-                div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
-                    div { class: "hi-qrcode",
-                        { make_qr_svg(80) }
+            div {
+                {render_demo_row(rsx! {
+                    div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
+                        div { class: "hi-qrcode",
+                            { make_qr_svg(80) }
+                        }
+                        div { style: "font-size:12px;color:var(--hi-color-text-secondary);text-align:center;margin-top:4px;", "Small" }
                     }
-                    div { style: "font-size:12px;color:var(--hi-color-text-secondary);text-align:center;margin-top:4px;", "Small" }
-                }
-                div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
-                    div { class: "hi-qrcode",
-                        { make_qr_svg(128) }
+                    div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
+                        div { class: "hi-qrcode",
+                            { make_qr_svg(128) }
+                        }
+                        div { style: "font-size:12px;color:var(--hi-color-text-secondary);text-align:center;margin-top:4px;", "Default" }
                     }
-                    div { style: "font-size:12px;color:var(--hi-color-text-secondary);text-align:center;margin-top:4px;", "Default" }
-                }
-                div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
-                    div { class: "hi-qrcode",
-                        { make_qr_svg(200) }
+                    div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
+                        div { class: "hi-qrcode",
+                            { make_qr_svg(200) }
+                        }
+                        div { style: "font-size:12px;color:var(--hi-color-text-secondary);text-align:center;margin-top:4px;", "Large" }
                     }
-                    div { style: "font-size:12px;color:var(--hi-color-text-secondary);text-align:center;margin-top:4px;", "Large" }
-                }
-            })}
-        })
+                })}
+            }
+        }),
         render_demo_block("QR Code with Label", rsx! {
-            {render_demo_row(rsx! {
-                div { style: "display:flex;flex-direction:column;align-items:center;gap:8px;",
-                    div { class: "hi-qrcode",
-                        { make_qr_svg(128) }
+            div {
+                {render_demo_row(rsx! {
+                    div { style: "display:flex;flex-direction:column;align-items:center;gap:8px;",
+                        div { class: "hi-qrcode",
+                            { make_qr_svg(128) }
+                        }
+                        span { style: "font-size:13px;color:var(--hi-color-text-secondary);", "Scan to visit github.com/tairitsu/hikari" }
                     }
-                    span { style: "font-size:13px;color:var(--hi-color-text-secondary);", "Scan to visit github.com/tairitsu/hikari" }
-                }
-            })}
-        })
+                })}
+            }
+        }),
         render_demo_block("QR Code with Download", rsx! {
-            {render_demo_row(rsx! {
-                div { style: "display:flex;flex-direction:column;align-items:center;gap:8px;",
-                    div { class: "hi-qrcode",
-                        { make_qr_svg(128) }
+            div {
+                {render_demo_row(rsx! {
+                    div { style: "display:flex;flex-direction:column;align-items:center;gap:8px;",
+                        div { class: "hi-qrcode",
+                            { make_qr_svg(128) }
+                        }
+                        button { class: "hi-button hi-button-secondary hi-button-sm", "Download PNG" }
                     }
-                    button { class: "hi-button hi-button-secondary hi-button-sm", "Download PNG" }
-                }
-            })}
-        })
+                })}
+            }
+        }),
         render_demo_block("API", rsx! {
-            {render_api_table(&[
-                ("value", "string", "-", "Data to encode in the QR code"),
-                ("size", "number", "128", "Canvas dimension in pixels"),
-                ("color", "string", "#000", "Foreground color"),
-                ("bgColor", "string", "#fff", "Background color"),
-                ("level", "L | M | Q | H", "M", "Error correction level"),
-            ])}
-        })
-    })
+            div {
+                {render_api_table(&[
+                    ("value", "string", "-", "Data to encode in the QR code"),
+                    ("size", "number", "128", "Canvas dimension in pixels"),
+                    ("color", "string", "#000", "Foreground color"),
+                    ("bgColor", "string", "#fff", "Background color"),
+                    ("level", "L | M | Q | H", "M", "Error correction level"),
+                ])}
+            }
+        }),
+    ]))
 }

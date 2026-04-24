@@ -2,10 +2,33 @@
 //!
 //! Demonstrates the reactive state management system with live interactive examples.
 
-use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
+use crate::components::demo_page::{render_demo_page};
 use crate::reactive::{button_counter, interactive_input, switch};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
+
+fn render_switches() -> VNode {
+    VNode::Fragment(vec![
+        switch(false, Some("Notifications")).1,
+        switch(true, Some("Dark Mode")).1,
+        switch(false, Some("Auto-save")).1,
+    ])
+}
+
+fn render_counters() -> VNode {
+    VNode::Fragment(vec![
+        button_counter(0, Some("Counter A")).1,
+        button_counter(5, Some("Counter B")).1,
+        button_counter(10, Some("Counter C")).1,
+    ])
+}
+
+fn render_inputs() -> VNode {
+    VNode::Fragment(vec![
+        interactive_input("", "Type something...", Some("Name")).1,
+        interactive_input("Hello, World!", "Enter text...", Some("Greeting")).1,
+    ])
+}
 
 /// Render the interactive examples page.
 pub fn render() -> VNode {
@@ -17,25 +40,7 @@ pub fn render() -> VNode {
                     "A boolean toggle control that maintains its state across page navigation. "
                     "Try toggling the switches below and then navigate away and back - the state will be preserved!"
                 }
-
-                { render_demo_row(rsx! {
-                    // Switch 1 - unchecked by default
-                    {
-                        let (_id, vnode) = switch(false, Some("Notifications"));
-                        vnode
-                    }
-                    // Switch 2 - checked by default
-                    {
-                        let (_id, vnode) = switch(true, Some("Dark Mode"));
-                        vnode
-                    }
-                    // Switch 3 - unchecked by default
-                    {
-                        let (_id, vnode) = switch(false, Some("Auto-save"));
-                        vnode
-                    }
-                }) }
-
+                {render_switches()}
                 div { class: "code-example",
                     pre { class: "hi-code-block",
                         code { class: "hi-code-content",
@@ -51,25 +56,7 @@ pub fn render() -> VNode {
                     "A click counter that increments with each button press. "
                     "Each counter maintains its own independent state."
                 }
-
-                { render_demo_row(rsx! {
-                    // Counter 1 - starts at 0
-                    {
-                        let (_id, vnode) = button_counter(0, Some("Counter A"));
-                        vnode
-                    }
-                    // Counter 2 - starts at 5
-                    {
-                        let (_id, vnode) = button_counter(5, Some("Counter B"));
-                        vnode
-                    }
-                    // Counter 3 - starts at 10
-                    {
-                        let (_id, vnode) = button_counter(10, Some("Counter C"));
-                        vnode
-                    }
-                }) }
-
+                {render_counters()}
                 div { class: "code-example",
                     pre { class: "hi-code-block",
                         code { class: "hi-code-content",
@@ -85,24 +72,7 @@ pub fn render() -> VNode {
                     "A text input with live value display. The input value is stored and "
                     "restored when you return to this page."
                 }
-
-                { render_demo_row(rsx! {
-                    // Input 1 - empty by default
-                    {
-                        let (_id, vnode) = interactive_input("", "Type something...", Some("Name"));
-                        vnode
-                    }
-                    // Input 2 - with initial value
-                    {
-                        let (_id, vnode) = interactive_input(
-                            "Hello, World!",
-                            "Enter text...",
-                            Some("Greeting"),
-                        );
-                        vnode
-                    }
-                }) }
-
+                {render_inputs()}
                 div { class: "code-example",
                     pre { class: "hi-code-block",
                         code { class: "hi-code-content",

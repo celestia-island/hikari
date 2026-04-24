@@ -51,9 +51,7 @@ pub fn Typography(props: TypographyProps) -> Element {
 
     let tag = match props.variant {
         TextVariant::H1 | TextVariant::H2 | TextVariant::H3
-        | TextVariant::H4 | TextVariant::H5 | TextVariant::H6 => {
-            "div"
-        }
+        | TextVariant::H4 | TextVariant::H5 | TextVariant::H6 => "div",
         TextVariant::Code => "code",
         _ => "span",
     };
@@ -64,27 +62,25 @@ pub fn Typography(props: TypographyProps) -> Element {
         classes.push_str(&props.class);
     }
 
-    rsx! {
-        {match tag {
-            "code" => VNode::Element(
-                VElement::new("code")
-                    .class(classes)
-                    .style(props.style)
-                    .child(props.children),
-            ),
-            "div" => VNode::Element(
-                VElement::new("div")
-                    .class(classes)
-                    .style(props.style)
-                    .child(props.children),
-            ),
-            _ => VNode::Element(
-                VElement::new("span")
-                    .class(classes)
-                    .style(props.style)
-                    .child(props.children),
-            ),
-        }}
+    match tag {
+        "code" => VNode::Element(
+            VElement::new("code")
+                .class(classes)
+                .style(props.style)
+                .child(props.children),
+        ),
+        "div" => VNode::Element(
+            VElement::new("div")
+                .class(classes)
+                .style(props.style)
+                .child(props.children),
+        ),
+        _ => VNode::Element(
+            VElement::new("span")
+                .class(classes)
+                .style(props.style)
+                .child(props.children),
+        ),
     }
 }
 

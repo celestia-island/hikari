@@ -16,7 +16,8 @@ pub fn render_animation_demo() -> VNode {
 
 pub fn render() -> VNode {
     render_demo_page("page-animations", "Animation Examples", "Interactive demonstrations of Hikari's animation system",
-        rsx! {
+        VNode::Fragment(vec![
+            rsx! {
             // Hover animations section
             div { class: "page-section",
                 h2 { "Hover Animations" }
@@ -408,10 +409,11 @@ let button = Button::new()
                     "Transition Element"
                 }
             }
+            },
 
             // Preset demo toggle script
-            { preset_demo_js() }
-        }
+            preset_demo_js(),
+        ])
     )
 }
 

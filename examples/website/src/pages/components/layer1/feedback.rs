@@ -31,8 +31,8 @@ pub fn render() -> VNode {
         "page-component-feedback",
         "Feedback",
         "Alerts, progress bars, and spinners for communicating system status to users.",
-        rsx! {
-            {render_demo_block("Alert Variants", rsx! {
+        VNode::Fragment(vec![
+            render_demo_block("Alert Variants", rsx! {
                 div { style: "display:flex;flex-direction:column;gap:12px;",
                     div { class: "hi-alert hi-alert--info",
                         span { style: "display:flex;align-items:center;gap:8px;",
@@ -55,8 +55,8 @@ pub fn render() -> VNode {
                             "Warning: Your session will expire in 5 minutes." }
                         }
                 }
-            })}
-            {render_demo_block("Alert with Title", rsx! {
+            }),
+            render_demo_block("Alert with Title", rsx! {
                 div { style: "display:flex;flex-direction:column;gap:12px;",
                     div { class: "hi-alert hi-alert--success",
                         div { style: "font-weight:600;margin-bottom:4px;", "Update Available" }
@@ -67,8 +67,8 @@ pub fn render() -> VNode {
                         div { "Unable to reach the server. Check your network settings." }
                     }
                 }
-            })}
-            {render_demo_block("Progress Bars", rsx! {
+            }),
+            render_demo_block("Progress Bars", rsx! {
                 div { style: "display:flex;flex-direction:column;gap:16px;",
                     div {
                         div { style: "margin-bottom:4px;font-size:13px;color:var(--hi-color-text-secondary);", "Uploading... 60%" }
@@ -89,18 +89,20 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            })}
-            {render_demo_block("Spinners", rsx! {
-                {render_demo_row(rsx! {
-                    div { class: "hi-spin" }
-                    div { class: "hi-spin hi-spin--lg" }
-                    div { style: "display:flex;align-items:center;gap:8px;",
+            }),
+            render_demo_block("Spinners",
+                VNode::Fragment(vec![
+                    render_demo_row(rsx! {
                         div { class: "hi-spin" }
-                        span { style: "font-size:14px;color:var(--hi-color-text-secondary);", "Loading data..." }
-                    }
-                })}
-            })}
-            {render_demo_block("Closable Alerts", rsx! {
+                        div { class: "hi-spin hi-spin--lg" }
+                        div { style: "display:flex;align-items:center;gap:8px;",
+                            div { class: "hi-spin" }
+                            span { style: "font-size:14px;color:var(--hi-color-text-secondary);", "Loading data..." }
+                        }
+                    })
+                ])
+            ),
+            render_demo_block("Closable Alerts", rsx! {
                 div { style: "display:flex;flex-direction:column;gap:12px;",
                     div { class: "hi-alert hi-alert--info",
                         span { style: "display:flex;align-items:center;gap:8px;flex:1;",
@@ -115,12 +117,12 @@ pub fn render() -> VNode {
                         span { style: "cursor:pointer;font-size:16px;opacity:0.6;padding:0 4px;", "\u{00D7}" }
                     }
                     div { class: "hi-alert hi-alert--success",
-                        span { style: "flex:1;", "✓  Changes saved successfully." }
-                        span { style: "cursor:pointer;font-size:16px;opacity:0.6;padding:0 4px;", "×" }
+                        span { style: "flex:1;", "\u{2713}  Changes saved successfully." }
+                        span { style: "cursor:pointer;font-size:16px;opacity:0.6;padding:0 4px;", "\u{00d7}" }
                     }
                 }
-            })}
-            {render_demo_block("Indeterminate & Spinner Sizes", rsx! {
+            }),
+            render_demo_block("Indeterminate & Spinner Sizes", rsx! {
                 div { style: "display:flex;flex-direction:column;gap:20px;",
                     div {
                         div { style: "margin-bottom:6px;font-size:13px;color:var(--hi-color-text-secondary);", "Loading resources..." }
@@ -143,16 +145,16 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            })}
-            {render_demo_block("API", rsx! {
-                {render_api_table(&[
+            }),
+            render_demo_block("API",
+                render_api_table(&[
                     ("Alert.variant", "info | success | danger | warning", "-", "Alert style variant"),
                     ("Alert.title", "string", "-", "Optional alert heading"),
                     ("Progress.percent", "number", "-", "Completion percentage (0-100)"),
                     ("Progress.variant", "default | success | danger", "-", "Progress bar color"),
                     ("Spinner.size", "default | large", "-", "Spinner diameter"),
-                ])}
-            })}
-        },
+                ])
+            ),
+        ]),
     )
 }

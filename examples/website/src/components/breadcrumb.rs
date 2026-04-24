@@ -1,4 +1,3 @@
-use tairitsu_macros::rsx;
 use tairitsu_vdom::{VElement, VNode, VText};
 
 fn txt(s: &str) -> VNode {

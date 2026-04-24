@@ -4,7 +4,7 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-collapsible", "Collapsible", "Accordion and collapse panels with expand/collapse animation.", rsx! {
+    render_demo_page("page-component-collapsible", "Collapsible", "Accordion and collapse panels with expand/collapse animation.", VNode::Fragment(vec![
         render_demo_block("Basic Accordion", rsx! {
             div { class: "hi-collapse",
                 div { class: "hi-collapse__item hi-collapse__item--active",
@@ -35,7 +35,7 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        })
+        }),
         render_demo_block("Settings Panels", rsx! {
             div { class: "hi-collapse",
                 div { class: "hi-collapse__item hi-collapse__item--active",
@@ -75,7 +75,7 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        })
+        }),
         render_demo_block("Nested Panels", rsx! {
             div { class: "hi-collapse",
                 div { class: "hi-collapse__item hi-collapse__item--active",
@@ -107,15 +107,17 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        })
+        }),
         render_demo_block("API", rsx! {
-            {render_api_table(&[
-                ("accordion", "bool", "false", "Only allow one panel open"),
-                ("activeKey", "string | string[]", "-", "Active panel key(s)"),
-                ("bordered", "bool", "true", "Show border around panels"),
-                ("expandIcon", "VNode", "▶", "Custom expand/collapse icon"),
-                ("collapsible", "header | icon | disabled", "-", "Trigger area for collapse"),
-            ])}
-        })
-    })
+            div {
+                {render_api_table(&[
+                    ("accordion", "bool", "false", "Only allow one panel open"),
+                    ("activeKey", "string | string[]", "-", "Active panel key(s)"),
+                    ("bordered", "bool", "true", "Show border around panels"),
+                    ("expandIcon", "VNode", "▶", "Custom expand/collapse icon"),
+                    ("collapsible", "header | icon | disabled", "-", "Trigger area for collapse"),
+                ])}
+            }
+        }),
+    ]))
 }

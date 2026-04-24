@@ -31,8 +31,8 @@ pub fn render() -> VNode {
         "page-component-tag",
         "Tag",
         "Compact labels for status indication, categorisation, and metadata display.",
-        rsx! {
-            {render_demo_block("Tag Variants",
+        VNode::Fragment(vec![
+            render_demo_block("Tag Variants",
                 render_demo_row(
                     rsx! {
                         span { class: "hi-tag hi-tag--primary", "Primary" }
@@ -42,26 +42,26 @@ pub fn render() -> VNode {
                         span { class: "hi-tag", "Default" }
                     }
                 )
-            )}
-            {render_demo_block("Tag Styles",
-                rsx! {
+            ),
+            render_demo_block("Tag Styles",
+                VNode::Fragment(vec![
                     render_demo_row(
                         rsx! {
                             span { class: "hi-tag hi-tag--primary", "Solid" }
                             span { class: "hi-tag hi-tag--primary hi-tag--outline", "Outline" }
                             span { class: "hi-tag hi-tag--primary hi-tag--light", "Light" }
                         }
-                    )
+                    ),
                     render_demo_row(
                         rsx! {
                             span { class: "hi-tag hi-tag--success", "Solid" }
                             span { class: "hi-tag hi-tag--success hi-tag--outline", "Outline" }
                             span { class: "hi-tag hi-tag--success hi-tag--light", "Light" }
                         }
-                    )
-                }
-            )}
-            {render_demo_block("Closable Tags",
+                    ),
+                ])
+            ),
+            render_demo_block("Closable Tags",
                 render_demo_row(
                     rsx! {
                         span { class: "hi-tag hi-tag--primary", "React" }
@@ -70,8 +70,8 @@ pub fn render() -> VNode {
                         span { class: "hi-tag hi-tag--success", "Rust" }
                     }
                 )
-            )}
-            {render_demo_block("Tag List",
+            ),
+            render_demo_block("Tag List",
                 rsx! {
                     div { style: "display:flex;flex-direction:column;gap:12px;",
                         div {
@@ -93,8 +93,8 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            )}
-            {render_demo_block("Icon Tags",
+            ),
+            render_demo_block("Icon Tags",
                 render_demo_row(
                     rsx! {
                         span { class: "hi-tag hi-tag--primary", style: "display:inline-flex;align-items:center;gap:4px;",
@@ -115,8 +115,8 @@ pub fn render() -> VNode {
                         }
                     }
                 )
-            )}
-            {render_demo_block("API",
+            ),
+            render_demo_block("API",
                 render_api_table(&[
                     ("variant", "primary | success | danger | warning | default", "default", "Tag color variant"),
                     ("style", "solid | outline | light", "solid", "Visual fill style"),
@@ -124,7 +124,7 @@ pub fn render() -> VNode {
                     ("icon", "string", "-", "Leading icon character"),
                     ("size", "small | default", "default", "Tag size"),
                 ])
-            )}
-        },
+            ),
+        ]),
     )
 }

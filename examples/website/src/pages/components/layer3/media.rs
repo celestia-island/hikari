@@ -4,7 +4,7 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-media", "Media", "Video and audio player components with custom controls and playback state display.", rsx!{
+    render_demo_page("page-component-media", "Media", "Video and audio player components with custom controls and playback state display.", VNode::Fragment(vec![
         render_demo_block("Video Player", rsx!{
             div { class: "hi-media-player",
                 div { class: "hi-media-player__poster",
@@ -32,7 +32,7 @@ pub fn render() -> VNode {
                     )}
                 }
             }
-        })
+        }),
         render_demo_block("Audio Player", rsx!{
             div { class: "hi-audio-player",
                 div { class: "hi-audio-player__info",
@@ -68,7 +68,7 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        })
+        }),
         render_demo_block("Mini Player", rsx!{
             div { style: "display:flex;align-items:center;gap:14px;padding:10px 16px;background:linear-gradient(135deg,#1e1e28 0%,#2d2d3a 100%);border-radius:10px;border:1px solid var(--hi-border,#e5e7eb);max-width:480px;",
                 div { style: "width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#F5A9A9,#e8a5a5);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;", "🎶" }
@@ -84,16 +84,18 @@ pub fn render() -> VNode {
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                 )}
             }
-        })
+        }),
         render_demo_block("API", rsx!{
-            render_api_table(&[
+            div {
+                {render_api_table(&[
                 ("src", "string", "-", "Media source URL"),
                 ("poster", "string", "-", "Video poster image"),
                 ("autoplay", "bool", "false", "Auto-play on mount"),
                 ("controls", "bool", "true", "Show playback controls"),
                 ("loop", "bool", "false", "Loop playback"),
                 ("volume", "number", "1.0", "Initial volume (0.0 - 1.0)"),
-            ])
-        })
-    })
+            ])}
+            }
+        }),
+    ]))
 }

@@ -3,7 +3,7 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-visualization", "Visualization", "Charts, graphs, and data visualization primitives for representing data visually.", rsx!{
+    render_demo_page("page-component-visualization", "Visualization", "Charts, graphs, and data visualization primitives for representing data visually.", VNode::Fragment(vec![
         render_demo_block("Bar Chart", rsx!{
             div { class: "hi-chart",
                 div { class: "hi-chart__title", "Weekly Activity" }
@@ -31,9 +31,9 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        })
+        }),
         render_demo_block("Progress Ring", rsx!{
-            render_demo_row(rsx!{
+            div { style: "display:flex;gap:24px;flex-wrap:wrap;",
                 div { class: "hi-progress-ring",
                     svg { width: "120", height: "120", viewBox: "0 0 120 120",
                         circle { cx: "60", cy: "60", r: "50", fill: "none", stroke: "var(--hi-color-surface)", stroke_width: "8" }
@@ -64,8 +64,8 @@ pub fn render() -> VNode {
                     }
                     div { class: "hi-progress-ring__text", "30%" }
                 }
-            })
-        })
+            }
+        }),
         render_demo_block("Horizontal Bar Chart", rsx!{
             div { class: "hi-chart hi-chart--horizontal",
                 div { class: "hi-chart__title", "Language Popularity" }
@@ -88,16 +88,18 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        })
+        }),
         render_demo_block("API", rsx!{
-            render_api_table(&[
+            div {
+                {render_api_table(&[
                 ("BarChart", "data", "number[]", "Array of values for each bar"),
                 ("BarChart", "labels", "string[]", "Labels for each bar"),
                 ("BarChart", "direction", "vertical | horizontal", "Bar orientation"),
                 ("ProgressRing", "percent", "number", "Completion percentage (0-100)"),
                 ("ProgressRing", "size", "number", "Ring diameter in pixels"),
                 ("ProgressRing", "strokeWidth", "number", "Ring thickness"),
-            ])
-        })
-    })
+            ])}
+            }
+        }),
+    ]))
 }

@@ -4,24 +4,7 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    let btn_signin = glow_wrap(
-        rsx! { button { class: "hi-button hi-button-primary", "Sign In" } },
-        GlowConfig {
-            intensity: GlowIntensity::Soft,
-            color: GlowColor::Primary,
-            ..Default::default()
-        },
-    );
-    let btn_submit = glow_wrap(
-        rsx! { button { class: "hi-button hi-button-primary", "Submit" } },
-        GlowConfig {
-            intensity: GlowIntensity::Soft,
-            color: GlowColor::Primary,
-            ..Default::default()
-        },
-    );
-
-    render_demo_page("page-component-form-composed", "Form (Composed)", "Form builder with validation, layout options, and submission handling.", rsx! {
+    render_demo_page("page-component-form-composed", "Form (Composed)", "Form builder with validation, layout options, and submission handling.", VNode::Fragment(vec![
         render_demo_block("Login Form", rsx! {
             form { class: "hi-form",
                 div { class: "hi-form-item",
@@ -45,9 +28,12 @@ pub fn render() -> VNode {
                     }
                     span { "Remember me" }
                 }
-                {btn_signin}
+                div { {glow_wrap(
+                    rsx! { button { class: "hi-button hi-button-primary", "Sign In" } },
+                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
+                )} }
             }
-        })
+        }),
         render_demo_block("Registration Form with Validation", rsx! {
             form { class: "hi-form",
                 div { class: "hi-form-item",
@@ -80,9 +66,12 @@ pub fn render() -> VNode {
                         GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                     )}
                 }
-                {btn_submit}
+                div { {glow_wrap(
+                    rsx! { button { class: "hi-button hi-button-primary", "Submit" } },
+                    GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
+                )} }
             }
-        })
+        }),
         render_demo_block("Inline Form", rsx! {
             form { class: "hi-form hi-form--inline",
                 {glow_wrap(
@@ -102,14 +91,16 @@ pub fn render() -> VNode {
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                 )}
             }
-        })
+        }),
         render_demo_block("API", rsx! {
-            {render_api_table(&[
-                ("layout", "vertical | horizontal | inline", "vertical", "Form layout mode"),
-                ("validation", "object", "-", "Validation rules per field"),
-                ("disabled", "bool", "false", "Disable entire form"),
-                ("requiredMark", "bool", "true", "Show required asterisk"),
-            ])}
-        })
-    })
+            div {
+                {render_api_table(&[
+                    ("layout", "vertical | horizontal | inline", "vertical", "Form layout mode"),
+                    ("validation", "object", "-", "Validation rules per field"),
+                    ("disabled", "bool", "false", "Disable entire form"),
+                    ("requiredMark", "bool", "true", "Show required asterisk"),
+                ])}
+            }
+        }),
+    ]))
 }

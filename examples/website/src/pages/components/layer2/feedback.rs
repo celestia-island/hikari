@@ -3,7 +3,7 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-feedback-composed", "Feedback (Composed)", "Toast notifications, progress indicators, and skeleton loading for composed feedback patterns.", rsx! {
+    render_demo_page("page-component-feedback-composed", "Feedback (Composed)", "Toast notifications, progress indicators, and skeleton loading for composed feedback patterns.", VNode::Fragment(vec![
         render_demo_block("Toast Notifications", rsx! {
             div { style: "display:flex;flex-direction:column;gap:12px;",
                 div { class: "hi-toast hi-toast--info",
@@ -39,7 +39,7 @@ pub fn render() -> VNode {
                     button { class: "hi-toast__close", "×" }
                 }
             }
-        })
+        }),
         render_demo_block("Progress Indicators", rsx! {
             div { style: "display:flex;flex-direction:column;gap:16px;",
                 div {
@@ -70,7 +70,7 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        })
+        }),
         render_demo_block("Skeleton Loading", rsx! {
             div { style: "display:flex;flex-direction:column;gap:20px;",
                 div { class: "hi-skeleton-card",
@@ -92,17 +92,19 @@ pub fn render() -> VNode {
                     div { class: "hi-skeleton", style: "width:40%;height:12px;margin-top:8px;" }
                 }
             }
-        })
+        }),
         render_demo_block("API", rsx! {
-            {render_api_table(&[
-                ("Toast", "variant", "info | success | danger | warning", "Toast style variant"),
-                ("Toast", "duration", "number", "Auto-dismiss time in ms"),
-                ("Toast", "closable", "bool", "Show close button"),
-                ("Progress", "label", "string", "Progress label text"),
-                ("Progress", "showInfo", "bool", "Show percentage text"),
-                ("Skeleton", "loading", "bool", "Whether to show skeleton"),
-                ("Skeleton", "rows", "number", "Number of skeleton rows"),
-            ])}
-        })
-    })
+            div {
+                {render_api_table(&[
+                    ("Toast", "variant", "info | success | danger | warning", "Toast style variant"),
+                    ("Toast", "duration", "number", "Auto-dismiss time in ms"),
+                    ("Toast", "closable", "bool", "Show close button"),
+                    ("Progress", "label", "string", "Progress label text"),
+                    ("Progress", "showInfo", "bool", "Show percentage text"),
+                    ("Skeleton", "loading", "bool", "Whether to show skeleton"),
+                    ("Skeleton", "rows", "number", "Number of skeleton rows"),
+                ])}
+            }
+        }),
+    ]))
 }

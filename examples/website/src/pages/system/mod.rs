@@ -2,7 +2,7 @@
 
 pub mod palette;
 
-use crate::components::demo_page::{render_demo_page, render_demo_row};
+use crate::components::demo_page::{render_demo_page, render_demo_block, render_demo_row};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
@@ -43,11 +43,11 @@ fn render_css() -> VNode {
         "page-system-css",
         "CSS Utilities",
         "Type-safe utility class system. All classes are prefixed with hi- to prevent conflicts.",
-        rsx! {
-            {render_demo_block("Layout",
+        VNode::Fragment(vec![
+            render_demo_block("Layout",
                 rsx! {
                     p { "Flexbox and grid utilities:" }
-                    render_demo_row(
+                    div { {render_demo_row(
                         rsx! {
                             code { "hi-flex" }
                             code { "hi-flex-row" }
@@ -55,23 +55,23 @@ fn render_css() -> VNode {
                             code { "hi-grid" }
                             code { "hi-gap-4" }
                         }
-                    )
+                    )} }
                 }
-            )}
-            {render_demo_block("Spacing",
+            ),
+            render_demo_block("Spacing",
                 rsx! {
                     p { "Margin and padding scale (0\u{2013}16, with semantic names):" }
-                    render_demo_row(
+                    div { {render_demo_row(
                         rsx! {
                             code { "hi-m-4" }
                             code { "hi-p-6" }
                             code { "hi-mt-2" }
                             code { "hi-pb-8" }
                         }
-                    )
+                    )} }
                 }
-            )}
-            {render_demo_block("Typography",
+            ),
+            render_demo_block("Typography",
                 render_demo_row(
                     rsx! {
                         code { "hi-text-sm" }
@@ -82,21 +82,21 @@ fn render_css() -> VNode {
                         code { "hi-font-bold" }
                     }
                 )
-            )}
-            {render_demo_block("Colors",
+            ),
+            render_demo_block("Colors",
                 rsx! {
                     p { "Text and background color utilities follow the palette color names." }
-                    render_demo_row(
+                    div { {render_demo_row(
                         rsx! {
                             code { "hi-text-primary" }
                             code { "hi-text-secondary" }
                             code { "hi-bg-surface" }
                             code { "hi-bg-background" }
                         }
-                    )
+                    )} }
                 }
-            )}
-        },
+            ),
+        ]),
     )
 }
 
@@ -105,11 +105,11 @@ fn render_icons() -> VNode {
         "page-system-icons",
         "Icons",
         "Hikari ships with Material Design Icons (MDI) and a custom Hikari icon set.",
-        rsx! {
-            {render_demo_block("Usage",
+        VNode::Fragment(vec![
+            render_demo_block("Usage",
                 rsx! {
                     p { "Icons are referenced by name. The icon system supports solid, outline, and duo-tone variants." }
-                    render_demo_row(
+                    div { {render_demo_row(
                         rsx! {
                             span { class: "hi-icon mdi mdi-home" }
                             span { class: "hi-icon mdi mdi-account" }
@@ -118,10 +118,10 @@ fn render_icons() -> VNode {
                             span { class: "hi-icon mdi mdi-heart" }
                             span { class: "hi-icon mdi mdi-star" }
                         }
-                    )
+                    )} }
                 }
-            )}
-            {render_demo_block("Sizes",
+            ),
+            render_demo_block("Sizes",
                 render_demo_row(
                     rsx! {
                         span { class: "hi-icon hi-icon--sm mdi mdi-star" }
@@ -130,8 +130,8 @@ fn render_icons() -> VNode {
                         span { class: "hi-icon hi-icon--xl mdi mdi-star" }
                     }
                 )
-            )}
-        },
+            ),
+        ]),
     )
 }
 
@@ -140,8 +140,8 @@ fn render_animations() -> VNode {
         "page-system-animations",
         "Animations",
         "Spring-physics animation system with configurable presets.",
-        rsx! {
-            {render_demo_block("Keyframe Animations",
+        VNode::Fragment(vec![
+            render_demo_block("Keyframe Animations",
                 rsx! {
                     p { "CSS keyframe animations available as utility classes:" }
                     div { class: "demo-grid",
@@ -151,21 +151,21 @@ fn render_animations() -> VNode {
                         div { class: "demo-card hikari-anim--pulse", "pulse" }
                     }
                 }
-            )}
-            {render_demo_block("Spring Physics",
+            ),
+            render_demo_block("Spring Physics",
                 rsx! {
                     p { "The hikari-animation crate exposes a spring solver for programmatic animations. Parameters:" }
-                    render_demo_row(
+                    div { {render_demo_row(
                         rsx! {
                             code { "stiffness" }
                             code { "damping" }
                             code { "mass" }
                             code { "velocity" }
                         }
-                    )
+                    )} }
                 }
-            )}
-        },
+            ),
+        ]),
     )
 }
 
@@ -174,8 +174,8 @@ fn render_i18n() -> VNode {
         "page-system-i18n",
         "Internationalisation",
         "Hikari supports 8 locales with structured translation keys.",
-        rsx! {
-            {render_demo_block("Supported Locales",
+        VNode::Fragment(vec![
+            render_demo_block("Supported Locales",
                 rsx! {
                     table { class: "hi-table",
                         thead {
@@ -234,8 +234,8 @@ fn render_i18n() -> VNode {
                         }
                     }
                 }
-            )}
-        },
+            ),
+        ]),
     )
 }
 

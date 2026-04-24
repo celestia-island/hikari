@@ -3,7 +3,7 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-timeline", "Timeline", "Chronological event display for tracking progress, history, and activity logs.", rsx! {
+    render_demo_page("page-component-timeline", "Timeline", "Chronological event display for tracking progress, history, and activity logs.", VNode::Fragment(vec![
         render_demo_block("Basic Timeline", rsx! {
             div { class: "hi-timeline",
                 div { class: "hi-timeline__item",
@@ -31,7 +31,7 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        })
+        }),
         render_demo_block("With Status Colors", rsx! {
             div { class: "hi-timeline",
                 div { class: "hi-timeline__item",
@@ -63,7 +63,7 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        })
+        }),
         render_demo_block("With Avatars", rsx! {
             div { class: "hi-timeline",
                 div { class: "hi-timeline__item",
@@ -83,14 +83,16 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        })
+        }),
         render_demo_block("API", rsx! {
-            {render_api_table(&[
-                ("mode", "left | right | alternate", "left", "Timeline placement"),
-                ("pending", "bool", "false", "Show pending ghost dot"),
-                ("reverse", "bool", "false", "Reverse item order"),
-                ("color", "string", "-", "Custom dot color"),
-            ])}
-        })
-    })
+            div {
+                {render_api_table(&[
+                    ("mode", "left | right | alternate", "left", "Timeline placement"),
+                    ("pending", "bool", "false", "Show pending ghost dot"),
+                    ("reverse", "bool", "false", "Reverse item order"),
+                    ("color", "string", "-", "Custom dot color"),
+                ])}
+            }
+        }),
+    ]))
 }

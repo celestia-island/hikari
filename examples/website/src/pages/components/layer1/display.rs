@@ -31,9 +31,9 @@ pub fn render() -> VNode {
         "page-component-display",
         "Display",
         "Badges, dividers, status indicators, and text styling primitives for visual presentation.",
-        rsx! {
-            {render_demo_block("Badges",
-                rsx! {
+        VNode::Fragment(vec![
+            render_demo_block("Badges",
+                VNode::Fragment(vec![
                     render_demo_row(
                         rsx! {
                             span { class: "hi-badge", "New" }
@@ -42,17 +42,17 @@ pub fn render() -> VNode {
                             span { class: "hi-badge hi-badge--danger", "Offline" }
                             span { class: "hi-badge hi-badge--warning", "Pending" }
                         }
-                    )
+                    ),
                     render_demo_row(
                         rsx! {
                             span { class: "hi-badge hi-badge--dot", "" }
                             span { class: "hi-badge hi-badge--dot hi-badge--success", "" }
                             span { class: "hi-badge hi-badge--dot hi-badge--danger", "" }
                         }
-                    )
-                }
-            )}
-            {render_demo_block("Badge on Element",
+                    ),
+                ])
+            ),
+            render_demo_block("Badge on Element",
                 render_demo_row(
                     rsx! {
                         div { style: "position:relative;display:inline-block;",
@@ -69,8 +69,8 @@ pub fn render() -> VNode {
                         }
                     }
                 )
-            )}
-            {render_demo_block("Dividers",
+            ),
+            render_demo_block("Dividers",
                 rsx! {
                     div { style: "display:flex;flex-direction:column;gap:16px;",
                         div {
@@ -85,8 +85,8 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            )}
-            {render_demo_block("Status Indicators",
+            ),
+            render_demo_block("Status Indicators",
                 rsx! {
                     div { style: "display:flex;flex-direction:column;gap:12px;",
                         div { style: "display:flex;align-items:center;gap:8px;",
@@ -107,8 +107,8 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            )}
-            {render_demo_block("Text Styles",
+            ),
+            render_demo_block("Text Styles",
                 rsx! {
                     div { style: "display:flex;flex-direction:column;gap:12px;",
                         p { class: "hi-text hi-text--heading", "Heading Text" }
@@ -119,8 +119,8 @@ pub fn render() -> VNode {
                         p { class: "hi-text hi-text--code", "monospace_code_style()" }
                     }
                 }
-            )}
-            {render_demo_block("API",
+            ),
+            render_demo_block("API",
                 render_api_table(&[
                     ("Badge", "variant", "default | primary | success | danger | warning", "Badge color variant"),
                     ("Badge", "dot", "bool", "Show as a small dot indicator"),
@@ -128,7 +128,7 @@ pub fn render() -> VNode {
                     ("Status", "state", "online | offline | busy | away", "Status indicator color"),
                     ("Text", "variant", "heading | subheading | body | caption | muted | code", "Text style preset"),
                 ])
-            )}
-        },
+            ),
+        ]),
     )
 }

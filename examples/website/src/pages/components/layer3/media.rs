@@ -4,8 +4,8 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-media", "Media", "Video and audio player components with custom controls and playback state display.", VNode::Fragment(vec![
-        render_demo_block("Video Player", rsx!{
+    render_demo_page("page-component-media", "Media", "Video and audio player components with custom controls and playback state display.", rsx! [
+        {render_demo_block("Video Player", rsx!{
             div { class: "hi-media-player",
                 div { class: "hi-media-player__poster",
                     div { style: "width:72px;height:72px;border-radius:50%;background:rgba(245,169,169,0.25);display:flex;align-items:center;justify-content:center;",
@@ -32,8 +32,8 @@ pub fn render() -> VNode {
                     )}
                 }
             }
-        }),
-        render_demo_block("Audio Player", rsx!{
+        })}
+        {render_demo_block("Audio Player", rsx!{
             div { class: "hi-audio-player",
                 div { class: "hi-audio-player__info",
                     div { class: "hi-audio-player__art",
@@ -68,8 +68,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("Mini Player", rsx!{
+        })}
+        {render_demo_block("Mini Player", rsx!{
             div { style: "display:flex;align-items:center;gap:14px;padding:10px 16px;background:linear-gradient(135deg,#1e1e28 0%,#2d2d3a 100%);border-radius:10px;border:1px solid var(--hi-border,#e5e7eb);max-width:480px;",
                 div { style: "width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#F5A9A9,#e8a5a5);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;", "🎶" }
                 div { style: "flex:1;min-width:0;",
@@ -84,8 +84,8 @@ pub fn render() -> VNode {
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                 )}
             }
-        }),
-        render_demo_block("API", rsx!{
+        })}
+        {render_demo_block("API", rsx!{
             div {
                 {render_api_table(&[
                 ("src", "string", "-", "Media source URL"),
@@ -96,6 +96,6 @@ pub fn render() -> VNode {
                 ("volume", "number", "1.0", "Initial volume (0.0 - 1.0)"),
             ])}
             }
-        }),
-    ]))
+        })}
+    ])
 }

@@ -4,8 +4,8 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-editor", "Editor", "Rich text and markdown editor with formatting toolbar, preview, and code block support.", VNode::Fragment(vec![
-        render_demo_block("Markdown Editor", rsx!{
+    render_demo_page("page-component-editor", "Editor", "Rich text and markdown editor with formatting toolbar, preview, and code block support.", rsx! [
+        {render_demo_block("Markdown Editor", rsx!{
             div { class: "hi-editor",
                 div { class: "hi-editor__toolbar",
                     {glow_wrap(
@@ -57,8 +57,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("Split View Editor", rsx!{
+        })}
+        {render_demo_block("Split View Editor", rsx!{
             div { class: "hi-editor hi-editor--split",
                 div { class: "hi-editor__toolbar",
                     {glow_wrap(
@@ -88,8 +88,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("Read-Only Mode", rsx!{
+        })}
+        {render_demo_block("Read-Only Mode", rsx!{
             div { class: "hi-editor",
                 div { class: "hi-editor__toolbar",
                     {glow_wrap(
@@ -111,8 +111,8 @@ pub fn render() -> VNode {
                      }
                 }
             }
-        }),
-        render_demo_block("Compact Editor with Limits", rsx!{
+        })}
+        {render_demo_block("Compact Editor with Limits", rsx!{
             div { style: "max-width:500px;",
                 div { class: "hi-editor",
                     div { class: "hi-editor__toolbar",
@@ -140,8 +140,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("API", rsx!{
+        })}
+        {render_demo_block("API", rsx!{
             div {
                 {render_api_table(&[
                 ("mode", "markdown | rich-text | code", "markdown", "Editor mode"),
@@ -152,6 +152,6 @@ pub fn render() -> VNode {
                 ("height", "string | number", "300px", "Editor height"),
             ])}
             }
-        }),
-    ]))
+        })}
+    ])
 }

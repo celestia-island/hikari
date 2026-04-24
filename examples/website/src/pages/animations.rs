@@ -16,8 +16,8 @@ pub fn render_animation_demo() -> VNode {
 
 pub fn render() -> VNode {
     render_demo_page("page-animations", "Animation Examples", "Interactive demonstrations of Hikari's animation system",
-        VNode::Fragment(vec![
-            rsx! {
+        rsx! {
+            {rsx! {
             // Hover animations section
             div { class: "page-section",
                 h2 { "Hover Animations" }
@@ -253,7 +253,7 @@ let button = Button::new()
                 }
             }
 
-            // ── Interactive Preset Demos ─────────────────────────────────────
+            // ── Interactive Preset Demos ─────────────────────────────
 
             div { class: "page-section preset-demo-section",
                 h2 { "Preset Demos" }
@@ -409,11 +409,11 @@ let button = Button::new()
                     "Transition Element"
                 }
             }
-            },
+            }}
 
             // Preset demo toggle script
-            preset_demo_js(),
-        ])
+            {preset_demo_js()}
+        }
     )
 }
 
@@ -437,12 +437,10 @@ const PRESET_DEMO_JS: &str = r#"
             var target = document.getElementById(activeAnimations[group].targetId);
             if (target) {
                 target.classList.remove(activeAnimations[group].animClass);
-                // Reset inline styles that might have been set
                 target.style.animationPlayState = '';
             }
             delete activeAnimations[group];
         }
-        // Update all buttons in the group
         var btns = document.querySelectorAll('[data-anim-group="' + group + '"]');
         btns.forEach(function(btn) {
             btn.classList.remove('is-active');
@@ -461,20 +459,15 @@ const PRESET_DEMO_JS: &str = r#"
         var label = btn.getAttribute('data-anim-label') || btn.textContent;
 
         if (activeAnimations[group] && activeAnimations[group].animClass === animClass) {
-            // Stop this animation
             clearGroupAnimations(group);
             return;
         }
 
-        // Clear any existing animation in this group
         clearGroupAnimations(group);
 
-        // Start the new animation
         var target = document.getElementById(targetId);
         if (target) {
-            // For transition effects, remove and re-add class to replay
             target.classList.remove(animClass);
-            // Force reflow to restart animation
             void target.offsetWidth;
             target.classList.add(animClass);
         }
@@ -487,7 +480,6 @@ const PRESET_DEMO_JS: &str = r#"
         btn.classList.add('is-active');
     }
 
-    // Store original labels
     function storeOriginalLabels() {
         var btns = document.querySelectorAll('[data-anim-group]');
         btns.forEach(function(btn) {

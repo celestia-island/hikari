@@ -58,14 +58,14 @@ pub fn render() -> VNode {
         "page-component-search",
         "Search",
         "Search input with icon, clear button, and size variants for instant filtering.",
-        VNode::Fragment(vec![
-            render_demo_block("Basic Search",
+        rsx! {
+            {render_demo_block("Basic Search",
                 render_demo_row(make_search("Search...", "", false, false, ""))
-            ),
-            render_demo_block("With Icon",
+            )}
+            {render_demo_block("With Icon",
                 render_demo_row(make_search("Search components...", "", true, false, ""))
-            ),
-            render_demo_block("Search Sizes",
+            )}
+            {render_demo_block("Search Sizes",
                 rsx! {
                     div { style: "display:flex;flex-direction:column;gap:12px;",
                         {make_search("Quick search", "hi-search--sm", true, false, "")}
@@ -73,11 +73,11 @@ pub fn render() -> VNode {
                         {make_search("Search the documentation...", "hi-search--lg", true, false, "")}
                     }
                 }
-            ),
-            render_demo_block("Clearable Search",
+            )}
+            {render_demo_block("Clearable Search",
                 render_demo_row(make_search("Type to search...", "", true, true, ""))
-            ),
-            render_demo_block("Disabled Search",
+            )}
+            {render_demo_block("Disabled Search",
                 render_demo_row(
                     rsx! {
                         div { class: "hi-search",
@@ -86,8 +86,8 @@ pub fn render() -> VNode {
                         }
                     }
                 )
-            ),
-            render_demo_block("API",
+            )}
+            {render_demo_block("API",
                 render_api_table(&[
                     ("placeholder", "string", "Search...", "Input placeholder text"),
                     ("value", "string", "", "Current search query"),
@@ -95,7 +95,7 @@ pub fn render() -> VNode {
                     ("clearable", "bool", "false", "Show clear button"),
                     ("size", "small | default | large", "default", "Input size preset"),
                 ])
-            ),
-        ]),
+            )}
+        }
     )
 }

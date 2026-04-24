@@ -3,8 +3,8 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-timeline", "Timeline", "Chronological event display for tracking progress, history, and activity logs.", VNode::Fragment(vec![
-        render_demo_block("Basic Timeline", rsx! {
+    render_demo_page("page-component-timeline", "Timeline", "Chronological event display for tracking progress, history, and activity logs.", rsx! [
+        {render_demo_block("Basic Timeline", rsx! {
             div { class: "hi-timeline",
                 div { class: "hi-timeline__item",
                     div { class: "hi-timeline__dot" }
@@ -31,8 +31,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("With Status Colors", rsx! {
+        })}
+        {render_demo_block("With Status Colors", rsx! {
             div { class: "hi-timeline",
                 div { class: "hi-timeline__item",
                     div { class: "hi-timeline__dot hi-timeline__dot--success" }
@@ -63,8 +63,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("With Avatars", rsx! {
+        })}
+        {render_demo_block("With Avatars", rsx! {
             div { class: "hi-timeline",
                 div { class: "hi-timeline__item",
                     div { class: "hi-avatar hi-avatar--primary hi-avatar--sm", "A" }
@@ -83,8 +83,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("API", rsx! {
+        })}
+        {render_demo_block("API", rsx! {
             div {
                 {render_api_table(&[
                     ("mode", "left | right | alternate", "left", "Timeline placement"),
@@ -93,6 +93,6 @@ pub fn render() -> VNode {
                     ("color", "string", "-", "Custom dot color"),
                 ])}
             }
-        }),
-    ]))
+        })}
+    ])
 }

@@ -3,8 +3,8 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-visualization", "Visualization", "Charts, graphs, and data visualization primitives for representing data visually.", VNode::Fragment(vec![
-        render_demo_block("Bar Chart", rsx!{
+    render_demo_page("page-component-visualization", "Visualization", "Charts, graphs, and data visualization primitives for representing data visually.", rsx! [
+        {render_demo_block("Bar Chart", rsx!{
             div { class: "hi-chart",
                 div { class: "hi-chart__title", "Weekly Activity" }
                 div { class: "hi-chart__bars",
@@ -31,8 +31,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("Progress Ring", rsx!{
+        })}
+        {render_demo_block("Progress Ring", rsx!{
             div { style: "display:flex;gap:24px;flex-wrap:wrap;",
                 div { class: "hi-progress-ring",
                     svg { width: "120", height: "120", viewBox: "0 0 120 120",
@@ -65,8 +65,8 @@ pub fn render() -> VNode {
                     div { class: "hi-progress-ring__text", "30%" }
                 }
             }
-        }),
-        render_demo_block("Horizontal Bar Chart", rsx!{
+        })}
+        {render_demo_block("Horizontal Bar Chart", rsx!{
             div { class: "hi-chart hi-chart--horizontal",
                 div { class: "hi-chart__title", "Language Popularity" }
                 div { style: "display:flex;flex-direction:column;gap:12px;",
@@ -88,8 +88,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("API", rsx!{
+        })}
+        {render_demo_block("API", rsx!{
             div {
                 {render_api_table(&[
                 ("BarChart", "data", "number[]", "Array of values for each bar"),
@@ -100,6 +100,6 @@ pub fn render() -> VNode {
                 ("ProgressRing", "strokeWidth", "number", "Ring thickness"),
             ])}
             }
-        }),
-    ]))
+        })}
+    ])
 }

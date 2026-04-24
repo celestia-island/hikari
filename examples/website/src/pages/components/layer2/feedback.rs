@@ -3,8 +3,8 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-feedback-composed", "Feedback (Composed)", "Toast notifications, progress indicators, and skeleton loading for composed feedback patterns.", VNode::Fragment(vec![
-        render_demo_block("Toast Notifications", rsx! {
+    render_demo_page("page-component-feedback-composed", "Feedback (Composed)", "Toast notifications, progress indicators, and skeleton loading for composed feedback patterns.", rsx! [
+        {render_demo_block("Toast Notifications", rsx! {
             div { style: "display:flex;flex-direction:column;gap:12px;",
                 div { class: "hi-toast hi-toast--info",
                     div { class: "hi-toast__icon", "ℹ" }
@@ -39,8 +39,8 @@ pub fn render() -> VNode {
                     button { class: "hi-toast__close", "×" }
                 }
             }
-        }),
-        render_demo_block("Progress Indicators", rsx! {
+        })}
+        {render_demo_block("Progress Indicators", rsx! {
             div { style: "display:flex;flex-direction:column;gap:16px;",
                 div {
                     div { style: "display:flex;justify-content:space-between;margin-bottom:4px;",
@@ -70,8 +70,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("Skeleton Loading", rsx! {
+        })}
+        {render_demo_block("Skeleton Loading", rsx! {
             div { style: "display:flex;flex-direction:column;gap:20px;",
                 div { class: "hi-skeleton-card",
                     div { style: "display:flex;align-items:center;gap:12px;margin-bottom:16px;",
@@ -92,8 +92,8 @@ pub fn render() -> VNode {
                     div { class: "hi-skeleton", style: "width:40%;height:12px;margin-top:8px;" }
                 }
             }
-        }),
-        render_demo_block("API", rsx! {
+        })}
+        {render_demo_block("API", rsx! {
             div {
                 {render_api_table(&[
                     ("Toast", "variant", "info | success | danger | warning", "Toast style variant"),
@@ -105,6 +105,6 @@ pub fn render() -> VNode {
                     ("Skeleton", "rows", "number", "Number of skeleton rows"),
                 ])}
             }
-        }),
-    ]))
+        })}
+    ])
 }

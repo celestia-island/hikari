@@ -43,8 +43,8 @@ fn make_qr_svg(size: u32) -> VNode {
 }
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-qrcode", "QRCode", "Static QR code generation placeholder for encoding URLs, text, or other data.", VNode::Fragment(vec![
-        render_demo_block("Basic QR Code", rsx! {
+    render_demo_page("page-component-qrcode", "QRCode", "Static QR code generation placeholder for encoding URLs, text, or other data.", rsx! [
+        {render_demo_block("Basic QR Code", rsx! {
             div {
                 {render_demo_row(rsx! {
                     div { class: "hi-qrcode",
@@ -52,8 +52,8 @@ pub fn render() -> VNode {
                     }
                 })}
             }
-        }),
-        render_demo_block("QR Code Sizes", rsx! {
+        })}
+        {render_demo_block("QR Code Sizes", rsx! {
             div {
                 {render_demo_row(rsx! {
                     div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
@@ -76,8 +76,8 @@ pub fn render() -> VNode {
                     }
                 })}
             }
-        }),
-        render_demo_block("QR Code with Label", rsx! {
+        })}
+        {render_demo_block("QR Code with Label", rsx! {
             div {
                 {render_demo_row(rsx! {
                     div { style: "display:flex;flex-direction:column;align-items:center;gap:8px;",
@@ -88,8 +88,8 @@ pub fn render() -> VNode {
                     }
                 })}
             }
-        }),
-        render_demo_block("QR Code with Download", rsx! {
+        })}
+        {render_demo_block("QR Code with Download", rsx! {
             div {
                 {render_demo_row(rsx! {
                     div { style: "display:flex;flex-direction:column;align-items:center;gap:8px;",
@@ -100,8 +100,8 @@ pub fn render() -> VNode {
                     }
                 })}
             }
-        }),
-        render_demo_block("API", rsx! {
+        })}
+        {render_demo_block("API", rsx! {
             div {
                 {render_api_table(&[
                     ("value", "string", "-", "Data to encode in the QR code"),
@@ -111,6 +111,6 @@ pub fn render() -> VNode {
                     ("level", "L | M | Q | H", "M", "Error correction level"),
                 ])}
             }
-        }),
-    ]))
+        })}
+    ])
 }

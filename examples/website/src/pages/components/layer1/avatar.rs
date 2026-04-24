@@ -7,8 +7,8 @@ pub fn render() -> VNode {
         "page-component-avatar",
         "Avatar",
         "User or entity representation with size variants, color options, and initials fallback.",
-        VNode::Fragment(vec![
-            render_demo_block("Avatar Sizes",
+        rsx! {
+            {render_demo_block("Avatar Sizes",
                 render_demo_row(
                     rsx! {
                         div { class: "hi-avatar hi-avatar--xs", "A" }
@@ -18,8 +18,8 @@ pub fn render() -> VNode {
                         div { class: "hi-avatar hi-avatar--xl", "E" }
                     }
                 )
-            ),
-            render_demo_block("Avatar Colors",
+            )}
+            {render_demo_block("Avatar Colors",
                 render_demo_row(
                     rsx! {
                         div { class: "hi-avatar hi-avatar--primary", "P" }
@@ -29,8 +29,8 @@ pub fn render() -> VNode {
                         div { class: "hi-avatar hi-avatar--warning", "Y" }
                     }
                 )
-            ),
-            render_demo_block("Avatar with Label",
+            )}
+            {render_demo_block("Avatar with Label",
                 rsx! {
                     div { style: "display:flex;flex-direction:column;gap:12px;",
                         div { style: "display:flex;align-items:center;gap:12px;",
@@ -49,8 +49,8 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            ),
-            render_demo_block("Avatar Group",
+            )}
+            {render_demo_block("Avatar Group",
                 render_demo_row(
                     rsx! {
                         div { class: "hi-avatar-group",
@@ -62,18 +62,18 @@ pub fn render() -> VNode {
                         }
                     }
                 )
-            ),
-            render_demo_block("Avatar Shapes",
+            )}
+            {render_demo_block("Avatar Shapes",
                 render_demo_row(
                     rsx! {
                         div { class: "hi-avatar hi-avatar--circle", "C" }
                         div { class: "hi-avatar hi-avatar--square", "S" }
                     }
                 )
-            ),
-            render_demo_block("Image Avatar",
-                VNode::Fragment(vec![
-                    render_demo_row(
+            )}
+            {render_demo_block("Image Avatar",
+                rsx! {
+                    {render_demo_row(
                         rsx! {
                             div { class: "hi-avatar",
                                 img { src: "https://i.pravatar.cc/150?img=1", alt: "Alice Chen", style: "width:100%;height:100%;object-fit:cover;border-radius:inherit;" }
@@ -86,11 +86,11 @@ pub fn render() -> VNode {
                             }
                             div { class: "hi-avatar", "F" }
                         }
-                    ),
-                    rsx! { p { style: "margin-top:12px;font-size:13px;color:var(--hi-color-text-secondary);", "Images fall back to initials on load error." } },
-                ])
-            ),
-            render_demo_block("Avatar with Status",
+                    )}
+                    {rsx! { p { style: "margin-top:12px;font-size:13px;color:var(--hi-color-text-secondary);", "Images fall back to initials on load error." } }}
+                }
+            )}
+            {render_demo_block("Avatar with Status",
                 render_demo_row(
                     rsx! {
                         div { style: "position:relative;display:inline-block;",
@@ -111,8 +111,8 @@ pub fn render() -> VNode {
                         }
                     }
                 )
-            ),
-            render_demo_block("API",
+            )}
+            {render_demo_block("API",
                 render_api_table(&[
                     ("size", "xs | sm | default | lg | xl", "default", "Avatar diameter"),
                     ("color", "primary | secondary | success | danger | warning", "-", "Background color"),
@@ -120,7 +120,7 @@ pub fn render() -> VNode {
                     ("src", "string", "-", "Image URL (falls back to initials)"),
                     ("group", "number", "-", "Max visible count in avatar group"),
                 ])
-            ),
-        ]),
+            )}
+        }
     )
 }

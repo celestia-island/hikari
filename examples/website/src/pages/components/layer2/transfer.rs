@@ -4,8 +4,8 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-transfer", "Transfer", "Dual-panel transfer widget for moving items between two lists.", VNode::Fragment(vec![
-        render_demo_block("Basic Transfer", rsx! {
+    render_demo_page("page-component-transfer", "Transfer", "Dual-panel transfer widget for moving items between two lists.", rsx! [
+        {render_demo_block("Basic Transfer", rsx! {
             div { class: "hi-transfer",
                 div { class: "hi-transfer__panel",
                     div { class: "hi-transfer__header",
@@ -50,8 +50,8 @@ pub fn render() -> VNode {
                     div { class: "hi-transfer__list" }
                 }
             }
-        }),
-        render_demo_block("Transfer with Pre-selected", rsx! {
+        })}
+        {render_demo_block("Transfer with Pre-selected", rsx! {
             div { class: "hi-transfer",
                 div { class: "hi-transfer__panel",
                     div { class: "hi-transfer__header",
@@ -85,8 +85,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("Disabled Transfer", rsx! {
+        })}
+        {render_demo_block("Disabled Transfer", rsx! {
             div { class: "hi-transfer hi-transfer--disabled",
                 div { class: "hi-transfer__panel",
                     div { class: "hi-transfer__header",
@@ -113,8 +113,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("One-Way Transfer", rsx! {
+        })}
+        {render_demo_block("One-Way Transfer", rsx! {
             div { class: "hi-transfer",
                 div { class: "hi-transfer__panel",
                     div { class: "hi-transfer__header",
@@ -142,8 +142,8 @@ pub fn render() -> VNode {
                     div { class: "hi-transfer__list" }
                 }
             }
-        }),
-        render_demo_block("API", rsx! {
+        })}
+        {render_demo_block("API", rsx! {
             div {
                 {render_api_table(&[
                     ("dataSource", "TransferItem[]", "-", "Source data items"),
@@ -154,6 +154,6 @@ pub fn render() -> VNode {
                     ("disabled", "bool", "false", "Disable the entire transfer"),
                 ])}
             }
-        }),
-    ]))
+        })}
+    ])
 }

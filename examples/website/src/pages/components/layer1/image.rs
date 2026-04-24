@@ -7,15 +7,15 @@ pub fn render() -> VNode {
         "page-component-image",
         "Image",
         "Responsive image display with size variants, object-fit modes, and fallback states.",
-        VNode::Fragment(vec![
-            render_demo_block("Basic Image",
+        rsx! {
+            {render_demo_block("Basic Image",
                 render_demo_row(
                     rsx! {
                         img { class: "hi-image", src: "https://picsum.photos/300/200", alt: "landscape" }
                     }
                 )
-            ),
-            render_demo_block("Image Sizes",
+            )}
+            {render_demo_block("Image Sizes",
                 render_demo_row(
                     rsx! {
                         img { class: "hi-image hi-image--xs", src: "https://picsum.photos/100/100", alt: "xs" }
@@ -24,8 +24,8 @@ pub fn render() -> VNode {
                         img { class: "hi-image hi-image--lg", src: "https://picsum.photos/300/200", alt: "lg" }
                     }
                 )
-            ),
-            render_demo_block("Object Fit",
+            )}
+            {render_demo_block("Object Fit",
                 render_demo_row(
                     rsx! {
                         div { style: "text-align:center;",
@@ -42,8 +42,8 @@ pub fn render() -> VNode {
                         }
                     }
                 )
-            ),
-            render_demo_block("Error and Loading State",
+            )}
+            {render_demo_block("Error and Loading State",
                 render_demo_row(
                     rsx! {
                         div { class: "hi-image hi-image--error", style: "width:150px;height:150px;display:flex;align-items:center;justify-content:center;",
@@ -54,16 +54,16 @@ pub fn render() -> VNode {
                         }
                     }
                 )
-            ),
-            render_demo_block("Rounded Image",
+            )}
+            {render_demo_block("Rounded Image",
                 render_demo_row(
                     rsx! {
                         img { class: "hi-image hi-image--rounded", style: "width:100px;height:100px;", src: "https://picsum.photos/200/200", alt: "rounded" }
                         img { class: "hi-image hi-image--circle", style: "width:100px;height:100px;", src: "https://picsum.photos/200/200", alt: "circle" }
                     }
                 )
-            ),
-            render_demo_block("API",
+            )}
+            {render_demo_block("API",
                 render_api_table(&[
                     ("src", "string", "-", "Image source URL"),
                     ("alt", "string", "-", "Alternative text description"),
@@ -72,7 +72,7 @@ pub fn render() -> VNode {
                     ("shape", "default | rounded | circle", "default", "Border radius style"),
                     ("fallback", "string", "-", "Fallback image on error"),
                 ])
-            ),
-        ]),
+            )}
+        }
     )
 }

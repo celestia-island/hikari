@@ -7,8 +7,8 @@ pub fn render() -> VNode {
         "page-component-description-list",
         "Description List",
         "Key-value pair display for metadata, configurations, and detail panels.",
-        VNode::Fragment(vec![
-            render_demo_block("Basic Description List",
+        rsx! {
+            {render_demo_block("Basic Description List",
                 rsx! {
                     dl { class: "hi-description-list",
                         div { class: "hi-description-list__item",
@@ -29,8 +29,8 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            ),
-            render_demo_block("Project Metadata",
+            )}
+            {render_demo_block("Project Metadata",
                 rsx! {
                     dl { class: "hi-description-list hi-description-list--horizontal",
                         div { class: "hi-description-list__item",
@@ -55,8 +55,8 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            ),
-            render_demo_block("With Tags",
+            )}
+            {render_demo_block("With Tags",
                 rsx! {
                     dl { class: "hi-description-list",
                         div { class: "hi-description-list__item",
@@ -90,8 +90,8 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            ),
-            render_demo_block("Bordered Style",
+            )}
+            {render_demo_block("Bordered Style",
                 rsx! {
                     dl { class: "hi-description-list hi-description-list--bordered",
                         div { class: "hi-description-list__item",
@@ -112,15 +112,15 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            ),
-            render_demo_block("API",
+            )}
+            {render_demo_block("API",
                 render_api_table(&[
                     ("layout", "vertical | horizontal", "vertical", "Term-detail alignment"),
                     ("bordered", "bool", "false", "Show borders between items"),
                     ("colon", "bool", "true", "Show colon after term"),
                     ("size", "small | default | large", "default", "Font and spacing size"),
                 ])
-            ),
-        ]),
+            )}
+        }
     )
 }

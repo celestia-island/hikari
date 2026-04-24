@@ -37,34 +37,34 @@ pub fn render() -> VNode {
         "page-component-number-input",
         "Number Input",
         "Numeric field with increment and decrement controls. Supports decimal steps, range limits, and sizes.",
-        VNode::Fragment(vec![
-            render_demo_block("Basic Number Input",
+        rsx! {
+            {render_demo_block("Basic Number Input",
                 render_demo_row(num_basic)
-            ),
-            render_demo_block("Decimal Step",
+            )}
+            {render_demo_block("Decimal Step",
                 render_demo_row(num_decimal)
-            ),
-            render_demo_block("With Range",
+            )}
+            {render_demo_block("With Range",
                 render_demo_row(
-                    VNode::Fragment(vec![
-                        num_range,
-                        rsx! { span { style: "color:var(--hi-color-text-secondary);font-size:13px;", "Min: 0, Max: 100" } },
-                    ])
+                    rsx! {
+                        {num_range}
+                        {rsx! { span { style: "color:var(--hi-color-text-secondary);font-size:13px;", "Min: 0, Max: 100" } }}
+                    }
                 )
-            ),
-            render_demo_block("Sizes",
+            )}
+            {render_demo_block("Sizes",
                 render_demo_row(
-                    VNode::Fragment(vec![
-                        num_small,
-                        make_num_input("0", "1", "", "", ""),
-                        num_large,
-                    ])
+                    rsx! {
+                        {num_small}
+                        {make_num_input("0", "1", "", "", "")}
+                        {num_large}
+                    }
                 )
-            ),
-            render_demo_block("Disabled",
+            )}
+            {render_demo_block("Disabled",
                 render_demo_row(num_disabled)
-            ),
-            render_demo_block("API",
+            )}
+            {render_demo_block("API",
                 render_api_table(&[
                     ("value", "number", "0", "Current numeric value"),
                     ("min", "number", "-Infinity", "Minimum allowed value"),
@@ -73,7 +73,7 @@ pub fn render() -> VNode {
                     ("disabled", "bool", "false", "Disable the control"),
                     ("size", "small | default | large", "default", "Input size preset"),
                 ])
-            ),
-        ]),
+            )}
+        }
     )
 }

@@ -3,8 +3,8 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-tree", "Tree", "Hierarchical tree view with expand/collapse, selection, and optional checkboxes.", VNode::Fragment(vec![
-        render_demo_block("Basic Tree", rsx! {
+    render_demo_page("page-component-tree", "Tree", "Hierarchical tree view with expand/collapse, selection, and optional checkboxes.", rsx! [
+        {render_demo_block("Basic Tree", rsx! {
             div { class: "hi-tree",
                 div { class: "hi-tree__item",
                     span { class: "hi-tree__arrow hi-tree__arrow--expanded", "▼" }
@@ -33,8 +33,8 @@ pub fn render() -> VNode {
                     span { class: "hi-tree__label", "README.md" }
                 }
             }
-        }),
-        render_demo_block("Tree with Checkboxes", rsx! {
+        })}
+        {render_demo_block("Tree with Checkboxes", rsx! {
             div { class: "hi-tree",
                 div { class: "hi-tree__item",
                     label { style: "display:flex;align-items:center;gap:6px;",
@@ -69,8 +69,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("Directory Tree", rsx! {
+        })}
+        {render_demo_block("Directory Tree", rsx! {
             div { class: "hi-tree",
                 div { class: "hi-tree__item",
                     span { class: "hi-tree__arrow hi-tree__arrow--expanded", "▼" }
@@ -94,8 +94,8 @@ pub fn render() -> VNode {
                     span { class: "hi-tree__label", "Cargo.toml" }
                 }
             }
-        }),
-        render_demo_block("API", rsx! {
+        })}
+        {render_demo_block("API", rsx! {
             div {
                 {render_api_table(&[
                 ("data", "TreeNode[]", "-", "Tree data source"),
@@ -105,6 +105,6 @@ pub fn render() -> VNode {
                 ("icons", "bool", "false", "Show file/folder icons"),
             ])}
             }
-        }),
-    ]))
+        })}
+    ])
 }

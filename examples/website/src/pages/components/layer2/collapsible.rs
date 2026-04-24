@@ -4,8 +4,8 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-collapsible", "Collapsible", "Accordion and collapse panels with expand/collapse animation.", VNode::Fragment(vec![
-        render_demo_block("Basic Accordion", rsx! {
+    render_demo_page("page-component-collapsible", "Collapsible", "Accordion and collapse panels with expand/collapse animation.", rsx! [
+        {render_demo_block("Basic Accordion", rsx! {
             div { class: "hi-collapse",
                 div { class: "hi-collapse__item hi-collapse__item--active",
                     div { class: "hi-collapse__header",
@@ -35,8 +35,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("Settings Panels", rsx! {
+        })}
+        {render_demo_block("Settings Panels", rsx! {
             div { class: "hi-collapse",
                 div { class: "hi-collapse__item hi-collapse__item--active",
                     div { class: "hi-collapse__header",
@@ -75,8 +75,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("Nested Panels", rsx! {
+        })}
+        {render_demo_block("Nested Panels", rsx! {
             div { class: "hi-collapse",
                 div { class: "hi-collapse__item hi-collapse__item--active",
                     div { class: "hi-collapse__header",
@@ -107,8 +107,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("API", rsx! {
+        })}
+        {render_demo_block("API", rsx! {
             div {
                 {render_api_table(&[
                     ("accordion", "bool", "false", "Only allow one panel open"),
@@ -118,6 +118,6 @@ pub fn render() -> VNode {
                     ("collapsible", "header | icon | disabled", "-", "Trigger area for collapse"),
                 ])}
             }
-        }),
-    ]))
+        })}
+    ])
 }

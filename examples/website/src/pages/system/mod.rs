@@ -43,8 +43,8 @@ fn render_css() -> VNode {
         "page-system-css",
         "CSS Utilities",
         "Type-safe utility class system. All classes are prefixed with hi- to prevent conflicts.",
-        VNode::Fragment(vec![
-            render_demo_block("Layout",
+        rsx! [
+            {render_demo_block("Layout",
                 rsx! {
                     p { "Flexbox and grid utilities:" }
                     div { {render_demo_row(
@@ -57,8 +57,8 @@ fn render_css() -> VNode {
                         }
                     )} }
                 }
-            ),
-            render_demo_block("Spacing",
+            )}
+            {render_demo_block("Spacing",
                 rsx! {
                     p { "Margin and padding scale (0\u{2013}16, with semantic names):" }
                     div { {render_demo_row(
@@ -70,8 +70,8 @@ fn render_css() -> VNode {
                         }
                     )} }
                 }
-            ),
-            render_demo_block("Typography",
+            )}
+            {render_demo_block("Typography",
                 render_demo_row(
                     rsx! {
                         code { "hi-text-sm" }
@@ -82,8 +82,8 @@ fn render_css() -> VNode {
                         code { "hi-font-bold" }
                     }
                 )
-            ),
-            render_demo_block("Colors",
+            )}
+            {render_demo_block("Colors",
                 rsx! {
                     p { "Text and background color utilities follow the palette color names." }
                     div { {render_demo_row(
@@ -95,8 +95,8 @@ fn render_css() -> VNode {
                         }
                     )} }
                 }
-            ),
-        ]),
+            )}
+        ]
     )
 }
 
@@ -105,8 +105,8 @@ fn render_icons() -> VNode {
         "page-system-icons",
         "Icons",
         "Hikari ships with Material Design Icons (MDI) and a custom Hikari icon set.",
-        VNode::Fragment(vec![
-            render_demo_block("Usage",
+        rsx! [
+            {render_demo_block("Usage",
                 rsx! {
                     p { "Icons are referenced by name. The icon system supports solid, outline, and duo-tone variants." }
                     div { {render_demo_row(
@@ -120,8 +120,8 @@ fn render_icons() -> VNode {
                         }
                     )} }
                 }
-            ),
-            render_demo_block("Sizes",
+            )}
+            {render_demo_block("Sizes",
                 render_demo_row(
                     rsx! {
                         span { class: "hi-icon hi-icon--sm mdi mdi-star" }
@@ -130,8 +130,8 @@ fn render_icons() -> VNode {
                         span { class: "hi-icon hi-icon--xl mdi mdi-star" }
                     }
                 )
-            ),
-        ]),
+            )}
+        ]
     )
 }
 
@@ -140,8 +140,8 @@ fn render_animations() -> VNode {
         "page-system-animations",
         "Animations",
         "Spring-physics animation system with configurable presets.",
-        VNode::Fragment(vec![
-            render_demo_block("Keyframe Animations",
+        rsx! [
+            {render_demo_block("Keyframe Animations",
                 rsx! {
                     p { "CSS keyframe animations available as utility classes:" }
                     div { class: "demo-grid",
@@ -151,8 +151,8 @@ fn render_animations() -> VNode {
                         div { class: "demo-card hikari-anim--pulse", "pulse" }
                     }
                 }
-            ),
-            render_demo_block("Spring Physics",
+            )}
+            {render_demo_block("Spring Physics",
                 rsx! {
                     p { "The hikari-animation crate exposes a spring solver for programmatic animations. Parameters:" }
                     div { {render_demo_row(
@@ -164,8 +164,8 @@ fn render_animations() -> VNode {
                         }
                     )} }
                 }
-            ),
-        ]),
+            )}
+        ]
     )
 }
 
@@ -174,8 +174,8 @@ fn render_i18n() -> VNode {
         "page-system-i18n",
         "Internationalisation",
         "Hikari supports 8 locales with structured translation keys.",
-        VNode::Fragment(vec![
-            render_demo_block("Supported Locales",
+        rsx! [
+            {render_demo_block("Supported Locales",
                 rsx! {
                     table { class: "hi-table",
                         thead {
@@ -234,8 +234,8 @@ fn render_i18n() -> VNode {
                         }
                     }
                 }
-            ),
-        ]),
+            )}
+        ]
     )
 }
 

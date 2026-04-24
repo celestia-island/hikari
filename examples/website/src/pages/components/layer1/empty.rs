@@ -31,16 +31,16 @@ pub fn render() -> VNode {
         "page-component-empty",
         "Empty",
         "Placeholder states for when no data is available, including search-not-found and empty table views.",
-        VNode::Fragment(vec![
-            render_demo_block("Basic Empty State",
+        rsx! {
+            {render_demo_block("Basic Empty State",
                 rsx! {
                     div { class: "hi-empty",
                         div { class: "hi-empty__icon", "\u{2205}" }
                         div { class: "hi-empty__description", "No data available" }
                     }
                 }
-            ),
-            render_demo_block("Empty with Action",
+            )}
+            {render_demo_block("Empty with Action",
                 rsx! {
                     div { class: "hi-empty",
                         div { class: "hi-empty__icon", "\u{1f4cb}" }
@@ -48,8 +48,8 @@ pub fn render() -> VNode {
                         button { class: "hi-button hi-button-primary", "Create Project" }
                     }
                 }
-            ),
-            render_demo_block("Search Not Found",
+            )}
+            {render_demo_block("Search Not Found",
                 rsx! {
                     div { class: "hi-empty",
                         div { class: "hi-empty__icon",
@@ -59,8 +59,8 @@ pub fn render() -> VNode {
                         div { class: "hi-empty__hint", "Try adjusting your search terms or filters" }
                     }
                 }
-            ),
-            render_demo_block("Empty Table",
+            )}
+            {render_demo_block("Empty Table",
                 rsx! {
                     table { class: "hi-table",
                         thead { tr { th { "Name" } th { "Status" } th { "Updated" } } }
@@ -78,8 +78,8 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            ),
-            render_demo_block("Skeleton Loading",
+            )}
+            {render_demo_block("Skeleton Loading",
                 rsx! {
                     div { style: "display:flex;flex-direction:column;gap:16px;",
                         div { style: "display:flex;align-items:center;gap:12px;",
@@ -96,8 +96,8 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            ),
-            render_demo_block("API",
+            )}
+            {render_demo_block("API",
                 render_api_table(&[
                     ("icon", "string", "\u{2205}", "Icon or emoji displayed"),
                     ("description", "string", "No data", "Primary description text"),
@@ -105,7 +105,7 @@ pub fn render() -> VNode {
                     ("action", "VNode", "-", "Optional action button"),
                     ("image", "string", "-", "Custom illustration URL"),
                 ])
-            ),
-        ]),
+            )}
+        }
     )
 }

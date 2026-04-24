@@ -4,8 +4,8 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-form-composed", "Form (Composed)", "Form builder with validation, layout options, and submission handling.", VNode::Fragment(vec![
-        render_demo_block("Login Form", rsx! {
+    render_demo_page("page-component-form-composed", "Form (Composed)", "Form builder with validation, layout options, and submission handling.", rsx! [
+        {render_demo_block("Login Form", rsx! {
             form { class: "hi-form",
                 div { class: "hi-form-item",
                     label { class: "hi-label", "Username" },
@@ -33,8 +33,8 @@ pub fn render() -> VNode {
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                 )} }
             }
-        }),
-        render_demo_block("Registration Form with Validation", rsx! {
+        })}
+        {render_demo_block("Registration Form with Validation", rsx! {
             form { class: "hi-form",
                 div { class: "hi-form-item",
                     label { class: "hi-label", "Email" },
@@ -71,8 +71,8 @@ pub fn render() -> VNode {
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                 )} }
             }
-        }),
-        render_demo_block("Inline Form", rsx! {
+        })}
+        {render_demo_block("Inline Form", rsx! {
             form { class: "hi-form hi-form--inline",
                 {glow_wrap(
                     rsx! { input { class: "hi-input", placeholder: "Search...", r#type: "search" } },
@@ -91,8 +91,8 @@ pub fn render() -> VNode {
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                 )}
             }
-        }),
-        render_demo_block("API", rsx! {
+        })}
+        {render_demo_block("API", rsx! {
             div {
                 {render_api_table(&[
                     ("layout", "vertical | horizontal | inline", "vertical", "Form layout mode"),
@@ -101,6 +101,6 @@ pub fn render() -> VNode {
                     ("requiredMark", "bool", "true", "Show required asterisk"),
                 ])}
             }
-        }),
-    ]))
+        })}
+    ])
 }

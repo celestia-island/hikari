@@ -4,8 +4,8 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-zoom-controls", "Zoom Controls", "Zoom in, zoom out, and reset controls for canvas viewers, maps, and image previews.", VNode::Fragment(vec![
-        render_demo_block("Basic Zoom Controls", rsx!{
+    render_demo_page("page-component-zoom-controls", "Zoom Controls", "Zoom in, zoom out, and reset controls for canvas viewers, maps, and image previews.", rsx! [
+        {render_demo_block("Basic Zoom Controls", rsx!{
             div { style: "display:flex;align-items:center;gap:14px;",
                 div { class: "hi-zoom-controls",
                     {glow_wrap(
@@ -27,8 +27,8 @@ pub fn render() -> VNode {
                     span { style: "font-size:0.75rem;font-family:monospace;background:var(--hi-surface-secondary,#f3f4f6);padding:2px 8px;border-radius:4px;border:1px solid var(--hi-border,#e5e7eb);", "Ctrl + Scroll" }
                 }
             }
-        }),
-        render_demo_block("Zoom Slider with Tick Marks", rsx!{
+        })}
+        {render_demo_block("Zoom Slider with Tick Marks", rsx!{
             div { style: "display:flex;flex-direction:column;width:100%;gap:10px;",
                 div { class: "hi-zoom-controls",
                     {glow_wrap(
@@ -56,8 +56,8 @@ pub fn render() -> VNode {
                     span { style: "font-size:0.6875rem;color:var(--hi-color-text-muted,#9ca3af);font-weight:500;", "400%" }
                 }
             }
-        }),
-        render_demo_block("Floating Zoom Controls", rsx!{
+        })}
+        {render_demo_block("Floating Zoom Controls", rsx!{
             div { style: "position:relative;height:260px;background:#fafbfc;border-radius:12px;border:1px solid var(--hi-border,#e5e7eb);overflow:hidden;",
                 div { style: "position:absolute;inset:0;background-image:radial-gradient(circle,var(--hi-border,#e5e7eb) 1px,transparent 1px);background-size:20px 20px;opacity:0.6;" }
                 div { style: "position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:80px;background:linear-gradient(135deg,#F5A9A9 0%,#f0c4c4 100%);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(245,169,169,0.25);",
@@ -83,8 +83,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("Zoom to Selection", rsx!{
+        })}
+        {render_demo_block("Zoom to Selection", rsx!{
             div { class: "hi-zoom-controls",
                 {glow_wrap(
                     rsx! { button { class: "hi-zoom-controls__btn", "+" } },
@@ -107,8 +107,8 @@ pub fn render() -> VNode {
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                 )}
             }
-        }),
-        render_demo_block("API", rsx!{
+        })}
+        {render_demo_block("API", rsx!{
             div {
                 {render_api_table(&[
                 ("zoom", "number", "100", "Current zoom percentage"),
@@ -119,6 +119,6 @@ pub fn render() -> VNode {
                 ("variant", "default | floating", "default", "Control layout style"),
             ])}
             }
-        }),
-    ]))
+        })}
+    ])
 }

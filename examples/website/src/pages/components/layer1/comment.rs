@@ -7,8 +7,8 @@ pub fn render() -> VNode {
         "page-component-comment",
         "Comment",
         "User comment display with author info, timestamps, content, and nested reply threads.",
-        VNode::Fragment(vec![
-            render_demo_block("Basic Comment", rsx! {
+        rsx! {
+            {render_demo_block("Basic Comment", rsx! {
                 div { class: "hi-comment",
                     div { class: "hi-comment__header",
                         div { class: "hi-avatar hi-avatar--primary hi-avatar--sm", "A" }
@@ -23,8 +23,8 @@ pub fn render() -> VNode {
                         span { "Like" }
                     }
                 }
-            }),
-            render_demo_block("Comment Thread", rsx! {
+            })}
+            {render_demo_block("Comment Thread", rsx! {
                 div { style: "display:flex;flex-direction:column;gap:16px;",
                     div { class: "hi-comment",
                         div { class: "hi-comment__header",
@@ -69,8 +69,8 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            }),
-            render_demo_block("Comment with Input", rsx! {
+            })}
+            {render_demo_block("Comment with Input", rsx! {
                 div { style: "display:flex;flex-direction:column;gap:16px;",
                     div { class: "hi-comment",
                         div { class: "hi-comment__header",
@@ -92,8 +92,8 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            }),
-            render_demo_block("Comment States", rsx! {
+            })}
+            {render_demo_block("Comment States", rsx! {
                 div { style: "display:flex;flex-direction:column;gap:16px;",
                     div { class: "hi-comment",
                         div { class: "hi-comment__header",
@@ -124,8 +124,8 @@ pub fn render() -> VNode {
                         }
                     }
                 }
-            }),
-            render_demo_block("API",
+            })}
+            {render_demo_block("API",
                 render_api_table(&[
                     ("author", "string", "-", "Author display name"),
                     ("avatar", "string", "-", "Avatar initials or image"),
@@ -134,7 +134,7 @@ pub fn render() -> VNode {
                     ("nested", "bool", "false", "Display as a nested reply"),
                     ("actions", "string[]", "-", "Action labels (e.g. Reply, Like)"),
                 ])
-            ),
-        ]),
+            )}
+        }
     )
 }

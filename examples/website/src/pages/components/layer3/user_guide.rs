@@ -4,8 +4,8 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-user-guide", "User Guide", "Step-by-step interactive guide for onboarding users and feature discovery.", VNode::Fragment(vec![
-        render_demo_block("Getting Started Guide", rsx!{
+    render_demo_page("page-component-user-guide", "User Guide", "Step-by-step interactive guide for onboarding users and feature discovery.", rsx! [
+        {render_demo_block("Getting Started Guide", rsx!{
             div { class: "hi-user-guide",
                 div { class: "hi-user-guide__header",
                     h4 { "Welcome to Hikari UI" }
@@ -56,8 +56,8 @@ pub fn render() -> VNode {
                     )}
                 }
             }
-        }),
-        render_demo_block("Feature Tour", rsx!{
+        })}
+        {render_demo_block("Feature Tour", rsx!{
             div { class: "hi-user-guide",
                 div { class: "hi-user-guide__header",
                     h4 { "Feature Spotlight" }
@@ -91,8 +91,8 @@ pub fn render() -> VNode {
                     span { "2 of 3 completed" }
                 }
             }
-        }),
-        render_demo_block("Vertical Stepper & Spotlight", rsx!{
+        })}
+        {render_demo_block("Vertical Stepper & Spotlight", rsx!{
             div { style: "display:flex;gap:32px;",
                 div { style: "flex:1;max-width:320px;",
                     h5 { style: "margin-bottom:16px;font-size:14px;", "Vertical Steps" }
@@ -119,7 +119,7 @@ pub fn render() -> VNode {
                         }
                         div { style: "display:flex;gap:12px;",
                             div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
-                                div { style: "width:28px;height:28px;border-radius:50%;background:#e5e7eb;color:var(--hi-gray-500);display:flex;align-items:center;justify-content:center;font-size:13px;", "3" }
+                                div { style: "width:28px;height:28px;border-radius:50%;background:#e5e7eb;color:var(--hi-gray-500);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;", "3" }
                             }
                             div {
                                 h6 { style: "margin:0;font-size:14px;", "Configure Profile" }
@@ -143,8 +143,8 @@ pub fn render() -> VNode {
                     }
                 }
             }
-        }),
-        render_demo_block("API", rsx!{
+        })}
+        {render_demo_block("API", rsx!{
             div {
                 {render_api_table(&[
                 ("steps", "GuideStep[]", "-", "Array of step objects"),
@@ -154,6 +154,6 @@ pub fn render() -> VNode {
                 ("mask", "bool", "false", "Show backdrop mask"),
             ])}
             }
-        }),
-    ]))
+        })}
+    ])
 }

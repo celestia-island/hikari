@@ -8,26 +8,26 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 fn render_switches() -> VNode {
-    VNode::Fragment(vec![
-        switch(false, Some("Notifications")).1,
-        switch(true, Some("Dark Mode")).1,
-        switch(false, Some("Auto-save")).1,
-    ])
+    rsx! {
+        {switch(false, Some("Notifications")).1}
+        {switch(true, Some("Dark Mode")).1}
+        {switch(false, Some("Auto-save")).1}
+    }
 }
 
 fn render_counters() -> VNode {
-    VNode::Fragment(vec![
-        button_counter(0, Some("Counter A")).1,
-        button_counter(5, Some("Counter B")).1,
-        button_counter(10, Some("Counter C")).1,
-    ])
+    rsx! {
+        {button_counter(0, Some("Counter A")).1}
+        {button_counter(5, Some("Counter B")).1}
+        {button_counter(10, Some("Counter C")).1}
+    }
 }
 
 fn render_inputs() -> VNode {
-    VNode::Fragment(vec![
-        interactive_input("", "Type something...", Some("Name")).1,
-        interactive_input("Hello, World!", "Enter text...", Some("Greeting")).1,
-    ])
+    rsx! {
+        {interactive_input("", "Type something...", Some("Name")).1}
+        {interactive_input("Hello, World!", "Enter text...", Some("Greeting")).1}
+    }
 }
 
 /// Render the interactive examples page.

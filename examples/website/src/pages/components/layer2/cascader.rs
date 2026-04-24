@@ -21,8 +21,8 @@ pub fn render() -> VNode {
         },
     );
 
-    render_demo_page("page-component-cascader", "Cascader", "Multi-level selection component for hierarchical data such as locations, categories, or org charts.", VNode::Fragment(vec![
-        render_demo_block("Location Picker", rsx! {
+    render_demo_page("page-component-cascader", "Cascader", "Multi-level selection component for hierarchical data such as locations, categories, or org charts.", rsx! [
+        {render_demo_block("Location Picker", rsx! {
             div {
                 {glow_wrap(
                     rsx! {
@@ -55,8 +55,8 @@ pub fn render() -> VNode {
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                 )}
             }
-        }),
-        render_demo_block("Category Selector", rsx! {
+        })}
+        {render_demo_block("Category Selector", rsx! {
             div {
                 {glow_wrap(
                     rsx! {
@@ -70,8 +70,8 @@ pub fn render() -> VNode {
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                 )}
             }
-        }),
-        render_demo_block("Disabled Cascader", rsx! {
+        })}
+        {render_demo_block("Disabled Cascader", rsx! {
             div {
                 {glow_wrap(
                     rsx! {
@@ -85,8 +85,8 @@ pub fn render() -> VNode {
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                 )}
             }
-        }),
-        render_demo_block("API", rsx! {
+        })}
+        {render_demo_block("API", rsx! {
             div {
                 {render_api_table(&[
                     ("options", "CascaderOption[]", "-", "Hierarchical data source"),
@@ -97,6 +97,6 @@ pub fn render() -> VNode {
                     ("expandTrigger", "click | hover", "click", "How to expand sub-menus"),
                 ])}
             }
-        }),
-    ]))
+        })}
+    ])
 }

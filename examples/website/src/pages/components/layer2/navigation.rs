@@ -4,8 +4,8 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-navigation", "Navigation", "Tabs, breadcrumbs, and steps for guiding users through application structure and workflows.", VNode::Fragment(vec![
-        render_demo_block("Tabs", rsx! {
+    render_demo_page("page-component-navigation", "Navigation", "Tabs, breadcrumbs, and steps for guiding users through application structure and workflows.", rsx! [
+        {render_demo_block("Tabs", rsx! {
             nav { class: "hi-tabs",
                 div { {glow_wrap(
                     rsx! { button { class: "hi-tab hi-tab--active", "Overview" } },
@@ -24,8 +24,8 @@ pub fn render() -> VNode {
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                 )} }
             }
-        }),
-        render_demo_block("Tabs with Icons", rsx! {
+        })}
+        {render_demo_block("Tabs with Icons", rsx! {
             nav { class: "hi-tabs",
                 div { {glow_wrap(
                     rsx! { button { class: "hi-tab hi-tab--active", "🏠 Home" } },
@@ -40,8 +40,8 @@ pub fn render() -> VNode {
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                 )} }
             }
-        }),
-        render_demo_block("Breadcrumbs", rsx! {
+        })}
+        {render_demo_block("Breadcrumbs", rsx! {
             div { style: "display:flex;flex-direction:column;gap:12px;",
                 nav { class: "hi-breadcrumb",
                     a { class: "hi-breadcrumb__item", href: "/", "Home" }
@@ -60,8 +60,8 @@ pub fn render() -> VNode {
                     span { class: "hi-breadcrumb__item hi-breadcrumb__item--active", "Settings" }
                 }
             }
-        }),
-        render_demo_block("Steps", rsx! {
+        })}
+        {render_demo_block("Steps", rsx! {
             div { class: "hi-steps",
                 div { class: "hi-steps__item hi-steps__item--finished",
                     div { class: "hi-steps__icon", "✓" }
@@ -84,8 +84,8 @@ pub fn render() -> VNode {
                     div { class: "hi-steps__description", "Review and submit" }
                 }
             }
-        }),
-        render_demo_block("API", rsx! {
+        })}
+        {render_demo_block("API", rsx! {
             div {
                 {render_api_table(&[
                     ("Tabs", "active", "number", "Index of active tab"),
@@ -95,6 +95,6 @@ pub fn render() -> VNode {
                     ("Steps", "direction", "horizontal | vertical", "Step layout direction"),
                 ])}
             }
-        }),
-    ]))
+        })}
+    ])
 }

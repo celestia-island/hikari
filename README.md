@@ -1,4 +1,4 @@
-<div align="center"><img src="./website/res/icons/logo.png" /></div>
+<div align="center"><img src="./public/images/logo.png" width="120" /></div>
 <h1 align="center">Hikari</h1>
 <div align="center">
  <strong>

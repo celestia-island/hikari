@@ -1,6 +1,8 @@
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
+use hikari_icons::generated::mdi_selected::get;
+use hikari_icons::MdiIcon;
 use tairitsu_vdom::{
     get_bounding_client_rect, set_attribute, set_style, DomHandle, EventData, MouseEvent,
     VElement, VNode, VText,
@@ -25,10 +27,8 @@ enum DropdownPlacement {
 impl DropdownPlacement {
     fn default_arrow_direction(&self) -> &'static str {
         match self {
-            Self::Bottom => "right",
-            Self::Top => "right",
-            Self::Right => "down",
-            Self::Left => "down",
+            Self::Bottom | Self::Top => "right",
+            Self::Right | Self::Left => "down",
         }
     }
 
@@ -167,6 +167,20 @@ fn viewport_size() -> (f64, f64) {
     }
 }
 
+fn build_icon_svg(icon: MdiIcon) -> String {
+    get(icon.to_string().as_str())
+        .map(|data| {
+            format!(
+                r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{}" width="18" height="18"><path fill="currentColor" d="{}"/></svg>"#,
+                data.view_box.as_deref().unwrap_or("0 0 24 24"),
+                data.path.as_deref().unwrap_or("")
+            )
+        })
+        .unwrap_or_else(|| String::from(
+            r#"<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>"#
+        ))
+}
+
 pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
     let current_lang = hooks::detect_language();
     let current_name = current_lang.native_name();
@@ -176,12 +190,39 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
     let current_placement: Rc<Cell<DropdownPlacement>> =
         Rc::new(Cell::new(DropdownPlacement::Bottom));
 
+    let icon_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>> = Rc::new(RefCell::new(None));
+
     let app_ref_t = app_ref.clone();
     let is_dark_t = is_dark.clone();
+    let icon_ref_t = icon_ref.clone();
     let theme_on_click = move |e: Box<dyn EventData>| {
         if let Some(_me) = e.as_any().downcast_ref::<MouseEvent>() {
             let dark = !is_dark_t.get();
             is_dark_t.set(dark);
+
+            let theme_icon = if dark {
+                MdiIcon::WhiteBalanceSunny
+            } else {
+                MdiIcon::MoonWaningCrescent
+            };
+            let svg_str = build_icon_svg(theme_icon);
+
+            if let Some(ref cell) = *icon_ref_t.borrow() {
+                if let Some(handle) = cell.downcast_ref::<u64>() {
+                    let h = DomHandle::from_raw(*handle);
+                    set_attribute(h, "innerHTML", &svg_str);
+                    set_attribute(
+                        h,
+                        "class",
+                        if dark {
+                            "hi-aside-footer__icon hikari-icon hi-aside-footer__icon--dark"
+                        } else {
+                            "hi-aside-footer__icon hikari-icon"
+                        },
+                    );
+                }
+            }
+
             if let Some(ref cell) = *app_ref_t.borrow() {
                 if let Some(handle) = cell.downcast_ref::<u64>() {
                     let h = DomHandle::from_raw(*handle);
@@ -257,6 +298,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
                     if let Some(sh) = sc.downcast_ref::<u64>() {
                         let sel_h = DomHandle::from_raw(*sh);
                         set_attribute(sel_h, "class", "hi-select hi-select-sm hi-select-open");
+                        set_attribute(sel_h, "aria-expanded", "true");
                     }
                 }
 
@@ -321,6 +363,8 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
                         }
                     ))
                     .attr("data-value", code.as_str())
+                    .attr("role", "option")
+                    .attr("aria-selected", if is_selected { "true" } else { "false" })
                     .on_event("click", move |_e: Box<dyn EventData>| {
                         is_open_opt.set(false);
                         close_dropdown(
@@ -350,20 +394,25 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
             .child(VNode::Element(
                 VElement::new("button")
                     .class("hi-aside-footer__btn")
-                    .attr("title", "Toggle theme")
                     .attr("type", "button")
+                    .attr("role", "switch")
+                    .attr("aria-checked", "false")
+                    .attr("aria-label", "Toggle dark mode")
+                    .attr("title", "Toggle theme")
                     .on_event("click", theme_on_click)
                     .child(VNode::Element(
                         VElement::new("span")
-                            .class("hi-aside-footer__icon")
-                            .inner_html(
-                                r#"<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>"#,
-                            ),
+                            .class("hi-aside-footer__icon hikari-icon")
+                            .ref_(icon_ref.clone())
+                            .inner_html(build_icon_svg(MdiIcon::MoonWaningCrescent)),
                     )),
             ))
             .child(VNode::Element(
                 VElement::new("div")
                     .class("hi-select hi-select-sm hi-select--borderless")
+                    .attr("role", "combobox")
+                    .attr("aria-haspopup", "listbox")
+                    .attr("aria-expanded", "false")
                     .ref_(select_ref.clone())
                     .child(VNode::Element(
                         VElement::new("div")
@@ -378,6 +427,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
                                 VElement::new("span")
                                     .class("hi-select-arrow")
                                     .attr("data-dir", "right")
+                                    .attr("aria-hidden", "true")
                                     .ref_(arrow_ref.clone())
                                     .inner_html(
                                         r#"<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>"#,
@@ -387,6 +437,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
                     .child(VNode::Element(
                         VElement::new("div")
                             .class("hi-select-dropdown")
+                            .attr("role", "listbox")
                             .ref_(dropdown_ref.clone())
                             .children(options),
                     )),
@@ -419,6 +470,7 @@ fn close_dropdown(
                 "class",
                 "hi-select hi-select-sm hi-select--borderless",
             );
+            set_attribute(DomHandle::from_raw(*sh), "aria-expanded", "false");
         }
     }
     if let Some(ref ar) = *arrow_ref.borrow() {

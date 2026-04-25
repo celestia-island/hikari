@@ -166,7 +166,7 @@
   display: none;
   position: fixed;
   z-index: 10000;
-  min-width: DROPDOWN_MIN_WIDTH;
+  min-width: 120px;
   max-width: 220px;
   max-height: 240px;
   overflow-y: auto;
@@ -213,9 +213,9 @@
   }
 }
 
-// ── Dark mode ──
+// ── Dark mode (data-theme driven + OS preference fallback) ──
 
-@media (prefers-color-scheme: dark) {
+@mixin aside-footer-dark {
   .hi-aside-footer__btn {
     color: var(--hi-color-text-secondary-dark, rgba(255, 255, 255, 0.55));
 
@@ -255,4 +255,15 @@
       color: var(--hi-pink-light, #f0bcbc);
     }
   }
+}
+
+// Primary: theme toggle sets data-theme="tairitsu" on .hi-layout
+.hi-layout-dark,
+:root[data-theme="tairitsu"] {
+  @include aside-footer-dark;
+}
+
+// Fallback: OS-level dark mode preference (before any manual toggle)
+@media (prefers-color-scheme: dark) {
+  @include aside-footer-dark;
 }

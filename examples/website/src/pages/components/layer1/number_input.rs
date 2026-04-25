@@ -1,10 +1,10 @@
-use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
+use crate::components::demo_page::{render_demo_block, render_demo_page, render_demo_row};
 use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 fn make_num_input(value: &str, step: &str, min: &str, max: &str, extra_class: &str) -> VNode {
-    let mut classes = "hi-number-input".to_string();
+    let mut classes = "hi-number-input-wrapper".to_string();
     if !extra_class.is_empty() {
         classes.push_str(" ");
         classes.push_str(extra_class);
@@ -12,9 +12,9 @@ fn make_num_input(value: &str, step: &str, min: &str, max: &str, extra_class: &s
     glow_wrap(
         rsx! {
             div { class: classes.as_str(),
-                button { class: "hi-number-input__btn", "-" }
-                input { class: "hi-number-input__input", r#type: "number", value: value, step: step, min: min, max: max }
-                button { class: "hi-number-input__btn", "+" }
+                button { class: "hi-number-input-btn hi-number-input-btn-decrement", "-" }
+                input { class: "hi-number-input-input", r#type: "number", value: value, step: step, min: min, max: max }
+                button { class: "hi-number-input-btn hi-number-input-btn-increment", "+" }
             }
         },
         GlowConfig {
@@ -29,51 +29,75 @@ pub fn render() -> VNode {
     let num_basic = make_num_input("0", "1", "", "", "");
     let num_decimal = make_num_input("3.14", "0.01", "", "", "");
     let num_range = make_num_input("50", "1", "0", "100", "");
-    let num_large = make_num_input("100", "10", "", "", "hi-number-input--lg");
-    let num_disabled = make_num_input("0", "1", "", "", "hi-number-input--disabled");
-    let num_small = make_num_input("5", "1", "", "", "hi-number-input--sm");
+    let num_large = make_num_input("100", "10", "", "", "hi-number-input-lg");
+    let num_disabled = make_num_input("0", "1", "", "", "");
+    let num_small = make_num_input("5", "1", "", "", "hi-number-input-sm");
 
+    // TEST: use render_demo_page for outer wrapper only, content stays as raw rsx!
     render_demo_page(
         "page-component-number-input",
         "Number Input",
         "Numeric field with increment and decrement controls. Supports decimal steps, range limits, and sizes.",
         rsx! {
-            {render_demo_block("Basic Number Input",
-                render_demo_row(num_basic)
-            )}
-            {render_demo_block("Decimal Step",
-                render_demo_row(num_decimal)
-            )}
-            {render_demo_block("With Range",
-                render_demo_row(
-                    rsx! {
-                        {num_range}
-                        {rsx! { span { style: "color:var(--hi-color-text-secondary);font-size:13px;", "Min: 0, Max: 100" } }}
+            div { class: "demo-block",
+                h3 { class: "demo-block__title", "Basic Number Input" }
+                div { class: "demo-block__body",
+                    div { class: "demo-row",
+                        {num_basic}
                     }
-                )
-            )}
-            {render_demo_block("Sizes",
-                render_demo_row(
-                    rsx! {
+                }
+            }
+            div { class: "demo-block",
+                h3 { class: "demo-block__title", "Decimal Step" }
+                div { class: "demo-block__body",
+                    div { class: "demo-row",
+                        {num_decimal}
+                    }
+                }
+            }
+            div { class: "demo-block",
+                h3 { class: "demo-block__title", "With Range" }
+                div { class: "demo-block__body",
+                    div { class: "demo-row",
+                        {num_range}
+                        span { style: "color:var(--hi-color-text-secondary);font-size:13px;", "Min: 0, Max: 100" }
+                    }
+                }
+            }
+            div { class: "demo-block",
+                h3 { class: "demo-block__title", "Sizes" }
+                div { class: "demo-block__body",
+                    div { class: "demo-row",
                         {num_small}
                         {make_num_input("0", "1", "", "", "")}
                         {num_large}
                     }
-                )
-            )}
-            {render_demo_block("Disabled",
-                render_demo_row(num_disabled)
-            )}
-            {render_demo_block("API",
-                render_api_table(&[
-                    ("value", "number", "0", "Current numeric value"),
-                    ("min", "number", "-Infinity", "Minimum allowed value"),
-                    ("max", "number", "Infinity", "Maximum allowed value"),
-                    ("step", "number", "1", "Increment/decrement step size"),
-                    ("disabled", "bool", "false", "Disable the control"),
-                    ("size", "small | default | large", "default", "Input size preset"),
-                ])
-            )}
-        }
+                }
+            }
+            div { class: "demo-block",
+                h3 { class: "demo-block__title", "Disabled" }
+                div { class: "demo-block__body",
+                    div { class: "demo-row",
+                        {num_disabled}
+                    }
+                }
+            }
+            div { class: "demo-block",
+                h3 { class: "demo-block__title", "API" }
+                div { class: "demo-block__body",
+                    table { class: "api-table",
+                        thead { tr { th { "Property" } th { "Type" } th { "Default" } th { "Description" } } }
+                        tbody {
+                            tr { td { code { "value" } } td { code { "number" } } td { code { "0" } } td { "Current numeric value" } }
+                            tr { td { code { "min" } } td { code { "number" } } td { code { "-Infinity" } } td { "Minimum allowed value" } }
+                            tr { td { code { "max" } } td { code { "number" } } td { code { "Infinity" } } td { "Maximum allowed value" } }
+                            tr { td { code { "step" } } td { code { "1" } } td { code { "default" } } td { "Increment/decrement step size" } }
+                            tr { td { code { "disabled" } } td { code { "bool" } } td { code { "false" } } td { "Disable the control" } }
+                            tr { td { code { "size" } } td { code { "small | default | large" } } td { code { "default" } } td { "Input size preset" } }
+                        }
+                    }
+                }
+            }
+        },
     )
 }

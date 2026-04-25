@@ -5,7 +5,7 @@ use tairitsu_vdom::VNode;
 
 fn btn(class: &str, label: &str, color: GlowColor) -> VNode {
     glow_wrap(
-        rsx! { button { class: class, label } },
+        rsx! { button { class: class, {tairitsu_vdom::VNode::Text(tairitsu_vdom::VText::new(label))} } },
         GlowConfig {
             intensity: GlowIntensity::Soft,
             color,
@@ -15,7 +15,7 @@ fn btn(class: &str, label: &str, color: GlowColor) -> VNode {
 }
 
 fn btn_raw(class: &str, label: &str, extra: &str) -> VNode {
-    rsx! { button { class: format!("{} {}", class, extra), label } }
+    rsx! { button { class: format!("{} {}", class, extra), {tairitsu_vdom::VNode::Text(tairitsu_vdom::VText::new(label))} } }
 }
 
 pub fn render() -> VNode {

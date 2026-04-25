@@ -46,12 +46,12 @@
 }
 
 .hi-number-input-btn-decrement {
-    border-right: 1px solid var(--hi-color-border, #d9d9d9);
+    border-right: none;
     border-radius: 7px 0 0 7px;
 }
 
 .hi-number-input-btn-increment {
-    border-left: 1px solid var(--hi-color-border, #d9d9d9);
+    border-left: none;
     border-radius: 0 7px 7px 0;
 }
 
@@ -160,12 +160,12 @@
 
 [data-theme="dark"] .hi-number-input-btn-decrement,
 [data-theme="tairitsu"] .hi-number-input-btn-decrement {
-    border-right-color: var(--hi-border, #333);
+    border-right: none;
 }
 
 [data-theme="dark"] .hi-number-input-btn-increment,
 [data-theme="tairitsu"] .hi-number-input-btn-increment {
-    border-left-color: var(--hi-border, #333);
+    border-left: none;
 }
 
 [data-theme="dark"] .hi-number-input-input,

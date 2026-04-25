@@ -25,16 +25,19 @@ fn el_style(tag: &str, class: &str, style: &str, children: VNode) -> VNode {
 // ============================================
 
 pub fn render_demo_page(page_id: &str, title: &str, subtitle: &str, content: VNode) -> VNode {
-    el("div", &format!("hikari-page {}", page_id),
-        VNode::Fragment(vec![
-            el("div", "page-header",
-                VNode::Fragment(vec![
-                    el("h1", "page-header__title", txt(title)),
-                    el("p", "page-header__subtitle", txt(subtitle)),
-                ])
-            ),
-            el("div", "page-section", content),
-        ])
+    VNode::Element(
+        VElement::new("div")
+            .attr("id", page_id)
+            .class(format!("hikari-page {}", page_id))
+            .child(VNode::Fragment(vec![
+                el("div", "page-header",
+                    VNode::Fragment(vec![
+                        el("h1", "page-header__title", txt(title)),
+                        el("p", "page-header__subtitle", txt(subtitle)),
+                    ])
+                ),
+                el("div", "page-section", content),
+            ])),
     )
 }
 
@@ -47,8 +50,11 @@ pub fn render_demo_page_raw(page_id: &str, title: Option<&str>, content: VNode) 
         VNode::empty()
     };
 
-    el("div", &format!("hikari-page {}", page_id),
-        VNode::Fragment(vec![header, el("div", "page-section", content)])
+    VNode::Element(
+        VElement::new("div")
+            .attr("id", page_id)
+            .class(format!("hikari-page {}", page_id))
+            .child(VNode::Fragment(vec![header, el("div", "page-section", content)])),
     )
 }
 

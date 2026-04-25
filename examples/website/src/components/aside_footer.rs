@@ -7,6 +7,165 @@ use tairitsu_vdom::{
 };
 
 use crate::hooks;
+use tairitsu_web::i18n::Language as TairitsuLanguage;
+
+const DROPDOWN_MAX_HEIGHT: f64 = 240.0;
+const DROPDOWN_MIN_WIDTH: f64 = 120.0;
+const DROPDOWN_OFFSET: f64 = 4.0;
+const VIEWPORT_PADDING: f64 = 8.0;
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum DropdownPlacement {
+    Bottom,
+    Top,
+    Right,
+    Left,
+}
+
+impl DropdownPlacement {
+    fn default_arrow_direction(&self) -> &'static str {
+        match self {
+            Self::Bottom => "right",
+            Self::Top => "right",
+            Self::Right => "down",
+            Self::Left => "down",
+        }
+    }
+
+    fn open_arrow_direction(&self) -> &'static str {
+        match self {
+            Self::Bottom => "down",
+            Self::Top => "up",
+            Self::Right => "right",
+            Self::Left => "left",
+        }
+    }
+}
+
+fn map_to_tairitsu_lang(lang: &hooks::Language) -> TairitsuLanguage {
+    match lang {
+        hooks::Language::En => TairitsuLanguage::English,
+        hooks::Language::ZhCn => TairitsuLanguage::ChineseSimplified,
+        hooks::Language::ZhTw => TairitsuLanguage::ChineseTraditional,
+        hooks::Language::Ja => TairitsuLanguage::Japanese,
+        hooks::Language::Ko => TairitsuLanguage::Korean,
+        hooks::Language::Fr => TairitsuLanguage::French,
+        hooks::Language::De => TairitsuLanguage::English,
+        hooks::Language::Es => TairitsuLanguage::Spanish,
+        hooks::Language::Ar => TairitsuLanguage::Arabic,
+        hooks::Language::Ru => TairitsuLanguage::Russian,
+    }
+}
+
+fn best_placement(
+    trigger_x: f64,
+    trigger_y: f64,
+    trigger_w: f64,
+    trigger_h: f64,
+    vw: f64,
+    vh: f64,
+) -> DropdownPlacement {
+    let space_bottom = vh - trigger_y - trigger_h - VIEWPORT_PADDING;
+    let space_top = trigger_y - VIEWPORT_PADDING;
+    let space_right = vw - trigger_x - trigger_w - VIEWPORT_PADDING;
+    let space_left = trigger_x - VIEWPORT_PADDING;
+
+    let need_height = DROPDOWN_MAX_HEIGHT.min(200.0);
+    let need_width = DROPDOWN_MIN_WIDTH;
+
+    if space_bottom >= need_height {
+        DropdownPlacement::Bottom
+    } else if space_top >= need_height {
+        DropdownPlacement::Top
+    } else if space_right >= need_width {
+        DropdownPlacement::Right
+    } else if space_left >= need_width {
+        DropdownPlacement::Left
+    } else if space_bottom >= space_top {
+        DropdownPlacement::Bottom
+    } else {
+        DropdownPlacement::Top
+    }
+}
+
+fn position_dropdown(
+    placement: DropdownPlacement,
+    dd_handle: DomHandle,
+    trigger_x: f64,
+    trigger_y: f64,
+    trigger_w: f64,
+    trigger_h: f64,
+    _dd_width: f64,
+) {
+    match placement {
+        DropdownPlacement::Bottom => {
+            set_style(dd_handle, "left", &format!("{}px", trigger_x));
+            set_style(dd_handle, "top", &format!("{}px", trigger_y + trigger_h + DROPDOWN_OFFSET));
+            set_style(dd_handle, "bottom", "auto");
+            set_style(dd_handle, "right", "auto");
+        }
+        DropdownPlacement::Top => {
+            set_style(dd_handle, "left", &format!("{}px", trigger_x));
+            set_style(dd_handle, "top", "auto");
+            set_style(
+                dd_handle,
+                "bottom",
+                &format!("{}px", vh_safety() - trigger_y + DROPDOWN_OFFSET),
+            );
+            set_style(dd_handle, "right", "auto");
+        }
+        DropdownPlacement::Right => {
+            set_style(dd_handle, "left", &format!("{}px", trigger_x + trigger_w + DROPDOWN_OFFSET));
+            set_style(dd_handle, "top", &format!("{}px", trigger_y));
+            set_style(dd_handle, "bottom", "auto");
+            set_style(dd_handle, "right", "auto");
+        }
+        DropdownPlacement::Left => {
+            set_style(dd_handle, "left", "auto");
+            set_style(dd_handle, "top", &format!("{}px", trigger_y));
+            set_style(dd_handle, "bottom", "auto");
+            set_style(
+                dd_handle,
+                "right",
+                &format!("{}px", vw_safety() - trigger_x + DROPDOWN_OFFSET),
+            );
+        }
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+fn vh_safety() -> f64 {
+    use tairitsu_web::wit_platform::wasm_impl::bindings::tairitsu_browser::full::window;
+    window::get_inner_height() as f64
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn vh_safety() -> f64 {
+    768.0
+}
+
+#[cfg(target_arch = "wasm32")]
+fn vw_safety() -> f64 {
+    use tairitsu_web::wit_platform::wasm_impl::bindings::tairitsu_browser::full::window;
+    window::get_inner_width() as f64
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn vw_safety() -> f64 {
+    1024.0
+}
+
+fn viewport_size() -> (f64, f64) {
+    #[cfg(target_arch = "wasm32")]
+    {
+        use tairitsu_web::wit_platform::wasm_impl::bindings::tairitsu_browser::full::window;
+        (window::get_inner_width() as f64, window::get_inner_height() as f64)
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        (1024.0, 768.0)
+    }
+}
 
 pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
     let current_lang = hooks::detect_language();
@@ -14,6 +173,8 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
 
     let is_dark = Rc::new(Cell::new(false));
     let is_open = Rc::new(Cell::new(false));
+    let current_placement: Rc<Cell<DropdownPlacement>> =
+        Rc::new(Cell::new(DropdownPlacement::Bottom));
 
     let app_ref_t = app_ref.clone();
     let is_dark_t = is_dark.clone();
@@ -42,70 +203,83 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
 
     let dropdown_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>> = Rc::new(RefCell::new(None));
     let select_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>> = Rc::new(RefCell::new(None));
+    let arrow_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>> = Rc::new(RefCell::new(None));
     let backdrop_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>> = Rc::new(RefCell::new(None));
 
     let is_open_toggle = is_open.clone();
     let dropdown_ref_t = dropdown_ref.clone();
     let select_ref_t = select_ref.clone();
+    let arrow_ref_t = arrow_ref.clone();
     let backdrop_ref_t = backdrop_ref.clone();
+    let placement_t = current_placement.clone();
     let trigger_on_click = move |e: Box<dyn EventData>| {
         if let Some(me) = e.as_any().downcast_ref::<MouseEvent>() {
             let now_open = !is_open_toggle.get();
             is_open_toggle.set(now_open);
 
-            if let Some(ref cell) = *dropdown_ref_t.borrow() {
-                if let Some(handle) = cell.downcast_ref::<u64>() {
-                    let dd_h = DomHandle::from_raw(*handle);
-                    if now_open {
-                        if let Some(target) = me.current_target {
-                            let trigger_h = DomHandle::from_raw(target);
-                            let rect = get_bounding_client_rect(trigger_h);
-                            set_style(dd_h, "left", &format!("{}px", rect.x));
-                            set_style(
-                                dd_h,
-                                "width",
-                                &format!("{}px", rect.width.max(120.0)),
-                            );
-                            set_style(
-                                dd_h,
-                                "bottom",
-                                &format!("calc(100vh - {}px)", rect.y - 4.0),
-                            );
-                            set_style(dd_h, "top", "auto");
-                            set_style(dd_h, "display", "block");
-                        }
-                        if let Some(ref sc) = *select_ref_t.borrow() {
-                            if let Some(sh) = sc.downcast_ref::<u64>() {
-                                set_attribute(
-                                    DomHandle::from_raw(*sh),
-                                    "class",
-                                    "hi-select hi-select-sm hi-select-open",
-                                );
-                            }
-                        }
-                        if let Some(ref bc) = *backdrop_ref_t.borrow() {
-                            if let Some(bh) = bc.downcast_ref::<u64>() {
-                                set_style(DomHandle::from_raw(*bh), "display", "block");
-                            }
-                        }
-                    } else {
-                        set_style(dd_h, "display", "none");
-                        if let Some(ref sc) = *select_ref_t.borrow() {
-                            if let Some(sh) = sc.downcast_ref::<u64>() {
-                                set_attribute(
-                                    DomHandle::from_raw(*sh),
-                                    "class",
-                                    "hi-select hi-select-sm",
-                                );
-                            }
-                        }
-                        if let Some(ref bc) = *backdrop_ref_t.borrow() {
-                            if let Some(bh) = bc.downcast_ref::<u64>() {
-                                set_style(DomHandle::from_raw(*bh), "display", "none");
-                            }
+            if now_open {
+                let mut trigger_rect_opt: Option<(f64, f64, f64, f64)> = None;
+
+                if let Some(ref sc) = *select_ref_t.borrow() {
+                    if let Some(sh) = sc.downcast_ref::<u64>() {
+                        let handle = DomHandle::from_raw(*sh);
+                        if handle.is_valid() {
+                            let r = get_bounding_client_rect(handle);
+                            trigger_rect_opt = Some((r.x, r.y, r.width, r.height));
                         }
                     }
                 }
+
+                if trigger_rect_opt.is_none() {
+                    if let Some(ct) = me.current_target {
+                        let handle = DomHandle::from_raw(ct);
+                        if handle.is_valid() {
+                            let r = get_bounding_client_rect(handle);
+                            trigger_rect_opt = Some((r.x, r.y, r.width, r.height));
+                        }
+                    }
+                }
+
+                let (tx, ty, tw, th) = trigger_rect_opt.unwrap_or((0.0, 0.0, 120.0, 32.0));
+                let (vw, vh) = viewport_size();
+                let placement = best_placement(tx, ty, tw, th, vw, vh);
+                placement_t.set(placement);
+
+                if let Some(ref cell) = *dropdown_ref_t.borrow() {
+                    if let Some(handle) = cell.downcast_ref::<u64>() {
+                        let dd_h = DomHandle::from_raw(*handle);
+                        position_dropdown(placement, dd_h, tx, ty, tw, th, DROPDOWN_MIN_WIDTH);
+                        set_style(dd_h, "display", "block");
+                    }
+                }
+
+                if let Some(ref sc) = *select_ref_t.borrow() {
+                    if let Some(sh) = sc.downcast_ref::<u64>() {
+                        let sel_h = DomHandle::from_raw(*sh);
+                        set_attribute(sel_h, "class", "hi-select hi-select-sm hi-select-open");
+                    }
+                }
+
+                if let Some(ref ar) = *arrow_ref_t.borrow() {
+                    if let Some(ah) = ar.downcast_ref::<u64>() {
+                        let arr_h = DomHandle::from_raw(*ah);
+                        let dir = placement.open_arrow_direction();
+                        set_attribute(arr_h, "data-dir", dir);
+                    }
+                }
+
+                if let Some(ref bc) = *backdrop_ref_t.borrow() {
+                    if let Some(bh) = bc.downcast_ref::<u64>() {
+                        set_style(DomHandle::from_raw(*bh), "display", "block");
+                    }
+                }
+            } else {
+                close_dropdown(
+                    &dropdown_ref_t,
+                    &select_ref_t,
+                    &arrow_ref_t,
+                    &backdrop_ref_t,
+                );
             }
         }
     };
@@ -113,75 +287,53 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
     let is_open_close = is_open.clone();
     let dropdown_ref_c = dropdown_ref.clone();
     let select_ref_c = select_ref.clone();
+    let arrow_ref_c = arrow_ref.clone();
     let backdrop_ref_c = backdrop_ref.clone();
     let backdrop_on_click = move |_e: Box<dyn EventData>| {
         if !is_open_close.get() {
             return;
         }
         is_open_close.set(false);
-        if let Some(ref cell) = *dropdown_ref_c.borrow() {
-            if let Some(handle) = cell.downcast_ref::<u64>() {
-                set_style(DomHandle::from_raw(*handle), "display", "none");
-            }
-        }
-        if let Some(ref sc) = *select_ref_c.borrow() {
-            if let Some(sh) = sc.downcast_ref::<u64>() {
-                set_attribute(
-                    DomHandle::from_raw(*sh),
-                    "class",
-                    "hi-select hi-select-sm",
-                );
-            }
-        }
-        if let Some(ref bc) = *backdrop_ref_c.borrow() {
-            if let Some(bh) = bc.downcast_ref::<u64>() {
-                set_style(DomHandle::from_raw(*bh), "display", "none");
-            }
-        }
+        close_dropdown(&dropdown_ref_c, &select_ref_c, &arrow_ref_c, &backdrop_ref_c);
     };
 
     let options: Vec<VNode> = hooks::supported_languages()
         .iter()
         .map(|(lang, name)| {
             let code = lang.code().to_string();
+            let t_lang = map_to_tairitsu_lang(lang);
+            let is_selected = *lang == current_lang;
+
             let is_open_opt = is_open.clone();
             let dropdown_ref_opt = dropdown_ref.clone();
             let select_ref_opt = select_ref.clone();
+            let arrow_ref_opt = arrow_ref.clone();
             let backdrop_ref_opt = backdrop_ref.clone();
+
             VNode::Element(
                 VElement::new("div")
                     .class(format!(
                         "hi-select-option{}",
-                        if *lang == current_lang {
+                        if is_selected {
                             " hi-select-option--selected"
                         } else {
                             ""
                         }
                     ))
                     .attr("data-value", code.as_str())
-                    .on_event("click", move |e: Box<dyn EventData>| {
+                    .on_event("click", move |_e: Box<dyn EventData>| {
                         is_open_opt.set(false);
-                        if let Some(ref cell) = *dropdown_ref_opt.borrow() {
-                            if let Some(handle) = cell.downcast_ref::<u64>() {
-                                set_style(DomHandle::from_raw(*handle), "display", "none");
-                            }
-                        }
-                        if let Some(ref sc) = *select_ref_opt.borrow() {
-                            if let Some(sh) = sc.downcast_ref::<u64>() {
-                                set_attribute(
-                                    DomHandle::from_raw(*sh),
-                                    "class",
-                                    "hi-select hi-select-sm",
-                                );
-                            }
-                        }
-                        if let Some(ref bc) = *backdrop_ref_opt.borrow() {
-                            if let Some(bh) = bc.downcast_ref::<u64>() {
-                                set_style(DomHandle::from_raw(*bh), "display", "none");
-                            }
-                        }
+                        close_dropdown(
+                            &dropdown_ref_opt,
+                            &select_ref_opt,
+                            &arrow_ref_opt,
+                            &backdrop_ref_opt,
+                        );
+
                         #[cfg(target_arch = "wasm32")]
                         {
+                            use tairitsu_web::i18n::set_locale;
+                            set_locale(t_lang);
                             use tairitsu_web::wit_platform::wasm_impl::bindings::tairitsu_browser::full::history;
                             history::push_state("", "", Some(&format!("#lang={}", code)));
                             history::go(Some(0));
@@ -195,61 +347,88 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
     VNode::Element(
         VElement::new("div")
             .class("hi-aside-footer")
-            .child(
-                VNode::Element(
-                    VElement::new("button")
-                        .class("hi-aside-footer__btn")
-                        .attr("title", "Toggle theme")
-                        .on_event("click", theme_on_click)
-                        .child(VNode::Element(
-                            VElement::new("span")
-                                .class("hi-aside-footer__icon")
-                                .child(VNode::Text(VText::new("\u{263E}"))),
-                        )),
-                ),
-            )
-            .child(
-                VNode::Element(
-                    VElement::new("div")
-                        .class("hi-select hi-select-sm")
-                        .ref_(select_ref.clone())
-                        .child(
-                            VNode::Element(
-                                VElement::new("div")
-                                    .class("hi-select-trigger hi-select-sm")
-                                    .on_event("click", trigger_on_click)
-                                    .child(VNode::Element(
-                                        VElement::new("span")
-                                            .class("hi-select-value")
-                                            .child(VNode::Text(VText::new(current_name))),
-                                    ))
-                                    .child(VNode::Element(
-                                        VElement::new("span")
-                                            .class("hi-select-arrow")
-                                            .inner_html(
-                                                r#"<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>"#,
-                                            ),
-                                    )),
+            .child(VNode::Element(
+                VElement::new("button")
+                    .class("hi-aside-footer__btn")
+                    .attr("title", "Toggle theme")
+                    .attr("type", "button")
+                    .on_event("click", theme_on_click)
+                    .child(VNode::Element(
+                        VElement::new("span")
+                            .class("hi-aside-footer__icon")
+                            .inner_html(
+                                r#"<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>"#,
                             ),
-                        )
-                        .child(
-                            VNode::Element(
-                                VElement::new("div")
-                                    .class("hi-select-dropdown")
-                                    .ref_(dropdown_ref.clone())
-                                    .children(options),
-                            ),
-                        ),
-                ),
-            )
-            .child(
-                VNode::Element(
-                    VElement::new("div")
-                        .attr("data-dropdown-backdrop", "true")
-                        .style("position:fixed;inset:0;z-index:9998;display:none;")
-                        .ref_(backdrop_ref.clone())
-                        .on_event("click", backdrop_on_click),
-                ),
-            ),
+                    )),
+            ))
+            .child(VNode::Element(
+                VElement::new("div")
+                    .class("hi-select hi-select-sm hi-select--borderless")
+                    .ref_(select_ref.clone())
+                    .child(VNode::Element(
+                        VElement::new("div")
+                            .class("hi-select-trigger hi-select-trigger--borderless")
+                            .on_event("click", trigger_on_click)
+                            .child(VNode::Element(
+                                VElement::new("span")
+                                    .class("hi-select-value")
+                                    .child(VNode::Text(VText::new(current_name))),
+                            ))
+                            .child(VNode::Element(
+                                VElement::new("span")
+                                    .class("hi-select-arrow")
+                                    .attr("data-dir", "right")
+                                    .ref_(arrow_ref.clone())
+                                    .inner_html(
+                                        r#"<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>"#,
+                                    ),
+                            )),
+                    ))
+                    .child(VNode::Element(
+                        VElement::new("div")
+                            .class("hi-select-dropdown")
+                            .ref_(dropdown_ref.clone())
+                            .children(options),
+                    )),
+            ))
+            .child(VNode::Element(
+                VElement::new("div")
+                    .attr("data-dropdown-backdrop", "true")
+                    .style("position:fixed;inset:0;z-index:9998;display:none;")
+                    .ref_(backdrop_ref.clone())
+                    .on_event("click", backdrop_on_click),
+            )),
     )
+}
+
+fn close_dropdown(
+    dropdown_ref: &Rc<RefCell<Option<Box<dyn std::any::Any>>>>,
+    select_ref: &Rc<RefCell<Option<Box<dyn std::any::Any>>>>,
+    arrow_ref: &Rc<RefCell<Option<Box<dyn std::any::Any>>>>,
+    backdrop_ref: &Rc<RefCell<Option<Box<dyn std::any::Any>>>>,
+) {
+    if let Some(ref cell) = *dropdown_ref.borrow() {
+        if let Some(handle) = cell.downcast_ref::<u64>() {
+            set_style(DomHandle::from_raw(*handle), "display", "none");
+        }
+    }
+    if let Some(ref sc) = *select_ref.borrow() {
+        if let Some(sh) = sc.downcast_ref::<u64>() {
+            set_attribute(
+                DomHandle::from_raw(*sh),
+                "class",
+                "hi-select hi-select-sm hi-select--borderless",
+            );
+        }
+    }
+    if let Some(ref ar) = *arrow_ref.borrow() {
+        if let Some(ah) = ar.downcast_ref::<u64>() {
+            set_attribute(DomHandle::from_raw(*ah), "data-dir", "right");
+        }
+    }
+    if let Some(ref bc) = *backdrop_ref.borrow() {
+        if let Some(bh) = bc.downcast_ref::<u64>() {
+            set_style(DomHandle::from_raw(*bh), "display", "none");
+        }
+    }
 }

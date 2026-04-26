@@ -1008,22 +1008,6 @@ static KEYS_RU: I18nKeys = I18nKeys {
     },
 };
 
-pub fn get_keys(lang: &Language) -> &'static I18nKeys {
-    match *lang {
-        Language::ENGLISH => &KEYS_EN,
-        Language::CHINESE_SIMPLIFIED => &KEYS_ZH_CN,
-        Language::CHINESE_TRADITIONAL => &KEYS_ZH_TW,
-        Language::JAPANESE => &KEYS_JA,
-        Language::KOREAN => &KEYS_KO,
-        Language::FRENCH => &KEYS_FR,
-        _ if is_german(lang) => &KEYS_DE,
-        Language::SPANISH => &KEYS_ES,
-        Language::ARABIC => &KEYS_AR,
-        Language::RUSSIAN => &KEYS_RU,
-        _ => &KEYS_EN,
-    }
-}
-
 pub fn detect_language() -> Language {
     #[cfg(target_arch = "wasm32")]
     {
@@ -1042,18 +1026,6 @@ pub fn detect_language() -> Language {
 
 pub fn use_language() -> Language {
     detect_language()
-}
-
-pub fn bilingual(primary: &str, secondary: &str) -> String {
-    format!("{} / {}", primary, secondary)
-}
-
-pub fn bilingual_keys(lang: &Language, en_key: &str, zh_key: &str) -> String {
-    if matches!(*lang, Language::CHINESE_SIMPLIFIED | Language::CHINESE_TRADITIONAL) {
-        bilingual(zh_key, en_key)
-    } else {
-        bilingual(en_key, zh_key)
-    }
 }
 
 pub fn supported_languages() -> &'static [(Language, &'static str)] {

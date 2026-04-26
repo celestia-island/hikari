@@ -1,11 +1,32 @@
 use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
 use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
+use hikari_icons::generated::mdi_selected::get;
+use hikari_icons::MdiIcon;
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
+fn icon_el(icon: MdiIcon, size: u32) -> VNode {
+    let svg_str = get(icon.to_string().as_str())
+        .map(|data| {
+            format!(
+                r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{}" width="{}" height="{}"><path fill="currentColor" d="{}"/></svg>"#,
+                data.view_box.as_deref().unwrap_or("0 0 24 24"),
+                size,
+                size,
+                data.path.as_deref().unwrap_or("")
+            )
+        })
+        .unwrap_or_default();
+    VNode::Element(
+        tairitsu_vdom::VElement::new("span")
+            .class("hikari-icon")
+            .inner_html(svg_str),
+    )
+}
+
 fn btn(class: &str, label: &str, color: GlowColor) -> VNode {
     glow_wrap(
-        rsx! { button { class: class, {tairitsu_vdom::VNode::Text(tairitsu_vdom::VText::new(label))} } },
+        rsx! { button { class: class, attr: "type", "button", {tairitsu_vdom::VNode::Text(tairitsu_vdom::VText::new(label))} } },
         GlowConfig {
             intensity: GlowIntensity::Soft,
             color,
@@ -14,8 +35,15 @@ fn btn(class: &str, label: &str, color: GlowColor) -> VNode {
     )
 }
 
-fn btn_raw(class: &str, label: &str, extra: &str) -> VNode {
-    rsx! { button { class: format!("{} {}", class, extra), {tairitsu_vdom::VNode::Text(tairitsu_vdom::VText::new(label))} } }
+fn btn_disabled(class: &str, label: &str, color: GlowColor) -> VNode {
+    glow_wrap(
+        rsx! { button { class: class, attr: "type", "button", attr: "disabled", "true", {tairitsu_vdom::VNode::Text(tairitsu_vdom::VText::new(label))} } },
+        GlowConfig {
+            intensity: GlowIntensity::Soft,
+            color,
+            ..Default::default()
+        },
+    )
 }
 
 pub fn render() -> VNode {
@@ -47,9 +75,9 @@ pub fn render() -> VNode {
                 render_demo_row(
                     rsx! {
                         {btn("hi-button hi-button-primary", "Normal", GlowColor::Primary)}
-                        {btn_raw("hi-button hi-button-primary", "\u{23F7} Loading...", "disabled=\"true\"")}
-                        {btn("hi-button hi-button-primary", "\u{2605} Icon Button", GlowColor::Primary)}
-                        {btn("hi-button hi-button-primary", "Disabled", GlowColor::Primary)}
+                        {btn_disabled("hi-button hi-button-primary", "Loading...", GlowColor::Primary)}
+                        {btn("hi-button hi-button-primary", " Icon Button", GlowColor::Primary)}
+                        {btn_disabled("hi-button hi-button-primary", "Disabled", GlowColor::Primary)}
                     }
                 )
             )}
@@ -64,11 +92,11 @@ pub fn render() -> VNode {
             {render_demo_block("Block Buttons",
                 rsx! {
                     div { style: "display:flex;flex-direction:column;gap:12px;",
-                        button { class: "hi-button hi-button-primary", style: "width:100%;", "Full Width Primary" }
-                        button { class: "hi-button hi-button-danger", style: "width:100%;", "Delete Account" }
+                        button { class: "hi-button hi-button-primary", style: "width:100%;", attr: "type", "button", "Full Width Primary" }
+                        button { class: "hi-button hi-button-danger", style: "width:100%;", attr: "type", "button", "Delete Account" }
                         div { style: "display:flex;gap:12px;",
-                            button { class: "hi-button hi-button-secondary", style: "flex:1;", "Cancel" }
-                            button { class: "hi-button hi-button-primary", style: "flex:1;", "Confirm" }
+                            button { class: "hi-button hi-button-secondary", style: "flex:1;", attr: "type", "button", "Cancel" }
+                            button { class: "hi-button hi-button-primary", style: "flex:1;", attr: "type", "button", "Confirm" }
                         }
                     }
                 }

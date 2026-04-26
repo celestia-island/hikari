@@ -39,7 +39,7 @@ fn make_search(placeholder: &str, extra_class: &str, icon: bool, clearable: bool
         None
     };
     let clear_node = if clearable {
-        Some(rsx! { button { class: "hi-search__clear", "\u{00D7}" } })
+        Some(rsx! { button { attr: "type", "button", class: "hi-search__clear", attr: "aria-label", "Clear", {icon_el(MdiIcon::Close, 14)} } })
     } else {
         None
     };

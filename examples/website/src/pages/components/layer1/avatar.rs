@@ -1,6 +1,16 @@
 use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
 use tairitsu_macros::rsx;
-use tairitsu_vdom::VNode;
+use tairitsu_vdom::{VElement, VNode};
+
+fn status_dot(color: &str, border: &str) -> VNode {
+    VNode::Element(
+        VElement::new("div")
+            .style(format!(
+                "position:absolute;bottom:0;right:0;width:14px;height:14px;border-radius:50%;background:{};border:2px solid {};",
+                color, border
+            ))
+    )
+}
 
 pub fn render() -> VNode {
     render_demo_page(
@@ -95,19 +105,19 @@ pub fn render() -> VNode {
                     rsx! {
                         div { style: "position:relative;display:inline-block;",
                             div { class: "hi-avatar hi-avatar--primary", "A" }
-                            div { style: "position:absolute;bottom:0;right:0;width:14px;height:14px;border-radius:50%;background:#22c55e;border:2px solid white;" }
+                            {status_dot("#22c55e", "white")}
                         }
                         div { style: "position:relative;display:inline-block;",
                             div { class: "hi-avatar hi-avatar--danger", "R" }
-                            div { style: "position:absolute;bottom:0;right:0;width:14px;height:14px;border-radius:50%;background:#ef4444;border:2px solid white;" }
+                            {status_dot("#ef4444", "white")}
                         }
                         div { style: "position:relative;display:inline-block;",
                             div { class: "hi-avatar hi-avatar--secondary", "S" }
-                            div { style: "position:absolute;bottom:0;right:0;width:14px;height:14px;border-radius:50%;background:#9ca3af;border:2px solid white;" }
+                            {status_dot("#9ca3af", "white")}
                         }
                         div { style: "position:relative;display:inline-block;",
                             div { class: "hi-avatar hi-avatar--warning", "Y" }
-                            div { style: "position:absolute;bottom:0;right:0;width:14px;height:14px;border:2px solid white;background:transparent;border-top:3px solid #f59e0b;border-right:3px solid transparent;transform:rotate(45deg);" }
+                            {status_dot("transparent", "var(--hi-color-bg-base, white)")}
                         }
                     }
                 )

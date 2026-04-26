@@ -1,6 +1,6 @@
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
-use crate::components::demo_page::{render_demo_page, render_demo_block, render_api_table};
 
 pub fn render() -> VNode {
     render_demo_page(
@@ -87,7 +87,7 @@ pub fn render() -> VNode {
                         div { class: "hi-comment-input__field",
                             textarea { class: "hi-textarea", placeholder: "Write a comment...", style: "resize:none;" }
                             div { style: "display:flex;justify-content:flex-end;margin-top:8px;",
-                                button { class: "hi-button hi-button-primary hi-button-sm", "Post" }
+                                button { class: "hi-button hi-button-primary hi-button-sm", attr: "type", "button", "Post" }
                             }
                         }
                     }

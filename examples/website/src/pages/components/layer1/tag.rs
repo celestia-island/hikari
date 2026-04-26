@@ -66,7 +66,9 @@ pub fn render() -> VNode {
                     rsx! {
                         span { class: "hi-tag hi-tag--primary", "React" }
                         span { class: "hi-tag hi-tag--primary", "TypeScript" }
-                        span { class: "hi-tag hi-tag--danger hi-tag--closable", "\u{d7}" }
+                         span { class: "hi-tag hi-tag--danger hi-tag--closable",
+                            {icon_el(MdiIcon::Close, 12)}
+                         }
                         span { class: "hi-tag hi-tag--success", "Rust" }
                     }
                 )

@@ -44,16 +44,16 @@ impl DropdownPlacement {
 
 fn map_to_tairitsu_lang(lang: &hooks::Language) -> TairitsuLanguage {
     match lang {
-        hooks::Language::En => TairitsuLanguage::English,
-        hooks::Language::ZhCn => TairitsuLanguage::ChineseSimplified,
-        hooks::Language::ZhTw => TairitsuLanguage::ChineseTraditional,
-        hooks::Language::Ja => TairitsuLanguage::Japanese,
-        hooks::Language::Ko => TairitsuLanguage::Korean,
-        hooks::Language::Fr => TairitsuLanguage::French,
-        hooks::Language::De => TairitsuLanguage::English,
-        hooks::Language::Es => TairitsuLanguage::Spanish,
-        hooks::Language::Ar => TairitsuLanguage::Arabic,
-        hooks::Language::Ru => TairitsuLanguage::Russian,
+        hooks::Language::En => TairitsuLanguage::ENGLISH,
+        hooks::Language::ZhCn => TairitsuLanguage::CHINESE_SIMPLIFIED,
+        hooks::Language::ZhTw => TairitsuLanguage::CHINESE_TRADITIONAL,
+        hooks::Language::Ja => TairitsuLanguage::JAPANESE,
+        hooks::Language::Ko => TairitsuLanguage::KOREAN,
+        hooks::Language::Fr => TairitsuLanguage::FRENCH,
+        hooks::Language::De => TairitsuLanguage::ENGLISH,
+        hooks::Language::Es => TairitsuLanguage::SPANISH,
+        hooks::Language::Ar => TairitsuLanguage::ARABIC,
+        hooks::Language::Ru => TairitsuLanguage::RUSSIAN,
     }
 }
 

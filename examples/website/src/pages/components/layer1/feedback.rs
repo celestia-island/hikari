@@ -1,8 +1,8 @@
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
 use hikari_icons::generated::mdi_selected::get;
 use hikari_icons::MdiIcon;
 use tairitsu_macros::rsx;
 use tairitsu_vdom::{VElement, VNode};
-use crate::components::demo_page::{render_demo_page, render_demo_block, render_demo_row, render_api_table};
 
 fn icon_el(icon: MdiIcon, size: u32) -> VNode {
     let icon_name = icon.to_string();
@@ -26,133 +26,75 @@ fn icon_el(icon: MdiIcon, size: u32) -> VNode {
     )
 }
 
+fn alert_node(class: &str, icon: MdiIcon, text: &str, role: &str, live: &str) -> VNode {
+    VNode::Element(
+        VElement::new("div")
+            .class(class)
+            .attr("role", role)
+            .attr("aria-live", live)
+            .children(vec![
+                VNode::Element(
+                    VElement::new("span")
+                        .style("display:flex;align-items:center;gap:8px;")
+                        .children(vec![icon_el(icon, 16), VNode::Text(tairitsu_vdom::VText::new(text))])
+                )
+            ])
+    )
+}
+
+fn closable_alert(class: &str, icon: MdiIcon, text: &str) -> VNode {
+    VNode::Element(
+        VElement::new("div")
+            .class(class)
+            .children(vec![
+                VNode::Element(
+                    VElement::new("span")
+                        .style("display:flex;align-items:center;gap:8px;flex:1;")
+                        .children(vec![icon_el(icon, 16), VNode::Text(tairitsu_vdom::VText::new(text))])
+                ),
+                VNode::Element(
+                    VElement::new("button")
+                        .class("hi-alert__close")
+                        .attr("type", "button")
+                        .attr("aria-label", "Dismiss")
+                        .children(vec![icon_el(MdiIcon::Close, 16)])
+                )
+            ])
+    )
+}
+
 pub fn render() -> VNode {
     render_demo_page(
         "page-component-feedback",
         "Feedback",
         "Alerts, progress bars, and spinners for communicating system status to users.",
         rsx! {
-            {render_demo_block("Alert Variants", rsx! {
-                div { style: "display:flex;flex-direction:column;gap:12px;",
-                    div { class: "hi-alert hi-alert--info",
-                        span { style: "display:flex;align-items:center;gap:8px;",
-                            {icon_el(MdiIcon::Information, 16)}
-                            "This is an informational alert for general notices." }
-                        }
-                    div { class: "hi-alert hi-alert--success",
-                        span { style: "display:flex;align-items:center;gap:8px;",
-                            {icon_el(MdiIcon::Check, 16)}
-                            "Operation completed successfully." }
-                        }
-                    div { class: "hi-alert hi-alert--danger",
-                        span { style: "display:flex;align-items:center;gap:8px;",
-                            {icon_el(MdiIcon::Close, 16)}
-                            "An error occurred. Please try again later." }
-                        }
-                    div { class: "hi-alert hi-alert--warning",
-                        span { style: "display:flex;align-items:center;gap:8px;",
-                            {icon_el(MdiIcon::AlertTriangle, 16)}
-                            "Warning: Your session will expire in 5 minutes." }
-                        }
-                }
-            })}
-            {render_demo_block("Alert with Title", rsx! {
-                div { style: "display:flex;flex-direction:column;gap:12px;",
-                    div { class: "hi-alert hi-alert--success",
-                        div { style: "font-weight:600;margin-bottom:4px;", "Update Available" }
-                        div { "A new version (v2.4.0) is ready to install." }
-                    }
-                    div { class: "hi-alert hi-alert--danger",
-                        div { style: "font-weight:600;margin-bottom:4px;", "Connection Lost" }
-                        div { "Unable to reach the server. Check your network settings." }
-                    }
-                }
-            })}
-            {render_demo_block("Progress Bars", rsx! {
-                div { style: "display:flex;flex-direction:column;gap:16px;",
-                    div {
-                        div { style: "margin-bottom:4px;font-size:13px;color:var(--hi-color-text-secondary);", "Uploading... 60%" }
-                        div { class: "hi-progress",
-                            div { class: "hi-progress__bar", style: "width: 60%;" }
-                        }
-                    }
-                    div {
-                        div { style: "margin-bottom:4px;font-size:13px;color:var(--hi-color-text-secondary);", "Processing... 85%" }
-                        div { class: "hi-progress hi-progress--success",
-                            div { class: "hi-progress__bar", style: "width: 85%;" }
-                        }
-                    }
-                    div {
-                        div { style: "margin-bottom:4px;font-size:13px;color:var(--hi-color-text-secondary);", "Error at 30%" }
-                        div { class: "hi-progress hi-progress--danger",
-                            div { class: "hi-progress__bar", style: "width: 30%;" }
-                        }
-                    }
-                }
-            })}
-            {render_demo_block("Spinners",
+            {render_demo_block("Alert Variants",
                 rsx! {
-                    {render_demo_row(rsx! {
-                        div { class: "hi-spin" }
-                        div { class: "hi-spin hi-spin--lg" }
-                        div { style: "display:flex;align-items:center;gap:8px;",
-                            div { class: "hi-spin" }
-                            span { style: "font-size:14px;color:var(--hi-color-text-secondary);", "Loading data..." }
-                        }
-                    })}
+                    div { style: "display:flex;flex-direction:column;gap:12px;",
+                        {alert_node("hi-alert hi-alert--info", MdiIcon::Information, "This is an informational alert for general notices.", "status", "polite")}
+                        {alert_node("hi-alert hi-alert--success", MdiIcon::Check, "Operation completed successfully.", "status", "polite")}
+                        {alert_node("hi-alert hi-alert--danger", MdiIcon::Close, "An error occurred. Please try again later.", "alert", "assertive")}
+                        {alert_node("hi-alert hi-alert--warning", MdiIcon::AlertTriangle, "Warning: Your session will expire in 5 minutes.", "alert", "assertive")}
+                    }
                 }
             )}
-            {render_demo_block("Closable Alerts", rsx! {
-                div { style: "display:flex;flex-direction:column;gap:12px;",
-                    div { class: "hi-alert hi-alert--info",
-                        span { style: "display:flex;align-items:center;gap:8px;flex:1;",
-                            {icon_el(MdiIcon::Information, 16)}
-                            "This alert can be dismissed." }
-                        span { style: "cursor:pointer;font-size:16px;opacity:0.6;padding:0 4px;", "\u{00D7}" }
-                    }
-                    div { class: "hi-alert hi-alert--success",
-                        span { style: "display:flex;align-items:center;gap:8px;flex:1;",
-                            {icon_el(MdiIcon::Check, 16)}
-                            "Changes saved successfully." }
-                        span { style: "cursor:pointer;font-size:16px;opacity:0.6;padding:0 4px;", "\u{00D7}" }
-                    }
-                    div { class: "hi-alert hi-alert--success",
-                        span { style: "flex:1;", "\u{2713}  Changes saved successfully." }
-                        span { style: "cursor:pointer;font-size:16px;opacity:0.6;padding:0 4px;", "\u{00d7}" }
+            {render_demo_block("Closable Alerts",
+                rsx! {
+                    div { style: "display:flex;flex-direction:column;gap:12px;",
+                        {closable_alert("hi-alert hi-alert--info", MdiIcon::Information, "This alert can be dismissed.")}
+                        {closable_alert("hi-alert hi-alert--success", MdiIcon::Check, "Changes saved successfully.")}
+                        {closable_alert("hi-alert hi-alert--success", MdiIcon::Check, " Changes saved successfully.")}
                     }
                 }
-            })}
-            {render_demo_block("Indeterminate & Spinner Sizes", rsx! {
-                div { style: "display:flex;flex-direction:column;gap:20px;",
-                    div {
-                        div { style: "margin-bottom:6px;font-size:13px;color:var(--hi-color-text-secondary);", "Loading resources..." }
-                        div { class: "hi-progress",
-                            div { class: "hi-progress__bar", style: "width:40%;animation:hi-progress-indeterminate 1.8s ease-in-out infinite;" }
-                        }
-                    }
-                    div { style: "display:flex;align-items:center;gap:24px;",
-                        div { style: "display:flex;align-items:center;gap:10px;",
-                            div { class: "hi-spin hi-spin--sm" }
-                            span { style: "font-size:13px;color:var(--hi-color-text-secondary);", "Small" }
-                        }
-                        div { style: "display:flex;align-items:center;gap:10px;",
-                            div { class: "hi-spin" }
-                            span { style: "font-size:13px;color:var(--hi-color-text-secondary);", "Default" }
-                        }
-                        div { style: "display:flex;align-items:center;gap:10px;",
-                            div { class: "hi-spin hi-spin--lg" }
-                            span { style: "font-size:13px;color:var(--hi-color-text-secondary);", "Large" }
-                        }
-                    }
-                }
-            })}
+            )}
             {render_demo_block("API",
                 render_api_table(&[
-                    ("Alert.variant", "info | success | danger | warning", "-", "Alert style variant"),
-                    ("Alert.title", "string", "-", "Optional alert heading"),
-                    ("Progress.percent", "number", "-", "Completion percentage (0-100)"),
-                    ("Progress.variant", "default | success | danger", "-", "Progress bar color"),
-                    ("Spinner.size", "default | large", "-", "Spinner diameter"),
+                    ("variant", "info | success | danger | warning", "info", "Alert color variant"),
+                    ("closable", "bool", "false", "Show dismiss button"),
+                    ("icon", "MdiIcon", "-", "Leading icon"),
+                    ("role", "string", "status | alert", "ARIA role (status or alert)"),
+                    ("aria-live", "string", "polite | assertive", "ARIA live region politeness"),
                 ])
             )}
         }

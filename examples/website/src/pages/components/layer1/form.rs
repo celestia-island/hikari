@@ -10,6 +10,13 @@ fn glow_input(placeholder: &str, type_: &str, extra_class: &str, color: GlowColo
     )
 }
 
+fn glow_input_disabled(placeholder: &str, type_: &str, color: GlowColor) -> VNode {
+    glow_wrap(
+        rsx! { input { class: "hi-input", placeholder: placeholder, r#type: type_, attr: "disabled", "true" } },
+        GlowConfig { intensity: GlowIntensity::Soft, color, ..Default::default() },
+    )
+}
+
 pub fn render() -> VNode {
     render_demo_page(
         "page-component-form",
@@ -35,7 +42,7 @@ pub fn render() -> VNode {
                             )}
                         }
                         {glow_wrap(
-                            rsx! { button { class: "hi-button hi-button-primary", "Submit" } },
+                            rsx! { button { class: "hi-button hi-button-primary", attr: "type", "button", "Submit" } },
                             GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                         )}
                     }
@@ -67,7 +74,7 @@ pub fn render() -> VNode {
                             }
                             div { class: "hi-form-item",
                                 label { class: "hi-label", "Disabled" }
-                                {glow_input("Disabled field", "text", "disabled=\"true\"", GlowColor::Ghost)}
+                                {glow_input_disabled("Disabled field", "text", GlowColor::Ghost)}
                             }
                         }
                     }
@@ -78,7 +85,7 @@ pub fn render() -> VNode {
                     form { class: "hi-form hi-form--inline",
                         {glow_input("Search...", "search", "", GlowColor::Ghost)}
                         {glow_wrap(
-                            rsx! { button { class: "hi-button hi-button-primary hi-button-sm", "Search" } },
+                            rsx! { button { class: "hi-button hi-button-primary hi-button-sm", attr: "type", "button", "Search" } },
                             GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                         )}
                     }
@@ -91,27 +98,27 @@ pub fn render() -> VNode {
                             div { class: "hi-form-item",
                                 label { class: "hi-form-item__label",
                                     span { "Username" }
-                                    span { style: "color:#ef4444;margin-left:2px;", "*" }
+                                    span { style: "color:var(--hi-color-danger);margin-left:2px;", "*" }
                                 }
                                 input { class: "hi-input", value: "alice_chen", style: "width:100%;box-sizing:border-box;" }
-                                p { style: "margin:4px 0 0;font-size:12px;color:#22c55e;display:flex;align-items:center;gap:4px;", "\u{2713} Username is available" }
+                                p { style: "margin:4px 0 0;font-size:12px;color:var(--hi-color-success);display:flex;align-items:center;gap:4px;", "\u{2713} Username is available" }
                             }
                             div { class: "hi-form-item",
                                 label { class: "hi-form-item__label",
                                     span { "Email" }
-                                    span { style: "color:#ef4444;margin-left:2px;", "*" }
+                                    span { style: "color:var(--hi-color-danger);margin-left:2px;", "*" }
                                 }
-                                input { class: "hi-input", value: "invalid-email", style: "width:100%;box-sizing:border-box;border-color:#ef4444;background:#fef2f2;" }
-                                p { style: "margin:4px 0 0;font-size:12px;color:#ef4444;", "Please enter a valid email address (e.g. user@example.com)" }
+                                input { class: "hi-input", value: "invalid-email", style: "width:100%;box-sizing:border-box;border-color:var(--hi-color-danger);background:var(--hi-color-danger-bg, rgba(239,68,68,0.06));" }
+                                p { style: "margin:4px 0 0;font-size:12px;color:var(--hi-color-danger);", "Please enter a valid email address (e.g. user@example.com)" }
                             }
                             div { class: "hi-form-item",
                                 label { class: "hi-form-item__label", "Password" }
-                                input { class: "hi-input", r#type: "password", value: "12345", style: "width:100%;box-sizing:border-box;border-color:#ef4444;background:#fef2f2;", autocomplete: "new-password" }
-                                p { style: "margin:4px 0 0;font-size:12px;color:#ef4444;", "Password must be at least 8 characters" }
+                                input { class: "hi-input", r#type: "password", value: "12345", style: "width:100%;box-sizing:border-box;border-color:var(--hi-color-danger);background:var(--hi-color-danger-bg, rgba(239,68,68,0.06));", autocomplete: "new-password" }
+                                p { style: "margin:4px 0 0;font-size:12px;color:var(--hi-color-danger);", "Password must be at least 8 characters" }
                             }
                             div { style: "display:flex;gap:12px;margin-top:8px;",
-                                button { class: "hi-button hi-button-primary", "Submit" }
-                                button { class: "hi-button hi-button-secondary", "Reset" }
+                                button { class: "hi-button hi-button-primary", attr: "type", "button", "Submit" }
+                                button { class: "hi-button hi-button-secondary", attr: "type", "button", "Reset" }
                             }
                         }
                     }

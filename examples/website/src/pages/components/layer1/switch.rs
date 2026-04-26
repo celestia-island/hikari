@@ -5,15 +5,24 @@ use tairitsu_vdom::VNode;
 fn make_switch(checked: bool, extra_class: &str) -> VNode {
     let mut classes = "hi-switch".to_string();
     if !extra_class.is_empty() {
-        classes.push_str(" ");
+        classes.push(' ');
         classes.push_str(extra_class);
     }
+    let checked_attr = if checked { "true" } else { "false" };
     let mut children: Vec<VNode> = Vec::new();
-    children.push(rsx! { input { r#type: "checkbox", class: "hi-switch__input" } });
+    children.push(rsx! {
+        input {
+            r#type: "checkbox",
+            class: "hi-switch__input",
+            checked: checked_attr,
+            attr: "aria-checked", checked_attr,
+        }
+    });
     children.push(rsx! { span { class: "hi-switch__rail" } });
     VNode::Element(
         tairitsu_vdom::VElement::new("label")
             .class(classes.as_str())
+            .attr("role", "switch")
             .children(children),
     )
 }
@@ -91,13 +100,11 @@ pub fn render() -> VNode {
                 rsx! {
                     div { style: "display:flex;flex-direction:column;gap:16px;",
                         div { style: "display:flex;align-items:center;gap:16px;",
-                            div { class: "hi-switch hi-switch--danger" }
+                            {make_switch(false, "hi-switch--danger")},
                             span { "Auto-delete after 30 days" }
                         }
                         div { style: "display:flex;align-items:center;gap:16px;",
-                            div { class: "hi-switch hi-switch--danger",
-                                input { r#type: "checkbox", checked: "true" }
-                            }
+                            {make_switch(true, "hi-switch--danger")},
                             span { "Auto-delete enabled (active)" }
                         }
                     }

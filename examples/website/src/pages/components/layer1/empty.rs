@@ -35,7 +35,9 @@ pub fn render() -> VNode {
             {render_demo_block("Basic Empty State",
                 rsx! {
                     div { class: "hi-empty",
-                        div { class: "hi-empty__icon", "\u{2205}" }
+                        div { class: "hi-empty__icon",
+                            {icon_el(MdiIcon::Magnify, 48)}
+                        }
                         div { class: "hi-empty__description", "No data available" }
                     }
                 }
@@ -43,9 +45,11 @@ pub fn render() -> VNode {
             {render_demo_block("Empty with Action",
                 rsx! {
                     div { class: "hi-empty",
-                        div { class: "hi-empty__icon", "\u{1f4cb}" }
+                        div { class: "hi-empty__icon",
+                            {icon_el(MdiIcon::FileEdit, 48)}
+                        }
                         div { class: "hi-empty__description", "You have no projects yet" }
-                        button { class: "hi-button hi-button-primary", "Create Project" }
+                        button { class: "hi-button hi-button-primary", attr: "type", "button", "Create Project" }
                     }
                 }
             )}
@@ -99,7 +103,7 @@ pub fn render() -> VNode {
             )}
             {render_demo_block("API",
                 render_api_table(&[
-                    ("icon", "string", "\u{2205}", "Icon or emoji displayed"),
+                    ("icon", "string", "MdiIcon", "Icon or emoji displayed (MdiIcon or Unicode)"),
                     ("description", "string", "No data", "Primary description text"),
                     ("hint", "string", "-", "Secondary helper text"),
                     ("action", "VNode", "-", "Optional action button"),

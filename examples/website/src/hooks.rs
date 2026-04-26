@@ -1,66 +1,9 @@
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Language {
-    En,
-    ZhCn,
-    ZhTw,
-    Ja,
-    Ko,
-    Fr,
-    De,
-    Es,
-    Ar,
-    Ru,
-}
+use std::sync::LazyLock;
 
-impl Language {
-    pub fn code(&self) -> &'static str {
-        match self {
-            Language::En => "en",
-            Language::ZhCn => "zh-CN",
-            Language::ZhTw => "zh-TW",
-            Language::Ja => "ja",
-            Language::Ko => "ko",
-            Language::Fr => "fr",
-            Language::De => "de",
-            Language::Es => "es",
-            Language::Ar => "ar",
-            Language::Ru => "ru",
-        }
-    }
+pub use tairitsu_web::i18n::Language;
 
-    pub fn native_name(&self) -> &'static str {
-        match self {
-            Language::En => "English",
-            Language::ZhCn => "简体中文",
-            Language::ZhTw => "繁體中文",
-            Language::Ja => "日本語",
-            Language::Ko => "한국어",
-            Language::Fr => "Français",
-            Language::De => "Deutsch",
-            Language::Es => "Español",
-            Language::Ar => "العربية",
-            Language::Ru => "Русский",
-        }
-    }
-
-    pub fn from_code(code: &str) -> Self {
-        match code {
-            "zh-CN" | "zh-CHS" | "zh-cn" | "zh-chs" | "zh" => Language::ZhCn,
-            "zh-TW" | "zh-CHT" | "zh-tw" | "zh-cht" => Language::ZhTw,
-            "ja" | "ja-JP" | "ja-jp" => Language::Ja,
-            "ko" | "ko-KR" | "ko-kr" => Language::Ko,
-            "fr" | "fr-FR" | "fr-fr" => Language::Fr,
-            "de" | "de-DE" | "de-de" => Language::De,
-            "es" | "es-ES" | "es-es" => Language::Es,
-            "ar" | "ar-SA" | "ar-sa" => Language::Ar,
-            "ru" | "ru-RU" | "ru-ru" => Language::Ru,
-            _ => Language::En,
-        }
-    }
-
-    pub fn is_rtl(&self) -> bool {
-        matches!(self, Language::Ar)
-    }
+fn is_german(lang: &Language) -> bool {
+    lang.code().starts_with("DE")
 }
 
 pub struct ComponentKeys {
@@ -1066,17 +1009,18 @@ static KEYS_RU: I18nKeys = I18nKeys {
 };
 
 pub fn get_keys(lang: &Language) -> &'static I18nKeys {
-    match lang {
-        Language::En => &KEYS_EN,
-        Language::ZhCn => &KEYS_ZH_CN,
-        Language::ZhTw => &KEYS_ZH_TW,
-        Language::Ja => &KEYS_JA,
-        Language::Ko => &KEYS_KO,
-        Language::Fr => &KEYS_FR,
-        Language::De => &KEYS_DE,
-        Language::Es => &KEYS_ES,
-        Language::Ar => &KEYS_AR,
-        Language::Ru => &KEYS_RU,
+    match *lang {
+        Language::ENGLISH => &KEYS_EN,
+        Language::CHINESE_SIMPLIFIED => &KEYS_ZH_CN,
+        Language::CHINESE_TRADITIONAL => &KEYS_ZH_TW,
+        Language::JAPANESE => &KEYS_JA,
+        Language::KOREAN => &KEYS_KO,
+        Language::FRENCH => &KEYS_FR,
+        _ if is_german(lang) => &KEYS_DE,
+        Language::SPANISH => &KEYS_ES,
+        Language::ARABIC => &KEYS_AR,
+        Language::RUSSIAN => &KEYS_RU,
+        _ => &KEYS_EN,
     }
 }
 
@@ -1087,11 +1031,13 @@ pub fn detect_language() -> Language {
 
         if hash.starts_with("#lang=") {
             let code = &hash[6..];
-            return Language::from_code(code);
+            if let Some(lang) = Language::from_code(code) {
+                return lang;
+            }
         }
     }
 
-    Language::En
+    Language::default_lang()
 }
 
 pub fn use_language() -> Language {
@@ -1103,7 +1049,7 @@ pub fn bilingual(primary: &str, secondary: &str) -> String {
 }
 
 pub fn bilingual_keys(lang: &Language, en_key: &str, zh_key: &str) -> String {
-    if matches!(lang, Language::ZhCn | Language::ZhTw) {
+    if matches!(*lang, Language::CHINESE_SIMPLIFIED | Language::CHINESE_TRADITIONAL) {
         bilingual(zh_key, en_key)
     } else {
         bilingual(en_key, zh_key)
@@ -1111,16 +1057,19 @@ pub fn bilingual_keys(lang: &Language, en_key: &str, zh_key: &str) -> String {
 }
 
 pub fn supported_languages() -> &'static [(Language, &'static str)] {
-    &[
-        (Language::En, "English"),
-        (Language::ZhCn, "简体中文"),
-        (Language::ZhTw, "繁體中文"),
-        (Language::Ja, "日本語"),
-        (Language::Ko, "한국어"),
-        (Language::Fr, "Français"),
-        (Language::De, "Deutsch"),
-        (Language::Es, "Español"),
-        (Language::Ar, "العربية"),
-        (Language::Ru, "Русский"),
-    ]
+    static LANGS: LazyLock<Vec<(Language, &'static str)>> = LazyLock::new(|| {
+        vec![
+            (Language::ENGLISH, "English"),
+            (Language::CHINESE_SIMPLIFIED, "简体中文"),
+            (Language::CHINESE_TRADITIONAL, "繁體中文"),
+            (Language::JAPANESE, "日本語"),
+            (Language::KOREAN, "한국어"),
+            (Language::FRENCH, "Français"),
+            (Language::from_code("de").unwrap_or(Language::ENGLISH), "Deutsch"),
+            (Language::SPANISH, "Español"),
+            (Language::ARABIC, "العربية"),
+            (Language::RUSSIAN, "Русский"),
+        ]
+    });
+    LANGS.as_slice()
 }

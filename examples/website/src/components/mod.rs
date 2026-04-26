@@ -4,6 +4,7 @@
 //! so the bundle.css styles apply correctly for the drawer/header/aside layout.
 
 pub mod aside_footer;
+pub mod icon_utils;
 pub mod breadcrumb;
 pub mod code_block;
 pub mod doc_components;

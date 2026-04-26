@@ -9,7 +9,7 @@ use tairitsu_vdom::{
 };
 
 use crate::hooks;
-use tairitsu_web::i18n::Language as TairitsuLanguage;
+use tairitsu_web::i18n::Language;
 
 const DROPDOWN_MAX_HEIGHT: f64 = 240.0;
 const DROPDOWN_MIN_WIDTH: f64 = 120.0;
@@ -39,21 +39,6 @@ impl DropdownPlacement {
             Self::Right => "right",
             Self::Left => "left",
         }
-    }
-}
-
-fn map_to_tairitsu_lang(lang: &hooks::Language) -> TairitsuLanguage {
-    match lang {
-        hooks::Language::En => TairitsuLanguage::ENGLISH,
-        hooks::Language::ZhCn => TairitsuLanguage::CHINESE_SIMPLIFIED,
-        hooks::Language::ZhTw => TairitsuLanguage::CHINESE_TRADITIONAL,
-        hooks::Language::Ja => TairitsuLanguage::JAPANESE,
-        hooks::Language::Ko => TairitsuLanguage::KOREAN,
-        hooks::Language::Fr => TairitsuLanguage::FRENCH,
-        hooks::Language::De => TairitsuLanguage::ENGLISH,
-        hooks::Language::Es => TairitsuLanguage::SPANISH,
-        hooks::Language::Ar => TairitsuLanguage::ARABIC,
-        hooks::Language::Ru => TairitsuLanguage::RUSSIAN,
     }
 }
 
@@ -343,7 +328,6 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
         .iter()
         .map(|(lang, name)| {
             let code = lang.code().to_string();
-            let t_lang = map_to_tairitsu_lang(lang);
             let is_selected = *lang == current_lang;
 
             let is_open_opt = is_open.clone();
@@ -377,7 +361,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
                         #[cfg(target_arch = "wasm32")]
                         {
                             use tairitsu_web::i18n::set_locale;
-                            set_locale(t_lang);
+                            set_locale(*lang);
                             use tairitsu_web::wit_platform::wasm_impl::bindings::tairitsu_browser::full::history;
                             history::push_state("", "", Some(&format!("#lang={}", code)));
                             history::go(Some(0));

@@ -58,9 +58,6 @@ icons/
 # Playwright MCP debug artifacts
 .playwright-mcp/
 
-# Browser screenshots (debug output)
-hikari-*.png
-
 # Python cache and virtual environments
 __pycache__/
 **/__pycache__/

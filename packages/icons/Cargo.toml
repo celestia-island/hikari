@@ -9,7 +9,7 @@ license.workspace = true
 default = []
 dioxus = []
 tairitsu = ["tairitsu-vdom", "tairitsu-hooks", "tairitsu-macros"]
-dynamic-fetch = []
+dynamic-fetch = ["dep:web-sys", "dep:reqwest"]
 dynamic-fetch-warnings = []
 
 [build-dependencies]
@@ -30,6 +30,6 @@ serde.workspace = true
 ron.workspace = true
 
 # WASM dependencies for dynamic icon fetching
-[target.'cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))'.dependencies]
-web-sys = { version = "0.3", features = ["console"] }
-reqwest = { version = "^0.12", features = ["json"] }
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+web-sys = { version = "0.3", features = ["console"], optional = true }
+reqwest = { version = "^0.12", features = ["json"], optional = true }

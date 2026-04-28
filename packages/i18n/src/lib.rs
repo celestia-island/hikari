@@ -26,8 +26,8 @@
 //!
 //! // Load translations
 //! let mut translations = std::collections::HashMap::new();
-//! translations.insert(Language::English, load_toml_flat(include_str!("../../locales/en-US/strings.toml")).unwrap());
-//! translations.insert(Language::ChineseSimplified, load_toml_flat(include_str!("../../locales/zh-CHS/strings.toml")).unwrap());
+//! translations.insert(Language::English, load_toml_flat(include_str!("../../locales/en/strings.toml")).unwrap());
+//! translations.insert(Language::ChineseSimplified, load_toml_flat(include_str!("../../locales/zhs/strings.toml")).unwrap());
 //!
 //! // Provide i18n context (call once at app root)
 //! provide_i18n(Language::English, translations);

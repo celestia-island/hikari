@@ -15,7 +15,7 @@ use tairitsu_vdom::{VElement, VNode, VText};
 /// # Arguments
 ///
 /// * `doc_path` - The documentation path (e.g., "components/layer1/button")
-/// * `language` - The language code (e.g., "en-US", "zh-CHS")
+/// * `language` - The language code (e.g., "en", "zhs")
 /// * `title` - Optional page title (defaults to doc_path)
 pub fn DocumentationPage(doc_path: String, language: String, title: Option<String>) -> VNode {
     let page_title = title.unwrap_or_else(|| {

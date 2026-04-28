@@ -10,22 +10,22 @@
 
     // Supported languages with their display names and native names
     const LANGUAGES = {
-        'en-US': { name: 'English', nativeName: 'English' },
-        'zh-CHS': { name: 'Chinese (Simplified)', nativeName: '简体中文' },
-        'zh-CHT': { name: 'Chinese (Traditional)', nativeName: '繁體中文' },
-        'fr-FR': { name: 'French', nativeName: 'Français' },
-        'ru-RU': { name: 'Russian', nativeName: 'Русский' },
-        'es-ES': { name: 'Spanish', nativeName: 'Español' },
-        'ar-SA': { name: 'Arabic', nativeName: 'العربية' },
-        'ja-JP': { name: 'Japanese', nativeName: '日本語' },
-        'ko-KR': { name: 'Korean', nativeName: '한국어' }
+        'en': { name: 'English', nativeName: 'English' },
+        'zhs': { name: 'Chinese (Simplified)', nativeName: '简体中文' },
+        'zht': { name: 'Chinese (Traditional)', nativeName: '繁體中文' },
+        'fr': { name: 'French', nativeName: 'Français' },
+        'ru': { name: 'Russian', nativeName: 'Русский' },
+        'es': { name: 'Spanish', nativeName: 'Español' },
+        'ar': { name: 'Arabic', nativeName: 'العربية' },
+        'ja': { name: 'Japanese', nativeName: '日本語' },
+        'ko': { name: 'Korean', nativeName: '한국어' }
     };
 
     // Language to locale code mapping for RTL support
-    const RTL_LANGUAGES = ['ar-SA'];
+    const RTL_LANGUAGES = ['ar'];
 
     // Default language
-    const DEFAULT_LANG = 'en-US';
+    const DEFAULT_LANG = 'en';
 
     // Currently loaded translations
     let currentTranslations = null;
@@ -48,7 +48,7 @@
                 return browserLang;
             }
 
-            // Check for partial match (e.g., 'zh' matches 'zh-CHS')
+            // Check for partial match (e.g., 'zh' matches 'zhs')
             const langPrefix = browserLang.split('-')[0];
             for (const [code, info] of Object.entries(LANGUAGES)) {
                 if (code.startsWith(langPrefix)) {

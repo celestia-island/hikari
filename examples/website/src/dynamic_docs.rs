@@ -7,11 +7,11 @@ use tairitsu_vdom::{VElement, VNode, VText};
 
 /// Supported languages for documentation.
 pub const SUPPORTED_LANGUAGES: &[&str] = &[
-    "en-US", "zh-CHS", "zh-CHT", "fr-FR", "ru-RU", "es-ES", "ar-SA", "ja-JP", "ko-KR",
+    "en", "zhs", "zht", "fr", "ru", "es", "ar", "ja", "ko",
 ];
 
 /// Default fallback language.
-pub const DEFAULT_LANGUAGE: &str = "en-US";
+pub const DEFAULT_LANGUAGE: &str = "en";
 
 /// Documentation loading state.
 #[derive(Debug, Clone, PartialEq)]
@@ -34,7 +34,7 @@ pub enum DocLoadState {
 /// # Arguments
 ///
 /// * `doc_path` - The documentation path (e.g., "components/layer1/button")
-/// * `language` - The language code (e.g., "en-US", "zh-CHS")
+/// * `language` - The language code (e.g., "en", "zhs")
 /// * `title` - Optional page title
 pub fn DocPage(doc_path: String, language: String, _title: Option<String>) -> VNode {
     // For now, we'll render a placeholder that will be populated by JavaScript
@@ -145,7 +145,7 @@ pub fn render_doc_not_found(doc_path: &str, language: &str) -> VNode {
 /// # Arguments
 ///
 /// * `doc_path` - The documentation path (e.g., "components/layer1/button")
-/// * `language` - The language code (e.g., "en-US", "zh-CHS")
+/// * `language` - The language code (e.g., "en", "zhs")
 ///
 /// # Returns
 ///
@@ -154,7 +154,7 @@ pub fn build_doc_url(doc_path: &str, language: &str) -> String {
     format!("/docs/{}/{}.md", language, doc_path)
 }
 
-/// Build the fallback documentation URL (defaults to en-US).
+/// Build the fallback documentation URL (defaults to en).
 ///
 /// # Arguments
 ///
@@ -178,13 +178,13 @@ pub fn doc_loader_js() -> String {
     'use strict';
 
     const DOC_CACHE = new Map();
-    const DEFAULT_LANG = 'en-US';
+    const DEFAULT_LANG = 'en';
     const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
     /**
      * Fetch markdown content from the docs directory
      * @param {string} docPath - Documentation path (e.g., "components/layer1/button")
-     * @param {string} language - Language code (e.g., "en-US", "zh-CHS")
+     * @param {string} language - Language code (e.g., "en", "zhs")
      * @returns {Promise<string|null>} - Markdown content or null if not found
      */
     async function fetchDocContent(docPath, language) {
@@ -423,12 +423,12 @@ mod tests {
     #[test]
     fn test_build_doc_url() {
         assert_eq!(
-            build_doc_url("components/layer1/button", "en-US"),
-            "/docs/en-US/components/layer1/button.md"
+            build_doc_url("components/layer1/button", "en"),
+            "/docs/en/components/layer1/button.md"
         );
         assert_eq!(
-            build_doc_url("system/palette", "zh-CHS"),
-            "/docs/zh-CHS/system/palette.md"
+            build_doc_url("system/palette", "zhs"),
+            "/docs/zhs/system/palette.md"
         );
     }
 
@@ -436,15 +436,15 @@ mod tests {
     fn test_build_fallback_doc_url() {
         assert_eq!(
             build_fallback_doc_url("components/layer1/button"),
-            "/docs/en-US/components/layer1/button.md"
+            "/docs/en/components/layer1/button.md"
         );
     }
 
     #[test]
     fn test_supported_languages() {
-        assert!(SUPPORTED_LANGUAGES.contains(&"en-US"));
-        assert!(SUPPORTED_LANGUAGES.contains(&"zh-CHS"));
-        assert!(SUPPORTED_LANGUAGES.contains(&"ja-JP"));
-        assert!(!SUPPORTED_LANGUAGES.contains(&"de-DE"));
+        assert!(SUPPORTED_LANGUAGES.contains(&"en"));
+        assert!(SUPPORTED_LANGUAGES.contains(&"zhs"));
+        assert!(SUPPORTED_LANGUAGES.contains(&"ja"));
+        assert!(!SUPPORTED_LANGUAGES.contains(&"de"));
     }
 }

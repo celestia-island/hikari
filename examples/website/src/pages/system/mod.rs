@@ -31,7 +31,7 @@ fn render_overview() -> VNode {
                 }
                 a { href: "/system/i18n", class: "card card--link",
                     h3 { class: "card__title", "i18n" }
-                    p { class: "card__body", "Multi-language support: en-US, zh-CHS, zh-CHT, ja-JP, ko-KR, fr-FR, es-ES, ru-RU." }
+                    p { class: "card__body", "Multi-language support: en, zhs, zht, ja, ko, fr, es, ru, ar." }
                 }
             }
         },
@@ -187,48 +187,48 @@ fn render_i18n() -> VNode {
                         }
                         tbody {
                             tr {
-                                td { "en-US" }
-                                td { "English (United States)" }
+                                td { "en" }
+                                td { "English" }
                                 td { span { class: "hi-tag hi-tag--success", "Complete" } }
                             }
                             tr {
-                                td { "zh-CHS" }
+                                td { "zhs" }
                                 td { "Chinese Simplified" }
                                 td { span { class: "hi-tag hi-tag--success", "Complete" } }
                             }
                             tr {
-                                td { "zh-CHT" }
+                                td { "zht" }
                                 td { "Chinese Traditional" }
                                 td { span { class: "hi-tag hi-tag--success", "Complete" } }
                             }
                             tr {
-                                td { "ja-JP" }
+                                td { "ja" }
                                 td { "Japanese" }
                                 td { span { class: "hi-tag hi-tag--success", "Complete" } }
                             }
                             tr {
-                                td { "ko-KR" }
+                                td { "ko" }
                                 td { "Korean" }
                                 td { span { class: "hi-tag hi-tag--success", "Complete" } }
                             }
                             tr {
-                                td { "fr-FR" }
+                                td { "fr" }
                                 td { "French" }
                                 td { span { class: "hi-tag hi-tag--success", "Complete" } }
                             }
                             tr {
-                                td { "es-ES" }
+                                td { "es" }
                                 td { "Spanish" }
                                 td { span { class: "hi-tag hi-tag--success", "Complete" } }
                             }
                             tr {
-                                td { "ru-RU" }
+                                td { "ru" }
                                 td { "Russian" }
                                 td { span { class: "hi-tag hi-tag--success", "Complete" } }
                             }
                             tr {
-                                td { "ar-SA" }
-                                td { "Arabic (Saudi Arabia)" }
+                                td { "ar" }
+                                td { "Arabic" }
                                 td { span { class: "hi-tag hi-tag--success", "Complete" } }
                             }
                         }

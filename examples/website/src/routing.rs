@@ -81,7 +81,7 @@ pub fn doc_router_js() -> String {
         { pattern: /^\/docs\/(.+)$/, docBase: '', type: 'general' },
     ];
 
-    const DEFAULT_LANG = 'en-US';
+    const DEFAULT_LANG = 'en';
     let currentRoute = null;
 
     /**

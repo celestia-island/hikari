@@ -18,7 +18,7 @@ use crate::{
 pub struct ThemeProviderProps {
     /// Initial theme identifier ("hikari" or "tairitsu")
     pub initial_palette: String,
-    /// Language code ("en-US", "zh-CHS", etc.)
+    /// Language code ("en", "zhs", etc.)
     pub language: String,
     /// Layout direction ("ltr" or "rtl")
     pub direction: String,
@@ -30,7 +30,7 @@ impl Default for ThemeProviderProps {
     fn default() -> Self {
         Self {
             initial_palette: "hikari".to_string(),
-            language: "en-US".to_string(),
+            language: "en".to_string(),
             direction: "ltr".to_string(),
             children: Vec::new(),
         }
@@ -49,7 +49,7 @@ impl Default for ThemeProviderProps {
 /// rsx! {
 ///     ThemeProvider {
 ///         initial_palette: "tairitsu",
-///         language: "zh-CHS",
+///         language: "zhs",
 ///         direction: "ltr",
 ///     } {
 ///         // Children here

@@ -482,26 +482,26 @@
   --hi-scrollbar-thumb-active-filter: brightness(0.85);     // Darken in light mode
 }
 
-// Dark theme specific overrides
+// Dark theme specific overrides — must stay in sync with Tairitsu::palette() in hikari-palette
 [data-theme="tairitsu"] {
   // Theme Colors
-  --hi-primary: #065279;     // 靛蓝
-  --hi-secondary: #4B5CC4;   // 宝蓝
-  --hi-accent: #F59E0B;      // 姜黄
-  --hi-success: #10B981;     // 葱倩
-  --hi-warning: #FBBF24;     // 鹅黄
-  --hi-danger: #EF4444;      // 朱红
-  --hi-info: #065279;        // 靛蓝
+  --hi-primary: #144A74;     // 鷃蓝
+  --hi-secondary: #FFC773;   // 姜黄
+  --hi-accent: #FFC773;      // 姜黄
+  --hi-success: #0EB840;     // 葱倩
+  --hi-warning: #FFF143;     // 鹅黄
+  --hi-danger: #FF4C00;      // 朱红
+  --hi-info: #144A74;        // 鷃蓝
 
   // Surface & Background Colors
-  --hi-background: #4A4266;  // 黛
-  --hi-surface: rgba(0, 0, 0, 0.7);  // 透明黑色
-  --hi-border: #4A4266;      // 黛
+  --hi-background: #161823;  // 漆黑 — 深邃夜空底色
+  --hi-surface: rgba(32, 35, 54, 0.7);  // 比 background 稍亮
+  --hi-border: #303448;      // 比 surface 稍亮
 
   // Text Colors
-  --hi-text-primary: #D6ECF0;   // 月白
-  --hi-text-secondary: #E0F0E9;  // 素
-  --hi-text-disabled: #9CA3AF;
+  --hi-text-primary: #F0F0F5;    // 近白，主文本
+  --hi-text-secondary: #B3B8C7;  // 柔白偏蓝，次要文本
+  --hi-text-disabled: #6B7280;
 
   // Aliases for components (with color- prefix for consistency)
   --hi-color-text-primary: var(--hi-text-primary);
@@ -510,23 +510,23 @@
   --hi-color-primary: var(--hi-primary);
   --hi-color-background: var(--hi-background);
   --hi-color-surface: var(--hi-surface);
-  --hi-color-surface-secondary: var(--hi-page-bg, linear-gradient(135deg, #000000 0%, #1a1a2e 100%));
+  --hi-color-surface-secondary: var(--hi-page-bg, linear-gradient(135deg, #10101c 0%, #161823 100%));
 
   // Scrollbar Colors
-  --hi-scrollbar-track-dark: rgba(255,255, 255, 0.25);  // White with 25% opacity
-  --hi-scrollbar-track-light: rgba(255, 255, 255, 0.12); // White with 12% opacity
-  --hi-scrollbar-thumb: rgba(203, 213, 225, 0.7);       // Slate with 70% opacity
-  --hi-scrollbar-thumb-hover: rgba(224, 240, 233, 0.9); // 素 with 90% opacity
-  --hi-scrollbar-thumb-active-filter: brightness(1.15);     // Brighten in dark mode
+  --hi-scrollbar-track-dark: rgba(255,255, 255, 0.08);
+  --hi-scrollbar-track-light: rgba(255, 255, 255, 0.04);
+  --hi-scrollbar-thumb: rgba(179, 184, 199, 0.5);
+  --hi-scrollbar-thumb-hover: rgba(179, 184, 199, 0.7);
+  --hi-scrollbar-thumb-active-filter: brightness(1.2);
 
   // Component-specific Colors
-  --hi-button-bg: rgba(250, 250, 250, 0.1);
-  --hi-button-bg-hover: rgba(250, 250, 250, 0.15);
+  --hi-button-bg: rgba(240, 240, 245, 0.08);
+  --hi-button-bg-hover: rgba(240, 240, 245, 0.14);
 
-  --hi-input-bg: rgba(250, 250, 250, 0.08);
-  --hi-input-bg-focus: rgba(250, 250, 250, 0.12);
+  --hi-input-bg: rgba(240, 240, 245, 0.06);
+  --hi-input-bg-focus: rgba(240, 240, 245, 0.10);
 
-  --hi-card-bg: rgba(250, 250, 250, 0.08);
+  --hi-card-bg: rgba(240, 240, 245, 0.06);
 }
 
 // ============================================

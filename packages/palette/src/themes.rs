@@ -213,11 +213,11 @@ impl Tairitsu {
             success: 葱倩,    // 绿色系
             warning: 鹅黄,    // 黄色系
             danger: 朱红,     // 红色系
-            background: 墨色, // 紫黑/深蓝黑 (80, 97, 109)
-            surface: 黛,      // 深蓝灰 (74, 66, 102)
-            border: 黛,       // 深蓝灰
-            text_primary: Color::from_rgb_float(0.95, 0.95, 0.95), // 95% opacity white (no alpha) - brighter
-            text_secondary: Color::from_rgb_float(0.85, 0.85, 0.85), // 85% opacity white (no alpha) - less gray
+            background: 漆黑, // (22, 24, 35) 深邃夜空底色
+            surface: Color::from_rgb(32, 35, 54),   // 比 background 稍亮，卡片/面板底色
+            border: Color::from_rgb(48, 52, 72),    // 比 surface 稍亮，边框色
+            text_primary: Color::from_rgb_float(0.94, 0.94, 0.96), // 近白，主文本
+            text_secondary: Color::from_rgb_float(0.70, 0.72, 0.78), // 柔白偏蓝，次要文本
         }
     }
 }
@@ -378,10 +378,16 @@ mod tests {
         let palette = Tairitsu::palette();
         assert_eq!(palette.mode, ThemeMode::Dark);
         assert_eq!(palette.primary, 鷃蓝);
-        assert_eq!(palette.background, 墨色);
+        assert_eq!(palette.background, 漆黑);
+        assert_eq!(palette.surface, Color::from_rgb(32, 35, 54));
+        assert_eq!(palette.border, Color::from_rgb(48, 52, 72));
         assert_eq!(
             palette.text_primary,
-            Color::from_rgb_float(0.95, 0.95, 0.95)
+            Color::from_rgb_float(0.94, 0.94, 0.96)
+        );
+        assert_eq!(
+            palette.text_secondary,
+            Color::from_rgb_float(0.70, 0.72, 0.78)
         );
     }
 

@@ -288,8 +288,8 @@ body {
     font-family: $hikari-font-family-sans;
     font-size: $hikari-font-size-base;
     line-height: 1.5;
-    color: #50616D;
-    background-color: var(--hi-color-background);
+    color: var(--hi-color-text-primary, #262626);
+    background-color: var(--hi-color-background, #ffffff);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -330,11 +330,11 @@ h6 {
 }
 
 p, span, div, label {
-    color: #50616D;
+    color: var(--hi-color-text-primary, #262626);
 }
 
 a {
-    color: #50616D;
+    color: var(--hi-color-text-primary, #262626);
     text-decoration: none;
     transition: color $hikari-transition-fast;
 
@@ -397,7 +397,7 @@ textarea {
 // ============================================
 
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="tairitsu"]) {
         // 暗黑模式背景色
         --hi-color-background: #000000;
         --hi-color-surface: #1E293B;

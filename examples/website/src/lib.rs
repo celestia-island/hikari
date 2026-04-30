@@ -17,16 +17,13 @@ mod scrollbar_host;
 mod theme;
 mod ui;
 
-use anyhow::Result;
-
 use tairitsu_web::WitPlatform;
-use tracing::error;
 
 fn run_app() {
     i18n_init::init();
     let platform = WitPlatform::new().expect("WitPlatform init failed");
     let vnode = app::render();
-    let _ = platform.mount_vnode_to_app(&vnode);
+    let _ = platform.mount_vnode_to_app(vnode);
 
     #[cfg(target_family = "wasm")]
     {

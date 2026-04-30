@@ -9,7 +9,6 @@ use tairitsu_vdom::{
 };
 
 use crate::hooks;
-use tairitsu_web::i18n::Language;
 
 const DROPDOWN_MAX_HEIGHT: f64 = 240.0;
 const DROPDOWN_MIN_WIDTH: f64 = 120.0;

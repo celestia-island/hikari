@@ -9,7 +9,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use tairitsu_vdom::{VElement, VNode, VText};
+use tairitsu_vdom::{VElement, VNode};
 
 use crate::{
     components::{self, portal::PortalJs},

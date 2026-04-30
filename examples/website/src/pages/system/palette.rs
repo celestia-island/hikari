@@ -1,6 +1,6 @@
 //! Color palette showcase page — renders all primary theme colors using hikari-palette.
 
-use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
+use crate::components::demo_page::render_demo_page;
 use hikari_palette::{default_theme, Hikari, Tairitsu};
 use tairitsu_vdom::{VElement, VNode, VText};
 

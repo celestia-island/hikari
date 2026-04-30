@@ -161,16 +161,6 @@ impl Animator {
         self.set_width(WIDTH_ACTIVE);
         self.begin_scroll_hover();
     }
-
-    fn restore_after_scroll_hover(&self) {
-        let over = *self.mouse_over.borrow();
-        let new = if over { AnimState::Active } else { AnimState::Idle };
-        *self.state.borrow_mut() = new;
-        if !over {
-            self.end_scroll_hover();
-            self.set_width(WIDTH_IDLE);
-        }
-    }
 }
 
 impl Clone for Animator {
@@ -213,24 +203,6 @@ fn update_thumb_with_state(content: DomHandle, track: DomHandle, thumb: DomHandl
         } else {
             dom_ops::set_attribute(track, "class", "custom-scrollbar-track");
         }
-    } else {
-        dom_ops::set_attribute(track, "class", "custom-scrollbar-track custom-scrollbar-hidden");
-    }
-}
-
-fn update_thumb_cached(content: DomHandle, track: DomHandle, thumb: DomHandle, cached_h: f64) {
-    let st = dom_ops::get_scroll_top(content);
-    let sh = dom_ops::get_scroll_height(content) as f64;
-    let ch = dom_ops::get_client_height(content) as f64;
-    let th = dom_ops::get_client_height(track) as f64;
-
-    let movable = th - cached_h;
-    let max = sh - ch;
-    let top = if max > 0.0 && movable > 0.0 { (st / max) * movable } else { 0.0 };
-    dom_ops::set_style(thumb, "top", &format!("{}px", top));
-
-    if cached_h > 0.0 && cached_h < ch {
-        dom_ops::set_attribute(track, "class", "custom-scrollbar-track");
     } else {
         dom_ops::set_attribute(track, "class", "custom-scrollbar-track custom-scrollbar-hidden");
     }
@@ -328,7 +300,6 @@ fn build_dom(container: DomHandle, saved_scroll: i32) -> Option<ScrollbarElement
 struct DragState {
     start_y: f64,
     start_scroll_top: f64,
-    thumb_h: f64,
     movable: f64,
 }
 
@@ -350,15 +321,10 @@ fn setup_one(host: &dyn ScrollbarHost, container: DomHandle) {
     let thumb = els.thumb;
 
     let animator = Animator::new(track);
-    let cached_h: Rc<RefCell<Option<f64>>> = Rc::new(RefCell::new(None));
-    let ratio: Rc<RefCell<f64>> = Rc::new(RefCell::new(0.0));
 
     update_thumb(content, track, thumb);
 
-    // -- scroll (with re-entrancy guard to prevent stack overflow) --
     let s_anim = animator.clone();
-    let s_cached = cached_h.clone();
-    let s_ratio = ratio.clone();
     let scrolling: Rc<RefCell<bool>> = Rc::new(RefCell::new(false));
 
     host.on_scroll(content, Box::new(move || {
@@ -373,10 +339,7 @@ fn setup_one(host: &dyn ScrollbarHost, container: DomHandle) {
         *scrolling.borrow_mut() = false;
     }));
 
-    // -- resize observer (no set_scroll_top to avoid scroll→resize infinite loop) --
-    let r_ratio = ratio.clone();
     host.on_resize(content, Box::new(move || {
-        let pct = *r_ratio.borrow();
         update_thumb(content, track, thumb);
     }));
 
@@ -402,12 +365,10 @@ fn setup_one(host: &dyn ScrollbarHost, container: DomHandle) {
 
     // -- drag --
     let d_anim = animator.clone();
-    let d_cached = cached_h.clone();
     let drag_st: Rc<RefCell<Option<DragState>>> = Rc::new(RefCell::new(None));
 
     let ds0 = drag_st.clone();
     let da0 = d_anim.clone();
-    let dc0 = d_cached.clone();
     let on_down: Rc<RefCell<dyn FnMut(f64)>> = Rc::new(RefCell::new(move |start_y: f64| {
         let start_scroll = dom_ops::get_scroll_top(content);
         let thumb_h = dom_ops::get_client_height(thumb) as f64;
@@ -415,11 +376,9 @@ fn setup_one(host: &dyn ScrollbarHost, container: DomHandle) {
         *ds0.borrow_mut() = Some(DragState {
             start_y,
             start_scroll_top: start_scroll,
-            thumb_h,
             movable: track_h - thumb_h,
         });
         da0.start_drag();
-        *dc0.borrow_mut() = Some(thumb_h);
     }));
 
     let ds1 = drag_st.clone();
@@ -436,11 +395,9 @@ fn setup_one(host: &dyn ScrollbarHost, container: DomHandle) {
 
     let ds2 = drag_st.clone();
     let da2 = d_anim;
-    let dc2 = d_cached;
     let on_end: Rc<RefCell<dyn FnMut()>> = Rc::new(RefCell::new(move || {
         *ds2.borrow_mut() = None;
         da2.end_drag();
-        *dc2.borrow_mut() = None;
     }));
 
     host.setup_drag(thumb, on_down, on_move, on_end);
@@ -523,20 +480,6 @@ mod tests {
         a.start_drag();
         a.pulse_scroll_hover();
         assert_eq!(*a.state.borrow(), AnimState::Dragging);
-    }
-
-    #[test]
-    fn restore_scroll_hover() {
-        let a = Animator::new(DomHandle::null());
-        a.pulse_scroll_hover();
-        assert_eq!(*a.state.borrow(), AnimState::ScrollHover);
-        a.restore_after_scroll_hover();
-        assert_eq!(*a.state.borrow(), AnimState::Idle);
-
-        a.activate();
-        a.pulse_scroll_hover();
-        a.restore_after_scroll_hover();
-        assert_eq!(*a.state.borrow(), AnimState::Active);
     }
 
     #[test]

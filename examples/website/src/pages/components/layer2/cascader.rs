@@ -4,23 +4,6 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    let btn_right = glow_wrap(
-        rsx! { button { class: "hi-button hi-button-secondary hi-button-sm", "→" } },
-        GlowConfig {
-            intensity: GlowIntensity::Soft,
-            color: GlowColor::Secondary,
-            ..Default::default()
-        },
-    );
-    let btn_left = glow_wrap(
-        rsx! { button { class: "hi-button hi-button-secondary hi-button-sm", "←" } },
-        GlowConfig {
-            intensity: GlowIntensity::Soft,
-            color: GlowColor::Secondary,
-            ..Default::default()
-        },
-    );
-
     render_demo_page("page-component-cascader", "Cascader", "Multi-level selection component for hierarchical data such as locations, categories, or org charts.", rsx! [
         {render_demo_block("Location Picker", rsx! {
             div {

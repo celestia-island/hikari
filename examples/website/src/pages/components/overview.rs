@@ -1,6 +1,6 @@
 //! Components overview page — cards for each component across all layers.
 
-use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
+use crate::components::demo_page::render_demo_page;
 use tairitsu_vdom::{VElement, VNode, VText};
 
 struct ComponentEntry {

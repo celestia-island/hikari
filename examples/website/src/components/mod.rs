@@ -21,9 +21,5 @@ pub mod top_nav;
 
 pub mod registry;
 
-pub use aside_footer::render as aside_footer;
-pub use breadcrumb::render as breadcrumb;
-pub use layout::render as layout;
-pub use registry::render_component_demo;
 pub use sidebar::render as sidebar;
 pub use top_nav::render as top_nav;

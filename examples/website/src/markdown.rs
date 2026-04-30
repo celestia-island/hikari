@@ -338,7 +338,7 @@ fn parse_component_path(path: &str) -> ComponentType {
     let parts: Vec<&str> = path.split('.').collect();
     match parts.as_slice() {
         [layer, name] => ComponentType::Layer(layer.to_string(), name.to_string(), None),
-        [layer, name, id] => {
+        [layer, name, id] if layer.starts_with("layer") => {
             ComponentType::Layer(layer.to_string(), name.to_string(), Some(id.to_string()))
         }
         [category, demo, name] => ComponentType::Demo(

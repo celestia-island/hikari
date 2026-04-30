@@ -3,7 +3,7 @@
 //! Provides a generic documentation page that loads markdown content
 //! dynamically based on the current route and language.
 
-use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_page_raw, render_demo_row};
+use crate::components::demo_page::{render_demo_page, render_demo_page_raw};
 use crate::dynamic_docs::{render_doc_loader_script, DocPage};
 use tairitsu_vdom::{VElement, VNode, VText};
 

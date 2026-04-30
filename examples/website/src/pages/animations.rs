@@ -4,7 +4,7 @@
 //! including hover effects, focus animations, state transitions, and interactive
 //! preset demos for glow, neon, tech, and transition effects.
 
-use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
+use crate::components::demo_page::{render_demo_page, render_demo_row};
 use crate::animation::AnimationId;
 use crate::ui::{self, Button, Card, Input};
 use tairitsu_macros::rsx;

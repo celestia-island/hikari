@@ -3,7 +3,7 @@ use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use crate::components::icon_utils::icon_el;
 use hikari_icons::MdiIcon;
 use tairitsu_macros::rsx;
-use tairitsu_vdom::{VElement, VNode};
+use tairitsu_vdom::VNode;
 
 fn make_search(placeholder: &str, extra_class: &str, icon: bool, clearable: bool, value: &str) -> VNode {
     let mut classes = "hi-search".to_string();

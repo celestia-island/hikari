@@ -197,6 +197,34 @@ visual-pipeline: browser-install visual-batch
     @echo "  ║  Ready for AI visual analysis              ║"
     @echo "  ╚══════════════════════════════════════════╝"
 
+# --- Wry-based visual debug (via tairitsu-debug HTTP API) ---
+
+build-debug-wry:
+    @cargo build --release --package hikari-e2e --bin hikari-visual-debug-wry
+
+wry-health debug_port="3001":
+    @cargo run --release --package hikari-e2e --bin hikari-visual-debug-wry -- health --debug-port {{debug_port}}
+
+wry-capture route="/" debug_port="3001" output="":
+    @cargo run --release --package hikari-e2e --bin hikari-visual-debug-wry -- \
+        capture --debug-port {{debug_port}} --route "{{route}}" --full-page {{if output != "" { "--output " + output } else { "" } }}
+
+wry-batch debug_port="3001" output="" routes="":
+    @cargo run --release --package hikari-e2e --bin hikari-visual-debug-wry -- \
+        batch --debug-port {{debug_port}} --output-json {{if output != "" { "--output " + output } else { "" }} {{if routes != "" { "--routes " + routes } else { "" } }}
+
+wry-inspect route="/" selector="" debug_port="3001":
+    @cargo run --release --package hikari-e2e --bin hikari-visual-debug-wry -- \
+        inspect --debug-port {{debug_port}} --route "{{route}}" {{if selector != "" { "--selector " + selector } else { "" } }}
+
+wry-interactive route="/" debug_port="3001":
+    @cargo run --release --package hikari-e2e --bin hikari-visual-debug-wry -- \
+        interactive --debug-port {{debug_port}} --route "{{route}}"
+
+wry-pipeline debug_port="3001": wry-health wry-batch
+    @echo "  ✓  Wry screenshots saved to wry_screenshots/"
+    @echo "  ✓  Ready for AI vision analysis"
+
 debug-screenshot url="http://localhost:3000" output="screenshot.png" wait="10" inject="":
     @{{py}} scripts/dev/browser_debug.py screenshot --url "{{url}}" --output "{{output}}" --wait {{wait}} {{if inject != "" { "--inject " + inject } else { "" } }}
 

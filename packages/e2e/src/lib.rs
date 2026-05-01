@@ -1,6 +1,7 @@
 // hikari-e2e/src/lib.rs
 // E2E testing library entry point
 
+pub mod debug_client;
 pub mod html_assertions;
 pub mod ssr_helpers;
 pub mod tests;

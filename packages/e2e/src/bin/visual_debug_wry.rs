@@ -1,13 +1,15 @@
 // hikari-e2e/src/bin/visual_debug_wry.rs
 // Visual debugging via Tairitsu Debug Browser Automation (wry-based)
-// Uses all 17 debug API endpoints including pixel screenshots, hydration wait, computed styles
+// Uses all 28 debug API endpoints including pixel screenshots, hydration wait,
+// computed styles, batch operations, a11y tree, network/perf observability
 
 use anyhow::{Context, Result, bail};
 use base64::{Engine as _, engine::general_purpose};
 use clap::{Parser, Subcommand};
 use hikari_e2e::debug_client::{
-    DebugClient, ScreenshotRequest,
+    DebugClient, ScreenshotRequest, BatchOp,
     ReadyResponse, ViewportResponse, ErrorsResponse,
+    PerformanceMetrics, NetworkResponse, A11yNode,
 };
 use serde_json::json;
 use std::fs;
@@ -77,6 +79,10 @@ enum Commands {
     Health,
     Ready,
     Errors,
+    Perf,
+    Network,
+    A11y,
+    BatchRoutes,
 }
 
 const PREDEFINED_ROUTES: &[(&str, &str)] = &[
@@ -132,7 +138,10 @@ async fn do_capture(
     let req = build_screenshot_req(mode, route.map(|s| s.as_str()), full_page, pixel);
     let filename = match (&route, &selector) {
         (Some(r), Some(s)) => format!("{}_{}.png", r.trim_start_matches('/').replace('/', "_"), s.replace(['#', '.', ' '], "_")),
-        (Some(r), None) => format!("{}.png", r.trim_start_matches('/').replace('/', "_")),
+        (Some(r), None) => {
+            let name = r.trim_start_matches('/').replace('/', "_");
+            if name.is_empty() { "root".into() } else { format!("{}.png", name) }
+        }
         (None, Some(s)) => format!("sel_{}.png", s.replace(['#', '.', ' '], "_")),
         (None, None) => "viewport.png".into(),
     };
@@ -364,6 +373,20 @@ async fn do_interactive(client: &DebugClient, route: &str) -> Result<()> {
     Ok(())
 }
 
+fn print_a11y_tree(nodes: &[A11yNode], depth: usize) {
+    let indent = "  ".repeat(depth);
+    for node in nodes {
+        let role = node.role.as_deref().unwrap_or("?");
+        let name = node.name.as_deref().unwrap_or("");
+        let tag = node.tag.as_deref().unwrap_or("");
+        let states = if node.states.is_empty() { String::new() } else { format!(" [{}]", node.states.join(",")) };
+        println!("{}<{}> {} \"{}\"{}", indent, tag, role, name, states);
+        if !node.children.is_empty() {
+            print_a11y_tree(&node.children, depth + 1);
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt()
@@ -402,6 +425,44 @@ async fn main() -> Result<()> {
             println!("Errors: {} | Rejections: {}", errs.errors.len(), errs.unhandled_rejections.len());
             for e in &errs.errors { println!("  [{}] {}", e.error_type, e.message); }
             for e in &errs.unhandled_rejections { println!("  [rej] {}", e.message); }
+        }
+        Commands::Perf => {
+            let p: PerformanceMetrics = client.performance().await?;
+            println!("── Performance Metrics ──");
+            println!("  DOM nodes: {}", p.dom_nodes);
+            if let Some(dcl) = p.dom_content_loaded_ms { println!("  DCL: {:.0}ms", dcl); }
+            if let Some(dc) = p.dom_complete_ms { println!("  DomComplete: {:.0}ms", dc); }
+            if let Some(fcp) = p.fcp_ms { println!("  FCP: {:.0}ms", fcp); }
+            if let Some(h) = p.js_heap_used_mb { println!("  JS Heap: {:.1}MB", h); }
+            println!("  WASM: {} | Hydrated: {} | Timestamp: {}", p.wasm_loaded, p.hydrated, p.timestamp);
+        }
+        Commands::Network => {
+            let n: NetworkResponse = client.network().await?;
+            println!("── Network Resources ({}) ──", n.resources.len());
+            for r in &n.resources {
+                println!("  [{:>8}] {:>6.0}ms  {:>7.0}B  {}", r.resource_type, r.duration, r.size,
+                    if r.url.len() > 80 { &r.url[..80] } else { &r.url });
+            }
+        }
+        Commands::A11y => {
+            let tree: Vec<A11yNode> = client.a11y().await?;
+            print_a11y_tree(&tree, 0);
+        }
+        Commands::BatchRoutes => {
+            fs::create_dir_all(&out)?;
+            let routes: Vec<BatchOp> = PREDEFINED_ROUTES.iter().map(|(url, _name)| {
+                BatchOp::Navigate { url: url.to_string(), wait_for: Some("hydration".into()) }
+            }).chain(PREDEFINED_ROUTES.iter().map(|(_url, name)| {
+                BatchOp::Screenshot { selector: None, full_page: Some(true), mode: Some("pixel".into()), name: Some(format!("{}_pixel", name)) }
+            })).collect();
+            let result = client.batch(routes).await?;
+            let ok = result.results.iter().filter(|r| r.success).count();
+            println!("Batch complete: {}/{} ops", ok, result.results.len());
+            for r in &result.results {
+                let status = if r.success { "OK" } else { "FAIL" };
+                println!("  [{:6.0}ms] {} {} - {}", r.duration_ms, status, r.op_type, r.name);
+                if let Some(ref e) = r.error { println!("         error: {}", e); }
+            }
         }
     }
 

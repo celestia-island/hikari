@@ -493,7 +493,7 @@ body,
 }
 
 .sidebar-section {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0;
 }
 
 .sidebar-section__label {
@@ -503,7 +503,7 @@ body,
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--hi-color-text-muted, #9ca3af);
-  padding: 0.5rem 1rem 0.25rem;
+  padding: 0.75rem 1rem 0.5rem;
 }
 
 // ── 3-level sidebar navigation ──────────────────────────────────────────
@@ -512,7 +512,7 @@ body,
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.3rem 0.75rem 0.3rem 1.5rem;
+  padding: 0.35rem 1rem;
   font-size: 0.8125rem;
   text-decoration: none;
   color: var(--hi-color-text-secondary, #6b7280);
@@ -535,7 +535,7 @@ body,
   &--home {
     font-weight: 600;
     font-size: 0.875rem;
-    padding: 0.4rem 0.875rem;
+    padding: 0.45rem 1rem;
     margin-bottom: 0.25rem;
   }
 }
@@ -557,7 +557,7 @@ body,
 .hi-menu {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.125rem;
   padding: 0.25rem 0;
   list-style: none;
   background: transparent;

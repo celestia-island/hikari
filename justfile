@@ -164,7 +164,38 @@ generate-scss:
 # ============================================================================
 
 build-debug:
-    @cargo build --release --package hikari-e2e --bin hikari-browser-debug
+    @cargo build --release --package hikari-e2e --bin hikari-browser-debug \
+                 --bin hikari-visual-debug
+
+# --- Tairitsu browser-test integration ---
+
+# Install Chromium via Tairitsu's BrowserDownloader
+browser-install:
+    @cd ../tairitsu && cargo run --package tairitsu-browser-test -- browser install
+
+# Visual debug: capture screenshots of all key pages (powered by tairitsu-browser-test)
+visual-capture url="http://localhost:3000" output="/tmp/e2e_screenshots" filter="":
+    @cargo run --release --package hikari-e2e --bin hikari-visual-debug -- capture \
+        --base-url "{{url}}" --output-dir "{{output}}" {{if filter != "" { "--filter " + filter } else { "" } }} --json
+
+# Visual debug: batch capture all routes with full report
+visual-batch url="http://localhost:3000" output="/tmp/e2e_screenshots":
+    @cargo run --release --package hikari-e2e --bin hikari-visual-debug -- batch \
+        --base-url "{{url}}" --output-dir "{{output}}" --json --report-path "/tmp/e2e_screenshots/report.json"
+
+# Visual debug: inspect a single page (layout metrics + screenshot)
+visual-inspect route="/" url="http://localhost:3000" output="inspect.png":
+    @cargo run --release --package hikari-e2e --bin hikari-visual-debug -- inspect \
+        --base-url "{{url}}" --route "{{route}}" --output "{{output}}"
+
+# Full visual pipeline: install chrome → capture → ready for AI analysis
+visual-pipeline: browser-install visual-batch
+    @echo ""
+    @echo "  ╔══════════════════════════════════════════╗"
+    @echo "  ║  Screenshots saved to /tmp/e2e_screenshots ║"
+    @echo "  ║  Report: /tmp/e2e_screenshots/report.json  ║"
+    @echo "  ║  Ready for AI visual analysis              ║"
+    @echo "  ╚══════════════════════════════════════════╝"
 
 debug-screenshot url="http://localhost:3000" output="screenshot.png" wait="10" inject="":
     @{{py}} scripts/dev/browser_debug.py screenshot --url "{{url}}" --output "{{output}}" --wait {{wait}} {{if inject != "" { "--inject " + inject } else { "" } }}

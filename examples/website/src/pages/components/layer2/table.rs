@@ -3,10 +3,15 @@ use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
-    render_demo_page("page-component-table", "Table", "Structured data table with sorting indicators, bordered variants, and action columns.", rsx! [
+    render_demo_page("page-component-table", "Table", "Structured data table with sorting indicators, bordered variants, zebra striping, and action columns.", rsx! [
         {render_demo_block("Basic Table", rsx! {
             table { class: "hi-table",
-                thead { tr { th { "# " } th { "Name" } th { "Email" } th { "Role" } } }
+                thead { tr {
+                    th { class: "hi-table-sortable", "#" }
+                    th { class: "hi-table-sortable hi-table-sort-asc", "Name" }
+                    th { class: "hi-table-sortable", "Email" }
+                    th { class: "hi-table-sortable", "Role" }
+                } }
                 tbody {
                     tr { td { "1" } td { "Alice Chen" } td { "alice@example.com" } td { "Admin" } }
                     tr { td { "2" } td { "Bob Martinez" } td { "bob@example.com" } td { "Editor" } }
@@ -24,7 +29,7 @@ pub fn render() -> VNode {
                 }
             }
         })}
-        {render_demo_block("Striped Table", rsx! {
+        {render_demo_block("Striped (Zebra) Table", rsx! {
             table { class: "hi-table hi-table--striped",
                 thead { tr { th { "Date" } th { "Event" } th { "Location" } } }
                 tbody {
@@ -35,9 +40,14 @@ pub fn render() -> VNode {
                 }
             }
         })}
-        {render_demo_block("Table with Actions", rsx! {
-            table { class: "hi-table hi-table--striped",
-                thead { tr { th { "Service" } th { "Status" } th { "Uptime" } th { "Actions" } } }
+        {render_demo_block("Table with Sort + Actions", rsx! {
+            table { class: "hi-table hi-table--striped hi-table-hover",
+                thead { tr {
+                    th { class: "hi-table-sortable", "Service" }
+                    th { class: "hi-table-sortable hi-table-sort-desc", "Status" }
+                    th { class: "hi-table-sortable hi-table-sort-asc", "Uptime" }
+                    th { "Actions" }
+                } }
                 tbody {
                     tr { td { "API Gateway" } td { span { class: "hi-tag hi-tag--success", "Running" } } td { "99.9%" } td { button { class: "hi-button hi-button-ghost hi-button-sm", "Restart" } } }
                     tr { td { "Auth Service" } td { span { class: "hi-tag hi-tag--success", "Running" } } td { "99.8%" } td { button { class: "hi-button hi-button-ghost hi-button-sm", "Restart" } } }
@@ -45,11 +55,25 @@ pub fn render() -> VNode {
                 }
             }
         })}
+        {render_demo_block("Pagination Example", rsx! {
+            div { style: "display: flex; align-items: center; gap: 8px;",
+                nav { class: "hi-pagination",
+                    ul {
+                        li { button { class: "hi-pagination-prev hi-button hi-button-ghost hi-button-sm hi-button--disabled", "Prev" } }
+                        li { button { class: "hi-pagination-item hi-button hi-button-primary hi-button-sm", "1" } }
+                        li { button { class: "hi-pagination-item hi-button hi-button-ghost hi-button-sm", "2" } }
+                        li { button { class: "hi-pagination-item hi-button hi-button-ghost hi-button-sm", "3" } }
+                        li { button { class: "hi-pagination-next hi-button hi-button-ghost hi-button-sm", "Next" } }
+                    }
+                }
+                span { style: "color: var(--hi-color-text-secondary); font-size: 0.875rem;", "Page 1 of 3 (24 items)" }
+            }
+        })}
         {render_demo_block("API", rsx! {
             div {
                 {render_api_table(&[
                     ("bordered", "bool", "false", "Show cell borders"),
-                    ("striped", "bool", "false", "Alternate row backgrounds"),
+                    ("striped", "bool", "false", "Alternate row backgrounds (zebra striping)"),
                     ("compact", "bool", "false", "Reduce padding for dense data"),
                     ("hoverable", "bool", "true", "Highlight row on hover"),
                     ("scroll", "bool", "false", "Enable horizontal scroll for overflow"),

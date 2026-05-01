@@ -6,6 +6,9 @@ authors = ["celestia-island"]
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+# Tairitsu browser testing infrastructure (from sibling repo)
+tairitsu-browser-test = { path = "../../../tairitsu/packages/browser-test" }
+
 # Selenium WebDriver for E2E testing
 thirtyfour = { version = "0.34", features = ["reqwest"] }
 
@@ -63,5 +66,9 @@ path = "src/bin/browser_debug.rs"
 [[bin]]
 name = "run-ssr-e2e"
 path = "src/bin/run_ssr_e2e.rs"
+
+[[bin]]
+name = "hikari-visual-debug"
+path = "src/bin/visual_debug.rs"
 
 [dev-dependencies]

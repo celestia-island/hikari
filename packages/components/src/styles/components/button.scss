@@ -95,6 +95,7 @@
   background: linear-gradient(135deg, var(--hi-color-primary), var(--hi-button-primary-dark));
   color: var(--hi-color-text-on-primary, #ffffff);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(255, 107, 129, 0.15), 0 1px 3px rgba(0, 0, 0, 0.06);
 
   &:hover:not(:disabled) {
     background: linear-gradient(135deg, var(--hi-button-primary-hover), var(--hi-button-primary-dark));
@@ -122,6 +123,7 @@
   background-color: var(--hi-color-secondary);
   color: var(--hi-color-text-on-secondary, #ffffff);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(75, 92, 196, 0.15), 0 1px 3px rgba(0, 0, 0, 0.06);
 
   &:hover:not(:disabled) {
     background-color: var(--hi-button-secondary-hover);
@@ -204,6 +206,7 @@
   background: linear-gradient(135deg, var(--hi-color-danger), var(--hi-button-danger-dark));
   color: var(--hi-color-text-on-danger, #ffffff);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15), 0 1px 3px rgba(0, 0, 0, 0.06);
 
   &:hover:not(:disabled) {
     background: linear-gradient(135deg, var(--hi-button-danger-hover), var(--hi-button-danger-dark));
@@ -231,6 +234,7 @@
   background: linear-gradient(135deg, var(--hi-color-success), var(--hi-button-success-dark));
   color: var(--hi-color-text-on-success, #ffffff);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15), 0 1px 3px rgba(0, 0, 0, 0.06);
 
   &:hover:not(:disabled) {
     background: linear-gradient(135deg, var(--hi-button-success-hover), var(--hi-button-success-dark));

@@ -211,7 +211,7 @@ wry-capture route="/" debug_port="3001" output="":
 
 wry-batch debug_port="3001" output="" routes="":
     @cargo run --release --package hikari-e2e --bin hikari-visual-debug-wry -- \
-        batch --debug-port {{debug_port}} --output-json {{if output != "" { "--output " + output } else { "" }} {{if routes != "" { "--routes " + routes } else { "" } }}
+        batch --debug-port {{debug_port}} --output-json {{if output != "" { "--output " + output } else { "" } }} {{if routes != "" { "--routes " + routes } else { "" } }}
 
 wry-inspect route="/" selector="" debug_port="3001":
     @cargo run --release --package hikari-e2e --bin hikari-visual-debug-wry -- \

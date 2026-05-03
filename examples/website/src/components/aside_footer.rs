@@ -381,8 +381,8 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
                     .attr("type", "button")
                     .attr("role", "switch")
                     .attr("aria-checked", "false")
-                    .attr("aria-label", "Toggle dark mode")
-                    .attr("title", "Toggle theme")
+                    .attr("aria-label", &hikari_i18n::t!("label.toggle_dark_mode"))
+                    .attr("title", hikari_i18n::t!("label.toggle_theme"))
                     .on_event("click", theme_on_click)
                     .child(VNode::Element(
                         VElement::new("span")

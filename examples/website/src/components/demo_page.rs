@@ -6,6 +6,7 @@
 //   DemoRow    — centered flex row for component showcase
 //   ApiTable   — API property reference table
 
+use hikari_i18n::t;
 use tairitsu_vdom::{VElement, VNode, VText};
 
 fn txt(s: &str) -> VNode {
@@ -100,10 +101,10 @@ pub fn render_api_table(rows: &[(&str, &str, &str, &str)]) -> VNode {
             el("thead", "",
                 el("tr", "",
                     VNode::Fragment(vec![
-                        el("th", "", txt("Property")),
-                        el("th", "", txt("Type")),
-                        el("th", "", txt("Default")),
-                        el("th", "", txt("Description")),
+                         el("th", "", txt(&t!("label.property"))),
+                        el("th", "", txt(&t!("label.type"))),
+                        el("th", "", txt(&t!("label.default"))),
+                        el("th", "", txt(&t!("label.description"))),
                     ])
                 )
             ),

@@ -42,6 +42,7 @@ pub use tairitsu_web::i18n::{
     provide_i18n, set_locale, translate, translate_or_key, use_locale, I18nProvider, I18nState,
     Language, TextDirection,
 };
+pub use tairitsu_web::{t, tr};
 
 pub mod loader;
 

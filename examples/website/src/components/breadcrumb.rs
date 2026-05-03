@@ -1,3 +1,4 @@
+use hikari_i18n::t;
 use tairitsu_vdom::{VElement, VNode, VText};
 
 fn txt(s: &str) -> VNode {
@@ -5,6 +6,7 @@ fn txt(s: &str) -> VNode {
 }
 
 pub fn render() -> VNode {
+    let home = &t!("breadcrumb.home");
     VNode::Element(
         VElement::new("nav")
             .class("hi-breadcrumb")
@@ -12,7 +14,7 @@ pub fn render() -> VNode {
                 VElement::new("a")
                     .attr("href", "/")
                     .class("hi-breadcrumb__item")
-                    .child(txt("Home")),
+                    .child(txt(home)),
             ))
             .child(VNode::Element(
                 VElement::new("span")
@@ -23,7 +25,7 @@ pub fn render() -> VNode {
                 VElement::new("span")
                     .attr("id", "breadcrumb-current")
                     .class("hi-breadcrumb__item hi-breadcrumb__item--current")
-                    .child(txt("Home")),
+                    .child(txt(home)),
             )),
     )
 }

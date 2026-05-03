@@ -1,5 +1,4 @@
-//! Home page — hero section and navigation cards.
-
+use hikari_i18n::t;
 use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use tairitsu_vdom::{VElement, VNode, VText};
 
@@ -68,40 +67,40 @@ pub fn render() -> VNode {
                                 .attr("width", "80"),
                         ))
                         .child(VNode::Element(
-                            VElement::new("h1").class("page-hero__title").child(txt("Hikari")),
+                            VElement::new("h1").class("page-hero__title").child(txt(&t!("page.home.hero.title"))),
                         ))
                         .child(VNode::Element(
-                            VElement::new("p").class("page-hero__subtitle").child(txt("A modern Rust UI component library for Tairitsu.")),
+                            VElement::new("p").class("page-hero__subtitle").child(txt(&t!("page.home.hero.subtitle"))),
                         ))
                         .child(VNode::Element(
-                            VElement::new("p").class("page-hero__tagline").child(txt("There is no shame in wanting to feel happy.")),
+                            VElement::new("p").class("page-hero__tagline").child(txt(&t!("page.home.hero.tagline"))),
                         ))
                         .child(VNode::Element(
                             VElement::new("div").class("page-hero__actions")
-                                .child(glow_btn("/components", "hi-button hi-button-primary hi-button-lg", "Explore Components ", Some("→")))
-                                .child(glow_btn("/system", "hi-button hi-button-secondary hi-button-lg", "View Documentation", None)),
+                                .child(glow_btn("/components", "hi-button hi-button-primary hi-button-lg", &t!("label.explore_components"), Some("→")))
+                                .child(glow_btn("/system", "hi-button hi-button-secondary hi-button-lg", &t!("label.view_documentation"), None)),
                         )),
                 )),
             ))
             .child(VNode::Element(
                 VElement::new("section").class("page-section")
                     .child(VNode::Element(
-                        VElement::new("h2").class("page-section__title").child(txt("What is Hikari?")),
+                        VElement::new("h2").class("page-section__title").child(txt(&t!("page.home.section_what.title"))),
                     ))
                     .child(VNode::Element(
                         VElement::new("div").class("card-grid")
-                            .child(glow_card("Component Library", "Layered architecture: Layer 1 (base primitives), Layer 2 (composed patterns), Layer 3 (complex widgets)."))
-                            .child(glow_card("Design System", "500+ traditional Chinese colours, CSS utility classes, icon library, animations, and i18n system."))
-                            .child(glow_card("WebAssembly First", "Ships as a wasm32-wasip2 component. Rendered with the Tairitsu virtual DOM — no JavaScript framework required.")),
+                            .child(glow_card(&t!("page.home.section_what.card_lib_title"), &t!("page.home.section_what.card_lib_desc")))
+                            .child(glow_card(&t!("page.home.section_what.card_design_title"), &t!("page.home.section_what.card_design_desc")))
+                            .child(glow_card(&t!("page.home.section_what.card_wasm_title"), &t!("page.home.section_what.card_wasm_desc"))),
                     )),
             ))
             .child(VNode::Element(
                 VElement::new("section").class("page-section")
                     .child(VNode::Element(
-                        VElement::new("h2").class("page-section__title").child(txt("Demos")),
+                        VElement::new("h2").class("page-section__title").child(txt(&t!("page.home.section_demos.title"))),
                     ))
                     .child(VNode::Element(
-                        VElement::new("p").class("page-section__desc").child(txt("Complete application examples showcasing Hikari components in realistic scenarios.")),
+                        VElement::new("p").class("page-section__desc").child(txt(&t!("page.home.section_demos.desc"))),
                     )),
             )),
     )

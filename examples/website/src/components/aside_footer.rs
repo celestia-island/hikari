@@ -194,7 +194,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
 
             if let Some(ref cell) = *icon_ref_t.borrow() {
                 if let Some(handle) = cell.downcast_ref::<WitElement>() {
-                    let h = DomHandle::from_raw(handle.0);
+                    let h = DomHandle::from_raw(handle.as_raw());
                     set_attribute(h, "innerHTML", &svg_str);
                     set_attribute(
                         h,
@@ -210,7 +210,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
 
             if let Some(ref cell) = *app_ref_t.borrow() {
                 if let Some(handle) = cell.downcast_ref::<WitElement>() {
-                    let h = DomHandle::from_raw(handle.0);
+                    let h = DomHandle::from_raw(handle.as_raw());
                     let theme = if dark { "tairitsu" } else { "hikari" };
                     set_attribute(h, "data-theme", theme);
                     set_attribute(
@@ -248,7 +248,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
 
                 if let Some(ref sc) = *select_ref_t.borrow() {
                     if let Some(sh) = sc.downcast_ref::<WitElement>() {
-                        let handle = DomHandle::from_raw(sh.0);
+                        let handle = DomHandle::from_raw(sh.as_raw());
                         if handle.is_valid() {
                             let r = get_bounding_client_rect(handle);
                             trigger_rect_opt = Some((r.x, r.y, r.width, r.height));
@@ -273,7 +273,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
 
                 if let Some(ref cell) = *dropdown_ref_t.borrow() {
                     if let Some(handle) = cell.downcast_ref::<WitElement>() {
-                        let dd_h = DomHandle::from_raw(handle.0);
+                        let dd_h = DomHandle::from_raw(handle.as_raw());
                         position_dropdown(placement, dd_h, tx, ty, tw, th, DROPDOWN_MIN_WIDTH);
                         set_style(dd_h, "display", "block");
                     }
@@ -281,7 +281,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
 
                 if let Some(ref sc) = *select_ref_t.borrow() {
                     if let Some(sh) = sc.downcast_ref::<WitElement>() {
-                        let sel_h = DomHandle::from_raw(sh.0);
+                        let sel_h = DomHandle::from_raw(sh.as_raw());
                         set_attribute(sel_h, "class", "hi-select hi-select-sm hi-select-open");
                         set_attribute(sel_h, "aria-expanded", "true");
                     }
@@ -289,7 +289,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
 
                 if let Some(ref ar) = *arrow_ref_t.borrow() {
                     if let Some(ah) = ar.downcast_ref::<WitElement>() {
-                        let arr_h = DomHandle::from_raw(ah.0);
+                        let arr_h = DomHandle::from_raw(ah.as_raw());
                         let dir = placement.open_arrow_direction();
                         set_attribute(arr_h, "data-dir", dir);
                     }
@@ -297,7 +297,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
 
                 if let Some(ref bc) = *backdrop_ref_t.borrow() {
                     if let Some(bh) = bc.downcast_ref::<WitElement>() {
-                        set_style(DomHandle::from_raw(bh.0), "display", "block");
+                        set_style(DomHandle::from_raw(bh.as_raw()), "display", "block");
                     }
                 }
             } else {
@@ -444,27 +444,27 @@ fn close_dropdown(
 ) {
     if let Some(ref cell) = *dropdown_ref.borrow() {
         if let Some(handle) = cell.downcast_ref::<WitElement>() {
-            set_style(DomHandle::from_raw(handle.0), "display", "none");
+            set_style(DomHandle::from_raw(handle.as_raw()), "display", "none");
         }
     }
     if let Some(ref sc) = *select_ref.borrow() {
         if let Some(sh) = sc.downcast_ref::<WitElement>() {
             set_attribute(
-                DomHandle::from_raw(sh.0),
+                DomHandle::from_raw(sh.as_raw()),
                 "class",
                 "hi-select hi-select-sm hi-select--borderless",
             );
-            set_attribute(DomHandle::from_raw(sh.0), "aria-expanded", "false");
+            set_attribute(DomHandle::from_raw(sh.as_raw()), "aria-expanded", "false");
         }
     }
     if let Some(ref ar) = *arrow_ref.borrow() {
         if let Some(ah) = ar.downcast_ref::<WitElement>() {
-            set_attribute(DomHandle::from_raw(ah.0), "data-dir", "right");
+            set_attribute(DomHandle::from_raw(ah.as_raw()), "data-dir", "right");
         }
     }
     if let Some(ref bc) = *backdrop_ref.borrow() {
         if let Some(bh) = bc.downcast_ref::<WitElement>() {
-            set_style(DomHandle::from_raw(bh.0), "display", "none");
+            set_style(DomHandle::from_raw(bh.as_raw()), "display", "none");
         }
     }
 }

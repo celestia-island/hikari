@@ -39,7 +39,7 @@ impl<'a> PlatformScrollbarHost<'a> {
     }
 
     fn el(&self, h: DomHandle) -> WitElement {
-        WitElement(h.get_inner_id())
+        WitElement::from_raw(h.get_inner_id())
     }
 }
 
@@ -48,7 +48,7 @@ impl ScrollbarHost for PlatformScrollbarHost<'_> {
         self.platform
             .query_selector_all(selector)
             .iter()
-            .map(|e| DomHandle::from_raw(e.0))
+            .map(|e| DomHandle::from_raw(e.as_raw()))
             .collect()
     }
 

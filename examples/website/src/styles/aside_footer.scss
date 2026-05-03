@@ -137,21 +137,24 @@
 }
 
 // When open, arrow rotates to point toward the dropdown
+// Base SVG chevron points DOWN (↓). Each data-dir maps to:
+//   "right" → → (rotate -90°)    "down"  → ↓ (rotate 0°)
+//   "left"  → ← (rotate 90°)     "up"    → ↑ (rotate 180°)
 .hi-aside-footer .hi-select-open > .hi-select-trigger--borderless .hi-select-arrow {
   &[data-dir="right"] {
-    transform: rotate(0deg);     // open rightward
+    transform: rotate(-90deg);   // open rightward →
   }
 
   &[data-dir="down"] {
-    transform: rotate(90deg);    // open downward
+    transform: rotate(0deg);     // open downward ↓
   }
 
   &[data-dir="left"] {
-    transform: rotate(180deg);   // open leftward
+    transform: rotate(90deg);    // open leftward ←
   }
 
   &[data-dir="up"] {
-    transform: rotate(-90deg);   // open upward
+    transform: rotate(180deg);   // open upward ↑
   }
 }
 

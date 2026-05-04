@@ -362,9 +362,10 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
                         {
                             use tairitsu_web::i18n::set_locale;
                             set_locale(*lang);
-                            use tairitsu_web::wit_platform::wasm_impl::bindings::tairitsu_browser::full::history;
-                            history::push_state("", "", Some(&format!("#lang={}", code)));
-                            history::go(Some(0));
+                            use tairitsu_web::wit_platform::wasm_impl::bindings::tairitsu_browser::full;
+                            let href = full::location::get_href();
+                            let sep = if href.contains('#') { "" } else { "#" };
+                            full::location::assign(&format!("{}{}lang={}", href, sep, code));
                         }
                     })
                     .child(VNode::Text(VText::new(*name))),

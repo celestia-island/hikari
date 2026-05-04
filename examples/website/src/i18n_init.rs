@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
 use hikari_i18n::{loader::load_toml_flat, provide_i18n, Language};
+use crate::hooks;
 
 pub fn init() {
+    let initial_lang = hooks::detect_language();
     let mut translations: HashMap<Language, HashMap<String, String>> = HashMap::new();
 
     translations.insert(
@@ -69,5 +71,5 @@ pub fn init() {
         .expect("Failed to load ar translations"),
     );
 
-    provide_i18n(Language::default_lang(), translations);
+    provide_i18n(initial_lang, translations);
 }

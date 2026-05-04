@@ -3574,6 +3574,9 @@ aside .hi-glow-wrapper {
     border: 1px solid rgba(0,0,0,0.12);
     border-radius: 8px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    display: none;
+}
+.hi-cascader-open .hi-cascader-dropdown {
     display: flex;
     flex-direction: row;
 }
@@ -3618,8 +3621,8 @@ aside .hi-glow-wrapper {
 }
 
 // ── Cascader BEM overrides (matches WASM-generated class names) ──
-.hi-cscader__dropdown { display: none !important; flex-direction: row !important; }
-.hi-cascader-open .hi-cscader__dropdown,
-.hi-cscader__wrapper:has(.hi-cscader--open) .hi-cscader__dropdown { display: flex !important; }
-.hi-cscader__menu { display: flex !important; flex-direction: column !important; }
-.hi-cscader__item { white-space: normal !important; }
+.hi-cascader__dropdown { display: none !important; }
+.hi-cascader-open .hi-cascader__dropdown,
+.hi-cascader__wrapper:has(.hi-cascader--open) .hi-cascader__dropdown { display: flex !important; flex-direction: row !important; }
+.hi-cascader__menu { display: flex !important; flex-direction: column !important; }
+.hi-cascader__item { white-space: normal !important; }

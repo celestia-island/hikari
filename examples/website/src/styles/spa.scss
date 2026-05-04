@@ -3518,3 +3518,108 @@ aside .hi-glow-wrapper {
 // ── Aside Footer (language selector + theme toggle) ──────────────────────
 
 @import './aside_footer.scss';
+
+// ── Cascader Demo (inline until bundle.css includes component styles) ────────
+.hi-cascader-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+.hi-cascader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 36px;
+    padding: 0.5rem 0.75rem;
+    appearance: none;
+    background-color: var(--hi-input-bg, #fff);
+    border: 1px solid var(--hi-input-border, rgba(0,0,0,0.15));
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--hi-input-text, #333);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+.hi-cascader-open {
+    border-color: #6366f1;
+}
+.hi-cascader-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.hi-cascader-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+}
+.hi-cascader-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.hi-cascader-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 1000;
+    min-width: 200px;
+    max-height: 320px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    display: flex;
+    flex-direction: row;
+}
+.hi-cascader-menu {
+    min-width: 160px;
+    max-height: 320px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-right: 1px solid rgba(0,0,0,0.08);
+}
+.hi-cascader-menu:last-child {
+    border-right: none;
+}
+.hi-cascader-menu-list {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.hi-cascader-menu-item {
+    display: block;
+    padding: 6px 12px;
+    margin: 0 4px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.5;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+}
+.hi-cascader-menu-item:hover {
+    background: #eef2ff;
+    color: #4338ca;
+}
+.hi-cascader-menu-item-selected {
+    background: #eef2ff;
+    color: #4338ca;
+    font-weight: 600;
+}
+
+// ── Cascader BEM overrides (matches WASM-generated class names) ──
+.hi-cscader__dropdown { display: none !important; flex-direction: row !important; }
+.hi-cascader-open .hi-cscader__dropdown,
+.hi-cscader__wrapper:has(.hi-cscader--open) .hi-cscader__dropdown { display: flex !important; }
+.hi-cscader__menu { display: flex !important; flex-direction: column !important; }
+.hi-cscader__item { white-space: normal !important; }

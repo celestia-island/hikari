@@ -50,7 +50,7 @@ jobs:
           RUSTFLAGS: '--cfg releasing'
 
       - name: Lint wasm32-wasip2 target
-        run: cargo clippy --workspace --exclude hikari-render-service --exclude hikari-e2e --all-features --target wasm32-wasip2
+        run: cargo clippy --workspace --exclude hikari-e2e --all-features --target wasm32-wasip2
         env:
           RUSTFLAGS: '--cfg releasing'
 
@@ -79,7 +79,7 @@ jobs:
           RUSTFLAGS: '--cfg releasing'
 
       - name: Check wasm32-wasip2 target
-        run: cargo check --workspace --exclude hikari-render-service --exclude hikari-e2e --all-features --target wasm32-wasip2
+        run: cargo check --workspace --exclude hikari-e2e --all-features --target wasm32-wasip2
         env:
           RUSTFLAGS: '--cfg releasing'
 

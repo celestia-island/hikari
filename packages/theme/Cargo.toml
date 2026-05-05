@@ -4,6 +4,8 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
+description = "Theme system with SCSS/CSS variable generation for the Hikari design system"
+repository.workspace = true
 
 [lib]
 doctest = false

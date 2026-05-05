@@ -4,6 +4,8 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
+description = "Lucide icon integration for the Hikari design system"
+repository.workspace = true
 
 [features]
 default = []

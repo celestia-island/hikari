@@ -4,6 +4,8 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
+description = "Build-time code generation for CSS and SVG processing in the Hikari design system"
+repository.workspace = true
 
 [lib]
 path = "src/lib.rs"

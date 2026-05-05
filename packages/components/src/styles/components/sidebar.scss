@@ -341,11 +341,12 @@
 
   // Active state
   &.active {
-    color: var(--hi-color-text-primary);  // Use text-primary instead of primary
-    background: var(--hi-color-primary);
-    font-weight: 500;
-    border-left: 3px solid var(--hi-color-primary);
+    color: var(--hi-badge-text, #FFFFFF);
+    background: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+    font-weight: 600;
+    border-left: 3px solid var(--hi-button-primary-dark, #FF9AA9);
     padding-left: calc(2.5rem - 3px);
+    box-shadow: inset 0 0 12px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.15));
   }
 }
 

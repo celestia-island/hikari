@@ -1,35 +1,44 @@
 // NumberInput Component Styles
+// All colors use CSS variables for theme consistency
+
+@use '../../../../theme/styles/variables.scss' as vars;
 
 .hi-number-input-wrapper {
     display: inline-flex;
     align-items: stretch;
-    border-radius: 8px;
-    border: 1px solid var(--hi-color-border, #d9d9d9);
-    background-color: transparent;
+    border-radius: vars.$hikari-radius-md;
+    border: 1px solid var(--hi-input-border, var(--hi-color-border, var(--hi-border, #C4D8DA)));
+    background-color: var(--hi-input-bg, var(--hi-surface, rgba(255, 255, 255, 0.7)));
     overflow: hidden;
-    transition: all 0.2s ease;
+    transition:
+        border-color vars.$hikari-transition-fast,
+        box-shadow vars.$hikari-transition-fast,
+        background-color vars.$hikari-transition-fast;
 }
 
 .hi-number-input-wrapper:focus-within {
-    border-color: var(--hi-color-primary, #1890ff);
-    box-shadow: 0 0 0 2px var(--hi-glow-button-primary, rgba(24, 144, 255, 0.2));
+    border-color: var(--hi-input-border-focus, var(--hi-color-primary, var(--hi-primary, #FFC0CB)));
+    box-shadow: 0 0 0 3px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.3));
+    background-color: var(--hi-input-bg-focus, #FFFFFF);
 }
 
+// Size variants
 .hi-number-input-sm {
     height: 24px;
-    font-size: 12px;
+    font-size: vars.$hikari-font-size-xs;
 }
 
 .hi-number-input-md {
     height: 32px;
-    font-size: 14px;
+    font-size: vars.$hikari-font-size-sm;
 }
 
 .hi-number-input-lg {
     height: 40px;
-    font-size: 16px;
+    font-size: vars.$hikari-font-size-base;
 }
 
+// Increment / decrement buttons
 .hi-number-input-btn {
     display: inline-flex;
     align-items: center;
@@ -39,42 +48,46 @@
     padding: 0;
     background-color: transparent;
     border: none;
-    color: var(--hi-color-text-secondary, #666);
+    color: var(--hi-text-secondary, var(--hi-text-secondary, rgba(80, 97, 109, 0.65)));
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition:
+        color vars.$hikari-transition-fast,
+        background-color vars.$hikari-transition-fast,
+        transform vars.$hikari-transition-fast;
     outline: none;
+
+    &:hover:not(:disabled) {
+        color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+        background-color: var(--hi-button-primary-light, #FFE4E9);
+    }
+
+    &:active:not(:disabled) {
+        transform: scale(0.88);
+        background-color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+        color: var(--hi-badge-text, #FFFFFF);
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        color: var(--hi-text-disabled, rgba(80, 97, 109, 0.35));
+        background-color: transparent;
+    }
+
+    &:focus-visible {
+        box-shadow: inset 0 0 0 2px var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+        border-radius: 2px;
+    }
 }
 
 .hi-number-input-btn-decrement {
     border-right: none;
-    border-radius: 7px 0 0 7px;
+    border-radius: calc(vars.$hikari-radius-md - 1px) 0 0 calc(vars.$hikari-radius-md - 1px);
 }
 
 .hi-number-input-btn-increment {
     border-left: none;
-    border-radius: 0 7px 7px 0;
-}
-
-.hi-number-input-btn:hover:not(:disabled) {
-    color: var(--hi-color-primary, #1890ff);
-    background-color: var(--hi-glow-button-primary, rgba(24, 144, 255, 0.1));
-}
-
-.hi-number-input-btn:active:not(:disabled) {
-    transform: scale(0.9);
-    background-color: var(--hi-color-primary, #1890ff);
-    color: #fff;
-}
-
-.hi-number-input-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    color: var(--hi-color-text-disabled, #bfbfbf);
-    background-color: transparent;
-}
-
-.hi-number-input-btn:focus-visible {
-    box-shadow: inset 0 0 0 2px var(--hi-color-primary, #1890ff);
+    border-radius: 0 calc(vars.$hikari-radius-md - 1px) calc(vars.$hikari-radius-md - 1px) 0;
 }
 
 .hi-number-input-btn svg {
@@ -83,6 +96,7 @@
     flex-shrink: 0;
 }
 
+// Button size adjustments
 .hi-number-input-sm .hi-number-input-btn {
     width: 24px;
 }
@@ -101,6 +115,7 @@
     height: 16px;
 }
 
+// Input field
 .hi-number-input-input {
     flex: 1;
     min-width: 48px;
@@ -108,67 +123,79 @@
     padding: 0 8px;
     border: none;
     background-color: transparent;
-    color: var(--hi-color-text-primary, #333);
+    color: var(--hi-input-text, var(--hi-text-primary, #50616D));
     font-size: inherit;
     text-align: center;
     outline: none;
     font-weight: 500;
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    &[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    &::placeholder {
+        color: var(--hi-input-placeholder, rgba(80, 97, 109, 0.4));
+    }
 }
 
-.hi-number-input-input::-webkit-outer-spin-button,
-.hi-number-input-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-.hi-number-input-input[type=number] {
-    -moz-appearance: textfield;
-}
-
-.hi-number-input-input:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.hi-number-input-input::placeholder {
-    color: var(--hi-color-text-secondary, #999);
-}
-
-[data-theme="dark"] .hi-number-input-wrapper,
+// Dark theme (Tairitsu) - using CSS variables
 [data-theme="tairitsu"] .hi-number-input-wrapper {
-    background-color: transparent;
-    border-color: var(--hi-border, #333);
+    background-color: var(--hi-input-bg, rgba(240, 240, 245, 0.06));
+    border-color: var(--hi-border, #303448);
+
+    &:focus-within {
+        background-color: var(--hi-input-bg-focus, rgba(240, 240, 245, 0.10));
+        box-shadow: 0 0 0 3px rgba(20, 74, 116, 0.25);
+    }
 }
 
-[data-theme="dark"] .hi-number-input-btn,
 [data-theme="tairitsu"] .hi-number-input-btn {
     background-color: transparent;
-    color: var(--hi-text-secondary, #aaa);
+    color: var(--hi-text-secondary, #B3B8C7);
+
+    &:hover:not(:disabled) {
+        background-color: rgba(20, 74, 116, 0.15);
+        color: var(--hi-primary, #144A74);
+    }
+
+    &:active:not(:disabled) {
+        background-color: var(--hi-primary, #144A74);
+        color: var(--hi-badge-text, #F0F0F5);
+    }
+
+    &:disabled {
+        color: var(--hi-text-disabled, #6B7280);
+    }
 }
 
-[data-theme="dark"] .hi-number-input-btn:hover:not(:disabled),
-[data-theme="tairitsu"] .hi-number-input-btn:hover:not(:disabled) {
-    background-color: var(--hi-glow-button-primary, rgba(24, 144, 255, 0.15));
-    color: var(--hi-color-primary, #40a9ff);
-}
-
-[data-theme="dark"] .hi-number-input-btn:active:not(:disabled),
-[data-theme="tairitsu"] .hi-number-input-btn:active:not(:disabled) {
-    background-color: var(--hi-color-primary, #1890ff);
-    color: #fff;
-}
-
-[data-theme="dark"] .hi-number-input-btn-decrement,
-[data-theme="tairitsu"] .hi-number-input-btn-decrement {
-    border-right: none;
-}
-
-[data-theme="dark"] .hi-number-input-btn-increment,
-[data-theme="tairitsu"] .hi-number-input-btn-increment {
-    border-left: none;
-}
-
-[data-theme="dark"] .hi-number-input-input,
 [data-theme="tairitsu"] .hi-number-input-input {
-    color: var(--hi-text-primary, #e0e0e0);
+    color: var(--hi-text-primary, #F0F0F5);
+
+    &::placeholder {
+        color: var(--hi-text-disabled, #6B7280);
+    }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+    .hi-number-input-wrapper,
+    .hi-number-input-btn,
+    .hi-number-input-input {
+        transition: none;
+    }
+
+    .hi-number-input-btn:active:not(:disabled) {
+        transform: none;
+    }
 }

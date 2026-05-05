@@ -4,15 +4,180 @@
 
 // ============================================
 // Hikari Link Component
-// Styled anchor with hover effects
+// Styled anchor with full state coverage,
+// size variants, icon support, and FUI glow
 // ============================================
 
 .hi-link {
-    color: var(--hi-color-text-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
     text-decoration: none;
-    transition: color vars.$hikari-transition-fast;
+    cursor: pointer;
+    font-weight: 500;
+    transition:
+        color vars.$hikari-transition-fast,
+        background-color vars.$hikari-transition-fast,
+        transform vars.$hikari-transition-fast;
+    position: relative;
 
     &:hover {
+        color: var(--hi-button-primary-hover, rgba(255, 192, 203, 0.85));
         text-decoration: underline;
+        text-underline-offset: 3px;
+        text-decoration-thickness: 1px;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--hi-color-primary, var(--hi-primary));
+        outline-offset: 2px;
+        border-radius: 2px;
+    }
+
+    &:active {
+        color: var(--hi-button-primary-dark, #FF9AA9);
+        transform: scale(0.97);
+    }
+
+    &:visited {
+        color: var(--hi-secondary, #519A73);
+    }
+
+    &.is-disabled,
+    &[aria-disabled="true"],
+    &:disabled {
+        color: var(--hi-text-disabled, rgba(80, 97, 109, 0.35));
+        cursor: not-allowed;
+        text-decoration: none;
+        pointer-events: none;
+    }
+}
+
+// Size variants
+.hi-link-xs {
+    font-size: vars.$hikari-font-size-xs;
+}
+
+.hi-link-sm {
+    font-size: vars.$hikari-font-size-sm;
+}
+
+.hi-link-md {
+    font-size: vars.$hikari-font-size-base;
+}
+
+.hi-link-lg {
+    font-size: vars.$hikari-font-size-lg;
+}
+
+// Color variants
+.hi-link-default {
+    color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+
+    &:hover {
+        color: var(--hi-button-primary-hover, rgba(255, 192, 203, 0.85));
+    }
+
+    &:active {
+        color: var(--hi-button-primary-dark, #FF9AA9);
+    }
+}
+
+.hi-link-secondary {
+    color: var(--hi-secondary, #519A73);
+
+    &:hover {
+        color: var(--hi-button-secondary-hover, rgba(81, 154, 115, 0.8));
+    }
+
+    &:active {
+        color: var(--hi-button-secondary-dark, #3D7657);
+    }
+}
+
+.hi-link-danger {
+    color: var(--hi-danger, #FF4C00);
+
+    &:hover {
+        color: var(--hi-button-danger-hover, rgba(255, 76, 0, 0.8));
+    }
+
+    &:active {
+        color: var(--hi-button-danger-dark, #CC3D00);
+    }
+}
+
+// Icon variant (link with leading icon)
+.hi-link-icon {
+    gap: 0.375rem;
+
+    svg,
+    .hi-icon {
+        width: 1em;
+        height: 1em;
+        flex-shrink: 0;
+        transition: transform vars.$hikari-transition-fast;
+    }
+
+    &:hover svg,
+    &:hover .hi-icon {
+        transform: translateX(2px);
+    }
+}
+
+// Underline mode (always underlined)
+.hi-link-underlined {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+
+    &:hover {
+        text-decoration-thickness: 2px;
+    }
+}
+
+// Ghost variant (subtle, no underline until hover)
+.hi-link-ghost {
+    color: var(--hi-text-primary, #50616D);
+
+    &:hover {
+        color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+}
+
+// External link indicator
+.hi-link-external::after {
+    content: "";
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-left: 4px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'/%3E%3Cpolyline points='15 3 21 3 21 9'/%3E%3Cline x1='10' y1='14' x2='21' y2='3'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    opacity: 0.5;
+    transition: opacity vars.$hikari-transition-fast;
+}
+
+.hi-link-external:hover::after {
+    opacity: 1;
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+    .hi-link {
+        transition: none;
+    }
+
+    .hi-link:active {
+        transform: none;
+    }
+
+    .hi-link-icon:hover svg,
+    .hi-link-icon:hover .hi-icon {
+        transform: none;
     }
 }

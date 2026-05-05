@@ -79,7 +79,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #fff;
+    background-color: var(--hi-surface, #FFFFFF);
     border-radius: 50%;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.08);
     transition: transform var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease),
@@ -127,8 +127,8 @@
 
 // Unchecked hover - subtle border glow (FUI style)
 .hi-switch:hover:not(.hi-switch-disabled):not(.hi-switch-checked) {
-    border-color: var(--hi-color-primary, #1890ff);
-    box-shadow: 0 0 8px rgba(24, 144, 255, 0.12);
+    border-color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+    box-shadow: 0 0 8px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.15));
 }
 
 .hi-switch-disabled {
@@ -264,105 +264,104 @@
     line-height: 1.5;
 }
 
-// Dark theme
+// Dark theme - all using CSS variables for consistency
 [data-theme="dark"] .hi-switch,
 [data-theme="tairitsu"] .hi-switch {
-    background-color: var(--hi-surface-hover, #333);
+    background-color: rgba(240, 240, 245, 0.12);
 }
 
 [data-theme="dark"] .hi-switch-thumb,
 [data-theme="tairitsu"] .hi-switch-thumb {
-    background-color: #2a2a2a;
+    background-color: var(--hi-background, #161823);
 }
 
 [data-theme="dark"] .hi-switch-thumb-dot,
 [data-theme="tairitsu"] .hi-switch-thumb-dot {
-    background-color: #666;
+    background-color: var(--hi-text-disabled, #6B7280);
 }
 
 [data-theme="dark"] .hi-switch-checked,
 [data-theme="tairitsu"] .hi-switch-checked {
-    background-color: var(--hi-success, #10B981);
+    background-color: var(--hi-success, #0EB840);
 }
 
 // Color variants in dark theme
 [data-theme="dark"] .hi-switch-color-primary.hi-switch-checked,
-[data-theme="tairitsu"] .hi-switch-color-primary.hi-switch-checked { background-color: var(--hi-color-primary, #1890ff); }
+[data-theme="tairitsu"] .hi-switch-color-primary.hi-switch-checked { background-color: var(--hi-primary, #144A74); }
 [data-theme="dark"] .hi-switch-color-secondary.hi-switch-checked,
-[data-theme="tairitsu"] .hi-switch-color-secondary.hi-switch-checked { background-color: var(--hi-secondary, #4B5CC4); }
+[data-theme="tairitsu"] .hi-switch-color-secondary.hi-switch-checked { background-color: var(--hi-secondary, #FFC773); }
 [data-theme="dark"] .hi-switch-color-danger.hi-switch-checked,
-[data-theme="tairitsu"] .hi-switch-color-danger.hi-switch-checked { background-color: var(--hi-danger, #EF4444); }
+[data-theme="tairitsu"] .hi-switch-color-danger.hi-switch-checked { background-color: var(--hi-danger, #FF4C00); }
 [data-theme="dark"] .hi-switch-color-warning.hi-switch-checked,
-[data-theme="tairitsu"] .hi-switch-color-warning.hi-switch-checked { background-color: var(--hi-warning, #FBBF24); }
+[data-theme="tairitsu"] .hi-switch-color-warning.hi-switch-checked { background-color: var(--hi-warning, #FFF143); }
 [data-theme="dark"] .hi-switch-color-info.hi-switch-checked,
-[data-theme="tairitsu"] .hi-switch-color-info.hi-switch-checked { background-color: var(--hi-info, #065279); }
+[data-theme="tairitsu"] .hi-switch-color-info.hi-switch-checked { background-color: var(--hi-info, #144A74); }
 
 // Thumb dot colors in dark theme for checked state
 [data-theme="dark"] .hi-switch-checked .hi-switch-thumb-dot,
-[data-theme="tairitsu"] .hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-success, #10B981); }
+[data-theme="tairitsu"] .hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-success, #0EB840); }
 [data-theme="dark"] .hi-switch-color-primary.hi-switch-checked .hi-switch-thumb-dot,
-[data-theme="tairitsu"] .hi-switch-color-primary.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-color-primary, #1890ff); }
+[data-theme="tairitsu"] .hi-switch-color-primary.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-primary, #144A74); }
 [data-theme="dark"] .hi-switch-color-secondary.hi-switch-checked .hi-switch-thumb-dot,
-[data-theme="tairitsu"] .hi-switch-color-secondary.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-secondary, #4B5CC4); }
+[data-theme="tairitsu"] .hi-switch-color-secondary.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-secondary, #FFC773); }
 [data-theme="dark"] .hi-switch-color-danger.hi-switch-checked .hi-switch-thumb-dot,
-[data-theme="tairitsu"] .hi-switch-color-danger.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-danger, #EF4444); }
+[data-theme="tairitsu"] .hi-switch-color-danger.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-danger, #FF4C00); }
 [data-theme="dark"] .hi-switch-color-warning.hi-switch-checked .hi-switch-thumb-dot,
-[data-theme="tairitsu"] .hi-switch-color-warning.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-warning, #FBBF24); }
+[data-theme="tairitsu"] .hi-switch-color-warning.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-warning, #FFF143); }
 [data-theme="dark"] .hi-switch-color-info.hi-switch-checked .hi-switch-thumb-dot,
-[data-theme="tairitsu"] .hi-switch-color-info.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-info, #065279); }
+[data-theme="tairitsu"] .hi-switch-color-info.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-info, #144A74); }
 
+// Thumb text/icon in dark theme - unchecked state
 [data-theme="dark"] .hi-switch-thumb-text,
 [data-theme="dark"] .hi-switch-thumb-icon,
 [data-theme="tairitsu"] .hi-switch-thumb-text,
 [data-theme="tairitsu"] .hi-switch-thumb-icon {
-    color: #666;
+    color: var(--hi-text-disabled, #6B7280);
 }
 
+// Thumb text/icon in dark theme - checked state
 [data-theme="dark"] .hi-switch-checked .hi-switch-thumb-text,
 [data-theme="dark"] .hi-switch-checked .hi-switch-thumb-icon,
 [data-theme="tairitsu"] .hi-switch-checked .hi-switch-thumb-text,
 [data-theme="tairitsu"] .hi-switch-checked .hi-switch-thumb-icon {
-    color: var(--hi-success, #10B981);
+    color: var(--hi-success, #0EB840);
 }
 
+// Dark theme checked text/icon per color variant
 [data-theme="dark"] .hi-switch-color-primary.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="dark"] .hi-switch-color-primary.hi-switch-checked .hi-switch-thumb-icon,
 [data-theme="tairitsu"] .hi-switch-color-primary.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="tairitsu"] .hi-switch-color-primary.hi-switch-checked .hi-switch-thumb-icon {
-    color: var(--hi-color-primary, #1890ff);
+    color: var(--hi-primary, #144A74);
 }
-
 [data-theme="dark"] .hi-switch-color-secondary.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="dark"] .hi-switch-color-secondary.hi-switch-checked .hi-switch-thumb-icon,
 [data-theme="tairitsu"] .hi-switch-color-secondary.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="tairitsu"] .hi-switch-color-secondary.hi-switch-checked .hi-switch-thumb-icon {
-    color: var(--hi-secondary, #4B5CC4);
+    color: var(--hi-secondary, #FFC773);
 }
-
 [data-theme="dark"] .hi-switch-color-danger.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="dark"] .hi-switch-color-danger.hi-switch-checked .hi-switch-thumb-icon,
 [data-theme="tairitsu"] .hi-switch-color-danger.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="tairitsu"] .hi-switch-color-danger.hi-switch-checked .hi-switch-thumb-icon {
-    color: var(--hi-danger, #EF4444);
+    color: var(--hi-danger, #FF4C00);
 }
-
 [data-theme="dark"] .hi-switch-color-warning.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="dark"] .hi-switch-color-warning.hi-switch-checked .hi-switch-thumb-icon,
 [data-theme="tairitsu"] .hi-switch-color-warning.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="tairitsu"] .hi-switch-color-warning.hi-switch-checked .hi-switch-thumb-icon {
-    color: var(--hi-warning, #FBBF24);
+    color: var(--hi-warning, #FFF143);
 }
-
 [data-theme="dark"] .hi-switch-color-info.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="dark"] .hi-switch-color-info.hi-switch-checked .hi-switch-thumb-icon,
 [data-theme="tairitsu"] .hi-switch-color-info.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="tairitsu"] .hi-switch-color-info.hi-switch-checked .hi-switch-thumb-icon {
-    color: var(--hi-info, #065279);
+    color: var(--hi-info, #144A74);
 }
 
 [data-theme="dark"] .hi-switch-text,
 [data-theme="tairitsu"] .hi-switch-text {
-    color: var(--hi-text-primary, #e0e0e0);
+    color: var(--hi-text-primary, #F0F0F5);
 }
 
 // Focus state for accessibility

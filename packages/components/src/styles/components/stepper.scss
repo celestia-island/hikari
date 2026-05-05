@@ -1,209 +1,243 @@
 // styles/components/stepper.scss
 // Stepper component with Arknights + FUI styling
+// All colors now use CSS variables for theme consistency
+
+@use '../../../../theme/styles/variables.scss' as vars;
 
 .hi-stepper {
-  display: flex;
-  gap: 1rem;
-  padding: 1rem 0;
+    display: flex;
+    gap: 0;
+    padding: 1rem 0;
 }
 
 // Step wrapper
 .hi-step {
-  display: flex;
-  align-items: center;
-  position: relative;
-  transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    position: relative;
+    transition: all vars.$hikari-transition-normal;
+    flex: 1;
 }
 
-// Step number
+// Step number circle
 .hi-step-number {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  font-weight:  600;
-  color: var(--hi-color-surface, #ffffff);
-  border: 2px solid var(--hi-color-border, #e0e0e0);
-  background-color: var(--hi-color-surface, #ffffff);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  z-index: 2;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--hi-text-secondary, var(--hi-text-secondary, rgba(80, 97, 109, 0.65)));
+    border: 2px solid var(--hi-color-border, var(--hi-border, #C4D8DA));
+    background-color: var(--hi-surface, rgba(255, 255, 255, 0.7));
+    box-shadow: var(--hi-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+    transition:
+        all vars.$hikari-transition-normal,
+        box-shadow vars.$hikari-transition-normal;
+    z-index: 2;
+    flex-shrink: 0;
 }
 
 // Step connector (horizontal)
 .hi-step-connector {
-  flex: 1;
-  height: 2px;
-  background-color: var(--hi-color-border, #e0e0e0);
-  transition: all 0.3s ease;
+    flex: 1;
+    height: 2px;
+    background-color: var(--hi-color-border, var(--hi-border, #C4D8DA));
+    transition: background-color vars.$hikari-transition-normal;
+    margin: 0 12px;
+    align-self: center;
 }
 
 // Step connector (vertical)
 .hi-step-connector-vertical {
-  position: absolute;
-  width: 2px;
-  background-color: var(--hi-color-border, #e0e0e0);
-  top: 40px;
-  left: 20px;
-  bottom: -20px;
-  transition: all 0.3s ease;
+    position: absolute;
+    width: 2px;
+    background-color: var(--hi-color-border, var(--hi-border, #C4D8DA));
+    top: 40px;
+    left: 20px;
+    bottom: -20px;
+    transition: background-color vars.$hikari-transition-normal;
 }
 
-// Step states
+// Step states - Pending (default)
 .hi-step-pending .hi-step-number {
-  background-color: var(--hi-color-surface, #ffffff);
-  border-color: var(--hi-color-border, #e0e0e0);
-  color: var(--hi-color-text-secondary, #666);
+    background-color: var(--hi-surface, rgba(255, 255, 255, 0.7));
+    border-color: var(--hi-color-border, var(--hi-border, #C4D8DA));
+    color: var(--hi-text-secondary, rgba(80, 97, 109, 0.65));
 }
 
+// Active state with FUI glow
 .hi-step-active .hi-step-number {
-  background-color: var(--hi-color-primary, #00A0E9);
-  border-color: var(--hi-color-primary, #00A0E9);
-  color: var(--hi-color-surface, #ffffff);
-  box-shadow:
-    0 4px 12px var(--hi-glow-button-primary, rgba(0, 160, 233, 0.4)),
-    0 0 20px var(--hi-glow-button-primary, rgba(0, 160, 233, 0.2));
-  transform: scale(1.1);
+    background-color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+    border-color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+    color: var(--hi-badge-text, #FFFFFF);
+    box-shadow:
+        var(--hi-glow-primary-md, 0 0 16px rgba(255, 179, 167, 0.5)),
+        var(--hi-shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+    transform: scale(1.08);
 }
 
+// Finished / completed state
 .hi-step-finished .hi-step-number {
-  background-color: var(--hi-color-success, #52c41a);
-  border-color: var(--hi-color-success, #52c41a);
-  color: var(--hi-color-surface, #ffffff);
-  box-shadow: 0 2px 8px rgba(82, 196, 26, 0.1);
+    background-color: var(--hi-success, #0EB840);
+    border-color: var(--hi-success, #0EB840);
+    color: var(--hi-badge-text, #FFFFFF);
+    box-shadow: 0 2px 8px rgba(14, 184, 64, 0.15);
 }
 
+// Last step - no connector needed
 .hi-step-last {
-  padding-right: 0;
+    padding-right: 0;
 }
 
 // Horizontal layout
 .hi-stepper-horizontal {
-  flex-direction: row;
-  align-items: flex-start;
+    flex-direction: row;
+    align-items: flex-start;
 }
 
 .hi-stepper-horizontal .hi-step-connector {
-  min-width: 2rem;
+    min-width: 2rem;
 }
 
 .hi-stepper-horizontal .hi-step {
-  padding-right: 0;
+    padding-right: 0;
 }
 
 .hi-stepper-horizontal .hi-step:last-child {
-  padding-right: 0;
+    padding-right: 0;
 }
 
 // Vertical layout
 .hi-stepper-vertical {
-  flex-direction: column;
-  align-items: flex-start;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .hi-stepper-vertical .hi-step {
-  flex-direction: row;
-  padding-bottom: 2rem;
+    flex-direction: row;
+    padding-bottom: 2rem;
 }
 
 .hi-stepper-vertical .hi-step:last-child {
-  padding-bottom: 0;
+    padding-bottom: 0;
 }
 
-// FUI effects
+// FUI effects - active pulse animation
 .hi-step-active .hi-step-number {
-  animation: hi-stepper-pulse 2s ease-in-out infinite;
+    animation: hi-stepper-pulse 2s ease-in-out infinite;
 }
 
 @keyframes hi-stepper-pulse {
-  0%, 100% {
-    transform: scale(1.1);
-    box-shadow:
-      0 4px 12px var(--hi-glow-button-primary, rgba(0, 160, 233, 0.4)),
-      0 0 20px var(--hi-glow-button-primary, rgba(0, 160, 233, 0.2));
-  }
-  50% {
-    transform: scale(1.15);
-    box-shadow:
-      0 4px 12px var(--hi-glow-button-primary, rgba(0, 160, 233, 0.4)),
-      0 0 20px var(--hi-glow-button-primary, rgba(0, 160, 233, 0.2));
-  }
+    0%, 100% {
+        transform: scale(1.08);
+        box-shadow:
+            var(--hi-glow-primary-md, 0 0 16px rgba(255, 179, 167, 0.5)),
+            var(--hi-shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+    }
+    50% {
+        transform: scale(1.12);
+        box-shadow:
+            var(--hi-glow-primary-lg, 0 0 24px rgba(255, 179, 167, 0.4)),
+            var(--hi-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+    }
 }
 
-// Tairitsu theme (dark)
+// Connector fill for finished steps
+.hi-step-finished + .hi-step .hi-step-connector,
+.hi-step-finished > .hi-step-connector {
+    background-color: var(--hi-success, #0EB840);
+}
+
+// Tairitsu dark theme - all using CSS variables
 [data-theme="tairitsu"] {
-  .hi-step-number {
-    background-color: #1a1a1a;
-    border-color: rgba(255, 255, 255, 0.24);
-    color: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
+    .hi-step-number {
+        background-color: var(--hi-card-bg, rgba(240, 240, 245, 0.06));
+        border-color: var(--hi-border, #303448);
+        color: var(--hi-text-secondary, #B3B8C7);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    }
 
-  .hi-step-pending .hi-step-number {
-    background-color: #1a1a1a;
-    border-color: rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.5);
-  }
+    .hi-step-pending .hi-step-number {
+        background-color: var(--hi-card-bg, rgba(240, 240, 245, 0.06));
+        border-color: var(--hi-border, #303448);
+        color: var(--hi-text-disabled, #6B7280);
+    }
 
-  .hi-step-active .hi-step-number {
-    background-color: #1a237e;
-    border-color: #1a237e;
-    color: rgba(255, 255, 255, 0.95);
-    box-shadow:
-      0 4px 12px rgba(26, 35, 126, 0.5),
-      0 0 20px rgba(26, 35, 126, 0.3);
-  }
+    .hi-step-active .hi-step-number {
+        background-color: var(--hi-primary, #144A74);
+        border-color: var(--hi-primary, #144A74);
+        color: var(--hi-badge-text, #F0F0F5);
+        box-shadow:
+            0 4px 16px rgba(20, 74, 116, 0.5),
+            0 0 24px rgba(20, 74, 116, 0.3);
+    }
 
-  .hi-step-finished .hi-step-number {
-    background-color: #2e7d32;
-    border-color: #2e7d32;
-    color: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 2px 8px rgba(46, 125, 50, 0.1);
-  }
+    .hi-step-finished .hi-step-number {
+        background-color: var(--hi-success, #0EB840);
+        border-color: var(--hi-success, #0EB840);
+        color: var(--hi-badge-text, #F0F0F5);
+        box-shadow: 0 2px 8px rgba(14, 184, 64, 0.15);
+    }
 
-  .hi-step-connector,
-  .hi-step-connector-vertical {
-    background-color: rgba(255, 255, 0.24);
-  }
+    .hi-step-connector,
+    .hi-step-connector-vertical {
+        background-color: var(--hi-border, #303448);
+    }
 
-  .hi-step-active .hi-step-number {
-    animation: hi-stepper-pulse 2s ease-in-out infinite;
-  }
+    .hi-step-finished + .hi-step .hi-step-connector,
+    .hi-step-finished > .hi-step-connector {
+        background-color: var(--hi-success, #0EB840);
+    }
 }
 
 // Responsive adjustments
 @media (max-width: 768px) {
-  .hi-stepper-horizontal {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+    .hi-stepper-horizontal {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 
-  .hi-stepper-horizontal .hi-step {
-    flex-direction: row;
-    padding-right: 0;
-    padding-bottom: 1.5rem;
-  }
+    .hi-stepper-horizontal .hi-step {
+        flex-direction: row;
+        padding-right: 0;
+        padding-bottom: 1.5rem;
+    }
 
-  .hi-stepper-horizontal .hi-step:last-child {
-    padding-bottom: 0;
-  }
+    .hi-stepper-horizontal .hi-step:last-child {
+        padding-bottom: 0;
+    }
 
-  .hi-step-number {
-    width: 32px;
-    height: 32px;
-    font-size: 0.875rem;
-  }
+    .hi-step-number {
+        width: 32px;
+        height: 32px;
+        font-size: 0.875rem;
+    }
 
-  .hi-step-connector-vertical {
-    left: 16px;
-    top: 32px;
-    bottom: -16px;
-  }
+    .hi-step-connector-vertical {
+        left: 16px;
+        top: 32px;
+        bottom: -16px;
+    }
 
-  .hi-stepper-vertical .hi-step {
-    padding-bottom: 1.5rem;
-  }
+    .hi-stepper-vertical .hi-step {
+        padding-bottom: 1.5rem;
+    }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+    .hi-step-number,
+    .hi-step,
+    .hi-step-connector,
+    .hi-step-connector-vertical {
+        transition: none;
+    }
+
+    .hi-step-active .hi-step-number {
+        animation: none;
+        transform: scale(1.08);
+    }
 }

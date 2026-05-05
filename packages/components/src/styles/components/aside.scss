@@ -135,7 +135,7 @@
 
       // Glow effect
       border-radius: vars.$hikari-radius-fui-sm;
-      background: linear-gradient(135deg, var(--hi-primary), rgba(238, 162, 164, 0.2));
+      background: linear-gradient(135deg, var(--hi-primary), var(--hi-button-primary-light, #FFE4E9));
       --hi-glow-transparent: false;
       --hi-glow-bg-color: var(--hi-primary);
       box-shadow:
@@ -830,7 +830,7 @@
       180deg,
       transparent 0%,
       var(--hi-color-primary) 20%,
-      rgba(238, 162, 164, 0.6) 50%,
+      var(--hi-button-primary-hover, rgba(255, 192, 203, 0.6)) 50%,
       var(--hi-color-primary) 80%,
       transparent 100%
     );
@@ -840,14 +840,14 @@
     color: var(--hi-color-text-primary);
 
     &.hi-aside-menu-item-active {
-      background: linear-gradient(90deg, rgba(238, 162, 164, 0.15), rgba(238, 162, 164, 0.05));
+      background: linear-gradient(90deg, var(--hi-button-primary-light, rgba(255, 192, 203, 0.15)), var(--hi-tertiary-bg, rgba(240, 240, 244, 0.05)));
     }
   }
 }
 
 // Primary variant
 .hi-aside-primary {
-  background: linear-gradient(180deg, rgba(238, 162, 164, 0.9), rgba(216, 139, 142, 0.9));
+  background: linear-gradient(180deg, var(--hi-primary), var(--hi-button-primary-dark, #FF9AA9));
   border-color: var(--hi-white-20, rgba(255, 255, 255, 0.2));
 
   &::before {

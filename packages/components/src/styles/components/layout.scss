@@ -72,7 +72,7 @@
   // Scrolled state (applied via JS)
   &.hi-layout-header-scrolled {
     background: var(--hi-card-bg);
-    box-shadow: 0 8px 16px rgba(23, 89, 168, 0.25), 0 0 30px var(--hi-primary);
+    box-shadow: 0 8px 16px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.2)), 0 0 30px var(--hi-primary);
   }
 }
 
@@ -374,7 +374,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(23, 89, 168, 0.3);
+      background: var(--hi-black-20, rgba(0, 0, 0, 0.2));
       backdrop-filter: blur(4px);
       z-index: 199;
       opacity: 0;

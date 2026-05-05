@@ -69,7 +69,7 @@
     --hi-glow-transparent: false;
     --hi-glow-bg-color: var(--hi-card-bg);
     box-shadow:
-      0 8px 24px rgba(23, 89, 168, 0.25),
+      0 8px 24px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.2)),
       0 0 40px var(--hi-glow-color);
 
     &::before {
@@ -407,7 +407,7 @@
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-sm;
     color: var(--hi-color-text-primary);
-    background: rgba(214, 236, 240, 0.5);
+    background: var(--hi-tertiary-bg, rgba(240, 240, 244, 0.5));
     border: 1px solid var(--hi-primary);
     border-radius: vars.$hikari-radius-fui-sm;
     outline: none;
@@ -423,15 +423,15 @@
     // Hover state
     &:hover {
       border-color: var(--hi-primary);
-      background: rgba(23, 89, 168, 0.2);
+      background: var(--hi-button-primary-light, rgba(255, 192, 203, 0.15));
     }
 
     // Focus state
     &:focus {
       border-color: var(--hi-color-primary);
-      background: rgba(23, 89, 168, 0.25);
+      background: var(--hi-input-bg-focus, #FFFFFF);
       --hi-glow-transparent: false;
-      --hi-glow-bg-color: rgba(23, 89, 168, 0.25);
+      --hi-glow-bg-color: var(--hi-button-primary-light, #FFE4E9);
       box-shadow:
         0 0 0 2px var(--hi-primary),
         0 0 12px var(--hi-glow-color);

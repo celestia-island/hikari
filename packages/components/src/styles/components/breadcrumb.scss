@@ -470,11 +470,11 @@
     }
 
     &:last-child {
-      background: linear-gradient(135deg, var(--hi-primary), var(--hi-primary));
-      border-color: var(--hi-primary);
+      background: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+      border-color: var(--hi-color-primary);
       box-shadow:
-        0 0 12px var(--hi-primary),
-        inset 0 0 8px var(--hi-primary);
+        0 0 12px var(--hi-glow-primary-md, rgba(255, 179, 167, 0.5)),
+        inset 0 0 8px rgba(255, 255, 255, 0.1);
     }
   }
 }

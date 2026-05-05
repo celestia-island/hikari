@@ -792,7 +792,7 @@ aside .hi-menu {
 
 .hi-menu-item:focus-visible {
   outline: none;
-  background: linear-gradient(90deg, var(--hi-primary), var(--hi-primary));
+  background: var(--hi-button-primary-light, #FFE4E9);
   border-color: var(--hi-primary);
 }
 
@@ -1048,9 +1048,9 @@ aside .hi-menu {
 // ============================================
 
 .hi-menu-list .hi-menu-item.hi-menu-item-active {
-  background: linear-gradient(90deg, var(--hi-primary), var(--hi-primary));
+  background: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
   border-color: var(--hi-primary);
-  color: var(--hi-color-text-primary);
+  color: var(--hi-badge-text, #FFFFFF);
 
   .hi-menu-item-icon {
     color: var(--hi-color-primary);

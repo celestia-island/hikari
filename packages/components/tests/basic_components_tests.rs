@@ -1,9 +1,3 @@
-#[unsafe(no_mangle)]
-pub extern "C" fn tairitsu_prevent_default(_event_handle: u64) {}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn tairitsu_stop_propagation(_event_handle: u64) {}
-
 #[cfg(test)]
 mod tests {
     use hikari_components::basic::badge::{Badge, BadgeProps};

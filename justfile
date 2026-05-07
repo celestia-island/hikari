@@ -160,69 +160,114 @@ generate-scss:
     @cargo build --manifest-path packages/builder/Cargo.toml
 
 # ============================================================================
-# Browser Debug (for AI agents)
+# Browser Debug & E2E (Python framework, powered by Tairitsu MCP)
+# ============================================================================
+#
+# The E2E framework is now pure Python (scripts/e2e/), replacing the old
+# Rust hikari-e2e package. It communicates with tairitsu-debug HTTP API.
+#
+# Key commands:
+#   just health              - Check if tairitsu-debug server is running
+#   just capture             - Screenshot a single page
+#   just batch               - Batch capture all routes
+#   just inspect             - Inspect a single page (diagnostics)
+#   just compare             - Compare screenshots / visual regression
+#   just baseline ...        - Manage golden screenshots
+#   just e2e-run             - Execute a JSON test suite
 # ============================================================================
 
+# Install Python dependencies for E2E framework
+e2e-install:
+    @{{py}} -m pip install Pillow requests --quiet 2>/dev/null || echo "Note: pip install may need --user or venv"
+
+# Check tairitsu-debug server health (replaces wry-health)
+health debug_port="3001":
+    @{{py}} scripts/e2e/cli.py health --debug-port {{debug_port}}
+
+# Capture a single screenshot (replaces hikari-browser-debug navigate)
+capture route="/" output="" wait="8":
+    @{{py}} scripts/e2e/cli.py capture --route "{{route}}" {{if output != "" { "--output " + output } else { "" } }} --wait {{wait}}
+
+# Batch capture all routes (replaces visual-batch / wry-batch)
+batch url="http://localhost:3000" output="./screenshots" routes="" wait="8":
+    @{{py}} scripts/e2e/cli.py batch --url "{{url}}" --output "{{output}}" {{if routes != "" { "--routes " + routes } else { "" } }} --wait {{wait}}
+
+# Inspect a single page: screenshot + errors + console + DOM snapshot
+inspect route="/" output="inspect.png" wait="8":
+    @{{py}} scripts/e2e/cli.py inspect --route "{{route}}" --output "{{output}}" --wait {{wait}}
+
+# Compare two screenshots or run regression against baselines
+compare expected="" actual="" baseline_dir="" candidate_dir="" threshold="30":
+    @{{py}} scripts/e2e/cli.py compare \
+        {{if expected != "" { "--expected " + expected } else { "" }}} \
+        {{if actual != "" { "--actual " + actual } else { "" }}} \
+        {{if baseline_dir != "" { "--baseline-dir " + baseline_dir } else { "" }}} \
+        {{if candidate_dir != "" { "--candidate-dir " + candidate_dir } else { "" }}} \
+        --threshold {{threshold}}
+
+# Baseline management: init, set, accept, list, delete, export
+baseline action="list" name="" image="" route="" suite="default":
+    @{{py}} scripts/e2e/cli.py baseline {{action}} \
+        {{if name != "" { "--name " + name } else { "" }}} \
+        {{if image != "" { "--image " + image } else { "" }}} \
+        {{if route != "" { "--route " + route } else { "" }}} \
+        --suite {{suite}}
+
+# Run a JSON test suite (replaces main hikari-e2e binary)
+e2e-run suite="" url="http://localhost:3000" output="e2e_output" html="":
+    @{{py}} scripts/e2e/cli.py run "{{suite}}" --url "{{url}}" --output "{{output}}" {{if html != "" { "--html" } else { "" }}}
+
+# Interactive session from commands JSON file
+interactive input="scripts/dev/commands/example_commands.json" output-dir="scripts/dev/screenshots":
+    @{{py}} scripts/e2e/cli.py interactive --input "{{input}}" --output-dir "{{output-dir}}"
+
+# --- Backward-compatible aliases (old names → new Python implementation) ---
+
 build-debug:
-    @cargo build --release --package hikari-e2e --bin hikari-browser-debug \
-                 --bin hikari-visual-debug
+    @echo "  ℹ️  build-debug is now unnecessary — the E2E framework is pure Python."
+    @echo "     Run 'just e2e-install' to ensure dependencies are installed."
 
-# --- Tairitsu browser-test integration ---
-
-# Install Chromium via Tairitsu's BrowserDownloader
 browser-install:
-    @cd ../tairitsu && cargo run --package tairitsu-browser-test -- browser install
+    @echo "  ℹ️  browser-install not needed — tairitsu-debug is built into the dev server."
+    @echo "     Start with 'just dev --daemon' and use 'just health' to verify."
 
-# Visual debug: capture screenshots of all key pages (powered by tairitsu-browser-test)
+# Aliases for old recipe names
 visual-capture url="http://localhost:3000" output="/tmp/e2e_screenshots" filter="":
-    @cargo run --release --package hikari-e2e --bin hikari-visual-debug -- capture \
-        --base-url "{{url}}" --output-dir "{{output}}" {{if filter != "" { "--filter " + filter } else { "" } }} --json
+    @just capture --route "/" --output "{{output}}/home.png"
+    @just batch --url "{{url}}" --output "{{output}}" {{if filter != "" { "--routes " + filter } else { "" }}}
 
-# Visual debug: batch capture all routes with full report
 visual-batch url="http://localhost:3000" output="/tmp/e2e_screenshots":
-    @cargo run --release --package hikari-e2e --bin hikari-visual-debug -- batch \
-        --base-url "{{url}}" --output-dir "{{output}}" --json --report-path "/tmp/e2e_screenshots/report.json"
+    @just batch --url "{{url}}" --output "{{output}}" --report "{{output}}/report.json"
 
-# Visual debug: inspect a single page (layout metrics + screenshot)
 visual-inspect route="/" url="http://localhost:3000" output="inspect.png":
-    @cargo run --release --package hikari-e2e --bin hikari-visual-debug -- inspect \
-        --base-url "{{url}}" --route "{{route}}" --output "{{output}}"
+    @just inspect --route "{{route}}" --output "{{output}}"
 
-# Full visual pipeline: install chrome → capture → ready for AI analysis
-visual-pipeline: browser-install visual-batch
+visual-pipeline: health batch
     @echo ""
     @echo "  ╔══════════════════════════════════════════╗"
-    @echo "  ║  Screenshots saved to /tmp/e2e_screenshots ║"
-    @echo "  ║  Report: /tmp/e2e_screenshots/report.json  ║"
+    @echo "  ║  Screenshots saved to ./screenshots       ║"
     @echo "  ║  Ready for AI visual analysis              ║"
     @echo "  ╚══════════════════════════════════════════╝"
 
-# --- Wry-based visual debug (via tairitsu-debug HTTP API) ---
-
-build-debug-wry:
-    @cargo build --release --package hikari-e2e --bin hikari-visual-debug-wry
+build-debug-wry: build-debug
 
 wry-health debug_port="3001":
-    @cargo run --release --package hikari-e2e --bin hikari-visual-debug-wry -- health --debug-port {{debug_port}}
+    @just health {{debug_port}}
 
 wry-capture route="/" debug_port="3001" output="":
-    @cargo run --release --package hikari-e2e --bin hikari-visual-debug-wry -- \
-        capture --debug-port {{debug_port}} --route "{{route}}" --full-page {{if output != "" { "--output " + output } else { "" } }}
+    @{{py}} scripts/e2e/cli.py capture --route "{{route}}" {{if output != "" { "--output " + output } else { "" } }} --debug-port {{debug_port}}
 
 wry-batch debug_port="3001" output="" routes="":
-    @cargo run --release --package hikari-e2e --bin hikari-visual-debug-wry -- \
-        batch --debug-port {{debug_port}} --output-json {{if output != "" { "--output " + output } else { "" } }} {{if routes != "" { "--routes " + routes } else { "" } }}
+    @{{py}} scripts/e2e/cli.py batch --debug-port {{debug_port}} --output "{{if output != "" { output } else { "./screenshots" } }}" {{if routes != "" { "--routes " + routes } else { "" }}}
 
 wry-inspect route="/" selector="" debug_port="3001":
-    @cargo run --release --package hikari-e2e --bin hikari-visual-debug-wry -- \
-        inspect --debug-port {{debug_port}} --route "{{route}}" {{if selector != "" { "--selector " + selector } else { "" } }}
+    @{{py}} scripts/e2e/cli.py inspect --route "{{route}}" --debug-port {{debug_port}}
 
 wry-interactive route="/" debug_port="3001":
-    @cargo run --release --package hikari-e2e --bin hikari-visual-debug-wry -- \
-        interactive --debug-port {{debug_port}} --route "{{route}}"
+    @{{py}} scripts/e2e/cli.py interactive --debug-port {{debug_port}}
 
 wry-pipeline debug_port="3001": wry-health wry-batch
-    @echo "  ✓  Wry screenshots saved to wry_screenshots/"
+    @echo "  ✓  Screenshots saved to ./screenshots/"
     @echo "  ✓  Ready for AI vision analysis"
 
 debug-screenshot url="http://localhost:3000" output="screenshot.png" wait="10" inject="":

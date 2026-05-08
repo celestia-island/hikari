@@ -318,3 +318,11 @@ palette_page_desc = "500+ 按色相和飽和度組織的中國傳統色彩。"
 hikari_theme = "Hikari 主題（淺色）"
 tairitsu_theme = "Tairitsu 主題（深色）"
 default_theme = "預設主題"
+
+[empty]
+no_data = "No data available"
+no_projects = "You have no projects yet"
+create_project = "Create Project"
+search_not_found = "No results found"
+search_hint = "Try adjusting your search terms"
+no_records = "No records to display"

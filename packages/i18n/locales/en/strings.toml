@@ -291,7 +291,7 @@ design_system_title = "Design System"
 design_system_desc = "The foundational layer of Hikari UI."
 palette_desc = "500+ traditional Chinese colors with auto light/dark mode switching."
 css_utilities_desc = "Type-safe utility classes for layout, spacing, typography, and colors."
-icons_desc = "Material Design Icons (MDI) integration with tree-shaking."
+icons_desc = "Material Design Icons rendered as inline SVG with tree-shaking support."
 animations_desc = "Spring-physics animation system with CSS keyframe presets."
 i18n_desc = "Multi-language support: en, zhs, zht, ja, ko, fr, es, ru, ar."
 css_page_desc = "Type-safe utility class system for rapid UI development."
@@ -318,3 +318,11 @@ palette_page_desc = "500+ traditional Chinese colors organized by hue and satura
 hikari_theme = "Hikari Theme (Light)"
 tairitsu_theme = "Tairitsu Theme (Dark)"
 default_theme = "Default Theme"
+
+[empty]
+no_data = "No data available"
+no_projects = "You have no projects yet"
+create_project = "Create Project"
+search_not_found = 'No results found for "quantum computing"'
+search_hint = "Try adjusting your search terms or filters"
+no_records = "No records to display"

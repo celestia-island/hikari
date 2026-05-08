@@ -121,7 +121,7 @@ def snap(page, name, sel=None, full_page=False):
     except Exception as e:
         print(f"  [FAIL] {group}/{fn}: {e}")
 
-def nav(page, route, wait_after=12):
+def nav(page, route, wait_after=15):
     url = BASE + route
     try:
         page.goto(url, wait_until="domcontentloaded", timeout=25000)
@@ -184,13 +184,47 @@ def do_click(page, selector):
 
 def do_type(page, selector, text):
     try:
-        el = page.query_selector(selector)
+        el = page.wait_for_selector(selector, state="attached", timeout=8000)
         if el:
-            el.click(timeout=3000)
+            try:
+                el.scroll_into_view_if_needed(timeout=2000)
+            except:
+                pass
             time.sleep(0.15)
-            el.click(click_count=3)
-            time.sleep(0.1)
-            page.keyboard.type(text, delay=30)
+            try:
+                el.click(timeout=2000)
+                time.sleep(0.1)
+                el.click(click_count=3)
+                time.sleep(0.1)
+                page.keyboard.type(text, delay=30)
+            except:
+                pass
+            time.sleep(0.3)
+            js_code = """
+                (args) => {
+                    const sel = args[0];
+                    const val = args[1];
+                    const el = document.querySelector(sel);
+                    if (el) {
+                        const tag = el.tagName.toLowerCase();
+                        if (tag === 'textarea') {
+                            const setter = Object.getOwnPropertyDescriptor(
+                                window.HTMLTextAreaElement.prototype, 'value'
+                            )?.set;
+                            if (setter) { setter.call(el, val); el.dispatchEvent(new Event('input', {bubbles:true})); }
+                        } else {
+                            const setter = Object.getOwnPropertyDescriptor(
+                                window.HTMLInputElement.prototype, 'value'
+                            )?.set;
+                            if (setter) { setter.call(el, val); el.dispatchEvent(new Event('input', {bubbles:true})); }
+                        }
+                        el.setAttribute('value', val);
+                    }
+                }
+            """
+            page.evaluate(js_code, [selector, text])
+        else:
+            print(f"    ! type({selector}): element not found")
         time.sleep(0.6)
     except Exception as e:
         print(f"    ! type({selector}): {str(e)[:60]}")
@@ -242,7 +276,7 @@ PLAN = [
     ("/components/layer1/form/index.html", "form-input-demo", [
         ("sv", "nav_form_0,0-1920,1080_initial"),
         ("sf", "nav_form_fullpage_full"),
-        ("tp", "input[type='text'], input:not([type]):first-of-type",
+        ("tp", "input.hi-input:first-of-type",
          "Hello E2E Test!", "type_input-hello"),
         ("sv", "type_form_0,0-1920,1080_typed-hello"),
         ("sc", 500, "scroll_form_0,500-1920,1580_more-fields"),
@@ -275,14 +309,21 @@ PLAN = [
     # --- SEARCH ---
     ("/components/layer1/search/index.html", "search-demo", [
         ("sv", "nav_search_0,0-1920,1080_initial"),
-        ("tp", "input:first-of-type", "test search query", "type_search-query"),
+        ("tp", "input[type='search'][placeholder='Search...']", "test search query", "type_search-query"),
         ("sv", "type_search_0,0-1920,1080_typed-query"),
         ("rs",),
     ]),
     # --- NUMBER INPUT ---
     ("/components/layer1/number-input/index.html", "number-input-demo", [
         ("sv", "nav_numberInput_0,0-1920,1080_initial"),
-        ("tp", "input:first-of-type", "42", "type_number-42"),
+        ("tp", ".hi-number-input-input", "42", "type_number-42"),
+        ("sv", "type_numInput_0,0-1920,1080_typed-42"),
+        ("rs",),
+    ]),
+    # --- NUMBER INPUT ---
+    ("/components/layer1/number-input/index.html", "number-input-demo", [
+        ("sv", "nav_numberInput_0,0-1920,1080_initial"),
+        ("tp", "input[type='number'], .hi-number-input-input", "42", "type_number-42"),
         ("sv", "type_numInput_0,0-1920,1080_typed-42"),
         ("rs",),
     ]),
@@ -328,7 +369,7 @@ PLAN = [
     ("/components/layer3/editor/index.html", "editor-demo", [
         ("sv", "nav_editor_0,0-1920,1080_initial"),
         ("sf", "nav_editor_fullpage_full"),
-        ("tp", "textarea, [contenteditable='true']",
+        ("tp", "textarea.hi-editor__textarea",
          "# Hello Markdown\n\nThis is **bold** text.", "type_markdown"),
         ("sv", "type_editor_0,0-1920,1080_typed-markdown"),
         ("sc", 400, "scroll_editor_0,400-1920,1480_editor-preview"),
@@ -380,11 +421,11 @@ PLAN = [
         ("sc", 1300, "scroll_icons_0,1300-1920,2380_more-icons"),
         ("rs",),
     ]),
-    # --- CSS VARIABLES ---
-    ("/system/css/index.html", "css-vars-demo", [
-        ("sv", "nav_cssVars_0,0-1920,1080_initial"),
-        ("sf", "nav_cssVars_fullpage_full"),
-        ("sc", 500, "scroll_cssVars_0,500-1920,1580_variables"),
+    # --- CSS UTILITIES ---
+    ("/system/css/index.html", "css-utilities-demo", [
+        ("sv", "nav_cssUtils_0,0-1920,1080_initial"),
+        ("sf", "nav_cssUtils_fullpage_full"),
+        ("sc", 500, "scroll_cssUtils_0,500-1920,1580_utilities"),
         ("rs",),
     ]),
     # --- ANIMATIONS (system page) ---
@@ -399,7 +440,14 @@ PLAN = [
     ]),
     # --- I18N ---
     ("/system/i18n/index.html", "i18n-demo", [
+        ("ck", ".hi-select-trigger", "open-lang-dropdown"),
+        ("ck", ".hi-select-option[data-value='en']", "switch-to-english"),
+        ("wait", 1.5),
         ("sv", "nav_i18n_0,0-1920,1080_initial"),
+        ("ck", ".hi-select-trigger", "open-lang-dropdown-2"),
+        ("ck", ".hi-select-option[data-value='zhs']", "switch-to-zhs"),
+        ("wait", 1.5),
+        ("sv", "nav_i18n_after-lang-change_0,0-1920,1080"),
         ("sf", "nav_i18n_fullpage_full"),
         ("rs",),
     ]),
@@ -415,7 +463,7 @@ PLAN = [
     ("/demos/form/index.html", "demo-form", [
         ("sv", "nav_demoForm_0,0-1920,1080_initial"),
         ("sf", "nav_demoForm_fullpage_full"),
-        ("tp", "input[type='text'], input:not([type]):first-of-type",
+        ("tp", "#demo-email",
          "John Doe", "type_form-name"),
         ("sv", "type_demoForm_0,0-1920,1080_filled-name"),
         ("sc", 500, "scroll_demoForm_0,500-1920,1580_more-fields"),

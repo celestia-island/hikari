@@ -1,10 +1,18 @@
 use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
 use crate::components::icon_utils::icon_el;
 use hikari_icons::MdiIcon;
+use hikari_i18n::t;
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
 pub fn render() -> VNode {
+    let no_data = t!("empty.no_data");
+    let no_projects = t!("empty.no_projects");
+    let create_project = t!("empty.create_project");
+    let search_not_found = t!("empty.search_not_found");
+    let search_hint = t!("empty.search_hint");
+    let no_records = t!("empty.no_records");
+
     render_demo_page(
         "page-component-empty",
         "Empty",
@@ -16,7 +24,48 @@ pub fn render() -> VNode {
                         div { class: "hi-empty__icon",
                             {icon_el(MdiIcon::Magnify, 48)}
                         }
-                        div { class: "hi-empty__description", "No data available" }
+                        div { class: "hi-empty__description", no_data }
+                    }
+                }
+            )}
+            {render_demo_block("Empty with Action",
+                rsx! {
+                    div { class: "hi-empty",
+                        div { class: "hi-empty__icon",
+                            {icon_el(MdiIcon::FileEdit, 48)}
+                        }
+                        div { class: "hi-empty__description", no_projects }
+                        button { class: "hi-button hi-button-primary", attr: "type", "button", "Create Project" }
+                    }
+                }
+            )}
+            {render_demo_block("Search Not Found",
+                rsx! {
+                    div { class: "hi-empty",
+                        div { class: "hi-empty__icon",
+                            {icon_el(MdiIcon::Magnify, 48)}
+                        }
+                        div { class: "hi-empty__description", search_not_found }
+                        div { class: "hi-empty__hint", search_hint }
+                    }
+                }
+            )}
+            {render_demo_block("Empty Table",
+                rsx! {
+                    table { class: "hi-table",
+                        thead { tr { th { "Name" } th { "Status" } th { "Updated" } } }
+                        tbody {
+                            tr {
+                                td { colspan: "3",
+                                    div { class: "hi-empty",
+                                        div { class: "hi-empty__icon",
+                                            {icon_el(MdiIcon::FileEdit, 48)}
+                                        }
+                                        div { class: "hi-empty__description", no_records }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             )}

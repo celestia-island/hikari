@@ -318,3 +318,11 @@ palette_page_desc = "500+ couleurs traditionnelles chinoises organisées par tei
 hikari_theme = "Thème Hikari (Clair)"
 tairitsu_theme = "Thème Tairitsu (Sombre)"
 default_theme = "Thème par Défaut"
+
+[empty]
+no_data = "No data available"
+no_projects = "You have no projects yet"
+create_project = "Create Project"
+search_not_found = "No results found"
+search_hint = "Try adjusting your search terms"
+no_records = "No records to display"

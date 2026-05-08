@@ -23,7 +23,7 @@ fn render_overview() -> VNode {
                 }
                 a { href: "/system/icons", class: "card card--link",
                     h3 { class: "card__title", "Icons" }
-                    p { class: "card__body", "Material Design Icons and custom Hikari icon set." }
+                    p { class: "card__body", "Material Design Icons rendered as inline SVG — no webfont required." }
                 }
                 a { href: "/system/animations", class: "card card--link",
                     h3 { class: "card__title", "Animations" }
@@ -101,22 +101,25 @@ fn render_css() -> VNode {
 }
 
 fn render_icons() -> VNode {
+    use crate::components::icon_utils::icon_el;
+    use hikari_icons::MdiIcon;
+
     render_demo_page(
         "page-system-icons",
         "Icons",
-        "Hikari ships with Material Design Icons (MDI) and a custom Hikari icon set.",
+        "Hikari ships with Material Design Icons (MDI) and a custom Hikari icon set. All icons are rendered as inline SVG.",
         rsx! [
             {render_demo_block("Usage",
                 rsx! {
-                    p { "Icons are referenced by name. The icon system supports solid, outline, and duo-tone variants." }
+                    p { "Icons are referenced by name. The icon system supports solid, outline, and duo-tone variants. All icons render as inline SVG — no webfont required." }
                     div { {render_demo_row(
                         rsx! {
-                            span { class: "hi-icon mdi mdi-home" }
-                            span { class: "hi-icon mdi mdi-account" }
-                            span { class: "hi-icon mdi mdi-settings" }
-                            span { class: "hi-icon mdi mdi-bell" }
-                            span { class: "hi-icon mdi mdi-heart" }
-                            span { class: "hi-icon mdi mdi-star" }
+                            {icon_el(MdiIcon::Home, 24)}
+                            {icon_el(MdiIcon::Account, 24)}
+                            {icon_el(MdiIcon::Cog, 24)}
+                            {icon_el(MdiIcon::BellOutline, 24)}
+                            {icon_el(MdiIcon::Heart, 24)}
+                            {icon_el(MdiIcon::Star, 24)}
                         }
                     )} }
                 }
@@ -124,10 +127,24 @@ fn render_icons() -> VNode {
             {render_demo_block("Sizes",
                 render_demo_row(
                     rsx! {
-                        span { class: "hi-icon hi-icon--sm mdi mdi-star" }
-                        span { class: "hi-icon mdi mdi-star" }
-                        span { class: "hi-icon hi-icon--lg mdi mdi-star" }
-                        span { class: "hi-icon hi-icon--xl mdi mdi-star" }
+                        {icon_el(MdiIcon::Star, 16)}
+                        {icon_el(MdiIcon::Star, 24)}
+                        {icon_el(MdiIcon::Star, 32)}
+                        {icon_el(MdiIcon::Star, 48)}
+                    }
+                )
+            )}
+            {render_demo_block("Common Icons",
+                render_demo_row(
+                    rsx! {
+                        {icon_el(MdiIcon::Magnify, 24)}
+                        {icon_el(MdiIcon::Menu, 24)}
+                        {icon_el(MdiIcon::Close, 24)}
+                        {icon_el(MdiIcon::ChevronLeft, 24)}
+                        {icon_el(MdiIcon::ChevronRight, 24)}
+                        {icon_el(MdiIcon::Check, 24)}
+                        {icon_el(MdiIcon::Calendar, 24)}
+                        {icon_el(MdiIcon::ClockOutline, 24)}
                     }
                 )
             )}

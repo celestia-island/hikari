@@ -14,6 +14,7 @@ OUT = Path("/mnt/sdb1/hikari/scripts/e2e/test_samples")
 OUT.mkdir(exist_ok=True)
 VP = dict(width=1920, height=1080)
 seq = [0]
+_current_group = "misc"
 
 INJECT_ANIM_CONTROL = """
 // Animation control bridge — injected before WASM loads
@@ -101,8 +102,11 @@ def nid():
     seq[0] += 1; return f"{seq[0]:03d}"
 
 def snap(page, name, sel=None, full_page=False):
+    group = _current_group
+    group_dir = OUT / group
+    group_dir.mkdir(parents=True, exist_ok=True)
     fn = f"{nid()}_{name}.png"
-    p = str(OUT / fn)
+    p = str(group_dir / fn)
     try:
         if full_page:
             page.screenshot(path=p, full_page=True)
@@ -113,9 +117,9 @@ def snap(page, name, sel=None, full_page=False):
         else:
             page.screenshot(path=p)
         s = os.path.getsize(p)
-        print(f"  [{s:>8}] {fn}")
+        print(f"  [{s:>8}] {group}/{fn}")
     except Exception as e:
-        print(f"  [FAIL] {fn}: {e}")
+        print(f"  [FAIL] {group}/{fn}: {e}")
 
 def nav(page, route, wait_after=12):
     url = BASE + route
@@ -434,6 +438,7 @@ with sync_playwright() as pw:
     pg = ctx.new_page()
 
     for route, desc, actions in PLAN:
+        _current_group = desc
         print(f"\n{'─'*70}\n  [{desc}] {route}\n{'─'*70}")
         nav(pg, route)
 
@@ -461,6 +466,7 @@ with sync_playwright() as pw:
 print(f"\n{'='*70}")
 print(f"DONE: {ok}/{total} screenshots")
 if fails: print(f"Fails ({len(fails)}): {fails[:20]}")
-files = sorted(OUT.glob("*.png"))
+files = sorted(OUT.rglob("*.png"))
 sz = sum(f.stat().st_size for f in files)
-print(f"Files: {len(files)}, Size: {sz/1024/1024:.1f}MB, Dir: {OUT}")
+dirs = sorted(set(f.parent.name for f in files))
+print(f"Files: {len(files)}, Size: {sz/1024/1024:.1f}MB, Groups: {len(dirs)}, Dir: {OUT}")

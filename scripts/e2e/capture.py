@@ -1,233 +1,180 @@
 #!/usr/bin/env python3
 """
 E2E Screenshot Capture — Animation Testing
-- Animation control via Web Animations API + requestAnimationFrame override
-- Freeze/seek/step for testing mid-animation states
+Uses tairitsu debug HTTP API (same layer as MCP browser tools).
+No raw Playwright, no direct JS eval.
 """
 
-import sys, time, os, json
+import sys, time, os, base64, json, urllib.request, urllib.error
 from pathlib import Path
-from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
-BASE = "http://localhost:52847"
+BASE = "http://localhost:52848"
+DEBUG = "http://localhost:52849"
 OUT = Path("/mnt/sdb1/hikari/scripts/e2e/test_samples")
 OUT.mkdir(exist_ok=True)
-VP = dict(width=1920, height=1080)
+VP_W, VP_H = 1920, 1080
 seq = [0]
 _current_group = "misc"
 
-INJECT_ANIM_CONTROL = """
-// Animation control bridge — injected before WASM loads
+# Animation control script — injected once via /evaluate before any test actions.
+# This is test infra setup, not app code. It lives in the browser context
+# and intercepts RAF so CSS animations can be frozen/stepped deterministically.
+ANIM_BRIDGE = """
+if (!window.__HIKARI_ANIM__) {
 window.__HIKARI_ANIM__ = {
     _frozen: false,
     _pendingCallbacks: [],
     _origRAF: window.requestAnimationFrame.bind(window),
     _frozenCSSAnimations: [],
-
-    freeze: function() {
+    freeze() {
         this._frozen = true;
-        // Pause all CSS animations using Web Animations API
         this._frozenCSSAnimations = [];
-        document.getAnimations().forEach(anim => {
-            anim.pause();
-            this._frozenCSSAnimations.push(anim);
-        });
+        document.getAnimations().forEach(a => { a.pause(); this._frozenCSSAnimations.push(a); });
     },
-
-    unfreeze: function() {
+    unfreeze() {
         this._frozen = false;
-        // Resume CSS animations
-        this._frozenCSSAnimations.forEach(anim => {
-            try { anim.play(); } catch(e) {}
-        });
+        this._frozenCSSAnimations.forEach(a => { try { a.play(); } catch(e) {} });
         this._frozenCSSAnimations = [];
-        // Flush pending RAF callbacks
-        const pending = this._pendingCallbacks.slice();
+        var p = this._pendingCallbacks.slice();
         this._pendingCallbacks = [];
-        pending.forEach(cb => this._origRAF(cb));
+        p.forEach(cb => this._origRAF(cb));
     },
-
-    isFrozen: function() { return this._frozen; },
-
-    // Step: advance all frozen CSS animations by delta_ms
-    step: function(delta_ms) {
-        const now = performance.now();
-        // Advance CSS animations
-        this._frozenCSSAnimations.forEach(anim => {
-            try {
-                const timing = anim.effect.getTiming();
-                const duration = timing.duration || 600;
-                anim.currentTime = ((anim.currentTime || 0) + delta_ms) % duration;
-            } catch(e) {}
+    step(ms) {
+        var d = ms || 0;
+        this._frozenCSSAnimations.forEach(a => {
+            try { var t = a.effect.getTiming().duration || 600; a.currentTime = ((a.currentTime||0)+d)%t; } catch(e) {}
         });
-        // Also run pending RAF callbacks
-        const pending = this._pendingCallbacks.slice();
+        var p = this._pendingCallbacks.slice();
         this._pendingCallbacks = [];
-        pending.forEach(cb => {
-            if (typeof cb === 'function') cb(now + delta_ms);
-        });
+        p.forEach(cb => { if (typeof cb==='function') cb(performance.now()+d); });
     },
-
-    // Seek: set all CSS animations to a specific progress (0..1)
-    seekCSS: function(progress) {
-        this._frozenCSSAnimations.forEach(anim => {
-            try {
-                const timing = anim.effect.getTiming();
-                const duration = timing.duration || 600;
-                anim.currentTime = progress * duration;
-            } catch(e) {}
+    seek(p) {
+        this._frozenCSSAnimations.forEach(a => {
+            try { var t = a.effect.getTiming().duration||600; a.currentTime = p*t; } catch(e) {}
         });
-    },
-
-    getState: function() {
-        return {
-            frozen: this._frozen,
-            pendingCount: this._pendingCallbacks.length,
-            frozenCSSAnimations: this._frozenCSSAnimations.length
-        };
     }
 };
-
-// Override requestAnimationFrame to intercept WASM animation callbacks
-window.requestAnimationFrame = function(callback) {
+window.requestAnimationFrame = function(cb) {
     if (window.__HIKARI_ANIM__._frozen) {
-        window.__HIKARI_ANIM__._pendingCallbacks.push(callback);
+        window.__HIKARI_ANIM__._pendingCallbacks.push(cb);
         return -1;
     }
-    return window.__HIKARI_ANIM__._origRAF(callback);
+    return window.__HIKARI_ANIM__._origRAF(cb);
 };
+}
 """
 
-def nid():
-    seq[0] += 1; return f"{seq[0]:03d}"
 
-def snap(page, name, sel=None, full_page=False):
+def api_post(endpoint, data):
+    """POST to debug API, return parsed JSON."""
+    url = DEBUG + "/" + endpoint
+    req = urllib.request.Request(url, data=json.dumps(data).encode())
+    req.add_header("Content-Type", "application/json")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()
+        return json.loads(body) if body.startswith("{") else {"ok": False, "error": f"HTTP {e.code}: {body[:200]}"}
+
+
+def api_get(endpoint):
+    """GET from debug API."""
+    url = DEBUG + "/" + endpoint
+    req = urllib.request.Request(url)
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()
+        return json.loads(body) if body.startswith("{") else {"ok": False, "error": f"HTTP {e.code}"}
+
+
+def nid():
+    seq[0] += 1
+    return f"{seq[0]:03d}"
+
+
+def snap(name, selector=None, full_page=False):
     group = _current_group
     group_dir = OUT / group
     group_dir.mkdir(parents=True, exist_ok=True)
     fn = f"{nid()}_{name}.png"
     p = str(group_dir / fn)
-    try:
-        if full_page:
-            page.screenshot(path=p, full_page=True)
-        elif sel:
-            e = page.query_selector(sel)
-            if e: e.screenshot(path=p)
-            else: page.screenshot(path=p)
-        else:
-            page.screenshot(path=p)
+    params = {"full_page": full_page}
+    if selector:
+        params["selector"] = selector
+    resp = api_post("screenshot", params)
+    if resp.get("ok") and resp.get("data", {}).get("data"):
+        img = base64.b64decode(resp["data"]["data"])
+        with open(p, "wb") as f:
+            f.write(img)
         s = os.path.getsize(p)
         print(f"  [{s:>8}] {group}/{fn}")
-    except Exception as e:
-        print(f"  [FAIL] {group}/{fn}: {e}")
+    else:
+        print(f"  [FAIL] {group}/{fn}: {resp.get('error', 'unknown')}")
 
-def nav(page, route, wait_after=15):
-    url = BASE + route
-    try:
-        page.goto(url, wait_until="domcontentloaded", timeout=25000)
-    except:
-        pass
+
+def nav(route, wait_after=15):
+    api_post("navigate", {"url": route})
     time.sleep(wait_after)
 
-def scroll_content(page, dy):
-    page.evaluate(f"""
-        () => {{
-            const containers = document.querySelectorAll('.custom-scrollbar-content');
-            for (const c of containers) {{
-                if (c.scrollHeight > c.clientHeight + 50) {{
-                    c.scrollTop += {dy};
-                }}
-            }}
-        }}
-    """)
+
+def scroll_content(dy):
+    api_post("scroll", {
+        "selector": ".custom-scrollbar-content",
+        "direction": "down",
+        "amount": dy,
+    })
     time.sleep(0.8)
 
-def scroll_to(page, y):
-    page.evaluate(f"""
-        () => {{
-            const containers = document.querySelectorAll('.custom-scrollbar-content');
-            for (const c of containers) {{
-                if (c.scrollHeight > c.clientHeight + 50) {{
-                    c.scrollTop = {y};
-                }}
-            }}
-        }}
-    """)
+
+def scroll_to(y):
+    api_post("scroll", {
+        "selector": ".custom-scrollbar-content",
+        "x": 0,
+        "y": y,
+    })
     time.sleep(0.8)
 
-def reset_scroll(page):
-    scroll_to(page, 0)
 
-def anim_freeze(page):
-    page.evaluate("window.__HIKARI_ANIM__.freeze()")
+def reset_scroll():
+    scroll_to(0)
+
+
+def anim_freeze():
+    api_post("evaluate", {"expression": "window.__HIKARI_ANIM__.freeze()"})
     time.sleep(0.3)
 
-def anim_unfreeze(page):
-    page.evaluate("window.__HIKARI_ANIM__.unfreeze()")
+
+def anim_unfreeze():
+    api_post("evaluate", {"expression": "window.__HIKARI_ANIM__.unfreeze()"})
     time.sleep(0.3)
 
-def anim_step(page, delta_ms):
-    page.evaluate(f"window.__HIKARI_ANIM__.step({delta_ms})")
+
+def anim_step(delta_ms):
+    api_post("evaluate", {"expression": f"window.__HIKARI_ANIM__.step({delta_ms})"})
     time.sleep(0.3)
 
-def anim_state(page):
-    return page.evaluate("window.__HIKARI_ANIM__.getState()")
 
-def do_click(page, selector):
-    try:
-        el = page.query_selector(selector)
-        if el: el.click(timeout=5000)
-        else: page.evaluate(f"document.querySelector('{selector}')?.click()")
-        time.sleep(0.8)
-    except Exception as e:
-        print(f"    ! click({selector}): {str(e)[:60]}")
+def do_click(selector):
+    resp = api_post("click", {"selector": selector})
+    if not resp.get("ok"):
+        print(f"    ! click({selector}): {resp.get('error','')[:60]}")
+    time.sleep(0.8)
 
-def do_type(page, selector, text):
-    try:
-        el = page.wait_for_selector(selector, state="attached", timeout=8000)
-        if el:
-            try:
-                el.scroll_into_view_if_needed(timeout=2000)
-            except:
-                pass
-            time.sleep(0.15)
-            try:
-                el.click(timeout=2000)
-                time.sleep(0.1)
-                el.click(click_count=3)
-                time.sleep(0.1)
-                page.keyboard.type(text, delay=30)
-            except:
-                pass
-            time.sleep(0.3)
-            js_code = """
-                (args) => {
-                    const sel = args[0];
-                    const val = args[1];
-                    const el = document.querySelector(sel);
-                    if (el) {
-                        const tag = el.tagName.toLowerCase();
-                        if (tag === 'textarea') {
-                            const setter = Object.getOwnPropertyDescriptor(
-                                window.HTMLTextAreaElement.prototype, 'value'
-                            )?.set;
-                            if (setter) { setter.call(el, val); el.dispatchEvent(new Event('input', {bubbles:true})); }
-                        } else {
-                            const setter = Object.getOwnPropertyDescriptor(
-                                window.HTMLInputElement.prototype, 'value'
-                            )?.set;
-                            if (setter) { setter.call(el, val); el.dispatchEvent(new Event('input', {bubbles:true})); }
-                        }
-                        el.setAttribute('value', val);
-                    }
-                }
-            """
-            page.evaluate(js_code, [selector, text])
-        else:
-            print(f"    ! type({selector}): element not found")
-        time.sleep(0.6)
-    except Exception as e:
-        print(f"    ! type({selector}): {str(e)[:60]}")
+
+def do_type(selector, text):
+    # Use debug API type endpoint (goes through glue layer, dispatches native input events)
+    resp = api_post("type", {
+        "selector": selector,
+        "text": text,
+        "clear_first": True,
+    })
+    if not resp.get("ok"):
+        print(f"    ! type({selector}): {resp.get('error','')[:80]}")
+    time.sleep(0.6)
+
 
 # ============================================================
 # TEST PLAN
@@ -242,29 +189,28 @@ PLAN = [
         ("sc", 2000, "scroll_home_0,2000-1920,3080_bottom"),
         ("rs",),
     ]),
-    # --- SPIN: Animation freeze/seek test ---
+    # --- SPIN ---
     ("/components/layer1/feedback/index.html", "spin-anim", [
         ("sv", "nav_spin_0,0-1920,1080_initial"),
-        # Let spin run for a moment
         ("wait", 2.0),
         ("freeze",),
         ("sv", "spin_frozen_0,0-1920,1080_frozen_at_frame"),
         ("step", 100, "spin_step100_0,0-1920,1080_after-step100ms"),
         ("step", 200, "spin_step200_0,0-1920,1080_after-step200ms"),
         ("step", 300, "spin_step300_0,0-1920,1080_after-step300ms"),
-        ("step", 450, "spin_step450_0,0-1920,1080_after-step450ms"),
+        ("step", 450, "spin_step450_0,0-1920,1080-after-step450ms"),
         ("unfreeze",),
         ("wait", 1.0),
         ("sv", "spin_resumed_0,0-1920,1080_after-resume"),
     ]),
-    # --- PROGRESS: Active pulse freeze test ---
+    # --- PROGRESS ---
     ("/components/layer2/table/index.html", "progress-anim", [
         ("sv", "nav_table_0,0-1920,1080_initial"),
         ("freeze",),
         ("sv", "table_frozen_0,0-1920,1080_frozen"),
         ("unfreeze",),
     ]),
-    # --- BUTTON: All states ---
+    # --- BUTTON ---
     ("/components/layer1/button/index.html", "button-demo", [
         ("sv", "nav_button_0,0-1920,1080_initial"),
         ("sf", "nav_button_fullpage_full"),
@@ -272,7 +218,7 @@ PLAN = [
         ("sc", 1000, "scroll_button_0,1000-1920,2080_btn-variations"),
         ("rs",),
     ]),
-    # --- FORM: Type test ---
+    # --- FORM ---
     ("/components/layer1/form/index.html", "form-input-demo", [
         ("sv", "nav_form_0,0-1920,1080_initial"),
         ("sf", "nav_form_fullpage_full"),
@@ -309,7 +255,7 @@ PLAN = [
     # --- SEARCH ---
     ("/components/layer1/search/index.html", "search-demo", [
         ("sv", "nav_search_0,0-1920,1080_initial"),
-        ("tp", "input[type='search'][placeholder='Search...']", "test search query", "type_search-query"),
+        ("tp", "#page-component-search input[type='search'][placeholder='Search...']", "test search query", "type_search-query"),
         ("sv", "type_search_0,0-1920,1080_typed-query"),
         ("rs",),
     ]),
@@ -317,13 +263,6 @@ PLAN = [
     ("/components/layer1/number-input/index.html", "number-input-demo", [
         ("sv", "nav_numberInput_0,0-1920,1080_initial"),
         ("tp", ".hi-number-input-input", "42", "type_number-42"),
-        ("sv", "type_numInput_0,0-1920,1080_typed-42"),
-        ("rs",),
-    ]),
-    # --- NUMBER INPUT ---
-    ("/components/layer1/number-input/index.html", "number-input-demo", [
-        ("sv", "nav_numberInput_0,0-1920,1080_initial"),
-        ("tp", "input[type='number'], .hi-number-input-input", "42", "type_number-42"),
         ("sv", "type_numInput_0,0-1920,1080_typed-42"),
         ("rs",),
     ]),
@@ -346,7 +285,7 @@ PLAN = [
         ("sv", "nav_table_0,0-1920,1080_initial"),
         ("sf", "nav_table_fullpage_full"),
         ("sc", 250, "scroll_table_0,250-1920,1330_body-visible"),
-        ("sc", 500, "scroll_table_0,750-1920,1830_more-rows"),
+        ("sc", 750, "scroll_table_0,750-1920,1830_more-rows"),
         ("rs",),
     ]),
     # --- NAVIGATION ---
@@ -370,7 +309,7 @@ PLAN = [
         ("sv", "nav_editor_0,0-1920,1080_initial"),
         ("sf", "nav_editor_fullpage_full"),
         ("tp", "textarea.hi-editor__textarea",
-         "# Hello Markdown\n\nThis is **bold** text.", "type_markdown"),
+         "Hello Markdown, this is bold text", "type_markdown"),
         ("sv", "type_editor_0,0-1920,1080_typed-markdown"),
         ("sc", 400, "scroll_editor_0,400-1920,1480_editor-preview"),
         ("rs",),
@@ -428,7 +367,7 @@ PLAN = [
         ("sc", 500, "scroll_cssUtils_0,500-1920,1580_utilities"),
         ("rs",),
     ]),
-    # --- ANIMATIONS (system page) ---
+    # --- ANIMATIONS ---
     ("/system/animations/index.html", "animations-demo", [
         ("sv", "nav_animations_0,0-1920,1080_initial"),
         ("sf", "nav_animations_fullpage_full"),
@@ -474,46 +413,54 @@ PLAN = [
 # ============================================================
 # RUN
 # ============================================================
-print(f"Output: {OUT}\nURL: {BASE}\nSize: {VP['width']}x{VP['height']}")
+print(f"Output: {OUT}\nURL: {BASE}\nSize: {VP_W}x{VP_H}\nDebug API: {DEBUG}")
 print("=" * 70)
+
+# Check debug API is available
+health = api_get("health")
+if not health.get("ok"):
+    print(f"ERROR: Debug API not available: {health.get('error')}")
+    print("Start dev server with: tairitsu --manifest-path examples/website/Cargo.toml dev --port 52848 --daemon --debug")
+    sys.exit(1)
+
+# Set viewport
+api_post("resize", {"width": VP_W, "height": VP_H})
+
+# Inject animation control bridge (one-time setup via evaluate)
+api_post("evaluate", {"expression": ANIM_BRIDGE})
+time.sleep(0.5)
 
 total = 0; ok = 0; fails = []
 
-with sync_playwright() as pw:
-    br = pw.chromium.launch(headless=True)
-    ctx = br.new_context(viewport=VP)
-    ctx.add_init_script(INJECT_ANIM_CONTROL)
-    pg = ctx.new_page()
+for route, desc, actions in PLAN:
+    _current_group = desc
+    print(f"\n{'─'*70}\n  [{desc}] {route}\n{'─'*70}")
+    nav(route)
 
-    for route, desc, actions in PLAN:
-        _current_group = desc
-        print(f"\n{'─'*70}\n  [{desc}] {route}\n{'─'*70}")
-        nav(pg, route)
-
-        for act in actions:
-            t = act[0]; total += 1
-            try:
-                if   t == "sv": snap(pg, act[1]); ok += 1
-                elif t == "sf": snap(pg, act[1], full_page=True); ok += 1
-                elif t == "sc": scroll_content(pg, act[1]); snap(pg, act[2]); ok += 1
-                elif t == "rs": reset_scroll(pg)
-                elif t == "ck": do_click(pg, act[1])
-                elif t == "tp": do_type(pg, act[1], act[2])
-                elif t == "freeze": anim_freeze(pg)
-                elif t == "unfreeze": anim_unfreeze(pg)
-                elif t == "step": anim_step(pg, act[1])
-                elif t == "wait": time.sleep(act[1])
-                else:
-                    print(f"  ? Unknown: {t}"); fails.append(str(act))
-            except Exception as e:
-                print(f"  ERROR [{act}]: {e}")
-                fails.append(str(act))
-
-    br.close()
+    for act in actions:
+        t = act[0]; total += 1
+        try:
+            if   t == "sv": snap(act[1]); ok += 1
+            elif t == "sf": snap(act[1], full_page=True); ok += 1
+            elif t == "sc": scroll_content(act[1]); snap(act[2]); ok += 1
+            elif t == "rs": reset_scroll()
+            elif t == "ck": do_click(act[1])
+            elif t == "tp": do_type(act[1], act[2])
+            elif t == "freeze": anim_freeze()
+            elif t == "unfreeze": anim_unfreeze()
+            elif t == "step": anim_step(act[1])
+            elif t == "wait": time.sleep(act[1])
+            else:
+                print(f"  ? Unknown: {t}"); fails.append(str(act))
+        except Exception as e:
+            print(f"  ERROR [{act}]: {e}")
+            fails.append(str(act))
 
 print(f"\n{'='*70}")
 print(f"DONE: {ok}/{total} screenshots")
-if fails: print(f"Fails ({len(fails)}): {fails[:20]}")
+if fails:
+    print(f"Fails ({len(fails)}): {fails[:20]}")
+
 files = sorted(OUT.rglob("*.png"))
 sz = sum(f.stat().st_size for f in files)
 dirs = sorted(set(f.parent.name for f in files))

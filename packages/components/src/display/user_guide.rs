@@ -4,10 +4,48 @@
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{TypedClass, ClassesBuilder, UserGuideClass};
 
-use crate::{basic::IconButton, prelude::*, styled::StyledComponent};
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use tairitsu_hooks::ReactiveSignal;
+
+use crate::{basic::IconButton, platform, prelude::*, styled::StyledComponent};
 use tairitsu_vdom::events::MouseEvent;
 
 pub struct UserGuideComponent;
+
+struct UserGuideAnimState {
+    start_ts: Option<f64>,
+    stopped: bool,
+}
+
+const USER_GUIDE_ANIM_MS: f64 = 300.0;
+
+fn user_guide_anim_tick(
+    state: Rc<RefCell<UserGuideAnimState>>,
+    progress_signal: ReactiveSignal<f64>,
+) {
+    platform::request_animation_frame_with_timestamp(move |ts| {
+        let mut s = state.borrow_mut();
+        if s.stopped {
+            return;
+        }
+        let start = s.start_ts.unwrap_or(ts);
+        if s.start_ts.is_none() {
+            s.start_ts = Some(ts);
+        }
+        let elapsed = ts - start;
+        let progress = (elapsed / USER_GUIDE_ANIM_MS).min(1.0);
+        drop(s);
+
+        let eased = 1.0 - (1.0 - progress).powi(3);
+        progress_signal.set(eased);
+
+        if progress < 1.0 {
+            user_guide_anim_tick(state.clone(), progress_signal.clone());
+        }
+    });
+}
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct GuideStep {
@@ -37,6 +75,7 @@ pub enum GuidePlacement {
     Right,
 }
 
+/// Props for the UserGuide component.
 #[define_props]
 pub struct UserGuideProps {
     pub steps: Vec<GuideStep>,
@@ -63,7 +102,7 @@ pub struct UserGuideProps {
     pub on_skip: Option<EventHandler<()>>,
 }
 
-///
+/// A step-by-step user guide overlay with navigation, progress dots, and skip support.
 #[component]
 pub fn UserGuide(props: UserGuideProps) -> Element {
     if !props.visible || props.steps.is_empty() {
@@ -89,6 +128,34 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
         .add_typed(placement_class)
         .add(&props.class)
         .build();
+
+    let progress_signal = use_signal(|| 0.0_f64);
+
+    {
+        let prog_clone = progress_signal.clone();
+        use_effect(move || {
+            let state = Rc::new(RefCell::new(UserGuideAnimState {
+                start_ts: None,
+                stopped: false,
+            }));
+            let s_ref = state.clone();
+            let prog_sig = prog_clone.clone();
+            platform::request_animation_frame_with_timestamp(move |ts| {
+                let mut s = s_ref.borrow_mut();
+                if s.stopped {
+                    return;
+                }
+                s.start_ts = Some(ts);
+                drop(s);
+                user_guide_anim_tick(s_ref, prog_sig);
+            });
+        });
+    }
+
+    let progress = progress_signal.get();
+    let guide_opacity = progress;
+    let guide_translate_y = 8.0 * (1.0 - progress);
+    let container_style = format!("opacity: {guide_opacity:.2}; transform: translateY({guide_translate_y:.1}px);");
 
     let handle_next = {
         let on_step_change = props.on_step_change.clone();
@@ -163,7 +230,7 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     };
 
     let guide_tooltip = rsx! {
-        div { class: container_classes,
+        div { class: container_classes, style: container_style,
             // Arrow
             div { class: {UserGuideClass::Arrow.class_name()} }
 
@@ -245,23 +312,11 @@ impl StyledComponent for UserGuideComponent {
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     max-width: 320px;
-    animation: hi-user-guide-fade-in 0.3s ease;
 }
 
 [data-theme="dark"] .hi-user-guide-container {
     background-color: var(--hi-surface);
     border-color: var(--hi-color-border);
-}
-
-@keyframes hi-user-guide-fade-in {
-    from {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .hi-user-guide-arrow {

@@ -82,6 +82,7 @@ pub struct CodeHighlighterState {
     pub show_copy: bool,
     pub wrap: bool,
     pub copied: bool,
+    pub copy_anim_progress: f64,
     pub class: String,
     pub style: String,
 }
@@ -96,6 +97,7 @@ impl CodeHighlighterState {
             show_copy: true,
             wrap: true,
             copied: false,
+            copy_anim_progress: 1.0,
             class: String::new(),
             style: String::new(),
         }
@@ -150,10 +152,26 @@ impl CodeHighlighterState {
 
     pub fn mark_copied(&mut self) {
         self.copied = true;
+        self.copy_anim_progress = 0.0;
     }
 
     pub fn reset_copied(&mut self) {
         self.copied = false;
+        self.copy_anim_progress = 1.0;
+    }
+
+    pub fn tick_copy_animation(&mut self, delta_ms: f64) {
+        if self.copy_anim_progress < 1.0 {
+            self.copy_anim_progress = (self.copy_anim_progress + delta_ms / 300.0).min(1.0);
+        }
+    }
+
+    pub fn copy_icon_scale(&self) -> f64 {
+        if self.copy_anim_progress >= 1.0 {
+            1.0
+        } else {
+            1.0 + 0.2 * (std::f64::consts::PI * self.copy_anim_progress).sin()
+        }
     }
 
     pub fn container_class(&self) -> String {
@@ -230,11 +248,18 @@ pub fn render_code_highlighter(state: &CodeHighlighterState) -> VNode {
         // The caller should call copy_to_clipboard and toggle state.copied on success.
         let copy_btn = VElement::new("button")
             .class("hi-code-highlighter-copy")
-            .child(VNode::Element(
+            .child(VNode::Element({
+                let scale = state.copy_icon_scale();
+                let icon_style = if (scale - 1.0).abs() > 0.001 {
+                    Some(format!("transform: scale({scale:.2});"))
+                } else {
+                    None
+                };
                 VElement::new("span")
                     .class("hi-code-highlighter-copy-icon")
-                    .child(VNode::Text(VText::new(state.copy_button_text()))),
-            ));
+                    .attr_opt("style", icon_style)
+                    .child(VNode::Text(VText::new(state.copy_button_text())))
+            }));
         header = header.child(VNode::Element(copy_btn));
     }
 
@@ -475,17 +500,7 @@ impl CodeHighlighterComponent {
   transition: all 0.2s ease;
 }
 
-@keyframes copy-success {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-}
-
 .hi-code-highlighter-copied .hi-code-highlighter-copy-icon {
-  animation: copy-success 0.3s ease;
   color: #4caf50;
 }
 "#

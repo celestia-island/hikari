@@ -1,11 +1,22 @@
 // packages/components/src/feedback/progress.rs
 // Progress component with Arknights + FUI styling
+// Active pulse: RAF-driven (migrated from CSS @keyframes)
+
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use hikari_palette::classes::{ClassesBuilder, ProgressClass};
+use tairitsu_hooks::ReactiveSignal;
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::{platform, prelude::*, styled::StyledComponent};
 
 pub struct ProgressComponent;
+
+struct PulseState {
+    phase: f64,
+    last_ts: Option<f64>,
+    stopped: bool,
+}
 
 #[define_props]
 pub struct ProgressProps {
@@ -55,15 +66,70 @@ pub fn Progress(props: ProgressProps) -> Element {
     };
 
     let combined_classes = format!("{wrapper_classes} {status_class}");
-    let width_style = format!("width: {percentage:.0}%;");
+
+    let opacity_signal = use_signal(|| 1.0_f64);
+    let is_active = props.status == ProgressStatus::Active;
+
+    {
+        let op_clone = opacity_signal.clone();
+        use_effect(move || {
+            if !is_active {
+                return;
+            }
+            let state = Rc::new(RefCell::new(PulseState {
+                phase: 0.0,
+                last_ts: None,
+                stopped: false,
+            }));
+            let s_ref = state.clone();
+            let op_sig = op_clone.clone();
+            platform::request_animation_frame_with_timestamp(move |ts| {
+                let mut s = s_ref.borrow_mut();
+                if s.stopped {
+                    return;
+                }
+                s.last_ts = Some(ts);
+                drop(s);
+                pulse_loop(s_ref.clone(), op_sig.clone());
+            });
+        });
+    }
+
+    let opacity = opacity_signal.get();
+    let pulse_style = if is_active && opacity < 0.99 {
+        format!("opacity: {opacity:.2};")
+    } else {
+        String::new()
+    };
+
+    let width_style = if is_active {
+        format!("width: {percentage:.0}%; {pulse_style}")
+    } else {
+        format!("width: {percentage:.0}%;")
+    };
+
     let stroke_dasharray_val = "339.292";
     let stroke_dashoffset_val = format!("{:.3}", 339.292 * (1.0 - percentage / 100.0));
     let percentage_text = format!("{percentage:.0}%");
+
+    let aria_valuenow = props.value.to_string();
+    let aria_valuemax = props.max.to_string();
+
+    let circle_style = if is_active && opacity < 0.99 {
+        format!("opacity: {opacity:.2};")
+    } else {
+        String::new()
+    };
 
     rsx! {
         div {
             class: combined_classes,
             style: props.style,
+            role: "progressbar",
+            "aria-valuenow": aria_valuenow,
+            "aria-valuemin": "0",
+            "aria-valuemax": aria_valuemax,
+            "aria-label": "Progress",
 
             {if props.progress_type == ProgressType::Linear {
                 rsx! {
@@ -113,6 +179,7 @@ pub fn Progress(props: ProgressProps) -> Element {
                                 stroke_dasharray: stroke_dasharray_val,
                                 stroke_dashoffset: stroke_dashoffset_val,
                                 transform: "rotate(-90 60 60)",
+                                style: circle_style,
                             }
                         }
 
@@ -169,15 +236,9 @@ impl StyledComponent for ProgressComponent {
     text-align: right;
 }
 
-/* Active status */
+/* Active status — RAF-driven opacity pulse (migrated from CSS @keyframes) */
 .hi-progress-active .hi-progress-bg {
-    animation: hi-progress-active 2s linear infinite;
-}
-
-@keyframes hi-progress-active {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
+  transition: opacity 0.1s linear;
 }
 
 /* Circular progress */
@@ -202,13 +263,7 @@ impl StyledComponent for ProgressComponent {
 }
 
 .hi-progress-active .hi-progress-circle-path {
-    animation: hi-progress-circle-active 2s linear infinite;
-}
-
-@keyframes hi-progress-circle-active {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
+  transition: opacity 0.1s linear;
 }
 
 .hi-progress-circle-text {
@@ -226,4 +281,26 @@ impl StyledComponent for ProgressComponent {
     fn name() -> &'static str {
         "progress"
     }
+}
+
+const PULSE_PERIOD_MS: f64 = 2000.0;
+
+fn pulse_loop(
+    state: Rc<RefCell<PulseState>>,
+    opacity_signal: ReactiveSignal<f64>,
+) {
+    platform::request_animation_frame_with_timestamp(move |ts| {
+        let mut s = state.borrow_mut();
+        if s.stopped {
+            return;
+        }
+        let prev = s.last_ts.unwrap_or(ts);
+        let delta = ts - prev;
+        s.last_ts = Some(ts);
+        s.phase = (s.phase + delta / PULSE_PERIOD_MS) % 1.0;
+        let opacity = 1.0 - 0.3 * (2.0 * std::f64::consts::PI * s.phase).sin().max(0.0);
+        drop(s);
+        opacity_signal.set(opacity);
+        pulse_loop(state.clone(), opacity_signal.clone());
+    });
 }

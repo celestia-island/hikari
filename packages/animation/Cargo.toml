@@ -48,3 +48,4 @@ js-sys = { version = "0.3", optional = true }
 [features]
 default = []
 legacy = ["wasm-bindgen", "web-sys", "js-sys"]
+debug = ["wasm-bindgen", "js-sys"]

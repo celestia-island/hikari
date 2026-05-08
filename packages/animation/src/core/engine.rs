@@ -102,6 +102,22 @@ impl AnimationEngine {
             .collect()
     }
 
+    pub fn get_all_ids(&self) -> Vec<TweenId> {
+        self.tweens.borrow().iter().map(|(id, _)| id).collect()
+    }
+
+    pub fn tween_state(&self, id: TweenId) -> Option<AnimationState> {
+        self.tweens.borrow().get(id).map(|t| t.state())
+    }
+
+    pub fn seek_to_progress(&self, id: TweenId, progress: f64) {
+        let progress = progress.clamp(0.0, 1.0);
+        self.with_tween_mut(id, |tween| {
+            let dur = tween.duration();
+            tween.seek(Duration::from_secs_f64(dur.as_secs_f64() * progress));
+        });
+    }
+
     pub fn tick(&self, delta: Duration) {
         let tweens = self.tweens.borrow();
         let active_tweens: Vec<TweenId> = tweens

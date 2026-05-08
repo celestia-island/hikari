@@ -39,6 +39,7 @@
 pub mod breathing;
 pub mod config;
 pub mod core;
+pub mod debug;
 pub mod easing;
 pub mod error;
 pub mod presets;
@@ -51,6 +52,7 @@ pub mod tween;
 pub use breathing::*;
 pub use config::AnimationConfig;
 pub use core::*;
+pub use debug::AnimationDebugProvider;
 pub use easing::*;
 pub use error::*;
 pub use presets::*;

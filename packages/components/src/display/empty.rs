@@ -32,6 +32,7 @@ pub struct EmptyProps {
     pub style: String,
 }
 
+/// An empty state placeholder component with optional image, title, and action.
 #[component]
 pub fn Empty(props: EmptyProps) -> Element {
     let container_classes = ClassesBuilder::new()

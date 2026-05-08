@@ -34,6 +34,7 @@ pub struct CommentProps {
     pub style: String,
 }
 
+/// A comment component for displaying user feedback with avatar, author, and nested replies.
 #[component]
 pub fn Comment(props: CommentProps) -> Element {
     let container_classes = ClassesBuilder::new()

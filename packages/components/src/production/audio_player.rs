@@ -5,8 +5,10 @@ use hikari_palette::classes::{TypedClass, AudioPlayerClass, ClassesBuilder};
 
 use crate::{prelude::*, styled::StyledComponent};
 
+/// Marker struct providing the styled CSS for the audio player component.
 pub struct AudioPlayerComponent;
 
+/// Available sizes for the audio player.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum AudioPlayerSize {
     #[default]
@@ -37,6 +39,7 @@ pub struct AudioPlayerProps {
     pub style: String,
 }
 
+/// Renders an audio player with cover art, title/artist info, and native HTML audio controls.
 #[component]
 pub fn AudioPlayer(props: AudioPlayerProps) -> Element {
     let size_class = match props.size {

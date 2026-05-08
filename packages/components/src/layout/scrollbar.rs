@@ -6,10 +6,7 @@
 
 use crate::prelude::*;
 
-///
-///
-///
-///
+/// A custom scrollbar container that hides native scrollbars in favor of script-based ones.
 #[component]
 pub fn ScrollbarContainer(
     children: Element,

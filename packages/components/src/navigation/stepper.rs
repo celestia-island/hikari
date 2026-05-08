@@ -23,6 +23,7 @@ pub enum StepperDirection {
     Vertical,
 }
 
+/// Props for the [`Stepper`] component.
 #[define_props]
 pub struct StepperProps {
     #[default]
@@ -38,7 +39,7 @@ pub struct StepperProps {
     pub class: String,
 }
 
-///
+/// A step indicator showing progress through a numbered sequence.
 #[component]
 pub fn Stepper(props: StepperProps) -> Element {
     let direction_class = match props.direction {

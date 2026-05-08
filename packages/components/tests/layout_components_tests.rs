@@ -7,6 +7,15 @@ mod tests {
         Space, SpaceProps, SpaceDirection,
         Footer, FooterProps,
         Container, ContainerProps, ContainerSize,
+        Grid, GridProps,
+        Col, ColProps,
+        Row, RowProps,
+        Section, SectionProps,
+        Spacer, SpacerProps,
+        Header, HeaderProps,
+        Aside, AsideProps,
+        Content, ContentProps,
+        ScrollbarContainer, ScrollbarContainerProps,
     };
 
     // ── Divider ────────────────────────────────────────────────
@@ -223,5 +232,313 @@ mod tests {
         };
         assert_eq!(props.size, ContainerSize::Large);
         assert!(props.center);
+    }
+
+    // ── Grid ──────────────────────────────────────────────────
+
+    #[test]
+    fn test_grid_renders() {
+        let props = GridProps {
+            children: Some(VNode::empty()),
+            ..Default::default()
+        };
+        let _ = Grid(props);
+    }
+
+    #[test]
+    fn test_grid_props_default() {
+        let props = GridProps::default();
+        assert_eq!(props.columns, 0);
+        assert_eq!(props.gap, "");
+        assert_eq!(props.class, "");
+    }
+
+    #[test]
+    fn test_grid_custom_columns() {
+        let props = GridProps {
+            children: Some(VNode::empty()),
+            columns: 6,
+            gap: "lg".to_string(),
+            class: "my-grid".to_string(),
+        };
+        assert_eq!(props.columns, 6);
+        assert_eq!(props.gap, "lg");
+    }
+
+    // ── Col ───────────────────────────────────────────────────
+
+    #[test]
+    fn test_col_renders() {
+        let props = ColProps {
+            children: Some(VNode::empty()),
+            ..Default::default()
+        };
+        let _ = Col(props);
+    }
+
+    #[test]
+    fn test_col_props_default() {
+        let props = ColProps::default();
+        assert!(props.span.is_none());
+        assert!(props.span_sm.is_none());
+        assert!(props.span_md.is_none());
+        assert!(props.span_lg.is_none());
+        assert!(props.offset.is_none());
+        assert_eq!(props.class, "");
+    }
+
+    #[test]
+    fn test_col_with_span() {
+        let props = ColProps {
+            children: Some(VNode::empty()),
+            span: Some(6),
+            span_sm: Some(12),
+            span_md: Some(6),
+            span_lg: Some(4),
+            offset: Some(2),
+            ..Default::default()
+        };
+        assert_eq!(props.span, Some(6));
+        assert_eq!(props.span_sm, Some(12));
+        assert_eq!(props.offset, Some(2));
+    }
+
+    // ── Row ───────────────────────────────────────────────────
+
+    #[test]
+    fn test_row_renders() {
+        let props = RowProps {
+            children: Some(VNode::empty()),
+            ..Default::default()
+        };
+        let _ = Row(props);
+    }
+
+    #[test]
+    fn test_row_props_default() {
+        let props = RowProps::default();
+        assert_eq!(props.gap, "");
+        assert!(!props.wrap);
+        assert_eq!(props.justify, "");
+        assert_eq!(props.align, "");
+        assert!(props.rtl.is_none());
+        assert_eq!(props.class, "");
+        assert_eq!(props.style, "");
+    }
+
+    #[test]
+    fn test_row_custom_layout() {
+        let props = RowProps {
+            children: Some(VNode::empty()),
+            gap: "lg".to_string(),
+            wrap: false,
+            justify: "between".to_string(),
+            align: "stretch".to_string(),
+            rtl: Some(true),
+            class: "my-row".to_string(),
+            style: "min-height: 100px;".to_string(),
+        };
+        assert!(!props.wrap);
+        assert_eq!(props.justify, "between");
+        assert_eq!(props.rtl, Some(true));
+    }
+
+    // ── Section ───────────────────────────────────────────────
+
+    #[test]
+    fn test_section_renders() {
+        let props = SectionProps {
+            children: Some(VNode::empty()),
+            ..Default::default()
+        };
+        let _ = Section(props);
+    }
+
+    #[test]
+    fn test_section_props_default() {
+        let props = SectionProps::default();
+        assert!(props.title.is_none());
+        assert!(props.description.is_none());
+        assert_eq!(props.size, "");
+        assert_eq!(props.class, "");
+    }
+
+    #[test]
+    fn test_section_with_header() {
+        let props = SectionProps {
+            children: Some(VNode::empty()),
+            title: Some(Some("Welcome".to_string())),
+            description: Some(Some("A description".to_string())),
+            size: "lg".to_string(),
+            class: "hero-section".to_string(),
+        };
+        assert_eq!(props.title.flatten().as_deref(), Some("Welcome"));
+        assert_eq!(props.description.flatten().as_deref(), Some("A description"));
+        assert_eq!(props.size, "lg");
+    }
+
+    // ── Spacer ────────────────────────────────────────────────
+
+    #[test]
+    fn test_spacer_renders() {
+        let _ = Spacer(SpacerProps::default());
+    }
+
+    #[test]
+    fn test_spacer_props_default() {
+        let props = SpacerProps::default();
+        assert_eq!(props.orientation, "");
+        assert_eq!(props.size, "");
+        assert_eq!(props.class, "");
+    }
+
+    #[test]
+    fn test_spacer_horizontal() {
+        let props = SpacerProps {
+            orientation: "horizontal".to_string(),
+            size: "xl".to_string(),
+            ..Default::default()
+        };
+        assert_eq!(props.orientation, "horizontal");
+        assert_eq!(props.size, "xl");
+    }
+
+    // ── Header ────────────────────────────────────────────────
+
+    #[test]
+    fn test_header_renders() {
+        let props = HeaderProps {
+            children: Some(VNode::empty()),
+            ..Default::default()
+        };
+        let _ = Header(props);
+    }
+
+    #[test]
+    fn test_header_props_default() {
+        let props = HeaderProps::default();
+        assert!(!props.bordered);
+        assert!(!props.show_menu_toggle);
+        assert!(props.on_menu_toggle.is_none());
+        assert!(props.rtl.is_none());
+        assert_eq!(props.class, "");
+        assert!(props.right_content.is_none());
+    }
+
+    #[test]
+    fn test_header_with_toggle() {
+        let props = HeaderProps {
+            children: Some(VNode::empty()),
+            bordered: false,
+            show_menu_toggle: true,
+            on_menu_toggle: Some(Some(Callback::new(|_| {}))),
+            right_content: Some(VNode::empty()),
+            ..Default::default()
+        };
+        assert!(!props.bordered);
+        assert!(props.show_menu_toggle);
+        assert!(props.on_menu_toggle.is_some());
+        assert!(props.right_content.is_some());
+    }
+
+    // ── Aside ─────────────────────────────────────────────────
+
+    #[test]
+    fn test_aside_props_default() {
+        let props = AsideProps::default();
+        assert!(props.header.is_none());
+        assert!(props.footer.is_none());
+        assert_eq!(props.width, "");
+        assert_eq!(props.variant, "");
+        assert!(!props.collapsible);
+        assert!(!props.initial_open);
+        assert!(props.rtl.is_none());
+        assert!(props.on_close.is_none());
+        assert_eq!(props.class, "");
+    }
+
+    #[test]
+    fn test_aside_with_options() {
+        let props = AsideProps {
+            children: Some(VNode::empty()),
+            header: Some(Some(VNode::empty())),
+            footer: Some(Some(VNode::empty())),
+            width: "lg".to_string(),
+            variant: "light".to_string(),
+            collapsible: false,
+            initial_open: true,
+            rtl: Some(false),
+            class: "sidebar".to_string(),
+            ..Default::default()
+        };
+        assert!(props.header.is_some());
+        assert!(props.footer.is_some());
+        assert_eq!(props.width, "lg");
+        assert!(!props.collapsible);
+        assert!(props.initial_open);
+    }
+
+    // ── Content ───────────────────────────────────────────────
+
+    #[test]
+    fn test_content_renders() {
+        let props = ContentProps {
+            children: Some(VNode::empty()),
+            ..Default::default()
+        };
+        let _ = Content(props);
+    }
+
+    #[test]
+    fn test_content_props_default() {
+        let props = ContentProps::default();
+        assert_eq!(props.background_color, "");
+        assert_eq!(props.padding, "");
+        assert!(!props.scrollable);
+        assert_eq!(props.class, "");
+    }
+
+    #[test]
+    fn test_content_custom() {
+        let props = ContentProps {
+            children: Some(VNode::empty()),
+            background_color: "#ffffff".to_string(),
+            padding: "p-4".to_string(),
+            scrollable: false,
+            class: "main-content".to_string(),
+        };
+        assert_eq!(props.background_color, "#ffffff");
+        assert!(!props.scrollable);
+    }
+
+    // ── ScrollbarContainer ────────────────────────────────────
+
+    #[test]
+    fn test_scrollbar_container_renders() {
+        let props = ScrollbarContainerProps {
+            children: Some(VNode::empty()),
+            ..Default::default()
+        };
+        let _ = ScrollbarContainer(props);
+    }
+
+    #[test]
+    fn test_scrollbar_container_props_default() {
+        let props = ScrollbarContainerProps::default();
+        assert_eq!(props.height, "");
+        assert_eq!(props.width, "");
+        assert_eq!(props.class, "");
+    }
+
+    #[test]
+    fn test_scrollbar_container_custom_dimensions() {
+        let props = ScrollbarContainerProps {
+            children: Some(VNode::empty()),
+            height: "400px".to_string(),
+            width: "auto".to_string(),
+            class: "custom-scroll".to_string(),
+        };
+        assert_eq!(props.height, "400px");
+        assert_eq!(props.width, "auto");
     }
 }

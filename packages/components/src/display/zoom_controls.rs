@@ -9,6 +9,7 @@ use tairitsu_vdom::events::KeyboardEvent;
 
 pub struct ZoomControlsComponent;
 
+/// Props for the ZoomControls component.
 #[define_props]
 pub struct ZoomControlsProps {
     #[default(100)]
@@ -35,7 +36,7 @@ pub struct ZoomControlsProps {
     pub on_zoom_change: Option<EventHandler<u32>>,
 }
 
-///
+/// A zoom control bar with zoom in/out buttons, percentage display, and keyboard shortcuts.
 #[component]
 pub fn ZoomControls(props: ZoomControlsProps) -> Element {
     let zoom = use_signal(|| props.zoom);

@@ -145,6 +145,7 @@ impl IntoAttrValue for GlowPreset {
     }
 }
 
+/// Props for the [`Glow`] component, controlling blur, color, intensity, and animation preset.
 #[define_props]
 pub struct GlowProps {
     pub children: Element,
@@ -177,6 +178,7 @@ struct GlowState {
     interaction_level: f32, // 0 = idle, 0.5 = hover, 1.0 = active
 }
 
+/// A mouse-following glow spotlight with acrylic blur, wrapping children in an interactive overlay.
 #[component]
 pub fn Glow(props: GlowProps) -> Element {
     let blur_class = match props.blur {

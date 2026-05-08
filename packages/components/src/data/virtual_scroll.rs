@@ -19,6 +19,14 @@ pub struct VirtualTreeNodeData {
     pub disabled: bool,
 }
 
+#[derive(Clone, Debug)]
+pub struct FlatItem {
+    pub id: String,
+    pub title: String,
+    pub disabled: bool,
+    pub depth: usize,
+}
+
 #[define_props]
 pub struct VirtualTreeProps {
     pub data: Vec<VirtualTreeNodeData>,
@@ -42,15 +50,15 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
     let scroll_position = use_signal(|| 0.0);
     let container_height = props.height.parse::<f64>().unwrap_or(400.0);
 
-    // Flatten tree data for virtual scrolling
     let flattened_items = use_memo(move || {
         let mut result = Vec::new();
-        fn flatten(
-            node: &VirtualTreeNodeData,
-            depth: usize,
-            result: &mut Vec<(VirtualTreeNodeData, usize)>,
-        ) {
-            result.push((node.clone(), depth));
+        fn flatten(node: &VirtualTreeNodeData, depth: usize, result: &mut Vec<FlatItem>) {
+            result.push(FlatItem {
+                id: node.id.clone(),
+                title: node.title.clone(),
+                disabled: node.disabled,
+                depth,
+            });
             for child in &node.children {
                 flatten(child, depth + 1, result);
             }
@@ -63,7 +71,6 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
 
     let total_height = flattened_items.read().len() as f64 * props.item_height as f64;
 
-    // Calculate visible range
     let flattened_for_range = flattened_items.clone();
     let scroll_for_range = scroll_position.clone();
     let range = use_memo(move || {
@@ -77,53 +84,37 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
     });
 
     let flattened_for_visible = flattened_items.clone();
-    let visible_items = use_memo(move || {
-        let (start, end) = range.read();
-        flattened_for_visible.read()[start..end].to_vec()
-    });
-
-    // Pre-compute items_data outside rsx!
-    let flattened_for_items = flattened_items.clone();
-    let items_data: Vec<_> = visible_items
-        .read()
+    let visible_range = range.read();
+    let (vis_start, vis_end) = (visible_range.0, visible_range.1);
+    let item_elements: Vec<Element> = flattened_for_visible.read()[vis_start..vis_end]
         .iter()
-        .map(|(item, depth)| {
-            let idx = {
-                let items = flattened_for_items.read();
-                items.iter().position(|(n, _)| n.id == item.id).unwrap_or(0)
-            };
-            (
-                item.id.clone(),
-                item.title.clone(),
-                item.disabled,
-                idx,
-                *depth,
-            )
-        })
-        .collect();
+        .enumerate()
+        .map(|(i, item)| {
+            let global_idx = vis_start + i;
+            let node_classes = ClassesBuilder::new()
+                .add_typed(VirtualScrollClass::VirtualTree)
+                .add_typed_if(VirtualScrollClass::NodeDisabled, item.disabled)
+                .build();
 
-    // Pre-build item elements outside rsx!
-    let item_elements: Vec<Element> = items_data.into_iter().map(|(id, title, disabled, idx, depth)| {
-        let node_classes = ClassesBuilder::new()
-            .add_typed(VirtualScrollClass::VirtualTree)
-            .add_typed_if(VirtualScrollClass::NodeDisabled, disabled)
-            .build();
+            let item_height = props.item_height;
+            let depth = item.depth;
+            let title = item.title.clone();
+            let id = item.id.clone();
+            rsx! {
+                div {
+                    class: node_classes,
+                    style: "position: absolute; top: {(global_idx as f64 * item_height as f64)}px; left: 0; right: 0; height: {item_height}px; padding-left: {(depth * 24)}px; display: flex; align-items: center;",
+                    "data-key": id,
 
-        let item_height = props.item_height;
-        rsx! {
-            div {
-                class: node_classes,
-                style: "position: absolute; top: {(idx as f64 * item_height as f64)}px; left: 0; right: 0; height: {item_height}px; padding-left: {(depth * 24)}px; display: flex; align-items: center;",
-                "data-key": id,
-
-                span {
-                    class: "hi-tree-node-content",
-                    style: "display: flex; align-items: center; gap: 8px;",
-                    "{title}"
+                    span {
+                        class: "hi-tree-node-content",
+                        style: "display: flex; align-items: center; gap: 8px;",
+                        "{title}"
+                    }
                 }
             }
-        }
-    }).collect();
+        })
+        .collect();
 
     // Clone for onscroll handler
     let scroll_position_for_onscroll = scroll_position.clone();

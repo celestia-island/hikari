@@ -8,8 +8,10 @@ use hikari_palette::classes::{TypedClass, CascaderClass, ClassesBuilder};
 
 use crate::{prelude::*, styled::StyledComponent};
 
+/// Style provider for the Cascader component.
 pub struct CascaderComponent;
 
+/// A single option in the cascader, optionally containing child options.
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct CascaderOption {
     pub label: String,
@@ -18,6 +20,7 @@ pub struct CascaderOption {
     pub disabled: bool,
 }
 
+/// Available sizes for the Cascader component.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum CascaderSize {
     #[default]
@@ -26,6 +29,7 @@ pub enum CascaderSize {
     Lg,
 }
 
+/// Props for the Cascader component.
 #[define_props]
 pub struct CascaderProps {
     pub options: Vec<CascaderOption>,
@@ -45,10 +49,7 @@ pub struct CascaderProps {
     pub on_change: Option<EventHandler<Vec<String>>>,
 }
 
-///
-///
-///
-///
+/// A multi-level cascading selection component for hierarchical data.
 #[component]
 pub fn Cascader(props: CascaderProps) -> Element {
     let is_open = use_signal(|| false);

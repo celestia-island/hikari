@@ -185,7 +185,7 @@ pub fn Popover(props: PopoverProps) -> Element {
         .build();
 
     rsx! {
-        div { class: container_classes, onclick: handle_trigger_click, {props.trigger} }
+        div { class: container_classes, onclick: handle_trigger_click, "aria-haspopup": "dialog", "aria-expanded": open.get().to_string(), {props.trigger} }
     }
 }
 

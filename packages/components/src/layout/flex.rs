@@ -58,6 +58,7 @@ pub enum FlexGap {
     Gap8,
 }
 
+/// Props for the [`FlexBox`] component.
 #[define_props]
 pub struct FlexBoxProps {
     pub direction: Direction,
@@ -92,6 +93,7 @@ pub struct FlexBoxProps {
     pub children: Element,
 }
 
+/// A flexible box layout component supporting direction, alignment, justification, wrapping, and gap.
 #[component]
 pub fn FlexBox(props: FlexBoxProps) -> Element {
     let layout_direction = use_layout_direction();

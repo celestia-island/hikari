@@ -177,8 +177,10 @@ pub fn Input(props: InputProps) -> Element {
                 autofocus: props.autofocus,
                 disabled: props.disabled,
                 readonly: props.readonly,
-                placeholder: props.placeholder,
+                placeholder: props.placeholder.clone(),
                 value: props.value,
+                "aria-invalid": if matches!(props.status, InputStatus::Error) { Some("true".to_string()) } else { None },
+                "aria-label": props.placeholder.clone(),
                 oninput: move |e: InputEvent| {
                     if let Some(handler) = props.oninput.as_ref() {
                         handler.call(e.data.clone());

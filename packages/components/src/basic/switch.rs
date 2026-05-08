@@ -197,7 +197,13 @@ pub fn Switch(props: SwitchProps) -> Element {
                 }
             },
 
-            div { class: switch_classes,
+            div {
+                class: switch_classes,
+                role: "switch",
+                "aria-checked": props.checked.to_string(),
+                tabindex: "0",
+                "aria-disabled": props.disabled.to_string(),
+
                 div { class: "hi-switch-track",
                     div { class: "hi-switch-thumb", {thumb_inner} }
                 }

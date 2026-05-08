@@ -5,6 +5,7 @@ use hikari_palette::classes::{AutoCompleteClass, ClassesBuilder, TypedClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
+/// Style provider for the AutoComplete component.
 pub struct AutoCompleteComponent;
 
 /// Props for the AutoComplete component
@@ -30,6 +31,7 @@ pub struct AutoCompleteProps {
     pub style: String,
 }
 
+/// An input field with a dropdown of filtered suggestions based on the current value.
 #[component]
 pub fn AutoComplete(props: AutoCompleteProps) -> Element {
     let is_open = use_signal(|| false);

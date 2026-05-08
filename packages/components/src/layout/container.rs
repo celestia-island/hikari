@@ -14,6 +14,7 @@ pub enum ContainerSize {
     Xl,
 }
 
+/// Props for the [`Container`] component.
 #[define_props]
 pub struct ContainerProps {
     #[default]
@@ -46,9 +47,7 @@ impl ContainerSize {
     }
 }
 
-///
-///
-///
+/// A responsive container that wraps content with a configurable max-width and optional centering.
 #[component]
 pub fn Container(props: ContainerProps) -> Element {
     let layout_direction = use_layout_direction();

@@ -18,6 +18,7 @@ use crate::{
 
 pub struct SidebarComponent;
 
+/// Props for the [`Sidebar`] component.
 #[define_props]
 pub struct SidebarProps {
     #[default("".to_string())]
@@ -83,6 +84,7 @@ pub struct SidebarSectionProps {
     pub children: Element,
 }
 
+/// A collapsible section within a sidebar containing nested items.
 #[component]
 pub fn SidebarSection(props: SidebarSectionProps) -> Element {
     let is_expanded = use_signal(|| props.default_expanded);
@@ -176,6 +178,7 @@ pub struct SidebarItemProps {
     pub items: Option<Element>,
 }
 
+/// A sidebar item with optional nested children and expand/collapse support.
 #[component]
 pub fn SidebarItem(props: SidebarItemProps) -> Element {
     // Check if nested items are provided
@@ -284,6 +287,7 @@ pub struct SidebarLeafProps {
     pub children: Element,
 }
 
+/// A terminal leaf node in the sidebar with no nested children.
 #[component]
 pub fn SidebarLeaf(props: SidebarLeafProps) -> Element {
     let leaf_classes = ClassesBuilder::new()

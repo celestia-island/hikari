@@ -40,6 +40,8 @@ pub struct PaginationProps {
     pub on_change: Option<EventHandler<u32>>,
 
     pub on_size_change: Option<EventHandler<u32>>,
+
+    pub aria_label: Option<String>,
 }
 
 #[component]
@@ -171,11 +173,12 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 let current_page_for_class = current_page.clone();
                 let current_page_for_handler = current_page.clone();
                 let on_change_for_handler = on_change.clone();
+                let is_active = i == current_page_for_class.get();
                 let page_class = ClassesBuilder::new()
                     .add_typed(PaginationClass::PaginationItem)
                     .add_typed_if(
                         PaginationClass::PaginationActive,
-                        i == current_page_for_class.get(),
+                        is_active,
                     )
                     .build();
                 let handler = move |_| {
@@ -194,6 +197,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         button {
                             class: page_class,
                             onclick: handler,
+                            "aria-current": if is_active { "page" } else { "false" },
                             "{i}"
                         }
                     }
@@ -214,11 +218,12 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 let current_page_for_class = current_page.clone();
                 let current_page_for_handler = current_page.clone();
                 let on_change_for_handler = on_change.clone();
+                let is_active = i == current_page_for_class.get();
                 let page_class = ClassesBuilder::new()
                     .add_typed(PaginationClass::PaginationItem)
                     .add_typed_if(
                         PaginationClass::PaginationActive,
-                        i == current_page_for_class.get(),
+                        is_active,
                     )
                     .build();
                 let handler = move |_| {
@@ -237,6 +242,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         button {
                             class: page_class,
                             onclick: handler,
+                            "aria-current": if is_active { "page" } else { "false" },
                             "{i}"
                         }
                     }
@@ -411,6 +417,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
     rsx! {
         div { class: container_classes,
+            "aria-label": props.aria_label.clone().unwrap_or_else(|| "Pagination".to_string()),
 
             if props.show_total {
                 div { class: total_classes,
@@ -440,6 +447,8 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         class: prev_classes,
                         disabled: current_page.get() <= 1,
                         onclick: handle_prev,
+                        "aria-label": "Previous page",
+                        "aria-disabled": if current_page.get() <= 1 { "true" } else { "false" },
                         Arrow {
                             direction: ArrowDirection::Left,
                             size: 16,
@@ -462,6 +471,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                 .add_typed_if(PaginationClass::PaginationActive, 1 == current_page.get())
                                 .build(),
                             onclick: first_page_handler,
+                            "aria-current": if 1 == current_page.get() { "page" } else { "false" },
                             "1"
                         }
                     }
@@ -539,6 +549,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                 .add_typed_if(PaginationClass::PaginationActive, total_pages == current_page.get())
                                 .build(),
                             onclick: last_page_handler,
+                            "aria-current": if total_pages == current_page.get() { "page" } else { "false" },
                             "{total_pages}"
                         }
                         }
@@ -554,6 +565,8 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         class: next_classes,
                         disabled: current_page.get() >= total_pages,
                         onclick: handle_next,
+                        "aria-label": "Next page",
+                        "aria-disabled": if current_page.get() >= total_pages { "true" } else { "false" },
                         Arrow {
                             direction: ArrowDirection::Right,
                             size: 16,
@@ -674,6 +687,7 @@ mod tests {
             class: "test-class".to_string(),
             on_change: None,
             on_size_change: None,
+            aria_label: None,
         };
 
         let cloned = props.clone();
@@ -696,6 +710,7 @@ mod tests {
             class: "test-class".to_string(),
             on_change: None,
             on_size_change: None,
+            aria_label: None,
         };
 
         let props2 = PaginationProps {
@@ -708,6 +723,7 @@ mod tests {
             class: "test-class".to_string(),
             on_change: None,
             on_size_change: None,
+            aria_label: None,
         };
 
         assert!(props1.current == props2.current);

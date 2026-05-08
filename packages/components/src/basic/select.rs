@@ -170,6 +170,7 @@ pub fn Select(props: SelectProps) -> Element {
             let menu_content = rsx! {
                 div {
                     class: "hi-select-dropdown",
+                    role: "listbox",
                     // Match trigger width via inline style if we have the rect
                     style: if let Some((_, _, w, _)) = trigger_rect_opt { format!("width: {w}px;") } else { "min-width: 100%;".to_string() },
 
@@ -196,6 +197,8 @@ pub fn Select(props: SelectProps) -> Element {
 
                             let option_classes = if is_selected { "hi-select-option hi-select-option-selected" } else { "hi-select-option" };
 
+                            let aria_selected = is_selected.to_string();
+
                             rsx! {
                                 if glow_for_options {
                                     Glow {
@@ -205,6 +208,8 @@ pub fn Select(props: SelectProps) -> Element {
                                         div {
                                             class: option_classes,
                                             onclick: click_handler,
+                                            role: "option",
+                                            "aria-selected": "{aria_selected}",
                                             "{label}"
                                         }
                                     }
@@ -212,6 +217,8 @@ pub fn Select(props: SelectProps) -> Element {
                                     div {
                                         class: option_classes,
                                         onclick: click_handler,
+                                        role: "option",
+                                        "aria-selected": "{aria_selected}",
                                         "{label}"
                                     }
                                 }
@@ -236,6 +243,9 @@ pub fn Select(props: SelectProps) -> Element {
         }
     };
 
+    let is_open = open.get();
+    let aria_expanded = if is_open { "true" } else { "false" };
+
     let wrapper_classes = ClassesBuilder::new()
         .add_typed(Position::Relative)
         .add_typed(Display::InlineBlock)
@@ -250,6 +260,9 @@ pub fn Select(props: SelectProps) -> Element {
                     intensity: crate::GlowIntensity::Soft,
                     color: crate::GlowColor::Primary,
                     div { class: trigger_classes, onclick: handle_trigger_click,
+                        role: "combobox",
+                        "aria-expanded": "{aria_expanded}",
+                        "aria-haspopup": "listbox",
 
                         span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
                             "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"请选择\".to_string()) }}"
@@ -263,6 +276,9 @@ pub fn Select(props: SelectProps) -> Element {
                 }
             } else {
                 div { class: trigger_classes, onclick: handle_trigger_click,
+                    role: "combobox",
+                    "aria-expanded": "{aria_expanded}",
+                    "aria-haspopup": "listbox",
 
                     span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
                         "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"请选择\".to_string()) }}"

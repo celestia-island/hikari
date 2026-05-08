@@ -5,6 +5,7 @@ use hikari_palette::classes::{ClassesBuilder, components::Footer as FooterClass}
 
 use crate::prelude::*;
 
+/// Props for the [`Footer`] component.
 #[define_props]
 pub struct FooterProps {
     #[default]
@@ -14,9 +15,7 @@ pub struct FooterProps {
     pub class: String,
 }
 
-///
-///
-///
+/// Application footer rendered as an HTML `<footer>` element with themed styling.
 #[component]
 pub fn Footer(props: FooterProps) -> Element {
     let footer_classes = ClassesBuilder::new()

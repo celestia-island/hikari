@@ -97,6 +97,7 @@ pub fn Tooltip(props: TooltipProps) -> Element {
                 class: TooltipClass::TooltipTrigger.class_name(),
                 onmouseenter: handle_mouse_enter,
                 onmouseleave: handle_mouse_leave,
+                "aria-describedby": format!("hi-tooltip-{}", tooltip_id.get()),
                 {props.children}
             }
         }

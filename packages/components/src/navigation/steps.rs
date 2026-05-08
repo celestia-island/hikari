@@ -36,6 +36,7 @@ pub enum StepsDirection {
     Vertical,
 }
 
+/// Data for a single step, including title, description, icon, and status.
 #[define_props]
 #[derive(Debug)]
 pub struct StepData {
@@ -60,6 +61,7 @@ impl IntoAttrValue for StepData {
     }
 }
 
+/// Props for the [`Steps`] component.
 #[define_props]
 pub struct StepsProps {
     #[default(0)]
@@ -89,10 +91,7 @@ struct StepItemData {
     step_status: StepStatus,
 }
 
-///
-///
-///
-///
+/// A multi-step navigation bar showing progress with titles and descriptions.
 #[component]
 pub fn Steps(props: StepsProps) -> Element {
     let direction_class = match props.direction {

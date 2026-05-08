@@ -306,7 +306,7 @@ fn ModalPortalEntry(
 
     let title_el = if title.is_some() {
         rsx! {
-            h3 { class: title_classes, "{title.as_ref().unwrap().clone()}" }
+            h3 { class: title_classes, id: "hi-modal-title-{id}", "{title.as_ref().unwrap().clone()}" }
         }
     } else {
         VNode::empty()
@@ -314,7 +314,7 @@ fn ModalPortalEntry(
 
     let close_button = if closable {
         rsx! {
-            button { class: close_classes, onclick: button_close,
+            button { class: close_classes, onclick: button_close, "aria-label": "Close",
                 svg {
                     view_box: "0 0 24 24",
                     fill: "none",
@@ -358,6 +358,9 @@ fn ModalPortalEntry(
             div {
                 class: modal_classes,
                 style: modal_style.read(),
+                role: "dialog",
+                "aria-modal": "true",
+                "aria-labelledby": if title.is_some() { format!("hi-modal-title-{}", id) } else { String::new() },
                 onclick: |e: MouseEvent| {
                     e.stop_propagation();
                 },
@@ -550,6 +553,8 @@ fn ToastPortalEntry(
         div {
             class: "hi-toast",
             style: "{position_style} z-index: {z_index}; pointer-events: auto;",
+            "aria-live": "assertive",
+            role: "alert",
             {children}
         }
     }
@@ -801,11 +806,14 @@ fn PopoverPortalEntry(
     let close_popover_for_content = close_popover.clone();
     let on_close_for_content = on_close.clone();
 
+    let aria_label = title.as_deref().unwrap_or("Popover").to_string();
     let popover_content = rsx! {
         div {
             class: "{popover_classes}",
             style: popover_style,
             "data-open": "true",
+            role: "dialog",
+            "aria-label": "{aria_label}",
 
             {title_el}
 
@@ -919,7 +927,7 @@ fn TooltipPortalEntry(
     rsx! {
         div { class: tooltip_classes, style: tooltip_style,
 
-            div { class: TooltipClass::TooltipContent.class_name(), "{content}" }
+            div { class: TooltipClass::TooltipContent.class_name(), id: format!("hi-tooltip-{}", id), "role": "tooltip", "{content}" }
 
             {arrow_el}
         }

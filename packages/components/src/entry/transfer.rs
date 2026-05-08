@@ -8,14 +8,17 @@ use hikari_palette::classes::{ClassesBuilder, TransferClass, TypedClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
+/// Style provider for the Transfer component.
 pub struct TransferComponent;
 
+/// Event payload emitted when the selection changes in either panel.
 #[derive(Clone, PartialEq, Debug)]
 pub struct SelectChangeEvent {
     pub list_type: usize,
     pub keys: Vec<String>,
 }
 
+/// A single item that can be transferred between panels.
 #[derive(Debug)]
 #[define_props]
 pub struct TransferItem {
@@ -27,6 +30,7 @@ pub struct TransferItem {
     pub disabled: bool,
 }
 
+/// Props for the Transfer component.
 #[define_props]
 pub struct TransferProps {
     pub data: Vec<TransferItem>,
@@ -52,10 +56,7 @@ pub struct TransferProps {
     pub on_change: Option<EventHandler<Vec<String>>>,
 }
 
-///
-///
-///
-///
+/// A dual-list transfer component for moving items between source and target panels.
 #[component]
 pub fn Transfer(props: TransferProps) -> Element {
     let titles = props

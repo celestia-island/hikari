@@ -28,14 +28,14 @@ use crate::platform;
 use crate::prelude::*;
 use tairitsu_hooks::ReactiveSignal;
 
+/// A single anchor link target with an href and display title.
 #[derive(Clone, Debug, PartialEq, Props)]
 pub struct AnchorItem {
     pub href: String,
     pub title: String,
 }
 
-///
-///
+/// In-page navigation with smooth scrolling to anchor targets.
 #[component]
 pub fn Anchor(
     items: Vec<AnchorItem>,

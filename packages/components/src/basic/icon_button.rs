@@ -93,6 +93,9 @@ pub struct IconButtonProps {
     pub class: String,
 
     pub onclick: Option<EventHandler<MouseEvent>>,
+
+    #[props(optional)]
+    pub aria_label: Option<String>,
 }
 
 /// Icon button component
@@ -177,6 +180,8 @@ pub fn IconButton(props: IconButtonProps) -> Element {
             style: style_attr,
             "data-animation-id": props.animation_id,
             disabled: props.disabled,
+            "aria-label": props.aria_label.unwrap_or_default(),
+            "aria-disabled": props.disabled.to_string(),
             onclick: move |e| {
                 if let Some(handler) = props.onclick.as_ref() {
                     handler(e);

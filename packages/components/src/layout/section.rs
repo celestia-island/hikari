@@ -20,8 +20,7 @@ use hikari_palette::classes::{TypedClass, ClassesBuilder, SectionClass};
 
 use crate::prelude::*;
 
-///
-///
+/// A content section with an optional title and description header.
 #[component]
 pub fn Section(
     children: Element,
@@ -69,8 +68,7 @@ pub fn Section(
     }
 }
 
-///
-///
+/// An invisible spacer element for adding vertical or horizontal gaps.
 #[component]
 pub fn Spacer(
     #[props(default = "vertical".to_string())] orientation: String,

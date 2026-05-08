@@ -32,6 +32,11 @@ pub struct CollapseProps {
 pub fn Collapse(props: CollapseProps) -> Element {
     let is_expanded = use_signal(|| props.expanded);
 
+    let content_id = use_signal(|| {
+        static COUNTER: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+        format!("hi-collapse-panel-{}", COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
+    });
+
     let animation_style = if props.animated {
         format!(
             "transition: max-height {}ms ease-in-out, opacity {}ms ease-in-out;",
@@ -81,6 +86,10 @@ pub fn Collapse(props: CollapseProps) -> Element {
             div {
                 class: "hi-collapse-header",
                 style: "cursor: pointer; display: flex; align-items: center; gap: 8px;",
+                role: "button",
+                tabindex: "0",
+                "aria-expanded": if is_expanded.get() { "true" } else { "false" },
+                "aria-controls": "{content_id}",
                 onclick: handle_toggle,
 
                 span {
@@ -97,7 +106,9 @@ pub fn Collapse(props: CollapseProps) -> Element {
             }
 
             div {
+                id: "{content_id}",
                 class: content_classes,
+                "aria-hidden": if is_expanded.get() { "false" } else { "true" },
                 style: format!(
                     "max-height: {}; overflow: hidden; opacity: {}; {};",
                     max_height,

@@ -13,6 +13,8 @@ use crate::{
 
 pub struct PaginationButtonComponent;
 
+const PAGINATION_BTN_BASE: &str = "display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; cursor: pointer; user-select: none;";
+
 #[derive(Clone, PartialEq, Props)]
 pub struct PaginationButtonProps {
     pub content: PaginationButtonContent,
@@ -69,7 +71,7 @@ pub fn PaginationButton(props: PaginationButtonProps) -> Element {
         PaginationButtonContent::Arrow { direction, size } => rsx! {
             div {
                 class: button_classes,
-                style: "display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; cursor: pointer; user-select: none;",
+                style: PAGINATION_BTN_BASE,
                 onclick: props.onclick,
 
                 Arrow { direction, size }
@@ -78,7 +80,7 @@ pub fn PaginationButton(props: PaginationButtonProps) -> Element {
         PaginationButtonContent::Text { text, font_size: _ } => rsx! {
             div {
                 class: button_classes,
-                style: "display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; cursor: pointer; user-select: none;",
+                style: PAGINATION_BTN_BASE,
                 onclick: props.onclick,
                 "{text}"
             }
@@ -86,7 +88,7 @@ pub fn PaginationButton(props: PaginationButtonProps) -> Element {
         PaginationButtonContent::Ellipsis => rsx! {
             div {
                 class: button_classes,
-                style: "display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; cursor: pointer; user-select: none; font-size: 14px; font-weight: 600; color: var(--hi-color-text-secondary); letter-spacing: 0.1em;",
+                style: format!("{PAGINATION_BTN_BASE} font-size: 14px; font-weight: 600; color: var(--hi-color-text-secondary); letter-spacing: 0.1em;"),
                 onclick: props.onclick,
                 "..."
             }

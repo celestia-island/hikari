@@ -118,6 +118,16 @@ pub fn Alert(props: AlertProps) -> Element {
     // Pre-compute onclick handler for closable button
     let on_close_handler = props.on_close.clone();
 
+    let aria_role = match props.variant {
+        AlertVariant::Error | AlertVariant::Warning => "alert",
+        AlertVariant::Info | AlertVariant::Success => "status",
+    };
+
+    let aria_live = match props.variant {
+        AlertVariant::Error | AlertVariant::Warning => "assertive",
+        AlertVariant::Info | AlertVariant::Success => "polite",
+    };
+
     rsx! {
         Glow {
             class: "hi-alert-glow-wrapper".to_string(),
@@ -125,7 +135,7 @@ pub fn Alert(props: AlertProps) -> Element {
             color: glow_color,
             intensity: GlowIntensity::Soft,
             block: true,
-            div { class: alert_classes,
+            div { class: alert_classes, role: "{aria_role}", "aria-live": "{aria_live}",
 
                 if icon.is_some() {
                     div { class: icon_wrapper_class, {icon.unwrap().clone()} }

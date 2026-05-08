@@ -13,6 +13,7 @@ pub enum SpaceDirection {
     Both,
 }
 
+/// Props for the [`Space`] component.
 #[define_props]
 pub struct SpaceProps {
     #[default(1)]
@@ -30,9 +31,7 @@ pub struct SpaceProps {
     pub children: Element,
 }
 
-///
-///
-///
+/// Adds consistent spacing between elements in horizontal, vertical, or both directions.
 #[component]
 pub fn Space(props: SpaceProps) -> Element {
     let direction_class = match props.direction {

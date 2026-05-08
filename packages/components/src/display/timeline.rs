@@ -17,6 +17,7 @@ pub enum TimelinePosition {
     Right,
 }
 
+/// Props for the Timeline component.
 #[define_props]
 pub struct TimelineProps {
     pub position: TimelinePosition,
@@ -27,6 +28,7 @@ pub struct TimelineProps {
     pub children: Element,
 }
 
+/// A vertical timeline component for displaying a sequence of events.
 #[component]
 pub fn Timeline(props: TimelineProps) -> Element {
     let position_class = match props.position {
@@ -47,6 +49,7 @@ pub fn Timeline(props: TimelineProps) -> Element {
     }
 }
 
+/// Props for the TimelineItem component.
 #[define_props]
 pub struct TimelineItemProps {
     pub position: TimelinePosition,
@@ -64,6 +67,7 @@ pub struct TimelineItemProps {
     pub children: Element,
 }
 
+/// A single item within a timeline with expandable description.
 #[component]
 pub fn TimelineItem(props: TimelineItemProps) -> Element {
     let position_class = match props.position {

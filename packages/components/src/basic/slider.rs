@@ -128,7 +128,7 @@ impl StyledComponent for SliderComponent {
     top: 50%;
     transform: translate(-50%, -50%);
     background-color: var(--hi-color-primary, #1890ff);
-    border: 2px solid #fff;
+    border: 2px solid var(--hi-color-bg-container, #fff);
     border-radius: 50%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -143,7 +143,7 @@ impl StyledComponent for SliderComponent {
 .hi-slider-handle:focus-visible {
     outline: 2px solid var(--hi-color-primary, #1890ff);
     outline-offset: 2px;
-    box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.2);
+    box-shadow: 0 0 0 4px rgba(var(--hi-color-primary-rgb, 24, 144, 255), 0.2);
 }
 
 .hi-slider-handle:active {
@@ -203,7 +203,7 @@ impl StyledComponent for SliderComponent {
 [data-theme="dark"] .hi-slider-handle:focus-visible {
     outline: 2px solid var(--hi-color-primary, #1890ff);
     outline-offset: 2px;
-    box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.3);
+    box-shadow: 0 0 0 4px rgba(var(--hi-color-primary-rgb, 24, 144, 255), 0.3);
 }
 "#
     }

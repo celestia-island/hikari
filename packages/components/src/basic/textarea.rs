@@ -85,10 +85,12 @@ pub fn Textarea(props: TextareaProps) -> Element {
             class: textarea_classes,
             disabled: props.disabled,
             readonly: props.readonly,
-            placeholder: props.placeholder.unwrap_or_default(),
+            placeholder: props.placeholder.clone().unwrap_or_default(),
             value: "{props.value}",
             rows: props.rows,
             maxlength: props.maxlength.unwrap_or(0),
+            "aria-invalid": if matches!(props.status, TextareaStatus::Error) { Some("true".to_string()) } else { None },
+            "aria-label": props.placeholder.clone(),
             oninput: move |e: InputEvent| {
                 if let Some(handler) = props.oninput.as_ref() {
                     handler.call(e.data.clone());

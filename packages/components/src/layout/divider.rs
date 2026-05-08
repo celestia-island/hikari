@@ -20,6 +20,7 @@ pub enum DividerType {
     Dotted,
 }
 
+/// Props for the [`Divider`] component.
 #[define_props]
 pub struct DividerProps {
     #[default]
@@ -41,9 +42,7 @@ pub struct DividerProps {
     pub class: String,
 }
 
-///
-///
-///
+/// A visual divider line that separates content sections, with optional centered text label.
 #[component]
 pub fn Divider(props: DividerProps) -> Element {
     let layout_direction = use_layout_direction();

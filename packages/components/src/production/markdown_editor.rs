@@ -6,8 +6,10 @@ use hikari_palette::classes::{ClassesBuilder, MarkdownEditorClass, TypedClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 
+/// Marker struct providing the styled CSS for the markdown editor component.
 pub struct MarkdownEditorComponent;
 
+/// Display mode for the markdown editor.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum MarkdownEditorMode {
     #[default]
@@ -16,6 +18,7 @@ pub enum MarkdownEditorMode {
     Split,
 }
 
+/// Available sizes for the markdown editor.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum MarkdownEditorSize {
     #[default]
@@ -24,6 +27,7 @@ pub enum MarkdownEditorSize {
     Large,
 }
 
+/// Props for the MarkdownEditor component.
 #[define_props]
 pub struct MarkdownEditorProps {
     #[default(String::default())]
@@ -50,7 +54,7 @@ pub struct MarkdownEditorProps {
     pub on_change: Option<EventHandler<String>>,
 }
 
-///
+/// Renders a markdown editor with a formatting toolbar and edit/preview/split modes.
 #[component]
 pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
     let content = use_signal(|| props.value.clone());

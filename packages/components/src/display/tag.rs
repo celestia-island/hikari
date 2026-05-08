@@ -21,6 +21,7 @@ pub enum TagVariant {
     Info,
 }
 
+/// Props for the Tag component.
 #[define_props]
 pub struct TagProps {
     pub variant: TagVariant,
@@ -31,6 +32,7 @@ pub struct TagProps {
     pub children: Element,
 }
 
+/// A tag component for labeling and categorizing content with variant styles.
 #[component]
 pub fn Tag(props: TagProps) -> Element {
     let variant_class = match props.variant {
@@ -89,57 +91,57 @@ impl StyledComponent for TagComponent {
 }
 
 .hi-tag-default {
-    background-color: rgba(107, 114, 128, 0.1);
-    color: var(--hi-color-text-primary);
-    border-color: rgba(107, 114, 128, 0.2);
+    background-color: rgba(var(--hi-color-text-secondary-rgb), 0.1);
+    color: var(--hi-color-text-secondary);
+    border-color: rgba(var(--hi-color-text-secondary-rgb), 0.2);
 }
 
 .hi-tag-default:hover {
-    background-color: rgba(107, 114, 128, 0.2);
+    background-color: rgba(var(--hi-color-text-secondary-rgb), 0.2);
 }
 
 .hi-tag-primary {
-    background-color: rgba(238, 162, 164, 0.1);
+    background-color: rgba(var(--hi-color-primary-rgb), 0.1);
     color: var(--hi-color-primary);
-    border-color: rgba(238, 162, 164, 0.3);
+    border-color: rgba(var(--hi-color-primary-rgb), 0.3);
 }
 
 .hi-tag-primary:hover {
-    background-color: rgba(238, 162, 164, 0.2);
-    box-shadow: 0 0 8px rgba(238, 162, 164, 0.3);
+    background-color: rgba(var(--hi-color-primary-rgb), 0.2);
+    box-shadow: 0 0 8px rgba(var(--hi-color-primary-rgb), 0.3);
 }
 
 .hi-tag-success {
-    background-color: rgba(16, 185, 129, 0.1);
-    color: #10b981;
-    border-color: rgba(16, 185, 129, 0.3);
+    background-color: rgba(var(--hi-color-success-rgb), 0.1);
+    color: var(--hi-color-success);
+    border-color: rgba(var(--hi-color-success-rgb), 0.3);
 }
 
 .hi-tag-success:hover {
-    background-color: rgba(16, 185, 129, 0.2);
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+    background-color: rgba(var(--hi-color-success-rgb), 0.2);
+    box-shadow: 0 0 8px rgba(var(--hi-color-success-rgb), 0.3);
 }
 
 .hi-tag-warning {
-    background-color: rgba(245, 158, 11, 0.1);
-    color: #f59e0b;
-    border-color: rgba(245, 158, 11, 0.3);
+    background-color: rgba(var(--hi-color-warning-rgb), 0.1);
+    color: var(--hi-color-warning);
+    border-color: rgba(var(--hi-color-warning-rgb), 0.3);
 }
 
 .hi-tag-warning:hover {
-    background-color: rgba(245, 158, 11, 0.2);
-    box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+    background-color: rgba(var(--hi-color-warning-rgb), 0.2);
+    box-shadow: 0 0 8px rgba(var(--hi-color-warning-rgb), 0.3);
 }
 
 .hi-tag-danger {
-    background-color: rgba(255, 76, 0, 0.1);
-    color: #ff4c00;
-    border-color: rgba(255, 76, 0, 0.3);
+    background-color: rgba(var(--hi-color-danger-rgb), 0.1);
+    color: var(--hi-color-danger);
+    border-color: rgba(var(--hi-color-danger-rgb), 0.3);
 }
 
 .hi-tag-danger:hover {
-    background-color: rgba(255, 76, 0, 0.2);
-    box-shadow: 0 0 8px rgba(255, 76, 0, 0.3);
+    background-color: rgba(var(--hi-color-danger-rgb), 0.2);
+    box-shadow: 0 0 8px rgba(var(--hi-color-danger-rgb), 0.3);
 }
 
 .hi-tag-info {

@@ -3,7 +3,6 @@
 //! This module provides unified DOM operations using tairitsu's WIT infrastructure,
 //! which works consistently across browser and server environments.
 
-use std::cell::RefCell;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use tairitsu_vdom::platform::DomRect;

@@ -1,5 +1,9 @@
 use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
 use crate::components::icon_utils::icon_el;
+use hikari_components::prelude::*;
+use hikari_components::{
+    Progress, ProgressStatus, Skeleton, SkeletonVariant, Spin, SpinSize, SpinTip,
+};
 use hikari_icons::MdiIcon;
 use tairitsu_macros::rsx;
 use tairitsu_vdom::{VElement, VNode};
@@ -63,6 +67,37 @@ pub fn render() -> VNode {
                         {closable_alert("hi-alert hi-alert--info", MdiIcon::Information, "This alert can be dismissed.")}
                         {closable_alert("hi-alert hi-alert--success", MdiIcon::Check, "Changes saved successfully.")}
                         {closable_alert("hi-alert hi-alert--success", MdiIcon::Check, " Changes saved successfully.")}
+                    }
+                }
+            )}
+            {render_demo_block("Spinners",
+                rsx! {
+                    div { style: "display:flex;flex-direction:row;gap:24px;align-items:center;flex-wrap:wrap;",
+                        Spin { size: SpinSize::Small, spinning: true }
+                        Spin { size: SpinSize::Medium, spinning: true }
+                        Spin { size: SpinSize::Large, spinning: true, tip: SpinTip::Loading }
+                        Spin { size: SpinSize::Medium, spinning: false }
+                    }
+                }
+            )}
+            {render_demo_block("Progress Bars",
+                rsx! {
+                    div { style: "display:flex;flex-direction:column;gap:16px;",
+                        Progress { value: 30.0, show_info: true }
+                        Progress { value: 70.0, show_info: true, status: ProgressStatus::Active }
+                        Progress { value: 100.0, show_info: true }
+                        Progress { value: 0.0, show_info: true, status: ProgressStatus::Active }
+                    }
+                }
+            )}
+            {render_demo_block("Skeleton Loading",
+                rsx! {
+                    div { style: "display:flex;flex-direction:column;gap:16px;max-width:400px;",
+                        Skeleton { rows: Some(3) }
+                        div { style: "display:flex;gap:12px;align-items:center;",
+                            Skeleton { variant: SkeletonVariant::Circular, width: Some("40px".into()), height: Some("40px".into()) }
+                            Skeleton { variant: SkeletonVariant::Text, width: Some("200px".into()) }
+                        }
                     }
                 }
             )}

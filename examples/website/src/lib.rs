@@ -36,3 +36,13 @@ fn run_app() {
 pub extern "C" fn tairitsu_component_bootstrap() {
     run_app();
 }
+
+#[unsafe(no_mangle)]
+pub extern "C" fn hikari_anim_freeze() {
+    hikari_components::platform::freeze_animations();
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn hikari_anim_unfreeze() {
+    hikari_components::platform::unfreeze_animations();
+}

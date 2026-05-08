@@ -3,7 +3,28 @@
 //! This module provides unified DOM operations using tairitsu's WIT infrastructure,
 //! which works consistently across browser and server environments.
 
+use std::cell::RefCell;
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use tairitsu_vdom::platform::DomRect;
+
+static ANIMATION_FROZEN: AtomicBool = AtomicBool::new(false);
+
+pub fn is_animation_frozen() -> bool {
+    ANIMATION_FROZEN.load(Ordering::SeqCst)
+}
+
+pub fn set_animation_frozen(frozen: bool) {
+    ANIMATION_FROZEN.store(frozen, Ordering::SeqCst);
+}
+
+pub fn freeze_animations() {
+    set_animation_frozen(true);
+}
+
+pub fn unfreeze_animations() {
+    set_animation_frozen(false);
+}
 
 /// Log a message to the console
 pub fn log(message: &str) {
@@ -163,12 +184,25 @@ pub fn get_scroll_top_by_selector(_selector: &str) -> f64 {
     0.0
 }
 
-/// Request animation frame (placeholder)
-pub fn request_animation_frame(_callback: impl FnOnce() + 'static) {}
+/// Request animation frame
+pub fn request_animation_frame(callback: impl FnOnce() + 'static) {
+    let mut cb: Option<Box<dyn FnOnce()>> = Some(Box::new(callback));
+    let _ = tairitsu_vdom::dom_ops::request_animation_frame(Box::new(move |_| {
+        if let Some(f) = cb.take() {
+            f();
+        }
+    }));
+}
 
-/// Request animation frame with timestamp (placeholder)
-pub fn request_animation_frame_with_timestamp(_callback: impl FnOnce(f64) + 'static) -> i32 {
-    0
+/// Request animation frame with timestamp
+pub fn request_animation_frame_with_timestamp(callback: impl FnOnce(f64) + 'static) -> i32 {
+    let mut cb: Option<Box<dyn FnOnce(f64)>> = Some(Box::new(callback));
+    let id = tairitsu_vdom::dom_ops::request_animation_frame(Box::new(move |ts| {
+        if let Some(f) = cb.take() {
+            f(ts);
+        }
+    }));
+    id as i32
 }
 
 /// Register scroll event callback

@@ -1,17 +1,6 @@
-// hi-components/src/feedback/spin.rs
-// Spin component with Arknights + FUI styling
-// Animation: RAF-driven rotation (migrated from CSS @keyframes)
-
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use hikari_palette::classes::{TypedClass, ClassesBuilder, SpinClass};
 
-use crate::{platform, prelude::*, styled::StyledComponent};
-
-use tairitsu_hooks::ReactiveSignal;
-
-const ROTATION_SPEED_DEG_PER_MS: f64 = 0.4; // 400 deg/s = ~0.9s per revolution
+use crate::{prelude::*, styled::StyledComponent};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SpinSize {
@@ -32,22 +21,11 @@ pub enum SpinTip {
 #[define_props]
 pub struct SpinProps {
     pub size: SpinSize,
-
     pub tip: SpinTip,
-
     pub custom_tip: Option<String>,
-
     pub delay: Option<u64>,
-
     pub spinning: bool,
-
     pub class: String,
-}
-
-struct SpinAnimationState {
-    rotation: f64,
-    last_timestamp: Option<f64>,
-    stopped: bool,
 }
 
 #[component]
@@ -75,85 +53,16 @@ pub fn Spin(props: SpinProps) -> Element {
         }
     };
 
-    let rotation_signal = use_signal(|| 0.0_f64);
-
-    let rot_clone = rotation_signal.clone();
-    let spinning = props.spinning;
-
-    use_effect(move || {
-        if !spinning {
-            return;
-        }
-
-        let state = Rc::new(RefCell::new(SpinAnimationState {
-            rotation: 0.0,
-            last_timestamp: None,
-            stopped: false,
-        }));
-
-        let state_ref = state.clone();
-        let rot_signal = rot_clone.clone();
-
-        platform::request_animation_frame_with_timestamp(move |timestamp| {
-            let mut s = state_ref.borrow_mut();
-            if s.stopped {
-                return;
-            }
-            s.last_timestamp = Some(timestamp);
-            s.rotation = 0.0;
-            drop(s);
-
-            let st = state_ref.clone();
-            let rs = rot_signal.clone();
-            spin_loop(st, rs);
-        });
-
-        let state_cleanup = state.clone();
-        let _ = state_cleanup;
-    });
-
-    let rotation = rotation_signal.get();
-    let spinner_style = if props.spinning {
-        format!("transform: rotate({rotation:.1}deg);")
-    } else {
-        String::new()
-    };
-
     rsx! {
         div { class: spin_classes,
             div {
                 class: SpinClass::Spinner.class_name(),
-                style: spinner_style,
             }
             if !tip_text.is_empty() {
                 div { class: SpinClass::Tip.class_name(), "{tip_text}" }
             }
         }
     }
-}
-
-fn spin_loop(
-    state: Rc<RefCell<SpinAnimationState>>,
-    rotation_signal: ReactiveSignal<f64>,
-) {
-    platform::request_animation_frame_with_timestamp(move |timestamp| {
-        let mut s = state.borrow_mut();
-        if s.stopped {
-            return;
-        }
-        let prev = s.last_timestamp.unwrap_or(timestamp);
-        let delta_ms = timestamp - prev;
-        s.last_timestamp = Some(timestamp);
-        s.rotation = (s.rotation + ROTATION_SPEED_DEG_PER_MS * delta_ms) % 360.0;
-        let current = s.rotation;
-        drop(s);
-
-        rotation_signal.set(current);
-
-        let st = state.clone();
-        let rs = rotation_signal.clone();
-        spin_loop(st, rs);
-    });
 }
 
 pub struct SpinComponent;
@@ -172,7 +81,7 @@ impl StyledComponent for SpinComponent {
   border-radius: 50%;
   border: 3px solid var(--hi-border);
   border-top-color: var(--hi-color-primary);
-  will-change: transform;
+  animation: hi-spin-rotate 0.6s linear infinite;
 }
 
 .hi-spin-sm .hi-spin-spinner {
@@ -194,7 +103,13 @@ impl StyledComponent for SpinComponent {
 }
 
 .hi-spin-stopped .hi-spin-spinner {
+  animation: none;
   opacity: 0.3;
+}
+
+@keyframes hi-spin-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .hi-spin-tip {

@@ -117,7 +117,9 @@ def snap(name, selector=None, full_page=False):
 
 def nav(route, wait_after=15):
     api_post("navigate", {"url": route})
-    time.sleep(wait_after)
+    time.sleep(2)
+    api_post("resize", {"width": VP_W, "height": VP_H})
+    time.sleep(max(0, wait_after - 2))
 
 
 def scroll_content(dy):

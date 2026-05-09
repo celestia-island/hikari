@@ -2,8 +2,6 @@
 //!
 //! Built with Tairitsu framework, compiled to wasm32-wasip2.
 
-tairitsu_macros::include_scss!("src/styles/spa.scss");
-
 mod animation;
 mod app;
 mod components;

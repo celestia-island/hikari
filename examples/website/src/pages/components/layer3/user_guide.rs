@@ -1,5 +1,6 @@
 use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
 use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
+use hikari_components::style_builder::{CssProperty, StyleStringBuilder};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
@@ -87,7 +88,7 @@ pub fn render() -> VNode {
                     }
                 }
                 div { class: "hi-user-guide__progress",
-                    div { class: "hi-user-guide__progress__bar", style: "width: 66%;" }
+                    div { class: "hi-user-guide__progress__bar", style: StyleStringBuilder::new().add_percent(CssProperty::Width, 66).build_clean() }
                     span { "2 of 3 completed" }
                 }
             }

@@ -1,4 +1,5 @@
 use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
+use hikari_components::style_builder::{CssProperty, StyleStringBuilder};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
@@ -8,25 +9,25 @@ pub fn render() -> VNode {
             div { class: "hi-chart",
                 div { class: "hi-chart__title", "Weekly Activity" }
                 div { class: "hi-chart__bars",
-                    div { class: "hi-chart__bar", style: "height: 40%;",
+                    div { class: "hi-chart__bar", style: StyleStringBuilder::new().add_percent(CssProperty::Height, 40).build_clean(),
                         span { class: "hi-chart__bar__label", "Mon" }
                     }
-                    div { class: "hi-chart__bar", style: "height: 70%;",
+                    div { class: "hi-chart__bar", style: StyleStringBuilder::new().add_percent(CssProperty::Height, 70).build_clean(),
                         span { class: "hi-chart__bar__label", "Tue" }
                     }
-                    div { class: "hi-chart__bar", style: "height: 55%;",
+                    div { class: "hi-chart__bar", style: StyleStringBuilder::new().add_percent(CssProperty::Height, 55).build_clean(),
                         span { class: "hi-chart__bar__label", "Wed" }
                     }
-                    div { class: "hi-chart__bar", style: "height: 85%;",
+                    div { class: "hi-chart__bar", style: StyleStringBuilder::new().add_percent(CssProperty::Height, 85).build_clean(),
                         span { class: "hi-chart__bar__label", "Thu" }
                     }
-                    div { class: "hi-chart__bar", style: "height: 60%;",
+                    div { class: "hi-chart__bar", style: StyleStringBuilder::new().add_percent(CssProperty::Height, 60).build_clean(),
                         span { class: "hi-chart__bar__label", "Fri" }
                     }
-                    div { class: "hi-chart__bar", style: "height: 30%;",
+                    div { class: "hi-chart__bar", style: StyleStringBuilder::new().add_percent(CssProperty::Height, 30).build_clean(),
                         span { class: "hi-chart__bar__label", "Sat" }
                     }
-                    div { class: "hi-chart__bar", style: "height: 20%;",
+                    div { class: "hi-chart__bar", style: StyleStringBuilder::new().add_percent(CssProperty::Height, 20).build_clean(),
                         span { class: "hi-chart__bar__label", "Sun" }
                     }
                 }

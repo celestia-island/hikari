@@ -1,4 +1,5 @@
 use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
+use hikari_components::style_builder::{CssProperty, StyleStringBuilder};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
@@ -48,7 +49,7 @@ pub fn render() -> VNode {
                         span { class: "hi-progress-label__meta", "3 of 5 steps" }
                     }
                     div { class: "hi-progress",
-                        div { class: "hi-progress__bar", style: "width: 60%;" }
+                        div { class: "hi-progress__bar", style: StyleStringBuilder::new().add_percent(CssProperty::Width, 60).build_clean() }
                     }
                 }
                 div {
@@ -57,7 +58,7 @@ pub fn render() -> VNode {
                         span { class: "hi-progress-label__meta hi-progress-label__meta--success", "100%" }
                     }
                     div { class: "hi-progress hi-progress--success",
-                        div { class: "hi-progress__bar", style: "width: 100%;" }
+                        div { class: "hi-progress__bar", style: StyleStringBuilder::new().add_percent(CssProperty::Width, 100).build_clean() }
                     }
                 }
                 div {
@@ -66,7 +67,7 @@ pub fn render() -> VNode {
                         span { class: "hi-progress-label__meta", "7.2 / 10 GB" }
                     }
                     div { class: "hi-progress hi-progress--warning",
-                        div { class: "hi-progress__bar", style: "width: 72%;" }
+                        div { class: "hi-progress__bar", style: StyleStringBuilder::new().add_percent(CssProperty::Width, 72).build_clean() }
                     }
                 }
             }

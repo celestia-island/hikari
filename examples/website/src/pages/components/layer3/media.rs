@@ -1,5 +1,6 @@
 use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
 use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
+use hikari_components::style_builder::{CssProperty, StyleStringBuilder};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
@@ -19,7 +20,7 @@ pub fn render() -> VNode {
                         GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                     )}
                     div { class: "hi-media-player__progress",
-                        div { class: "hi-media-player__progress__bar", style: "width: 35%;" }
+                        div { class: "hi-media-player__progress__bar", style: StyleStringBuilder::new().add_percent(CssProperty::Width, 35).build_clean() }
                     }
                     span { class: "hi-media-player__time", "1:18 / 3:42" }
                     {glow_wrap(
@@ -46,7 +47,7 @@ pub fn render() -> VNode {
                 }
                  div { class: "hi-audio-player__body",
                     div { class: "hi-media-player__progress",
-                        div { class: "hi-media-player__progress__bar", style: "width: 65%;" }
+                        div { class: "hi-media-player__progress__bar", style: StyleStringBuilder::new().add_percent(CssProperty::Width, 65).build_clean() }
                     }
                     div { class: "hi-audio-player__time-row",
                         span { "2:15" }
@@ -75,7 +76,7 @@ pub fn render() -> VNode {
                 div { class: "hi-mini-player__body",
                     div { class: "hi-mini-player__title", "Chill Vibes" }
                     div { class: "hi-media-player__progress",
-                        div { class: "hi-media-player__progress__bar", style: "width:48%;" }
+                        div { class: "hi-media-player__progress__bar", style: StyleStringBuilder::new().add_percent(CssProperty::Width, 48).build_clean() }
                     }
                 }
                 span { class: "hi-mini-player__time", "1:34 / 3:00" }

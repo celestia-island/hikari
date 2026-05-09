@@ -263,9 +263,15 @@ impl InteractiveComponentBuilder {
     fn render_switch(&self, instance_id: &str) -> VNode {
         let checked = matches!(self.initial_state, ComponentState::Switch { checked: true });
 
+        let switch_class = if checked {
+            "hi-switch hi-switch-md hi-switch-checked hi-interactive-switch"
+        } else {
+            "hi-switch hi-switch-md hi-interactive-switch"
+        };
+
         rsx! {
             label {
-                class: "hi-switch hi-interactive-switch",
+                class: switch_class,
                 "data-instance-id": instance_id,
                 input {
                     r#type: "checkbox",
@@ -273,7 +279,9 @@ impl InteractiveComponentBuilder {
                     "data-instance-id": instance_id,
                     checked: checked.to_string(),
                 }
-                span { class: "hi-switch__rail" }
+                span { class: "hi-switch-track",
+                    span { class: "hi-switch-thumb" }
+                }
             }
         }
     }

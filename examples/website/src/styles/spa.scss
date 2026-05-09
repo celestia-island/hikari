@@ -4112,8 +4112,8 @@ aside .hi-glow-wrapper {
 
 // ── Search Input Enhancement ───────────────────────────────────────────
 
-.demo-row:has(.hi-input[placeholder*="Search"]),
-.demo-row:has(.hi-input[placeholder*="search"]) {
+.demo-row:has(.hi-input[placeholder*="Search"]):not(:has(.hi-search__icon)),
+.demo-row:has(.hi-input[placeholder*="search"]):not(:has(.hi-search__icon)) {
   position: relative;
 
   .hi-input {

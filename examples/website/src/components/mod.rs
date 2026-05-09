@@ -15,7 +15,6 @@ pub mod layout;
 pub mod markdown_renderer;
 pub mod page_layout;
 pub mod portal;
-pub mod portal_examples;
 pub mod sidebar;
 pub mod top_nav;
 

@@ -10,10 +10,6 @@ use crate::ui::{self, Button, Card, Input};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 
-pub fn render_animation_demo() -> VNode {
-    render()
-}
-
 pub fn render() -> VNode {
     render_demo_page("page-animations", "Animation Examples", "Interactive demonstrations of Hikari's animation system",
         rsx! {

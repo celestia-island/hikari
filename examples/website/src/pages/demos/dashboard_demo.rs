@@ -97,13 +97,13 @@ pub fn render_dashboard_demo() -> VNode {
 
     let charts = VNode::Element(
         VElement::new("div")
-            .style("display:grid;grid-template-columns:1fr 1fr;gap:1.5rem")
+            .class("dashboard-charts-grid")
             .child(VNode::Element(
                 VElement::new("div")
                     .class("card")
                     .child(VNode::Element(
                         VElement::new("div")
-                            .style("display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem")
+                            .class("card__header-row")
                             .child(VNode::Element(
                                 VElement::new("h3")
                                     .class("card__title")
@@ -117,7 +117,7 @@ pub fn render_dashboard_demo() -> VNode {
                     ))
                     .child(VNode::Element(
                         VElement::new("div")
-                            .style("height:200px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--hi-color-border);border-radius:0.5rem;color:var(--hi-color-secondary)")
+                            .class("chart-placeholder")
                             .child(txt("Chart Placeholder")),
                     )),
             ))
@@ -126,7 +126,7 @@ pub fn render_dashboard_demo() -> VNode {
                     .class("card")
                     .child(VNode::Element(
                         VElement::new("div")
-                            .style("display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem")
+                            .class("card__header-row")
                             .child(VNode::Element(
                                 VElement::new("h3")
                                     .class("card__title")
@@ -140,7 +140,7 @@ pub fn render_dashboard_demo() -> VNode {
                     ))
                     .child(VNode::Element(
                         VElement::new("div")
-                            .style("height:200px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--hi-color-border);border-radius:0.5rem;color:var(--hi-color-secondary)")
+                            .class("chart-placeholder")
                             .child(txt("Pie Chart Placeholder")),
                     )),
             )),

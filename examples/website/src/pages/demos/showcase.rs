@@ -28,8 +28,7 @@ pub fn render_showcase() -> VNode {
                 ))
                 .child(VNode::Element(
                     VElement::new("span")
-                        .class("card__action")
-                        .style("color:var(--hi-color-primary);font-size:0.875rem")
+                        .class("card__action card__action--link")
                         .child(VNode::Text(VText::new("View Demo ->"))),
                 )),
         ));

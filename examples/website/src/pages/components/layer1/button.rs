@@ -1,28 +1,7 @@
 use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
 use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
-use hikari_icons::generated::mdi_selected::get;
-use hikari_icons::MdiIcon;
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
-
-fn icon_el(icon: MdiIcon, size: u32) -> VNode {
-    let svg_str = get(icon.to_string().as_str())
-        .map(|data| {
-            format!(
-                r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{}" width="{}" height="{}"><path fill="currentColor" d="{}"/></svg>"#,
-                data.view_box.as_deref().unwrap_or("0 0 24 24"),
-                size,
-                size,
-                data.path.as_deref().unwrap_or("")
-            )
-        })
-        .unwrap_or_default();
-    VNode::Element(
-        tairitsu_vdom::VElement::new("span")
-            .class("hikari-icon")
-            .inner_html(svg_str),
-    )
-}
 
 fn btn(class: &str, label: &str, color: GlowColor) -> VNode {
     glow_wrap(

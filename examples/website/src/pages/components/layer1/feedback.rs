@@ -17,7 +17,7 @@ fn alert_node(class: &str, icon: MdiIcon, text: &str, role: &str, live: &str) ->
             .children(vec![
                 VNode::Element(
                     VElement::new("span")
-                        .style("display:flex;align-items:center;gap:8px;")
+                        .class("hi-alert__body")
                         .children(vec![icon_el(icon, 16), VNode::Text(tairitsu_vdom::VText::new(text))])
                 )
             ])
@@ -31,7 +31,7 @@ fn closable_alert(class: &str, icon: MdiIcon, text: &str) -> VNode {
             .children(vec![
                 VNode::Element(
                     VElement::new("span")
-                        .style("display:flex;align-items:center;gap:8px;flex:1;")
+                        .class("hi-alert__body hi-alert__body--closable")
                         .children(vec![icon_el(icon, 16), VNode::Text(tairitsu_vdom::VText::new(text))])
                 ),
                 VNode::Element(

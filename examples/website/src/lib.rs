@@ -1,6 +1,17 @@
 //! Hikari Design System website.
 //!
 //! Built with Tairitsu framework, compiled to wasm32-wasip2.
+//!
+//! Type-safe CSS class enums — one per component SCSS source.
+//! Each enum variant maps 1:1 to a `.class-name` in that stylesheet.
+//! Typos are caught at compile time.
+
+tairitsu_macros::include_scss!("../../packages/components/src/styles/components/button.scss");
+tairitsu_macros::include_scss!("../../packages/components/src/styles/components/input.scss", prefix: "HiInput");
+tairitsu_macros::include_scss!("../../packages/components/src/styles/components/switch.scss", prefix: "HiSwitch");
+tairitsu_macros::include_scss!("../../packages/components/src/styles/components/toast.scss", prefix: "HiToast");
+tairitsu_macros::include_scss!("../../packages/components/src/styles/components/table.scss", prefix: "HiTable");
+tairitsu_macros::include_scss!("../../packages/components/src/styles/components/skeleton.scss", prefix: "HiSkeleton");
 
 mod animation;
 mod app;

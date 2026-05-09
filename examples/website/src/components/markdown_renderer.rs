@@ -285,7 +285,10 @@ fn is_horizontal_rule(line: &str) -> bool {
     if trimmed.len() < 3 {
         return false;
     }
-    let first = trimmed.chars().next().unwrap();
+    let first = match trimmed.chars().next() {
+        Some(ch) => ch,
+        None => return false,
+    };
     if first != '-' && first != '*' && first != '_' {
         return false;
     }
@@ -337,7 +340,10 @@ fn parse_ordered_list(lines: &[&str], start: usize) -> (VNode, usize) {
 
     while i < lines.len() && is_ordered_list_item(lines[i]) {
         let text = lines[i].trim_start();
-        let dot_pos = text.find(". ").unwrap();
+        let dot_pos = match text.find(". ") {
+            Some(pos) => pos,
+            None => continue,
+        };
         let content = &text[dot_pos + 2..];
         let mut el = VElement::new("li");
         for node in parse_inline(content) {

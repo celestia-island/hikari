@@ -121,7 +121,7 @@ pub fn render_markdown_simple(content: &str) -> VNode {
             items.push(render_list_line(line));
             while let Some(next) = lines.peek() {
                 if next.starts_with("- ") || next.starts_with("* ") {
-                    items.push(render_list_line(lines.next().unwrap()));
+                    items.push(render_list_line(lines.next().expect("peeked line exists")));
                 } else {
                     break;
                 }

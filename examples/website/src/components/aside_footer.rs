@@ -430,7 +430,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
             .child(VNode::Element(
                 VElement::new("div")
                     .attr("data-dropdown-backdrop", "true")
-                    .style("position:fixed;inset:0;z-index:9998;display:none;")
+                    .class("dropdown-backdrop")
                     .ref_(backdrop_ref.clone())
                     .on_event("click", backdrop_on_click),
             )),

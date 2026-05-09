@@ -4172,7 +4172,14 @@ aside .hi-glow-wrapper {
     color: var(--hi-color-text-primary, rgba(255, 255, 255, 0.9));
   }
 
-  .hi-select-dropdown {
+.dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: none;
+}
+
+.hi-select-dropdown {
     background: rgba(30, 30, 40, 0.96);
     border-color: rgba(255, 255, 255, 0.12);
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);

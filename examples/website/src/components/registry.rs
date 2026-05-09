@@ -1,3 +1,4 @@
+use hikari_components::style_builder::{CssProperty, StyleStringBuilder};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::{VElement, VNode, VText};
 
@@ -38,7 +39,7 @@ fn txt(s: &str) -> VNode {
 }
 
 fn btn(class: &str, label: &str) -> VNode {
-    VNode::Element(VElement::new("button").class(class).child(txt(label)))
+    VNode::Element(VElement::new("button").attr("type", "button").class(class).child(txt(label)))
 }
 
 pub fn render_component_demo(component_id: &str) -> Option<VNode> {
@@ -52,25 +53,25 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
             div { class: "demo-group",
                 div { class: "demo-section__label", "Variants" }
                 div { class: "demo-row",
-                    button { class: "hi-button hi-button-primary", "Primary" }
-                    button { class: "hi-button hi-button-secondary", "Secondary" }
-                    button { class: "hi-button hi-button-ghost", "Ghost" }
-                    button { class: "hi-button hi-button-danger", "Danger" }
+                    button { attr: "type", "button", class: "hi-button hi-button-primary", "Primary" }
+                    button { attr: "type", "button", class: "hi-button hi-button-secondary", "Secondary" }
+                    button { attr: "type", "button", class: "hi-button hi-button-ghost", "Ghost" }
+                    button { attr: "type", "button", class: "hi-button hi-button-danger", "Danger" }
                 }
                 div { class: "demo-section__label", "Sizes" }
                 div { class: "demo-row",
-                    button { class: "hi-button hi-button-primary hi-button-sm", "Small" }
-                    button { class: "hi-button hi-button-primary", "Medium" }
-                    button { class: "hi-button hi-button-primary hi-button-lg", "Large" }
+                    button { attr: "type", "button", class: "hi-button hi-button-primary hi-button-sm", "Small" }
+                    button { attr: "type", "button", class: "hi-button hi-button-primary", "Medium" }
+                    button { attr: "type", "button", class: "hi-button hi-button-primary hi-button-lg", "Large" }
                 }
                 div { class: "demo-section__label", "Disabled" }
                 div { class: "demo-row",
-                    button { class: "hi-button hi-button-primary", disabled: "true", "Disabled" }
-                    button { class: "hi-button hi-button-secondary", disabled: "true", "Disabled" }
+                    button { attr: "type", "button", class: "hi-button hi-button-primary", disabled: "true", "Disabled" }
+                    button { attr: "type", "button", class: "hi-button hi-button-secondary", disabled: "true", "Disabled" }
                 }
                 div { class: "demo-section__label", "With Icon" }
                 div { class: "demo-row",
-                    button { class: "hi-button hi-button-primary hi-icon-btn",
+                    button { attr: "type", "button", class: "hi-button hi-button-primary hi-icon-btn",
                         span { class: "mdi mdi-cog" }
                         " Settings"
                     }
@@ -318,13 +319,13 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row",
                     div { class: "hi-image-container",
-                        img { class: "hi-image", src: "/images/logo.png", alt: "Demo", style: "width: 100px; height: 100px; object-fit: cover;" }
+                        img { class: "hi-image", src: "/images/logo.png", alt: "Demo", style: StyleStringBuilder::new().add_px(CssProperty::Width, 100).add_px(CssProperty::Height, 100).add(CssProperty::ObjectFit, "cover").build_clean() }
                     }
                 }
                 div { class: "demo-section__label", "With Fallback" }
                 div { class: "demo-row",
                     div { class: "hi-image-container",
-                        div { class: "hi-image-placeholder hi-image-skeleton", style: "width: 100px; height: 100px;" }
+                        div { class: "hi-image-placeholder hi-image-skeleton", style: StyleStringBuilder::new().add_px(CssProperty::Width, 100).add_px(CssProperty::Height, 100).build_clean() }
                     }
                 }
             }
@@ -337,8 +338,8 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-row-full",
                     div { class: "hi-slider",
                         div { class: "hi-slider-rail" }
-                        div { class: "hi-slider-track", style: "width: 50%;" }
-                        div { class: "hi-slider-handle", style: "left: 50%;" }
+                        div { class: "hi-slider-track", style: StyleStringBuilder::new().add_percent(CssProperty::Width, 50).build_clean() }
+                        div { class: "hi-slider-handle", style: StyleStringBuilder::new().add(CssProperty::Left, "50%").build_clean() }
                         input { r#type: "range", class: "hi-slider-input", value: "50", min: "0", max: "100" }
                     }
                 }
@@ -346,8 +347,8 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-row-full",
                     div { class: "hi-slider",
                         div { class: "hi-slider-rail" }
-                        div { class: "hi-slider-track", style: "width: 30%;" }
-                        div { class: "hi-slider-handle", style: "left: 30%;" }
+                        div { class: "hi-slider-track", style: StyleStringBuilder::new().add_percent(CssProperty::Width, 30).build_clean() }
+                        div { class: "hi-slider-handle", style: StyleStringBuilder::new().add(CssProperty::Left, "30%").build_clean() }
                         input { r#type: "range", class: "hi-slider-input", value: "30", min: "0", max: "100" }
                     }
                 }
@@ -359,7 +360,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
             div { class: "demo-group",
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row",
-                    div { style: "position: relative; display: inline-block;",
+                    div { style: StyleStringBuilder::new().add(CssProperty::Position, "relative").add(CssProperty::Display, "inline-block").build_clean(),
                         div { class: "hi-select-trigger",
                             span { class: "hi-select-placeholder", "Select an option" }
                             span { class: "hi-select-arrow" }
@@ -390,8 +391,8 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-row-full",
                     div { class: "hi-file-upload-wrapper",
                         div { class: "hi-file-upload",
-                            input { r#type: "file", style: "position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer;" }
-                            div { class: "hi-file-upload-area", style: "pointer-events: none;",
+                            input { r#type: "file", style: StyleStringBuilder::new().add(CssProperty::Position, "absolute").add_percent(CssProperty::Width, 100).add_percent(CssProperty::Height, 100).add(CssProperty::Top, "0").add(CssProperty::Left, "0").add(CssProperty::Opacity, "0").add(CssProperty::Cursor, "pointer").build_clean() }
+                            div { class: "hi-file-upload-area", style: StyleStringBuilder::new().add(CssProperty::PointerEvents, "none").build_clean(),
                                 svg { class: "hi-file-upload-icon", view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "2",
                                     path { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }
                                     polyline { points: "17 8 12 3 7 8" }
@@ -428,7 +429,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
             div { class: "demo-group",
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row",
-                    canvas { class: "hi-canvas", width: "300", height: "150", style: "border: 1px solid var(--hi-border); border-radius: 4px;" }
+                    canvas { class: "hi-canvas", width: "300", height: "150", style: StyleStringBuilder::new().add(CssProperty::Border, "1px solid var(--hi-border)").add_px(CssProperty::BorderRadius, 4).build_clean() }
                 }
             }
         }),
@@ -601,7 +602,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
             div { class: "demo-group",
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row",
-                    nav { class: "hi-sidebar", role: "navigation", style: "width: 240px; border: 1px solid var(--hi-border); border-radius: 8px; padding: 8px;",
+                    nav { class: "hi-sidebar", role: "navigation", style: StyleStringBuilder::new().add_px(CssProperty::Width, 240).add(CssProperty::Border, "1px solid var(--hi-border)").add_px(CssProperty::BorderRadius, 8).add_px(CssProperty::Padding, 8).build_clean(),
                         div { class: "hi-sidebar-section",
                             div { class: "hi-sidebar-section-header",
                                 div { class: "hi-sidebar-section-title-group",
@@ -643,7 +644,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
             div { class: "demo-group",
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row",
-                    div { class: "hi-tree", style: "width: 260px;",
+                    div { class: "hi-tree", style: StyleStringBuilder::new().add_px(CssProperty::Width, 260).build_clean(),
                         div { class: "hi-tree-item",
                             span { class: "hi-tree-arrow", "▶" }
                             span { class: "hi-tree-label", "Parent 1" }
@@ -671,13 +672,13 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row",
                     div { class: "hi-pagination",
-                        button { class: "hi-pagination__btn", "‹" }
-                        button { class: "hi-pagination__btn", "1" }
-                        button { class: "hi-pagination__btn hi-pagination__btn--active", "2" }
-                        button { class: "hi-pagination__btn", "3" }
-                        button { class: "hi-pagination__btn", "4" }
-                        button { class: "hi-pagination__btn", "5" }
-                        button { class: "hi-pagination__btn", "›" }
+                        button { attr: "type", "button", class: "hi-pagination__btn", "‹" }
+                        button { attr: "type", "button", class: "hi-pagination__btn", "1" }
+                        button { attr: "type", "button", class: "hi-pagination__btn hi-pagination__btn--active", "2" }
+                        button { attr: "type", "button", class: "hi-pagination__btn", "3" }
+                        button { attr: "type", "button", class: "hi-pagination__btn", "4" }
+                        button { attr: "type", "button", class: "hi-pagination__btn", "5" }
+                        button { attr: "type", "button", class: "hi-pagination__btn", "›" }
                     }
                 }
             }
@@ -688,7 +689,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
             div { class: "demo-group",
                 div { class: "demo-section__label", "Accordion" }
                 div { class: "demo-row-full",
-                    div { style: "width: 100%; max-width: 400px;",
+                    div { style: StyleStringBuilder::new().add_percent(CssProperty::Width, 100).add(CssProperty::MaxWidth, "400px").build_clean(),
                         div { class: "hi-collapse",
                             div { class: "hi-collapse-item",
                                 div { class: "hi-collapse-header", "Section 1" }
@@ -719,9 +720,9 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-row",
                     div { class: "hi-anchor-wrapper",
                         div { class: "hi-anchor hi-anchor-right",
-                            button { class: "hi-anchor-link hi-anchor-active", "Section 1" }
-                            button { class: "hi-anchor-link", "Section 2" }
-                            button { class: "hi-anchor-link", "Section 3" }
+                            button { attr: "type", "button", class: "hi-anchor-link hi-anchor-active", "Section 1" }
+                            button { attr: "type", "button", class: "hi-anchor-link", "Section 2" }
+                            button { attr: "type", "button", class: "hi-anchor-link", "Section 3" }
                         }
                     }
                 }
@@ -846,13 +847,13 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                     p { "Use data-tooltip attribute or the Tooltip component." }
                     div { class: "hi-tooltip-wrapper",
                         div { class: "hi-tooltip-trigger",
-                            button { class: "hi-button hi-button-primary", "Hover me" }
+                            button { attr: "type", "button", class: "hi-button hi-button-primary", "Hover me" }
                         }
                         div { class: "hi-tooltip-content hi-tooltip-top", "Tooltip on top" }
                     }
                     div { class: "hi-tooltip-wrapper",
                         div { class: "hi-tooltip-trigger",
-                            button { class: "hi-button hi-button-secondary", "Hover me" }
+                            button { attr: "type", "button", class: "hi-button hi-button-secondary", "Hover me" }
                         }
                         div { class: "hi-tooltip-content hi-tooltip-bottom", "Tooltip on bottom" }
                     }
@@ -866,7 +867,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row",
                     p { "Modal dialogs are rendered via the Portal system." }
-                    button { class: "hi-button hi-button-primary", "Open Modal" }
+                    button { attr: "type", "button", class: "hi-button hi-button-primary", "Open Modal" }
                 }
             }
         }),
@@ -877,7 +878,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row",
                     p { "Drawer panels slide in from the edge of the viewport." }
-                    button { class: "hi-button hi-button-primary", "Open Drawer" }
+                    button { attr: "type", "button", class: "hi-button hi-button-primary", "Open Drawer" }
                 }
             }
         }),
@@ -889,7 +890,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-row",
                     p { "Popover displays content in a floating panel near the trigger." }
                     div { class: "hi-popover-trigger",
-                        button { class: "hi-button hi-button-secondary", "Click me" }
+                        button { attr: "type", "button", class: "hi-button hi-button-secondary", "Click me" }
                     }
                 }
             }
@@ -903,7 +904,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                     div { class: "hi-progress-wrapper",
                         div { class: "hi-progress-outer",
                             div { class: "hi-progress-inner",
-                                div { class: "hi-progress-bg", style: "width: 30%;" }
+                                div { class: "hi-progress-bg", style: StyleStringBuilder::new().add_percent(CssProperty::Width, 30).build_clean() }
                             }
                             span { class: "hi-progress-text", "30%" }
                         }
@@ -911,7 +912,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                     div { class: "hi-progress-wrapper",
                         div { class: "hi-progress-outer",
                             div { class: "hi-progress-inner",
-                                div { class: "hi-progress-bg", style: "width: 70%;" }
+                                div { class: "hi-progress-bg", style: StyleStringBuilder::new().add_percent(CssProperty::Width, 70).build_clean() }
                             }
                             span { class: "hi-progress-text", "70%" }
                         }
@@ -957,10 +958,10 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-row",
                     p { "Glow effect wraps elements with a mouse-following spotlight." }
                     div { class: "hi-glow-wrapper hi-glow-soft",
-                        button { class: "hi-button hi-button-primary", "Hover for glow" }
+                        button { attr: "type", "button", class: "hi-button hi-button-primary", "Hover for glow" }
                     }
                     div { class: "hi-glow-wrapper hi-glow-bright",
-                        button { class: "hi-button hi-button-secondary", "Bright glow" }
+                        button { attr: "type", "button", class: "hi-button hi-button-secondary", "Bright glow" }
                     }
                 }
             }
@@ -971,7 +972,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
             div { class: "demo-group",
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row",
-                    div { style: "position: relative;",
+                    div { style: StyleStringBuilder::new().add(CssProperty::Position, "relative").build_clean(),
                         input { class: "hi-input", placeholder: "Type to search...", r#type: "text" }
                     }
                 }
@@ -984,9 +985,9 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row",
                     div { class: "hi-number-input",
-                        button { class: "hi-number-input__btn", "-" }
+                        button { attr: "type", "button", class: "hi-number-input__btn", "-" }
                         input { class: "hi-number-input__input", r#type: "number", value: "0" }
-                        button { class: "hi-number-input__btn", "+" }
+                        button { attr: "type", "button", class: "hi-number-input__btn", "+" }
                     }
                 }
             }
@@ -1019,7 +1020,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                             }
                         }
                         div { class: "hi-transfer-actions",
-                            button { class: "hi-button", "→" }
+                            button { attr: "type", "button", class: "hi-button", "→" }
                         }
                         div { class: "hi-transfer-panel",
                             div { class: "hi-transfer-header", "Selected" }
@@ -1036,7 +1037,7 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row",
                     p { "Cascader provides hierarchical multi-level selection." }
-                    div { style: "position: relative; display: inline-block;",
+                    div { style: StyleStringBuilder::new().add(CssProperty::Position, "relative").add(CssProperty::Display, "inline-block").build_clean(),
                         div { class: "hi-select-trigger",
                             span { class: "hi-select-placeholder", "Select location" }
                             span { class: "hi-select-arrow" }
@@ -1067,14 +1068,14 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
             div { class: "demo-group",
                 div { class: "demo-section__label", "Text" }
                 div { class: "demo-row",
-                    div { class: "hi-skeleton", style: "width: 200px; height: 20px;" }
-                    div { class: "hi-skeleton", style: "width: 160px; height: 20px;" }
-                    div { class: "hi-skeleton", style: "width: 180px; height: 20px;" }
+                    div { class: "hi-skeleton", style: StyleStringBuilder::new().add_px(CssProperty::Width, 200).add_px(CssProperty::Height, 20).build_clean() }
+                    div { class: "hi-skeleton", style: StyleStringBuilder::new().add_px(CssProperty::Width, 160).add_px(CssProperty::Height, 20).build_clean() }
+                    div { class: "hi-skeleton", style: StyleStringBuilder::new().add_px(CssProperty::Width, 180).add_px(CssProperty::Height, 20).build_clean() }
                 }
                 div { class: "demo-section__label", "Circle" }
                 div { class: "demo-row",
-                    div { class: "hi-skeleton hi-skeleton--circle", style: "width: 40px; height: 40px;" }
-                    div { class: "hi-skeleton hi-skeleton--circle", style: "width: 56px; height: 56px;" }
+                    div { class: "hi-skeleton hi-skeleton--circle", style: StyleStringBuilder::new().add_px(CssProperty::Width, 40).add_px(CssProperty::Height, 40).build_clean() }
+                    div { class: "hi-skeleton hi-skeleton--circle", style: StyleStringBuilder::new().add_px(CssProperty::Width, 56).add_px(CssProperty::Height, 56).build_clean() }
                 }
             }
         }),
@@ -1117,12 +1118,12 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row",
                     p { "User Guide provides step-by-step onboarding overlay." }
-                    div { style: "padding: 16px; border: 1px solid var(--hi-border); border-radius: 8px; max-width: 360px;",
-                        div { style: "font-weight: 600; margin-bottom: 8px;", "Step 1 of 3: Welcome" }
+                    div { style: StyleStringBuilder::new().add_px(CssProperty::Padding, 16).add(CssProperty::Border, "1px solid var(--hi-border)").add_px(CssProperty::BorderRadius, 8).add(CssProperty::MaxWidth, "360px").build_clean(),
+                        div { style: StyleStringBuilder::new().add(CssProperty::FontWeight, "600").add_px(CssProperty::MarginBottom, 8).build_clean(), "Step 1 of 3: Welcome" }
                         p { "This is a step-by-step guide to introduce new features." }
-                        div { style: "display: flex; gap: 8px; margin-top: 12px;",
-                            button { class: "hi-button hi-button-primary hi-button-sm", "Next" }
-                            button { class: "hi-button hi-button-ghost hi-button-sm", "Skip" }
+                        div { style: StyleStringBuilder::new().add(CssProperty::Display, "flex").add(CssProperty::Gap, "8px").add_px(CssProperty::MarginTop, 12).build_clean(),
+                            button { attr: "type", "button", class: "hi-button hi-button-primary hi-button-sm", "Next" }
+                            button { attr: "type", "button", class: "hi-button hi-button-ghost hi-button-sm", "Skip" }
                         }
                     }
                 }
@@ -1148,10 +1149,10 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row",
                     div { class: "hi-zoom-controls",
-                        button { class: "hi-zoom-controls__btn", "+" }
+                        button { attr: "type", "button", class: "hi-zoom-controls__btn", "+" }
                         span { class: "hi-zoom-controls__percentage", "100%" }
-                        button { class: "hi-zoom-controls__btn", "-" }
-                        button { class: "hi-zoom-controls__btn", "⟲" }
+                        button { attr: "type", "button", class: "hi-zoom-controls__btn", "-" }
+                        button { attr: "type", "button", class: "hi-zoom-controls__btn", "⟲" }
                     }
                 }
             }
@@ -1162,8 +1163,8 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
             div { class: "demo-group",
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row-full",
-                    div { class: "hi-code-highlight", style: "max-width: 500px;",
-                        pre { style: "margin: 0; padding: 16px; background: var(--hi-surface); border-radius: 8px; overflow-x: auto; font-family: monospace; font-size: 13px; line-height: 1.6;",
+                    div { class: "hi-code-highlight", style: StyleStringBuilder::new().add(CssProperty::MaxWidth, "500px").build_clean(),
+                        pre { style: StyleStringBuilder::new().add(CssProperty::Margin, "0").add_px(CssProperty::Padding, 16).add(CssProperty::Background, "var(--hi-surface)").add_px(CssProperty::BorderRadius, 8).add(CssProperty::OverflowX, "auto").add(CssProperty::FontFamily, "monospace").add(CssProperty::FontSize, "13px").add(CssProperty::LineHeight, "1.6").build_clean(),
                             code { "fn main() {\n    println!(\"Hello, World!\");\n}" }
                         }
                     }
@@ -1176,15 +1177,15 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
             div { class: "demo-group",
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row-full",
-                    div { class: "hi-editor", style: "max-width: 500px; height: 200px;",
+                    div { class: "hi-editor", style: StyleStringBuilder::new().add(CssProperty::MaxWidth, "500px").add_px(CssProperty::Height, 200).build_clean(),
                         div { class: "hi-editor__toolbar",
-                            button { class: "hi-editor__btn", "B" }
-                            button { class: "hi-editor__btn", "I" }
-                            button { class: "hi-editor__btn", "H1" }
-                            button { class: "hi-editor__btn", "H2" }
+                            button { attr: "type", "button", class: "hi-editor__btn", "B" }
+                            button { attr: "type", "button", class: "hi-editor__btn", "I" }
+                            button { attr: "type", "button", class: "hi-editor__btn", "H1" }
+                            button { attr: "type", "button", class: "hi-editor__btn", "H2" }
                         }
                         div { class: "hi-editor__content",
-                            textarea { class: "hi-editor__textarea", placeholder: "Write markdown here...", style: "width: 100%; height: 100%; border: none; resize: none; font-family: monospace;" }
+                            textarea { class: "hi-editor__textarea", placeholder: "Write markdown here...", style: StyleStringBuilder::new().add_percent(CssProperty::Width, 100).add_percent(CssProperty::Height, 100).add(CssProperty::Border, "none").add(CssProperty::Resize, "none").add(CssProperty::FontFamily, "monospace").build_clean() }
                         }
                     }
                 }
@@ -1196,15 +1197,15 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
             div { class: "demo-group",
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row-full",
-                    div { class: "hi-editor", style: "max-width: 500px; height: 200px;",
+                    div { class: "hi-editor", style: StyleStringBuilder::new().add(CssProperty::MaxWidth, "500px").add_px(CssProperty::Height, 200).build_clean(),
                         div { class: "hi-editor__toolbar",
-                            button { class: "hi-editor__btn", "B" }
-                            button { class: "hi-editor__btn", "I" }
-                            button { class: "hi-editor__btn", "U" }
-                            button { class: "hi-editor__btn", "S" }
+                            button { attr: "type", "button", class: "hi-editor__btn", "B" }
+                            button { attr: "type", "button", class: "hi-editor__btn", "I" }
+                            button { attr: "type", "button", class: "hi-editor__btn", "U" }
+                            button { attr: "type", "button", class: "hi-editor__btn", "S" }
                         }
                         div { class: "hi-editor__content",
-                            textarea { class: "hi-editor__textarea", placeholder: "Start typing...", style: "width: 100%; height: 100%; border: none; resize: none;" }
+                            textarea { class: "hi-editor__textarea", placeholder: "Start typing...", style: StyleStringBuilder::new().add_percent(CssProperty::Width, 100).add_percent(CssProperty::Height, 100).add(CssProperty::Border, "none").add(CssProperty::Resize, "none").build_clean() }
                         }
                     }
                 }
@@ -1216,10 +1217,10 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
             div { class: "demo-group",
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row-full",
-                    div { class: "hi-media-player", style: "max-width: 480px;",
+                    div { class: "hi-media-player", style: StyleStringBuilder::new().add(CssProperty::MaxWidth, "480px").build_clean(),
                         div { class: "hi-media-player__poster", "▶" }
                         div { class: "hi-media-player__controls",
-                            button { class: "hi-media-player__btn", "▶" }
+                            button { attr: "type", "button", class: "hi-media-player__btn", "▶" }
                             div { class: "hi-media-player__progress" }
                             span { class: "hi-media-player__time", "0:00" }
                         }
@@ -1233,9 +1234,9 @@ pub fn render_component_demo(component_id: &str) -> Option<VNode> {
             div { class: "demo-group",
                 div { class: "demo-section__label", "Basic" }
                 div { class: "demo-row-full",
-                    div { class: "hi-media-player", style: "max-width: 400px;",
+                    div { class: "hi-media-player", style: StyleStringBuilder::new().add(CssProperty::MaxWidth, "400px").build_clean(),
                         div { class: "hi-media-player__controls",
-                            button { class: "hi-media-player__btn", "▶" }
+                            button { attr: "type", "button", class: "hi-media-player__btn", "▶" }
                             div { class: "hi-media-player__progress" }
                             span { class: "hi-media-player__time", "0:00 / 3:45" }
                         }

@@ -23,6 +23,7 @@
 //! );
 //! ```
 
+use hikari_components::style_builder::{CssProperty, StyleStringBuilder};
 use std::sync::atomic::{AtomicU64, Ordering};
 use tairitsu_vdom::{VElement, VNode, VText};
 
@@ -192,7 +193,7 @@ impl Portal {
                 None,
                 children,
                 Some(PortalProps {
-                    style: "position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: auto; z-index: 9999;".to_string(),
+                    style: StyleStringBuilder::new().add(CssProperty::Position, "fixed").add(CssProperty::Top, "50%").add(CssProperty::Left, "50%").add(CssProperty::Transform, "translate(-50%, -50%)").add(CssProperty::PointerEvents, "auto").add(CssProperty::ZIndex, "9999").build(),
                     classes: vec!["hi-modal".to_string()],
                     ..Default::default()
                 }),

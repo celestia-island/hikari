@@ -27,12 +27,12 @@
   transition: background-color 0.15s ease, color 0.15s ease;
 
   &:hover {
-    background: rgba(245, 169, 169, 0.1);
+    background: var(--hi-color-primary-alpha-10);
     color: var(--hi-pink, #F5A9A9);
   }
 
   &:active {
-    background: rgba(245, 169, 169, 0.16);
+    background: var(--hi-color-primary-alpha-16);
   }
 
   &:focus-visible {
@@ -79,12 +79,12 @@
   white-space: nowrap;
 
   &:hover {
-    background: rgba(245, 169, 169, 0.1);
+    background: var(--hi-color-primary-alpha-10);
     color: var(--hi-color-text-primary, #374151);
   }
 
   &:active {
-    background: rgba(245, 169, 169, 0.16);
+    background: var(--hi-color-primary-alpha-16);
   }
 
   &:focus-visible {
@@ -94,7 +94,7 @@
 }
 
 .hi-aside-footer .hi-select-open > .hi-select-trigger--borderless {
-  background: rgba(245, 169, 169, 0.12);
+  background: var(--hi-color-primary-alpha-12);
   color: var(--hi-color-text-primary, #374151);
 }
 
@@ -178,9 +178,9 @@
   border: 1px solid var(--hi-border-subtle, #e5e7eb);
   border-radius: 10px;
   box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.08),
-    0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(0, 0, 0, 0.04);
+    0 4px 6px -1px var(--hi-shadow-sm),
+    0 10px 15px -3px var(--hi-shadow-md),
+    0 0 0 1px var(--hi-shadow-xs);
   padding: 4px;
 
   &::-webkit-scrollbar {
@@ -188,7 +188,7 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.15);
+    background: var(--hi-shadow-overlay);
     border-radius: 2px;
   }
 }
@@ -203,11 +203,11 @@
   transition: background-color 0.1s ease;
 
   &:hover {
-    background: rgba(245, 169, 169, 0.1);
+    background: var(--hi-color-primary-alpha-10);
   }
 
   &:active {
-    background: rgba(245, 169, 169, 0.16);
+    background: var(--hi-color-primary-alpha-16);
   }
 
   &--selected {
@@ -223,7 +223,7 @@
     color: var(--hi-color-text-secondary-dark, rgba(255, 255, 255, 0.55));
 
     &:hover {
-      background: rgba(245, 169, 169, 0.12);
+      background: var(--hi-color-primary-alpha-12);
       color: var(--hi-pink-light, #f0bcbc);
     }
   }
@@ -233,7 +233,7 @@
 
     &:hover,
     &.hi-select-open > & {
-      background: rgba(245, 169, 169, 0.12);
+      background: var(--hi-color-primary-alpha-12);
       color: var(--hi-color-text-primary-dark, rgba(255, 255, 255, 0.9));
     }
   }
@@ -251,7 +251,7 @@
     color: rgba(255, 255, 255, 0.85);
 
     &:hover {
-      background: rgba(245, 169, 169, 0.12);
+      background: var(--hi-color-primary-alpha-12);
     }
 
     &--selected {

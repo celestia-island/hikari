@@ -1510,7 +1510,7 @@ aside .hi-glow-wrapper {
   left: 28px;
   width: 56px;
   height: 40px;
-  background: white;
+  background: var(--hi-color-bg-base);
   border-radius: 6px;
   border: 1px solid var(--hi-border, #e5e7eb);
   display: flex;
@@ -2105,7 +2105,7 @@ aside .hi-glow-wrapper {
   align-items: center;
   justify-content: center;
   padding: 8px;
-  background: white;
+  background: var(--hi-color-bg-base);
   border-radius: 8px;
   border: 1px solid var(--hi-border, #e5e7eb);
 }
@@ -2576,7 +2576,7 @@ aside .hi-glow-wrapper {
   font-size: 0.875rem;
   line-height: 1.5;
   color: var(--hi-color-text-primary-darker, #1f2937);
-  background: white;
+  background: var(--hi-color-bg-base);
   border: 2px solid var(--hi-color-border-strong, #d1d5db);
   border-radius: var(--hi-radius);
   transition: all 0.2s ease;
@@ -2647,7 +2647,7 @@ aside .hi-glow-wrapper {
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: white;
+    background: var(--hi-color-bg-base);
     box-shadow: 0 2px 4px var(--hi-shadow-md), 0 1px 2px rgba(0,0,0,0.1);
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     position: absolute;
@@ -2717,7 +2717,7 @@ aside .hi-glow-wrapper {
     border-color: #ef4444;
   }
   .hi-switch__knob {
-    &:checked { background: white; }
+    &:checked { background: var(--hi-color-bg-base); }
   }
 }
 
@@ -2772,7 +2772,7 @@ aside .hi-glow-wrapper {
   padding: 0.875rem 1rem;
   border-radius: var(--hi-radius);
   border-left: 4px solid;
-  background: white;
+  background: var(--hi-color-bg-base);
   box-shadow: var(--hi-shadow-sm);
   font-size: 0.875rem;
   line-height: 1.5;
@@ -2879,7 +2879,7 @@ aside .hi-glow-wrapper {
     border-color: rgba(245,169,169,0.4);
 
     &.hi-tag--light {
-      background: white;
+      background: var(--hi-color-bg-base);
       color: var(--hi-pink-dark);
       border-color: var(--hi-pink);
     }
@@ -2897,7 +2897,7 @@ aside .hi-glow-wrapper {
     border-color: rgba(94,201,141,0.4);
 
     &.hi-tag--light {
-      background: white;
+      background: var(--hi-color-bg-base);
       color: #059669;
       border-color: var(--hi-green);
     }
@@ -2915,7 +2915,7 @@ aside .hi-glow-wrapper {
     border-color: rgba(245,158,75,0.4);
 
     &.hi-tag--light {
-      background: white;
+      background: var(--hi-color-bg-base);
       color: #d97706;
       border-color: var(--hi-orange);
     }
@@ -2937,7 +2937,7 @@ aside .hi-glow-wrapper {
     }
 
     &.hi-tag--light {
-      background: white;
+      background: var(--hi-color-bg-base);
       color: #dc2626;
       border-color: var(--hi-red);
     }
@@ -3100,7 +3100,7 @@ aside .hi-glow-wrapper {
   border-collapse: separate;
   border-spacing: 0;
   font-size: 0.875rem;
-  background: white;
+  background: var(--hi-color-bg-base);
   border-radius: var(--hi-radius-lg);
   overflow: hidden;
   border: 1px solid var(--hi-color-border, #e5e7eb);
@@ -3204,7 +3204,7 @@ aside .hi-glow-wrapper {
     border-radius: var(--hi-radius-sm);
     text-decoration: none;
     color: var(--hi-color-text-primary-dark, #374151);
-    background: white;
+    background: var(--hi-color-bg-base);
     border: 1px solid var(--hi-color-border, #e5e7eb);
     transition: all 0.15s ease;
     font-size: inherit;
@@ -3360,7 +3360,7 @@ aside .hi-glow-wrapper {
   border: 1px solid var(--hi-color-border, #e5e7eb);
   border-radius: var(--hi-radius);
   overflow: hidden;
-  background: white;
+  background: var(--hi-color-bg-base);
   box-shadow: var(--hi-shadow-sm);
 }
 
@@ -3482,7 +3482,7 @@ aside .hi-glow-wrapper {
   flex: 1;
   border: 1px solid var(--hi-color-border, #e5e7eb);
   border-radius: var(--hi-radius);
-  background: white;
+  background: var(--hi-color-bg-base);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -3558,7 +3558,7 @@ aside .hi-glow-wrapper {
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   color: var(--hi-color-text-primary-dark, #374151);
-  background: white;
+  background: var(--hi-color-bg-base);
   border: 1.5px solid var(--hi-color-border, #e5e7eb);
   border-radius: var(--hi-radius);
   cursor: pointer;
@@ -3579,7 +3579,7 @@ aside .hi-glow-wrapper {
   top: calc(100% + 4px);
   left: 0;
   z-index: 100;
-  background: white;
+  background: var(--hi-color-bg-base);
   border: 1px solid var(--hi-color-border, #e5e7eb);
   border-radius: var(--hi-radius);
   box-shadow: var(--hi-shadow-lg);
@@ -3823,7 +3823,7 @@ aside .hi-glow-wrapper {
   gap: 0.75rem;
   padding: 0.875rem 1rem;
   border-radius: var(--hi-radius);
-  background: white;
+  background: var(--hi-color-bg-base);
   box-shadow: var(--hi-shadow-md);
   border-left: 4px solid var(--hi-color-border-strong, #d1d5db);
   max-width: 420px;
@@ -3877,7 +3877,7 @@ aside .hi-glow-wrapper {
 .hi-editor {
   border: 1px solid var(--hi-color-border, #e5e7eb);
   border-radius: var(--hi-radius);
-  background: white;
+  background: var(--hi-color-bg-base);
   overflow: hidden;
   box-shadow: var(--hi-shadow-sm);
 
@@ -3929,7 +3929,7 @@ aside .hi-glow-wrapper {
   border-right: 1px solid var(--hi-color-border, #e5e7eb);
 
   &.hi-editor__preview {
-    background: white;
+    background: var(--hi-color-bg-base);
     padding: 1rem;
   }
 }
@@ -4004,7 +4004,7 @@ aside .hi-glow-wrapper {
   font-size: 0.875rem;
   font-weight: 700;
   margin-bottom: 0.625rem;
-  background: white;
+  background: var(--hi-color-bg-base);
   border: 2px solid var(--hi-color-border, #e5e7eb);
   color: var(--hi-color-text-tertiary, #9ca3af);
   transition: all 0.3s;
@@ -4333,7 +4333,7 @@ aside .hi-glow-wrapper {
     min-width: 200px;
     max-height: 320px;
     overflow: hidden;
-    background: #fff;
+    background: var(--hi-color-bg-base);
     border: 1px solid var(--hi-shadow-sm);
     border-radius: 8px;
     box-shadow: 0 4px 16px var(--hi-shadow-sm);

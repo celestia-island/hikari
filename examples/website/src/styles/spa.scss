@@ -5,6 +5,33 @@
 
 :root {
   --hi-page-bg: linear-gradient(135deg, #ffffff 0%, #f0f0f4 100%);
+
+  // Orphan variables (used in spa.scss but never declared in index.scss :root)
+  --hi-color-text-muted: #9ca3af;
+  --hi-color-text-tertiary: #9ca3af;
+  --hi-color-text-disabled: #d1d5db;
+  --hi-color-bg-hover: rgba(0, 0, 0, 0.03);
+  --hi-color-bg-base: white;
+  --hi-color-bg-muted: #f9fafb;
+  --hi-color-fill-secondary: #f3f4f6;
+  --hi-color-border-strong: #d1d5db;
+  --hi-pink: #f472b6;
+  --hi-pink-dark: #e88a8a;
+  --hi-color-primary-alpha-3: rgba(245, 169, 169, 0.03);
+  --hi-color-primary-alpha-5: rgba(245, 169, 169, 0.05);
+  --hi-color-primary-alpha-6: rgba(245, 169, 169, 0.06);
+  --hi-color-primary-alpha-8: rgba(245, 169, 169, 0.08);
+  --hi-color-primary-alpha-12: rgba(245, 169, 169, 0.12);
+  --hi-color-primary-alpha-15: rgba(245, 169, 169, 0.15);
+  --hi-color-primary-alpha-20: rgba(245, 169, 169, 0.20);
+  --hi-color-primary-alpha-25: rgba(245, 169, 169, 0.25);
+  --hi-color-primary-alpha-35: rgba(245, 169, 169, 0.35);
+  --hi-color-shadow-md: rgba(0, 0, 0, 0.1);
+  --hi-color-shadow-lg: rgba(0, 0, 0, 0.15);
+  --hi-color-overlay-heavy: rgba(0, 0, 0, 0.4);
+  --hi-color-overlay-medium: rgba(0, 0, 0, 0.5);
+  --hi-color-danger-bg: rgba(239, 68, 68, 0.06);
+  --hi-color-orange-alpha-10: rgba(255, 149, 0, 0.10);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -4857,4 +4884,37 @@ aside .hi-glow-wrapper {
   // --- Misc component overrides ---
   --hi-badge-bg-primary: var(--hi-primary);
   --hi-badge-bg-success: var(--hi-success);
+
+  // --- Orphan variables (used in spa.scss with hardcoded light fallbacks) ---
+  --hi-color-text-muted: rgba(240, 240, 245, 0.5);
+  --hi-color-text-tertiary: rgba(240, 240, 245, 0.35);
+  --hi-color-text-disabled: rgba(240, 240, 245, 0.25);
+  --hi-color-bg-hover: rgba(255, 255, 255, 0.06);
+  --hi-color-bg-base: var(--hi-surface);
+  --hi-color-bg-muted: rgba(255, 255, 255, 0.04);
+  --hi-color-fill-secondary: rgba(255, 255, 255, 0.08);
+  --hi-color-border-strong: rgba(240, 240, 245, 0.2);
+  --hi-pink: #e88a8a;
+  --hi-pink-dark: #d67070;
+  --hi-color-primary-alpha-3: rgba(240, 240, 245, 0.03);
+  --hi-color-primary-alpha-5: rgba(240, 240, 245, 0.05);
+  --hi-color-primary-alpha-6: rgba(240, 240, 245, 0.06);
+  --hi-color-primary-alpha-8: rgba(240, 240, 245, 0.08);
+  --hi-color-primary-alpha-12: rgba(240, 240, 245, 0.12);
+  --hi-color-primary-alpha-15: rgba(240, 240, 245, 0.15);
+  --hi-color-primary-alpha-20: rgba(240, 240, 245, 0.20);
+  --hi-color-primary-alpha-25: rgba(240, 240, 245, 0.25);
+  --hi-color-primary-alpha-35: rgba(240, 240, 245, 0.35);
+  --hi-color-shadow-md: rgba(0, 0, 0, 0.4);
+  --hi-color-shadow-lg: rgba(0, 0, 0, 0.5);
+  --hi-color-overlay-heavy: rgba(0, 0, 0, 0.6);
+  --hi-color-overlay-medium: rgba(0, 0, 0, 0.5);
+  --hi-color-danger-bg: rgba(255, 76, 0, 0.12);
+  --hi-color-orange-alpha-10: rgba(255, 149, 0, 0.10);
+
+  // --- Missing :root alias overrides ---
+  --hi-color-accent: var(--hi-accent);
+  --hi-color-info: var(--hi-info);
+  --hi-overlay-color: rgba(0, 0, 0, 0.6);
+  --hi-card-bg-light: rgba(32, 35, 54, 0.9);
 }

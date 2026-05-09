@@ -222,7 +222,10 @@ fn plain_menu_item(href: &str, label: &str, _level: u32) -> VNode {
     )
 }
 
-pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
+pub fn render(
+    app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>,
+    aside_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>,
+) -> VNode {
     let mut category_nodes: Vec<VNode> = Vec::new();
 
     for category in NAV_CATEGORIES {
@@ -265,6 +268,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
         VElement::new("aside")
             .attr("id", "hikari-aside")
             .class("hi-aside hi-aside-drawer hi-aside-lg hi-aside-light")
+            .ref_(aside_ref.clone())
             .child(VNode::Element(
                 VElement::new("div")
                     .class("hi-aside-content")
@@ -274,6 +278,6 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
                             .child(menu_list),
                     )),
             ))
-            .child(super::aside_footer::render(app_ref)),
+            .child(super::aside_footer::render(app_ref, aside_ref)),
     )
 }

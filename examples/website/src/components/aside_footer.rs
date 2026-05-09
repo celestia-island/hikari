@@ -166,7 +166,10 @@ fn build_icon_svg(icon: MdiIcon) -> String {
         ))
 }
 
-pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
+pub fn render(
+    app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>,
+    aside_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>,
+) -> VNode {
     let current_lang = hooks::detect_language();
     let current_name = current_lang.native_name();
 
@@ -178,6 +181,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
     let icon_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>> = Rc::new(RefCell::new(None));
 
     let app_ref_t = app_ref.clone();
+    let aside_ref_t = aside_ref.clone();
     let is_dark_t = is_dark.clone();
     let icon_ref_t = icon_ref.clone();
     let theme_on_click = move |e: Box<dyn EventData>| {
@@ -228,6 +232,21 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
                         theme::hikari_style()
                     };
                     set_attribute(h, "style", &new_style.to_string());
+                }
+            }
+
+            if let Some(ref cell) = *aside_ref_t.borrow() {
+                if let Some(handle) = cell.downcast_ref::<WitElement>() {
+                    let h = DomHandle::from_raw(handle.as_raw());
+                    set_attribute(
+                        h,
+                        "class",
+                        if dark {
+                            "hi-aside hi-aside-drawer hi-aside-lg hi-aside-dark"
+                        } else {
+                            "hi-aside hi-aside-drawer hi-aside-lg hi-aside-light"
+                        },
+                    );
                 }
             }
         }

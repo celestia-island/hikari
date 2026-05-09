@@ -5,6 +5,7 @@ use tairitsu_vdom::{VElement, VNode};
 
 pub fn render(content: VNode) -> VNode {
     let app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>> = Rc::new(RefCell::new(None));
+    let aside_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>> = Rc::new(RefCell::new(None));
     VNode::Element(
         VElement::new("div")
             .attr("id", "hikari-app")
@@ -19,7 +20,7 @@ pub fn render(content: VNode) -> VNode {
                             .attr("id", "drawer-overlay")
                             .class("hi-layout-overlay"),
                     ))
-                    .child(super::sidebar::render(app_ref))
+                    .child(super::sidebar::render(app_ref, aside_ref))
                     .child(VNode::Element(
                         VElement::new("div")
                             .class("hi-layout-main")

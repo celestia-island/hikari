@@ -34,6 +34,7 @@ pub fn render() -> VNode {
     let portal_init = PortalJs::init_script();
 
     let app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>> = Rc::new(RefCell::new(None));
+    let aside_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>> = Rc::new(RefCell::new(None));
 
     let app_content = VNode::Element(
         VElement::new("div")
@@ -51,7 +52,7 @@ pub fn render() -> VNode {
                             .attr("id", "drawer-overlay")
                             .class("hi-layout-overlay"),
                     ))
-                    .child(components::sidebar(app_ref.clone()))
+                    .child(components::sidebar(app_ref.clone(), aside_ref.clone()))
                     .child(VNode::Element(
                         VElement::new("div")
                             .class("hi-layout-main")

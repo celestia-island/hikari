@@ -26,19 +26,19 @@ pub fn render() -> VNode {
                 }
                 div { class: "hi-transfer__actions",
                     div { {glow_wrap(
-                        rsx! { button { class: "hi-button hi-button-primary hi-button-sm", "\u{2192}" } },
+                        rsx! { button { class: "hi-button hi-button-primary hi-button-sm", attr: "type", "button", "\u{2192}" } },
                         GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                     )} }
                     div { {glow_wrap(
-                        rsx! { button { class: "hi-button hi-button-primary hi-button-sm", "\u{2190}" } },
+                        rsx! { button { class: "hi-button hi-button-primary hi-button-sm", attr: "type", "button", "\u{2190}" } },
                         GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                     )} }
                     div { {glow_wrap(
-                        rsx! { button { class: "hi-button hi-button-secondary hi-button-sm", "\u{21D2}" } },
+                        rsx! { button { class: "hi-button hi-button-secondary hi-button-sm", attr: "type", "button", "\u{21D2}" } },
                         GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Secondary, ..Default::default() },
                     )} }
                     div { {glow_wrap(
-                        rsx! { button { class: "hi-button hi-button-secondary hi-button-sm", "\u{21D0}" } },
+                        rsx! { button { class: "hi-button hi-button-secondary hi-button-sm", attr: "type", "button", "\u{21D0}" } },
                         GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Secondary, ..Default::default() },
                     )} }
                 }
@@ -66,11 +66,11 @@ pub fn render() -> VNode {
                 }
                 div { class: "hi-transfer__actions",
                     div { {glow_wrap(
-                        rsx! { button { class: "hi-button hi-button-primary hi-button-sm", "\u{2192}" } },
+                        rsx! { button { class: "hi-button hi-button-primary hi-button-sm", attr: "type", "button", "\u{2192}" } },
                         GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                     )} }
                     div { {glow_wrap(
-                        rsx! { button { class: "hi-button hi-button-primary hi-button-sm", "\u{2190}" } },
+                        rsx! { button { class: "hi-button hi-button-primary hi-button-sm", attr: "type", "button", "\u{2190}" } },
                         GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                     )} }
                 }
@@ -130,7 +130,7 @@ pub fn render() -> VNode {
                 }
                 div { class: "hi-transfer__actions",
                     div { {glow_wrap(
-                        rsx! { button { class: "hi-button hi-button-primary hi-button-sm", "\u{2192}" } },
+                        rsx! { button { class: "hi-button hi-button-primary hi-button-sm", attr: "type", "button", "\u{2192}" } },
                         GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                     )} }
                 }

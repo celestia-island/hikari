@@ -19,7 +19,7 @@ fn btn_primary(text: &str) -> VNode {
 
 fn btn_secondary(text: &str) -> VNode {
     glow_wrap(
-        rsx! { button { class: "hi-button hi-button-secondary hi-button-lg", text } },
+        rsx! { button { class: "hi-button hi-button-secondary hi-button-lg", attr: "type", "button", text } },
         GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Secondary, ..Default::default() },
     )
 }

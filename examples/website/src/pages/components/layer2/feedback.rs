@@ -12,7 +12,7 @@ pub fn render() -> VNode {
                         div { class: "hi-toast__title", "System Update" }
                         div { class: "hi-toast__message", "A new version is available for download." }
                     }
-                    button { class: "hi-toast__close", "×" }
+                    button { class: "hi-toast__close", attr: "type", "button", "×" }
                 }
                 div { class: "hi-toast hi-toast--success",
                     div { class: "hi-toast__icon", "✓" }
@@ -20,7 +20,7 @@ pub fn render() -> VNode {
                         div { class: "hi-toast__title", "Saved" }
                         div { class: "hi-toast__message", "Your changes have been saved successfully." }
                     }
-                    button { class: "hi-toast__close", "×" }
+                    button { class: "hi-toast__close", attr: "type", "button", "×" }
                 }
                 div { class: "hi-toast hi-toast--danger",
                     div { class: "hi-toast__icon", "✗" }
@@ -28,7 +28,7 @@ pub fn render() -> VNode {
                         div { class: "hi-toast__title", "Error" }
                         div { class: "hi-toast__message", "Failed to connect to the server." }
                     }
-                    button { class: "hi-toast__close", "×" }
+                    button { class: "hi-toast__close", attr: "type", "button", "×" }
                 }
                 div { class: "hi-toast hi-toast--warning",
                     div { class: "hi-toast__icon", "⚠" }
@@ -36,7 +36,7 @@ pub fn render() -> VNode {
                         div { class: "hi-toast__title", "Warning" }
                         div { class: "hi-toast__message", "You are about to delete this item permanently." }
                     }
-                    button { class: "hi-toast__close", "×" }
+                    button { class: "hi-toast__close", attr: "type", "button", "×" }
                 }
             }
         })}

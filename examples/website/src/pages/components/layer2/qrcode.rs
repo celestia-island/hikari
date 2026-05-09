@@ -96,7 +96,7 @@ pub fn render() -> VNode {
                         div { class: "hi-qrcode",
                             { make_qr_svg(128) }
                         }
-                        button { class: "hi-button hi-button-secondary hi-button-sm", "Download PNG" }
+                        button { class: "hi-button hi-button-secondary hi-button-sm", attr: "type", "button", "Download PNG" }
                     }
                 })}
             }

@@ -8,19 +8,19 @@ pub fn render() -> VNode {
         {render_demo_block("Tabs", rsx! {
             nav { class: "hi-tabs",
                 div { {glow_wrap(
-                    rsx! { button { class: "hi-tab hi-tab--active", "Overview" } },
+                    rsx! { button { class: "hi-tab hi-tab--active", attr: "type", "button",  "Overview" } },
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                 )} }
                 div { {glow_wrap(
-                    rsx! { button { class: "hi-tab", "Components" } },
+                    rsx! { button { class: "hi-tab", attr: "type", "button",  "Components" } },
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                 )} }
                 div { {glow_wrap(
-                    rsx! { button { class: "hi-tab", "API Reference" } },
+                    rsx! { button { class: "hi-tab", attr: "type", "button",  "API Reference" } },
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                 )} }
                 div { {glow_wrap(
-                    rsx! { button { class: "hi-tab", "Changelog" } },
+                    rsx! { button { class: "hi-tab", attr: "type", "button",  "Changelog" } },
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                 )} }
             }
@@ -28,15 +28,15 @@ pub fn render() -> VNode {
         {render_demo_block("Tabs with Icons", rsx! {
             nav { class: "hi-tabs",
                 div { {glow_wrap(
-                    rsx! { button { class: "hi-tab hi-tab--active", "🏠 Home" } },
+                    rsx! { button { class: "hi-tab hi-tab--active", attr: "type", "button",  "🏠 Home" } },
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                 )} }
                 div { {glow_wrap(
-                    rsx! { button { class: "hi-tab", "\u{1F4E6} Components" } },
+                    rsx! { button { class: "hi-tab", attr: "type", "button",  "\u{1F4E6} Components" } },
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                 )} }
                 div { {glow_wrap(
-                    rsx! { button { class: "hi-tab", "⚙️ Settings" } },
+                    rsx! { button { class: "hi-tab", attr: "type", "button",  "⚙️ Settings" } },
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                 )} }
             }

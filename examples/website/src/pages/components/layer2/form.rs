@@ -29,7 +29,7 @@ pub fn render() -> VNode {
                     span { "Remember me" }
                 }
                 div { {glow_wrap(
-                    rsx! { button { class: "hi-button hi-button-primary", "Sign In" } },
+                    rsx! { button { class: "hi-button hi-button-primary", attr: "type", "submit", "Sign In" } },
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                 )} }
             }
@@ -67,7 +67,7 @@ pub fn render() -> VNode {
                     )}
                 }
                 div { {glow_wrap(
-                    rsx! { button { class: "hi-button hi-button-primary", "Submit" } },
+                    rsx! { button { class: "hi-button hi-button-primary", attr: "type", "submit", "Submit" } },
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                 )} }
             }
@@ -87,7 +87,7 @@ pub fn render() -> VNode {
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                 )}
                 {glow_wrap(
-                    rsx! { button { class: "hi-button hi-button-primary", "Search" } },
+                    rsx! { button { class: "hi-button hi-button-primary", attr: "type", "button", "Search" } },
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                 )}
             }

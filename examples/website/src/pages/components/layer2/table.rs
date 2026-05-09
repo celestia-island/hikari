@@ -49,9 +49,9 @@ pub fn render() -> VNode {
                     th { "Actions" }
                 } }
                 tbody {
-                    tr { td { "API Gateway" } td { span { class: "hi-tag hi-tag--success", "Running" } } td { "99.9%" } td { button { class: "hi-button hi-button-ghost hi-button-sm", "Restart" } } }
-                    tr { td { "Auth Service" } td { span { class: "hi-tag hi-tag--success", "Running" } } td { "99.8%" } td { button { class: "hi-button hi-button-ghost hi-button-sm", "Restart" } } }
-                    tr { td { "Worker Pool" } td { span { class: "hi-tag hi-tag--danger", "Down" } } td { "0%" } td { button { class: "hi-button hi-button-primary hi-button-sm", "Fix" } } }
+                    tr { td { "API Gateway" } td { span { class: "hi-tag hi-tag--success", "Running" } } td { "99.9%" } td { button { class: "hi-button hi-button-ghost hi-button-sm", attr: "type", "button", "Restart" } } }
+                    tr { td { "Auth Service" } td { span { class: "hi-tag hi-tag--success", "Running" } } td { "99.8%" } td { button { class: "hi-button hi-button-ghost hi-button-sm", attr: "type", "button", "Restart" } } }
+                    tr { td { "Worker Pool" } td { span { class: "hi-tag hi-tag--danger", "Down" } } td { "0%" } td { button { class: "hi-button hi-button-primary hi-button-sm", attr: "type", "button", "Fix" } } }
                 }
             }
         })}
@@ -59,11 +59,11 @@ pub fn render() -> VNode {
             div { class: "hi-table-pagination",
                 nav { class: "hi-pagination",
                     ul {
-                        li { button { class: "hi-pagination-prev hi-button hi-button-ghost hi-button-sm hi-button--disabled", "Prev" } }
-                        li { button { class: "hi-pagination-item hi-button hi-button-primary hi-button-sm", "1" } }
-                        li { button { class: "hi-pagination-item hi-button hi-button-ghost hi-button-sm", "2" } }
-                        li { button { class: "hi-pagination-item hi-button hi-button-ghost hi-button-sm", "3" } }
-                        li { button { class: "hi-pagination-next hi-button hi-button-ghost hi-button-sm", "Next" } }
+                        li { button { attr: "type", "button",  class: "hi-pagination-prev hi-button hi-button-ghost hi-button-sm hi-button--disabled", "Prev" } }
+                        li { button { attr: "type", "button",  class: "hi-pagination-item hi-button hi-button-primary hi-button-sm", "1" } }
+                        li { button { attr: "type", "button",  class: "hi-pagination-item hi-button hi-button-ghost hi-button-sm", "2" } }
+                        li { button { attr: "type", "button",  class: "hi-pagination-item hi-button hi-button-ghost hi-button-sm", "3" } }
+                        li { button { attr: "type", "button",  class: "hi-pagination-next hi-button hi-button-ghost hi-button-sm", "Next" } }
                     }
                 }
                 span { class: "hi-pagination__info", "Page 1 of 3 (24 items)" }

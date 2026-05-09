@@ -4,7 +4,7 @@ use std::rc::Rc;
 use hikari_icons::generated::mdi_selected::get;
 use hikari_icons::MdiIcon;
 use tairitsu_vdom::{
-    get_bounding_client_rect, rerender, set_attribute, set_style, DomHandle, EventData,
+    get_bounding_client_rect, set_attribute, set_style, DomHandle, EventData,
     MouseEvent, VElement, VNode, VText,
 };
 use tairitsu_web::wit_platform::WitElement;
@@ -343,7 +343,8 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
             let backdrop_ref_opt = backdrop_ref.clone();
 
             VNode::Element(
-                VElement::new("div")
+                VElement::new("a")
+                    .attr("href", &format!("?lang={}", code.as_str()))
                     .class(format!(
                         "hi-select-option{}",
                         if is_selected {
@@ -363,13 +364,6 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
                             &arrow_ref_opt,
                             &backdrop_ref_opt,
                         );
-
-                        #[cfg(target_arch = "wasm32")]
-                        {
-                            use tairitsu_web::i18n::set_locale;
-                            set_locale(*lang);
-                            rerender();
-                        }
                     })
                     .child(VNode::Text(VText::new(*name))),
             )

@@ -1011,8 +1011,36 @@ static KEYS_RU: I18nKeys = I18nKeys {
 pub fn detect_language() -> Language {
     #[cfg(target_arch = "wasm32")]
     {
-        let hash = tairitsu_web::wit_platform::wasm_impl::bindings::tairitsu_browser::full::location::get_hash();
+        let href = tairitsu_web::wit_platform::wasm_impl::bindings::tairitsu_browser::full::location::get_href();
 
+        if let Some(query_start) = href.find('?') {
+            let query = &href[query_start + 1..];
+            for pair in query.split('&') {
+                if let Some(eq_pos) = pair.find('=') {
+                    let key = &pair[..eq_pos];
+                    let val = &pair[eq_pos + 1..];
+                    if key == "lang" {
+                        if let Some(lang) = Language::from_code(val) {
+                            return lang;
+                        }
+                    }
+                }
+            }
+        }
+
+        if href.starts_with("#lang=") || href.contains("#lang=") {
+            if let Some(hash_start) = href.find('#') {
+                let hash = &href[hash_start..];
+                if hash.starts_with("#lang=") {
+                    let code = &hash[6..];
+                    if let Some(lang) = Language::from_code(code) {
+                        return lang;
+                    }
+                }
+            }
+        }
+
+        let hash = tairitsu_web::wit_platform::wasm_impl::bindings::tairitsu_browser::full::location::get_hash();
         if hash.starts_with("#lang=") {
             let code = &hash[6..];
             if let Some(lang) = Language::from_code(code) {

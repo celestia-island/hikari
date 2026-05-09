@@ -25,7 +25,7 @@ pub fn render() -> VNode {
                 }
             })}
             {render_demo_block("Comment Thread", rsx! {
-                div { style: "display:flex;flex-direction:column;gap:16px;",
+                div { class: "hi-comment-stack",
                     div { class: "hi-comment",
                         div { class: "hi-comment__header",
                             div { class: "hi-avatar hi-avatar--success hi-avatar--sm", "B" }
@@ -71,7 +71,7 @@ pub fn render() -> VNode {
                 }
             })}
             {render_demo_block("Comment with Input", rsx! {
-                div { style: "display:flex;flex-direction:column;gap:16px;",
+                div { class: "hi-comment-stack",
                     div { class: "hi-comment",
                         div { class: "hi-comment__header",
                             div { class: "hi-avatar hi-avatar--secondary hi-avatar--sm", "E" }
@@ -85,8 +85,8 @@ pub fn render() -> VNode {
                     div { class: "hi-comment-input",
                         div { class: "hi-avatar hi-avatar--primary hi-avatar--sm", "Y" }
                         div { class: "hi-comment-input__field",
-                            textarea { class: "hi-textarea", placeholder: "Write a comment...", style: "resize:none;" }
-                            div { style: "display:flex;justify-content:flex-end;margin-top:8px;",
+                            textarea { class: "hi-textarea hi-textarea--no-resize", placeholder: "Write a comment..." }
+                            div { class: "hi-comment-input__actions",
                                 button { class: "hi-button hi-button-primary hi-button-sm", attr: "type", "button", "Post" }
                             }
                         }
@@ -94,14 +94,14 @@ pub fn render() -> VNode {
                 }
             })}
             {render_demo_block("Comment States", rsx! {
-                div { style: "display:flex;flex-direction:column;gap:16px;",
+                div { class: "hi-comment-stack",
                     div { class: "hi-comment",
                         div { class: "hi-comment__header",
                             div { class: "hi-avatar hi-avatar--primary hi-avatar--sm", "A" }
                             div {
                                 span { class: "hi-comment__author", "Alice Chen" }
                                 span { class: "hi-comment__time", "2 hours ago" }
-                                span { style: "font-size:12px;color:var(--hi-color-text-tertiary);margin-left:6px;", "(edited)" }
+                                span { class: "hi-comment__edited", "(edited)" }
                             }
                         }
                         div { class: "hi-comment__content", "Updated my earlier comment with more details about the implementation." }
@@ -112,15 +112,15 @@ pub fn render() -> VNode {
                     }
                     div { class: "hi-comment",
                         div { class: "hi-comment__header",
-                            div { class: "hi-avatar hi-avatar--sm", style: "background:var(--hi-color-fill-secondary);color:var(--hi-color-text-tertiary);", "D" }
-                        div {
-                            span { class: "hi-comment__author", style: "text-decoration:line-through;color:var(--hi-color-text-tertiary);", "Deleted User" }
-                            span { class: "hi-comment__time", style: "color:var(--hi-color-text-tertiary);", "yesterday" }
+                            div { class: "hi-avatar hi-avatar--sm hi-avatar--deleted", "D" }
+                            div {
+                                span { class: "hi-comment__author hi-comment__author--deleted", "Deleted User" }
+                                span { class: "hi-comment__time hi-comment__time--muted", "yesterday" }
+                            }
                         }
-                    }
-                    div { class: "hi-comment__content", style: "color:var(--hi-color-text-tertiary);font-style:italic;", "This comment has been deleted." }
-                    div { class: "hi-comment__actions",
-                        span { style: "color:var(--hi-color-text-disabled);", "Restore" }
+                        div { class: "hi-comment__content hi-comment__content--deleted", "This comment has been deleted." }
+                        div { class: "hi-comment__actions",
+                            span { class: "hi-comment__action--restore", "Restore" }
                         }
                     }
                 }

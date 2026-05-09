@@ -56,8 +56,8 @@ pub fn render() -> VNode {
             {render_demo_block("Rounded Image",
                 render_demo_row(
                     rsx! {
-                        img { class: "hi-image hi-image--rounded", style: "width:100px;height:100px;", src: "https://picsum.photos/200/200", alt: "rounded" }
-                        img { class: "hi-image hi-image--circle", style: "width:100px;height:100px;", src: "https://picsum.photos/200/200", alt: "circle" }
+                        img { class: "hi-image hi-image--rounded hi-image--sized", src: "https://picsum.photos/200/200", alt: "rounded" }
+                        img { class: "hi-image hi-image--circle hi-image--sized", src: "https://picsum.photos/200/200", alt: "circle" }
                     }
                 )
             )}

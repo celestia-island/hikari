@@ -6,7 +6,7 @@ use tairitsu_vdom::VNode;
 pub fn render() -> VNode {
     render_demo_page("page-component-zoom-controls", "Zoom Controls", "Zoom in, zoom out, and reset controls for canvas viewers, maps, and image previews.", rsx! [
         {render_demo_block("Basic Zoom Controls", rsx!{
-            div { style: "display:flex;align-items:center;gap:14px;",
+            div { class: "hi-zoom-row",
                 div { class: "hi-zoom-controls",
                     {glow_wrap(
                         rsx! { button { class: "hi-zoom-controls__btn", "+" } },
@@ -18,18 +18,18 @@ pub fn render() -> VNode {
                         GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                     )}
                     {glow_wrap(
-                        rsx! { button { class: "hi-zoom-controls__btn", "↺" } },
+                        rsx! { button { class: "hi-zoom-controls__btn", "\u{21ba}" } },
                         GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
                     )}
                 }
-                div { style: "margin-left:auto;display:flex;align-items:center;gap:6px;",
-                    span { style: "font-size:0.75rem;color:var(--hi-color-text-tertiary);", "Keyboard:" }
-                    span { style: "font-size:0.75rem;font-family:monospace;background:var(--hi-color-fill-secondary);padding:2px 8px;border-radius:4px;border:1px solid var(--hi-color-border);", "Ctrl + Scroll" }
+                div { class: "hi-zoom-hints",
+                    span { class: "hi-zoom-hints__label", "Keyboard:" }
+                    span { class: "hi-zoom-hints__kbd", "Ctrl + Scroll" }
                 }
             }
         })}
         {render_demo_block("Zoom Slider with Tick Marks", rsx!{
-            div { style: "display:flex;flex-direction:column;width:100%;gap:10px;",
+            div { class: "hi-zoom-slider-stack",
                 div { class: "hi-zoom-controls",
                     {glow_wrap(
                         rsx! { button { class: "hi-zoom-controls__btn", "+" } },
@@ -48,12 +48,12 @@ pub fn render() -> VNode {
                         GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Secondary, ..Default::default() },
                     )}
                 }
-                 div { style: "display:flex;justify-content:space-between;padding:0 4px;",
-                    span { style: "font-size:0.6875rem;color:var(--hi-color-text-tertiary);font-weight:500;", "25%" }
-                    span { style: "font-size:0.6875rem;color:var(--hi-color-text-tertiary);font-weight:500;", "50%" }
-                    span { style: "font-size:0.6875rem;color:var(--hi-color-text-tertiary);font-weight:500;", "100%" }
-                    span { style: "font-size:0.6875rem;color:var(--hi-color-text-tertiary);font-weight:500;", "200%" }
-                    span { style: "font-size:0.6875rem;color:var(--hi-color-text-tertiary);font-weight:500;", "400%" }
+                 div { class: "hi-zoom-ticks",
+                    span { "25%" }
+                    span { "50%" }
+                    span { "100%" }
+                    span { "200%" }
+                    span { "400%" }
                 }
             }
         })}
@@ -66,7 +66,7 @@ pub fn render() -> VNode {
                 div { class: "hi-zoom-canvas__card", "Card A" }
                 div { class: "hi-zoom-canvas__card hi-zoom-canvas__card--right", "Card B" }
                 div { class: "hi-zoom-canvas__selection", "Selection" }
-                div { style: "position:absolute;bottom:12px;right:12px;",
+                div { class: "hi-zoom-canvas__floating-anchor",
                     div { class: "hi-zoom-controls hi-zoom-controls--floating",
                         {glow_wrap(
                             rsx! { button { class: "hi-zoom-controls__btn", "+" } },

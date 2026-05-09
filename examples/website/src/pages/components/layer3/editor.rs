@@ -113,7 +113,7 @@ pub fn render() -> VNode {
             }
         })}
         {render_demo_block("Compact Editor with Limits", rsx!{
-            div { style: "max-width:500px;",
+            div { class: "hi-editor hi-editor--compact",
                 div { class: "hi-editor",
                     div { class: "hi-editor__toolbar",
                         {glow_wrap(
@@ -130,11 +130,11 @@ pub fn render() -> VNode {
                         )}
                     }
                     div { class: "hi-editor__content",
-                        textarea { class: "hi-editor__textarea", placeholder: "Write a short bio...", style: "height:80px;",
+                        textarea { class: "hi-editor__textarea hi-editor__textarea--sm", placeholder: "Write a short bio...",
                             "Type something here..."
                          }
                     }
-                    div { style: "display:flex;justify-content:space-between;padding-top:6px;font-size:12px;color:var(--hi-color-text-tertiary);",
+                    div { class: "hi-editor__footer",
                         span { "18 / 200 characters" }
                         span { "Markdown supported" }
                     }

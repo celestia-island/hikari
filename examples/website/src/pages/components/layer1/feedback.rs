@@ -66,7 +66,7 @@ pub fn render() -> VNode {
                     div { class: "hi-alert-stack",
                         {closable_alert("hi-alert hi-alert--info", MdiIcon::Information, "This alert can be dismissed.")}
                         {closable_alert("hi-alert hi-alert--success", MdiIcon::Check, "Changes saved successfully.")}
-                        {closable_alert("hi-alert hi-alert--success", MdiIcon::Check, " Changes saved successfully.")}
+                        {closable_alert("hi-alert hi-alert--success", MdiIcon::Check, "Changes saved successfully.")}
                     }
                 }
             )}

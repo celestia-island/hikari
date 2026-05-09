@@ -102,26 +102,6 @@ pub fn render() -> VNode {
                     }
                 }
             )}
-            {render_demo_block("With Description",
-                rsx! {
-                    div { style: "display:flex;flex-direction:column;gap:16px;",
-                        div { style: "display:flex;align-items:center;justify-content:space-between;",
-                            div {
-                                div { style: "font-size:14px;font-weight:500;color:var(--hi-color-text-primary);", "Auto-save" }
-                                p { style: "font-size:13px;color:var(--hi-color-text-secondary);margin:0;", "Automatically save changes every 30 seconds" }
-                            }
-                            {make_switch(true, "")}
-                        }
-                        div { style: "display:flex;align-items:center;justify-content:space-between;",
-                            div {
-                                div { style: "font-size:14px;font-weight:500;color:var(--hi-color-text-primary);", "Notifications" }
-                                p { style: "font-size:13px;color:var(--hi-color-text-secondary);margin:0;", "Receive push notifications for updates" }
-                            }
-                            {make_switch(false, "")}
-                        }
-                    }
-                }
-            )}
             {render_demo_block("Disabled",
                 render_demo_row(
                     rsx! {
@@ -129,20 +109,6 @@ pub fn render() -> VNode {
                         {make_switch(true, "hi-switch--disabled")}
                     }
                 )
-            )}
-            {render_demo_block("Danger Variant",
-                rsx! {
-                    div { style: "display:flex;flex-direction:column;gap:16px;",
-                        div { style: "display:flex;align-items:center;gap:16px;",
-                            {make_switch(false, "hi-switch--danger")},
-                            span { "Auto-delete after 30 days" }
-                        }
-                        div { style: "display:flex;align-items:center;gap:16px;",
-                            {make_switch(true, "hi-switch--danger")},
-                            span { "Auto-delete enabled (active)" }
-                        }
-                    }
-                }
             )}
             {render_demo_block("API",
                 render_api_table(&[

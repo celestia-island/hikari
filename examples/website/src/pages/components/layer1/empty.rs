@@ -71,18 +71,18 @@ pub fn render() -> VNode {
             )}
             {render_demo_block("Skeleton Loading",
                 rsx! {
-                    div { style: "display:flex;flex-direction:column;gap:16px;",
-                        div { style: "display:flex;align-items:center;gap:12px;",
-                            div { class: "hi-skeleton hi-skeleton--circle", style: "width:48px;height:48px;" }
-                            div { style: "display:flex;flex-direction:column;gap:8px;flex:1;",
-                                div { class: "hi-skeleton", style: "width:40%;height:16px;" }
-                                div { class: "hi-skeleton", style: "width:60%;height:12px;" }
+                    div { class: "hi-skeleton-stack",
+                        div { class: "hi-skeleton-row hi-skeleton-row--avatar",
+                            div { class: "hi-skeleton hi-skeleton--circle hi-skeleton--avatar" }
+                            div { class: "hi-skeleton-col",
+                                div { class: "hi-skeleton hi-skeleton--text-short" }
+                                div { class: "hi-skeleton hi-skeleton--text-long" }
                             }
                         }
-                        div { class: "hi-skeleton", style: "width:100%;height:120px;" }
-                        div { style: "display:flex;gap:8px;",
-                            div { class: "hi-skeleton", style: "width:80px;height:32px;" }
-                            div { class: "hi-skeleton", style: "width:80px;height:32px;" }
+                        div { class: "hi-skeleton hi-skeleton--banner" }
+                        div { class: "hi-skeleton-row hi-skeleton-row--actions",
+                            div { class: "hi-skeleton hi-skeleton--btn" }
+                            div { class: "hi-skeleton hi-skeleton--btn" }
                         }
                     }
                 }

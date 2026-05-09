@@ -75,21 +75,21 @@ pub fn render() -> VNode {
             div { class: "hi-skeleton-cards",
                 div { class: "hi-skeleton-card",
                     div { class: "hi-skeleton-card__header",
-                        div { class: "hi-skeleton hi-skeleton--circle", style: "width:40px;height:40px;" }
+                        div { class: "hi-skeleton hi-skeleton--circle hi-skeleton--avatar-sm" }
                         div { class: "hi-skeleton-card__header-text",
-                            div { class: "hi-skeleton", style: "width:50%;height:14px;" }
-                            div { class: "hi-skeleton", style: "width:30%;height:10px;" }
+                            div { class: "hi-skeleton hi-skeleton--text-md" }
+                            div { class: "hi-skeleton hi-skeleton--text-xs" }
                         }
                     }
-                    div { class: "hi-skeleton", style: "width:100%;height:12px;" }
-                    div { class: "hi-skeleton", style: "width:100%;height:12px;" }
-                    div { class: "hi-skeleton", style: "width:60%;height:12px;" }
+                    div { class: "hi-skeleton hi-skeleton--line" }
+                    div { class: "hi-skeleton hi-skeleton--line" }
+                    div { class: "hi-skeleton hi-skeleton--line hi-skeleton--line-short" }
                 }
                 div { class: "hi-skeleton-card hi-skeleton-card--media",
-                    div { class: "hi-skeleton", style: "width:100%;height:140px;margin-bottom:12px;" }
-                    div { class: "hi-skeleton", style: "width:80%;height:16px;" }
-                    div { class: "hi-skeleton", style: "width:100%;height:12px;margin-top:8px;" }
-                    div { class: "hi-skeleton", style: "width:40%;height:12px;margin-top:8px;" }
+                    div { class: "hi-skeleton hi-skeleton--banner" }
+                    div { class: "hi-skeleton hi-skeleton--text-lg" }
+                    div { class: "hi-skeleton hi-skeleton--line" }
+                    div { class: "hi-skeleton hi-skeleton--line-short" }
                 }
             }
         })}

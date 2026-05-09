@@ -4654,3 +4654,172 @@ aside .hi-glow-wrapper {
   font-family: monospace;
   font-size: 0.875rem;
 }
+
+// ── Avatar helpers (avatar.rs) ────────────────────────────────────────
+
+.hi-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.hi-avatar__hint {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--hi-color-text-secondary, #6b7280);
+}
+.hi-avatar-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+// ── Image sized variant (image.rs) ───────────────────────────────────
+
+.hi-image--sized {
+  width: 100px;
+  height: 100px;
+}
+
+// ── Skeleton demo helpers (empty.rs) ──────────────────────────────────
+
+.hi-skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.hi-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hi-skeleton-row--avatar { align-items: center; gap: 12px; }
+.hi-skeleton-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.hi-skeleton--avatar { width: 48px; height: 48px; }
+.hi-skeleton--text-short { width: 40%; height: 16px; }
+.hi-skeleton--text-long { width: 60%; height: 12px; }
+.hi-skeleton--banner { width: 100%; height: 120px; }
+.hi-skeleton-row--actions { display: flex; gap: 8px; }
+.hi-skeleton--btn { width: 80px; height: 32px; }
+
+// ── Comment demo helpers (comment.rs) ─────────────────────────────────
+
+.hi-comment-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.hi-textarea--no-resize { resize: none; }
+.hi-comment-input__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.hi-comment__edited {
+  font-size: 12px;
+  color: var(--hi-color-text-tertiary, #9ca3af);
+  margin-left: 6px;
+}
+.hi-avatar--deleted {
+  background: var(--hi-color-fill-secondary, #f3f4f6);
+  color: var(--hi-color-text-tertiary, #9ca3af);
+}
+.hi-comment__author--deleted {
+  text-decoration: line-through;
+  color: var(--hi-color-text-tertiary, #9ca3af);
+}
+.hi-comment__time--muted { color: var(--hi-color-text-tertiary, #9ca3af); }
+.hi-comment__content--deleted {
+  color: var(--hi-color-text-tertiary, #9ca3af);
+  font-style: italic;
+}
+.hi-comment__action--restore { color: var(--hi-color-text-disabled, #d1d5db); }
+
+// ── Number Input hint (number_input.rs) ───────────────────────────────
+
+.hi-number-input__hint {
+  color: var(--hi-color-text-secondary, #6b7280);
+  font-size: 13px;
+}
+
+// ── Skeleton card helpers (feedback L2) ────────────────────────────────
+
+.hi-skeleton--avatar-sm { width: 40px; height: 40px; }
+.hi-skeleton--text-md { width: 50%; height: 14px; }
+.hi-skeleton--text-xs { width: 30%; height: 10px; }
+.hi-skeleton--line { width: 100%; height: 12px; }
+.hi-skeleton--line-short { width: 60%; }
+.hi-skeleton--banner { width: 100%; height: 140px; margin-bottom: 12px; }
+.hi-skeleton--text-lg { width: 80%; height: 16px; }
+
+// ── Editor helpers (editor L3) ────────────────────────────────────────
+
+.hi-editor--compact { max-width: 500px; }
+.hi-editor__textarea--sm { height: 80px; }
+.hi-editor__footer {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 6px;
+  font-size: 12px;
+  color: var(--hi-color-text-tertiary, #9ca3af);
+}
+
+// ── User Guide helpers (user_guide L3) ───────────────────────────────
+
+.hi-user-guide__desc {
+  font-size: 14px;
+  color: var(--hi-color-text-secondary, #6b7280);
+}
+.hi-spotlight-card__actions {
+  display: flex;
+  gap: 8px;
+}
+
+// ── Zoom Controls helpers (zoom_controls L3) ─────────────────────────
+
+.hi-zoom-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.hi-zoom-hints {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hi-zoom-hints__label {
+  font-size: 0.75rem;
+  color: var(--hi-color-text-tertiary, #9ca3af);
+}
+.hi-zoom-hints__kbd {
+  font-size: 0.75rem;
+  font-family: monospace;
+  background: var(--hi-color-fill-secondary, #f3f4f6);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--hi-color-border, #e5e7eb);
+}
+.hi-zoom-slider-stack {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 10px;
+}
+.hi-zoom-ticks {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+  font-size: 0.6875rem;
+  color: var(--hi-color-text-tertiary, #9ca3af);
+  font-weight: 500;
+}
+.hi-zoom-canvas__floating-anchor {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+}

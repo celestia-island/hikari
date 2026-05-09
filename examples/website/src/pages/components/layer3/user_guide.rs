@@ -9,7 +9,7 @@ pub fn render() -> VNode {
             div { class: "hi-user-guide",
                 div { class: "hi-user-guide__header",
                     h4 { "Welcome to Hikari UI" }
-                    p { style: "font-size:14px;color:var(--hi-color-text-secondary);", "Follow these steps to set up your first project." }
+                    p { class: "hi-user-guide__desc", "Follow these steps to set up your first project." }
                 }
                 div { class: "hi-user-guide__steps",
                     div { class: "hi-user-guide__step hi-user-guide__step--active",
@@ -61,7 +61,7 @@ pub fn render() -> VNode {
             div { class: "hi-user-guide",
                 div { class: "hi-user-guide__header",
                     h4 { "Feature Spotlight" }
-                    p { style: "font-size:14px;color:var(--hi-color-text-secondary);", "Discover the key features of this release." }
+                    p { class: "hi-user-guide__desc", "Discover the key features of this release." }
                 }
                 div { class: "hi-user-guide__steps",
                     div { class: "hi-user-guide__step hi-user-guide__step--completed",
@@ -128,7 +128,7 @@ pub fn render() -> VNode {
                         div { class: "hi-spotlight-card__badge", "New Feature!" }
                         div { class: "hi-spotlight-card__title", "Dark Mode Toggle" }
                         p { class: "hi-spotlight-card__desc", "Switch between light and dark themes. Your preference is saved automatically." }
-                        div { style: "display:flex;gap:8px;",
+                        div { class: "hi-spotlight-card__actions",
                             {glow_wrap(
                                 rsx! { button { class: "hi-button hi-button-primary hi-button-sm", "Got it!" } },
                                 GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default()},

@@ -83,36 +83,36 @@ pub fn render() -> VNode {
                     {render_demo_row(
                         rsx! {
                             div { class: "hi-avatar",
-                                img { src: "https://i.pravatar.cc/150?img=1", alt: "Alice Chen", style: "width:100%;height:100%;object-fit:cover;border-radius:inherit;" }
+                                img { src: "https://i.pravatar.cc/150?img=1", alt: "Alice Chen", class: "hi-avatar__img" }
                             }
                             div { class: "hi-avatar hi-avatar--lg",
-                                img { src: "https://i.pravatar.cc/150?img=2", alt: "Bob Martinez", style: "width:100%;height:100%;object-fit:cover;border-radius:inherit;" }
+                                img { src: "https://i.pravatar.cc/150?img=2", alt: "Bob Martinez", class: "hi-avatar__img" }
                             }
                             div { class: "hi-avatar hi-avatar--xl",
-                                img { src: "https://i.pravatar.cc/150?img=3", alt: "Carol Wu", style: "width:100%;height:100%;object-fit:cover;border-radius:inherit;" }
+                                img { src: "https://i.pravatar.cc/150?img=3", alt: "Carol Wu", class: "hi-avatar__img" }
                             }
                             div { class: "hi-avatar", "F" }
                         }
                     )}
-                    {rsx! { p { style: "margin-top:12px;font-size:13px;color:var(--hi-color-text-secondary);", "Images fall back to initials on load error." } }}
+                    {rsx! { p { class: "hi-avatar__hint", "Images fall back to initials on load error." } }}
                 }
             )}
             {render_demo_block("Avatar with Status",
                 render_demo_row(
                     rsx! {
-                        div { style: "position:relative;display:inline-block;",
+                        div { class: "hi-avatar-wrapper",
                             div { class: "hi-avatar hi-avatar--primary", "A" }
                             {status_dot("hi-avatar__status--success")}
                         }
-                        div { style: "position:relative;display:inline-block;",
+                        div { class: "hi-avatar-wrapper",
                             div { class: "hi-avatar hi-avatar--danger", "R" }
                             {status_dot("hi-avatar__status--danger")}
                         }
-                        div { style: "position:relative;display:inline-block;",
+                        div { class: "hi-avatar-wrapper",
                             div { class: "hi-avatar hi-avatar--secondary", "S" }
                             {status_dot("hi-avatar__status--default")}
                         }
-                        div { style: "position:relative;display:inline-block;",
+                        div { class: "hi-avatar-wrapper",
                             div { class: "hi-avatar hi-avatar--warning", "Y" }
                             {status_dot("hi-avatar__status--warning")}
                         }

@@ -100,7 +100,7 @@ pub fn render() -> VNode {
                                     span { "Username" }
                                     span { class: "hi-form-item__required", "*" }
                                 }
-                                input { class: "hi-input", value: "alice_chen", class: "hi-input--block" }
+                                input { class: "hi-input hi-input--block hi-input--error", value: "alice_chen" }
                                 p { class: "hi-form-item__success", "\u{2713} Username is available" }
                             }
                             div { class: "hi-form-item",

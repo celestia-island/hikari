@@ -33,7 +33,6 @@ pub fn render() -> VNode {
     let num_disabled = make_num_input("0", "1", "", "", "");
     let num_small = make_num_input("5", "1", "", "", "hi-number-input-sm");
 
-    // TEST: use render_demo_page for outer wrapper only, content stays as raw rsx!
     render_demo_page(
         "page-component-number-input",
         "Number Input",
@@ -60,7 +59,7 @@ pub fn render() -> VNode {
                 div { class: "demo-block__body",
                     div { class: "demo-row",
                         {num_range}
-                        span { style: "color:var(--hi-color-text-secondary);font-size:13px;", "Min: 0, Max: 100" }
+                        span { class: "hi-number-input__hint", "Min: 0, Max: 100" }
                     }
                 }
             }

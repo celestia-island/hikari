@@ -227,7 +227,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
                     } else {
                         theme::hikari_style()
                     };
-                    set_style(h, "cssText", &new_style.to_string());
+                    set_attribute(h, "style", &new_style.to_string());
                 }
             }
         }
@@ -356,15 +356,6 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
                     .attr("data-value", code.as_str())
                     .attr("role", "option")
                     .attr("aria-selected", if is_selected { "true" } else { "false" })
-                    .on_event("click", move |_e: Box<dyn EventData>| {
-                        is_open_opt.set(false);
-                        close_dropdown(
-                            &dropdown_ref_opt,
-                            &select_ref_opt,
-                            &arrow_ref_opt,
-                            &backdrop_ref_opt,
-                        );
-                    })
                     .child(VNode::Text(VText::new(*name))),
             )
         })

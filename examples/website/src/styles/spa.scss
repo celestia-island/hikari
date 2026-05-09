@@ -4814,3 +4814,47 @@ aside .hi-glow-wrapper {
   bottom: 12px;
   right: 12px;
 }
+
+// ── Dark Theme (Tairitsu) :root variable overrides ────────────────────────
+// Variables defined as `var()` chains in :root (index.scss) bake their values
+// at declaration scope and never update when parent vars change. We must
+// re-declare them here with concrete dark values so every element inside
+// [data-theme="tairitsu"] resolves them correctly.
+
+[data-theme="tairitsu"],
+[data-theme="dark"] {
+  // --- Aliases (re-resolve in dark context) ---
+  --hi-color-text-primary: var(--hi-text-primary);
+  --hi-color-text-secondary: var(--hi-text-secondary);
+  --hi-color-border: var(--hi-border);
+  --hi-color-primary: var(--hi-primary);
+  --hi-color-background: var(--hi-background);
+  --hi-color-surface: var(--hi-surface);
+  --hi-color-surface-secondary: var(--hi-surface);
+
+  // --- Surface / background overrides ---
+  --hi-page-bg: linear-gradient(135deg, #0f0f1a 0%, #161823 100%);
+  --hi-secondary-bg: rgba(255, 255, 255, 0.06);
+  --hi-tertiary-bg: rgba(255, 255, 255, 0.03);
+  --hi-card-bg: var(--hi-surface);
+  --hi-card-border: var(--hi-border);
+  --hi-header-surface: var(--hi-surface);
+  --hi-aside-surface: var(--hi-surface);
+
+  // --- Button overrides ---
+  --hi-button-bg: var(--hi-surface);
+  --hi-button-bg-hover: rgba(255, 192, 203, 0.15);
+  --hi-button-text: var(--hi-text-primary);
+  --hi-button-border: var(--hi-border);
+
+  // --- Input overrides ---
+  --hi-input-bg: var(--hi-surface);
+  --hi-input-bg-focus: rgba(255, 255, 255, 0.08);
+  --hi-input-border: var(--hi-border);
+  --hi-input-text: var(--hi-text-primary);
+  --hi-input-placeholder: rgba(240, 240, 245, 0.35);
+
+  // --- Misc component overrides ---
+  --hi-badge-bg-primary: var(--hi-primary);
+  --hi-badge-bg-success: var(--hi-success);
+}

@@ -76,6 +76,11 @@ body,
   margin: 0;
 }
 
+.page-header__subtitle--standalone {
+  max-width: 800px;
+  line-height: 1.6;
+}
+
 // ── GitHub link in header ──────────────────────────────────────────────
 
 .hi-header-github {
@@ -648,6 +653,11 @@ aside .hi-menu {
 .hi-submenu[data-collapsed] .hi-submenu-list {
   display: none;
 }
+
+// Submenu nesting levels
+.hi-submenu-list--level-1 { padding-left: 1em; }
+.hi-submenu-list--level-2 { padding-left: 2em; }
+.hi-submenu-list--level-3 { padding-left: 3em; }
 
 .hi-submenu[data-collapsed] .hi-menu-item-arrow {
   transform: rotate(0deg);
@@ -1618,6 +1628,80 @@ aside .hi-glow-wrapper {
   justify-content: center;
   border: 1px dashed var(--hi-color-border);
   border-radius: 0.5rem;
+  color: var(--hi-color-secondary);
+}
+
+// ── Demo page section & container (page_layout helpers) ───────────────
+
+.demo-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--hi-color-border);
+  background: var(--hi-color-surface);
+}
+.demo-section__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--hi-color-text-primary);
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--hi-color-border);
+  margin-bottom: 0;
+}
+.page-container {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+// ── Form demo page helpers ───────────────────────────────────────────────
+
+.demo-form-login {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+.demo-card { width: 100%; max-width: 420px; padding: 2rem; }
+.demo-form-header { margin-bottom: 1.5rem; text-align: center; }
+.demo-form-header__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  color: var(--hi-color-primary);
+}
+.demo-form-header__subtitle {
+  color: var(--hi-color-secondary);
+  font-size: 0.875rem;
+}
+.demo-form-body { margin-bottom: 1.5rem; }
+.demo-form-row--between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.demo-form-remember {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.demo-form-link {
+  font-size: 0.875rem;
+  color: var(--hi-color-primary);
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+.demo-form-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+.demo-form-footer {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.875rem;
   color: var(--hi-color-secondary);
 }
 

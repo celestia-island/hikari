@@ -7,12 +7,10 @@ fn txt(s: &str) -> VNode {
 pub fn render_demo_section(title: &str, content: VNode) -> VNode {
     VNode::Element(
         VElement::new("section")
-            .class("mb-8 p-6")
-            .style("border-radius:0.75rem;border:1px solid var(--hi-color-border);background:var(--hi-color-surface)")
+            .class("demo-section")
             .child(VNode::Element(
                 VElement::new("h2")
-                    .class("text-lg font-semibold text-primary mb-4")
-                    .style("padding-bottom:0.75rem;border-bottom:1px solid var(--hi-color-border)")
+                    .class("demo-section__title")
                     .child(txt(title)),
             ))
             .child(content),
@@ -49,8 +47,7 @@ pub fn render_page_container(
     } else if let Some(d) = description {
         page_children.push(VNode::Element(
             VElement::new("p")
-                .class("text-secondary mb-8")
-                .style("max-width:800px;line-height:1.6")
+                .class("page-header__subtitle--standalone")
                 .child(txt(d)),
         ));
     }
@@ -66,8 +63,7 @@ pub fn render_page_container(
 
     VNode::Element(
         VElement::new("div")
-            .class("p-6")
-            .style("max-width:1200px;margin:0 auto;padding-left:2rem;padding-right:2rem")
+            .class("page-container")
             .child(hikari_page),
     )
 }

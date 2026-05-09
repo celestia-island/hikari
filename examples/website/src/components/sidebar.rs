@@ -184,7 +184,7 @@ fn submenu(label: &str, level: u32, children: Vec<VNode>, open: bool) -> VNode {
     let list = VNode::Element(
         VElement::new("ul")
             .class("hi-submenu-list")
-            .style(format!("padding-left:{}em", level))
+            .class(format!("hi-submenu-list--level-{}", level))
             .children(children),
     );
     let mut el = VElement::new("li").class("hi-submenu");

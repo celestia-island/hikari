@@ -1,162 +1,76 @@
-use tairitsu_vdom::{VElement, VNode, VText};
-
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
 use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
-use crate::components::page_layout::{render_demo_section, render_page_container};
+use tairitsu_macros::rsx;
+use tairitsu_vdom::VNode;
+
+fn glow_input(placeholder: &str, type_: &str, id: &str, required: bool) -> VNode {
+    glow_wrap(
+        rsx! { input { class: "hi-input", placeholder: placeholder, r#type: type_, id: id, attr_if: "required", required, "true" } },
+        GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Ghost, ..Default::default() },
+    )
+}
+
+fn btn_primary(text: &str) -> VNode {
+    glow_wrap(
+        rsx! { button { class: "hi-button hi-button-primary hi-button-lg hi-button--block", attr: "type", "submit", text } },
+        GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
+    )
+}
+
+fn btn_secondary(text: &str) -> VNode {
+    glow_wrap(
+        rsx! { button { class: "hi-button hi-button-secondary hi-button-lg", text } },
+        GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Secondary, ..Default::default() },
+    )
+}
 
 pub fn render_form_demo() -> VNode {
-    let email_field = glow_wrap(
-        VNode::Element(
-            VElement::new("div")
-                .style("margin-bottom:1rem")
-                .child(VNode::Element(
-                    VElement::new("label")
-                        .class("hi-label")
-                        .attr("for", "demo-email")
-                        .child(VNode::Text(VText::new("Email"))),
-                ))
-                .child(VNode::Element(
-                    VElement::new("input")
-                        .attr("id", "demo-email")
-                        .class("hi-input")
-                        .attr("type", "email")
-                        .attr("placeholder", "you@example.com")
-                        .attr("required", "true"),
-                )),
-        ),
-        GlowConfig {
-            intensity: GlowIntensity::Soft,
-            color: GlowColor::Ghost,
-            ..Default::default()
-        },
-    );
-
-    let password_field = glow_wrap(
-        VNode::Element(
-            VElement::new("div")
-                .style("margin-bottom:1rem")
-                .child(VNode::Element(
-                    VElement::new("label")
-                        .class("hi-label")
-                        .attr("for", "demo-password")
-                        .child(VNode::Text(VText::new("Password"))),
-                ))
-                .child(VNode::Element(
-                    VElement::new("input")
-                        .attr("id", "demo-password")
-                        .class("hi-input")
-                        .attr("type", "password")
-                        .attr("placeholder", "Enter your password")
-                        .attr("required", "true"),
-                )),
-        ),
-        GlowConfig {
-            intensity: GlowIntensity::Soft,
-            color: GlowColor::Ghost,
-            ..Default::default()
-        },
-    );
-
-    let btn_signin = glow_wrap(
-        VNode::Element(
-            VElement::new("button")
-                .attr("type", "submit")
-                .class("hi-button hi-button-primary hi-button-lg")
-                .style("flex:1")
-                .child(VNode::Text(VText::new("Sign In"))),
-        ),
-        GlowConfig {
-            intensity: GlowIntensity::Soft,
-            color: GlowColor::Primary,
-            ..Default::default()
-        },
-    );
-
-    let btn_cancel = glow_wrap(
-        VNode::Element(
-            VElement::new("button")
-                .attr("type", "button")
-                .class("hi-button hi-button-secondary hi-button-lg")
-                .child(VNode::Text(VText::new("Cancel"))),
-        ),
-        GlowConfig {
-            intensity: GlowIntensity::Soft,
-            color: GlowColor::Secondary,
-            ..Default::default()
-        },
-    );
-
-    let form_content = VNode::Element(
-        VElement::new("div")
-            .style("display:flex;justify-content:center;align-items:center;padding:2rem")
-            .child(VNode::Element(
-                VElement::new("div")
-                    .class("card")
-                    .style("width:100%;max-width:420px;padding:2rem")
-                    .child(VNode::Element(
-                        VElement::new("div")
-                            .class("form-header")
-                            .style("margin-bottom:1.5rem;text-align:center")
-                            .child(VNode::Element(
-                                VElement::new("h2")
-                                    .style("font-size:1.5rem;font-weight:700;margin-bottom:0.25rem;color:var(--hi-color-primary)")
-                                    .child(VNode::Text(VText::new("Login"))),
-                            ))
-                            .child(VNode::Element(
-                                VElement::new("p")
-                                    .style("color:var(--hi-color-secondary);font-size:0.875rem")
-                                    .child(VNode::Text(VText::new("Welcome back, please sign in to your account"))),
-                            )),
-                    ))
-                    .child(VNode::Element(
-                        VElement::new("div")
-                            .style("margin-bottom:1.5rem")
-                            .child(email_field)
-                            .child(password_field)
-                            .child(VNode::Element(
-                                VElement::new("div")
-                                    .style("display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem")
-                                    .child(VNode::Element(
-                                        VElement::new("label")
-                                            .style("display:flex;align-items:center;gap:0.5rem;font-size:0.875rem;cursor:pointer")
-                                            .child(VNode::Element(
-                                                VElement::new("input")
-                                                    .attr("type", "checkbox")
-                                                    .class("hi-switch__input"),
-                                            ))
-                                            .child(VNode::Text(VText::new("Remember me"))),
-                                    ))
-                                    .child(VNode::Element(
-                                        VElement::new("a")
-                                            .style("font-size:0.875rem;color:var(--hi-color-primary);text-decoration:none")
-                                            .child(VNode::Text(VText::new("Forgot password?"))),
-                                    )),
-                            ))
-                            .child(VNode::Element(
-                                VElement::new("div")
-                                    .style("display:flex;gap:0.75rem")
-                                    .child(btn_signin)
-                                    .child(btn_cancel),
-                            )),
-                    ))
-                    .child(VNode::Element(
-                        VElement::new("div")
-                            .style("text-align:center;margin-top:1rem;font-size:0.875rem;color:var(--hi-color-secondary)")
-                            .child(VNode::Text(VText::new("Don't have an account? ")))
-                            .child(VNode::Element(
-                                VElement::new("a")
-                                    .style("color:var(--hi-color-primary);text-decoration:none")
-                                    .child(VNode::Text(VText::new("Sign up"))),
-                            )),
-                    )),
-            )),
-    );
-
-    let section = render_demo_section("Login Form", form_content);
-
-    render_page_container(
+    render_demo_page(
         "page-demos-form",
-        Some("Form Demo"),
-        Some("Demonstrates how to build a complete login form using Layer 1 basic components."),
-        section,
+        "Form Demo",
+        "Demonstrates how to build a complete login form using Layer 1 components.",
+        rsx! {
+            {render_demo_block("Login Form",
+                rsx! {
+                    div { class: "demo-form-login",
+                        div { class: "card demo-card",
+                            div { class: "demo-form-header",
+                                h2 { class: "demo-form-header__title", "Login" }
+                                p { class: "demo-form-header__subtitle", "Welcome back, please sign in to your account" }
+                            }
+                            div { class: "demo-form-body",
+                                {glow_input("you@example.com", "email", "demo-email", true)}
+                                {glow_input("Enter your password", "password", "demo-password", true)}
+                                div { class: "demo-form-row--between",
+                                    label { class: "demo-form-remember",
+                                        input { r#type: "checkbox", class: "hi-switch__input" }
+                                        "Remember me"
+                                    }
+                                    a { class: "demo-form-link", "Forgot password?" }
+                                }
+                                div { class: "demo-form-actions",
+                                    {btn_primary("Sign In")}
+                                    {btn_secondary("Cancel")}
+                                }
+                            }
+                            div { class: "demo-form-footer",
+                                p { "Don't have an account?" }
+                                a { class: "demo-form-link", "Sign up" }
+                            }
+                        }
+                    }
+                }
+            )}
+            {render_demo_block("API",
+                render_api_table(&[
+                    ("layout", "vertical | horizontal | inline", "vertical", "Form layout mode"),
+                    ("validation", "object | string", "-", "Validation rules per field"),
+                    ("requiredMark", "bool", "true", "Show required asterisk"),
+                    ("rememberMe", "bool", "false", "Show remember me checkbox"),
+                    ("forgotLink", "string", "-", "Forgot password link URL"),
+                    ("signupLink", "string", "-", "Sign up link URL"),
+                ])
+            )}
+        }
     )
 }

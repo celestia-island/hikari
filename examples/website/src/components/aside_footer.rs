@@ -4,12 +4,12 @@ use std::rc::Rc;
 use hikari_icons::generated::mdi_selected::get;
 use hikari_icons::MdiIcon;
 use tairitsu_vdom::{
-    get_bounding_client_rect, set_attribute, set_style, DomHandle, EventData, MouseEvent,
-    VElement, VNode, VText,
+    get_bounding_client_rect, rerender, set_attribute, set_style, DomHandle, EventData,
+    MouseEvent, VElement, VNode, VText,
 };
 use tairitsu_web::wit_platform::WitElement;
 
-use crate::hooks;
+use crate::{hooks, theme};
 
 const DROPDOWN_MAX_HEIGHT: f64 = 240.0;
 const DROPDOWN_MIN_WIDTH: f64 = 120.0;
@@ -222,6 +222,12 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
                             "hi-layout hi-layout-light hi-layout-has-sidebar hi-ambient-bg"
                         },
                     );
+                    let new_style = if dark {
+                        theme::tairitsu_style()
+                    } else {
+                        theme::hikari_style()
+                    };
+                    set_style(h, "cssText", &new_style.to_string());
                 }
             }
         }
@@ -362,10 +368,7 @@ pub fn render(app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>>) -> VNode {
                         {
                             use tairitsu_web::i18n::set_locale;
                             set_locale(*lang);
-                            use tairitsu_web::wit_platform::wasm_impl::bindings::tairitsu_browser::full;
-                            let href = full::location::get_href();
-                            let sep = if href.contains('#') { "" } else { "#" };
-                            full::location::assign(&format!("{}{}lang={}", href, sep, code));
+                            rerender();
                         }
                     })
                     .child(VNode::Text(VText::new(*name))),

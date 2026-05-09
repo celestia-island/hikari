@@ -101,7 +101,7 @@ pub fn render() -> VNode {
                             div {
                                 span { class: "hi-comment__author", "Alice Chen" }
                                 span { class: "hi-comment__time", "2 hours ago" }
-                                span { style: "font-size:12px;color:var(--hi-gray-400);margin-left:6px;", "(edited)" }
+                                span { style: "font-size:12px;color:var(--hi-color-text-tertiary);margin-left:6px;", "(edited)" }
                             }
                         }
                         div { class: "hi-comment__content", "Updated my earlier comment with more details about the implementation." }
@@ -112,15 +112,15 @@ pub fn render() -> VNode {
                     }
                     div { class: "hi-comment",
                         div { class: "hi-comment__header",
-                            div { class: "hi-avatar hi-avatar--sm", style: "background:var(--hi-gray-200);color:var(--hi-gray-500);", "D" }
-                            div {
-                                span { class: "hi-comment__author", style: "text-decoration:line-through;color:var(--hi-gray-400);", "Deleted User" }
-                                span { class: "hi-comment__time", style: "color:var(--hi-gray-400);", "yesterday" }
-                            }
+                            div { class: "hi-avatar hi-avatar--sm", style: "background:var(--hi-color-fill-secondary);color:var(--hi-color-text-tertiary);", "D" }
+                        div {
+                            span { class: "hi-comment__author", style: "text-decoration:line-through;color:var(--hi-color-text-tertiary);", "Deleted User" }
+                            span { class: "hi-comment__time", style: "color:var(--hi-color-text-tertiary);", "yesterday" }
                         }
-                        div { class: "hi-comment__content", style: "color:var(--hi-gray-400);font-style:italic;", "This comment has been deleted." }
-                        div { class: "hi-comment__actions",
-                            span { style: "color:var(--hi-gray-300);", "Restore" }
+                    }
+                    div { class: "hi-comment__content", style: "color:var(--hi-color-text-tertiary);font-style:italic;", "This comment has been deleted." }
+                    div { class: "hi-comment__actions",
+                        span { style: "color:var(--hi-color-text-disabled);", "Restore" }
                         }
                     }
                 }

@@ -99,9 +99,9 @@ pub fn render() -> VNode {
                         label { class: "hi-transfer__item", input { r#type: "checkbox", checked: "true", disabled: "true" } " Option C" }
                     }
                 }
-                div { class: "hi-transfer__actions",
-                    button { class: "hi-button hi-button-secondary hi-button-sm", style: "opacity:0.5;cursor:not-allowed;", "\u{2192}" }
-                    button { class: "hi-button hi-button-secondary hi-button-sm", style: "opacity:0.5;cursor:not-allowed;", "\u{2190}" }
+                 div { class: "hi-transfer__actions",
+                    button { class: "hi-button hi-button-secondary hi-button-sm hi-button--disabled", "\u{2192}" }
+                    button { class: "hi-button hi-button-secondary hi-button-sm hi-button--disabled", "\u{2190}" }
                 }
                 div { class: "hi-transfer__panel",
                     div { class: "hi-transfer__header",

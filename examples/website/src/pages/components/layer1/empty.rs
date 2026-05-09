@@ -69,47 +69,6 @@ pub fn render() -> VNode {
                     }
                 }
             )}
-            {render_demo_block("Empty with Action",
-                rsx! {
-                    div { class: "hi-empty",
-                        div { class: "hi-empty__icon",
-                            {icon_el(MdiIcon::FileEdit, 48)}
-                        }
-                        div { class: "hi-empty__description", "You have no projects yet" }
-                        button { class: "hi-button hi-button-primary", attr: "type", "button", "Create Project" }
-                    }
-                }
-            )}
-            {render_demo_block("Search Not Found",
-                rsx! {
-                    div { class: "hi-empty",
-                        div { class: "hi-empty__icon",
-                            {icon_el(MdiIcon::Magnify, 48)}
-                        }
-                        div { class: "hi-empty__description", "No results found for \"quantum computing\"" }
-                        div { class: "hi-empty__hint", "Try adjusting your search terms or filters" }
-                    }
-                }
-            )}
-            {render_demo_block("Empty Table",
-                rsx! {
-                    table { class: "hi-table",
-                        thead { tr { th { "Name" } th { "Status" } th { "Updated" } } }
-                        tbody {
-                            tr {
-                                td { colspan: "3",
-                                    div { class: "hi-empty",
-                                        div { class: "hi-empty__icon",
-                                            {icon_el(MdiIcon::FileEdit, 48)}
-                                        }
-                                        div { class: "hi-empty__description", "No records to display" }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            )}
             {render_demo_block("Skeleton Loading",
                 rsx! {
                     div { style: "display:flex;flex-direction:column;gap:16px;",

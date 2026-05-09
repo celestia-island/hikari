@@ -51,7 +51,7 @@ pub fn render() -> VNode {
             {render_demo_block("Input States",
                 rsx! {
                     form { class: "hi-form",
-                        div { style: "display:flex;flex-direction:column;gap:16px;",
+                        div { class: "hi-form--stacked",
                             div { class: "hi-form-item",
                                 label { class: "hi-label", "Default" }
                                 {glow_input("Default input", "text", "", GlowColor::Ghost)}
@@ -67,7 +67,7 @@ pub fn render() -> VNode {
                             div { class: "hi-form-item hi-form-item--error",
                                 label { class: "hi-label", "Username" }
                                 {glow_wrap(
-                                    rsx! { input { class: "hi-input hi-input-error", placeholder: "Error state", r#type: "text", value: "invalid-user" } },
+                                    rsx! { input { class: "hi-input hi-input--error", placeholder: "Error state", r#type: "text", value: "invalid-user" } },
                                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Danger, ..Default::default() },
                                 )}
                                 span { class: "hi-form-error", "Username must be 3-20 characters" }
@@ -94,29 +94,29 @@ pub fn render() -> VNode {
             {render_demo_block("Form Validation",
                 rsx! {
                     form { class: "hi-form",
-                        div { style: "display:flex;flex-direction:column;gap:16px;max-width:480px;",
+                        div { class: "hi-form--stacked",
                             div { class: "hi-form-item",
                                 label { class: "hi-form-item__label",
                                     span { "Username" }
-                                    span { style: "color:var(--hi-color-danger);margin-left:2px;", "*" }
+                                    span { class: "hi-form-item__required", "*" }
                                 }
-                                input { class: "hi-input", value: "alice_chen", style: "width:100%;box-sizing:border-box;" }
-                                p { style: "margin:4px 0 0;font-size:12px;color:var(--hi-color-success);display:flex;align-items:center;gap:4px;", "\u{2713} Username is available" }
+                                input { class: "hi-input", value: "alice_chen", class: "hi-input--block" }
+                                p { class: "hi-form-item__success", "\u{2713} Username is available" }
                             }
                             div { class: "hi-form-item",
                                 label { class: "hi-form-item__label",
                                     span { "Email" }
-                                    span { style: "color:var(--hi-color-danger);margin-left:2px;", "*" }
+                                    span { class: "hi-form-item__required", "*" }
                                 }
-                                input { class: "hi-input", value: "invalid-email", style: "width:100%;box-sizing:border-box;border-color:var(--hi-color-danger);background:var(--hi-color-danger-bg, rgba(239,68,68,0.06));" }
-                                p { style: "margin:4px 0 0;font-size:12px;color:var(--hi-color-danger);", "Please enter a valid email address (e.g. user@example.com)" }
+                                input { class: "hi-input hi-input--block hi-input--error", value: "invalid-email" }
+                                p { class: "hi-form-item__error", "Please enter a valid email address (e.g. user@example.com)" }
                             }
                             div { class: "hi-form-item",
                                 label { class: "hi-form-item__label", "Password" }
-                                input { class: "hi-input", r#type: "password", value: "12345", style: "width:100%;box-sizing:border-box;border-color:var(--hi-color-danger);background:var(--hi-color-danger-bg, rgba(239,68,68,0.06));", autocomplete: "new-password" }
-                                p { style: "margin:4px 0 0;font-size:12px;color:var(--hi-color-danger);", "Password must be at least 8 characters" }
+                                input { class: "hi-input hi-input--block hi-input--error", r#type: "password", value: "12345", autocomplete: "new-password" }
+                                p { class: "hi-form-item__error", "Password must be at least 8 characters" }
                             }
-                            div { style: "display:flex;gap:12px;margin-top:8px;",
+                            div { class: "hi-form-actions",
                                 button { class: "hi-button hi-button-primary", attr: "type", "button", "Submit" }
                                 button { class: "hi-button hi-button-secondary", attr: "type", "button", "Reset" }
                             }

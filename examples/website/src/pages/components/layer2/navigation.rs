@@ -42,7 +42,7 @@ pub fn render() -> VNode {
             }
         })}
         {render_demo_block("Breadcrumbs", rsx! {
-            div { style: "display:flex;flex-direction:column;gap:12px;",
+            div { class: "hi-breadcrumb-stack",
                 nav { class: "hi-breadcrumb",
                     a { class: "hi-breadcrumb__item", href: "/", "Home" }
                     span { class: "hi-breadcrumb__separator", "/" }

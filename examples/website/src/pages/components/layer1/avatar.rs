@@ -2,13 +2,10 @@ use crate::components::demo_page::{render_api_table, render_demo_block, render_d
 use tairitsu_macros::rsx;
 use tairitsu_vdom::{VElement, VNode};
 
-fn status_dot(color: &str, border: &str) -> VNode {
+fn status_dot(bg_class: &str) -> VNode {
     VNode::Element(
         VElement::new("div")
-            .style(format!(
-                "position:absolute;bottom:0;right:0;width:14px;height:14px;border-radius:50%;background:{};border:2px solid {};",
-                color, border
-            ))
+            .class(format!("hi-avatar__status {}", bg_class))
     )
 }
 
@@ -42,19 +39,19 @@ pub fn render() -> VNode {
             )}
             {render_demo_block("Avatar with Label",
                 rsx! {
-                    div { style: "display:flex;flex-direction:column;gap:12px;",
-                        div { style: "display:flex;align-items:center;gap:12px;",
+                    div { class: "hi-avatar-label-list",
+                        div { class: "hi-avatar-label",
                             div { class: "hi-avatar hi-avatar--primary", "A" }
-                            div {
-                                div { style: "font-weight:600;", "Alice Chen" }
-                                div { style: "color:var(--hi-color-text-secondary);font-size:13px;", "alice@example.com" }
+                            div { class: "hi-avatar-label__info",
+                                div { class: "hi-avatar-label__name", "Alice Chen" }
+                                div { class: "hi-avatar-label__email", "alice@example.com" }
                             }
                         }
-                        div { style: "display:flex;align-items:center;gap:12px;",
+                        div { class: "hi-avatar-label",
                             div { class: "hi-avatar hi-avatar--success", "B" }
-                            div {
-                                div { style: "font-weight:600;", "Bob Martinez" }
-                                div { style: "color:var(--hi-color-text-secondary);font-size:13px;", "bob@example.com" }
+                            div { class: "hi-avatar-label__info",
+                                div { class: "hi-avatar-label__name", "Bob Martinez" }
+                                div { class: "hi-avatar-label__email", "bob@example.com" }
                             }
                         }
                     }
@@ -105,19 +102,19 @@ pub fn render() -> VNode {
                     rsx! {
                         div { style: "position:relative;display:inline-block;",
                             div { class: "hi-avatar hi-avatar--primary", "A" }
-                            {status_dot("#22c55e", "white")}
+                            {status_dot("hi-avatar__status--success")}
                         }
                         div { style: "position:relative;display:inline-block;",
                             div { class: "hi-avatar hi-avatar--danger", "R" }
-                            {status_dot("#ef4444", "white")}
+                            {status_dot("hi-avatar__status--danger")}
                         }
                         div { style: "position:relative;display:inline-block;",
                             div { class: "hi-avatar hi-avatar--secondary", "S" }
-                            {status_dot("#9ca3af", "white")}
+                            {status_dot("hi-avatar__status--default")}
                         }
                         div { style: "position:relative;display:inline-block;",
                             div { class: "hi-avatar hi-avatar--warning", "Y" }
-                            {status_dot("transparent", "var(--hi-color-bg-base, white)")}
+                            {status_dot("hi-avatar__status--warning")}
                         }
                     }
                 )

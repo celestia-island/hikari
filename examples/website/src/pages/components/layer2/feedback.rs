@@ -5,7 +5,7 @@ use tairitsu_vdom::VNode;
 pub fn render() -> VNode {
     render_demo_page("page-component-feedback-composed", "Feedback (Composed)", "Toast notifications, progress indicators, and skeleton loading for composed feedback patterns.", rsx! [
         {render_demo_block("Toast Notifications", rsx! {
-            div { style: "display:flex;flex-direction:column;gap:12px;",
+            div { class: "hi-toast-stack",
                 div { class: "hi-toast hi-toast--info",
                     div { class: "hi-toast__icon", "ℹ" }
                     div { class: "hi-toast__content",
@@ -41,29 +41,29 @@ pub fn render() -> VNode {
             }
         })}
         {render_demo_block("Progress Indicators", rsx! {
-            div { style: "display:flex;flex-direction:column;gap:16px;",
+            div { class: "hi-progress-stack",
                 div {
-                    div { style: "display:flex;justify-content:space-between;margin-bottom:4px;",
-                        span { style: "font-size:13px;font-weight:600;", "Build Progress" }
-                        span { style: "font-size:13px;color:var(--hi-color-text-secondary);", "3 of 5 steps" }
+                    div { class: "hi-progress-label",
+                        span { class: "hi-progress-label__text", "Build Progress" }
+                        span { class: "hi-progress-label__meta", "3 of 5 steps" }
                     }
                     div { class: "hi-progress",
                         div { class: "hi-progress__bar", style: "width: 60%;" }
                     }
                 }
                 div {
-                    div { style: "display:flex;justify-content:space-between;margin-bottom:4px;",
-                        span { style: "font-size:13px;font-weight:600;", "Upload Complete" }
-                        span { style: "font-size:13px;color:var(--hi-color-text-success);", "100%" }
+                    div { class: "hi-progress-label",
+                        span { class: "hi-progress-label__text", "Upload Complete" }
+                        span { class: "hi-progress-label__meta hi-progress-label__meta--success", "100%" }
                     }
                     div { class: "hi-progress hi-progress--success",
                         div { class: "hi-progress__bar", style: "width: 100%;" }
                     }
                 }
                 div {
-                    div { style: "display:flex;justify-content:space-between;margin-bottom:4px;",
-                        span { style: "font-size:13px;font-weight:600;", "Storage Used" }
-                        span { style: "font-size:13px;color:var(--hi-color-text-secondary);", "7.2 / 10 GB" }
+                    div { class: "hi-progress-label",
+                        span { class: "hi-progress-label__text", "Storage Used" }
+                        span { class: "hi-progress-label__meta", "7.2 / 10 GB" }
                     }
                     div { class: "hi-progress hi-progress--warning",
                         div { class: "hi-progress__bar", style: "width: 72%;" }
@@ -72,11 +72,11 @@ pub fn render() -> VNode {
             }
         })}
         {render_demo_block("Skeleton Loading", rsx! {
-            div { style: "display:flex;flex-direction:column;gap:20px;",
+            div { class: "hi-skeleton-cards",
                 div { class: "hi-skeleton-card",
-                    div { style: "display:flex;align-items:center;gap:12px;margin-bottom:16px;",
+                    div { class: "hi-skeleton-card__header",
                         div { class: "hi-skeleton hi-skeleton--circle", style: "width:40px;height:40px;" }
-                        div { style: "flex:1;display:flex;flex-direction:column;gap:8px;",
+                        div { class: "hi-skeleton-card__header-text",
                             div { class: "hi-skeleton", style: "width:50%;height:14px;" }
                             div { class: "hi-skeleton", style: "width:30%;height:10px;" }
                         }
@@ -85,7 +85,7 @@ pub fn render() -> VNode {
                     div { class: "hi-skeleton", style: "width:100%;height:12px;" }
                     div { class: "hi-skeleton", style: "width:60%;height:12px;" }
                 }
-                div { class: "hi-skeleton-card",
+                div { class: "hi-skeleton-card hi-skeleton-card--media",
                     div { class: "hi-skeleton", style: "width:100%;height:140px;margin-bottom:12px;" }
                     div { class: "hi-skeleton", style: "width:80%;height:16px;" }
                     div { class: "hi-skeleton", style: "width:100%;height:12px;margin-top:8px;" }

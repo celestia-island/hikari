@@ -56,23 +56,23 @@ pub fn render() -> VNode {
         {render_demo_block("QR Code Sizes", rsx! {
             div {
                 {render_demo_row(rsx! {
-                    div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
+                    div { class: "hi-qrcode--size",
                         div { class: "hi-qrcode",
                             { make_qr_svg(80) }
                         }
-                        div { style: "font-size:12px;color:var(--hi-color-text-secondary);text-align:center;margin-top:4px;", "Small" }
+                        div { class: "hi-qrcode__label", "Small" }
                     }
-                    div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
+                    div { class: "hi-qrcode--size",
                         div { class: "hi-qrcode",
                             { make_qr_svg(128) }
                         }
-                        div { style: "font-size:12px;color:var(--hi-color-text-secondary);text-align:center;margin-top:4px;", "Default" }
+                        div { class: "hi-qrcode__label", "Default" }
                     }
-                    div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
+                    div { class: "hi-qrcode--size",
                         div { class: "hi-qrcode",
                             { make_qr_svg(200) }
                         }
-                        div { style: "font-size:12px;color:var(--hi-color-text-secondary);text-align:center;margin-top:4px;", "Large" }
+                        div { class: "hi-qrcode__label", "Large" }
                     }
                 })}
             }
@@ -80,11 +80,11 @@ pub fn render() -> VNode {
         {render_demo_block("QR Code with Label", rsx! {
             div {
                 {render_demo_row(rsx! {
-                    div { style: "display:flex;flex-direction:column;align-items:center;gap:8px;",
+                    div { class: "hi-qrcode--labeled",
                         div { class: "hi-qrcode",
                             { make_qr_svg(128) }
                         }
-                        span { style: "font-size:13px;color:var(--hi-color-text-secondary);", "Scan to visit github.com/tairitsu/hikari" }
+                        span { class: "hi-qrcode__caption", "Scan to visit github.com/tairitsu/hikari" }
                     }
                 })}
             }
@@ -92,7 +92,7 @@ pub fn render() -> VNode {
         {render_demo_block("QR Code with Download", rsx! {
             div {
                 {render_demo_row(rsx! {
-                    div { style: "display:flex;flex-direction:column;align-items:center;gap:8px;",
+                    div { class: "hi-qrcode--labeled",
                         div { class: "hi-qrcode",
                             { make_qr_svg(128) }
                         }

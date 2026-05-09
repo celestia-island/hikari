@@ -33,7 +33,7 @@ pub fn render() -> VNode {
             }
         })}
         {render_demo_block("Progress Ring", rsx!{
-            div { style: "display:flex;gap:24px;flex-wrap:wrap;",
+            div { class: "hi-progress-ring-group",
                 div { class: "hi-progress-ring",
                     svg { width: "120", height: "120", viewBox: "0 0 120 120",
                         circle { cx: "60", cy: "60", r: "50", fill: "none", stroke: "var(--hi-color-surface)", stroke_width: "8" }
@@ -69,22 +69,22 @@ pub fn render() -> VNode {
         {render_demo_block("Horizontal Bar Chart", rsx!{
             div { class: "hi-chart hi-chart--horizontal",
                 div { class: "hi-chart__title", "Language Popularity" }
-                div { style: "display:flex;flex-direction:column;gap:12px;",
-                    div { style: "display:flex;align-items:center;gap:12px;",
-                        span { style: "width:80px;font-size:13px;text-align:right;", "Rust" }
-                        div { class: "hi-chart__h-bar", style: "width: 85%;", "85%" }
+                div { class: "hi-h-bar-list",
+                    div { class: "hi-h-bar-row",
+                        span { class: "hi-h-bar-label", "Rust" }
+                        div { class: "hi-chart__h-bar hi-h-bar--85", "85%" }
                     }
-                    div { style: "display:flex;align-items:center;gap:12px;",
-                        span { style: "width:80px;font-size:13px;text-align:right;", "Go" }
-                        div { class: "hi-chart__h-bar", style: "width: 72%;", "72%" }
+                    div { class: "hi-h-bar-row",
+                        span { class: "hi-h-bar-label", "Go" }
+                        div { class: "hi-chart__h-bar hi-h-bar--72", "72%" }
                     }
-                    div { style: "display:flex;align-items:center;gap:12px;",
-                        span { style: "width:80px;font-size:13px;text-align:right;", "TypeScript" }
-                        div { class: "hi-chart__h-bar", style: "width: 68%;", "68%" }
+                    div { class: "hi-h-bar-row",
+                        span { class: "hi-h-bar-label", "TypeScript" }
+                        div { class: "hi-chart__h-bar hi-h-bar--68", "68%" }
                     }
-                    div { style: "display:flex;align-items:center;gap:12px;",
-                        span { style: "width:80px;font-size:13px;text-align:right;", "Python" }
-                        div { class: "hi-chart__h-bar", style: "width: 60%;", "60%" }
+                    div { class: "hi-h-bar-row",
+                        span { class: "hi-h-bar-label", "Python" }
+                        div { class: "hi-chart__h-bar hi-h-bar--60", "60%" }
                     }
                 }
             }

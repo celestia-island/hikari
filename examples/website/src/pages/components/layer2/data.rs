@@ -33,9 +33,9 @@ pub fn render() -> VNode {
         {render_demo_block("Data List with Avatars", rsx! {
             ul { class: "hi-list",
                 li { class: "hi-list__item",
-                    div { style: "display:flex;align-items:center;gap:12px;",
+                    div { class: "hi-list__item--avatar",
                         div { class: "hi-avatar hi-avatar--primary hi-avatar--sm", "A" }
-                        div { style: "flex:1;",
+                        div { class: "hi-list__item--body",
                             div { class: "hi-list__title", "Alice Chen" }
                             div { class: "hi-list__meta", "Lead Engineer · San Francisco" }
                         }
@@ -43,9 +43,9 @@ pub fn render() -> VNode {
                     }
                 }
                 li { class: "hi-list__item",
-                    div { style: "display:flex;align-items:center;gap:12px;",
+                    div { class: "hi-list__item--avatar",
                         div { class: "hi-avatar hi-avatar--danger hi-avatar--sm", "B" }
-                        div { style: "flex:1;",
+                        div { class: "hi-list__item--body",
                             div { class: "hi-list__title", "Bob Martinez" }
                             div { class: "hi-list__meta", "Senior Designer · New York" }
                         }

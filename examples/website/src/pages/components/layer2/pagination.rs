@@ -26,7 +26,7 @@ pub fn render() -> VNode {
         elem("div", vec![], vec![elem("a", vec![("class", "hi-pagination__item"), ("href", "#")], vec![txt("\u{203A}")])]),
     ]);
 
-    let total_content = elem("div", vec![("style", "display:flex;align-items:center;gap:16px;")], vec![
+    let total_content = elem("div", vec![("class", "hi-pagination hi-pagination--with-total")], vec![
         elem("div", vec![("class", "hi-pagination")], vec![
             elem("div", vec![], vec![elem("a", vec![("class", "hi-pagination__item"), ("href", "#")], vec![txt("\u{2039}")])]),
             elem("div", vec![], vec![elem("a", vec![("class", "hi-pagination__item"), ("href", "#")], vec![txt("1")])]),

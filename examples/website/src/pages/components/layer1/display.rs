@@ -33,15 +33,15 @@ pub fn render() -> VNode {
             {render_demo_block("Badge on Element",
                 render_demo_row(
                     rsx! {
-                        div { style: "position:relative;display:inline-block;",
+                        div { class: "hi-badge-wrapper",
                             span { class: "hi-badge hi-badge--danger", "3" }
-                            span { style: "font-size:20px;",
+                            span { class: "hi-badge-target",
                                 {icon_el(MdiIcon::Bell, 20)}
                             }
                         }
-                        div { style: "position:relative;display:inline-block;",
+                        div { class: "hi-badge-wrapper",
                             span { class: "hi-badge hi-badge--dot hi-badge--success", "" }
-                            span { style: "font-size:20px;",
+                            span { class: "hi-badge-target",
                                 {icon_el(MdiIcon::Mail, 20)}
                             }
                         }
@@ -50,7 +50,7 @@ pub fn render() -> VNode {
             )}
             {render_demo_block("Dividers",
                 rsx! {
-                    div { style: "display:flex;flex-direction:column;gap:16px;",
+                    div { class: "hi-divider-stack",
                         div {
                             p { "Content above the divider" }
                             hr { class: "hi-divider" }
@@ -66,20 +66,20 @@ pub fn render() -> VNode {
             )}
             {render_demo_block("Status Indicators",
                 rsx! {
-                    div { style: "display:flex;flex-direction:column;gap:12px;",
-                        div { style: "display:flex;align-items:center;gap:8px;",
+                    div { class: "hi-status-list",
+                        div { class: "hi-status-list__item",
                             span { class: "hi-status hi-status--online", "" }
                             span { "Online" }
                         }
-                        div { style: "display:flex;align-items:center;gap:8px;",
+                        div { class: "hi-status-list__item",
                             span { class: "hi-status hi-status--offline", "" }
                             span { "Offline" }
                         }
-                        div { style: "display:flex;align-items:center;gap:8px;",
+                        div { class: "hi-status-list__item",
                             span { class: "hi-status hi-status--busy", "" }
                             span { "Busy" }
                         }
-                        div { style: "display:flex;align-items:center;gap:8px;",
+                        div { class: "hi-status-list__item",
                             span { class: "hi-status hi-status--away", "" }
                             span { "Away" }
                         }
@@ -88,7 +88,7 @@ pub fn render() -> VNode {
             )}
             {render_demo_block("Text Styles",
                 rsx! {
-                    div { style: "display:flex;flex-direction:column;gap:12px;",
+                    div { class: "hi-text-stack",
                         p { class: "hi-text hi-text--heading", "Heading Text" }
                         p { class: "hi-text hi-text--subheading", "Subheading Text" }
                         p { class: "hi-text hi-text--body", "Regular body text for paragraph content." }

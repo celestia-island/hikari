@@ -28,17 +28,17 @@ pub fn render() -> VNode {
             {render_demo_block("Object Fit",
                 render_demo_row(
                     rsx! {
-                        div { style: "text-align:center;",
-                            img { class: "hi-image hi-image--cover", style: "width:150px;height:150px;", src: "https://picsum.photos/300/100", alt: "cover" }
-                            p { style: "font-size:12px;color:var(--hi-color-text-secondary);margin-top:4px;", "cover" }
+                        div { class: "hi-image-demo",
+                            img { class: "hi-image hi-image--cover hi-image--square", src: "https://picsum.photos/300/100", alt: "cover" }
+                            p { class: "hi-image-demo__label", "cover" }
                         }
-                        div { style: "text-align:center;",
-                            img { class: "hi-image hi-image--contain", style: "width:150px;height:150px;", src: "https://picsum.photos/300/100", alt: "contain" }
-                            p { style: "font-size:12px;color:var(--hi-color-text-secondary);margin-top:4px;", "contain" }
+                        div { class: "hi-image-demo",
+                            img { class: "hi-image hi-image--contain hi-image--square", src: "https://picsum.photos/300/100", alt: "contain" }
+                            p { class: "hi-image-demo__label", "contain" }
                         }
-                        div { style: "text-align:center;",
-                            img { class: "hi-image hi-image--fill", style: "width:150px;height:150px;", src: "https://picsum.photos/300/100", alt: "fill" }
-                            p { style: "font-size:12px;color:var(--hi-color-text-secondary);margin-top:4px;", "fill" }
+                        div { class: "hi-image-demo",
+                            img { class: "hi-image hi-image--fill hi-image--square", src: "https://picsum.photos/300/100", alt: "fill" }
+                            p { class: "hi-image-demo__label", "fill" }
                         }
                     }
                 )
@@ -46,10 +46,8 @@ pub fn render() -> VNode {
             {render_demo_block("Error and Loading State",
                 render_demo_row(
                     rsx! {
-                        div { class: "hi-image hi-image--error", style: "width:150px;height:150px;display:flex;align-items:center;justify-content:center;",
-                            span { "\u{2715}" }
-                        }
-                        div { class: "hi-image hi-image--loading", style: "width:150px;height:150px;display:flex;align-items:center;justify-content:center;",
+                        div { class: "hi-image hi-image--error hi-image--square", "\u{2715}" }
+                        div { class: "hi-image hi-image--loading hi-image--square",
                             div { class: "hi-spin" }
                         }
                     }

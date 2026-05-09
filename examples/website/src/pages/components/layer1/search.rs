@@ -45,12 +45,22 @@ pub fn render() -> VNode {
             )}
             {render_demo_block("Search Sizes",
                 rsx! {
-                    div { style: "display:flex;flex-direction:column;gap:12px;",
+                    div { class: "hi-search-stack",
                         {make_search("Quick search", "hi-search--sm", true, false, "")}
                         {make_search("Search components...", "", true, false, "")}
                         {make_search("Search the documentation...", "hi-search--lg", true, false, "")}
                     }
                 }
+            )}
+            {render_demo_block("Disabled Search",
+                render_demo_row(
+                    rsx! {
+                        div { class: "hi-search hi-search--disabled",
+                            div { class: "hi-search__icon", {icon_el(MdiIcon::Magnify, 16)} }
+                            input { class: "hi-input hi-search__input", placeholder: "Search...", disabled: "true" }
+                        }
+                    }
+                )
             )}
             {render_demo_block("Clearable Search",
                 render_demo_row(make_search("Type to search...", "", true, true, ""))

@@ -53,9 +53,9 @@ pub fn render() -> VNode {
             )}
             {render_demo_block("Tag List",
                 rsx! {
-                    div { style: "display:flex;flex-direction:column;gap:12px;",
+                    div { class: "hi-tag-group",
                         div {
-                            div { style: "font-size:13px;color:var(--hi-color-text-secondary);margin-bottom:6px;", "Technologies" }
+                            div { class: "hi-tag-group__label", "Technologies" }
                             div { class: "hi-tag-list",
                                 span { class: "hi-tag hi-tag--primary", "Tauri" }
                                 span { class: "hi-tag hi-tag--success", "Rust" }
@@ -64,7 +64,7 @@ pub fn render() -> VNode {
                             }
                         }
                         div {
-                            div { style: "font-size:13px;color:var(--hi-color-text-secondary);margin-bottom:6px;", "Status" }
+                            div { class: "hi-tag-group__label", "Status" }
                             div { class: "hi-tag-list",
                                 span { class: "hi-tag hi-tag--success", "Stable" }
                                 span { class: "hi-tag hi-tag--warning", "Beta" }
@@ -77,19 +77,19 @@ pub fn render() -> VNode {
             {render_demo_block("Icon Tags",
                 render_demo_row(
                     rsx! {
-                        span { class: "hi-tag hi-tag--primary", style: "display:inline-flex;align-items:center;gap:4px;",
+                        span { class: "hi-tag hi-tag--primary hi-tag--icon",
                             {icon_el(MdiIcon::Package, 12)}
                             "Package"
                         }
-                        span { class: "hi-tag hi-tag--success", style: "display:inline-flex;align-items:center;gap:4px;",
+                        span { class: "hi-tag hi-tag--success hi-tag--icon",
                             {icon_el(MdiIcon::CheckboxMarkedCircle, 12)}
                             "Verified"
                         }
-                        span { class: "hi-tag hi-tag--danger", style: "display:inline-flex;align-items:center;gap:4px;",
+                        span { class: "hi-tag hi-tag--danger hi-tag--icon",
                             {icon_el(MdiIcon::Alert, 12)}
                             "Critical"
                         }
-                        span { class: "hi-tag hi-tag--warning", style: "display:inline-flex;align-items:center;gap:4px;",
+                        span { class: "hi-tag hi-tag--warning hi-tag--icon",
                             {icon_el(MdiIcon::ClockOutline, 12)}
                             "Pending"
                         }

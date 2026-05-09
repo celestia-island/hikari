@@ -81,11 +81,11 @@ pub fn render() -> VNode {
                         }
                         div { class: "hi-description-list__item",
                             dt { class: "hi-description-list__term", "Assignee" }
-                            dd { class: "hi-description-list__detail",
-                                div { style: "display:flex;align-items:center;gap:8px;",
-                                    div { class: "hi-avatar hi-avatar--primary hi-avatar--xs", "A" }
-                                    span { "Alice Chen" }
-                                }
+                        dd { class: "hi-description-list__detail",
+                            div { class: "hi-dl-avatar-row",
+                                div { class: "hi-avatar hi-avatar--primary hi-avatar--xs", "A" }
+                                span { "Alice Chen" }
+                            }
                             }
                         }
                     }

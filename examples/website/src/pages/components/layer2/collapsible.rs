@@ -43,14 +43,14 @@ pub fn render() -> VNode {
                         span { class: "hi-collapse__arrow", "▼" }
                     }
                     div { class: "hi-collapse__content",
-                        div { style: "display:flex;flex-direction:column;gap:12px;",
-                            div { style: "display:flex;align-items:center;justify-content:space-between;",
+                        div { class: "hi-settings-list",
+                            div { class: "hi-settings-list__row",
                                 span { "Language" }
-                                span { style: "color:var(--hi-color-text-secondary);", "English" }
+                                span { class: "hi-settings-list__value", "English" }
                             }
-                            div { style: "display:flex;align-items:center;justify-content:space-between;",
+                            div { class: "hi-settings-list__row",
                                 span { "Theme" }
-                                span { style: "color:var(--hi-color-text-secondary);", "Dark" }
+                                span { class: "hi-settings-list__value", "Dark" }
                             }
                         }
                     }

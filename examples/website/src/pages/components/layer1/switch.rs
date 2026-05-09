@@ -52,18 +52,52 @@ pub fn render() -> VNode {
             )}
             {render_demo_block("With Labels",
                 rsx! {
-                    div { style: "display:flex;flex-direction:column;gap:16px;",
-                        div { style: "display:flex;align-items:center;gap:12px;",
+                    div { class: "hi-switch-list",
+                        div { class: "hi-switch-list__item",
                             {make_switch(true, "")}
-                            span { style: "font-size:14px;color:var(--hi-color-text-primary);", "Wi-Fi" }
+                            span { class: "hi-switch-list__label", "Wi-Fi" }
                         }
-                        div { style: "display:flex;align-items:center;gap:12px;",
+                        div { class: "hi-switch-list__item",
                             {make_switch(false, "")}
-                            span { style: "font-size:14px;color:var(--hi-color-text-primary);", "Bluetooth" }
+                            span { class: "hi-switch-list__label", "Bluetooth" }
                         }
-                        div { style: "display:flex;align-items:center;gap:12px;",
+                        div { class: "hi-switch-list__item",
                             {make_switch(false, "")}
-                            span { style: "font-size:14px;color:var(--hi-color-text-primary);", "Airplane Mode" }
+                            span { class: "hi-switch-list__label", "Airplane Mode" }
+                        }
+                    }
+                }
+            )}
+            {render_demo_block("With Description",
+                rsx! {
+                    div { class: "hi-switch-settings",
+                        div { class: "hi-switch-settings__row",
+                            div { class: "hi-switch-settings__info",
+                                div { class: "hi-switch-settings__name", "Auto-save" }
+                                p { class: "hi-switch-settings__desc", "Automatically save changes every 30 seconds" }
+                            }
+                            {make_switch(true, "")}
+                        }
+                        div { class: "hi-switch-settings__row",
+                            div { class: "hi-switch-settings__info",
+                                div { class: "hi-switch-settings__name", "Notifications" }
+                                p { class: "hi-switch-settings__desc", "Receive push notifications for updates" }
+                            }
+                            {make_switch(false, "")}
+                        }
+                    }
+                }
+            )}
+            {render_demo_block("Danger Variant",
+                rsx! {
+                    div { class: "hi-switch-list",
+                        div { class: "hi-switch-list__item",
+                            {make_switch(false, "hi-switch--danger")}
+                            span { "Auto-delete after 30 days" }
+                        }
+                        div { class: "hi-switch-list__item",
+                            {make_switch(true, "hi-switch--danger")}
+                            span { "Auto-delete enabled (active)" }
                         }
                     }
                 }

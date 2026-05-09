@@ -82,8 +82,8 @@ pub fn render() -> VNode {
                     }
                     div { class: "hi-editor__divider" }
                     div { class: "hi-editor__panel hi-editor__preview",
-                        p { style: "font-weight:bold;", "Bold text" }
-                        p { style: "font-style:italic;", "Italic text" }
+                        p { class: "hi-editor__preview--bold", "Bold text" }
+                        p { class: "hi-editor__preview--italic", "Italic text" }
                         p { code { "inline code" } }
                     }
                 }
@@ -134,7 +134,7 @@ pub fn render() -> VNode {
                             "Type something here..."
                          }
                     }
-                    div { style: "display:flex;justify-content:space-between;padding-top:6px;font-size:12px;color:var(--hi-gray-400);",
+                    div { style: "display:flex;justify-content:space-between;padding-top:6px;font-size:12px;color:var(--hi-color-text-tertiary);",
                         span { "18 / 200 characters" }
                         span { "Markdown supported" }
                     }

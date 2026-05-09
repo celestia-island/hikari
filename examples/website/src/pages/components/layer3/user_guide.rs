@@ -93,47 +93,41 @@ pub fn render() -> VNode {
             }
         })}
         {render_demo_block("Vertical Stepper & Spotlight", rsx!{
-            div { style: "display:flex;gap:32px;",
-                div { style: "flex:1;max-width:320px;",
-                    h5 { style: "margin-bottom:16px;font-size:14px;", "Vertical Steps" }
-                    div { style: "display:flex;flex-direction:column;gap:0;",
-                        div { style: "display:flex;gap:12px;",
-                            div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
-                                div { style: "width:28px;height:28px;border-radius:50%;background:#f472b6;color:white;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;", "1" }
-                                div { style: "width:2px;height:32px;background:#f472b6;" }
-                            }
+            div { class: "hi-user-guide__spotlight",
+                div { class: "hi-user-guide__stepper",
+                    h5 { "Vertical Steps" }
+                    div { class: "hi-stepper",
+                        div { class: "hi-stepper__item hi-stepper__item--active",
+                            div { class: "hi-stepper__dot hi-stepper__dot--primary", "1" }
+                            div { class: "hi-stepper__connector" }
                             div {
-                                h6 { style: "margin:0;font-size:14px;", "Account Setup" }
-                                p { style: "margin:2px 0 0;font-size:12px;color:var(--hi-gray-500);", "Create your account" }
+                                h6 { class: "hi-stepper__title", "Account Setup" }
+                                p { class: "hi-stepper__desc", "Create your account" }
                             }
                         }
-                        div { style: "display:flex;gap:12px;",
-                            div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
-                                div { style: "width:28px;height:28px;border-radius:50%;background:#22c55e;color:white;display:flex;align-items:center;justify-content:center;font-size:13px;", "✓" }
-                                div { style: "width:2px;height:32px;background:#e5e7eb;" }
-                            }
+                        div { class: "hi-stepper__item",
+                            div { class: "hi-stepper__dot hi-stepper__dot--success", "✓" }
+                            div { class: "hi-stepper__connector hi-stepper__connector--done" }
                             div {
-                                h6 { style: "margin:0;font-size:14px;", "Verify Email" }
-                                p { style: "margin:2px 0 0;font-size:12px;color:var(--hi-gray-500);", "Check your inbox" }
+                                h6 { class: "hi-stepper__title", "Verify Email" }
+                                p { class: "hi-stepper__desc", "Check your inbox" }
                             }
                         }
-                        div { style: "display:flex;gap:12px;",
-                            div { style: "display:flex;flex-direction:column;align-items:center;gap:4px;",
-                                div { style: "width:28px;height:28px;border-radius:50%;background:#e5e7eb;color:var(--hi-gray-500);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;", "3" }
-                            }
+                        div { class: "hi-stepper__item",
+                            div { class: "hi-stepper__dot hi-stepper__dot--pending", "3" }
                             div {
-                                h6 { style: "margin:0;font-size:14px;", "Configure Profile" }
-                                p { style: "margin:2px 0 0;font-size:12px;color:var(--hi-gray-500);", "Set your preferences" }
+                                h6 { class: "hi-stepper__title", "Configure Profile" }
+                                p { class: "hi-stepper__desc", "Set your preferences" }
                             }
                         }
                     }
                 }
-                div { style: "flex:1;",
-                    h5 { style: "margin-bottom:16px;font-size:14px;", "Spotlight Overlay" }
-                    div { style: "position:relative;padding:24px;border:2px solid #f472b6;border-radius:12px;background:rgba(244,114,182,0.04);",
-                        div { style: "position:absolute;top:-10px;left:20px;background:#f472b6;color:white;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:600;", "New Feature!" }
-                        div { style: "font-weight:600;margin-bottom:8px;", "Dark Mode Toggle" }
-                        p { style: "font-size:13px;color:var(--hi-gray-600);margin:0 0 12px;", "Switch between light and dark themes. Your preference is saved automatically." }
+                div { class: "hi-user-guide__spotlight-panel",
+                    h5 { "Spotlight Overlay" }
+                    div { class: "hi-spotlight-card",
+                        div { class: "hi-spotlight-card__badge", "New Feature!" }
+                        div { class: "hi-spotlight-card__title", "Dark Mode Toggle" }
+                        p { class: "hi-spotlight-card__desc", "Switch between light and dark themes. Your preference is saved automatically." }
                         div { style: "display:flex;gap:8px;",
                             {glow_wrap(
                                 rsx! { button { class: "hi-button hi-button-primary hi-button-sm", "Got it!" } },

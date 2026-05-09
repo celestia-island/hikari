@@ -53,7 +53,7 @@ pub fn render() -> VNode {
         rsx! {
             {render_demo_block("Alert Variants",
                 rsx! {
-                    div { style: "display:flex;flex-direction:column;gap:12px;",
+                    div { class: "hi-alert-stack",
                         {alert_node("hi-alert hi-alert--info", MdiIcon::Information, "This is an informational alert for general notices.", "status", "polite")}
                         {alert_node("hi-alert hi-alert--success", MdiIcon::Check, "Operation completed successfully.", "status", "polite")}
                         {alert_node("hi-alert hi-alert--danger", MdiIcon::Close, "An error occurred. Please try again later.", "alert", "assertive")}
@@ -63,7 +63,7 @@ pub fn render() -> VNode {
             )}
             {render_demo_block("Closable Alerts",
                 rsx! {
-                    div { style: "display:flex;flex-direction:column;gap:12px;",
+                    div { class: "hi-alert-stack",
                         {closable_alert("hi-alert hi-alert--info", MdiIcon::Information, "This alert can be dismissed.")}
                         {closable_alert("hi-alert hi-alert--success", MdiIcon::Check, "Changes saved successfully.")}
                         {closable_alert("hi-alert hi-alert--success", MdiIcon::Check, " Changes saved successfully.")}
@@ -72,7 +72,7 @@ pub fn render() -> VNode {
             )}
             {render_demo_block("Spinners",
                 rsx! {
-                    div { style: "display:flex;flex-direction:row;gap:24px;align-items:center;flex-wrap:wrap;",
+                    div { class: "hi-spinner-row",
                         Spin { size: SpinSize::Small, spinning: true }
                         Spin { size: SpinSize::Medium, spinning: true }
                         Spin { size: SpinSize::Large, spinning: true, tip: SpinTip::Loading }
@@ -82,7 +82,7 @@ pub fn render() -> VNode {
             )}
             {render_demo_block("Progress Bars",
                 rsx! {
-                    div { style: "display:flex;flex-direction:column;gap:16px;",
+                    div { class: "hi-progress-stack",
                         Progress { value: 30.0, show_info: true }
                         Progress { value: 70.0, show_info: true, status: ProgressStatus::Active }
                         Progress { value: 100.0, show_info: true }
@@ -92,9 +92,9 @@ pub fn render() -> VNode {
             )}
             {render_demo_block("Skeleton Loading",
                 rsx! {
-                    div { style: "display:flex;flex-direction:column;gap:16px;max-width:400px;",
+                    div { class: "hi-skeleton-stack",
                         Skeleton { rows: Some(3) }
-                        div { style: "display:flex;gap:12px;align-items:center;",
+                        div { class: "hi-skeleton-row",
                             Skeleton { variant: SkeletonVariant::Circular, width: Some("40px".into()), height: Some("40px".into()) }
                             Skeleton { variant: SkeletonVariant::Text, width: Some("200px".into()) }
                         }

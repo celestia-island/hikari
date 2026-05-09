@@ -56,7 +56,7 @@ pub fn render() -> VNode {
             }
         })}
         {render_demo_block("Pagination Example", rsx! {
-            div { style: "display: flex; align-items: center; gap: 8px;",
+            div { class: "hi-table-pagination",
                 nav { class: "hi-pagination",
                     ul {
                         li { button { class: "hi-pagination-prev hi-button hi-button-ghost hi-button-sm hi-button--disabled", "Prev" } }
@@ -66,7 +66,7 @@ pub fn render() -> VNode {
                         li { button { class: "hi-pagination-next hi-button hi-button-ghost hi-button-sm", "Next" } }
                     }
                 }
-                span { style: "color: var(--hi-color-text-secondary); font-size: 0.875rem;", "Page 1 of 3 (24 items)" }
+                span { class: "hi-pagination__info", "Page 1 of 3 (24 items)" }
             }
         })}
         {render_demo_block("API", rsx! {

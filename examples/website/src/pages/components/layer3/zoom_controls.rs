@@ -23,8 +23,8 @@ pub fn render() -> VNode {
                     )}
                 }
                 div { style: "margin-left:auto;display:flex;align-items:center;gap:6px;",
-                    span { style: "font-size:0.75rem;color:var(--hi-color-text-muted,#9ca3af);", "Keyboard:" }
-                    span { style: "font-size:0.75rem;font-family:monospace;background:var(--hi-surface-secondary,#f3f4f6);padding:2px 8px;border-radius:4px;border:1px solid var(--hi-border,#e5e7eb);", "Ctrl + Scroll" }
+                    span { style: "font-size:0.75rem;color:var(--hi-color-text-tertiary);", "Keyboard:" }
+                    span { style: "font-size:0.75rem;font-family:monospace;background:var(--hi-color-fill-secondary);padding:2px 8px;border-radius:4px;border:1px solid var(--hi-color-border);", "Ctrl + Scroll" }
                 }
             }
         })}
@@ -48,24 +48,24 @@ pub fn render() -> VNode {
                         GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Secondary, ..Default::default() },
                     )}
                 }
-                div { style: "display:flex;justify-content:space-between;padding:0 4px;",
-                    span { style: "font-size:0.6875rem;color:var(--hi-color-text-muted,#9ca3af);font-weight:500;", "25%" }
-                    span { style: "font-size:0.6875rem;color:var(--hi-color-text-muted,#9ca3af);font-weight:500;", "50%" }
-                    span { style: "font-size:0.6875rem;color:var(--hi-color-text-muted,#9ca3af);font-weight:500;", "100%" }
-                    span { style: "font-size:0.6875rem;color:var(--hi-color-text-muted,#9ca3af);font-weight:500;", "200%" }
-                    span { style: "font-size:0.6875rem;color:var(--hi-color-text-muted,#9ca3af);font-weight:500;", "400%" }
+                 div { style: "display:flex;justify-content:space-between;padding:0 4px;",
+                    span { style: "font-size:0.6875rem;color:var(--hi-color-text-tertiary);font-weight:500;", "25%" }
+                    span { style: "font-size:0.6875rem;color:var(--hi-color-text-tertiary);font-weight:500;", "50%" }
+                    span { style: "font-size:0.6875rem;color:var(--hi-color-text-tertiary);font-weight:500;", "100%" }
+                    span { style: "font-size:0.6875rem;color:var(--hi-color-text-tertiary);font-weight:500;", "200%" }
+                    span { style: "font-size:0.6875rem;color:var(--hi-color-text-tertiary);font-weight:500;", "400%" }
                 }
             }
         })}
         {render_demo_block("Floating Zoom Controls", rsx!{
-            div { style: "position:relative;height:260px;background:#fafbfc;border-radius:12px;border:1px solid var(--hi-border,#e5e7eb);overflow:hidden;",
-                div { style: "position:absolute;inset:0;background-image:radial-gradient(circle,var(--hi-border,#e5e7eb) 1px,transparent 1px);background-size:20px 20px;opacity:0.6;" }
-                div { style: "position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:80px;background:linear-gradient(135deg,#F5A9A9 0%,#f0c4c4 100%);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(245,169,169,0.25);",
-                    span { style: "color:white;font-size:24px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,0.15);", "🖼" }
+            div { class: "hi-zoom-canvas",
+                div { class: "hi-zoom-canvas__grid" }
+                div { class: "hi-zoom-canvas__preview",
+                    span { "🖼" }
                 }
-                div { style: "position:absolute;top:28px;left:28px;width:56px;height:40px;background:white;border-radius:6px;border:1px solid var(--hi-border,#e5e7eb);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--hi-color-text-secondary,#6b7280);box-shadow:0 2px 8px rgba(0,0,0,0.06);", "Card A" }
-                div { style: "position:absolute;top:32px;right:32px;width:64px;height:44px;background:white;border-radius:6px;border:1px solid var(--hi-border,#e5e7eb);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--hi-color-text-secondary,#6b7280);box-shadow:0 2px 8px rgba(0,0,0,0.06);", "Card B" }
-                div { style: "position:absolute;bottom:48px;left:40px;width:72px;height:36px;background:rgba(245,169,169,0.08);border:1px dashed rgba(245,169,169,0.35);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--hi-color-primary,#F5A9A9);font-weight:600;", "Selection" }
+                div { class: "hi-zoom-canvas__card", "Card A" }
+                div { class: "hi-zoom-canvas__card hi-zoom-canvas__card--right", "Card B" }
+                div { class: "hi-zoom-canvas__selection", "Selection" }
                 div { style: "position:absolute;bottom:12px;right:12px;",
                     div { class: "hi-zoom-controls hi-zoom-controls--floating",
                         {glow_wrap(
@@ -103,7 +103,7 @@ pub fn render() -> VNode {
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Secondary, ..Default::default() },
                 )}
                 {glow_wrap(
-                    rsx! { button { class: "hi-zoom-controls__btn", style: "width:auto;padding:0 10px;font-size:13px;", "▹ Sel" } },
+                    rsx! { button { class: "hi-zoom-controls__btn hi-zoom-controls__btn--text", "▹ Sel" } },
                     GlowConfig { intensity: GlowIntensity::Soft, color: GlowColor::Primary, ..Default::default() },
                 )}
             }

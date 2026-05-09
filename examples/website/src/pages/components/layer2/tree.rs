@@ -37,32 +37,32 @@ pub fn render() -> VNode {
         {render_demo_block("Tree with Checkboxes", rsx! {
             div { class: "hi-tree",
                 div { class: "hi-tree__item",
-                    label { style: "display:flex;align-items:center;gap:6px;",
+                    label { class: "hi-tree__label--checkable",
                         input { r#type: "checkbox", checked: "true" }
                         span { class: "hi-tree__arrow hi-tree__arrow--expanded", "▼" }
                         span { class: "hi-tree__label", "Permissions" }
                     }
                 }
                 div { class: "hi-tree__item hi-tree__item--indent",
-                    label { style: "display:flex;align-items:center;gap:6px;",
+                    label { class: "hi-tree__label--checkable",
                         input { r#type: "checkbox", checked: "true" }
                         span { class: "hi-tree__label", "Read" }
                     }
                 }
                 div { class: "hi-tree__item hi-tree__item--indent",
-                    label { style: "display:flex;align-items:center;gap:6px;",
+                    label { class: "hi-tree__label--checkable",
                         input { r#type: "checkbox", checked: "true" }
                         span { class: "hi-tree__label", "Write" }
                     }
                 }
                 div { class: "hi-tree__item hi-tree__item--indent",
-                    label { style: "display:flex;align-items:center;gap:6px;",
+                    label { class: "hi-tree__label--checkable",
                         input { r#type: "checkbox" }
                         span { class: "hi-tree__label", "Delete" }
                     }
                 }
                 div { class: "hi-tree__item",
-                    label { style: "display:flex;align-items:center;gap:6px;",
+                    label { class: "hi-tree__label--checkable",
                         input { r#type: "checkbox" }
                         span { class: "hi-tree__arrow", "▶" }
                         span { class: "hi-tree__label", "Admin" }

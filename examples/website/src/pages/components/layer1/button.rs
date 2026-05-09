@@ -91,12 +91,12 @@ pub fn render() -> VNode {
             )}
             {render_demo_block("Block Buttons",
                 rsx! {
-                    div { style: "display:flex;flex-direction:column;gap:12px;",
-                        button { class: "hi-button hi-button-primary", style: "width:100%;", attr: "type", "button", "Full Width Primary" }
-                        button { class: "hi-button hi-button-danger", style: "width:100%;", attr: "type", "button", "Delete Account" }
-                        div { style: "display:flex;gap:12px;",
-                            button { class: "hi-button hi-button-secondary", style: "flex:1;", attr: "type", "button", "Cancel" }
-                            button { class: "hi-button hi-button-primary", style: "flex:1;", attr: "type", "button", "Confirm" }
+                    div { class: "hi-btn-group--block",
+                        button { class: "hi-button hi-button-primary hi-button--block", attr: "type", "button", "Full Width Primary" }
+                        button { class: "hi-button hi-button-danger hi-button--block", attr: "type", "button", "Delete Account" }
+                        div { class: "hi-btn-group",
+                            button { class: "hi-button hi-button-secondary hi-button--flex", attr: "type", "button", "Cancel" }
+                            button { class: "hi-button hi-button-primary hi-button--flex", attr: "type", "button", "Confirm" }
                         }
                     }
                 }

@@ -50,7 +50,7 @@ packages/icons/assets/lucide_svgs.json
 packages/icons/assets/lucide_manifest.json
 
 # Bulk SVG downloads (build-time intermediate files fetched from CDN)
-icons/
+/icons/
 
 # NPM cache
 .npm/

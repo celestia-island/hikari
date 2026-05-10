@@ -26,7 +26,7 @@ tairitsu-hooks = { version = "^0.4", optional = true }
 tairitsu-macros = { version = "^0.4", optional = true }
 
 # Hikari design system
-hikari-animation = { path = "../animation", default-features = false }
+hikari-animation = { version = "^0.1", path = "../animation", default-features = false }
 
 # Data serialization
 serde.workspace = true

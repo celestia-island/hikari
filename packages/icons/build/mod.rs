@@ -217,20 +217,24 @@ fn generate_icon_module(selected_icons: &HashSet<String>, workspace_root: &Path)
 
     output.push_str("}\n\n");
 
-    output.push_str("pub fn get(name: &str) -> Option<&'static IconData> {\n");
-    output.push_str("    match name {\n");
+    if icon_data.is_empty() {
+        output.push_str("pub fn get(_name: &str) -> Option<&'static IconData> {\n    None\n}\n");
+    } else {
+        output.push_str("pub fn get(name: &str) -> Option<&'static IconData> {\n");
+        output.push_str("    match name {\n");
 
-    for (const_name, icon_name, _) in &icon_data {
-        output.push_str("        \"");
-        output.push_str(icon_name);
-        output.push_str("\" => Some(&data::");
-        output.push_str(const_name);
-        output.push_str("),\n");
+        for (const_name, icon_name, _) in &icon_data {
+            output.push_str("        \"");
+            output.push_str(icon_name);
+            output.push_str("\" => Some(&data::");
+            output.push_str(const_name);
+            output.push_str("),\n");
+        }
+
+        output.push_str("        _ => None,\n");
+        output.push_str("    }\n");
+        output.push_str("}\n");
     }
-
-    output.push_str("        _ => None,\n");
-    output.push_str("    }\n");
-    output.push_str("}\n");
 
     Ok(output)
 }

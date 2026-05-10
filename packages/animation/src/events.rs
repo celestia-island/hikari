@@ -191,7 +191,7 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
                 let wrapped_handler = move |event: Box<dyn EventData>| {
                     if let Some(mouse_event) = event.as_any().downcast_ref::<MouseEvent>() {
                         let value_str = (f)(mouse_event.client_x, mouse_event.client_y);
-                        for (_name, element_handle) in elements.iter() {
+                        for element_handle in elements.values() {
                             platform.borrow_mut().set_style(
                                 element_handle,
                                 "transform",
@@ -214,7 +214,7 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
             let wrapped_handler = move |event: Box<dyn EventData>| {
                 if let Some(mouse_event) = event.as_any().downcast_ref::<MouseEvent>() {
                     let value_str = (f)(mouse_event.client_x, mouse_event.client_y);
-                    for (_name, element_handle) in elements.iter() {
+                    for element_handle in elements.values() {
                         platform
                             .borrow_mut()
                             .set_style(element_handle, "transform", &value_str);
@@ -271,7 +271,7 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
         // Create a wrapper that converts the value string to actual style application
         let wrapped_handler = move |event: Box<dyn EventData>| {
             if let Some(value_str) = handler(event) {
-                for (_name, element_handle) in elements.iter() {
+                for element_handle in elements.values() {
                     // Apply the style using the platform
                     platform
                         .borrow_mut()

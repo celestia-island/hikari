@@ -188,7 +188,7 @@ hikari-components/
 - 组件级样式隔离
 - CSS 变量集成
 
-### 6. 构建系统 (hikari-builder)
+### 6. 构建系统 (hikari-icons (build))
 
 编译时代码生成和 SCSS 编译。
 
@@ -215,15 +215,14 @@ hikari-components/
 ```rust
 // build.rs
 fn main() {
-    hikari_builder::build().expect("Build failed");
+    tairitsu-icons build system::build().expect("Build failed");
 }
 ```
 
 **生成文件**:
-- `packages/builder/src/generated/components.rs` - 组件常量
 - `public/styles/bundle.css` - 编译后的 CSS
 
-### 7. 渲染服务 (hikari-render-service)
+### 7. 渲染服务 (tairitsu-packager)
 
 服务端渲染和静态资源服务。
 
@@ -402,11 +401,11 @@ hikari-extra-components
   ├── hikari-theme
   └── hikari-animation
 
-hikari-render-service
+tairitsu-packager
   ├── hikari-components
   └── axum
 
-hikari-builder
+hikari-icons (build)
   └── grass (SCSS compiler)
 ```
 

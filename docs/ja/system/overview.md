@@ -188,7 +188,7 @@ hikari-components/
 - コンポーネントレベルのスタイル分離
 - CSS変数統合
 
-### 6. Build System (hikari-builder)
+### 6. Icon Build System
 
 コンパイル時コード生成とSCSSコンパイル。
 
@@ -215,15 +215,14 @@ hikari-components/
 ```rust
 // build.rs
 fn main() {
-    hikari_builder::build().expect("ビルド失敗");
+    tairitsu-icons build system::build().expect("ビルド失敗");
 }
 ```
 
 **生成ファイル**:
-- `packages/builder/src/generated/components.rs` - コンポーネント定数
 - `public/styles/bundle.css` - コンパイル済みCSS
 
-### 7. Render Service (hikari-render-service)
+### 7. Render Service (tairitsu-packager)
 
 サーバーサイドレンダリングと静的アセット配信。
 
@@ -402,11 +401,11 @@ hikari-extra-components
   ├── hikari-theme
   └── hikari-animation
 
-hikari-render-service
+tairitsu-packager
   ├── hikari-components
   └── axum
 
-hikari-builder
+hikari-icons (build)
   └── grass (SCSSコンパイラ)
 ```
 

@@ -1,0 +1,48 @@
+name: Tests
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/test.yml'
+      - 'packages/**/*'
+      - 'examples/**/*'
+      - 'Cargo.toml'
+      - 'justfile'
+  push:
+    branches: [master, dev]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain:
+          - stable
+          - nightly
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          targets: wasm32-wasip2
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install just
+        uses: extractions/setup-just@v3
+
+      - name: Run tests
+        run: just test
+
+      - name: Check wasm32-wasip2 target
+        run: |
+          cargo check \
+            --workspace \
+            --exclude hikari-e2e \
+            --all-features \
+            --target wasm32-wasip2

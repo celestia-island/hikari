@@ -38,11 +38,13 @@ tairitsu-web = { path = "../../../tairitsu/packages/web", default-features = fal
 # Hikari design system (pure Rust, no Dioxus)
 hikari-palette = { path = "../../packages/palette" }
 hikari-components = { path = "../../packages/components", default-features = false }
-hikari-i18n = { path = "../../packages/i18n" }
 hikari-icons = { path = "../../packages/icons", features = ["tairitsu"] }
 
 # Markdown rendering
 pulldown-cmark = "0.12"
+
+# TOML parsing (for i18n loader)
+toml = "^0.8"
 
 # Logging and error handling
 tracing = "^0.1"

@@ -1,4 +1,4 @@
-use hikari_i18n::t;
+use tairitsu_web::t;
 use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use tairitsu_vdom::{VElement, VNode, VText};
 

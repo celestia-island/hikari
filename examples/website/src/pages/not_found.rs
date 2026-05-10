@@ -1,4 +1,4 @@
-use hikari_i18n::t;
+use tairitsu_web::t;
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
 

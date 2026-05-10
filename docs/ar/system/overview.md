@@ -188,7 +188,7 @@ hikari-components/
 - عزل الأنماط على مستوى المكون
 - تكامل متغيرات CSS
 
-### 6. نظام البناء (hikari-builder)
+### 6. نظام البناء (hikari-icons (build))
 
 توليد الكود في وقت الترجمة وتجميع SCSS.
 
@@ -215,15 +215,14 @@ hikari-components/
 ```rust
 // build.rs
 fn main() {
-    hikari_builder::build().expect("فشل البناء");
+    tairitsu-icons build system::build().expect("فشل البناء");
 }
 ```
 
 **الملفات المولدة**:
-- `packages/builder/src/generated/components.rs` - ثوابت المكونات
 - `public/styles/bundle.css` - CSS المجمّع
 
-### 7. خدمة العرض (hikari-render-service)
+### 7. خدمة العرض (tairitsu-packager)
 
 العرض من جانب الخادم وخدمة الأصول الثابتة.
 
@@ -402,11 +401,11 @@ hikari-extra-components
 ├── hikari-theme
 └── hikari-animation
 
-hikari-render-service
+tairitsu-packager
 ├── hikari-components
 └── axum
 
-hikari-builder
+hikari-icons (build)
 └── grass (مترجم SCSS)
 ```
 

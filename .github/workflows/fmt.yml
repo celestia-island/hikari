@@ -17,6 +17,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Fetch MDI icons
+        run: python3 scripts/icons/fetch_mdi_icons.py
+
+      - name: Generate icon modules
+        run: cargo build -p hikari-icons
+
       - name: Setup toolchain
         uses: dtolnay/rust-toolchain@master
         with:

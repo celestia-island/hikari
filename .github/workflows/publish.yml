@@ -67,9 +67,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Fetch MDI icons
+        run: python3 scripts/icons/fetch_mdi_icons.py
+
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-wasip2
 
       - uses: Swatinem/rust-cache@v2
 

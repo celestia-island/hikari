@@ -1,7 +1,7 @@
 // packages/components/src/display/comment.rs
 // Comment component with Arknights + FUI styling
 
-use hikari_palette::classes::{TypedClass, ClassesBuilder, CommentClass};
+use hikari_palette::classes::{ClassesBuilder, CommentClass, TypedClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 

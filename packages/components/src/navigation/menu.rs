@@ -280,7 +280,9 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
         .add(&props.class)
         .build();
 
-    let list_classes = ClassesBuilder::new().add_typed(MenuClass::SubmenuList).build();
+    let list_classes = ClassesBuilder::new()
+        .add_typed(MenuClass::SubmenuList)
+        .build();
 
     let is_open_for_memo = is_open.clone();
     let list_style = use_memo(move || {

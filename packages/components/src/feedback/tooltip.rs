@@ -1,7 +1,7 @@
 // hi-components/src/feedback/tooltip.rs
 // Tooltip component with Arknights + FUI styling - Portal-based rendering with animation
 
-use hikari_palette::classes::{TypedClass, ClassesBuilder, TooltipClass};
+use hikari_palette::classes::{ClassesBuilder, TooltipClass, TypedClass};
 
 use crate::portal::{PortalEntry, TriggerPlacement};
 use crate::{

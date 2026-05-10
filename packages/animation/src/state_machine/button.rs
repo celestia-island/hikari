@@ -283,20 +283,14 @@ impl ButtonStateMachine {
         // Special case: Disable can be triggered from any state
         // This ensures buttons can be disabled regardless of current interaction
         match event {
-            ButtonEvent::Disable => {
-                if self.current_state != ButtonState::Disabled {
-                    self.current_state = ButtonState::Disabled;
-                    return Some(ButtonState::Disabled);
-                }
+            ButtonEvent::Disable if self.current_state != ButtonState::Disabled => {
+                self.current_state = ButtonState::Disabled;
+                return Some(ButtonState::Disabled);
             }
-            // Special case: Enable can only exit from Disabled state
-            ButtonEvent::Enable => {
-                if self.current_state == ButtonState::Disabled {
-                    self.current_state = ButtonState::Idle;
-                    return Some(ButtonState::Idle);
-                }
+            ButtonEvent::Enable if self.current_state == ButtonState::Disabled => {
+                self.current_state = ButtonState::Idle;
+                return Some(ButtonState::Idle);
             }
-            // All other event combinations that don't have predefined transitions are ignored
             _ => {}
         }
 

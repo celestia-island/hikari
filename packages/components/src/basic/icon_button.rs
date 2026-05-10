@@ -8,7 +8,7 @@
 #![expect(clippy::needless_update)]
 
 use hikari_icons::{Icon, IconProps, MdiIcon};
-use hikari_palette::classes::{components::ButtonClass, ClassesBuilder};
+use hikari_palette::classes::{ClassesBuilder, components::ButtonClass};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},

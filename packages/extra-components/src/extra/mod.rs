@@ -39,7 +39,7 @@ pub use rich_text_editor::*;
 pub use timeline::*;
 pub use user_guide::*;
 pub use video_player::PlaybackChangeEvent as VideoPlaybackChangeEvent;
-pub use video_player::{PlaybackStatus, TimeUpdateEvent, VideoPlayerState, VIDEO_PLAYER_STYLES};
+pub use video_player::{PlaybackStatus, TimeUpdateEvent, VIDEO_PLAYER_STYLES, VideoPlayerState};
 pub use zoom_controls::*;
 
 pub use audio_waveform::render_audio_waveform;

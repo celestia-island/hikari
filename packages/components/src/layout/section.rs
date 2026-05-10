@@ -16,7 +16,7 @@
 //! }
 //! ```
 
-use hikari_palette::classes::{TypedClass, ClassesBuilder, SectionClass};
+use hikari_palette::classes::{ClassesBuilder, SectionClass, TypedClass};
 
 use crate::prelude::*;
 

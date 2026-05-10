@@ -21,7 +21,7 @@ serde = { version = "^1", features = ["derive"] }
 serde_json = "^1"
 
 # VDOM
-tairitsu-vdom = { path = "../../../tairitsu/packages/vdom" }
+tairitsu-vdom = "^0.4"
 
 # Utilities
 lazy_static = "^1"

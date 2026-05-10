@@ -4,7 +4,7 @@
 #![expect(clippy::needless_update)]
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{TypedClass, CascaderClass, ClassesBuilder};
+use hikari_palette::classes::{CascaderClass, ClassesBuilder, TypedClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 

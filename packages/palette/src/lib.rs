@@ -180,16 +180,36 @@ mod wasm_export {
             g: c.g(),
             b: c.b(),
             category: match c.category {
-                crate::colors::ColorCategory::Red => exports::hikari::palette::color::ColorCategory::Red,
-                crate::colors::ColorCategory::Yellow => exports::hikari::palette::color::ColorCategory::Yellow,
-                crate::colors::ColorCategory::Green => exports::hikari::palette::color::ColorCategory::Green,
-                crate::colors::ColorCategory::Blue => exports::hikari::palette::color::ColorCategory::Blue,
-                crate::colors::ColorCategory::Cyan => exports::hikari::palette::color::ColorCategory::Cyan,
-                crate::colors::ColorCategory::White => exports::hikari::palette::color::ColorCategory::White,
-                crate::colors::ColorCategory::Black => exports::hikari::palette::color::ColorCategory::Black,
-                crate::colors::ColorCategory::Gray => exports::hikari::palette::color::ColorCategory::Gray,
-                crate::colors::ColorCategory::Purple => exports::hikari::palette::color::ColorCategory::Purple,
-                crate::colors::ColorCategory::Orange => exports::hikari::palette::color::ColorCategory::Orange,
+                crate::colors::ColorCategory::Red => {
+                    exports::hikari::palette::color::ColorCategory::Red
+                }
+                crate::colors::ColorCategory::Yellow => {
+                    exports::hikari::palette::color::ColorCategory::Yellow
+                }
+                crate::colors::ColorCategory::Green => {
+                    exports::hikari::palette::color::ColorCategory::Green
+                }
+                crate::colors::ColorCategory::Blue => {
+                    exports::hikari::palette::color::ColorCategory::Blue
+                }
+                crate::colors::ColorCategory::Cyan => {
+                    exports::hikari::palette::color::ColorCategory::Cyan
+                }
+                crate::colors::ColorCategory::White => {
+                    exports::hikari::palette::color::ColorCategory::White
+                }
+                crate::colors::ColorCategory::Black => {
+                    exports::hikari::palette::color::ColorCategory::Black
+                }
+                crate::colors::ColorCategory::Gray => {
+                    exports::hikari::palette::color::ColorCategory::Gray
+                }
+                crate::colors::ColorCategory::Purple => {
+                    exports::hikari::palette::color::ColorCategory::Purple
+                }
+                crate::colors::ColorCategory::Orange => {
+                    exports::hikari::palette::color::ColorCategory::Orange
+                }
             },
         }
     }
@@ -201,7 +221,9 @@ mod wasm_export {
     fn palette_to_wit(p: &crate::themes::Palette) -> exports::hikari::palette::theme::Palette {
         exports::hikari::palette::theme::Palette {
             mode: match p.mode {
-                crate::themes::ThemeMode::Light => exports::hikari::palette::theme::ThemeMode::Light,
+                crate::themes::ThemeMode::Light => {
+                    exports::hikari::palette::theme::ThemeMode::Light
+                }
                 crate::themes::ThemeMode::Dark => exports::hikari::palette::theme::ThemeMode::Dark,
             },
             primary: color_to_wit(&p.primary),
@@ -250,17 +272,29 @@ mod wasm_export {
             wit_to_color(&c).is_light()
         }
 
-        fn color_to_hsl(c: exports::hikari::palette::color::Color) -> exports::hikari::palette::color::Hsl {
+        fn color_to_hsl(
+            c: exports::hikari::palette::color::Color,
+        ) -> exports::hikari::palette::color::Hsl {
             let hsl = wit_to_color(&c).to_hsl();
-            exports::hikari::palette::color::Hsl { h: hsl.h, s: hsl.s, l: hsl.l }
+            exports::hikari::palette::color::Hsl {
+                h: hsl.h,
+                s: hsl.s,
+                l: hsl.l,
+            }
         }
 
-        fn color_adjust_saturation(c: exports::hikari::palette::color::Color, factor: f64) -> exports::hikari::palette::color::Color {
+        fn color_adjust_saturation(
+            c: exports::hikari::palette::color::Color,
+            factor: f64,
+        ) -> exports::hikari::palette::color::Color {
             let adjusted = wit_to_color(&c).adjust_saturation(factor);
             color_to_wit(&adjusted)
         }
 
-        fn color_adjust_lightness(c: exports::hikari::palette::color::Color, factor: f64) -> exports::hikari::palette::color::Color {
+        fn color_adjust_lightness(
+            c: exports::hikari::palette::color::Color,
+            factor: f64,
+        ) -> exports::hikari::palette::color::Color {
             let adjusted = wit_to_color(&c).adjust_lightness(factor);
             color_to_wit(&adjusted)
         }
@@ -276,7 +310,8 @@ mod wasm_export {
             c2: exports::hikari::palette::color::Color,
             ratio: f64,
         ) -> exports::hikari::palette::color::Color {
-            let result = crate::color_math::blend_colors(wit_to_color(&c1), wit_to_color(&c2), ratio);
+            let result =
+                crate::color_math::blend_colors(wit_to_color(&c1), wit_to_color(&c2), ratio);
             color_to_wit(&result)
         }
 
@@ -306,9 +341,10 @@ mod wasm_export {
             stops: Vec<exports::hikari::palette::gradient::GradientStop>,
             position: f64,
         ) -> exports::hikari::palette::color::Color {
-            let native_stops: Vec<_> = stops.iter().map(|s| {
-                crate::color_math::GradientStop::new(s.position, wit_to_color(&s.color))
-            }).collect();
+            let native_stops: Vec<_> = stops
+                .iter()
+                .map(|s| crate::color_math::GradientStop::new(s.position, wit_to_color(&s.color)))
+                .collect();
             let gradient = crate::color_math::Gradient::new(native_stops);
             let result = gradient.sample(position);
             color_to_wit(&result)
@@ -334,8 +370,12 @@ mod wasm_export {
         ) -> String {
             let native_palette = crate::themes::Palette {
                 mode: match p.mode {
-                    exports::hikari::palette::theme::ThemeMode::Light => crate::themes::ThemeMode::Light,
-                    exports::hikari::palette::theme::ThemeMode::Dark => crate::themes::ThemeMode::Dark,
+                    exports::hikari::palette::theme::ThemeMode::Light => {
+                        crate::themes::ThemeMode::Light
+                    }
+                    exports::hikari::palette::theme::ThemeMode::Dark => {
+                        crate::themes::ThemeMode::Dark
+                    }
                 },
                 primary: wit_to_color(&p.primary),
                 secondary: wit_to_color(&p.secondary),
@@ -357,7 +397,9 @@ mod wasm_export {
             alpha: f64,
         ) -> String {
             let mode = match p.mode {
-                exports::hikari::palette::theme::ThemeMode::Light => crate::themes::ThemeMode::Light,
+                exports::hikari::palette::theme::ThemeMode::Light => {
+                    crate::themes::ThemeMode::Light
+                }
                 exports::hikari::palette::theme::ThemeMode::Dark => crate::themes::ThemeMode::Dark,
             };
             let tmp = crate::themes::Palette {

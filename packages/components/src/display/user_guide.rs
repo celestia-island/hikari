@@ -2,7 +2,7 @@
 // UserGuide component with Arknights + FUI styling
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{TypedClass, ClassesBuilder, UserGuideClass};
+use hikari_palette::classes::{ClassesBuilder, TypedClass, UserGuideClass};
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -155,7 +155,8 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     let progress = progress_signal.get();
     let guide_opacity = progress;
     let guide_translate_y = 8.0 * (1.0 - progress);
-    let container_style = format!("opacity: {guide_opacity:.2}; transform: translateY({guide_translate_y:.1}px);");
+    let container_style =
+        format!("opacity: {guide_opacity:.2}; transform: translateY({guide_translate_y:.1}px);");
 
     let handle_next = {
         let on_step_change = props.on_step_change.clone();

@@ -285,10 +285,7 @@ impl StyledComponent for ProgressComponent {
 
 const PULSE_PERIOD_MS: f64 = 2000.0;
 
-fn pulse_loop(
-    state: Rc<RefCell<PulseState>>,
-    opacity_signal: ReactiveSignal<f64>,
-) {
+fn pulse_loop(state: Rc<RefCell<PulseState>>, opacity_signal: ReactiveSignal<f64>) {
     platform::request_animation_frame_with_timestamp(move |ts| {
         let mut s = state.borrow_mut();
         if s.stopped {

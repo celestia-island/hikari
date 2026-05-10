@@ -3,7 +3,7 @@ mod build_icons;
 
 use std::path::PathBuf;
 
-use build_icons::{auto_discovery, IconConfig, IconSelection, MdiStyle};
+use build_icons::{IconConfig, IconSelection, auto_discovery};
 
 fn main() {
     let is_dynamic = std::env::var("CARGO_FEATURE_DYNAMIC_FETCH").is_ok();
@@ -20,9 +20,7 @@ fn main() {
         Ok(()) => {}
         Err(e) => {
             eprintln!("Failed to build icons: {}", e);
-            eprintln!(
-                "Solution: Run 'python scripts/icons/fetch_mdi_icons.py' to download icons"
-            );
+            eprintln!("Solution: Run 'python scripts/icons/fetch_mdi_icons.py' to download icons");
             std::process::exit(1);
         }
     }
@@ -43,7 +41,6 @@ fn build_icons(workspace_root: &std::path::Path) -> anyhow::Result<()> {
 
     let config = IconConfig {
         selection: icon_selection,
-        styles: vec![MdiStyle::Filled, MdiStyle::Outline],
         output_file: "src/generated/mdi_selected.rs".into(),
     };
 

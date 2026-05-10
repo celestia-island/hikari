@@ -1,22 +1,13 @@
 #[cfg(test)]
 mod tests {
-    use hikari_components::prelude::*;
     use hikari_components::layout::{
-        Divider, DividerProps, DividerOrientation, DividerType,
-        FlexBox, FlexBoxProps, Direction, Align, Justify, Wrap, FlexGap,
-        Space, SpaceProps, SpaceDirection,
-        Footer, FooterProps,
-        Container, ContainerProps, ContainerSize,
-        Grid, GridProps,
-        Col, ColProps,
-        Row, RowProps,
-        Section, SectionProps,
-        Spacer, SpacerProps,
-        Header, HeaderProps,
-        Aside, AsideProps,
-        Content, ContentProps,
-        ScrollbarContainer, ScrollbarContainerProps,
+        Align, AsideProps, Col, ColProps, Container, ContainerProps, ContainerSize, Content,
+        ContentProps, Direction, Divider, DividerOrientation, DividerProps, DividerType, FlexBox,
+        FlexBoxProps, FlexGap, Footer, FooterProps, Grid, GridProps, Header, HeaderProps, Justify,
+        Row, RowProps, ScrollbarContainer, ScrollbarContainerProps, Section, SectionProps, Space,
+        SpaceDirection, SpaceProps, Spacer, SpacerProps, Wrap,
     };
+    use hikari_components::prelude::*;
 
     // ── Divider ────────────────────────────────────────────────
 
@@ -27,7 +18,10 @@ mod tests {
 
     #[test]
     fn test_divider_orientation_variants() {
-        assert_eq!(DividerOrientation::default(), DividerOrientation::Horizontal);
+        assert_eq!(
+            DividerOrientation::default(),
+            DividerOrientation::Horizontal
+        );
         let _vertical = DividerOrientation::Vertical;
     }
 
@@ -373,7 +367,10 @@ mod tests {
             class: "hero-section".to_string(),
         };
         assert_eq!(props.title.flatten().as_deref(), Some("Welcome"));
-        assert_eq!(props.description.flatten().as_deref(), Some("A description"));
+        assert_eq!(
+            props.description.flatten().as_deref(),
+            Some("A description")
+        );
         assert_eq!(props.size, "lg");
     }
 

@@ -13,7 +13,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
-tairitsu-style = { path = "../../../tairitsu/packages/style" }
+tairitsu-style = "^0.4"
 yuuka = "0.6"
 
 [target.'cfg(target_family = "wasm")'.dependencies]

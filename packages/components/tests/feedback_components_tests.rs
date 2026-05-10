@@ -263,7 +263,7 @@ mod tests {
 
     #[test]
     fn test_modal_calculate_position_center() {
-        use hikari_components::feedback::{calculate_position, ModalPosition};
+        use hikari_components::feedback::{ModalPosition, calculate_position};
         let (x, y) = calculate_position(
             ModalPosition::Center,
             None,
@@ -279,7 +279,7 @@ mod tests {
 
     #[test]
     fn test_modal_calculate_position_top_left() {
-        use hikari_components::feedback::{calculate_position, ModalPosition};
+        use hikari_components::feedback::{ModalPosition, calculate_position};
         let (x, y) = calculate_position(
             ModalPosition::TopLeft,
             Some(100.0),
@@ -295,7 +295,7 @@ mod tests {
 
     #[test]
     fn test_modal_calculate_position_clamped() {
-        use hikari_components::feedback::{calculate_position, ModalPosition};
+        use hikari_components::feedback::{ModalPosition, calculate_position};
         let (x, y) = calculate_position(
             ModalPosition::TopLeft,
             Some(10.0),

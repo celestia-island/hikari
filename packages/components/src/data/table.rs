@@ -3,8 +3,8 @@
 
 use std::collections::HashMap;
 
-use hikari_palette::classes::TableClass;
 use hikari_palette::TypedClass;
+use hikari_palette::classes::TableClass;
 use tairitsu_style::ClassesBuilder;
 
 pub use super::{

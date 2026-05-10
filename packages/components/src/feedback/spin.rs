@@ -1,4 +1,4 @@
-use hikari_palette::classes::{TypedClass, ClassesBuilder, SpinClass};
+use hikari_palette::classes::{ClassesBuilder, SpinClass, TypedClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 

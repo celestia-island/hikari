@@ -218,7 +218,7 @@ mod tests {
 
     #[test]
     fn test_slide_direction_exists() {
-        let _directions = vec![
+        let _directions = [
             SlideDirection::Top,
             SlideDirection::Bottom,
             SlideDirection::Left,

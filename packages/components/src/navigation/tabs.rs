@@ -239,7 +239,7 @@ impl StyledComponent for TabsComponent {
 /// Tab pane component
 #[component]
 pub fn TabPane(props: TabPaneProps) -> Element {
-    use hikari_palette::classes::{TypedClass, components::TabsClass, ClassesBuilder};
+    use hikari_palette::classes::{ClassesBuilder, TypedClass, components::TabsClass};
 
     let ctx = use_context::<TabsContext>().expect("TabsContext not found");
     let ctx = ctx.get();

@@ -22,7 +22,9 @@
 //! }
 //! ```
 
-use hikari_palette::classes::{TypedClass, AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding};
+use hikari_palette::classes::{
+    AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, TypedClass,
+};
 
 use crate::platform;
 use crate::prelude::*;

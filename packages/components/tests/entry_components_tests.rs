@@ -1,15 +1,12 @@
 #[cfg(test)]
 mod tests {
     use hikari_components::entry::{
-        AutoCompleteProps,
-        Cascader, CascaderProps, CascaderOption, CascaderSize,
-        NumberInput, NumberInputProps, NumberInputSize,
-        SearchProps,
-        Transfer, TransferProps, TransferItem, SelectChangeEvent,
+        AutoCompleteProps, Cascader, CascaderOption, CascaderProps, CascaderSize, NumberInput,
+        NumberInputProps, NumberInputSize, SearchProps, SelectChangeEvent, Transfer, TransferItem,
+        TransferProps,
     };
 
     // ── AutoComplete ────────────────────────────────────────────
-
 
     // Note: AutoComplete render test requires use_signal hooks (runtime context)
     // Props-based tests below cover the API surface
@@ -86,21 +83,17 @@ mod tests {
 
     #[test]
     fn test_cascader_with_nested_options() {
-        let options = vec![
-            CascaderOption {
-                label: "China".to_string(),
-                value: "cn".to_string(),
-                children: Some(vec![
-                    CascaderOption {
-                        label: "Beijing".to_string(),
-                        value: "bj".to_string(),
-                        children: None,
-                        disabled: false,
-                    },
-                    ]),
+        let options = vec![CascaderOption {
+            label: "China".to_string(),
+            value: "cn".to_string(),
+            children: Some(vec![CascaderOption {
+                label: "Beijing".to_string(),
+                value: "bj".to_string(),
+                children: None,
                 disabled: false,
-            },
-        ];
+            }]),
+            disabled: false,
+        }];
         let props = CascaderProps {
             options,
             value: Some(vec!["cn".to_string(), "bj".to_string()]),
@@ -184,10 +177,7 @@ mod tests {
             value: "rust".to_string(),
             placeholder: "Search...".to_string(),
             loading: true,
-            suggestions: vec![
-                "rust lang".to_string(),
-                "rustacean".to_string(),
-            ],
+            suggestions: vec!["rust lang".to_string(), "rustacean".to_string()],
             ..Default::default()
         };
         assert_eq!(props.value, "rust");

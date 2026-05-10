@@ -2,8 +2,8 @@
 // Skeleton component with Arknights + FUI styling
 
 use hikari_palette::classes::{
-    components::SkeletonDisplayClass, ClassesBuilder, Display, FlexDirection, Gap, Padding,
-    SkeletonClass,
+    ClassesBuilder, Display, FlexDirection, Gap, Padding, SkeletonClass,
+    components::SkeletonDisplayClass,
 };
 use tairitsu_vdom::IntoAttrValue;
 

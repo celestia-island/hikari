@@ -1,9 +1,9 @@
 // packages/components/src/display/empty.rs
 // Empty state component with Arknights + FUI styling
 
-use hikari_palette::classes::{TypedClass, 
+use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, EmptyClass, FlexDirection, Gap, JustifyContent, Padding,
-    TextAlign,
+    TextAlign, TypedClass,
 };
 
 use crate::{prelude::*, styled::StyledComponent};

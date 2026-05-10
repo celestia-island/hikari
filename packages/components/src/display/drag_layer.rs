@@ -1,7 +1,7 @@
 // packages/components/src/display/drag_layer.rs
 // DragLayer component with Arknights + FUI styling
 
-use hikari_palette::classes::{TypedClass, ClassesBuilder, DragLayerClass};
+use hikari_palette::classes::{ClassesBuilder, DragLayerClass, TypedClass};
 
 use std::cell::RefCell;
 use std::rc::Rc;

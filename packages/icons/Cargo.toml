@@ -21,9 +21,9 @@ regex = "^1"
 
 [dependencies]
 # Tairitsu framework (optional)
-tairitsu-vdom = { path = "../../../tairitsu/packages/vdom", optional = true }
-tairitsu-hooks = { path = "../../../tairitsu/packages/hooks", optional = true }
-tairitsu-macros = { path = "../../../tairitsu/packages/macros", optional = true }
+tairitsu-vdom = { version = "^0.4", optional = true }
+tairitsu-hooks = { version = "^0.4", optional = true }
+tairitsu-macros = { version = "^0.4", optional = true }
 
 # Hikari design system
 hikari-animation = { path = "../animation", default-features = false }

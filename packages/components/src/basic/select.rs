@@ -7,8 +7,8 @@ use crate::platform;
 use crate::{
     feedback::{Glow, GlowProps},
     portal::{
-        generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy,
-        TriggerPlacement,
+        PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
+        use_portal,
     },
     prelude::*,
     styled::StyledComponent,

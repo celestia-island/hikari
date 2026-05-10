@@ -50,8 +50,12 @@ pub fn Typography(props: TypographyProps) -> Element {
     };
 
     let tag = match props.variant {
-        TextVariant::H1 | TextVariant::H2 | TextVariant::H3
-        | TextVariant::H4 | TextVariant::H5 | TextVariant::H6 => "div",
+        TextVariant::H1
+        | TextVariant::H2
+        | TextVariant::H3
+        | TextVariant::H4
+        | TextVariant::H5
+        | TextVariant::H6 => "div",
         TextVariant::Code => "code",
         _ => "span",
     };

@@ -4,7 +4,7 @@
 use crate::style_builder::StyleStringBuilder;
 use crate::{prelude::*, styled::StyledComponent};
 use hikari_palette::classes::{CardClass, ClassesBuilder, TypedClass};
-use tairitsu_vdom::{get_bounding_client_rect, DomHandle};
+use tairitsu_vdom::{DomHandle, get_bounding_client_rect};
 
 pub struct CardComponent;
 

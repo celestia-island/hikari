@@ -208,14 +208,14 @@ impl Tairitsu {
         Palette {
             mode: ThemeMode::Dark,
             primary: 鷃蓝,                                         // 鷃蓝 (20, 74, 116)
-            secondary: 姜黄,  // 姜黄 (255, 199, 115) - 与深蓝互补
-            accent: 姜黄,     // 黄色系
-            success: 葱倩,    // 绿色系
-            warning: 鹅黄,    // 黄色系
-            danger: 朱红,     // 红色系
-            background: 漆黑, // (22, 24, 35) 深邃夜空底色
-            surface: Color::from_rgb(32, 35, 54),   // 比 background 稍亮，卡片/面板底色
-            border: Color::from_rgb(48, 52, 72),    // 比 surface 稍亮，边框色
+            secondary: 姜黄,                      // 姜黄 (255, 199, 115) - 与深蓝互补
+            accent: 姜黄,                         // 黄色系
+            success: 葱倩,                        // 绿色系
+            warning: 鹅黄,                        // 黄色系
+            danger: 朱红,                         // 红色系
+            background: 漆黑,                     // (22, 24, 35) 深邃夜空底色
+            surface: Color::from_rgb(32, 35, 54), // 比 background 稍亮，卡片/面板底色
+            border: Color::from_rgb(48, 52, 72),  // 比 surface 稍亮，边框色
             text_primary: Color::from_rgb_float(0.94, 0.94, 0.96), // 近白，主文本
             text_secondary: Color::from_rgb_float(0.70, 0.72, 0.78), // 柔白偏蓝，次要文本
         }

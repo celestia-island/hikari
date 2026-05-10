@@ -1,18 +1,14 @@
 // hi-components/src/feedback/drawer.rs
 // Drawer component with Arknights + FUI styling
 
-use hikari_palette::classes::{TypedClass, ClassesBuilder, DrawerClass};
+use hikari_palette::classes::{ClassesBuilder, DrawerClass, TypedClass};
 
 use std::cell::RefCell;
 use std::rc::Rc;
 
 use tairitsu_hooks::ReactiveSignal;
 
-use crate::{
-    platform,
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::{platform, prelude::*, styled::StyledComponent};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DrawerPlacement {
@@ -39,10 +35,7 @@ struct DrawerAnimState {
 
 const DRAWER_ANIM_DURATION_MS: f64 = 300.0;
 
-fn drawer_anim_tick(
-    state: Rc<RefCell<DrawerAnimState>>,
-    progress_signal: ReactiveSignal<f64>,
-) {
+fn drawer_anim_tick(state: Rc<RefCell<DrawerAnimState>>, progress_signal: ReactiveSignal<f64>) {
     platform::request_animation_frame_with_timestamp(move |ts| {
         let mut s = state.borrow_mut();
         if s.stopped {

@@ -1,14 +1,10 @@
 #[cfg(test)]
 mod tests {
+    use hikari_components::navigation::{
+        AnchorItem, SidebarItemProps, SidebarLeafProps, SidebarProps, SidebarSectionProps,
+    };
     use hikari_components::prelude::*;
     use tairitsu_macros::rsx;
-    use hikari_components::navigation::{
-        AnchorItem,
-        SidebarProps,
-        SidebarSectionProps,
-        SidebarItemProps,
-        SidebarLeafProps,
-    };
 
     // ── Anchor ─────────────────────────────────────────────────
 
@@ -25,9 +21,18 @@ mod tests {
     #[test]
     fn test_anchor_with_items() {
         let items = [
-            AnchorItem { href: "#intro".to_string(), title: "Intro".to_string() },
-            AnchorItem { href: "#body".to_string(), title: "Body".to_string() },
-            AnchorItem { href: "#conclusion".to_string(), title: "Conclusion".to_string() },
+            AnchorItem {
+                href: "#intro".to_string(),
+                title: "Intro".to_string(),
+            },
+            AnchorItem {
+                href: "#body".to_string(),
+                title: "Body".to_string(),
+            },
+            AnchorItem {
+                href: "#conclusion".to_string(),
+                title: "Conclusion".to_string(),
+            },
         ];
         assert_eq!(items.len(), 3);
         assert_eq!(items[0].href, "#intro");

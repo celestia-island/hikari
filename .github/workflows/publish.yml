@@ -67,9 +67,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Checkout tairitsu
-        run: git clone --depth 1 https://github.com/celestia-island/tairitsu.git ../tairitsu
-
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-wasip2

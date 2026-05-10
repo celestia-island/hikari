@@ -4,7 +4,7 @@
 #![expect(clippy::needless_update)]
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{TypedClass, ClassesBuilder, ToastClass};
+use hikari_palette::classes::{ClassesBuilder, ToastClass, TypedClass};
 
 use crate::{
     basic::{IconButton, IconButtonSize, IconButtonVariant},

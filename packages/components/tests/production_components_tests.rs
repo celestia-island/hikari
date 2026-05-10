@@ -1,11 +1,9 @@
 #[cfg(test)]
 mod tests {
     use hikari_components::production::{
-        VideoPlayer, VideoPlayerProps,
-        AudioPlayer, AudioPlayerProps, AudioPlayerSize,
-        RichTextEditor, RichTextEditorProps,
-        CodeHighlight, CodeHighlightProps,
-        MarkdownEditor, MarkdownEditorProps, MarkdownEditorMode, MarkdownEditorSize,
+        AudioPlayer, AudioPlayerProps, AudioPlayerSize, CodeHighlight, CodeHighlightProps,
+        MarkdownEditor, MarkdownEditorMode, MarkdownEditorProps, MarkdownEditorSize,
+        RichTextEditor, RichTextEditorProps, VideoPlayer, VideoPlayerProps,
     };
 
     // ── VideoPlayer ──────────────────────────────────────────────

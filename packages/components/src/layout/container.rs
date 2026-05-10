@@ -78,9 +78,7 @@ pub fn Container(props: ContainerProps) -> Element {
     let center_style = if props.center {
         "margin-inline-start: auto; margin-inline-end: auto;"
     } else {
-        {
-            ""
-        }
+        { "" }
     };
 
     rsx! {

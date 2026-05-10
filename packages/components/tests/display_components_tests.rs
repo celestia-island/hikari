@@ -1,18 +1,13 @@
 #[cfg(test)]
 mod tests {
-    use hikari_components::prelude::*;
     use hikari_components::display::{
-        Calendar, CalendarProps,
-        Carousel, CarouselProps, CarouselIndicatorPosition, CarouselIndicatorType,
-        Timeline, TimelineProps, TimelineItem, TimelineItemProps, TimelinePosition,
-        Skeleton, SkeletonProps, SkeletonVariant, SkeletonSize,
-        SkeletonCard, SkeletonCardProps,
-        SkeletonTableProps,
-        QRCode, QRCodeProps,
-        Tag, TagProps, TagVariant,
-        Empty, EmptyProps,
-        Comment, CommentProps,
+        Calendar, CalendarProps, Carousel, CarouselIndicatorPosition, CarouselIndicatorType,
+        CarouselProps, Comment, CommentProps, Empty, EmptyProps, QRCode, QRCodeProps, Skeleton,
+        SkeletonCard, SkeletonCardProps, SkeletonProps, SkeletonSize, SkeletonTableProps,
+        SkeletonVariant, Tag, TagProps, TagVariant, Timeline, TimelineItem, TimelineItemProps,
+        TimelinePosition, TimelineProps,
     };
+    use hikari_components::prelude::*;
 
     // ── Calendar ────────────────────────────────────────────────
 
@@ -61,8 +56,14 @@ mod tests {
 
     #[test]
     fn test_carousel_indicator_position_variants() {
-        assert_eq!(CarouselIndicatorPosition::default(), CarouselIndicatorPosition::Bottom);
-        assert_eq!(CarouselIndicatorType::default(), CarouselIndicatorType::Dots);
+        assert_eq!(
+            CarouselIndicatorPosition::default(),
+            CarouselIndicatorPosition::Bottom
+        );
+        assert_eq!(
+            CarouselIndicatorType::default(),
+            CarouselIndicatorType::Dots
+        );
 
         let _top = CarouselIndicatorPosition::Top;
         let _left = CarouselIndicatorPosition::Left;

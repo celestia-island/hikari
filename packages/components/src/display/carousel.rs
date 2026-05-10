@@ -1,7 +1,7 @@
 // display/carousel.rs
 // Carousel component - Image/content slider with Arknights + FUI styling
 
-use hikari_palette::classes::{TypedClass, CarouselClass, ClassesBuilder};
+use hikari_palette::classes::{CarouselClass, ClassesBuilder, TypedClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 

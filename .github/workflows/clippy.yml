@@ -24,30 +24,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Checkout tairitsu
-        run: git clone --depth 1 https://github.com/celestia-island/tairitsu.git ../tairitsu
-
       - name: Setup toolchain
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.toolchain }}
           components: clippy
-          targets: wasm32-wasip2
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: Run clippy (native)
+      - name: Run clippy
         run: |
           cargo clippy \
             --all-targets \
             --all-features \
-            -- -D warnings
-
-      - name: Run clippy (wasm32-wasip2)
-        run: |
-          cargo clippy \
-            --workspace \
-            --exclude hikari-e2e \
-            --all-features \
-            --target wasm32-wasip2 \
             -- -D warnings

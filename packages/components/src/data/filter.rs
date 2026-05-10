@@ -1,8 +1,8 @@
 // hi-components/src/data/filter.rs
 // Filter component with Arknights + FUI styling
 
-use hikari_palette::classes::FilterClass;
 use hikari_palette::TypedClass;
+use hikari_palette::classes::FilterClass;
 use tairitsu_style::ClassesBuilder;
 
 use crate::{prelude::*, styled::StyledComponent};

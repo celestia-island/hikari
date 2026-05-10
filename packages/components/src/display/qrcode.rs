@@ -1,8 +1,8 @@
 // packages/components/src/display/qrcode.rs
 // QRCode component using inline SVG for rendering
 
-use hikari_palette::classes::{TypedClass, 
-    AlignItems, ClassesBuilder, Display, FlexDirection, Padding, QRCodeClass,
+use hikari_palette::classes::{
+    AlignItems, ClassesBuilder, Display, FlexDirection, Padding, QRCodeClass, TypedClass,
 };
 use qrcode::{Color, QrCode};
 

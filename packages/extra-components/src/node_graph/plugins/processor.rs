@@ -234,14 +234,16 @@ mod tests {
     fn test_handle_input_triggers_compute() {
         let node = ProcessorNode::add();
 
-        assert!(node
-            .get_output("processor_add_output".to_string())
-            .is_none());
+        assert!(
+            node.get_output("processor_add_output".to_string())
+                .is_none()
+        );
 
         node.handle_input("processor_add_a".to_string(), NodeValue::Number(10.0));
-        assert!(node
-            .get_output("processor_add_output".to_string())
-            .is_none());
+        assert!(
+            node.get_output("processor_add_output".to_string())
+                .is_none()
+        );
 
         node.handle_input("processor_add_b".to_string(), NodeValue::Number(20.0));
         let output = node.get_output("processor_add_output".to_string());

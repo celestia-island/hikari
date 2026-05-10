@@ -5,7 +5,7 @@ use hikari_palette::classes::{ClassesBuilder, Display, PopoverClass, Position};
 
 use crate::{
     platform,
-    portal::{generate_portal_id, use_portal, PortalEntry},
+    portal::{PortalEntry, generate_portal_id, use_portal},
     prelude::*,
     styled::StyledComponent,
 };

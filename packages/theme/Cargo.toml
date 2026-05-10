@@ -19,10 +19,10 @@ scss = []          # SCSS compilation
 hikari-palette = { path = "../palette" }
 
 # Tairitsu framework (for theme context)
-tairitsu-vdom = { path = "../../../tairitsu/packages/vdom" }
-tairitsu-hooks = { path = "../../../tairitsu/packages/hooks" }
-tairitsu-macros = { path = "../../../tairitsu/packages/macros" }
+tairitsu-vdom = "^0.4"
+tairitsu-hooks = "^0.4"
+tairitsu-macros = "^0.4"
 
 [build-dependencies]
-tairitsu-packager = { path = "../../../tairitsu/packages/packager", default-features = false }
+tairitsu-packager = { version = "^0.4", default-features = false }
 anyhow = "^1"

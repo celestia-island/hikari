@@ -25,7 +25,7 @@
 //! }
 //! ```
 
-use hikari_palette::{classes::components::*, ClassesBuilder, TypedClass};
+use hikari_palette::{ClassesBuilder, TypedClass, classes::components::*};
 
 use crate::{prelude::*, theme::use_layout_direction};
 

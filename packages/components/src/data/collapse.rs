@@ -34,7 +34,10 @@ pub fn Collapse(props: CollapseProps) -> Element {
 
     let content_id = use_signal(|| {
         static COUNTER: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
-        format!("hi-collapse-panel-{}", COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
+        format!(
+            "hi-collapse-panel-{}",
+            COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+        )
     });
 
     let animation_style = if props.animated {

@@ -50,15 +50,19 @@ pub fn Typography(props: TypographyProps) -> Element {
     };
 
     let tag = match props.variant {
-        TextVariant::H1 | TextVariant::H2 | TextVariant::H3
-        | TextVariant::H4 | TextVariant::H5 | TextVariant::H6 => "div",
+        TextVariant::H1
+        | TextVariant::H2
+        | TextVariant::H3
+        | TextVariant::H4
+        | TextVariant::H5
+        | TextVariant::H6 => "div",
         TextVariant::Code => "code",
         _ => "span",
     };
 
-    let mut classes = format!("{variant_class}");
+    let mut classes = variant_class.to_string();
     if !props.class.is_empty() {
-        classes.push_str(" ");
+        classes.push(' ');
         classes.push_str(&props.class);
     }
 

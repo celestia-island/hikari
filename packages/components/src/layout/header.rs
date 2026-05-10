@@ -16,7 +16,7 @@
 //! }
 //! ```
 
-use hikari_palette::{classes::*, ClassesBuilder};
+use hikari_palette::{ClassesBuilder, classes::*};
 
 use crate::{prelude::*, theme::use_layout_direction};
 

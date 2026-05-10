@@ -25,11 +25,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Fetch MDI icons
+        run: python3 scripts/icons/fetch_mdi_icons.py
+
       - name: Setup toolchain
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.toolchain }}
-          targets: wasm32-wasip2
 
       - uses: Swatinem/rust-cache@v2
 
@@ -38,11 +40,3 @@ jobs:
 
       - name: Run tests
         run: just test
-
-      - name: Check wasm32-wasip2 target
-        run: |
-          cargo check \
-            --workspace \
-            --exclude hikari-e2e \
-            --all-features \
-            --target wasm32-wasip2

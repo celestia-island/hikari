@@ -20,7 +20,7 @@ pub struct TreeNodeData {
     pub disabled: bool,
 }
 
-#[derive(Clone, Props)]
+#[derive(Clone, Default, Props)]
 pub struct TreeNodeProps {
     pub node_key: String,
 
@@ -60,27 +60,6 @@ pub struct TreeNodeProps {
 
     #[props(default)]
     pub on_expand: Option<EventHandler<String>>,
-}
-
-impl Default for TreeNodeProps {
-    fn default() -> Self {
-        Self {
-            node_key: String::new(),
-            label: String::new(),
-            node_children: None,
-            icon: None,
-            disabled: false,
-            expanded: false,
-            selected: false,
-            level: 0,
-            class: String::new(),
-            onclick: None,
-            expanded_keys: None,
-            selected_keys: None,
-            on_select: None,
-            on_expand: None,
-        }
-    }
 }
 
 #[component]

@@ -176,10 +176,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 let is_active = i == current_page_for_class.get();
                 let page_class = ClassesBuilder::new()
                     .add_typed(PaginationClass::PaginationItem)
-                    .add_typed_if(
-                        PaginationClass::PaginationActive,
-                        is_active,
-                    )
+                    .add_typed_if(PaginationClass::PaginationActive, is_active)
                     .build();
                 let handler = move |_| {
                     if i != current_page_for_handler.get() {
@@ -221,10 +218,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 let is_active = i == current_page_for_class.get();
                 let page_class = ClassesBuilder::new()
                     .add_typed(PaginationClass::PaginationItem)
-                    .add_typed_if(
-                        PaginationClass::PaginationActive,
-                        is_active,
-                    )
+                    .add_typed_if(PaginationClass::PaginationActive, is_active)
                     .build();
                 let handler = move |_| {
                     if i != current_page_for_handler.get() {

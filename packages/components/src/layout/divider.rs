@@ -91,9 +91,7 @@ pub fn Divider(props: DividerProps) -> Element {
             _ => "text-align: center;",
         }
     } else {
-        {
-            ""
-        }
+        { "" }
     };
 
     rsx! {

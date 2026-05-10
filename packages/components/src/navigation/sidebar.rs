@@ -8,7 +8,7 @@
 // - Styles via SCSS with CSS variables for theming
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{TypedClass, ClassesBuilder, SidebarClass};
+use hikari_palette::classes::{ClassesBuilder, SidebarClass, TypedClass};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},

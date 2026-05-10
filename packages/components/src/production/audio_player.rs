@@ -1,7 +1,7 @@
 // packages/components/src/production/audio_player.rs
 // Audio player component with Arknights + FUI styling
 
-use hikari_palette::classes::{TypedClass, AudioPlayerClass, ClassesBuilder};
+use hikari_palette::classes::{AudioPlayerClass, ClassesBuilder, TypedClass};
 
 use crate::{prelude::*, styled::StyledComponent};
 

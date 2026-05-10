@@ -3,8 +3,8 @@
 
 #![expect(clippy::needless_update)]
 
-use hikari_palette::classes::{TypedClass, 
-    ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass, TooltipClass,
+use hikari_palette::classes::{
+    ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass, TooltipClass, TypedClass,
 };
 
 use super::provider::use_portal;
@@ -52,10 +52,7 @@ fn use_animated_portal_entry(
         let anim_state = internal_animation_state.clone();
         use_memo(move || {
             let state = anim_state.read();
-            log(&format!(
-                "{} use_memo triggered, state: {:?}",
-                name, state
-            ));
+            log(&format!("{} use_memo triggered, state: {:?}", name, state));
             let (opacity, scale) = match state {
                 ModalAnimationState::Appearing => ("0".to_string(), "0.95".to_string()),
                 ModalAnimationState::Visible => ("1".to_string(), "1".to_string()),
@@ -94,10 +91,7 @@ fn use_animated_portal_entry(
                 let remove = remove_entry_for_timeout.clone();
                 set_timeout(
                     move || {
-                        log(&format!(
-                            "{} removing entry after timeout: {}",
-                            name, id
-                        ));
+                        log(&format!("{} removing entry after timeout: {}", name, id));
                         remove.call(id);
                     },
                     200,
@@ -126,7 +120,9 @@ pub fn PortalRender(
         }
     };
 
-    let portal_classes = ClassesBuilder::new().add_typed(PortalClass::PortalRoot).build();
+    let portal_classes = ClassesBuilder::new()
+        .add_typed(PortalClass::PortalRoot)
+        .build();
 
     // Pre-collect all portal entry elements
     let entry_elements: Vec<Element> = entries
@@ -465,11 +461,16 @@ fn DropdownPortalEntry(
             .add_typed(DropdownClass::OverlayDimmed)
             .build()
     } else {
-        ClassesBuilder::new().add_typed(DropdownClass::Overlay).build()
+        ClassesBuilder::new()
+            .add_typed(DropdownClass::Overlay)
+            .build()
     };
 
-    let dropdown_classes =
-        use_memo(move || ClassesBuilder::new().add_typed(DropdownClass::Dropdown).build());
+    let dropdown_classes = use_memo(move || {
+        ClassesBuilder::new()
+            .add_typed(DropdownClass::Dropdown)
+            .build()
+    });
 
     let overlay_style = format!(
         "position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: auto; z-index: {};",
@@ -751,12 +752,18 @@ fn PopoverPortalEntry(
         let width_style = width.as_deref().unwrap_or("auto");
         format!(
             "{} z-index: {}; width: {}; transform: {}; transform-origin: {}; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10); backdrop-filter: blur(12px); padding: 4px 0; opacity: {}; transition: opacity 0.2s ease-in-out;",
-            position_style, z_index, width_style, translate_transform, transform_origin, computed_opacity_scale.read().0
+            position_style,
+            z_index,
+            width_style,
+            translate_transform,
+            transform_origin,
+            computed_opacity_scale.read().0
         )
     } else {
         format!(
             "position: fixed; z-index: {}; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10); backdrop-filter: blur(12px); padding: 4px 0; opacity: {}; transition: opacity 0.2s ease-in-out;",
-            z_index, computed_opacity_scale.read().0
+            z_index,
+            computed_opacity_scale.read().0
         )
     };
 
@@ -790,8 +797,12 @@ fn PopoverPortalEntry(
     };
 
     let title_classes = ClassesBuilder::new().add_typed(PopoverClass::Title).build();
-    let content_classes = ClassesBuilder::new().add_typed(PopoverClass::Content).build();
-    let popover_classes = ClassesBuilder::new().add_typed(PopoverClass::Popover).build();
+    let content_classes = ClassesBuilder::new()
+        .add_typed(PopoverClass::Content)
+        .build();
+    let popover_classes = ClassesBuilder::new()
+        .add_typed(PopoverClass::Popover)
+        .build();
 
     // Build title element outside rsx!
     let title_el = if title.is_some() {

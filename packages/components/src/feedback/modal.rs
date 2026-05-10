@@ -4,7 +4,7 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::{
-    portal::{use_portal, PortalEntry},
+    portal::{PortalEntry, use_portal},
     prelude::*,
     styled::StyledComponent,
 };

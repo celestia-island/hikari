@@ -75,7 +75,7 @@ mod tests {
 
     #[test]
     fn test_select_renders() {
-        let entries = use_signal(|| Vec::<PortalEntry>::new());
+        let entries = use_signal(Vec::<PortalEntry>::new);
         provide_context(PortalContext {
             entries: entries.clone(),
             add_entry: Callback::new(|_| {}),

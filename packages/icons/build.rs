@@ -39,12 +39,17 @@ fn build_icons(workspace_root: &std::path::Path) -> anyhow::Result<()> {
         get_default_icon_selection()
     };
 
+    let out_dir = std::env::var("OUT_DIR").unwrap();
+    let output_file = PathBuf::from(&out_dir).join("mdi_selected.rs");
+
     let config = IconConfig {
         selection: icon_selection,
-        output_file: "src/generated/mdi_selected.rs".into(),
+        output_file,
     };
 
-    build_icons::build_selected_icons(&config)
+    build_icons::build_selected_icons(&config)?;
+
+    Ok(())
 }
 
 fn find_workspace_root() -> PathBuf {

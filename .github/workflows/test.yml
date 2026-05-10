@@ -25,6 +25,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Checkout tairitsu
+        run: git clone --depth 1 https://github.com/celestia-island/tairitsu.git ../tairitsu
+
       - name: Setup toolchain
         uses: dtolnay/rust-toolchain@master
         with:
